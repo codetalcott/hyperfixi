@@ -125,7 +125,12 @@ export const arabicProfile: LanguageProfile = {
     return: { primary: 'ارجع', alternatives: ['عُد'], normalized: 'return' },
     then: { primary: 'ثم', alternatives: ['بعدها', 'ثمّ'], normalized: 'then' },
     and: { primary: 'وأيضاً', alternatives: ['أيضاً'], normalized: 'and' },
-    end: { primary: 'نهاية', alternatives: ['انتهى', 'آخر'], normalized: 'end' },
+    // آخر is deliberately ABSENT: it is the positional `last` keyword
+    // (آخر <button/> في .modal — see pattern-matcher's positional handling).
+    // Listing it as an end-alternative made parseBodyWithClauses chop every
+    // clause containing a positional `last` at that token (ar focus-trap lost
+    // its if-branch body). النهاية is what the i18n dict actually emits.
+    end: { primary: 'نهاية', alternatives: ['انتهى', 'النهاية'], normalized: 'end' },
     // Advanced
     js: { primary: 'جافاسكربت', alternatives: ['js'], normalized: 'js' },
     async: { primary: 'متزامن', normalized: 'async' },

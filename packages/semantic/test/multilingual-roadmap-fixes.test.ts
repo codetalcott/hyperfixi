@@ -3602,3 +3602,107 @@ describe('ko event marker 할 때 — fused patterns anchor, custom events confi
     expect([...a].sort()).toEqual(['on', 'put', 'set']);
   });
 });
+
+describe('tl/ar VSO event recovery — mis-listed keywords + midstream-on-no-match (Track B)', () => {
+  // Three small pieces clearing the tl/ar focus-trap/modal-close/breakpoint
+  // cluster (7 instances, 0 regressions; avgFidelity 0.9629 → 0.9641):
+  //
+  // 1. ar آخر removed from the end-keyword set (curated parser set + profile
+  //    alternatives). آخر is ar's positional `last`; listing it as `end` made
+  //    parseBodyWithClauses chop every clause at a positional last, so the
+  //    ar focus-trap if-branch body (focus/halt) vanished. النهاية — the form
+  //    the i18n dict actually emits for end — replaces it. Same collision
+  //    class as tr son/sonuncu (locked earlier).
+  // 2. tl 'kung' (= IF) removed from the kapag-alternatives of the
+  //    event-tl-kapag patterns. if-first emissions (`kung <cond> kapag <event>
+  //    …`) matched the EVENT pattern with event=<cond fragment>, eating the
+  //    if-clause. With kung gone, Stage 2 matches `if` (a block action) and
+  //    the existing midstream-loop extraction builds handler+if correctly —
+  //    the §10-planned Stage-1.5 reorder turned out unnecessary.
+  // 3. Stage 2.5: tryMidStreamEventExtraction now also runs for VSO when
+  //    Stage 2 found NO command (`itago pinakamalapit .modal kapag click …` —
+  //    hide-closest has no tl pattern; `breakpoint kapag click …` — not a
+  //    command keyword). Gated to single-line input: a multi-line behavior
+  //    block legitimately contains on-marked events in its body and must not
+  //    be flattened into one handler (ar behavior-removable caught this).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang).
+  it('[ar] focus-trap keeps the if-branch body (آخر no longer chops the clause)', () => {
+    const a = actions(
+      parse(
+        'إذا هدف يطابق آخر <button/> في .modal من .modal عند keydown[key=="Tab"] ثم تركيز أول <button/> في .modal ثم أوقف النهاية',
+        'ar'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[tl] focus-trap: kung anchors if, kapag anchors the event (was event=cond fragment)', () => {
+    const a = actions(
+      parse(
+        'kung target tumutugma huli <button/> sa_loob .modal mula sa .modal kapag keydown[key=="Tab"] pagkatapos ituon una <button/> sa_loob .modal pagkatapos huminto wakas',
+        'tl'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[tl] modal-close-button recovers the handler around an unmatched leading command', () => {
+    const a = actions(
+      parse('itago pinakamalapit .modal kapag click pagkatapos alisin .modal-open mula sa katawan', 'tl')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[ar] modal-close-button recovers the handler likewise', () => {
+    const a = actions(parse('اخف الأقرب .modal عند نقر ثم احذف .modal-open من جسم', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[tl] breakpoint-command keeps the handler (breakpoint is not a command keyword)', () => {
+    const a = actions(parse('breakpoint kapag click pagkatapos itakda $x sa 42', 'tl'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[ar] a multi-line behavior block is NOT flattened by the new stage (single-line guard)', () => {
+    // Reduced behavior-removable shape. The guard's contract: the multi-line
+    // block must never be swallowed into a single on-handler (a parse failure
+    // here is acceptable — the full corpus block parses via the behavior path).
+    let flattenedToHandler = false;
+    try {
+      const a = actions(
+        parse('behavior Removable(t)\n    من t عند نقر\n        احذف أنا\n    النهاية\nالنهاية', 'ar')
+      );
+      flattenedToHandler = a.has('on');
+    } catch {
+      // not parseable as a single statement — fine, the behavior path owns it
+    }
+    expect(flattenedToHandler).toBe(false);
+  });
+
+  it('[en] the en reference parses are unchanged', () => {
+    const a = actions(parse('on click hide closest .modal remove .modal-open from body', 'en'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+});
