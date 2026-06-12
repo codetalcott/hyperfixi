@@ -89,7 +89,11 @@ export const tagalogProfile: LanguageProfile = {
     focus: { primary: 'ituon', normalized: 'focus' },
     blur: { primary: 'alisin_tuon', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'walang-laman', alternatives: ['alisin-laman'], normalized: 'empty' },
+    empty: {
+      primary: 'walang-laman',
+      alternatives: ['alisin-laman', 'walang_laman'],
+      normalized: 'empty',
+    },
     open: { primary: 'buksan', normalized: 'open' },
     close: { primary: 'isara', normalized: 'close' },
     select: { primary: 'piliin', normalized: 'select' },

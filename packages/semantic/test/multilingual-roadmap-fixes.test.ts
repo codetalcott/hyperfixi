@@ -3044,3 +3044,80 @@ describe('generated for-loop accepts identifier loop vars + the dict in-connecti
     expect([...a].sort()).toEqual(['for', 'on', 'set']);
   });
 });
+
+describe('empty-predicate adjective is a profile keyword alternative (is-empty cluster)', () => {
+  // if-empty + input-validation dropped the `empty` action in 11 languages.
+  // The `is empty` predicate is recovered through profile.keywords.empty —
+  // languages that worked (es vacío, pl pusty, de leer, pt vazio, zh 空的)
+  // list the predicate ADJECTIVE the dict emits as a keyword alternative;
+  // the failing ones listed only the command VERB (ru опустошить, it svuotare,
+  // uk спорожнити). A tokenizer entry alone is NOT sufficient — it had
+  // 'vuoto'→empty in the tokenizer and still dropped the predicate. Added the
+  // dict-emitted adjective as a keywords.empty alternative for ar فارغ,
+  // bn খালি, hi खाली, it vuoto, ms kosong, ru пустой, th ว่าง, tl walang_laman,
+  // tr boş, uk порожній, vi trống. if-empty 9/23 → 19/23 faithful,
+  // input-validation similar (avgFidelity 0.9541 → 0.9554, lossy 258 → 236,
+  // 0 regressions). Residuals tracked: he (possessive untranslated),
+  // ja/ko (SOV blur-verb hijack), qu (the dict emits no empty word at all),
+  // sw (event-head drop, separate).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), if-empty:
+  // `on blur if my value is empty add .error to me put "Required" into next
+  //  .error-message end`
+  const corpus: Array<[string, string]> = [
+    [
+      'ru',
+      'при размыть если мой значение есть пустой добавить .error в я затем положить "Required" в следующий .error-message конец',
+    ],
+    [
+      'it',
+      'su sfuocatura se mio valore è vuoto aggiungere .error in io allora mettere "Required" in prossimo .error-message fine',
+    ],
+    [
+      'vi',
+      'khi mất tập trung nếu của tôi giá trị là trống thêm .error vào tôi rồi đặt "Required" vào tiếp theo .error-message kết thúc',
+    ],
+    [
+      'uk',
+      'при розмиття якщо мій значення є порожній додати .error в я тоді покласти "Required" в наступний .error-message кінець',
+    ],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] if-empty keeps the empty predicate (was dropped)`, () => {
+      const a = actions(parse(input, lang as 'ru'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('empty')).toBe(true);
+      expect(a.has('add')).toBe(true);
+    });
+  }
+
+  it('[ru] the empty COMMAND verb still parses (опустошить unchanged)', () => {
+    const a = actions(parse('опустошить #list', 'ru'));
+    expect(a.has('empty')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on blur if my value is empty add .error to me put "Required" into next .error-message end',
+        'en'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('empty')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+});

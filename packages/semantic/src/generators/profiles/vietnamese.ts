@@ -88,7 +88,7 @@ export const vietnameseProfile: LanguageProfile = {
     focus: { primary: 'tập trung', normalized: 'focus' },
     blur: { primary: 'mất tập trung', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'làm-rỗng', normalized: 'empty' },
+    empty: { primary: 'làm-rỗng', alternatives: ['trống'], normalized: 'empty' },
     open: { primary: 'mở', normalized: 'open' },
     close: { primary: 'đóng', normalized: 'close' },
     select: { primary: 'đánh-dấu', normalized: 'select' },
