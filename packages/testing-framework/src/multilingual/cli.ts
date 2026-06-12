@@ -5,9 +5,61 @@
  * Command-line interface for running multilingual tests.
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { checkDbStamp, getDefaultDbPath } from '@hyperfixi/patterns-reference';
 import { TestOrchestrator } from './orchestrator';
 import type { TestConfig, LanguageCode } from './types';
+
+/**
+ * Packages whose dist/ this harness executes (directly or via imports), in
+ * topological build order. The sibling of the patterns.db provenance stamp:
+ * a sweep against a stale dist scores code that differs from the checkout.
+ */
+const DIST_GUARD_PACKAGES = [
+  'intent',
+  'framework',
+  'semantic',
+  'i18n',
+  'patterns-reference',
+  'core',
+];
+
+/** True if any .ts under dir is newer than builtAt (early-exit walk). */
+function hasNewerTs(dir: string, builtAt: number): boolean {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (hasNewerTs(p, builtAt)) return true;
+    } else if (entry.name.endsWith('.ts') && fs.statSync(p).mtimeMs > builtAt) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Names of guard packages whose src/ is newer than their built dist/ (or whose
+ * dist/ is missing entirely). Same staleness semantics as
+ * scripts/ensure-fresh.sh, but read-only — the CLI refuses instead of
+ * rebuilding, so a gate/baseline run never silently mutates build state.
+ */
+function findStaleDists(): string[] {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const packagesRoot = path.resolve(here, '../../..');
+  const stale: string[] = [];
+  for (const name of DIST_GUARD_PACKAGES) {
+    const pkg = path.join(packagesRoot, name);
+    const srcDir = path.join(pkg, 'src');
+    const marker = path.join(pkg, 'dist', 'index.js');
+    if (!fs.existsSync(srcDir)) continue;
+    if (!fs.existsSync(marker) || hasNewerTs(srcDir, fs.statSync(marker).mtimeMs)) {
+      stale.push(name);
+    }
+  }
+  return stale;
+}
 
 /**
  * Parse command-line arguments
@@ -228,6 +280,24 @@ async function main(): Promise<void> {
           '⚠ patterns.db has no provenance stamp (generated before the freshness guard); ' +
             'cannot verify it is fresh. Re-sync if results look surprising.'
         );
+      }
+
+      // Dist freshness guard (the db stamp's sibling): this CLI is normally
+      // invoked via `npx tsx`, which skips the pretest ensure-fresh hooks, and
+      // it executes the parser stack from dist/. A gate or --save-baseline run
+      // against a stale dist scores code that differs from the checkout — the
+      // "baseline saved from a transitional build" footgun (roadmap §7g/§10).
+      // Refuse rather than auto-rebuild so the run never mutates build state.
+      const staleDists = findStaleDists();
+      if (staleDists.length > 0) {
+        console.error(
+          `\n✗ Stale dist/ in: ${staleDists.join(', ')} — src/ is newer than the built output,\n` +
+            '  so this run would execute code that differs from the checkout (and a saved\n' +
+            '  baseline would not reproduce). Rebuild first:\n\n' +
+            staleDists.map(p => `    npm run build --prefix packages/${p}`).join('\n') +
+            '\n\n  (or rebuild the whole stack: npm run test:multilingual:build-deps)\n'
+        );
+        process.exit(1);
       }
     }
 
