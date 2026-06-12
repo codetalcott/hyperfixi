@@ -4200,3 +4200,70 @@ describe('ko literal quoting — the SOV fallback path strips quote chars (R2 #3
     expect(p.dataType).toBe('string');
   });
 });
+
+describe('event-wrapper source groups — remove-from captures across word orders (R2 #378)', () => {
+  // The event-handler wrappers had NO source slot at all: `remove X from Y`
+  // translations either silently dropped the from-phrase (SVO/VSO — the
+  // pattern matched and the trailing `de .items` was lossy-discarded) or
+  // leaked it past the matched span, where the SOV verb-anchoring fallback
+  // read the から particle as a verb and fabricated a bogus `from` command
+  // that threw Unknown command at runtime (after the remove had already
+  // acted on the wrong target). Wrappers now emit an optional source-phrase
+  // group via eventHandlerSourceGroup() — schema-deferring like the #376
+  // destination fix, position-aware (prepositions precede the value,
+  // postpositional particles follow it). R2 0.7826 → 0.8721; de/es/fr/pt/
+  // sw/tr join ar/he/zh at 1.000.
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+
+  // Corpus-shaped remove-class-from-all (en → lang).
+  const cases: Array<[string, string]> = [
+    ['es', 'en clic quitar .active de .items'],
+    ['de', 'bei klick entfernen .active von .items'],
+    ['ru', 'при клик удалить .active из .items'],
+    ['ja', '.active を クリック で 削除 .items から'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] remove captures source .items (was dropped or a bogus command)`, () => {
+      const cmds = commands(parse(input, lang as 'es'));
+      const remove = cmds.find(c => c.action === 'remove');
+      expect(remove, 'remove command present').toBeTruthy();
+      expect(role(remove!, 'patient')).toBe('.active');
+      expect(role(remove!, 'source')).toBe('.items');
+    });
+  }
+
+  it('[ja] no fabricated from/into command in the multi-command body', () => {
+    const cmds = commands(
+      parse('.active を クリック で 削除 .tab から それから .active を 追加 私 に', 'ja')
+    );
+    expect(cmds.map(c => c.action).sort()).toEqual(['add', 'remove']);
+    const remove = cmds.find(c => c.action === 'remove')!;
+    expect(role(remove, 'source')).toBe('.tab');
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmds = commands(parse('on click remove .active from .items', 'en'));
+    expect(cmds).toHaveLength(1);
+    expect(role(cmds[0], 'source')).toBe('.items');
+  });
+});
