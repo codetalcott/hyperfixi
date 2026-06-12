@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T18:39:06.288Z",
-  "commit": "61c334ff",
+  "timestamp": "2026-06-12T19:54:16.472Z",
+  "commit": "942907ae",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -13,7 +13,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["if-exists", "repeat-until-event", "window-scroll"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -639,8 +639,8 @@
       "avgConfidence": 0.8430632859204288,
       "avgFidelity": 0.9905844155844155,
       "avgRoleFidelity": 0.7622345559845559,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [],
       "lossyPasses": [
         "fetch-do-not-throw",
@@ -649,7 +649,7 @@
         "make-toast-element",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1280,7 +1280,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1904,7 +1904,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2535,7 +2535,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3165,7 +3165,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3791,8 +3791,8 @@
       "avgConfidence": 0.8263201576927067,
       "avgFidelity": 0.9569716775599126,
       "avgRoleFidelity": 0.8520003239390994,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -3809,7 +3809,7 @@
         "tell-command",
         "tell-other-element"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4435,11 +4435,12 @@
       "avgConfidence": 0.9546072974644388,
       "avgFidelity": 0.928030303030303,
       "avgRoleFidelity": 0.5759974259974261,
-      "avgExecutionFidelity": 0.8235294117647058,
+      "avgExecutionFidelity": 0.7894736842105263,
       "executionFailures": [
         "set-inner-html-possessive-dot",
         "set-style",
-        "set-text-possessive-dot"
+        "set-text-possessive-dot",
+        "tabs-content"
       ],
       "degeneratePasses": [
         "bind-auto-detect",
@@ -4461,7 +4462,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5088,7 +5089,7 @@
       "avgConfidence": 0.8437908496732007,
       "avgFidelity": 0.9496732026143792,
       "avgRoleFidelity": 0.7939990281827016,
-      "avgExecutionFidelity": 0.8823529411764706,
+      "avgExecutionFidelity": 0.8947368421052632,
       "executionFailures": ["increment-counter", "set-style"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
@@ -5104,7 +5105,7 @@
         "set-transform",
         "template-literal-interpolation"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5730,11 +5731,11 @@
       "avgConfidence": 0.8379396202925594,
       "avgFidelity": 0.9803921568627451,
       "avgRoleFidelity": 0.7985098801425334,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6360,8 +6361,8 @@
       "avgConfidence": 0.8351783137497423,
       "avgFidelity": 0.9384199134199134,
       "avgRoleFidelity": 0.7358268983268984,
-      "avgExecutionFidelity": 0.9411764705882353,
-      "executionFailures": ["put-content-basic"],
+      "avgExecutionFidelity": 0.8947368421052632,
+      "executionFailures": ["put-content-basic", "tabs-content"],
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -6383,7 +6384,7 @@
         "put-content-basic",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7010,8 +7011,8 @@
       "avgConfidence": 0.7911667697381983,
       "avgFidelity": 0.9595238095238094,
       "avgRoleFidelity": 0.7415218790218793,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -7026,7 +7027,7 @@
         "input-validation",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7667,7 +7668,7 @@
         "render-template-with-data",
         "set-color-variable"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8289,11 +8290,11 @@
       "avgConfidence": 0.8037866998651292,
       "avgFidelity": 0.9782135076252723,
       "avgRoleFidelity": 0.814342403628118,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8923,7 +8924,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9548,9 +9549,9 @@
       "parseRate": 1,
       "avgConfidence": 0.6999278499278501,
       "avgFidelity": 0.9606060606060607,
-      "avgRoleFidelity": 0.6935649935649936,
-      "avgExecutionFidelity": 0.9411764705882353,
-      "executionFailures": ["put-content-basic"],
+      "avgRoleFidelity": 0.6980694980694981,
+      "avgExecutionFidelity": 0.8947368421052632,
+      "executionFailures": ["put-content-basic", "tabs-content"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -9565,7 +9566,7 @@
         "take-class-from-siblings",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10192,11 +10193,11 @@
       "avgConfidence": 0.8117913832199526,
       "avgFidelity": 0.9935064935064936,
       "avgRoleFidelity": 0.8202622265122268,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10827,7 +10828,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["event-debounce", "repeat-until-event", "set-color-variable"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11450,11 +11451,11 @@
       "avgConfidence": 0.8401154401154378,
       "avgFidelity": 1,
       "avgRoleFidelity": 0.8062258687258687,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12085,7 +12086,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": ["if-exists", "window-scroll"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12712,8 +12713,8 @@
       "avgConfidence": 0.8329805996472663,
       "avgFidelity": 0.9635076252723311,
       "avgRoleFidelity": 0.750664075153871,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -12722,7 +12723,7 @@
         "default-value"
       ],
       "lossyPasses": ["fetch-do-not-throw", "unless-condition"],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13348,11 +13349,11 @@
       "avgConfidence": 0.8098948670377222,
       "avgFidelity": 0.9935064935064936,
       "avgRoleFidelity": 0.8085505148005151,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13979,8 +13980,8 @@
       "avgConfidence": 0.8037518037518019,
       "avgFidelity": 0.985930735930736,
       "avgRoleFidelity": 0.8507319819819822,
-      "avgExecutionFidelity": 1,
-      "executionFailures": [],
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["tabs-content"],
       "degeneratePasses": [],
       "lossyPasses": [
         "input-mirror",
@@ -13989,7 +13990,7 @@
         "set-color-variable",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14628,7 +14629,7 @@
         "tell-other-element",
         "unless-condition"
       ],
-      "bundleSize": 412262,
+      "bundleSize": 411967,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15250,7 +15251,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 412262,
+      "size": 411967,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
