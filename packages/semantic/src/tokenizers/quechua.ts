@@ -120,7 +120,11 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'ñawpaqnin', normalized: 'previous' },
   { native: 'ñawpaq kaq', normalized: 'previous' },
   { native: 'ñawpaq_kaq', normalized: 'previous' },
-  { native: 'aswan qayllaqa', normalized: 'closest' },
+  // Single token only — 'aswan qayllaqa' (multi-word) was dead, and any
+  // aswan-prefixed compound splits (the suffix extractor strips -wan from
+  // 'aswan'). The i18n dict emits bare 'kaylla' (near/close).
+  { native: 'kaylla', normalized: 'closest' },
+  { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
   // Events

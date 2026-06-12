@@ -76,8 +76,11 @@ const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   { native: 'próximo', normalized: 'next' },
   { native: 'proximo', normalized: 'next' },
   { native: 'anterior', normalized: 'previous' },
-  { native: 'mais próximo', normalized: 'closest' },
-  { native: 'mais proximo', normalized: 'closest' },
+  // Single token only — the tokenizer never matches multi-word natives, so the
+  // old 'mais próximo' entries were dead. Fused form matches the i18n dict
+  // ('próximo' alone is claimed by next).
+  { native: 'maispróximo', normalized: 'closest' },
+  { native: 'maisproximo', normalized: 'closest' },
   { native: 'pai', normalized: 'parent' },
 
   // Events

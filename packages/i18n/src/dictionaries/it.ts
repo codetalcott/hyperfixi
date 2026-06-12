@@ -192,7 +192,7 @@ export const it: Dictionary = {
     prev: 'prec',
     at: 'a',
     random: 'casuale',
-    closest: 'piùvicino',
+    closest: 'vicino',
     parent: 'genitore',
     children: 'figli',
     within: 'dentro',

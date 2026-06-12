@@ -194,7 +194,7 @@ export const pt: Dictionary = {
     prev: 'ant',
     at: 'em',
     random: 'aleatório',
-    closest: 'mais_próximo',
+    closest: 'maispróximo',
     parent: 'pai',
     children: 'filhos',
     within: 'dentro',

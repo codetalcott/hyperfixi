@@ -42,7 +42,10 @@ const POSITIONAL_CONCEPTS = [
  * - `random` is unrecognized by most tokenizers (no extras entry).
  * - The `closest` superlatives/compounds (es máscercano, fr plusproche,
  *   it piùvicino, pt mais_próximo, tr en_yakın, qu aswan_kaylla) split or
- *   miss entirely.
+ *   missed entirely — the tokenizer never matches multi-word/underscore
+ *   natives, so the old tokenizer entries were dead. Fixed by aligning each
+ *   dict to a single token the tokenizer recognizes (es cercano, fr proche,
+ *   it vicino, pt maispróximo, tr enyakın, qu kaylla).
  * - ru/uk tokenizers carried only the feminine/neuter gendered variants — the
  *   masculine nominative forms the dict emits were never listed; fixed.
  * - qu next/previous were CROSS-MAPPED (qhipantin→last, ñawpaqnin→first —
@@ -60,22 +63,17 @@ const KNOWN_DRIFT = new Set<string>([
   'de:closest',
   'de:parent',
   'de:random',
-  'es:closest',
   'es:random',
-  'fr:closest',
   'fr:random',
   'hi:random',
   'id:random',
-  'it:closest',
   'it:parent',
   'it:random',
   'ja:random',
   'ko:random',
   'ms:random',
   'pl:random',
-  'pt:closest',
   'pt:random',
-  'qu:closest',
   'qu:parent',
   'qu:random',
   'sw:first',
@@ -83,7 +81,6 @@ const KNOWN_DRIFT = new Set<string>([
   'sw:previous',
   'sw:random',
   'th:random',
-  'tr:closest',
   'tr:random',
   'zh:random',
 ]);

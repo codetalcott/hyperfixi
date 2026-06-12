@@ -193,7 +193,7 @@ export const fr: Dictionary = {
     prev: 'préc',
     at: 'à',
     random: 'aléatoire',
-    closest: 'plusproche',
+    closest: 'proche',
     parent: 'parent',
     children: 'enfants',
     within: 'dans',

@@ -192,7 +192,7 @@ export const es: Dictionary = {
     prev: 'ant',
     at: 'en',
     random: 'aleatorio',
-    closest: 'máscercano',
+    closest: 'cercano',
     parent: 'padre',
     children: 'hijos',
     within: 'dentro',

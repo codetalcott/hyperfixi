@@ -52,7 +52,9 @@ const FRENCH_EXTRAS: KeywordEntry[] = [
   { native: 'suivant', normalized: 'next' },
   { native: 'précédent', normalized: 'previous' },
   { native: 'precedent', normalized: 'previous' },
-  { native: 'plus proche', normalized: 'closest' },
+  // Single token only — the tokenizer never matches multi-word natives, so the
+  // old 'plus proche' entry was dead. The i18n dict emits 'proche'.
+  { native: 'proche', normalized: 'closest' },
   { native: 'parent', normalized: 'parent' },
 
   // Events
