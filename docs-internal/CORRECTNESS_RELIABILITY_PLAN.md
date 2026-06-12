@@ -195,6 +195,59 @@ event-debounce (8). One probed-but-dropped branch: the ko i18n event-marker
 (see handoff) — net +0.0008 but 4 ko faithful→lossy flips, correctly blocked
 by the R0 ratchet.
 
+## 7b. Status update (2026-06-12, post-#372 — overnight run, session 3)
+
+**avgFidelity 0.9690 | lossy 122 | degenerate 63 | R1 avgRoleFidelity 0.7552**.
+Seven PRs (#366–#372) cleared **67 lossy + 4 degenerate** (189 → 122;
+avgFidelity 0.9608 → 0.9690). Honorable-finish threshold 0.965 passed mid-run;
+the 0.97 half of the ship line is ~11 instances away, but lossy<100 needs
+another ~22 — one more session.
+
+- **#366** — fused-event body walker recovers verb-mid SOV clauses:
+  parseBodyWithGrammarPatterns gained parseClause's per-clause
+  parseSOVClauseByVerbAnchoring fallback (fires only when nothing in the
+  clause matched). −10 (bn/ja/qu/tr then-tails) and the precondition for #367.
+- **#367** — ko event marker 할 때 end-to-end (the §10 carry-over, landed):
+  i18n profile marker + insertMarkers suppression for SELECTOR-shaped
+  pseudo-events (the dangling locative-`on` target — also strips ja's spurious
+  で) + trySOVEventExtraction consumes the optional two-token 할 때 phrase and
+  lets it confirm custom identifier events. All 4 documented probe flips
+  resolved. ko 0.9307 → 0.9574, lossy −3, degen −2.
+- **#368** — tl/ar VSO event recovery: ar آخر (positional last!) removed from
+  the end-keyword set (it chopped every clause at a positional last — found by
+  token-tracing parseBodyWithClauses); tl 'kung' (= if) removed from the
+  kapag-alternatives; Stage 2.5 runs tryMidStreamEventExtraction for VSO when
+  Stage 2 matched NO command (single-line-gated: a multi-line behavior block
+  must not flatten — ar behavior-removable caught it). −5 incl. both
+  focus-traps WITHOUT the planned Stage-1.5 reorder.
+- **#369** — SOV clause-final for-loop: `for` un-skipped in buildVerbLookup so
+  the verb-anchoring fallback anchors the trailing for-word; dict realigns
+  ko 동안→각각 (동안 is while), qu rayku→sapankaq (doubles as by),
+  hi के_लिए→हेतु (underscore split). −5 (bn/ja/ko/qu/tr); hi blocked by an
+  into-pattern matching first (tracked).
+- **#370** — marker-less fetch ×8 (de/ru/uk/it/vi/th/ar/tl): for `fetch <url>`
+  the transformer emits no source marker but the generated pattern requires
+  one — the existing fetch-fr/pt markerlessFetch table extended. −16: BOTH
+  fetch-loading-state and event-debounce cleared in all 8.
+- **#371** — set patterns must not claim put verbs: set-de/fr/pt listed
+  setzen/stellen, mettre, colocar (the PUT verbs) as set-alternatives; the
+  dicts emit distinct verbs, so every transformed put parsed as set with
+  swapped roles. One collision, four clusters (if-exists, async-block,
+  fetch-with-headers, when-value-changes). −12.
+- **#372** — dict↔profile realigns: clear ×8 (the dict clear words are remove
+  words in their profiles — keydown-key-is-syntax cluster; he had no entry),
+  commands.blur ×5 (dicts had blur only as an EVENT word — blur-element, plus
+  sw if-empty/input-validation), pt unless a_menos→salvo (underscore split).
+  −16. R1 0.7525 → 0.7552.
+
+Worst languages now: hi 0.928 (untouched tonight, 8 lossy + 8 degen,
+role 0.543), id 0.933, he 0.934, ja 0.938, ms 0.953. th reached 1.0000;
+es/it 0 lossy. Largest residual clusters: unless-condition (8, SOV-final +
+zh 把), if-exists (6, body-word destinations), possessive-dot triple
+(get-attribute/method-call/input-mirror, id/ja/ms/vi), he tail (15: the
+send/trigger/tell cluster), behavior-\* degenerates (~40 across languages —
+untouched all sessions).
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -252,87 +305,88 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#365)
+## 10. Handoff — next session (written 2026-06-12, post-#372, session 3)
 
-Read first: §7 (current state), §8 (R1 — now SHIPPED, burn-down unscheduled),
-§9 (the track table is stale; use the table below). Lock tests:
-`packages/semantic/test/multilingual-roadmap-fixes.test.ts` — the last nine
-describe-blocks are #357–#365 and document every mechanism.
+Read first: §7b (closing state), §9's track table is two sessions stale —
+ignore it. Lock tests: `packages/semantic/test/multilingual-roadmap-fixes.test.ts`
+— the last seven describe-blocks are #366–#372 and document every mechanism,
+including the negative guards (ko 아니면 never unless; qu qillqay stays copy;
+ko 동안 stays while; de löschen stays remove; the ar multi-line behavior guard
+on Stage 2.5). i18n-side locks in `packages/i18n/src/grammar/grammar.test.ts`
+(ko 할 때 emission + selector-event suppression; commands.blur ×5).
 
-State: **avgFidelity 0.9608 | lossy 189 | degenerate 67 | R1 roleFidelity
-0.7505 recorded**. Gate green on main at `32c62e3d`. Per-instance economics
-still ≈ +0.0001 avgFidelity per cleared lossy instance; 0.965 needs ~42 more,
-0.97 needs ~90 + lossy<100 (i.e. nearly everything). The cheap universal
-clusters are gone — what remains is per-language/per-cluster work.
+State: **avgFidelity 0.9690 | lossy 122 | degenerate 63 | R1 roleFidelity
+0.7552**. Gate green on main. Economics unchanged (~+0.0001/instance):
+0.97 needs ~11 more; lossy<100 needs ~22; the full ship line is one focused
+session if the per-language tails cooperate. The behavior-\* degenerate block
+(~40 instances) is untouched by all three sessions and is the single biggest
+remaining mass — but it needs multi-line block parsing work, not keyword
+realigns.
 
 Half-confirmed mechanisms with probe evidence (rank-ordered):
 
-- **ko event marker (highest yield, needs care).** The i18n `koreanProfile`
-  (`packages/i18n/src/grammar/profiles/index.ts`) has NO event-role marker —
-  the only SOV profile without one (ja emits で, tr de/da) — so every ko
-  handler emits a bare event name and the semantic `*-event-ko-sov-*` patterns
-  (which expect 할 때) can't anchor; verb-homonym events (블러) hijack whole
-  handlers into a bare verb. Adding
-  `{ form: '할 때', role: 'event', position: 'postposition', required: true }`
-  measured **net ko 0.9244→0.9492, lossy 13→10, degen 7→5, global +0.0008**,
-  BUT flipped 4 ko patterns faithful→lossy (announce-screen-reader: a SECOND
-  spurious 할 때 lands after a non-event clause-final role; fetch-json: set
-  drops; form-disable-on-submit: put drops; if-exists: put drops) — over the
-  R0 tolerance (3), branch dropped. `required: false` does NOT change the
-  emission. Fix the 4 (likely the transformer's role-mapper marking non-event
-  roles, plus body-path interactions) and this is ~7 net instances + the
-  biggest ko unlock.
-- **tl/ar if-first VSO reorder (Track B, mechanism confirmed).**
-  `event-tl-kapag` (`packages/semantic/src/patterns/event-handler.ts` ~1536)
-  lists **'kung' (= if!) as a kapag-alternative**, so if-first emissions
-  (`kung <cond> … kapag <event> …`, focus-trap class) match the EVENT pattern
-  with event=`target` — the if-clause is eaten. Removing 'kung' alone leaves
-  no anchor; the real fix is an if-first mid-stream reorder (Stage-1.5
-  sibling in semantic-parser.ts): detect `<if-clause> <kapag-event> <body>`,
-  build handler(event){if(cond){body}}. ar analog: `إذا … عند <event> ثم …`.
-  ~8–10 instances (tl 11 lossy, ar 8).
-- **SOV clause-final for-loop (bn/hi/ja/ko/qu/tr).** #358's table fixed SVO;
-  these six emit `<var> <in-word> <coll> <pat-marker> <for-word>` with the
-  for-keyword LAST (`item में $items को के_लिए`). Needs an SOV for-loop
-  pattern (or generator variant) anchored on the trailing keyword. 6 instances
-  (template-literal-list-build) + fetch-json tails.
-- **SOV clause-final unless (ja/ko/tr/hi/qu) + zh 把-blocked unless.** The
-  dict words exist but sit clause-final (`… tıklama de değilse`); zh 除非
-  tokenizes fine but `除非 把 I match …` fails the condition role on the 把
-  particle. ~6 instances. NOTE the locked guard: ko 아니면 must NEVER become
-  an unless keyword (it's the else word — see the #361 lock test).
-- **Underscore-compound tokenizer splits (vi/hi/qu).** ru/uk word extractors
-  split at `_` (если*не → если+*+не) — fixed by realigning to real words
-  (кроме/крім). vi trừ*khi and hi जब*तक*नहीं still split; tl maliban_kung
-  works (its extractor treats * as a word char). Either teach those extractors
-  `_`, or pick single-word dict emissions.
-- **Residual clusters worth a probe each:** keydown-key-is-syntax (9 langs;
-  `on keyup[key is 'Escape']` — the bracketed `key is X` form),
-  fetch-loading-state (9; `add … fetch … then remove …` — the fetch drops
-  mid-chain in ar, others vary), event-debounce (8; `debounced at 300ms`
-  modifier), if-exists put/set tails (9; de/fr/pt parse put-as-set via verb
-  collision — setzen/mettre/colocar double as set; id/ar drop it entirely:
-  `taruh itu ke badan` fails on the untranslated `badan`), blur-element (5),
-  render/morph-with-template (id/ms/qu/tl/vi).
-- **R1 burn-down (new track, NOT started).** Mean roleFidelity 0.7505; worst
-  hi 0.543, qu 0.648, ko 0.688, it 0.693, ja 0.703. Expect transformer-side
-  role-assignment bugs (the swapped patient/destination class). Start by
-  dumping per-pattern roleFidelity from results.json parseResults[].roleSignature
-  for hi and clustering by command.
+- **possessive-dot triple (id/ms/vi, ~8 instances).** get-attribute-possessive-
+  dot, method-call-possessive-dot, input-mirror. The transformer leaves
+  dot-fused compounds verbatim (`my.getAttribute("data-id")`); en tokenizes
+  `my` as keyword and assembles the property path, id/vi leave it an
+  identifier and the put clause dies. PROBED: adding a `my`-passthrough
+  keyword to the id tokenizer is NOT sufficient — the expression assembly
+  (pattern-matcher property-path building) still rejects it. Probe there.
+  ms also emits `saya_punya nilai` (underscore split) for `my value`.
+- **ms put-with-ia (~3).** `letak ia ke #result` FAILS while `letak itu ke
+#result` parses put — although ia tokenizes keyword(it) identically to itu.
+  Both ms fetch tails (fetch-basic/event-debounce/fetch-loading-state) are
+  blocked on it (their fetch halves parse). Suspect reference-value handling
+  in the matcher, not the profile (ms.ts:25 `it: 'ia'` is the only listing).
+- **if-exists body-word destinations (id/ar/ms/sw/tl/bn, ~6).** The then-tail
+  put (`taruh itu ke badan`) drops; with `#out` it parses. NOT the references
+  table alone (fr/pt aligned and still failed until #371; id badan vs profile
+  tubuh IS misaligned, ar dict جسم vs profile الجسم too). After #371 the
+  de/fr/pt instances are fixed; for the rest, realign dict body words to the
+  profile references AND probe what value-type the put destination gets.
+- **unless-condition SOV-final (ja/tr/hi/ko/bn, ~5 + zh 把, qu spurious-if).**
+  The SOV transformer scatters unless: condition fronted, unless-word at the
+  ABSOLUTE END of the handler (`I match .disabled 切り替え .selected を クリック
+で でなければ`). No mid-stream trick rescues that — it needs either an
+  emission-side rule (keep unless mid-stream like pt salvo) or a clause-final
+  unless extractor mirroring the for-loop fix. ko's dict emits 아니면 for
+  unless (the ELSE word — locked guard): the ko dict needs a different word
+  entirely (~하지 않으면 class) BEFORE any parse-side work. zh `除非 把 …`
+  fails the condition role on 把. qu mana_sichus reads as if (sichus wins).
+- **hi (8 lossy + 8 degen, role 0.543 — worst language, untouched).** Two
+  known leads: a generated hi `into`-pattern matches `में …` clauses before
+  fallbacks can fire (blocks the for-loop fix landing for hi), and hi shares
+  the keydown/announce/fetch-json shapes that realigns fixed elsewhere —
+  check the hi dict words against the profile first (the #361/#364/#372
+  class; it has been the highest-yield move three sessions running).
+- **he tail (15 lossy).** send-event/send-event-to-form/send-with-detail/
+  socket-send/trigger-event/tell-\* — probably one את-particle or verb
+  mechanism for the whole family; one probe should tell.
+- **URL token-kind parity (latent class, no instance tonight).** Only ~9
+  tokenizers classify `/api/x` as kind url; the rest emit identifier→
+  expression, which fetch patterns happen to accept. A 16-file parity sweep
+  was prototyped and REVERTED as risk-without-reward (url→literal changes
+  other patterns' type checks). If a future fetch/go/path bug appears, start
+  here, and measure R1.
 
-Meta-lessons confirmed again tonight (now nine-for-nine across two sessions):
-the documented diagnosis is wrong until probed (the ja "generator gap" was a
-TOKENIZER split — も particle ate もし; the qu "transformer-side" set bug was
-a stale fix-translations.sql override re-stomping a fixed dict on every
-populate). New ones: (1) when a fix needs a profile keyword, check whether the
-word ALREADY means something else in that language (ko 아니면 = else; sw
-mwisho = end) — the R0 warning list is the cheapest detector; (2) the
-underscore-compound trick only works in tokenizers whose word extractor
-includes `_`; (3) `populate` re-runs fix-translations.sql, so any dict realign
-must check that file for a frozen override of the same rows.
+Meta-lessons (now ~13-for-13 across three sessions): the dominant residual
+class is **mis-listed keywords** — a word listed under a role/action it does
+not mean (kung-as-kapag, آخر-as-end, mettre/colocar/setzen-as-set,
+동안-as-for, wyczyść-as-clear, 아니면-as-unless). Before trusting ANY
+structural diagnosis, grep the word in (a) the curated parser keyword sets
+(then/end/else in semantic-parser.ts), (b) handcrafted pattern alternatives
+(patterns/\*.ts), (c) the profile keywords, and (d) fix-translations.sql.
+New this session: (6) standalone-clause probes do NOT exercise parseClause —
+probe corpus-shaped full strings, then isolate; (7) Stage 2 returns the FIRST
+command match and silently drops trailing then-chains — any new command
+pattern can expose it; (8) dict commands.X shadows events.X in event-name
+translation (blur) — parse-safe only if the command word is also in
+eventNameTranslations; (9) `git stash push` pathspecs resolve against CWD —
+run it from the repo root.
 
-Operating mode that worked: measure-first probe → one mechanism per PR →
-serialize merges (the baseline conflicts) → prototype the NEXT fix in the
-working tree while the current PR is in CI, stash, pop onto a fresh branch
-after merge. Nine PRs in one night with zero gate failures except the one the
-ratchet correctly blocked.
+Operating mode that worked (now 16 PRs over two overnight runs): unchanged —
+measure-first probe, one mechanism per PR (realign batches of the same class
+may bundle), serialize merges on the baseline file, prototype the next
+mechanism in the working tree while CI runs, stash with named messages.
+The probe→falsify rhythm matters more than the plan: five of seven PRs
+tonight fixed something OTHER than the documented diagnosis.
