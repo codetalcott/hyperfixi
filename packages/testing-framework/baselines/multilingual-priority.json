@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T14:33:03.560Z",
-  "commit": "1cd70ff5",
+  "timestamp": "2026-06-12T14:43:23.269Z",
+  "commit": "dfb90ae0",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -3779,8 +3779,8 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8469447038074495,
-      "avgFidelity": 0.937363834422658,
-      "avgRoleFidelity": 0.8304583738257207,
+      "avgFidelity": 0.956971677559913,
+      "avgRoleFidelity": 0.8520003239390994,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -3794,14 +3794,8 @@
         "if-empty",
         "input-validation",
         "last-in-collection",
-        "send-event",
-        "send-event-to-form",
-        "send-with-detail",
-        "socket-send",
         "tell-command",
-        "tell-other-element",
-        "trigger-event",
-        "wait-then"
+        "tell-other-element"
       ],
       "bundleSize": 410892,
       "patterns": {

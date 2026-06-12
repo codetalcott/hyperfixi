@@ -55,10 +55,56 @@ function getSendPatternsZh(): LanguagePattern[] {
 /**
  * Get send patterns for a specific language.
  */
+function getSendPatternsHe(): LanguagePattern[] {
+  return [
+    {
+      // The transformer marks send's object with the accusative את
+      // (`שלח את refresh על #widget`); the generated pattern is marker-less
+      // (`שלח {event}`), so every send dropped (send-event, send-event-to-form,
+      // send-with-detail, socket-send — the he tail). Same shape as send-zh-ba
+      // (zh marks the same slot with 把).
+      id: 'send-he-et',
+      language: 'he',
+      command: 'send',
+      priority: 105,
+      template: {
+        format: 'שלח את {event} על {destination}',
+        tokens: [
+          { type: 'literal', value: 'שלח' },
+          { type: 'literal', value: 'את' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'על', alternatives: ['ל', 'אל'] },
+              {
+                type: 'role',
+                role: 'destination',
+                expectedTypes: ['selector', 'reference', 'expression'],
+              },
+            ],
+          },
+        ],
+      },
+      extraction: {
+        event: { position: 2 },
+        destination: {
+          marker: 'על',
+          markerAlternatives: ['ל', 'אל'],
+          default: { type: 'reference', value: 'me' },
+        },
+      },
+    },
+  ];
+}
+
 export function getSendPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'zh':
       return getSendPatternsZh();
+    case 'he':
+      return getSendPatternsHe();
     default:
       return [];
   }

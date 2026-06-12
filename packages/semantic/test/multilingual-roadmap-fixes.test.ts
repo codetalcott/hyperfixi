@@ -4055,3 +4055,56 @@ describe('auditor realign batch 1 — trigger/take/render/settle/morph/make (17 
     expect(a.has('take')).toBe(false);
   });
 });
+
+describe('he accusative את — send/trigger/wait tolerate the marked object', () => {
+  // The transformer inserts את (the accusative particle) after EVERY verb;
+  // ~40 generated he patterns embed it before {patient}, but send/trigger/
+  // wait name their object slot event/duration, so THEIR generated patterns
+  // are marker-less (`שלח {event}`) and the whole he tail dropped
+  // (send-event, send-event-to-form, send-with-detail, socket-send,
+  // trigger-event, wait-then — 6 instances). Handcrafted את-marked variants
+  // added (send-he-et / trigger-he-et / wait-he-et — the send-zh-ba shape).
+  // ALSO: the he tokenizer no longer maps את to the 'you' reference (the
+  // feminine-you homonym) — the transformer emits את exclusively as the
+  // object marker, and the you-reading polluted role capture.
+  // NOTE for future work: do NOT drop את from the token stream — that breaks
+  // the ~40 generated patterns embedding it (probed and reverted).
+  // avgFidelity 0.9709 → 0.9717, lossy 105 → 99, 0 regressions — the
+  // parsing-track ship line (≥0.97 AND lossy<100) is reached.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → he).
+  const cases: Array<[string, string, string]> = [
+    ['send-event', 'ב לחיצה שלח את refresh על #widget', 'send'],
+    ['socket-send', 'ב לחיצה שלח את "hello" על ChatSocket', 'send'],
+    ['trigger-event', 'ב load הפעל את init', 'trigger'],
+    ['wait-then', 'ב לחיצה חכה את 2s אז הסר את אני', 'wait'],
+  ];
+  for (const [name, input, action] of cases) {
+    it(`[he] ${name} keeps the ${action} (was {on})`, () => {
+      const a = actions(parse(input, 'he'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has(action)).toBe(true);
+    });
+  }
+
+  it('[he] את-marked generated patterns still work (toggle/put-after guards)', () => {
+    expect(actions(parse('ב לחיצה מתג את .active', 'he')).has('toggle')).toBe(true);
+    expect(actions(parse('ב לחיצה שים את "<p>New</p>" אחרי אני', 'he')).has('put')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(parse('on click send refresh to #widget', 'en'));
+    expect([...a].sort()).toEqual(['on', 'send']);
+  });
+});

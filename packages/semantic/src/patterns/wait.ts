@@ -50,10 +50,35 @@ function getWaitPatternsZh(): LanguagePattern[] {
 /**
  * Get wait patterns for a specific language.
  */
+function getWaitPatternsHe(): LanguagePattern[] {
+  return [
+    {
+      // Accusative-marked wait (`חכה את 2s`) — see send-he-et / wait-zh-ba.
+      id: 'wait-he-et',
+      language: 'he',
+      command: 'wait',
+      priority: 105,
+      template: {
+        format: 'חכה את {duration}',
+        tokens: [
+          { type: 'literal', value: 'חכה', alternatives: ['המתן'] },
+          { type: 'literal', value: 'את' },
+          { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+        ],
+      },
+      extraction: {
+        duration: { position: 2 },
+      },
+    },
+  ];
+}
+
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'zh':
       return getWaitPatternsZh();
+    case 'he':
+      return getWaitPatternsHe();
     default:
       return [];
   }
