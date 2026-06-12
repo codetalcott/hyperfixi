@@ -2831,3 +2831,63 @@ describe('tr positional last — sonuncu (son doubles as the end keyword)', () =
     expect(actions(parse('o i sonuncu .y e koy', 'tr')).has('put')).toBe(true);
   });
 });
+
+describe('possessive property is never a normalized structural keyword (ms make-toast)', () => {
+  // ms make-toast-element went faithful→0.67 in #351 (accepted within
+  // tolerance) — once ms had an eventMarker, the fused make pattern anchored
+  // and the body re-parse hit `letak 'Saved!' ke ia kemudian …`. The
+  // possessive matcher read `ia kemudian` as "its kemudian" (ms `ia` = it/its;
+  // `kemudian` passed the structural-keyword check because that check used the
+  // raw VALUE against an English set) — forming a phantom property-path whose
+  // destination type-check failed the whole put pattern. The body's put
+  // silently dropped whenever ANY clause followed it. The check now also
+  // rejects a property token whose NORMALIZED form is structural
+  // (kemudian→then, tamat→end). ms make-toast-element lossy → faithful
+  // (0.9357 → 0.9379); every other language byte-identical.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ms] make-toast-element keeps the put (was dropped by the phantom possessive)', () => {
+    // Corpus-shaped transformer output (en → ms).
+    const a = actions(
+      parse(
+        "apabila click buat a <div.toast/> kemudian letak 'Saved!' ke ia kemudian letak ia di tamat daripada badan",
+        'ms'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('make')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[ms] a then-chained put with an it-destination keeps later clauses', () => {
+    const a = actions(
+      parse(
+        "apabila click buat a <div.toast/> kemudian letak 'Saved!' ke ia kemudian togol .x",
+        'ms'
+      )
+    );
+    expect(a.has('put')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+
+  it('[en] a real possessive property still parses (my value)', () => {
+    const a = actions(parse('put my value into #out', 'en'));
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[ms] a real ia-possessive property still parses', () => {
+    // `ia innerHTML` — identifier property, unaffected by the structural gate.
+    const a = actions(parse('letak ia innerHTML ke #out', 'ms'));
+    expect(a.has('put')).toBe(true);
+  });
+});

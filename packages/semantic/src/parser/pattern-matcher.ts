@@ -812,9 +812,15 @@ export class PatternMatcher {
     // Property should be an identifier, keyword (not structural), or selector (for style/dot/attr)
     // Examples: "my value", "my innerHTML", "my *background", "my *opacity", "my @data-count"
     // Also handles dot-property access: "my.textContent" tokenized as "my" + ".textContent"
+    // Structural keywords are checked by NORMALIZED form too — non-English
+    // structural words (ms kemudian→then, tamat→end) otherwise read as a
+    // property ("its then"), forming a phantom property-path whose type check
+    // fails the whole pattern (ms `letak 'X' ke ia kemudian …` dropped the put).
     if (
       propertyToken.kind === 'identifier' ||
-      (propertyToken.kind === 'keyword' && !this.isStructuralKeyword(propertyToken.value)) ||
+      (propertyToken.kind === 'keyword' &&
+        !this.isStructuralKeyword(propertyToken.value) &&
+        !(propertyToken.normalized && this.isStructuralKeyword(propertyToken.normalized))) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||
       (propertyToken.kind === 'selector' &&
