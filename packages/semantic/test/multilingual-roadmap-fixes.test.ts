@@ -3502,3 +3502,103 @@ describe('fused-event body walker recovers verb-mid SOV clauses (then-tail set/p
     expect([...a].sort()).toEqual(['fetch', 'on', 'set']);
   });
 });
+
+describe('ko event marker 할 때 — fused patterns anchor, custom events confirmed', () => {
+  // The i18n koreanProfile was the only SOV profile with NO event-role marker
+  // (ja emits で, tr de/da), so every ko handler emitted a bare event name the
+  // fused *-event-ko-sov-* patterns (which expect 할 때) could never anchor.
+  // Three pieces, one mechanism (the marker end-to-end):
+  //  1. i18n profile marker { form: '할 때', role: 'event' } — handlers now emit
+  //     `클릭 할 때`, and the fused patterns + the #366 body walker carry the
+  //     then-tails.
+  //  2. i18n insertMarkers suppresses the event marker for SELECTOR-shaped
+  //     "events": `set @role to "alert" on #sr-announce` splits at the locative
+  //     `on` (set/put are deliberately NOT in ON_TARGET_COMMANDS) and the
+  //     dangling `on #sr-announce` parses as a headless pseudo-handler — the
+  //     marker turned that into a spurious mid-stream `#sr-announce 할 때`
+  //     anchor (this also stripped ja's `#sr-announce で`).
+  //  3. semantic trySOVEventExtraction consumes the OPTIONAL two-token 할 때
+  //     phrase (할 identifier + 때 keyword — invisible to the single-token
+  //     marker check) and lets it confirm a custom identifier event the way
+  //     ja's で does. Never required: bare-event ko keeps parsing.
+  // ko 0.9307 → 0.9574, lossy 9 → 6, degen 7 → 5 (caret-var-increment,
+  // increment-by-amount, increment-counter, decrement-counter, wait-for-event
+  // fixed; if-empty/input-validation degenerate → lossy). Global avgFidelity
+  // 0.9617 → 0.9629, lossy 179 → 176, degenerate 67 → 65, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → ko).
+  it('[ko] increment-counter anchors the handler on 클릭 할 때 (was {increment})', () => {
+    const a = actions(parse('#counter 를 클릭 할 때 증가', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  it('[ko] wait-for-event keeps the handler (was {wait})', () => {
+    const a = actions(parse('클릭 할 때 대기 transitionend', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+
+  it('[ko] a custom identifier event is confirmed by the marker phrase (announce-screen-reader)', () => {
+    const a = actions(
+      parse(
+        'event.detail.message 를 success 할 때 넣다 #sr-announce 에 그러면 @role 를 설정 "alert" 에 그러면 #sr-announce',
+        'ko'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[ko] fetch-json keeps the then-tail set through the fused pattern + body walker', () => {
+    const a = actions(
+      parse('/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 설정 그것의.name 에', 'ko')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[ko] if-exists keeps the else-branch put (the 4th probe flip, now locked)', () => {
+    const a = actions(
+      parse(
+        '클릭 할 때 만약 #modal 존재 #modal 를 보이다 아니면 a <div#modal/> 를 만들다 그러면 그것 를 바디 에 넣다 끝',
+        'ko'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('show')).toBe(true);
+    expect(a.has('make')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    // The locked #361 guard still holds: 아니면 is else, never unless.
+    expect(a.has('unless')).toBe(false);
+  });
+
+  it('[ko] marker-less events still parse (pre-marker emissions, hand-written input)', () => {
+    // The phrase is OPTIONAL: the fetch keyword-alignment corpus shape (no 할 때).
+    const a = actions(parse('/api/form 를 제출 가져오기 method:"POST" body:form 로', 'ko'));
+    expect(a.has('on')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
+        'en'
+      )
+    );
+    expect([...a].sort()).toEqual(['on', 'put', 'set']);
+  });
+});

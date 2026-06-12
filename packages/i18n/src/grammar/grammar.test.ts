@@ -1767,3 +1767,38 @@ describe('destination `on` is not confused with the event head `on`', () => {
     }
   });
 });
+
+describe('ko event marker 할 때 + selector-event marker suppression', () => {
+  // koreanProfile gained the event-role marker 할 때 — the semantic
+  // *-event-ko-sov-* patterns anchor on it; before, every ko handler emitted a
+  // bare event name no fused pattern could match. The companion guard lives in
+  // insertMarkers: a SELECTOR-shaped "event" (the dangling target of a locative
+  // `on` — `set @role to "alert" on #sr-announce` — split off as a headless
+  // pseudo-handler because set/put are deliberately NOT in ON_TARGET_COMMANDS)
+  // must NOT receive the marker, or the emission grows a spurious mid-stream
+  // event anchor (`#sr-announce 할 때` / ja `#sr-announce で`).
+  it('[ko] a real event gets the marker', () => {
+    const t = new GrammarTransformer('en', 'ko');
+    expect(t.transform('on click increment #counter')).toBe('#counter 를 클릭 할 때 증가');
+  });
+
+  it('[ko] a dangling selector pseudo-event does NOT get the marker', () => {
+    const t = new GrammarTransformer('en', 'ko');
+    const out = t.transform(
+      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce'
+    );
+    // The real event keeps its marker…
+    expect(out).toContain('success 할 때');
+    // …the selector tail does not.
+    expect(out.endsWith('#sr-announce')).toBe(true);
+    expect(out.match(/할 때/g)?.length).toBe(1);
+  });
+
+  it('[ja] the same suppression strips the spurious で', () => {
+    const t = new GrammarTransformer('en', 'ja');
+    const out = t.transform(
+      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce'
+    );
+    expect(out.endsWith('#sr-announce')).toBe(true);
+  });
+});
