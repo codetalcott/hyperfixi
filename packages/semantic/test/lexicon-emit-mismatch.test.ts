@@ -54,7 +54,6 @@ const KNOWN_MISMATCHES = new Set([
   'id:break:hentikan',
   'id:catch:tangkap',
   'id:close:tutup',
-  'id:increment:tambahkan',
   'id:pushUrl:tambahUrl',
   'id:replaceUrl:gantiUrl',
   'id:select:pilih',

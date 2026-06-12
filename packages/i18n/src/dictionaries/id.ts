@@ -40,7 +40,11 @@ export const id: Dictionary = {
     catch: 'tangkap',
     measure: 'ukur',
     transition: 'transisi',
-    increment: 'tambahkan',
+    // naikkan (raise), not tambahkan — tambahkan is the semantic profile's
+    // `add` alternative, so emitting it made increment-counter parse as ADD
+    // (the #373 collision family). naikkan is the profile's increment
+    // alternative, pairing naturally with the decrement side.
+    increment: 'naikkan',
     decrement: 'kurangi',
     default: 'bawaan',
     go: 'pergi',

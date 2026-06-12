@@ -4742,3 +4742,36 @@ describe("qu curated apostrophe rows — ñit'iy keyword + event-source wrapper 
     expect(role(remove!, 'source')).toBe('.items');
   });
 });
+
+describe('id increment dict realign — tambahkan (parses as add) → naikkan (R2 id)', () => {
+  // The id dict emitted tambahkan for increment, but tambahkan is the id
+  // semantic profile's `add` ALTERNATIVE — increment-counter parsed as
+  // add(#counter) and execution diverged (the #373 keyword-collision family;
+  // its allowlist row is pruned in the same PR). The dict now emits naikkan,
+  // the profile's increment alternative.
+  function firstCommand(node: unknown): Record<string, unknown> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'command') return rec;
+    for (const f of ['body', 'statements', 'commands']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const r = firstCommand(x);
+          if (r) return r;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  it('[id] increment-counter emission parses as increment, not add', () => {
+    const cmd = firstCommand(parse('pada klik naikkan #counter', 'id'));
+    expect(cmd?.action).toBe('increment');
+  });
+
+  it('[id] tambahkan still parses as add (the profile alternative is untouched)', () => {
+    const cmd = firstCommand(parse('tambahkan .highlight', 'id'));
+    expect(cmd?.action).toBe('add');
+  });
+});
