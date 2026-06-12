@@ -4614,3 +4614,54 @@ describe('Possessive-dot passthrough heads assemble property-paths (R2 id/ms/vi)
     expect(roles.get('patient')?.value).toBe('Done!');
   });
 });
+
+describe('tl source marker emission realign — grammar `mula sa` → dict/profile mula_sa (R2 tl)', () => {
+  // Three-way drift, with the i18n grammar profile as the odd one out: its
+  // source marker was the spaced 'mula sa' while both the tl dict and the
+  // semantic profile use the underscore convention mula_sa (like every other
+  // multi-word tl form: kuhanin_mula, idagdag_sa_simula, galing_sa). The
+  // spaced emission produced two tokens the generated patterns' single
+  // mula_sa literal could never match, so `alisin X mula sa Y` lost its
+  // source phrase and the remove schema's default fabricated source=me —
+  // remove-class-from-all and tabs-basic removed .active from the handler
+  // element instead of the real targets. The grammar profile now emits
+  // mula_sa. tl 0.882 → 1.000 (19/23 perfect), mean 0.9770 → 0.9821.
+  function commands(node: unknown, acc: Array<Record<string, unknown>> = []) {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'command') acc.push(rec);
+    for (const f of ['body', 'statements', 'commands']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => commands(x, acc));
+    }
+    return acc;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+
+  it('[tl] remove-class-from-all captures the real source (was default me)', () => {
+    const cmds = commands(parse('alisin .active mula_sa .items kapag click', 'tl'));
+    const remove = cmds.find(c => c.action === 'remove');
+    expect(remove, 'remove command present').toBeTruthy();
+    expect(role(remove!, 'patient')).toBe('.active');
+    expect(role(remove!, 'source')).toBe('.items');
+  });
+
+  it('[tl] tabs-basic keeps remove source + add destination', () => {
+    const cmds = commands(
+      parse('alisin .active mula_sa .tab kapag click pagkatapos idagdag .active sa ako', 'tl')
+    );
+    const remove = cmds.find(c => c.action === 'remove');
+    const add = cmds.find(c => c.action === 'add');
+    expect(role(remove!, 'source')).toBe('.tab');
+    expect(role(add!, 'destination')).toBe('me');
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmds = commands(parse('on click remove .active from .items', 'en'));
+    expect(role(cmds[0], 'source')).toBe('.items');
+  });
+});
