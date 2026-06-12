@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T02:53:20.129Z",
-  "commit": "e41475c3",
+  "timestamp": "2026-06-12T03:09:26.094Z",
+  "commit": "8e35cd64",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -28,7 +28,7 @@
         "template-literal-list-build",
         "window-scroll"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -669,7 +669,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1312,7 +1312,7 @@
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1936,7 +1936,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2564,7 +2564,7 @@
       "avgFidelity": 0.9752723311546839,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["fetch-do-not-throw", "form-submit-prevent", "template-literal-list-build"],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3202,7 +3202,7 @@
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3854,7 +3854,7 @@
         "trigger-event",
         "wait-then"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4502,7 +4502,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5153,7 +5153,7 @@
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5789,7 +5789,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6447,7 +6447,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7097,7 +7097,7 @@
         "unless-condition",
         "wait-for-event"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7722,7 +7722,7 @@
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
       "avgConfidence": 0.9374454032172144,
-      "avgFidelity": 0.9356823266219241,
+      "avgFidelity": 0.9379194630872483,
       "degeneratePasses": [],
       "lossyPasses": [
         "async-block",
@@ -7739,7 +7739,6 @@
         "keydown-key-is-syntax",
         "last-in-collection",
         "make-element",
-        "make-toast-element",
         "method-call-possessive-dot",
         "put-after",
         "put-before",
@@ -7751,7 +7750,7 @@
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8383,7 +8382,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9022,7 +9021,7 @@
         "unless-condition",
         "when-value-changes"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9688,7 +9687,7 @@
         "unless-condition",
         "window-scroll"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -10326,7 +10325,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10969,7 +10968,7 @@
         "set-color-variable",
         "template-literal-list-build"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11602,7 +11601,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12247,7 +12246,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12892,7 +12891,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13529,7 +13528,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14173,7 +14172,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14815,7 +14814,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 407543,
+      "bundleSize": 407600,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15434,7 +15433,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 407543,
+      "size": 407600,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
