@@ -145,23 +145,55 @@ is often wrong until probed** (hi `bind` → structural; B3 → fetch gap, not t
 
 Target: avgFidelity **0.928 → ~0.97+** (clearing the lossy bucket) before behaviors.
 
-## 7. Status update (2026-06-11, post-#356)
+## 7. Status update (2026-06-12, post-#365 — overnight run)
 
-**avgFidelity 0.9495 | lossy 316 | degenerate 67** (of which ~28 are the deferred
-`behavior-*` family). R0 shipped and has caught every would-be regression since.
-19 mechanism PRs landed; sessions #352–#356 took the focus-trap family from 1/23
-to 19/23 faithful via five mechanisms: fused-pattern event-head tolerance
-(bracket key-filter, #352), profile-driven source-clause consumption in both
-marker orders (#354), the sw/tr last↔end polysemy realigns (wamwisho #353,
-sonuncu #355), and the possessive normalized-structural-keyword gate (#356).
-Mechanism docs live in the lock tests
-(`packages/semantic/test/multilingual-roadmap-fixes.test.ts`).
+**avgFidelity 0.9608 | lossy 189 | degenerate 67 | R1 avgRoleFidelity 0.7505
+(recorded)**. Nine PRs in one overnight session (#357–#365) cleared **127 lossy
+instances** (316 → 189; avgFidelity 0.9495 → 0.9608). The Phase-0 sizing rule
+("don't trust §9's yield estimates") paid for the whole night: the baseline's
+own lossy-pattern frequency table revealed three near-universal clusters §9
+hadn't ranked, and the two largest fixes were one- and two-line schema changes.
 
-Per-instance economics (measured): one cleared lossy instance ≈ +0.3 fidelity on
-its pattern ≈ +0.0001 cross-language avgFidelity. Reaching 0.97 needs ~240 more
-instances; the remaining distribution is thinner than what's been cleared
-(structural reorder slices + per-language tails), so expect throughput decay
-from ~20/session toward ~5/session without parallelization (§9).
+- **#357** — generated if/unless condition `expectedTypes` widened to match the
+  en handcrafted set (`['expression','reference','selector']`). A bare reference
+  condition (`ello`/`it`/`оно`) failed the type check and the `if` wrapper
+  silently dropped in EVERY language. −41 lossy.
+- **#358** — generated for-loop: patient accepts identifier loop vars + a
+  per-language `markerOverride` table for the dict's `in`-connective. The only
+  live `for` pattern had been en's. −17 (SOV clause-final tail remains).
+- **#359** — `is empty` predicate adjective added to `keywords.empty`
+  alternatives in 11 profiles (the pl-pusty/es-vacío proof generalized). −22.
+- **#360** — ja tokenizer: a single-char particle reading must not split a
+  longer keyword (もし read as も+し, so NO ja conditional could ever anchor —
+  the documented "SOV generator gap" diagnosis was wrong; the patterns all
+  existed). Also dissolved the ぼかし(blur)-verb hijack. −8 lossy, −2 degen.
+- **#361** — `unless` keyword added to pl/it/ru/uk/th profiles (the 14 failing
+  languages had NO keywords.unless, so no pattern was ever generated);
+  single-token dict realigns it salvo / ru кроме / uk крім. ko 아니면 was tried
+  and reverted — it is ko's _else_ word (R0 caught the flip). −5.
+- **#362** — positional put (before/after) for de/fr/he/id/ms/pt/sw/zh + zh
+  then-set fix (之后 was a curated then-keyword, splitting put-after's clause;
+  那么 — what the transformer actually emits — replaced it). −16.
+- **#363** — qu patient-first SOV variants for add/remove/put (transformer
+  emits patient-first; handcrafted patterns were source-first only). −11.
+- **#364** — qu dict log → qillqakuy (qillqay is copy) + pruned 2 stale
+  fix-translations.sql overrides that re-stomped the set/churanay realign on
+  every populate. −7. qu overall: 0.8923/32-lossy → 0.9471/12-lossy.
+- **#365** — R1 role-fidelity ratchet (§8) shipped: per-language
+  `avgRoleFidelity` recorded + ratcheted. First measurement mean **0.7505**
+  (worst: hi 0.543, qu 0.648, ko 0.688, it 0.693, ja 0.703) — the predicted
+  larger band, now visible and non-regressable. Burn-down deliberately NOT
+  started (out of parsing-track scope).
+
+Ship line (0.97 / lossy<100) not reached; honorable-finish threshold 0.965 also
+not reached — the universal clusters bent the curve (+0.0113 in one night vs
++0.0009/instance economics), but the residue is genuinely per-language tails
+now. Worst languages: hi 0.928, ko 0.931, id 0.933, ja 0.934, he 0.934.
+Largest residual clusters: keydown-key-is-syntax (9), unless-condition (9,
+SOV-final), if-exists (9, put/set tails), fetch-loading-state (9),
+event-debounce (8). One probed-but-dropped branch: the ko i18n event-marker
+(see handoff) — net +0.0008 but 4 ko faithful→lossy flips, correctly blocked
+by the R0 ratchet.
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
@@ -219,3 +251,88 @@ landed.
 
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
+
+## 10. Handoff — next session (written 2026-06-12, post-#365)
+
+Read first: §7 (current state), §8 (R1 — now SHIPPED, burn-down unscheduled),
+§9 (the track table is stale; use the table below). Lock tests:
+`packages/semantic/test/multilingual-roadmap-fixes.test.ts` — the last nine
+describe-blocks are #357–#365 and document every mechanism.
+
+State: **avgFidelity 0.9608 | lossy 189 | degenerate 67 | R1 roleFidelity
+0.7505 recorded**. Gate green on main at `32c62e3d`. Per-instance economics
+still ≈ +0.0001 avgFidelity per cleared lossy instance; 0.965 needs ~42 more,
+0.97 needs ~90 + lossy<100 (i.e. nearly everything). The cheap universal
+clusters are gone — what remains is per-language/per-cluster work.
+
+Half-confirmed mechanisms with probe evidence (rank-ordered):
+
+- **ko event marker (highest yield, needs care).** The i18n `koreanProfile`
+  (`packages/i18n/src/grammar/profiles/index.ts`) has NO event-role marker —
+  the only SOV profile without one (ja emits で, tr de/da) — so every ko
+  handler emits a bare event name and the semantic `*-event-ko-sov-*` patterns
+  (which expect 할 때) can't anchor; verb-homonym events (블러) hijack whole
+  handlers into a bare verb. Adding
+  `{ form: '할 때', role: 'event', position: 'postposition', required: true }`
+  measured **net ko 0.9244→0.9492, lossy 13→10, degen 7→5, global +0.0008**,
+  BUT flipped 4 ko patterns faithful→lossy (announce-screen-reader: a SECOND
+  spurious 할 때 lands after a non-event clause-final role; fetch-json: set
+  drops; form-disable-on-submit: put drops; if-exists: put drops) — over the
+  R0 tolerance (3), branch dropped. `required: false` does NOT change the
+  emission. Fix the 4 (likely the transformer's role-mapper marking non-event
+  roles, plus body-path interactions) and this is ~7 net instances + the
+  biggest ko unlock.
+- **tl/ar if-first VSO reorder (Track B, mechanism confirmed).**
+  `event-tl-kapag` (`packages/semantic/src/patterns/event-handler.ts` ~1536)
+  lists **'kung' (= if!) as a kapag-alternative**, so if-first emissions
+  (`kung <cond> … kapag <event> …`, focus-trap class) match the EVENT pattern
+  with event=`target` — the if-clause is eaten. Removing 'kung' alone leaves
+  no anchor; the real fix is an if-first mid-stream reorder (Stage-1.5
+  sibling in semantic-parser.ts): detect `<if-clause> <kapag-event> <body>`,
+  build handler(event){if(cond){body}}. ar analog: `إذا … عند <event> ثم …`.
+  ~8–10 instances (tl 11 lossy, ar 8).
+- **SOV clause-final for-loop (bn/hi/ja/ko/qu/tr).** #358's table fixed SVO;
+  these six emit `<var> <in-word> <coll> <pat-marker> <for-word>` with the
+  for-keyword LAST (`item में $items को के_लिए`). Needs an SOV for-loop
+  pattern (or generator variant) anchored on the trailing keyword. 6 instances
+  (template-literal-list-build) + fetch-json tails.
+- **SOV clause-final unless (ja/ko/tr/hi/qu) + zh 把-blocked unless.** The
+  dict words exist but sit clause-final (`… tıklama de değilse`); zh 除非
+  tokenizes fine but `除非 把 I match …` fails the condition role on the 把
+  particle. ~6 instances. NOTE the locked guard: ko 아니면 must NEVER become
+  an unless keyword (it's the else word — see the #361 lock test).
+- **Underscore-compound tokenizer splits (vi/hi/qu).** ru/uk word extractors
+  split at `_` (если*не → если+*+не) — fixed by realigning to real words
+  (кроме/крім). vi trừ*khi and hi जब*तक*नहीं still split; tl maliban_kung
+  works (its extractor treats * as a word char). Either teach those extractors
+  `_`, or pick single-word dict emissions.
+- **Residual clusters worth a probe each:** keydown-key-is-syntax (9 langs;
+  `on keyup[key is 'Escape']` — the bracketed `key is X` form),
+  fetch-loading-state (9; `add … fetch … then remove …` — the fetch drops
+  mid-chain in ar, others vary), event-debounce (8; `debounced at 300ms`
+  modifier), if-exists put/set tails (9; de/fr/pt parse put-as-set via verb
+  collision — setzen/mettre/colocar double as set; id/ar drop it entirely:
+  `taruh itu ke badan` fails on the untranslated `badan`), blur-element (5),
+  render/morph-with-template (id/ms/qu/tl/vi).
+- **R1 burn-down (new track, NOT started).** Mean roleFidelity 0.7505; worst
+  hi 0.543, qu 0.648, ko 0.688, it 0.693, ja 0.703. Expect transformer-side
+  role-assignment bugs (the swapped patient/destination class). Start by
+  dumping per-pattern roleFidelity from results.json parseResults[].roleSignature
+  for hi and clustering by command.
+
+Meta-lessons confirmed again tonight (now nine-for-nine across two sessions):
+the documented diagnosis is wrong until probed (the ja "generator gap" was a
+TOKENIZER split — も particle ate もし; the qu "transformer-side" set bug was
+a stale fix-translations.sql override re-stomping a fixed dict on every
+populate). New ones: (1) when a fix needs a profile keyword, check whether the
+word ALREADY means something else in that language (ko 아니면 = else; sw
+mwisho = end) — the R0 warning list is the cheapest detector; (2) the
+underscore-compound trick only works in tokenizers whose word extractor
+includes `_`; (3) `populate` re-runs fix-translations.sql, so any dict realign
+must check that file for a frozen override of the same rows.
+
+Operating mode that worked: measure-first probe → one mechanism per PR →
+serialize merges (the baseline conflicts) → prototype the NEXT fix in the
+working tree while the current PR is in CI, stash, pop onto a fresh branch
+after merge. Nine PRs in one night with zero gate failures except the one the
+ratchet correctly blocked.
