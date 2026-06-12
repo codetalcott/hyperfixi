@@ -224,3 +224,38 @@ describe('span-mask: unmask is idempotent for unmasked input', () => {
     expect(unmaskSpans('__HFXMSK_99_STR1__', [])).toBe('__HFXMSK_99_STR1__');
   });
 });
+
+describe('span-mask: self-closing selector literals do not open an inner-text span', () => {
+  // Hyperscript between two self-closing selector literals is CODE, not HTML
+  // inner text. The html-text rule used to treat the `>` of `<button/>` as an
+  // opening tag and masked everything up to the next `<` — hiding the segment
+  // from the grammar transformer, which then emitted it untranslated. This
+  // single over-mask kept focus-trap lossy in 23/23 languages (the English
+  // `focus first` leak) and form-disable-on-submit lossy in 18 (` in me put
+  // "Submitting..." into ` swallowed the same way).
+  it('keeps code between two selector literals translatable (focus-trap shape)', () => {
+    const input =
+      'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end';
+    const { masked, spans } = maskSpans(input);
+    expect(masked).toContain('focus first'); // visible to the transformer
+    expect(masked).toContain('in .modal');
+    expect(spans.some(s => s.kind === 'html-text')).toBe(false);
+    expect(unmaskSpans(masked, spans)).toBe(input);
+  });
+
+  it('keeps code after a selector literal translatable (form-disable shape)', () => {
+    const input = 'add @disabled to <button/> in me put "Submitting..." into <button/> in me';
+    const { masked, spans } = maskSpans(input);
+    expect(masked).toContain('in me put');
+    expect(spans.some(s => s.kind === 'html-text')).toBe(false);
+  });
+
+  it('still masks real HTML inner text (non-self-closing tags)', () => {
+    const input = 'put <b>hello world</b> into me';
+    const { masked, spans } = maskSpans(input);
+    const text = spans.find(s => s.kind === 'html-text');
+    expect(text?.original).toBe('hello world');
+    expect(masked).not.toContain('hello world');
+    expect(unmaskSpans(masked, spans)).toBe(input);
+  });
+});
