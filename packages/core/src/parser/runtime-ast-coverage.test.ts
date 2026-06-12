@@ -7,10 +7,13 @@
  * templateLiteral, and the `does not contain` / `does not include` operator
  * cases.
  *
- * Note: `propertyAccess`, `optionalChain`, and `positionalExpression` from
- * pratt-parser fragments are NOT reached via the canonical PARSER_TABLE
- * (parser.ts uses memberExpression instead). Handlers for those types are
- * intentionally omitted; tests for them would exercise unreachable code.
+ * Note: the canonical core PARSER_TABLE never produces `propertyAccess`,
+ * `optionalChain`, or `positionalExpression` (parser.ts uses memberExpression
+ * instead). `optionalChain`/`positionalExpression` handlers remain omitted. But
+ * `propertyAccess` IS reachable cross-package: the semantic→AST builder
+ * (@lokascript/semantic) emits it for property paths fed straight into this
+ * runtime, so it now has a handler (and the coverage test below feeds the node
+ * shape directly, since the core parser won't produce it).
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -137,6 +140,42 @@ describe('AST evaluator coverage', () => {
     it('${arr.join("-")} works on locals array', async () => {
       const locals = new Map<string, unknown>([['arr', [1, 2, 3]]]);
       expect(await evalArg('return `${arr.join("-")}`', { locals })).toBe('1-2-3');
+    });
+  });
+
+  // `propertyAccess` is never produced by the core parser (it emits
+  // `memberExpression`), but the semantic→AST builder (@lokascript/semantic)
+  // emits it for property paths (`item.name`) fed straight into this runtime.
+  // Before the handler was added, evaluateAST threw `Unknown AST node type:
+  // propertyAccess`. These feed the node shape directly (the parser won't make it).
+  describe('propertyAccess (semantic→AST-builder property paths)', () => {
+    const paNode = (objectName: string, property: string) => ({
+      type: 'propertyAccess' as const,
+      object: { type: 'identifier' as const, name: objectName },
+      property,
+    });
+
+    it('resolves object.property from a local', async () => {
+      const ctx = {
+        ...createContext(),
+        registry: FULL_REGISTRY,
+      } as any;
+      ctx.locals.set('item', { name: 'alice' });
+      expect(await evaluateAST(paNode('item', 'name') as any, ctx)).toBe('alice');
+    });
+
+    it('reads a DOM element property via getElementProperty semantics', async () => {
+      const el = document.createElement('input');
+      el.value = 'typed';
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      ctx.locals.set('field', el);
+      expect(await evaluateAST(paNode('field', 'value') as any, ctx)).toBe('typed');
+    });
+
+    it('silent null access returns undefined (does not throw)', async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      ctx.locals.set('nada', null);
+      expect(await evaluateAST(paNode('nada', 'x') as any, ctx)).toBeUndefined();
     });
   });
 
