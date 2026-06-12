@@ -59,6 +59,31 @@ export const EXECUTION_SUBSET: readonly string[] = [
   'set-inner-html-possessive-dot',
   'set-style',
   'closest-ancestor',
+  // Expansion wave 1 (session 8): multi-command click patterns — sync,
+  // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
+  // original subset: the en reference must execute with a non-empty effect
+  // signature in the current runtime. Eleven candidates were probed; nine are
+  // deliberately absent because their EN reference is unusable:
+  //   halt-propagation      — runtime `halt` exits the whole handler (patient
+  //                           parses as bare 'the'), second command never runs
+  //   tabs-aria             — `set @attr … on <sel>`: "Invalid selector
+  //                           @aria-selected" (the set-attribute family gap)
+  //   modal-close-button    — en parse DROPS `hide closest .modal`; the
+  //                           surviving body-class change is invisible to the
+  //                           snapshot (body isn't serialized)
+  //   dropdown-toggle       — AST emits a propertyAccess node the runtime
+  //                           can't execute
+  //   make-element,
+  //   make-toast-element    — runtime "Invalid selector <div.card/>" (make
+  //                           with an HTML-literal selector)
+  //   if-condition, if-matches, if-exists, unless-condition,
+  //   modal-close-backdrop  — the en SEMANTIC PARSE flattens if/unless
+  //                           branches into sibling commands (condition
+  //                           truncated to 'I'); the runtime then rejects the
+  //                           bare `if`. Control-flow expansion is blocked on
+  //                           the parsing track's dominant cluster — in en too.
+  'tabs-content',
+  'accordion-exclusive',
 ];
 
 /**
@@ -77,6 +102,9 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <ul><li class="items active"></li><li class="items active"></li></ul>
   <div class="tab active"></div>
   <div class="tab"></div>
+  <div class="tab-panel"></div>
+  <div class="tab-panel"></div>
+  <div class="accordion-item open"></div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */
@@ -87,6 +115,9 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   'show-element': doc => {
     (doc.getElementById('modal') as HTMLElement).style.display = 'none';
   },
+  // `add .open to closest .accordion-item` needs #btn inside one; the
+  // fixture's standalone `.accordion-item.open` is the exclusivity victim.
+  'accordion-exclusive': doc => doc.querySelector('.card')!.classList.add('accordion-item'),
 };
 
 /** Result of executing one pattern translation. */
