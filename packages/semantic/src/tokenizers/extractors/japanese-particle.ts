@@ -60,14 +60,30 @@ export class JapaneseParticleExtractor implements ContextAwareExtractor {
 
   setContext(context: TokenizerContext): void {
     this._context = context;
-    void this._context; // Satisfy noUnusedLocals
+  }
+
+  /**
+   * A single-character particle reading must NOT split a longer keyword that
+   * starts at the same position: もし (if) would otherwise tokenize as
+   * も[particle] + し[identifier] and the conditional could never anchor.
+   * Checks exact 2..4-char slices against the keyword map (longest first).
+   */
+  private longerKeywordStartsHere(input: string, position: number): boolean {
+    if (!this._context) return false;
+    for (let len = 4; len >= 2; len--) {
+      const slice = input.slice(position, position + len);
+      if (slice.length === len && this._context.isKeyword(slice)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   canExtract(input: string, position: number): boolean {
     const char = input[position];
 
-    // Check single-character particles
-    if (SINGLE_CHAR_PARTICLES.has(char)) {
+    // Check single-character particles (unless a longer keyword starts here)
+    if (SINGLE_CHAR_PARTICLES.has(char) && !this.longerKeywordStartsHere(input, position)) {
       return true;
     }
 
@@ -97,8 +113,10 @@ export class JapaneseParticleExtractor implements ContextAwareExtractor {
       }
     }
 
-    // Try single-character particles
+    // Try single-character particles (the canExtract keyword gate re-applies
+    // because extract() can be reached through a different dispatch path)
     const char = input[position];
+    if (this.longerKeywordStartsHere(input, position)) return null;
     const metadata = SINGLE_CHAR_PARTICLES.get(char);
     if (metadata) {
       return {
