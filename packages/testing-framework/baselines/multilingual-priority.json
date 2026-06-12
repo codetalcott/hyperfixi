@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T16:48:45.656Z",
-  "commit": "789c0705",
+  "timestamp": "2026-06-12T16:59:46.889Z",
+  "commit": "79442169",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -638,7 +638,7 @@
       "parseRate": 1,
       "avgConfidence": 0.8430632859204288,
       "avgFidelity": 0.9905844155844155,
-      "avgRoleFidelity": 0.7631998069498068,
+      "avgRoleFidelity": 0.7622345559845559,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
@@ -5736,7 +5736,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8379396202925594,
       "avgFidelity": 0.9803921568627451,
-      "avgRoleFidelity": 0.7099449303530939,
+      "avgRoleFidelity": 0.7135730482669262,
       "avgExecutionFidelity": 0.8235294117647058,
       "executionFailures": [
         "set-inner-html-possessive-dot",
@@ -8314,13 +8314,9 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8037866998651292,
       "avgFidelity": 0.9782135076252723,
-      "avgRoleFidelity": 0.740516682863622,
-      "avgExecutionFidelity": 0.8235294117647058,
-      "executionFailures": [
-        "set-inner-html-possessive-dot",
-        "set-style",
-        "set-text-possessive-dot"
-      ],
+      "avgRoleFidelity": 0.814342403628118,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
       "bundleSize": 411714,
@@ -10232,13 +10228,9 @@
       "parseRate": 1,
       "avgConfidence": 0.8117913832199526,
       "avgFidelity": 0.9935064935064936,
-      "avgRoleFidelity": 0.7469353281853287,
-      "avgExecutionFidelity": 0.8235294117647058,
-      "executionFailures": [
-        "set-inner-html-possessive-dot",
-        "set-style",
-        "set-text-possessive-dot"
-      ],
+      "avgRoleFidelity": 0.8202622265122268,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
       "bundleSize": 411714,
@@ -11494,7 +11486,7 @@
       "parseRate": 1,
       "avgConfidence": 0.8401154401154378,
       "avgFidelity": 1,
-      "avgRoleFidelity": 0.7306467181467183,
+      "avgRoleFidelity": 0.7410714285714287,
       "avgExecutionFidelity": 0.8235294117647058,
       "executionFailures": [
         "set-inner-html-possessive-dot",
@@ -13396,13 +13388,9 @@
       "parseRate": 1,
       "avgConfidence": 0.8098948670377222,
       "avgFidelity": 0.9935064935064936,
-      "avgRoleFidelity": 0.7352236164736169,
-      "avgExecutionFidelity": 0.8235294117647058,
-      "executionFailures": [
-        "set-inner-html-possessive-dot",
-        "set-style",
-        "set-text-possessive-dot"
-      ],
+      "avgRoleFidelity": 0.8085505148005151,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
       "bundleSize": 411714,
