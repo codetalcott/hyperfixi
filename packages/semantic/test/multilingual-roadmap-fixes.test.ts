@@ -3378,3 +3378,55 @@ describe('qu patient-first SOV variants for add/remove/put (Track C core)', () =
     expect([...a].sort()).toEqual(['add', 'on', 'remove']);
   });
 });
+
+describe('qu log emits qillqakuy (qillqay is the copy verb)', () => {
+  // The qu dict emitted qillqay for BOTH log and copy; the semantic qu
+  // profile reads qillqay as copy (log primary is qillqakuy), so every
+  // transformed log parsed as copy — log-value/log-element/get-value/
+  // optional-chaining-possessive/form-submit-prevent all lossy. Realigned
+  // the dict to qillqakuy (same dict↔profile class as the set/churanay
+  // realign documented in the dict). Bundled (same PR): the two stale qu
+  // set-* overrides in fix-translations.sql — written for an old spacing bug
+  // and frozen with the pre-realign churay verb — were pruned; the live
+  // transformer now emits parseable churanay forms (the overrides were
+  // re-stomping the fix on every populate). qu lossy 19 → 12
+  // (avgFidelity 0.9599 → 0.9608 global, lossy 196 → 189).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[qu] a transformed log parses as log, not copy', () => {
+    // Corpus-shaped (en → qu): `on click log "Button clicked!"`.
+    const a = actions(parse('"Button clicked!" ta ñitiy pi qillqakuy', 'qu'));
+    expect(a.has('log')).toBe(true);
+    expect(a.has('copy')).toBe(false);
+  });
+
+  it('[qu] the root cause stays locked: qillqay reads as copy', () => {
+    // qillqay is the profile copy primary — this is WHY the dict had to move.
+    const a = actions(parse('"x" ta ñitiy pi qillqay', 'qu'));
+    expect(a.has('log')).toBe(false);
+  });
+
+  it('[qu] get-value keeps the log tail (was {copy,get,on})', () => {
+    const a = actions(parse('#input.value ta ñitiy pi taripay chayqa chay ta qillqakuy', 'qu'));
+    expect(a.has('get')).toBe(true);
+    expect(a.has('log')).toBe(true);
+  });
+
+  it('[qu] set-text-basic parses set from the live transformer emission', () => {
+    // The pruned fix-translations.sql override used to stomp this back to
+    // churay (put) on every populate.
+    const a = actions(parse('#output.innerText ta "Hello World" man ñitiy pi churanay', 'qu'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+});

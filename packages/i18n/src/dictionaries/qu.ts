@@ -38,7 +38,10 @@ export const qu: Dictionary = {
     call: 'qayay',
     return: 'kutimuy',
     make: 'ruray',
-    log: 'qillqay',
+    // qillqay is the semantic qu profile's `copy` primary; `log` is qillqakuy.
+    // Emitting qillqay for log made the parser read every transformed log as
+    // copy (log-value/log-element/get-value lossy) — same realign as set above.
+    log: 'qillqakuy',
     throw: 'wikchuy',
     catch: 'hapsiy',
     measure: 'tupuy',
