@@ -23,7 +23,7 @@ export const russianDictionary: Dictionary = {
     // parser doesn't read as the scroll command (#321 focus family).
     scroll: 'прокрутить',
     if: 'если',
-    unless: 'если_не',
+    unless: 'кроме',
     repeat: 'повторить',
     for: 'для',
     while: 'пока',

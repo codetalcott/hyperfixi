@@ -230,6 +230,7 @@ export const russianProfile: LanguageProfile = {
     settle: { primary: 'стабилизировать', normalized: 'settle', form: 'infinitive' },
     // Control flow
     if: { primary: 'если', normalized: 'if' },
+    unless: { primary: 'кроме', normalized: 'unless' },
     when: { primary: 'когда', normalized: 'when' },
     where: { primary: 'где', normalized: 'where' },
     else: { primary: 'иначе', normalized: 'else' },

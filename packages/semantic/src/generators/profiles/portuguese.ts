@@ -100,6 +100,7 @@ export const portugueseProfile: LanguageProfile = {
     fetch: { primary: 'buscar', normalized: 'fetch' },
     settle: { primary: 'estabilizar', normalized: 'settle' },
     if: { primary: 'se', normalized: 'if' },
+    unless: { primary: 'a_menos', normalized: 'unless' },
     when: { primary: 'quando', normalized: 'when' },
     where: { primary: 'onde', normalized: 'where' },
     else: { primary: 'senão', normalized: 'else' },
