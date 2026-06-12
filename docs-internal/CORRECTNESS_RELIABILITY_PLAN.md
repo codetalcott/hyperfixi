@@ -248,6 +248,37 @@ zh 把), if-exists (6, body-word destinations), possessive-dot triple
 send/trigger/tell cluster), behavior-\* degenerates (~40 across languages —
 untouched all sessions).
 
+## 7c. Status update (2026-06-12, post-#374 — session 4): SHIP LINE REACHED
+
+**avgFidelity 0.9717 | lossy 99 | degenerate 63 | R1 avgRoleFidelity 0.7575**.
+Two PRs (#373, #374) cleared 23 lossy instances and crossed BOTH halves of
+the ship line (≥0.97 AND lossy<100). 16 PRs total across sessions 2–4
+(189 → 99 lossy; avgFidelity 0.9495 → 0.9717).
+
+- **#373** — the lexicon emit-mismatch RATCHET
+  (`packages/semantic/test/lexicon-emit-mismatch.test.ts`): every i18n dict
+  `commands.<action>` emission is statically cross-checked against what the
+  semantic side reads that word as (profile keywords + pattern head literals).
+  New mismatches fail CI; 127 pre-existing ones are an allowlisted baseline to
+  prune. This is the architectural answer to the "grep the word in all four
+  places" meta-lesson — the manual grep is now a ratchet. Its FIRST RUN
+  generated the realign batch shipped in the same PR (17 dict rows, 7
+  languages: trigger-as-call pl/ru/uk, take-as-remove/get qu/tl/tr,
+  render-as-show id/qu/tl, settle/morph unread id/qu/tl/sw, sw make unread)
+  → −17: trigger-event ×3, take-class-from-siblings ×2, render/settle/morph
+  templates ×3 each, sw if-exists + make-element + make-toast-element.
+- **#374** — he accusative את: the 15-lossy he tail was ONE mechanism. The
+  transformer marks every verb's object with את; ~40 generated he patterns
+  embed it before {patient}, but send/trigger/wait name their object slot
+  event/duration, so their generated patterns are marker-less and the clause
+  dropped. Handcrafted את-marked variants (send-zh-ba shape) + the tokenizer's
+  את→you homonym mapping removed. Probed-and-REVERTED: dropping את from the
+  token stream (breaks the 40 patterns embedding it). −6.
+
+Per §9's stopping rule the parsing track now STOPS: the marginal session
+clears ~5 hard instances while R2 removes whole categories of production
+risk. Remaining parsing tail (99 lossy, 63 degen) is documented in §10.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -305,88 +336,59 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#372, session 3)
+## 10. Handoff — next session (written 2026-06-12, post-#374, session 4)
 
-Read first: §7b (closing state), §9's track table is two sessions stale —
-ignore it. Lock tests: `packages/semantic/test/multilingual-roadmap-fixes.test.ts`
-— the last seven describe-blocks are #366–#372 and document every mechanism,
-including the negative guards (ko 아니면 never unless; qu qillqay stays copy;
-ko 동안 stays while; de löschen stays remove; the ar multi-line behavior guard
-on Stage 2.5). i18n-side locks in `packages/i18n/src/grammar/grammar.test.ts`
-(ko 할 때 emission + selector-event suppression; commands.blur ×5).
+**The parsing-track ship line is reached (§7c). Do not grind the parsing tail
+further** — §9's stopping rule applies. The recommended next mission is
+**R2 (execution smoke ratchet, §8)**: execute a curated subset of transformed
+patterns in the browser harness and assert DOM effects match the en
+reference. Treat it as a mini-project (effect capture, async, flake control);
+the parsing ratchets (R0 parse-rate/fidelity, R1 roles, the #373 lexicon
+ratchet) hold the floor while you build it.
 
-State: **avgFidelity 0.9690 | lossy 122 | degenerate 63 | R1 roleFidelity
-0.7552**. Gate green on main. Economics unchanged (~+0.0001/instance):
-0.97 needs ~11 more; lossy<100 needs ~22; the full ship line is one focused
-session if the per-language tails cooperate. The behavior-\* degenerate block
-(~40 instances) is untouched by all three sessions and is the single biggest
-remaining mass — but it needs multi-line block parsing work, not keyword
-realigns.
+Lock tests: the last ~10 describe-blocks of
+`packages/semantic/test/multilingual-roadmap-fixes.test.ts` (#366–#374) +
+`packages/semantic/test/lexicon-emit-mismatch.test.ts` (the allowlist is a
+PRUNE-DOWN list: fixing a dict row should delete its entry) +
+`packages/i18n/src/grammar/grammar.test.ts`.
 
-Half-confirmed mechanisms with probe evidence (rank-ordered):
+If a future session DOES return to parsing, the residual map:
 
-- **possessive-dot triple (id/ms/vi, ~8 instances).** get-attribute-possessive-
-  dot, method-call-possessive-dot, input-mirror. The transformer leaves
-  dot-fused compounds verbatim (`my.getAttribute("data-id")`); en tokenizes
-  `my` as keyword and assembles the property path, id/vi leave it an
-  identifier and the put clause dies. PROBED: adding a `my`-passthrough
-  keyword to the id tokenizer is NOT sufficient — the expression assembly
-  (pattern-matcher property-path building) still rejects it. Probe there.
-  ms also emits `saya_punya nilai` (underscore split) for `my value`.
-- **ms put-with-ia (~3).** `letak ia ke #result` FAILS while `letak itu ke
-#result` parses put — although ia tokenizes keyword(it) identically to itu.
-  Both ms fetch tails (fetch-basic/event-debounce/fetch-loading-state) are
-  blocked on it (their fetch halves parse). Suspect reference-value handling
-  in the matcher, not the profile (ms.ts:25 `it: 'ia'` is the only listing).
-- **if-exists body-word destinations (id/ar/ms/sw/tl/bn, ~6).** The then-tail
-  put (`taruh itu ke badan`) drops; with `#out` it parses. NOT the references
-  table alone (fr/pt aligned and still failed until #371; id badan vs profile
-  tubuh IS misaligned, ar dict جسم vs profile الجسم too). After #371 the
-  de/fr/pt instances are fixed; for the rest, realign dict body words to the
-  profile references AND probe what value-type the put destination gets.
-- **unless-condition SOV-final (ja/tr/hi/ko/bn, ~5 + zh 把, qu spurious-if).**
-  The SOV transformer scatters unless: condition fronted, unless-word at the
-  ABSOLUTE END of the handler (`I match .disabled 切り替え .selected を クリック
-で でなければ`). No mid-stream trick rescues that — it needs either an
-  emission-side rule (keep unless mid-stream like pt salvo) or a clause-final
-  unless extractor mirroring the for-loop fix. ko's dict emits 아니면 for
-  unless (the ELSE word — locked guard): the ko dict needs a different word
-  entirely (~하지 않으면 class) BEFORE any parse-side work. zh `除非 把 …`
-  fails the condition role on 把. qu mana_sichus reads as if (sichus wins).
-- **hi (8 lossy + 8 degen, role 0.543 — worst language, untouched).** Two
-  known leads: a generated hi `into`-pattern matches `में …` clauses before
-  fallbacks can fire (blocks the for-loop fix landing for hi), and hi shares
-  the keydown/announce/fetch-json shapes that realigns fixed elsewhere —
-  check the hi dict words against the profile first (the #361/#364/#372
-  class; it has been the highest-yield move three sessions running).
-- **he tail (15 lossy).** send-event/send-event-to-form/send-with-detail/
-  socket-send/trigger-event/tell-\* — probably one את-particle or verb
-  mechanism for the whole family; one probe should tell.
-- **URL token-kind parity (latent class, no instance tonight).** Only ~9
-  tokenizers classify `/api/x` as kind url; the rest emit identifier→
-  expression, which fetch patterns happen to accept. A 16-file parity sweep
-  was prototyped and REVERTED as risk-without-reward (url→literal changes
-  other patterns' type checks). If a future fetch/go/path bug appears, start
-  here, and measure R1.
+- **behavior-\* degenerate mass (~40 of the 63 degen)** — multi-line behavior
+  blocks; untouched four sessions running; needs block-structure parsing, not
+  keyword work. Biggest single mass and also the most R2-visible.
+- **hi (8 lossy + 8 degen, role 0.543)** — worst language, still untouched.
+  The hi `into`-pattern matches `में …` clauses before fallbacks fire (blocks
+  the #369 for-loop fix there). The #373 auditor lists hi rows to prune.
+- **possessive-dot triple (id/ms/vi ~8)** — `my.getAttribute(...)` heads:
+  en assembles property-paths from my:keyword; id/vi leave my an identifier.
+  A tokenizer passthrough alone is NOT sufficient (probed) — the assembly
+  lives in pattern-matcher property-path building.
+- **ms put-with-ia (~3)** — `letak ia ke #result` fails while `letak itu ke
+#result` parses, with identical-looking tokens (ia keyword(it)). Suspect
+  reference-value handling in the matcher. Blocks three ms fetch tails.
+- **unless-condition SOV-final (ja/tr/hi/ko/bn ~5 + zh 把 + qu)** — the
+  transformer scatters unless (condition fronted, unless-word handler-final).
+  Emission-side fix preferred (keep unless mid-stream like pt salvo). ko's
+  dict emits 아니면 (= else, locked guard) — fix the ko dict word FIRST.
+- **#373 allowlist prune-down** — 127 known emit-mismatches; most are
+  commands with no live corpus pattern (catch, pushUrl), but es poner-as-set,
+  de senden-under-two-actions, bn নিন take/get, id/ms ambil take/fetch are
+  real latent collisions. Each prune is a permanent win the ratchet enforces.
+- **tl tapos listed as BOTH then and end in the curated parser sets**; pt
+  depois / es después / bn পরে are after-words in thenKeywords (the zh 之后
+  class, #362) — latent, no live instance tonight.
 
-Meta-lessons (now ~13-for-13 across three sessions): the dominant residual
-class is **mis-listed keywords** — a word listed under a role/action it does
-not mean (kung-as-kapag, آخر-as-end, mettre/colocar/setzen-as-set,
-동안-as-for, wyczyść-as-clear, 아니면-as-unless). Before trusting ANY
-structural diagnosis, grep the word in (a) the curated parser keyword sets
-(then/end/else in semantic-parser.ts), (b) handcrafted pattern alternatives
-(patterns/\*.ts), (c) the profile keywords, and (d) fix-translations.sql.
-New this session: (6) standalone-clause probes do NOT exercise parseClause —
-probe corpus-shaped full strings, then isolate; (7) Stage 2 returns the FIRST
-command match and silently drops trailing then-chains — any new command
-pattern can expose it; (8) dict commands.X shadows events.X in event-name
-translation (blur) — parse-safe only if the command word is also in
-eventNameTranslations; (9) `git stash push` pathspecs resolve against CWD —
-run it from the repo root.
+Meta-lessons (sessions 2–4, ~16-for-16): unchanged from §10-session-3, plus:
+(10) when a tokenizer-level "drop the particle" fix looks elegant, check how
+many GENERATED patterns embed that particle as a required literal first —
+the generator inserts profile roleMarkers into templates; (11) the auditor
+(one afternoon of work) replaced three sessions of manual grepping — when a
+manual diagnostic move pays off three times, mechanize it; (12) homonym
+mappings in tokenizer EXTRAS lists (את→you, ja も) are the quiet killers —
+the profile/dict never shows them.
 
-Operating mode that worked (now 16 PRs over two overnight runs): unchanged —
-measure-first probe, one mechanism per PR (realign batches of the same class
-may bundle), serialize merges on the baseline file, prototype the next
-mechanism in the working tree while CI runs, stash with named messages.
-The probe→falsify rhythm matters more than the plan: five of seven PRs
-tonight fixed something OTHER than the documented diagnosis.
+Operating mode: unchanged (measure-first probe, one mechanism per PR,
+serialize on the baseline, prototype-while-CI-runs, stash with names).
+18 PRs over three overnight runs, one ratchet-blocked branch, zero broken
+mains.
