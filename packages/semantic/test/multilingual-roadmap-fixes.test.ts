@@ -2891,3 +2891,80 @@ describe('possessive property is never a normalized structural keyword (ms make-
     expect(a.has('put')).toBe(true);
   });
 });
+
+describe('generated if/unless condition accepts reference + selector conditions (universal if drop)', () => {
+  // The single largest lossy cluster (#357): every non-en language dropped the
+  // `if` from body clauses like `si ello establecer $users a ello fin`
+  // (fetch-do-not-throw, 22 langs) and `si resultado es falso registrar …`
+  // (form-submit-prevent, 22 langs). The en handcrafted if/unless patterns
+  // accept condition expectedTypes ['expression','reference','selector'], but
+  // ifSchema/unlessSchema — the source of every GENERATED `if-<lang>-*` /
+  // `unless-<lang>-*` pattern — declared ['expression'] only. A bare reference
+  // condition (`ello`/`it`/`оно`) failed the role type-check, the if pattern
+  // never matched inside parseClause, and the clause's tokens were skipped
+  // until the next verb — keeping the body command but silently losing the
+  // wrapper. Widening the two schemas to mirror the en handcrafted set flips
+  // fetch-do-not-throw to 17/22 and form-submit-prevent to 19/22 faithful
+  // (avgFidelity 0.9495 → 0.9525, lossy 316 → 275, 0 regressions).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[es] fetch-do-not-throw keeps the if wrapper (reference condition `ello`)', () => {
+    // Corpus-shaped transformer output (en → es).
+    const a = actions(
+      parse(
+        'en clic buscar /api/users como JSON do no lanzar entonces si ello establecer $users a ello fin',
+        'es'
+      )
+    );
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[es] form-submit-prevent keeps the if wrapper (expression condition)', () => {
+    const a = actions(
+      parse(
+        'en enviar detener the evento llamar validateForm() si resultado es falso registrar "Invalid form" fin',
+        'es'
+      )
+    );
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('call')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('log')).toBe(true);
+  });
+
+  it('[ru] the if wrapper survives a reference condition in a then-chain', () => {
+    const a = actions(
+      parse(
+        'при клик получать /api/users как JSON do не бросать затем если оно установить $users в оно конец',
+        'ru'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse('on click fetch /api/users as JSON do not throw then if it set $users to it end', 'en')
+    );
+    expect([...a].sort()).toEqual(['fetch', 'if', 'on', 'set']);
+  });
+
+  it('[es] a simple expression condition still parses (no regression)', () => {
+    const a = actions(parse('en clic si $x > 5 alternar .active fin', 'es'));
+    expect(a.has('if')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+});
