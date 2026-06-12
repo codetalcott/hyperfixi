@@ -157,7 +157,7 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     pl: 'ustaw x na 10',
     ja: 'x を 10 に 設定',
     zh: '设置 x 为 10',
-    ko: 'x 를 10 으로 설정',
+    ko: 'x 를 10 에 설정',
     ar: 'عيّن x إلى 10',
     tr: 'x i 10 e ayarla',  // Use primary keyword + proper markers
     id: 'atur x ke 10',
@@ -572,7 +572,7 @@ export const EVENT_HANDLER_TEST_CASES = {
 
   'set-on-change': {
     ja: '変更 で x を 10 に 設定',
-    ko: '변경 할 때 x 를 10 으로 설정',
+    ko: '변경 할 때 x 를 10 에 설정',
     tr: 'değişiklik de x i 10 e ayarla',
     ar: 'عند التغيير عيّن x إلى 10',
     hi: 'बदलाव पर x को 10 में सेट',
