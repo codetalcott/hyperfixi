@@ -4665,3 +4665,80 @@ describe('tl source marker emission realign — grammar `mula sa` → dict/profi
     expect(role(cmds[0], 'source')).toBe('.items');
   });
 });
+
+describe("qu curated apostrophe rows — ñit'iy keyword + event-source wrapper steal (R2 qu)", () => {
+  // Two qu execution killers, both hit the six curated fix-translations.sql
+  // rows (the linguistically-correct glottalized forms):
+  //
+  // 1. The tokenizer keyword table only listed the dict's ñitiy, so the
+  //    curated ñit'iy fell to the regular word-walk, which breaks at any
+  //    position where a known keyword starts — including the injected
+  //    English-passthrough `it` INSIDE ñit'iy (ñ + it + 'iy). The event came
+  //    out as literal "'iy" and the whole clause collapsed. ñit'iy is now a
+  //    keyword (patterns/event-handler.ts already mapped it to click).
+  //
+  // 2. The hand-crafted event-qu-source wrapper ({event} pi {source} manta
+  //    {body}) misclaimed a body command's own from-phrase sitting after the
+  //    event in qu SOV order, and the non-action buildEventHandler path
+  //    discards wrapper roles other than `event` — so the manta phrase was
+  //    lost either way and remove acted on `me`. The wrapper is removed; the
+  //    qu from-elsewhere rows put the source phrase before the event, so
+  //    nothing legitimate matched it.
+  function commands(node: unknown, acc: Array<Record<string, unknown>> = []) {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'command') acc.push(rec);
+    for (const f of ['body', 'statements', 'commands']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => commands(x, acc));
+    }
+    return acc;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+  function eventOf(node: unknown): unknown {
+    const rec = node as Record<string, unknown>;
+    const roles = rec?.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get('event') as { value?: unknown } | undefined)?.value;
+  }
+
+  it("[qu] ñit'iy tokenizes as one click keyword (no ñ + it + 'iy split)", () => {
+    const tokens = getTokenizer('qu').tokenize("ñit'iy pi .highlight ta yapay").tokens;
+    const first = tokens[0] as { value: string; normalized?: string };
+    expect(first.value).toBe("ñit'iy");
+    expect(first.normalized).toBe('click');
+  });
+
+  it("[qu] add-class-basic curated row: event click + add patient (was event \"'iy\")", () => {
+    const node = parse("ñit'iy pi .highlight ta yapay", 'qu');
+    expect(eventOf(node)).toBe('click');
+    const add = commands(node).find(c => c.action === 'add');
+    expect(role(add!, 'patient')).toBe('.highlight');
+  });
+
+  it("[qu] toggle-class-on-other curated row keeps destination (t'ikray verb)", () => {
+    const node = parse("ñit'iy pi #menu pa .open ta t'ikray", 'qu');
+    expect(eventOf(node)).toBe('click');
+    const toggle = commands(node).find(c => c.action === 'toggle');
+    expect(role(toggle!, 'patient')).toBe('.open');
+  });
+
+  it('[qu] remove-class-from-all keeps the manta source (was stolen by event-qu-source)', () => {
+    const node = parse("ñit'iy pi .items manta .active ta qichuy", 'qu');
+    expect(eventOf(node)).toBe('click');
+    const remove = commands(node).find(c => c.action === 'remove');
+    expect(role(remove!, 'patient')).toBe('.active');
+    expect(role(remove!, 'source')).toBe('.items');
+  });
+
+  it('[qu] the dict ñitiy form still parses identically', () => {
+    const node = parse('ñitiy pi .items manta .active ta qichuy', 'qu');
+    expect(eventOf(node)).toBe('click');
+    const remove = commands(node).find(c => c.action === 'remove');
+    expect(role(remove!, 'source')).toBe('.items');
+  });
+});
