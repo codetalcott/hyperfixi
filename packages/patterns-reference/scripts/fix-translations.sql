@@ -92,12 +92,4 @@ UPDATE pattern_translations
 SET hyperscript = 'ñit''iy pi .items manta .active ta qichuy', verified_parses = 0, updated_at = datetime('now')
 WHERE code_example_id = 'remove-class-from-all' AND language = 'qu';
 
--- set-text-basic: #output.innerTextta "Hello World"man ñitiypi churay -> ñit'iy pi #output.innerText ta "napaykullayki" man churay
-UPDATE pattern_translations
-SET hyperscript = 'ñit''iy pi #output.innerText ta "Hello World" man churay', verified_parses = 0, updated_at = datetime('now')
-WHERE code_example_id = 'set-text-basic' AND language = 'qu';
 
--- set-attribute: @disabledta cheqaqman ñitiypi churay -> ñit'iy pi @disabled ta cheqaq man churay
-UPDATE pattern_translations
-SET hyperscript = 'ñit''iy pi @disabled ta cheqaq man churay', verified_parses = 0, updated_at = datetime('now')
-WHERE code_example_id = 'set-attribute' AND language = 'qu';

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T05:14:46.962Z",
-  "commit": "c4cf8eac",
+  "timestamp": "2026-06-12T05:25:56.860Z",
+  "commit": "d75030e8",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -9572,7 +9572,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.7423520923520923,
-      "avgFidelity": 0.9273809523809522,
+      "avgFidelity": 0.9470779220779221,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -9582,19 +9582,12 @@
       "lossyPasses": [
         "append-content",
         "fetch-json",
-        "form-submit-prevent",
-        "get-value",
         "if-empty",
         "input-validation",
-        "log-element",
-        "log-value",
         "modal-close-escape",
         "morph-with-template",
-        "optional-chaining-possessive",
         "render-template-with-data",
         "repeat-for-each",
-        "set-attribute",
-        "set-text-basic",
         "settle-animations",
         "take-class-from-siblings",
         "template-literal-list-build",
