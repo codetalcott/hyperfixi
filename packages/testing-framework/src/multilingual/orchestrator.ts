@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { loadPatterns } from './pattern-loader';
 import { selectBundle, getBundleInfo } from './bundle-builder';
 import { ParseValidator } from './validators/parse-validator';
+import { ExecutionValidator, loadExecutionSubset } from './validators/execution-validator';
 import { SizeValidator } from './validators/size-validator';
 import { ConsoleReporter } from './reporters/console-reporter';
 import { JSONReporter } from './reporters/json-reporter';
@@ -103,6 +104,10 @@ export class TestOrchestrator {
       // surfaces *degenerate* passes — patterns that parse non-null but drop most
       // of the source's commands — which the parse-rate metric alone can't see.
       this.scoreFidelity(languageResults);
+
+      // R2 — execution smoke: run the curated subset in jsdom and compare DOM
+      // effects against the en reference's (see execution-validator.ts).
+      await this.scoreExecution(languageResults);
 
       // Collect bundle information
       const bundles: TestResults['bundles'] = {};
@@ -300,6 +305,56 @@ export class TestOrchestrator {
           : undefined;
       lang.degeneratePasses = degenerate.sort();
       lang.lossyPasses = lossy.sort();
+    }
+  }
+
+  /**
+   * R2 — execute the curated execution subset for every language in the run
+   * and score each translation's DOM-effect signature against the en
+   * reference's, in-place (`avgExecutionFidelity` / `executionFailures`).
+   * English is the reference and is left unscored; patterns whose en
+   * reference errors or produces no effects are excluded (no usable
+   * reference). No-op when English wasn't part of the run.
+   */
+  private async scoreExecution(languageResults: LanguageResults[]): Promise<void> {
+    const en = languageResults.find(r => r.language === 'en');
+    if (!en) return;
+
+    const sources = await loadExecutionSubset(languageResults.map(r => r.language));
+    const validator = new ExecutionValidator();
+    await validator.initialize();
+
+    // codeExampleId -> en effect signature (only clean, effectful references).
+    const reference = new Map<string, string[]>();
+    for (const [id, code] of sources.get('en') ?? []) {
+      const res = await validator.execute(id, code, 'en');
+      if (!res.error && res.effects.length > 0) reference.set(id, res.effects);
+    }
+    if (reference.size === 0) return;
+
+    for (const lang of languageResults) {
+      if (lang.language === 'en') continue;
+      const langSources = sources.get(lang.language);
+      if (!langSources) continue;
+
+      const failures: string[] = [];
+      let scored = 0;
+      let matched = 0;
+      for (const [id, refEffects] of reference) {
+        const code = langSources.get(id);
+        if (!code) continue; // no translation — excluded, not failed
+        const res = await validator.execute(id, code, lang.language);
+        // Match on DOM effects ONLY. Trapped runtime errors are diagnostic:
+        // their attribution rides on unhandled-rejection timing (racy), while
+        // the effect snapshot is synchronous and deterministic — and an AST
+        // mis-build that damages behavior shows up as differing effects anyway.
+        const match = JSON.stringify(res.effects) === JSON.stringify(refEffects);
+        scored++;
+        if (match) matched++;
+        else failures.push(id);
+      }
+      lang.avgExecutionFidelity = scored > 0 ? matched / scored : undefined;
+      lang.executionFailures = failures.sort();
     }
   }
 

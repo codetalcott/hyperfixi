@@ -317,6 +317,16 @@ async function main(): Promise<void> {
           r => r.avgRoleFidelityDelta < -AVG_ROLE_FIDELITY_DROP_TOLERANCE
         );
 
+        // R2 — execution ratchet (§8): curated-subset patterns whose jsdom DOM
+        // effects matched the en reference in the baseline but diverge now.
+        // Tolerance 0: execution is binary and the harness is deterministic
+        // (two full probe sweeps were byte-identical), so ANY pass→fail flip is
+        // a real behavioral regression. Guarded by the baseline carrying
+        // executionFailures, so an un-regenerated baseline never retro-flags.
+        const executionRegressions = allResults.flatMap(r =>
+          r.newExecutionFailures.map(id => `${r.language}/${id}`)
+        );
+
         let failed = false;
 
         if (regressed.length > 0) {
@@ -395,12 +405,25 @@ async function main(): Promise<void> {
           failed = true;
         }
 
+        if (executionRegressions.length > 0) {
+          console.error(
+            `\n✗ Execution regression vs baseline (R2): ${executionRegressions.length} ` +
+              `curated pattern(s) no longer reproduce the en reference's DOM effects:`
+          );
+          for (const id of executionRegressions) console.error(`   ${id}`);
+          console.error(
+            `   (executed faithfully in the baseline — if intentional, regenerate ` +
+              `the baseline with --save-baseline)`
+          );
+          failed = true;
+        }
+
         if (failed) {
           exitCode = 1;
         } else {
           console.log(
             `\n✓ No regression vs baseline ` +
-              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness ratchets).`
+              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + execution ratchets).`
           );
           exitCode = 0;
         }

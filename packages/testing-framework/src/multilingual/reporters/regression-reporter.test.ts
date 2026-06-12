@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { writeFileSync, rmSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, readFileSync, rmSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { RegressionReporter } from './regression-reporter';
@@ -234,5 +234,96 @@ describe('RegressionReporter correctness (lossy) ratchet — R0', () => {
     );
     const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
     expect(r.newLossyPasses).toEqual([]);
+  });
+});
+
+describe('RegressionReporter execution ratchet — R2 (session 5)', () => {
+  // LOCK: the R2 execution ratchet flags ONLY pass→fail transitions on the
+  // curated execution subset, with the same never-retro-flag guard as the
+  // degenerate/lossy ratchets (an un-regenerated baseline carries no
+  // `executionFailures`, so nothing is flagged until one is saved). Trapped
+  // runtime errors are deliberately NOT part of the match signal — only the
+  // deterministic DOM-effect comparison is (see execution-validator.ts).
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'execution-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  function langWithExecution(
+    executionFailures: string[],
+    avgExecutionFidelity: number
+  ): LanguageResults {
+    const l = lang([pass('stable')], []);
+    l.avgExecutionFidelity = avgExecutionFidelity;
+    l.executionFailures = executionFailures;
+    return l;
+  }
+
+  const baseline: Baseline = {
+    timestamp: '',
+    commit: 'base',
+    languages: {
+      ja: {
+        parseSuccess: 1,
+        parseFailure: 0,
+        parseRate: 1,
+        avgConfidence: 1,
+        avgFidelity: 1,
+        avgExecutionFidelity: 0.8,
+        executionFailures: ['was-failing'],
+        degeneratePasses: [],
+        lossyPasses: [],
+        bundleSize: undefined,
+        patterns: { stable: { success: true, confidence: 1 } },
+      },
+    },
+    bundles: {},
+  };
+
+  it('flags a faithfully-executing baseline pattern that now diverges', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithExecution(['was-failing', 'was-passing'], 0.7)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newExecutionFailures).toEqual(['was-passing']);
+    // Already failing in baseline = burn-down list, not a regression.
+    expect(r.newExecutionFailures).not.toContain('was-failing');
+    expect(r.avgExecutionFidelityDelta).toBeCloseTo(-0.1, 5);
+    expect(r.status).toBe('regressed');
+  });
+
+  it('does not flag when the failure set is unchanged', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithExecution(['was-failing'], 0.8)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newExecutionFailures).toEqual([]);
+    expect(r.avgExecutionFidelityDelta).toBeCloseTo(0, 5);
+  });
+
+  it('never retro-flags when the baseline has no execution data', () => {
+    const noExecution: Baseline = structuredClone(baseline);
+    delete noExecution.languages.ja!.executionFailures;
+    delete noExecution.languages.ja!.avgExecutionFidelity;
+    const reporter = reporterWith(noExecution);
+    reporter.reportComplete(results(langWithExecution(['anything', 'everything'], 0.1)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newExecutionFailures).toEqual([]);
+    expect(r.avgExecutionFidelityDelta).toBe(0);
+  });
+
+  it('persists execution data when saving a baseline', () => {
+    const reporter = reporterWith(baseline);
+    const res = results(langWithExecution(['was-failing'], 0.8));
+    reporter.reportComplete(res);
+    reporter.saveAsBaseline(res);
+    const saved = JSON.parse(readFileSync(join(dir, 'baseline.json'), 'utf-8')) as Baseline;
+    expect(saved.languages.ja!.avgExecutionFidelity).toBeCloseTo(0.8, 5);
+    expect(saved.languages.ja!.executionFailures).toEqual(['was-failing']);
   });
 });
