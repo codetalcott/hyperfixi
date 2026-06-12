@@ -372,4 +372,63 @@ describe('ExpressionParser', () => {
       });
     });
   });
+
+  // The remaining en condition forms (gate if-exists / if-empty /
+  // input-validation execution): the `exists` postfix predicate, the
+  // `is empty` / `is not empty` unary predicates, and the possessive SPACE
+  // form (`my value`) folding to a propertyAccess. All evaluate through
+  // existing core runtime expressions (exists/isEmpty/isNotEmpty;
+  // propertyAccess + the contextReference possessive aliases).
+  describe('postfix predicates and possessive space form', () => {
+    it('parses `#modal exists` as a postfix exists unary', () => {
+      const result = parseExpression('#modal exists');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'unaryExpression',
+        operator: 'exists',
+        prefix: false,
+        operand: { type: 'selector', value: '#modal' },
+      });
+    });
+
+    it('keeps `exists(...)` a call expression (not the postfix predicate)', () => {
+      const result = parseExpression('exists(5)');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'callExpression',
+        callee: { type: 'identifier', name: 'exists' },
+      });
+    });
+
+    it('parses `my value is empty` — possessive space form + is-empty unary', () => {
+      const result = parseExpression('my value is empty');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'unaryExpression',
+        operator: 'is empty',
+        operand: {
+          type: 'propertyAccess',
+          object: { type: 'contextReference', contextType: 'my' },
+          property: 'value',
+        },
+      });
+    });
+
+    it('parses `my value is not empty` as the negated unary', () => {
+      const result = parseExpression('my value is not empty');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'unaryExpression',
+        operator: 'is not empty',
+      });
+    });
+
+    it('does not fold the space form past an operator keyword (`result is false` intact)', () => {
+      // `result` is a context var but NOT a possessive one — no folding at all;
+      // and for possessives, `is` is a stop word so `my is …` never folds.
+      const result = parseExpression('result is false');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({ type: 'binaryExpression', operator: 'is' });
+    });
+  });
 });

@@ -179,6 +179,32 @@ describe('AST evaluator coverage', () => {
     });
   });
 
+  // The semantic→AST builder emits the SURFACE form as the contextType
+  // (`my value` → contextReference 'my'); without the alias cases these fell
+  // through to undefined and any possessive condition evaluated wrong.
+  describe('contextReference possessive aliases (semantic→AST builder)', () => {
+    const ref = (contextType: string) => ({ type: 'contextReference' as const, contextType });
+
+    it("'my' resolves to context.me", async () => {
+      const el = document.createElement('input');
+      el.value = 'typed';
+      const ctx = { ...createContext(), registry: FULL_REGISTRY, me: el } as any;
+      expect(await evaluateAST(ref('my') as any, ctx)).toBe(el);
+    });
+
+    it("'its' resolves to context.it", async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      ctx.it = { value: 42 };
+      expect(await evaluateAST(ref('its') as any, ctx)).toEqual({ value: 42 });
+    });
+
+    it("'your' resolves to context.you", async () => {
+      const el = document.createElement('div');
+      const ctx = { ...createContext(), registry: FULL_REGISTRY, you: el } as any;
+      expect(await evaluateAST(ref('your') as any, ctx)).toBe(el);
+    });
+  });
+
   describe('optional chaining (?.)', () => {
     it('result?.x with present property → value', async () => {
       expect(await evalArg('return result?.x', { result: { x: 5 } })).toBe(5);
