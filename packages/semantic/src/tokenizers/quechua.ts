@@ -130,6 +130,11 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // Events
   { native: 'llikllay', normalized: 'click' },
   { native: 'ñitiy', normalized: 'click' },
+  // Glottalized spelling — the curated corpus rows (fix-translations.sql) and
+  // the event-handler pattern map both use ñit'iy. Without this entry the
+  // word-walk splits it at the injected English-passthrough keyword `it`
+  // (ñ + it + 'iy), wrecking every curated qu click pattern.
+  { native: "ñit'iy", normalized: 'click' },
   { native: 'click', normalized: 'click' },
   { native: 'yaykuy', normalized: 'input' },
   { native: 'llave uray', normalized: 'keydown' },

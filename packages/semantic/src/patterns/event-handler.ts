@@ -1251,25 +1251,16 @@ function getEventHandlerPatternsQu(): LanguagePattern[] {
         event: { position: 1 },
       },
     },
-    {
-      id: 'event-qu-source',
-      language: 'qu',
-      command: 'on',
-      priority: 110,
-      template: {
-        format: '{event} pi {source} manta {body}',
-        tokens: [
-          { type: 'role', role: 'event' },
-          { type: 'literal', value: 'pi' },
-          { type: 'role', role: 'source' },
-          { type: 'literal', value: 'manta' },
-        ],
-      },
-      extraction: {
-        event: { position: 0 },
-        source: { marker: 'manta' },
-      },
-    },
+    // NOTE: there is deliberately no `event-qu-source` ({event} pi {source}
+    // manta {body}) wrapper. Its captured source was discarded unconditionally
+    // (the non-action buildEventHandler path drops wrapper roles other than
+    // `event`), while the shape it matched — a command's own from-phrase
+    // sitting right after the event in qu SOV order, e.g.
+    // `ñit'iy pi .items manta .active ta qichuy` — stole the manta phrase
+    // from the body command (remove lost its source and acted on `me`).
+    // The qu from-elsewhere corpus rows put the source phrase BEFORE the
+    // event phrase, so nothing legitimate matched this wrapper. With it gone,
+    // event-qu-standard matches and the body re-parse captures source+patient.
     {
       id: 'event-qu-kaqtin',
       language: 'qu',
