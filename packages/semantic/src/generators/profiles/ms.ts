@@ -161,5 +161,8 @@ export const malayProfile: LanguageProfile = {
   eventHandler: {
     keyword: { primary: 'apabila', alternatives: ['ketika'], normalized: 'on' },
     sourceMarker: { primary: 'dari', position: 'before' },
+    // Without an eventMarker ms generated NO fused event patterns at all —
+    // the only language besides en in that state (the swap/if recovery split).
+    eventMarker: { primary: 'apabila', alternatives: ['ketika'], position: 'before' },
   },
 };

@@ -311,7 +311,10 @@ export const polishProfile: LanguageProfile = {
     // Event marker: przy (at/on), used in SVO pattern
     // Pattern: przy [event] [verb] [patient] na [destination?]
     // Example: przy kliknięciu przełącz .active na #button
-    eventMarker: { primary: 'przy', alternatives: ['na'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'przy', alternatives: ['na', 'gdy'], position: 'before' },
     temporalMarkers: ['kiedy', 'gdy', 'przy'], // temporal conjunctions (when, at)
   },
 };

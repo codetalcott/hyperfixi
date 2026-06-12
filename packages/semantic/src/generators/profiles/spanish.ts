@@ -200,7 +200,10 @@ export const spanishProfile: LanguageProfile = {
     // Event marker: al (when), used in SVO pattern
     // Pattern: al [event] [verb] [patient] en [destination?]
     // Example: al clic alternar .active en #button
-    eventMarker: { primary: 'al', alternatives: ['cuando'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'al', alternatives: ['cuando', 'en'], position: 'before' },
     temporalMarkers: ['cuando', 'al'], // temporal conjunctions (when)
   },
 };

@@ -98,7 +98,9 @@ describe('New Language Support', () => {
         from: 'en',
         to: 'id',
       });
-      expect(result).toContain('ambil'); // fetch → ambil
+      // fetch → muat (profile primary; 'ambil' is take's word — the old
+      // emission made every id fetch parse as take)
+      expect(result).toContain('muat');
       expect(result).toContain('taruh'); // put → taruh
       expect(result).toContain('hasil'); // result → hasil
     });

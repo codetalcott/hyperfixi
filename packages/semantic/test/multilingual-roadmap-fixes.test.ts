@@ -1745,7 +1745,10 @@ describe('marker-less fetch fidelity (es/pl/id/sw/he) — recover dropped fetch'
   const cases: Array<[string, string]> = [
     ['es', 'en clic buscar /api/data entonces poner ello a #result'],
     ['pl', 'gdy kliknięcie pobierz /api/data wtedy umieść to do #result'],
-    ['id', 'pada klik ambil /api/data lalu taruh itu ke #result'],
+    // id dict realigned fetch ambil→muat (ambil is take's word; once the fused
+    // take-event pattern came alive it claimed every ambil-fetch — the de
+    // holen/abrufen class). The emission is now muat.
+    ['id', 'pada klik muat /api/data lalu taruh itu ke #result'],
     ['sw', 'kwenye bonyeza leta /api/data kisha weka hiyo kwa #result'],
     ['he', 'ב לחיצה הבא את /api/data אז שים את זה על #result'],
   ];
@@ -2386,5 +2389,90 @@ describe('it focus verb + pt halt/break cross-map (focus-trap residuals)', () =>
     const a = actions(parse('su fuoco aggiungere .active a io', 'it'));
     expect(a.has('on')).toBe(true);
     expect(a.has('add')).toBe(true);
+  });
+});
+
+describe('eventMarker emission alignment — fused patterns come alive (es/fr/it/pt/pl/id/ms)', () => {
+  // The generalization of the #346 swap recovery split: the i18n transformer
+  // leads event handlers with the profile's eventHandler.KEYWORD word (es en,
+  // fr sur, it su, pt em, pl gdy, id pada, ms apabila), but the generated
+  // fused `<cmd>-event-<lang>-vso` patterns anchor on eventHandler.EVENTMARKER,
+  // which didn't include it — so every fused event pattern was DEAD in these
+  // languages (ms generated none at all: no eventMarker). Bodies fell to
+  // handcrafted event patterns + re-parse, which drops if-blocks and other
+  // structures. Adding the emission word as an eventMarker alternative (and
+  // giving ms an eventMarker) brought the whole fused family alive:
+  // if-exists/if-condition/if-matches (pl), tell-command/tell-other-element +
+  // modal-close-backdrop (all 6), caret-var-on-target (fr/pt), get-value/
+  // hide-with-transition (ms) flip lossy → faithful. 26 pattern-instances,
+  // +0.0084..+0.0120 avgFidelity each, 1 within-tolerance regression
+  // (ms make-toast-element — transformer emission shape change, follow-up).
+  //
+  // Surfaced collision (bundled, #345 precedent): id dict emitted ambil for
+  // fetch, but ambil is take's word — dead while the fused take pattern
+  // couldn't match, every id fetch became take once it could (the de
+  // holen/abrufen class). id dict realigned fetch → muat (profile primary).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // The if-recovery this unlocks: a fused if-event pattern now anchors the
+  // handler, keeping the if + branch + juxtaposed tail (was {focus,halt,on}
+  // with if dropped, or worse).
+  const ifCases: Array<[string, string]> = [
+    ['es', 'en clic si objetivo coincide .x enfocar #y entonces detener fin'],
+    ['fr', 'sur clic si cible correspond .x focaliser #y alors stopper fin'],
+    ['pt', 'em clique se alvo corresponde .x focar #y então parar fim'],
+    ['pl', 'gdy kliknięcie jeśli cel pasuje .x skup #y wtedy zatrzymaj koniec'],
+    ['id', 'pada klik jika target cocok .x fokus #y lalu berhenti akhir'],
+    ['ms', 'apabila klik jika sasaran sepadan .x fokus #y kemudian henti tamat'],
+  ];
+  for (const [lang, input] of ifCases) {
+    it(`[${lang}] emission-led if handler keeps if + branch + tail`, () => {
+      const a = actions(parse(input, lang as 'es'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('focus')).toBe(true);
+      expect(a.has('halt')).toBe(true);
+    });
+  }
+
+  // id fetch realign: muat is fetch, ambil stays take.
+  it('[id] fetch-basic emission parses fetch + put (muat)', () => {
+    const a = actions(parse('pada klik muat /api/data lalu taruh itu ke #result', 'id'));
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('take')).toBe(false);
+  });
+  it('[id] ambil still parses as take', () => {
+    const a = actions(parse('pada klik ambil .item dari #list', 'id'));
+    expect(a.has('take')).toBe(true);
+    expect(a.has('fetch')).toBe(false);
+  });
+
+  // Regression guards: simple handlers parse the same action set as before
+  // (now via fused patterns), and then-chains stay complete.
+  it('[es] simple toggle handler unchanged', () => {
+    expect([...actions(parse('en clic alternar .active', 'es'))].sort()).toEqual(['on', 'toggle']);
+  });
+  it('[es] fetch-loading-state then-chain stays complete', () => {
+    const a = actions(
+      parse(
+        'en clic añadir .loading a mí entonces buscar /api/data entonces quitar .loading de mí entonces poner ello a #result',
+        'es'
+      )
+    );
+    expect(a.has('add')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('put')).toBe(true);
   });
 });

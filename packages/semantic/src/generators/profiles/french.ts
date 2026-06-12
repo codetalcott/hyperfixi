@@ -169,7 +169,10 @@ export const frenchProfile: LanguageProfile = {
     // Event marker: au (at/upon), used in SVO pattern
     // Pattern: au [event] [verb] [patient] sur [destination?]
     // Example: au clic basculer .active sur #button
-    eventMarker: { primary: 'au', alternatives: ['lors du', 'lors de'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'au', alternatives: ['lors du', 'lors de', 'sur'], position: 'before' },
     temporalMarkers: ['quand', 'lorsque'], // temporal conjunctions (when)
   },
 };

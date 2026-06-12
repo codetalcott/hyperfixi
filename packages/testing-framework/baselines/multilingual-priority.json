@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T01:20:43.490Z",
-  "commit": "f4c727c8",
+  "timestamp": "2026-06-12T01:33:06.289Z",
+  "commit": "55c3be23",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -28,7 +28,7 @@
         "template-literal-list-build",
         "window-scroll"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -670,7 +670,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1314,7 +1314,7 @@
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1938,7 +1938,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2562,25 +2562,17 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9652505446623094,
+      "avgConfidence": 0.9374935159248873,
+      "avgFidelity": 0.9736383442265794,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "fetch-do-not-throw",
         "focus-trap",
         "form-submit-prevent",
-        "if-exists",
-        "modal-close-backdrop",
-        "tell-command",
-        "tell-other-element",
         "template-literal-list-build"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-class-on-other": {
           "success": true,
           "confidence": 1
@@ -2590,14 +2582,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-from-all": {
           "success": true,
           "confidence": 1
         },
@@ -2629,43 +2613,7 @@
           "success": true,
           "confidence": 1
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-visibility": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 1
         },
@@ -2677,19 +2625,7 @@
           "success": true,
           "confidence": 1
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 1
-        },
         "send-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 1
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 1
         },
@@ -2697,71 +2633,11 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 1
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 1
-        },
         "repeat-for-each": {
           "success": true,
           "confidence": 1
         },
-        "halt-propagation": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-url": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-back": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 1
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -2773,23 +2649,7 @@
           "success": true,
           "confidence": 1
         },
-        "call-function": {
-          "success": true,
-          "confidence": 1
-        },
         "async-block": {
-          "success": true,
-          "confidence": 1
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 1
         },
@@ -2797,19 +2657,7 @@
           "success": true,
           "confidence": 1
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 1
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-backdrop": {
           "success": true,
           "confidence": 1
         },
@@ -2817,15 +2665,7 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 1
-        },
         "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 1
         },
@@ -2837,15 +2677,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -2858,14 +2690,6 @@
           "confidence": 1
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 1
-        },
-        "window-resize": {
-          "success": true,
-          "confidence": 1
-        },
-        "document-ready": {
           "success": true,
           "confidence": 1
         },
@@ -2889,10 +2713,6 @@
           "success": true,
           "confidence": 1
         },
-        "previous-element": {
-          "success": true,
-          "confidence": 1
-        },
         "closest-ancestor": {
           "success": true,
           "confidence": 1
@@ -2909,14 +2729,6 @@
           "success": true,
           "confidence": 1
         },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-while": {
-          "success": true,
-          "confidence": 1
-        },
         "event-once": {
           "success": true,
           "confidence": 1
@@ -2929,39 +2741,11 @@
           "success": true,
           "confidence": 1
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 1
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 1
         },
         "fetch-loading-state": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
-        "unless-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "copy-to-clipboard": {
           "success": true,
           "confidence": 1
         },
@@ -3017,23 +2801,7 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 1
         },
@@ -3042,18 +2810,6 @@
           "confidence": 1
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 1
         },
@@ -3070,26 +2826,6 @@
           "confidence": 1
         },
         "worker-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 1
-        },
-        "tell-other-element": {
           "success": true,
           "confidence": 1
         },
@@ -3110,14 +2846,6 @@
           "confidence": 1
         },
         "beep-debug-expression": {
-          "success": true,
-          "confidence": 1
-        },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 1
-        },
-        "take-class-from-siblings": {
           "success": true,
           "confidence": 1
         },
@@ -3157,21 +2885,289 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-on-target": {
-          "success": true,
-          "confidence": 1
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 1
         },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
+        },
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-url": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -3198,32 +3194,24 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9432461873638344,
+      "avgConfidence": 0.9337586886606484,
+      "avgFidelity": 0.9549019607843137,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
         "blur-element",
-        "caret-var-on-target",
         "fetch-do-not-throw",
         "fetch-with-headers",
         "focus-trap",
         "form-submit-prevent",
         "if-exists",
-        "modal-close-backdrop",
         "put-after",
         "put-before",
-        "tell-command",
-        "tell-other-element",
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-class-on-other": {
           "success": true,
           "confidence": 1
@@ -3233,14 +3221,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-from-all": {
           "success": true,
           "confidence": 1
         },
@@ -3272,43 +3252,7 @@
           "success": true,
           "confidence": 1
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-visibility": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 1
         },
@@ -3320,19 +3264,7 @@
           "success": true,
           "confidence": 1
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 1
-        },
         "send-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 1
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 1
         },
@@ -3340,71 +3272,7 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 1
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-for-each": {
-          "success": true,
-          "confidence": 1
-        },
-        "halt-propagation": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-url": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-back": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 1
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -3416,23 +3284,7 @@
           "success": true,
           "confidence": 1
         },
-        "call-function": {
-          "success": true,
-          "confidence": 1
-        },
         "async-block": {
-          "success": true,
-          "confidence": 1
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 1
         },
@@ -3440,19 +3292,7 @@
           "success": true,
           "confidence": 1
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 1
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-backdrop": {
           "success": true,
           "confidence": 1
         },
@@ -3460,15 +3300,7 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 1
-        },
         "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 1
         },
@@ -3480,15 +3312,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -3501,14 +3325,6 @@
           "confidence": 1
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 1
-        },
-        "window-resize": {
-          "success": true,
-          "confidence": 1
-        },
-        "document-ready": {
           "success": true,
           "confidence": 1
         },
@@ -3532,31 +3348,7 @@
           "success": true,
           "confidence": 1
         },
-        "previous-element": {
-          "success": true,
-          "confidence": 1
-        },
         "closest-ancestor": {
-          "success": true,
-          "confidence": 1
-        },
-        "first-in-parent": {
-          "success": true,
-          "confidence": 1
-        },
-        "last-in-collection": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-until-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-while": {
           "success": true,
           "confidence": 1
         },
@@ -3572,10 +3364,6 @@
           "success": true,
           "confidence": 1
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 1
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 1
@@ -3584,39 +3372,11 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
-        "unless-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "copy-to-clipboard": {
-          "success": true,
-          "confidence": 1
-        },
         "fade-out-remove": {
           "success": true,
           "confidence": 1
         },
         "slide-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "stagger-animation": {
           "success": true,
           "confidence": 1
         },
@@ -3660,23 +3420,7 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 1
         },
@@ -3685,18 +3429,6 @@
           "confidence": 1
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 1
         },
@@ -3713,26 +3445,6 @@
           "confidence": 1
         },
         "worker-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 1
-        },
-        "tell-other-element": {
           "success": true,
           "confidence": 1
         },
@@ -3753,14 +3465,6 @@
           "confidence": 1
         },
         "beep-debug-expression": {
-          "success": true,
-          "confidence": 1
-        },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 1
-        },
-        "take-class-from-siblings": {
           "success": true,
           "confidence": 1
         },
@@ -3800,21 +3504,309 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-on-target": {
-          "success": true,
-          "confidence": 1
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 1
         },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
+        },
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-for-each": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-url": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "first-in-parent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "last-in-collection": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-until-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "stagger-animation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -3871,7 +3863,7 @@
         "trigger-event",
         "wait-then"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4520,7 +4512,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5144,8 +5136,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9111111111111111,
+      "avgConfidence": 0.9382404813777352,
+      "avgFidelity": 0.9194989106753813,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "caret-var-increment",
@@ -5159,7 +5151,6 @@
         "input-mirror",
         "keydown-key-is-syntax",
         "method-call-possessive-dot",
-        "modal-close-backdrop",
         "morph-with-template",
         "put-after",
         "put-before",
@@ -5170,17 +5161,11 @@
         "set-style",
         "set-transform",
         "settle-animations",
-        "tell-command",
-        "tell-other-element",
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-class-on-other": {
           "success": true,
           "confidence": 1
@@ -5190,14 +5175,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-from-all": {
           "success": true,
           "confidence": 1
         },
@@ -5229,43 +5206,7 @@
           "success": true,
           "confidence": 1
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-visibility": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 1
         },
@@ -5277,19 +5218,7 @@
           "success": true,
           "confidence": 1
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 1
-        },
         "send-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 1
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 1
         },
@@ -5297,71 +5226,11 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 1
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-for-each": {
-          "success": true,
-          "confidence": 1
-        },
-        "halt-propagation": {
-          "success": true,
-          "confidence": 1
-        },
         "go-url": {
           "success": true,
           "confidence": 1
         },
-        "go-back": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 1
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -5373,23 +5242,7 @@
           "success": true,
           "confidence": 1
         },
-        "call-function": {
-          "success": true,
-          "confidence": 1
-        },
         "async-block": {
-          "success": true,
-          "confidence": 1
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 1
         },
@@ -5397,19 +5250,7 @@
           "success": true,
           "confidence": 1
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 1
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-backdrop": {
           "success": true,
           "confidence": 1
         },
@@ -5417,15 +5258,7 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 1
-        },
         "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 1
         },
@@ -5437,15 +5270,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -5462,10 +5287,6 @@
           "confidence": 1
         },
         "window-resize": {
-          "success": true,
-          "confidence": 1
-        },
-        "document-ready": {
           "success": true,
           "confidence": 1
         },
@@ -5489,15 +5310,7 @@
           "success": true,
           "confidence": 1
         },
-        "previous-element": {
-          "success": true,
-          "confidence": 1
-        },
         "closest-ancestor": {
-          "success": true,
-          "confidence": 1
-        },
-        "first-in-parent": {
           "success": true,
           "confidence": 1
         },
@@ -5506,10 +5319,6 @@
           "confidence": 1
         },
         "repeat-until-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-forever": {
           "success": true,
           "confidence": 1
         },
@@ -5529,39 +5338,11 @@
           "success": true,
           "confidence": 1
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 1
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 1
         },
         "fetch-loading-state": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
-        "unless-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "copy-to-clipboard": {
           "success": true,
           "confidence": 1
         },
@@ -5617,23 +5398,7 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 1
         },
@@ -5642,18 +5407,6 @@
           "confidence": 1
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 1
         },
@@ -5670,26 +5423,6 @@
           "confidence": 1
         },
         "worker-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 1
-        },
-        "tell-other-element": {
           "success": true,
           "confidence": 1
         },
@@ -5710,14 +5443,6 @@
           "confidence": 1
         },
         "beep-debug-expression": {
-          "success": true,
-          "confidence": 1
-        },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 1
-        },
-        "take-class-from-siblings": {
           "success": true,
           "confidence": 1
         },
@@ -5757,21 +5482,285 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-on-target": {
-          "success": true,
-          "confidence": 1
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 1
         },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
+        },
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-for-each": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "first-in-parent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -5798,7 +5787,7 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9878721859114016,
+      "avgConfidence": 0.9370785351177497,
       "avgFidelity": 0.9620915032679738,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
@@ -5813,12 +5802,8 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-class-on-other": {
           "success": true,
           "confidence": 1
@@ -5828,14 +5813,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-from-all": {
           "success": true,
           "confidence": 1
         },
@@ -5867,43 +5844,7 @@
           "success": true,
           "confidence": 1
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-visibility": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 1
         },
@@ -5915,19 +5856,7 @@
           "success": true,
           "confidence": 1
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 1
-        },
         "send-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 1
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 1
         },
@@ -5935,43 +5864,7 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 1
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 1
-        },
         "repeat-for-each": {
-          "success": true,
-          "confidence": 1
-        },
-        "halt-propagation": {
           "success": true,
           "confidence": 1
         },
@@ -5979,27 +5872,7 @@
           "success": true,
           "confidence": 1
         },
-        "go-back": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 1
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -6011,23 +5884,7 @@
           "success": true,
           "confidence": 1
         },
-        "call-function": {
-          "success": true,
-          "confidence": 1
-        },
         "async-block": {
-          "success": true,
-          "confidence": 1
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 1
         },
@@ -6035,19 +5892,7 @@
           "success": true,
           "confidence": 1
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 1
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-backdrop": {
           "success": true,
           "confidence": 1
         },
@@ -6055,15 +5900,7 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 1
-        },
         "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 1
         },
@@ -6075,15 +5912,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -6092,14 +5921,6 @@
           "confidence": 1
         },
         "window-keydown": {
-          "success": true,
-          "confidence": 1
-        },
-        "window-resize": {
-          "success": true,
-          "confidence": 1
-        },
-        "document-ready": {
           "success": true,
           "confidence": 1
         },
@@ -6123,10 +5944,6 @@
           "success": true,
           "confidence": 1
         },
-        "previous-element": {
-          "success": true,
-          "confidence": 1
-        },
         "closest-ancestor": {
           "success": true,
           "confidence": 1
@@ -6136,18 +5953,6 @@
           "confidence": 1
         },
         "last-in-collection": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-until-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-while": {
           "success": true,
           "confidence": 1
         },
@@ -6163,10 +5968,6 @@
           "success": true,
           "confidence": 1
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 1
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 1
@@ -6175,27 +5976,7 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
         "unless-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "copy-to-clipboard": {
           "success": true,
           "confidence": 1
         },
@@ -6251,23 +6032,7 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 1
         },
@@ -6276,18 +6041,6 @@
           "confidence": 1
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 1
         },
@@ -6304,26 +6057,6 @@
           "confidence": 1
         },
         "worker-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 1
-        },
-        "tell-other-element": {
           "success": true,
           "confidence": 1
         },
@@ -6344,14 +6077,6 @@
           "confidence": 1
         },
         "beep-debug-expression": {
-          "success": true,
-          "confidence": 1
-        },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 1
-        },
-        "take-class-from-siblings": {
           "success": true,
           "confidence": 1
         },
@@ -6391,21 +6116,285 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-on-target": {
-          "success": true,
-          "confidence": 1
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 1
         },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
+        },
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-until-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -6471,7 +6460,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7121,7 +7110,7 @@
         "unless-condition",
         "wait-for-event"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7745,8 +7734,8 @@
       "parseSuccess": 149,
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.998806860551827,
-      "avgFidelity": 0.9220357941834452,
+      "avgConfidence": 0.9428145307339928,
+      "avgFidelity": 0.9340044742729308,
       "degeneratePasses": [],
       "lossyPasses": [
         "async-block",
@@ -7757,8 +7746,6 @@
         "focus-trap",
         "form-submit-prevent",
         "get-attribute-possessive-dot",
-        "get-value",
-        "hide-with-transition",
         "if-empty",
         "if-exists",
         "input-mirror",
@@ -7766,8 +7753,8 @@
         "keydown-key-is-syntax",
         "last-in-collection",
         "make-element",
+        "make-toast-element",
         "method-call-possessive-dot",
-        "modal-close-backdrop",
         "put-after",
         "put-before",
         "render-template-with-data",
@@ -7775,17 +7762,11 @@
         "set-opacity",
         "set-style",
         "set-transform",
-        "tell-command",
-        "tell-other-element",
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-class-on-other": {
           "success": true,
           "confidence": 1
@@ -7795,14 +7776,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "remove-class-from-all": {
           "success": true,
           "confidence": 1
         },
@@ -7834,43 +7807,7 @@
           "success": true,
           "confidence": 1
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-visibility": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 1
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 1
         },
@@ -7882,19 +7819,7 @@
           "success": true,
           "confidence": 1
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 1
-        },
         "send-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 1
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 1
         },
@@ -7902,71 +7827,7 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 1
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-for-each": {
-          "success": true,
-          "confidence": 1
-        },
-        "halt-propagation": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-url": {
-          "success": true,
-          "confidence": 1
-        },
-        "go-back": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 1
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 1
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -7978,23 +7839,7 @@
           "success": true,
           "confidence": 1
         },
-        "call-function": {
-          "success": true,
-          "confidence": 1
-        },
         "async-block": {
-          "success": true,
-          "confidence": 1
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 1
         },
@@ -8002,19 +7847,7 @@
           "success": true,
           "confidence": 1
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 1
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-backdrop": {
           "success": true,
           "confidence": 1
         },
@@ -8022,15 +7855,7 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 1
-        },
         "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 1
         },
@@ -8042,15 +7867,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -8063,14 +7880,6 @@
           "confidence": 1
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 1
-        },
-        "window-resize": {
-          "success": true,
-          "confidence": 1
-        },
-        "document-ready": {
           "success": true,
           "confidence": 1
         },
@@ -8094,31 +7903,11 @@
           "success": true,
           "confidence": 1
         },
-        "previous-element": {
-          "success": true,
-          "confidence": 1
-        },
         "closest-ancestor": {
           "success": true,
           "confidence": 1
         },
-        "first-in-parent": {
-          "success": true,
-          "confidence": 1
-        },
         "last-in-collection": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-until-event": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 1
-        },
-        "repeat-while": {
           "success": true,
           "confidence": 1
         },
@@ -8134,10 +7923,6 @@
           "success": true,
           "confidence": 1
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 1
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 1
@@ -8146,39 +7931,11 @@
           "success": true,
           "confidence": 1
         },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
-        "unless-condition": {
-          "success": true,
-          "confidence": 1
-        },
-        "copy-to-clipboard": {
-          "success": true,
-          "confidence": 1
-        },
         "fade-out-remove": {
           "success": true,
           "confidence": 1
         },
         "slide-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "stagger-animation": {
           "success": true,
           "confidence": 1
         },
@@ -8222,23 +7979,7 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 1
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 1
         },
@@ -8247,18 +7988,6 @@
           "confidence": 1
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 1
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 1
         },
@@ -8271,26 +8000,6 @@
           "confidence": 1
         },
         "worker-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 1
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 1
-        },
-        "tell-other-element": {
           "success": true,
           "confidence": 1
         },
@@ -8314,14 +8023,6 @@
           "success": true,
           "confidence": 1
         },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 1
-        },
-        "take-class-from-siblings": {
-          "success": true,
-          "confidence": 1
-        },
         "live-derived-value": {
           "success": true,
           "confidence": 1
@@ -8342,15 +8043,7 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-on-target": {
-          "success": true,
-          "confidence": 1
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 1
         },
@@ -8373,6 +8066,298 @@
         "behavior-resizable": {
           "success": true,
           "confidence": 1
+        },
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-for-each": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-url": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "first-in-parent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-until-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "stagger-animation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -8399,8 +8384,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.828685548293392,
-      "avgFidelity": 0.9478213507625272,
+      "avgConfidence": 0.8882767921983612,
+      "avgFidelity": 0.9594771241830065,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "blur-element",
@@ -8408,20 +8393,106 @@
         "focus-trap",
         "form-submit-prevent",
         "get-value",
-        "if-condition",
-        "if-exists",
-        "if-matches",
         "keydown-key-is-syntax",
-        "modal-close-backdrop",
-        "tell-command",
-        "tell-other-element",
         "template-literal-list-build",
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-to-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "put-content-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event": {
+          "success": true,
+          "confidence": 1
+        },
+        "repeat-for-each": {
+          "success": true,
+          "confidence": 1
+        },
+        "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-disable-on-submit": {
+          "success": true,
+          "confidence": 1
+        },
         "window-scroll": {
+          "success": true,
+          "confidence": 1
+        },
+        "next-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
+        "first-in-parent": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -8433,7 +8504,19 @@
           "success": true,
           "confidence": 1
         },
+        "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
         "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event-to-form": {
+          "success": true,
+          "confidence": 1
+        },
+        "on-custom-event-receive": {
           "success": true,
           "confidence": 1
         },
@@ -8461,33 +8544,285 @@
           "success": true,
           "confidence": 1
         },
+        "caret-var-on-target": {
+          "success": true,
+          "confidence": 1
+        },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
         "toggle-class-basic": {
           "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "add-class-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "add-class-to-other": {
-          "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
         },
         "remove-class-basic": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
         },
         "remove-class-from-all": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-until-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "set-text-basic": {
           "success": true,
@@ -8501,59 +8836,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "put-content-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "put-before": {
           "success": true,
           "confidence": 0.8222222222222222
         },
         "put-after": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "append-content": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "remove-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "toggle-visibility": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "wait-for-event": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8565,63 +8852,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "trigger-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "multiple-events": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-for-each": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "halt-propagation": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8629,27 +8860,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "go-back": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8661,27 +8872,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "tell-command": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "call-function": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "async-block": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8689,39 +8880,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "modal-close-backdrop": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "dropdown-close-outside": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "input-mirror": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8729,31 +8888,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "input-clear": {
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "form-submit-prevent": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "form-disable-on-submit": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "window-keydown": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "window-resize": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "document-ready": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8773,35 +8912,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "next-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "previous-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "closest-ancestor": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "first-in-parent": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "last-in-collection": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-until-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-while": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8817,31 +8928,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "event-key-combo": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-loading-state": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-empty": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8849,15 +8936,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "copy-to-clipboard": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "fade-out-remove": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "slide-toggle": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8873,14 +8952,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "toggle-aria-expanded": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "focus-trap": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -8893,35 +8964,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "get-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8930,50 +8973,6 @@
           "confidence": 0.8222222222222222
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-form-update": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "socket-send": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tell-other-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-event-to-form": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "on-custom-event-receive": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8989,14 +8988,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "take-class-from-siblings": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "when-value-changes": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9006,18 +8997,6 @@
           "confidence": 0.8222222222222222
         },
         "caret-var-write": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "caret-var-on-target": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9042,30 +9021,90 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8344952795933194,
-      "avgFidelity": 0.9410675381263616,
+      "avgConfidence": 0.8933395580454406,
+      "avgFidelity": 0.9527233115468409,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
         "blur-element",
-        "caret-var-on-target",
         "fetch-do-not-throw",
         "fetch-with-headers",
         "focus-trap",
         "form-submit-prevent",
         "if-exists",
-        "modal-close-backdrop",
         "put-after",
         "put-before",
-        "tell-command",
-        "tell-other-element",
         "template-literal-list-build",
         "unless-condition",
         "when-value-changes"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
-        "window-resize": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-to-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "put-content-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
+        "transition-opacity": {
+          "success": true,
+          "confidence": 1
+        },
+        "transition-transform": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event": {
+          "success": true,
+          "confidence": 1
+        },
+        "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-disable-on-submit": {
+          "success": true,
+          "confidence": 1
+        },
+        "transition-color": {
+          "success": true,
+          "confidence": 1
+        },
+        "next-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "closest-ancestor": {
           "success": true,
           "confidence": 1
         },
@@ -9073,7 +9112,35 @@
           "success": true,
           "confidence": 1
         },
+        "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "fade-out-remove": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 1
+        },
         "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -9085,7 +9152,15 @@
           "success": true,
           "confidence": 1
         },
+        "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
         "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event-to-form": {
           "success": true,
           "confidence": 1
         },
@@ -9125,33 +9200,289 @@
           "success": true,
           "confidence": 1
         },
+        "caret-var-on-target": {
+          "success": true,
+          "confidence": 1
+        },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
         "toggle-class-basic": {
           "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "add-class-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "add-class-to-other": {
-          "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
         },
         "remove-class-basic": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
         },
         "remove-class-from-all": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.8857142857142858
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "wait-for-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "send-with-detail": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "increment-by-amount": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "decrement-counter": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-times": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-for-each": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "halt-propagation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "call-function": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-button": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "first-in-parent": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "repeat-while": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "copy-to-clipboard": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "pick-text-range": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "take-class-from-siblings": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "caret-var-increment": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "reactive-array-push": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "set-text-basic": {
           "success": true,
@@ -9165,10 +9496,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "put-content-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "put-before": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9177,115 +9504,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "append-content": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "remove-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "toggle-visibility": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "wait-for-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "transition-opacity": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "transition-transform": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "settle-animations": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-with-detail": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "trigger-event": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "multiple-events": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "increment-counter": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "decrement-counter": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-condition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-times": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-for-each": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "halt-propagation": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9293,27 +9512,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "go-back": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "blur-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9325,27 +9524,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "tell-command": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "call-function": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "async-block": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "js-inline": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tabs-content": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9353,39 +9532,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "modal-close-button": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "modal-close-escape": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "modal-close-backdrop": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "dropdown-close-outside": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "input-mirror": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9393,19 +9540,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "input-clear": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "form-submit-prevent": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "form-disable-on-submit": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9414,10 +9549,6 @@
           "confidence": 0.8222222222222222
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "document-ready": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9433,35 +9564,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "transition-color": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "next-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "previous-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "closest-ancestor": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "first-in-parent": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "last-in-collection": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-forever": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "repeat-while": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9477,47 +9580,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "event-key-combo": {
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "fetch-loading-state": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "unless-condition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "copy-to-clipboard": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fade-out-remove": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "slide-toggle": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9533,10 +9600,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "toggle-aria-expanded": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "focus-trap": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9549,35 +9612,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "get-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "make-toast-element": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9586,46 +9621,6 @@
           "confidence": 0.8222222222222222
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "morph-form-update": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "socket-send": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tell-other-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "send-event-to-form": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9641,27 +9636,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "pick-text-range": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "take-class-from-siblings": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "caret-var-write": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "caret-var-on-target": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "reactive-array-push": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9729,7 +9704,7 @@
         "unless-condition",
         "window-scroll"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -10368,7 +10343,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11013,7 +10988,7 @@
         "set-color-variable",
         "template-literal-list-build"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11647,7 +11622,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12292,7 +12267,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12938,7 +12913,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13576,7 +13551,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14221,7 +14196,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14864,7 +14839,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405912,
+      "bundleSize": 405935,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15483,7 +15458,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 405912,
+      "size": 405935,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

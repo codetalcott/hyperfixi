@@ -192,7 +192,10 @@ export const italianProfile: LanguageProfile = {
     // Event marker: al (at/upon), used in SVO pattern
     // Pattern: al [event] [verb] [patient] su [destination?]
     // Example: al clic commutare .active su #button
-    eventMarker: { primary: 'al', alternatives: ['allo', 'alla'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'al', alternatives: ['allo', 'alla', 'su'], position: 'before' },
     temporalMarkers: ['quando', 'al'], // temporal conjunctions (when)
   },
 };
