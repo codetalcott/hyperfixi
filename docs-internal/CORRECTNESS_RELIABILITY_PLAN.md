@@ -398,14 +398,18 @@ R0 (parse rate + action-set fidelity + lossy/degenerate), R1 (roles), the
 The parsing track remains STOPPED (§9). The recommended next missions, in
 order of leverage:
 
-1. **R2 burn-down, role-loss class first.** The ~18-language _dropped
-   destination_ shelf (`show #modal`, `toggle .open on #menu`,
-   `increment/decrement #counter`, `modal-open`, `hide-element`) is one or
-   few mechanisms in role transfer between parse and AST-build — NOT 90
-   independent bugs. Probe `buildAST`'s destination-role handling for a
-   translated parse vs en before believing any per-language theory. Fixing it
-   moves executionFidelity for nearly every language at once and likely
-   drags R1 roleFidelity (0.7575) up with it.
+1. **R2 burn-down, role-loss class first — mechanism CONFIRMED by probe.**
+   The ~18-language shelf (`show #modal`, `toggle .open on #menu`,
+   `increment/decrement #counter`, `modal-open`, `hide-element`) is a
+   SPURIOUS-ROLE injection, not a drop: `en clic mostrar #modal` (es) and
+   `bei klick zeigen #modal` (de) parse with `patient:#modal` PLUS an extra
+   `destination:me` that en's parse doesn't have; `buildAST` then emits
+   `args:[contextReference me]` (destination wins over patient), so the
+   runtime shows `me` instead of `#modal`. Two candidate sites: the
+   generated patterns/profile defaulting destination=me, and buildAST's
+   args-from-roles priority. NOTE: R1 roleFidelity is RECALL-based, so an
+   extra role scores 1.0 — only R2 sees this class. Fixing it moves nearly
+   every language at once and likely drags R1 (0.7575) up with it.
 2. **ko quoting + ja connective-as-command.** Small, mechanical-looking:
    ko keeps literal quotes in `put` patient (`text["Done!"]`); ja builds
    `into`/`from` connectives into commands that throw at runtime. Each is
