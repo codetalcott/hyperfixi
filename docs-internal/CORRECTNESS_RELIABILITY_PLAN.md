@@ -383,6 +383,63 @@ to recall-based R1, surfaced wholesale by R2's first sweep. The fix idiom
 that worked five out of five times: make the emission side defer to the
 command schema and mirror en's parse shape; never touch the mappers.
 
+## 7f. Status update (2026-06-12, post-#385 — session 7): R2 TAIL
+
+**R2 executionFidelity 0.9130 → 0.9821 | failing instances 34 → 7 |
+19/23 languages at 1.000 (everything but hi id ja qu) | parsing floor
+byte-identical (avgFidelity 0.9717).** Four PRs (#382–#385), each one
+mechanism, each baselined and locked. The §10 ranking held loosely: target 1
+landed as probed; targets 2/3 were partially stale (the remove/tabs/toggle
+items had already cleared in the session-6 endgame — re-measure before
+trusting any handoff's instance lists); the real remaining mass was the
+set-trio across 8 languages, which fell to three different drifts.
+
+- **#382 — it/th body-role drop (−12, it/th → 1.000, qu 0.412 → 0.765).**
+  The handcrafted fused patterns (`su {event} {action}`, `เมื่อ {event}
+{action}`) capture only the body VERB; the body's arguments trail and the
+  command node came out role-less. Fix is a parser-side RETRY in
+  buildEventHandler (semantic-parser.ts): when the captured action produced a
+  zero-roled command, re-parse [verb..clause-boundary] with the command
+  patterns and swap in the result — only if it's a single command with the
+  SAME action and ≥1 role, so bodies with no standalone pattern (it
+  blur/transition, th breakpoint/put) keep the zero-roled action instead of
+  degenerating. By construction no R0 regression is possible; the full it/th
+  corpus sweep showed ~40 rows gaining roles, zero losing actions, one
+  spurious beep dropping (now en-identical). Companions: set-it-full gained
+  the transformer's `in` marker; set-th-simple's broken positional patient
+  became the ใน marker group. NOTE: node.roles is a Map — an Object.keys()
+  acceptance check silently never fires (cost one debug round).
+- **#383 — ko set marker drift (−3, ko → 1.000).** setSchema's ko patient
+  markerOverride said 으로; the ko dict translates set's `to` as 에. No
+  generated pattern matched, the particle fallback INVERTED the roles (를 →
+  patient, 에 → destination), and set wrote nothing. One-line realign to the
+  dict; zero corpus rows used 으로. Three test fixtures had hardcoded the
+  drifted form (official-examples, language-matrix, hyperscript-adapter
+  preprocessor — the last one only surfaced in CI round 2).
+- **#384 — possessive-dot heads (−10, ms/vi → 1.000, qu → 0.941).** The
+  dot-notation transformer SKIPS multi-word possessives (can't prefix them
+  onto `my.X`), so id (`saya punya`) and vi (`của tôi`) corpus heads stay
+  literal English `my.textContent`; ms emits single-token `saya_punya.X` and
+  qu the romanization `noqaq.X` — forms their semantic profiles never
+  listed. The possessive matcher found no keyword → raw expression instead
+  of property-path(me.X) → setMapper wrote nothing. Fix: add the EMITTED
+  forms to the four profiles' possessive.keywords (id/vi: `my` passthrough).
+  Parse-side only, no corpus churn.
+- **#385 — tl source marker (−2, tl → 1.000).** Three-way drift with the
+  i18n grammar profile as odd one out: it emitted spaced `mula sa` while the
+  tl dict AND semantic profile both use underscore `mula_sa` (the standard
+  tl multi-word convention). Two tokens never matched the single literal;
+  remove lost its source phrase and the schema default fabricated source=me.
+  One-line grammar-profile fix; corpus regenerates parseable.
+
+**Remaining 7 (per-language tails, all distinct mechanisms):** hi set trio
+(3 — event-hi-bare swallows the fronted possessive as the event; hi remains
+the worst language), ja/qu put-content-basic (2 — SOV put root-not-wrapped),
+id set-style (1 — the TWO-WORD phrase `saya punya *background`: the matcher
+reads punya as the property; new mechanism found this session), id
+increment-counter (1 — dict emits tambahkan which parses as add; keyword-
+collision family).
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -445,70 +502,58 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#380, session 6)
+## 10. Handoff — next session (written 2026-06-12, post-#385, session 7)
 
-**R2 burn-down is past the knee: 0.9130, 34 failing instances, 13/23
-languages perfect (§7e).** All four ratchets hold; the parsing track remains
-STOPPED (§9). The remaining R2 mass is per-language tails — ≥6 distinct
-small mechanisms, each probed this session to at least parse level. In
-order of expected yield:
+**R2 burn-down is in the tail: 0.9821, 7 failing instances, 19/23
+languages perfect (§7f).** All four ratchets hold; the parsing track remains
+STOPPED (§9). HARD-LEARNED THIS SESSION: handoff instance-lists go stale —
+two of session 6's four ranked targets had already cleared by the time they
+were probed. ALWAYS re-read `executionFailures` from the current baseline
+before picking a target. The remaining 7, re-probed this session:
 
-1. **it/th event-handler body-role drop (~6 instances + drags set-style).**
-   `su clic impostare mio.textContent in "Done!"` matches the handcrafted
-   `event-handler-it-full` pattern (packages/semantic/src/patterns/
-   event-handler.ts:993) which captures `{action}` as a positional role —
-   the body command comes out action=set with ZERO roles, while the SAME
-   clause standalone (`impostare mio.textContent in "Done!"`) parses
-   destination correctly via set-it-full. th identical via
-   `event-handler-th-svo` (line 1470). The body re-parse path for the
-   handcrafted full patterns is the site — find where the captured action
-   role becomes a command node without re-running pattern extraction.
-   HALF-CONFIRMED: pattern ids verified, body-parse site not yet located.
-   Also note it set-it-full's value marker is `a` (alternatives su/come)
-   while the transformer emits `in` — even after the body-parse fix the
-   patient may need `in` added to the alternatives.
-2. **ko post-verb phrase on PLAIN patterns (~4: remove/tabs/add-to-other).**
-   ko corpus strings lack the 할 때 event marker (`.active 를 클릭 제거
-.items 에서`), so they match plain `remove-ko-generated` — whose
-   schema-ordered source group sits pre-patient (sovPosition), not
-   post-verb where the transformer puts it; the schema default then
-   fabricates source=me. The #378/#379 trailing-group fix only covers the
-   event WRAPPERS. Candidate: trailing role groups on plain generated SOV
-   command patterns too (buildTokens in pattern-generator.ts), or fix the
-   ko transformer's event-marker emission so the wrapper matches at all.
-   CONFIRMED at parse level (patternId probed).
-3. **toggle-on-other then-scatter (bn/ja ~2 + hi/qu).** The transformer
-   emits the to-phrase behind a then-connective (`切り替え それから #menu
-で`); the clause splitter cuts at それから and the orphan `#menu で`
-   clause is silently dropped. Transformer-side ordering bug (emit the
-   phrase before the verb, or not behind then) — i18n grammar territory,
-   NOT parseable away with optional groups. CONFIRMED by probe.
-4. **vi untranslated `my.` (~2).** vi corpus for set-text/inner-html
-   carries literal English `my.textContent` (`gán my.textContent vào …`) —
-   parses to contextType 'my' (vs en 'me') with stray position fields.
-   Either the vi transformer should emit `của tôi`, or the corpus rows are
-   stale. Check patterns-reference data first.
-5. **ja put root-not-wrapped (~1) + id increment (~1) + qu everything
-   (0.412, 10 instances).** ja `"Done!" を 私 に 置く クリック で` parses as
-   a bare put (event dropped) — SOV verb-final put with trailing event
-   phrase; no wrapper covers that order. qu remains the worst language and
-   is baseline-only (not CI-gated) — lowest priority.
-6. **R2 subset expansion** — the burn-down is arguably "stabilized" now:
-   multi-command patterns, then control-flow (`if-matches`,
-   `unless-condition`), then behavior-\*. RULE (locked by test): any subset
-   change regenerates the baseline AND updates the membership lock in the
-   SAME PR.
-7. **Runtime gaps visible in en** (from the subset exclusions):
+1. **hi set trio (3: set-text/set-inner-html possessive-dot + set-style).**
+   `मेरा.textContent को क्लिक पर सेट "Done!" में` — `event-hi-bare` matches
+   FIRST and captures the fronted possessive (मेरा.textContent, correctly
+   assembled as a property-path!) as the EVENT; the body collapses to a
+   role-less compound. The hi profile's possessive keywords are fine; this
+   is event-pattern ordering/shape (the hi `into`-pattern family from the
+   §10-session-6 residual map). hi is the worst language overall — expect
+   the fix to drag other hi rows. CONFIRMED by probe this session.
+2. **id set-style (1) — two-word possessive PHRASE.** The id row is `atur
+saya punya *background ke "red"` (space form — NOT the dot-head the
+   #384 passthrough fixed). tryMatchPossessiveExpression reads saya→me,
+   then takes `punya` as the PROPERTY (me.punya) and strands \*background.
+   Candidate: a possessive-linker skip in the matcher (id `punya` after
+   saya/aku), or emission-side single-token form. CONFIRMED by probe.
+3. **ja/qu put-content-basic (2).** ja `"Done!" を 私 に 置く クリック で`
+   parses as a bare put (event dropped) — SOV verb-final put with trailing
+   event phrase; no wrapper covers that order (unchanged from session 6).
+4. **id increment-counter (1).** Corpus `pada klik tambahkan #counter` —
+   the id dict emits tambahkan for increment, which the id profile parses
+   as ADD (keyword collision family; the #373 allowlist lists it). Fix the
+   dict word (id increment → e.g. naikkan) AND prune the allowlist row in
+   the same PR.
+5. **R2 subset expansion** — with the burn-down at 7, expansion is now the
+   higher-leverage move: multi-command patterns, then control-flow
+   (`if-matches`, `unless-condition`), then behavior-\*. RULE (locked by
+   test): any subset change regenerates the baseline AND updates the
+   membership lock in the SAME PR. Expect a new failure band on first
+   expansion — record + ratchet, don't fold into this tail.
+6. **Runtime gaps visible in en** (from the subset exclusions):
    `toggle @hidden`, `set #output.innerText to X`, `set @disabled to true`
    fail in ENGLISH in the current runtime. Core-runtime track, independent
    of translation.
 
-Mechanism idiom that went five-for-five this session (§7e): make the
-emission side defer to the command schema and mirror en's parse shape;
-never patch the AST mappers. The helpers to extend are
-`eventHandlerDestinationExtraction` / `eventHandlerSourceExtraction` /
-`eventHandlerRoleGroup` in
-`packages/semantic/src/generators/command-schemas.ts`.
+Mechanism idiom, now 9-for-9 across two sessions (§7e/§7f): find which of
+the three layers drifted — dict emission, grammar-profile emission, or
+semantic profile/schema parse side — and realign the odd one out toward the
+other two / toward en's parse shape; never patch the AST mappers. New
+parser-side tool from #382: the buildEventHandler zero-roled-action RETRY
+(semantic-parser.ts) — it re-parses fused-pattern bodies through the command
+patterns with a same-action+roles acceptance guard, so improving a
+language's STANDALONE command patterns now automatically improves its fused
+event-handler bodies too. Beware: `CommandSemanticNode.roles` is a Map
+(`.size`, not `Object.keys`).
 
 One discovered-but-unfixed hazard, left alone deliberately: `buildVerbLookup`
 (semantic-parser.ts) indexes EVERY profile keyword as a verb-anchor except a
@@ -539,10 +584,12 @@ R2 operational notes for the next session:
   freshly `populate`d patterns.db (CI re-populates before the gate), and
   patterns.db must be reverted before commit.
 
-Lock tests: the last ~15 describe-blocks of
+Lock tests: the last ~19 describe-blocks of
 `packages/semantic/test/multilingual-roadmap-fixes.test.ts` (#366–#374
 parsing-track + #376–#380 R2 burn-down: wrapper destination deference, ko
-quote stripping, source groups, trailing destination, set.ts convention) +
+quote stripping, source groups, trailing destination, set.ts convention;
+#382–#385 R2 tail: fused-body retry + it/th markers, ko 에 realign,
+possessive-dot passthrough, tl mula_sa) +
 `packages/semantic/test/lexicon-emit-mismatch.test.ts` (the allowlist is a
 PRUNE-DOWN list: fixing a dict row should delete its entry) +
 `packages/i18n/src/grammar/grammar.test.ts` + the R2 locks
