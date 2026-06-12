@@ -1028,17 +1028,38 @@ export class SemanticParserImpl implements ISemanticParser {
   ): SemanticNode[] {
     const commands: SemanticNode[] = [];
 
+    // SOV verb-anchoring recovery, per clause. The SOV grammar transforms put
+    // the verb BETWEEN roles (`#name.innerText 를 설정 그것의.name 에`), an order
+    // no command pattern covers — parseClause recovers it via
+    // parseSOVClauseByVerbAnchoring, but this body walker used to just skip the
+    // tokens, silently dropping the command (ko fetch-json/form-disable-on-submit
+    // then-tails once the fused event pattern anchors). Mirror parseClause's
+    // fallback semantics exactly: collect skipped tokens per clause and anchor
+    // them ONLY if nothing in that clause matched a pattern — additive, so a
+    // clause with any pattern match is byte-identical to the old behavior.
+    let skippedClauseTokens: LanguageToken[] = [];
+    let clauseHadMatch = false;
+    const flushClause = () => {
+      if (!clauseHadMatch && skippedClauseTokens.length > 0) {
+        commands.push(...this.parseSOVClauseByVerbAnchoring(skippedClauseTokens, language));
+      }
+      skippedClauseTokens = [];
+      clauseHadMatch = false;
+    };
+
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
 
       // Check for 'then' keyword - skip it and continue parsing
       if (current && this.isThenKeyword(current.value, language)) {
+        flushClause();
         tokens.advance();
         continue;
       }
 
       // Check for 'end' keyword - terminates block
       if (current && this.isEndKeyword(current.value, language)) {
+        flushClause();
         tokens.advance();
         break;
       }
@@ -1067,6 +1088,7 @@ export class SemanticParserImpl implements ISemanticParser {
           });
           commands.push(commandNode);
           matched = true;
+          clauseHadMatch = true;
 
           // Check if this pattern also has continuation
           const continuesValue = grammarMatch.captured.get('continues');
@@ -1087,15 +1109,18 @@ export class SemanticParserImpl implements ISemanticParser {
         if (commandMatch) {
           commands.push(this.buildCommand(commandMatch, language));
           matched = true;
+          clauseHadMatch = true;
         }
       }
 
-      // Skip unrecognized token
+      // Skip unrecognized token (collected for the per-clause SOV recovery)
       if (!matched) {
+        if (current) skippedClauseTokens.push(current);
         tokens.advance();
       }
     }
 
+    flushClause();
     return commands;
   }
 
