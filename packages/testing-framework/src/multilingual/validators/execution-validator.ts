@@ -62,8 +62,8 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 1 (session 8): multi-command click patterns — sync,
   // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
   // original subset: the en reference must execute with a non-empty effect
-  // signature in the current runtime. Eleven candidates were probed; nine are
-  // deliberately absent because their EN reference is unusable:
+  // signature in the current runtime. Eleven candidates were probed; five are
+  // still deliberately absent because their EN reference is unusable:
   //   halt-propagation      — runtime `halt` exits the whole handler (patient
   //                           parses as bare 'the'), second command never runs
   //   tabs-aria             — `set @attr … on <sel>`: "Invalid selector
@@ -71,19 +71,25 @@ export const EXECUTION_SUBSET: readonly string[] = [
   //   modal-close-button    — en parse DROPS `hide closest .modal`; the
   //                           surviving body-class change is invisible to the
   //                           snapshot (body isn't serialized)
-  //   dropdown-toggle       — AST emits a propertyAccess node the runtime
-  //                           can't execute
+  //   dropdown-toggle       — `next .dropdown-menu` mis-parses as a binary
+  //                           `next.dropdown - menu` (positional-expression
+  //                           gap); toggle target evaluates to NaN
   //   make-element,
   //   make-toast-element    — runtime "Invalid selector <div.card/>" (make
   //                           with an HTML-literal selector)
-  //   if-condition, if-matches, if-exists, unless-condition,
-  //   modal-close-backdrop  — the en SEMANTIC PARSE flattens if/unless
-  //                           branches into sibling commands (condition
-  //                           truncated to 'I'); the runtime then rejects the
-  //                           bare `if`. Control-flow expansion is blocked on
-  //                           the parsing track's dominant cluster — in en too.
   'tabs-content',
   'accordion-exclusive',
+  // Expansion wave 2 (session 9, post en-conditional work): control-flow click
+  // patterns whose en reference now parses (the if/else conditional fold) and
+  // executes (propertyAccess evaluator; matches/exists/is-empty condition
+  // forms). Probed through this validator: each produces a non-empty,
+  // deterministic effect signature. `unless-condition` stays out — `unless` is
+  // deliberately NOT folded (see semantic-parser.tryParseConditionalBlock), so
+  // its flat parse still errors at runtime.
+  'if-condition',
+  'if-matches',
+  'if-exists',
+  'modal-close-backdrop',
 ];
 
 /**
@@ -118,6 +124,10 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   // `add .open to closest .accordion-item` needs #btn inside one; the
   // fixture's standalone `.accordion-item.open` is the exclusivity victim.
   'accordion-exclusive': doc => doc.querySelector('.card')!.classList.add('accordion-item'),
+  // `if target matches .modal-backdrop hide .modal-backdrop` — the dispatched
+  // click's target is #btn, so the condition only fires when #btn IS the
+  // backdrop (the real-page case is a click landing on the backdrop itself).
+  'modal-close-backdrop': doc => doc.getElementById('btn')!.classList.add('modal-backdrop'),
 };
 
 /** Result of executing one pattern translation. */

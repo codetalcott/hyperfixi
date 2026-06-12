@@ -30,6 +30,15 @@ import type {
 // Parser Class
 // =============================================================================
 
+/** Context vars whose SPACE form (`my value`) is a possessive property access. */
+const POSSESSIVE_CONTEXT_TYPES = new Set(['my', 'its', 'your']);
+
+/**
+ * Identifier-typed operator keywords that must never be folded as a possessive
+ * space-form property (`my value is empty` folds `value`, stops at `is`).
+ */
+const POSTFIX_STOP_WORDS = new Set(['is', 'matches', 'match', 'contains', 'in', 'exists', 'does']);
+
 export class ExpressionParser {
   private tokens: Token[] = [];
   private current = 0;
@@ -59,6 +68,12 @@ export class ExpressionParser {
 
   private peek(): Token {
     return this.tokens[this.current] ?? { type: TokenType.EOF, value: '', start: 0, end: 0 };
+  }
+
+  private peekAt(offset: number): Token {
+    return (
+      this.tokens[this.current + offset] ?? { type: TokenType.EOF, value: '', start: 0, end: 0 }
+    );
   }
 
   private previous(): Token {
@@ -152,6 +167,22 @@ export class ExpressionParser {
       } else {
         break;
       }
+      // `is empty` / `is not empty` are UNARY predicates on the left operand
+      // (the core runtime evaluates them via its isEmpty/isNotEmpty
+      // expressions), not a binary comparison against an `empty` identifier.
+      if (operator.toLowerCase() === 'is') {
+        if (this.checkValue('empty')) {
+          this.advance();
+          left = this.createPostfixUnary('is empty', left);
+          continue;
+        }
+        if (this.checkValue('not') && this.peekAt(1).value.toLowerCase() === 'empty') {
+          this.advance();
+          this.advance();
+          left = this.createPostfixUnary('is not empty', left);
+          continue;
+        }
+      }
       const right = this.parseComparison();
       left = this.createBinaryExpression(operator, left, right);
     }
@@ -241,6 +272,29 @@ export class ExpressionParser {
           throw new Error('Expected ] after index');
         }
         expr = this.createPropertyAccess(expr, index);
+      }
+      // Possessive SPACE form: `my value`, `its length`, `your name` — a
+      // possessive context var followed directly by a plain identifier is the
+      // hyperscript possessive without the `'s`/dot. Folded to a propertyAccess
+      // (string property — the runtime resolves Element props through
+      // getElementProperty). Gated to a contextReference head so `foo bar`
+      // never folds, and the identifier must not be an operator keyword
+      // (`my value is empty` folds `my value`, leaves `is empty` alone).
+      else if (
+        expr.type === 'contextReference' &&
+        POSSESSIVE_CONTEXT_TYPES.has((expr as { contextType?: string }).contextType ?? '') &&
+        this.check(TokenType.IDENTIFIER) &&
+        !POSTFIX_STOP_WORDS.has(this.peek().value.toLowerCase())
+      ) {
+        const property = this.advance().value;
+        expr = this.createPropertyAccess(expr, property);
+      }
+      // Postfix `exists` predicate: `#modal exists`, `result exists` — a unary
+      // existence check the core runtime evaluates via its `exists` expression.
+      // Not taken when `exists` is being CALLED (`exists(...)`).
+      else if (this.checkValue('exists') && this.peekAt(1).type !== TokenType.LPAREN) {
+        this.advance();
+        expr = this.createPostfixUnary('exists', expr);
       } else {
         break;
       }
@@ -559,6 +613,18 @@ export class ExpressionParser {
       prefix: true,
       start: this.previous().start,
       end: operand.end,
+    };
+  }
+
+  /** Postfix unary predicate (`X exists`, `X is empty`): operand precedes the operator. */
+  private createPostfixUnary(operator: string, operand: ExpressionNode): UnaryExpressionNode {
+    return {
+      type: 'unaryExpression',
+      operator,
+      operand,
+      prefix: false,
+      start: operand.start,
+      end: this.previous().end,
     };
   }
 

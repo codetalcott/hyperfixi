@@ -109,7 +109,20 @@ type CallNode = ASTNode & {
   isConstructor?: boolean;
 };
 type SelectorNode = ASTNode & { value: unknown; fromQuery?: boolean };
-type ContextRefNode = ASTNode & { contextType: 'me' | 'you' | 'it' | 'target' | 'event' };
+type ContextRefNode = ASTNode & {
+  contextType:
+    | 'me'
+    | 'my'
+    | 'myself'
+    | 'I'
+    | 'you'
+    | 'your'
+    | 'yourself'
+    | 'it'
+    | 'its'
+    | 'target'
+    | 'event';
+};
 type PossessiveNode = ASTNode & { object: ASTNode; property: { name: string } };
 type EventHandlerNode = ASTNode & { event?: unknown; selector?: unknown; commands: ASTNode[] };
 type ConditionalNode = ASTNode & { test: ASTNode; consequent: ASTNode; alternate?: ASTNode };
@@ -1637,6 +1650,19 @@ async function evaluateContextReference(
     case 'you':
     case 'it':
       return getExpr(context, node.contextType).evaluate(context);
+    // Possessive/reflexive aliases (same set as the identifier path's Q1.6
+    // aliasing): the semantic→AST builder emits the surface form as the
+    // contextType (`my value` → contextReference 'my'), so resolve these to
+    // their base reference instead of falling through to undefined.
+    case 'my':
+    case 'myself':
+    case 'I':
+      return getExpr(context, 'me').evaluate(context);
+    case 'your':
+    case 'yourself':
+      return getExpr(context, 'you').evaluate(context);
+    case 'its':
+      return getExpr(context, 'it').evaluate(context);
     case 'event':
       return (context as any).event;
     case 'target':
