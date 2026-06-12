@@ -118,6 +118,13 @@ export class RegressionReporter implements Reporter {
         langResult.avgRoleFidelity !== undefined && baselineLang.avgRoleFidelity !== undefined
           ? langResult.avgRoleFidelity - baselineLang.avgRoleFidelity
           : 0;
+      // R2 — same both-sides guard: an un-regenerated baseline (no execution
+      // data yet) must never retro-flag.
+      const avgExecutionFidelityDelta =
+        langResult.avgExecutionFidelity !== undefined &&
+        baselineLang.avgExecutionFidelity !== undefined
+          ? langResult.avgExecutionFidelity - baselineLang.avgExecutionFidelity
+          : 0;
       const bundleSizeDelta = this.getBundleSizeDelta(langResult, baselineLang);
 
       // Identify new failures and successes
@@ -127,6 +134,8 @@ export class RegressionReporter implements Reporter {
       const newDegeneratePasses = this.findNewDegeneratePasses(langResult, baselineLang);
       // Correctness ratchet (R0): faithful pass in baseline → lossy pass now.
       const newLossyPasses = this.findNewLossyPasses(langResult, baselineLang);
+      // Execution ratchet (R2): faithful execution in baseline → divergent now.
+      const newExecutionFailures = this.findNewExecutionFailures(langResult, baselineLang);
 
       // Determine status
       let status: 'improved' | 'regressed' | 'unchanged' = 'unchanged';
@@ -134,7 +143,8 @@ export class RegressionReporter implements Reporter {
         parseRateDelta < -5 ||
         newFailures.length > 0 ||
         newDegeneratePasses.length > 0 ||
-        newLossyPasses.length > 0
+        newLossyPasses.length > 0 ||
+        newExecutionFailures.length > 0
       ) {
         status = 'regressed';
       } else if (parseRateDelta > 5 || newSuccesses.length > 0) {
@@ -147,11 +157,13 @@ export class RegressionReporter implements Reporter {
         avgConfidenceDelta,
         avgFidelityDelta,
         avgRoleFidelityDelta,
+        avgExecutionFidelityDelta,
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
         newFailures,
         newSuccesses,
         newDegeneratePasses,
         newLossyPasses,
+        newExecutionFailures,
         status,
       });
     }
@@ -284,6 +296,24 @@ export class RegressionReporter implements Reporter {
   }
 
   /**
+   * Execution ratchet (R2): curated-subset patterns that executed faithfully in
+   * the baseline (scored, and not in its `executionFailures`) but diverge from
+   * the en reference now. Returns [] when the baseline carries no execution
+   * data yet (`executionFailures` undefined) so adopting the signal never
+   * retro-flags — same guard as the degenerate/lossy ratchets. A pattern
+   * already failing in the baseline is not re-flagged (that's the burn-down
+   * list, not a regression).
+   */
+  private findNewExecutionFailures(
+    current: LanguageResults,
+    baseline: { executionFailures?: string[] | undefined }
+  ): string[] {
+    if (!baseline.executionFailures) return [];
+    const baselineFailures = new Set(baseline.executionFailures);
+    return (current.executionFailures ?? []).filter(id => !baselineFailures.has(id)).sort();
+  }
+
+  /**
    * Save current results as new baseline
    */
   saveAsBaseline(results: TestResults): void {
@@ -327,6 +357,10 @@ export class RegressionReporter implements Reporter {
         // R1 — role fidelity (role name + value type vs the en reference).
         // Recorded + ratcheted; burn-down is NOT part of the parsing-track goal.
         avgRoleFidelity: langResult.avgRoleFidelity ?? undefined,
+        // R2 — execution fidelity over the curated subset (DOM effects vs the
+        // en reference in jsdom). Recorded + ratcheted; burn-down deferred.
+        avgExecutionFidelity: langResult.avgExecutionFidelity ?? undefined,
+        executionFailures: langResult.executionFailures ?? undefined,
         degeneratePasses: langResult.degeneratePasses ?? undefined,
         lossyPasses: langResult.lossyPasses ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,

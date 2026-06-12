@@ -158,8 +158,53 @@ export class ConsoleReporter implements Reporter {
     }
 
     this.reportDegeneratePasses(results);
+    this.reportExecutionFailures(results);
 
     this.log('');
+  }
+
+  /**
+   * R2 — surface curated-subset patterns whose jsdom execution diverged from
+   * the en reference's DOM effects. These can score 1.0 on parse fidelity yet
+   * behave differently at runtime, so they're reported separately.
+   */
+  private reportExecutionFailures(results: TestResults): void {
+    // pattern id -> languages where execution diverged
+    const byPattern = new Map<string, string[]>();
+    const scored = results.languageResults.filter(l => l.avgExecutionFidelity !== undefined);
+    for (const lang of scored) {
+      for (const id of lang.executionFailures ?? []) {
+        let langs = byPattern.get(id);
+        if (!langs) {
+          langs = [];
+          byPattern.set(id, langs);
+        }
+        langs.push(lang.language);
+      }
+    }
+    if (scored.length === 0) return;
+
+    const avg = scored.reduce((sum, l) => sum + (l.avgExecutionFidelity ?? 0), 0) / scored.length;
+    this.log('');
+    this.log(
+      this.bright(`Execution (R2): avgExecutionFidelity ${avg.toFixed(4)} over curated subset`)
+    );
+    if (byPattern.size === 0) return;
+
+    const totalInstances = [...byPattern.values()].reduce((n, langs) => n + langs.length, 0);
+    this.log(
+      this.yellow(
+        `⚠ Execution divergence: ${totalInstances} instance(s) across ${byPattern.size} pattern(s)`
+      )
+    );
+    this.log(
+      this.dim('  (DOM effects differ from the en reference in jsdom — not parse failures)')
+    );
+    for (const [id, langs] of [...byPattern.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      this.log(
+        `  ${this.dim('-')} ${id} ${this.dim(`(${langs.length}: ${langs.sort().join(',')})`)}`
+      );
+    }
   }
 
   /**
@@ -256,6 +301,14 @@ export class ConsoleReporter implements Reporter {
         this.log(
           `  ${this.yellow('Fidelity Regressions:')} ${result.newDegeneratePasses.length}` +
             ` ${this.dim(`(${result.newDegeneratePasses.join(', ')})`)}`
+        );
+      }
+
+      // R2 — execution regressions (faithful execution → divergent DOM effects)
+      if (result.newExecutionFailures.length > 0) {
+        this.log(
+          `  ${this.red('Execution Regressions:')} ${result.newExecutionFailures.length}` +
+            ` ${this.dim(`(${result.newExecutionFailures.join(', ')})`)}`
         );
       }
 

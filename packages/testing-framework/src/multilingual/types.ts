@@ -190,6 +190,21 @@ export interface LanguageResults {
   avgRoleFidelity?: number | undefined;
 
   /**
+   * R2 — mean executionFidelity over the curated execution subset (see
+   * validators/execution-validator.ts): 1 per pattern whose jsdom DOM-effect
+   * signature exactly matches the en reference's, else 0. Recorded + ratcheted
+   * in the baseline; the burn-down is NOT part of any current session goal
+   * (CORRECTNESS_RELIABILITY_PLAN.md §8).
+   */
+  avgExecutionFidelity?: number | undefined;
+
+  /**
+   * R2 — curated-subset pattern IDs whose execution diverged from the en
+   * reference (error, no effect, or different DOM-effect signature).
+   */
+  executionFailures?: string[] | undefined;
+
+  /**
    * Pattern IDs that pass (non-null) but parse *degenerately* — fidelity below
    * the harness threshold (lost most of the English command structure). These
    * are real-but-shallow passes the parse-rate metric alone can't surface.
@@ -260,6 +275,10 @@ export interface Baseline {
         avgFidelity?: number | undefined;
         /** R1 — mean role fidelity vs the English reference (see ParseResult.roleFidelity). */
         avgRoleFidelity?: number | undefined;
+        /** R2 — mean execution fidelity over the curated execution subset (see LanguageResults.avgExecutionFidelity). */
+        avgExecutionFidelity?: number | undefined;
+        /** R2 — curated-subset pattern IDs whose execution diverged from the en reference. */
+        executionFailures?: string[] | undefined;
         /** Pattern IDs that pass but parse degenerately (fidelity below threshold). */
         degeneratePasses?: string[] | undefined;
         /** Pattern IDs that pass *lossily* (fidelity in [0.5, 1.0) — drop ≥1 command). */
@@ -291,6 +310,14 @@ export interface RegressionResult {
   avgFidelityDelta: number;
   /** R1 — absolute change in avgRoleFidelity (current − baseline). 0 when either side lacks data. */
   avgRoleFidelityDelta: number;
+  /** R2 — absolute change in avgExecutionFidelity (current − baseline). 0 when either side lacks data. */
+  avgExecutionFidelityDelta: number;
+  /**
+   * R2 — curated-subset patterns that executed faithfully in the baseline but
+   * diverge now. Empty when the baseline carries no execution data yet (never
+   * retro-flags); the precise per-pattern execution ratchet.
+   */
+  newExecutionFailures: string[];
   bundleSizeDelta: number | undefined; // % change
   newFailures: string[]; // pattern IDs
   newSuccesses: string[]; // pattern IDs
