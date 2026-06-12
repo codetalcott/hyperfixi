@@ -1606,7 +1606,10 @@ export class SemanticParserImpl implements ISemanticParser {
       ar: new Set(['ثم', 'بعدها', 'ثمّ']),
       es: new Set(['entonces', 'luego', 'después']),
       ko: new Set(['그다음', '그리고', '그런후', '그러면']),
-      zh: new Set(['然后', '接着', '之后']),
+      // 之后 is deliberately ABSENT: the zh transformer emits it as positional
+      // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
+      // it here split the put clause at 之后 and dropped the put.
+      zh: new Set(['然后', '接着', '那么']),
       tr: new Set(['sonra', 'ardından', 'daha sonra']),
       pt: new Set(['então', 'depois', 'logo']),
       fr: new Set(['puis', 'ensuite', 'alors']),

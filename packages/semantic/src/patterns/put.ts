@@ -742,7 +742,96 @@ function getPutPatternsZh(): LanguagePattern[] {
 /**
  * Get put patterns for a specific language.
  */
+/**
+ * Positional put (before/after) for languages whose handcrafted/generated put
+ * patterns cover only the into-destination form. The i18n transformer emits
+ * `<verb> {patient} <before|after-word> {destination}` (he inserts the את
+ * patient marker after the verb; zh fronts 把 between verb and patient).
+ * Without these, `put X after/before Y` keeps the event but drops the put
+ * (put-after/put-before lossy in exactly these 8 languages). en/es/pl/ru/uk/vi
+ * carry their own handcrafted before/after variants — this table is only for
+ * the languages that had none.
+ */
+const PUT_POSITIONAL: ReadonlyArray<{
+  lang: string;
+  verb: string;
+  verbAlts?: string[];
+  before: string;
+  after: string;
+  /** literal inserted between verb and patient (he את, zh 把-optional) */
+  patientPrefix?: string;
+  patientPrefixOptional?: boolean;
+}> = [
+  { lang: 'de', verb: 'setzen', before: 'vor', after: 'nach' },
+  { lang: 'fr', verb: 'mettre', before: 'avant', after: 'après' },
+  { lang: 'he', verb: 'שים', patientPrefix: 'את', before: 'לפני', after: 'אחרי' },
+  {
+    lang: 'id',
+    verb: 'taruh',
+    verbAlts: ['letakkan', 'masukkan', 'tempatkan'],
+    before: 'sebelum',
+    after: 'setelah',
+  },
+  { lang: 'ms', verb: 'letak', before: 'sebelum', after: 'selepas' },
+  { lang: 'pt', verb: 'colocar', before: 'antes', after: 'depois' },
+  { lang: 'sw', verb: 'weka', before: 'kabla', after: 'baada' },
+  {
+    lang: 'zh',
+    verb: '放置',
+    verbAlts: ['放', '放入'],
+    patientPrefix: '把',
+    patientPrefixOptional: true,
+    before: '之前',
+    after: '之后',
+  },
+];
+
+function buildPositionalPutPatterns(language: string): LanguagePattern[] {
+  const spec = PUT_POSITIONAL.find(s => s.lang === language);
+  if (!spec) return [];
+  return (['before', 'after'] as const).map(manner => {
+    const posWord = spec[manner];
+    const tokens: LanguagePattern['template']['tokens'] = [
+      spec.verbAlts
+        ? { type: 'literal', value: spec.verb, alternatives: spec.verbAlts }
+        : { type: 'literal', value: spec.verb },
+    ];
+    if (spec.patientPrefix) {
+      tokens.push(
+        spec.patientPrefixOptional
+          ? {
+              type: 'group',
+              optional: true,
+              tokens: [{ type: 'literal', value: spec.patientPrefix }],
+            }
+          : { type: 'literal', value: spec.patientPrefix }
+      );
+    }
+    tokens.push(
+      { type: 'role', role: 'patient' },
+      { type: 'literal', value: posWord },
+      { type: 'role', role: 'destination' }
+    );
+    return {
+      id: `put-${spec.lang}-${manner}`,
+      language: spec.lang,
+      command: 'put',
+      priority: 95,
+      template: {
+        format: `${spec.verb} {patient} ${posWord} {destination}`,
+        tokens,
+      },
+      extraction: {
+        patient: { position: spec.patientPrefix && !spec.patientPrefixOptional ? 2 : 1 },
+        destination: { marker: posWord },
+        manner: { default: { type: 'literal', value: manner } },
+      },
+    } satisfies LanguagePattern;
+  });
+}
+
 export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
+  const positional = buildPositionalPutPatterns(language);
   switch (language) {
     case 'bn':
       return getPutPatternsBn();
@@ -753,7 +842,7 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
     case 'hi':
       return getPutPatternsHi();
     case 'id':
-      return getPutPatternsId();
+      return [...getPutPatternsId(), ...positional];
     case 'it':
       return getPutPatternsIt();
     case 'pl':
@@ -767,8 +856,8 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
     case 'vi':
       return getPutPatternsVi();
     case 'zh':
-      return getPutPatternsZh();
+      return [...getPutPatternsZh(), ...positional];
     default:
-      return [];
+      return positional;
   }
 }

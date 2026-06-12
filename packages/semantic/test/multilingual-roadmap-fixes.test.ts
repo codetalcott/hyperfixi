@@ -3249,3 +3249,72 @@ describe('unless keyword exists in profiles the dicts emit for (pl/it/ru/uk/th)'
     expect([...a].sort()).toEqual(['on', 'toggle', 'unless']);
   });
 });
+
+describe('positional put (before/after) for the 8 languages without variants', () => {
+  // put-after/put-before were lossy in exactly de/fr/he/id/ms/pt/sw/zh — the
+  // languages whose handcrafted/generated put patterns cover only the
+  // into-destination form (en/es/pl/ru/uk/vi carry their own before/after
+  // variants). The transformer emits `<verb> {patient} <pos-word> {dest}`
+  // (he inserts the את patient marker; zh fronts 把). Added a table-driven
+  // builder mirroring the put-es-after shape for the 8.
+  //
+  // zh needed one more mechanism: 之后 was in the parser's curated zh
+  // then-keyword set, so `放置 把 X 之后 Y` split at 之后 and the put dropped
+  // even with the pattern present. The zh transformer emits 那么 for then
+  // (now in the set) and 之后 only as positional after — removed from the set.
+  // Side effect: zh behavior-* go null-parse → degenerate (bodies now split
+  // at 那么), a strict improvement. lossy 223 → 207, avgFidelity
+  // 0.9571 → 0.9586, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), put-after:
+  // `on click put "<p>New</p>" after me`
+  const corpus: Array<[string, string]> = [
+    ['de', 'bei klick setzen "<p>New</p>" nach ich'],
+    ['fr', 'sur clic mettre "<p>New</p>" après moi'],
+    ['he', 'ב לחיצה שים את "<p>New</p>" אחרי אני'],
+    ['id', 'pada klik taruh "<p>New</p>" setelah saya'],
+    ['ms', 'apabila click letak "<p>New</p>" selepas saya'],
+    ['pt', 'em clique colocar "<p>New</p>" depois eu'],
+    ['sw', 'kwenye bonyeza weka "<p>New</p>" baada mimi'],
+    ['zh', '当 点击 时 放置 把 "<p>New</p>" 之后 我'],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] put-after keeps the put (was {on})`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('put')).toBe(true);
+    });
+  }
+
+  it('[zh] put-before works symmetrically', () => {
+    const a = actions(parse('当 点击 时 放置 把 "<p>New</p>" 之前 我', 'zh'));
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[zh] 那么 then-chains still split (replacement for the removed 之后)', () => {
+    const a = actions(parse('当 点击 时 设置 把 $x 到 "1" 那么 切换 .active', 'zh'));
+    expect(a.has('set')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+
+  it('[de] the into-destination put is unchanged', () => {
+    const a = actions(parse('bei klick setzen "x" zu #out', 'de'));
+    expect(a.has('on')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(parse('on click put "<p>New</p>" after me', 'en'));
+    expect([...a].sort()).toEqual(['on', 'put']);
+  });
+});
