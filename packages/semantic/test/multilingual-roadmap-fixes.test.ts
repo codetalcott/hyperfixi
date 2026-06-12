@@ -4323,3 +4323,50 @@ describe('event-wrapper trailing destination — SOV post-verb to-phrase capture
     expect(role(cmds[0], 'destination')).toBe('#item');
   });
 });
+
+describe('set.ts role-convention realign — goal/target conventions → en convention (R2 #380)', () => {
+  // Handcrafted set patterns carried THREE role conventions: most languages
+  // use {destination}+{patient} (what setMapper reads: destination→args,
+  // patient→modifiers.to), but bn/it/pl/ru/th/uk used {patient}+{goal} and
+  // vi used {target}+{value}. setMapper ignores goal/target/value entirely,
+  // so the property path landed in modifiers.to, args came out EMPTY, and
+  // the runtime set nothing — set-style/set-text/set-inner-html failed at
+  // execution in every goal-convention language whose corpus matched these
+  // patterns. All realigned to the en convention; the mapper is untouched.
+  // pl/ru/uk 0.824 → 1.000 (13 perfect languages), mean 0.8900 → 0.9130.
+  function firstBody(node: unknown): Record<string, unknown> {
+    const rec = node as Record<string, unknown>;
+    const body = rec?.body as unknown;
+    return (Array.isArray(body) ? body[0] : body) as Record<string, unknown>;
+  }
+  function roleType(node: unknown, name: string): string | undefined {
+    const cmd = firstBody(node);
+    const roles = cmd?.roles as Map<string, { type?: string }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { type?: string } | undefined)?.type;
+  }
+
+  // Corpus-shaped set-text-possessive-dot (en → lang).
+  const cases: Array<[string, string]> = [
+    ['ru', 'при клик установить мой.textContent в "Done!"'],
+    ['uk', 'при клік встановити мій.textContent в "Done!"'],
+    ['pl', 'gdy kliknięcie ustaw mój.textContent do "Done!"'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] set captures destination=property-path + patient=value (was patient+goal)`, () => {
+      const parsed = parse(input, lang as 'ru');
+      expect(roleType(parsed, 'destination')).toBe('property-path');
+      expect(roleType(parsed, 'patient')).toBe('literal');
+      const cmd = firstBody(parsed);
+      const roles = cmd.roles as Map<string, unknown>;
+      const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+      expect(m.has('goal'), 'no goal role').toBe(false);
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const parsed = parse('on click set my.textContent to "Done!"', 'en');
+    expect(roleType(parsed, 'destination')).toBe('property-path');
+    expect(roleType(parsed, 'patient')).toBe('literal');
+  });
+});

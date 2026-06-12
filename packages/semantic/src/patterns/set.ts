@@ -18,19 +18,19 @@ function getSetPatternsBn(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: '{patient} কে {goal} এ সেট করুন',
+        format: '{destination} কে {patient} এ সেট করুন',
         tokens: [
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
           { type: 'literal', value: 'কে' },
-          { type: 'role', role: 'goal' },
+          { type: 'role', role: 'patient' },
           { type: 'literal', value: 'এ', alternatives: ['তে'] },
           { type: 'literal', value: 'সেট', alternatives: ['নির্ধারণ'] },
           { type: 'literal', value: 'করুন' },
         ],
       },
       extraction: {
-        patient: { position: 0 },
-        goal: { marker: 'এ', position: 2 },
+        destination: { position: 0 },
+        patient: { marker: 'এ', position: 2 },
       },
     },
     // Simple pattern: সেট :x 5
@@ -40,16 +40,16 @@ function getSetPatternsBn(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'সেট {patient} {goal}',
+        format: 'সেট {destination} {patient}',
         tokens: [
           { type: 'literal', value: 'সেট', alternatives: ['নির্ধারণ'] },
+          { type: 'role', role: 'destination' },
           { type: 'role', role: 'patient' },
-          { type: 'role', role: 'goal' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { position: 2 },
+        destination: { position: 1 },
+        patient: { position: 2 },
       },
     },
   ];
@@ -455,23 +455,23 @@ function getSetPatternsIt(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'impostare {patient} a {goal}',
+        format: 'impostare {destination} a {patient}',
         tokens: [
           { type: 'literal', value: 'impostare', alternatives: ['imposta', 'set', 'definire'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'a', alternatives: ['su', 'come'] },
-              { type: 'role', role: 'goal' },
+              { type: 'role', role: 'patient' },
             ],
           },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { marker: 'a', markerAlternatives: ['su', 'come'] },
+        destination: { position: 1 },
+        patient: { marker: 'a', markerAlternatives: ['su', 'come'] },
       },
     },
     {
@@ -480,14 +480,14 @@ function getSetPatternsIt(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'impostare {patient}',
+        format: 'impostare {destination}',
         tokens: [
           { type: 'literal', value: 'impostare', alternatives: ['imposta', 'set'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
+        destination: { position: 1 },
       },
     },
   ];
@@ -501,23 +501,23 @@ function getSetPatternsPl(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'ustaw {patient} na {goal}',
+        format: 'ustaw {destination} na {patient}',
         tokens: [
           { type: 'literal', value: 'ustaw', alternatives: ['określ', 'okresl', 'przypisz'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'na', alternatives: ['do', 'jako'] },
-              { type: 'role', role: 'goal' },
+              { type: 'role', role: 'patient' },
             ],
           },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { marker: 'na', markerAlternatives: ['do', 'jako'] },
+        destination: { position: 1 },
+        patient: { marker: 'na', markerAlternatives: ['do', 'jako'] },
       },
     },
     {
@@ -526,14 +526,14 @@ function getSetPatternsPl(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'ustaw {patient}',
+        format: 'ustaw {destination}',
         tokens: [
           { type: 'literal', value: 'ustaw', alternatives: ['określ', 'okresl'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
+        destination: { position: 1 },
       },
     },
   ];
@@ -623,23 +623,23 @@ function getSetPatternsRu(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'установить {patient} в {goal}',
+        format: 'установить {destination} в {patient}',
         tokens: [
           { type: 'literal', value: 'установить', alternatives: ['установи', 'задать', 'задай'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'в', alternatives: ['на', 'как'] },
-              { type: 'role', role: 'goal' },
+              { type: 'role', role: 'patient' },
             ],
           },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { marker: 'в', markerAlternatives: ['на', 'как'] },
+        destination: { position: 1 },
+        patient: { marker: 'в', markerAlternatives: ['на', 'как'] },
       },
     },
     {
@@ -648,14 +648,14 @@ function getSetPatternsRu(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'установить {patient}',
+        format: 'установить {destination}',
         tokens: [
           { type: 'literal', value: 'установить', alternatives: ['установи', 'задать', 'задай'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
+        destination: { position: 1 },
       },
     },
   ];
@@ -708,16 +708,16 @@ function getSetPatternsTh(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'ตั้ง {patient} {goal}',
+        format: 'ตั้ง {destination} {patient}',
         tokens: [
           { type: 'literal', value: 'ตั้ง', alternatives: ['กำหนด'] },
+          { type: 'role', role: 'destination' },
           { type: 'role', role: 'patient' },
-          { type: 'role', role: 'goal' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { position: 2 },
+        destination: { position: 1 },
+        patient: { position: 2 },
       },
     },
   ];
@@ -731,23 +731,23 @@ function getSetPatternsUk(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'встановити {patient} в {goal}',
+        format: 'встановити {destination} в {patient}',
         tokens: [
           { type: 'literal', value: 'встановити', alternatives: ['встанови', 'задати', 'задай'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'в', alternatives: ['на', 'як'] },
-              { type: 'role', role: 'goal' },
+              { type: 'role', role: 'patient' },
             ],
           },
         ],
       },
       extraction: {
-        patient: { position: 1 },
-        goal: { marker: 'в', markerAlternatives: ['на', 'як'] },
+        destination: { position: 1 },
+        patient: { marker: 'в', markerAlternatives: ['на', 'як'] },
       },
     },
     {
@@ -756,14 +756,14 @@ function getSetPatternsUk(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'встановити {patient}',
+        format: 'встановити {destination}',
         tokens: [
           { type: 'literal', value: 'встановити', alternatives: ['встанови', 'задати', 'задай'] },
-          { type: 'role', role: 'patient' },
+          { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
-        patient: { position: 1 },
+        destination: { position: 1 },
       },
     },
   ];
@@ -855,7 +855,7 @@ function getSetPatternsVi(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: 'gán {target} thành {value}',
+        format: 'gán {destination} thành {patient}',
         tokens: [
           { type: 'literal', value: 'gán', alternatives: ['thiết lập', 'đặt giá trị'] },
           { type: 'role', role: 'patient' },
@@ -874,7 +874,7 @@ function getSetPatternsVi(): LanguagePattern[] {
       command: 'set',
       priority: 90,
       template: {
-        format: 'đặt {target} là {value}',
+        format: 'đặt {destination} là {patient}',
         tokens: [
           { type: 'literal', value: 'đặt' },
           { type: 'role', role: 'patient' },
