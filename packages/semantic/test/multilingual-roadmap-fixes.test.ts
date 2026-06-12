@@ -1498,13 +1498,31 @@ describe('socket command keyword alignment (9 native-primary languages)', () => 
   // name/url and put the verb mid-stream; the recovery is order-independent.
   const cases: Array<[string, string]> = [
     ['ar', 'مقبس ChatSocket ws://localhost:8080 ثم عند message ثم ضع هو إلى #chat end'],
-    ['bn', 'ChatSocket ws://localhost:8080 কে সকেট তারপর message এ তারপর এটি কে #chat end তে রাখুন'],
+    [
+      'bn',
+      'ChatSocket ws://localhost:8080 কে সকেট তারপর message এ তারপর এটি কে #chat end তে রাখুন',
+    ],
     ['hi', 'ChatSocket ws://localhost:8080 को सॉकेट फिर message पर फिर यह को रखें #chat end में'],
-    ['ja', 'ChatSocket ws://localhost:8080 を ソケット それから message で それから それ を #chat end に 置く'],
-    ['ko', 'ChatSocket ws://localhost:8080 를 소켓 그러면 message 그러면 그것 를 #chat end 에 넣다'],
-    ['pt', 'soquete ChatSocket ws://localhost:8080 então em message então colocar isso para #chat end'],
-    ['qu', 'ChatSocket ws://localhost:8080 ta tinkina chayqa message pi chayqa chay ta #chat end man churay'],
-    ['sw', 'soketi ChatSocket ws://localhost:8080 kisha kwenye message kisha weka hiyo kwa #chat end'],
+    [
+      'ja',
+      'ChatSocket ws://localhost:8080 を ソケット それから message で それから それ を #chat end に 置く',
+    ],
+    [
+      'ko',
+      'ChatSocket ws://localhost:8080 를 소켓 그러면 message 그러면 그것 를 #chat end 에 넣다',
+    ],
+    [
+      'pt',
+      'soquete ChatSocket ws://localhost:8080 então em message então colocar isso para #chat end',
+    ],
+    [
+      'qu',
+      'ChatSocket ws://localhost:8080 ta tinkina chayqa message pi chayqa chay ta #chat end man churay',
+    ],
+    [
+      'sw',
+      'soketi ChatSocket ws://localhost:8080 kisha kwenye message kisha weka hiyo kwa #chat end',
+    ],
     ['tr', 'ChatSocket ws://localhost:8080 i soket sonra message de sonra o i #chat end e koy'],
   ];
 
@@ -3346,10 +3364,7 @@ describe('qu patient-first SOV variants for add/remove/put (Track C core)', () =
   it('[qu] tabs-basic keeps remove + add (was {on} + spurious from)', () => {
     // Corpus-shaped transformer output (en → qu).
     const a = actions(
-      parse(
-        '.active ta .tab manta ñitiy pi qichuy chayqa .active ta noqa man yapay',
-        'qu'
-      )
+      parse('.active ta .tab manta ñitiy pi qichuy chayqa .active ta noqa man yapay', 'qu')
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('remove')).toBe(true);
@@ -3461,7 +3476,10 @@ describe('fused-event body walker recovers verb-mid SOV clauses (then-tail set/p
   // Corpus-shaped transformer output (en → lang).
   it('[ja] fetch-json keeps the then-tail set (was {fetch,on})', () => {
     const a = actions(
-      parse('/api/user を クリック で フェッチ json それから #name.innerText を 設定 その.name に', 'ja')
+      parse(
+        '/api/user を クリック で フェッチ json それから #name.innerText を 設定 その.name に',
+        'ja'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('fetch')).toBe(true);
@@ -3470,7 +3488,10 @@ describe('fused-event body walker recovers verb-mid SOV clauses (then-tail set/p
 
   it('[tr] form-disable-on-submit keeps the then-tail put (was {add,on})', () => {
     const a = actions(
-      parse('@disabled i gönder de ekle <button/> in me e sonra "Submitting..." i <button/> in me e koy', 'tr')
+      parse(
+        '@disabled i gönder de ekle <button/> in me e sonra "Submitting..." i <button/> in me e koy',
+        'tr'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('add')).toBe(true);
@@ -3491,14 +3512,19 @@ describe('fused-event body walker recovers verb-mid SOV clauses (then-tail set/p
 
   it('[qu] fetch-json keeps the then-tail set (was {fetch,on})', () => {
     const a = actions(
-      parse('/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay', 'qu')
+      parse(
+        '/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay',
+        'qu'
+      )
     );
     expect(a.has('fetch')).toBe(true);
     expect(a.has('set')).toBe(true);
   });
 
   it('[en] the en reference parse is unchanged', () => {
-    const a = actions(parse('on click fetch /api/user as json then set #name.innerText to it.name', 'en'));
+    const a = actions(
+      parse('on click fetch /api/user as json then set #name.innerText to it.name', 'en')
+    );
     expect([...a].sort()).toEqual(['fetch', 'on', 'set']);
   });
 });
@@ -3564,7 +3590,10 @@ describe('ko event marker 할 때 — fused patterns anchor, custom events confi
 
   it('[ko] fetch-json keeps the then-tail set through the fused pattern + body walker', () => {
     const a = actions(
-      parse('/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 설정 그것의.name 에', 'ko')
+      parse(
+        '/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 설정 그것의.name 에',
+        'ko'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('fetch')).toBe(true);
@@ -3666,7 +3695,10 @@ describe('tl/ar VSO event recovery — mis-listed keywords + midstream-on-no-mat
 
   it('[tl] modal-close-button recovers the handler around an unmatched leading command', () => {
     const a = actions(
-      parse('itago pinakamalapit .modal kapag click pagkatapos alisin .modal-open mula sa katawan', 'tl')
+      parse(
+        'itago pinakamalapit .modal kapag click pagkatapos alisin .modal-open mula sa katawan',
+        'tl'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('remove')).toBe(true);
@@ -3691,7 +3723,10 @@ describe('tl/ar VSO event recovery — mis-listed keywords + midstream-on-no-mat
     let flattenedToHandler = false;
     try {
       const a = actions(
-        parse('behavior Removable(t)\n    من t عند نقر\n        احذف أنا\n    النهاية\nالنهاية', 'ar')
+        parse(
+          'behavior Removable(t)\n    من t عند نقر\n        احذف أنا\n    النهاية\nالنهاية',
+          'ar'
+        )
       );
       flattenedToHandler = a.has('on');
     } catch {
@@ -3840,9 +3875,18 @@ describe('marker-less fetch recovery for the fetch-loading-state/event-debounce 
   // event-debounce: `on input debounced at 300ms fetch /api/search?q=${my value}
   //  as json then put it into #results`
   const debounce: Array<[string, string]> = [
-    ['it', 'su input debounced a 300ms recuperare /api/search?q=${my value} come json allora mettere esso in #results'],
-    ['uk', 'при введення debounced в 300ms завантажити /api/search?q=${my value} як json тоді покласти це в #results'],
-    ['vi', 'khi nhập debounced tại 300ms tải /api/search?q=${my value} như json rồi đặt nó vào #results'],
+    [
+      'it',
+      'su input debounced a 300ms recuperare /api/search?q=${my value} come json allora mettere esso in #results',
+    ],
+    [
+      'uk',
+      'при введення debounced в 300ms завантажити /api/search?q=${my value} як json тоді покласти це в #results',
+    ],
+    [
+      'vi',
+      'khi nhập debounced tại 300ms tải /api/search?q=${my value} như json rồi đặt nó vào #results',
+    ],
   ];
   for (const [lang, input] of debounce) {
     it(`[${lang}] event-debounce keeps the fetch (was {on,put})`, () => {
@@ -3859,7 +3903,10 @@ describe('marker-less fetch recovery for the fetch-loading-state/event-debounce 
 
   it('[en] the en reference parse is unchanged', () => {
     const a = actions(
-      parse('on click add .loading to me fetch /api/data then remove .loading from me put it into #result', 'en')
+      parse(
+        'on click add .loading to me fetch /api/data then remove .loading from me put it into #result',
+        'en'
+      )
     );
     expect([...a].sort()).toEqual(['add', 'fetch', 'on', 'put', 'remove']);
   });
@@ -3934,7 +3981,10 @@ describe('set patterns must not claim put verbs (de setzen / fr mettre / pt colo
 
   it('[en] the en reference parse is unchanged', () => {
     const a = actions(
-      parse('on click if #modal exists show #modal else make a <div#modal/> put it into body end', 'en')
+      parse(
+        'on click if #modal exists show #modal else make a <div#modal/> put it into body end',
+        'en'
+      )
     );
     expect([...a].sort()).toEqual(['if', 'make', 'on', 'put', 'show']);
   });
@@ -4037,9 +4087,21 @@ describe('auditor realign batch 1 — trigger/take/render/settle/morph/make (17 
     ['ru', 'при загрузка запустить инициализировать', ['on', 'trigger']],
     ['tl', 'kumuha .active mula sa .tab-button kapag click pagkatapos para_sa ako', ['on', 'take']],
     ['tr', '.active i tıklama de tut .tab-button den sonra ben i için', ['on', 'take']],
-    ['id', 'pada klik olah #user-list dengan users: $data lalu taruh itu ke #container', ['on', 'render', 'put']],
-    ['qu', '.animate ta ñitiy pi yapay chayqa tiyakuy chayqa .animate ta qichuy', ['on', 'add', 'settle', 'remove']],
-    ['sw', 'kwenye bonyeza tengeneza a <div.card/> kisha weka hiyo kwa #container', ['on', 'make', 'put']],
+    [
+      'id',
+      'pada klik olah #user-list dengan users: $data lalu taruh itu ke #container',
+      ['on', 'render', 'put'],
+    ],
+    [
+      'qu',
+      '.animate ta ñitiy pi yapay chayqa tiyakuy chayqa .animate ta qichuy',
+      ['on', 'add', 'settle', 'remove'],
+    ],
+    [
+      'sw',
+      'kwenye bonyeza tengeneza a <div.card/> kisha weka hiyo kwa #container',
+      ['on', 'make', 'put'],
+    ],
   ];
   for (const [lang, input, expected] of cases) {
     it(`[${lang}] realigned emission parses {${expected.join(',')}}`, () => {
@@ -4313,7 +4375,10 @@ describe('event-wrapper trailing destination — SOV post-verb to-phrase capture
       expect(add, 'add command present').toBeTruthy();
       expect(role(add!, 'patient')).toBe('.selected');
       expect(role(add!, 'destination')).toBe('#item');
-      expect(cmds.some(c => c.action === 'into'), 'no fabricated into command').toBe(false);
+      expect(
+        cmds.some(c => c.action === 'into'),
+        'no fabricated into command'
+      ).toBe(false);
     });
   }
 
@@ -4368,5 +4433,88 @@ describe('set.ts role-convention realign — goal/target conventions → en conv
     const parsed = parse('on click set my.textContent to "Done!"', 'en');
     expect(roleType(parsed, 'destination')).toBe('property-path');
     expect(roleType(parsed, 'patient')).toBe('literal');
+  });
+});
+
+describe('Fused {action} event patterns re-parse the body clause for roles (R2 it/th)', () => {
+  // The handcrafted fused event patterns (`su {event} {action}` it,
+  // `เมื่อ {event} {action}` th, and the bn family) capture only the body
+  // VERB as a positional role — the body's arguments trail unconsumed and the
+  // handler body came out as a command with ZERO roles, while the en
+  // reference re-parses the same clause through the command patterns and
+  // captures everything. buildEventHandler now retries: when the captured
+  // action produced a role-less command, the [verb..clause-boundary] span is
+  // re-parsed with the command patterns and swapped in — but only when the
+  // re-parse yields a single command with the SAME action and ≥1 role, so a
+  // body whose standalone pattern is missing (it blur/transition, th
+  // breakpoint/put) keeps the zero-roled action instead of degenerating to
+  // nothing. Companion marker fixes: set-it-full gains the transformer's
+  // value marker `in`; set-th-simple swaps a broken positional patient for
+  // the ใน marker group every th corpus emission carries.
+  // it/th 0.824 → 1.000 (15 perfect languages), qu 0.412 → 0.765,
+  // mean 0.9130 → 0.9437.
+  function firstBody(node: unknown): Record<string, unknown> {
+    const rec = node as Record<string, unknown>;
+    const body = rec?.body as unknown;
+    return (Array.isArray(body) ? body[0] : body) as Record<string, unknown>;
+  }
+  function rolesOf(
+    cmd: Record<string, unknown> | undefined
+  ): Map<string, { type?: string; value?: unknown }> {
+    const roles = cmd?.roles as Map<string, { type?: string; value?: unknown }>;
+    return roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+  }
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped set-text-possessive-dot (en: on click set my.textContent to "Done!").
+  const fused: Array<[string, string]> = [
+    ['it', 'su clic impostare mio.textContent in "Done!"'],
+    ['th', 'เมื่อ คลิก ตั้ง ของฉัน.textContent ใน "Done!"'],
+  ];
+  for (const [lang, input] of fused) {
+    it(`[${lang}] fused event-handler body re-parses with destination + patient (was zero roles)`, () => {
+      const roles = rolesOf(firstBody(parse(input, lang as 'it')));
+      expect(roles.get('destination')?.type).toBe('property-path');
+      expect(roles.get('patient')?.value).toBe('Done!');
+    });
+  }
+
+  // Standalone bodies (then-chain / continuation re-parse shape).
+  it('[it] standalone set with the transformer marker `in` captures the patient', () => {
+    const roles = rolesOf(parse('impostare mio.textContent in "Done!"', 'it') as never);
+    expect(roles.get('destination')?.type).toBe('property-path');
+    expect(roles.get('patient')?.value).toBe('Done!');
+  });
+  it('[th] standalone set with the ใน marker captures the patient (was bogus positional)', () => {
+    const roles = rolesOf(parse('ตั้ง ของฉัน.textContent ใน "Done!"', 'th') as never);
+    expect(roles.get('destination')?.type).toBe('property-path');
+    expect(roles.get('patient')?.value).toBe('Done!');
+  });
+
+  // Fallback guard: a body verb with no matching standalone pattern keeps its
+  // zero-roled action (the retry must never degenerate an action to nothing).
+  it('[it] blur body without a standalone pattern keeps the blur action', () => {
+    expect(actions(parse('su keydown[key=="Escape"] sfuocatura io', 'it')).has('blur')).toBe(true);
+  });
+  it('[th] breakpoint + then-chain keeps both actions', () => {
+    const a = actions(parse('เมื่อ คลิก จุดพัก แล้ว ตั้ง $x ใน 42', 'th'));
+    expect(a.has('breakpoint')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const roles = rolesOf(firstBody(parse('on click set my.textContent to "Done!"', 'en')));
+    expect(roles.get('destination')?.type).toBe('property-path');
+    expect(roles.get('patient')?.value).toBe('Done!');
   });
 });

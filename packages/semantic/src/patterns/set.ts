@@ -463,7 +463,8 @@ function getSetPatternsIt(): LanguagePattern[] {
             type: 'group',
             optional: true,
             tokens: [
-              { type: 'literal', value: 'a', alternatives: ['su', 'come'] },
+              // 'in' is what the it grammar transformer emits for en 'to'
+              { type: 'literal', value: 'a', alternatives: ['su', 'come', 'in'] },
               { type: 'role', role: 'patient' },
             ],
           },
@@ -471,7 +472,7 @@ function getSetPatternsIt(): LanguagePattern[] {
       },
       extraction: {
         destination: { position: 1 },
-        patient: { marker: 'a', markerAlternatives: ['su', 'come'] },
+        patient: { marker: 'a', markerAlternatives: ['su', 'come', 'in'] },
       },
     },
     {
@@ -701,23 +702,32 @@ function getSetPatternsSw(): LanguagePattern[] {
 
 function getSetPatternsTh(): LanguagePattern[] {
   return [
-    // Simple pattern: ตั้ง :x 5
+    // Marker pattern: ตั้ง X ใน "val" — every th corpus emission marks the
+    // value with ใน (en 'to'); positional patient mis-captured multi-token
+    // destinations (property paths) and fabricated bogus values.
     {
       id: 'set-th-simple',
       language: 'th',
       command: 'set',
       priority: 100,
       template: {
-        format: 'ตั้ง {destination} {patient}',
+        format: 'ตั้ง {destination} ใน {patient}',
         tokens: [
-          { type: 'literal', value: 'ตั้ง', alternatives: ['กำหนด'] },
+          { type: 'literal', value: 'ตั้ง', alternatives: ['กำหนด', 'ตั้งค่า'] },
           { type: 'role', role: 'destination' },
-          { type: 'role', role: 'patient' },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'ใน', alternatives: ['เป็น'] },
+              { type: 'role', role: 'patient' },
+            ],
+          },
         ],
       },
       extraction: {
         destination: { position: 1 },
-        patient: { position: 2 },
+        patient: { marker: 'ใน', markerAlternatives: ['เป็น'] },
       },
     },
   ];
