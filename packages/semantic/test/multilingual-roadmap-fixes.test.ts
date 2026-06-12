@@ -4160,3 +4160,43 @@ describe('event-wrapper destination injection — wrappers defer to the command 
     expect(roles.has('destination')).toBe(false);
   });
 });
+
+describe('ko literal quoting — the SOV fallback path strips quote chars (R2 #377)', () => {
+  // `"Done!" 를 클릭 넣다 나 에` parsed with patient literal `"Done!"` — quote
+  // characters INCLUDED — so the runtime wrote `"Done!"` into the DOM where
+  // en wrote `Done!`. The ko tokenizer correctly emits the token as
+  // kind=literal; the bug was in semantic-parser's own tokenToSemanticValue /
+  // tokensToSemanticValue (the particle-based SOV fallback path), which
+  // wrapped the RAW value in createLiteral without stripping quotes — unlike
+  // pattern-matcher's parseLiteralValue, which every other language's parse
+  // path goes through. Both sites now strip symmetric quotes and tag
+  // dataType string. ko execution 0.588 → 0.647.
+  function firstBody(node: unknown): Record<string, unknown> {
+    const rec = node as Record<string, unknown>;
+    const body = rec?.body as unknown;
+    return (Array.isArray(body) ? body[0] : body) as Record<string, unknown>;
+  }
+  function role(node: unknown, name: string): { value?: unknown; dataType?: string } {
+    const cmd = firstBody(node);
+    const roles = cmd?.roles as Map<string, unknown>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) ?? {}) as { value?: unknown; dataType?: string };
+  }
+
+  it('[ko] put-content-basic patient literal has no quote chars (was "\\"Done!\\"")', () => {
+    const p = role(parse('"Done!" 를 클릭 넣다 나 에', 'ko'), 'patient');
+    expect(p.value).toBe('Done!');
+    expect(p.dataType).toBe('string');
+  });
+
+  it('[ko] single-quoted literal strips too', () => {
+    const p = role(parse("'OK' 를 클릭 넣다 나 에", 'ko'), 'patient');
+    expect(p.value).toBe('OK');
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const p = role(parse('on click put "Done!" into me', 'en'), 'patient');
+    expect(p.value).toBe('Done!');
+    expect(p.dataType).toBe('string');
+  });
+});
