@@ -548,6 +548,22 @@ removes a whole category of production risk. If a deadline run is at risk
 mid-way, drop the target to 0.965 and ship that; the ratchet keeps whatever
 landed.
 
+> **Owner decision (2026-06-12, session 8): two tracks REOPENED/APPROVED.**
+>
+> 1. **Parsing track reopens, scoped to the en if/unless flatten only.** The
+>    session-8 probe (§7g) showed the §2 dominant cluster manifests in
+>    ENGLISH: `if I match .active then A else B end` parses as flat siblings
+>    (condition truncated), so the runtime rejects the bare `if`. Fixing the
+>    conditional-node assembly in the semantic parser is the single biggest
+>    unlock — it gates R2 expansion wave 2 (all control-flow patterns) and
+>    underlies ~130 cross-language drops. The general ship-line stop still
+>    applies to the REST of the parsing tail; this is a surgical reopen.
+> 2. **Core-runtime gaps track approved** (the §10.7 en-side list): runtime
+>    `halt` exiting the whole handler even as `halt the event`; `@attr`
+>    selector family; `make` with HTML-literal selectors; the propertyAccess
+>    AST rejection; `set #id.prop` / `toggle @attr` family. Independent of
+>    translation; each fix re-qualifies excluded patterns for the R2 subset.
+
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
