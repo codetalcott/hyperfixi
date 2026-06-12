@@ -4267,3 +4267,59 @@ describe('event-wrapper source groups — remove-from captures across word order
     expect(role(cmds[0], 'source')).toBe('.items');
   });
 });
+
+describe('event-wrapper trailing destination — SOV post-verb to-phrase captures (R2 #379)', () => {
+  // The destination twin of the #378 source fix: the grammar transformer
+  // emits `add X to Y`'s to-phrase AFTER the verb (`追加 #item に`), but the
+  // SOV wrappers' only destination group sat before the patient, so the
+  // trailing phrase leaked past the matched span and the verb-anchoring
+  // fallback read the に particle as a bogus `into` command, while the
+  // schema default filled destination=me — add acted on the clicked element
+  // instead of #item. The SOV wrappers now also emit a trailing
+  // (post-verb) destination group via eventHandlerDestinationGroup().
+  // bn 0.882 → 1.000 (10 languages now perfect), ja 0.824 → 0.941.
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+
+  // Corpus-shaped add-class-to-other (en → lang).
+  const cases: Array<[string, string]> = [
+    ['ja', '.selected を クリック で 追加 #item に'],
+    ['bn', '.selected কে ক্লিক এ যোগ #item তে'],
+    ['hi', '.selected को क्लिक पर जोड़ें #item में'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] add captures trailing destination #item (was default me + bogus into)`, () => {
+      const cmds = commands(parse(input, lang as 'ja'));
+      const add = cmds.find(c => c.action === 'add');
+      expect(add, 'add command present').toBeTruthy();
+      expect(role(add!, 'patient')).toBe('.selected');
+      expect(role(add!, 'destination')).toBe('#item');
+      expect(cmds.some(c => c.action === 'into'), 'no fabricated into command').toBe(false);
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmds = commands(parse('on click add .selected to #item', 'en'));
+    expect(cmds).toHaveLength(1);
+    expect(role(cmds[0], 'destination')).toBe('#item');
+  });
+});

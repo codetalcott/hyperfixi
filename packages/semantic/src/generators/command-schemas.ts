@@ -186,11 +186,35 @@ export function eventHandlerSourceGroup(
   schema: CommandSchema,
   marker: RoleMarker | undefined
 ): PatternToken[] {
-  if (!marker || !schema.roles.some(r => r.role === 'source')) return [];
+  return eventHandlerRoleGroup(schema, marker, 'source');
+}
+
+/**
+ * Trailing destination-phrase group for the SOV wrappers, the destination
+ * twin of eventHandlerSourceGroup: the grammar transformer emits
+ * `add X to Y`'s to-phrase AFTER the verb (`追加 #item に`), but the SOV
+ * wrappers' only destination group sits before the patient, so the trailing
+ * phrase leaked past the matched span and the verb-anchoring fallback read
+ * the に particle as a bogus `into` command (same failure shape as the
+ * source-phrase leak).
+ */
+export function eventHandlerDestinationGroup(
+  schema: CommandSchema,
+  marker: RoleMarker | undefined
+): PatternToken[] {
+  return eventHandlerRoleGroup(schema, marker, 'destination');
+}
+
+function eventHandlerRoleGroup(
+  schema: CommandSchema,
+  marker: RoleMarker | undefined,
+  role: SemanticRole
+): PatternToken[] {
+  if (!marker || !schema.roles.some(r => r.role === role)) return [];
   const markerToken: PatternToken = marker.alternatives
     ? { type: 'literal', value: marker.primary, alternatives: [...marker.alternatives] }
     : { type: 'literal', value: marker.primary };
-  const roleToken: PatternToken = { type: 'role', role: 'source', optional: true };
+  const roleToken: PatternToken = { type: 'role', role, optional: true };
   return [
     {
       type: 'group',
