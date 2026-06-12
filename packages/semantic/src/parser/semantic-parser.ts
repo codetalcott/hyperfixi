@@ -465,11 +465,64 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
 
-      const commandNode = createCommandNode(actionName as ActionType, roles, {
+      let commandNode = createCommandNode(actionName as ActionType, roles, {
         sourceLanguage: language,
         patternId: match.pattern.id,
         confidence: match.confidence,
       });
+
+      // A handcrafted fused pattern (`su {event} {action}` / `เมื่อ {event}
+      // {action}`) captures only the body VERB — the body's arguments trail
+      // unconsumed and the command node above comes out with ZERO roles, while
+      // the en reference re-parses the same clause through the command patterns
+      // and captures everything (`set my.textContent to X` → destination +
+      // patient). When that happens, retry: re-parse [verb..clause boundary]
+      // with the command patterns and swap in the result — but only when it is
+      // a single command with the SAME action and at least one role, so a body
+      // whose standalone pattern is missing (blur/transition/breakpoint) keeps
+      // the zero-roled node instead of degenerating to nothing.
+      if (Object.keys(roles).length === 0) {
+        const all = tokens.tokens;
+        const pos = tokens.position();
+        const verbToken = pos > 0 ? all[pos - 1] : undefined;
+        const verbNormalized = verbToken
+          ? ((verbToken as { normalized?: string }).normalized ?? verbToken.value)
+          : undefined;
+        // Every action-capturing pattern puts {action} last, so the verb is the
+        // previously consumed token; require it to map to the captured action.
+        if (verbToken && verbNormalized === actionName) {
+          const clauseTokens: LanguageToken[] = [verbToken];
+          let clauseEnd = pos;
+          while (clauseEnd < all.length) {
+            const t = all[clauseEnd];
+            const isBoundary =
+              t.kind === 'conjunction' ||
+              (t.kind === 'keyword' &&
+                (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+            if (isBoundary) break;
+            clauseTokens.push(t);
+            clauseEnd++;
+          }
+          // Only retry when the verb has trailing arguments to reclaim.
+          if (clauseTokens.length > 1) {
+            const commandPatterns = getPatternsForLanguage(language)
+              .filter(p => p.command !== 'on')
+              .sort((a, b) => b.priority - a.priority);
+            const reparsed = this.parseClause(clauseTokens, commandPatterns, language);
+            const first = reparsed[0];
+            if (
+              reparsed.length === 1 &&
+              first &&
+              first.kind === 'command' &&
+              first.action === actionName &&
+              (first as CommandSemanticNode).roles.size > 0
+            ) {
+              commandNode = first as CommandSemanticNode;
+              while (tokens.position() < clauseEnd) tokens.advance();
+            }
+          }
+        }
+      }
 
       // Check if pattern has continuation marker (then-chains).
       const continuesValue = match.captured.get('continues');
