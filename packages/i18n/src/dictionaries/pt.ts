@@ -25,8 +25,9 @@ export const pt: Dictionary = {
     while: 'enquanto',
     until: 'até',
     continue: 'continuar',
-    break: 'parar',
-    halt: 'interromper',
+    // un-crossed: the profile/tokenizer read parar=halt, interromper=break
+    break: 'interromper',
+    halt: 'parar',
     wait: 'esperar',
     fetch: 'buscar',
     call: 'chamar',

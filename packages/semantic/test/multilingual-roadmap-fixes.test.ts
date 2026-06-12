@@ -2330,3 +2330,149 @@ describe('bn/hi single-word append + hi swap vocabulary (B2c)', () => {
     expect(actions(parse('.active को क्लिक पर टॉगल', 'hi')).has('toggle')).toBe(true);
   });
 });
+
+describe('it focus verb + pt halt/break cross-map (focus-trap residuals)', () => {
+  // Two dict-side residuals surfaced by the #349 span-mask fix (which exposed
+  // the focus-trap body to translation for the first time):
+  // - it: the dict's COMMANDS section had no focus verb, so the transformer
+  //   fell back to the EVENTS noun (fuoco) — the #321/#344 noun-where-verb
+  //   family. The generated focus patterns match the profile primary literal
+  //   (focalizzare), so the command dropped. Added commands focus: focalizzare.
+  // - pt: halt/break were CROSS-MAPPED (dict break: parar / halt: interromper,
+  //   while profile+tokenizer read parar=halt, interromper=break). Every halt
+  //   emission parsed as break — poisoning dropdown-toggle, halt-propagation,
+  //   if-matches, window-keydown (all lossy → faithful, pt avgFidelity
+  //   0.9300 → 0.9411) plus the focus-trap tail.
+  // it/pt focus-trap 0.5 → 0.75 (the remaining 0.25 is the dropped `if`, the
+  // M2 body-parse mechanism — tracked separately).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[it] the transformed focus-trap body keeps focus + halt', () => {
+    const a = actions(
+      parse(
+        'su keydown[key=="Tab"] da .modal se obiettivo corrisponde ultimo <button/> in .modal focalizzare primo <button/> in .modal allora fermare fine',
+        'it'
+      )
+    );
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[pt] the transformed focus-trap body keeps focus + halt (parar)', () => {
+    const a = actions(
+      parse(
+        'em keydown[key=="Tab"] de .modal se alvo corresponde último <button/> dentro .modal focar primeiro <button/> dentro .modal então parar fim',
+        'pt'
+      )
+    );
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[pt] halt-propagation shape parses parar as halt (was break)', () => {
+    const a = actions(parse('em clique parar the evento', 'pt'));
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('break')).toBe(false);
+  });
+
+  it('[it] the focus EVENT still works via the noun (fuoco unchanged in events)', () => {
+    const a = actions(parse('su fuoco aggiungere .active a io', 'it'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+});
+
+describe('eventMarker emission alignment — fused patterns come alive (es/fr/it/pt/pl/id/ms)', () => {
+  // The generalization of the #346 swap recovery split: the i18n transformer
+  // leads event handlers with the profile's eventHandler.KEYWORD word (es en,
+  // fr sur, it su, pt em, pl gdy, id pada, ms apabila), but the generated
+  // fused `<cmd>-event-<lang>-vso` patterns anchor on eventHandler.EVENTMARKER,
+  // which didn't include it — so every fused event pattern was DEAD in these
+  // languages (ms generated none at all: no eventMarker). Bodies fell to
+  // handcrafted event patterns + re-parse, which drops if-blocks and other
+  // structures. Adding the emission word as an eventMarker alternative (and
+  // giving ms an eventMarker) brought the whole fused family alive:
+  // if-exists/if-condition/if-matches (pl), tell-command/tell-other-element +
+  // modal-close-backdrop (all 6), caret-var-on-target (fr/pt), get-value/
+  // hide-with-transition (ms) flip lossy → faithful. 26 pattern-instances,
+  // +0.0084..+0.0120 avgFidelity each, 1 within-tolerance regression
+  // (ms make-toast-element — transformer emission shape change, follow-up).
+  //
+  // Surfaced collision (bundled, #345 precedent): id dict emitted ambil for
+  // fetch, but ambil is take's word — dead while the fused take pattern
+  // couldn't match, every id fetch became take once it could (the de
+  // holen/abrufen class). id dict realigned fetch → muat (profile primary).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // The if-recovery this unlocks: a fused if-event pattern now anchors the
+  // handler, keeping the if + branch + juxtaposed tail (was {focus,halt,on}
+  // with if dropped, or worse).
+  const ifCases: Array<[string, string]> = [
+    ['es', 'en clic si objetivo coincide .x enfocar #y entonces detener fin'],
+    ['fr', 'sur clic si cible correspond .x focaliser #y alors stopper fin'],
+    ['pt', 'em clique se alvo corresponde .x focar #y então parar fim'],
+    ['pl', 'gdy kliknięcie jeśli cel pasuje .x skup #y wtedy zatrzymaj koniec'],
+    ['id', 'pada klik jika target cocok .x fokus #y lalu berhenti akhir'],
+    ['ms', 'apabila klik jika sasaran sepadan .x fokus #y kemudian henti tamat'],
+  ];
+  for (const [lang, input] of ifCases) {
+    it(`[${lang}] emission-led if handler keeps if + branch + tail`, () => {
+      const a = actions(parse(input, lang as 'es'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('focus')).toBe(true);
+      expect(a.has('halt')).toBe(true);
+    });
+  }
+
+  // id fetch realign: muat is fetch, ambil stays take.
+  it('[id] fetch-basic emission parses fetch + put (muat)', () => {
+    const a = actions(parse('pada klik muat /api/data lalu taruh itu ke #result', 'id'));
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('take')).toBe(false);
+  });
+  it('[id] ambil still parses as take', () => {
+    const a = actions(parse('pada klik ambil .item dari #list', 'id'));
+    expect(a.has('take')).toBe(true);
+    expect(a.has('fetch')).toBe(false);
+  });
+
+  // Regression guards: simple handlers parse the same action set as before
+  // (now via fused patterns), and then-chains stay complete.
+  it('[es] simple toggle handler unchanged', () => {
+    expect([...actions(parse('en clic alternar .active', 'es'))].sort()).toEqual(['on', 'toggle']);
+  });
+  it('[es] fetch-loading-state then-chain stays complete', () => {
+    const a = actions(
+      parse(
+        'en clic añadir .loading a mí entonces buscar /api/data entonces quitar .loading de mí entonces poner ello a #result',
+        'es'
+      )
+    );
+    expect(a.has('add')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+});
