@@ -73,12 +73,19 @@ export const hindiProfile: LanguageProfile = {
     remove: { primary: 'हटाएं', alternatives: ['हटा', 'मिटाएं'], normalized: 'remove' },
     // Content operations
     put: { primary: 'रखें', alternatives: ['रख', 'डालें', 'डाल'], normalized: 'put' },
-    append: { primary: 'जोड़ें_अंत', alternatives: [], normalized: 'append' },
+    // संलग्न (attach/append) — single token. The old underscore compound
+    // 'जोड़ें_अंत' split in the tokenizer and its embedded जोड़ें (`add`) won,
+    // so hi append always parsed as add.
+    append: { primary: 'संलग्न', alternatives: [], normalized: 'append' },
     prepend: { primary: 'जोड़ें_शुरू', alternatives: [], normalized: 'prepend' },
     take: { primary: 'लें', alternatives: ['ले'], normalized: 'take' },
     make: { primary: 'बनाएं', alternatives: ['बना'], normalized: 'make' },
     clone: { primary: 'क्लोन', alternatives: ['प्रतिलिपि'], normalized: 'clone' },
-    swap: { primary: 'बदलें_स्थान', alternatives: [], normalized: 'swap' },
+    // विनिमय (exchange) — single token. The old underscore compound
+    // 'बदलें_स्थान' split and its embedded बदलें is toggle's alternative, so
+    // hi swap always parsed as toggle (same collision in the dict, which
+    // emitted bare बदलें).
+    swap: { primary: 'विनिमय', alternatives: [], normalized: 'swap' },
     morph: { primary: 'रूपांतर', alternatives: [], normalized: 'morph' },
     // Variable operations
     set: { primary: 'सेट', alternatives: ['निर्धारित'], normalized: 'set' },

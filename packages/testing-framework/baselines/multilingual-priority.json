@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-11T23:39:10.944Z",
-  "commit": "23cf40b2",
+  "timestamp": "2026-06-12T00:02:45.700Z",
+  "commit": "715898d6",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -653,11 +653,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8657287157287157,
-      "avgFidelity": 0.9666666666666666,
+      "avgFidelity": 0.9699134199134197,
       "degeneratePasses": [],
       "lossyPasses": [
         "announce-screen-reader",
-        "append-content",
         "breakpoint-command",
         "fetch-do-not-throw",
         "fetch-json",
@@ -4501,7 +4500,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "avgFidelity": 0.9106060606060608,
+      "avgFidelity": 0.9170995670995672,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -4514,7 +4513,6 @@
       ],
       "lossyPasses": [
         "announce-screen-reader",
-        "append-content",
         "breakpoint-command",
         "event-throttle",
         "fetch-do-not-throw",
@@ -4525,7 +4523,6 @@
         "if-empty",
         "input-validation",
         "keydown-key-is-syntax",
-        "swap-content",
         "template-literal-list-build",
         "unless-condition"
       ],

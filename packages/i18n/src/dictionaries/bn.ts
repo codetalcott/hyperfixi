@@ -34,7 +34,7 @@ export const bengaliDictionary: Dictionary = {
     throw: 'নিক্ষেপ',
     continue: 'চালিয়ে যান',
     make: 'তৈরি করুন',
-    append: 'শেষে যোগ',
+    append: 'জুড়ুন',
     prepend: 'শুরুতে যোগ',
     focus: 'ফোকাস',
     blur: 'ঝাপসা',

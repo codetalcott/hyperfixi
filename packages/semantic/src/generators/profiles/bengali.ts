@@ -59,7 +59,10 @@ export const bengaliProfile: LanguageProfile = {
     remove: { primary: 'সরান', alternatives: ['সরিয়ে ফেলুন', 'মুছুন'], normalized: 'remove' },
     // Content operations
     put: { primary: 'রাখুন', alternatives: ['রাখ'], normalized: 'put' },
-    append: { primary: 'শেষে যোগ', alternatives: [], normalized: 'append' },
+    // জুড়ুন (attach/join, imperative — matches the রাখুন/নিন verb style).
+    // The old multi-word 'শেষে যোগ' could never tokenize as one keyword
+    // (শেষে reads as `end`, যোগ as `add`), so bn append always parsed as add.
+    append: { primary: 'জুড়ুন', alternatives: [], normalized: 'append' },
     prepend: { primary: 'শুরুতে যোগ', alternatives: [], normalized: 'prepend' },
     take: { primary: 'নিন', alternatives: ['নে'], normalized: 'take' },
     make: { primary: 'তৈরি করুন', alternatives: ['বানান'], normalized: 'make' },
