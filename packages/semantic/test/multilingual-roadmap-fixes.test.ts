@@ -2476,3 +2476,111 @@ describe('eventMarker emission alignment — fused patterns come alive (es/fr/it
     expect(a.has('put')).toBe(true);
   });
 });
+
+describe('event-head tolerance — bracket key-filter + source clause (focus-trap)', () => {
+  // The fused `<cmd>-event-*-vso` patterns (alive since the #351 eventMarker
+  // alignment) expect the wrapped command's verb right after the `{event}`
+  // role. But the tokenizer splits `keydown[key=="Tab"]` into TWO tokens
+  // (`keydown` + a `[key=="Tab"]` selector), and the corpus emission also
+  // carries a source clause (`von .modal` / `de .modal`). Either one broke the
+  // fused match, so focus-trap fell to the plain event pattern whose body
+  // re-parse drops the `if` wrapper (0.75). The matcher's event role now
+  // consumes a trailing `[…]` selector (folded back onto the event value —
+  // mirroring the bracket-filter skip in the SOV/mid-stream extractors) and a
+  // `<source-marker> <element>` pair (skipped when the pattern explicitly
+  // expects the marker next, so handcrafted `… von {source}` patterns keep
+  // working). focus-trap flips lossy → faithful in 11 languages
+  // (de/es/fr/he/id/it/ms/pt/ru/th/vi, + it blur-element), lossy 337 → 325,
+  // 0 regressions. sw (mwisho→end condition polysemy), tr (SOV head shape),
+  // and ar (VSO if-before-event reorder) are separate mechanisms, tracked.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), focus-trap:
+  // `on keydown[key=="Tab"] from .modal if target matches last <button/> in
+  //  .modal focus first <button/> in .modal halt end`
+  const corpus: Array<[string, string]> = [
+    [
+      'de',
+      'bei keydown[key=="Tab"] von .modal falls ziel passt letzte <button/> in .modal fokussieren erste <button/> in .modal dann anhalten ende',
+    ],
+    [
+      'it',
+      'su keydown[key=="Tab"] da .modal se obiettivo corrisponde ultimo <button/> in .modal focalizzare primo <button/> in .modal allora fermare fine',
+    ],
+    [
+      'es',
+      'en keydown[key=="Tab"] de .modal si objetivo coincide último <button/> en .modal enfocar primero <button/> en .modal entonces detener fin',
+    ],
+    [
+      'fr',
+      'sur keydown[key=="Tab"] de .modal si cible correspond dernier <button/> en .modal focaliser premier <button/> en .modal alors stopper fin',
+    ],
+    [
+      'pt',
+      'em keydown[key=="Tab"] de .modal se alvo corresponde último <button/> dentro .modal focar primeiro <button/> dentro .modal então parar fim',
+    ],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] focus-trap keeps the if wrapper (was {focus,halt,on})`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('focus')).toBe(true);
+      expect(a.has('halt')).toBe(true);
+    });
+  }
+
+  // Each head element alone used to break the fused match (the bisect).
+  it('[de] the bracket filter alone no longer breaks the fused if-event match', () => {
+    const a = actions(
+      parse(
+        'bei keydown[key=="Tab"] falls ziel passt letzte <button/> in .modal fokussieren erste <button/> in .modal dann anhalten ende',
+        'de'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+  });
+  it('[de] the source clause alone no longer breaks the fused if-event match', () => {
+    const a = actions(
+      parse(
+        'bei klick von .modal falls ziel passt letzte <button/> in .modal fokussieren erste <button/> in .modal dann anhalten ende',
+        'de'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+  });
+
+  // Regression guards.
+  it('[de] the handcrafted `bei {event} von {source}` pattern still parses', () => {
+    // The source-clause consumption is gated on the next pattern token, so the
+    // explicit-source handcrafted pattern (or its base sibling) still wins and
+    // the handler keeps its body.
+    const a = actions(parse('bei klick von .modal umschalten .active', 'de'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end',
+        'en'
+      )
+    );
+    expect([...a].sort()).toEqual(['focus', 'halt', 'if', 'on']);
+  });
+  it('[es] a simple unfiltered handler is unaffected', () => {
+    expect([...actions(parse('en clic alternar .active', 'es'))].sort()).toEqual(['on', 'toggle']);
+  });
+});
