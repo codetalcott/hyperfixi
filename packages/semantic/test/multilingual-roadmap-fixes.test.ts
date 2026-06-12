@@ -3706,3 +3706,82 @@ describe('tl/ar VSO event recovery — mis-listed keywords + midstream-on-no-mat
     expect(a.has('remove')).toBe(true);
   });
 });
+
+describe('SOV clause-final for-loop anchors via verb-anchoring (#358 tail)', () => {
+  // #358's markerOverride table fixed the SVO for-loops; the six SOV languages
+  // emit the for-keyword clause-FINAL (`item の中 $items を ために`) — an order
+  // no generated pattern covers, so parseClause dropped the whole loop clause.
+  // `for` is no longer skipped in buildVerbLookup: the verb-anchoring fallback
+  // (which only fires when nothing else in the clause matched) anchors on the
+  // trailing for-word. Plus dict↔profile realigns where the dict emitted a
+  // word the profile reads as something else (the #361/#364 class):
+  //   ko 동안 → 각각  (동안 is WHILE — the profile comment already warned)
+  //   qu rayku → sapankaq  (rayku doubles as `by`)
+  //   hi के_लिए → हेतु  (splits at `_` in the word extractor; new profile alt)
+  // bn জন্য and tr için needed no realign — verb-anchoring matches by token
+  // VALUE, so their particle-kind for-words anchor as-is.
+  // Fixed template-literal-list-build in bn/ja/ko/qu/tr (avgFidelity
+  // 0.9641 → 0.9646, lossy 171 → 166, 0 regressions). hi remains: a generated
+  // into-pattern matches `में …` first, so the clause never reaches the
+  // fallback (separate mechanism, tracked in the handoff).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), template-literal-list-build.
+  const corpus: Array<[string, string]> = [
+    [
+      'ja',
+      '$html を クリック で 設定 "" に それから item の中 $items を ために それから $html を 設定 $html + `<li>${item.name}</li>` 終わり に それから #list.innerHTML を 設定 $html に',
+    ],
+    [
+      'tr',
+      '$html i tıklama de ayarla "" e sonra item içinde $items i için sonra $html i ayarla $html + `<li>${item.name}</li>` son e sonra #list.innerHTML i ayarla $html e',
+    ],
+    [
+      'ko',
+      '$html 를 클릭 할 때 설정 "" 에 그러면 item 안에 $items 를 각각 그러면 $html 를 설정 $html + `<li>${item.name}</li>` 끝 에 그러면 #list.innerHTML 를 설정 $html 에',
+    ],
+    [
+      'bn',
+      '$html কে ক্লিক এ সেট "" তে তারপর item এ $items কে জন্য তারপর $html কে সেট $html + `<li>${item.name}</li>` শেষ তে তারপর #list.innerHTML কে সেট $html তে',
+    ],
+    [
+      'qu',
+      '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` tukuy man churanay chayqa #list.innerHTML ta $html man churanay',
+    ],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] template-literal-list-build keeps the for loop (was {on,set})`, () => {
+      const a = actions(parse(input, lang as 'ja'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('for')).toBe(true);
+      expect(a.has('set')).toBe(true);
+    });
+  }
+
+  it('[ko] 동안 still reads as while, not for (the realign reason stays locked)', () => {
+    // The ko profile reads 동안 as WHILE; the dict realign (동안 → 각각) exists
+    // because emitting 동안 for `for` could never anchor a for-loop.
+    const a = actions(parse('item 안에 $items 를 동안 그러면 $html 를 설정 $html 에', 'ko'));
+    expect(a.has('for')).toBe(false);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
+        'en'
+      )
+    );
+    expect([...a].sort()).toEqual(['for', 'on', 'set']);
+  });
+});

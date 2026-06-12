@@ -27,7 +27,7 @@ export const qu: Dictionary = {
     if: 'sichus',
     unless: 'mana_sichus',
     repeat: 'kutipay',
-    for: 'rayku',
+    for: 'sapankaq', // profile's for word — rayku doubles as `by`
     while: 'kay_kaq',
     until: 'hayk_akama',
     continue: 'purichiy',

@@ -134,7 +134,10 @@ export const hindiProfile: LanguageProfile = {
     where: { primary: 'कहाँ', normalized: 'where' },
     else: { primary: 'वरना', alternatives: ['नहीं तो'], normalized: 'else' },
     repeat: { primary: 'दोहराएं', alternatives: ['दोहरा'], normalized: 'repeat' },
-    for: { primary: 'के लिए', alternatives: [], normalized: 'for' },
+    // हेतु is what the i18n dict emits (के_लिए split at `_` in the word
+    // extractor; के लिए is two tokens — neither could anchor the clause-final
+    // SOV for-loop).
+    for: { primary: 'के लिए', alternatives: ['हेतु'], normalized: 'for' },
     while: { primary: 'जब तक', alternatives: [], normalized: 'while' },
     continue: { primary: 'जारी', alternatives: [], normalized: 'continue' },
     halt: { primary: 'रोकें', alternatives: ['रोक'], normalized: 'halt' },
