@@ -84,6 +84,15 @@ const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 
 const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
 
+/**
+ * Keyword infix comparison operators (tokenized as IDENTIFIER, matched by value
+ * in the parser). A selector is valid immediately after one — `target matches
+ * .modal-backdrop`, `me matches .active` — so `previousTokenAllowsSelector`
+ * treats them like the symbolic comparison operators. `match` is accepted as an
+ * alias of `matches` (the multilingual corpus uses the bare form).
+ */
+const COMPARISON_KEYWORDS = new Set(['is', 'matches', 'match', 'contains', 'in']);
+
 const TIME_UNITS = new Set([
   'ms',
   's',
@@ -112,6 +121,11 @@ export function tokenize(input: string): Token[] {
   function previousTokenAllowsSelector(): boolean {
     if (tokens.length === 0) return true;
     const prev = tokens[tokens.length - 1];
+    // A keyword comparison operator (tokenized as IDENTIFIER) is followed by a
+    // selector operand: `matches .modal-backdrop`, `is .active`.
+    if (prev.type === TokenType.IDENTIFIER && COMPARISON_KEYWORDS.has(prev.value.toLowerCase())) {
+      return true;
+    }
     // After these token types, a selector is valid
     return [
       TokenType.OPERATOR,

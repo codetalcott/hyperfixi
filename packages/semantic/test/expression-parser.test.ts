@@ -331,4 +331,45 @@ describe('ExpressionParser', () => {
       expect(result.success).toBe(false);
     });
   });
+
+  // Keyword infix comparison operators (is/matches/contains/in) are tokenized as
+  // IDENTIFIER and must be CONSUMED in parseEquality (checkValue only peeks).
+  // Previously they were read via previous() without advancing, so the operator
+  // was unconsumed and the operand mis-attributed — `target matches .x` came out
+  // as a broken `matches.x` member access. This locks the consume + the selector
+  // operand (a class selector tokenizes after a comparison keyword) + the `match`
+  // → `matches` corpus alias. These conditions gate en control-flow execution.
+  describe('keyword comparison operators with selector operands', () => {
+    it('parses `target matches .modal-backdrop` as a matches binary (selector intact)', () => {
+      const result = parseExpression('target matches .modal-backdrop');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'binaryExpression',
+        operator: 'matches',
+        left: { type: 'contextReference', name: 'target' },
+        right: { type: 'selector', value: '.modal-backdrop' },
+      });
+    });
+
+    it('accepts the bare `match` form as an alias of `matches`', () => {
+      const result = parseExpression('I match .active');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'binaryExpression',
+        operator: 'matches',
+        right: { type: 'selector', value: '.active' },
+      });
+    });
+
+    it('parses `result is false` as an `is` binary', () => {
+      const result = parseExpression('result is false');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'binaryExpression',
+        operator: 'is',
+        left: { type: 'contextReference', name: 'result' },
+        right: { type: 'literal', value: false },
+      });
+    });
+  });
 });

@@ -129,14 +129,29 @@ export class ExpressionParser {
   private parseEquality(): ExpressionNode {
     let left = this.parseComparison();
 
-    while (
-      this.match(TokenType.COMPARISON) ||
-      this.checkValue('is') ||
-      this.checkValue('matches') ||
-      this.checkValue('contains') ||
-      this.checkValue('in')
-    ) {
-      const operator = this.previous().value;
+    while (true) {
+      let operator: string;
+      if (this.match(TokenType.COMPARISON)) {
+        // match() already consumed the symbolic comparison token.
+        operator = this.previous().value;
+      } else if (
+        this.checkValue('is') ||
+        this.checkValue('matches') ||
+        this.checkValue('match') ||
+        this.checkValue('contains') ||
+        this.checkValue('in')
+      ) {
+        // Keyword infix operators are tokenized as IDENTIFIER, so they must be
+        // CONSUMED here (checkValue only peeks — mirrors the advance() in
+        // parseAnd/parseOr). Reading previous() without advancing left the
+        // operator unconsumed and mis-attributed the operand (e.g. `target
+        // matches .x` parsed as a broken `matches.x` member access). `match` is
+        // the corpus's bare alias of `matches`.
+        const raw = this.advance().value;
+        operator = raw.toLowerCase() === 'match' ? 'matches' : raw;
+      } else {
+        break;
+      }
       const right = this.parseComparison();
       left = this.createBinaryExpression(operator, left, right);
     }
