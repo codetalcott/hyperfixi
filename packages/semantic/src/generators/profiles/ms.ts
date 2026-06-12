@@ -35,6 +35,11 @@ export const malayProfile: LanguageProfile = {
     keywords: {
       // Full pronoun forms (also serve as possessives)
       saya: 'me', // my (formal)
+      // The ms dict translates possessive-dot `my.X` as saya_punya.X (the
+      // underscore keeps it one token for the dot-notation transformer) —
+      // recognize that emitted form so the possessive matcher can assemble
+      // the property-path (set-text/set-style corpus rows).
+      saya_punya: 'me', // my (dict dot-notation emission)
       aku: 'me', // my (informal)
       awak: 'you', // your (informal, Malaysian)
       kamu: 'you', // your (informal)

@@ -4563,3 +4563,54 @@ describe('ko set patient marker realign — schema 으로 → dict 에 (R2 ko)',
     expect(roles.get('patient')?.value).toBe('Done!');
   });
 });
+
+describe('Possessive-dot passthrough heads assemble property-paths (R2 id/ms/vi)', () => {
+  // The dot-notation transformer can't prefix a multi-word possessive onto
+  // `my.X` heads, so the id dict ('saya punya') and vi dict ('của tôi') leave
+  // the corpus heads as literal English `my.textContent`; the ms dict emits
+  // the single-token saya_punya.X, which the ms profile never listed. In all
+  // three, the possessive matcher found no keyword, the head parsed as a raw
+  // expression instead of property-path(me.X), and the runtime set nothing
+  // (set-text/set-inner-html/set-style failed at execution). The profiles now
+  // recognize the emitted forms (id/vi: `my` passthrough, ms: saya_punya), so
+  // the matcher assembles the en-identical property-path.
+  function firstBody(node: unknown): Record<string, unknown> {
+    const rec = node as Record<string, unknown>;
+    const body = rec?.body as unknown;
+    return (Array.isArray(body) ? body[0] : body) as Record<string, unknown>;
+  }
+  function rolesOf(
+    cmd: Record<string, unknown> | undefined
+  ): Map<string, { type?: string; value?: unknown }> {
+    const roles = cmd?.roles as Map<string, { type?: string; value?: unknown }>;
+    return roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+  }
+
+  // Corpus-shaped set-text-possessive-dot (en: on click set my.textContent to "Done!").
+  const cases: Array<[string, string]> = [
+    ['id', 'pada klik atur my.textContent ke "Done!"'],
+    ['ms', 'apabila click tetapkan saya_punya.textContent ke "Done!"'],
+    ['vi', 'khi nhấp gán my.textContent vào "Done!"'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] possessive-dot head parses as property-path(me.textContent) (was raw expression)`, () => {
+      const cmd = firstBody(parse(input, lang as 'id'));
+      expect(cmd.action).toBe('set');
+      const roles = rolesOf(cmd);
+      const dest = roles.get('destination') as
+        | { type?: string; object?: { value?: string }; property?: string }
+        | undefined;
+      expect(dest?.type).toBe('property-path');
+      expect(dest?.object?.value).toBe('me');
+      expect(dest?.property).toBe('textContent');
+      expect(roles.get('patient')?.value).toBe('Done!');
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmd = firstBody(parse('on click set my.textContent to "Done!"', 'en'));
+    const roles = rolesOf(cmd);
+    expect((roles.get('destination') as { type?: string } | undefined)?.type).toBe('property-path');
+    expect(roles.get('patient')?.value).toBe('Done!');
+  });
+});

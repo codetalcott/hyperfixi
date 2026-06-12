@@ -44,6 +44,11 @@ export const vietnameseProfile: LanguageProfile = {
       // Multi-word possessive phrases
       // Note: These may require tokenizer support for multi-word recognition
       'của tôi': 'me', // my
+      // The vi dict's `my` is the two-word 'của tôi', which the dot-notation
+      // transformer can't prefix onto `my.X` — those corpus heads stay literal
+      // English `my.textContent`. Recognize the passthrough so the possessive
+      // matcher can assemble the property-path (set-text/set-inner-html rows).
+      my: 'me', // untranslated dot-notation passthrough
       'của bạn': 'you', // your (informal)
       'của anh': 'you', // your (male speaker, formal)
       'của chị': 'you', // your (female speaker, formal)

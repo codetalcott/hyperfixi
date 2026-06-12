@@ -38,6 +38,10 @@ export const quechuaProfile: LanguageProfile = {
       // "my" - ñuqapa, ñuqaypa
       ñuqapa: 'me',
       ñuqaypa: 'me',
+      // The qu dict's `my` is the romanization noqaq — what the dot-notation
+      // transformer emits into possessive-dot heads (noqaq.textContent).
+      // Recognize it so the possessive matcher can assemble the property-path.
+      noqaq: 'me',
       // "your" - qampa
       qampa: 'you',
       // "its/his/her" - paypa
