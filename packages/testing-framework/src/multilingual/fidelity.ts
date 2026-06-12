@@ -71,3 +71,54 @@ export function computeFidelity(
   }
   return hits / reference.length;
 }
+
+/**
+ * R1 — role-fidelity signature.
+ *
+ * Action-set fidelity cannot see a parse that finds the right commands with the
+ * WRONG roles: a swapped patient/destination executes wrongly while scoring 1.0.
+ * This signature captures, for every command node in the tree, which roles were
+ * filled and with what value *type* (`add.patient:selector`,
+ * `put.destination:reference`). Cross-language comparison is by role name +
+ * value type — never by value string, which is legitimately translated.
+ * The roles container is a ReadonlyMap on live nodes (serializes to {} in JSON),
+ * so the signature must be collected at validation time, not from results.json.
+ */
+export function collectRoleSignature(node: unknown): string[] {
+  const acc = new Set<string>();
+  walkRoles(node, acc, 0);
+  return [...acc].sort();
+}
+
+function walkRoles(node: unknown, acc: Set<string>, depth: number): void {
+  if (depth > 64 || node === null || typeof node !== 'object') return;
+
+  const rec = node as Record<string, unknown>;
+  const action = rec.action;
+  if (typeof action === 'string' && !STRUCTURAL_ACTIONS.has(action)) {
+    const roles = rec.roles;
+    const entries: Array<[unknown, unknown]> =
+      roles instanceof Map
+        ? [...roles.entries()]
+        : roles && typeof roles === 'object'
+          ? Object.entries(roles)
+          : [];
+    for (const [role, value] of entries) {
+      if (value === undefined || value === null) continue;
+      const kind =
+        typeof value === 'object' && typeof (value as { type?: unknown }).type === 'string'
+          ? (value as { type: string }).type
+          : typeof value;
+      acc.add(`${action}.${String(role)}:${kind}`);
+    }
+  }
+
+  for (const field of CHILD_FIELDS) {
+    const child = rec[field];
+    if (Array.isArray(child)) {
+      for (const c of child) walkRoles(c, acc, depth + 1);
+    } else if (child && typeof child === 'object') {
+      walkRoles(child, acc, depth + 1);
+    }
+  }
+}

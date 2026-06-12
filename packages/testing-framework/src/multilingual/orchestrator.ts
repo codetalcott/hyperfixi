@@ -249,9 +249,14 @@ export class TestOrchestrator {
 
     // codeExampleId -> English action signature (only successful en parses).
     const reference = new Map<string, string[]>();
+    // R1: codeExampleId -> English role signature (action.role:valueType set).
+    const roleReference = new Map<string, string[]>();
     for (const r of en.parseResults) {
       if (r.success && r.actionSignature && r.actionSignature.length > 0) {
         reference.set(r.pattern.codeExampleId, r.actionSignature);
+      }
+      if (r.success && r.roleSignature && r.roleSignature.length > 0) {
+        roleReference.set(r.pattern.codeExampleId, r.roleSignature);
       }
     }
 
@@ -261,6 +266,7 @@ export class TestOrchestrator {
       const degenerate: string[] = [];
       const lossy: string[] = [];
       const scores: number[] = [];
+      const roleScores: number[] = [];
 
       for (const result of lang.parseResults) {
         if (!result.success || !result.actionSignature) continue;
@@ -274,10 +280,24 @@ export class TestOrchestrator {
         scores.push(fidelity);
         if (fidelity < FIDELITY_THRESHOLD) degenerate.push(result.pattern.codeExampleId);
         else if (fidelity < 1) lossy.push(result.pattern.codeExampleId);
+
+        // R1 — role recall vs the en role signature (role name + value type).
+        const roleRef = roleReference.get(result.pattern.codeExampleId);
+        if (roleRef && result.roleSignature) {
+          const roleFidelity = computeFidelity(roleRef, result.roleSignature);
+          if (roleFidelity !== undefined) {
+            result.roleFidelity = roleFidelity;
+            roleScores.push(roleFidelity);
+          }
+        }
       }
 
       lang.avgFidelity =
         scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
+      lang.avgRoleFidelity =
+        roleScores.length > 0
+          ? roleScores.reduce((a, b) => a + b, 0) / roleScores.length
+          : undefined;
       lang.degeneratePasses = degenerate.sort();
       lang.lossyPasses = lossy.sort();
     }

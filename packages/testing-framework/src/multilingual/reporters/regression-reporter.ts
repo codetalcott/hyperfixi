@@ -112,6 +112,12 @@ export class RegressionReporter implements Reporter {
       const parseRateDelta = (langResult.parseRate - baselineLang.parseRate) * 100;
       const avgConfidenceDelta = langResult.avgConfidence - baselineLang.avgConfidence;
       const avgFidelityDelta = (langResult.avgFidelity ?? 0) - (baselineLang.avgFidelity ?? 0);
+      // R1 — only meaningful when BOTH sides carry role data; an un-regenerated
+      // baseline (no avgRoleFidelity yet) must never retro-flag.
+      const avgRoleFidelityDelta =
+        langResult.avgRoleFidelity !== undefined && baselineLang.avgRoleFidelity !== undefined
+          ? langResult.avgRoleFidelity - baselineLang.avgRoleFidelity
+          : 0;
       const bundleSizeDelta = this.getBundleSizeDelta(langResult, baselineLang);
 
       // Identify new failures and successes
@@ -140,6 +146,7 @@ export class RegressionReporter implements Reporter {
         parseRateDelta,
         avgConfidenceDelta,
         avgFidelityDelta,
+        avgRoleFidelityDelta,
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
         newFailures,
         newSuccesses,
@@ -317,6 +324,9 @@ export class RegressionReporter implements Reporter {
         // Structural fidelity vs the English reference parse — tracks degenerate
         // (non-null but shallow) passes that the parse rate alone can't surface.
         avgFidelity: langResult.avgFidelity ?? undefined,
+        // R1 — role fidelity (role name + value type vs the en reference).
+        // Recorded + ratcheted; burn-down is NOT part of the parsing-track goal.
+        avgRoleFidelity: langResult.avgRoleFidelity ?? undefined,
         degeneratePasses: langResult.degeneratePasses ?? undefined,
         lossyPasses: langResult.lossyPasses ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,

@@ -124,6 +124,14 @@ export interface ParseResult {
   actionSignature?: string[];
 
   /**
+   * R1 — role-level signature: `action.role:valueType` for every command node
+   * in the tree (`add.patient:selector`, `put.destination:reference`).
+   * Cross-language comparison is by role name + value TYPE, never the value
+   * string (which is legitimately translated). Set by the validator.
+   */
+  roleSignature?: string[];
+
+  /**
    * Structural fidelity vs the English reference parse, in [0, 1]: the fraction
    * of the English parse's distinct actions also present in this language's
    * parse (recall). `1` = same command structure; low values flag a *degenerate*
@@ -132,6 +140,14 @@ export interface ParseResult {
    * usable English reference or this parse failed.
    */
   fidelity?: number;
+
+  /**
+   * R1 — role fidelity vs the English reference, in [0, 1]: the fraction of the
+   * English parse's role-signature entries also present here. Catches a parse
+   * that finds the right commands with the WRONG roles (swapped
+   * patient/destination executes wrongly while action-fidelity scores 1.0).
+   */
+  roleFidelity?: number;
 }
 
 /**
@@ -165,6 +181,13 @@ export interface LanguageResults {
    * reference (see ParseResult.fidelity). `undefined` for English itself.
    */
   avgFidelity?: number | undefined;
+
+  /**
+   * R1 — mean `roleFidelity` over successful parses with an English reference.
+   * Recorded + ratcheted in the baseline; the burn-down is deliberately NOT part
+   * of the parsing-track goal (see CORRECTNESS_RELIABILITY_PLAN.md §8).
+   */
+  avgRoleFidelity?: number | undefined;
 
   /**
    * Pattern IDs that pass (non-null) but parse *degenerately* — fidelity below
@@ -235,6 +258,8 @@ export interface Baseline {
         avgConfidence: number;
         /** Mean structural fidelity vs the English reference parse (see ParseResult.fidelity). */
         avgFidelity?: number | undefined;
+        /** R1 — mean role fidelity vs the English reference (see ParseResult.roleFidelity). */
+        avgRoleFidelity?: number | undefined;
         /** Pattern IDs that pass but parse degenerately (fidelity below threshold). */
         degeneratePasses?: string[] | undefined;
         /** Pattern IDs that pass *lossily* (fidelity in [0.5, 1.0) — drop ≥1 command). */
@@ -264,6 +289,8 @@ export interface RegressionResult {
   avgConfidenceDelta: number; // absolute change
   /** Absolute change in avgFidelity (current − baseline). Negative = correctness drop. */
   avgFidelityDelta: number;
+  /** R1 — absolute change in avgRoleFidelity (current − baseline). 0 when either side lacks data. */
+  avgRoleFidelityDelta: number;
   bundleSizeDelta: number | undefined; // % change
   newFailures: string[]; // pattern IDs
   newSuccesses: string[]; // pattern IDs

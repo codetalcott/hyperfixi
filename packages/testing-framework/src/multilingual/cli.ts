@@ -306,6 +306,17 @@ async function main(): Promise<void> {
           r => r.avgFidelityDelta < -AVG_FIDELITY_DROP_TOLERANCE
         );
 
+        // R1 — role-fidelity ratchet (§8): same semantics as the avgFidelity
+        // ratchet, on the role-recall signal (action.role:valueType vs the en
+        // reference). Deltas are 0 unless the baseline carries avgRoleFidelity,
+        // so an un-regenerated baseline never retro-flags. Slightly looser
+        // tolerance: role signatures are bigger sets, so populate jitter moves
+        // them a bit more than action sets.
+        const AVG_ROLE_FIDELITY_DROP_TOLERANCE = 0.02;
+        const roleFidelityDrops = allResults.filter(
+          r => r.avgRoleFidelityDelta < -AVG_ROLE_FIDELITY_DROP_TOLERANCE
+        );
+
         let failed = false;
 
         if (regressed.length > 0) {
@@ -365,6 +376,20 @@ async function main(): Promise<void> {
           );
           for (const r of fidelityDrops) {
             console.error(`   ${r.language}: ΔavgFidelity ${r.avgFidelityDelta.toFixed(4)}`);
+          }
+          console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
+        if (roleFidelityDrops.length > 0) {
+          console.error(
+            `\n✗ avgRoleFidelity dropped > ${AVG_ROLE_FIDELITY_DROP_TOLERANCE} in ` +
+              `${roleFidelityDrops.length} language(s):`
+          );
+          for (const r of roleFidelityDrops) {
+            console.error(
+              `   ${r.language}: ΔavgRoleFidelity ${r.avgRoleFidelityDelta.toFixed(4)}`
+            );
           }
           console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
           failed = true;
