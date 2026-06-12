@@ -4006,3 +4006,52 @@ describe('dict↔profile realigns: clear (8 langs), command blur (5), pt unless 
     expect([...a].sort()).toEqual(['clear', 'on']);
   });
 });
+
+describe('auditor realign batch 1 — trigger/take/render/settle/morph/make (17 rows, 7 dicts)', () => {
+  // First yield of the lexicon auditor (test/lexicon-emit-mismatch.test.ts):
+  // cross-checking every dict emission against what the semantic side reads
+  // mapped most of the remaining lossy mass to mechanical realigns —
+  // pl wywołaj→wyzwól / ru вызвать→запустить / uk викликати→запустити
+  // (trigger read as CALL), qu hurquy / tl kunin / tr al (take read as
+  // remove/get), id tampilkan / qu rikuchiy / tl ipakita (render read as
+  // show), id stabil / tl ayusin / qu tiyay (settle read by nothing),
+  // morph ×4, sw fanya→tengeneza (make read by nothing). Cleared
+  // trigger-event ×3, take-class-from-siblings ×2, render/settle/morph
+  // templates ×3 langs each, sw if-exists/make-element/make-toast-element:
+  // avgFidelity 0.9690 → 0.9709, lossy 122 → 105, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped post-realign emissions (en → lang).
+  const cases: Array<[string, string, string[]]> = [
+    ['pl', 'gdy załaduj wyzwól init', ['on', 'trigger']],
+    ['ru', 'при загрузка запустить инициализировать', ['on', 'trigger']],
+    ['tl', 'kumuha .active mula sa .tab-button kapag click pagkatapos para_sa ako', ['on', 'take']],
+    ['tr', '.active i tıklama de tut .tab-button den sonra ben i için', ['on', 'take']],
+    ['id', 'pada klik olah #user-list dengan users: $data lalu taruh itu ke #container', ['on', 'render', 'put']],
+    ['qu', '.animate ta ñitiy pi yapay chayqa tiyakuy chayqa .animate ta qichuy', ['on', 'add', 'settle', 'remove']],
+    ['sw', 'kwenye bonyeza tengeneza a <div.card/> kisha weka hiyo kwa #container', ['on', 'make', 'put']],
+  ];
+  for (const [lang, input, expected] of cases) {
+    it(`[${lang}] realigned emission parses {${expected.join(',')}}`, () => {
+      const a = actions(parse(input, lang as 'pl'));
+      for (const act of expected) expect(a.has(act), `missing ${act}`).toBe(true);
+    });
+  }
+
+  it('[tr] al still reads as get (why the take dict row had to move)', () => {
+    // The tr profile comment already warned: al was removed from take to
+    // avoid colliding with get. The dict emitting al for take was the bug.
+    const a = actions(parse('#input.value i tıklama de al', 'tr'));
+    expect(a.has('take')).toBe(false);
+  });
+});

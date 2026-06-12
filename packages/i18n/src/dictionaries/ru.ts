@@ -7,7 +7,7 @@ export const russianDictionary: Dictionary = {
   commands: {
     on: 'при',
     tell: 'сказать',
-    trigger: 'вызвать',
+    trigger: 'запустить', // auditor: dict emitted a word the profile reads differently
     send: 'отправить',
     take: 'взять',
     put: 'положить',

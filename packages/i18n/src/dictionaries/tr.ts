@@ -9,7 +9,7 @@ export const tr: Dictionary = {
     tell: 'söyle',
     trigger: 'tetikle',
     send: 'gönder',
-    take: 'al',
+    take: 'tut', // auditor: dict emitted a word the profile reads differently
     put: 'koy',
     set: 'ayarla',
     get: 'al',

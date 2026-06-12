@@ -9,7 +9,7 @@ export const tagalogDictionary: Dictionary = {
     tell: 'sabihin',
     trigger: 'palitawin',
     send: 'ipadala',
-    take: 'kunin',
+    take: 'kumuha', // auditor: dict emitted a word the profile reads differently
     put: 'ilagay',
     set: 'itakda',
     // Align with the semantic tl profile's `get` primary (`kunin`); the previous
@@ -51,10 +51,10 @@ export const tagalogDictionary: Dictionary = {
     beep: 'tunog',
     js: 'js',
     async: 'sabay',
-    render: 'ipakita',
+    render: 'irender', // auditor: dict emitted a word the profile reads differently
     swap: 'palitan_pwesto',
-    morph: 'baguhin_hugis',
-    settle: 'ayusin',
+    morph: 'baguhin', // auditor: dict emitted a word the profile reads differently
+    settle: 'magpatahimik', // auditor: dict emitted a word the profile reads differently
     append: 'idagdag_sa_dulo',
     prepend: 'idagdag_sa_simula',
     exit: 'lumabas',
