@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T19:54:16.472Z",
-  "commit": "942907ae",
+  "timestamp": "2026-06-12T20:00:11.439Z",
+  "commit": "326197ce",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -5086,20 +5086,15 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8437908496732007,
-      "avgFidelity": 0.9496732026143792,
-      "avgRoleFidelity": 0.7939990281827016,
-      "avgExecutionFidelity": 0.8947368421052632,
-      "executionFailures": ["increment-counter", "set-style"],
+      "avgConfidence": 0.8404295051353855,
+      "avgFidelity": 0.9627450980392157,
+      "avgRoleFidelity": 0.8053368966634273,
+      "avgExecutionFidelity": 0.9473684210526315,
+      "executionFailures": ["set-style"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "caret-var-increment",
         "if-exists",
-        "increment-by-amount",
-        "increment-counter",
         "input-mirror",
-        "repeat-until-event",
-        "repeat-while",
         "set-opacity",
         "set-style",
         "set-transform",
@@ -5419,18 +5414,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "increment-counter": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "increment-by-amount": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "caret-var-increment": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -5500,6 +5483,14 @@
           "confidence": 0.7142857142857143
         },
         "wait-for-event": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "increment-counter": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "increment-by-amount": {
           "success": true,
           "confidence": 0.7142857142857143
         },
@@ -5632,6 +5623,10 @@
           "confidence": 0.7142857142857143
         },
         "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "caret-var-increment": {
           "success": true,
           "confidence": 0.7142857142857143
         },
