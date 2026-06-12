@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@lokascript/framework": "^2.5.1",
-    "hono": "^4.11.7"
+    "hono": "^4.12.25"
   },
   "devDependencies": {
     "@hono/node-server": "^2.0.0",
