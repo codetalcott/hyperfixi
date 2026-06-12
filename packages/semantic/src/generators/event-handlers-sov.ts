@@ -10,6 +10,7 @@
 import type { LanguagePattern, PatternToken } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema } from './command-schemas';
+import { eventHandlerDestinationExtraction } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 
 /**
@@ -91,7 +92,7 @@ export function generateSOVEventHandlerPattern(
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
@@ -164,7 +165,7 @@ export function generateSOVPatientFirstEventHandlerPattern(
       action: { value: commandSchema.action },
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
@@ -332,7 +333,7 @@ export function generateSOVCompactEventHandlerPattern(
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }

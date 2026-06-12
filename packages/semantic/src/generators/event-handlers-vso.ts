@@ -10,6 +10,7 @@
 import type { LanguagePattern, PatternToken } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema } from './command-schemas';
+import { eventHandlerDestinationExtraction } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 
 /**
@@ -72,7 +73,7 @@ export function generateVSOEventHandlerPattern(
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
@@ -143,7 +144,7 @@ export function generateVSOVerbFirstEventHandlerPattern(
       action: { value: commandSchema.action },
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
@@ -409,7 +410,7 @@ export function generateVSONegatedEventHandlerPattern(
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
@@ -483,7 +484,7 @@ export function generateVSOProcliticEventHandlerPattern(
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+      ...eventHandlerDestinationExtraction(commandSchema),
     },
   };
 }
