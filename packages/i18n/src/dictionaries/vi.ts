@@ -63,7 +63,7 @@ export const vi: Dictionary = {
     prepend: 'thêm đầu',
     else: 'không thì',
     breakpoint: 'điểm-dừng',
-    clear: 'xóa',
+    clear: 'tẩy', // xóa is the remove PRIMARY in the profile
     close: 'đóng',
     open: 'mở',
     select: 'chọn',

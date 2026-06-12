@@ -3939,3 +3939,70 @@ describe('set patterns must not claim put verbs (de setzen / fr mettre / pt colo
     expect([...a].sort()).toEqual(['if', 'make', 'on', 'put', 'show']);
   });
 });
+
+describe('dict↔profile realigns: clear (8 langs), command blur (5), pt unless salvo', () => {
+  // Three sweeps of the same class — the dict emitted a word the semantic
+  // profile reads as a DIFFERENT action (or could not read at all):
+  //  1. clear: de löschen / pl wyczyść / vi xóa / id hapus / ms padam /
+  //     sw futa / ar امسح are all REMOVE words in their profiles, so
+  //     keydown-key-is-syntax (`on keyup[key=='Escape'] clear me`) parsed
+  //     clear-as-remove in 8 languages; he had no clear entry at all
+  //     (untranslated). Dicts realigned to the profile clear verbs
+  //     (bereinigen/zeruj/tẩy/bersihkan/bersihkan/safisha/نظّف/נקה).
+  //  2. blur: de/fr/pt/pl/sw dicts had blur only in the EVENTS section, so
+  //     the COMMAND `blur me` fell back to the event word, which no profile
+  //     reads as the verb (blur-element ×5; sw's event word also blocked
+  //     if-empty/input-validation). commands.blur added (see grammar.test.ts).
+  //  3. pt unless: dict+profile agreed on a_menos, but the pt word extractor
+  //     splits at `_` (a + _ + menos — the #361 underscore class), so the
+  //     keyword never tokenized. Realigned to salvo (the it precedent).
+  // Combined: avgFidelity 0.9669 → ~0.9685, −16 instances, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped post-realign emissions (en → lang), keydown-key-is-syntax.
+  const clearCases: Array<[string, string]> = [
+    ['de', 'bei keyup[key=="Escape"] bereinigen ich'],
+    ['pl', 'gdy keyup[key=="Escape"] zeruj ja'],
+    ['vi', 'khi keyup[key=="Escape"] tẩy tôi'],
+    ['id', 'pada keyup[key=="Escape"] bersihkan saya'],
+    ['ms', 'apabila keyup[key=="Escape"] bersihkan saya'],
+    ['sw', 'kwenye keyup[key=="Escape"] safisha mimi'],
+    ['ar', 'عند keyup[key=="Escape"] نظّف أنا'],
+    ['he', 'ב keyup[key=="Escape"] נקה את אני'],
+  ];
+  for (const [lang, input] of clearCases) {
+    it(`[${lang}] keydown-key-is-syntax parses clear, not remove`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('clear')).toBe(true);
+      expect(a.has('remove')).toBe(false);
+    });
+  }
+
+  it('[de] löschen still parses as remove (the realign reason stays locked)', () => {
+    const a = actions(parse('bei klick löschen .active von ich', 'de'));
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[pt] unless-condition parses the unless wrapper via salvo (was {on,toggle})', () => {
+    const a = actions(parse('em clique salvo I match .disabled alternar .selected', 'pt'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('unless')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(parse("on keyup[key=='Escape'] clear me", 'en'));
+    expect([...a].sort()).toEqual(['clear', 'on']);
+  });
+});

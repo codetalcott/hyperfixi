@@ -100,7 +100,10 @@ export const portugueseProfile: LanguageProfile = {
     fetch: { primary: 'buscar', normalized: 'fetch' },
     settle: { primary: 'estabilizar', normalized: 'settle' },
     if: { primary: 'se', normalized: 'if' },
-    unless: { primary: 'a_menos', normalized: 'unless' },
+    // salvo — single token ('salvo se' = unless). a_menos kept as an
+    // alternative documenting intent: the pt word extractor splits at `_`
+    // (a + _ + menos), so the compound could never tokenize as one keyword.
+    unless: { primary: 'salvo', alternatives: ['a_menos'], normalized: 'unless' },
     when: { primary: 'quando', normalized: 'when' },
     where: { primary: 'onde', normalized: 'where' },
     else: { primary: 'senão', normalized: 'else' },

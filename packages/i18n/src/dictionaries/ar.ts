@@ -59,7 +59,7 @@ export const ar: Dictionary = {
     exit: 'اخرج',
     install: 'ثبّت',
     breakpoint: 'نقطة-توقف',
-    clear: 'امسح',
+    clear: 'نظّف', // امسح is a remove alternative in the profile
     close: 'أغلق',
     open: 'افتح',
     select: 'اختر',

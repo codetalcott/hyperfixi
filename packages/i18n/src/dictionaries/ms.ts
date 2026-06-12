@@ -63,7 +63,7 @@ export const malayDictionary: Dictionary = {
     init: 'mula',
     clone: 'klon',
     breakpoint: 'titik-henti',
-    clear: 'padam',
+    clear: 'bersihkan', // padam is a remove alternative in the profile
     close: 'tutup',
     open: 'buka',
     select: 'pilih',
