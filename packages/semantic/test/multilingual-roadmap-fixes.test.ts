@@ -2143,8 +2143,9 @@ describe('compound-split append — ru/uk dict realign + pl handcrafted collisio
   //   Removed the stale alternatives.
   // pl/ru/uk append-content lossy → faithful; cross-lang avgFidelity
   // 0.9392 → 0.9397; 0 regressions. Remaining compound-split append languages
-  // (bn শেষে যোগ, hi जोड़ें_अंत, ms tambah_hujung) need NEW single-word native
-  // vocabulary in both profile and dict — deferred.
+  // (bn শেষে যোগ, hi जोड़ें_अंत) got new single-word native vocabulary in the
+  // B2c follow-up below; ms tambah_hujung turned out fine (the ms tokenizer's
+  // word-chars include '_', so the compound matches whole).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -2269,5 +2270,60 @@ describe('Generated swap patterns match the transformer emission shape (swap pat
       expect(a.has('on')).toBe(true);
       expect(a.has('swap')).toBe(true);
     }
+  });
+});
+
+describe('bn/hi single-word append + hi swap vocabulary (B2c)', () => {
+  // The compound-split tail of the B2 append/swap clusters that needed NEW
+  // native vocabulary (not a realign — neither side had a workable word):
+  // - bn append 'শেষে যোগ' (multi-word): শেষে reads as `end`, যোগ as `add`,
+  //   so bn append-content always parsed as add. New primary: জুড়ুন
+  //   (attach/join, imperative — matches the রাখুন/নিন verb style).
+  // - hi append 'जोड़ें_अंत' (underscore compound): splits, embedded जोड़ें
+  //   (`add`) wins. New primary: संलग्न (attach/append).
+  // - hi swap: dict emitted bare बदलें, a TOGGLE alternative; the profile's
+  //   'बदलें_स्थान' compound splits to the same collision. New primary:
+  //   विनिमय (exchange). This was the last lossy swap-content — the command
+  //   is now faithful in 23/23 languages.
+  // Profile + dict updated together (the tokenizers auto-register profile
+  // keywords). bn +1 / hi +2 patterns lossy → faithful; 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer emissions with the new vocabulary.
+  it('[bn] append-content parses the real append action (was add)', () => {
+    const a = actions(parse('"<li>Item</li>" কে ক্লিক এ জুড়ুন #list তে', 'bn'));
+    expect(a.has('append')).toBe(true);
+    expect(a.has('add')).toBe(false);
+  });
+
+  it('[hi] append-content parses the real append action (was add)', () => {
+    const a = actions(parse('"<li>Item</li>" को क्लिक पर संलग्न #list में', 'hi'));
+    expect(a.has('append')).toBe(true);
+    expect(a.has('add')).toBe(false);
+  });
+
+  it('[hi] swap-content parses the real swap action (was toggle)', () => {
+    const a = actions(parse('#a को क्लिक पर विनिमय #b से', 'hi'));
+    expect(a.has('swap')).toBe(true);
+    expect(a.has('toggle')).toBe(false);
+  });
+
+  // Regression guards: the plain add/toggle verbs are untouched.
+  it('[bn] plain add still parses (যোগ)', () => {
+    expect(actions(parse('.highlight কে ক্লিক এ যোগ #item তে', 'bn')).has('add')).toBe(true);
+  });
+  it('[hi] plain add and toggle still parse (जोड़ें / टॉगल)', () => {
+    expect(actions(parse('.highlight को क्लिक पर जोड़ें #item में', 'hi')).has('add')).toBe(true);
+    expect(actions(parse('.active को क्लिक पर टॉगल', 'hi')).has('toggle')).toBe(true);
   });
 });
