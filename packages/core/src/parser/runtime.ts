@@ -88,6 +88,7 @@ type ObjectLiteralNode = ASTNode & {
   properties: Array<{ key: ASTNode & { valueType?: string }; value: ASTNode }>;
 };
 type AttributeAccessNode = ASTNode & { attributeName: string };
+type PropertyAccessNode = ASTNode & { object: ASTNode; property: string };
 type PropertyOfNode = ASTNode & { property: ASTNode; target: ASTNode };
 type TemplateLiteralNode = ASTNode & { value: string };
 type CollectionNode = ASTNode & {
@@ -182,6 +183,11 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
     case 'memberExpression':
       return evaluateMemberExpression(n, context);
+
+    // Semantic→AST-builder property paths (`item.name`). The core parser uses
+    // `memberExpression`, so this only arrives from `@lokascript/semantic`.
+    case 'propertyAccess':
+      return evaluatePropertyAccess(n, context);
 
     case 'callExpression':
       return evaluateCallExpression(n, context);
@@ -1378,36 +1384,63 @@ async function evaluateMemberExpression(node: MemberNode, context: ExecutionCont
     return object?.[property];
   } else {
     // Non-computed access: object.property
-    const propertyName = node.property.name as string;
-
-    // Handle attribute access (@attr → getAttribute)
-    if (typeof propertyName === 'string' && propertyName.startsWith('@')) {
-      const attrName = propertyName.substring(1);
-      if (object && typeof object.getAttribute === 'function') {
-        return object.getAttribute(attrName);
-      }
-      return undefined;
-    }
-
-    // Element property access routes through getElementProperty so that
-    // `me.*background-color` (parsed as property "computed-background-color")
-    // and special DOM properties resolve correctly. Plain object access
-    // falls back to a direct lookup.
-    if (object instanceof Element && typeof propertyName === 'string') {
-      return getElementProperty(object, propertyName);
-    }
-
-    // A classRef/queryRef collection maps `.prop` over every member, so the dot
-    // form matches the possessive form: `.cb.checked` === `.cb's checked` →
-    // [true, false]. Same guard as the possessive evaluator (element/host
-    // collections only; skips collection-own props so `.items.length` is still
-    // the count) — delegate to it for one source of truth.
-    if (isMappableCollection(object) && !(propertyName in (object as object))) {
-      return getExpr(context, 'possessive').evaluate(context, object, propertyName);
-    }
-
-    return object?.[propertyName];
+    return resolveNamedProperty(object, node.property.name as string, context);
   }
+}
+
+/**
+ * Resolve a named (non-computed) property off an already-evaluated object,
+ * with hyperscript's DOM-aware semantics: `@attr` → getAttribute, Element
+ * properties through getElementProperty (so `me.*background-color` and special
+ * DOM props resolve), and collection mapping (`.cb.checked` → [true, false]).
+ * Shared by the `memberExpression` (parser-produced) and `propertyAccess`
+ * (semantic→AST-builder-produced) evaluators so both behave identically.
+ */
+function resolveNamedProperty(object: any, propertyName: string, context: ExecutionContext): any {
+  // Handle attribute access (@attr → getAttribute)
+  if (typeof propertyName === 'string' && propertyName.startsWith('@')) {
+    const attrName = propertyName.substring(1);
+    if (object && typeof object.getAttribute === 'function') {
+      return object.getAttribute(attrName);
+    }
+    return undefined;
+  }
+
+  // Element property access routes through getElementProperty so that
+  // `me.*background-color` (parsed as property "computed-background-color")
+  // and special DOM properties resolve correctly. Plain object access
+  // falls back to a direct lookup.
+  if (object instanceof Element && typeof propertyName === 'string') {
+    return getElementProperty(object, propertyName);
+  }
+
+  // A classRef/queryRef collection maps `.prop` over every member, so the dot
+  // form matches the possessive form: `.cb.checked` === `.cb's checked` →
+  // [true, false]. Same guard as the possessive evaluator (element/host
+  // collections only; skips collection-own props so `.items.length` is still
+  // the count) — delegate to it for one source of truth.
+  if (isMappableCollection(object) && !(propertyName in (object as object))) {
+    return getExpr(context, 'possessive').evaluate(context, object, propertyName);
+  }
+
+  return object?.[propertyName];
+}
+
+/**
+ * Evaluate a `propertyAccess` node. The canonical core parser emits
+ * `memberExpression` for dotted access, so this node type is never produced by
+ * `parse()` — but the semantic→AST builder (`@lokascript/semantic`) emits
+ * `propertyAccess` for property paths (e.g. `item.name`) it feeds straight into
+ * this runtime. Without this case the runtime threw `Unknown AST node type:
+ * propertyAccess` on otherwise-valid semantic ASTs. Resolves `object.property`
+ * with the same DOM-aware semantics as non-computed member access.
+ */
+async function evaluatePropertyAccess(
+  node: PropertyAccessNode,
+  context: ExecutionContext
+): Promise<any> {
+  const object = await evaluateAST(node.object, context);
+  return resolveNamedProperty(object, node.property, context);
 }
 
 /**

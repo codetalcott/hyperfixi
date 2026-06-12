@@ -3126,17 +3126,30 @@ describe('empty-predicate adjective is a profile keyword alternative (is-empty c
     expect(a.has('empty')).toBe(true);
   });
 
-  it('[en] the en reference parse is unchanged', () => {
-    const a = actions(
-      parse(
-        'on blur if my value is empty add .error to me put "Required" into next .error-message end',
-        'en'
-      )
-    );
+  it('[en] folds the if into a conditional; `is empty` is the condition, not a spurious `empty` command', () => {
+    // The en if/unless conditional fold (semantic-parser.tryParseConditionalBlock)
+    // captures `my value is empty` as the condition EXPRESSION and nests the body
+    // under a conditional node. Previously the predicate adjective `empty` matched
+    // the `empty` COMMAND primary and surfaced as a spurious top-level action; it
+    // is now correctly part of the condition, so the reference action set is
+    // {on, if, add, put} with no bogus `empty`.
+    const node = parse(
+      'on blur if my value is empty add .error to me put "Required" into next .error-message end',
+      'en'
+    ) as Record<string, unknown>;
+    const a = actions(node);
     expect(a.has('if')).toBe(true);
-    expect(a.has('empty')).toBe(true);
     expect(a.has('add')).toBe(true);
     expect(a.has('put')).toBe(true);
+    expect(a.has('empty')).toBe(false);
+
+    // The then-branch nests under a conditional whose condition carries the predicate.
+    const handler = node as { body?: Array<Record<string, unknown>> };
+    const conditional = handler.body?.find(n => n.kind === 'conditional');
+    expect(conditional).toBeDefined();
+    const cond = (conditional!.roles as Map<string, { raw?: string }>).get('condition');
+    expect(cond?.raw).toContain('empty');
+    expect(Array.isArray(conditional!.thenBranch)).toBe(true);
   });
 });
 
@@ -4817,5 +4830,94 @@ describe('id increment dict realign — tambahkan (parses as add) → naikkan (R
   it('[id] tambahkan still parses as add (the profile alternative is untouched)', () => {
     const cmd = firstCommand(parse('tambahkan .highlight', 'id'));
     expect(cmd?.action).toBe('add');
+  });
+});
+
+describe('en if/unless conditional fold (parsing track reopen — §2 dominant cluster)', () => {
+  // The semantic parser's body assembly (parseBodyWithClauses →
+  // tryParseConditionalBlock) folds an English-order `if <cond> [then] <body>
+  // [else <body>] [end]` into a ConditionalSemanticNode: the full condition is
+  // captured (previously truncated to its first token) and the then/else branches
+  // nest (previously flattened into sibling commands). This is the §2 dominant
+  // cluster that manifests in English itself and blocked R2 control-flow
+  // expansion. `unless` is intentionally NOT folded (a conditional node is always
+  // action `if`; folding `unless` would relabel its action and desync the
+  // cross-language action-set comparison).
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const found = findConditional(x);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+  const condText = (c: Record<string, unknown>): string =>
+    ((c.roles as Map<string, { raw?: string }>).get('condition')?.raw ?? '') as string;
+  const branchActions = (branch: unknown): string[] =>
+    Array.isArray(branch)
+      ? (branch as Array<Record<string, unknown>>).map(n => String(n.action))
+      : [];
+
+  it('if-condition: full condition + nested then/else branches', () => {
+    const c = findConditional(
+      parse('on click if I match .active then remove .active else add .active end', 'en')
+    );
+    expect(c).not.toBeNull();
+    expect(condText(c!)).toBe('I match .active');
+    expect(branchActions(c!.thenBranch)).toEqual(['remove']);
+    expect(branchActions(c!.elseBranch)).toEqual(['add']);
+  });
+
+  it('if-matches: no explicit `then` — condition ends at the first command verb', () => {
+    const c = findConditional(
+      parse('on click if I match .disabled halt else toggle .active end', 'en')
+    );
+    expect(condText(c!)).toBe('I match .disabled');
+    expect(branchActions(c!.thenBranch)).toEqual(['halt']);
+    expect(branchActions(c!.elseBranch)).toEqual(['toggle']);
+  });
+
+  it('if-exists: else branch keeps a juxtaposed multi-command body', () => {
+    const c = findConditional(
+      parse(
+        'on click if #modal exists show #modal else make a <div#modal/> put it into body end',
+        'en'
+      )
+    );
+    expect(condText(c!)).toBe('#modal exists');
+    expect(branchActions(c!.thenBranch)).toEqual(['show']);
+    expect(branchActions(c!.elseBranch)).toEqual(['make', 'put']);
+  });
+
+  it('is-empty copula guard: `empty` after `is` stays in the condition, not the then-branch', () => {
+    const c = findConditional(
+      parse('on blur if my value is empty add .error to me else remove .error from me end', 'en')
+    );
+    expect(condText(c!)).toBe('my value is empty');
+    expect(branchActions(c!.thenBranch)).toEqual(['add']);
+    expect(branchActions(c!.elseBranch)).toEqual(['remove']);
+  });
+
+  it('no `else`, no `end`: whole remainder is the then-branch', () => {
+    const c = findConditional(
+      parse('on click if target matches .modal-backdrop hide .modal-backdrop end', 'en')
+    );
+    expect(condText(c!)).toBe('target matches .modal-backdrop');
+    expect(branchActions(c!.thenBranch)).toEqual(['hide']);
+    expect(c!.elseBranch).toBeUndefined();
+  });
+
+  it('unless is NOT folded (keeps its flat parse / `unless` action label)', () => {
+    const c = findConditional(
+      parse('on click unless I match .disabled toggle .selected', 'en')
+    );
+    expect(c).toBeNull();
   });
 });

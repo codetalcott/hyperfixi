@@ -8,6 +8,7 @@
 import type {
   SemanticNode,
   CommandSemanticNode,
+  CompoundSemanticNode,
   EventHandlerSemanticNode,
   SemanticParser as ISemanticParser,
   SemanticValue,
@@ -20,6 +21,7 @@ import {
   createCommandNode,
   createEventHandler,
   createCompoundNode,
+  createConditionalNode,
   createSelector,
   createLiteral,
   createReference,
@@ -628,6 +630,23 @@ export class SemanticParserImpl implements ISemanticParser {
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
       if (!current) break;
+
+      // Fold a leading `if`/`unless` block into a ConditionalSemanticNode.
+      // At a clause boundary (no tokens accumulated for a pending command), an
+      // `if`/`unless` keyword introduces a conditional whose condition + then/else
+      // branches must nest under one node — otherwise the branches flatten into
+      // sibling commands and the condition truncates to its first token (the §2
+      // dominant cluster, observable in English itself). `tryParseConditionalBlock`
+      // consumes the whole block from the stream and returns the conditional, or
+      // null without consuming when the head isn't a usable conditional — so a
+      // non-conditional clause is byte-identical to the previous behavior.
+      if (currentClauseTokens.length === 0) {
+        const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
+        if (conditional) {
+          clauses.push(conditional);
+          continue;
+        }
+      }
 
       // Check if this is a conjunction token (clause boundary)
       const isConjunction =
@@ -1840,6 +1859,222 @@ export class SemanticParserImpl implements ISemanticParser {
     const curated = endKeywords[language];
     if (curated) return curated.has(v);
     return v === 'end' || this.profileKeywordMatches(language, 'end', v);
+  }
+
+  /**
+   * Check if a token value is an `if` keyword in the given language (profile
+   * primary + alternatives, with the English literal always accepted).
+   */
+  private isIfKeyword(value: string, language: string): boolean {
+    const v = value.toLowerCase();
+    if (v === 'if') return true;
+    return this.profileKeywordMatches(language, 'if', v);
+  }
+
+  /**
+   * Check if a token value is an `unless` keyword (negated conditional).
+   */
+  private isUnlessKeyword(value: string, language: string): boolean {
+    const v = value.toLowerCase();
+    if (v === 'unless') return true;
+    return this.profileKeywordMatches(language, 'unless', v);
+  }
+
+  /**
+   * Copula / negation words that, when they immediately precede a token, keep that
+   * token inside the condition even if it doubles as a command verb. `empty` is
+   * both the `empty` command and the predicate adjective in `is empty`; without
+   * this guard `if my value is empty add …` would truncate the condition at
+   * `empty` and treat it as the then-branch's first command.
+   */
+  private static readonly CONDITION_COPULAS = new Set([
+    'is',
+    'am',
+    'are',
+    'be',
+    'was',
+    'were',
+    'not',
+    'no',
+  ]);
+
+  /**
+   * Parse a leading `if`/`unless` conditional block from the stream into a
+   * ConditionalSemanticNode, consuming the whole block (condition + then/else
+   * branches, up to the matching `end` or the stream end). Returns null WITHOUT
+   * consuming when the head token is not an `if`/`unless` keyword or no condition
+   * is present, so the caller falls through unchanged.
+   *
+   * Word-order scope: this matches the English-style `if <cond> [then] <body>
+   * [else <body>] [end]` order (the §2 dominant cluster, which manifests in
+   * English itself). SOV/VSO transforms place the condition/branches differently;
+   * those clauses don't start with a bare `if`/`unless` keyword here, so they fall
+   * through to the existing per-clause path untouched.
+   */
+  private tryParseConditionalBlock(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): SemanticNode | null {
+    const head = tokens.peek();
+    if (!head) return null;
+    const headVal = (head.normalized ?? head.value).toLowerCase();
+    // Fold `if` only. `unless` is deliberately left on its existing flat parse:
+    // a conditional node is always action `if`, so folding `unless` would relabel
+    // its action from `unless` to `if` and desync the cross-language action-set
+    // comparison (every language that still emits `unless` would read as having
+    // dropped the conditional). Folding `if` keeps the same `if` action the flat
+    // parse already produced, so no action set changes — only the nesting and the
+    // (previously truncated) condition do.
+    if (!this.isIfKeyword(headVal, language)) return null;
+
+    const startMark = tokens.mark();
+    tokens.advance(); // consume if/unless
+
+    // Collect the whole block from the stream: every token up to the matching
+    // depth-0 `end` (or the stream end). Nested `if`/`unless` raise the depth; a
+    // nested `end` lowers it — so an inner conditional's `end` never terminates
+    // the outer block.
+    const blockTokens: LanguageToken[] = [];
+    let depth = 0;
+    while (!tokens.isAtEnd()) {
+      const t = tokens.peek();
+      if (!t) break;
+      const tv = (t.normalized ?? t.value).toLowerCase();
+      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) {
+        depth++;
+        blockTokens.push(t);
+        tokens.advance();
+        continue;
+      }
+      if (this.isEndKeyword(t.value, language)) {
+        if (depth === 0) {
+          tokens.advance(); // consume the terminating `end`
+          break;
+        }
+        depth--;
+        blockTokens.push(t);
+        tokens.advance();
+        continue;
+      }
+      blockTokens.push(t);
+      tokens.advance();
+    }
+
+    if (blockTokens.length === 0) {
+      tokens.reset(startMark);
+      return null;
+    }
+
+    // Split blockTokens into condition / then-branch / else-branch. The condition
+    // ends at the first depth-0 `then` keyword, or at the first depth-0 token that
+    // begins a command (copula-guarded). then/else are split at depth-0 `else`.
+    let i = 0;
+    let bodyDepth = 0;
+    const condTokens: LanguageToken[] = [];
+    let sawThen = false;
+    for (; i < blockTokens.length; i++) {
+      const t = blockTokens[i];
+      const tv = (t.normalized ?? t.value).toLowerCase();
+      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) bodyDepth++;
+      else if (this.isEndKeyword(t.value, language)) bodyDepth--;
+      if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
+        sawThen = true;
+        i++; // skip the `then`
+        break;
+      }
+      if (bodyDepth === 0 && condTokens.length > 0) {
+        const prev = (blockTokens[i - 1].normalized ?? blockTokens[i - 1].value).toLowerCase();
+        if (
+          !SemanticParserImpl.CONDITION_COPULAS.has(prev) &&
+          this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language)
+        ) {
+          break; // this token starts the then-branch
+        }
+      }
+      condTokens.push(t);
+    }
+
+    if (condTokens.length === 0) {
+      tokens.reset(startMark);
+      return null;
+    }
+    void sawThen;
+
+    // Partition the remaining tokens into then- / else-branch at the depth-0 else.
+    const thenTokens: LanguageToken[] = [];
+    const elseTokens: LanguageToken[] = [];
+    let inElse = false;
+    let branchDepth = 0;
+    for (; i < blockTokens.length; i++) {
+      const t = blockTokens[i];
+      const tv = (t.normalized ?? t.value).toLowerCase();
+      if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) branchDepth++;
+      else if (this.isEndKeyword(t.value, language)) branchDepth--;
+      if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
+        inElse = true;
+        continue; // skip the `else`
+      }
+      (inElse ? elseTokens : thenTokens).push(t);
+    }
+
+    const conditionValue = { type: 'expression' as const, raw: this.joinTokenText(condTokens) };
+
+    const thenBranch = this.parseBranch(thenTokens, commandPatterns, language);
+    const elseBranch =
+      elseTokens.length > 0 ? this.parseBranch(elseTokens, commandPatterns, language) : undefined;
+
+    // Nothing parsed in either branch — not a usable conditional; fall through so
+    // the existing per-clause path can try (e.g. a stray `if` token).
+    if (thenBranch.length === 0 && (!elseBranch || elseBranch.length === 0)) {
+      tokens.reset(startMark);
+      return null;
+    }
+
+    return createConditionalNode(conditionValue, thenBranch, elseBranch, {
+      sourceLanguage: language,
+      patternId: `conditional-${language}-folded`,
+      confidence: 1,
+    });
+  }
+
+  /** Reconstruct source-ish text from a token slice for an expression value. */
+  private joinTokenText(toks: readonly LanguageToken[]): string {
+    return toks
+      .map(t => t.value)
+      .join(' ')
+      .trim();
+  }
+
+  /** Whether a command pattern matches at the head of the given token slice. */
+  private tokensBeginCommand(
+    toks: LanguageToken[],
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): boolean {
+    if (toks.length === 0) return false;
+    const stream = new TokenStreamImpl(toks, language);
+    return patternMatcher.matchBest(stream, commandPatterns) !== null;
+  }
+
+  /**
+   * Parse a conditional branch's tokens into a flat list of statements. Reuses
+   * `parseBodyWithClauses` (so then-chains, juxtaposed commands, and nested
+   * conditionals inside the branch all work), then unwraps a single top-level
+   * compound into its statements so the branch array is flat.
+   */
+  private parseBranch(
+    toks: LanguageToken[],
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): SemanticNode[] {
+    if (toks.length === 0) return [];
+    const stream = new TokenStreamImpl(toks, language);
+    const parsed = this.parseBodyWithClauses(stream, commandPatterns, language);
+    if (parsed.length === 1 && parsed[0]?.kind === 'compound') {
+      return (parsed[0] as CompoundSemanticNode).statements;
+    }
+    return parsed;
   }
 
   /**

@@ -489,6 +489,48 @@ else B end` parses as flat siblings if(condition:'I') + A + B; the
   build gotcha recurred and would have silently laundered a real regression
   into the new baseline.**
 
+## 7h. Status update (2026-06-12, post-#393 — session 9): en if/unless EXECUTES
+
+**Both reopened tracks (§9 owner decision) land their first increment in one PR
+(#396). en control-flow now PARSES and EXECUTES end-to-end** — `if I match
+.active then A else B end` and `if target matches .modal-backdrop hide …`
+produce the correct DOM effects in a jsdom run. Three fixes, each independently
+gated:
+
+1. **Parsing — en if/else fold (`semantic-parser.tryParseConditionalBlock`).**
+`parseBodyWithClauses` folds an English-order `if <cond> [then] <body> [else
+<body>] [end]` into a `ConditionalSemanticNode`: full condition capture (up to
+   an explicit `then` or the first command verb, copula-guarded so `is empty`
+   stays in the condition) + recursively-parsed then/else branches. `unless` is
+   left flat on purpose — the conditional node is always action `if`, and folding
+   `unless` relabels its action and desyncs the cross-language action-set
+   comparison (caught as a 12-language faithful→lossy mid-implementation). Action
+   fidelity is recursion-aware, so nesting changes no reference action set — the
+   gate is green with **no baseline change**.
+2. **Core runtime — `propertyAccess` evaluator (§10.7 gap).** The core parser
+   emits `memberExpression`, so `evaluateAST` never handled `propertyAccess`; the
+   semantic→AST builder emits it for property paths fed straight into the runtime,
+   so valid semantic ASTs crashed `Unknown AST node type: propertyAccess` (this
+   blocked dropdown-toggle). Added an evaluator sharing `resolveNamedProperty`
+   with member access.
+3. **Expression parser — keyword comparison operators.** `is`/`matches`/
+   `contains`/`in` were matched by `checkValue()` (peek-only) but read via
+   `previous()` without advancing, so the operator was unconsumed and the operand
+   mis-attributed (`target matches .modal-backdrop` → broken `matches.modal`).
+   Now they consume properly, `match` aliases `matches`, and a selector tokenizes
+   after a comparison keyword.
+
+**Validation:** multilingual `--regression` gate green (all four ratchets, no
+baseline change); semantic 5813, expression-parser 36, core
+expressions/control-flow/parser 2580, runtime-ast-coverage 75; typechecks clean.
+
+**Next (deliberately deferred):** R2 execution-subset expansion to the
+now-executable control-flow patterns (baseline regen + subset-lock in one PR;
+the band INVERTS per §10.5). Remaining condition forms still needing
+expression-parser work: `is empty` with a possessive space-phrase subject (`my
+value is empty`) and the `exists` postfix (`#modal exists`). Other §10.7 runtime
+gaps (`@attr` family, `make` HTML-literal, `halt the event`) untouched.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
