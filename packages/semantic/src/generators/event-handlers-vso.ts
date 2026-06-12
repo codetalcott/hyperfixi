@@ -10,7 +10,11 @@
 import type { LanguagePattern, PatternToken } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema } from './command-schemas';
-import { eventHandlerDestinationExtraction } from './command-schemas';
+import {
+  eventHandlerDestinationExtraction,
+  eventHandlerSourceExtraction,
+  eventHandlerSourceGroup,
+} from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 
 /**
@@ -60,6 +64,10 @@ export function generateVSOEventHandlerPattern(
     });
   }
 
+  // Optional source phrase (`de .items`) for wrapped commands with a
+  // source role (remove/take): previously dropped, breaking remove-from
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso`,
     language: profile.code,
@@ -74,6 +82,7 @@ export function generateVSOEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
@@ -120,6 +129,11 @@ export function generateVSOVerbFirstEventHandlerPattern(
     });
   }
 
+  // Optional source phrase (`mula sa .tab`) sits between the patient and the
+  // trailing event marker in verb-first order: previously dropped, breaking
+  // remove-from for wrapped commands with a source role (remove/take)
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   // Event marker at end
   if (eventMarker.position === 'before') {
     const markerToken: PatternToken = eventMarker.alternatives
@@ -145,6 +159,7 @@ export function generateVSOVerbFirstEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
@@ -397,6 +412,10 @@ export function generateVSONegatedEventHandlerPattern(
     });
   }
 
+  // Optional source phrase (`de .items`) for wrapped commands with a
+  // source role (remove/take): previously dropped, breaking remove-from
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-negated`,
     language: profile.code,
@@ -411,6 +430,7 @@ export function generateVSONegatedEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
@@ -471,6 +491,10 @@ export function generateVSOProcliticEventHandlerPattern(
     });
   }
 
+  // Optional source phrase (`de .items`) for wrapped commands with a
+  // source role (remove/take): previously dropped, breaking remove-from
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-proclitic`,
     language: profile.code,
@@ -485,6 +509,7 @@ export function generateVSOProcliticEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }

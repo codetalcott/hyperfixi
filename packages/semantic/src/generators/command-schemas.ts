@@ -5,7 +5,8 @@
  * Used by the pattern generator to create language-specific patterns.
  */
 
-import type { SemanticRole, ActionType, SemanticValue, ExpectedType } from '../types';
+import type { SemanticRole, ActionType, SemanticValue, ExpectedType, PatternToken } from '../types';
+import type { RoleMarker } from './profiles/types';
 
 // =============================================================================
 // Command Schema Types
@@ -150,6 +151,53 @@ export function eventHandlerDestinationExtraction(
       ? { fromRole: 'destination', default: destRole.default }
       : { fromRole: 'destination' },
   };
+}
+
+/**
+ * Extraction entry for the optional source slot of event-handler wrapper
+ * patterns — same contract as eventHandlerDestinationExtraction: no source
+ * role in the wrapped schema → no extraction; a declared role inherits the
+ * schema's own default (remove's `from X` defaults to me, matching the
+ * runtime's behavior when the modifier is absent).
+ */
+export function eventHandlerSourceExtraction(
+  schema: CommandSchema
+): Record<string, { fromRole: string; default?: SemanticValue }> {
+  const srcRole = schema.roles.find(r => r.role === 'source');
+  if (!srcRole) return {};
+  return {
+    source: srcRole.default
+      ? { fromRole: 'source', default: srcRole.default }
+      : { fromRole: 'source' },
+  };
+}
+
+/**
+ * Optional source-phrase group token for event-handler wrapper patterns,
+ * emitted only when the wrapped schema declares a source role and the
+ * profile has a source marker. The marker's position decides token order:
+ * prepositions precede the value (es `de .items`), postpositional particles
+ * follow it (ja `.items から`). Wrappers previously had NO source slot at
+ * all, so `remove X from Y` translations either silently dropped the
+ * from-phrase (SVO/VSO) or leaked it past the matched span where the SOV
+ * verb-anchoring fallback read the particle as a bogus `from` command.
+ */
+export function eventHandlerSourceGroup(
+  schema: CommandSchema,
+  marker: RoleMarker | undefined
+): PatternToken[] {
+  if (!marker || !schema.roles.some(r => r.role === 'source')) return [];
+  const markerToken: PatternToken = marker.alternatives
+    ? { type: 'literal', value: marker.primary, alternatives: [...marker.alternatives] }
+    : { type: 'literal', value: marker.primary };
+  const roleToken: PatternToken = { type: 'role', role: 'source', optional: true };
+  return [
+    {
+      type: 'group',
+      optional: true,
+      tokens: marker.position === 'after' ? [roleToken, markerToken] : [markerToken, roleToken],
+    },
+  ];
 }
 
 /**

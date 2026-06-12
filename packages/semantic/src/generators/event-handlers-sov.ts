@@ -10,7 +10,11 @@
 import type { LanguagePattern, PatternToken } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema } from './command-schemas';
-import { eventHandlerDestinationExtraction } from './command-schemas';
+import {
+  eventHandlerDestinationExtraction,
+  eventHandlerSourceExtraction,
+  eventHandlerSourceGroup,
+} from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 
 /**
@@ -79,6 +83,10 @@ export function generateSOVEventHandlerPattern(
     : { type: 'literal', value: keyword.primary };
   tokens.push(verbToken);
 
+  // Optional trailing source phrase (post-verb, where the transformer
+  // emits `remove X from Y`'s from-phrase in SOV output)
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov`,
     language: profile.code,
@@ -93,6 +101,7 @@ export function generateSOVEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
@@ -152,6 +161,10 @@ export function generateSOVPatientFirstEventHandlerPattern(
     : { type: 'literal', value: keyword.primary };
   tokens.push(verbToken);
 
+  // Optional trailing source phrase (post-verb, where the transformer
+  // emits `remove X from Y`'s from-phrase in SOV output)
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
     language: profile.code,
@@ -166,6 +179,7 @@ export function generateSOVPatientFirstEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
@@ -320,6 +334,10 @@ export function generateSOVCompactEventHandlerPattern(
     : { type: 'literal', value: keyword.primary };
   tokens.push(verbToken);
 
+  // Optional trailing source phrase (post-verb, where the transformer
+  // emits `remove X from Y`'s from-phrase in SOV output)
+  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-compact`,
     language: profile.code,
@@ -334,6 +352,7 @@ export function generateSOVCompactEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       ...eventHandlerDestinationExtraction(commandSchema),
+      ...eventHandlerSourceExtraction(commandSchema),
     },
   };
 }
