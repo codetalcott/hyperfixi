@@ -1745,7 +1745,10 @@ describe('marker-less fetch fidelity (es/pl/id/sw/he) — recover dropped fetch'
   const cases: Array<[string, string]> = [
     ['es', 'en clic buscar /api/data entonces poner ello a #result'],
     ['pl', 'gdy kliknięcie pobierz /api/data wtedy umieść to do #result'],
-    ['id', 'pada klik ambil /api/data lalu taruh itu ke #result'],
+    // id dict realigned fetch ambil→muat (ambil is take's word; once the fused
+    // take-event pattern came alive it claimed every ambil-fetch — the de
+    // holen/abrufen class). The emission is now muat.
+    ['id', 'pada klik muat /api/data lalu taruh itu ke #result'],
     ['sw', 'kwenye bonyeza leta /api/data kisha weka hiyo kwa #result'],
     ['he', 'ב לחיצה הבא את /api/data אז שים את זה על #result'],
   ];

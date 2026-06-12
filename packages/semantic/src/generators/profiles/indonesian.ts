@@ -174,7 +174,10 @@ export const indonesianProfile: LanguageProfile = {
     // Event marker: saat (when), used in SVO pattern
     // Pattern: saat [event] [verb] [patient] pada [destination?]
     // Example: saat klik alihkan .active pada #button
-    eventMarker: { primary: 'saat', alternatives: ['ketika'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'saat', alternatives: ['ketika', 'pada'], position: 'before' },
     temporalMarkers: ['ketika', 'saat'], // temporal conjunctions (when)
   },
 };

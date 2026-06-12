@@ -28,7 +28,10 @@ export const id: Dictionary = {
     break: 'hentikan',
     halt: 'berhenti',
     wait: 'tunggu',
-    fetch: 'ambil',
+    // profile primary; 'ambil' is take's word — emitting it for fetch made every
+    // fetch parse as take once the fused take-event pattern came alive (the de
+    // holen/abrufen bug class)
+    fetch: 'muat',
     call: 'panggil',
     return: 'kembali',
     make: 'buat',

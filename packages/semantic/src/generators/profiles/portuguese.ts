@@ -164,7 +164,10 @@ export const portugueseProfile: LanguageProfile = {
     // Event marker: ao (at/upon), used in SVO pattern
     // Pattern: ao [event] [verb] [patient] em [destination?]
     // Example: ao clique alternar .active em #button
-    eventMarker: { primary: 'ao', alternatives: ['no'], position: 'before' },
+    // + the eventHandler.keyword word the i18n transformer actually emits —
+    // without it every generated fused `<cmd>-event-*-vso` pattern was dead
+    // (the swap/if recovery split, #346/#351)
+    eventMarker: { primary: 'ao', alternatives: ['no', 'em'], position: 'before' },
     temporalMarkers: ['quando', 'ao'], // temporal conjunctions (when)
   },
 };
