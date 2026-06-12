@@ -167,8 +167,9 @@ export class PatternMatcher {
       }
     }
 
-    for (const patternToken of patternTokens) {
-      const matched = this.matchPatternToken(tokens, patternToken, captured);
+    for (let i = 0; i < patternTokens.length; i++) {
+      const patternToken = patternTokens[i];
+      const matched = this.matchPatternToken(tokens, patternToken, captured, patternTokens[i + 1]);
 
       if (!matched) {
         // If token is optional, continue
@@ -188,14 +189,15 @@ export class PatternMatcher {
   private matchPatternToken(
     tokens: TokenStream,
     patternToken: PatternToken,
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken?: PatternToken
   ): boolean {
     switch (patternToken.type) {
       case 'literal':
         return this.matchLiteralToken(tokens, patternToken);
 
       case 'role':
-        return this.matchRoleToken(tokens, patternToken, captured);
+        return this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
 
       case 'group':
         return this.matchGroupToken(tokens, patternToken, captured);
@@ -254,7 +256,8 @@ export class PatternMatcher {
   private matchRoleToken(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'role' },
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken?: PatternToken
   ): boolean {
     // Skip noise words like "the" before selectors (English idiom support)
     this.skipNoiseWords(tokens);
@@ -426,7 +429,66 @@ export class PatternMatcher {
 
     captured.set(patternToken.role, value);
     tokens.advance();
+
+    // Event-head tolerance: a bracket key-filter and/or a prepositional source
+    // clause can trail the event token (`keydown` + `[key=="Tab"]` — the
+    // tokenizer splits them — then `von .modal`). Fused event patterns
+    // (`<marker> {event} <verb> …`) expect the wrapped command's verb right
+    // after the event role, so without consuming these the whole fused match
+    // fails and the input falls to a plain event pattern whose body re-parse
+    // drops the wrapped block command (focus-trap's `if` across de/it/es/fr/pt).
+    // Mirrors the bracket-filter skip already in the SOV/mid-stream extractors.
+    if (patternToken.role === 'event') {
+      const filterTok = tokens.peek();
+      if (
+        filterTok &&
+        filterTok.kind === 'selector' &&
+        filterTok.value.startsWith('[') &&
+        'value' in value
+      ) {
+        // Fold the filter back onto the event value (the tokenizer split it off).
+        captured.set(patternToken.role, createLiteral(`${String(value.value)}${filterTok.value}`));
+        tokens.advance();
+      }
+      // `<source-marker> <element>` (`von .modal` / `kutoka .modal` / `from window`).
+      // Skipped when the pattern itself expects the marker next (e.g. the
+      // handcrafted `event-de-bei-source` carries an explicit `von {source}`).
+      const srcMarker = tokens.peek();
+      if (
+        srcMarker &&
+        (srcMarker.kind === 'particle' || srcMarker.kind === 'keyword') &&
+        (srcMarker.normalized ?? '').toLowerCase() === 'source' &&
+        !this.patternTokenWouldMatch(nextPatternToken, srcMarker)
+      ) {
+        const srcValueTok = tokens.peek(1);
+        if (srcValueTok && (srcValueTok.kind === 'selector' || srcValueTok.kind === 'identifier')) {
+          tokens.advance(); // the source marker
+          const srcValue = this.tokenToSemanticValue(tokens.advance());
+          if (srcValue && !captured.has('source')) {
+            captured.set('source', srcValue);
+          }
+        }
+      }
+    }
+
     return true;
+  }
+
+  /**
+   * Whether a pattern token (literal, or a group starting with a literal) would
+   * match the given stream token. Used to keep the event-head source-clause
+   * consumption from stealing a marker the pattern explicitly expects.
+   */
+  private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
+    if (!pt) return false;
+    if (pt.type === 'literal') {
+      if (this.getMatchType(token, pt.value) !== 'none') return true;
+      return !!pt.alternatives?.some(a => this.getMatchType(token, a) !== 'none');
+    }
+    if (pt.type === 'group') {
+      return this.patternTokenWouldMatch(pt.tokens?.[0], token);
+    }
+    return false;
   }
 
   /**
