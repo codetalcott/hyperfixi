@@ -44,6 +44,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../patterns-reference ../core",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

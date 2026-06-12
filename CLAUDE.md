@@ -199,6 +199,16 @@ Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any 
 
 When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests.
 
+> **Neither hook fires for direct `npx vitest` / `npx tsx` invocations.** That's
+> how the qu "unreproducible baseline" incident happened (roadmap §7g): a sweep
+> executed a stale `dist/` and scored code that differed from the checkout. The
+> multilingual CLI now guards this itself — `--regression` / `--save-baseline`
+> runs REFUSE when any of intent/framework/semantic/i18n/patterns-reference/core
+> has `src/` newer than `dist/index.js` (the dist sibling of the patterns.db
+> provenance stamp). If you run vitest directly after editing an upstream
+> package, rebuild it first (`npm run check:fresh` or `npm run build --prefix
+packages/<dep>`); a green suite against a stale dist is vacuously green.
+
 ### Live Testing
 
 ```bash

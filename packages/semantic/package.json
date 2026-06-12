@@ -213,6 +213,7 @@
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "build:browser": "tsup src/browser.ts --format iife --global-name LokaScriptSemantic --minify",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework",
     "test": "bash ../../scripts/vitest-run.sh",
     "test:run": "vitest run",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
