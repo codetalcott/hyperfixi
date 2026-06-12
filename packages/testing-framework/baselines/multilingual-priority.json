@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T18:26:54.259Z",
-  "commit": "4119da0b",
+  "timestamp": "2026-06-12T18:39:06.288Z",
+  "commit": "61c334ff",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -12078,11 +12078,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8482999260310177,
+      "avgConfidence": 0.8457025234336144,
       "avgFidelity": 0.9970779220779221,
-      "avgRoleFidelity": 0.8596927284427288,
-      "avgExecutionFidelity": 0.8823529411764706,
-      "executionFailures": ["remove-class-from-all", "tabs-basic"],
+      "avgRoleFidelity": 0.8736566924066927,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": ["if-exists", "window-scroll"],
       "bundleSize": 412262,
@@ -12423,14 +12423,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "remove-class-from-all": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "send-with-detail": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -12439,27 +12431,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "tabs-content": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "dropdown-close-outside": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "previous-element": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -12467,13 +12439,41 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 0.7777777777777777
+        },
         "event-from-elsewhere": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.7777777777777777
         },
         "take-class-from-siblings": {
           "success": true,
-          "confidence": 0.8222222222222222
+          "confidence": 0.7777777777777777
         },
         "repeat-times": {
           "success": true,

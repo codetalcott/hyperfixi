@@ -926,7 +926,11 @@ export const tagalogProfile: LanguageProfile = {
   markers: [
     { form: 'kapag', role: 'event', position: 'preposition', required: true },
     { form: 'sa', role: 'destination', position: 'preposition', required: false },
-    { form: 'mula sa', role: 'source', position: 'preposition', required: false },
+    // mula_sa (underscore) matches the tl dict and the semantic profile's
+    // source marker — the spaced form emitted two tokens the generated
+    // patterns' single mula_sa literal could never match, so `remove X
+    // mula sa Y` lost its source and the schema default fabricated me.
+    { form: 'mula_sa', role: 'source', position: 'preposition', required: false },
     { form: 'nang', role: 'style', position: 'preposition', required: false },
     { form: 'bilang', role: 'method', position: 'preposition', required: false },
   ],
