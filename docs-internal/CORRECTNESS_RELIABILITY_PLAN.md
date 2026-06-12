@@ -279,6 +279,55 @@ Per §9's stopping rule the parsing track now STOPS: the marginal session
 clears ~5 hard instances while R2 removes whole categories of production
 risk. Remaining parsing tail (99 lossy, 63 degen) is documented in §10.
 
+## 7d. Status update (2026-06-12, post-#375 — session 5): R2 SHIPPED
+
+**R2 executionFidelity 0.5141 (23 languages, recorded + ratcheted) | parsing
+floor unchanged (avgFidelity 0.9717 | lossy 99 | degenerate 63 | R1 0.7575).**
+One PR (#375) — the R2 execution smoke ratchet (§8), built and baselined in a
+single session. No parser/dict files touched.
+
+- **Mechanism**: semantic parse → buildAST → `runtime.execute` installs the
+  `on click` handler in a fresh jsdom fixture → dispatch click → diff the DOM
+  (classes / attrs / inline style / leaf text) → exact-match the effect
+  signature against the en reference's. Curated 17-pattern subset
+  (toggle/add/remove/put/set/show/hide/increment on click), locked by test.
+  Per-language `avgExecutionFidelity` + `executionFailures` in the baseline;
+  gate fails on ANY pass→fail flip (tolerance 0 — harness measured
+  byte-identical across full sweeps). All in
+  `packages/testing-framework/src/multilingual/validators/execution-validator.ts`
+  - orchestrator/reporters/CLI wiring.
+- **Infra discovery (measure-first paid again)**: no new browser harness was
+  needed. `packages/core/src/multilingual/e2e-execution.test.ts` had already
+  proven parse → buildAST → execute in jsdom; R2 is that loop made
+  corpus-driven and ratcheted. Playwright was deliberately NOT used: jsdom is
+  in-process, deterministic, and runs inside the existing multilingual CLI.
+- **First measurement — the predicted new band, 3rd time in a row**:
+  executionFidelity mean **0.5141**, 190 failing instances across 13/17
+  patterns. Worst: qu 0.118, hi 0.294, ko 0.294, then a 10-language 0.412
+  shelf. Best: **he 1.000 and zh 1.000** (he's perfect score is the #374 את
+  mechanism paying off at runtime — spot-verified). Burn-down deliberately
+  NOT started (§8 rule).
+- **Dominant failure classes (probe evidence, half-confirmed mechanisms)**:
+  (1) _dropped destination role_ — `show #modal` / `toggle .open on #menu` /
+  `increment #counter` execute against `me` instead of the selector target in
+  ~18 languages; this is the R1 role-loss band becoming execution-visible
+  (R0 scores several of these 1.0). (2) _ja AST mis-builds_ — connective
+  words leak into the AST as commands (`Unknown command: into/from`); the
+  effect often still lands, then the bogus trailing command throws.
+  (3) _ko literal quoting_ — `put "Done!" into me` writes `"Done!"` with
+  quotes (`text["Done!"]` vs en `text[Done!]`). (4) _possessive-dot_ —
+  `set my.textContent/innerHTML/*style` diverges in hi/id/it/ko/pl/ru/th/uk(/vi)
+  — the §10 possessive-dot triple, now measured at runtime.
+- **Effects-only match (deliberate)**: trapped runtime errors are diagnostic,
+  not part of the signal — their attribution rides on unhandled-rejection
+  timing (racy), while the DOM snapshot is synchronous. A mis-build that
+  damages behavior diverges in effects regardless. Flake control first.
+- **Excluded from the subset (en reference itself doesn't execute)**:
+  `toggle-visibility` (`toggle @hidden`), `set-text-basic`
+  (`set #output.innerText`), `set-attribute` (`set @disabled`) — these are
+  RUNTIME gaps visible even in English; candidates for a runtime track, not
+  translation work.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -295,11 +344,16 @@ wrongly while scoring 1.0. Two stages, ~10× apart in cost:
   **Expectation (learned from R0): the first measurement will reveal a new,
   larger failure band. Record + ratchet the baseline; do NOT fold its burn-down
   into the current parsing-track goal.**
-- **R2 — execution smoke ratchet (runtime, later).** Execute a curated subset of
-  transformed patterns in the browser harness and assert DOM effects match the
-  en reference's effects. This is the true production signal but a mini-project
-  (effect capture, async patterns, flake control). Sequence after the parsing
-  ship line, alongside Track 2.
+- **R2 — execution smoke ratchet (runtime). SHIPPED in #375 (see §7d).**
+  Executes a curated 17-pattern subset in jsdom (parse → buildAST →
+  runtime.execute → dispatch → DOM-effect diff) and exact-matches each
+  language's effect signature against the en reference's. Per-language
+  `avgExecutionFidelity` + `executionFailures` ratcheted in the baseline,
+  tolerance 0 (deterministic harness). First measurement mean 0.5141 —
+  the expected larger band; burn-down is its own track, not this one.
+  Expansion path: grow the subset (multi-command, control-flow, behavior-\*
+  patterns) — every expansion recalibrates the averages, so it must
+  regenerate the baseline and update the subset lock test in the same PR.
 
 ## 9. Endgame: parallel tracks, merge-queue discipline, ship line
 
@@ -336,21 +390,62 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#374, session 4)
+## 10. Handoff — next session (written 2026-06-12, post-#375, session 5)
 
-**The parsing-track ship line is reached (§7c). Do not grind the parsing tail
-further** — §9's stopping rule applies. The recommended next mission is
-**R2 (execution smoke ratchet, §8)**: execute a curated subset of transformed
-patterns in the browser harness and assert DOM effects match the en
-reference. Treat it as a mini-project (effect capture, async, flake control);
-the parsing ratchets (R0 parse-rate/fidelity, R1 roles, the #373 lexicon
-ratchet) hold the floor while you build it.
+**R2 is shipped and baselined (§7d).** All four ratchets now hold the floor:
+R0 (parse rate + action-set fidelity + lossy/degenerate), R1 (roles), the
+#373 lexicon emit-mismatch allowlist, and R2 (execution effects, tolerance 0).
+The parsing track remains STOPPED (§9). The recommended next missions, in
+order of leverage:
+
+1. **R2 burn-down, role-loss class first.** The ~18-language _dropped
+   destination_ shelf (`show #modal`, `toggle .open on #menu`,
+   `increment/decrement #counter`, `modal-open`, `hide-element`) is one or
+   few mechanisms in role transfer between parse and AST-build — NOT 90
+   independent bugs. Probe `buildAST`'s destination-role handling for a
+   translated parse vs en before believing any per-language theory. Fixing it
+   moves executionFidelity for nearly every language at once and likely
+   drags R1 roleFidelity (0.7575) up with it.
+2. **ko quoting + ja connective-as-command.** Small, mechanical-looking:
+   ko keeps literal quotes in `put` patient (`text["Done!"]`); ja builds
+   `into`/`from` connectives into commands that throw at runtime. Each is
+   probably one emission/builder site.
+3. **R2 subset expansion** — after the burn-down stabilizes: multi-command
+   patterns, then control-flow (`if-matches`, `unless-condition`), then
+   behavior-\* (the §10-session-4 degenerate mass is also the most
+   R2-visible). RULE: subset changes recalibrate every average — regenerate
+   the baseline AND update the subset lock test in the same PR.
+4. **Runtime gaps visible in en** (from the subset exclusions):
+   `toggle @hidden`, `set #output.innerText to X`, `set @disabled to true`
+   fail in ENGLISH in the current runtime. That's a core-runtime track,
+   independent of translation.
+
+R2 operational notes for the next session:
+
+- The validator lives in
+  `packages/testing-framework/src/multilingual/validators/execution-validator.ts`;
+  scoring in `orchestrator.scoreExecution`; ratchet in regression-reporter +
+  CLI (`newExecutionFailures`, tolerance 0). Match is EFFECTS-ONLY by design —
+  do not add trapped runtime errors to the match signal without solving
+  unhandled-rejection attribution first (it raced probe-vs-harness in
+  session 5).
+- `@hyperfixi/core`'s root dist touches `Element` at module-eval time: jsdom
+  globals must be installed BEFORE importing it (the validator's
+  `initialize()` does this; any new consumer must too).
+- The baseline now spans 24 languages while the CI gate sweeps 21
+  (bn/ms/qu are baseline-only) — keep using the 24-language list for
+  `--save-baseline` or those three lose ratchet coverage.
+- Workflow gotcha that cost one redo: `--save-baseline` must run against a
+  freshly `populate`d patterns.db (CI re-populates before the gate), and
+  patterns.db must be reverted before commit.
 
 Lock tests: the last ~10 describe-blocks of
 `packages/semantic/test/multilingual-roadmap-fixes.test.ts` (#366–#374) +
 `packages/semantic/test/lexicon-emit-mismatch.test.ts` (the allowlist is a
 PRUNE-DOWN list: fixing a dict row should delete its entry) +
-`packages/i18n/src/grammar/grammar.test.ts`.
+`packages/i18n/src/grammar/grammar.test.ts` + the R2 locks
+(`execution-validator.test.ts` subset/behavior locks and the R2
+describe-block in `regression-reporter.test.ts`).
 
 If a future session DOES return to parsing, the residual map:
 
@@ -387,6 +482,16 @@ the generator inserts profile roleMarkers into templates; (11) the auditor
 manual diagnostic move pays off three times, mechanize it; (12) homonym
 mappings in tokenizer EXTRAS lists (את→you, ja も) are the quiet killers —
 the profile/dict never shows them.
+
+Session-5 additions: (13) measure-first applies to INFRA too — the "browser
+harness mini-project" was already 80% built (`e2e-execution.test.ts` proved
+the execution loop; the work was corpus-wiring + ratchet semantics, one
+session not several); (14) when a binary ratchet signal can race
+(unhandled-rejection attribution), cut the racy half out of the signal
+rather than tolerating flake — effects-only matching kept tolerance at 0;
+(15) the en reference can itself be broken — always validate the reference
+side first and EXCLUDE rather than score against garbage (3 of 20 candidate
+patterns failed in English).
 
 Operating mode: unchanged (measure-first probe, one mechanism per PR,
 serialize on the baseline, prototype-while-CI-runs, stash with names).
