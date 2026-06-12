@@ -121,7 +121,7 @@ export const turkishProfile: LanguageProfile = {
     focus: { primary: 'odak', alternatives: ['odaklanma'], normalized: 'focus' },
     blur: { primary: 'bulanık', alternatives: ['bulanıklık', 'bulanik'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'boşalt', alternatives: ['bosalt'], normalized: 'empty' },
+    empty: { primary: 'boşalt', alternatives: ['bosalt', 'boş'], normalized: 'empty' },
     open: { primary: 'aç', alternatives: ['ac'], normalized: 'open' },
     close: { primary: 'kapat', normalized: 'close' },
     select: { primary: 'vurgula', normalized: 'select' },

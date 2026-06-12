@@ -105,7 +105,7 @@ export const hindiProfile: LanguageProfile = {
     focus: { primary: 'फोकस', alternatives: ['केंद्रित'], normalized: 'focus' },
     blur: { primary: 'धुंधला', alternatives: ['फोकस_हटाएं'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'खाली-करें', normalized: 'empty' },
+    empty: { primary: 'खाली-करें', alternatives: ['खाली'], normalized: 'empty' },
     open: { primary: 'खोलें', normalized: 'open' },
     close: { primary: 'बंद-करें', normalized: 'close' },
     select: { primary: 'चिह्नित-करें', normalized: 'select' },

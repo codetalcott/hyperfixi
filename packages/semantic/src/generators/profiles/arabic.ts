@@ -92,7 +92,7 @@ export const arabicProfile: LanguageProfile = {
     focus: { primary: 'تركيز', alternatives: ['ركز'], normalized: 'focus' },
     blur: { primary: 'ضبابية', alternatives: ['شوش'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'إفراغ', normalized: 'empty' },
+    empty: { primary: 'إفراغ', alternatives: ['فارغ'], normalized: 'empty' },
     open: { primary: 'افتح', normalized: 'open' },
     close: { primary: 'أغلق', normalized: 'close' },
     select: { primary: 'ظلل', normalized: 'select' },

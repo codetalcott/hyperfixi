@@ -87,7 +87,7 @@ export const bengaliProfile: LanguageProfile = {
     focus: { primary: 'ফোকাস', alternatives: ['মনোযোগ'], normalized: 'focus' },
     blur: { primary: 'ঝাপসা', alternatives: ['ফোকাস_সরান'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'খালি-করুন', normalized: 'empty' },
+    empty: { primary: 'খালি-করুন', alternatives: ['খালি'], normalized: 'empty' },
     open: { primary: 'খুলুন', normalized: 'open' },
     close: { primary: 'বন্ধ', normalized: 'close' },
     select: { primary: 'নির্বাচন', normalized: 'select' },

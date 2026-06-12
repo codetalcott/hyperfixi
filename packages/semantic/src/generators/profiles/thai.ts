@@ -85,7 +85,7 @@ export const thaiProfile: LanguageProfile = {
     focus: { primary: 'โฟกัส', alternatives: [], normalized: 'focus' },
     blur: { primary: 'เบลอ', alternatives: [], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'ล้าง', alternatives: ['ทำให้ว่าง'], normalized: 'empty' },
+    empty: { primary: 'ล้าง', alternatives: ['ทำให้ว่าง', 'ว่าง'], normalized: 'empty' },
     open: { primary: 'เปิด', normalized: 'open' },
     close: { primary: 'ปิด', normalized: 'close' },
     select: { primary: 'ทำเครื่องหมาย', normalized: 'select' },

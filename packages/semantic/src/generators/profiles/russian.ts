@@ -170,7 +170,7 @@ export const russianProfile: LanguageProfile = {
     },
     blur: { primary: 'размыть', alternatives: ['размой'], normalized: 'blur', form: 'infinitive' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'опустошить', normalized: 'empty' },
+    empty: { primary: 'опустошить', alternatives: ['пустой'], normalized: 'empty' },
     open: { primary: 'открыть', normalized: 'open' },
     close: { primary: 'закрыть', normalized: 'close' },
     select: { primary: 'выделить', normalized: 'select' },
