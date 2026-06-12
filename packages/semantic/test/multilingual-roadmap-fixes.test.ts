@@ -4108,3 +4108,55 @@ describe('he accusative את — send/trigger/wait tolerate the marked object', 
     expect([...a].sort()).toEqual(['on', 'send']);
   });
 });
+
+describe('event-wrapper destination injection — wrappers defer to the command schema (R2 #376)', () => {
+  // The SOV/VSO event-handler wrapper generators (also reused by SVO) hardcoded
+  // `destination: { fromRole: 'destination', default: me }` into EVERY wrapped
+  // command's extraction — including show/hide/increment/decrement, whose
+  // schemas have no destination role at all. buildAST's show/hide/increment
+  // mappers fill the args slot with `destination ?? patient`, so the fabricated
+  // `destination:me` beat the real patient and the runtime acted on the clicked
+  // element instead of the named selector in ~18 languages (R2's 0.412 shelf).
+  // Recall-based R1 scores extra roles 1.0, which is how this survived five
+  // sessions invisible. Wrappers now defer to the wrapped schema via
+  // eventHandlerDestinationExtraction(): no destination role → no extraction;
+  // a declared destination role keeps the schema's own default (toggle/add/
+  // remove keep default me — benign, those mappers route it to modifiers).
+  // R2 0.5141 → 0.7801, failing instances 190 → 86, ar joins he/zh at 1.000.
+  function bodyRoles(node: unknown): Map<string, unknown> {
+    const rec = node as Record<string, unknown> | null;
+    const body = rec?.body as unknown;
+    const first = Array.isArray(body) ? body[0] : body;
+    const roles = (first as Record<string, unknown> | undefined)?.roles;
+    return roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+  }
+
+  // Corpus-shaped wrapped commands whose schema has NO destination role:
+  // the parse must carry the patient and must NOT fabricate destination:me.
+  const noDestCases: Array<[string, string, string]> = [
+    ['es', 'en clic mostrar #modal', '#modal'],
+    ['de', 'bei klick zeigen #modal', '#modal'],
+    ['ru', 'при клик увеличить #counter', '#counter'],
+    ['it', 'su clic nascondere #modal', '#modal'],
+  ];
+  for (const [lang, input, patient] of noDestCases) {
+    it(`[${lang}] "${input}" keeps patient ${patient} and gains no destination`, () => {
+      const roles = bodyRoles(parse(input, lang as 'es'));
+      expect((roles.get('patient') as { value?: unknown })?.value).toBe(patient);
+      expect(roles.has('destination')).toBe(false);
+    });
+  }
+
+  it('[es] a schema WITH a destination role still captures a surface destination', () => {
+    // toggle declares destination (default me); the captured #menu must win.
+    const roles = bodyRoles(parse('en clic alternar .open a #menu', 'es'));
+    expect((roles.get('patient') as { value?: unknown })?.value).toBe('.open');
+    expect((roles.get('destination') as { value?: unknown })?.value).toBe('#menu');
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const roles = bodyRoles(parse('on click show #modal', 'en'));
+    expect((roles.get('patient') as { value?: unknown })?.value).toBe('#modal');
+    expect(roles.has('destination')).toBe(false);
+  });
+});

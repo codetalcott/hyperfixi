@@ -131,6 +131,28 @@ export interface CommandSchema {
 }
 
 /**
+ * Extraction entry for the optional destination slot of event-handler
+ * wrapper patterns. Defers to the wrapped command's schema: commands whose
+ * schema has no destination role (show/hide/increment/decrement/…) get NO
+ * destination extraction, and commands that do declare one inherit the
+ * schema's own default. A hardcoded `default: me` here used to fabricate a
+ * destination role on every wrapped parse — buildAST prefers destination
+ * over patient for the args slot, so the runtime acted on `me` instead of
+ * the patient selector (invisible to recall-based R1, caught by R2).
+ */
+export function eventHandlerDestinationExtraction(
+  schema: CommandSchema
+): Record<string, { fromRole: string; default?: SemanticValue }> {
+  const destRole = schema.roles.find(r => r.role === 'destination');
+  if (!destRole) return {};
+  return {
+    destination: destRole.default
+      ? { fromRole: 'destination', default: destRole.default }
+      : { fromRole: 'destination' },
+  };
+}
+
+/**
  * Command categories for organization.
  */
 export type CommandCategory =
