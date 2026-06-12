@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 19 curated patterns', () => {
+  it('contains exactly the 23 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -43,10 +43,18 @@ describe('R2 execution subset (lock)', () => {
         'set-style',
         'closest-ancestor',
         // Session-8 expansion wave 1 (multi-command): see the eligibility
-        // probe notes in execution-validator.ts for the nine candidates
-        // excluded because their en reference doesn't execute.
+        // probe notes in execution-validator.ts for the candidates excluded
+        // because their en reference doesn't execute.
         'tabs-content',
         'accordion-exclusive',
+        // Session-9 expansion wave 2 (control-flow): en if/else now folds to a
+        // conditional and executes (matches/exists/is-empty condition forms +
+        // the propertyAccess runtime evaluator). unless-condition stays out
+        // (unless is deliberately not folded).
+        'if-condition',
+        'if-matches',
+        'if-exists',
+        'modal-close-backdrop',
       ].sort()
     );
   });
@@ -95,6 +103,28 @@ describe('R2 execution validator (lock)', () => {
     expect(en.effects.join()).toContain('#menu');
     expect(meInstead.effects.join()).toContain('#btn');
     expect(meInstead.effects).not.toEqual(en.effects);
+  });
+
+  it('wave-2 control-flow en references execute with non-empty signatures', async () => {
+    // The else-branch fires (btn has no .active): conditional fold + branch
+    // selection are live, not just parsing.
+    const ifCond = await validator.execute(
+      'if-condition',
+      'on click if I match .active then remove .active else add .active end',
+      'en'
+    );
+    expect(ifCond.error).toBeUndefined();
+    expect(ifCond.effects.join()).toContain('#btn cls[active');
+
+    // The PATTERN_SETUP makes #btn the backdrop, so the condition is true and
+    // hide produces the effect.
+    const backdrop = await validator.execute(
+      'modal-close-backdrop',
+      'on click if target matches .modal-backdrop hide .modal-backdrop end',
+      'en'
+    );
+    expect(backdrop.error).toBeUndefined();
+    expect(backdrop.effects.length).toBeGreaterThan(0);
   });
 
   it('a parse failure comes back as an error, never a throw', async () => {

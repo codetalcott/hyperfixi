@@ -524,12 +524,31 @@ gated:
 baseline change); semantic 5813, expression-parser 36, core
 expressions/control-flow/parser 2580, runtime-ast-coverage 75; typechecks clean.
 
-**Next (deliberately deferred):** R2 execution-subset expansion to the
-now-executable control-flow patterns (baseline regen + subset-lock in one PR;
-the band INVERTS per §10.5). Remaining condition forms still needing
-expression-parser work: `is empty` with a possessive space-phrase subject (`my
-value is empty`) and the `exists` postfix (`#modal exists`). Other §10.7 runtime
-gaps (`@attr` family, `make` HTML-literal, `halt the event`) untouched.
+**Same-session follow-ups (landed after #396 merged):**
+
+- **Remaining condition forms SHIPPED** — `exists` postfix (`#modal exists`),
+  `is empty` / `is not empty` unary predicates, the possessive SPACE form
+  (`my value` → propertyAccess), and contextReference `my`/`its`/`your` aliases
+  in the core runtime. `input-validation` now executes BOTH branches correctly
+  in jsdom; `if #modal exists show #modal` works. Locked by
+  expression-parser.test.ts + runtime-ast-coverage.test.ts. Gate green, no
+  baseline change.
+- **R2 expansion wave 2 SHIPPED** — subset 19 → 23 (`if-condition`,
+  `if-matches`, `if-exists`, `modal-close-backdrop` + a backdrop
+  PATTERN_SETUP). `unless-condition` stays out (unless deliberately not
+  folded); `dropdown-toggle` still excluded (the `next .dropdown-menu`
+  positional mis-parse, NOT the propertyAccess gap — that's fixed).
+  **Recalibration: mean executionFidelity 0.9542 → 0.7902, failing instances
+  20 → 111** — the four new patterns fail in most of the 23 non-en languages
+  because the conditional fold is en-only. This is the expected
+  record-the-band outcome (§8); the cross-language conditional burn-down is
+  its OWN track, not folded into this one. Baseline regenerated + subset lock
+  updated in the same PR per the locked rule.
+
+**Still deferred:** other §10.7 runtime gaps (`@attr` family, `make`
+HTML-literal, `halt the event`); the en tabs-content `show <positional>
+<html-literal>` parse (needs the positional work that also gates
+dropdown-toggle); cross-language conditional folding (SOV/VSO orders).
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
