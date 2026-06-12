@@ -19,7 +19,7 @@ export const it: Dictionary = {
     hide: 'nascondere',
     show: 'mostrare',
     if: 'se',
-    unless: 'a meno che',
+    unless: 'salvo',
     repeat: 'ripetere',
     for: 'per',
     while: 'mentre',

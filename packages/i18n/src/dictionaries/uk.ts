@@ -23,7 +23,7 @@ export const ukrainianDictionary: Dictionary = {
     // parser doesn't read as the scroll command (#321 focus family).
     scroll: 'прокрутити',
     if: 'якщо',
-    unless: 'якщо_не',
+    unless: 'крім',
     repeat: 'повторити',
     for: 'для',
     while: 'поки',

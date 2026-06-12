@@ -110,6 +110,7 @@ export const thaiProfile: LanguageProfile = {
     settle: { primary: 'คงที่', alternatives: [], normalized: 'settle' },
     // Control flow
     if: { primary: 'ถ้า', alternatives: ['หาก'], normalized: 'if' },
+    unless: { primary: 'unless', normalized: 'unless' },
     when: { primary: 'ขณะที่', normalized: 'when' },
     where: { primary: 'ที่ไหน', normalized: 'where' },
     else: { primary: 'ไม่งั้น', alternatives: ['ไม่เช่นนั้น'], normalized: 'else' },

@@ -222,6 +222,7 @@ export const polishProfile: LanguageProfile = {
     settle: { primary: 'ustabilizuj', normalized: 'settle', form: 'imperative' },
     // Control flow
     if: { primary: 'jeśli', alternatives: ['jesli', 'jeżeli', 'jezeli'], normalized: 'if' },
+    unless: { primary: 'chyba', normalized: 'unless' },
     when: { primary: 'kiedy', normalized: 'when' },
     where: { primary: 'gdzie', normalized: 'where' },
     else: { primary: 'inaczej', alternatives: ['wpp'], normalized: 'else' },

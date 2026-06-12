@@ -118,6 +118,7 @@ export const italianProfile: LanguageProfile = {
     settle: { primary: 'stabilizzare', normalized: 'settle' },
     // Control flow
     if: { primary: 'se', normalized: 'if' },
+    unless: { primary: 'salvo', normalized: 'unless' },
     when: { primary: 'quando', normalized: 'when' },
     where: { primary: 'dove', normalized: 'where' },
     else: { primary: 'altrimenti', normalized: 'else' },

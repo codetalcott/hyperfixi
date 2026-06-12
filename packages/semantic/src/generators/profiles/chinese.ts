@@ -106,6 +106,7 @@ export const chineseProfile: LanguageProfile = {
     settle: { primary: '稳定', normalized: 'settle' },
     // Control flow
     if: { primary: '如果', normalized: 'if' },
+    unless: { primary: '除非', normalized: 'unless' },
     when: { primary: '何时', normalized: 'when' },
     where: { primary: '哪里', normalized: 'where' },
     else: { primary: '否则', normalized: 'else' },
