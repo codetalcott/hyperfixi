@@ -440,6 +440,55 @@ reads punya as the property; new mechanism found this session), id
 increment-counter (1 — dict emits tambahkan which parses as add; keyword-
 collision family).
 
+## 7g. Status update (2026-06-12, post-#387/#388 — session 8): R2 SUBSET EXPANSION WAVE 1
+
+**Subset 17 → 19 patterns (tabs-content + accordion-exclusive) | recalibrated
+mean executionFidelity 0.9542 | 9/23 perfect | failing instances 20 = the 7
+carried tails + a NEW 13-language tabs-content band | parsing floor
+unchanged.** Two PRs: #387 (qu restore, see below) then #388 (expansion +
+baseline). accordion-exclusive passes 24/24 on arrival.
+
+- **Eligibility probe (13 candidates, 11 excluded).** Probed 8 multi-command
+  - 5 control-flow click patterns through the validator in en FIRST
+    (lesson 15). Only tabs-content and accordion-exclusive have a usable en
+    reference. The nine exclusions are en-side gaps, documented in the subset
+    comment (execution-validator.ts) and itemized in §10.6:
+  * `halt the event then toggle …` — runtime halt exits the WHOLE handler
+    (patient parses as bare 'the'); the second command never runs.
+  * `set @attr … on <sel>` — "Invalid selector @aria-selected" (joins the
+    set-attribute/toggle-visibility family).
+  * `hide closest .modal …` — the en SEMANTIC PARSE drops the hide command
+    entirely; only the following remove survives.
+  * `toggle .open on next .dropdown-menu halt` — buildAST emits a
+    propertyAccess node the runtime rejects.
+  * `make a <div.card/>` — runtime "Invalid selector <div.card/>" (make with
+    HTML-literal selector), 2 patterns.
+  * **if/unless flatten IN ENGLISH** (5 patterns): `if I match .active then A
+else B end` parses as flat siblings if(condition:'I') + A + B; the
+    runtime rejects the bare if. The §2 dominant cluster is not a
+    translation problem — control-flow R2 expansion is BLOCKED on it.
+- **The tabs-content band (13 langs: bn he hi it ja ko pl qu ru th tr uk
+  vi).** A 4-command juxtaposed chain (remove/add/hide/show) — en itself
+  drops cmd 4 (`show the next <div.tab-panel/>`), and 13 translations drop
+  more. This is the multi-command-drop surface the expansion exists to
+  expose; it is RECORDED in the baseline, not folded into the old tail.
+- **qu incident + #387.** The session opened with the committed baseline
+  unreproducible: 6 curated qu rows (fix-translations.sql glottalized
+  spellings) failed execution on a clean ordered rebuild of HEAD, though the
+  baseline said they passed. Root causes (both fixed in #387, no baseline
+  change needed): (1) tokenizer keyword table lacked `ñit'iy`, so the
+  word-walk split it at the framework-injected English passthrough `it`
+  (ñ + it + 'iy — event parsed as literal "'iy"); (2) the hand-crafted
+  `event-qu-source` wrapper stole a body command's own `manta` from-phrase
+  (qu SOV puts it right after the event) and the non-action
+  buildEventHandler path discards wrapper roles other than `event`, so any
+  match lost the phrase — removed, nothing legitimate matched its shape.
+  **Process lesson (extends the stale-handoff rule): before regenerating a
+  baseline, first verify the COMMITTED one reproduces — a clean rebuild +
+  `--regression` run is the cheap check. The §10 save-from-transitional-
+  build gotcha recurred and would have silently laundered a real regression
+  into the new baseline.**
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -502,14 +551,18 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#385, session 7)
+## 10. Handoff — next session (written 2026-06-12, post-#388, session 8)
 
-**R2 burn-down is in the tail: 0.9821, 7 failing instances, 19/23
-languages perfect (§7f).** All four ratchets hold; the parsing track remains
-STOPPED (§9). HARD-LEARNED THIS SESSION: handoff instance-lists go stale —
-two of session 6's four ranked targets had already cleared by the time they
-were probed. ALWAYS re-read `executionFailures` from the current baseline
-before picking a target. The remaining 7, re-probed this session:
+**R2 now runs the 19-pattern subset: mean 0.9542 (recalibrated), 9/23
+perfect, 20 failing instances = 7 carried tails + the 13-language
+tabs-content band (§7g).** All four ratchets hold; the parsing track remains
+STOPPED (§9). Two session-8 process rules, both hard-learned: (1) handoff
+instance-lists go stale — ALWAYS re-read `executionFailures` from the
+current baseline before picking a target; (2) before regenerating a
+baseline, VERIFY THE COMMITTED ONE REPRODUCES on a clean ordered rebuild
+(`--regression`, zero hits expected) — session 8 caught a silently
+unreproducible baseline (qu, fixed in #387) that a blind regen would have
+laundered into the new floor. The remaining instances:
 
 1. **hi set trio (3: set-text/set-inner-html possessive-dot + set-style).**
    `मेरा.textContent को क्लिक पर सेट "Done!" में` — `event-hi-bare` matches
@@ -533,16 +586,30 @@ saya punya *background ke "red"` (space form — NOT the dot-head the
    as ADD (keyword collision family; the #373 allowlist lists it). Fix the
    dict word (id increment → e.g. naikkan) AND prune the allowlist row in
    the same PR.
-5. **R2 subset expansion** — with the burn-down at 7, expansion is now the
-   higher-leverage move: multi-command patterns, then control-flow
-   (`if-matches`, `unless-condition`), then behavior-\*. RULE (locked by
-   test): any subset change regenerates the baseline AND updates the
-   membership lock in the SAME PR. Expect a new failure band on first
-   expansion — record + ratchet, don't fold into this tail.
-6. **Runtime gaps visible in en** (from the subset exclusions):
-   `toggle @hidden`, `set #output.innerText to X`, `set @disabled to true`
-   fail in ENGLISH in the current runtime. Core-runtime track, independent
-   of translation.
+5. **The tabs-content band (13 langs — the new R2 work surface).** A
+   4-command juxtaposed chain; per-language drops of commands 2–4. Expect
+   clusters, not 13 mechanisms: probe which command each language loses
+   first (the §7e/§7f mechanism idiom applies — find the drifted layer per
+   cluster). NOTE: the en reference itself drops cmd 4 (`show the next
+<div.tab-panel/>`) — translations are scored against en's 3-command
+   effects, so a translation keeping all 4 would DIVERGE; don't "fix" a
+   language past the reference.
+6. **Expansion waves remaining:** control-flow (`if-matches`,
+   `unless-condition`, …) is BLOCKED on the en if/unless flatten (§7g —
+   the §2 dominant cluster, parsing track); behavior-\* still out. Wave 2
+   becomes possible only after en control-flow parses execute. RULE
+   (locked by test) unchanged: any subset change regenerates the baseline
+   AND updates the membership lock in the SAME PR.
+7. **Runtime/parse gaps visible in en** (from the subset exclusions; the
+   session-8 probe added five): `toggle @hidden`, `set #output.innerText
+to X`, `set @disabled to true`, `set @attr … on <sel>` (tabs-aria);
+   runtime `halt` exits the whole handler even as `halt the event`
+   (halt-propagation); en parse drops `hide closest .modal`
+   (modal-close-button); buildAST emits propertyAccess for `next .X` that
+   the runtime rejects (dropdown-toggle); `make a <div.card/>` invalid
+   selector (make-element, make-toast-element); en if/unless branch
+   flatten (5 control-flow patterns). Core-runtime/parsing tracks,
+   independent of translation.
 
 Mechanism idiom, now 9-for-9 across two sessions (§7e/§7f): find which of
 the three layers drifted — dict emission, grammar-profile emission, or
