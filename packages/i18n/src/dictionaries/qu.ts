@@ -9,7 +9,7 @@ export const qu: Dictionary = {
     tell: 'niy',
     trigger: 'kichay',
     send: 'kachay',
-    take: 'hurquy',
+    take: 'hapiy', // auditor: dict emitted a word the profile reads differently
     put: 'churay',
     // churay is the semantic qu profile's `put` primary; `set` is churanay. Emitting
     // churay for set made the semantic parser read a transformed `set` as `put`.
@@ -57,10 +57,10 @@ export const qu: Dictionary = {
     beep: 'waqay',
     js: 'js',
     async: 'mana_suyaspa',
-    render: 'rikuchiy',
+    render: 'rikurichiy', // auditor: dict emitted a word the profile reads differently
     swap: "t'inkuy", // profile primary; 'rantin_tikray' splits, 'tikray' is toggle's word
-    morph: 'tikrachiy',
-    settle: 'tiyay',
+    morph: 'tukunay', // auditor: dict emitted a word the profile reads differently
+    settle: 'tiyakuy', // auditor: dict emitted a word the profile reads differently
     append: 'qhipaman_yapay',
     exit: 'lluqsiy',
     install: 'tarpuy',

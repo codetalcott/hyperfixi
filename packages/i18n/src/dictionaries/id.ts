@@ -51,10 +51,10 @@ export const id: Dictionary = {
     beep: 'bunyi',
     js: 'js',
     async: 'asinkron',
-    render: 'tampilkan',
+    render: 'olah', // auditor: dict emitted a word the profile reads differently
     swap: 'tukar',
-    morph: 'ubah_bentuk',
-    settle: 'stabil',
+    morph: 'ubah', // auditor: dict emitted a word the profile reads differently
+    settle: 'stabilkan', // auditor: dict emitted a word the profile reads differently
     append: 'sisipkan', // profile primary; 'tambah_akhir' splits and is unrecognized
     exit: 'keluar',
     install: 'pasang',

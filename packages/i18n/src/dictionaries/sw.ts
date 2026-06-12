@@ -37,7 +37,7 @@ export const sw: Dictionary = {
     fetch: 'leta',
     call: 'ita',
     return: 'rudi',
-    make: 'fanya',
+    make: 'tengeneza', // auditor: dict emitted a word the profile reads differently
     log: 'andika',
     throw: 'tupa',
     catch: 'shika',
@@ -56,7 +56,7 @@ export const sw: Dictionary = {
     async: 'sainkroni',
     render: 'chora',
     swap: 'badilishana',
-    morph: 'badilishaUmbo',
+    morph: 'geuza', // auditor: dict emitted a word the profile reads differently
     settle: 'tulia',
     append: 'ambatanisha', // profile primary; 'ongezaMwisho' is unrecognized
     exit: 'toka',

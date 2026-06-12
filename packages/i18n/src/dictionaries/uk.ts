@@ -7,7 +7,7 @@ export const ukrainianDictionary: Dictionary = {
   commands: {
     on: 'при',
     tell: 'сказати',
-    trigger: 'викликати',
+    trigger: 'запустити', // auditor: dict emitted a word the profile reads differently
     send: 'надіслати',
     take: 'взяти',
     put: 'покласти',

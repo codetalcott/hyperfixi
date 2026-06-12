@@ -7,7 +7,7 @@ export const pl: Dictionary = {
   commands: {
     on: 'gdy',
     tell: 'powiedz',
-    trigger: 'wywołaj',
+    trigger: 'wyzwól', // auditor: dict emitted a word the profile reads differently
     send: 'wyślij',
     take: 'weź',
     put: 'umieść',
