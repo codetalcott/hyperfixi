@@ -1520,7 +1520,11 @@ function getEventHandlerPatternsTl(): LanguagePattern[] {
       template: {
         format: 'kapag {event} mula_sa {source} {body}',
         tokens: [
-          { type: 'literal', value: 'kapag', alternatives: ['kung', 'sa'] },
+          // 'kung' is deliberately ABSENT: it is tl's IF keyword. Listing it as
+          // a kapag-alternative made if-first emissions (`kung <cond> kapag
+          // <event> …`, focus-trap) match THIS pattern with event=<cond's first
+          // token>, eating the if-clause. 'sa' stays (a genuine on-variant).
+          { type: 'literal', value: 'kapag', alternatives: ['sa'] },
           { type: 'role', role: 'event' },
           { type: 'literal', value: 'mula_sa', alternatives: ['galing_sa'] },
           { type: 'role', role: 'source' },
@@ -1540,7 +1544,8 @@ function getEventHandlerPatternsTl(): LanguagePattern[] {
       template: {
         format: 'kapag {event} {body}',
         tokens: [
-          { type: 'literal', value: 'kapag', alternatives: ['kung', 'sa'] },
+          // 'kung' deliberately absent — see event-tl-kapag-source above.
+          { type: 'literal', value: 'kapag', alternatives: ['sa'] },
           { type: 'role', role: 'event' },
         ],
       },

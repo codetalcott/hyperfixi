@@ -288,6 +288,35 @@ export class SemanticParserImpl implements ISemanticParser {
       )
     );
 
+    // Stage 2.5 (VSO): mid-stream event with an UNMATCHED leading command.
+    // The stage-midstream-cmd path above only runs when Stage 2 matched a
+    // command — but the leading clause is often unmatchable (`itago
+    // pinakamalapit .modal kapag click ثم …`: hide-closest has no tl pattern;
+    // `breakpoint kapag click …`: breakpoint isn't a command keyword), so the
+    // event + then-chain fell through to compound parsing and the handler was
+    // lost (tl/ar modal-close-button, tl breakpoint-command). Same extractor,
+    // same guard: fires only on a real on-marked event whose body parses, so
+    // it can only add parses. Restricted to VSO like stage-midstream-cmd, and
+    // to SINGLE-LINE input: a multi-line block (`behavior … init … on click …`)
+    // legitimately contains an on-marked event in its body, and extracting it
+    // would flatten the whole block into one handler (ar behavior-removable).
+    if (!parseInput.includes('\n') && tryGetProfile(language)?.wordOrder === 'VSO') {
+      const midNoCmd = this.tryMidStreamEventExtraction(parseInput, language, sortedPatterns);
+      if (midNoCmd) {
+        diagnostics.push(
+          parseDiagnostic(
+            'mid-stream event extraction succeeded with no leading command match',
+            'info',
+            'stage-midstream-nocmd'
+          )
+        );
+        const result = modifiers
+          ? this.applyModifiers(midNoCmd as EventHandlerSemanticNode, modifiers)
+          : midNoCmd;
+        return withDiagnostics(result, diagnostics);
+      }
+    }
+
     // Stage 3: Try SOV event trigger extraction
     const sovResult = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
     if (sovResult) {
@@ -1715,7 +1744,10 @@ export class SemanticParserImpl implements ISemanticParser {
     const endKeywords: Record<string, Set<string>> = {
       en: new Set(['end']),
       ja: new Set(['終わり', '終了', 'おわり']),
-      ar: new Set(['نهاية', 'انتهى', 'آخر']),
+      // ar آخر is deliberately ABSENT: it is the positional `last` keyword;
+      // listing it here chopped clauses at every positional last (ar focus-trap
+      // lost its if-branch body). النهاية is what the i18n dict emits for end.
+      ar: new Set(['نهاية', 'انتهى', 'النهاية']),
       es: new Set(['fin', 'final', 'terminar']),
       ko: new Set(['끝', '종료', '마침']),
       zh: new Set(['结束', '终止', '完']),
