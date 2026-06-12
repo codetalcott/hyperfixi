@@ -328,6 +328,61 @@ single session. No parser/dict files touched.
   RUNTIME gaps visible even in English; candidates for a runtime track, not
   translation work.
 
+## 7e. Status update (2026-06-12, post-#380 — session 6): R2 BURN-DOWN
+
+**R2 executionFidelity 0.5141 → 0.9130 | failing instances 190 → 34 |
+13/23 languages at 1.000 (ar bn de es fr he pl pt ru sw tr uk zh) | parsing
+floor byte-identical (avgFidelity 0.9717, lossy 99, degen 63) | R1 0.7575 →
+0.7844 (newly captured source/destination roles raise recall).** Five PRs
+(#376–#380), each one mechanism, each baselined and locked. The §10
+role-injection diagnosis held exactly as probed — the first session where
+the documented mechanism survived contact with the probe.
+
+- **#376 — spurious destination:me (the ~18-language shelf, −104 instances,
+  mean → 0.7801).** The SOV/VSO event-handler wrapper generators (SVO reuses
+  VSO) hardcoded `destination: {fromRole, default: me}` into EVERY wrapped
+  command's extraction — including show/hide/increment/decrement, whose
+  schemas declare no destination role. buildAST's mappers fill args with
+  `destination ?? patient`, so the fabricated me beat the real patient.
+  Fix: `eventHandlerDestinationExtraction()` defers to the wrapped schema
+  (no role → no extraction; declared role keeps the schema's own default —
+  benign for toggle/add/remove, whose mappers route destination to
+  modifiers). en's parse shape is now mirrored exactly.
+- **#377 — ko quote retention (−1, ko put now en-identical).** The
+  particle-based SOV fallback (`semantic-parser`'s tokenToSemanticValue /
+  tokensToSemanticValue) wrapped RAW token values in createLiteral — unlike
+  pattern-matcher's parseLiteralValue. `put "Done!"` wrote `"Done!"` with
+  quotes into the DOM. Both sites now strip symmetric quotes + tag dataType.
+- **#378 — wrappers had NO source slot (−35, mean → 0.8721, six languages
+  to 1.000).** `remove X from Y` translations: SVO/VSO silently dropped the
+  from-phrase (pattern matched, trailer lossy-discarded); SOV leaked it past
+  the matched span, where the verb-anchoring fallback read the から particle
+  as a verb (buildVerbLookup indexes ALL profile keywords, including the
+  `from` modifier) and fabricated a `from` command — Unknown command thrown
+  AFTER the remove acted on the wrong target, killing the rest of the body.
+  Fix: `eventHandlerSourceGroup()` — schema-deferring, position-aware
+  (prepositions precede the value, postpositional particles follow it);
+  trails the verb in SOV (where the transformer emits the phrase), sits
+  between patient and trailing event marker in verb-first VSO.
+- **#379 — SOV trailing destination (−7, bn to 1.000, ja 0.941).** The
+  destination twin: the transformer emits `add X to Y`'s to-phrase
+  post-verb (`追加 #item に`), but the SOV wrappers' only destination group
+  sat pre-patient; the leak became a bogus `into` command + default me.
+  Same generic role-group builder, destination flavor.
+- **#380 — set.ts role-convention split (−9, pl/ru/uk to 1.000, mean →
+  0.9130).** Handcrafted set patterns carried THREE conventions:
+  {destination}+{patient} (en, what setMapper reads), {patient}+{goal}
+  (bn/it/pl/ru/th/uk), {target}+{value} (vi). setMapper ignores
+  goal/target/value → args EMPTY, runtime set nothing. All realigned to the
+  en convention; mapper untouched.
+
+**The session's shape:** every mechanism was the same disease in a different
+organ — generated/handcrafted patterns emitting role shapes the en reference
+never produces (fabricated defaults, missing slots, renamed roles), invisible
+to recall-based R1, surfaced wholesale by R2's first sweep. The fix idiom
+that worked five out of five times: make the emission side defer to the
+command schema and mirror en's parse shape; never touch the mappers.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
@@ -390,39 +445,80 @@ landed.
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
-## 10. Handoff — next session (written 2026-06-12, post-#375, session 5)
+## 10. Handoff — next session (written 2026-06-12, post-#380, session 6)
 
-**R2 is shipped and baselined (§7d).** All four ratchets now hold the floor:
-R0 (parse rate + action-set fidelity + lossy/degenerate), R1 (roles), the
-#373 lexicon emit-mismatch allowlist, and R2 (execution effects, tolerance 0).
-The parsing track remains STOPPED (§9). The recommended next missions, in
-order of leverage:
+**R2 burn-down is past the knee: 0.9130, 34 failing instances, 13/23
+languages perfect (§7e).** All four ratchets hold; the parsing track remains
+STOPPED (§9). The remaining R2 mass is per-language tails — ≥6 distinct
+small mechanisms, each probed this session to at least parse level. In
+order of expected yield:
 
-1. **R2 burn-down, role-loss class first — mechanism CONFIRMED by probe.**
-   The ~18-language shelf (`show #modal`, `toggle .open on #menu`,
-   `increment/decrement #counter`, `modal-open`, `hide-element`) is a
-   SPURIOUS-ROLE injection, not a drop: `en clic mostrar #modal` (es) and
-   `bei klick zeigen #modal` (de) parse with `patient:#modal` PLUS an extra
-   `destination:me` that en's parse doesn't have; `buildAST` then emits
-   `args:[contextReference me]` (destination wins over patient), so the
-   runtime shows `me` instead of `#modal`. Two candidate sites: the
-   generated patterns/profile defaulting destination=me, and buildAST's
-   args-from-roles priority. NOTE: R1 roleFidelity is RECALL-based, so an
-   extra role scores 1.0 — only R2 sees this class. Fixing it moves nearly
-   every language at once and likely drags R1 (0.7575) up with it.
-2. **ko quoting + ja connective-as-command.** Small, mechanical-looking:
-   ko keeps literal quotes in `put` patient (`text["Done!"]`); ja builds
-   `into`/`from` connectives into commands that throw at runtime. Each is
-   probably one emission/builder site.
-3. **R2 subset expansion** — after the burn-down stabilizes: multi-command
-   patterns, then control-flow (`if-matches`, `unless-condition`), then
-   behavior-\* (the §10-session-4 degenerate mass is also the most
-   R2-visible). RULE: subset changes recalibrate every average — regenerate
-   the baseline AND update the subset lock test in the same PR.
-4. **Runtime gaps visible in en** (from the subset exclusions):
+1. **it/th event-handler body-role drop (~6 instances + drags set-style).**
+   `su clic impostare mio.textContent in "Done!"` matches the handcrafted
+   `event-handler-it-full` pattern (packages/semantic/src/patterns/
+   event-handler.ts:993) which captures `{action}` as a positional role —
+   the body command comes out action=set with ZERO roles, while the SAME
+   clause standalone (`impostare mio.textContent in "Done!"`) parses
+   destination correctly via set-it-full. th identical via
+   `event-handler-th-svo` (line 1470). The body re-parse path for the
+   handcrafted full patterns is the site — find where the captured action
+   role becomes a command node without re-running pattern extraction.
+   HALF-CONFIRMED: pattern ids verified, body-parse site not yet located.
+   Also note it set-it-full's value marker is `a` (alternatives su/come)
+   while the transformer emits `in` — even after the body-parse fix the
+   patient may need `in` added to the alternatives.
+2. **ko post-verb phrase on PLAIN patterns (~4: remove/tabs/add-to-other).**
+   ko corpus strings lack the 할 때 event marker (`.active 를 클릭 제거
+.items 에서`), so they match plain `remove-ko-generated` — whose
+   schema-ordered source group sits pre-patient (sovPosition), not
+   post-verb where the transformer puts it; the schema default then
+   fabricates source=me. The #378/#379 trailing-group fix only covers the
+   event WRAPPERS. Candidate: trailing role groups on plain generated SOV
+   command patterns too (buildTokens in pattern-generator.ts), or fix the
+   ko transformer's event-marker emission so the wrapper matches at all.
+   CONFIRMED at parse level (patternId probed).
+3. **toggle-on-other then-scatter (bn/ja ~2 + hi/qu).** The transformer
+   emits the to-phrase behind a then-connective (`切り替え それから #menu
+で`); the clause splitter cuts at それから and the orphan `#menu で`
+   clause is silently dropped. Transformer-side ordering bug (emit the
+   phrase before the verb, or not behind then) — i18n grammar territory,
+   NOT parseable away with optional groups. CONFIRMED by probe.
+4. **vi untranslated `my.` (~2).** vi corpus for set-text/inner-html
+   carries literal English `my.textContent` (`gán my.textContent vào …`) —
+   parses to contextType 'my' (vs en 'me') with stray position fields.
+   Either the vi transformer should emit `của tôi`, or the corpus rows are
+   stale. Check patterns-reference data first.
+5. **ja put root-not-wrapped (~1) + id increment (~1) + qu everything
+   (0.412, 10 instances).** ja `"Done!" を 私 に 置く クリック で` parses as
+   a bare put (event dropped) — SOV verb-final put with trailing event
+   phrase; no wrapper covers that order. qu remains the worst language and
+   is baseline-only (not CI-gated) — lowest priority.
+6. **R2 subset expansion** — the burn-down is arguably "stabilized" now:
+   multi-command patterns, then control-flow (`if-matches`,
+   `unless-condition`), then behavior-\*. RULE (locked by test): any subset
+   change regenerates the baseline AND updates the membership lock in the
+   SAME PR.
+7. **Runtime gaps visible in en** (from the subset exclusions):
    `toggle @hidden`, `set #output.innerText to X`, `set @disabled to true`
-   fail in ENGLISH in the current runtime. That's a core-runtime track,
-   independent of translation.
+   fail in ENGLISH in the current runtime. Core-runtime track, independent
+   of translation.
+
+Mechanism idiom that went five-for-five this session (§7e): make the
+emission side defer to the command schema and mirror en's parse shape;
+never patch the AST mappers. The helpers to extend are
+`eventHandlerDestinationExtraction` / `eventHandlerSourceExtraction` /
+`eventHandlerRoleGroup` in
+`packages/semantic/src/generators/command-schemas.ts`.
+
+One discovered-but-unfixed hazard, left alone deliberately: `buildVerbLookup`
+(semantic-parser.ts) indexes EVERY profile keyword as a verb-anchor except a
+small skip list — the modifier keywords (into/from/before/after/until/event)
+still fabricate commands when a marked phrase strands in its own clause.
+#378/#379 removed the two live instances by capturing the phrases upstream;
+the lookup itself is still permissive. If a new bogus-command class appears,
+skip particles (token.kind === 'particle') in the verb search — から/に/へ
+matched as VERBS is the root absurdity — or filter the lookup to schema
+actions (careful: `for` must stay, see the comment at the site).
 
 R2 operational notes for the next session:
 
@@ -443,8 +539,10 @@ R2 operational notes for the next session:
   freshly `populate`d patterns.db (CI re-populates before the gate), and
   patterns.db must be reverted before commit.
 
-Lock tests: the last ~10 describe-blocks of
-`packages/semantic/test/multilingual-roadmap-fixes.test.ts` (#366–#374) +
+Lock tests: the last ~15 describe-blocks of
+`packages/semantic/test/multilingual-roadmap-fixes.test.ts` (#366–#374
+parsing-track + #376–#380 R2 burn-down: wrapper destination deference, ko
+quote stripping, source groups, trailing destination, set.ts convention) +
 `packages/semantic/test/lexicon-emit-mismatch.test.ts` (the allowlist is a
 PRUNE-DOWN list: fixing a dict row should delete its entry) +
 `packages/i18n/src/grammar/grammar.test.ts` + the R2 locks
