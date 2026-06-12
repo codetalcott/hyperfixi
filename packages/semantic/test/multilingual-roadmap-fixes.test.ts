@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse } from '../src';
+import { parse, canParse, getTokenizer } from '../src';
 
 describe('Korean fetch keyword alignment (가져오기)', () => {
   // Corpus-shaped event handlers from the multilingual baseline.
@@ -3119,5 +3119,69 @@ describe('empty-predicate adjective is a profile keyword alternative (is-empty c
     expect(a.has('empty')).toBe(true);
     expect(a.has('add')).toBe(true);
     expect(a.has('put')).toBe(true);
+  });
+});
+
+describe('ja particle reading must not split a longer keyword (もし → も+し)', () => {
+  // The documented Track-A diagnosis ("the SOV generators never emit an
+  // if-event variant for ja") was wrong: if-event-ja-sov(-simple/-temporal…)
+  // are all generated. They could never anchor because the ja TOKENIZER never
+  // produced an if token — JapaneseParticleExtractor runs before the keyword
+  // extractor and read the も of もし as the standalone "also" particle,
+  // splitting the conditional into も[particle] + し[identifier]. The particle
+  // extractor now defers when an exact 2..4-char profile keyword starts at the
+  // same position (checked via TokenizerContext.isKeyword — the hook reserved
+  // for exactly this). One fix, two ja failure modes: もし anchors the fused
+  // if-event patterns, AND the ぼかし(blur-event)-as-verb hijack disappears
+  // because the higher-priority event pattern can now outrank the bare verb
+  // match. ja if-condition/if-matches/if-exists flip faithful (avgFidelity
+  // 0.9554 → 0.9566, lossy 236 → 228, degenerate 67 → 65, 0 regressions).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ja] もし tokenizes as the if keyword, not も+し', () => {
+    const t = getTokenizer('ja');
+    const tok = t.tokenize('もし $x').peek() as { value: string; normalized?: string };
+    expect(tok.value).toBe('もし');
+    expect(tok.normalized).toBe('if');
+  });
+
+  it('[ja] the fused if-event head anchors (was: no pattern at all)', () => {
+    const a = actions(
+      parse(
+        'クリック で もし 私の 値 である 追加 .error を 空 私 に それから "Required" を 次 .error-message に 置く 終わり',
+        'ja'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+
+  it('[ja] the blur-event head no longer hijacks the handler into a bare blur verb', () => {
+    // if-empty corpus shape — used to parse as {blur} via blur-ja-generated.
+    const a = actions(
+      parse(
+        'ぼかし で もし 私の 値 である 追加 .error を 空 私 に それから "Required" を 次 .error-message に 置く 終わり',
+        'ja'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('blur')).toBe(false);
+  });
+
+  it('[ja] genuine particles still tokenize (を/に roles unchanged)', () => {
+    const a = actions(parse('.active を 切り替え', 'ja'));
+    expect(a.has('toggle')).toBe(true);
   });
 });
