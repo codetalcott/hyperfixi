@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T13:19:12.544Z",
-  "commit": "4b04c1c3",
+  "timestamp": "2026-06-12T13:30:09.411Z",
+  "commit": "fe597217",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -1270,18 +1270,10 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9315177923021051,
-      "avgFidelity": 0.9627450980392156,
-      "avgRoleFidelity": 0.7866132167152577,
+      "avgFidelity": 0.9716775599128542,
+      "avgRoleFidelity": 0.7985179786200195,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": [
-        "async-block",
-        "blur-element",
-        "fetch-with-headers",
-        "get-value",
-        "if-exists",
-        "keydown-key-is-syntax",
-        "when-value-changes"
-      ],
+      "lossyPasses": ["blur-element", "get-value", "keydown-key-is-syntax"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -3159,16 +3151,10 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9292768959435616,
-      "avgFidelity": 0.9681917211328975,
-      "avgRoleFidelity": 0.784353741496599,
+      "avgFidelity": 0.9771241830065359,
+      "avgRoleFidelity": 0.7962585034013608,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": [
-        "async-block",
-        "blur-element",
-        "fetch-with-headers",
-        "if-exists",
-        "when-value-changes"
-      ],
+      "lossyPasses": ["blur-element"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -8922,17 +8908,10 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8958294428882667,
-      "avgFidelity": 0.9660130718954247,
-      "avgRoleFidelity": 0.804316488500162,
+      "avgFidelity": 0.9749455337690631,
+      "avgRoleFidelity": 0.816221250404924,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": [
-        "async-block",
-        "blur-element",
-        "fetch-with-headers",
-        "if-exists",
-        "unless-condition",
-        "when-value-changes"
-      ],
+      "lossyPasses": ["blur-element", "unless-condition"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
