@@ -2327,3 +2327,64 @@ describe('bn/hi single-word append + hi swap vocabulary (B2c)', () => {
     expect(actions(parse('.active को क्लिक पर टॉगल', 'hi')).has('toggle')).toBe(true);
   });
 });
+
+describe('it focus verb + pt halt/break cross-map (focus-trap residuals)', () => {
+  // Two dict-side residuals surfaced by the #349 span-mask fix (which exposed
+  // the focus-trap body to translation for the first time):
+  // - it: the dict's COMMANDS section had no focus verb, so the transformer
+  //   fell back to the EVENTS noun (fuoco) — the #321/#344 noun-where-verb
+  //   family. The generated focus patterns match the profile primary literal
+  //   (focalizzare), so the command dropped. Added commands focus: focalizzare.
+  // - pt: halt/break were CROSS-MAPPED (dict break: parar / halt: interromper,
+  //   while profile+tokenizer read parar=halt, interromper=break). Every halt
+  //   emission parsed as break — poisoning dropdown-toggle, halt-propagation,
+  //   if-matches, window-keydown (all lossy → faithful, pt avgFidelity
+  //   0.9300 → 0.9411) plus the focus-trap tail.
+  // it/pt focus-trap 0.5 → 0.75 (the remaining 0.25 is the dropped `if`, the
+  // M2 body-parse mechanism — tracked separately).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[it] the transformed focus-trap body keeps focus + halt', () => {
+    const a = actions(
+      parse(
+        'su keydown[key=="Tab"] da .modal se obiettivo corrisponde ultimo <button/> in .modal focalizzare primo <button/> in .modal allora fermare fine',
+        'it'
+      )
+    );
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[pt] the transformed focus-trap body keeps focus + halt (parar)', () => {
+    const a = actions(
+      parse(
+        'em keydown[key=="Tab"] de .modal se alvo corresponde último <button/> dentro .modal focar primeiro <button/> dentro .modal então parar fim',
+        'pt'
+      )
+    );
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[pt] halt-propagation shape parses parar as halt (was break)', () => {
+    const a = actions(parse('em clique parar the evento', 'pt'));
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('break')).toBe(false);
+  });
+
+  it('[it] the focus EVENT still works via the noun (fuoco unchanged in events)', () => {
+    const a = actions(parse('su fuoco aggiungere .active a io', 'it'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+});
