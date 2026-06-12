@@ -2584,3 +2584,85 @@ describe('event-head tolerance — bracket key-filter + source clause (focus-tra
     expect([...actions(parse('en clic alternar .active', 'es'))].sort()).toEqual(['on', 'toggle']);
   });
 });
+
+describe('sw positional keywords — wamwisho (last) / kwanza / iliyopita', () => {
+  // The sw tail of the focus-trap campaign. The i18n sw dict emitted 'mwisho'
+  // for positional `last`, but 'mwisho' is the END keyword (block terminator;
+  // the keyword map is last-wins), so `… inafanana mwisho <button/>` read as a
+  // premature block-end and the whole branch body dropped (focus-trap stuck at
+  // {if,on} after #352 fixed the event head). The dict now emits the distinct
+  // concatenated adjective 'wamwisho' (wa mwisho — the saufsi/wennnicht/enyakın
+  // single-token class), which the tokenizer reads as `last`. Bundled (same
+  // dict↔tokenizer realign mechanism, #338 ijayo class): 'kwanza' → first and
+  // 'iliyopita' → previous tokenizer entries replace the dead multi-word
+  // 'wa kwanza'/'wa mwisho' entries. sw focus-trap + input-clear flip
+  // lossy → faithful (sw avgFidelity 0.9408 → 0.9474); three KNOWN_DRIFT
+  // entries removed (sw:first, sw:last, sw:previous — the list only shrinks).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[sw] focus-trap keeps the full body (was {if,on} — mwisho killed the branch)', () => {
+    // Corpus-shaped transformer output (en → sw) with the realigned emission.
+    const a = actions(
+      parse(
+        'kwenye keydown[key=="Tab"] kutoka .modal kama lengo inafanana wamwisho <button/> ndani .modal lenga kwanza <button/> ndani .modal kisha simama mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[sw] the root cause stays locked: mwisho in the condition kills the branch', () => {
+    // 'mwisho' is the block terminator — this is WHY the dict had to emit
+    // wamwisho. If this starts passing, the polysemy was resolved another way
+    // and the dict emission can be reconsidered.
+    const a = actions(
+      parse(
+        'kwenye bonyeza kama lengo inafanana mwisho <button/> ndani .modal lenga kwanza <button/> ndani .modal kisha simama mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('focus')).toBe(false);
+  });
+
+  it('[sw] mwisho still terminates a block (end reading unchanged)', () => {
+    // repeat-while corpus shape — trailing mwisho is the real end.
+    const a = actions(
+      parse(
+        'kwenye bonyeza rudia wakati #counter.innerText < 10 kisha ongezeko #counter kisha ngoja 200ms mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+
+  it('[sw] put into a wamwisho (last) destination keeps put', () => {
+    expect(actions(parse('weka "X" kwa wamwisho .y', 'sw')).has('put')).toBe(true);
+  });
+
+  it('[sw] put into an iliyopita (previous) destination keeps put', () => {
+    expect(actions(parse('weka "X" kwa iliyopita .y', 'sw')).has('put')).toBe(true);
+  });
+
+  it('[sw] first-in-parent still parses (kwanza now a real positional)', () => {
+    const a = actions(
+      parse('kwenye bonyeza lenga kwanza <input/> ndani karibu_zaidi <form/>', 'sw')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+  });
+});

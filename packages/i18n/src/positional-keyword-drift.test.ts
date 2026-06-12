@@ -52,8 +52,10 @@ const POSITIONAL_CONCEPTS = [
  *   morphology bound the prefixes); fixed with exact tokenizer entries.
  * - de closest→nächste normalizes to `next` by design (one word covers both
  *   readings; POSITIONAL_OR_SCOPE_KEYWORDS accepts either) — expected to stay.
- * - bn/sw last (শেষ / mwisho) normalize to `end` (the block terminator) —
- *   polysemous words claimed by the structural keyword.
+ * - bn last (শেষ) normalizes to `end` (the block terminator) — a polysemous
+ *   word claimed by the structural keyword. (sw had the same collision via
+ *   mwisho; fixed by emitting the distinct concatenated adjective `wamwisho`,
+ *   which the tokenizer reads as `last` — the saufsi/wennnicht/enyakın class.)
  */
 const KNOWN_DRIFT = new Set<string>([
   'ar:parent',
@@ -76,9 +78,6 @@ const KNOWN_DRIFT = new Set<string>([
   'pt:random',
   'qu:parent',
   'qu:random',
-  'sw:first',
-  'sw:last',
-  'sw:previous',
   'sw:random',
   'th:random',
   'tr:random',

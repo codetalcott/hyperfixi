@@ -75,12 +75,17 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   // tokenizer-keyword-injectivity.test.ts.
   { native: 'haijafafanuliwa', normalized: 'undefined' },
 
-  // Positional
-  { native: 'wa kwanza', normalized: 'first' },
-  { native: 'wa mwisho', normalized: 'last' },
+  // Positional. The tokenizer matches single words only, so the multi-word
+  // adjective forms ('wa kwanza', 'wa mwisho') were dead entries — the i18n
+  // dict emissions are the single tokens below (kwanza, wamwisho, iliyopita).
+  // 'mwisho' itself is claimed by `end` (last-wins keyword map), which is why
+  // positional last needs the distinct concatenated form.
+  { native: 'kwanza', normalized: 'first' },
+  { native: 'wamwisho', normalized: 'last' },
   { native: 'ifuatayo', normalized: 'next' },
   { native: 'ijayo', normalized: 'next' }, // i18n dict emits 'ijayo' for next
   { native: 'iliyotangulia', normalized: 'previous' },
+  { native: 'iliyopita', normalized: 'previous' }, // i18n dict emission
   { native: 'karibu', normalized: 'closest' },
   { native: 'mzazi', normalized: 'parent' },
 
