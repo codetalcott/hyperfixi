@@ -1,23 +1,16 @@
 {
-  "timestamp": "2026-06-12T13:04:18.133Z",
-  "commit": "3b2c1ceb",
+  "timestamp": "2026-06-12T13:19:12.544Z",
+  "commit": "4b04c1c3",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9311967924424667,
-      "avgFidelity": 0.9690631808278866,
-      "avgRoleFidelity": 0.8385568513119536,
+      "avgFidelity": 0.9725490196078432,
+      "avgRoleFidelity": 0.8411078717201169,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": [
-        "event-debounce",
-        "fetch-loading-state",
-        "if-exists",
-        "keydown-key-is-syntax",
-        "repeat-until-event",
-        "window-scroll"
-      ],
+      "lossyPasses": ["if-exists", "keydown-key-is-syntax", "repeat-until-event", "window-scroll"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-basic": {
@@ -1277,14 +1270,12 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9315177923021051,
-      "avgFidelity": 0.9592592592592591,
+      "avgFidelity": 0.9627450980392156,
       "avgRoleFidelity": 0.7866132167152577,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
         "blur-element",
-        "event-debounce",
-        "fetch-loading-state",
         "fetch-with-headers",
         "get-value",
         "if-exists",
@@ -5744,10 +5735,10 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9330117232078005,
-      "avgFidelity": 0.9769063180827887,
+      "avgFidelity": 0.9803921568627451,
       "avgRoleFidelity": 0.6924846128927764,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": ["event-debounce", "fetch-loading-state"],
+      "lossyPasses": [],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -10210,10 +10201,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8983302411873844,
-      "avgFidelity": 0.9867965367965368,
+      "avgFidelity": 0.9902597402597403,
       "avgRoleFidelity": 0.7273407335907333,
       "degeneratePasses": ["install-behavior"],
-      "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
+      "lossyPasses": ["trigger-event"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -11475,10 +11466,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9402185116470816,
-      "avgFidelity": 0.9965367965367965,
+      "avgFidelity": 1,
       "avgRoleFidelity": 0.7133043758043759,
       "degeneratePasses": [],
-      "lossyPasses": ["event-debounce", "fetch-loading-state"],
+      "lossyPasses": [],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -12104,12 +12095,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9122867328749679,
-      "avgFidelity": 0.9833333333333332,
+      "avgFidelity": 0.9867965367965368,
       "avgRoleFidelity": 0.8527107464607466,
       "degeneratePasses": [],
       "lossyPasses": [
-        "event-debounce",
-        "fetch-loading-state",
         "if-exists",
         "morph-with-template",
         "render-template-with-data",
@@ -13376,10 +13365,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.896021438878582,
-      "avgFidelity": 0.9867965367965368,
+      "avgFidelity": 0.9902597402597403,
       "avgRoleFidelity": 0.7156290218790216,
       "degeneratePasses": ["install-behavior"],
-      "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
+      "lossyPasses": ["trigger-event"],
       "bundleSize": 410869,
       "patterns": {
         "toggle-class-on-other": {
@@ -14005,12 +13994,10 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.900968872397444,
-      "avgFidelity": 0.9727272727272727,
+      "avgFidelity": 0.9761904761904763,
       "avgRoleFidelity": 0.808614864864865,
       "degeneratePasses": [],
       "lossyPasses": [
-        "event-debounce",
-        "fetch-loading-state",
         "get-attribute-possessive-dot",
         "input-mirror",
         "keydown-key-is-syntax",
