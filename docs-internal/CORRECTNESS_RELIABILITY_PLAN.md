@@ -548,6 +548,22 @@ removes a whole category of production risk. If a deadline run is at risk
 mid-way, drop the target to 0.965 and ship that; the ratchet keeps whatever
 landed.
 
+> **Owner decision (2026-06-12, session 8): two tracks REOPENED/APPROVED.**
+>
+> 1. **Parsing track reopens, scoped to the en if/unless flatten only.** The
+>    session-8 probe (§7g) showed the §2 dominant cluster manifests in
+>    ENGLISH: `if I match .active then A else B end` parses as flat siblings
+>    (condition truncated), so the runtime rejects the bare `if`. Fixing the
+>    conditional-node assembly in the semantic parser is the single biggest
+>    unlock — it gates R2 expansion wave 2 (all control-flow patterns) and
+>    underlies ~130 cross-language drops. The general ship-line stop still
+>    applies to the REST of the parsing tail; this is a surgical reopen.
+> 2. **Core-runtime gaps track approved** (the §10.7 en-side list): runtime
+>    `halt` exiting the whole handler even as `halt the event`; `@attr`
+>    selector family; `make` with HTML-literal selectors; the propertyAccess
+>    AST rejection; `set #id.prop` / `toggle @attr` family. Independent of
+>    translation; each fix re-qualifies excluded patterns for the R2 subset.
+
 **Out of scope for the ship line:** Track 2 behaviors, R2 execution, the
 `component-*` HTML templates, and R1's burn-down (baseline only).
 
@@ -586,14 +602,22 @@ saya punya *background ke "red"` (space form — NOT the dot-head the
    as ADD (keyword collision family; the #373 allowlist lists it). Fix the
    dict word (id increment → e.g. naikkan) AND prune the allowlist row in
    the same PR.
-5. **The tabs-content band (13 langs — the new R2 work surface).** A
-   4-command juxtaposed chain; per-language drops of commands 2–4. Expect
-   clusters, not 13 mechanisms: probe which command each language loses
-   first (the §7e/§7f mechanism idiom applies — find the drifted layer per
-   cluster). NOTE: the en reference itself drops cmd 4 (`show the next
-<div.tab-panel/>`) — translations are scored against en's 3-command
-   effects, so a translation keeping all 4 would DIVERGE; don't "fix" a
-   language past the reference.
+5. **The tabs-content band (13 langs) — PROBED (session 8, post-#391): it
+   is NOT 13 broken languages; it is the EN reference being lossy.** All
+   13 "failers" (probed: ru/he/ko/it/ja/vi) parse ALL FOUR commands
+   faithfully; the 10 "passers" (probed: de/es/tl/zh) drop `show the next
+<div.tab-panel/>` exactly like en does — they pass by sharing en's
+   lossiness. The failers diverge only because their faithful 4th command
+   produces an extra DOM effect. There is NO per-language work here. The
+   fix path is en-side and needs BOTH reopened tracks: (a) parsing — en's
+   body parse silently drops `show <positional> <html-literal>`; (b) core
+   runtime — even a correct parse hits the positional-node rejection (the
+   dropdown-toggle "Unknown AST node type: propertyAccess" gap), so
+   fixing the parse alone would turn en's reference into an ERROR and
+   disqualify the pattern entirely. Land runtime support FIRST, then the
+   en parse. WARNING: when en starts parsing all 4, the band INVERTS —
+   today's 10 passers become the failers; expect a full re-record at the
+   next `--save-baseline`, not a regression.
 6. **Expansion waves remaining:** control-flow (`if-matches`,
    `unless-condition`, …) is BLOCKED on the en if/unless flatten (§7g —
    the §2 dominant cluster, parsing track); behavior-\* still out. Wave 2
