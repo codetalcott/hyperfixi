@@ -86,6 +86,20 @@ function withDiagnostics<T extends SemanticNode>(node: T, diagnostics: Diagnosti
   return { ...node, diagnostics } as T;
 }
 
+/**
+ * Strip a symmetric pair of surrounding quote characters from a string
+ * literal token's raw value. Unbalanced values are returned unchanged.
+ */
+function stripQuotes(val: string): string {
+  if (val.length >= 2) {
+    const first = val[0];
+    if ((first === '"' || first === "'") && val.endsWith(first)) {
+      return val.slice(1, -1);
+    }
+  }
+  return val;
+}
+
 // =============================================================================
 // Semantic Parser Implementation
 // =============================================================================
@@ -992,7 +1006,7 @@ export class SemanticParserImpl implements ISemanticParser {
       return createSelector(combined);
     }
     if (first.kind === 'literal' || first.value.startsWith('"') || first.value.startsWith("'")) {
-      return createLiteral(combined);
+      return createLiteral(stripQuotes(combined), 'string');
     }
     if ((first.kind as string) === 'reference') {
       return createReference(combined as 'me' | 'it' | 'you' | 'result');
@@ -1018,9 +1032,12 @@ export class SemanticParserImpl implements ISemanticParser {
       return createSelector(val);
     }
 
-    // String literals
+    // String literals — strip the quote characters like the pattern-matcher
+    // path does (parseLiteralValue); keeping them put literal `"Done!"`
+    // (quotes and all) into the DOM at runtime in the particle-based parse
+    // path while en wrote `Done!`.
     if (val.startsWith('"') || val.startsWith("'")) {
-      return createLiteral(val);
+      return createLiteral(stripQuotes(val), 'string');
     }
 
     // Numbers
