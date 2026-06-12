@@ -678,6 +678,36 @@ function getPutPatternsVi(): LanguagePattern[] {
   ];
 }
 
+function getPutPatternsQu(): LanguagePattern[] {
+  return [
+    // Patient-first SOV with destination: chay ta kurku man churay — the i18n
+    // transformer emits PATIENT-first for qu (`chay ta noqa man churay`,
+    // async-block / fetch-with-headers / if-exists then-tails); there were no
+    // handcrafted qu put patterns at all and the generated SOV order is
+    // dest-first, so every marked-destination put dropped.
+    {
+      id: 'put-qu-patient-first',
+      language: 'qu',
+      command: 'put',
+      priority: 96,
+      template: {
+        format: '{patient} ta {destination} man churay',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ta' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'man' },
+          { type: 'literal', value: 'churay', alternatives: ['tiyachiy'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { position: 2 },
+      },
+    },
+  ];
+}
+
 function getPutPatternsZh(): LanguagePattern[] {
   return [
     {
@@ -849,6 +879,8 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
       return getPutPatternsPl();
     case 'ru':
       return getPutPatternsRu();
+    case 'qu':
+      return getPutPatternsQu();
     case 'th':
       return getPutPatternsTh();
     case 'uk':

@@ -278,6 +278,30 @@ function getAddPatternsQu(): LanguagePattern[] {
         patient: { position: 1 },
       },
     },
+    // Patient-first with destination: .active ta #button man yapay — the i18n
+    // transformer emits PATIENT-first SOV for qu (`.modal-open ta kurku man
+    // yapay`), the dest-first pattern below never matches that order
+    // (modal-open / repeat-for-each lossy).
+    {
+      id: 'add-qu-patient-first',
+      language: 'qu',
+      command: 'add',
+      priority: 96,
+      template: {
+        format: '{patient} ta {destination} man yapay',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ta' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'man' },
+          { type: 'literal', value: 'yapay', alternatives: ['yapaykuy'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { position: 2 },
+      },
+    },
     // With destination: #button man .active ta yapay
     {
       id: 'add-qu-with-dest',

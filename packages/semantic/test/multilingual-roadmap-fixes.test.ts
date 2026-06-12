@@ -3318,3 +3318,63 @@ describe('positional put (before/after) for the 8 languages without variants', (
     expect([...a].sort()).toEqual(['on', 'put']);
   });
 });
+
+describe('qu patient-first SOV variants for add/remove/put (Track C core)', () => {
+  // The qu transformer emits PATIENT-first SOV for marked two-role commands
+  // (`.highlight ta noqa manta qichuy`, `.modal-open ta kurku man yapay`,
+  // `chay ta noqa man churay`) but the handcrafted qu patterns were
+  // source/dest-FIRST only ({source} manta {patient} ta qichuy) and put had
+  // no qu patterns at all — so every marked remove (9 patterns: tabs-*,
+  // modal-close-button, dropdown-close-outside, …), add (modal-open,
+  // repeat-for-each) and then-tail put (if-exists, fetch-with-headers)
+  // dropped its command. Added patient-first variants at priority 96
+  // (above the source-first 95 forms, below the simple 100 forms).
+  // qu lossy 30 → 19 across the session (avgFidelity 0.9586 → 0.9599 global,
+  // lossy 207 → 196, degen 68 → 67, 0 regressions).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[qu] tabs-basic keeps remove + add (was {on} + spurious from)', () => {
+    // Corpus-shaped transformer output (en → qu).
+    const a = actions(
+      parse(
+        '.active ta .tab manta ñitiy pi qichuy chayqa .active ta noqa man yapay',
+        'qu'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+
+  it('[qu] modal-close-button keeps the remove tail', () => {
+    const a = actions(
+      parse('kaylla .modal ta ñitiy pi pakay chayqa .modal-open ta kurku manta qichuy', 'qu')
+    );
+    expect(a.has('hide')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[qu] a then-tail put with marked destination parses', () => {
+    expect(actions(parse('chay ta noqa man churay', 'qu')).has('put')).toBe(true);
+  });
+
+  it('[qu] the source-first order still parses (both orders valid SOV)', () => {
+    const a = actions(parse('noqa manta .highlight ta qichuy', 'qu'));
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(parse('on click remove .active from .tab add .active to me', 'en'));
+    expect([...a].sort()).toEqual(['add', 'on', 'remove']);
+  });
+});
