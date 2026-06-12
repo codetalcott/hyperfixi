@@ -407,6 +407,21 @@ export interface TokenizerContext {
   isKeywordStart(input: string, position: number): boolean;
 
   /**
+   * Like `isKeywordStart`, but only true when the keyword match ends at a
+   * word boundary (end of input or a char rejected by `isWordChar`).
+   * Space-delimited languages must use this for word-walk break checks —
+   * the keyword table includes English canonical fallbacks (me, it, you, …),
+   * so the raw check splits native words mid-word (e.g. Quechua ñit'iy
+   * contains "it"). Optional for backward compatibility with hand-rolled
+   * contexts; callers should treat absence as "no boundary keyword here".
+   */
+  isKeywordStartAtBoundary?(
+    input: string,
+    position: number,
+    isWordChar?: (char: string) => boolean
+  ): boolean;
+
+  /**
    * Optional morphological normalizer for this language.
    */
   readonly normalizer?: MorphologicalNormalizer;
@@ -449,6 +464,11 @@ export function createTokenizerContext(tokenizer: {
   lookupKeyword(native: string): KeywordEntry | undefined;
   isKeyword(native: string): boolean;
   isKeywordStart(input: string, position: number): boolean;
+  isKeywordStartAtBoundary?(
+    input: string,
+    position: number,
+    isWordChar?: (char: string) => boolean
+  ): boolean;
   normalizer?: MorphologicalNormalizer;
 }): TokenizerContext {
   const ctx: TokenizerContext = {
@@ -457,6 +477,9 @@ export function createTokenizerContext(tokenizer: {
     lookupKeyword: tokenizer.lookupKeyword.bind(tokenizer),
     isKeyword: tokenizer.isKeyword.bind(tokenizer),
     isKeywordStart: tokenizer.isKeywordStart.bind(tokenizer),
+    ...(tokenizer.isKeywordStartAtBoundary
+      ? { isKeywordStartAtBoundary: tokenizer.isKeywordStartAtBoundary.bind(tokenizer) }
+      : {}),
   };
 
   if (tokenizer.normalizer) {

@@ -123,6 +123,13 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     for (let len = Math.min(maxKeywordLen, input.length - startPos); len >= 2; len--) {
       const candidate = input.slice(startPos, startPos + len);
 
+      // Only accept a match that ends at a word boundary. Without this, a
+      // keyword prefix steals the front of a longer native word (ñit'iy
+      // matching inside ñit'iyq leaves a stray `q` token). Boundary-broken
+      // suffix splits (wasita → wasi + ta) still happen in the word-walk below.
+      const after = input[startPos + len];
+      if (after !== undefined && isQuechuaLetter(after)) continue;
+
       // Check all chars are Quechua
       let allQuechua = true;
       for (let i = 0; i < candidate.length; i++) {
@@ -169,8 +176,12 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     let pos = position;
 
     while (pos < input.length && isQuechuaLetter(input[pos])) {
-      // Check if we're at the start of a known keyword (for word boundary detection)
-      if (word.length > 0 && this.context.isKeywordStart(input, pos)) {
+      // Break for an attached keyword (agglutinative suffix like `-ta`, `-man`)
+      // only when the match ends at a word boundary. A raw isKeywordStart check
+      // splits native words around embedded English-fallback keywords (me, it,
+      // you, … are injected for every language): ñit'iy → ñ + it + 'iy.
+      // isQuechuaLetter keeps the glottal apostrophe inside the word.
+      if (word.length > 0 && this.context.isKeywordStartAtBoundary?.(input, pos, isQuechuaLetter)) {
         break;
       }
       word += input[pos];
