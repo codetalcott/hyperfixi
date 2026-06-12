@@ -44,6 +44,11 @@ export const indonesianProfile: LanguageProfile = {
       saya: 'me', // formal
       aku: 'me', // informal
       ku: 'me', // clitic
+      // The id dict's `my` is the two-word 'saya punya', which the dot-notation
+      // transformer can't prefix onto `my.X` — those corpus heads stay literal
+      // English `my.textContent`. Recognize the passthrough so the possessive
+      // matcher can assemble the property-path (set-text/set-style rows).
+      my: 'me', // untranslated dot-notation passthrough
       // "your" - formal and informal
       anda: 'you', // formal
       kamu: 'you', // informal
