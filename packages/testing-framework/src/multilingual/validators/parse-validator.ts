@@ -5,7 +5,7 @@
 import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
-import { collectActions } from '../fidelity';
+import { collectActions, collectRoleSignature } from '../fidelity';
 
 /**
  * Parse Validator
@@ -87,6 +87,9 @@ export class ParseValidator implements Validator<ParseResult[]> {
         parser: 'semantic',
         // Structural signature for cross-language fidelity scoring (see fidelity.ts).
         actionSignature: collectActions(semanticNode),
+        // R1 role signature (role name + value type per command) — collected here
+        // because live nodes carry roles as a ReadonlyMap that serializes to {}.
+        roleSignature: collectRoleSignature(semanticNode),
         duration: performance.now() - startTime,
       };
     } catch (error) {

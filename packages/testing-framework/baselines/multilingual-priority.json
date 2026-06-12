@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T05:25:56.860Z",
-  "commit": "d75030e8",
+  "timestamp": "2026-06-12T05:39:18.434Z",
+  "commit": "a6b6a5e5",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -8,6 +8,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9311967924424667,
       "avgFidelity": 0.9554466230936819,
+      "avgRoleFidelity": 0.8255183025591192,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -649,6 +650,7 @@
       "parseRate": 1,
       "avgConfidence": 0.8884559884559885,
       "avgFidelity": 0.9786796536796537,
+      "avgRoleFidelity": 0.726488095238095,
       "degeneratePasses": [],
       "lossyPasses": [
         "announce-screen-reader",
@@ -1288,6 +1290,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9315177923021051,
       "avgFidelity": 0.9592592592592591,
+      "avgRoleFidelity": 0.7866132167152577,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
@@ -2550,6 +2553,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9322647577549528,
       "avgFidelity": 0.9803921568627451,
+      "avgRoleFidelity": 0.800170068027211,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
       "bundleSize": 410100,
@@ -3177,6 +3181,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9292768959435616,
       "avgFidelity": 0.9681917211328975,
+      "avgRoleFidelity": 0.784353741496599,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
@@ -3810,6 +3815,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8469447038074495,
       "avgFidelity": 0.9340958605664489,
+      "avgRoleFidelity": 0.827057013281503,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -4458,6 +4464,7 @@
       "parseRate": 1,
       "avgConfidence": 1,
       "avgFidelity": 0.9280303030303032,
+      "avgRoleFidelity": 0.5428893178893178,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -5104,6 +5111,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9330117232078005,
       "avgFidelity": 0.9327886710239651,
+      "avgRoleFidelity": 0.746833495302883,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "caret-var-increment",
@@ -5749,6 +5757,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9330117232078005,
       "avgFidelity": 0.9769063180827887,
+      "avgRoleFidelity": 0.6924846128927764,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["event-debounce", "fetch-loading-state"],
       "bundleSize": 410100,
@@ -6376,6 +6385,7 @@
       "parseRate": 1,
       "avgConfidence": 0.8787157287157287,
       "avgFidelity": 0.9340909090909091,
+      "avgRoleFidelity": 0.7027187902187902,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -7025,6 +7035,7 @@
       "parseRate": 1,
       "avgConfidence": 0.5553391053391054,
       "avgFidelity": 0.9307359307359307,
+      "avgRoleFidelity": 0.6881676319176323,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -7671,6 +7682,7 @@
       "parseRate": 0.9675324675324676,
       "avgConfidence": 0.9374454032172144,
       "avgFidelity": 0.9525727069351231,
+      "avgRoleFidelity": 0.7670221560846564,
       "degeneratePasses": [],
       "lossyPasses": [
         "async-block",
@@ -8312,6 +8324,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8915136424940349,
       "avgFidelity": 0.968409586056645,
+      "avgRoleFidelity": 0.7139860706187232,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["blur-element", "get-value", "keydown-key-is-syntax", "trigger-event"],
       "bundleSize": 410100,
@@ -8939,6 +8952,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8958294428882667,
       "avgFidelity": 0.9660130718954247,
+      "avgRoleFidelity": 0.804316488500162,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
@@ -9573,6 +9587,7 @@
       "parseRate": 1,
       "avgConfidence": 0.7423520923520923,
       "avgFidelity": 0.9470779220779221,
+      "avgRoleFidelity": 0.6480694980694983,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -10219,6 +10234,7 @@
       "parseRate": 1,
       "avgConfidence": 0.8983302411873844,
       "avgFidelity": 0.9867965367965368,
+      "avgRoleFidelity": 0.7273407335907333,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
       "bundleSize": 410100,
@@ -10847,6 +10863,7 @@
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.878719576719577,
       "avgFidelity": 0.9576666666666667,
+      "avgRoleFidelity": 0.7936425264550265,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "blur-element",
@@ -11482,6 +11499,7 @@
       "parseRate": 1,
       "avgConfidence": 0.9402185116470816,
       "avgFidelity": 0.9965367965367965,
+      "avgRoleFidelity": 0.7133043758043759,
       "degeneratePasses": [],
       "lossyPasses": ["event-debounce", "fetch-loading-state"],
       "bundleSize": 410100,
@@ -12110,6 +12128,7 @@
       "parseRate": 1,
       "avgConfidence": 0.9122867328749679,
       "avgFidelity": 0.9692640692640694,
+      "avgRoleFidelity": 0.8363819176319179,
       "degeneratePasses": ["event-debounce"],
       "lossyPasses": [
         "breakpoint-command",
@@ -12750,6 +12769,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.877923021060276,
       "avgFidelity": 0.951525054466231,
+      "avgRoleFidelity": 0.7177842565597665,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -13391,6 +13411,7 @@
       "parseRate": 1,
       "avgConfidence": 0.896021438878582,
       "avgFidelity": 0.9867965367965368,
+      "avgRoleFidelity": 0.7156290218790216,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
       "bundleSize": 410100,
@@ -14019,6 +14040,7 @@
       "parseRate": 1,
       "avgConfidence": 0.900968872397444,
       "avgFidelity": 0.9727272727272727,
+      "avgRoleFidelity": 0.808614864864865,
       "degeneratePasses": [],
       "lossyPasses": [
         "event-debounce",
@@ -14658,6 +14680,7 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9882871667185392,
       "avgFidelity": 0.9632897603485838,
+      "avgRoleFidelity": 0.892095885973437,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "form-submit-prevent",
