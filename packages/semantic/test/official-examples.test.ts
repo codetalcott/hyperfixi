@@ -748,11 +748,13 @@ describe('Newly Wired Commands', () => {
       expect(node.action).toBe('set');
     });
 
-    it('Korean: :x 를 5 으로 설정', () => {
-      // Generated pattern: {destination} 를 {patient} 으로 설정
-      expect(canParse(':x 를 5 으로 설정', 'ko')).toBe(true);
+    it('Korean: :x 를 5 에 설정', () => {
+      // Generated pattern: {destination} 를 {patient} 에 설정
+      // (에 matches the ko dict's translation of set's `to`; the schema's old
+      // 으로 marker never appeared in any corpus emission)
+      expect(canParse(':x 를 5 에 설정', 'ko')).toBe(true);
 
-      const node = parse(':x 를 5 으로 설정', 'ko');
+      const node = parse(':x 를 5 에 설정', 'ko');
       expect(node.action).toBe('set');
     });
 

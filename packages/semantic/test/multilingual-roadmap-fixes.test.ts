@@ -4518,3 +4518,48 @@ describe('Fused {action} event patterns re-parse the body clause for roles (R2 i
     expect(roles.get('patient')?.value).toBe('Done!');
   });
 });
+
+describe('ko set patient marker realign — schema 으로 → dict 에 (R2 ko)', () => {
+  // setSchema's ko patient markerOverride said 으로 ("x 를 10 으로 설정"), but
+  // the ko dict translates set's `to` as 에 — every ko corpus emission is
+  // `{destination} 를 {event} 할 때 설정 {value} 에`. No generated set pattern
+  // could match, so the rows fell to the particle fallback, which read 를 as
+  // patient and 에 as destination — roles INVERTED vs the en reference (and
+  // the possessive destination stayed a raw literal instead of a
+  // property-path), so setMapper wrote nothing at runtime. Zero ko corpus
+  // rows use 으로; the override now matches the dict. ko 0.824 → 1.000
+  // (16 perfect languages), mean 0.9437 → 0.9514.
+  function firstBody(node: unknown): Record<string, unknown> {
+    const rec = node as Record<string, unknown>;
+    const body = rec?.body as unknown;
+    return (Array.isArray(body) ? body[0] : body) as Record<string, unknown>;
+  }
+  function rolesOf(
+    cmd: Record<string, unknown> | undefined
+  ): Map<string, { type?: string; value?: unknown }> {
+    const roles = cmd?.roles as Map<string, { type?: string; value?: unknown }>;
+    return roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+  }
+
+  // Corpus-shaped set trio (en: on click set my.X to "...").
+  const cases: Array<[string, string]> = [
+    ['set-text', '내.textContent 를 클릭 할 때 설정 "Done!" 에'],
+    ['set-style', '내 *background 를 클릭 할 때 설정 "red" 에'],
+  ];
+  for (const [name, input] of cases) {
+    it(`[ko] ${name} matches the generated SOV wrapper with en-convention roles (was inverted fallback)`, () => {
+      const parsed = parse(input, 'ko');
+      const cmd = firstBody(parsed);
+      expect(cmd.action).toBe('set');
+      const roles = rolesOf(cmd);
+      expect(roles.get('destination')?.type).toBe('property-path');
+      expect(roles.get('patient')?.type).toBe('literal');
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const roles = rolesOf(firstBody(parse('on click set my.textContent to "Done!"', 'en')));
+    expect(roles.get('destination')?.type).toBe('property-path');
+    expect(roles.get('patient')?.value).toBe('Done!');
+  });
+});

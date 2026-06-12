@@ -56,7 +56,7 @@ describe('preprocessToEnglish', () => {
     it.each([
       ['es', 'establecer x a 5'],
       ['ja', 'x を 5 に 設定'],
-      ['ko', 'x 를 5 으로 설정'],
+      ['ko', 'x 를 5 에 설정'],
       ['zh', '设置 x 为 5'],
       ['fr', 'définir x à 5'],
     ])('[%s] translates set x to 5', (lang, input) => {

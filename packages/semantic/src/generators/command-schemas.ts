@@ -490,7 +490,7 @@ export const setSchema: CommandSchema = {
       markerOverride: {
         en: '', // No marker before destination in English: "set :x to 5"
         ja: 'を', // "x を 10 に 設定" - variable gets object marker
-        ko: '를', // "x 를 10 으로 설정" - variable gets object marker
+        ko: '를', // "x 를 10 에 설정" - variable gets object marker
         tr: 'i', // "x i 10 e ayarla" - variable gets accusative marker
         ar: '', // "عيّن x إلى 10" - no marker before variable
         sw: '', // "seti x kwenye 10" - no marker before variable
@@ -517,7 +517,9 @@ export const setSchema: CommandSchema = {
         de: 'auf', // "setze x auf 10"
         id: 'ke', // "atur x ke 10"
         ja: 'に', // "x を 10 に 設定" - value gets destination marker
-        ko: '으로', // "x 를 10 으로 설정" - value gets manner/instrument marker
+        // ko dict translates set's `to` as 에 (not the manner marker 으로) —
+        // every ko corpus emission is `… 설정 {value} 에`; keep aligned.
+        ko: '에', // "x 를 10 에 설정" - value gets destination marker
         tr: 'e', // "x i 10 e ayarla" - value gets dative marker
         ar: 'إلى', // "عيّن x إلى 10" - value gets preposition "to"
         sw: 'kwenye', // "seti x kwenye 10" - destination prep before value
