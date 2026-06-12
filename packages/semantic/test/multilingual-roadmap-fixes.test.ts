@@ -3430,3 +3430,75 @@ describe('qu log emits qillqakuy (qillqay is the copy verb)', () => {
     expect(a.has('set')).toBe(true);
   });
 });
+
+describe('fused-event body walker recovers verb-mid SOV clauses (then-tail set/put drops)', () => {
+  // When a fused `*-event-<lang>-sov-*` pattern anchors the handler, the
+  // trailing then-chain is parsed by parseBodyWithGrammarPatterns — which only
+  // tried pattern matches and SKIPPED everything else. The SOV grammar
+  // transformer puts the verb BETWEEN roles for two-role then-tail clauses
+  // (`#name.innerText を 設定 その.name に` — patient, VERB, value) — an order no
+  // command pattern covers. parseClause (the stage-3 SOV-extraction body path)
+  // already recovers these via parseSOVClauseByVerbAnchoring; the fused-pattern
+  // body walker now mirrors that fallback per clause, firing ONLY when nothing
+  // in the clause matched a pattern (additive — a clause with any pattern match
+  // is unchanged). Cleared 10 instances across bn/ja/qu/tr (fetch-json ×4,
+  // announce-screen-reader ×2, form-disable-on-submit ×2, bn breakpoint-command,
+  // qu repeat-for-each): avgFidelity 0.9608 → 0.9617, lossy 189 → 179,
+  // 0 regressions. Also the precondition for the ko event-marker track: with
+  // 할 때 emitted, ko then-tails route through this same walker.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang).
+  it('[ja] fetch-json keeps the then-tail set (was {fetch,on})', () => {
+    const a = actions(
+      parse('/api/user を クリック で フェッチ json それから #name.innerText を 設定 その.name に', 'ja')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[tr] form-disable-on-submit keeps the then-tail put (was {add,on})', () => {
+    const a = actions(
+      parse('@disabled i gönder de ekle <button/> in me e sonra "Submitting..." i <button/> in me e koy', 'tr')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[bn] announce-screen-reader keeps put + set (was {on,put})', () => {
+    const a = actions(
+      parse(
+        'event.detail.message কে success এ রাখুন #sr-announce তে তারপর @role কে সেট "alert" তে তারপর #sr-announce এ',
+        'bn'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[qu] fetch-json keeps the then-tail set (was {fetch,on})', () => {
+    const a = actions(
+      parse('/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay', 'qu')
+    );
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(parse('on click fetch /api/user as json then set #name.innerText to it.name', 'en'));
+    expect([...a].sort()).toEqual(['fetch', 'on', 'set']);
+  });
+});
