@@ -1293,7 +1293,9 @@ export const forSchema: CommandSchema = {
       role: 'patient',
       description: 'The iteration variable',
       required: true,
-      expectedTypes: ['reference'],
+      // The transformer emits a bare identifier loop variable (`for item in …`),
+      // which tokenizes as an expression — mirror the en handcrafted pattern.
+      expectedTypes: ['reference', 'expression'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1304,7 +1306,29 @@ export const forSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 1,
-      markerOverride: { en: 'in' }, // "for item in .items"
+      // The i18n dicts translate the for-loop's `in` connective, NOT the
+      // profile's source roleMarker — align each generated pattern to what the
+      // transformer actually emits (`para item en $items`, `dla item w $items`).
+      markerOverride: {
+        en: 'in', // "for item in .items"
+        es: 'en',
+        fr: 'en',
+        de: 'in',
+        it: 'in',
+        pt: 'dentro',
+        id: 'dalam',
+        ms: 'dalam',
+        pl: 'w',
+        ru: 'в',
+        uk: 'у',
+        sw: 'ndani',
+        th: 'ใน',
+        vi: 'trong',
+        ar: 'في',
+        tl: 'sa_loob',
+        he: 'in', // the he transformer leaves the connective untranslated
+        zh: '在',
+      },
     },
   ],
 };

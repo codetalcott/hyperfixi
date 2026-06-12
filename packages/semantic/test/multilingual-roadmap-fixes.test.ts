@@ -2968,3 +2968,79 @@ describe('generated if/unless condition accepts reference + selector conditions 
     expect(a.has('toggle')).toBe(true);
   });
 });
+
+describe('generated for-loop accepts identifier loop vars + the dict in-connective', () => {
+  // template-literal-list-build was lossy in ALL 23 non-en languages — the only
+  // live `for` pattern was the en handcrafted one. forSchema generated
+  // per-language patterns, but two mismatches kept them dead: (1) the patient
+  // (loop var) declared expectedTypes ['reference'] while the transformer emits
+  // a bare identifier (`para item en $items` — `item` tokenizes as an
+  // expression), and (2) the source marker came from the profile's source
+  // roleMarker (es `de`) while the i18n dicts translate the for-loop's `in`
+  // connective (es `en`, pl `w`, ru `в`). Widened the patient to
+  // ['reference','expression'] and added a per-language markerOverride table
+  // aligned to the dict emissions. 17/23 languages flip faithful (avgFidelity
+  // 0.9525 → 0.9541, lossy 275 → 258, 0 regressions). bn/hi/ja/ko/qu/tr remain:
+  // their SOV emissions put the for-keyword clause-FINAL
+  // (`item में $items को के_लिए`) — a different mechanism (SOV loop-head
+  // reorder), tracked.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), template-literal-list-build.
+  const corpus: Array<[string, string]> = [
+    [
+      'es',
+      'en clic establecer $html a "" entonces para item en $items entonces establecer $html a $html + `<li>${item.name}</li>` fin entonces establecer #list.innerHTML a $html',
+    ],
+    [
+      'pl',
+      'gdy kliknięcie ustaw $html do "" wtedy dla item w $items wtedy ustaw $html do $html + `<li>${item.name}</li>` koniec wtedy ustaw #list.innerHTML do $html',
+    ],
+    [
+      'ru',
+      'при клик установить $html в "" затем для item в $items затем установить $html в $html + `<li>${item.name}</li>` конец затем установить #list.innerHTML в $html',
+    ],
+    [
+      'vi',
+      'khi nhấp gán $html vào "" rồi với mỗi item trong $items rồi gán $html vào $html + `<li>${item.name}</li>` kết thúc rồi gán #list.innerHTML vào $html',
+    ],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] template-literal-list-build keeps the for loop (was {on,set})`, () => {
+      const a = actions(parse(input, lang as 'es'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('for')).toBe(true);
+      expect(a.has('set')).toBe(true);
+    });
+  }
+
+  it('[es] a bare for-loop with an identifier variable parses standalone', () => {
+    const a = actions(parse('para item en $items registrar item fin', 'es'));
+    expect(a.has('for')).toBe(true);
+  });
+
+  it('[es] a reference loop variable keeps working', () => {
+    const a = actions(parse('para $x en $items registrar $x fin', 'es'));
+    expect(a.has('for')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
+        'en'
+      )
+    );
+    expect([...a].sort()).toEqual(['for', 'on', 'set']);
+  });
+});
