@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T00:51:22.119Z",
-  "commit": "e00b75ae",
+  "timestamp": "2026-06-12T01:20:43.490Z",
+  "commit": "f4c727c8",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -5799,7 +5799,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9878721859114016,
-      "avgFidelity": 0.9604575163398692,
+      "avgFidelity": 0.9620915032679738,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "blur-element",
@@ -9043,20 +9043,17 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8344952795933194,
-      "avgFidelity": 0.9299564270152505,
+      "avgFidelity": 0.9410675381263616,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
         "blur-element",
         "caret-var-on-target",
-        "dropdown-toggle",
         "fetch-do-not-throw",
         "fetch-with-headers",
         "focus-trap",
         "form-submit-prevent",
-        "halt-propagation",
         "if-exists",
-        "if-matches",
         "modal-close-backdrop",
         "put-after",
         "put-before",
@@ -9064,8 +9061,7 @@
         "tell-other-element",
         "template-literal-list-build",
         "unless-condition",
-        "when-value-changes",
-        "window-keydown"
+        "when-value-changes"
       ],
       "bundleSize": 405912,
       "patterns": {

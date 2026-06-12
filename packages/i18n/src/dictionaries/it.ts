@@ -62,6 +62,9 @@ export const it: Dictionary = {
     select: 'selezionare',
     clone: 'clonare',
     prepend: 'anteporre',
+    // profile primary; without a commands entry the transformer fell back to
+    // the EVENTS noun 'fuoco', which generated focus patterns can't match
+    focus: 'focalizzare',
   },
 
   modifiers: {
