@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T12:20:07.279Z",
-  "commit": "3bfa7f1e",
+  "timestamp": "2026-06-12T12:39:08.977Z",
+  "commit": "1507578c",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -25,7 +25,7 @@
         "repeat-until-event",
         "window-scroll"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -660,7 +660,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1299,7 +1299,7 @@
         "keydown-key-is-syntax",
         "when-value-changes"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1923,7 +1923,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2552,7 +2552,7 @@
       "avgRoleFidelity": 0.800170068027211,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3186,7 +3186,7 @@
         "if-exists",
         "when-value-changes"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3835,7 +3835,7 @@
         "trigger-event",
         "wait-then"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4481,7 +4481,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5128,7 +5128,7 @@
         "settle-animations",
         "template-literal-interpolation"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5756,7 +5756,7 @@
       "avgRoleFidelity": 0.6924846128927764,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["event-debounce", "fetch-loading-state"],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6404,7 +6404,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7028,32 +7028,111 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.5553391053391054,
-      "avgFidelity": 0.9307359307359307,
-      "avgRoleFidelity": 0.6881676319176323,
+      "avgConfidence": 0.7878066378066378,
+      "avgFidelity": 0.9573593073593072,
+      "avgRoleFidelity": 0.6736647361647365,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "if-empty",
-        "input-validation",
         "window-scroll"
       ],
       "lossyPasses": [
-        "caret-var-increment",
-        "decrement-counter",
         "fetch-do-not-throw",
         "fetch-error-handling",
-        "increment-by-amount",
-        "increment-counter",
+        "if-empty",
+        "input-validation",
         "template-literal-list-build",
-        "unless-condition",
-        "wait-for-event"
+        "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
+        "toggle-class-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "add-class-to-other": {
+          "success": true,
+          "confidence": 1
+        },
+        "remove-class-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "remove-class-from-all": {
+          "success": true,
+          "confidence": 1
+        },
+        "remove-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "make-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "show-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "show-with-transition": {
+          "success": true,
+          "confidence": 1
+        },
+        "hide-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "hide-with-transition": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
+        "wait-then": {
+          "success": true,
+          "confidence": 1
+        },
         "wait-for-event": {
+          "success": true,
+          "confidence": 1
+        },
+        "settle-animations": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event": {
+          "success": true,
+          "confidence": 1
+        },
+        "trigger-event": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-json": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-with-method": {
           "success": true,
           "confidence": 1
         },
@@ -7069,11 +7148,115 @@
           "success": true,
           "confidence": 1
         },
+        "if-condition": {
+          "success": true,
+          "confidence": 1
+        },
         "repeat-for-each": {
           "success": true,
           "confidence": 1
         },
+        "go-url": {
+          "success": true,
+          "confidence": 1
+        },
+        "go-back": {
+          "success": true,
+          "confidence": 1
+        },
+        "focus-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "blur-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "log-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "log-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "js-inline": {
+          "success": true,
+          "confidence": 1
+        },
+        "tabs-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "tabs-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "modal-open": {
+          "success": true,
+          "confidence": 1
+        },
+        "modal-close-escape": {
+          "success": true,
+          "confidence": 1
+        },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-exclusive": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-close-outside": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-disable-on-submit": {
+          "success": true,
+          "confidence": 1
+        },
         "window-scroll": {
+          "success": true,
+          "confidence": 1
+        },
+        "next-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "previous-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
+        "last-in-collection": {
+          "success": true,
+          "confidence": 1
+        },
+        "repeat-until-event": {
           "success": true,
           "confidence": 1
         },
@@ -7085,7 +7268,107 @@
           "success": true,
           "confidence": 1
         },
+        "event-once": {
+          "success": true,
+          "confidence": 1
+        },
+        "event-from-elsewhere": {
+          "success": true,
+          "confidence": 1
+        },
+        "event-key-combo": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-error-handling": {
+          "success": true,
+          "confidence": 1
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 1
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 1
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "stagger-animation": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 1
+        },
+        "its-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "render-template-with-data": {
+          "success": true,
+          "confidence": 1
+        },
+        "make-toast-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "morph-fetch-result": {
+          "success": true,
+          "confidence": 1
+        },
+        "morph-with-template": {
+          "success": true,
+          "confidence": 1
+        },
+        "morph-form-update": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-with-headers": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-with-method-body": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-formdata": {
+          "success": true,
+          "confidence": 1
+        },
+        "fetch-do-not-throw": {
+          "success": true,
+          "confidence": 1
+        },
+        "tell-other-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "send-event-to-form": {
+          "success": true,
+          "confidence": 1
+        },
+        "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 1
+        },
+        "take-class-from-siblings": {
           "success": true,
           "confidence": 1
         },
@@ -7121,38 +7404,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-validation": {
-          "success": true,
-          "confidence": 0.6
-        },
-        "if-empty": {
-          "success": true,
-          "confidence": 0.6
-        },
-        "toggle-class-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "add-class-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "add-class-to-other": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "remove-class-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "remove-class-from-all": {
-          "success": true,
-          "confidence": 0.5
-        },
         "set-text-basic": {
           "success": true,
           "confidence": 0.5
@@ -7181,42 +7432,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "remove-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "make-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "swap-content": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "show-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "show-with-transition": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "hide-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "hide-with-transition": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "toggle-visibility": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "wait-then": {
-          "success": true,
-          "confidence": 0.5
-        },
         "transition-opacity": {
           "success": true,
           "confidence": 0.5
@@ -7225,39 +7440,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "settle-animations": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "send-event": {
-          "success": true,
-          "confidence": 0.5
-        },
         "send-with-detail": {
           "success": true,
           "confidence": 0.5
         },
-        "trigger-event": {
-          "success": true,
-          "confidence": 0.5
-        },
         "multiple-events": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-json": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-with-method": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "if-condition": {
           "success": true,
           "confidence": 0.5
         },
@@ -7269,39 +7456,7 @@
           "success": true,
           "confidence": 0.5
         },
-        "go-url": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "go-back": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "focus-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "blur-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "log-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "log-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-value": {
-          "success": true,
-          "confidence": 0.5
-        },
         "default-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "tell-command": {
           "success": true,
           "confidence": 0.5
         },
@@ -7313,51 +7468,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "js-inline": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "tabs-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "tabs-content": {
-          "success": true,
-          "confidence": 0.5
-        },
         "tabs-aria": {
           "success": true,
           "confidence": 0.5
         },
-        "modal-open": {
-          "success": true,
-          "confidence": 0.5
-        },
         "modal-close-button": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "modal-close-escape": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "modal-close-backdrop": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "dropdown-close-outside": {
           "success": true,
           "confidence": 0.5
         },
@@ -7374,10 +7489,6 @@
           "confidence": 0.5
         },
         "form-submit-prevent": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "form-disable-on-submit": {
           "success": true,
           "confidence": 0.5
         },
@@ -7409,31 +7520,7 @@
           "success": true,
           "confidence": 0.5
         },
-        "next-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "previous-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "closest-ancestor": {
-          "success": true,
-          "confidence": 0.5
-        },
         "first-in-parent": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "last-in-collection": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "repeat-until-event": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "event-once": {
           "success": true,
           "confidence": 0.5
         },
@@ -7442,30 +7529,6 @@
           "confidence": 0.5
         },
         "event-throttle": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "event-from-elsewhere": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "event-key-combo": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-loading-state": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-error-handling": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "if-exists": {
           "success": true,
           "confidence": 0.5
         },
@@ -7481,19 +7544,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.5
-        },
         "two-way-binding": {
           "success": true,
           "confidence": 0.5
         },
         "computed-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.5
         },
@@ -7533,35 +7588,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "its-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "render-template-with-data": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "make-toast-element": {
-          "success": true,
-          "confidence": 0.5
-        },
         "template-literal-interpolation": {
           "success": true,
           "confidence": 0.5
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "morph-fetch-result": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "morph-with-template": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "morph-form-update": {
           "success": true,
           "confidence": 0.5
         },
@@ -7573,43 +7604,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "socket-send": {
-          "success": true,
-          "confidence": 0.5
-        },
         "worker-basic": {
           "success": true,
           "confidence": 0.5
         },
-        "fetch-with-headers": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-with-method-body": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-formdata": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "fetch-do-not-throw": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "tell-other-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "send-event-to-form": {
-          "success": true,
-          "confidence": 0.5
-        },
         "on-custom-event-receive": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "keydown-key-is-syntax": {
           "success": true,
           "confidence": 0.5
         },
@@ -7622,10 +7621,6 @@
           "confidence": 0.5
         },
         "pick-text-range": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "take-class-from-siblings": {
           "success": true,
           "confidence": 0.5
         },
@@ -7698,7 +7693,7 @@
         "set-transform",
         "template-literal-interpolation"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8322,7 +8317,7 @@
       "avgRoleFidelity": 0.7139860706187232,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["blur-element", "get-value", "keydown-key-is-syntax", "trigger-event"],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8957,7 +8952,7 @@
         "unless-condition",
         "when-value-changes"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9601,7 +9596,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -10230,7 +10225,7 @@
       "avgRoleFidelity": 0.7273407335907333,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10870,7 +10865,7 @@
         "repeat-until-event",
         "set-color-variable"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11495,7 +11490,7 @@
       "avgRoleFidelity": 0.7133043758043759,
       "degeneratePasses": [],
       "lossyPasses": ["event-debounce", "fetch-loading-state"],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12136,7 +12131,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12776,7 +12771,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13404,7 +13399,7 @@
       "avgRoleFidelity": 0.7156290218790216,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": ["event-debounce", "fetch-loading-state", "trigger-event"],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14044,7 +14039,7 @@
         "set-color-variable",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14681,7 +14676,7 @@
         "tell-other-element",
         "unless-condition"
       ],
-      "bundleSize": 410232,
+      "bundleSize": 410580,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15303,7 +15298,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 410232,
+      "size": 410580,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

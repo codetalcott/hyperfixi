@@ -1202,11 +1202,38 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
     ja: new Set(['で']),
-    ko: new Set(), // Korean doesn't use event marker particles
+    ko: new Set(), // ko's marker is the two-token 할 때 phrase — see SOV_EVENT_MARKER_PHRASES
     tr: new Set(['de', 'da', 'te', 'ta']),
     bn: new Set(['এ']),
     qu: new Set(['pi']),
   };
+
+  /**
+   * OPTIONAL multi-token event-marker phrases consumed after the event token.
+   * The ko i18n profile emits 할 때 after the event role; it tokenizes as TWO
+   * tokens (할 identifier + 때 keyword), invisible to the single-token marker
+   * check above. Unlike SOV_EVENT_MARKERS these never gate event detection —
+   * ko events still anchor bare (pre-marker emissions, hand-written input) —
+   * the phrase is just consumed when present so it doesn't leak into the body,
+   * and it CONFIRMS a custom (identifier) event the way ja's で does.
+   */
+  private static readonly SOV_EVENT_MARKER_PHRASES: Record<string, string[][]> = {
+    ko: [['할', '때'], ['할때']],
+  };
+
+  /** Length (in tokens) of an event-marker phrase starting at startIdx, or 0. */
+  private matchEventMarkerPhrase(
+    allTokens: readonly LanguageToken[],
+    startIdx: number,
+    language: string
+  ): number {
+    const phrases = SemanticParserImpl.SOV_EVENT_MARKER_PHRASES[language];
+    if (!phrases) return 0;
+    for (const phrase of phrases) {
+      if (phrase.every((w, j) => allTokens[startIdx + j]?.value === w)) return phrase.length;
+    }
+    return 0;
+  }
 
   /**
    * SOV source markers ("from" equivalents) and window tokens per language.
@@ -1468,11 +1495,13 @@ export class SemanticParserImpl implements ISemanticParser {
             break;
           }
         } else {
-          // Languages without event markers (KO): event keyword stands alone
+          // Languages without single-token event markers (KO): event keyword
+          // stands alone, or is followed by an optional marker phrase (할 때),
+          // consumed so it doesn't leak into the body parse.
           eventIndex = i;
           eventName = resolvedName;
           keyFilter = tokenKeyFilter;
-          tokensToRemove = 1; // Remove event keyword only
+          tokensToRemove = 1 + this.matchEventMarkerPhrase(allTokens, i + 1, language);
           break;
         }
       }
@@ -1516,8 +1545,19 @@ export class SemanticParserImpl implements ISemanticParser {
             break;
           }
         } else {
-          // Marker-less Korean: the event identifier sits immediately before the
-          // body's command verb (e.g. `… hello 넣다 …`).
+          // Korean: the 할 때 marker phrase confirms a custom event the way
+          // ja's で does (`… success 할 때 넣다 …`)…
+          const phraseLen = this.matchEventMarkerPhrase(allTokens, i + 1, language);
+          if (phraseLen > 0) {
+            eventIndex = i;
+            eventName = token.value;
+            keyFilter = '';
+            tokensToRemove = 1 + phraseLen;
+            break;
+          }
+          // …or, marker-less (pre-marker emissions, hand-written input), the
+          // event identifier sits immediately before the body's command verb
+          // (e.g. `… hello 넣다 …`).
           const nextToken = allTokens[i + 1];
           if (
             nextToken &&

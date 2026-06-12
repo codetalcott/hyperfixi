@@ -142,6 +142,10 @@ export const koreanProfile: LanguageProfile = {
     { form: '를', role: 'patient', position: 'postposition', required: true, alternatives: ['을'] },
     { form: '에', role: 'destination', position: 'postposition', required: true },
     { form: '에서', role: 'source', position: 'postposition', required: true },
+    // Event marker — the semantic *-event-ko-sov-* patterns anchor on 할 때
+    // (the generator profile's eventMarker); without it every ko handler
+    // emitted a bare event name no fused pattern could anchor.
+    { form: '할 때', role: 'event', position: 'postposition', required: true },
     {
       form: '로',
       role: 'style',

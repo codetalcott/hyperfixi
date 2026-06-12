@@ -538,7 +538,18 @@ export function insertMarkers(
   const result: string[] = [];
 
   for (const element of elements) {
-    const marker = markers.find(m => m.role === element.role);
+    let marker = markers.find(m => m.role === element.role);
+
+    // A selector-shaped "event" is never a trigger. It's the dangling target of
+    // a locative `on` (`set @role to "alert" on #sr-announce`) that
+    // splitOnCommandBoundaries splits off as a headless pseudo-handler (set/put
+    // are deliberately NOT in ON_TARGET_COMMANDS — dual-destination collision).
+    // Emitting the event marker after it (ko 할 때, ja で, bn এ, tr de) plants a
+    // spurious mid-stream event anchor in the emission; suppress the marker and
+    // emit the bare selector, which body parsers skip harmlessly.
+    if (marker?.role === 'event' && /^[#.<@[]/.test(element.translated || element.value)) {
+      marker = undefined;
+    }
 
     if (marker) {
       if (adpositionType === 'preposition') {
