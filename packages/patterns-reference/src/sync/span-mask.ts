@@ -101,8 +101,14 @@ export function maskSpans(input: string): MaskResult {
   //    and consume nested tags as if they were text. The middle character
   //    class `[^<\n\s]` ensures at least one printable non-`<` char exists
   //    so pure indentation between elements is not masked.
+  //    The `(?<!\/)` lookbehind excludes a `>` that closes a SELF-CLOSING
+  //    selector literal (`<button/>`): hyperscript between two selector
+  //    literals (`… last <button/> in .modal focus first <button/> …`) is
+  //    real code, not element inner text — masking it hid the whole segment
+  //    from the transformer, which then emitted it untranslated (the
+  //    focus-trap `focus first` leak).
   working = working.replace(
-    />([^<\n]*[^<\n\s][^<\n]*)</g,
+    /(?<!\/)>([^<\n]*[^<\n\s][^<\n]*)</g,
     (_m, text) => `>${record('html-text', text)}<`
   );
 
