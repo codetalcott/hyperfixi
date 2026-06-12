@@ -191,7 +191,13 @@ export const sw: Dictionary = {
 
   expressions: {
     first: 'kwanza',
-    last: 'mwisho',
+    // 'mwisho' is the END keyword (block terminator) — the tokenizer's keyword
+    // map is last-wins, so a positional `last` emission of 'mwisho' reads as
+    // `end` and terminates the enclosing block mid-condition (focus-trap's
+    // `… inafanana mwisho <button/>` dropped the whole branch body). Emit the
+    // concatenated adjective form instead (wa mwisho — the saufsi/wennnicht/
+    // enyakın single-token class); the tokenizer reads it as `last`.
+    last: 'wamwisho',
     next: 'ijayo',
     previous: 'iliyopita',
     prev: 'awali',

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-12T02:10:20.987Z",
-  "commit": "69e70840",
+  "timestamp": "2026-06-12T02:28:47.905Z",
+  "commit": "a2bcc18a",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -10954,16 +10954,14 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.878719576719577,
-      "avgFidelity": 0.9407777777777776,
+      "avgFidelity": 0.9474444444444443,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "blur-element",
         "event-debounce",
-        "focus-trap",
         "form-submit-prevent",
         "if-empty",
         "if-exists",
-        "input-clear",
         "input-validation",
         "keydown-key-is-syntax",
         "make-element",
