@@ -494,6 +494,37 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   }
 
   /**
+   * Check if a known keyword starts at the given position AND ends at a word
+   * boundary (end of input or a non-word character).
+   *
+   * Space-delimited languages must use this (not `isKeywordStart`) for
+   * word-walk break checks: the keyword table includes English canonical
+   * fallbacks (me, it, you, …), so a raw `startsWith` check splits any native
+   * word with an embedded fallback mid-word (e.g. Quechua ñit'iy contains
+   * "it"). CJK/no-space tokenizers rely on mid-text keyword starts and must
+   * keep using `isKeywordStart`.
+   *
+   * @param input - Input string
+   * @param pos - Current position
+   * @param isWordChar - Language-specific word-character predicate; pass the
+   *   tokenizer's letter classifier so e.g. the Quechua glottal apostrophe
+   *   counts as part of a word. Defaults to Unicode letters/digits/underscore.
+   * @returns true if a keyword starts here and is not followed by a word char
+   */
+  protected isKeywordStartAtBoundary(
+    input: string,
+    pos: number,
+    isWordChar: (char: string) => boolean = ch => /[\p{L}\p{N}_]/u.test(ch)
+  ): boolean {
+    const remaining = input.slice(pos);
+    return this.profileKeywords.some(entry => {
+      if (!remaining.startsWith(entry.native)) return false;
+      const after = input[pos + entry.native.length];
+      return after === undefined || !isWordChar(after);
+    });
+  }
+
+  /**
    * Look up a keyword by native word (case-insensitive).
    * O(1) lookup using the keyword map.
    *

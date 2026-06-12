@@ -4743,6 +4743,50 @@ describe("qu curated apostrophe rows — ñit'iy keyword + event-source wrapper 
   });
 });
 
+describe('qu word-walk keyword breaks require a word boundary (systemic #387 follow-up)', () => {
+  // #387 fixed one live instance (ñit'iy) by adding it as a keyword, but the
+  // hazard was systemic: the keyword table injects English canonical reference
+  // words (me, it, you, …) for EVERY language, and the qu word-walk broke at
+  // any position where a known keyword merely starts (raw startsWith). Any
+  // unknown space-delimited word with an embedded fallback split mid-word.
+  // The walk now uses isKeywordStartAtBoundary (framework base-tokenizer) with
+  // isQuechuaLetter, so a break needs the match to end at a word boundary —
+  // and the longest-keyword scan at word start applies the same guard, so a
+  // keyword prefix no longer steals the front of a longer word (ñit'iyq).
+  function values(input: string): string[] {
+    return getTokenizer('qu')
+      .tokenize(input)
+      .tokens.map((t: { value: string }) => t.value);
+  }
+
+  it('[qu] unknown word with embedded English fallback "it" stays whole', () => {
+    expect(values('umitaq')).toEqual(['umitaq']);
+  });
+
+  it('[qu] unknown word with embedded English fallback "me" stays whole', () => {
+    expect(values('umema')).toEqual(['umema']);
+  });
+
+  it("[qu] keyword-prefix word ñit'iyq stays whole (no click + stray q)", () => {
+    expect(values("ñit'iyq")).toEqual(["ñit'iyq"]);
+  });
+
+  it('[qu] mid-sentence: embedded-fallback word is one token, clause still parses', () => {
+    expect(values('.active ta umitaq man yapay')).toEqual([
+      '.active',
+      'ta',
+      'umitaq',
+      'man',
+      'yapay',
+    ]);
+  });
+
+  it('[qu] agglutinated case suffix still splits at the word boundary', () => {
+    // Boundary-ending keyword breaks are load-bearing: wasita → wasi + ta
+    expect(values('wasita')).toEqual(['wasi', 'ta']);
+  });
+});
+
 describe('id increment dict realign — tambahkan (parses as add) → naikkan (R2 id)', () => {
   // The id dict emitted tambahkan for increment, but tambahkan is the id
   // semantic profile's `add` ALTERNATIVE — increment-counter parsed as
