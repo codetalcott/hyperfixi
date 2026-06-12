@@ -105,7 +105,11 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   // References (feminine forms not in profile)
   { native: 'היא', normalized: 'it' }, // feminine "it"
   { native: 'הוא', normalized: 'it' }, // masculine "it"
-  { native: 'את', normalized: 'you' }, // feminine "you"
+  // את is deliberately NOT mapped to 'you' (the feminine-you homonym): the
+  // transformer emits את exclusively as the ACCUSATIVE marker (`שלח את
+  // refresh`) — profile roleMarkers.patient.primary — and the you-reading
+  // poisoned every verb+את clause (send/trigger/tell/wait/add: the 15-lossy
+  // he tail). PREPOSITIONS above keeps it tokenizing as the object particle.
 
   // Time units
   { native: 'שנייה', normalized: 's' },
@@ -145,6 +149,9 @@ export class HebrewTokenizer extends BaseTokenizer {
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
   // All tokenization logic delegated to registered extractors (context-aware)
+  // NOTE: do NOT drop את from the stream — ~40 generated he patterns embed it
+  // as a required literal before {patient}. The send/trigger/tell/wait gap is
+  // covered by את-tolerant handcrafted patterns instead (patterns/he-accusative).
 
   classifyToken(token: string): TokenKind {
     if (PREPOSITIONS.has(token)) return 'particle';

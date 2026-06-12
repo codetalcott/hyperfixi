@@ -89,12 +89,54 @@ function getTriggerPatternsZh(): LanguagePattern[] {
 /**
  * Get trigger patterns for a specific language.
  */
+function getTriggerPatternsHe(): LanguagePattern[] {
+  return [
+    {
+      // Accusative-marked trigger (`הפעל את init`) — see send-he-et.
+      id: 'trigger-he-et',
+      language: 'he',
+      command: 'trigger',
+      priority: 105,
+      template: {
+        format: 'הפעל את {event} על {destination}',
+        tokens: [
+          { type: 'literal', value: 'הפעל', alternatives: ['שגר'] },
+          { type: 'literal', value: 'את' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'על', alternatives: ['ל', 'אל'] },
+              {
+                type: 'role',
+                role: 'destination',
+                expectedTypes: ['selector', 'reference', 'expression'],
+              },
+            ],
+          },
+        ],
+      },
+      extraction: {
+        event: { position: 2 },
+        destination: {
+          marker: 'על',
+          markerAlternatives: ['ל', 'אל'],
+          default: { type: 'reference', value: 'me' },
+        },
+      },
+    },
+  ];
+}
+
 export function getTriggerPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'en':
       return getTriggerPatternsEn();
     case 'zh':
       return getTriggerPatternsZh();
+    case 'he':
+      return getTriggerPatternsHe();
     default:
       return [];
   }
