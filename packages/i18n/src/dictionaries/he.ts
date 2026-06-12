@@ -11,6 +11,7 @@ export const he: Dictionary = {
     beep: 'ביפ',
     break: 'שבור',
     call: 'קרא',
+    clear: 'נקה', // profile's clear word — was untranslated (parsed as nothing)
     continue: 'המשך',
     copy: 'העתק',
     decrement: 'הקטן',

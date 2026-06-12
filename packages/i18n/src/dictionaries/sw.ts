@@ -19,6 +19,9 @@ export const sw: Dictionary = {
     add: 'ongeza',
     remove: 'ondoa',
     toggle: 'badilisha',
+    // command blur (the events section has the blur EVENT word; without this
+    // entry the transformer fell back to it and no profile read it as the verb)
+    blur: 'blur',
     hide: 'ficha',
     show: 'onyesha',
     if: 'kama',
@@ -59,7 +62,7 @@ export const sw: Dictionary = {
     exit: 'toka',
     install: 'sakinisha',
     breakpoint: 'nukta-simama',
-    clear: 'futa',
+    clear: 'safisha', // futa is a remove alternative in the profile
     close: 'funga',
     open: 'fungua',
     select: 'chagua',

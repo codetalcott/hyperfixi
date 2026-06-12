@@ -16,10 +16,13 @@ export const pt: Dictionary = {
     add: 'adicionar',
     remove: 'remover',
     toggle: 'alternar',
+    // command blur (the events section has the blur EVENT word; without this
+    // entry the transformer fell back to it and no profile read it as the verb)
+    blur: 'desfocar',
     hide: 'esconder',
     show: 'mostrar',
     if: 'se',
-    unless: 'a_menos',
+    unless: 'salvo', // a_menos splits at _ in the pt extractor (see profile)
     repeat: 'repetir',
     for: 'para',
     while: 'enquanto',

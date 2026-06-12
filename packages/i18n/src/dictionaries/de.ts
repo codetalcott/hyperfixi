@@ -16,6 +16,9 @@ export const de: Dictionary = {
     add: 'hinzufügen',
     remove: 'entfernen',
     toggle: 'umschalten',
+    // command blur (the events section has the blur EVENT word; without this
+    // entry the transformer fell back to it and no profile read it as the verb)
+    blur: 'defokussieren',
     hide: 'verstecken',
     show: 'zeigen',
     // Align with the semantic German profile's `if` primary (`falls`). The previous
@@ -61,7 +64,7 @@ export const de: Dictionary = {
     exit: 'beenden',
     install: 'installieren',
     breakpoint: 'haltepunkt',
-    clear: 'löschen',
+    clear: 'bereinigen', // löschen is a remove alternative in the profile
     close: 'schließen',
     open: 'öffnen',
     select: 'auswählen',

@@ -16,6 +16,9 @@ export const pl: Dictionary = {
     add: 'dodaj',
     remove: 'usuń',
     toggle: 'przełącz',
+    // command blur (the events section has the blur EVENT word; without this
+    // entry the transformer fell back to it and no profile read it as the verb)
+    blur: 'rozmyj',
     hide: 'ukryj',
     show: 'pokaż',
     if: 'jeśli',
@@ -56,7 +59,7 @@ export const pl: Dictionary = {
     exit: 'wyjdź',
     install: 'zainstaluj',
     breakpoint: 'punkt-przerwania',
-    clear: 'wyczyść',
+    clear: 'zeruj', // wyczyść is a remove alternative in the profile
     close: 'zamknij',
     open: 'otwórz',
     select: 'wybierz',

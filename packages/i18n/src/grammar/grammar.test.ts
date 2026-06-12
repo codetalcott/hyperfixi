@@ -1802,3 +1802,34 @@ describe('ko event marker 할 때 + selector-event marker suppression', () => {
     expect(out.endsWith('#sr-announce')).toBe(true);
   });
 });
+
+describe('command blur translates via commands.blur, not the blur EVENT word', () => {
+  // de/fr/pt/pl/sw dicts had blur only in the EVENTS section (unscharf/flou/
+  // desfoque/rozmycie/poteza_macho); the COMMAND `blur me` fell back to that
+  // event word, which no semantic profile reads as the blur verb — blur-element
+  // was lossy in all five. commands.blur now emits the profile's verb.
+  const cases: Array<[string, string]> = [
+    ['de', 'defokussieren'],
+    ['fr', 'défocaliser'],
+    ['pt', 'desfocar'],
+    ['pl', 'rozmyj'],
+    ['sw', 'blur'],
+  ];
+  for (const [lang, verb] of cases) {
+    it(`[${lang}] blur me emits ${verb}`, () => {
+      const t = new GrammarTransformer('en', lang);
+      const out = t.transform('on keydown[key=="Escape"] blur me');
+      expect(out).toContain(verb);
+    });
+  }
+
+  it('[de] the blur EVENT now also emits the command word (shadowing, parse-safe)', () => {
+    // commands.blur shadows events.blur in event-name translation too. That is
+    // accepted: defokussieren is in the semantic eventNameTranslations for de,
+    // so `bei defokussieren …` still anchors the handler (gate green), and the
+    // command/event senses can never diverge again.
+    const t = new GrammarTransformer('en', 'de');
+    const out = t.transform('on blur add .error to me');
+    expect(out).toContain('defokussieren');
+  });
+});

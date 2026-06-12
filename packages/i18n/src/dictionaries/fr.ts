@@ -16,6 +16,9 @@ export const fr: Dictionary = {
     add: 'ajouter',
     remove: 'supprimer',
     toggle: 'basculer',
+    // command blur (the events section has the blur EVENT word; without this
+    // entry the transformer fell back to it and no profile read it as the verb)
+    blur: 'défocaliser',
     hide: 'cacher',
     show: 'montrer',
     if: 'si',

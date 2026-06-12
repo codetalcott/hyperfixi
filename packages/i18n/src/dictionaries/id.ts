@@ -59,7 +59,7 @@ export const id: Dictionary = {
     exit: 'keluar',
     install: 'pasang',
     breakpoint: 'titik-henti',
-    clear: 'hapus',
+    clear: 'bersihkan', // hapus is the remove PRIMARY in the profile
     close: 'tutup',
     open: 'buka',
     select: 'pilih',
