@@ -268,6 +268,27 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       // transformer inserts the `את` accusative particle (`הבא את /url`) where the
       // generated pattern expects `מ` (from); accept either. Verb alt `טען`.
       return [markerlessFetch('fetch-he', 'he', 'הבא', 'מ', 'כ', ['טען'], ['את'])];
+    // fetch-loading-state / event-debounce cluster (9 langs): same marker-less
+    // shape — the dict verb matches the profile, but `fetch <url>` emits no
+    // source marker so the generated pattern never anchors mid then-chain.
+    case 'de':
+      return [markerlessFetch('fetch-de', 'de', 'abrufen', 'von', 'als', ['laden'])];
+    case 'ru':
+      return [markerlessFetch('fetch-ru', 'ru', 'загрузить', 'из', 'как', ['загрузи'])];
+    case 'uk':
+      return [markerlessFetch('fetch-uk', 'uk', 'завантажити', 'з', 'як', ['завантаж'])];
+    case 'it':
+      return [markerlessFetch('fetch-it', 'it', 'recuperare', 'da', 'come')];
+    case 'vi':
+      return [markerlessFetch('fetch-vi', 'vi', 'tải', 'từ', 'như')];
+    case 'th':
+      return [markerlessFetch('fetch-th', 'th', 'ดึงข้อมูล', 'จาก', 'เป็น')];
+    case 'ar':
+      return [markerlessFetch('fetch-ar', 'ar', 'احضر', 'من', 'كـ', ['جلب'])];
+    case 'tl':
+      return [
+        markerlessFetch('fetch-tl', 'tl', 'kuhanin_mula', 'mula_sa', 'bilang', ['kunin_mula']),
+      ];
     default:
       return [];
   }

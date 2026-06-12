@@ -3785,3 +3785,82 @@ describe('SOV clause-final for-loop anchors via verb-anchoring (#358 tail)', () 
     expect([...a].sort()).toEqual(['for', 'on', 'set']);
   });
 });
+
+describe('marker-less fetch recovery for the fetch-loading-state/event-debounce cluster', () => {
+  // The dict fetch verbs already matched their profiles (de abrufen, th
+  // ดึงข้อมูล, it recuperare …) — the §10 "fetch drops mid then-chain"
+  // diagnosis pointed at the chain, but the probe showed the BARE clause
+  // (`abrufen /api/data`) failing standalone: for `fetch <url>` (no `from`)
+  // the transformer emits NO source marker, while the generated
+  // fetch-<lang>-generated pattern requires one. The fetch-fr/fetch-pt
+  // markerlessFetch shape already existed for exactly this; extended the
+  // table to de/ru/uk/it/vi/th/ar/tl. Fixed event-debounce AND
+  // fetch-loading-state in all 8 (16 instances — ar/tl despite their
+  // jumbled debounce-fronted emissions): avgFidelity 0.9646 → 0.9658,
+  // lossy 166 → 150, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), fetch-loading-state:
+  // `on click add .loading to me fetch /api/data then remove .loading from me
+  //  put it into #result`
+  const loadingState: Array<[string, string]> = [
+    [
+      'de',
+      'bei klick hinzufügen .loading zu ich dann abrufen /api/data dann entfernen .loading von ich dann setzen es zu #result',
+    ],
+    [
+      'ru',
+      'при клик добавить .loading в я затем загрузить /api/data затем удалить .loading из я затем положить это в #result',
+    ],
+    [
+      'th',
+      'เมื่อ คลิก เพิ่ม .loading ใน ฉัน แล้ว ดึงข้อมูล /api/data แล้ว ลบ .loading จาก ฉัน แล้ว ใส่ มัน ใน #result',
+    ],
+  ];
+  for (const [lang, input] of loadingState) {
+    it(`[${lang}] fetch-loading-state keeps the mid-chain fetch (was {add,on,put,remove})`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('fetch')).toBe(true);
+      expect(a.has('add')).toBe(true);
+      expect(a.has('remove')).toBe(true);
+      expect(a.has('put')).toBe(true);
+    });
+  }
+
+  // event-debounce: `on input debounced at 300ms fetch /api/search?q=${my value}
+  //  as json then put it into #results`
+  const debounce: Array<[string, string]> = [
+    ['it', 'su input debounced a 300ms recuperare /api/search?q=${my value} come json allora mettere esso in #results'],
+    ['uk', 'при введення debounced в 300ms завантажити /api/search?q=${my value} як json тоді покласти це в #results'],
+    ['vi', 'khi nhập debounced tại 300ms tải /api/search?q=${my value} như json rồi đặt nó vào #results'],
+  ];
+  for (const [lang, input] of debounce) {
+    it(`[${lang}] event-debounce keeps the fetch (was {on,put})`, () => {
+      const a = actions(parse(input, lang as 'it'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('fetch')).toBe(true);
+      expect(a.has('put')).toBe(true);
+    });
+  }
+
+  it('[de] the bare marker-less clause parses standalone (the probe shape)', () => {
+    expect(actions(parse('abrufen /api/data', 'de')).has('fetch')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse('on click add .loading to me fetch /api/data then remove .loading from me put it into #result', 'en')
+    );
+    expect([...a].sort()).toEqual(['add', 'fetch', 'on', 'put', 'remove']);
+  });
+});
