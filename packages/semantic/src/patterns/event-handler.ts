@@ -1739,6 +1739,35 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
       },
     },
     {
+      // Circumfix `当 {event} 时 {body}` — the standard zh "当…时" (when…then)
+      // wrapper the i18n transformer emits for EVERY event handler. The plain
+      // `event-zh-standard` (`当 {event}`) below catches only the leading `当`
+      // and leaks the trailing `时` into the body: harmless for a single-command
+      // body (parseClause skips the stray `时`), but it stops the conditional
+      // fold firing — `parseBodyWithClauses` only folds a leading `if`/`unless`
+      // when it sits at clause-start (`currentClauseTokens.length === 0`), and the
+      // orphaned `时` makes the `如果` no longer first, collapsing the whole block
+      // into a flat `compound` (the §7n/§7r zh "compound-collapse"). Consuming the
+      // `时` here lets the body start cleanly at `如果` so the fold runs. Requires
+      // the leading `当`, so it never shadows the bare `点击 的时候` temporal form
+      // (event-zh-temporal) nor a `当 {event}` form with no trailing temporal.
+      id: 'event-zh-circumfix',
+      language: 'zh',
+      command: 'on',
+      priority: 106,
+      template: {
+        format: '当 {event} 时 {body}',
+        tokens: [
+          { type: 'literal', value: '当' },
+          { type: 'role', role: 'event' },
+          { type: 'literal', value: '时', alternatives: ['的时候', '时候'] },
+        ],
+      },
+      extraction: {
+        event: { position: 1 },
+      },
+    },
+    {
       id: 'event-zh-standard',
       language: 'zh',
       command: 'on',

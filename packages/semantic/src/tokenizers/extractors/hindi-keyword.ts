@@ -42,35 +42,20 @@ export class HindiKeywordExtractor implements ContextAwareExtractor {
 
     const startPos = position;
 
-    // Extract Hindi word - read until non-Devanagari or space
+    // Extract a single Devanagari word (stops at the next space or non-Devanagari).
+    //
+    // Multi-word Hindi keyword phrases are matched BEFORE this extractor, so it no
+    // longer needs its own hardcoded compound allowlist (Task #10 Phase C):
+    //   - non-marker phrases (के लिए=for, जब तक=while, से पहले=before, के बाद=after,
+    //     नहीं तो=else, …) tokenize via the base tokenizer's profile-driven
+    //     `tryMultiWordKeyword` (#416), which runs first and emits ONE keyword token;
+    //   - the remaining marker phrases that have no profile keyword (के साथ=with,
+    //     के बारे में=about) are caught by HindiParticleExtractor, which is
+    //     registered ahead of this extractor.
     let word = '';
     let pos = position;
 
-    while (pos < input.length && (isDevanagari(input[pos]) || input[pos] === ' ')) {
-      // Allow spaces for compound words but stop at double spaces
-      if (input[pos] === ' ') {
-        // Check if next char is Hindi (compound postposition)
-        if (pos + 1 < input.length && isDevanagari(input[pos + 1])) {
-          // Check if it forms a known compound
-          const rest = input.slice(pos);
-          const compound = [
-            ' के लिए',
-            ' के साथ',
-            ' के बाद',
-            ' से पहले',
-            ' नहीं तो',
-            ' जब तक',
-            ' के बारे में',
-          ].find(c => rest.startsWith(c));
-          if (compound) {
-            word += compound;
-            pos += compound.length;
-            continue;
-          }
-        }
-        break;
-      }
-
+    while (pos < input.length && isDevanagari(input[pos])) {
       word += input[pos];
       pos++;
     }

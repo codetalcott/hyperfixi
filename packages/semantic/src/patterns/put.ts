@@ -973,6 +973,47 @@ const PUT_AT_END: ReadonlyArray<{
   },
 ];
 
+/**
+ * Whether an `end`-keyword token is the position NOUN of an `at end of` phrase
+ * (`put it at end of body`), not a block terminator. The clause splitter
+ * (`parseBodyWithClauses`) breaks at every `end` keyword; for languages whose
+ * `end` noun tokenizes as a `keyword` (zh `结束`, …) that wrongly chops the
+ * trailing `put it at end of body` clause out of make-toast. The English guard
+ * recognizes the `at` … `of` sandwich literally; this generalizes it to the
+ * per-language `at`/`of` words recorded in PUT_AT_END (zh `在` … `的`,
+ * id `di` … `dari`, …). Returns false for languages with no at-end spec (their
+ * end noun never collides) and for any non-sandwiched `end`.
+ */
+export function isAtEndPositionNoun(
+  language: string,
+  endValue: string,
+  prevValue: string | undefined,
+  nextValue: string | undefined
+): boolean {
+  const spec = PUT_AT_END.find(s => s.lang === language);
+  if (!spec) return false;
+  const eq = (a: string | undefined, b: string): boolean =>
+    (a ?? '').toLowerCase() === b.toLowerCase();
+  return eq(endValue, spec.end) && eq(prevValue, spec.at) && eq(nextValue, spec.of);
+}
+
+/**
+ * Whether a word is one of a language's `at end of` connective words (`at`/`end`/
+ * `of`: zh `在`/`结束`/`的`, ms `di`/`tamat`/`daripada`, …). These are pattern
+ * connectives, never DOM property names — so a possessive whose property head is
+ * one is a mis-read (`letak ia di tamat …` = "put it at end of …", not the
+ * phantom possessive `it.di`). Unlike the role markers caught by their normalized
+ * concept, the `at`/`of` words tokenize as bare identifiers with no concept, so
+ * this surface-word check is the only signal. Returns false when the language has
+ * no at-end spec.
+ */
+export function isAtEndConnective(language: string, value: string): boolean {
+  const spec = PUT_AT_END.find(s => s.lang === language);
+  if (!spec) return false;
+  const v = value.toLowerCase();
+  return v === spec.at.toLowerCase() || v === spec.of.toLowerCase() || v === spec.end.toLowerCase();
+}
+
 function buildAtEndPutPatterns(language: string): LanguagePattern[] {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec) return [];

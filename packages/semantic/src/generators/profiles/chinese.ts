@@ -110,6 +110,14 @@ export const chineseProfile: LanguageProfile = {
     when: { primary: '何时', normalized: 'when' },
     where: { primary: '哪里', normalized: 'where' },
     else: { primary: '否则', normalized: 'else' },
+    // `matches` is a comparison operator (core territory), so it had always
+    // tokenized as a bare identifier. The folded condition raw is read by the
+    // core expression parser (English operators only), so `target 匹配 .x` must
+    // normalize to `target matches .x`; otherwise `匹配` stays an identifier and
+    // modal-close-backdrop drops its then-branch at runtime. `匹配` appears in
+    // exactly two corpus patterns (modal-close-backdrop, focus-trap), both as
+    // the comparison operator — no non-operator collision (cf. §7r ko/ru/uk).
+    matches: { primary: '匹配', normalized: 'matches' },
     repeat: { primary: '重复', normalized: 'repeat' },
     for: { primary: '为', normalized: 'for' },
     while: { primary: '持续', normalized: 'while' },

@@ -109,93 +109,25 @@ export class VietnameseKeywordExtractor implements ContextAwareExtractor {
   }
 
   /**
-   * Try to match a multi-word phrase.
-   * Vietnamese has many multi-word keywords like "chuyển đổi" (toggle), "hiển thị" (show).
+   * Try to match a multi-word ROLE-MARKER phrase that the base tokenizer cannot.
+   *
+   * Task #10 Phase C retired this extractor's ~80-entry compound allowlist: every
+   * non-marker Vietnamese multi-word keyword (chuyển đổi=toggle, hiển thị=show,
+   * với mỗi=for, trước khi=before, cho đến khi=until, …) is now a profile keyword
+   * whose natural spaced form the base tokenizer's profile-driven
+   * `tryMultiWordKeyword` (#416) emits as ONE keyword token before any extractor
+   * runs. Only the two phrases the base mechanism MUST exclude remain here:
+   * `vào trong` (into) and `sự kiện` (event) carry marker concepts matched by the
+   * pattern matcher's role mechanism (see MARKER_CONCEPT_NORMALIZEDS in the
+   * framework base tokenizer), so pre-matching them as one keyword would shadow
+   * the single-word markers the patterns rely on.
    */
   private tryMultiWordPhrase(input: string, position: number): ExtractionResult | null {
     if (!this.context) return null;
 
-    // Common Vietnamese multi-word phrases
     const multiWordPhrases = [
-      'chuyển đổi', // toggle
-      'bật tắt', // toggle (alt)
-      'hiển thị', // show
-      'gỡ bỏ', // remove
-      'loại bỏ', // remove (alt)
-      'bổ sung', // add (alt)
-      'thêm vào đầu', // prepend
-      'hoán đổi', // swap
-      'biến đổi', // morph
-      'thiết lập', // set (alt)
-      'lấy giá trị', // get
-      'tăng lên', // increment (alt)
-      'giảm đi', // decrement (alt)
-      'in ra', // log
-      'chuyển tiếp', // transition
-      'kích hoạt', // trigger
-      'tập trung', // focus
-      'mất tập trung', // blur
-      'nhấp chuột', // click
-      'di chuột', // hover
-      'rê chuột', // hover (alt)
-      'nhập liệu', // input (alt)
-      'thay đổi', // change
-      'đi đến', // go
-      'chờ đợi', // wait (alt)
-      'ổn định', // settle
-      'nếu không', // else (alt)
-      'không thì', // else
-      'lặp lại', // repeat
-      'với mỗi', // for
-      'trong khi', // while
-      'tiếp tục', // continue
-      'dừng lại', // halt (alt)
-      'trả về', // return
-      'sau đó', // then (alt)
-      'kết thúc', // end
-      'bất đồng bộ', // async
-      'nói với', // tell
-      'mặc định', // default
-      'khởi tạo', // init
-      'hành vi', // behavior
-      'cài đặt', // install
-      'đo lường', // measure
-      'sao chép', // copy
-      'thoát ra', // exit
-      'kết xuất', // render
-      'vào trong', // into (alt)
-      'trước khi', // before (alt)
-      'sau khi', // after (alt)
-      'cho đến khi', // until
-      'sự kiện', // event
-      'kết quả', // result
-      'mục tiêu', // target
-      'của tôi', // my
-      'của nó', // its
-      'của bạn', // your
-      'của anh', // your (male formal)
-      'của chị', // your (female formal)
-      'không xác định', // undefined
-      'đầu tiên', // first
-      'cuối cùng', // last
-      'tiếp theo', // next
-      'trước đó', // previous
-      'gần nhất', // closest
-      'nhấp đúp', // dblclick
-      'gửi biểu mẫu', // submit
-      'phím xuống', // keydown
-      'phím lên', // keyup
-      'chuột vào', // mouseover
-      'chuột ra', // mouseout
-      'tải trang', // load
-      'mili giây', // milliseconds (time unit)
-      'thêm vào cuối', // append
-      'nhân bản', // clone
-      'tạo ra', // make
-      'đặt giá trị', // set (alt)
-      'ghi nhật ký', // log (alt)
-      'chuyển tới', // go (alt)
-      'ngược lại', // else (alt)
+      'vào trong', // into (marker — kept out of base multi-word matching)
+      'sự kiện', // event (marker — kept out of base multi-word matching)
     ];
 
     for (const phrase of multiWordPhrases) {

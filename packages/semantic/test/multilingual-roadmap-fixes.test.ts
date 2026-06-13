@@ -5501,6 +5501,9 @@ describe('`matches` comparison-operator normalization (R2 wave 12 — modal-clos
     ['ko', '클릭 할 때 만약 대상 일치 .modal-backdrop .modal-backdrop 를 숨기다 끝'],
     ['ru', 'при клик если цель соответствует .modal-backdrop скрыть .modal-backdrop конец'],
     ['uk', 'при клік якщо ціль відповідає .modal-backdrop сховати .modal-backdrop кінець'],
+    // zh joined the club once the `当…时` circumfix fix (S2 wave 1) let its body
+    // fold at all; `匹配`→matches was the second half (S2 wave 2).
+    ['zh', '当 点击 时 如果 目标 匹配 .modal-backdrop 隐藏 把 .modal-backdrop 结束'],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] the folded condition normalizes to en-identical \`target matches .modal-backdrop\``, () => {
@@ -5715,6 +5718,20 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     ['vi', 'với mỗi', 'for'],
     ['hi', 'के लिए', 'for'],
     ['hi', 'मेल खाता', 'matches'], // natural spaced matches (no more मेलखाता concat)
+    // Task #10 Phase B: `before`/`after`/`until` are pattern literals (matched by
+    // `matchLiteralToken` via value/normalized), not role markers, so they were
+    // removed from MARKER_CONCEPT_NORMALIZEDS and now tokenize as ONE base keyword
+    // — the profile-driven replacement for the hindi/vietnamese hardcoded compound
+    // lists deleted in Phase C.
+    ['hi', 'से पहले', 'before'],
+    ['hi', 'के बाद', 'after'],
+    ['vi', 'trước khi', 'before'],
+    ['vi', 'sau khi', 'after'],
+    ['vi', 'cho đến khi', 'until'],
+    // Task #10 Phase C: vi wait/exit gained spaced alternatives so the base
+    // mechanism covers them and the vietnamese extractor list could be retired.
+    ['vi', 'chờ đợi', 'wait'],
+    ['vi', 'thoát ra', 'exit'],
   ];
   for (const [lang, phrase, want] of oneKeyword) {
     it(`[${lang}] "${phrase}" → single keyword \`${want}\``, () => {
@@ -5728,6 +5745,47 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     const toks = norm('id', 'ke dalam');
     expect(toks[0]).toBe('destination'); // `ke` → destination marker
     expect(toks).not.toEqual(['into']);
+  });
+
+  // Task #10 Phase C: the per-language hardcoded compound allowlists are gone.
+  // The base tokenizer's `tryMultiWordKeyword` covers every non-marker phrase; the
+  // few genuine marker phrases with no profile keyword keep a minimal extractor.
+  describe('Task #10 Phase C — hardcoded compound lists retired', () => {
+    it('[hi] before/after/while/for/else come from the base mechanism (keyword extractor allowlist deleted)', () => {
+      // These were in HindiKeywordExtractor's deleted compound array; the base
+      // `tryMultiWordKeyword` now emits them as one keyword with the right normalized.
+      expect(norm('hi', 'से पहले')).toEqual(['before']);
+      expect(norm('hi', 'के बाद')).toEqual(['after']);
+      expect(norm('hi', 'जब तक')).toEqual(['while']);
+      expect(norm('hi', 'के लिए')).toEqual(['for']);
+      expect(norm('hi', 'नहीं तो')).toEqual(['else']);
+    });
+
+    it('[hi] `के साथ`/`के बारे में` (no profile keyword) still match as one token via HindiParticleExtractor', () => {
+      // These two marker/relational phrases are NOT profile keywords, so the base
+      // mechanism cannot emit them — the trimmed HindiParticleExtractor keeps them.
+      const withToks = getTokenizer('hi').tokenize('के साथ #x').tokens as Array<{ value: string }>;
+      expect(withToks[0].value).toBe('के साथ');
+      const aboutToks = getTokenizer('hi').tokenize('के बारे में #x').tokens as Array<{
+        value: string;
+      }>;
+      expect(aboutToks[0].value).toBe('के बारे में');
+    });
+
+    it('[vi] the retired ~80-entry list is covered by the base mechanism', () => {
+      // A representative spread across categories that used to live in the extractor.
+      expect(norm('vi', 'chuyển đổi')).toEqual(['toggle']);
+      expect(norm('vi', 'hiển thị')).toEqual(['show']);
+      expect(norm('vi', 'với mỗi')).toEqual(['for']);
+      expect(norm('vi', 'trước khi')).toEqual(['before']);
+      expect(norm('vi', 'cho đến khi')).toEqual(['until']);
+    });
+
+    it('[vi] `vào trong` (into) and `sự kiện` (event) stay one token via the trimmed extractor', () => {
+      // The only two phrases the base mechanism MUST exclude (marker concepts).
+      expect(norm('vi', 'vào trong')).toEqual(['into']);
+      expect(norm('vi', 'sự kiện')).toEqual(['event']);
+    });
   });
 
   it('[hi] modal-close-backdrop folds with natural `मेल खाता` matches', () => {
@@ -5744,5 +5802,172 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     expect(c).not.toBeNull();
     const cond = (c!.roles as Map<string, { raw?: string }>).get('condition')?.raw;
     expect(cond).toBe('target matches .modal-backdrop');
+  });
+});
+
+describe('zh circumfix `当 {event} 时` event wrapper (S2 — fused-event compound-collapse)', () => {
+  // The zh i18n transformer wraps every event handler in the `当…时` (when…then)
+  // circumfix: `当 点击 时 <body>`. The hand-crafted event patterns only covered
+  // the leading `当` (`event-zh-standard` = `当 {event}`), so the trailing `时`
+  // leaked into the body. For a single-command body that is harmless — parseClause
+  // skips the stray `时` — but it stopped the conditional fold from firing:
+  // `parseBodyWithClauses` folds a leading `if`/`unless` ONLY at clause-start
+  // (`currentClauseTokens.length === 0`), and the orphaned `时` pushed the `如果`
+  // off clause-start, so the whole `if … end` block collapsed into a flat
+  // `compound` (the §7n/§7r zh "compound-collapse"; the condition was lost and the
+  // then/else branches flattened into siblings). Adding the circumfix pattern
+  // `当 {event} 时 {body}` (priority 106, above `event-zh-standard`) consumes the
+  // `时` so the body starts cleanly at `如果` and the fold runs. Cleared zh
+  // if-condition, if-exists, if-matches (execution 32→29); modal-close-backdrop
+  // also folds now but stays failing until zh gets a `matches` operator (next).
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const found = findConditional(x);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+  const actionsOf = (c: Record<string, unknown>, branch: 'thenBranch' | 'elseBranch'): string[] =>
+    ((c[branch] as Array<{ action?: string }> | undefined) ?? []).map(n => n.action ?? '');
+
+  it('[zh] if-condition folds into a conditional with then=[remove] else=[add]', () => {
+    const c = findConditional(
+      parse('当 点击 时 如果 I match .active 那么 移除 把 .active 否则 添加 把 .active 结束', 'zh')
+    );
+    expect(c, 'conditional folded (not a flat compound)').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['remove']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['add']);
+  });
+
+  it('[zh] if-matches folds into a conditional with then=[halt] else=[toggle]', () => {
+    const c = findConditional(
+      parse('当 点击 时 如果 I match .disabled 停止 否则 切换 把 .active 结束', 'zh')
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['halt']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['toggle']);
+  });
+
+  it('[zh] if-exists folds with the make+put else branch', () => {
+    const c = findConditional(
+      parse(
+        '当 点击 时 如果 #modal 存在 显示 把 #modal 否则 制作 把 a <div#modal/> 那么 把 它 放置 到 主体 结束',
+        'zh'
+      )
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['show']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['make', 'put']);
+  });
+
+  it('[zh] a simple (non-conditional) `当…时` body still parses — the 时 is consumed, not leaked', () => {
+    const node = parse('当 点击 时 切换 把 .active', 'zh') as { body?: Array<{ action?: string }> };
+    const body = node.body ?? [];
+    expect(body.map(n => n.action)).toEqual(['toggle']);
+  });
+});
+
+describe('ms put-with-`ia` — marker keyword after a pronoun (S2 — make-element)', () => {
+  // `letak ia ke #container` (put it into #container) dropped its whole put while
+  // `letak itu ke #container` (put that …) parsed, with near-identical tokens. `ia`
+  // (it) tokenizes as a possessive base, and the possessive matcher greedily read
+  // the FOLLOWING role-marker `ke` as the possessive's property — `ke` normalizes
+  // to the concept `destination`, which the structural-keyword guard (English
+  // surface prepositions only) didn't catch. So `ia ke` became the phantom
+  // possessive `it.ke`, the literal `ke` then failed, and the put dropped (the §10
+  // ms put-with-`ia` bug; same for `saya`=me). The fix rejects a possessive
+  // property head whose normalized form is a role-marker concept
+  // (destination/source/…). Cleared ms make-element (execution 28→27).
+  const roleOf = (
+    n: { roles?: Map<string, { type?: string; value?: unknown }> },
+    role: string
+  ): { type?: string; value?: unknown } | undefined => n.roles?.get(role);
+
+  it('[ms] `letak ia ke #container` parses as put it→#container (was dropped)', () => {
+    const n = parse('letak ia ke #container', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(roleOf(n, 'patient')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(roleOf(n, 'destination')).toMatchObject({ type: 'selector', value: '#container' });
+  });
+
+  it('[ms] `letak saya ke #container` parses as put me→#container', () => {
+    const n = parse('letak saya ke #container', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(roleOf(n, 'patient')).toMatchObject({ type: 'reference', value: 'me' });
+  });
+
+  it('[ms] make-element body is make + put (the trailing put is reclaimed)', () => {
+    const n = parse(
+      'apabila click buat a <div.card/> kemudian letak ia ke #container',
+      'ms'
+    ) as { body?: Array<{ action?: string }> };
+    expect((n.body ?? []).map(c => c.action)).toEqual(['make', 'put']);
+  });
+
+  it('[en] a genuine possessive property head is still read as a property-path (no regression)', () => {
+    const n = parse('put my value into #x', 'en') as {
+      roles?: Map<string, { type?: string }>;
+    };
+    expect(n.roles?.get('patient')?.type).toBe('property-path');
+  });
+});
+
+describe('per-language `at end of` position noun (S2 — zh make-toast)', () => {
+  // make-toast's third clause is `put it at end of body`, which ATTACHES the made
+  // toast (without it the div is detached → no effect). The zh PUT_AT_END pattern
+  // (`放置 把 {patient} 在 结束 的 {destination}`) parses it fine STANDALONE, but
+  // inside the then-chained body the clause splitter chopped it: zh `结束` (end)
+  // tokenizes as a `keyword`, so parseBodyWithClauses' `end`-terminator break
+  // fired mid-phrase. The position-noun guard that suppresses that break only knew
+  // the English `at … of` sandwich; generalizing it to the per-language at/of
+  // words (zh `在 … 的`, via PUT_AT_END) keeps the `结束` from terminating the
+  // clause. Cleared zh make-toast (execution 27→26).
+  it('[zh] make-toast keeps all three clauses (make, put, put-at-end)', () => {
+    const node = parse(
+      "当 点击 时 制作 把 a <div.toast/> 那么 把 'Saved!' 放置 到 它 那么 放置 把 它 在 结束 的 主体",
+      'zh'
+    ) as { body?: Array<{ kind?: string; action?: string; statements?: Array<{ action?: string }> }> };
+    // The body is a then-chained compound; flatten its statements.
+    const flat = (node.body ?? []).flatMap(n =>
+      n.kind === 'compound' ? (n.statements ?? []) : [n]
+    );
+    expect(flat.map(n => n.action)).toEqual(['make', 'put', 'put']);
+  });
+
+  it('[zh] the `结束` inside `在 结束 的` is the position noun, not a block end', () => {
+    const n = parse('放置 把 它 在 结束 的 主体', 'zh') as {
+      action?: string;
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(n.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+
+  it('[ms] `letak ia di tamat daripada badan` parses (at-end connective not eaten as possessive)', () => {
+    // `di` is the ms at-end connective (a bare identifier, no normalized concept),
+    // so the possessive matcher used to read `ia di` as the phantom possessive
+    // `it.di` and drop the put. Rejecting at-end connective property heads keeps
+    // `ia` a bare patient. This is make-toast's attaching third clause.
+    const n = parse('letak ia di tamat daripada badan', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(n.roles?.get('patient')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(n.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });

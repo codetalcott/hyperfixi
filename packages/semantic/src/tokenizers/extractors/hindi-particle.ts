@@ -37,14 +37,17 @@ const SINGLE_POSTPOSITIONS = new Map<string, ParticleMetadata>([
 /**
  * Compound Hindi postpositions with role metadata.
  * These are multi-word expressions that must be matched as a unit.
+ *
+ * Only the phrases with NO profile keyword remain here (Task #10 Phase C). The
+ * rest — के लिए=for, के बाद=after, से पहले=before, नहीं तो=else, जब तक=while —
+ * are profile keywords whose natural spaced form the base tokenizer's
+ * `tryMultiWordKeyword` (#416) now emits as one keyword token BEFORE any
+ * extractor runs, so listing them here is dead. `के साथ` (with) and
+ * `के बारे में` (about) have no profile-keyword multi-word form, so they still
+ * need explicit handling.
  */
 const COMPOUND_POSTPOSITIONS = new Map<string, ParticleMetadata>([
-  ['के लिए', { role: 'purpose', confidence: 0.95 }], // For (purpose)
   ['के साथ', { role: 'instrument', confidence: 0.95 }], // With (accompaniment)
-  ['के बाद', { role: 'temporal-after', confidence: 0.9 }], // After
-  ['से पहले', { role: 'temporal-before', confidence: 0.9 }], // Before
-  ['नहीं तो', { role: 'conditional', confidence: 0.85 }], // Otherwise
-  ['जब तक', { role: 'temporal-until', confidence: 0.9 }], // Until (temporal)
   ['के बारे में', { role: 'about', confidence: 0.9 }], // About
 ]);
 

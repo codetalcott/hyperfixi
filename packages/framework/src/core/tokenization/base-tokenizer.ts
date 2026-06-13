@@ -33,14 +33,28 @@ import { getDefaultExtractors } from './default-extractors';
 const SIMPLE_TOKENIZER_OPERATOR_SET = new Set(DEFAULT_OPERATORS);
 
 /**
- * Normalized concepts that are handled POSITIONALLY by the pattern matcher
- * (role markers + prepositional modifiers), so a multi-word phrase carrying one
- * of them must NOT be pre-matched as a single keyword token — doing so shadows
- * the single-word marker the patterns expect (e.g. id `ke dalam`=into hides the
- * `ke` destination marker; ko `할 때`=eventMarker pre-empts SOV event extraction).
- * Command verbs / control-flow / event names are intentionally absent — those
- * are keyword literals the matcher reads whole, so multi-word matching helps.
- * See `multiWordKeywords` / `tryMultiWordKeyword`.
+ * Normalized concepts that are matched via the pattern matcher's ROLE-MARKER
+ * MECHANISM (the source/destination/event clause matchers in
+ * `packages/semantic/src/parser/pattern-matcher.ts`), which peeks/advances a
+ * SINGLE token and checks `.value`/`.normalized`. A multi-word phrase carrying
+ * one of these must NOT be pre-matched as a single keyword token — doing so
+ * shadows the single-word marker those clause matchers expect (e.g. id
+ * `ke dalam`=into hides the `ke` destination marker; ko `할 때`=eventMarker
+ * pre-empts SOV event extraction).
+ *
+ * NOTE — what is *not* here. Prepositional modifiers that the generated patterns
+ * expose as ordinary pattern LITERALS (`before`/`after` in put-before/after,
+ * `until` in repeat-until) are deliberately absent: those are read by
+ * `matchLiteralToken`, which compares the whole token by exact value OR
+ * normalized form (`getMatchType`), so a multi-word marker token (`से पहले`,
+ * `cho đến khi`) matches the literal's value/alternatives directly with no
+ * special handling. Keeping them out lets `tryMultiWordKeyword` emit them as one
+ * token — the profile-driven replacement for the per-language hardcoded compound
+ * lists (Task #10). `into` stays excluded because it IS consumed by the role
+ * mechanism in some languages (id destination `ke`), and `from`/`to`/`with`/
+ * `on`/`at`/`of`/`as`/`by`/`in` are genuine role markers. Command verbs /
+ * control-flow / event names were always absent. See `multiWordKeywords` /
+ * `tryMultiWordKeyword`.
  */
 const MARKER_CONCEPT_NORMALIZEDS: ReadonlySet<string> = new Set([
   // Role-marker role names (profile.roleMarkers normalizeds)
@@ -53,7 +67,9 @@ const MARKER_CONCEPT_NORMALIZEDS: ReadonlySet<string> = new Set([
   'agent',
   'goal',
   'manner',
-  // Prepositional / positional modifier concepts (profile.keywords "Modifiers")
+  // Prepositional / positional modifier concepts matched via the role mechanism
+  // (profile.keywords "Modifiers"). `before`/`after`/`until` are intentionally
+  // NOT here — they are pattern literals (see the note above).
   'into',
   'from',
   'to',
@@ -64,14 +80,11 @@ const MARKER_CONCEPT_NORMALIZEDS: ReadonlySet<string> = new Set([
   'by',
   'in',
   'on',
-  'before',
-  'after',
   'over',
   'under',
   'between',
   'through',
   'without',
-  'until',
 ]);
 
 // =============================================================================
