@@ -127,7 +127,11 @@ export const hindiDictionary: Dictionary = {
     not: 'नहीं',
     is: 'है',
     exists: 'मौजूद',
-    matches: 'मेल_खाता',
+    // Concatenated (no `_`): the hi tokenizer splits on underscore, so `मेल_खाता`
+    // tokenized as मेल/_/खाता and no `matches` operator formed (the folded
+    // conditional's raw stayed un-English and the core couldn't evaluate it).
+    // The hindi profile maps `मेलखाता`→matches (R2 wave 15).
+    matches: 'मेलखाता',
     contains: 'शामिल',
     includes: 'में_है',
     equals: 'बराबर',

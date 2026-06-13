@@ -1212,6 +1212,62 @@ set-trio + tabs-aria, ja/ko/tr tabs-aria); (3) **en-reference-lossy tabs-aria**
 - remaining qu tails. No more cheap dict-alignment wins remain in the cluster;
   the tail is genuinely the §9 "marginal session clears ~5 hard instances" regime.
 
+## 7u. Status update (2026-06-13, session 21): hi matches + session wrap (waves 12–15)
+
+**hi modal-close-backdrop cleared — the wave-12 + wave-14 mechanisms combined.**
+hi's matches both lacked a profile entry (wave-12 class) AND underscore-split
+(wave-14 class): the dict emitted `मेल_खाता`, which the hi tokenizer split into
+मेल/\_/खाता, and no hi profile entry mapped it to `matches`. Concatenate the dict
+to `मेलखाता` (no underscore) + add `मेलखाता`→matches to the hindi profile → the
+folded condition normalizes to the en-identical `target matches .modal-backdrop`.
+
+- **Result**: meanExecutionFidelity **0.9509 → 0.9523**; failing execution cells
+  **35 → 34** (−1). lossy 76, degen 63 unchanged. Gate green; baseline
+  regenerated; 1 lock test added (wave 15). Semantic 5903, i18n 846 green.
+
+### Session arc (waves 12–15): 46 → 34 failing execution cells
+
+| wave | PR     | mechanism                                             | cells |
+| ---- | ------ | ----------------------------------------------------- | ----- |
+| 12   | #411   | `matches` operator → ko/ru/uk profiles                | 46→43 |
+| 13   | #412   | de `nächstgelegene` closest vs next disambiguation    | 43→40 |
+| 14   | #413   | sw/qu `_`-joined surface words (karibuzaidi/manachus) | 40→35 |
+| 15   | (this) | hi `मेलखाता` matches (concat + profile)               | 35→34 |
+
+meanExecutionFidelity 0.9355 → 0.9523; avgFidelity / lossy 77→76 / degen 63
+essentially flat (these were execution-layer fixes — the lossy-but-faithful gap).
+All four ratchets held every wave; zero parse-level regressions; zero broken mains.
+
+### Stopping point — the cheap dict-alignment wins are EXHAUSTED
+
+The session cleared every remaining **dict/profile-alignment** mechanism (the
+"align the odd-one-out / emit a clean single-token surface form" idiom). The
+residual **34 cells are all deep structural arcs**, each its own multi-session
+effort (NOT clean single-mechanism fixes — all probed this session):
+
+1. **Fused-event body routing / compound collapse** (~12 cells: make-toast ×6,
+   make-element ×3, + zh/bn conditional residue). ms drops the trailing
+   `then put …` because `letak ia …` (put-with-`ia`) fails to parse standalone
+   (the §10 ms-put-ia bug); bn/zh collapse the whole event body to a single
+   `compound` (a higher-level event path) that bypasses the fold/grammar/at-end
+   paths. Needs semantic-parser body-routing + ms put-pattern work.
+2. **Per-language SOV scrambles** (hi set-trio + tabs-aria, ja/ko/tr tabs-aria):
+   fronted possessives captured as the event; attr/value/scope roles reorder.
+3. **en-reference-lossy tabs-aria** (×5): `set @attr … on <scope>` drops the
+   `on <scope>` modifier even in EN — a two-layer arc (fix en parse first, which
+   inverts the band).
+4. **qu particle-split** (`punta`/target → `pun`/`ta`-accusative) + dict↔profile
+   target mismatch (`punta` vs `ñawpaqman`): blocks qu modal-close-backdrop,
+   modal-open, put-content-basic. A tokenizer (particle) arc.
+5. **set-attribute / set-style / possessive-dot tails** (hi/qu/tr/id): SOV
+   fronting + possessive-phrase capture.
+
+Per §9 this is the documented stop: the marginal session now clears ~1–2 hard
+structural instances at high risk, while the same effort on Track-2 (behaviors,
+~40 of 63 degen) or R1 burn-down removes whole categories. The four ranked
+mechanisms remaining (fused-routing, SOV scrambles, en-lossy tabs-aria, qu
+particle) are each scoped above as their own arcs for a future session.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right

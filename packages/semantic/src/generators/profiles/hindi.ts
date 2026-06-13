@@ -146,6 +146,11 @@ export const hindiProfile: LanguageProfile = {
     return: { primary: 'लौटाएं', alternatives: ['लौटा'], normalized: 'return' },
     then: { primary: 'फिर', alternatives: ['तब'], normalized: 'then' },
     and: { primary: 'और', alternatives: [], normalized: 'and' },
+    // Comparison operator — see korean.ts (R2 wave 12) for the rationale. The hi
+    // dict emits the concatenated `मेलखाता` (the old `मेल_खाता` underscore-split to
+    // मेल/_/खाता and no operator formed), which the folded conditional's raw must
+    // normalize to `matches` so the core expression parser can evaluate it.
+    matches: { primary: 'मेलखाता', normalized: 'matches' },
     end: { primary: 'समाप्त', alternatives: ['अंत'], normalized: 'end' },
     // Advanced
     js: { primary: 'जेएस', alternatives: ['js'], normalized: 'js' },
