@@ -6010,3 +6010,38 @@ describe('hi set-family marker alignment (S6 — fronted target before event)', 
     expect(cmd?.roles?.get('patient')?.value).toBe('true');
   });
 });
+
+describe('hi verb-medial put in fused event bodies (S6 — make-element/make-toast)', () => {
+  // The hi transformer emits put VERB-MEDIAL inside a fused event body's
+  // then-clause: `… बनाएं फिर यह को रखें #container में` — रखें sits BETWEEN the
+  // patient and the destination, unlike the standalone verb-FINAL
+  // `{patient} को {destination} में रखें`. No hi put pattern covered that order, so
+  // the clause fell to `put-hi-bare` (`रखें {patient}`), which grabbed the
+  // DESTINATION (#container) as the patient and defaulted the destination to `me`.
+  // Adding `put-hi-verb-medial` (`{patient} को रखें {destination} में`) restores
+  // the roles. Cleared hi make-element + make-toast (execution 21→19).
+  const bodyOf = (code: string) => {
+    const n = parse(code, 'hi') as {
+      body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown }> }>;
+    };
+    return n.body ?? [];
+  };
+
+  it('[hi] make-element: put it→#container (was patient=#container, dest=me)', () => {
+    const body = bodyOf('a <div.card/> को क्लिक पर बनाएं फिर यह को रखें #container में');
+    expect(body.map(c => c.action)).toEqual(['make', 'put']);
+    const put = body[1];
+    expect(put?.roles?.get('patient')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(put?.roles?.get('destination')).toMatchObject({ type: 'selector', value: '#container' });
+  });
+
+  it('[hi] make-toast: make + put(Saved!→it) + put(it→body, at end of)', () => {
+    const body = bodyOf(
+      "a <div.toast/> को क्लिक पर बनाएं फिर 'Saved!' को रखें यह में फिर यह पर समाप्त का बॉडी को रखें"
+    );
+    expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
+    expect(body[1]?.roles?.get('patient')).toMatchObject({ type: 'literal', value: 'Saved!' });
+    expect(body[1]?.roles?.get('destination')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});
