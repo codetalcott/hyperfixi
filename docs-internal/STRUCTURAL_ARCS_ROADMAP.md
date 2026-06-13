@@ -9,7 +9,14 @@
 > in the clause splitter (zh make-toast), and the at-end-connective-as-possessive
 > bug (ms make-toast). avgExecutionFidelity 0.9551 → 0.9649. The make-toast
 > survivors (hi/qu/uk) belong to **other** arcs (S6 SOV, qu tokenizer, uk
-> string-truncation), not S2. Next leverage-first target: **S6 (hi)**.
+> string-truncation), not S2.
+>
+> **Progress (S6 6/8 — 25 → 19):** S6 (hi) then cleared **6 of its 8 cells** in two
+> zero-regression waves — the set-family (set-text/inner-html/style/attribute) via a
+> set markerOverride.hi alignment, and make-element/make-toast via a verb-medial hi
+> put pattern. hi 8→2; only halt-propagation (blocked — leaked-`the` strip regresses
+> tr) and tabs-aria (S1) remain. **Session total: 13 cells, 32 → 19.** Next: qu
+> tokenizer (×6) or the deferred S3/S1 families.
 
 > **Scope:** the **32 remaining R2 execution-failing cells** after the cheap
 > dict/profile-alignment wins were exhausted (waves 12–16 + the multi-word
@@ -77,9 +84,27 @@ Score each arc on five axes (H/M/L), then rank by leverage-adjusted value.
   semantic-only, parse-level byte-identical, each gate-verified + baselined +
   lock-tested. See CORRECTNESS_RELIABILITY_PLAN.md §7x.
 
-### S6 — hi worst-language SOV fronting + possessive-dot ★ highest single-lang count
+### S6 — hi worst-language SOV fronting + possessive-dot ◑ 6/8 DONE (waves 1–2)
 
-- **Cells (hi is in 8 total):** set-inner-html-possessive-dot, set-text-possessive-dot,
+- **Cleared (6):** set-text/set-inner-html/set-style/set-attribute (wave 1 — the
+  set schema gained markerOverride.hi {destination:`को`, patient:`में`}, which the
+  transformer emits inverted from the hi profile defaults; the existing
+  `set-event-hi-sov-2role-dest-first` pattern then matched). make-element +
+  make-toast (wave 2 — added `put-hi-verb-medial` `{patient} को रखें {destination}
+में`; the transformer emits put VERB-MEDIAL in fused-body then-clauses, which had
+  fallen to `put-hi-bare` and grabbed the destination as the patient). Execution
+  32→19 over the session (S2 + these); both waves zero-regression, baselined, lock-
+  tested. See §7y.
+- **Remaining (2), both DEFERRED:**
+  - **halt-propagation** — needs the leaked English article `the` (`the घटना` =
+    "the event", fronted to position 0) removed so `halt-event-hi-sov-patient-first`
+    matches. A general leading-`the` strip WORKS for hi but **regresses
+    tr/form-submit-prevent 4 actions → 1** (its leaked leading `the olay` is
+    load-bearing for a fragile halt+call+if body parse). Needs either a hi-scoped
+    strip (smell) or hardening tr's body parse first. Probed + reverted, not shipped.
+  - **tabs-aria** — S1 (en-reference-lossy `set @attr … on <scope>`); high-risk
+    band-inversion, do with a deliberate re-baseline.
+- **Original cell list (hi in 8):** set-inner-html-possessive-dot, set-text-possessive-dot,
   set-style, set-attribute, halt-propagation, make-element, make-toast, tabs-aria.
 - **Mechanism (re-probed session 23, NOT a single lever):** the hi transformer
   fronts the patient/target to position 0, BEFORE the event: `<role> को क्लिक पर
@@ -166,16 +191,19 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 1. ✅ **(Task #10)** multi-word markers + dict underscore audit — DONE (#417).
 2. ✅ **S2** fused-event body routing / compound collapse — **DONE** (5 waves,
    32→25; zh+ms fully clear; subsumes S5). See §7x.
-3. **S6** hi SOV fronting + possessive-dot — highest single-language count (hi ×8).
-   **← next.**
-4. **S3** SOV `@attr`/`set` role-scramble.
-5. **S4** SOV verb-final put + per-language tails — opportunistic.
-6. **S1** en-reference-lossy tabs-aria — last; high-risk band-inversion, do only
-   with a deliberate re-baseline.
+3. ◑ **S6** hi SOV fronting + possessive-dot — **6/8 DONE** (2 waves, 25→19; hi
+   8→2). See §7y. Remaining hi: halt (blocked), tabs-aria (S1).
+4. **S3** SOV `@attr`/`set` role-scramble — partly absorbed by S6 wave 2 (hi
+   make-element/make-toast put role-swap). Remaining: tr/qu/id set-attribute/set-style.
+5. **qu tokenizer** (×6) — now the single largest remaining language cluster.
+6. **S4** SOV verb-final put + per-language tails — opportunistic.
+7. **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — last; high-risk
+   band-inversion, do only with a deliberate re-baseline.
 
-**Cluster snapshot after S2 (25 cells):** hi ×8 (S6), qu ×6 (qu tokenizer),
-tr ×3 (set-attribute, tabs-aria, if-matches), ja ×2 (put-content-basic, tabs-aria),
-bn/id/it/ko/th/uk ×1. zh ×0, ms ×0.
+**Cluster snapshot after S6 (19 cells):** qu ×6 (qu tokenizer), tabs-aria ×5
+(bn/hi/ja/ko/tr → S1), tr ×2 (if-matches, set-attribute), id set-style, it
+modal-close-button, ja put-content-basic, th accordion-exclusive, uk make-toast,
+hi halt-propagation. zh ×0, ms ×0; hi ×2 (down from 8).
 
 ## Stopping rule (carried from §9)
 

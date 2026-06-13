@@ -1653,19 +1653,58 @@ tr ×3, ja ×2, bn/id/it/ko/th/uk ×1. The make-toast survivors (hi/qu/uk) are e
 a SEPARATE arc — hi SOV, qu tokenizer, uk string-truncation. See
 STRUCTURAL_ARCS_ROADMAP.md for the leverage-first continuation (S6 next).
 
+## 7y. Status update (2026-06-13, session 23 cont.): S6 hi 6/8 (25→19)
+
+**S6 (hi, the worst language) cleared 6 of its 8 cells in two zero-regression
+waves — the "per-language grind" had two clean shared sub-levers, not eight
+separate fixes.**
+
+| wave | mechanism                                                      | cleared                                            |
+| ---- | -------------------------------------------------------------- | -------------------------------------------------- |
+| 1    | set schema markerOverride.hi {destination:`को`, patient:`में`} | set-text, set-inner-html, set-style, set-attribute |
+| 2    | `put-hi-verb-medial` (`{patient} को रखें {destination} में`)   | make-element, make-toast-element                   |
+
+- **Wave 1 (set-family):** hi fronts set's TARGET to position 0
+  (`मेरा.textContent को क्लिक पर सेट "Done!" में`); the transformer marks target
+  with को and value with में — INVERTED from the hi profile defaults — but the set
+  schema had no `hi` markerOverride, so the generated hi set patterns carried the
+  swapped markers, matched no corpus, and the set-family fell to `event-hi-bare`
+  (capturing the fronted target as the EVENT). One marker pair → the existing
+  `set-event-hi-sov-2role-dest-first` pattern matches.
+- **Wave 2 (make-element/make-toast):** the transformer emits put VERB-MEDIAL in
+  fused-body then-clauses (`… बनाएं फिर यह को रखें #container में`); no hi put
+  pattern covered it, so it fell to `put-hi-bare` and grabbed the destination as
+  the patient. Added the verb-medial pattern (closes the S3 hi put role-swap share).
+- **Result:** execution **25 → 19**; meanExecutionFidelity **0.9649 → 0.9734**.
+  Both waves parse-clean (no fidelity flips); gate green; baseline regenerated; 5
+  lock tests added. Semantic 5942 green.
+- **Probed + reverted (NOT shipped) — halt-propagation:** the leaked English
+  article `the` (`the घटना`, fronted to position 0) is grabbed as the event. A
+  general leading-`the` strip fixes hi but **regresses tr/form-submit-prevent 4
+  actions → 1** — tr's leaked leading `the olay` is load-bearing for a fragile
+  halt+call+if body parse (its faithful-with-`the` parse was an action-set
+  accident — the §7j pattern). Within-tolerance, but a real per-pattern
+  regression, so reverted. Needs a hi-scoped strip or tr-body hardening.
+
+**Cluster after S6 (19 cells):** qu ×6 (qu tokenizer — largest single cluster),
+tabs-aria ×5 (bn/hi/ja/ko/tr → S1), tr ×2, id/it/ja/th/uk ×1, hi halt-propagation
+×1. hi 8→2; zh ×0; ms ×0.
+
 ## 11. Next-arc handoffs (post-#416)
 
-The cheap dict/profile-alignment wins are exhausted (R2 execution: 25 cells after
-S2, parse ship line held). The next work is decomposed into focused handoffs:
+The cheap dict/profile-alignment wins are exhausted (R2 execution: 19 cells after
+S2+S6, parse ship line held). The next work is decomposed into focused handoffs:
 
 - ✅ **Task #10 — multi-word markers + dict underscore audit:** DONE (#417).
 - ✅ **S2 — fused-event body routing / compound collapse:** DONE (session 23, §7x;
   32→25). zh + ms fully clear.
+- ◑ **S6 — hi SOV fronting:** 6/8 DONE (session 23, §7y; 25→19; hi 8→2). Remaining
+  hi: halt-propagation (blocked — leaked-`the` regresses tr), tabs-aria (S1).
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·
-  unblocks) and a leverage-first ranking (~~S2 fused-routing~~ > **S6 hi (next)** >
-  S3 SOV-attr > S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
+  unblocks) and a leverage-first ranking (~~S2~~ > ~~S6 (6/8)~~ > **qu tokenizer
+  (×6, next)** > S3/S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
 - **Track 2 — behaviors (next big track):** 49 of the 63 degenerate passes are
   `behavior-*` (draggable/resizable/sortable ×15 each + removable ×4 +
   install-behavior ×3). This is a **runtime** effort (block-structure parsing +
