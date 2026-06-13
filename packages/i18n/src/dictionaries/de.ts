@@ -201,7 +201,13 @@ export const de: Dictionary = {
     prev: 'vorh',
     at: 'bei',
     random: 'zufällig',
-    closest: 'nächste',
+    // `nächste` already serves `next` (line above). German `nächste` is
+    // genuinely ambiguous (next/nearest), so emitting it for `closest` too
+    // collided: the semantic tokenizer normalizes `nächste`→next (a deliberate
+    // last-wins choice — see german.ts), and a closest reading is impossible to
+    // recover. Use the unambiguous `nächstgelegene` ("nearest-located") for
+    // closest so the two readings stay distinct end-to-end.
+    closest: 'nächstgelegene',
     parent: 'elternteil',
     children: 'kinder',
     within: 'innerhalb',

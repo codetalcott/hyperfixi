@@ -57,6 +57,12 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   // (POSITIONAL_OR_SCOPE_KEYWORDS), so normalizing to 'next' serves both readings.
   { native: 'nächste', normalized: 'next' },
   { native: 'nachste', normalized: 'next' },
+  // The de dict emits the unambiguous `nächstgelegene` ("nearest-located") for
+  // `closest` (it used to also emit `nächste`, which the line above swallows as
+  // `next` — closest was unrecoverable, so closest .X resolved to the wrong
+  // element). Distinct word → no shadowing of `next`; closest now round-trips.
+  { native: 'nächstgelegene', normalized: 'closest' },
+  { native: 'nachstgelegene', normalized: 'closest' },
   { native: 'vorherige', normalized: 'previous' },
   { native: 'eltern', normalized: 'parent' },
 

@@ -50,8 +50,11 @@ const POSITIONAL_CONCEPTS = [
  *   masculine nominative forms the dict emits were never listed; fixed.
  * - qu next/previous were CROSS-MAPPED (qhipantin→last, ñawpaqnin→first —
  *   morphology bound the prefixes); fixed with exact tokenizer entries.
- * - de closest→nächste normalizes to `next` by design (one word covers both
- *   readings; POSITIONAL_OR_SCOPE_KEYWORDS accepts either) — expected to stay.
+ * - de closest: FIXED (R2 wave 13). The dict used to emit `nächste` for both
+ *   next and closest, and the tokenizer normalizes `nächste`→next by design, so
+ *   closest was unrecoverable. The dict now emits the unambiguous
+ *   `nächstgelegene` for closest, which the tokenizer maps →closest (distinct
+ *   word, no shadowing of next).
  * - bn last (শেষ) normalizes to `end` (the block terminator) — a polysemous
  *   word claimed by the structural keyword. (sw had the same collision via
  *   mwisho; fixed by emitting the distinct concatenated adjective `wamwisho`,
@@ -62,7 +65,6 @@ const KNOWN_DRIFT = new Set<string>([
   'ar:random',
   'bn:last',
   'bn:random',
-  'de:closest',
   'de:parent',
   'de:random',
   'es:random',
