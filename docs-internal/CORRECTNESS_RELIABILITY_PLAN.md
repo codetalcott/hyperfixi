@@ -1610,21 +1610,62 @@ serialize on the baseline, prototype-while-CI-runs, stash with names).
 18 PRs over three overnight runs, one ratchet-blocked branch, zero broken
 mains.
 
+## 7x. Status update (2026-06-13, session 23): S2 fused-event arc COMPLETE (32→25)
+
+**The S2 "fused-event body routing / compound collapse" arc — the roadmap's #1
+leverage target — is done in 5 semantic-only waves, clearing 7 cells (zh ×5 + ms
+×2, both languages now fully clear).** Measure-first dismantled the original
+"one big body-routing mechanism" framing into FIVE distinct bugs:
+
+| wave | mechanism                                                     | cells cleared                               |
+| ---- | ------------------------------------------------------------- | ------------------------------------------- |
+| 1    | zh `当 {event} 时 {body}` circumfix event pattern             | zh if-condition, if-exists, if-matches      |
+| 2    | zh `匹配`→matches profile operator (§7r mechanism, zh)        | zh modal-close-backdrop                     |
+| 3    | reject role-marker concept normalized as possessive property  | ms make-element (the §10 put-with-`ia` bug) |
+| 4    | per-language `at end of` position noun in the clause splitter | zh make-toast-element                       |
+| 5    | reject PUT_AT_END connective word as possessive property      | ms make-toast-element                       |
+
+- **Root cause of the zh "compound collapse" (§7n/§7r):** NOT a higher-level event
+  path — the `当…时` circumfix's trailing `时` leaked into the body (no event
+  pattern consumed it), pushing the leading `如果` off clause-start so
+  `parseBodyWithClauses` never folded the conditional (`currentClauseTokens.length
+=== 0` guard). Consuming `时` in the wrapper fixed all four zh conditionals (3
+  fold-and-execute immediately on English conditions; modal-close-backdrop needed
+  wave 2's `匹配` operator).
+- **Root cause of the ms "put-with-`ia`" (§10):** `ia`(it)/`saya`(me) are
+  possessive bases AND object pronouns. `tryMatchPossessiveExpression` greedily
+  read the FOLLOWING role marker as the possessive's property — `ke`→`destination`
+  (wave 3, normalized-concept guard) and the at-end connective `di` (wave 5,
+  PUT_AT_END-word guard). Genuine `my value`→property-path is unaffected (verified).
+- **make-toast attaching put:** make-toast's 3rd clause `put it at end of body`
+  attaches the made toast; without it the div is detached → zero DOM effect. Both
+  the zh keyword-`结束` clause-break (wave 4) and the ms `ia di` possessive-greedy
+  (wave 5) dropped that clause.
+- **Result:** meanExecutionFidelity **0.9551 → 0.9649**; execution failures
+  **32 → 25**. Parse-level byte-identical every wave (avgFidelity, lossy 76, degen
+  63 unchanged — pure execution-layer / lossy-but-faithful fixes). All four gate
+  ratchets held; baseline regenerated each wave; 15 lock tests added across the
+  `multilingual-roadmap-fixes` describe blocks. Semantic 5938 green. bn was NOT a
+  live S2 target (its only cell is tabs-aria → S1).
+
+**Cluster after S2 (25 cells):** hi ×8 (S6 — next), qu ×6 (qu tokenizer),
+tr ×3, ja ×2, bn/id/it/ko/th/uk ×1. The make-toast survivors (hi/qu/uk) are each
+a SEPARATE arc — hi SOV, qu tokenizer, uk string-truncation. See
+STRUCTURAL_ARCS_ROADMAP.md for the leverage-first continuation (S6 next).
+
 ## 11. Next-arc handoffs (post-#416)
 
-The cheap dict/profile-alignment wins are exhausted (R2 execution: 32 cells,
-parse ship line held). The next work is decomposed into focused handoffs:
+The cheap dict/profile-alignment wins are exhausted (R2 execution: 25 cells after
+S2, parse ship line held). The next work is decomposed into focused handoffs:
 
-- **Task #10 — multi-word markers + dict underscore audit:**
-  [TASK10_MULTIWORD_MARKER_HANDOFF.md](TASK10_MULTIWORD_MARKER_HANDOFF.md). Unblocked
-  by the #416 keystone; 3 phases (non-marker underscore audit → multi-word marker
-  support in the pattern matcher → retire the hindi/vi hardcoded lists). Highest
-  leverage; also clears the qu particle/tokenizer cells. **Do first.**
+- ✅ **Task #10 — multi-word markers + dict underscore audit:** DONE (#417).
+- ✅ **S2 — fused-event body routing / compound collapse:** DONE (session 23, §7x;
+  32→25). zh + ms fully clear.
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·
-  unblocks) and a leverage-first ranking (S2 fused-routing > S6 hi > S3 SOV-attr >
-  S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
+  unblocks) and a leverage-first ranking (~~S2 fused-routing~~ > **S6 hi (next)** >
+  S3 SOV-attr > S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
 - **Track 2 — behaviors (next big track):** 49 of the 63 degenerate passes are
   `behavior-*` (draggable/resizable/sortable ×15 each + removable ×4 +
   install-behavior ×3). This is a **runtime** effort (block-structure parsing +
