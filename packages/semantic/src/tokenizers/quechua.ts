@@ -99,6 +99,11 @@ const SUFFIXES = new Set([
  */
 const QUECHUA_EXTRAS: KeywordEntry[] = [
   // Values/Literals
+  // `cheqaq` ("true/correct") is the form the i18n dict emits for `true`
+  // (set-attribute `@disabled ta cheqaq man …`); without it the value tokenized
+  // as a bare identifier and `set @disabled to <undefined>` ran. arí/ari ("yes")
+  // are the colloquial alternates, kept for input tolerance.
+  { native: 'cheqaq', normalized: 'true' },
   { native: 'arí', normalized: 'true' },
   { native: 'ari', normalized: 'true' },
   { native: 'manan', normalized: 'false' },

@@ -6099,3 +6099,18 @@ describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1
     expect(raw.startsWith('target ')).toBe(true);
   });
 });
+
+describe('qu `cheqaq` → true boolean literal (qu arc wave 2 — set-attribute)', () => {
+  // The qu tokenizer EXTRAS mapped only arí/ari ("yes") to `true`, but the i18n
+  // dict emits `cheqaq` ("true/correct") — set-attribute `@disabled ta cheqaq man
+  // …`. So the value tokenized as a bare identifier and `set @disabled to
+  // <undefined>` ran. Adding cheqaq→true to the tokenizer aligns it. Cleared qu
+  // set-attribute (execution 15→14).
+  it('[qu] set-attribute: cheqaq resolves to the boolean true', () => {
+    const n = parse('@disabled ta cheqaq man ñitiy pi churanay', 'qu') as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown }> }>;
+    };
+    const set = (n.body ?? []).find(c => c.action === 'set');
+    expect(set?.roles?.get('patient')?.value).toBe('true');
+  });
+});
