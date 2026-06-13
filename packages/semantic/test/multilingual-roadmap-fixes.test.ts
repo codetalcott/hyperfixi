@@ -5396,3 +5396,66 @@ describe('trailing post-verb destination clause in fused-event bodies (R2 wave 1
     expect(role(add!, 'destination')).toBe('body');
   });
 });
+
+describe('trailing post-verb POSITIONAL destination (R2 wave 11 — accordion-exclusive)', () => {
+  // accordion-exclusive's body is `remove .open from .accordion-item then add
+  // .open to closest .accordion-item`. The to-phrase trails the add verb as a
+  // POSITIONAL phrase — SOV `… 最も近い .accordion-item に` (closest + selector +
+  // to-marker) — which neither the per-command add pattern nor wave 10's single-
+  // token reclaim claimed, so the destination defaulted to `me` (the class landed
+  // on the clicked button instead of the closest .accordion-item). tryAttachTrailingRole
+  // now also reclaims a `<positional-keyword> <selector> <marker>` destination,
+  // building the same `{ type: 'expression', raw: 'closest .accordion-item' }` the
+  // English reference produces (normalized positional keyword + selector surface)
+  // so the core's positional evaluator resolves it identically. Cleared
+  // accordion-exclusive in 5 languages (8→3) plus toggle-aria-expanded's
+  // `next .panel` destination as a ride-along.
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  function destRaw(cmd: Record<string, unknown>): unknown {
+    const roles = cmd.roles as Map<string, { raw?: unknown; value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    const d = m.get('destination') as { raw?: unknown; value?: unknown } | undefined;
+    return d?.raw ?? d?.value;
+  }
+
+  // tr is a real execution win too, but its corpus `closest` surface form jitters
+  // across populates (`en yakın` / `enyakın` / `en_yakın`), so it is left out of
+  // this parse-level lock to keep the test decoupled from corpus jitter. The four
+  // cases below use single-token `closest` words that never jitter.
+  const cases: Array<[string, string]> = [
+    ['ja', '.open を クリック で 削除 .accordion-item から それから .open を 追加 最も近い .accordion-item に'],
+    ['ko', '.open 를 클릭 제거 .accordion-item 에서 그러면 .open 를 추가 가장가까운 .accordion-item 에'],
+    ['hi', '.open को क्लिक पर हटाएं .accordion-item से फिर .open को जोड़ें निकटतम .accordion-item में'],
+    ['bn', '.open কে ক্লিক এ সরান .accordion-item থেকে তারপর .open কে যোগ নিকটতম .accordion-item তে'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] the trailing positional destination resolves to closest .accordion-item`, () => {
+      const add = commands(parse(input, lang as 'ja')).find(c => c.action === 'add');
+      expect(add, 'add command present').toBeTruthy();
+      expect(destRaw(add!)).toBe('closest .accordion-item');
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const add = commands(
+      parse('on click remove .open from .accordion-item add .open to closest .accordion-item', 'en')
+    ).find(c => c.action === 'add');
+    expect(add).toBeTruthy();
+    expect(destRaw(add!)).toBe('closest .accordion-item');
+  });
+});

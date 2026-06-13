@@ -945,6 +945,66 @@ sw); set-style ×2 (hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu 
   event body routing** (ms/tl make-toast + zh/bn compound collapse). Alt track:
   behavior-\* degenerate mass (~40 of 63 degen).
 
+## 7q. Status update (2026-06-13, session 18): trailing positional destination
+
+**accordion-exclusive 8→3 by extending the trailing-role reclaim to positional
+phrases.** accordion's body is `remove .open from .accordion-item then add .open
+to closest .accordion-item`; the add's to-phrase trails the verb as a POSITIONAL
+phrase — SOV `… 最も近い .accordion-item に` (closest + selector + to-marker) —
+which the wave-10 single-token reclaim couldn't capture (the leading token is the
+`closest` keyword, not a selector/reference), so the destination defaulted to
+`me`. Added a positional branch to `tryAttachTrailingRole`: when the strict
+(destination) role's trailing tokens are `<positional-keyword> <selector>
+<marker>`, it builds the same `{ type: 'expression', raw: 'closest
+.accordion-item' }` the English reference produces (normalized positional keyword
+
+- selector surface), so the core's positional evaluator resolves it identically.
+
+**Result:** accordion-exclusive 8→3 failing (cleared bn, hi, ja, ko, tr), plus a
+ride-along (toggle-aria-expanded's `next .panel` destination, also positional).
+meanExecutionFidelity **0.9285 → 0.9355**; failing execution cells **51 → 46**
+(−5). Parse-level byte-identical (avgFidelity 0.9743, lossy 77, degen 63); the
+clean same-`patterns.db` diff showed only the two correct positional captures
+(`closest .accordion-item`, `next .panel`) across the five languages — no
+cascading. Gate green; baseline regenerated; subset membership unchanged. 5 unit
+tests added (R2 wave 11; tr omitted — see below).
+
+**tr — populate-jitter on the execution boundary (important reliability note).**
+tr's `closest` keyword is two words (`en yakın`); the i18n transformer joins it
+non-deterministically across populates — `en yakın` (space) and `enyakın`
+(joined) both tokenize to `closest` (tr PASSES), but `en_yakın` (underscore)
+splits to `en`/`_`/`yakın` (tr FAILS). Before this PR, tr accordion failed
+**regardless** of the join (no reclaim → destination always `me`), so it was
+stably failing. This PR puts tr on the jitter boundary. Six consecutive fresh
+`npm run populate` runs all produced a passing form (`enyakın`); the failing
+`en_yakın` was only in the stale committed `patterns.db`, which **CI overwrites
+with a fresh populate** before the gate — so CI sees the passing form and the
+baseline (tr passing) is consistent. tr is therefore counted as a win, but it is
+**omitted from the wave-11 parse-lock** to keep the unit test decoupled from the
+jittery corpus surface form. The proper fix is the underscore-tokenizer arc
+(below) — once tr/sw `closest` tokenizes deterministically, this boundary
+disappears. The four locked languages (ja/ko/hi/bn) use single-token `closest`
+words that never jitter.
+
+**Still-open R2 clusters after this (46 failing, ranked):** make-toast-element ×6
+(bn hi ms qu uk zh); modal-close-backdrop ×6 (hi ko qu ru uk zh); tabs-aria ×5
+(bn hi ja ko tr); modal-close-button ×4 (de it qu sw); make-element ×3 (bn hi
+ms); accordion-exclusive ×3 (de sw th — de nächste, sw/th underscore/other);
+set-attribute ×3 (hi qu tr); if-matches ×3 (qu tr zh); closest-ancestor ×2 (de
+sw); set-style ×2 (hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu zh);
+
+- singletons. **Next-mechanism ranking:** (1) **underscore-tokenizer** (qu
+  `mana_chayqa`, tr `en_yakın`, sw `karibu_zaidi`, de? — the `_`-joined multi-word
+  keyword split; qu in 8 cells, also unlocks tr/sw `closest` in accordion, and the
+  qu else/body alignments reverted in #405); (2) **modal-close-backdrop condition
+  keyword normalization** — `if target matches .X`'s `matches` keyword (일치/
+  соответствует/відповідає) is not normalized to English so the core can't evaluate
+  the condition, AND the then-branch (`hide`) is dropped (conditional residue, the
+  §7j/#403 class); (3) **tabs-aria `set @attr to X on scope`** — the `on <scope>`
+  target and the attr/value roles scramble under SOV reordering; (4) **de
+  `nächste`/`next` disambiguation**; (5) **fused-event body routing** (ms/tl
+  make-toast + zh/bn compound collapse). Alt track: behavior-\* degenerate mass.
+
 ## 7p. Status update (2026-06-13, session 17): trailing post-verb destination
 
 **modal-open 7→1 by generalizing the wave-9 source reclaim to destinations.**
