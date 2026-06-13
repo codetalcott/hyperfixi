@@ -60,7 +60,11 @@ Score each arc on five axes (H/M/L), then rank by leverage-adjusted value.
    tails opportunistically when already in that language's files.
 5. Re-measure the cluster each PR (it shifts); this map is a snapshot at #416.
 
-## The arcs (ranked) — cell map at HEAD `7a0769df`
+## The arcs (ranked) — cell map progressed through session 23
+
+> Original snapshot was HEAD `7a0769df` (#416, 32 cells). Updated through the
+> S2 / S6 / qu arcs — see the per-arc status (✅/◑) and the current cluster
+> snapshot below the ranked sequence (13 cells). Re-measure before any new arc.
 
 ### S2 — fused-event body routing / compound collapse ✅ DONE (5 waves)
 
@@ -151,15 +155,17 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
   reference change → baseline re-record) · Unblocks: re-qualifies the @attr family.**
 - **Verdict:** defer unless ready for a deliberate band-inversion + full re-baseline.
 
-### S3 — SOV `@attr` / `set` role-scramble
+### S3 — SOV `@attr` / `set` role-scramble ◑ mostly absorbed
 
-- **Cells (~5):** set-attribute (hi, qu, tr), set-style (hi, id).
-- **Mechanism:** SOV reorder fronts `@attr`/possessive; set's attr/value/scope
-  roles scramble. id set-style is the two-word possessive PHRASE (`saya punya
-*background`). hi/tr are SOV fronting.
+- **Remaining (2):** set-attribute (tr), set-style (id). The hi share (set-attribute,
+  set-style) was cleared by **S6 wave 1** (the set markerOverride.hi alignment) and
+  the qu share (set-attribute) by **qu wave 2** (`cheqaq`→true).
+- **Mechanism (remaining):** id set-style is the two-word possessive PHRASE
+  (`saya punya *background`); tr set-attribute is the SOV `@attr` fronting that the
+  hi marker alignment did NOT generalize (tr has its own markers).
 - **Layer:** `semantic-parser.ts` SOV + possessive-phrase matcher.
-- **Yield M (5) · Leverage M (hi/qu/tr/id) · Confidence M · Risk M · Unblocks: no.**
-- **Verdict:** medium; overlaps S6 (hi) and the qu tokenizer arc.
+- **Yield L (2) · Leverage L (id/tr, distinct) · Confidence M · Risk M · Unblocks: no.**
+- **Verdict:** mostly done via S6/qu; the id/tr residue is a 2-cell tail.
 
 ### S5 — zh compound-collapse conditionals (subsumed by S2) ✅ DONE
 
@@ -170,9 +176,11 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 
 ### S4 — SOV verb-final put
 
-- **Cells (2):** put-content-basic (ja, qu). `"Done!" を 私 に 置く クリック で` —
+- **Remaining (1):** put-content-basic (ja). `"Done!" を 私 に 置く クリック で` —
   SOV verb-final put with a trailing event phrase; no wrapper covers that order.
-- **Yield L (2) · Leverage L · Confidence M · Risk M.**
+  (The qu share was cleared by **qu wave 1** reference alignment — qu's structure
+  `{patient} ta {dest} man {event} pi {verb}` already parsed once `noqa`→me resolved.)
+- **Yield L (1) · Leverage L · Confidence M · Risk M.**
 - **Verdict:** small; do opportunistically when in the SOV event-wrapper code.
 
 ### qu particle-tokenizer ✅ DONE (3 waves — qu 6→0)
