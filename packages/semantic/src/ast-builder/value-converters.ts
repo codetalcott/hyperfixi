@@ -20,6 +20,7 @@ import {
   type LiteralNode,
   type SelectorNode,
   type ContextReferenceNode,
+  type AttributeAccessNode,
   type PropertyAccessNode,
   type IdentifierNode,
   type ContextType,
@@ -82,7 +83,22 @@ export function convertLiteral(value: LiteralValue): LiteralNode {
  * @param value - The selector value to convert
  * @param warnings - Optional array to collect warnings
  */
-export function convertSelector(value: SelectorValue, warnings?: string[]): SelectorNode {
+export function convertSelector(
+  value: SelectorValue,
+  warnings?: string[]
+): SelectorNode | AttributeAccessNode {
+  // An `@attr` value is an ATTRIBUTE reference, not a CSS selector — the
+  // semantic tokenizer classifies `@disabled` / `@aria-selected` as a selector
+  // role value, but feeding it to querySelector throws "Invalid selector".
+  // Emit the canonical core-parser shape instead: the runtime reads it via
+  // getAttribute, and the write commands (set/toggle) route it to setAttribute.
+  if (value.value.startsWith('@') && /^[a-zA-Z_]/.test(value.value.slice(1))) {
+    return {
+      type: 'attributeAccess',
+      attributeName: value.value.slice(1),
+    };
+  }
+
   // Warn if selector looks like a CSS property (starts with * followed by a letter/hyphen)
   // This catches cases like "*background-color" which should likely be a literal string
   if (warnings && value.value.startsWith('*') && /^[a-zA-Z-]/.test(value.value.slice(1))) {

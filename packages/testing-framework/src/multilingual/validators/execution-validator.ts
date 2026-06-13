@@ -35,11 +35,11 @@ import type { LanguageCode } from '../types';
 /**
  * The curated execution subset: simple, deterministic, fixture-friendly
  * single-handler click patterns. Expand only after the loop is proven stable
- * (an unstable ratchet is worse than none). Three otherwise-eligible patterns
- * are deliberately absent because their EN reference doesn't execute in the
- * current runtime (no usable reference): `toggle-visibility` (attribute
- * toggle), `set-text-basic` (#id.innerText target), `set-attribute`
- * (@attr selector).
+ * (an unstable ratchet is worse than none). `set-text-basic` (#id.innerText)
+ * is deliberately absent: jsdom does not implement innerText, so its en
+ * reference write is an inert expando (empty signature) — a harness
+ * limitation, not a runtime gap. `toggle-visibility` and `set-attribute`
+ * joined in wave 2b once @attr emitted canonical attributeAccess nodes.
  */
 export const EXECUTION_SUBSET: readonly string[] = [
   'add-class-basic',
@@ -62,12 +62,10 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 1 (session 8): multi-command click patterns — sync,
   // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
   // original subset: the en reference must execute with a non-empty effect
-  // signature in the current runtime. Eleven candidates were probed; five are
+  // signature in the current runtime. Eleven candidates were probed; four are
   // still deliberately absent because their EN reference is unusable:
   //   halt-propagation      — runtime `halt` exits the whole handler (patient
   //                           parses as bare 'the'), second command never runs
-  //   tabs-aria             — `set @attr … on <sel>`: "Invalid selector
-  //                           @aria-selected" (the set-attribute family gap)
   //   modal-close-button    — en parse DROPS `hide closest .modal`; the
   //                           surviving body-class change is invisible to the
   //                           snapshot (body isn't serialized)
@@ -90,6 +88,16 @@ export const EXECUTION_SUBSET: readonly string[] = [
   'if-matches',
   'if-exists',
   'modal-close-backdrop',
+  // Expansion wave 2b (session 9): the @attr family — the semantic value
+  // converter / expression parser now emit canonical attributeAccess nodes for
+  // `@attr`, so these en references execute (set → setAttribute, toggle →
+  // attribute toggle). set-text-basic stays out: its en reference writes
+  // `innerText`, which jsdom does not implement (the write becomes an inert
+  // expando, empty signature) — a harness limitation, not a runtime gap; it
+  // works in real browsers.
+  'set-attribute',
+  'toggle-visibility',
+  'tabs-aria',
 ];
 
 /**

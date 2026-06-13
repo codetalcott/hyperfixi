@@ -88,6 +88,27 @@ describe('Value Converters', () => {
       expect(result.value).toBe('#button');
       expect(result.selectorType).toBe('id');
     });
+
+    it('converts an @attr value to attributeAccess (not a CSS selector)', () => {
+      // `set @disabled to true` / `toggle @hidden` — feeding `@disabled` to
+      // querySelector throws "Invalid selector"; the canonical core-parser
+      // shape is attributeAccess, which set/toggle route to setAttribute.
+      const value: SelectorValue = { type: 'selector', value: '@disabled', selectorKind: 'complex' };
+      const result = convertSelector(value);
+
+      expect(result).toMatchObject({ type: 'attributeAccess', attributeName: 'disabled' });
+    });
+
+    it('converts hyphenated @attr values (`@aria-selected`)', () => {
+      const value: SelectorValue = {
+        type: 'selector',
+        value: '@aria-selected',
+        selectorKind: 'complex',
+      };
+      const result = convertSelector(value);
+
+      expect(result).toMatchObject({ type: 'attributeAccess', attributeName: 'aria-selected' });
+    });
   });
 
   describe('convertReference', () => {

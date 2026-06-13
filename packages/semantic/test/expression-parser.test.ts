@@ -431,4 +431,25 @@ describe('ExpressionParser', () => {
       expect(result.node).toMatchObject({ type: 'binaryExpression', operator: 'is' });
     });
   });
+
+  // Bare `@attr` references (`toggle @hidden`, `set @disabled to true`). The
+  // tokenizer previously skipped the `@` as an unknown character, so the
+  // attribute surfaced as a plain identifier and the write commands treated it
+  // as a class/selector. Now emitted as the canonical attributeAccess shape.
+  describe('attribute references (@attr)', () => {
+    it('parses `@hidden` as an attributeAccess node', () => {
+      const result = parseExpression('@hidden');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({ type: 'attributeAccess', attributeName: 'hidden' });
+    });
+
+    it('parses hyphenated attribute names (`@aria-selected`)', () => {
+      const result = parseExpression('@aria-selected');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'attributeAccess',
+        attributeName: 'aria-selected',
+      });
+    });
+  });
 });

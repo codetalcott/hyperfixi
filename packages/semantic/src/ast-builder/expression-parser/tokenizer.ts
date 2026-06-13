@@ -21,6 +21,8 @@ export enum TokenType {
   CLASS_SELECTOR = 'CLASS_SELECTOR',
   ATTRIBUTE_SELECTOR = 'ATTRIBUTE_SELECTOR',
   QUERY_SELECTOR = 'QUERY_SELECTOR',
+  /** Bare attribute reference: `@disabled`, `@aria-selected` (value keeps the `@`). */
+  ATTRIBUTE_REF = 'ATTRIBUTE_REF',
 
   // References
   CONTEXT_VAR = 'CONTEXT_VAR',
@@ -275,6 +277,16 @@ export function tokenize(input: string): Token[] {
       advance();
       const name = readWhile(c => /[\w-]/.test(c));
       tokens.push(makeToken(TokenType.CLASS_SELECTOR, '.' + name, start));
+      continue;
+    }
+
+    // Bare attribute references @attr (`@disabled`, `@aria-selected`).
+    // Previously the `@` fell through the unknown-character skip, so the
+    // attribute name surfaced as a plain identifier and the `@` was lost.
+    if (char === '@' && /[a-zA-Z_]/.test(peek(1))) {
+      advance();
+      const name = readWhile(c => /[\w-]/.test(c));
+      tokens.push(makeToken(TokenType.ATTRIBUTE_REF, '@' + name, start));
       continue;
     }
 

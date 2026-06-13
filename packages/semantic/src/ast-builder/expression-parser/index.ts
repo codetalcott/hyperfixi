@@ -18,6 +18,7 @@ export type {
   ContextReferenceNode,
   ContextType,
   IdentifierNode,
+  AttributeAccessNode,
   PropertyAccessNode,
   MemberExpressionNode,
   PossessiveExpressionNode,

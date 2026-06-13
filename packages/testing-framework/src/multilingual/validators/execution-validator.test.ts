@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 23 curated patterns', () => {
+  it('contains exactly the 26 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -55,6 +55,13 @@ describe('R2 execution subset (lock)', () => {
         'if-matches',
         'if-exists',
         'modal-close-backdrop',
+        // Session-9 expansion wave 2b (@attr family): the semantic value
+        // converter / expression parser now emit canonical attributeAccess
+        // nodes, so these en references execute. set-text-basic stays out
+        // (jsdom doesn't implement innerText — harness limitation).
+        'set-attribute',
+        'toggle-visibility',
+        'tabs-aria',
       ].sort()
     );
   });

@@ -226,7 +226,11 @@ describe('Set Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('set');
-    expect(result.args[0]).toMatchObject({ type: 'selector', value: '@data-value' });
+    // `@attr` destinations convert to the canonical attributeAccess shape
+    // (previously a selector node, which the runtime fed to querySelector and
+    // threw "Invalid selector @data-value"). SetCommand routes attributeAccess
+    // to setAttribute.
+    expect(result.args[0]).toMatchObject({ type: 'attributeAccess', attributeName: 'data-value' });
     expect(result.modifiers!['to']).toMatchObject({ type: 'literal', value: 'hello' });
   });
 });
