@@ -5501,6 +5501,9 @@ describe('`matches` comparison-operator normalization (R2 wave 12 — modal-clos
     ['ko', '클릭 할 때 만약 대상 일치 .modal-backdrop .modal-backdrop 를 숨기다 끝'],
     ['ru', 'при клик если цель соответствует .modal-backdrop скрыть .modal-backdrop конец'],
     ['uk', 'при клік якщо ціль відповідає .modal-backdrop сховати .modal-backdrop кінець'],
+    // zh joined the club once the `当…时` circumfix fix (S2 wave 1) let its body
+    // fold at all; `匹配`→matches was the second half (S2 wave 2).
+    ['zh', '当 点击 时 如果 目标 匹配 .modal-backdrop 隐藏 把 .modal-backdrop 结束'],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] the folded condition normalizes to en-identical \`target matches .modal-backdrop\``, () => {
