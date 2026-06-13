@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-13T21:51:47.049Z",
-  "commit": "ded81618",
+  "timestamp": "2026-06-13T22:02:07.954Z",
+  "commit": "6bcfaefd",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -9521,16 +9521,9 @@
       "parseRate": 1,
       "avgConfidence": 0.7161616161616162,
       "avgFidelity": 0.9632034632034633,
-      "avgRoleFidelity": 0.7185649935649935,
-      "avgExecutionFidelity": 0.8064516129032258,
-      "executionFailures": [
-        "make-toast-element",
-        "modal-close-backdrop",
-        "modal-close-button",
-        "modal-open",
-        "put-content-basic",
-        "set-attribute"
-      ],
+      "avgRoleFidelity": 0.757142857142857,
+      "avgExecutionFidelity": 0.9354838709677419,
+      "executionFailures": ["make-toast-element", "set-attribute"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",

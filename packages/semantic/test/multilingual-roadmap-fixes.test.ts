@@ -6045,3 +6045,57 @@ describe('hi verb-medial put in fused event bodies (S6 — make-element/make-toa
     expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });
+
+describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1)', () => {
+  // The qu semantic profile carried formal/alternate spellings (me=ñuqa,
+  // target=ñawpaqman, body=ukhu, it=pay) that appear in ZERO corpus rows — the
+  // i18n dict emits noqa/punta/kurku/chay. So the put destination (`noqa man`),
+  // the matches-condition target (`punta` — which the tokenizer then SPLIT into
+  // `pun`+`ta`-accusative because it wasn't a known word), and the DOM body
+  // (`kurku`) never resolved. Aligning references to the dict forms (§7l) fixed
+  // all four — and made `punta` tokenize whole, so the "accusative over-stripping"
+  // was really an unknown-word artifact. Cleared modal-open, modal-close-button,
+  // modal-close-backdrop, put-content-basic (execution 19→15).
+  const firstBody = (code: string) => {
+    const n = parse(code, 'qu') as {
+      body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown; raw?: string }> }>;
+    };
+    return n.body ?? [];
+  };
+
+  it('[qu] put-content: `noqa man` resolves the destination to me', () => {
+    const put = firstBody('"Done!" ta noqa man ñitiy pi churay').find(c => c.action === 'put');
+    expect(put?.roles?.get('destination')).toMatchObject({ value: 'me' });
+  });
+
+  it('[qu] modal-open: `kurku man` resolves the add destination to body', () => {
+    const add = firstBody('#modal ta ñitiy pi rikuchiy chayqa .modal-open ta kurku man yapay').find(
+      c => c.action === 'add'
+    );
+    expect(add?.roles?.get('destination')).toMatchObject({ value: 'body' });
+  });
+
+  it('[qu] modal-close-button: `kurku manta` resolves the remove source to body', () => {
+    const remove = firstBody(
+      'kaylla .modal ta ñitiy pi pakay chayqa .modal-open ta kurku manta qichuy'
+    ).find(c => c.action === 'remove');
+    expect(remove?.roles?.get('source')).toMatchObject({ value: 'body' });
+  });
+
+  it('[qu] modal-close-backdrop: `punta` tokenizes whole (target), not pun+ta', () => {
+    const node = parse('ñitiy pi sichus punta tupan .modal-backdrop .modal-backdrop ta pakay tukuy', 'qu');
+    const cond = (function find(n: unknown): Record<string, unknown> | null {
+      if (!n || typeof n !== 'object') return null;
+      const r = n as Record<string, unknown>;
+      if (r.kind === 'conditional') return r;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = r[f];
+        if (Array.isArray(c)) for (const x of c) { const got = find(x); if (got) return got; }
+      }
+      return null;
+    })(node);
+    expect(cond).not.toBeNull();
+    const raw = (cond!.roles as Map<string, { raw?: string }>).get('condition')?.raw ?? '';
+    expect(raw.startsWith('target ')).toBe(true);
+  });
+});

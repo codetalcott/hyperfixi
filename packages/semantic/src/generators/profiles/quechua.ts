@@ -21,13 +21,19 @@ export const quechuaProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'ñuqa', // "I/me"
-    it: 'pay', // "it/he/she" (same pronoun)
+    // Aligned to the i18n dict's emitted surface forms (the corpus-canonical
+    // words the parser must recognize — §7l). The dict emits noqa/punta/kurku;
+    // the old ñuqa/ñawpaqman/ukhu appear in ZERO corpus rows, so the put
+    // destination (`noqa man` → me), the matches condition target (`punta`), and
+    // the DOM body (`kurku`, for modal-open/modal-close-button/make-toast) never
+    // resolved.
+    me: 'noqa', // "I/me" (dict form; ñuqa is the formal spelling, unused in corpus)
+    it: 'chay', // dict form for `it` (pay = he/she, not the dict's choice)
     you: 'qam', // "you"
     result: 'rurasqa',
     event: 'ruwakuq',
-    target: 'ñawpaqman',
-    body: 'ukhu',
+    target: 'punta',
+    body: 'kurku',
   },
   possessive: {
     marker: '-pa', // Genitive suffix
