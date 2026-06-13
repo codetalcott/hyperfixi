@@ -1609,3 +1609,24 @@ Operating mode: unchanged (measure-first probe, one mechanism per PR,
 serialize on the baseline, prototype-while-CI-runs, stash with names).
 18 PRs over three overnight runs, one ratchet-blocked branch, zero broken
 mains.
+
+## 11. Next-arc handoffs (post-#416)
+
+The cheap dict/profile-alignment wins are exhausted (R2 execution: 32 cells,
+parse ship line held). The next work is decomposed into focused handoffs:
+
+- **Task #10 — multi-word markers + dict underscore audit:**
+  [TASK10_MULTIWORD_MARKER_HANDOFF.md](TASK10_MULTIWORD_MARKER_HANDOFF.md). Unblocked
+  by the #416 keystone; 3 phases (non-marker underscore audit → multi-word marker
+  support in the pattern matcher → retire the hindi/vi hardcoded lists). Highest
+  leverage; also clears the qu particle/tokenizer cells. **Do first.**
+- **Per-language structural arcs (the R2 tail):**
+  [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
+  mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·
+  unblocks) and a leverage-first ranking (S2 fused-routing > S6 hi > S3 SOV-attr >
+  S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
+- **Track 2 — behaviors (next big track):** 49 of the 63 degenerate passes are
+  `behavior-*` (draggable/resizable/sortable ×15 each + removable ×4 +
+  install-behavior ×3). This is a **runtime** effort (block-structure parsing +
+  behavior execution), not parsing/i18n — the biggest single mass and the
+  recommended focus after Task #10.
