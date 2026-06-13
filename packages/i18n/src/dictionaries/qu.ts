@@ -137,7 +137,11 @@ export const qu: Dictionary = {
     has: 'kachkan',
     have: 'kachkani',
     then: 'chayqa',
-    else: 'mana_chayqa',
+    // Align to the semantic profile's else word `manachus`. The old `mana_chayqa`
+    // tokenized as `mana`(false) + `_` + `chayqa`(then) — no else keyword formed,
+    // so qu conditionals never split their else branch. `manachus` is a single
+    // token the profile-derived keyword map reads as `else` (dict↔profile align).
+    else: 'manachus',
     otherwise: 'huk_kaqpi',
     end: 'tukuy',
     live: 'kawsay',

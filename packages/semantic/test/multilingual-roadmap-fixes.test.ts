@@ -5581,3 +5581,69 @@ describe('de `nächstgelegene` → closest disambiguation (R2 wave 13)', () => {
     expect(String(roleRaw(put!, 'destination'))).toContain('next');
   });
 });
+
+describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', () => {
+  // The sw and qu tokenizers split on `_`, so a dict word joined with an
+  // underscore tokenizes as `word`/`_`/`word` and never matches its keyword.
+  // Two instances cleared by emitting a clean single-token surface form (the
+  // established `enyakın` pattern), aligning dict → tokenizer/profile:
+  //  - sw closest: `karibu_zaidi` → `karibuzaidi` (+ tokenizer EXTRAS entry).
+  //    The stray `_ zaidi` had broken positional `closest <sel>` capture, so the
+  //    destination defaulted to `me`. Cleared sw accordion-exclusive,
+  //    closest-ancestor, AND modal-close-button (`hide closest .modal`).
+  //  - qu else: `mana_chayqa` → `manachus` (the profile's existing else word).
+  //    The old form tokenized as `mana`(false)/`_`/`chayqa`(then), so no else
+  //    keyword formed and qu conditionals never split their else branch. Cleared
+  //    qu if-matches, if-condition.
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  const roleRaw = (cmd: Record<string, unknown>, role: string): unknown => {
+    const roles = cmd.roles as Map<string, { raw?: unknown; value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    const d = m.get(role) as { raw?: unknown; value?: unknown } | undefined;
+    return d?.raw ?? d?.value;
+  };
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) { const f2 = findConditional(x); if (f2) return f2; }
+    }
+    return null;
+  }
+  const branchActions = (branch: unknown): string[] =>
+    Array.isArray(branch) ? (branch as Array<Record<string, unknown>>).map(n => String(n.action)) : [];
+
+  it('[sw] toggle destination captures `closest .card` (karibuzaidi)', () => {
+    const toggle = commands(parse('kwenye bonyeza badilisha .expanded kwa karibuzaidi .card', 'sw')).find(
+      c => c.action === 'toggle'
+    );
+    expect(toggle, 'toggle present').toBeTruthy();
+    expect(roleRaw(toggle!, 'destination')).toBe('closest .card');
+  });
+
+  it('[qu] if-matches folds with the else branch (manachus)', () => {
+    const c = findConditional(
+      parse('ñitiy pi sichus I match .disabled sayay manachus .active ta tikray tukuy', 'qu')
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(branchActions(c!.thenBranch)).toEqual(['halt']);
+    expect(branchActions(c!.elseBranch)).toEqual(['toggle']);
+  });
+});

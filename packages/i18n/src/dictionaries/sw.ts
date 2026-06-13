@@ -206,7 +206,12 @@ export const sw: Dictionary = {
     prev: 'awali',
     at: 'katika',
     random: 'nasibu',
-    closest: 'karibu_zaidi',
+    // Concatenated (no `_`): the swahili tokenizer splits on underscore, so the
+    // old `karibu_zaidi` tokenized as `karibu`(closest) + `_` + `zaidi`, and the
+    // stray `_ zaidi` broke the positional `closest <selector>` capture (the
+    // destination defaulted to `me`). The fused `karibuzaidi` is a single token
+    // the tokenizer maps →closest (the established `enyakın` pattern).
+    closest: 'karibuzaidi',
     parent: 'mzazi',
     children: 'watoto',
     within: 'ndani_ya',

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-13T12:18:56.369Z",
-  "commit": "6b7a21bf",
+  "timestamp": "2026-06-13T12:32:49.128Z",
+  "commit": "c8ed5ed9",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -9547,10 +9547,8 @@
       "avgConfidence": 0.7161616161616162,
       "avgFidelity": 0.9632034632034633,
       "avgRoleFidelity": 0.7185649935649935,
-      "avgExecutionFidelity": 0.7419354838709677,
+      "avgExecutionFidelity": 0.8064516129032258,
       "executionFailures": [
-        "if-condition",
-        "if-matches",
         "make-toast-element",
         "modal-close-backdrop",
         "modal-close-button",
@@ -10825,18 +10823,13 @@
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.791841269841268,
-      "avgFidelity": 0.9705555555555554,
-      "avgRoleFidelity": 0.8360201719576721,
-      "avgExecutionFidelity": 0.9032258064516129,
-      "executionFailures": ["accordion-exclusive", "closest-ancestor", "modal-close-button"],
+      "avgConfidence": 0.7926455026455007,
+      "avgFidelity": 0.9727777777777777,
+      "avgRoleFidelity": 0.8428488756613759,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
-      "lossyPasses": [
-        "event-debounce",
-        "modal-close-button",
-        "repeat-until-event",
-        "set-color-variable"
-      ],
+      "lossyPasses": ["event-debounce", "repeat-until-event", "set-color-variable"],
       "bundleSize": 423296,
       "patterns": {
         "toggle-class-on-other": {
@@ -10871,6 +10864,10 @@
           "success": true,
           "confidence": 1
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "dropdown-toggle": {
           "success": true,
           "confidence": 1
@@ -10884,6 +10881,10 @@
           "confidence": 1
         },
         "next-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "closest-ancestor": {
           "success": true,
           "confidence": 1
         },
@@ -10995,14 +10996,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "set-text-basic": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11052,10 +11045,6 @@
           "confidence": 0.8222222222222222
         },
         "tabs-aria": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "modal-close-button": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11256,6 +11245,10 @@
           "confidence": 0.7142857142857143
         },
         "modal-open": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "modal-close-button": {
           "success": true,
           "confidence": 0.7142857142857143
         },
