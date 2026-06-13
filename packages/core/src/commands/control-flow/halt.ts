@@ -65,16 +65,18 @@ export class HaltCommand implements DecoratedCommand {
   ): Promise<HaltCommandInput> {
     if (raw.args && raw.args.length > 0) {
       const firstArg = raw.args[0] as any;
-      const secondArg = raw.args.length > 1 ? (raw.args[1] as any) : null;
 
-      // Check for "halt the event" pattern
-      if (
-        firstArg.type === 'identifier' &&
-        firstArg.name === 'the' &&
-        secondArg &&
-        secondArg.type === 'identifier' &&
-        secondArg.name === 'event'
-      ) {
+      // "halt the event" — the leading article "the" marks the prevent-default-
+      // and-CONTINUE form (as opposed to bare `halt`, which stops the handler).
+      // The i18n transformer leaves the article "the" verbatim across every
+      // language, so this is the cross-language signal; the event noun may
+      // follow as a second arg, sit elsewhere in the clause, or be dropped by
+      // the translation, and the article node may arrive as a `literal` (en) or
+      // an `identifier` (other languages, via the expression value converter).
+      // Any of these means halt the event — NOT stop execution. Without this,
+      // the non-en article evaluated to undefined and halt threw, swallowing
+      // every command after `halt the event` (the §7 halt-propagation cluster).
+      if (firstArg && (firstArg.name === 'the' || firstArg.value === 'the')) {
         return { target: context.event };
       }
 

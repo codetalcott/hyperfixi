@@ -781,6 +781,42 @@ regenerated; 6 unit tests added (R2 wave 6 block). Semantic 5855 green.
   `_` (`mana_chayqa`, and any other multi-word qu dict emission). Until fixed,
   qu else/body dict alignments can't land. Tokenizer-layer.
 
+## 7m. Status update (2026-06-13, session 14): halt-the-event article (core)
+
+**halt-propagation 18→1 with a one-line core fix.** All 18 non-en translations
+captured the halt patient as the literal English article `"the"` (the i18n
+transformer leaves `the` verbatim and the event noun is dropped/elsewhere). en
+emitted it as a `literal "the"`, which `HaltCommand.execute` already special-
+cased (`=== 'the'` → halt the event, CONTINUE); the other 17 emitted it as an
+`identifier "the"` (via the expression value converter), which `parseInput`
+_evaluated_ (→ undefined) → halt threw `HALT_EXECUTION` → the handler stopped and
+every command after `halt the event` was swallowed (the toggle never fired).
+
+The structural-looking compound-vs-flat difference was a red herring: identical
+`halt{patient:"the"}` semantic nodes, but the AST node TYPE differed
+(literal vs identifier) and only the literal hit execute's recovery path. Fix in
+`packages/core/src/commands/control-flow/halt.ts` `parseInput`: treat a leading
+`"the"` article (by `name` OR `value`, so literal and identifier both match,
+event noun present or not) as the prevent-default-and-CONTINUE form — return
+`{ target: context.event }` before the evaluate-and-maybe-throw path. Subsumes
+the old narrow `the`+`event` two-arg check.
+
+**Result:** meanExecutionFidelity **0.8640 → 0.8878**, failing cells **97 → 80**
+(−17). halt-propagation 18→1 (only **hi** remains — its SOV clause drops the
+leading `the` so the patient is undefined → bare halt; a separate SOV
+leading-article sub-case). Parse-level untouched (halt is runtime-only:
+avgFidelity 0.9743, lossy 77, degen 63 all identical). Core 6987 green (2 new
+halt parseInput tests). Gate green; baseline regenerated.
+
+**Still-open R2 clusters after this (80 failing, ranked):** make-toast-element
+×23 (`at end of` manner phrase, non-en drop); accordion-exclusive ×8 (de
+`nächste` collision + ja/ko SOV destination positional); modal-close-button ×~10
+(SOV post-verb source ja/ko/tr/hi + bn/it/th source=undefined + de collision);
+modal-open ×7; modal-close-backdrop ×6; tabs-aria ×5; if-matches ×4; hi
+halt-propagation ×1. Next-mechanism candidates unchanged: SOV post-verb source
+clause (parser), qu underscore-tokenizer, de `nächste`/`next` disambiguation,
+make-toast `at end of` per-language.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
