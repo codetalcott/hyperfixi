@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-13T05:51:41.867Z",
-  "commit": "2d0e4cf9",
+  "timestamp": "2026-06-13T06:22:20.309Z",
+  "commit": "dbe7cf8b",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -13,7 +13,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["repeat-until-event", "window-scroll"],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -638,14 +638,9 @@
       "parseRate": 1,
       "avgConfidence": 0.8477942692228406,
       "avgFidelity": 0.9905844155844155,
-      "avgRoleFidelity": 0.7832770270270271,
-      "avgExecutionFidelity": 0.8709677419354839,
-      "executionFailures": [
-        "accordion-exclusive",
-        "make-element",
-        "make-toast-element",
-        "tabs-aria"
-      ],
+      "avgRoleFidelity": 0.7859797297297297,
+      "avgExecutionFidelity": 0.9032258064516129,
+      "executionFailures": ["make-element", "make-toast-element", "tabs-aria"],
       "degeneratePasses": [],
       "lossyPasses": [
         "fetch-do-not-throw",
@@ -654,7 +649,7 @@
         "make-toast-element",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1285,7 +1280,7 @@
       "executionFailures": ["accordion-exclusive", "closest-ancestor", "modal-close-button"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1909,7 +1904,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2540,7 +2535,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3170,7 +3165,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3814,7 +3809,7 @@
         "tell-command",
         "tell-other-element"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4439,10 +4434,9 @@
       "parseRate": 1,
       "avgConfidence": 0.9560915275200976,
       "avgFidelity": 0.928030303030303,
-      "avgRoleFidelity": 0.5926158301158303,
-      "avgExecutionFidelity": 0.6774193548387096,
+      "avgRoleFidelity": 0.5953185328185331,
+      "avgExecutionFidelity": 0.7096774193548387,
       "executionFailures": [
-        "accordion-exclusive",
         "halt-propagation",
         "make-element",
         "make-toast-element",
@@ -4473,7 +4467,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5110,7 +5104,7 @@
         "set-transform",
         "template-literal-interpolation"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5740,7 +5734,7 @@
       "executionFailures": ["modal-close-button"],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6365,9 +6359,9 @@
       "parseRate": 1,
       "avgConfidence": 0.8399092970521543,
       "avgFidelity": 0.941017316017316,
-      "avgRoleFidelity": 0.7559041184041186,
-      "avgExecutionFidelity": 0.9032258064516129,
-      "executionFailures": ["accordion-exclusive", "put-content-basic", "tabs-aria"],
+      "avgRoleFidelity": 0.7586068211068213,
+      "avgExecutionFidelity": 0.9354838709677419,
+      "executionFailures": ["put-content-basic", "tabs-aria"],
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -6387,7 +6381,7 @@
         "put-content-basic",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7013,9 +7007,9 @@
       "parseRate": 1,
       "avgConfidence": 0.7958977530406102,
       "avgFidelity": 0.958874458874459,
-      "avgRoleFidelity": 0.7514639639639643,
-      "avgExecutionFidelity": 0.9032258064516129,
-      "executionFailures": ["accordion-exclusive", "modal-close-backdrop", "tabs-aria"],
+      "avgRoleFidelity": 0.754166666666667,
+      "avgExecutionFidelity": 0.9354838709677419,
+      "executionFailures": ["modal-close-backdrop", "tabs-aria"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -7030,7 +7024,7 @@
         "input-validation",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7671,7 +7665,7 @@
         "render-template-with-data",
         "set-color-variable"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8297,7 +8291,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8927,7 +8921,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9576,7 +9570,7 @@
         "take-class-from-siblings",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10207,7 +10201,7 @@
       "executionFailures": ["modal-close-backdrop"],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10843,7 +10837,7 @@
         "repeat-until-event",
         "set-color-variable"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11470,7 +11464,7 @@
       "executionFailures": ["accordion-exclusive"],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12101,7 +12095,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": ["window-scroll"],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12727,9 +12721,9 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8377425044091712,
       "avgFidelity": 0.9635076252723311,
-      "avgRoleFidelity": 0.7712018140589568,
-      "avgExecutionFidelity": 0.8709677419354839,
-      "executionFailures": ["accordion-exclusive", "if-matches", "set-attribute", "tabs-aria"],
+      "avgRoleFidelity": 0.773922902494331,
+      "avgExecutionFidelity": 0.9032258064516129,
+      "executionFailures": ["if-matches", "set-attribute", "tabs-aria"],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -12738,7 +12732,7 @@
         "default-value"
       ],
       "lossyPasses": ["fetch-do-not-throw", "unless-condition"],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13368,7 +13362,7 @@
       "executionFailures": ["make-toast-element", "modal-close-backdrop"],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14005,7 +13999,7 @@
         "set-color-variable",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14650,7 +14644,7 @@
         "tell-other-element",
         "unless-condition"
       ],
-      "bundleSize": 422859,
+      "bundleSize": 423145,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15272,7 +15266,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 422859,
+      "size": 423145,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

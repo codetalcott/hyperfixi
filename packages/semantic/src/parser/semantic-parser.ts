@@ -67,6 +67,21 @@ const NON_VALUE_KEYWORDS = new Set([
   'and',
 ]);
 
+/**
+ * Positional keywords that lead a positional-phrase role value (`closest .card`,
+ * `next .panel`). tryAttachTrailingRole uses these to reclaim a trailing
+ * `<positional> <selector> <marker>` destination as the `{ type: 'expression' }`
+ * shape the core runtime evaluates — matching the English reference parse.
+ */
+const POSITIONAL_VALUE_KEYWORDS = new Set([
+  'first',
+  'last',
+  'next',
+  'previous',
+  'random',
+  'closest',
+]);
+
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
 // =============================================================================
@@ -973,6 +988,25 @@ export class SemanticParserImpl implements ISemanticParser {
       const tok0 = stream.peek();
       const tok1 = stream.peek(1);
       if (!tok0 || !tok1) return;
+
+      // Positional-phrase value: `<closest|next|…> <selector> <marker>`
+      // (accordion `add .open to closest .accordion-item` → SOV `… 最も近い
+      // .accordion-item に`). Only meaningful for the strict (destination) role and
+      // only postpositional — the only corpus shape. Built as the same
+      // `{ type: 'expression', raw: 'closest .accordion-item' }` the English
+      // reference produces (normalized positional keyword + selector surface), so
+      // the core's positional evaluator resolves it identically.
+      if (strict && marker.position === 'after') {
+        const tok2 = stream.peek(2);
+        const pos = (tok0.normalized ?? tok0.value).toLowerCase();
+        if (POSITIONAL_VALUE_KEYWORDS.has(pos) && tok1.kind === 'selector' && isMarker(tok2)) {
+          roles.set(role, { type: 'expression', raw: `${pos} ${tok1.value}` } as SemanticValue);
+          stream.advance();
+          stream.advance();
+          stream.advance();
+          return;
+        }
+      }
 
       if (marker.position === 'after') {
         // Postpositional `<value> <marker>` (SOV: ja から/に, ko 에서/에, …).
