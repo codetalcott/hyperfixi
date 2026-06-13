@@ -87,6 +87,10 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'iliyotangulia', normalized: 'previous' },
   { native: 'iliyopita', normalized: 'previous' }, // i18n dict emission
   { native: 'karibu', normalized: 'closest' },
+  // Fused superlative the i18n dict now emits for closest ("nearer/nearest").
+  // The dict used to emit `karibu_zaidi`, but the tokenizer splits on `_`, so the
+  // `_ zaidi` stranded and broke positional `closest <selector>` capture.
+  { native: 'karibuzaidi', normalized: 'closest' },
   { native: 'mzazi', normalized: 'parent' },
 
   // Events

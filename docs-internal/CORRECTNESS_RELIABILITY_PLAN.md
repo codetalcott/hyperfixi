@@ -1163,6 +1163,55 @@ tabs-aria (`on <scope>` dropped even in en — a two-layer arc). Probed this ses
 make-element/set-attribute/tabs-aria are each scattered per-language structural
 bugs, NOT clean single mechanisms.
 
+## 7t. Status update (2026-06-13, session 20): sw/qu `_`-joined surface words
+
+**The underscore-tokenizer "arc" turned out to be a small dict-alignment win,
+not the multi-PR effort the §7q framing implied — measure-first corrected three
+stale assumptions.** Re-probing against the current dist showed: (1) **ms is NOT
+underscore** — `ke_dalam` tokenizes cleanly (`_` is a malay word-char); ms's
+make-element/make-toast drop is the fused-body-routing class (§7n). (2) **tr is
+already fixed** — the tr dict emits the concatenated `enyakın`, not `en_yakın`
+(the §7q jitter note is stale); and tr's failing cells don't use closest anyway.
+(3) The genuine `_`-split cases are **sw** and **qu**, each a one-line dict
+realign to a clean single-token form (the established `enyakın` pattern).
+
+- **sw closest**: dict `karibu_zaidi` → `karibuzaidi` (+ a swahili tokenizer
+  EXTRAS entry `karibuzaidi`→closest). The `_ zaidi` had stranded and broken the
+  positional `closest <selector>` capture (destination defaulted to `me`).
+  Cleared sw **accordion-exclusive, closest-ancestor, AND modal-close-button**
+  (the last via `hide closest .modal` — the §7o "sw hide drops" diagnosis was
+  actually this closest break). 3 cells; also a parse-level bonus
+  (modal-close-button lossy→faithful, sw avgFidelity 0.9706→0.9728, lossy 77→76).
+- **qu else**: dict `mana_chayqa` → `manachus` (the qu profile's existing else
+  word — a dict↔profile alignment, no tokenizer change). The old form tokenized
+  as `mana`(false)/`_`/`chayqa`(then), so no else keyword formed and qu
+  conditionals never split their else branch. Cleared qu **if-matches,
+  if-condition**. 2 cells.
+
+- **Result**: meanExecutionFidelity **0.9439 → 0.9509**; failing execution cells
+  **40 → 35** (−5). lossy 77→76, degen 63 unchanged. Gate green (all four
+  ratchets); baseline regenerated; 2 lock tests added (wave 14). Semantic 5902,
+  i18n 846 green.
+- **Remaining underscore residue is NOT a clean win**: qu `punta` (target) is a
+  _particle_ split (`pun`/`ta`-accusative), not underscore — blocks qu
+  modal-close-backdrop separately; qu `closest` is `kaylla` (no underscore).
+
+**Still-open R2 clusters after this (35 failing, ranked):** make-toast-element ×6
+(bn hi ms qu uk zh); tabs-aria ×5 (bn hi ja ko tr); make-element ×3 (bn hi ms);
+modal-close-backdrop ×3 (hi qu zh); set-attribute ×3 (hi qu tr); set-style ×2 (hi
+id); modal-close-button ×2 (it qu); put-content-basic ×2 (ja qu); if-matches ×2
+(tr zh); + singletons (halt-propagation hi, set-{inner-html,text}-possessive-dot
+hi, modal-open qu, accordion-exclusive th, if-condition zh, if-exists zh). **The
+residual is now dominated by structural blockers, each its own hard arc**:
+(1) **fused-event body routing / zh-bn-ms compound collapse** — the largest
+remaining lever (ms make-element/make-toast, bn make-element/make-toast/tabs-aria,
+zh make-toast + conditional residue); (2) **per-language SOV scrambles** (hi
+set-trio + tabs-aria, ja/ko/tr tabs-aria); (3) **en-reference-lossy tabs-aria**
+(`on <scope>` dropped even in en — two-layer arc); (4) qu particle-split (`punta`)
+
+- remaining qu tails. No more cheap dict-alignment wins remain in the cluster;
+  the tail is genuinely the §9 "marginal session clears ~5 hard instances" regime.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
