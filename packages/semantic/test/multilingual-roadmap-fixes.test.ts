@@ -5587,10 +5587,12 @@ describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', (
   // underscore tokenizes as `word`/`_`/`word` and never matches its keyword.
   // Two instances cleared by emitting a clean single-token surface form (the
   // established `enyakın` pattern), aligning dict → tokenizer/profile:
-  //  - sw closest: `karibu_zaidi` → `karibuzaidi` (+ tokenizer EXTRAS entry).
-  //    The stray `_ zaidi` had broken positional `closest <sel>` capture, so the
-  //    destination defaulted to `me`. Cleared sw accordion-exclusive,
-  //    closest-ancestor, AND modal-close-button (`hide closest .modal`).
+  //  - sw closest: `karibu_zaidi` → `karibu` (natural Swahili "near/close", which
+  //    the tokenizer already maps to closest; R2 wave 16 — wave 14 first used the
+  //    fused `karibuzaidi`, since corrected to the natural single word). The stray
+  //    `_ zaidi` had broken positional `closest <sel>` capture, so the destination
+  //    defaulted to `me`. Cleared sw accordion-exclusive, closest-ancestor, AND
+  //    modal-close-button (`hide closest .modal`).
   //  - qu else: `mana_chayqa` → `manachus` (the profile's existing else word).
   //    The old form tokenized as `mana`(false)/`_`/`chayqa`(then), so no else
   //    keyword formed and qu conditionals never split their else branch. Cleared
@@ -5630,8 +5632,8 @@ describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', (
   const branchActions = (branch: unknown): string[] =>
     Array.isArray(branch) ? (branch as Array<Record<string, unknown>>).map(n => String(n.action)) : [];
 
-  it('[sw] toggle destination captures `closest .card` (karibuzaidi)', () => {
-    const toggle = commands(parse('kwenye bonyeza badilisha .expanded kwa karibuzaidi .card', 'sw')).find(
+  it('[sw] toggle destination captures `closest .card` (natural `karibu`)', () => {
+    const toggle = commands(parse('kwenye bonyeza badilisha .expanded kwa karibu .card', 'sw')).find(
       c => c.action === 'toggle'
     );
     expect(toggle, 'toggle present').toBeTruthy();
