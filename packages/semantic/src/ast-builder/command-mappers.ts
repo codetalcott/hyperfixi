@@ -333,7 +333,7 @@ const logMapper: CommandMapper = {
 /**
  * Put command mapper.
  *
- * Semantic: put patient:"hello" destination:#output method:into
+ * Semantic: put patient:"hello" destination:#output manner:into
  * AST: { name: 'put', args: ["hello"], modifiers: { into: #output } }
  */
 const putMapper: CommandMapper = {
@@ -341,14 +341,17 @@ const putMapper: CommandMapper = {
   toAST(node, _builder) {
     const patient = convertRoleValue(node, 'patient');
     const destination = convertRoleValue(node, 'destination');
-    const method = getRole(node, 'method'); // before, after, into, etc.
+    // The handcrafted put patterns record the position phrase in `manner`
+    // (before / after / at end of / at start of). `method` is kept as a
+    // fallback for any older producer. Reading only `method` was a latent
+    // bug: `put X before Y` silently built a put-INTO AST.
+    const position = getRole(node, 'manner') ?? getRole(node, 'method');
 
     const args: ExpressionNode[] = patient ? [patient] : [];
     const modifiers: Record<string, ExpressionNode> = {};
 
     if (destination) {
-      // Determine the preposition based on method or default to 'into'
-      const prep = method?.type === 'literal' ? String(method.value) : 'into';
+      const prep = position?.type === 'literal' ? String(position.value) : 'into';
       modifiers[prep] = destination;
     }
 

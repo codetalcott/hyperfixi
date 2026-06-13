@@ -62,16 +62,9 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 1 (session 8): multi-command click patterns — sync,
   // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
   // original subset: the en reference must execute with a non-empty effect
-  // signature in the current runtime. Eleven candidates were probed; two are
-  // still deliberately absent because their EN reference is unusable:
-  //   modal-close-button    — en parse DROPS `hide closest .modal`; the
-  //                           surviving body-class change is invisible to the
-  //                           snapshot (body isn't serialized)
-  //   make-toast-element    — the make + into-it puts now work, but the final
-  //                           `put it at end of body` is the at-end-of
-  //                           positional-put form (distinct from the now-fixed
-  //                           `next .sel` fold), so the detached toast never
-  //                           enters the DOM
+  // signature in the current runtime. Eleven candidates were probed; the two
+  // then-excluded for unusable EN references (modal-close-button,
+  // make-toast-element) joined in waves 3/3b once their en parses were fixed.
   'tabs-content',
   'accordion-exclusive',
   // Expansion wave 2 (session 9, post en-conditional work): control-flow click
@@ -114,8 +107,15 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // command dropped from the body entirely). The en reference for
   // modal-close-button now hides the enclosing .modal (PATTERN_SETUP gives
   // #btn a .modal ancestor, mirroring the real-page structure).
-  // make-toast-element stays out (at-end-of positional put, distinct form).
   'modal-close-button',
+  // Expansion wave 3b (session 10): the at-end-of positional put — en put
+  // patterns for `at end of` / `at start of`, the parseBodyWithClauses
+  // end-noun guard (the `end` in `at end of` is a position noun, not the
+  // block terminator), putMapper reads `manner` (also fixing the latent
+  // before/after→into bug), core PutCommand accepts the multi-word modifier
+  // keys, and contextReference body/document/window resolve. The en
+  // reference appends the toast at end of body: one clean effect line.
+  'make-toast-element',
 ];
 
 /**
@@ -157,8 +157,12 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   // backdrop (the real-page case is a click landing on the backdrop itself).
   'modal-close-backdrop': doc => doc.getElementById('btn')!.classList.add('modal-backdrop'),
   // `hide closest .modal` needs #btn inside a .modal (the real-page case is a
-  // close button inside the modal it closes).
-  'modal-close-button': doc => doc.querySelector('.card')!.classList.add('modal'),
+  // close button inside the modal it closes), and `remove .modal-open from
+  // body` needs the class present so the body write is scoreable.
+  'modal-close-button': doc => {
+    doc.querySelector('.card')!.classList.add('modal');
+    doc.body.classList.add('modal-open');
+  },
 };
 
 /** Result of executing one pattern translation. */
@@ -178,23 +182,33 @@ export interface ExecutionResult {
  * Keyed by #id when present, else tag[document-order-index]; the fixture is
  * identical across languages, so keys are comparable.
  */
+function serializeElement(el: Element): string {
+  const attrs = Array.from(el.attributes)
+    .filter(a => a.name !== 'class' && a.name !== 'style')
+    .map(a => `${a.name}=${a.value}`)
+    .sort()
+    .join(',');
+  const classes = Array.from(el.classList).sort().join(' ');
+  const style = (el as HTMLElement).getAttribute('style') ?? '';
+  // Leaf text only — container text would duplicate every child mutation.
+  const text =
+    el.childNodes.length === 0 || (el.childNodes.length === 1 && el.firstChild?.nodeType === 3)
+      ? (el.textContent ?? '')
+      : '';
+  return `cls[${classes}] attr[${attrs}] style[${style}] text[${text}]`;
+}
+
 function snapshot(document: Document): Map<string, string> {
   const out = new Map<string, string>();
+  // body participates under its own stable key: body-targeted effects
+  // (`add .modal-open to body`, modal-open/modal-close-button) must be
+  // visible in the signature now that the runtime resolves `body`. Before
+  // wave 3b these writes fell back to `me` (visible by accident); a correct
+  // body write was invisible and a dropped one unscoreable.
+  out.set('body', serializeElement(document.body));
   document.body.querySelectorAll('*').forEach((el, i) => {
     const key = el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}[${i}]`;
-    const attrs = Array.from(el.attributes)
-      .filter(a => a.name !== 'class' && a.name !== 'style')
-      .map(a => `${a.name}=${a.value}`)
-      .sort()
-      .join(',');
-    const classes = Array.from(el.classList).sort().join(' ');
-    const style = (el as HTMLElement).getAttribute('style') ?? '';
-    // Leaf text only — container text would duplicate every child mutation.
-    const text =
-      el.childNodes.length === 0 || (el.childNodes.length === 1 && el.firstChild?.nodeType === 3)
-        ? (el.textContent ?? '')
-        : '';
-    out.set(key, `cls[${classes}] attr[${attrs}] style[${style}] text[${text}]`);
+    out.set(key, serializeElement(el));
   });
   return out;
 }

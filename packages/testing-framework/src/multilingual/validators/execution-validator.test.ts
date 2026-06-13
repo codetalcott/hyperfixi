@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 30 curated patterns', () => {
+  it('contains exactly the 31 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -74,8 +74,14 @@ describe('R2 execution subset (lock)', () => {
         // Session-10 expansion wave 3: positional-phrase patients — the
         // pattern matcher captures `closest <sel>` / `the next <sel>`, so
         // `hide closest .modal` parses and executes (PATTERN_SETUP gives #btn
-        // a .modal ancestor). make-toast-element still out (at-end-of put).
+        // a .modal ancestor).
         'modal-close-button',
+        // Session-10 expansion wave 3b: the at-end-of positional put — en
+        // `at end of`/`at start of` patterns + the parseBodyWithClauses
+        // end-noun guard + putMapper manner + core multi-word modifier keys
+        // + contextReference body. The last R2 candidate excluded for an
+        // unusable en reference is now in.
+        'make-toast-element',
       ].sort()
     );
   });

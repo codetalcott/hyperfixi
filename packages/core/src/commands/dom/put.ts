@@ -91,8 +91,10 @@ export class PutCommand implements DecoratedCommand {
       targetArg: ASTNode | null = null;
     if (prepIdx === -1) {
       // Check modifiers for semantic parsing format (e.g., { args: [content], modifiers: { into: target } })
-      if (raw.modifiers.into || raw.modifiers.before || raw.modifiers.after) {
-        const prepKey = raw.modifiers.into ? 'into' : raw.modifiers.before ? 'before' : 'after';
+      // Any valid preposition can arrive as a modifier key, including the
+      // multi-word positional forms ('at start of' / 'at end of').
+      const prepKey = validPreps.find(p => raw.modifiers[p]);
+      if (prepKey) {
         contentArg = raw.args[0];
         prepKw = prepKey;
         targetArg = raw.modifiers[prepKey] as ASTNode;

@@ -121,7 +121,10 @@ type ContextRefNode = ASTNode & {
     | 'it'
     | 'its'
     | 'target'
-    | 'event';
+    | 'event'
+    | 'body'
+    | 'document'
+    | 'window';
 };
 type PossessiveNode = ASTNode & { object: ASTNode; property: { name: string } };
 type EventHandlerNode = ASTNode & { event?: unknown; selector?: unknown; commands: ASTNode[] };
@@ -1671,6 +1674,17 @@ async function evaluateContextReference(
         (context as any).event?.target ??
         getExpr(context, 'me').evaluate(context)
       );
+    // Document references: the semantic→AST builder emits these surface forms
+    // as contextReference (`put it at end of body` → reference 'body'). The
+    // identifier path deliberately does NOT pre-empt `body` (a user local named
+    // `body` would be shadowed); the contextReference node only ever comes
+    // from the builder, so resolving it here is unambiguous.
+    case 'body':
+      return typeof document !== 'undefined' ? document.body : undefined;
+    case 'document':
+      return getExpr(context, 'document').evaluate(context);
+    case 'window':
+      return getExpr(context, 'window').evaluate(context);
     default:
       return undefined;
   }

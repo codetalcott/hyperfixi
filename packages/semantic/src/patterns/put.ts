@@ -116,6 +116,55 @@ function getPutPatternsEn(): LanguagePattern[] {
         manner: { default: { type: 'literal', value: 'after' } },
       },
     },
+    // The at-end-of / at-start-of positional puts (`put it at end of body`,
+    // make-toast-element). The three-word position phrase is matched as
+    // consecutive literal tokens and recorded whole in `manner` — the exact
+    // form the core runtime's PutCommand.mapPosition accepts (beforeend /
+    // afterbegin).
+    {
+      id: 'put-en-at-end',
+      language: 'en',
+      command: 'put',
+      priority: 96,
+      template: {
+        format: 'put {patient} at end of {destination}',
+        tokens: [
+          { type: 'literal', value: 'put' },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'at' },
+          { type: 'literal', value: 'end' },
+          { type: 'literal', value: 'of' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { position: 5 },
+        manner: { default: { type: 'literal', value: 'at end of' } },
+      },
+    },
+    {
+      id: 'put-en-at-start',
+      language: 'en',
+      command: 'put',
+      priority: 96,
+      template: {
+        format: 'put {patient} at start of {destination}',
+        tokens: [
+          { type: 'literal', value: 'put' },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'at' },
+          { type: 'literal', value: 'start' },
+          { type: 'literal', value: 'of' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { position: 5 },
+        manner: { default: { type: 'literal', value: 'at start of' } },
+      },
+    },
   ];
 }
 

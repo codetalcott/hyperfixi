@@ -653,8 +653,22 @@ export class SemanticParserImpl implements ISemanticParser {
         current.kind === 'conjunction' ||
         (current.kind === 'keyword' && this.isThenKeyword(current.value, language));
 
-      // Check if this is an 'end' keyword (terminates block)
-      const isEnd = current.kind === 'keyword' && this.isEndKeyword(current.value, language);
+      // Check if this is an 'end' keyword (terminates block). The English
+      // positional-put phrase `at end of <target>` contains the literal word
+      // `end` — when the pending clause ends with `at` and the next token is
+      // `of`, this `end` is the position noun, not a block terminator
+      // (`put it at end of body`, make-toast-element). The sandwich check is
+      // value-based and language-safe: no other language's end keyword sits
+      // between literal `at`/`of` tokens.
+      const prevClauseToken = currentClauseTokens[currentClauseTokens.length - 1];
+      const followingToken = tokens.peek(1);
+      const isPositionalEndNoun =
+        prevClauseToken?.value.toLowerCase() === 'at' &&
+        followingToken?.value.toLowerCase() === 'of';
+      const isEnd =
+        current.kind === 'keyword' &&
+        this.isEndKeyword(current.value, language) &&
+        !isPositionalEndNoun;
 
       if (isConjunction) {
         // We've reached a clause boundary - parse accumulated tokens

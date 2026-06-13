@@ -5004,3 +5004,61 @@ describe('en positional-phrase patients — closest <sel> and the-led positional
     expect(roles(show).get('patient')?.raw).toBe('next <div.tab-panel/>');
   });
 });
+
+describe('en at-end-of positional put — at end of / at start of (R2 make-toast-element)', () => {
+  function roles(node: unknown): Map<string, { type?: string; raw?: string; value?: unknown }> {
+    return (node as { roles: Map<string, { type?: string; raw?: string; value?: unknown }> })
+      .roles;
+  }
+
+  it("put 'x' at end of #out captures destination + the whole position phrase", () => {
+    const node = parse("put 'x' at end of #out", 'en') as Record<string, unknown>;
+    expect(node).toBeTruthy();
+    expect(node.action).toBe('put');
+    expect(roles(node).get('destination')?.value).toBe('#out');
+    expect(roles(node).get('manner')?.value).toBe('at end of');
+  });
+
+  it("put 'x' at start of #out captures the at-start-of form", () => {
+    const node = parse("put 'x' at start of #out", 'en') as Record<string, unknown>;
+    expect(node).toBeTruthy();
+    expect(roles(node).get('manner')?.value).toBe('at start of');
+  });
+
+  it('the position noun `end` does not terminate an event body clause', () => {
+    // parseBodyWithClauses treats `end` as the block terminator; in
+    // `put it at end of body` it is the position noun. The sandwich guard
+    // (previous clause token `at`, following token `of`) keeps the clause
+    // intact — previously the body parsed EMPTY.
+    const node = parse("on click put 'a' at end of #x", 'en') as {
+      body?: Array<Record<string, unknown>>;
+    };
+    expect(node.body?.length).toBe(1);
+    expect(node.body?.[0].action).toBe('put');
+    expect(roles(node.body![0]).get('manner')?.value).toBe('at end of');
+  });
+
+  it('a real block-terminating end still terminates (guard is sandwich-gated)', () => {
+    const node = parse(
+      'on click if I match .active then add .x to me end',
+      'en'
+    ) as { body?: Array<Record<string, unknown>> };
+    const conditional = node.body?.find(n => n.kind === 'conditional');
+    expect(conditional).toBeDefined();
+  });
+
+  it('make-toast-element parses all three commands including the at-end-of put', () => {
+    const node = parse(
+      "on click make a <div.toast/> then put 'Saved!' into it then put it at end of body",
+      'en'
+    ) as { body?: Array<Record<string, unknown>> };
+    const stmts =
+      node.body?.flatMap(n =>
+        n.kind === 'compound' ? (n.statements as Array<Record<string, unknown>>) : [n]
+      ) ?? [];
+    expect(stmts.map(s => s.action)).toEqual(['make', 'put', 'put']);
+    const lastPut = stmts[2];
+    expect(roles(lastPut).get('destination')?.value).toBe('body');
+    expect(roles(lastPut).get('manner')?.value).toBe('at end of');
+  });
+});
