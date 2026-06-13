@@ -5801,3 +5801,73 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     expect(cond).toBe('target matches .modal-backdrop');
   });
 });
+
+describe('zh circumfix `当 {event} 时` event wrapper (S2 — fused-event compound-collapse)', () => {
+  // The zh i18n transformer wraps every event handler in the `当…时` (when…then)
+  // circumfix: `当 点击 时 <body>`. The hand-crafted event patterns only covered
+  // the leading `当` (`event-zh-standard` = `当 {event}`), so the trailing `时`
+  // leaked into the body. For a single-command body that is harmless — parseClause
+  // skips the stray `时` — but it stopped the conditional fold from firing:
+  // `parseBodyWithClauses` folds a leading `if`/`unless` ONLY at clause-start
+  // (`currentClauseTokens.length === 0`), and the orphaned `时` pushed the `如果`
+  // off clause-start, so the whole `if … end` block collapsed into a flat
+  // `compound` (the §7n/§7r zh "compound-collapse"; the condition was lost and the
+  // then/else branches flattened into siblings). Adding the circumfix pattern
+  // `当 {event} 时 {body}` (priority 106, above `event-zh-standard`) consumes the
+  // `时` so the body starts cleanly at `如果` and the fold runs. Cleared zh
+  // if-condition, if-exists, if-matches (execution 32→29); modal-close-backdrop
+  // also folds now but stays failing until zh gets a `matches` operator (next).
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const found = findConditional(x);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+  const actionsOf = (c: Record<string, unknown>, branch: 'thenBranch' | 'elseBranch'): string[] =>
+    ((c[branch] as Array<{ action?: string }> | undefined) ?? []).map(n => n.action ?? '');
+
+  it('[zh] if-condition folds into a conditional with then=[remove] else=[add]', () => {
+    const c = findConditional(
+      parse('当 点击 时 如果 I match .active 那么 移除 把 .active 否则 添加 把 .active 结束', 'zh')
+    );
+    expect(c, 'conditional folded (not a flat compound)').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['remove']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['add']);
+  });
+
+  it('[zh] if-matches folds into a conditional with then=[halt] else=[toggle]', () => {
+    const c = findConditional(
+      parse('当 点击 时 如果 I match .disabled 停止 否则 切换 把 .active 结束', 'zh')
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['halt']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['toggle']);
+  });
+
+  it('[zh] if-exists folds with the make+put else branch', () => {
+    const c = findConditional(
+      parse(
+        '当 点击 时 如果 #modal 存在 显示 把 #modal 否则 制作 把 a <div#modal/> 那么 把 它 放置 到 主体 结束',
+        'zh'
+      )
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(actionsOf(c!, 'thenBranch')).toEqual(['show']);
+    expect(actionsOf(c!, 'elseBranch')).toEqual(['make', 'put']);
+  });
+
+  it('[zh] a simple (non-conditional) `当…时` body still parses — the 时 is consumed, not leaked', () => {
+    const node = parse('当 点击 时 切换 把 .active', 'zh') as { body?: Array<{ action?: string }> };
+    const body = node.body ?? [];
+    expect(body.map(n => n.action)).toEqual(['toggle']);
+  });
+});
