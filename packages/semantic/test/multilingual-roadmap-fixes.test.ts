@@ -5322,3 +5322,77 @@ describe('trailing post-verb source clause in fused-event bodies (R2 wave 9 — 
     expect(role(remove!, 'source')).toBe('body');
   });
 });
+
+describe('trailing post-verb destination clause in fused-event bodies (R2 wave 10 — modal-open)', () => {
+  // The destination twin of wave 9. modal-open's body is `show #modal then add
+  // .modal-open to body`. The grammar transformer emits the to-phrase AFTER the
+  // verb — SOV `.modal-open を 追加 ボディ に`, SVO th `เพิ่ม .modal-open ใน บอดี้`
+  // — which the per-command add pattern (ending at the verb) never claims, so the
+  // class is added to the clicked button (the `me` default) instead of the
+  // document body. tryAttachTrailingRole now reclaims the trailing destination as
+  // well as the source. The destination value is matched STRICTLY (selectors +
+  // DOM reference words only, never a bare identifier): the to-markers (ja に,
+  // ko 에, …) are common, so admitting arbitrary identifiers would let the reclaim
+  // eat tokens a later command needs. This is why `add .open to closest
+  // .accordion-item` is untouched — `closest` is a keyword, not a value — and is
+  // left for the positional path. Cleared modal-open in 6 languages (7→1).
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+
+  // Corpus modal-open translations: `show #modal then add .modal-open to body`.
+  const cases: Array<[string, string]> = [
+    ['ja', '#modal を クリック で 表示 それから .modal-open を 追加 ボディ に'],
+    ['ko', '#modal 를 클릭 보이다 그러면 .modal-open 를 추가 바디 에'],
+    ['bn', '#modal কে ক্লিক এ দেখান তারপর .modal-open কে যোগ বডি তে'],
+    ['hi', '#modal को क्लिक पर दिखाएं फिर .modal-open को जोड़ें बॉडी में'],
+    ['tr', '#modal i tıklama de göster sonra .modal-open i ekle gövde e'],
+    ['th', 'เมื่อ คลิก แสดง #modal แล้ว เพิ่ม .modal-open ใน บอดี้'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] the trailing post-verb add captures destination = body (was the me default)`, () => {
+      const add = commands(parse(input, lang as 'ja')).find(c => c.action === 'add');
+      expect(add, 'add command present').toBeTruthy();
+      expect(role(add!, 'patient')).toBe('.modal-open');
+      expect(role(add!, 'destination')).toBe('body');
+    });
+  }
+
+  it('[ja] a positional-phrase destination is NOT mis-captured (accordion add stays off body)', () => {
+    // accordion-exclusive's `add .open to closest .accordion-item` trails a
+    // positional phrase (`最も近い .accordion-item に`). The strict destination
+    // matcher rejects the leading `closest` keyword, so the reclaim does not fire
+    // and never assigns `body` — the positional destination is handled elsewhere.
+    const input =
+      '.open を クリック で 削除 .accordion-item から それから .open を 追加 最も近い .accordion-item に';
+    const add = commands(parse(input, 'ja')).find(c => c.action === 'add');
+    expect(add).toBeTruthy();
+    expect(role(add!, 'destination')).not.toBe('body');
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const add = commands(parse('on click show #modal add .modal-open to body', 'en')).find(
+      c => c.action === 'add'
+    );
+    expect(add).toBeTruthy();
+    expect(role(add!, 'destination')).toBe('body');
+  });
+});
