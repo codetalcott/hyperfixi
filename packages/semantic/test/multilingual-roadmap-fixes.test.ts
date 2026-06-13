@@ -5060,6 +5060,33 @@ describe('en positional-phrase patients — closest <sel> and the-led positional
     const show = stmts.find(s => s.action === 'show')!;
     expect(roles(show).get('patient')?.raw).toBe('next <div.tab-panel/>');
   });
+
+  // Cross-language positional NORMALIZATION (R2 wave 5). The captured `raw` is
+  // evaluated by the core's English positional expression parser, so a
+  // source-language positional keyword (`cercano`/`次`/`التالي`) must surface in
+  // the raw as its normalized English form — otherwise the runtime errors,
+  // drops to `me`, or matches every element (same idiom as the conditional
+  // fold's joinTokenText). Selectors are code and keep their surface value.
+  // This is what cleared tabs-content (22→0), dropdown-toggle (13→0), and most
+  // of accordion/modal-close-button/closest-ancestor in the execution sweep.
+  const positionalCases: Array<[string, string, string]> = [
+    ['es', 'mostrar siguiente <div.tab-panel/>', 'next <div.tab-panel/>'],
+    ['de', 'zeigen the nächste <div.tab-panel/>', 'next <div.tab-panel/>'],
+    ['ja', '次 <div.tab-panel/> を 表示', 'next <div.tab-panel/>'],
+    ['ko', '다음 <div.tab-panel/> 를 보이다', 'next <div.tab-panel/>'],
+    ['ar', 'اظهر التالي <div.tab-panel/>', 'next <div.tab-panel/>'],
+    ['es', 'ocultar cercano .modal', 'closest .modal'],
+    ['ar', 'اخف الأقرب .modal', 'closest .modal'],
+  ];
+  for (const [lang, input, expectedRaw] of positionalCases) {
+    it(`[${lang}] positional keyword normalizes to English in the captured raw`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      const patient = roles(node).get('patient');
+      expect(patient?.type).toBe('expression');
+      expect(patient?.raw).toBe(expectedRaw);
+    });
+  }
 });
 
 describe('en at-end-of positional put — at end of / at start of (R2 make-toast-element)', () => {
