@@ -545,10 +545,24 @@ expressions/control-flow/parser 2580, runtime-ast-coverage 75; typechecks clean.
   its OWN track, not folded into this one. Baseline regenerated + subset lock
   updated in the same PR per the locked rule.
 
-**Still deferred:** other §10.7 runtime gaps (`@attr` family, `make`
-HTML-literal, `halt the event`); the en tabs-content `show <positional>
-<html-literal>` parse (needs the positional work that also gates
-dropdown-toggle); cross-language conditional folding (SOV/VSO orders).
+- **@attr family SHIPPED (wave 2b)** — the semantic value converter and
+  expression parser now emit the canonical `attributeAccess` node for `@attr`
+  (previously a selector node → "Invalid selector @disabled", or a bare
+  identifier with the `@` lost). The core side already supported
+  attributeAccess everywhere (set's resolveAttributeWriteTarget, toggle's
+  evaluateFirstArg, evaluateAST). `set-attribute`, `toggle-visibility`, and
+  `tabs-aria` en references now execute; R2 subset 23 → 26, baseline
+  regenerated (mean executionFidelity 0.7902 → **0.8010**, failing instances
+  111 → 119 from the larger surface). **`set-text-basic` is NOT a runtime
+  gap** — probed: the full cascade works at source level; jsdom simply doesn't
+  implement `innerText` (the write becomes an inert expando), so its en
+  signature is empty. Harness limitation; works in real browsers. Excluded
+  with that reason documented.
+
+**Still deferred:** remaining §10.7 runtime gaps (`make` HTML-literal,
+`halt the event`); the `next .X` positional mis-parse (gates dropdown-toggle
+and the en tabs-content `show <positional> <html-literal>` fix);
+cross-language conditional folding (SOV/VSO orders).
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 

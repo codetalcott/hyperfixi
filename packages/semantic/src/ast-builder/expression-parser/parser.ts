@@ -13,6 +13,7 @@ import type {
   SelectorNode,
   ContextReferenceNode,
   IdentifierNode,
+  AttributeAccessNode,
   PropertyAccessNode,
   PossessiveExpressionNode,
   BinaryExpressionNode,
@@ -361,6 +362,18 @@ export class ExpressionParser {
 
     if (this.match(TokenType.ATTRIBUTE_SELECTOR)) {
       return this.createSelector(token.value, 'attribute', token);
+    }
+
+    // Bare attribute reference: `@disabled` → attributeAccess (the canonical
+    // core-parser shape; the runtime reads it via getAttribute, and set/toggle
+    // route it to setAttribute).
+    if (this.match(TokenType.ATTRIBUTE_REF)) {
+      return {
+        type: 'attributeAccess',
+        attributeName: token.value.slice(1),
+        start: token.start,
+        end: token.end,
+      } as AttributeAccessNode;
     }
 
     if (this.match(TokenType.QUERY_SELECTOR)) {

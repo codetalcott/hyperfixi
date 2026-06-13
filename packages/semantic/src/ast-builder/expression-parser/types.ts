@@ -97,6 +97,16 @@ export interface PropertyAccessNode extends ExpressionNode {
   readonly property: string;
 }
 
+/**
+ * Attribute reference (`@disabled`, `@aria-selected`). Matches the canonical
+ * core parser's node shape — the runtime evaluates it via getAttribute and the
+ * write commands (set/toggle) route it to setAttribute.
+ */
+export interface AttributeAccessNode extends ExpressionNode {
+  readonly type: 'attributeAccess';
+  readonly attributeName: string;
+}
+
 export interface MemberExpressionNode extends ExpressionNode {
   readonly type: 'memberExpression';
   readonly object: ExpressionNode;
@@ -185,6 +195,7 @@ export type AnyExpressionNode =
   | SelectorNode
   | ContextReferenceNode
   | IdentifierNode
+  | AttributeAccessNode
   | PropertyAccessNode
   | MemberExpressionNode
   | PossessiveExpressionNode
