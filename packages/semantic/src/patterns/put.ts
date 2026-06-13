@@ -1001,6 +1001,19 @@ const PUT_AT_END: ReadonlyArray<{
     end: 'শেষ',
     of: 'র',
   },
+  // qu was excluded from PUT_AT_END (§7n) while body was the unaligned `ukhu`;
+  // now that the qu profile body = `kurku` (qu arc wave 1), add the SOV at-end
+  // entry. Corpus: `chay pi tukuy pa kurku ta churay` = `{patient} pi tukuy pa
+  // {destination} ta churay` (put it at end of body — make-toast's attaching put).
+  {
+    lang: 'qu',
+    verb: 'churay',
+    sov: true,
+    objMarker: 'ta',
+    at: 'pi',
+    end: 'tukuy',
+    of: 'pa',
+  },
 ];
 
 /**
@@ -1161,7 +1174,7 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
     case 'ru':
       return [...getPutPatternsRu(), ...atEnd];
     case 'qu':
-      return getPutPatternsQu();
+      return [...getPutPatternsQu(), ...atEnd];
     case 'th':
       return [...getPutPatternsTh(), ...atEnd];
     case 'uk':

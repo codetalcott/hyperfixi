@@ -6114,3 +6114,39 @@ describe('qu `cheqaq` → true boolean literal (qu arc wave 2 — set-attribute)
     expect(set?.roles?.get('patient')?.value).toBe('true');
   });
 });
+
+describe('qu make-toast: single-quote strings + fused-body at-end (qu arc wave 3)', () => {
+  // make-toast qu (`… 'Saved!' ta chay man churay … chay pi tukuy pa kurku ta
+  // churay`) needed three fixes: (1) the qu string extractor only accepted `"`,
+  // so the single-quoted `'Saved!'` tokenized as `'Saved`+`!`+`'` — now `'` is
+  // accepted (safe: Quechua apostrophes are mid-word, never at a token start);
+  // (2) the fused make-event body routes through parseBodyWithGrammarPatterns,
+  // whose `end`-keyword break lacked the isAtEndPositionNoun guard, so `tukuy`
+  // (end) chopped the attaching at-end put — guard mirrored from
+  // parseBodyWithClauses; (3) `case 'qu'` in getPutPatternsForLanguage didn't
+  // spread `...atEnd`, so PUT_AT_END never generated `put-qu-at-end`. Cleared qu
+  // make-toast (execution 14→13) — qu fully clear.
+  it('[qu] single-quoted string `\x27Saved!\x27` tokenizes as one string literal', () => {
+    const toks = getTokenizer('qu').tokenize("'Saved!' ta").tokens;
+    expect(toks[0]?.value).toBe("'Saved!'");
+  });
+
+  it('[qu] make-toast parses make + put(Saved!→it) + put(it→body, at end of)', () => {
+    const n = parse(
+      "a <div.toast/> ta ñitiy pi ruray chayqa 'Saved!' ta chay man churay chayqa chay pi tukuy pa kurku ta churay",
+      'qu'
+    ) as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
+    };
+    const body = n.body ?? [];
+    expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
+    // The single-quoted literal now tokenizes whole (was `'Saved`+`!`+`'`); the
+    // put captures it as an expression whose raw carries the Saved! text.
+    const p1 = body[1]?.roles?.get('patient');
+    expect(String(p1?.raw ?? p1?.value)).toContain('Saved!');
+    expect(body[1]?.roles?.get('destination')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('patient')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('destination')).toMatchObject({ value: 'body' });
+    expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});
