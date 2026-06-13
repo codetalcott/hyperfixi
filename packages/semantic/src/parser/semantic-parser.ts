@@ -49,6 +49,24 @@ import { parseExplicit as parseExplicitFn } from '../explicit/parser';
  */
 const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
 
+/**
+ * Control-flow / structural keywords that tokenize as identifiers in some
+ * languages but can never be a trailing role value (source/destination). Guards
+ * tryAttachTrailingRole against capturing a block terminator (`put … end`) or a
+ * branch keyword (`… else …`) as a destination.
+ */
+const NON_VALUE_KEYWORDS = new Set([
+  'then',
+  'end',
+  'else',
+  'if',
+  'unless',
+  'while',
+  'for',
+  'repeat',
+  'and',
+]);
+
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
 // =============================================================================
@@ -823,7 +841,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (commandMatch) {
         const cmd = this.buildCommand(commandMatch, language);
         commands.push(cmd);
-        this.tryAttachTrailingSource(clauseStream, cmd, language);
+        this.tryAttachTrailingRole(clauseStream, cmd, language);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -863,75 +881,116 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Attach a trailing post-verb source phrase that the per-command pattern left
-   * unconsumed. The SOV grammar transformer emits `remove .x from body` as
-   * `.x を 削除 ボディ から` (modal-close-button) — patient + verb, then a
-   * postpositional `<body-word> <from-marker>` the SOV remove pattern (which
-   * ends at the verb) never claims; parseClause's loop would otherwise skip it
-   * and source defaults to `me` (the class is removed from the clicked button,
-   * not the document body). SVO languages (th) trail a prepositional
-   * `<from-marker> <body-word>` after `verb patient`. This is the body-clause
-   * twin of the #379 event-wrapper trailing source group.
+   * Reclaim a trailing post-verb role phrase (`source` or `destination`) that the
+   * per-command pattern left unconsumed. The grammar transformer emits a
+   * command's `from <source>` / `to <destination>` phrase AFTER the verb:
+   *   remove .x from body → `.x を 削除 ボディ から` (modal-close-button)
+   *   add .x to body      → `.x を 追加 ボディ に`   (modal-open)
+   * The per-command pattern ends at the verb, so the trailing `<value> <marker>`
+   * (postpositional, SOV) or `<marker> <value>` (prepositional, SVO th) is skipped
+   * and the role defaults to `me` — the effect lands on the clicked element
+   * instead of the document body. Body-clause twin of the #379 event-wrapper
+   * trailing role groups.
    *
-   * Conservative by construction: fires only when (1) the command's schema
-   * declares a `source` role, (2) that role is currently absent or the defaulted
-   * `me`, and (3) the very next tokens form a clean marker+value pair in the
-   * profile's source-marker order — so it can neither overwrite a real source
-   * (accordion's `remove .open from .accordion-item` keeps its captured source)
-   * nor steal a following command's tokens (a trailing `then add …` has no
-   * source marker adjacent to the verb).
+   * Conservative by construction: for each of source/destination the command's
+   * schema declares and that is currently absent or the defaulted `me`, fires
+   * only when the very next tokens form a clean marker+value pair in that
+   * marker's position order. So it can neither overwrite a genuinely captured
+   * role (accordion's `remove .open from .accordion-item` keeps its source),
+   * steal a following command's tokens (a trailing `then add …` has no role
+   * marker adjacent), nor touch a positional-phrase destination (`add .open to
+   * closest .accordion-item` — the leading token is the `closest` keyword, which
+   * isValue rejects, so that phrase is left for the positional path).
+   *
+   * The `destination` marker is matched by its PRIMARY surface form only: several
+   * profiles list dangerous destination *alternatives* that belong to other roles
+   * (ko `에서` is the source marker, hi `को` the object marker), so admitting them
+   * would mis-capture a source phrase as a destination. The shipped `source`
+   * reclaim keeps its broader primary+alternatives+normalized match.
    */
-  private tryAttachTrailingSource(
+  private tryAttachTrailingRole(
     stream: TokenStream,
     command: CommandSemanticNode,
     language: string
   ): void {
     const schema = getSchema(command.action as ActionType);
-    if (!schema?.roles.some(r => r.role === 'source')) return;
-
+    if (!schema) return;
+    const profile = tryGetProfile(language);
+    if (!profile) return;
     const roles = command.roles as Map<SemanticRole, SemanticValue>;
-    const existing = roles.get('source');
-    // Only fill a missing source or override the schema's `me` default — never a
-    // genuinely captured one.
-    if (existing && !(existing.type === 'reference' && existing.value === 'me')) return;
 
-    const src = tryGetProfile(language)?.roleMarkers?.source;
-    if (!src) return;
-    const isMarker = (t: LanguageToken | null): boolean => {
-      if (!t || (t.kind !== 'particle' && t.kind !== 'keyword')) return false;
-      if ((t.normalized ?? '').toLowerCase() === 'source') return true;
-      const v = t.value.toLowerCase();
-      return (
-        src.primary?.toLowerCase() === v || !!src.alternatives?.some(a => a.toLowerCase() === v)
-      );
+    // What counts as a trailing role value. A control-flow keyword never does
+    // (`end`/`else`/`then` tokenize as identifiers in some languages and must not
+    // be captured). The `strict` variant — used for `destination` — admits only
+    // selectors and known DOM reference words; a bare identifier is rejected
+    // because the `to`-markers (ja に, ko 에, …) are common enough that admitting
+    // arbitrary identifiers makes the reclaim consume tokens a later command
+    // needed, cascading into different parses. The non-strict variant — used for
+    // `source`, matching the shipped #379/#408 behavior — also admits bare
+    // identifiers (the `from`-markers are rarer and were verified safe).
+    const isValue = (t: LanguageToken | null, strict: boolean): boolean => {
+      if (!t) return false;
+      if (t.kind === 'selector') return true;
+      const norm = (t.normalized ?? t.value).toLowerCase();
+      if (NON_VALUE_KEYWORDS.has(norm)) return false;
+      if (
+        norm === 'body' ||
+        norm === 'it' ||
+        norm === 'you' ||
+        norm === 'result' ||
+        norm === 'document' ||
+        norm === 'window'
+      )
+        return true;
+      if (strict) return false;
+      return t.kind === 'identifier' || (t.kind as string) === 'reference';
     };
-    const isValue = (t: LanguageToken | null): boolean =>
-      !!t &&
-      (t.kind === 'selector' ||
-        (t.normalized ?? '').toLowerCase() === 'body' ||
-        t.kind === 'identifier' ||
-        (t.kind as string) === 'reference');
 
-    const tok0 = stream.peek();
-    const tok1 = stream.peek(1);
-    if (!tok0 || !tok1) return;
+    // remove→source, add/put→destination. A command declares at most one of
+    // these trailing markers, so the loop never double-fires for one clause.
+    const trailingRoles: ReadonlyArray<{ role: SemanticRole; strict: boolean }> = [
+      { role: 'source', strict: false },
+      { role: 'destination', strict: true },
+    ];
+    for (const { role, strict } of trailingRoles) {
+      if (!schema.roles.some(r => r.role === role)) continue;
+      const marker = profile.roleMarkers?.[role];
+      if (!marker) continue;
+      const existing = roles.get(role);
+      // Only fill a missing role or override the schema's `me` default — never a
+      // genuinely captured one.
+      if (existing && !(existing.type === 'reference' && existing.value === 'me')) continue;
 
-    if (src.position === 'after') {
-      // Postpositional `<value> <from-marker>` (ja から, ko 에서, bn থেকে,
-      // hi से, tr den).
-      if (isValue(tok0) && isMarker(tok1)) {
-        const v = this.tokenToSemanticValue(tok0);
-        stream.advance();
-        stream.advance();
-        if (v) roles.set('source', v);
-      }
-    } else {
-      // Prepositional `<from-marker> <value>` (th จาก and other SVO langs whose
-      // transformer trails the from-phrase after `verb patient`).
-      if (isMarker(tok0) && isValue(tok1)) {
-        stream.advance();
-        const v = this.tokenToSemanticValue(stream.advance());
-        if (v) roles.set('source', v);
+      const isMarker = (t: LanguageToken | null): boolean => {
+        if (!t || (t.kind !== 'particle' && t.kind !== 'keyword')) return false;
+        const v = t.value.toLowerCase();
+        if (marker.primary?.toLowerCase() === v) return true;
+        if (strict) return false;
+        if ((t.normalized ?? '').toLowerCase() === role) return true;
+        return !!marker.alternatives?.some(a => a.toLowerCase() === v);
+      };
+
+      const tok0 = stream.peek();
+      const tok1 = stream.peek(1);
+      if (!tok0 || !tok1) return;
+
+      if (marker.position === 'after') {
+        // Postpositional `<value> <marker>` (SOV: ja から/に, ko 에서/에, …).
+        if (isValue(tok0, strict) && isMarker(tok1)) {
+          const v = this.tokenToSemanticValue(tok0);
+          stream.advance();
+          stream.advance();
+          if (v) roles.set(role, v);
+          return;
+        }
+      } else {
+        // Prepositional `<marker> <value>` (SVO th: จาก/ใน body).
+        if (isMarker(tok0) && isValue(tok1, strict)) {
+          stream.advance();
+          const v = this.tokenToSemanticValue(stream.advance());
+          if (v) roles.set(role, v);
+          return;
+        }
       }
     }
   }
@@ -1364,11 +1423,12 @@ export class SemanticParserImpl implements ISemanticParser {
         if (commandMatch) {
           const cmd = this.buildCommand(commandMatch, language);
           commands.push(cmd);
-          // Reclaim a trailing post-verb source phrase the matched pattern left
-          // unconsumed (`remove .x from body` → `.x を 削除 ボディ から`); without
-          // this the SOV grammar body walker skips `ボディ から` and source stays
+          // Reclaim a trailing post-verb source/destination phrase the matched
+          // pattern left unconsumed (`remove .x from body` → `.x を 削除 ボディ から`,
+          // `add .x to body` → `.x を 追加 ボディ に`); without this the SOV grammar
+          // body walker skips the trailing `<value> <marker>` and the role stays
           // the `me` default. Same guard as the parseClause call site.
-          this.tryAttachTrailingSource(tokens, cmd, language);
+          this.tryAttachTrailingRole(tokens, cmd, language);
           matched = true;
           clauseHadMatch = true;
         }

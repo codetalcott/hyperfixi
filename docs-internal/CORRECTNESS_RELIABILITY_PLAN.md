@@ -945,6 +945,70 @@ sw); set-style ×2 (hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu 
   event body routing** (ms/tl make-toast + zh/bn compound collapse). Alt track:
   behavior-\* degenerate mass (~40 of 63 degen).
 
+## 7p. Status update (2026-06-13, session 17): trailing post-verb destination
+
+**modal-open 7→1 by generalizing the wave-9 source reclaim to destinations.**
+modal-open's body is `show #modal then add .modal-open to body`; the transformer
+emits the to-phrase AFTER the verb — SOV `.modal-open を 追加 ボディ に`, SVO th
+`เพิ่ม .modal-open ใน บอดี้` — so the add pattern (ending at the verb) drops it and
+the class is added to the clicked button (the `me` default) instead of the body.
+modal-open's destination value is `body` — a single reference token, the exact
+shape wave 9 already handled for source. Generalized `tryAttachTrailingSource` →
+`tryAttachTrailingRole`: it now loops over {source, destination}, reclaiming a
+trailing marker+value phrase for whichever the command's schema declares and is
+currently absent or `me`.
+
+**Two hard-won guards (a first cut regressed R1, then cascaded):**
+
+1. **Block keywords are not values.** `end`/`else`/`then` tokenize as identifiers
+   in some languages; a naive `isValue` admitting identifiers captured hi `put …
+end` → destination `end` (the role-fidelity regression the first measurement
+   exposed). A `NON_VALUE_KEYWORDS` set rejects them.
+2. **The destination matcher is STRICT (selectors + DOM reference words only, no
+   bare identifiers); the source matcher stays broad (shipped #408).** The
+   `to`-markers (ja に, ko 에, …) are common, so admitting arbitrary identifiers
+   made the reclaim eat tokens a later command needed, **cascading** into wholly
+   different downstream parses (ja fetch-loading-state `get` → `fetch source:then`,
+   ~1000 captures changed). Restricting destination values to selectors/references
+   eliminated the cascade; the clean same-`patterns.db` diff then showed ONLY
+   correct improvements (modal-open→body, send-with-detail→#target,
+   window-scroll→#header). The `from`-markers are rarer and were verified safe
+   broad, so source keeps its shipped breadth (and its degenerate
+   behavior-draggable `source:document` capture). The destination strictness also
+   means accordion's positional `add .open to closest .accordion-item` is left
+   untouched (the leading `closest` keyword fails isValue) — exactly right, that's
+   the separate positional path.
+
+**Result:** modal-open 7→1 failing (cleared bn, hi, ja, ko, th, tr).
+meanExecutionFidelity **0.9201 → 0.9285**; failing execution cells **57 → 51**
+(−6). Parse-level byte-identical (avgFidelity 0.9743, lossy 77, degen 63). The
+per-language avgRoleFidelity baseline wiggled ±0.002 (within the documented
+populate-jitter tolerance — the gate passed; the clean parser-only diff is purely
+positive). Gate green; baseline regenerated; subset membership unchanged. 9 unit
+tests added (R2 wave 10). Semantic 5889 green.
+
+**Process note (measurement trap that cost two false alarms):** a `probe-roles`
+diff is only valid against ONE `patterns.db` — repopulating between the before/
+after captures makes populate jitter masquerade as a ~1000-line parser regression.
+Capture both snapshots against the same DB (stash the parser change, rebuild,
+capture; pop, rebuild, capture — no `populate` in between), or trust the gate.
+
+**Still-open R2 clusters after this (51 failing, ranked):** accordion-exclusive
+×8 (bn de hi ja ko sw th tr — SOV destination-positional, the `closest
+.accordion-item` phrase); make-toast-element ×6 (bn hi ms qu uk zh);
+modal-close-backdrop ×6 (hi ko qu ru uk zh); tabs-aria ×5 (bn hi ja ko tr);
+modal-close-button ×4 (de it qu sw); make-element ×3 (bn hi ms); set-attribute ×3
+(hi qu tr); if-matches ×3 (qu tr zh); closest-ancestor ×2 (de sw); set-style ×2
+(hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu zh); + singletons.
+**Next-mechanism ranking:** (1) **accordion destination-POSITIONAL** — same
+trailing-destination shape but the value is a `closest <sel>` positional phrase,
+so it needs positional-expression capture (not the single-token `isValue`), AND
+tr/sw are additionally blocked by underscore-tokenization (`en_yakın`/
+`karibu_zaidi`); clean yield ja/ko/hi/bn ≈ 4 cells. (2) **qu/tr/sw underscore-
+tokenizer** (the `_`-joined multi-word keyword split — qu in 8 cells, also unlocks
+tr/sw `closest`). (3) **de `nächste`/`next` disambiguation**. (4) **fused-event
+body routing**. Alt track: behavior-\* degenerate mass.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
