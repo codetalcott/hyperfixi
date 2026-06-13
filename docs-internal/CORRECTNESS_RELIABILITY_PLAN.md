@@ -1122,6 +1122,47 @@ modal-close-backdrop, sw closest, + the qu else/body alignments reverted in
 cluster at ×5); (3) **de `nächste`/`next` disambiguation**; (4) **fused-event
 body routing / zh-bn compound collapse**. Alt track: behavior-\* degenerate mass.
 
+## 7s. Status update (2026-06-13, session 19 cont.): de nächste/closest disambiguation
+
+**de cleared entirely (3 cells) — the §7k/§7q de `nächste`/`next` collision.**
+German `nächste` is genuinely ambiguous (next/nearest); the de i18n dict emitted
+it for BOTH `next` and `closest`, and the german tokenizer deliberately
+normalizes `nächste`→next (last-wins — a second `closest` entry would shadow the
+positional-capable `next`, documented in german.ts). So a translated `closest .X`
+surfaced as `next .X` and the wrong element was hit at runtime (accordion-exclusive,
+closest-ancestor, modal-close-button).
+
+- **Fix** (align-the-odd-one-out idiom, two layers): de dict emits the
+  unambiguous `nächstgelegene` ("nearest-located") for `closest`; the german
+  tokenizer maps `nächstgelegene`→closest. Distinct word → no shadowing of
+  `next`; closest round-trips. Pruned the now-fixed `de:closest` from the
+  `positional-keyword-drift` burn-down allowlist (the list only shrinks). A probe
+  confirmed all three de cells capture en-identical roles (`closest .accordion-item`,
+  `closest .card`, `hide closest .modal`; modal-close-button's `körper`→body
+  source already resolved, so de modal-close-button is fully clean).
+- **Result**: de now has **0** execution failures (was 3). meanExecutionFidelity
+  **0.9397 → 0.9439**; failing execution cells **43 → 40** (−3). Parse-level
+  byte-identical (avgFidelity / lossy 77 / degen 63 unchanged — only the captured
+  positional `raw` the runtime reads moved from next/me to `closest .X`). Gate
+  green; baseline regenerated; 3 lock tests added (wave 13). Semantic 5900, i18n
+  846 green.
+
+**Still-open R2 clusters after this (40 failing, ranked):** make-toast-element ×6
+(bn hi ms qu uk zh); tabs-aria ×5 (bn hi ja ko tr); make-element ×3 (bn hi ms);
+modal-close-backdrop ×3 (hi qu zh); set-attribute ×3 (hi qu tr); modal-close-button
+×3 (it qu sw); if-matches ×3 (qu tr zh); set-style ×2 (hi id); put-content-basic ×2
+(ja qu); if-condition ×2 (qu zh); accordion-exclusive ×2 (sw th); + singletons
+(halt-propagation hi, set-{inner-html,text}-possessive-dot hi, modal-open qu,
+closest-ancestor sw, if-exists zh). **The residual is now dominated by two
+cross-cutting blockers**: (1) **underscore/particle tokenizer** — qu (8 cells via
+`mana_chayqa`/`punta`), sw (`karibu_zaidi` → accordion/closest-ancestor), ms
+(`ke_dalam` → make-element/make-toast); (2) **zh/bn fused-event compound collapse**
+(zh all conditionals + make-toast; bn make-element/make-toast/tabs-aria). Plus
+per-language SOV scrambles (hi set-trio, tabs-aria SOV) and the en-reference-lossy
+tabs-aria (`on <scope>` dropped even in en — a two-layer arc). Probed this session:
+make-element/set-attribute/tabs-aria are each scattered per-language structural
+bugs, NOT clean single mechanisms.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
