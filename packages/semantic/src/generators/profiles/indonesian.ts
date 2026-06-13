@@ -28,7 +28,7 @@ export const indonesianProfile: LanguageProfile = {
     result: 'hasil',
     event: 'peristiwa',
     target: 'target',
-    body: 'tubuh',
+    body: 'badan', // matches the i18n dict's emitted body word (corpus-canonical; tubuh = anatomical body)
   },
   possessive: {
     marker: '', // Indonesian: "X saya" (X of mine), possessor follows noun
@@ -109,7 +109,7 @@ export const indonesianProfile: LanguageProfile = {
     unless: { primary: 'kecuali', normalized: 'unless' },
     when: { primary: 'ketika', normalized: 'when' },
     where: { primary: 'di_mana', normalized: 'where' },
-    else: { primary: 'selainnya', normalized: 'else' },
+    else: { primary: 'selainnya', alternatives: ['lainnya'], normalized: 'else' }, // lainnya = the i18n dict's emitted else word (corpus-canonical)
     repeat: { primary: 'ulangi', normalized: 'repeat' },
     for: { primary: 'untuk', normalized: 'for' },
     while: { primary: 'selama', normalized: 'while' },
