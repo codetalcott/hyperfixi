@@ -6045,3 +6045,108 @@ describe('hi verb-medial put in fused event bodies (S6 — make-element/make-toa
     expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });
+
+describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1)', () => {
+  // The qu semantic profile carried formal/alternate spellings (me=ñuqa,
+  // target=ñawpaqman, body=ukhu, it=pay) that appear in ZERO corpus rows — the
+  // i18n dict emits noqa/punta/kurku/chay. So the put destination (`noqa man`),
+  // the matches-condition target (`punta` — which the tokenizer then SPLIT into
+  // `pun`+`ta`-accusative because it wasn't a known word), and the DOM body
+  // (`kurku`) never resolved. Aligning references to the dict forms (§7l) fixed
+  // all four — and made `punta` tokenize whole, so the "accusative over-stripping"
+  // was really an unknown-word artifact. Cleared modal-open, modal-close-button,
+  // modal-close-backdrop, put-content-basic (execution 19→15).
+  const firstBody = (code: string) => {
+    const n = parse(code, 'qu') as {
+      body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown; raw?: string }> }>;
+    };
+    return n.body ?? [];
+  };
+
+  it('[qu] put-content: `noqa man` resolves the destination to me', () => {
+    const put = firstBody('"Done!" ta noqa man ñitiy pi churay').find(c => c.action === 'put');
+    expect(put?.roles?.get('destination')).toMatchObject({ value: 'me' });
+  });
+
+  it('[qu] modal-open: `kurku man` resolves the add destination to body', () => {
+    const add = firstBody('#modal ta ñitiy pi rikuchiy chayqa .modal-open ta kurku man yapay').find(
+      c => c.action === 'add'
+    );
+    expect(add?.roles?.get('destination')).toMatchObject({ value: 'body' });
+  });
+
+  it('[qu] modal-close-button: `kurku manta` resolves the remove source to body', () => {
+    const remove = firstBody(
+      'kaylla .modal ta ñitiy pi pakay chayqa .modal-open ta kurku manta qichuy'
+    ).find(c => c.action === 'remove');
+    expect(remove?.roles?.get('source')).toMatchObject({ value: 'body' });
+  });
+
+  it('[qu] modal-close-backdrop: `punta` tokenizes whole (target), not pun+ta', () => {
+    const node = parse('ñitiy pi sichus punta tupan .modal-backdrop .modal-backdrop ta pakay tukuy', 'qu');
+    const cond = (function find(n: unknown): Record<string, unknown> | null {
+      if (!n || typeof n !== 'object') return null;
+      const r = n as Record<string, unknown>;
+      if (r.kind === 'conditional') return r;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = r[f];
+        if (Array.isArray(c)) for (const x of c) { const got = find(x); if (got) return got; }
+      }
+      return null;
+    })(node);
+    expect(cond).not.toBeNull();
+    const raw = (cond!.roles as Map<string, { raw?: string }>).get('condition')?.raw ?? '';
+    expect(raw.startsWith('target ')).toBe(true);
+  });
+});
+
+describe('qu `cheqaq` → true boolean literal (qu arc wave 2 — set-attribute)', () => {
+  // The qu tokenizer EXTRAS mapped only arí/ari ("yes") to `true`, but the i18n
+  // dict emits `cheqaq` ("true/correct") — set-attribute `@disabled ta cheqaq man
+  // …`. So the value tokenized as a bare identifier and `set @disabled to
+  // <undefined>` ran. Adding cheqaq→true to the tokenizer aligns it. Cleared qu
+  // set-attribute (execution 15→14).
+  it('[qu] set-attribute: cheqaq resolves to the boolean true', () => {
+    const n = parse('@disabled ta cheqaq man ñitiy pi churanay', 'qu') as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown }> }>;
+    };
+    const set = (n.body ?? []).find(c => c.action === 'set');
+    expect(set?.roles?.get('patient')?.value).toBe('true');
+  });
+});
+
+describe('qu make-toast: single-quote strings + fused-body at-end (qu arc wave 3)', () => {
+  // make-toast qu (`… 'Saved!' ta chay man churay … chay pi tukuy pa kurku ta
+  // churay`) needed three fixes: (1) the qu string extractor only accepted `"`,
+  // so the single-quoted `'Saved!'` tokenized as `'Saved`+`!`+`'` — now `'` is
+  // accepted (safe: Quechua apostrophes are mid-word, never at a token start);
+  // (2) the fused make-event body routes through parseBodyWithGrammarPatterns,
+  // whose `end`-keyword break lacked the isAtEndPositionNoun guard, so `tukuy`
+  // (end) chopped the attaching at-end put — guard mirrored from
+  // parseBodyWithClauses; (3) `case 'qu'` in getPutPatternsForLanguage didn't
+  // spread `...atEnd`, so PUT_AT_END never generated `put-qu-at-end`. Cleared qu
+  // make-toast (execution 14→13) — qu fully clear.
+  it('[qu] single-quoted string `\x27Saved!\x27` tokenizes as one string literal', () => {
+    const toks = getTokenizer('qu').tokenize("'Saved!' ta").tokens;
+    expect(toks[0]?.value).toBe("'Saved!'");
+  });
+
+  it('[qu] make-toast parses make + put(Saved!→it) + put(it→body, at end of)', () => {
+    const n = parse(
+      "a <div.toast/> ta ñitiy pi ruray chayqa 'Saved!' ta chay man churay chayqa chay pi tukuy pa kurku ta churay",
+      'qu'
+    ) as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
+    };
+    const body = n.body ?? [];
+    expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
+    // The single-quoted literal now tokenizes whole (was `'Saved`+`!`+`'`); the
+    // put captures it as an expression whose raw carries the Saved! text.
+    const p1 = body[1]?.roles?.get('patient');
+    expect(String(p1?.raw ?? p1?.value)).toContain('Saved!');
+    expect(body[1]?.roles?.get('destination')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('patient')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('destination')).toMatchObject({ value: 'body' });
+    expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});

@@ -1690,16 +1690,58 @@ separate fixes.**
 tabs-aria ×5 (bn/hi/ja/ko/tr → S1), tr ×2, id/it/ja/th/uk ×1, hi halt-propagation
 ×1. hi 8→2; zh ×0; ms ×0.
 
+## 7z. Status update (2026-06-13, session 23 cont.): qu tokenizer arc DONE (19→13)
+
+**The qu tokenizer arc cleared all 6 qu cells in 3 waves — and the roadmap's
+"accusative-particle over-stripping" diagnosis was wrong: it was an unknown-word
+artifact, not a particle-logic bug.**
+
+| wave | mechanism                                                          | cleared                                                                 |
+| ---- | ------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| 1    | reference alignment to dict forms (me/it/target/body)              | modal-open, modal-close-button, modal-close-backdrop, put-content-basic |
+| 2    | `cheqaq`→true in the tokenizer EXTRAS                              | set-attribute                                                           |
+| 3    | single-quote strings + fused-body at-end guard + PUT_AT_END wiring | make-toast-element                                                      |
+
+- **Wave 1 (the big lever, 4 cells):** the qu semantic profile carried formal
+  spellings — me=`ñuqa`, target=`ñawpaqman`, body=`ukhu`, it=`pay` — that appear in
+  ZERO corpus rows; the i18n dict emits noqa/punta/kurku/chay. So the put
+  destination, the matches-condition target, and the DOM body never resolved.
+  Crucially, `punta` (target) was being SPLIT into `pun`+`ta`-accusative ONLY
+  because it wasn't a known word — once it's the profile's `target` reference it
+  tokenizes whole. The §10/§7n "qu accusative over-stripping" was a phantom (no
+  particle-logic change needed) — the §7l reference-alignment idiom did it all.
+- **Wave 2:** the tokenizer mapped only arí/ari ("yes") to `true`; the dict emits
+  `cheqaq` ("correct"). `set @disabled to <undefined>` → `to true`.
+- **Wave 3 (3 sub-fixes for 1 cell):** (a) the qu string extractor rejected single
+  quotes (to dodge the glottalization apostrophe `ch'usaq`) so `'Saved!'` broke —
+  accept `'` (safe: those apostrophes are always mid-word, and the extractor only
+  runs at a token start); (b) the fused make-event body routes through
+  parseBodyWithGrammarPatterns, whose `end`-break lacked the S2 `isAtEndPositionNoun`
+  guard, so `tukuy` (end) chopped the attaching put — guard mirrored; (c)
+  `case 'qu'` didn't spread `...atEnd`, so PUT_AT_END never generated
+  `put-qu-at-end`. The `pi` event-marker/at-marker collision was a red herring once
+  the at-end pattern (priority 110) existed.
+- **Result:** execution **19 → 13**; meanExecutionFidelity up. All waves
+  semantic-only, zero regressions / fidelity flips; gate green; baseline
+  regenerated; 7 lock tests added. Semantic 5949 green. The shared
+  parseBodyWithGrammarPatterns guard is gated to a language's exact PUT_AT_END
+  at/of words, so non-qu bodies are byte-identical.
+
+**Cluster after qu (13 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1 en-reference-
+lossy), tr ×2 (if-matches, set-attribute), id/it/ja/th/uk ×1, hi halt-propagation
+×1. zh ×0, ms ×0, qu ×0; hi ×2. Session 23 total: **32 → 13 (19 cells, 4 arcs).**
+
 ## 11. Next-arc handoffs (post-#416)
 
-The cheap dict/profile-alignment wins are exhausted (R2 execution: 19 cells after
-S2+S6, parse ship line held). The next work is decomposed into focused handoffs:
+The cheap dict/profile-alignment wins are exhausted (R2 execution: 13 cells after
+S2+S6+qu, parse ship line held). The next work is decomposed into focused handoffs:
 
 - ✅ **Task #10 — multi-word markers + dict underscore audit:** DONE (#417).
 - ✅ **S2 — fused-event body routing / compound collapse:** DONE (session 23, §7x;
   32→25). zh + ms fully clear.
 - ◑ **S6 — hi SOV fronting:** 6/8 DONE (session 23, §7y; 25→19; hi 8→2). Remaining
   hi: halt-propagation (blocked — leaked-`the` regresses tr), tabs-aria (S1).
+- ✅ **qu tokenizer arc:** DONE (session 23, §7z; 19→13; qu 6→0).
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·

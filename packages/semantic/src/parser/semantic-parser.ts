@@ -1410,11 +1410,25 @@ export class SemanticParserImpl implements ISemanticParser {
         continue;
       }
 
-      // Check for 'end' keyword - terminates block
+      // Check for 'end' keyword - terminates block. But an `end` keyword that is
+      // the position NOUN of an `at end of` phrase (qu `… pi tukuy pa kurku ta
+      // churay`, where `tukuy` = end) is not a block terminator — the same guard
+      // parseBodyWithClauses applies, now mirrored on this fused-body path so a
+      // make-event's trailing at-end put (make-toast) isn't chopped.
       if (current && this.isEndKeyword(current.value, language)) {
-        flushClause();
-        tokens.advance();
-        break;
+        const prevTok = tokens.peek(-1);
+        const nextTok = tokens.peek(1);
+        const isPositionalEnd = isAtEndPositionNoun(
+          language,
+          current.value,
+          prevTok?.value,
+          nextTok?.value
+        );
+        if (!isPositionalEnd) {
+          flushClause();
+          tokens.advance();
+          break;
+        }
       }
 
       let matched = false;

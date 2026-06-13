@@ -25,14 +25,20 @@ import type { ValueExtractor, ExtractionResult } from './value-extractor-types';
 
 /**
  * Custom string literal extractor for Quechua.
- * Only accepts double quotes (") to avoid conflicts with apostrophes in words
- * like "ñit'iy" (glottalized sounds).
+ *
+ * Accepts both double (") and single (') quotes. Single quotes are safe here
+ * even though Quechua glottalizes with an apostrophe (`ch'usaq`, `ñit'iy`):
+ * those apostrophes are always MID-word, and this extractor is only consulted at
+ * a token-start position (after whitespace) — no Quechua word *starts* with `'`,
+ * and the word/keyword extractor (registered after this one) consumes the whole
+ * glottalized word before its apostrophe is ever a token boundary. Without single
+ * quotes the corpus `'Saved!'` (make-toast) tokenized as `'Saved` + `!` + `'`.
  */
 class QuechuaStringLiteralExtractor implements ValueExtractor {
   readonly name = 'quechua-string-literal';
 
   canExtract(input: string, position: number): boolean {
-    return input[position] === '"';
+    return input[position] === '"' || input[position] === "'";
   }
 
   extract(input: string, position: number): ExtractionResult | null {
@@ -99,6 +105,11 @@ const SUFFIXES = new Set([
  */
 const QUECHUA_EXTRAS: KeywordEntry[] = [
   // Values/Literals
+  // `cheqaq` ("true/correct") is the form the i18n dict emits for `true`
+  // (set-attribute `@disabled ta cheqaq man …`); without it the value tokenized
+  // as a bare identifier and `set @disabled to <undefined>` ran. arí/ari ("yes")
+  // are the colloquial alternates, kept for input tolerance.
+  { native: 'cheqaq', normalized: 'true' },
   { native: 'arí', normalized: 'true' },
   { native: 'ari', normalized: 'true' },
   { native: 'manan', normalized: 'false' },
