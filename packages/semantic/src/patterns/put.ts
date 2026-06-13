@@ -865,6 +865,164 @@ const PUT_POSITIONAL: ReadonlyArray<{
   },
 ];
 
+/**
+ * The at-end-of positional put (`put it at end of body`, make-toast-element).
+ * en carries `put-en-at-end` (a handcrafted three-literal `at end of` phrase);
+ * the i18n transformer translates that phrase word-for-word into every other
+ * language, but no non-en language had a counterpart, so the third clause of
+ * make-toast-element either dropped entirely (SOV/VSO: the made toast is never
+ * attached → empty effect) or mis-parsed (the generic into-put grabbed the
+ * `end` word as the destination). This table records the per-language surface
+ * words the transformer emits for `at`/`end`/`of` plus the put verb, so the
+ * generated pattern reconstructs the en `put {patient} <at-word> <end-word>
+ * <of-word> {destination}` shape with `manner: 'at end of'` — the exact form
+ * the core runtime's PutCommand.mapPosition accepts (beforeend).
+ *
+ * The destination is the language's `body` word (the dict-canonical form, which
+ * already aligns with each profile's `references.body` so it resolves to the
+ * `body` contextReference). qu is omitted: its dict body word (`kurku`)
+ * disagrees with the profile (`ukhu`) and its tokenizer splits `_`-joined
+ * keywords — both tracked separately. he leaves `at`/`of` untranslated, so its
+ * markers are the English literals.
+ *
+ * A multi-word marker (vi `kết thúc`) tokenizes as a SINGLE token whose value is
+ * the whole phrase, so it is carried verbatim in one literal (not split). SOV
+ * languages place the verb last (after an object marker on the body). Only
+ * `at end of` is generated — `at start of` appears in no corpus example.
+ */
+const PUT_AT_END: ReadonlyArray<{
+  lang: string;
+  verb: string;
+  verbAlts?: string[];
+  /** marker word(s) for `at` (manner phrase head). */
+  at: string;
+  /** the `end` position noun. */
+  end: string;
+  /** the `of` connective between `end` and the body destination. */
+  of: string;
+  /** verb-final word order: `{patient} at end of {destination} <objMarker> verb`. */
+  sov?: boolean;
+  /** SOV object marker between the body destination and the trailing verb. */
+  objMarker?: string;
+  /** literal inserted between verb and patient (zh 把, he את). */
+  patientPrefix?: string;
+}> = [
+  // SVO / VSO (verb-first)
+  {
+    lang: 'es',
+    verb: 'poner',
+    verbAlts: ['pon', 'colocar', 'put'],
+    at: 'en',
+    end: 'fin',
+    of: 'de',
+  },
+  { lang: 'fr', verb: 'mettre', at: 'à', end: 'fin', of: 'de' },
+  { lang: 'pt', verb: 'colocar', at: 'em', end: 'fim', of: 'de' },
+  { lang: 'it', verb: 'mettere', at: 'a', end: 'fine', of: 'di' },
+  { lang: 'de', verb: 'setzen', at: 'bei', end: 'ende', of: 'von' },
+  { lang: 'sw', verb: 'weka', at: 'katika', end: 'mwisho', of: 'ya' },
+  {
+    lang: 'id',
+    verb: 'taruh',
+    verbAlts: ['letakkan', 'masukkan', 'tempatkan'],
+    at: 'di',
+    end: 'akhir',
+    of: 'dari',
+  },
+  { lang: 'ms', verb: 'letak', at: 'di', end: 'tamat', of: 'daripada' },
+  { lang: 'vi', verb: 'đặt', at: 'tại', end: 'kết thúc', of: 'của' },
+  { lang: 'pl', verb: 'umieść', at: 'przy', end: 'koniec', of: 'z' },
+  { lang: 'ru', verb: 'положить', at: 'у', end: 'конец', of: 'из' },
+  { lang: 'uk', verb: 'покласти', at: 'в', end: 'кінець', of: 'з' },
+  { lang: 'th', verb: 'ใส่', at: 'ที่', end: 'จบ', of: 'ของ' },
+  { lang: 'tl', verb: 'ilagay', at: 'sa', end: 'wakas', of: 'ng' },
+  { lang: 'ar', verb: 'ضع', at: 'عند', end: 'النهاية', of: 'من' },
+  {
+    lang: 'zh',
+    verb: '放置',
+    verbAlts: ['放', '放入'],
+    patientPrefix: '把',
+    at: '在',
+    end: '结束',
+    of: '的',
+  },
+  { lang: 'he', verb: 'שים', patientPrefix: 'את', at: 'at', end: 'סוף', of: 'of' },
+  // SOV (verb-last, object marker before the verb)
+  { lang: 'tr', verb: 'koy', sov: true, objMarker: 'i', at: 'de', end: 'son', of: 'nin' },
+  { lang: 'ja', verb: '置く', sov: true, objMarker: 'を', at: 'で', end: '終わり', of: 'の' },
+  { lang: 'ko', verb: '넣다', sov: true, objMarker: '를', at: '에', end: '끝', of: '의' },
+  {
+    lang: 'hi',
+    verb: 'रखें',
+    verbAlts: ['रख', 'डालें', 'डाल'],
+    sov: true,
+    objMarker: 'को',
+    at: 'पर',
+    end: 'समाप्त',
+    of: 'का',
+  },
+  {
+    lang: 'bn',
+    verb: 'রাখুন',
+    verbAlts: ['রাখ'],
+    sov: true,
+    objMarker: 'কে',
+    at: 'এ',
+    end: 'শেষ',
+    of: 'র',
+  },
+];
+
+function buildAtEndPutPatterns(language: string): LanguagePattern[] {
+  const spec = PUT_AT_END.find(s => s.lang === language);
+  if (!spec) return [];
+  const tokens: LanguagePattern['template']['tokens'] = [];
+  const verbToken = spec.verbAlts
+    ? ({ type: 'literal', value: spec.verb, alternatives: spec.verbAlts } as const)
+    : ({ type: 'literal', value: spec.verb } as const);
+  // A multi-word marker (vi `kết thúc`) tokenizes as ONE token whose value is
+  // the whole phrase, so the literal must carry the phrase verbatim — splitting
+  // on whitespace would emit two literals that never align with the single
+  // token. Single-word markers are unaffected.
+  const pushWords = (phrase: string) => {
+    tokens.push({ type: 'literal', value: phrase });
+  };
+  if (!spec.sov) {
+    tokens.push(verbToken);
+    if (spec.patientPrefix) tokens.push({ type: 'literal', value: spec.patientPrefix });
+    tokens.push({ type: 'role', role: 'patient' });
+    pushWords(spec.at);
+    pushWords(spec.end);
+    pushWords(spec.of);
+    tokens.push({ type: 'role', role: 'destination' });
+  } else {
+    tokens.push({ type: 'role', role: 'patient' });
+    pushWords(spec.at);
+    pushWords(spec.end);
+    pushWords(spec.of);
+    tokens.push({ type: 'role', role: 'destination' });
+    if (spec.objMarker) tokens.push({ type: 'literal', value: spec.objMarker });
+    tokens.push(verbToken);
+  }
+  return [
+    {
+      id: `put-${spec.lang}-at-end`,
+      language: spec.lang,
+      command: 'put',
+      // Above the generic into-put (≤100) so the full `at end of` phrase wins
+      // over a put that would otherwise grab the `end` word as its destination.
+      priority: 110,
+      template: {
+        format: `put {patient} ${spec.at} ${spec.end} ${spec.of} {destination}`,
+        tokens,
+      },
+      extraction: {
+        manner: { default: { type: 'literal', value: 'at end of' } },
+      },
+    } satisfies LanguagePattern,
+  ];
+}
+
 function buildPositionalPutPatterns(language: string): LanguagePattern[] {
   const spec = PUT_POSITIONAL.find(s => s.lang === language);
   if (!spec) return [];
@@ -911,34 +1069,37 @@ function buildPositionalPutPatterns(language: string): LanguagePattern[] {
 
 export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
   const positional = buildPositionalPutPatterns(language);
+  // The at-end-of positional put (make-toast-element); en carries its own
+  // handcrafted variant, every other language is generated from PUT_AT_END.
+  const atEnd = buildAtEndPutPatterns(language);
   switch (language) {
     case 'bn':
-      return getPutPatternsBn();
+      return [...getPutPatternsBn(), ...atEnd];
     case 'en':
       return getPutPatternsEn();
     case 'es':
-      return getPutPatternsEs();
+      return [...getPutPatternsEs(), ...atEnd];
     case 'hi':
-      return getPutPatternsHi();
+      return [...getPutPatternsHi(), ...atEnd];
     case 'id':
-      return [...getPutPatternsId(), ...positional];
+      return [...getPutPatternsId(), ...positional, ...atEnd];
     case 'it':
-      return getPutPatternsIt();
+      return [...getPutPatternsIt(), ...atEnd];
     case 'pl':
-      return getPutPatternsPl();
+      return [...getPutPatternsPl(), ...atEnd];
     case 'ru':
-      return getPutPatternsRu();
+      return [...getPutPatternsRu(), ...atEnd];
     case 'qu':
       return getPutPatternsQu();
     case 'th':
-      return getPutPatternsTh();
+      return [...getPutPatternsTh(), ...atEnd];
     case 'uk':
-      return getPutPatternsUk();
+      return [...getPutPatternsUk(), ...atEnd];
     case 'vi':
-      return getPutPatternsVi();
+      return [...getPutPatternsVi(), ...atEnd];
     case 'zh':
-      return [...getPutPatternsZh(), ...positional];
+      return [...getPutPatternsZh(), ...positional, ...atEnd];
     default:
-      return positional;
+      return [...positional, ...atEnd];
   }
 }
