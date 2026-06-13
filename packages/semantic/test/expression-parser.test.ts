@@ -432,6 +432,38 @@ describe('ExpressionParser', () => {
     });
   });
 
+  // Positional builtin + selector operand folds to a call expression — the
+  // shape the core runtime's positional expressions evaluate (its call
+  // evaluator passes selector args as raw strings). Previously
+  // `next .dropdown-menu` mangled into a `next.dropdown - menu` binary.
+  describe('positional builtin call folding', () => {
+    it('parses `next .dropdown-menu` as next(".dropdown-menu")', () => {
+      const result = parseExpression('next .dropdown-menu');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'callExpression',
+        callee: { type: 'identifier', name: 'next' },
+        arguments: [{ type: 'selector', value: '.dropdown-menu' }],
+      });
+    });
+
+    it('parses `closest .modal` as closest(".modal")', () => {
+      const result = parseExpression('closest .modal');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'callExpression',
+        callee: { type: 'identifier', name: 'closest' },
+        arguments: [{ type: 'selector', value: '.modal' }],
+      });
+    });
+
+    it('a bare positional word stays an identifier (`next` alone)', () => {
+      const result = parseExpression('next');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({ type: 'identifier', name: 'next' });
+    });
+  });
+
   // Bare `@attr` references (`toggle @hidden`, `set @disabled to true`). The
   // tokenizer previously skipped the `@` as an unknown character, so the
   // attribute surfaced as a plain identifier and the write commands treated it

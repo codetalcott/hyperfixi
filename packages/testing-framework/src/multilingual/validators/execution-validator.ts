@@ -62,18 +62,16 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 1 (session 8): multi-command click patterns — sync,
   // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
   // original subset: the en reference must execute with a non-empty effect
-  // signature in the current runtime. Eleven candidates were probed; three are
+  // signature in the current runtime. Eleven candidates were probed; two are
   // still deliberately absent because their EN reference is unusable:
   //   modal-close-button    — en parse DROPS `hide closest .modal`; the
   //                           surviving body-class change is invisible to the
   //                           snapshot (body isn't serialized)
-  //   dropdown-toggle       — `next .dropdown-menu` mis-parses as a binary
-  //                           `next.dropdown - menu` (positional-expression
-  //                           gap); toggle target evaluates to NaN
   //   make-toast-element    — the make + into-it puts now work, but the final
-  //                           `put it at end of body` is the positional-put
-  //                           form (same positional gap as dropdown-toggle),
-  //                           so the detached toast never enters the DOM
+  //                           `put it at end of body` is the at-end-of
+  //                           positional-put form (distinct from the now-fixed
+  //                           `next .sel` fold), so the detached toast never
+  //                           enters the DOM
   'tabs-content',
   'accordion-exclusive',
   // Expansion wave 2 (session 9, post en-conditional work): control-flow click
@@ -104,6 +102,12 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // to the fixture as the put destination).
   'halt-propagation',
   'make-element',
+  // Expansion wave 2d (session 9): `next .dropdown-menu` folds to a positional
+  // call expression (next('.dropdown-menu')) the runtime's positional
+  // expressions evaluate — previously it mangled into `next.dropdown - menu`
+  // and the toggle target evaluated to NaN. `.dropdown-menu` added to the
+  // fixture (appended last; existing snapshot indexes unchanged).
+  'dropdown-toggle',
 ];
 
 /**
@@ -126,6 +130,7 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div class="tab-panel"></div>
   <div class="accordion-item open"></div>
   <div id="container"></div>
+  <div class="dropdown-menu"></div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */

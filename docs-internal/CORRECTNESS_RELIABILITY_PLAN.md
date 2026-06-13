@@ -559,9 +559,23 @@ expressions/control-flow/parser 2580, runtime-ast-coverage 75; typechecks clean.
   signature is empty. Harness limitation; works in real browsers. Excluded
   with that reason documented.
 
-**Still deferred:** remaining §10.7 runtime gaps (`make` HTML-literal,
-`halt the event`); the `next .X` positional mis-parse (gates dropdown-toggle
-and the en tabs-content `show <positional> <html-literal>` fix);
+- **halt-the-event + make literals SHIPPED (wave 2c)** — the semantic halt
+  mapper preserves its patient (so `halt the event then toggle …` continues the
+  handler; HaltCommand already resolved the 'the' target), and convertSelector
+  carries `<…>` element literals on `raw` (MakeCommand's canonical field) so
+  `make a <div.card/>` creates instead of querySelector-ing. Subset 26 → 28
+  (halt-propagation, make-element; #container fixture element added).
+- **`next .sel` positional fold SHIPPED (wave 2d)** — the expression parser
+  folds `next/previous/closest/first/last <selector>` to a call expression
+  (the shape the runtime's positional expressions evaluate); previously
+  `next .dropdown-menu` mangled into a `next.dropdown - menu` binary. Subset
+  28 → 29 (dropdown-toggle; `.dropdown-menu` fixture element). Zero
+  parse-level fidelity churn from the fold (gate green, no avgFidelity moves).
+
+**Still deferred (the deep en body-parse arc):** `hide closest .modal`
+(modal-close-button) and `show the next <div.tab-panel/>` (tabs-content §10.5)
+still DROP at the semantic parse — body segmentation, not expression work; the
+at-end-of positional put (`put it at end of body`, make-toast-element);
 cross-language conditional folding (SOV/VSO orders).
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
