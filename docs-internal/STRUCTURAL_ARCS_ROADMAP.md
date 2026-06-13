@@ -81,14 +81,31 @@ Score each arc on five axes (H/M/L), then rank by leverage-adjusted value.
 
 - **Cells (hi is in 8 total):** set-inner-html-possessive-dot, set-text-possessive-dot,
   set-style, set-attribute, halt-propagation, make-element, make-toast, tabs-aria.
-- **Mechanism:** hi `into`-pattern (`में …`) matches before fallbacks; **fronted
-  possessive captured as the event** (`मेरा.textContent … सेट …` → possessive
-  becomes the event, body collapses); possessive-dot head assembly (§10 hi set-trio).
-- **Layer:** `semantic-parser.ts` (hi event-pattern ordering) + possessive matcher.
-- **Yield H (8) · Leverage L (one language) · Confidence M (probed §10) · Risk M ·
-  Unblocks: no.**
-- **Verdict:** big count but a per-language grind; several of its cells also belong
-  to S1/S3, so partial credit comes from those. Do after S2.
+- **Mechanism (re-probed session 23, NOT a single lever):** the hi transformer
+  fronts the patient/target to position 0, BEFORE the event: `<role> को क्लिक पर
+<verb> <value> में`. The priority-80 fallback `event-hi-bare` (`{event}`) then
+  grabs that fronted token as the EVENT and the body collapses. Confirmed parses:
+  - set-text/set-style/set-inner-html: event captured as the property-path
+    `me.textContent` / `me.*background` (the fronted **destination** + trailing
+    `<value> में` patient — NOT covered by `generateSOVPatientFirstEventHandlerPattern`,
+    which is patient-first with no trailing value).
+  - set-attribute: event captured as `@disabled` (fronted `@attr`).
+  - halt-propagation: event captured as `the` — a leaked **English article**
+    (`the घटना` = "the event"; dict/transformer left `the` untranslated).
+  - make-element: matches `make-event-hi-sov-patient-first` (event=click OK) but
+    the trailing `put it into #container` scrambles to patient=#container /
+    dest=me (a role-swap, the S3 `set`-scramble class — distinct bug).
+- **Why it's a grind:** each cell needs a DIFFERENT hi SOV event pattern (a
+  destination-fronted-with-trailing-value pattern for the set-trio; an `@attr`-
+  fronted pattern for set-attribute; the leaked-`the` fix for halt; a put role
+  un-scramble for make-element). No single circumfix-style lever like S2 wave 1.
+- **Layer:** `event-handlers-sov.ts` (new hi patterns) + `semantic-parser.ts`.
+- **Yield H (8) · Leverage L (one language, ~4 distinct sub-fixes) · Confidence M
+  (probed) · Risk M (SOV event patterns + en-reference-shared roles) · Unblocks: no.**
+- **Verdict:** highest count but confirmed a per-language grind. Best entry point:
+  a **destination-fronted-with-value SOV event pattern** for the set-trio (3 cells,
+  the cleanest shared sub-lever). halt's leaked-`the` and set-attribute's `@attr`
+  front are separate small fixes. make-element overlaps S3.
 
 ### S1 — en-reference-lossy patterns (`set @attr … on <scope>`) ⚠ high-risk
 
