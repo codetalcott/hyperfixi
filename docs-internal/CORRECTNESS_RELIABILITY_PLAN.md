@@ -817,6 +817,76 @@ halt-propagation ×1. Next-mechanism candidates unchanged: SOV post-verb source
 clause (parser), qu underscore-tokenizer, de `nächste`/`next` disambiguation,
 make-toast `at end of` per-language.
 
+## 7n. Status update (2026-06-13, session 15): make-toast `at end of` per-language
+
+**The biggest single R2 cluster (make-toast-element ×23) dropped to ×6 with one
+generated-pattern table.** en carries a handcrafted `put {patient} at end of
+{destination}` pattern (`put-en-at-end`); the i18n transformer translates that
+three-word position phrase verbatim into every other language, but no non-en
+language had a counterpart, so the third clause of make-toast (`put it at end of
+body`) either **dropped entirely** (SOV/VSO — the made toast is never attached →
+empty effect) or the generic into-put grabbed the `end` word as the destination.
+Fix in `packages/semantic/src/patterns/put.ts`: a `PUT_AT_END` table records the
+per-language surface words for the put verb + `at`/`end`/`of`, and
+`buildAtEndPutPatterns` reconstructs the en shape (`<verb> {patient} <at> <end>
+<of> {destination}`, SOV variant `{patient} <at> <end> <of> {destination}
+<objMarker> <verb>`) with `manner: 'at end of'` at priority 110 (above the
+generic into-put). The destination is the language's dict-canonical `body` word,
+which **already aligns** with each profile's `references.body` (the §7l
+alignment), so it resolves to the `body` contextReference with no dict change.
+
+**Result:** make-toast-element 23→6 failing (cleared **17 languages**: es, fr,
+pt, it, de, sw, id, vi, pl, ru, th, tl, ar, he, ja, ko, tr).
+meanExecutionFidelity **0.8878 → 0.9116**, failing cells **80 → 63** (−17).
+Parse-level **byte-identical** (avgFidelity 0.9743, lossy 77, degen 63 all
+unchanged): the dropped third command is a duplicate `put` action, so action-set
+fidelity was already 1.0 — exactly the lossy-but-faithful gap R2 execution
+fidelity exists to catch (same shape as the §7m halt fix). avgRoleFidelity (R1)
+ticked up slightly for the 17 (the now-parsed third put adds correct roles). Gate
+green; baseline regenerated; subset membership unchanged (make-toast was already
+in). 17 cross-language unit tests added (R2 wave 8 block). Semantic 5872 green.
+
+**Two findings worth the next session:** (1) a multi-word marker (vi `kết thúc`)
+tokenizes as ONE token whose value is the whole phrase, so the literal must carry
+the phrase verbatim — splitting on whitespace emits two literals that never
+align. (2) The single-token multi-word case is the _opposite_ of the usual
+assumption; check `tokenize(code,lang).tokens` before assuming a space splits.
+
+**make-toast survivors (6) — all SEPARATE, pre-existing mechanisms (none are
+this fix's regressions):**
+
+- **ms/tl-path**: ms drops the third clause even though every token is correct
+  and tl (identical SVO shape) works — ms's event body routes through the
+  grammar/fused path (`parseBodyWithGrammarPatterns`), not `parseBodyWithClauses`,
+  so the handcrafted at-end pattern is never consulted (the §7j routing class,
+  now manifesting on make-toast's fused make-event). tl proves the pattern is
+  correct; ms needs the body-routing fix.
+- **zh/bn compound collapse**: the whole event body parses as a single
+  `compound` (a higher-level event path), so neither the at-end nor any body
+  pattern is reached. Pre-existing.
+- **hi/uk second-put bug**: the at-end (third) put parses correctly, but the
+  SECOND clause mis-parses — hi drops `'Saved!'` (patient→it, dest→me); uk
+  truncates the string literal `'Saved!'`→`"Save"` and drops the destination
+  (`put requires content and position`). Separate string/role-capture bugs.
+- **qu**: body word mismatch (`kurku`≠profile `ukhu`) + the underscore-tokenizer
+  bug — excluded from PUT_AT_END; tracked for the qu-tokenizer arc.
+
+**Still-open R2 clusters after this (63 failing, ranked):** modal-close-button
+×10 (bn de hi it ja ko qu sw th tr — SOV post-verb source + bn/it/th
+source=undefined + de collision); accordion-exclusive ×8 (bn de hi ja ko sw th
+tr); modal-open ×7 (bn hi ja ko qu th tr); make-toast-element ×6 (bn hi ms qu uk
+zh — the survivors above); modal-close-backdrop ×6 (hi ko qu ru uk zh); tabs-aria
+×5 (bn hi ja ko tr); make-element ×3 (bn hi ms); set-attribute ×3 (hi qu tr);
+if-matches ×3 (qu tr zh); closest-ancestor ×2 (de sw); set-style ×2 (hi id);
+put-content-basic ×2 (ja qu); if-condition ×2 (qu zh); + singletons
+(halt-propagation hi, set-_-possessive-dot hi×2, if-exists zh). **Next-mechanism
+ranking:** (1) **SOV post-verb source clause** (parser, parseClause — modal-close-
+button/accordion ja/ko/tr/hi; control test in §7l proved even a selector source
+drops); (2) **qu underscore-tokenizer** (unlocks qu else/body + make-toast);
+(3) **de `nächste`/`next` disambiguation**; (4) **fused-event body routing**
+(would unlock ms/tl-class make-toast + possibly the zh/bn compound collapse — the
+§7j class generalized). Alt track: behavior-_ degenerate mass (~40 of 63 degen).
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right

@@ -5195,3 +5195,54 @@ describe('en at-end-of positional put — at end of / at start of (R2 make-toast
     expect(roles(lastPut).get('manner')?.value).toBe('at end of');
   });
 });
+
+describe('cross-language at-end-of positional put (R2 wave 8 — make-toast-element)', () => {
+  // en carries a handcrafted `put {patient} at end of {destination}` pattern; the
+  // i18n transformer translates that three-word position phrase verbatim into
+  // every other language, but no non-en language had a counterpart, so the third
+  // clause of make-toast-element (`put it at end of body`) either dropped
+  // entirely (SOV/VSO — the made toast was never attached → empty effect) or the
+  // generic into-put grabbed the `end` word as the destination. PUT_AT_END
+  // (patterns/put.ts) records the per-language surface words for the verb +
+  // `at`/`end`/`of` so the generated pattern reconstructs the en shape with
+  // `manner: 'at end of'`; the destination is the language's dict-canonical body
+  // word, which already resolves to the `body` contextReference. This cleared
+  // make-toast-element in 17 languages in the execution sweep (23→6 failing).
+  // Parse-level fidelity is unchanged: the dropped third command is a duplicate
+  // `put` action, so action-set fidelity was already 1.0 — exactly the
+  // lossy-but-faithful gap R2 execution fidelity exists to catch.
+  function roles(node: unknown): Map<string, { type?: string; value?: unknown }> {
+    return (node as { roles: Map<string, { type?: string; value?: unknown }> }).roles;
+  }
+  // [lang, the corpus-shaped third clause `put 'x' <at> end <of> body`]. SOV
+  // languages (ja/ko/tr) place the verb last after an object marker; he leaves
+  // `at`/`of` untranslated; vi's `kết thúc` is a single multi-word token.
+  const atEndCases: Array<[string, string]> = [
+    ['es', "poner 'x' en fin de cuerpo"],
+    ['fr', "mettre 'x' à fin de corps"],
+    ['pt', "colocar 'x' em fim de corpo"],
+    ['it', "mettere 'x' a fine di corpo"],
+    ['de', "setzen 'x' bei ende von körper"],
+    ['sw', "weka 'x' katika mwisho ya mwili"],
+    ['id', "taruh 'x' di akhir dari badan"],
+    ['vi', "đặt 'x' tại kết thúc của body"],
+    ['pl', "umieść 'x' przy koniec z body"],
+    ['ru', "положить 'x' у конец из тело"],
+    ['th', "ใส่ 'x' ที่ จบ ของ บอดี้"],
+    ['tl', "ilagay 'x' sa wakas ng katawan"],
+    ['ar', "ضع 'x' عند النهاية من جسم"],
+    ['he', "שים את 'x' at סוף of גוף"],
+    ['ja', "'x' で 終わり の ボディ を 置く"],
+    ['ko', "'x' 에 끝 의 바디 를 넣다"],
+    ['tr', "'x' de son nin gövde i koy"],
+  ];
+  for (const [lang, input] of atEndCases) {
+    it(`[${lang}] put at end of body parses as a put with manner 'at end of' + body destination`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      expect(node.action).toBe('put');
+      expect(roles(node).get('manner')?.value).toBe('at end of');
+      expect(roles(node).get('destination')?.value).toBe('body');
+    });
+  }
+});
