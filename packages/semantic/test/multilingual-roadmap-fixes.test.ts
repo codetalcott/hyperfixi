@@ -5650,14 +5650,14 @@ describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', (
   });
 });
 
-describe('hi `मेलखाता` matches operator (R2 wave 15 — modal-close-backdrop)', () => {
+describe('hi `मेल खाता` matches operator (R2 wave 15 → natural-form migration)', () => {
   // hi modal-close-backdrop combined the wave-12 (matches not in the profile) and
   // wave-14 (`_`-split) failures: the hi dict emitted `मेल_खाता` for matches, which
   // the hi tokenizer split into मेल/_/खाता, AND no hi profile entry mapped it to
-  // `matches`. So the folded condition raw came out garbled (`target मेल _` with
-  // `खाता` leaking into the hide patient) and the core couldn't evaluate it.
-  // Concatenate the dict to `मेलखाता` (no underscore) + add it to the hi profile →
-  // condition normalizes to the en-identical `target matches .modal-backdrop`.
+  // `matches`. wave-15 used a concatenated `मेलखाता` (parsed, but unnatural). Now
+  // that the base tokenizer matches multi-word profile keywords, this uses the
+  // NATURAL spaced `मेल खाता` — condition normalizes to en-identical
+  // `target matches .modal-backdrop`.
   function findConditional(node: unknown): Record<string, unknown> | null {
     if (!node || typeof node !== 'object') return null;
     const rec = node as Record<string, unknown>;
@@ -5678,10 +5678,71 @@ describe('hi `मेलखाता` matches operator (R2 wave 15 — modal-clos
 
   it('[hi] folds with en-identical `target matches .modal-backdrop` + clean hide patient', () => {
     const c = findConditional(
-      parse('क्लिक पर अगर लक्ष्य मेलखाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi')
+      parse('क्लिक पर अगर लक्ष्य मेल खाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi')
     );
     expect(c, 'conditional folded').not.toBeNull();
     expect(condText(c!)).toBe('target matches .modal-backdrop');
     expect(patientText(c!)).toBe('.modal-backdrop');
+  });
+});
+
+describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
+  // The base tokenizer now matches the longest space-containing profile keyword
+  // at a word boundary BEFORE the per-language extractors (profile-driven, not a
+  // per-language hardcoded list). Natural spaced multi-word keywords tokenize as
+  // ONE keyword across all languages — replacing the underscore/concatenation
+  // workarounds. Marker/modifier concepts are excluded (handled positionally),
+  // so e.g. id `ke dalam` (into) stays split and the destination marker `ke`
+  // survives for the put pattern.
+  const norm = (lang: string, text: string): string[] => {
+    const toks = getTokenizer(lang as 'en').tokenize(text).tokens as Array<{
+      value: string;
+      normalized?: string;
+    }>;
+    return toks.map(t => t.normalized ?? t.value);
+  };
+
+  // Command verbs / control-flow / event names: one keyword, correct normalized.
+  const oneKeyword: Array<[string, string, string]> = [
+    ['es', 'tecla abajo', 'keydown'],
+    ['he', 'כל עוד', 'while'],
+    ['he', 'ברירת מחדל', 'default'],
+    ['bn', 'তৈরি করুন', 'make'],
+    ['bn', 'চালিয়ে যান', 'continue'],
+    ['tr', 'üzerine gelme', 'hover'],
+    ['qu', 'mana waqtalla', 'async'],
+    ['vi', 'chuyển đổi', 'toggle'],
+    ['vi', 'với mỗi', 'for'],
+    ['hi', 'के लिए', 'for'],
+    ['hi', 'मेल खाता', 'matches'], // natural spaced matches (no more मेलखाता concat)
+  ];
+  for (const [lang, phrase, want] of oneKeyword) {
+    it(`[${lang}] "${phrase}" → single keyword \`${want}\``, () => {
+      expect(norm(lang, phrase)).toEqual([want]);
+    });
+  }
+
+  it('[id] marker concept `ke dalam` (into) stays split so the `ke` destination marker survives', () => {
+    // `into` is a positional marker concept — excluded from multi-word matching.
+    // The destination roleMarker `ke` must remain a separate token for the put pattern.
+    const toks = norm('id', 'ke dalam');
+    expect(toks[0]).toBe('destination'); // `ke` → destination marker
+    expect(toks).not.toEqual(['into']);
+  });
+
+  it('[hi] modal-close-backdrop folds with natural `मेल खाता` matches', () => {
+    const c = (function find(n: unknown): Record<string, unknown> | null {
+      if (!n || typeof n !== 'object') return null;
+      const r = n as Record<string, unknown>;
+      if (r.kind === 'conditional') return r;
+      for (const f of ['body', 'thenBranch', 'elseBranch']) {
+        const ch = r[f];
+        if (Array.isArray(ch)) for (const x of ch) { const got = find(x); if (got) return got; }
+      }
+      return null;
+    })(parse('क्लिक पर अगर लक्ष्य मेल खाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi'));
+    expect(c).not.toBeNull();
+    const cond = (c!.roles as Map<string, { raw?: string }>).get('condition')?.raw;
+    expect(cond).toBe('target matches .modal-backdrop');
   });
 });
