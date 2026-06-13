@@ -5647,3 +5647,39 @@ describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', (
     expect(branchActions(c!.elseBranch)).toEqual(['toggle']);
   });
 });
+
+describe('hi `मेलखाता` matches operator (R2 wave 15 — modal-close-backdrop)', () => {
+  // hi modal-close-backdrop combined the wave-12 (matches not in the profile) and
+  // wave-14 (`_`-split) failures: the hi dict emitted `मेल_खाता` for matches, which
+  // the hi tokenizer split into मेल/_/खाता, AND no hi profile entry mapped it to
+  // `matches`. So the folded condition raw came out garbled (`target मेल _` with
+  // `खाता` leaking into the hide patient) and the core couldn't evaluate it.
+  // Concatenate the dict to `मेलखाता` (no underscore) + add it to the hi profile →
+  // condition normalizes to the en-identical `target matches .modal-backdrop`.
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) { const r = findConditional(x); if (r) return r; }
+    }
+    return null;
+  }
+  const condText = (c: Record<string, unknown>): string =>
+    ((c.roles as Map<string, { raw?: string }>).get('condition')?.raw ?? '') as string;
+  const patientText = (c: Record<string, unknown>): unknown => {
+    const t = (c.thenBranch as Array<Record<string, unknown>>)?.[0];
+    const roles = t?.roles as Map<string, { value?: unknown; raw?: unknown }>;
+    return roles?.get('patient')?.value ?? roles?.get('patient')?.raw;
+  };
+
+  it('[hi] folds with en-identical `target matches .modal-backdrop` + clean hide patient', () => {
+    const c = findConditional(
+      parse('क्लिक पर अगर लक्ष्य मेलखाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi')
+    );
+    expect(c, 'conditional folded').not.toBeNull();
+    expect(condText(c!)).toBe('target matches .modal-backdrop');
+    expect(patientText(c!)).toBe('.modal-backdrop');
+  });
+});
