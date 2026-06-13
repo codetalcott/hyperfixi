@@ -5246,3 +5246,79 @@ describe('cross-language at-end-of positional put (R2 wave 8 — make-toast-elem
     });
   }
 });
+
+describe('trailing post-verb source clause in fused-event bodies (R2 wave 9 — modal-close-button)', () => {
+  // modal-close-button's body is `hide closest .modal then remove .modal-open
+  // from body`. The grammar transformer emits the from-phrase AFTER the verb —
+  // SOV `... .modal-open を 削除 ボディ から`, SVO th `... ลบ .modal-open จาก
+  // บอดี้` — and the per-command remove pattern (which ends at the verb) never
+  // claims it. Because the fused event pattern captures the first command (hide)
+  // as the action, the trailing `remove …` clause is parsed by
+  // parseBodyWithGrammarPatterns, which used to skip `<body-word> <from-marker>`
+  // and leave the schema's `me` default, so `.modal-open` was removed from the
+  // clicked button instead of the document body (no effect). tryAttachTrailingSource
+  // now reclaims the trailing source (postpositional or prepositional, per the
+  // profile's source-marker position) — the body-clause twin of the #379
+  // event-wrapper trailing source group. Cleared 6 languages in the execution
+  // sweep (modal-close-button 10→4). Fires only when the matched command's schema
+  // declares a source role that is currently absent or the defaulted `me`.
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  function role(cmd: Record<string, unknown>, name: string): unknown {
+    const roles = cmd.roles as Map<string, { value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    return (m.get(name) as { value?: unknown } | undefined)?.value;
+  }
+
+  // Corpus modal-close-button translations: `hide closest .modal then remove
+  // .modal-open from body`. bn/hi/ja/ko/tr trail a postpositional `<body>
+  // <from-marker>`; th a prepositional `<from-marker> <body>` after the verb.
+  const cases: Array<[string, string]> = [
+    ['ja', '最も近い .modal を クリック で 隠す それから .modal-open を 削除 ボディ から'],
+    ['ko', '가장가까운 .modal 를 클릭 할 때 숨기다 그러면 .modal-open 를 제거 바디 에서'],
+    ['bn', 'নিকটতম .modal কে ক্লিক এ লুকান তারপর .modal-open কে সরান বডি থেকে'],
+    ['hi', 'निकटतम .modal को क्लिक पर छिपाएं फिर .modal-open को हटाएं बॉडी से'],
+    ['tr', 'enyakın .modal i tıklama de gizle sonra .modal-open i kaldır gövde den'],
+    ['th', 'เมื่อ คลิก ซ่อน ใกล้สุด .modal แล้ว ลบ .modal-open จาก บอดี้'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] the trailing post-verb remove captures source = body (was the me default)`, () => {
+      const remove = commands(parse(input, lang as 'ja')).find(c => c.action === 'remove');
+      expect(remove, 'remove command present').toBeTruthy();
+      expect(role(remove!, 'patient')).toBe('.modal-open');
+      expect(role(remove!, 'source')).toBe('body');
+    });
+  }
+
+  it('[ja] a genuinely captured source is not overwritten (accordion remove keeps .accordion-item)', () => {
+    // accordion-exclusive's `remove .open from .accordion-item` captures its
+    // source through the existing path; the trailing-source reclaim must not
+    // touch it (the guard returns early on a non-`me` existing source).
+    const input =
+      '.open を クリック で 削除 .accordion-item から それから .open を 追加 最も近い .accordion-item に';
+    const remove = commands(parse(input, 'ja')).find(c => c.action === 'remove');
+    expect(remove).toBeTruthy();
+    expect(role(remove!, 'source')).toBe('.accordion-item');
+  });
+
+  it('[en] the en reference parse is unchanged (no trailing source phrase to reclaim)', () => {
+    const cmds = commands(parse('on click hide closest .modal remove .modal-open from body', 'en'));
+    const remove = cmds.find(c => c.action === 'remove');
+    expect(remove).toBeTruthy();
+    expect(role(remove!, 'source')).toBe('body');
+  });
+});

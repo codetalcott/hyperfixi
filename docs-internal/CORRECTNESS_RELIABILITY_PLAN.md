@@ -887,6 +887,64 @@ drops); (2) **qu underscore-tokenizer** (unlocks qu else/body + make-toast);
 (would unlock ms/tl-class make-toast + possibly the zh/bn compound collapse — the
 §7j class generalized). Alt track: behavior-_ degenerate mass (~40 of 63 degen).
 
+## 7o. Status update (2026-06-13, session 16): trailing post-verb source clause
+
+**modal-close-button 10→4 by reclaiming the trailing post-verb source.** Its
+body is `hide closest .modal then remove .modal-open from body`; the grammar
+transformer emits the from-phrase AFTER the verb — SOV `.modal-open を 削除 ボディ
+から` (bn/hi/ja/ko/tr), SVO th `ลบ .modal-open จาก บอดี้` — and the per-command
+remove pattern (which ends at the verb) never claims it, so the class was removed
+from the clicked button (the schema's `me` default) instead of the document body
+(no effect).
+
+**Key discovery (the handoff's parseClause hypothesis was half-right):** the
+remove clause does NOT go through `parseClause`. modal-close-button's fused event
+pattern captures the first command (`hide`) as the action, so the trailing
+`remove …` clause is parsed by **`parseBodyWithGrammarPatterns`** (the §7j fused-
+body path), not `parseBodyWithClauses → parseClause`. A `parseClause`-only fix
+therefore never fired (confirmed by an instrumented probe). The fix adds a shared
+`tryAttachTrailingSource` helper called at BOTH the `parseClause` and the
+`parseBodyWithGrammarPatterns` `matchBest` call sites: after a command matches, if
+its schema declares a `source` role that is currently absent or the defaulted
+`me`, and the next tokens form a clean marker+value pair in the profile's
+source-marker order (postpositional `<value> <from>` for SOV; prepositional
+`<from> <value>` for SVO), it reclaims the trailing source. The body-clause twin
+of #379's event-wrapper trailing source group.
+
+**Result:** modal-close-button 10→4 failing (cleared **6 languages**: bn, hi, ja,
+ko, th, tr). meanExecutionFidelity **0.9116 → 0.9201**; failing execution cells
+**63 → 57** (−6). Parse-level byte-identical (avgFidelity 0.9743, lossy 77, degen
+63 — the remove command was already present, only its source role was wrong);
+avgRoleFidelity (R1) ticked up for the 6. Conservative guard verified: accordion-
+exclusive / remove-class-from-all / take-class-from-siblings keep their genuinely
+captured sources (`.accordion-item` / `.items` / `.tab-button`) — the reclaim
+returns early on a non-`me` existing source. Gate green; baseline regenerated;
+subset membership unchanged. 9 cross-language unit tests added (R2 wave 9 block).
+Semantic 5881 green.
+
+**modal-close-button survivors (4) — separate mechanisms:** de (`nächste`→next
+collision, hide targets the wrong element); it (captures body as DESTINATION not
+source — a role-mislabel in the it path); sw (the `hide` command drops entirely);
+qu (body word `kurku`≠profile + underscore tokenizer).
+
+**Still-open R2 clusters after this (57 failing, ranked):** accordion-exclusive
+×8 (bn de hi ja ko sw th tr — the SOV **destination**-positional drop: `add .open
+to closest .accordion-item` → destination `me`, a DIFFERENT mechanism from the
+source clause); modal-open ×7 (bn hi ja ko qu th tr); make-toast-element ×6 (bn hi
+ms qu uk zh); modal-close-backdrop ×6 (hi ko qu ru uk zh); tabs-aria ×5 (bn hi ja
+ko tr); modal-close-button ×4 (de it qu sw); make-element ×3 (bn hi ms);
+set-attribute ×3 (hi qu tr); if-matches ×3 (qu tr zh); closest-ancestor ×2 (de
+sw); set-style ×2 (hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu zh);
+
+- singletons. **Next-mechanism ranking:** (1) **SOV destination-positional drop**
+  (accordion-exclusive `add` destination `closest .accordion-item`→`me` in
+  bn/hi/ja/ko/sw/tr — the destination twin of this PR's source reclaim, but in the
+  positional-phrase path; ~6 cells, the largest cluster); (2) **qu underscore-
+  tokenizer** (qu appears in 8 cells); (3) **de `nächste`/`next` disambiguation**
+  (de in 3 cells: modal-close-button, accordion, closest-ancestor); (4) **fused-
+  event body routing** (ms/tl make-toast + zh/bn compound collapse). Alt track:
+  behavior-\* degenerate mass (~40 of 63 degen).
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
