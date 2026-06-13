@@ -1069,6 +1069,59 @@ tokenizer** (the `_`-joined multi-word keyword split — qu in 8 cells, also unl
 tr/sw `closest`). (3) **de `nächste`/`next` disambiguation**. (4) **fused-event
 body routing**. Alt track: behavior-\* degenerate mass.
 
+## 7r. Status update (2026-06-13, session 19): `matches` operator normalization
+
+**modal-close-backdrop 6→3 with a three-line profile addition — the §7q/#2
+condition-keyword-normalization mechanism, confirmed by measure-first.** The
+fresh wave-11 baseline cluster (46 failing cells) was dominated by the
+conditional family (modal-close-backdrop ×6, if-matches ×3, if-condition ×2,
+if-exists ×1). A parse-probe of every modal-close-backdrop translation
+(`if target matches .modal-backdrop hide … end`) showed the fold is already
+STRUCTURALLY CORRECT in every language (condition + then-`hide`) — the only
+divergence is the `matches` operator word left untranslated in the condition
+raw: ko `target 일치 .modal-backdrop`, ru `target соответствует …`, uk `target
+відповідає …`. `joinTokenText` only normalizes `kind === 'keyword'` tokens, and
+**no profile defined `matches`** (it's a comparison operator — core territory —
+so it had always tokenized as an identifier), so the raw stayed un-English and
+the core expression parser (English operators only) couldn't evaluate it; the
+condition failed and the then-branch dropped at runtime.
+
+- **Fix**: add `matches: { primary: '<word>', normalized: 'matches' }` to the
+  ko/ru/uk profiles (the exact corpus surface words `일치`/`соответствует`/
+  `відповідає`). Now `matches` tokenizes as a keyword and the condition
+  normalizes to the en-identical `target matches .modal-backdrop`. Parser-side
+  only (the i18n dict already emits these words); lowest blast radius. The three
+  words occur in exactly two corpus patterns (modal-close-backdrop, focus-trap),
+  both as the comparison operator — no non-operator collision.
+- **Result**: modal-close-backdrop 6→3 failing (cleared ko, ru, uk).
+  meanExecutionFidelity **0.9355 → 0.9397**; failing execution cells **46 → 43**
+  (−3). Parse-level **byte-identical** (avgFidelity unchanged, lossy 77, degen
+  63 — the action set was always {if, hide}; only the un-normalized condition
+  raw moved, the lossy-but-faithful gap R2 exists to catch). Gate green (all four
+  ratchets); baseline regenerated; 4 lock tests added (wave 12). Semantic 5893.
+- **The remaining 3 are each a SEPARATE, pre-existing bug** (adding `matches`
+  doesn't help them): **hi** `मेल_खाता` (matches) underscore-splits to
+  `मेल`/`_`/`खाता`; **qu** `punta` (target) splits to `pun`/`ta`-particle (and
+  `tupan`/matches also unnormalized); **zh** the whole event body collapses to a
+  `compound` (the §7n zh/bn compound-collapse path) so the fold never runs at
+  all. hi/qu are blocked by the underscore/particle tokenizer; zh by body
+  routing.
+
+**Still-open R2 clusters after this (43 failing, ranked):** make-toast-element
+×6 (bn hi ms qu uk zh); modal-close-backdrop ×3 (hi qu zh — the survivors
+above); tabs-aria ×5 (bn hi ja ko tr); modal-close-button ×4 (de it qu sw);
+make-element ×3 (bn hi ms); accordion-exclusive ×3 (de sw th); set-attribute ×3
+(hi qu tr); if-matches ×3 (qu tr zh); closest-ancestor ×2 (de sw); set-style ×2
+(hi id); put-content-basic ×2 (ja qu); if-condition ×2 (qu zh); + singletons
+(halt-propagation hi, set-{inner-html,text}-possessive-dot hi, modal-open qu,
+if-exists zh). **Next-mechanism ranking unchanged from §7q:** (1) **underscore-
+tokenizer** (qu `mana_chayqa`/`punta`-ish, tr `en_yakın`, sw `karibu_zaidi` — a
+`_`-joined or particle-suffix multi-word keyword split; would unblock hi/qu
+modal-close-backdrop, sw closest, + the qu else/body alignments reverted in
+#405); (2) **tabs-aria `set @attr to X on scope`** (now the largest single
+cluster at ×5); (3) **de `nächste`/`next` disambiguation**; (4) **fused-event
+body routing / zh-bn compound collapse**. Alt track: behavior-\* degenerate mass.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right

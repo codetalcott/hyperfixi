@@ -128,6 +128,13 @@ export const koreanProfile: LanguageProfile = {
     return: { primary: '반환', normalized: 'return' },
     then: { primary: '그다음', alternatives: ['그런후'], normalized: 'then' },
     and: { primary: '그리고', alternatives: ['또한', '및'], normalized: 'and' },
+    // Comparison operator. The semantic package doesn't evaluate operators (core
+    // does), but a folded conditional's raw condition is reconstructed from the
+    // token stream and read by the core expression parser, which only understands
+    // English operator words — so `target 일치 .x` must normalize to `target
+    // matches .x`. Without this keyword `일치` stays an identifier and the
+    // condition is unevaluable (modal-close-backdrop drops its then-branch).
+    matches: { primary: '일치', normalized: 'matches' },
     end: { primary: '끝', alternatives: ['마침'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS실행', alternatives: ['js'], normalized: 'js' },
