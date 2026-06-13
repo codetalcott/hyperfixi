@@ -37,7 +37,17 @@ class CyrillicKeywordExtractor implements ContextAwareExtractor {
   }
 
   canExtract(input: string, position: number): boolean {
-    return this.isLetter(input[position]);
+    const char = input[position];
+    // A leading apostrophe is a string-literal quote, not a word start. The
+    // Ukrainian char class includes the apostrophe because it is an internal
+    // letter (п'ять, об'єкт) — valid mid-word (the extract loop's
+    // isIdentifierChar keeps it) but never word-initial. Without this guard a
+    // keyword starts on the opening `'` of a literal like 'Saved!', swallowing
+    // the quote and splitting the string at the first non-letter (issue: uk
+    // make-toast-element). No-op for Russian, whose char class has no
+    // apostrophe.
+    if (char === "'") return false;
+    return this.isLetter(char);
   }
 
   extract(input: string, position: number): ExtractionResult | null {

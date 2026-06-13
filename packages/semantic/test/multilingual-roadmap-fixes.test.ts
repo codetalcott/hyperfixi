@@ -6150,3 +6150,42 @@ describe('qu make-toast: single-quote strings + fused-body at-end (qu arc wave 3
     expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });
+
+describe('uk make-toast: apostrophe-as-letter no longer eats string quotes (R2 tails batch)', () => {
+  // The Ukrainian CyrillicKeywordExtractor's char class includes the apostrophe
+  // because it is an internal Ukrainian letter (п'ять, об'єкт). canExtract
+  // therefore matched the OPENING quote of a string literal, so `'Saved!'`
+  // tokenized as `'Saved` + `!` + `'`. That scrambled the make-toast fused body
+  // (make + put + put): the trailing `put it at end of body` lost its position
+  // role and threw `put requires content and position` at runtime. The fix
+  // rejects a LEADING apostrophe in canExtract (an apostrophe is never
+  // word-initial in Ukrainian); internal apostrophes still tokenize via the
+  // extract loop's isIdentifierChar. Cleared uk make-toast (execution −1).
+  it('[uk] single-quoted string `\x27Saved!\x27` tokenizes as one string literal', () => {
+    const toks = getTokenizer('uk')!.tokenize("покласти 'Saved!' в це").tokens;
+    const lit = toks.find(t => t.value.startsWith("'"));
+    expect(lit?.value).toBe("'Saved!'");
+  });
+
+  it('[uk] internal apostrophe (п\x27ять, об\x27єкт) still tokenizes whole (no regression)', () => {
+    const toks = getTokenizer('uk')!.tokenize("п'ять об'єкт").tokens;
+    expect(toks.map(t => t.value)).toEqual(["п'ять", "об'єкт"]);
+  });
+
+  it('[uk] make-toast parses make + put(Saved!→it) + put(it→body, at end of)', () => {
+    const n = parse(
+      "при клік створити a <div.toast/> тоді покласти 'Saved!' в це тоді покласти це в кінець з тіло",
+      'uk'
+    ) as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
+    };
+    const body = n.body ?? [];
+    expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
+    const p1 = body[1]?.roles?.get('patient');
+    expect(String(p1?.raw ?? p1?.value)).toContain('Saved!');
+    expect(body[1]?.roles?.get('destination')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('patient')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('destination')).toMatchObject({ value: 'body' });
+    expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});
