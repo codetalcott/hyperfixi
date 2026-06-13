@@ -5459,3 +5459,62 @@ describe('trailing post-verb POSITIONAL destination (R2 wave 11 — accordion-ex
     expect(destRaw(add!)).toBe('closest .accordion-item');
   });
 });
+
+describe('`matches` comparison-operator normalization (R2 wave 12 — modal-close-backdrop)', () => {
+  // modal-close-backdrop's body is `if target matches .modal-backdrop hide
+  // .modal-backdrop end`. The fold (tryParseConditionalBlock) already produced the
+  // right structure (condition + then-`hide`) in every language, but the condition
+  // raw is reconstructed from the token stream via joinTokenText, which only
+  // normalizes `kind === 'keyword'` tokens. The translated `matches` operator
+  // (`일치` / `соответствует` / `відповідає`) was an IDENTIFIER — no profile defined
+  // `matches` — so the raw stayed `target 일치 .modal-backdrop`, which the core
+  // expression parser (English operators only) can't evaluate; the condition was
+  // unevaluable and modal-close-backdrop dropped its then-branch at runtime.
+  // Adding `matches` to the ko/ru/uk profiles makes it tokenize as a keyword so the
+  // raw normalizes to the en-identical `target matches .modal-backdrop`. Parse-level
+  // action set is unchanged (still if + hide); only execution fidelity moved (the
+  // lossy-but-faithful gap R2 exists to catch). Cleared modal-close-backdrop in ko,
+  // ru, uk (6→3 failing; only hi/qu/zh remain, each blocked by a separate bug —
+  // hi `मेल_खाता` underscore-split, qu `punta`→`pun`/`ta` split, zh compound-collapse).
+  function findConditional(node: unknown): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.kind === 'conditional') return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const found = findConditional(x);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+  const condText = (c: Record<string, unknown>): string =>
+    ((c.roles as Map<string, { raw?: string }>).get('condition')?.raw ?? '') as string;
+
+  // The corpus surface form per language (freshly populated). `matches` is the only
+  // word being keyword-ified here; it appears in exactly two patterns
+  // (modal-close-backdrop, focus-trap), both as the comparison operator.
+  const cases: Array<[string, string]> = [
+    ['ko', '클릭 할 때 만약 대상 일치 .modal-backdrop .modal-backdrop 를 숨기다 끝'],
+    ['ru', 'при клик если цель соответствует .modal-backdrop скрыть .modal-backdrop конец'],
+    ['uk', 'при клік якщо ціль відповідає .modal-backdrop сховати .modal-backdrop кінець'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] the folded condition normalizes to en-identical \`target matches .modal-backdrop\``, () => {
+      const c = findConditional(parse(input, lang as 'ko'));
+      expect(c, 'conditional folded').not.toBeNull();
+      expect(condText(c!)).toBe('target matches .modal-backdrop');
+    });
+  }
+
+  it('[en] the en reference condition is unchanged', () => {
+    const c = findConditional(
+      parse('on click if target matches .modal-backdrop hide .modal-backdrop end', 'en')
+    );
+    expect(c).not.toBeNull();
+    expect(condText(c!)).toBe('target matches .modal-backdrop');
+  });
+});

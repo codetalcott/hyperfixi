@@ -274,6 +274,11 @@ export const ukrainianProfile: LanguageProfile = {
     },
     then: { primary: 'потім', alternatives: ['далі', 'тоді'], normalized: 'then' },
     and: { primary: 'і', alternatives: ['та'], normalized: 'and' },
+    // Comparison operator — see korean.ts for the rationale. A folded conditional's
+    // raw condition is read by the core expression parser (English operators only),
+    // so `target відповідає .x` must normalize to `target matches .x`; otherwise
+    // `відповідає` stays an identifier and modal-close-backdrop drops its then-branch.
+    matches: { primary: 'відповідає', normalized: 'matches' },
     end: { primary: 'кінець', normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },
