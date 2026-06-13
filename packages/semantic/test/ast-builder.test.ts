@@ -109,6 +109,19 @@ describe('Value Converters', () => {
 
       expect(result).toMatchObject({ type: 'attributeAccess', attributeName: 'aria-selected' });
     });
+
+    it('carries element-literal markup on `raw` (`<div.card/>` is creation, not a query)', () => {
+      // MakeCommand reads `node.raw` for element literals — without it the
+      // literal was querySelector-ed ("Invalid selector <div.card/>").
+      const value: SelectorValue = {
+        type: 'selector',
+        value: '<div.card/>',
+        selectorKind: 'complex',
+      };
+      const result = convertSelector(value);
+
+      expect(result).toMatchObject({ type: 'selector', value: '<div.card/>', raw: '<div.card/>' });
+    });
   });
 
   describe('convertReference', () => {

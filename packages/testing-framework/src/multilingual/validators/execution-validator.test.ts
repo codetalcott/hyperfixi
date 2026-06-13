@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 26 curated patterns', () => {
+  it('contains exactly the 28 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -62,6 +62,12 @@ describe('R2 execution subset (lock)', () => {
         'set-attribute',
         'toggle-visibility',
         'tabs-aria',
+        // Session-9 expansion wave 2c: halt-the-event patient preserved by the
+        // semantic halt mapper (handler continues); make element literals carry
+        // their markup on `raw`. make-toast-element stays out (positional
+        // `put it at end of body` — the dropdown-toggle positional gap).
+        'halt-propagation',
+        'make-element',
       ].sort()
     );
   });

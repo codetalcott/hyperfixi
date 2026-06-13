@@ -636,12 +636,23 @@ const returnMapper: CommandMapper = {
 /**
  * Halt command mapper.
  *
- * Semantic: halt
- * AST: { name: 'halt', args: [] }
+ * Semantic: halt [patient]
+ * AST: { name: 'halt', args: [] } or { name: 'halt', args: [patient] }
+ *
+ * The patient distinguishes `halt the event` (preventDefault/stopPropagation,
+ * handler CONTINUES) from bare `halt` (stops the whole handler). Dropping it
+ * collapsed both to the bare form, so `halt the event then toggle …` never ran
+ * the toggle. The semantic parse captures the patient as the literal 'the'
+ * (the `event` word is consumed as a keyword); HaltCommand.execute already
+ * resolves a 'the' target to context.event.
  */
 const haltMapper: CommandMapper = {
   action: 'halt',
-  toAST(_node, _builder) {
+  toAST(node, _builder) {
+    const patient = node.roles.get('patient');
+    if (patient) {
+      return createCommandNode('halt', [convertValue(patient)]);
+    }
     return createCommandNode('halt', []);
   },
 };

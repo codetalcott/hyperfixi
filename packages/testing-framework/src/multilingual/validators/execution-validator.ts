@@ -62,19 +62,18 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 1 (session 8): multi-command click patterns — sync,
   // network/timer-free sequences of 2–4 commands. Same eligibility bar as the
   // original subset: the en reference must execute with a non-empty effect
-  // signature in the current runtime. Eleven candidates were probed; four are
+  // signature in the current runtime. Eleven candidates were probed; three are
   // still deliberately absent because their EN reference is unusable:
-  //   halt-propagation      — runtime `halt` exits the whole handler (patient
-  //                           parses as bare 'the'), second command never runs
   //   modal-close-button    — en parse DROPS `hide closest .modal`; the
   //                           surviving body-class change is invisible to the
   //                           snapshot (body isn't serialized)
   //   dropdown-toggle       — `next .dropdown-menu` mis-parses as a binary
   //                           `next.dropdown - menu` (positional-expression
   //                           gap); toggle target evaluates to NaN
-  //   make-element,
-  //   make-toast-element    — runtime "Invalid selector <div.card/>" (make
-  //                           with an HTML-literal selector)
+  //   make-toast-element    — the make + into-it puts now work, but the final
+  //                           `put it at end of body` is the positional-put
+  //                           form (same positional gap as dropdown-toggle),
+  //                           so the detached toast never enters the DOM
   'tabs-content',
   'accordion-exclusive',
   // Expansion wave 2 (session 9, post en-conditional work): control-flow click
@@ -98,6 +97,13 @@ export const EXECUTION_SUBSET: readonly string[] = [
   'set-attribute',
   'toggle-visibility',
   'tabs-aria',
+  // Expansion wave 2c (session 9): `halt the event` no longer collapses to a
+  // bare halt (the semantic halt mapper preserves its patient, so the handler
+  // CONTINUES after preventDefault/stopPropagation), and `make a <div.card/>`
+  // executes (element literals carry their markup on `raw`; #container added
+  // to the fixture as the put destination).
+  'halt-propagation',
+  'make-element',
 ];
 
 /**
@@ -119,6 +125,7 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div class="tab-panel"></div>
   <div class="tab-panel"></div>
   <div class="accordion-item open"></div>
+  <div id="container"></div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */
