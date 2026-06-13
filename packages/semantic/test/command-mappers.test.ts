@@ -331,6 +331,36 @@ describe('Put Command Mapper', () => {
     expect(result.args[0]).toMatchObject({ type: 'literal', value: 'Hello World' });
     expect(result.modifiers!['into']).toMatchObject({ type: 'contextReference', contextType: 'me' });
   });
+
+  it('maps the manner role to the position modifier (before/after)', () => {
+    // The handcrafted put patterns record the position phrase in `manner`.
+    // Reading only `method` was a latent bug: `put X before Y` silently built
+    // a put-INTO AST (wrong insertion position at runtime).
+    const node = createCommandNode('put', {
+      patient: literal('x', 'string'),
+      destination: reference('me'),
+      manner: literal('before', 'string'),
+    });
+    const result = getCommandMapper('put')!.toAST(node, new ASTBuilder());
+    expect(result.modifiers!['before']).toBeDefined();
+    expect(result.modifiers!['into']).toBeUndefined();
+  });
+
+  it('maps the at-end-of positional put to the multi-word modifier key', () => {
+    // `put it at end of body` (make-toast-element): the position phrase is the
+    // exact key the core PutCommand accepts ('at end of' → beforeend).
+    const node = createCommandNode('put', {
+      patient: reference('it'),
+      destination: reference('body'),
+      manner: literal('at end of', 'string'),
+    });
+    const result = getCommandMapper('put')!.toAST(node, new ASTBuilder());
+    expect(result.modifiers!['at end of']).toMatchObject({
+      type: 'contextReference',
+      contextType: 'body',
+    });
+    expect(result.modifiers!['into']).toBeUndefined();
+  });
 });
 
 // =============================================================================

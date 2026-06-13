@@ -203,6 +203,25 @@ describe('AST evaluator coverage', () => {
       const ctx = { ...createContext(), registry: FULL_REGISTRY, you: el } as any;
       expect(await evaluateAST(ref('your') as any, ctx)).toBe(el);
     });
+
+    // Document references: the semantic→AST builder emits `body` / `document`
+    // / `window` as contextReference (`put it at end of body` → reference
+    // 'body'); without these cases they fell through to undefined and the put
+    // landed on `me` instead of body.
+    it("'body' resolves to document.body", async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      expect(await evaluateAST(ref('body') as any, ctx)).toBe(document.body);
+    });
+
+    it("'document' resolves to the document", async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      expect(await evaluateAST(ref('document') as any, ctx)).toBe(document);
+    });
+
+    it("'window' resolves to the window", async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      expect(await evaluateAST(ref('window') as any, ctx)).toBe(window);
+    });
   });
 
   describe('optional chaining (?.)', () => {

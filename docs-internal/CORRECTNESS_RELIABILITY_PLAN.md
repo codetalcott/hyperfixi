@@ -610,9 +610,38 @@ behavior the translations don't yet produce — mean executionFidelity 0.7706 �
 unchanged (0.9742; one within-tolerance sw flip). Baseline regenerated; gate
 green against it.
 
-**Still deferred:** the at-end-of positional put (`put it at end of body`,
-make-toast-element); cross-language positional/conditional burn-down (SOV/VSO
-orders — now visible as the widened R2 band).
+**Wave 3b (same session, post-#401): the at-end-of positional put SHIPPED.**
+`put it at end of body` (make-toast-element) needed five small fixes across
+the stack, found by walking the failure end-to-end:
+
+1. **en put patterns** for `at end of` / `at start of` (patterns/put.ts) —
+   the three-word position phrase matched as consecutive literal tokens,
+   recorded whole in `manner`.
+2. **The end-noun guard** (parseBodyWithClauses) — the `end` in `at end of`
+   hit the block-terminator break and the body clause parsed EMPTY; the guard
+   is sandwich-gated (previous token `at`, next token `of`), so real
+   block-`end`s still terminate.
+3. **putMapper reads `manner`** (was `method`, which no producer sets) — this
+   also fixed a LATENT bug: `put X before Y` silently built a put-INTO AST.
+4. **Core PutCommand accepts the multi-word modifier keys** (`at end of` /
+   `at start of`) on the semantic-modifiers path.
+5. **contextReference `body`/`document`/`window` resolve** in the core
+   runtime (the builder emits these surface forms; `body` fell through to
+   undefined and the put landed on `me`). The identifier path deliberately
+   does NOT pre-empt `body` (would shadow user locals).
+
+Harness: the effect snapshot now serializes **body under its own key** —
+before, a body write was invisible (and the old modal-open en reference was
+only scoreable because its `add .modal-open to body` WRONGLY fell back to
+`me`); modal-close-button's PATTERN_SETUP also pre-adds `.modal-open` so the
+body remove is scoreable. Subset 30 → **31** (make-toast-element — the last
+R2 candidate excluded for an unusable en reference; en signature is one clean
+line: the toast appended at end of body). Zero parse-level churn (0.9742 /
+78 lossy / 63 degen identical); meanExecutionFidelity 0.6957 → 0.6452
+(recorded band: the new pattern + re-scored body signatures).
+
+**Still deferred:** cross-language positional/conditional burn-down (SOV/VSO
+orders — now visible as the widened R2 band); behavior-\* degenerate mass.
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
