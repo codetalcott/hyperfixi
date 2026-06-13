@@ -4921,3 +4921,86 @@ describe('en if/unless conditional fold (parsing track reopen — §2 dominant c
     expect(c).toBeNull();
   });
 });
+
+describe('en positional-phrase patients — closest <sel> and the-led positionals (R2 wave 3)', () => {
+  // `hide closest .modal` / `show the next <div.tab-panel/>` previously
+  // DROPPED at the semantic parse: `closest` was not a positional-expression
+  // lead keyword (only first/last/next/previous/random), and skipNoiseWords
+  // only skipped `the` before selectors/identifiers — never before a
+  // positional keyword. Both forms now capture the whole phrase as a single
+  // expression value, which the expression parser folds to the positional
+  // call shape the core runtime evaluates (see the #400 fold).
+  function roles(node: unknown): Map<string, { type?: string; raw?: string; value?: string }> {
+    return (node as { roles: Map<string, { type?: string; raw?: string; value?: string }> })
+      .roles;
+  }
+
+  it('hide closest .modal captures the patient as a positional expression', () => {
+    const node = parse('hide closest .modal', 'en') as Record<string, unknown>;
+    expect(node).toBeTruthy();
+    expect(node.action).toBe('hide');
+    const patient = roles(node).get('patient');
+    expect(patient?.type).toBe('expression');
+    expect(patient?.raw).toBe('closest .modal');
+  });
+
+  it('show the next <div.tab-panel/> skips the article and captures the positional', () => {
+    const node = parse('show the next <div.tab-panel/>', 'en') as Record<string, unknown>;
+    expect(node).toBeTruthy();
+    expect(node.action).toBe('show');
+    const patient = roles(node).get('patient');
+    expect(patient?.type).toBe('expression');
+    expect(patient?.raw).toBe('next <div.tab-panel/>');
+  });
+
+  it('toggle … on closest .card captures the destination as a positional expression', () => {
+    // Previously the destination captured the bare literal `closest` and the
+    // selector stranded (closest-ancestor / accordion-toggle corpus rows).
+    const node = parse('on click toggle .expanded on closest .card', 'en') as {
+      body?: Array<Record<string, unknown>>;
+    };
+    const toggle = node.body?.find(n => n.action === 'toggle');
+    expect(toggle).toBeDefined();
+    const dest = roles(toggle).get('destination');
+    expect(dest?.type).toBe('expression');
+    expect(dest?.raw).toBe('closest .card');
+  });
+
+  it('a juxtaposed following command is not swallowed as the positional source clause', () => {
+    // modal-close-button: `hide closest .modal remove .modal-open from body` —
+    // the optional `<marker> <selector>` source clause must not consume the
+    // next clause's verb (`remove`) as a locative marker. Guarded by the
+    // schema-action keyword set (language-independent: tokenizers normalize
+    // every language's verbs to these forms).
+    const node = parse('on click hide closest .modal remove .modal-open from body', 'en') as {
+      body?: Array<Record<string, unknown>>;
+    };
+    const stmts =
+      node.body?.flatMap(n =>
+        n.kind === 'compound' ? (n.statements as Array<Record<string, unknown>>) : [n]
+      ) ?? [];
+    const actions = stmts.map(s => s.action);
+    expect(actions).toContain('hide');
+    expect(actions).toContain('remove');
+    const hide = stmts.find(s => s.action === 'hide')!;
+    expect(roles(hide).get('patient')?.raw).toBe('closest .modal');
+    const remove = stmts.find(s => s.action === 'remove')!;
+    expect(roles(remove).get('patient')?.value).toBe('.modal-open');
+  });
+
+  it('tabs-content parses all four commands including the article-led show', () => {
+    // §10.5: the en reference was lossy (show dropped), which made 13
+    // faithful languages read as failers. All four commands now survive.
+    const node = parse(
+      'on click remove .active from .tab add .active to me hide .tab-panel show the next <div.tab-panel/>',
+      'en'
+    ) as { body?: Array<Record<string, unknown>> };
+    const stmts =
+      node.body?.flatMap(n =>
+        n.kind === 'compound' ? (n.statements as Array<Record<string, unknown>>) : [n]
+      ) ?? [];
+    expect(stmts.map(s => s.action)).toEqual(['remove', 'add', 'hide', 'show']);
+    const show = stmts.find(s => s.action === 'show')!;
+    expect(roles(show).get('patient')?.raw).toBe('next <div.tab-panel/>');
+  });
+});

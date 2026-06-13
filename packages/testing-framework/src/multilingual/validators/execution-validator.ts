@@ -108,6 +108,14 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // and the toggle target evaluated to NaN. `.dropdown-menu` added to the
   // fixture (appended last; existing snapshot indexes unchanged).
   'dropdown-toggle',
+  // Expansion wave 3 (session 10): positional-phrase patients/destinations —
+  // the pattern matcher now captures `closest <sel>` and article-led
+  // `the next <sel>` as positional expressions (previously the hide/show
+  // command dropped from the body entirely). The en reference for
+  // modal-close-button now hides the enclosing .modal (PATTERN_SETUP gives
+  // #btn a .modal ancestor, mirroring the real-page structure).
+  // make-toast-element stays out (at-end-of positional put, distinct form).
+  'modal-close-button',
 ];
 
 /**
@@ -148,6 +156,9 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
   // click's target is #btn, so the condition only fires when #btn IS the
   // backdrop (the real-page case is a click landing on the backdrop itself).
   'modal-close-backdrop': doc => doc.getElementById('btn')!.classList.add('modal-backdrop'),
+  // `hide closest .modal` needs #btn inside a .modal (the real-page case is a
+  // close button inside the modal it closes).
+  'modal-close-button': doc => doc.querySelector('.card')!.classList.add('modal'),
 };
 
 /** Result of executing one pattern translation. */

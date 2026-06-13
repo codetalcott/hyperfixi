@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 29 curated patterns', () => {
+  it('contains exactly the 30 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -71,6 +71,11 @@ describe('R2 execution subset (lock)', () => {
         // Session-9 expansion wave 2d: `next .sel` folds to a positional call
         // expression. make-toast-element still out (at-end-of positional put).
         'dropdown-toggle',
+        // Session-10 expansion wave 3: positional-phrase patients — the
+        // pattern matcher captures `closest <sel>` / `the next <sel>`, so
+        // `hide closest .modal` parses and executes (PATTERN_SETUP gives #btn
+        // a .modal ancestor). make-toast-element still out (at-end-of put).
+        'modal-close-button',
       ].sort()
     );
   });
