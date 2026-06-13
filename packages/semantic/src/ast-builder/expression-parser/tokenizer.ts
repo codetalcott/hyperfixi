@@ -95,6 +95,14 @@ const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
  */
 const COMPARISON_KEYWORDS = new Set(['is', 'matches', 'match', 'contains', 'in']);
 
+/**
+ * Positional builtins whose operand is a selector (`next .dropdown-menu`,
+ * `closest .modal`). A selector is valid immediately after one, and the parser
+ * folds the pair into a call expression the runtime's positional expressions
+ * evaluate.
+ */
+const POSITIONAL_KEYWORDS = new Set(['next', 'previous', 'closest', 'first', 'last']);
+
 const TIME_UNITS = new Set([
   'ms',
   's',
@@ -126,6 +134,11 @@ export function tokenize(input: string): Token[] {
     // A keyword comparison operator (tokenized as IDENTIFIER) is followed by a
     // selector operand: `matches .modal-backdrop`, `is .active`.
     if (prev.type === TokenType.IDENTIFIER && COMPARISON_KEYWORDS.has(prev.value.toLowerCase())) {
+      return true;
+    }
+    // A positional builtin is followed by its selector operand:
+    // `next .dropdown-menu`, `closest .modal`.
+    if (prev.type === TokenType.IDENTIFIER && POSITIONAL_KEYWORDS.has(prev.value.toLowerCase())) {
       return true;
     }
     // After these token types, a selector is valid

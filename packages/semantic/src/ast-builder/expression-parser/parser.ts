@@ -40,6 +40,13 @@ const POSSESSIVE_CONTEXT_TYPES = new Set(['my', 'its', 'your']);
  */
 const POSTFIX_STOP_WORDS = new Set(['is', 'matches', 'match', 'contains', 'in', 'exists', 'does']);
 
+/**
+ * Positional builtins folded to a call expression when followed by a selector
+ * (`next .dropdown-menu` → next('.dropdown-menu')). Matches the set the core
+ * runtime's call evaluator dispatches to positional expressions.
+ */
+const POSITIONAL_CALL_KEYWORDS = new Set(['next', 'previous', 'closest', 'first', 'last']);
+
 export class ExpressionParser {
   private tokens: Token[] = [];
   private current = 0;
@@ -389,6 +396,34 @@ export class ExpressionParser {
 
     // Identifiers
     if (this.match(TokenType.IDENTIFIER)) {
+      // Positional builtin + selector operand (`next .dropdown-menu`,
+      // `closest .modal`) → a call expression. The core runtime's positional
+      // expressions evaluate exactly this shape (its call evaluator passes
+      // selector args as raw strings). Without the fold, `next .dropdown-menu`
+      // mangled into `next.dropdown - menu`.
+      if (
+        POSITIONAL_CALL_KEYWORDS.has(token.value.toLowerCase()) &&
+        (this.check(TokenType.CLASS_SELECTOR) ||
+          this.check(TokenType.ID_SELECTOR) ||
+          this.check(TokenType.QUERY_SELECTOR))
+      ) {
+        const selToken = this.advance();
+        const selValue =
+          selToken.type === TokenType.QUERY_SELECTOR ? selToken.value.slice(1, -2) : selToken.value;
+        const kind: SelectorKind =
+          selToken.type === TokenType.CLASS_SELECTOR
+            ? 'class'
+            : selToken.type === TokenType.ID_SELECTOR
+              ? 'id'
+              : 'query';
+        return {
+          type: 'callExpression',
+          callee: this.createIdentifier(token.value, token),
+          arguments: [this.createSelector(selValue, kind, selToken)],
+          start: token.start,
+          end: selToken.end,
+        } as CallExpressionNode;
+      }
       return this.createIdentifier(token.value, token);
     }
 
