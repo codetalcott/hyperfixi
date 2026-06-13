@@ -12,9 +12,11 @@ import type {
   EventHandlerSemanticNode,
   SemanticParser as ISemanticParser,
   SemanticValue,
+  SemanticRole,
   ActionType,
   LanguagePattern,
   LanguageToken,
+  TokenStream,
   Diagnostic,
 } from '../types';
 import {
@@ -33,6 +35,7 @@ import {
 } from '../tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
+import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { render as renderExplicitFn } from '../explicit/renderer';
@@ -818,7 +821,9 @@ export class SemanticParserImpl implements ISemanticParser {
       // Try to match as a command
       const commandMatch = patternMatcher.matchBest(clauseStream, commandPatterns);
       if (commandMatch) {
-        commands.push(this.buildCommand(commandMatch, language));
+        const cmd = this.buildCommand(commandMatch, language);
+        commands.push(cmd);
+        this.tryAttachTrailingSource(clauseStream, cmd, language);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -855,6 +860,80 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     return commands;
+  }
+
+  /**
+   * Attach a trailing post-verb source phrase that the per-command pattern left
+   * unconsumed. The SOV grammar transformer emits `remove .x from body` as
+   * `.x を 削除 ボディ から` (modal-close-button) — patient + verb, then a
+   * postpositional `<body-word> <from-marker>` the SOV remove pattern (which
+   * ends at the verb) never claims; parseClause's loop would otherwise skip it
+   * and source defaults to `me` (the class is removed from the clicked button,
+   * not the document body). SVO languages (th) trail a prepositional
+   * `<from-marker> <body-word>` after `verb patient`. This is the body-clause
+   * twin of the #379 event-wrapper trailing source group.
+   *
+   * Conservative by construction: fires only when (1) the command's schema
+   * declares a `source` role, (2) that role is currently absent or the defaulted
+   * `me`, and (3) the very next tokens form a clean marker+value pair in the
+   * profile's source-marker order — so it can neither overwrite a real source
+   * (accordion's `remove .open from .accordion-item` keeps its captured source)
+   * nor steal a following command's tokens (a trailing `then add …` has no
+   * source marker adjacent to the verb).
+   */
+  private tryAttachTrailingSource(
+    stream: TokenStream,
+    command: CommandSemanticNode,
+    language: string
+  ): void {
+    const schema = getSchema(command.action as ActionType);
+    if (!schema?.roles.some(r => r.role === 'source')) return;
+
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    const existing = roles.get('source');
+    // Only fill a missing source or override the schema's `me` default — never a
+    // genuinely captured one.
+    if (existing && !(existing.type === 'reference' && existing.value === 'me')) return;
+
+    const src = tryGetProfile(language)?.roleMarkers?.source;
+    if (!src) return;
+    const isMarker = (t: LanguageToken | null): boolean => {
+      if (!t || (t.kind !== 'particle' && t.kind !== 'keyword')) return false;
+      if ((t.normalized ?? '').toLowerCase() === 'source') return true;
+      const v = t.value.toLowerCase();
+      return (
+        src.primary?.toLowerCase() === v || !!src.alternatives?.some(a => a.toLowerCase() === v)
+      );
+    };
+    const isValue = (t: LanguageToken | null): boolean =>
+      !!t &&
+      (t.kind === 'selector' ||
+        (t.normalized ?? '').toLowerCase() === 'body' ||
+        t.kind === 'identifier' ||
+        (t.kind as string) === 'reference');
+
+    const tok0 = stream.peek();
+    const tok1 = stream.peek(1);
+    if (!tok0 || !tok1) return;
+
+    if (src.position === 'after') {
+      // Postpositional `<value> <from-marker>` (ja から, ko 에서, bn থেকে,
+      // hi से, tr den).
+      if (isValue(tok0) && isMarker(tok1)) {
+        const v = this.tokenToSemanticValue(tok0);
+        stream.advance();
+        stream.advance();
+        if (v) roles.set('source', v);
+      }
+    } else {
+      // Prepositional `<from-marker> <value>` (th จาก and other SVO langs whose
+      // transformer trails the from-phrase after `verb patient`).
+      if (isMarker(tok0) && isValue(tok1)) {
+        stream.advance();
+        const v = this.tokenToSemanticValue(stream.advance());
+        if (v) roles.set('source', v);
+      }
+    }
   }
 
   // ==========================================================================
@@ -1283,7 +1362,13 @@ export class SemanticParserImpl implements ISemanticParser {
       if (!matched) {
         const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
         if (commandMatch) {
-          commands.push(this.buildCommand(commandMatch, language));
+          const cmd = this.buildCommand(commandMatch, language);
+          commands.push(cmd);
+          // Reclaim a trailing post-verb source phrase the matched pattern left
+          // unconsumed (`remove .x from body` → `.x を 削除 ボディ から`); without
+          // this the SOV grammar body walker skips `ボディ から` and source stays
+          // the `me` default. Same guard as the parseClause call site.
+          this.tryAttachTrailingSource(tokens, cmd, language);
           matched = true;
           clauseHadMatch = true;
         }
