@@ -38,6 +38,7 @@ import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
 import { eventNameTranslations } from '../patterns/event-handler';
+import { isAtEndPositionNoun } from '../patterns/put';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 
@@ -739,8 +740,12 @@ export class SemanticParserImpl implements ISemanticParser {
       const prevClauseToken = currentClauseTokens[currentClauseTokens.length - 1];
       const followingToken = tokens.peek(1);
       const isPositionalEndNoun =
-        prevClauseToken?.value.toLowerCase() === 'at' &&
-        followingToken?.value.toLowerCase() === 'of';
+        (prevClauseToken?.value.toLowerCase() === 'at' &&
+          followingToken?.value.toLowerCase() === 'of') ||
+        // Per-language `at end of` phrase (zh `在 结束 的`, id `di akhir dari`, …):
+        // the `end` noun tokenizes as a keyword in some languages and would
+        // otherwise chop make-toast's trailing `put it at end of body` clause.
+        isAtEndPositionNoun(language, current.value, prevClauseToken?.value, followingToken?.value);
       const isEnd =
         current.kind === 'keyword' &&
         this.isEndKeyword(current.value, language) &&

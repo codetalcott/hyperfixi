@@ -5925,3 +5925,35 @@ describe('ms put-with-`ia` — marker keyword after a pronoun (S2 — make-eleme
     expect(n.roles?.get('patient')?.type).toBe('property-path');
   });
 });
+
+describe('per-language `at end of` position noun (S2 — zh make-toast)', () => {
+  // make-toast's third clause is `put it at end of body`, which ATTACHES the made
+  // toast (without it the div is detached → no effect). The zh PUT_AT_END pattern
+  // (`放置 把 {patient} 在 结束 的 {destination}`) parses it fine STANDALONE, but
+  // inside the then-chained body the clause splitter chopped it: zh `结束` (end)
+  // tokenizes as a `keyword`, so parseBodyWithClauses' `end`-terminator break
+  // fired mid-phrase. The position-noun guard that suppresses that break only knew
+  // the English `at … of` sandwich; generalizing it to the per-language at/of
+  // words (zh `在 … 的`, via PUT_AT_END) keeps the `结束` from terminating the
+  // clause. Cleared zh make-toast (execution 27→26).
+  it('[zh] make-toast keeps all three clauses (make, put, put-at-end)', () => {
+    const node = parse(
+      "当 点击 时 制作 把 a <div.toast/> 那么 把 'Saved!' 放置 到 它 那么 放置 把 它 在 结束 的 主体",
+      'zh'
+    ) as { body?: Array<{ kind?: string; action?: string; statements?: Array<{ action?: string }> }> };
+    // The body is a then-chained compound; flatten its statements.
+    const flat = (node.body ?? []).flatMap(n =>
+      n.kind === 'compound' ? (n.statements ?? []) : [n]
+    );
+    expect(flat.map(n => n.action)).toEqual(['make', 'put', 'put']);
+  });
+
+  it('[zh] the `结束` inside `在 结束 的` is the position noun, not a block end', () => {
+    const n = parse('放置 把 它 在 结束 的 主体', 'zh') as {
+      action?: string;
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(n.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});

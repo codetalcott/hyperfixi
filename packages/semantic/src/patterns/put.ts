@@ -973,6 +973,30 @@ const PUT_AT_END: ReadonlyArray<{
   },
 ];
 
+/**
+ * Whether an `end`-keyword token is the position NOUN of an `at end of` phrase
+ * (`put it at end of body`), not a block terminator. The clause splitter
+ * (`parseBodyWithClauses`) breaks at every `end` keyword; for languages whose
+ * `end` noun tokenizes as a `keyword` (zh `结束`, …) that wrongly chops the
+ * trailing `put it at end of body` clause out of make-toast. The English guard
+ * recognizes the `at` … `of` sandwich literally; this generalizes it to the
+ * per-language `at`/`of` words recorded in PUT_AT_END (zh `在` … `的`,
+ * id `di` … `dari`, …). Returns false for languages with no at-end spec (their
+ * end noun never collides) and for any non-sandwiched `end`.
+ */
+export function isAtEndPositionNoun(
+  language: string,
+  endValue: string,
+  prevValue: string | undefined,
+  nextValue: string | undefined
+): boolean {
+  const spec = PUT_AT_END.find(s => s.lang === language);
+  if (!spec) return false;
+  const eq = (a: string | undefined, b: string): boolean =>
+    (a ?? '').toLowerCase() === b.toLowerCase();
+  return eq(endValue, spec.end) && eq(prevValue, spec.at) && eq(nextValue, spec.of);
+}
+
 function buildAtEndPutPatterns(language: string): LanguagePattern[] {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec) return [];
