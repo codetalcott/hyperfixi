@@ -497,6 +497,13 @@ export const setSchema: CommandSchema = {
         tl: '', // "itakda x sa 10" - no marker before variable
         bn: 'কে', // "x কে 10 তে সেট" - patient marker on variable
         qu: 'ta', // "x ta 10 man churay" - patient marker on variable
+        // hi: the transformer marks the TARGET with को and the VALUE with में
+        // (`मेरा.textContent को … सेट "Done!" में`) — inverted from the hi profile
+        // defaults (destination=में, patient=को). Without these overrides the
+        // generated hi set patterns carried the swapped markers and matched no
+        // corpus, so the whole hi set-family (set-text/inner-html/style/attribute)
+        // fell to the bare-event fallback (S6 set-trio).
+        hi: 'को', // target (destination) gets को
       },
     },
     {
@@ -526,6 +533,7 @@ export const setSchema: CommandSchema = {
         tl: 'sa', // "itakda x sa 10" - destination prep before value
         bn: 'তে', // "x কে 10 তে সেট" - destination marker on value
         qu: 'man', // "x ta 10 man churay" - destination marker on value
+        hi: 'में', // value (patient) gets में — see the destination note above
       },
     },
   ],

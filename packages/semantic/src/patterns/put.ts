@@ -234,6 +234,36 @@ function getPutPatternsEs(): LanguagePattern[] {
 
 function getPutPatternsHi(): LanguagePattern[] {
   return [
+    // Verb-MEDIAL pattern: यह को रखें #container में (`{patient} को रखें
+    // {destination} में`). The hi transformer emits put VERB-MEDIAL in a fused
+    // event body's then-clause (`… बनाएं फिर यह को रखें #container में` —
+    // make-element / make-toast first put), with रखें BETWEEN the patient and the
+    // destination, unlike the standalone verb-FINAL `put-hi-full` below. Without
+    // this the clause fell through to `put-hi-bare` (`रखें {patient}`), which
+    // grabbed the DESTINATION (#container) as the patient and defaulted the
+    // destination to `me` — the put landed on the clicked element. Priority above
+    // put-hi-full; only matches when रखें is medial, so the verb-final form is
+    // untouched.
+    {
+      id: 'put-hi-verb-medial',
+      language: 'hi',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: '{patient} को रखें {destination} में',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'को' },
+          { type: 'literal', value: 'रखें', alternatives: ['रख', 'डालें', 'डाल'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'में' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'में', position: 3 },
+      },
+    },
     // Full pattern: "text" को #element में रखें
     {
       id: 'put-hi-full',
