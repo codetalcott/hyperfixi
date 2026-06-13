@@ -692,6 +692,51 @@ positional bodies); halt-propagation ×18; closest-ancestor + dropdown-toggle
 modal-open ×12 (SOV/non-Latin); conditional residue: hi/ko/qu/ru/uk/zh on
 modal-close-backdrop, id/qu/tr/zh on if-matches.
 
+## 7k. Status update (2026-06-13, session 12): cross-language positional normalize
+
+**The positional cluster (b) + most of the multi-command positional bodies
+collapsed with ONE parser fix — the positional analog of §7j's joinTokenText.**
+`tryMatchPositionalExpression` (pattern-matcher.ts) built the captured `raw`
+from each token's SURFACE value, so a source-language positional keyword
+(`cercano`, `nächste`, `次`, `다음`, `التالي`, `الأقرب`) survived into the role
+value. The core's positional expression parser is English-only (`next(...)`,
+`closest(...)`), so the runtime either errored ("got number"), dropped to `me`,
+or — with the keyword silently ignored — matched EVERY element (e.g.
+`show <div.tab-panel/>` revealing all panels instead of the next one). Fix: the
+leading positional keyword and the optional locative source marker (`in`/`from`)
+now contribute their NORMALIZED English form to `raw`; selectors/identifiers are
+code and keep their surface value (en byte-identical).
+
+**Result:** meanExecutionFidelity **0.7546 → 0.8471**, failing cells **175 →
+109** (−66). tabs-content 22→0, dropdown-toggle 13→0, closest-ancestor 13→2,
+accordion-exclusive 22→8, modal-close-button 21→15. Parse-level byte-identical
+(avgFidelity 0.9741, 80 lossy, 63 degen — only the execution layer moved, since
+the change touches only the captured expression's raw text the runtime reads,
+not the action set or role shapes). Gate green; baseline regenerated. 7
+cross-language unit tests added (R2 wave 5 block).
+
+**Residuals on the targeted patterns are now DISTINCT, separate-layer issues
+(not parser bugs this fix introduced):**
+
+- **de `nächste`→`next` collision** (accordion/modal-close-button de): German
+  `nächste` means both "next" and "nearest"; the tokenizer normalizes it to
+  `next`, so a de "closest" surfaces as `next` and the wrong element is hit.
+  Needs a de dict/normalizer disambiguation (closest = `nächstgelegene`?) —
+  dict-layer.
+- **`body`/`körper`/`جسم`/SOV body source not recognized** (modal-close-button
+  ja/ko/ar/de): `remove .modal-open from body` captures source `body` in en/es
+  (cuerpo→body) but ja/ko/ar/de leave it untranslated, falling back to `me`.
+  Needs the per-language `body` contextReference word in the dict — dict-layer.
+- **ja/ko SOV destination-position positional drop** (accordion ja/ko):
+  `最も近い .accordion-item に` (closest in DESTINATION role) drops to `me`,
+  while the SAME `最も近い` in PATIENT position (modal-close-button) now
+  captures correctly. The SOV destination path doesn't reach
+  tryMatchPositionalExpression. Parser follow-up, narrower scope.
+- **make-toast-element ×23 untouched** — its `put it at end of body` needs the
+  `at end of` manner phrase + the third clause, which non-en translations drop
+  entirely (the handcrafted en put patterns for `at end of` have no per-language
+  counterpart). Separate, harder mechanism — its own track.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right

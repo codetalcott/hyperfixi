@@ -653,7 +653,15 @@ export class PatternMatcher {
     }
 
     const mark = tokens.mark();
-    const parts: string[] = [token.value];
+    // The captured `raw` is evaluated by the core's English positional
+    // expression parser (`next(...)`, `closest(...)`), so the positional KEYWORD
+    // must be its normalized English form — a source-language keyword
+    // (`cercano`, `次`, `التالي`) is unevaluable as-is and the runtime either
+    // errors, drops to `me`, or matches every element. Same idiom as the
+    // conditional fold's joinTokenText (semantic-parser): keyword/marker tokens
+    // contribute their normalized form; selectors/identifiers are code and keep
+    // their surface value (for en the two are identical).
+    const parts: string[] = [token.normalized ?? token.value];
     tokens.advance();
 
     // Required: the queried selector (e.g. <.message/>, .message, <button/>).
@@ -698,7 +706,9 @@ export class PatternMatcher {
       // the following command lost.
       !PatternMatcher.COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
     ) {
-      parts.push(marker.value, source.value);
+      // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
+      // runtime reads — normalize it; the source selector is code.
+      parts.push(marker.normalized ?? marker.value, source.value);
       tokens.advance();
       tokens.advance();
     }
