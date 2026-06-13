@@ -27,6 +27,7 @@ import { commandSchemas } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
+import { isAtEndConnective } from '../patterns/put';
 import type { ConfidenceModel } from './confidence-model';
 import { defaultConfidenceModel } from './confidence-model';
 
@@ -859,6 +860,17 @@ export class PatternMatcher {
     // `it.ke`, the literal `ke` match then failed, and the whole put dropped
     // (the §10 "ms put-with-`ia`" bug). A marker concept is never a real DOM
     // property name, so reject it as a possessive property head.
+    //
+    // A positional `at end of` connective (ms `di`/`tamat`/`daripada`, zh
+    // `在`/`结束`/`的`) tokenizes as a bare identifier with NO normalized concept,
+    // so the guards above miss it. `letak ia di tamat daripada badan` (put it at
+    // end of body, make-toast's attaching put) read `ia di` as the phantom
+    // possessive `it.di`, the literal `di` then failed and the put dropped. Bail
+    // so `ia` stays a bare patient and the at-end pattern matches.
+    if (isAtEndConnective(this.currentProfile.code, propertyToken.value)) {
+      tokens.reset(mark);
+      return null;
+    }
     if (
       propertyToken.kind === 'identifier' ||
       (propertyToken.kind === 'keyword' &&

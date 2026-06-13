@@ -5956,4 +5956,18 @@ describe('per-language `at end of` position noun (S2 — zh make-toast)', () => 
     expect(n.action).toBe('put');
     expect(n.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
+
+  it('[ms] `letak ia di tamat daripada badan` parses (at-end connective not eaten as possessive)', () => {
+    // `di` is the ms at-end connective (a bare identifier, no normalized concept),
+    // so the possessive matcher used to read `ia di` as the phantom possessive
+    // `it.di` and drop the put. Rejecting at-end connective property heads keeps
+    // `ia` a bare patient. This is make-toast's attaching third clause.
+    const n = parse('letak ia di tamat daripada badan', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(n.roles?.get('patient')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(n.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
 });
