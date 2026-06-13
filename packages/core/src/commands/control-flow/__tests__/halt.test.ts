@@ -113,6 +113,34 @@ describe('HaltCommand', () => {
       expect(input.target).toBe(mockEvent);
     });
 
+    it('should recognize a leading "the" article (identifier) as halt-the-event, event noun dropped', async () => {
+      // Cross-language halt-propagation: the i18n transformer leaves the article
+      // "the" verbatim and the event noun is often dropped/elsewhere, so a
+      // non-en `halt the event` arrives as a single identifier `the` (en arrives
+      // as a literal). Both mean prevent-default-and-continue — NOT stop the
+      // handler. Without this the article evaluated to undefined and halt threw,
+      // swallowing every following command (es/de/ar/ru/… halt-propagation).
+      const mockEvent = createMockEvent();
+      const context = createMockContext({ event: mockEvent as any });
+      const evaluator = createMockEvaluator();
+
+      const args = [{ type: 'identifier', name: 'the' }] as unknown as ASTNode[];
+      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
+
+      expect(input.target).toBe(mockEvent);
+    });
+
+    it('should recognize a leading "the" literal as halt-the-event (en form)', async () => {
+      const mockEvent = createMockEvent();
+      const context = createMockContext({ event: mockEvent as any });
+      const evaluator = createMockEvaluator();
+
+      const args = [{ type: 'literal', value: 'the' }] as unknown as ASTNode[];
+      const input = await command.parseInput({ args, modifiers: {} }, evaluator, context);
+
+      expect(input.target).toBe(mockEvent);
+    });
+
     it('should evaluate single arg when not "the event" pattern', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
