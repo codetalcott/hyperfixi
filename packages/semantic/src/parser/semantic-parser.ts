@@ -455,6 +455,46 @@ export class SemanticParserImpl implements ISemanticParser {
     // Check if pattern captured an action (grammar-transformed patterns)
     // These patterns combine event + action in a single match
     const actionValue = match.captured.get('action');
+
+    // A fused event pattern that captured `if` as the body's first action has
+    // swallowed the conditional KEYWORD into a flat command — the condition
+    // truncates to whatever role the pattern grabbed and the branches flatten
+    // into siblings (the §2 cluster, cross-language: en folds via
+    // parseBodyWithClauses → tryParseConditionalBlock, but this action-captured
+    // path never reached the fold). Rewind to the if-keyword token and parse the
+    // remaining body through the clause path so the whole block folds. Swap in
+    // ONLY when a conditional actually folded — otherwise fall through to the
+    // existing flat path byte-identical. `unless` stays unfolded (see
+    // tryParseConditionalBlock: folding would relabel its action and desync the
+    // cross-language action-set comparison).
+    if (actionValue && actionValue.type === 'literal' && actionValue.value === 'if') {
+      const all = tokens.tokens as LanguageToken[];
+      let ifIdx = -1;
+      for (let k = tokens.position() - 1; k >= 0; k--) {
+        const kTok = all[k] as { normalized?: string; value: string };
+        const kv = (kTok.normalized ?? kTok.value).toLowerCase();
+        if (this.isIfKeyword(kv, language)) {
+          ifIdx = k;
+          break;
+        }
+      }
+      if (ifIdx >= 0) {
+        const commandPatterns = getPatternsForLanguage(language)
+          .filter(p => p.command !== 'on')
+          .sort((a, b) => b.priority - a.priority);
+        const bodyStream = new TokenStreamImpl(all.slice(ifIdx), language);
+        const folded = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
+        if (folded.some(n => n.kind === 'conditional')) {
+          while (!tokens.isAtEnd()) tokens.advance(); // body fully consumed by the fold
+          return createEventHandler(resolvedEventValue, folded, eventModifiers, {
+            sourceLanguage: language,
+            patternId: match.pattern.id,
+            confidence: match.confidence,
+          });
+        }
+      }
+    }
+
     if (actionValue && actionValue.type === 'literal') {
       // Create a command node directly from captured roles
       const actionName = actionValue.value as string;
@@ -2052,10 +2092,20 @@ export class SemanticParserImpl implements ISemanticParser {
     });
   }
 
-  /** Reconstruct source-ish text from a token slice for an expression value. */
+  /**
+   * Reconstruct source-ish text from a token slice for an expression value.
+   * Keyword tokens contribute their NORMALIZED (English) form: the condition
+   * raw string is evaluated by the core expression parser, which only reads
+   * English operator words — a translated condition (`#modal 存在する`,
+   * `#modal existe`) is unevaluable as-is, while its normalized join
+   * (`#modal exists`) runs. Non-keyword tokens (identifiers, selectors,
+   * literals) keep their surface value; for en the two are identical.
+   */
   private joinTokenText(toks: readonly LanguageToken[]): string {
     return toks
-      .map(t => t.value)
+      .map(t =>
+        t.kind === 'keyword' ? ((t as { normalized?: string }).normalized ?? t.value) : t.value
+      )
       .join(' ')
       .trim();
   }

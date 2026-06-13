@@ -284,11 +284,42 @@ describe('`is empty` predicate alignment (verb vs adjective)', () => {
     return acc;
   }
 
+  /** Walk all conditional nodes and collect their condition raw strings. */
+  function conditionRaws(node: unknown, acc: string[] = []): string[] {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    const roles = rec.roles;
+    if (roles instanceof Map) {
+      const cond = roles.get('condition') as { raw?: string; value?: unknown } | undefined;
+      if (cond) acc.push(String(cond.raw ?? cond.value ?? ''));
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => conditionRaws(x, acc));
+      else if (c && typeof c === 'object') conditionRaws(c, acc);
+    }
+    return acc;
+  }
+
+  /** Predicate survives either as a folded condition word (normalized
+   * `empty`/`null` — the en-reference shape) or as the flat-compromise
+   * `empty` command action. */
+  function predicateRetained(node: unknown, a: Set<string>): boolean {
+    if (a.has('empty')) return true;
+    return conditionRaws(node).some(raw => /\b(empty|null)\b/i.test(raw));
+  }
+
   // The semantic profile's `empty` primary is the *verb* (vider/esvaziar/清空/…),
   // but the i18n transformer emits the *adjective* for the `is empty` emptiness
   // check (vide/vazio/空的/…). Without the adjective registered, the condition
-  // predicate was silently dropped. These corpus-shaped `if … is empty …` handlers
-  // must now retain the `empty` action (alongside if + body).
+  // predicate was silently dropped. The predicate must survive in one of two
+  // shapes: since the cross-language conditional fold (buildEventHandler routes
+  // a fused `if` action through tryParseConditionalBlock), languages whose
+  // copula normalizes to `is` fold the predicate INTO the condition expression
+  // (`me valore is empty` — the en-reference shape, see the [en] case in the
+  // is-empty cluster below); languages whose copula does not normalize keep the
+  // older flat compromise where the adjective parses as the `empty` COMMAND.
+  // Either way it must not silently vanish.
   const cases: Array<[string, string]> = [
     ['fr', 'sur flou si mon valeur est vide ajouter .error à moi fin'],
     ['pt', 'em desfoque se meu valor é vazio adicionar .error para eu fim'],
@@ -298,10 +329,11 @@ describe('`is empty` predicate alignment (verb vs adjective)', () => {
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] recognizes the empty predicate in a conditional`, () => {
-      const a = actions(parse(input, lang));
-      expect(a.has('empty')).toBe(true);
+      const node = parse(input, lang);
+      const a = actions(node);
       expect(a.has('if')).toBe(true);
       expect(a.has('add')).toBe(true);
+      expect(predicateRetained(node, a)).toBe(true);
     });
   }
 });
@@ -3111,13 +3143,38 @@ describe('empty-predicate adjective is a profile keyword alternative (is-empty c
       'при розмиття якщо мій значення є порожній додати .error в я тоді покласти "Required" в наступний .error-message кінець',
     ],
   ];
+  /** Walk all conditional nodes and collect their condition raw strings. */
+  function conditionRaws(node: unknown, acc: string[] = []): string[] {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    const roles = rec.roles;
+    if (roles instanceof Map) {
+      const cond = roles.get('condition') as { raw?: string; value?: unknown } | undefined;
+      if (cond) acc.push(String(cond.raw ?? cond.value ?? ''));
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => conditionRaws(x, acc));
+      else if (c && typeof c === 'object') conditionRaws(c, acc);
+    }
+    return acc;
+  }
+
   for (const [lang, input] of corpus) {
     it(`[${lang}] if-empty keeps the empty predicate (was dropped)`, () => {
-      const a = actions(parse(input, lang as 'ru'));
+      const node = parse(input, lang as 'ru');
+      const a = actions(node);
       expect(a.has('on')).toBe(true);
       expect(a.has('if')).toBe(true);
-      expect(a.has('empty')).toBe(true);
       expect(a.has('add')).toBe(true);
+      // The predicate survives either folded into the condition expression
+      // (normalized `is empty` — the en-reference shape; it/vi since the
+      // cross-language conditional fold) or as the flat-compromise `empty`
+      // command (ru/uk, whose copula doesn't normalize to `is`). Either way
+      // it must not silently vanish.
+      const retained =
+        a.has('empty') || conditionRaws(node).some(raw => /\b(empty|null)\b/i.test(raw));
+      expect(retained).toBe(true);
     });
   }
 

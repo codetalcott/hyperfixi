@@ -643,6 +643,55 @@ line: the toast appended at end of body). Zero parse-level churn (0.9742 /
 **Still deferred:** cross-language positional/conditional burn-down (SOV/VSO
 orders — now visible as the widened R2 band); behavior-\* degenerate mass.
 
+## 7j. Status update (2026-06-12, session 11): cross-language conditional fold
+
+**The conditional cluster (a) collapsed with ONE parser-routing fix.** The
+baseline's per-language `executionFailures` clustered exactly as §10 predicted:
+if-condition / if-exists / if-matches / modal-close-backdrop failed in ALL 23
+non-en languages (92 of 253 failing cells). The mechanism was NOT a per-language
+dict drift: `tryParseConditionalBlock` is already language-parameterized
+(profile-driven if/then/else/end keywords), but non-en handlers match a **fused
+grammar event pattern** that captures the body's first verb as `action` — and
+the action-captured path in `buildEventHandler` builds a flat command +
+`parseBodyWithGrammarPatterns`, which has no fold. The condition truncated to
+whatever role the pattern grabbed and the branches flattened into siblings
+(runtime: "if command requires a condition to evaluate"). Two fixes in
+`semantic-parser.ts`:
+
+1. **buildEventHandler routes fused `action='if'` through the fold** — rewind
+   to the if-keyword token, parse the remaining body via `parseBodyWithClauses`
+   (where the fold lives), and swap in ONLY when a conditional actually folded;
+   anything else falls through byte-identical. `unless` stays unfolded
+   (action-relabel desync, see the fold's own comment).
+2. **`joinTokenText` normalizes keyword tokens** in the folded condition raw —
+   the core expression evaluator reads English operator words only, so a
+   translated condition (`#modal 存在する`, `si … existe`, `jest pusty`) is
+   unevaluable as-is while its normalized join (`#modal exists`, `is empty`)
+   runs. Identifiers/selectors/literals keep their surface value; en unchanged.
+
+**Result:** if-condition 23→3, if-exists 23→1, if-matches 23→4,
+modal-close-backdrop 23→6 failing languages; meanExecutionFidelity **0.6452 →
+0.7546**, failing cells **253 → 175**. Parse-level: avgFidelity 0.9742→0.9741,
+lossy 78→80, degen 63 unchanged. The +2 lossy are ko if-empty/input-validation
+faithful→lossy flips (within tolerance) and are HONEST: the ko SOV transformer
+emits a scrambled conditional (`… 이다 추가 …` = "is add" — the copula directly
+before the then-branch verb, the empty-adjective stranded inside the add), so
+the old faithful 1.0 was an action-set accident on a broken translation. The
+fold's copula guard now swallows the add into the condition. Realigning the ko
+transformer's SOV conditional emission is a tracked dict/transformer-layer
+follow-up (NOT a parser bug). Side effect of (2): id/pl/it/vi if-empty now fold
+the `is empty` predicate INTO the condition (the en-reference shape); the two
+empty-predicate test families accept either shape (folded condition or the
+flat-compromise `empty` command for languages whose copula doesn't normalize —
+fr/pt/zh/ru/uk).
+
+**Remaining R2 clusters (next session):** make-toast-element ×23 +
+accordion-exclusive/tabs-content ×22 + modal-close-button ×21 (multi-command /
+positional bodies); halt-propagation ×18; closest-ancestor + dropdown-toggle
+×13 (positional capture, same 13 Latin-script langs — cluster (b));
+modal-open ×12 (SOV/non-Latin); conditional residue: hi/ko/qu/ru/uk/zh on
+modal-close-backdrop, id/qu/tr/zh on if-matches.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
