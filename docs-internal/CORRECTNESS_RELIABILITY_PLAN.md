@@ -1268,6 +1268,52 @@ structural instances at high risk, while the same effort on Track-2 (behaviors,
 mechanisms remaining (fused-routing, SOV scrambles, en-lossy tabs-aria, qu
 particle) are each scoped above as their own arcs for a future session.
 
+## 7v. Design note (2026-06-13, session 22): the underscore convention is wrong — prefer native-natural surface forms
+
+**Owner question, answered: is the `_`-joined multi-word keyword surface form
+(`karibu_zaidi`, `मेल_खाता`, `mana_chayqa`, `के_साथ`) correct, or just
+confusing? Verdict: WRONG on both axes — unnatural AND usually unparseable.**
+
+1. **Unnatural.** No native author writes snake_case in their own language; it's
+   a C-identifier convention leaking into text that is supposed to BE the
+   language. It defeats the "write code in your language" premise.
+2. **Mis-tokenizes.** Most tokenizers treat `_` as a non-word char, so
+   `मेल_खाता` → `मेल`/`_`/`खाता` (a stray `_` token) and the keyword never forms —
+   the exact bug class waves 14/15 fixed. Smoking gun: the hi dict emits
+   `के_साथ` (with) which tokenizes BROKEN, while the natural `के साथ` tokenizes as
+   one token. It only "works" in Malay, by accident (malay's letter-class
+   includes `_`).
+
+**Preference hierarchy for multi-word/compound keywords (apply going forward):**
+
+1. **Real single word** if one exists — de `nächstgelegene` (closest), qu
+   `manachus` (else), sw `karibu` (closest). Natural and parseable.
+2. **Natural spaced phrase** with longest-match multi-word tokenization — the hi
+   tokenizer ALREADY does this for `के लिए`/`जब तक` (the `for`/`while` keywords).
+3. **Concatenation** (`enyakın`, `karibuzaidi`, `मेलखाता`) ONLY as a last resort,
+   documented as a parse-driven compromise. Better than `_` (parses), but still
+   not how the language is written.
+4. **Never `_`.**
+
+**State of the migration (already in progress, unfinished):** the semantic
+profiles increasingly use natural spaced forms (hi `के लिए`/`जब तक`) while the
+i18n dicts still emit underscores (`के_साथ`, `से_पहले`, `के_बीच`, `mana_sichus`,
+`kay_kaq`, … — dozens across ~20 langs). Many are latent `के_साथ`-class parse
+bugs waiting for a pattern to use them. **session-22 correction (this PR):** sw
+`karibuzaidi` → `karibu` (the wave-14 fused form replaced with the real word;
+zero metric change, pure naturalness). hi stays on `मेलखाता` because the natural
+`मेल खाता` does NOT tokenize — the hi extractor's multi-word support is a
+**hardcoded postpositional-compound allowlist** (`hindi-keyword.ts`: `के लिए`,
+`के साथ`, …) that doesn't cover a two-word verb phrase.
+
+**The proper fix (recommended arc, not yet done):** (a) generalize multi-word
+keyword tokenization — replace the per-language hardcoded compound allowlists
+with real longest-phrase matching against the profile keyword set (the framework
+`tryProfileKeyword` already does `startsWith` across spaces; the extractor-based
+tokenizers need to consult it for multi-token keywords); then (b) audit every
+`_` in the dicts and replace with the natural single/spaced form. (a) unblocks
+(b) for every language at once and lets the `_` convention be deleted wholesale.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
