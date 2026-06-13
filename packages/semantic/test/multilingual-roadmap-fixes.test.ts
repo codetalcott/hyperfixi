@@ -5874,3 +5874,54 @@ describe('zh circumfix `当 {event} 时` event wrapper (S2 — fused-event compo
     expect(body.map(n => n.action)).toEqual(['toggle']);
   });
 });
+
+describe('ms put-with-`ia` — marker keyword after a pronoun (S2 — make-element)', () => {
+  // `letak ia ke #container` (put it into #container) dropped its whole put while
+  // `letak itu ke #container` (put that …) parsed, with near-identical tokens. `ia`
+  // (it) tokenizes as a possessive base, and the possessive matcher greedily read
+  // the FOLLOWING role-marker `ke` as the possessive's property — `ke` normalizes
+  // to the concept `destination`, which the structural-keyword guard (English
+  // surface prepositions only) didn't catch. So `ia ke` became the phantom
+  // possessive `it.ke`, the literal `ke` then failed, and the put dropped (the §10
+  // ms put-with-`ia` bug; same for `saya`=me). The fix rejects a possessive
+  // property head whose normalized form is a role-marker concept
+  // (destination/source/…). Cleared ms make-element (execution 28→27).
+  const roleOf = (
+    n: { roles?: Map<string, { type?: string; value?: unknown }> },
+    role: string
+  ): { type?: string; value?: unknown } | undefined => n.roles?.get(role);
+
+  it('[ms] `letak ia ke #container` parses as put it→#container (was dropped)', () => {
+    const n = parse('letak ia ke #container', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(roleOf(n, 'patient')).toMatchObject({ type: 'reference', value: 'it' });
+    expect(roleOf(n, 'destination')).toMatchObject({ type: 'selector', value: '#container' });
+  });
+
+  it('[ms] `letak saya ke #container` parses as put me→#container', () => {
+    const n = parse('letak saya ke #container', 'ms') as {
+      action?: string;
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    expect(n.action).toBe('put');
+    expect(roleOf(n, 'patient')).toMatchObject({ type: 'reference', value: 'me' });
+  });
+
+  it('[ms] make-element body is make + put (the trailing put is reclaimed)', () => {
+    const n = parse(
+      'apabila click buat a <div.card/> kemudian letak ia ke #container',
+      'ms'
+    ) as { body?: Array<{ action?: string }> };
+    expect((n.body ?? []).map(c => c.action)).toEqual(['make', 'put']);
+  });
+
+  it('[en] a genuine possessive property head is still read as a property-path (no regression)', () => {
+    const n = parse('put my value into #x', 'en') as {
+      roles?: Map<string, { type?: string }>;
+    };
+    expect(n.roles?.get('patient')?.type).toBe('property-path');
+  });
+});

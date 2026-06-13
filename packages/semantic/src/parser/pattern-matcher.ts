@@ -848,11 +848,23 @@ export class PatternMatcher {
     // structural words (ms kemudian→then, tamat→end) otherwise read as a
     // property ("its then"), forming a phantom property-path whose type check
     // fails the whole pattern (ms `letak 'X' ke ia kemudian …` dropped the put).
+    //
+    // The same trap exists for ROLE-MARKER keywords whose normalized form is a
+    // role *concept* rather than an English preposition surface word: ms `ke`
+    // (into) normalizes to `destination`, `dari` (from) to `source`, `pada` (to)
+    // to `destination`. `isStructuralKeyword` only knows the English surface
+    // prepositions (`into`/`to`/`from`), so a possessive pronoun directly
+    // followed by such a marker — `letak ia ke #container` (put it into X),
+    // `letak saya ke …` (put me into …) — read `ia ke` as the phantom possessive
+    // `it.ke`, the literal `ke` match then failed, and the whole put dropped
+    // (the §10 "ms put-with-`ia`" bug). A marker concept is never a real DOM
+    // property name, so reject it as a possessive property head.
     if (
       propertyToken.kind === 'identifier' ||
       (propertyToken.kind === 'keyword' &&
         !this.isStructuralKeyword(propertyToken.value) &&
-        !(propertyToken.normalized && this.isStructuralKeyword(propertyToken.normalized))) ||
+        !(propertyToken.normalized && this.isStructuralKeyword(propertyToken.normalized)) &&
+        !(propertyToken.normalized && this.isRoleMarkerConcept(propertyToken.normalized))) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||
       (propertyToken.kind === 'selector' &&
@@ -959,6 +971,30 @@ export class PatternMatcher {
       'call',
     ]);
     return structural.has(value.toLowerCase());
+  }
+
+  /**
+   * Whether a NORMALIZED token form is a role-marker *concept* (the abstract
+   * role name a non-English marker keyword normalizes to, e.g. ms `ke`→
+   * `destination`, `dari`→`source`). These are markers, never DOM property
+   * names — so a possessive property head normalizing to one is a mis-read
+   * (`letak ia ke …` = "put it into …", not "put it's `ke`"). Only checked
+   * against the `normalized` form: a real English property surface word
+   * (`value`, `style`) tokenizes as a bare identifier with no normalized concept,
+   * so this never blocks a genuine `my value` / `its style` possessive.
+   */
+  private isRoleMarkerConcept(normalized: string): boolean {
+    const markerConcepts = new Set([
+      'destination',
+      'source',
+      'patient',
+      'object',
+      'event',
+      'eventmarker',
+      'manner',
+      'instrument',
+    ]);
+    return markerConcepts.has(normalized.toLowerCase());
   }
 
   /**
