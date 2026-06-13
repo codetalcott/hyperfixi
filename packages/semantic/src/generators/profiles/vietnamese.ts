@@ -113,7 +113,7 @@ export const vietnameseProfile: LanguageProfile = {
     replace: { primary: 'thay_thế', alternatives: ['thay_the'], normalized: 'replace' },
     process: { primary: 'xử_lý', alternatives: ['xu_ly'], normalized: 'process' },
     // Async
-    wait: { primary: 'chờ', alternatives: ['đợi'], normalized: 'wait' },
+    wait: { primary: 'chờ', alternatives: ['đợi', 'chờ đợi'], normalized: 'wait' },
     fetch: { primary: 'tải', normalized: 'fetch' },
     settle: { primary: 'ổn định', normalized: 'settle' },
     // Control flow
@@ -145,7 +145,7 @@ export const vietnameseProfile: LanguageProfile = {
     beep: { primary: 'beep', normalized: 'beep' },
     break: { primary: 'ngắt', normalized: 'break' },
     copy: { primary: 'sao chép', normalized: 'copy' },
-    exit: { primary: 'thoát', normalized: 'exit' },
+    exit: { primary: 'thoát', alternatives: ['thoát ra'], normalized: 'exit' },
     pick: { primary: 'chọn', normalized: 'pick' },
     render: { primary: 'kết xuất', normalized: 'render' },
     // Modifiers

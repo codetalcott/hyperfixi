@@ -5715,6 +5715,20 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     ['vi', 'với mỗi', 'for'],
     ['hi', 'के लिए', 'for'],
     ['hi', 'मेल खाता', 'matches'], // natural spaced matches (no more मेलखाता concat)
+    // Task #10 Phase B: `before`/`after`/`until` are pattern literals (matched by
+    // `matchLiteralToken` via value/normalized), not role markers, so they were
+    // removed from MARKER_CONCEPT_NORMALIZEDS and now tokenize as ONE base keyword
+    // — the profile-driven replacement for the hindi/vietnamese hardcoded compound
+    // lists deleted in Phase C.
+    ['hi', 'से पहले', 'before'],
+    ['hi', 'के बाद', 'after'],
+    ['vi', 'trước khi', 'before'],
+    ['vi', 'sau khi', 'after'],
+    ['vi', 'cho đến khi', 'until'],
+    // Task #10 Phase C: vi wait/exit gained spaced alternatives so the base
+    // mechanism covers them and the vietnamese extractor list could be retired.
+    ['vi', 'chờ đợi', 'wait'],
+    ['vi', 'thoát ra', 'exit'],
   ];
   for (const [lang, phrase, want] of oneKeyword) {
     it(`[${lang}] "${phrase}" → single keyword \`${want}\``, () => {
@@ -5728,6 +5742,47 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     const toks = norm('id', 'ke dalam');
     expect(toks[0]).toBe('destination'); // `ke` → destination marker
     expect(toks).not.toEqual(['into']);
+  });
+
+  // Task #10 Phase C: the per-language hardcoded compound allowlists are gone.
+  // The base tokenizer's `tryMultiWordKeyword` covers every non-marker phrase; the
+  // few genuine marker phrases with no profile keyword keep a minimal extractor.
+  describe('Task #10 Phase C — hardcoded compound lists retired', () => {
+    it('[hi] before/after/while/for/else come from the base mechanism (keyword extractor allowlist deleted)', () => {
+      // These were in HindiKeywordExtractor's deleted compound array; the base
+      // `tryMultiWordKeyword` now emits them as one keyword with the right normalized.
+      expect(norm('hi', 'से पहले')).toEqual(['before']);
+      expect(norm('hi', 'के बाद')).toEqual(['after']);
+      expect(norm('hi', 'जब तक')).toEqual(['while']);
+      expect(norm('hi', 'के लिए')).toEqual(['for']);
+      expect(norm('hi', 'नहीं तो')).toEqual(['else']);
+    });
+
+    it('[hi] `के साथ`/`के बारे में` (no profile keyword) still match as one token via HindiParticleExtractor', () => {
+      // These two marker/relational phrases are NOT profile keywords, so the base
+      // mechanism cannot emit them — the trimmed HindiParticleExtractor keeps them.
+      const withToks = getTokenizer('hi').tokenize('के साथ #x').tokens as Array<{ value: string }>;
+      expect(withToks[0].value).toBe('के साथ');
+      const aboutToks = getTokenizer('hi').tokenize('के बारे में #x').tokens as Array<{
+        value: string;
+      }>;
+      expect(aboutToks[0].value).toBe('के बारे में');
+    });
+
+    it('[vi] the retired ~80-entry list is covered by the base mechanism', () => {
+      // A representative spread across categories that used to live in the extractor.
+      expect(norm('vi', 'chuyển đổi')).toEqual(['toggle']);
+      expect(norm('vi', 'hiển thị')).toEqual(['show']);
+      expect(norm('vi', 'với mỗi')).toEqual(['for']);
+      expect(norm('vi', 'trước khi')).toEqual(['before']);
+      expect(norm('vi', 'cho đến khi')).toEqual(['until']);
+    });
+
+    it('[vi] `vào trong` (into) and `sự kiện` (event) stay one token via the trimmed extractor', () => {
+      // The only two phrases the base mechanism MUST exclude (marker concepts).
+      expect(norm('vi', 'vào trong')).toEqual(['into']);
+      expect(norm('vi', 'sự kiện')).toEqual(['event']);
+    });
   });
 
   it('[hi] modal-close-backdrop folds with natural `मेल खाता` matches', () => {

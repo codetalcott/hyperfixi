@@ -1,8 +1,89 @@
 # Task #10 handoff — multi-word marker keywords → retire compound lists → dict underscore audit
 
-> **Status:** ready to start. Unblocked by #416 (the multi-word keyword
-> tokenization keystone). One coherent arc, 3 phases, each gate-verified and
-> shippable on its own. Start with Phase A (lowest risk, already unblocked).
+> **Status:** Phase B + Phase C **DONE** (gate-green, all package suites green,
+> lock tests added). Phase A **partially done** + re-scoped — see "What landed"
+> below. The arc shipped in the order **B → C → A-slice** rather than A-first,
+> because measurement showed the keystone (Phase B) is far cheaper than the
+> handoff assumed (no pattern-matcher surgery), and it unblocks the list
+> deletions that were the concrete DoD.
+
+## What landed (this session)
+
+**Phase B — DONE.** `before`/`after`/`until` were removed from
+`MARKER_CONCEPT_NORMALIZEDS` (`packages/framework/src/core/tokenization/base-tokenizer.ts`).
+**Key correction to this handoff's premise:** these three concepts do NOT need
+the pattern-matcher surgery described below. The generated patterns expose them
+as ordinary **pattern literals** (e.g. vi `put-vi-before: LIT(trước|trước khi)`,
+hi put has no before/after literal at all), which `matchLiteralToken` matches by
+exact value OR normalized form (`getMatchType`). So once the base
+`tryMultiWordKeyword` emits `से पहले`/`के बाद`/`cho đến khi` as ONE keyword
+token, it matches the literal directly — no role-mechanism change. The pattern
+matcher only needs teaching for markers consumed by the **role clause matchers**
+(source/destination/event), which is why `into`/`from`/`to`/`with`/`on`/… stay
+excluded (id `ke dalam` shadowing `ke` destination is the canonical case).
+Blast radius of the change was just hi (`से पहले`/`के बाद`) and vi
+(`cho đến khi`); every other language uses single-word before/after/until markers
+that never went through multi-word matching. hi dict migrated
+`से_पहले`→`से पहले`, `के_बाद`→`के बाद`, `जब_तक`→`जब तक`.
+
+**Phase C — DONE.**
+
+- `HindiKeywordExtractor` (`extractors/hindi-keyword.ts`): the `[' के लिए', …]`
+  compound allowlist + its space-walking branch is **deleted**. It reads a single
+  Devanagari word now; every phrase it used to catch is covered by the base
+  mechanism (के लिए/के बाद/से पहले/नहीं तो/जब तक) or by `HindiParticleExtractor`
+  (के साथ/के बारे में).
+- `HindiParticleExtractor` (`extractors/hindi-particle.ts`): `COMPOUND_POSTPOSITIONS`
+  trimmed from 7 → 2. Only `के साथ` (with) and `के बारे में` (about) remain —
+  the two phrases that are NOT profile keywords, so the base mechanism can't emit
+  them. The other 5 are dead (base runs first).
+- `VietnameseKeywordExtractor` (`extractors/vietnamese-keyword.ts`): the ~80-entry
+  `multiWordPhrases` array trimmed to **2** — `vào trong` (into) and `sự kiện`
+  (event), the only marker concepts the base mechanism MUST exclude. vi profile
+  gained `chờ đợi`→wait and `thoát ra`→exit alternatives so the base covers those
+  two compounds (they had no profile keyword before).
+
+**Phase A — partial + re-scoped.** Migrated hi before/after/while as above. The
+broad dict underscore audit revealed the handoff's "just change `X_Y`→`X Y` in
+the dict" recipe applies to **almost nothing** as-is, because the natural spaced
+form only tokenizes when the concept is already a profile keyword. Breakdown of
+the ~290 underscore dict forms (audit over all dicts × semantic tokenizer):
+
+- **~270 are decorative dict-only forms** in the `expressions`/`attributes`/
+  `values`/`logical` categories (tl `mga_klase`, `naka_tsek`; uk `лише_читання`;
+  …). The semantic command parser never tokenizes these as keywords — they exist
+  only for i18n grammar-transform _display_ — so they are **not gate-relevant**
+  and migrating them is pure cosmetics with no parse effect (and risk to i18n
+  round-trip tests). Left as-is.
+- **events** (hi `माउस_नीचे`=mousedown, id/ru/sw/tr/uk equivalents): appear in the
+  corpus but are **zero fidelity impact** — none is in any baseline lossy/degenerate
+  pass, because event-name capture in the handler pattern is lenient (fidelity
+  counts command _actions_, not the event string). Migrating them needs the event
+  names added to each profile as multi-word keywords; deferred as low-value.
+- **`unless`** (hi `जब_तक_नहीं`, qu `mana_sichus`): genuinely lossy
+  (`unless-condition` drops the conditional → fid 0.5), but this is the
+  **control-flow-body parsing cluster** tracked in
+  `docs-internal/CORRECTNESS_RELIABILITY_PLAN.md`, not a dict swap: `unless` is
+  absent from those profiles, and the SOV trailing-`unless` fold is unsolved. A
+  spaced `जब तक नहीं` mis-captures as `while`, not `unless`. Left for that arc.
+
+### DoD status
+
+- ✅ hindi + vietnamese hardcoded compound lists deleted (hindi fully; vietnamese
+  and the hindi particle list reduced to the documented marker residue base can't
+  cover).
+- 🟡 No `_` keyword surface form remains _where a natural form parses_ — true for
+  the migrated forms; the residue is the decorative/event/`unless` set documented
+  above (none of which is "a natural form that parses" today).
+- ✅ `MARKER_CONCEPT_NORMALIZEDS` reduced to role-mechanism markers only, with the
+  pattern-literal-vs-role-mechanism distinction documented in code.
+- ✅ Gate green; framework/semantic/i18n + 8 domain suites green; lock tests added
+  (`Task #10 Phase C` block in
+  `packages/semantic/test/multilingual-roadmap-fixes.test.ts`).
+
+---
+
+## Original handoff (for reference)
 
 ## Objective
 
