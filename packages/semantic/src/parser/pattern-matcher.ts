@@ -23,6 +23,7 @@ import {
   isValidReference,
 } from '../types';
 import { isTypeCompatible } from './utils/type-validation';
+import { commandSchemas } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -562,6 +563,11 @@ export class PatternMatcher {
   /**
    * Positional query keywords (English + normalized forms produced by the
    * tokenizers for every language, e.g. AR آخر→last, TL huli→last).
+   * `closest` is included: `closest <sel>` is the ancestor-scope query form
+   * (`hide closest .modal`, `toggle .x on closest .card`) and folds to the
+   * same call-expression shape the runtime's positional expressions evaluate
+   * (the expression-parser positional fold). Without it the patient/destination
+   * role rejected the keyword and the whole command dropped from event bodies.
    */
   private static readonly POSITIONAL_KEYWORDS = new Set([
     'first',
@@ -569,6 +575,7 @@ export class PatternMatcher {
     'next',
     'previous',
     'random',
+    'closest',
   ]);
 
   /**
@@ -610,6 +617,16 @@ export class PatternMatcher {
     'self',
     'this',
   ]);
+
+  /**
+   * Normalized command-action keywords (the schema registry's action names).
+   * Tokenizers normalize every language's command verbs to these forms, so the
+   * set is language-independent. Used to keep the positional source clause
+   * from consuming a following command's verb as a locative marker.
+   */
+  private static readonly COMMAND_ACTION_KEYWORDS = new Set(
+    Object.keys(commandSchemas).map(a => a.toLowerCase())
+  );
 
   /**
    * Try to match a positional query expression:
@@ -674,7 +691,12 @@ export class PatternMatcher {
       source &&
       source.kind === 'selector' &&
       (marker.kind === 'keyword' || marker.kind === 'particle' || marker.kind === 'identifier') &&
-      !PatternMatcher.POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
+      !PatternMatcher.POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
+      // A command verb is never a locative marker: in a juxtaposed body
+      // (`hide closest .modal remove .modal-open from body`) the next clause's
+      // verb (`remove`) would otherwise be swallowed as the source marker and
+      // the following command lost.
+      !PatternMatcher.COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
     ) {
       parts.push(marker.value, source.value);
       tokens.advance();
@@ -1458,7 +1480,15 @@ export class PatternMatcher {
         return;
       }
 
-      // Not followed by a selector or identifier, revert
+      // "the next <sel>" / "the closest .modal": the article also precedes
+      // positional-phrase heads, which tokenize as keywords/literals — skip it
+      // so tryMatchPositionalExpression sees the positional keyword first.
+      const nextNorm = nextToken ? (nextToken.normalized ?? nextToken.value).toLowerCase() : '';
+      if (nextToken && PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(nextNorm)) {
+        return;
+      }
+
+      // Not followed by a selector, identifier, or positional keyword — revert
       tokens.reset(mark);
     }
 

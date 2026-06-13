@@ -572,11 +572,47 @@ expressions/control-flow/parser 2580, runtime-ast-coverage 75; typechecks clean.
   28 → 29 (dropdown-toggle; `.dropdown-menu` fixture element). Zero
   parse-level fidelity churn from the fold (gate green, no avgFidelity moves).
 
-**Still deferred (the deep en body-parse arc):** `hide closest .modal`
-(modal-close-button) and `show the next <div.tab-panel/>` (tabs-content §10.5)
-still DROP at the semantic parse — body segmentation, not expression work; the
-at-end-of positional put (`put it at end of body`, make-toast-element);
-cross-language conditional folding (SOV/VSO orders).
+## 7i. Status update (2026-06-12, session 10): positional-phrase patients (wave 3)
+
+**The "deep en body-parse arc" turned out to be three small pattern-matcher
+gaps, not body segmentation.** `hide closest .modal` and `show the next
+<div.tab-panel/>` dropped because the role matcher never RECOGNIZED the
+phrase — once the role captures it as one expression, the existing clause
+segmentation, the #400 expression-parser positional fold, and the core
+runtime all already work. Three fixes in `pattern-matcher.ts`:
+
+1. **`closest` joins POSITIONAL_KEYWORDS** — `tryMatchPositionalExpression`
+   only fired for first/last/next/previous/random, so a `closest <sel>`
+   patient/destination rejected the keyword and the whole command dropped from
+   the event body. Bonus surface: destinations — `toggle .x on closest .card`
+   previously captured destination literal `"closest"` (selector stranded) and
+   `add .x to closest .card` silently defaulted to `me`; both now capture the
+   full positional expression (closest-ancestor / accordion-exclusive
+   references improved).
+2. **`skipNoiseWords` skips articles before positional keywords** — `the
+next <div.tab-panel/>` never reached the positional matcher because the
+   article was only skipped before selectors/identifiers (tabs-content §10.5).
+3. **Source-clause command-verb guard** — the positional matcher's optional
+   `<marker> <selector>` source clause accepted ANY keyword as the marker, so
+   in the juxtaposed modal-close-button body (`hide closest .modal remove
+.modal-open from body`) it swallowed `remove` as a locative marker and the
+   following command was lost. Markers whose normalized form is a schema
+   action (`commandSchemas` keys — language-independent) are now refused.
+
+**Validation:** semantic 5835 green; en references for tabs-content (all FOUR
+commands, §10.5 resolved), modal-close-button, closest-ancestor now parse and
+EXECUTE end-to-end in jsdom. Subset 29 → 30 (modal-close-button +
+PATTERN_SETUP giving #btn a `.modal` ancestor); membership lock updated in the
+same PR. **The §10.5 band inversion happened as predicted**: 58 execution rows
+re-recorded (the four improved en signatures now demand correct positional
+behavior the translations don't yet produce — mean executionFidelity 0.7706 →
+0.6957, the recorded-band outcome, NOT a regression). Parse-level fidelity
+unchanged (0.9742; one within-tolerance sw flip). Baseline regenerated; gate
+green against it.
+
+**Still deferred:** the at-end-of positional put (`put it at end of body`,
+make-toast-element); cross-language positional/conditional burn-down (SOV/VSO
+orders — now visible as the widened R2 band).
 
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
