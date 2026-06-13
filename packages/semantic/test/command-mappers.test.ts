@@ -508,6 +508,25 @@ describe('Halt Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('halt');
+    expect(result.args).toEqual([]);
+  });
+
+  it('preserves the patient (`halt the event` must not collapse to a bare halt)', () => {
+    // A bare halt stops the WHOLE handler; `halt the event` only
+    // preventDefault/stopPropagations and the handler continues. The semantic
+    // parse captures the patient as the literal 'the' (the `event` word is
+    // consumed as a keyword); HaltCommand.execute resolves a 'the' target to
+    // context.event. Dropping the patient made `halt the event then toggle …`
+    // skip the toggle.
+    const node = createCommandNode('halt', { patient: literal('the', 'string') });
+
+    const mapper = getCommandMapper('halt')!;
+    const builder = new ASTBuilder();
+    const result = mapper.toAST(node, builder);
+
+    expect(result.name).toBe('halt');
+    expect(result.args).toHaveLength(1);
+    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'the' });
   });
 });
 

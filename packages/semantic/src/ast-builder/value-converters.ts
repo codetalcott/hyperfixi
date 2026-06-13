@@ -109,6 +109,19 @@ export function convertSelector(
     );
   }
 
+  // An element LITERAL (`<div.card/>`) is creation markup, not a query — carry
+  // it on `raw` (the canonical parser's element-literal field) so consumers
+  // like MakeCommand use the markup directly instead of querySelector-ing it.
+  if (value.value.startsWith('<')) {
+    return {
+      type: 'selector',
+      value: value.value,
+      selector: value.value,
+      selectorType: value.selectorKind as SelectorKind,
+      raw: value.value,
+    } as SelectorNode;
+  }
+
   return {
     type: 'selector',
     value: value.value,
