@@ -5518,3 +5518,66 @@ describe('`matches` comparison-operator normalization (R2 wave 12 — modal-clos
     expect(condText(c!)).toBe('target matches .modal-backdrop');
   });
 });
+
+describe('de `nächstgelegene` → closest disambiguation (R2 wave 13)', () => {
+  // German `nächste` is genuinely ambiguous (next/nearest). The de i18n dict
+  // emitted it for BOTH `next` and `closest`, and the german tokenizer
+  // deliberately normalizes `nächste`→next (last-wins; a second closest entry
+  // would shadow the positional-capable `next`). So a translated `closest .X`
+  // surfaced as `next .X` (or, where next isn't positional in that slot, dropped
+  // to `me`) and the wrong element was targeted at runtime. The dict now emits
+  // the unambiguous `nächstgelegene` ("nearest-located") for closest, and the
+  // tokenizer maps it →closest — distinct word, no shadowing of next. Cleared de
+  // on accordion-exclusive, closest-ancestor, modal-close-button (de now 0
+  // execution failures). Parse-level unchanged (the captured positional `raw`
+  // text the runtime reads moved from `next`/`me` to `closest .X`, not the
+  // action set). Hand-built minimal de inputs (decoupled from corpus jitter).
+  function commands(node: unknown): Array<Record<string, unknown>> {
+    const out: Array<Record<string, unknown>> = [];
+    const walk = (c: unknown) => {
+      if (!c || typeof c !== 'object') return;
+      const rec = c as Record<string, unknown>;
+      if (typeof rec.action === 'string' && !['on', 'compound'].includes(rec.action as string))
+        out.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const ch = rec[f];
+        if (Array.isArray(ch)) ch.forEach(walk);
+        else if (ch) walk(ch);
+      }
+    };
+    walk(node);
+    return out;
+  }
+  const roleRaw = (cmd: Record<string, unknown>, role: string): unknown => {
+    const roles = cmd.roles as Map<string, { raw?: unknown; value?: unknown }>;
+    const m = roles instanceof Map ? roles : new Map(Object.entries((roles as object) ?? {}));
+    const d = m.get(role) as { raw?: unknown; value?: unknown } | undefined;
+    return d?.raw ?? d?.value;
+  };
+
+  it('toggle destination captures `closest .card` (closest-ancestor shape)', () => {
+    const toggle = commands(parse('bei klick umschalten .expanded zu nächstgelegene .card', 'de')).find(
+      c => c.action === 'toggle'
+    );
+    expect(toggle, 'toggle present').toBeTruthy();
+    expect(roleRaw(toggle!, 'destination')).toBe('closest .card');
+  });
+
+  it('hide patient captures `closest .modal` (modal-close-button shape)', () => {
+    const hide = commands(parse('bei klick verstecken nächstgelegene .modal', 'de')).find(
+      c => c.action === 'hide'
+    );
+    expect(hide, 'hide present').toBeTruthy();
+    expect(roleRaw(hide!, 'patient')).toBe('closest .modal');
+  });
+
+  it('`nächste` still normalizes to next (no shadowing regression)', () => {
+    // The positional-capable `next` reading must survive: a distinct closest word
+    // means `nächste` is untouched. `put X into next .y` keeps next.
+    const put = commands(parse('bei klick setzen "x" in nächste .panel', 'de')).find(
+      c => c.action === 'put'
+    );
+    expect(put, 'put present').toBeTruthy();
+    expect(String(roleRaw(put!, 'destination'))).toContain('next');
+  });
+});
