@@ -30,7 +30,7 @@ export const russianProfile: LanguageProfile = {
     result: 'результат',
     event: 'событие',
     target: 'цель',
-    body: 'body',
+    body: 'тело', // was an English placeholder; the i18n dict emits the Russian word
   },
   possessive: {
     marker: '',

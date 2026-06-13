@@ -5089,6 +5089,55 @@ describe('en positional-phrase patients — closest <sel> and the-led positional
   }
 });
 
+describe('body reference dict↔profile alignment (R2 wave 6)', () => {
+  // The semantic profile's `references.body` word MUST equal the word the i18n
+  // dict emits (the corpus-canonical surface form), or the parser never maps the
+  // translated body word to the `body` contextReference and the source/
+  // destination role falls back to `me`. Three profiles carried the literal
+  // English placeholder `'body'` (ru/tl/uk) and three more disagreed with the
+  // dict on a real word (ar الجسم≠جسم, ko 본문≠바디 — 본문 means "main text",
+  // wrong for the DOM body; id tubuh≠badan). Aligned profile→dict; this cleared
+  // ar/id/ru/tl on modal-close-button + modal-open in the execution sweep.
+  // (qu kurku/ukhu is a separate underscore-tokenization issue — the dict emits
+  //  mana_chayqa/kurku which the qu tokenizer splits; tracked, not fixed here.)
+  function roles(node: unknown): Map<string, { type?: string; value?: unknown; raw?: unknown }> {
+    return (node as { roles: Map<string, { type?: string; value?: unknown; raw?: unknown }> }).roles;
+  }
+  // [lang, corpus-shaped `remove .x from <body-word>`, expected source value]
+  const bodyCases: Array<[string, string]> = [
+    ['ar', 'احذف .modal-open من جسم'],
+    ['id', 'hapus .modal-open dari badan'],
+    ['ru', 'удалить .modal-open из тело'],
+    ['tl', 'alisin .modal-open mula_sa katawan'],
+    ['uk', 'видалити .modal-open з тіло'],
+  ];
+  for (const [lang, input] of bodyCases) {
+    it(`[${lang}] the dict's body word resolves to the body reference (not me)`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      const source = roles(node).get('source');
+      expect(source?.value).toBe('body');
+    });
+  }
+
+  it('[id] lainnya is recognized as else so if-exists nests (else-branch does not flatten into then)', () => {
+    // The id dict emits `lainnya` for else but the profile only had `selainnya`,
+    // so the else-branch flattened into then. With the condition true (the modal
+    // exists), the flattened make+put-into-body then executed and produced a
+    // spurious effect. `lainnya` is now a profile else alternative.
+    const node = parse(
+      'pada klik jika #modal ada tampilkan #modal lainnya buat a <div#modal/> lalu taruh itu ke badan akhir',
+      'id'
+    ) as { body?: Array<Record<string, unknown>> };
+    const conditional = node.body?.find(n => n.kind === 'conditional') as
+      | { thenBranch?: unknown[]; elseBranch?: unknown[] }
+      | undefined;
+    expect(conditional).toBeDefined();
+    expect(conditional!.thenBranch?.length).toBe(1); // show #modal only
+    expect(conditional!.elseBranch?.length).toBe(2); // make + put, NOT flattened into then
+  });
+});
+
 describe('en at-end-of positional put — at end of / at start of (R2 make-toast-element)', () => {
   function roles(node: unknown): Map<string, { type?: string; raw?: string; value?: unknown }> {
     return (node as { roles: Map<string, { type?: string; raw?: string; value?: unknown }> })

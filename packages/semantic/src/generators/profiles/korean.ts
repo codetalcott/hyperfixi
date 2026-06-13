@@ -29,7 +29,7 @@ export const koreanProfile: LanguageProfile = {
     result: '결과',
     event: '이벤트',
     target: '대상',
-    body: '본문',
+    body: '바디', // matches the i18n dict's emitted body word (본문 = "main text", wrong for the DOM body element)
   },
   possessive: {
     marker: '의', // Possessive particle

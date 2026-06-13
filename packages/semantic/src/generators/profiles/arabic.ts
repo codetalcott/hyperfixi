@@ -28,7 +28,7 @@ export const arabicProfile: LanguageProfile = {
     result: 'النتيجة',
     event: 'الحدث',
     target: 'الهدف',
-    body: 'الجسم',
+    body: 'جسم', // matches the i18n dict's emitted body word (corpus-canonical, parser must recognize it)
   },
   possessive: {
     marker: '', // No explicit marker - uses possessive pronouns

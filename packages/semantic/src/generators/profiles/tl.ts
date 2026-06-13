@@ -27,7 +27,7 @@ export const tagalogProfile: LanguageProfile = {
     result: 'resulta', // "result"
     event: 'pangyayari', // "event"
     target: 'target', // "target"
-    body: 'body',
+    body: 'katawan', // was an English placeholder; the i18n dict emits the Tagalog word
   },
   possessive: {
     marker: 'ng', // Linker used in possessive constructions

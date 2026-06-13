@@ -30,7 +30,7 @@ export const ukrainianProfile: LanguageProfile = {
     result: 'результат',
     event: 'подія',
     target: 'ціль',
-    body: 'body',
+    body: 'тіло', // was an English placeholder; the i18n dict emits the Ukrainian word
   },
   possessive: {
     marker: '',

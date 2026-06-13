@@ -737,6 +737,50 @@ cross-language unit tests added (R2 wave 5 block).
   entirely (the handcrafted en put patterns for `at end of` have no per-language
   counterpart). Separate, harder mechanism — its own track.
 
+## 7l. Status update (2026-06-13, session 13): body reference dict↔profile align
+
+**Half of §7k's "body source not recognized" residual was a dict↔profile word
+drift, fixed by aligning the semantic profile's `references.body` to the i18n
+dict's emitted word** (the corpus-canonical surface form the parser must
+recognize). Three profiles carried the literal English placeholder `'body'`
+(ru/tl/uk) instead of the language's word (`тело`/`katawan`/`тіло`); three more
+disagreed on a real word (ar `الجسم`≠dict `جسم`; ko `본문`="main text", wrong for
+the DOM body, ≠dict `바디`; id `tubuh`≠dict `badan`). Aligned profile→dict
+(lowest blast radius — changes only parser recognition, not the committed
+corpus). Cleared ar/id/ru/tl on **modal-close-button** (15→10 failing) and
+**modal-open** (12→7).
+
+**A measurement-exposed latent bug rode along (and got fixed):** id `if-exists`
+was faithful-by-accident — its else word `lainnya` wasn't a profile else
+alternative (profile only had `selainnya`), so the else-branch (`make`+`put into
+body`) flattened into the _then_-branch; with the condition true and `body`
+unrecognized, the stray `put` was an inert no-op that happened to match en. Once
+`body` resolved, that put produced a spurious effect (an honest faithful→failing
+exposure, exactly the §7j ko pattern). Fixed at the root by adding `lainnya` as
+a profile else alternative → the else-branch nests, doesn't execute, if-exists
+is _truly_ faithful. (`mana_chayqa` for qu is the same drift but blocked by a
+separate **tokenizer underscore-split** bug — `mana_chayqa` tokenizes as
+`mana`/`_`/`chayqa` = false/\_/then — so qu's body+else changes were REVERTED to
+keep qu at baseline until the tokenizer is fixed; tracked below.)
+
+**Result:** meanExecutionFidelity **0.8471 → 0.8640**, failing cells **109 →
+97** (−12). Parse-level essentially flat (avgFidelity 0.9741→0.9743, lossy 80→77
+from the id if-exists nesting, degen 63 unchanged). Gate green; baseline
+regenerated; 6 unit tests added (R2 wave 6 block). Semantic 5855 green.
+
+**Remaining body-source residual (still separate-layer):**
+
+- **SOV/marker-after post-verb source clause** (ja/ko/tr/hi modal-close-button):
+  a control test (`.modal-open を 削除 .container から`) proved even a SELECTOR
+  source drops to `me` in the SOV post-verb position — the trailing source
+  clause after the verb isn't parsed. Structural parser follow-up.
+- **`source=undefined`** (bn/it/th modal-close-button): the source role isn't
+  captured at all (dict word matches the profile, so not a word issue) — a
+  different role-capture path.
+- **qu underscore-tokenization**: the qu tokenizer splits dict words joined with
+  `_` (`mana_chayqa`, and any other multi-word qu dict emission). Until fixed,
+  qu else/body dict alignments can't land. Tokenizer-layer.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right
