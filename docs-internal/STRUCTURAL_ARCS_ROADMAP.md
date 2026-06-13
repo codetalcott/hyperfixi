@@ -15,8 +15,14 @@
 > zero-regression waves — the set-family (set-text/inner-html/style/attribute) via a
 > set markerOverride.hi alignment, and make-element/make-toast via a verb-medial hi
 > put pattern. hi 8→2; only halt-propagation (blocked — leaked-`the` strip regresses
-> tr) and tabs-aria (S1) remain. **Session total: 13 cells, 32 → 19.** Next: qu
-> tokenizer (×6) or the deferred S3/S1 families.
+> tr) and tabs-aria (S1) remain.
+>
+> **Progress (qu DONE — 19 → 13):** the qu tokenizer arc then cleared **all 6 qu
+> cells** in 3 waves — reference alignment to dict forms (4), `cheqaq`→true (1),
+> and make-toast (single-quote strings + fused-body at-end guard + PUT_AT_END
+> wiring) (1). The "accusative over-stripping" was an unknown-word artifact, not a
+> particle bug. **Session total: 19 cells, 32 → 13.** Next: the deferred S1
+> tabs-aria family (×5) or per-language tails.
 
 > **Scope:** the **32 remaining R2 execution-failing cells** after the cheap
 > dict/profile-alignment wins were exhausted (waves 12–16 + the multi-word
@@ -169,21 +175,26 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 - **Yield L (2) · Leverage L · Confidence M · Risk M.**
 - **Verdict:** small; do opportunistically when in the SOV event-wrapper code.
 
-### qu particle-tokenizer (overlaps Task #10)
+### qu particle-tokenizer ✅ DONE (3 waves — qu 6→0)
 
-- **Cells (qu is in 6):** modal-close-backdrop, modal-close-button, modal-open,
-  put-content-basic, set-attribute, make-toast.
-- **Mechanism:** qu accusative-particle over-stripping — `punta` (target) →
-  `pun`+`ta` (the `ta` particle); plus the body-word/`_` issues.
-- **Layer:** qu tokenizer (particle logic). **Best folded into Task #10's
-  tokenizer work** (same layer, same language).
-- **Yield M (some of qu's 6) · Leverage L (qu) · Confidence M · Risk M (qu finicky).**
-- **Verdict:** address inside Task #10.
+- **Cleared (6):** modal-open, modal-close-button, modal-close-backdrop,
+  put-content-basic (wave 1 — reference alignment to dict forms); set-attribute
+  (wave 2 — `cheqaq`→true); make-toast (wave 3 — single-quote strings +
+  fused-body at-end guard + PUT_AT_END wiring). Execution 19→13. See §7z.
+- **What it actually was (NOT particle over-stripping):** the roadmap's "accusative
+  over-stripping" (`punta`→`pun`+`ta`) was an UNKNOWN-WORD artifact — the qu profile
+  carried formal spellings (me=ñuqa, target=ñawpaqman, body=ukhu, it=pay) the dict
+  never emits (it emits noqa/punta/kurku/chay). Once `punta` is the profile's
+  `target` reference it tokenizes whole; no particle-logic change was needed. The
+  one genuine tokenizer fix was the string extractor (it rejected single quotes to
+  avoid the glottalization apostrophe, breaking `'Saved!'`).
+- **All semantic-only, zero regressions, baselined, lock-tested.**
 
 ### Per-language tails (batch opportunistically)
 
 - it modal-close-button (body captured as DESTINATION not source — role-mislabel),
-  th accordion-exclusive, qu modal-close-button. ~3 cells, 1 each.
+  th accordion-exclusive. ~2 cells, 1 each. (qu modal-close-button was cleared by
+  the qu arc.)
 - **Verdict:** not worth a dedicated arc; fix when already in that language's files.
 
 ## Ranked sequence (leverage-first)
@@ -193,17 +204,17 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
    32→25; zh+ms fully clear; subsumes S5). See §7x.
 3. ◑ **S6** hi SOV fronting + possessive-dot — **6/8 DONE** (2 waves, 25→19; hi
    8→2). See §7y. Remaining hi: halt (blocked), tabs-aria (S1).
-4. **S3** SOV `@attr`/`set` role-scramble — partly absorbed by S6 wave 2 (hi
-   make-element/make-toast put role-swap). Remaining: tr/qu/id set-attribute/set-style.
-5. **qu tokenizer** (×6) — now the single largest remaining language cluster.
-6. **S4** SOV verb-final put + per-language tails — opportunistic.
+4. ✅ **qu tokenizer** — **DONE** (3 waves, 19→13; qu 6→0). See §7z.
+5. **S3** SOV `@attr`/`set` role-scramble — mostly absorbed (S6 wave 2 hi put;
+   qu wave 2 set-attribute). Remaining: tr/id set-attribute/set-style.
+6. **S4** SOV verb-final put + per-language tails (it/th) — opportunistic.
 7. **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — last; high-risk
    band-inversion, do only with a deliberate re-baseline.
 
-**Cluster snapshot after S6 (19 cells):** qu ×6 (qu tokenizer), tabs-aria ×5
-(bn/hi/ja/ko/tr → S1), tr ×2 (if-matches, set-attribute), id set-style, it
-modal-close-button, ja put-content-basic, th accordion-exclusive, uk make-toast,
-hi halt-propagation. zh ×0, ms ×0; hi ×2 (down from 8).
+**Cluster snapshot after qu (13 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1),
+tr ×2 (if-matches, set-attribute), id set-style, it modal-close-button, ja
+put-content-basic, th accordion-exclusive, uk make-toast, hi halt-propagation.
+zh ×0, ms ×0, qu ×0; hi ×2.
 
 ## Stopping rule (carried from §9)
 
