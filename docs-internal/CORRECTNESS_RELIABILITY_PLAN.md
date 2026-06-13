@@ -1314,6 +1314,53 @@ tokenizers need to consult it for multi-token keywords); then (b) audit every
 `_` in the dicts and replace with the natural single/spaced form. (a) unblocks
 (b) for every language at once and lets the `_` convention be deleted wholesale.
 
+## 7w. Status update (2026-06-13, session 22): multi-word keyword tokenization GENERALIZED (the §7v keystone)
+
+**Shipped the keystone from §7v(a): profile-driven longest-phrase multi-word
+keyword matching in the framework base tokenizer.** Measure-first found that
+multi-word profile keywords were DEAD in ~8 languages (id `ke dalam`, qu
+`mana waqtalla`, he `כל עוד`, bn `তৈরি করুন`, tr `üzerine gelme`, es `tecla
+abajo`, sw `isiyo sawia` all split) — only vi and hi worked, each via its OWN
+**hardcoded compound list** (the vietnamese extractor's 80-entry
+`multiWordPhrases`, the hindi extractor's allowlist). The generalization makes it
+one mechanism, profile-driven.
+
+- **Mechanism** (`packages/framework/src/core/tokenization/base-tokenizer.ts`):
+  `initializeKeywordsFromProfile` now also builds `multiWordKeywords` (the
+  space-containing `profileKeywords`, longest-first). `tokenizeWithExtractors`
+  calls `tryMultiWordKeyword` after whitespace-skip, BEFORE the per-language
+  extractors: it matches the longest multi-word profile keyword at a word
+  boundary and emits one keyword token. No-op for single-word and no-space (CJK)
+  languages (`multiWordKeywords` empty).
+- **Marker/modifier concepts are EXCLUDED** (`MARKER_CONCEPT_NORMALIZEDS`):
+  into/from/to/with/before/after/… + role names (patient/destination/source/
+  event/eventMarker/…). Those are matched POSITIONALLY by the pattern matcher;
+  greedily pre-matching a multi-word marker phrase shadows the single-word marker
+  patterns depend on. Found via two real regressions the first cut produced: id
+  `ke dalam` (into) swallowed the `ke` destination marker (broke the put pattern),
+  and ko `할 때` (eventMarker) pre-empted the SOV event extraction (broke
+  modal-close-backdrop + the §7-#367 event-marker handling). Command verbs /
+  control-flow / event names are KEPT (vi `với mỗi`=for, es `tecla abajo`=keydown,
+  bn `তৈরি করুন`=make) — those are keyword literals, so one-token matching helps.
+- **Result**: failing execution cells **34 → 32** (bn make-element +
+  make-toast-element cleared — `তৈরি করুন`=make now parses whole);
+  meanExecutionFidelity 0.9523 → 0.9551; **lossy 76 → 73** (the bn pair went
+  lossy→faithful — a parse-level improvement too); degen 63 unchanged. Gate green
+  (all four ratchets); no language regressed. Framework 764, semantic 5916, i18n
+  846, all 8 domain suites green; typechecks clean.
+- **hi natural-form migration (§7v(b), partial)**: hi `matches` `मेलखाता` (wave-15
+  concatenation) → natural spaced **`मेल खाता`**, now that the base matches it.
+  The wave-15 lock test updated to the natural form.
+
+**Deferred (tracked):** fully retiring the hindi/vi hardcoded lists + the
+dict-wide `_` audit (§7v(b) remainder). Blocker: those lists also hold
+MARKER-phrases (`से पहले`/before, `vào trong`/into, `के साथ`/with) that the base
+matcher excludes — fully retiring needs the PATTERN MATCHER to accept multi-word
+marker keywords (so into/before/after can leave `MARKER_CONCEPT_NORMALIZEDS`).
+The lists are now redundant for non-marker keywords (the base runs first) and
+coexist harmlessly. That pattern-matcher work + the underscore audit is the next
+arc.
+
 ## 8. R1 / R2 — role-fidelity and execution ratchets (extend R0)
 
 Action-set fidelity (R0's signal) cannot see a parse that finds the right

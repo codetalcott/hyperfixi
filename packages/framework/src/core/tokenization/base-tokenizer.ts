@@ -32,6 +32,48 @@ import { getDefaultExtractors } from './default-extractors';
 // Uses the canonical list from OperatorExtractor to avoid duplication.
 const SIMPLE_TOKENIZER_OPERATOR_SET = new Set(DEFAULT_OPERATORS);
 
+/**
+ * Normalized concepts that are handled POSITIONALLY by the pattern matcher
+ * (role markers + prepositional modifiers), so a multi-word phrase carrying one
+ * of them must NOT be pre-matched as a single keyword token — doing so shadows
+ * the single-word marker the patterns expect (e.g. id `ke dalam`=into hides the
+ * `ke` destination marker; ko `할 때`=eventMarker pre-empts SOV event extraction).
+ * Command verbs / control-flow / event names are intentionally absent — those
+ * are keyword literals the matcher reads whole, so multi-word matching helps.
+ * See `multiWordKeywords` / `tryMultiWordKeyword`.
+ */
+const MARKER_CONCEPT_NORMALIZEDS: ReadonlySet<string> = new Set([
+  // Role-marker role names (profile.roleMarkers normalizeds)
+  'patient',
+  'destination',
+  'source',
+  'style',
+  'event',
+  'eventMarker',
+  'agent',
+  'goal',
+  'manner',
+  // Prepositional / positional modifier concepts (profile.keywords "Modifiers")
+  'into',
+  'from',
+  'to',
+  'with',
+  'at',
+  'of',
+  'as',
+  'by',
+  'in',
+  'on',
+  'before',
+  'after',
+  'over',
+  'under',
+  'between',
+  'through',
+  'without',
+  'until',
+]);
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -113,6 +155,15 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
 
   /** Keywords derived from profile, sorted longest-first for greedy matching */
   protected profileKeywords: KeywordEntry[] = [];
+
+  /**
+   * Space-containing profile keywords (multi-word phrases), longest-first.
+   * Used by `tryMultiWordKeyword` so natural spaced forms (hi `मेल खाता`,
+   * vi `chuyển đổi`, es `tecla abajo`, …) tokenize as ONE keyword — the
+   * profile-driven replacement for the per-language hardcoded compound lists.
+   * Empty for no-space (CJK) languages, so they are unaffected.
+   */
+  protected multiWordKeywords: KeywordEntry[] = [];
 
   /** Map for O(1) keyword lookups by lowercase native word */
   protected profileKeywordMap: Map<string, KeywordEntry> = new Map();
@@ -218,6 +269,19 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
         pos++;
       }
       if (pos >= input.length) break;
+
+      // Multi-word keyword pre-match: a profile keyword containing a space
+      // (e.g. hi `मेल खाता`, vi `chuyển đổi`, es `tecla abajo`) is matched as ONE
+      // keyword token at a word boundary, longest-first. Runs before the
+      // per-language extractors so natural spaced multi-word keywords tokenize
+      // without each tokenizer hardcoding a compound list. No-op for single-word
+      // and no-space (CJK) languages (multiWordKeywords is empty).
+      const multiWord = this.tryMultiWordKeyword(input, pos);
+      if (multiWord) {
+        tokens.push(multiWord);
+        pos = multiWord.position.end;
+        continue;
+      }
 
       // Try registered extractors in order
       let extracted = false;
@@ -429,6 +493,20 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       (a, b) => b.native.length - a.native.length
     );
 
+    // Multi-word (space-containing) keywords, for longest-phrase matching at a
+    // token boundary. Already longest-first (profileKeywords is sorted above).
+    // Marker/modifier concepts are EXCLUDED: those are matched positionally by
+    // the pattern matcher (role markers), and greedily consuming a multi-word
+    // marker phrase shadows the single-word marker patterns rely on — e.g. id
+    // `ke dalam` (into) would swallow the `ke` destination marker, and ko `할 때`
+    // (eventMarker) would pre-empt the SOV event extraction. Command verbs,
+    // control-flow, and event-name keywords (vi `với mỗi`=for, es `tecla abajo`=
+    // keydown, bn `তৈরি করুন`=make) are kept — the pattern matcher treats those
+    // as keyword literals, so one-token matching is strictly better.
+    this.multiWordKeywords = this.profileKeywords.filter(
+      k => k.native.includes(' ') && !MARKER_CONCEPT_NORMALIZEDS.has(k.normalized)
+    );
+
     // Build Map for O(1) lookups (case-insensitive + diacritic-insensitive)
     // This allows matching both 'بدّل' (with shadda) and 'بدل' (without) to the same entry
     this.profileKeywordMap = new Map();
@@ -476,6 +554,40 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
           entry.normalized
         );
       }
+    }
+    return null;
+  }
+
+  /**
+   * Match the longest multi-word (space-containing) profile keyword at `pos`,
+   * requiring the match to end at a word boundary. The profile-driven
+   * counterpart of the per-language hardcoded compound lists (the hindi and
+   * vietnamese keyword extractors). Returns a keyword token (with the normalized
+   * form) or null. Case-sensitive against the stored native form, mirroring
+   * `tryProfileKeyword`/`isKeywordStart` (the i18n dicts emit a fixed surface
+   * case). No-op when `multiWordKeywords` is empty (no-space/CJK languages).
+   *
+   * @param input - Input string
+   * @param pos - Current position (must be a token-start boundary)
+   * @param isWordChar - End-boundary predicate (defaults to Unicode letter/digit/_)
+   */
+  protected tryMultiWordKeyword(
+    input: string,
+    pos: number,
+    isWordChar: (char: string) => boolean = ch => /[\p{L}\p{N}_]/u.test(ch)
+  ): LanguageToken | null {
+    if (this.multiWordKeywords.length === 0) return null;
+    const rest = input.slice(pos);
+    for (const entry of this.multiWordKeywords) {
+      if (!rest.startsWith(entry.native)) continue;
+      const after = input[pos + entry.native.length];
+      if (after !== undefined && isWordChar(after)) continue; // not a word boundary
+      return createToken(
+        entry.native,
+        'keyword',
+        createPosition(pos, pos + entry.native.length),
+        entry.normalized
+      );
     }
     return null;
   }
