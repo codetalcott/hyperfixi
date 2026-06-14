@@ -42,8 +42,7 @@
 > **Cluster after batch 2 (5 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1). All
 > other languages clear. S1 is the en-reference-lossy arc (`set @attr … on
 <scope>` drops the scope even in English) — defer to a dedicated band-inversion
->
-> - full re-record. See CORRECTNESS_RELIABILITY_PLAN.md §7aa.
+> with a full re-record. See CORRECTNESS_RELIABILITY_PLAN.md §7aa.
 
 > **Progress (S2 DONE — 32 → 25 execution cells):** the **S2 fused-event
 > body-routing / compound-collapse arc is complete** (5 waves, semantic-only).
