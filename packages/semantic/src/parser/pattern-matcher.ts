@@ -1563,6 +1563,32 @@ export class PatternMatcher {
         return;
       }
 
+      // Leaked English article before a FRONTED reference-noun patient: in a
+      // non-English parse `the` is never authored — it's a dict/transformer leak
+      // (hi `the घटना को …` = "the event", the fronted halt patient). Without
+      // skipping it the patient role grabs only `the` and the following marker
+      // fails, so `halt-event-hi-sov-patient-first` (`{patient} को {event} पर
+      // रोकें`) never matches and the halt loses its patient (a bare halt stops
+      // the handler). The reference noun (घटना→event) then fills the patient, so
+      // `halt the event` continues.
+      //
+      // Gated to `the <ref-noun> <particle-marker>` — a fronted patient phrase.
+      // This deliberately does NOT fire for `the <ref-noun> <verb>` (tr
+      // form-submit-prevent's `the olay çağır …` = "the event call …", where the
+      // ref noun is followed by the `call` verb, not a marker): skipping `the`
+      // there breaks tr's fragile body parse (the §7y regression). English keeps
+      // `the` (authored, not a leak) — byte identical, so the en reference parse
+      // is untouched. See STRUCTURAL_ARCS_ROADMAP.md (hi halt-propagation).
+      if (
+        nextToken &&
+        nextToken.kind === 'keyword' &&
+        this.currentProfile?.code !== 'en' &&
+        isValidReference(nextNorm) &&
+        tokens.peek(1)?.kind === 'particle'
+      ) {
+        return;
+      }
+
       // Not followed by a selector, identifier, or positional keyword — revert
       tokens.reset(mark);
     }
