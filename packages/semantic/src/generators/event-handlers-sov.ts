@@ -9,7 +9,7 @@
 
 import type { LanguagePattern, PatternToken } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
-import type { CommandSchema } from './command-schemas';
+import type { CommandSchema, RoleSpec } from './command-schemas';
 import {
   eventHandlerDestinationExtraction,
   eventHandlerDestinationGroup,
@@ -17,6 +17,49 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
+
+/**
+ * Resolve the surface marker (and any allomorph alternatives) for a role in a
+ * given language. Prefers the schema's per-command `markerOverride`, else the
+ * profile's default roleMarker. In BOTH cases, `markerVariants[code]` is merged
+ * in as alternatives so the generated pattern matches every surface form the
+ * i18n transformer can produce.
+ *
+ * Why: `markerOverride` is a single string, so it silently dropped the allomorph
+ * alternatives the profile roleMarker would otherwise have supplied. The Turkish
+ * dative the transformer emits under vowel harmony (e/a/ye/ya) is the canonical
+ * case: tr set-attribute's `… doğru ya ayarla` (value=true marked with the -ya
+ * dative) failed to match the `e`-only patient marker, so the whole set fell to
+ * the role-scrambling generic SOV extraction. See STRUCTURAL_ARCS_ROADMAP.md.
+ */
+function resolveRoleMarker(
+  roleSpec: RoleSpec,
+  profile: LanguageProfile
+): { marker: string | undefined; alternatives: string[] | undefined } {
+  let marker: string | undefined;
+  let alternatives: string[] | undefined;
+
+  if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
+    marker = roleSpec.markerOverride[profile.code];
+  } else {
+    const roleMarker = profile.roleMarkers[roleSpec.role];
+    if (roleMarker) {
+      marker = roleMarker.primary;
+      alternatives = roleMarker.alternatives ? [...roleMarker.alternatives] : undefined;
+    }
+  }
+
+  const variants = roleSpec.markerVariants?.[profile.code];
+  if (variants && variants.length > 0) {
+    const merged = alternatives ? [...alternatives] : [];
+    for (const v of variants) {
+      if (v !== marker && !merged.includes(v)) merged.push(v);
+    }
+    alternatives = merged;
+  }
+
+  return { marker, alternatives };
+}
 
 /**
  * Generate SOV event handler pattern (Japanese, Korean, Turkish).
@@ -551,21 +594,8 @@ export function generateSOVTwoRoleEventHandlerPattern(
     // Add the role
     tokens.push({ type: 'role', role: roleSpec.role, optional: false });
 
-    // Get marker for this role - check for override first
-    let marker: string | undefined;
-    let markerAlternatives: string[] | undefined;
-
-    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
-      // Use the override marker
-      marker = roleSpec.markerOverride[profile.code];
-    } else {
-      // Use default role marker from profile
-      const roleMarker = profile.roleMarkers[roleSpec.role];
-      if (roleMarker) {
-        marker = roleMarker.primary;
-        markerAlternatives = roleMarker.alternatives;
-      }
-    }
+    // Get marker for this role - markerOverride/profile default + markerVariants.
+    const { marker, alternatives: markerAlternatives } = resolveRoleMarker(roleSpec, profile);
 
     // Add the marker token
     if (marker) {
@@ -603,6 +633,91 @@ export function generateSOVTwoRoleEventHandlerPattern(
 }
 
 /**
+ * Generate event-LAST SOV two-role event handler pattern.
+ *
+ * Some SOV emissions place the whole event phrase AFTER the command verb, as a
+ * trailing afterthought:
+ * - Japanese put: "Done!" を 私 に 置く クリック で
+ *   [patient] [pMarker] [destination] [dMarker] [verb] [event] [eventMarker]
+ *
+ * The event-first (`{event} で {p} {d} 置く`) and dest-first
+ * (`{p} {event} で 置く {d}`) variants both expect the event before the verb, so
+ * this order fell to the bare command pattern (`put-ja-generated`) — which runs
+ * immediately at execute() time, before the click is dispatched, so the effect
+ * is invisible to the R2 execution snapshot (S4, ja put-content-basic).
+ */
+export function generateSOVTwoRoleEventLastEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  const requiredRoles = commandSchema.roles.filter(r => r.required);
+  const sortedRoles = [...requiredRoles].sort((a, b) => {
+    const aPos = a.sovPosition ?? 999;
+    const bPos = b.sovPosition ?? 999;
+    return aPos - bPos;
+  });
+
+  // Roles + their markers first (SOV position order)
+  for (const roleSpec of sortedRoles) {
+    tokens.push({ type: 'role', role: roleSpec.role, optional: false });
+    const { marker, alternatives: markerAlternatives } = resolveRoleMarker(roleSpec, profile);
+    if (marker) {
+      tokens.push(
+        markerAlternatives
+          ? { type: 'literal', value: marker, alternatives: markerAlternatives }
+          : { type: 'literal', value: marker }
+      );
+    }
+  }
+
+  // Command verb (SOV: after the roles)
+  tokens.push(
+    keyword.alternatives
+      ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+      : { type: 'literal', value: keyword.primary }
+  );
+
+  // Trailing event phrase: {event} {eventMarker}
+  tokens.push({ type: 'role', role: 'event', optional: false });
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) tokens.push({ type: 'literal', value: word });
+    } else {
+      tokens.push(
+        eventMarker.alternatives
+          ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+          : { type: 'literal', value: eventMarker.primary }
+      );
+    }
+  }
+
+  const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-2role-event-last`,
+    language: profile.code,
+    command: 'on',
+    // Below the event-first / dest-first variants — this is the fallback order.
+    priority: (config.basePriority ?? 100) + 40,
+    template: {
+      format: `${roleNames} ${keyword.primary} {event} ${eventMarker.primary}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+    },
+  };
+}
+
+/**
  * Generate destination-first SOV two-role event handler pattern.
  *
  * For languages where the roles precede the event in SOV order:
@@ -632,16 +747,16 @@ export function generateSOVTwoRoleDestFirstEventHandlerPattern(
   const firstRole = sortedRoles[0];
   tokens.push({ type: 'role', role: firstRole.role, optional: false });
 
-  // First role marker
-  let firstMarker: string | undefined;
-  if (firstRole.markerOverride && firstRole.markerOverride[profile.code] !== undefined) {
-    firstMarker = firstRole.markerOverride[profile.code];
-  } else {
-    const roleMarker = profile.roleMarkers[firstRole.role];
-    if (roleMarker) firstMarker = roleMarker.primary;
-  }
+  // First role marker (markerOverride/profile default + markerVariants allomorphs)
+  const { marker: firstMarker, alternatives: firstMarkerAlts } = resolveRoleMarker(
+    firstRole,
+    profile
+  );
   if (firstMarker) {
-    tokens.push({ type: 'literal', value: firstMarker });
+    const firstMarkerToken: PatternToken = firstMarkerAlts
+      ? { type: 'literal', value: firstMarker, alternatives: firstMarkerAlts }
+      : { type: 'literal', value: firstMarker };
+    tokens.push(firstMarkerToken);
   }
 
   // Event role
@@ -672,18 +787,11 @@ export function generateSOVTwoRoleDestFirstEventHandlerPattern(
   const secondRole = sortedRoles[1];
   tokens.push({ type: 'role', role: secondRole.role, optional: false });
 
-  // Second role marker
-  let secondMarker: string | undefined;
-  let secondMarkerAlts: string[] | undefined;
-  if (secondRole.markerOverride && secondRole.markerOverride[profile.code] !== undefined) {
-    secondMarker = secondRole.markerOverride[profile.code];
-  } else {
-    const roleMarker = profile.roleMarkers[secondRole.role];
-    if (roleMarker) {
-      secondMarker = roleMarker.primary;
-      secondMarkerAlts = roleMarker.alternatives;
-    }
-  }
+  // Second role marker (markerOverride/profile default + markerVariants allomorphs)
+  const { marker: secondMarker, alternatives: secondMarkerAlts } = resolveRoleMarker(
+    secondRole,
+    profile
+  );
   if (secondMarker) {
     const markerToken: PatternToken = secondMarkerAlts
       ? { type: 'literal', value: secondMarker, alternatives: secondMarkerAlts }

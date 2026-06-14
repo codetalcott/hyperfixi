@@ -25,6 +25,7 @@ import {
   generateSOVTemporalEventHandlerPattern,
   generateSOVTwoRoleEventHandlerPattern,
   generateSOVTwoRoleDestFirstEventHandlerPattern,
+  generateSOVTwoRoleEventLastEventHandlerPattern,
 } from './event-handlers-sov';
 import {
   generateVSOEventHandlerPattern,
@@ -372,6 +373,18 @@ export function generateEventHandlerPatterns(
       // Quechua set: x ta ñitiy pi 10 man churay
       patterns.push(
         generateSOVTwoRoleDestFirstEventHandlerPattern(
+          commandSchema,
+          profile,
+          keyword,
+          eventMarker,
+          config
+        )
+      );
+
+      // Two-role SOV pattern (event-last variant) — the event phrase trails the
+      // verb: Japanese put `"Done!" を 私 に 置く クリック で` (S4 put-content-basic).
+      patterns.push(
+        generateSOVTwoRoleEventLastEventHandlerPattern(
           commandSchema,
           profile,
           keyword,

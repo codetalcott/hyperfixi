@@ -1,5 +1,50 @@
 # Per-language structural arcs roadmap (R2 execution tail)
 
+> **Progress (R2 structural tails batch 2 — 10 → 5):** the five remaining
+> non-S1 cells were each cleared as a localized, probed-before-edit,
+> gate-green, zero-regression fix (avgExecutionFidelity 0.9860 → **0.9930**).
+> **Only the S1 tabs-aria ×5 cluster remains** (the deferred en-reference
+> band-inversion). The five:
+>
+> - **tr set-attribute** — TWO compounding bugs. (1) `doğru` ("true") was in the
+>   tokenizer's POSTPOSITIONS set ("towards") and classifyToken checks
+>   POSTPOSITIONS before isKeyword, so the boolean tokenized as `kind='particle'`
+>   — which `tokenToSemanticValue` has no case for, so the set patient rejected
+>   it. (2) The i18n transformer emits the dative under vowel harmony (`e` for
+>   quoted strings, `-ya` for `doğru`); markerOverride is a single string so the
+>   tr set patterns carried only `e`. Removed `doğru` from POSTPOSITIONS + wired
+>   the schema's `markerVariants` into the SOV two-role generators (new
+>   `resolveRoleMarker` helper) + added tr dative allomorphs to set's patient.
+> - **ja put-content-basic** (S4) — the event phrase trails the verb (`"Done!" を
+私 に 置く クリック で`); no SOV two-role variant covered event-LAST order, so
+>   it fell to the bare command pattern (runs at execute() time, before the click
+>   → invisible). Added `generateSOVTwoRoleEventLastEventHandlerPattern`.
+> - **id set-style** (S3) — the dict renders "my" as the two-word `saya punya`
+>   ("I have"); the connector `punya` between the possessor (saya→me) and the
+>   property broke the possessive matcher. Added a `connectors` field to
+>   `PossessiveConfig` (id: `punya`) skipped after the possessor keyword.
+> - **tr if-matches** — the folded-`if` condition extraction truncated at the
+>   first token that begins a command; in SOV the then-verb is clause-final, so
+>   `match .disabled durdur` spuriously matched a verb-last halt pattern and cut
+>   the condition `I match .disabled` down to `I`. (ja/ko/hi escaped only because
+>   their halt pattern happened not to match the span — the same English `I match`
+>   leaks into every language.) Added a `CONDITION_OPERATORS` guard: an operator
+>   is never a command head, so don't truncate at one.
+> - **hi halt-propagation** (the §7y-blocked one) — hi fronts the halt patient to
+>   position 0 with a leaked English article (`the घटना को क्लिक पर रोकें …`); the
+>   patient role grabbed only `the`, the marker `को` failed, and the halt fell to
+>   a BARE halt (stops the handler). `skipNoiseWords` now skips a leaked `the`
+>   before `the <ref-noun> <marker>`. The §7y tr/form-submit-prevent regression
+>   is **avoided** by the 2-token gate: `the olay çağır …` has the ref noun
+>   followed by a VERB (not a marker), so `the` is left intact. en excluded
+>   entirely (authored `the`, not a leak) — en reference byte-identical.
+>
+> **Cluster after batch 2 (5 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1). All
+> other languages clear. S1 is the en-reference-lossy arc — the en `set`
+> reference drops its trailing `on`-scope modifier even in English. Defer to a
+> dedicated band-inversion with a full re-record. See
+> CORRECTNESS_RELIABILITY_PLAN.md §7aa.
+
 > **Progress (S2 DONE — 32 → 25 execution cells):** the **S2 fused-event
 > body-routing / compound-collapse arc is complete** (5 waves, semantic-only).
 > It cleared **7 cells — zh ×5 and ms ×2, both languages now fully clear**:
@@ -137,8 +182,14 @@ Score each arc on five axes (H/M/L), then rank by leverage-adjusted value.
   fallen to `put-hi-bare` and grabbed the destination as the patient). Execution
   32→19 over the session (S2 + these); both waves zero-regression, baselined, lock-
   tested. See §7y.
-- **Remaining (2), both DEFERRED:**
-  - **halt-propagation** — needs the leaked English article `the` (`the घटना` =
+- **Remaining (2):**
+  - **halt-propagation** — ✅ **CLEARED (batch 2, §7aa).** The §7y "leaked-`the`
+    strip regresses tr" blocker was solved with a 2-token gate: skip the leaked
+    `the` only before `the <ref-noun> <marker>` (a fronted patient). tr
+    form-submit-prevent's `the olay çağır …` has a VERB after the ref noun, so
+    `the` is left intact — no regression. The note below is the original framing.
+  - **tabs-aria** — still S1 (the only remaining hi cell).
+  - **(historical)** halt-propagation — needs the leaked English article `the` (`the घटना` =
     "the event", fronted to position 0) removed so `halt-event-hi-sov-patient-first`
     matches. A general leading-`the` strip WORKS for hi but **regresses
     tr/form-submit-prevent 4 actions → 1** (its leaked leading `the olay` is
@@ -187,9 +238,13 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
   reference change → baseline re-record) · Unblocks: re-qualifies the @attr family.**
 - **Verdict:** defer unless ready for a deliberate band-inversion + full re-baseline.
 
-### S3 — SOV `@attr` / `set` role-scramble ◑ mostly absorbed
+### S3 — SOV `@attr` / `set` role-scramble ✅ DONE
 
-- **Remaining (2):** set-attribute (tr), set-style (id). The hi share (set-attribute,
+- **Closed (batch 2):** tr set-attribute (`doğru`-as-particle in POSTPOSITIONS +
+  dative allomorph via `markerVariants` wired into the SOV two-role generators);
+  id set-style (two-word possessive connector `punya` via `PossessiveConfig.connectors`).
+  The hi + qu shares were already cleared (S6 wave 1 / qu wave 2). See §7aa.
+- **(historical)** Remaining (2): set-attribute (tr), set-style (id). The hi share (set-attribute,
   set-style) was cleared by **S6 wave 1** (the set markerOverride.hi alignment) and
   the qu share (set-attribute) by **qu wave 2** (`cheqaq`→true).
 - **Mechanism (remaining):** id set-style is the two-word possessive PHRASE
@@ -206,9 +261,13 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
   compound-collapse — see the per-language tails).
 - **Verdict:** folded into S2 as predicted; the zh share is cleared.
 
-### S4 — SOV verb-final put
+### S4 — SOV verb-final put ✅ DONE
 
-- **Remaining (1):** put-content-basic (ja). `"Done!" を 私 に 置く クリック で` —
+- **Closed (batch 2):** ja put-content-basic via
+  `generateSOVTwoRoleEventLastEventHandlerPattern` (`{roles} {verb} {event}
+{eventMarker}`) — the event phrase trails the verb. The qu share was cleared by
+  qu wave 1. See §7aa.
+- **(historical)** Remaining (1): put-content-basic (ja). `"Done!" を 私 に 置く クリック で` —
   SOV verb-final put with a trailing event phrase; no wrapper covers that order.
   (The qu share was cleared by **qu wave 1** reference alignment — qu's structure
   `{patient} ta {dest} man {event} pi {verb}` already parsed once `noqa`→me resolved.)
@@ -230,12 +289,14 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
   avoid the glottalization apostrophe, breaking `'Saved!'`).
 - **All semantic-only, zero regressions, baselined, lock-tested.**
 
-### Per-language tails (batch opportunistically)
+### Per-language tails (batch opportunistically) ✅ DONE
 
-- it modal-close-button (body captured as DESTINATION not source — role-mislabel),
-  th accordion-exclusive. ~2 cells, 1 each. (qu modal-close-button was cleared by
-  the qu arc.)
-- **Verdict:** not worth a dedicated arc; fix when already in that language's files.
+- **R2 tails batch:** it modal-close-button, th accordion-exclusive, uk make-toast.
+- **R2 batch 2:** tr if-matches (CONDITION_OPERATORS — don't truncate the folded-if
+  condition at an operator; SOV verb-last halt patterns spuriously matched the
+  `match .disabled <verb>` span). See §7aa.
+- **Verdict:** all cleared opportunistically while in each language's files, exactly
+  per the rubric heuristic #4.
 
 ## Ranked sequence (leverage-first)
 
@@ -245,11 +306,13 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 3. ◑ **S6** hi SOV fronting + possessive-dot — **6/8 DONE** (2 waves, 25→19; hi
    8→2). See §7y. Remaining hi: halt (blocked), tabs-aria (S1).
 4. ✅ **qu tokenizer** — **DONE** (3 waves, 19→13; qu 6→0). See §7z.
-5. **S3** SOV `@attr`/`set` role-scramble — mostly absorbed (S6 wave 2 hi put;
-   qu wave 2 set-attribute). Remaining: tr/id set-attribute/set-style.
-6. **S4** SOV verb-final put + per-language tails (it/th) — opportunistic.
-7. **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — last; high-risk
-   band-inversion, do only with a deliberate re-baseline.
+5. ✅ **S3** SOV `@attr`/`set` role-scramble — **DONE** (hi via S6 wave 2 + qu wave
+   2; tr set-attribute + id set-style via batch 2). See §7aa.
+6. ✅ **S4** SOV verb-final put — **DONE** (qu via wave 1; ja put-content-basic via
+   batch 2's event-last wrapper). Per-language tails (it/th) cleared in R2 tails
+   batch; tr if-matches + hi halt-propagation cleared in batch 2.
+7. **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — **the only remaining
+   cluster**; high-risk band-inversion, do only with a deliberate re-baseline.
 
 **Cluster snapshot after qu (13 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1),
 tr ×2 (if-matches, set-attribute), id set-style, it modal-close-button, ja
@@ -261,6 +324,32 @@ zh ×0, ms ×0, qu ×0; hi ×2.
 put-content-basic, hi halt-propagation. Cleared this batch: uk make-toast, it
 modal-close-button, th accordion-exclusive. it ×0, th ×0, uk ×0; id ×1, ja ×1,
 tr ×2, hi ×2 (halt + tabs-aria), bn/ko ×1 (tabs-aria).
+
+**Cluster snapshot after R2 structural tails batch 2 (5 cells):** tabs-aria ×5
+(bn/hi/ja/ko/tr → S1) — **all that remains**. Cleared this batch: tr
+set-attribute, ja put-content-basic, id set-style, tr if-matches, hi
+halt-propagation. id ×0, ja ×0, tr ×0 except tabs-aria; hi ×1 (tabs-aria only).
+avgExecutionFidelity 0.9860 → 0.9930. The next R2 move is S1 (deliberate
+band-inversion) — or, per the stopping rule, switch to behaviors (Track 2).
+
+## S1 — tabs-aria ×5: the only remaining cluster (deferred, deliberate)
+
+The en reference is itself lossy: `on click set @aria-selected to "false" on .tab
+set @aria-selected to "true" on me` parses to two `set` commands that BOTH drop
+their `on <scope>` modifier (verified: en AST has destination=@aria-selected,
+patient=false/true, no scope), so both write `#btn` and the net visible effect is
+`aria-selected=true` on `#btn`. The five translations only reach the first set
+(`aria-selected=false`) and then error/drop the second, so they don't even match
+the lossy en effect.
+
+A real fix is two-layer: (1) teach the core/semantic `set` to capture `… on
+<scope>` (a scope modifier or third role) so the en reference becomes
+`aria-selected=false on .tab` + `aria-selected=true on me` — **this inverts the
+gate band** (today's en effect signature changes, and every language re-compares
+against the new reference); then (2) per-language scope capture. Because step 1
+churns the en reference and the whole execution baseline, this must be a dedicated
+arc done with `--save-baseline` immediately after, not bundled with zero-regression
+tail work. Until then it stays the documented R2 floor.
 
 ## Stopping rule (carried from §9)
 

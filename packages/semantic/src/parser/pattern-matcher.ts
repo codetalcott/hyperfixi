@@ -835,6 +835,23 @@ export class PatternMatcher {
     const mark = tokens.mark();
     tokens.advance();
 
+    // Skip a possessive CONNECTOR for multi-word possessor-first constructions
+    // (Indonesian `saya punya *background` = "I have *background" = "my
+    // *background"). The connector sits between the possessor keyword and the
+    // property; without skipping it, `punya` is read as the property and the
+    // whole set body fails to parse (id set-style/set-text).
+    const connectors = this.currentProfile.possessive?.connectors;
+    if (connectors && connectors.length > 0) {
+      const next = tokens.peek();
+      if (next) {
+        const nv = next.value.toLowerCase();
+        const nn = (next.normalized ?? '').toLowerCase();
+        if (connectors.some(c => c.toLowerCase() === nv || c.toLowerCase() === nn)) {
+          tokens.advance();
+        }
+      }
+    }
+
     const propertyToken = tokens.peek();
     if (!propertyToken) {
       // Just the possessive keyword, no property - revert
@@ -1543,6 +1560,32 @@ export class PatternMatcher {
       // so tryMatchPositionalExpression sees the positional keyword first.
       const nextNorm = nextToken ? (nextToken.normalized ?? nextToken.value).toLowerCase() : '';
       if (nextToken && PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(nextNorm)) {
+        return;
+      }
+
+      // Leaked English article before a FRONTED reference-noun patient: in a
+      // non-English parse `the` is never authored — it's a dict/transformer leak
+      // (hi `the घटना को …` = "the event", the fronted halt patient). Without
+      // skipping it the patient role grabs only `the` and the following marker
+      // fails, so `halt-event-hi-sov-patient-first` (`{patient} को {event} पर
+      // रोकें`) never matches and the halt loses its patient (a bare halt stops
+      // the handler). The reference noun (घटना→event) then fills the patient, so
+      // `halt the event` continues.
+      //
+      // Gated to `the <ref-noun> <particle-marker>` — a fronted patient phrase.
+      // This deliberately does NOT fire for `the <ref-noun> <verb>` (tr
+      // form-submit-prevent's `the olay çağır …` = "the event call …", where the
+      // ref noun is followed by the `call` verb, not a marker): skipping `the`
+      // there breaks tr's fragile body parse (the §7y regression). English keeps
+      // `the` (authored, not a leak) — byte identical, so the en reference parse
+      // is untouched. See STRUCTURAL_ARCS_ROADMAP.md (hi halt-propagation).
+      if (
+        nextToken &&
+        nextToken.kind === 'keyword' &&
+        this.currentProfile?.code !== 'en' &&
+        isValidReference(nextNorm) &&
+        tokens.peek(1)?.kind === 'particle'
+      ) {
         return;
       }
 

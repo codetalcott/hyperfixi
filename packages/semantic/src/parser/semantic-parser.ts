@@ -2151,6 +2151,29 @@ export class SemanticParserImpl implements ISemanticParser {
   ]);
 
   /**
+   * Condition operators that join two operands inside an `if` condition
+   * expression (`I match .x`, `me contains .y`, `#m exists`). An operator can
+   * never begin a then-branch command, so the condition extraction must not
+   * truncate AT one — but in SOV languages the then-branch verb is clause-final,
+   * so a span like `match .disabled durdur` (tr) can spuriously match a verb-last
+   * command pattern and break the condition at `match`, dropping the operator and
+   * its right operand (tr if-matches; ja/ko/hi escape only because their halt
+   * pattern happens not to match the equivalent span). Checked by the token's
+   * normalized form too, so per-language `matches` keywords (ko 일치 → `matches`)
+   * are covered; the corpus also leaks these as English across every language.
+   */
+  private static readonly CONDITION_OPERATORS = new Set([
+    'matches',
+    'match',
+    'contains',
+    'exists',
+    'has',
+    'have',
+    'equals',
+    'includes',
+  ]);
+
+  /**
    * Parse a leading `if`/`unless` conditional block from the stream into a
    * ConditionalSemanticNode, consuming the whole block (condition + then/else
    * branches, up to the matching `end` or the stream end). Returns null WITHOUT
@@ -2237,7 +2260,12 @@ export class SemanticParserImpl implements ISemanticParser {
       }
       if (bodyDepth === 0 && condTokens.length > 0) {
         const prev = (blockTokens[i - 1].normalized ?? blockTokens[i - 1].value).toLowerCase();
+        const cur = (t.normalized ?? t.value).toLowerCase();
+        // A condition operator (`match`/`contains`/`exists`/…) is part of the
+        // expression, never a then-branch command head — don't truncate at it
+        // even if a verb-last SOV command pattern spuriously matches the span.
         if (
+          !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
           !SemanticParserImpl.CONDITION_COPULAS.has(prev) &&
           this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language)
         ) {

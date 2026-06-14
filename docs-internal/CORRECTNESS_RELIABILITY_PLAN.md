@@ -1731,6 +1731,41 @@ artifact, not a particle-logic bug.**
 lossy), tr ×2 (if-matches, set-attribute), id/it/ja/th/uk ×1, hi halt-propagation
 ×1. zh ×0, ms ×0, qu ×0; hi ×2. Session 23 total: **32 → 13 (19 cells, 4 arcs).**
 
+## 7aa. Status update (R2 structural tails — batch 2: 10 → 5)
+
+**The five remaining non-S1 R2 execution cells are cleared — each a distinct,
+localized, probed-before-edit, gate-green, zero-fidelity-regression fix.** The
+only remaining execution cluster is **S1 tabs-aria ×5** (the deferred
+en-reference band-inversion). avgExecutionFidelity **0.9860 → 0.9930**.
+
+| cell                 | mechanism                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| tr set-attribute     | `doğru` ("true") was in POSTPOSITIONS ("towards"), classified before isKeyword → `kind='particle'` (no `tokenToSemanticValue` case) → patient rejected. Plus the dative allomorph `ya` (vowel harmony) wasn't a marker alt. Removed `doğru` from POSTPOSITIONS; wired schema `markerVariants` into the SOV two-role generators (new `resolveRoleMarker`); added tr dative allomorphs (e/a/ye/ya) to set's patient. |
+| ja put-content-basic | event phrase trails the verb (`"Done!" を 私 に 置く クリック で`); no event-LAST SOV variant, so it fell to the bare command (runs pre-click → invisible). Added `generateSOVTwoRoleEventLastEventHandlerPattern`.                                                                                                                                                                                                |
+| id set-style         | dict renders "my" as two-word `saya punya`; the connector `punya` broke the possessive matcher. Added `PossessiveConfig.connectors` (id: `punya`), skipped after the possessor keyword.                                                                                                                                                                                                                            |
+| tr if-matches        | folded-`if` condition truncated at the first command-beginning token; in SOV the then-verb is clause-final, so `match .disabled durdur` spuriously matched a verb-last halt pattern, cutting the condition to `I`. Added `CONDITION_OPERATORS` guard (an operator never begins a command).                                                                                                                         |
+| hi halt-propagation  | the §7y-blocked one. hi fronts the halt patient with a leaked English article (`the घटना को क्लिक पर रोकें …`); the patient role grabbed only `the`, the marker `को` failed, halt fell to a BARE halt (stops handler). `skipNoiseWords` now skips a leaked `the` before `the <ref-noun> <marker>` only.                                                                                                            |
+
+- **The §7y blocker (leaked-`the` strip regresses tr/form-submit-prevent) is
+  SOLVED, not avoided.** The fix is gated three ways — non-English only (en `the`
+  is authored), reference-noun keyword only (event/body/target/…, via
+  `isValidReference`), AND a following particle marker. The last gate is the key:
+  hi `the घटना को` has a MARKER after the ref noun (a fronted patient → skip), but
+  tr `the olay çağır …` has a VERB (`call`) after it (→ leave `the` intact). tr
+  form-submit-prevent keeps its 4 actions (halt,call,if,log) — verified by lock
+  test and the full gate (zero fidelity regressions, vs the 1 within-tolerance
+  flip the naive non-en-only gate produced).
+- **All semantic-only; en reference byte-identical** (the leaked-`the` skip is
+  excluded for en). Full `--regression` gate green (parse-rate, fidelity,
+  correctness, execution ratchets); baseline regenerated against a freshly
+  populated patterns.db; 11 lock tests added (`multilingual-roadmap-fixes.test.ts`
+  → 580 in file). Semantic 5958 green.
+
+**Cluster after batch 2 (5 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1) — all that
+remains. The next R2 move is S1 (a deliberate en-reference band-inversion + full
+re-record) or, per the stopping rule, switch to behaviors (Track 2). See
+STRUCTURAL_ARCS_ROADMAP.md.
+
 ## 11. Next-arc handoffs (post-#416)
 
 The cheap dict/profile-alignment wins are exhausted (R2 execution: 13 cells after
@@ -1739,14 +1774,18 @@ S2+S6+qu, parse ship line held). The next work is decomposed into focused handof
 - ✅ **Task #10 — multi-word markers + dict underscore audit:** DONE (#417).
 - ✅ **S2 — fused-event body routing / compound collapse:** DONE (session 23, §7x;
   32→25). zh + ms fully clear.
-- ◑ **S6 — hi SOV fronting:** 6/8 DONE (session 23, §7y; 25→19; hi 8→2). Remaining
-  hi: halt-propagation (blocked — leaked-`the` regresses tr), tabs-aria (S1).
+- ✅ **S6 — hi SOV fronting:** 7/8 DONE (§7y + §7aa). hi halt-propagation cleared in
+  batch 2 (the leaked-`the` blocker solved with a marker-gated skip). Only hi
+  tabs-aria (S1) remains.
 - ✅ **qu tokenizer arc:** DONE (session 23, §7z; 19→13; qu 6→0).
+- ✅ **R2 structural tails — S3/S4/tails:** DONE (§7aa; 10→5). tr set-attribute, ja
+  put-content-basic, id set-style, tr if-matches, hi halt-propagation. Only S1
+  tabs-aria ×5 remains.
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·
-  unblocks) and a leverage-first ranking (~~S2~~ > ~~S6 (6/8)~~ > **qu tokenizer
-  (×6, next)** > S3/S4/tails > S1 en-lossy). Opportunistic — lower ROI than behaviors.
+  unblocks) and a leverage-first ranking (~~S2~~ > ~~S6~~ > ~~qu~~ > ~~S3/S4/tails~~
+  > **S1 en-lossy (only remaining, deferred)**). Opportunistic — lower ROI than behaviors.
 - **Track 2 — behaviors (next big track):** 49 of the 63 degenerate passes are
   `behavior-*` (draggable/resizable/sortable ×15 each + removable ×4 +
   install-behavior ×3). This is a **runtime** effort (block-structure parsing +

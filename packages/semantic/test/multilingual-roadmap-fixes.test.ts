@@ -6244,3 +6244,149 @@ describe('th add destination: positional phrase captured (R2 tails batch)', () =
     expect(bare.roles?.get('destination')).toMatchObject({ value: 'me' });
   });
 });
+
+// =============================================================================
+// R2 structural tails — batch 2 (10 → 5 execution cells). Each cell is a distinct
+// per-language mechanism; see docs-internal/STRUCTURAL_ARCS_ROADMAP.md.
+// =============================================================================
+
+import { buildAST } from '../src';
+
+/** Collect command names (the AST action set) by walking the built AST. */
+function astActions(node: unknown, acc: string[] = []): string[] {
+  if (!node || typeof node !== 'object') return acc;
+  const rec = node as Record<string, unknown>;
+  if (typeof rec.name === 'string' && (rec.type === 'command' || rec.type === 'eventHandler')) {
+    acc.push(rec.name);
+  }
+  for (const k of Object.keys(rec)) astActions(rec[k], acc);
+  return acc;
+}
+
+/** Find the first built-AST command node with the given name. */
+function findAstCommand(node: unknown, name: string): Record<string, unknown> | null {
+  if (!node || typeof node !== 'object') return null;
+  const rec = node as Record<string, unknown>;
+  if (rec.name === name && rec.type === 'command') return rec;
+  for (const k of Object.keys(rec)) {
+    const r = findAstCommand(rec[k], name);
+    if (r) return r;
+  }
+  return null;
+}
+
+describe('tr set-attribute — doğru-as-particle + dative allomorph (R2 batch 2)', () => {
+  // Two bugs dropped the value of `set @attr to true`: (1) `doğru` ("true") was a
+  // POSTPOSITION ("towards") classified before the keyword check, so it tokenized
+  // as kind='particle' which tokenToSemanticValue can't convert; (2) the dative
+  // allomorph `ya` (the i18n transformer's vowel-harmony form) wasn't a marker
+  // alternative. Both fixed → set-event-tr-sov-2role matches.
+  const corpus = 'tıklama da @disabled i doğru ya ayarla';
+
+  it('[tr] doğru tokenizes as a value, not a postposition particle', () => {
+    const toks = getTokenizer('tr').tokenize('doğru').tokens;
+    expect(toks[0].kind).not.toBe('particle');
+    expect(toks[0].normalized).toBe('true');
+  });
+
+  it('[tr] set @disabled to true captures destination + value', () => {
+    const ast = buildAST(parse(corpus, 'tr'));
+    const set = findAstCommand(ast.ast, 'set');
+    expect(set).not.toBeNull();
+    const roles = set!.semanticRoles as Record<string, { type?: string; attributeName?: string }>;
+    expect(roles.destination).toMatchObject({ type: 'attributeAccess', attributeName: 'disabled' });
+    expect(roles.event).toBeUndefined(); // not the role-scrambling SOV fallback
+  });
+});
+
+describe('ja put-content-basic — event-last SOV two-role wrapper (R2 batch 2)', () => {
+  // `"Done!" を 私 に 置く クリック で` places the event phrase AFTER the verb.
+  // Without the event-last variant it fell to the bare command pattern (runs at
+  // execute() time, before the click → invisible).
+  const corpus = '"Done!" を 私 に 置く クリック で';
+
+  it('[ja] parses as an event handler, not a bare command', () => {
+    const node = parse(corpus, 'ja') as { kind?: string; metadata?: { patternId?: string } };
+    expect(node.kind).toBe('event-handler');
+    expect(node.metadata?.patternId).toContain('event-last');
+  });
+
+  it('[ja] put captures patient "Done!" and destination me', () => {
+    const ast = buildAST(parse(corpus, 'ja'));
+    const put = findAstCommand(ast.ast, 'put');
+    const roles = put!.semanticRoles as Record<string, { value?: unknown; name?: string }>;
+    expect(roles.patient).toMatchObject({ value: 'Done!' });
+    expect(roles.destination).toMatchObject({ name: 'me' });
+  });
+});
+
+describe('id set-style — two-word possessive connector `punya` (R2 batch 2)', () => {
+  // The id dict renders "my" as `saya punya` ("I have"); the connector `punya`
+  // sits between the possessor (saya→me) and the property and must be skipped.
+  const corpus = 'pada klik atur saya punya *background ke "red"';
+
+  it('[id] set my *background captures the property-path destination', () => {
+    const ast = buildAST(parse(corpus, 'id'));
+    const set = findAstCommand(ast.ast, 'set');
+    expect(set).not.toBeNull();
+    const roles = set!.semanticRoles as Record<string, { type?: string; property?: string }>;
+    expect(roles.destination).toMatchObject({ type: 'propertyAccess', property: '*background' });
+  });
+
+  it('[id] single-word possessor (saya *background) still works', () => {
+    const set = findAstCommand(buildAST(parse('atur saya *background ke "red"', 'id')).ast, 'set');
+    expect(set).not.toBeNull();
+  });
+});
+
+describe('tr if-matches — condition not truncated at an operator (R2 batch 2)', () => {
+  // In SOV the then-verb is clause-final, so `match .disabled durdur` spuriously
+  // matched a verb-last halt pattern and truncated the condition `I match
+  // .disabled` to just `I`. CONDITION_OPERATORS guards against truncating at a
+  // condition operator.
+  const corpus = 'tıklama de eğer I match .disabled durdur yoksa .active i değiştir son';
+
+  it('[tr] condition captures the full matches expression', () => {
+    const ast = buildAST(parse(corpus, 'tr'));
+    const ifn = findAstCommand(ast.ast, 'if');
+    const cond = (ifn!.args as Array<{ type?: string; operator?: string }>)[0];
+    expect(cond).toMatchObject({ type: 'binaryExpression', operator: 'matches' });
+  });
+
+  it('[tr] then=halt, else=toggle preserved', () => {
+    expect(astActions(buildAST(parse(corpus, 'tr')).ast)).toEqual(
+      expect.arrayContaining(['halt', 'toggle'])
+    );
+  });
+});
+
+describe('hi halt-propagation — leaked `the` before a fronted patient (R2 batch 2)', () => {
+  // hi fronts the halt patient: `the घटना को क्लिक पर रोकें फिर …`. The leaked
+  // English article made the patient role grab only `the`, so the halt lost its
+  // patient (a bare halt stops the handler). skipNoiseWords now skips a leaked
+  // `the` before `the <ref-noun> <marker>`.
+  const corpus = 'the घटना को क्लिक पर रोकें फिर .active को टॉगल';
+
+  it('[hi] halt keeps its patient (the event) so the handler continues', () => {
+    const ast = buildAST(parse(corpus, 'hi'));
+    const halt = findAstCommand(ast.ast, 'halt');
+    expect((halt!.args as unknown[]).length).toBeGreaterThan(0); // NOT a bare halt
+    expect(astActions(ast.ast)).toEqual(expect.arrayContaining(['halt', 'toggle']));
+  });
+
+  it('[tr] the skip is gated to a following marker — form-submit-prevent keeps 4 actions', () => {
+    // `the olay çağır …` (the event call …) — ref noun followed by a VERB, not a
+    // marker, so `the` is NOT skipped (the §7y regression is avoided).
+    const fsp =
+      'the olay çağır validateForm() i gönder de durdur eğer sonuç dir yanlış "Invalid form" i kaydet son';
+    const acts = astActions(buildAST(parse(fsp, 'tr')).ast);
+    expect(acts).toEqual(expect.arrayContaining(['halt', 'call', 'if', 'log']));
+  });
+
+  it('[en] authored `the` before a reference noun is untouched', () => {
+    // en is excluded from the skip — `halt the event` still parses (the en
+    // reference must stay byte-identical).
+    const halt = findAstCommand(buildAST(parse('halt the event', 'en')).ast, 'halt');
+    expect((halt!.args as unknown[]).length).toBeGreaterThan(0);
+  });
+});

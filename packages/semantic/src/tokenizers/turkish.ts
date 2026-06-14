@@ -44,7 +44,14 @@ const POSTPOSITIONS = new Set([
   'karşı', // against, towards
   'göre', // according to
   'rağmen', // despite
-  'doğru', // towards
+  // NOTE: 'doğru' ("towards") is intentionally NOT a postposition here. It
+  // collides with the boolean literal `doğru` ("true"), which the i18n dict
+  // emits for `set @attr to true`. classifyToken checks POSTPOSITIONS before
+  // isKeyword, so listing it here misclassified the value as kind='particle'
+  // — and tokenToSemanticValue has no `particle` case, so the set patient role
+  // rejected it (set-attribute fell to the role-scrambling SOV fallback). The
+  // postpositional "towards" sense is not a hyperscript construct; the value
+  // sense is. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
   'boyunca', // along, throughout
 ]);
 
