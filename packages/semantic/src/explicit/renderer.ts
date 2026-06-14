@@ -98,8 +98,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * are more recognizable and closer to the original hyperscript syntax.
    */
   private findBestPattern(node: SemanticNode, patterns: LanguagePattern[]): LanguagePattern | null {
+    // Event-handler nodes carry their commands in `body`, never in roles. The
+    // 'on' pattern set also contains fused `<command>-event-*` patterns (e.g.
+    // `toggle-event-ko-sov-simple`, template `<event> 할 때 토글`) that exist to
+    // PARSE single-line fused commands. Selecting one to *render* a handler emits
+    // its trailing verb literal as a phantom command ahead of the real body — the
+    // `切り替え / 토글 / değiştir / بدّل / переключить` (toggle) injection seen in
+    // ja/ko/tr/ar/ru. At render time a handler is only ever a trigger, so restrict
+    // candidates to pure event-trigger patterns (ids without the `-event-`
+    // fused-command segment: `on-*`, `event-*`, `event-handler-*`). The fused
+    // patterns stay available for parsing.
+    let candidates = patterns;
+    if (node.kind === 'event-handler') {
+      const triggers = patterns.filter(pattern => !/-event-/i.test(pattern.id));
+      if (triggers.length > 0) candidates = triggers;
+    }
+
     // Score patterns by how well they match our roles
-    const scored = patterns.map(pattern => {
+    const scored = candidates.map(pattern => {
       let score = pattern.priority;
 
       // Check each role token in the pattern
