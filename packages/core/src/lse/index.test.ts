@@ -255,7 +255,9 @@ describe('LSE bridge', () => {
       const { parseSemantic } = await import('@lokascript/semantic');
       const result = parseSemantic('toggle .active', 'en');
       expect(result.node).not.toBeNull();
-      const lse = await renderExplicit(result.node!);
+      // Bridge the semantic→intent SemanticNode union gap (block kinds) — same as
+      // the toLSECode production path.
+      const lse = await renderExplicit(result.node! as Parameters<typeof renderExplicit>[0]);
       expect(lse).toContain('[');
       expect(lse).toContain('toggle');
       expect(lse).toContain('.active');

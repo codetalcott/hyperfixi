@@ -596,7 +596,34 @@ function buildTokens(
       tokens.push(...roleTokens);
   }
 
-  return tokens;
+  return collapseAdjacentLiterals(tokens);
+}
+
+/**
+ * Collapse adjacent identical literal tokens into one.
+ *
+ * For the event-handler trigger (`on`) schema, a handful of languages use the
+ * same word for the trigger keyword (the `on` verb) and the event role's marker —
+ * bn `তে`, hi `पर`, th `เมื่อ`. `buildTokens` then emits it twice (`<event> তে তে`),
+ * which the renderer prints verbatim; on re-parse the duplicate pairs with the
+ * following token as a phantom command (e.g. `তে আমি` → a spurious `on me`). No
+ * trigger pattern needs to match the same literal twice in a row, so fold the
+ * duplicate, preserving any `alternatives` from either side. Verified to affect
+ * only the `on` patterns of bn/hi/th — no other command/language has adjacent
+ * duplicate literals. See MULTILINGUAL_BEHAVIORS_PLAN.md Phase 2.
+ */
+function collapseAdjacentLiterals(tokens: PatternToken[]): PatternToken[] {
+  const out: PatternToken[] = [];
+  for (const tok of tokens) {
+    const prev = out[out.length - 1];
+    if (prev && prev.type === 'literal' && tok.type === 'literal' && prev.value === tok.value) {
+      const alts = [...(prev.alternatives ?? []), ...(tok.alternatives ?? [])];
+      if (alts.length) out[out.length - 1] = { ...prev, alternatives: [...new Set(alts)] };
+      continue;
+    }
+    out.push(tok);
+  }
+  return out;
 }
 
 /**

@@ -9,6 +9,8 @@ import type {
   SemanticNode,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  BehaviorSemanticNode,
+  DefSemanticNode,
   SemanticValue,
   SemanticRenderer as ISemanticRenderer,
   LanguagePattern,
@@ -32,6 +34,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // Handle compound nodes specially (e.g., "cmd1 then cmd2")
     if (node.kind === 'compound') {
       return this.renderCompound(node as CompoundSemanticNode, language);
+    }
+    // Block constructs render to multi-line target-language source so a whole
+    // behavior/function round-trips between languages (Phase 4).
+    if (node.kind === 'behavior') {
+      return this.renderBehavior(node as BehaviorSemanticNode, language);
+    }
+    if (node.kind === 'def') {
+      return this.renderDef(node as DefSemanticNode, language);
     }
 
     const patterns = getPatternsForLanguageAndCommand(language, node.action);
@@ -61,6 +71,56 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * Resolve a structural keyword (`behavior`/`def`/`init`/`end`) in the target
+   * language, falling back to the English form when the profile has no translation.
+   */
+  private keyword(language: string, action: string): string {
+    return tryGetProfile(language)?.keywords?.[action]?.primary ?? action;
+  }
+
+  /** `Name` or `Name(p1, p2)` — the parameter list renders verbatim (identifiers). */
+  private renderBlockHeader(keyword: string, name: string, parameters: readonly string[]): string {
+    return parameters.length > 0
+      ? `${keyword} ${name}(${parameters.join(', ')})`
+      : `${keyword} ${name}`;
+  }
+
+  /**
+   * Render a behavior block to target-language source:
+   * `<behavior> Name(params)` + each handler (closed by `end`) + optional `init`
+   * block + closing `end`. Handlers/commands render through the normal paths.
+   */
+  private renderBehavior(node: BehaviorSemanticNode, language: string): string {
+    const endKw = this.keyword(language, 'end');
+    const lines = [
+      this.renderBlockHeader(this.keyword(language, 'behavior'), node.name, node.parameters),
+    ];
+    for (const handler of node.eventHandlers) {
+      lines.push(`  ${this.render(handler, language)}`, `  ${endKw}`);
+    }
+    if (node.initBlock && node.initBlock.length > 0) {
+      lines.push(`  ${this.keyword(language, 'init')}`);
+      for (const cmd of node.initBlock) lines.push(`    ${this.render(cmd, language)}`);
+      lines.push(`  ${endKw}`);
+    }
+    lines.push(endKw);
+    return lines.join('\n');
+  }
+
+  /**
+   * Render a function definition to target-language source:
+   * `<def> name(params)` + body commands + closing `end`.
+   */
+  private renderDef(node: DefSemanticNode, language: string): string {
+    const lines = [
+      this.renderBlockHeader(this.keyword(language, 'def'), node.name, node.parameters),
+    ];
+    for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
+    lines.push(this.keyword(language, 'end'));
+    return lines.join('\n');
+  }
+
+  /**
    * Get the translated chain word for the given language.
    */
   private getChainWord(chainType: 'then' | 'and' | 'async', language: string): string {
@@ -80,7 +140,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Delegates to @lokascript/framework/ir for the core logic.
    */
   renderExplicit(node: SemanticNode): string {
-    return renderExplicitBase(node);
+    // The framework IR renderer predates the `behavior` block kind and types its
+    // input to the single-statement node union. A behavior block is not rendered
+    // through the explicit IR path, so bridge the (structurally compatible) type
+    // at this boundary rather than widen the framework package's union.
+    return renderExplicitBase(node as Parameters<typeof renderExplicitBase>[0]);
   }
 
   /**
@@ -98,8 +162,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * are more recognizable and closer to the original hyperscript syntax.
    */
   private findBestPattern(node: SemanticNode, patterns: LanguagePattern[]): LanguagePattern | null {
+    // Event-handler nodes carry their commands in `body`, never in roles. The
+    // 'on' pattern set also contains fused `<command>-event-*` patterns (e.g.
+    // `toggle-event-ko-sov-simple`, template `<event> 할 때 토글`) that exist to
+    // PARSE single-line fused commands. Selecting one to *render* a handler emits
+    // its trailing verb literal as a phantom command ahead of the real body — the
+    // `切り替え / 토글 / değiştir / بدّل / переключить` (toggle) injection seen in
+    // ja/ko/tr/ar/ru. At render time a handler is only ever a trigger, so restrict
+    // candidates to pure event-trigger patterns (ids without the `-event-`
+    // fused-command segment: `on-*`, `event-*`, `event-handler-*`). The fused
+    // patterns stay available for parsing.
+    let candidates = patterns;
+    if (node.kind === 'event-handler') {
+      const triggers = patterns.filter(pattern => !/-event-/i.test(pattern.id));
+      if (triggers.length > 0) candidates = triggers;
+    }
+
     // Score patterns by how well they match our roles
-    const scored = patterns.map(pattern => {
+    const scored = candidates.map(pattern => {
       let score = pattern.priority;
 
       // Check each role token in the pattern
@@ -114,6 +194,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             score -= 50;
           }
         }
+      }
+
+      // Positional variants (`put X at end of Y`, `at start of`) are handcrafted
+      // for PARSING that specific surface form; they carry the position as baked-in
+      // literals, not a role, so role scoring can't distinguish them from the
+      // canonical `put X into Y`. Some carry a higher parse priority (e.g.
+      // `put-bn-at-end` at 110) and would otherwise win render selection, emitting
+      // the verbose positional form for every plain put. Penalize them for
+      // rendering only — parsing is priority-ordered in the matcher, not here, so
+      // positional INPUT still matches its pattern via the literals.
+      if (/-at-end|-at-start/i.test(pattern.id)) {
+        score -= 30;
       }
 
       // For English rendering, prefer "standard" patterns over "native idiom" patterns
@@ -205,6 +297,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             const destValue = node.roles.get('destination');
             if (destValue?.type === 'reference' && destValue.value === 'me') {
               return null; // Skip rendering default "me" destination
+            }
+          }
+        }
+
+        // For optional groups with a `quantity` role, skip when it equals the
+        // schema default (1). The parser injects `quantity: 1` for
+        // increment/decrement even when unspecified, so rendering it produces a
+        // redundant "by 1" — harmless in most languages but a real bug in vi,
+        // where the quantity marker `thêm` is also the `add` keyword, so
+        // `tăng :count thêm 1` re-parses as increment + a phantom `add`. Omitting
+        // the default-1 quantity is recall-neutral (the action set is unchanged)
+        // and renders increment/decrement naturally everywhere.
+        if (token.optional) {
+          const qtyToken = token.tokens.find(
+            (t: any) => t.type === 'role' && t.role === 'quantity'
+          );
+          if (qtyToken) {
+            const qtyValue = node.roles.get('quantity');
+            if (qtyValue?.type === 'literal' && Number(qtyValue.value) === 1) {
+              return null; // Skip rendering default quantity of 1
             }
           }
         }

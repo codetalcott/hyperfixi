@@ -37,6 +37,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
+import { tryParseBlock } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { render as renderExplicitFn } from '../explicit/renderer';
@@ -149,6 +150,16 @@ export class SemanticParserImpl implements ISemanticParser {
    * Accumulates diagnostics from each fallback stage (Phase 3.4).
    */
   parse(input: string, language: string): SemanticNode {
+    // Stage 0: structural / block layer. A `behavior … end` block is decomposed
+    // into its handlers (each parsed by the single-statement path below) and
+    // re-assembled — otherwise the leading keyword matches and the whole body is
+    // dropped at a false confidence 1.0. Returns null (fast) for non-block input.
+    const blockNode = tryParseBlock(input, language, {
+      statement: (text, lang) => this.parse(text, lang),
+      body: (text, lang) => this.parseStatements(text, lang),
+    });
+    if (blockNode) return blockNode;
+
     // Extract standalone event modifiers (once, debounced, throttled) from input
     const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
     const modInput = remainingInput || input;
@@ -410,6 +421,21 @@ export class SemanticParserImpl implements ISemanticParser {
       parseInput,
       diagnostics
     );
+  }
+
+  /**
+   * Parse a multi-command body/sequence into a flat list of statement nodes.
+   * Unlike `parse()` (which returns on the first command match), this routes
+   * through the clause splitter, so `add .a` newline `remove .b`, then-chains, and
+   * nested if-blocks all yield every statement. Used by the structural layer for
+   * `def` bodies and behavior `init` blocks.
+   */
+  parseStatements(input: string, language: string): SemanticNode[] {
+    const tokens = tokenizeInternal(input, language);
+    const commandPatterns = getPatternsForLanguage(language)
+      .filter(p => p.command !== 'on')
+      .sort((a, b) => b.priority - a.priority);
+    return this.parseBodyWithClauses(tokens, commandPatterns, language);
   }
 
   /**

@@ -190,7 +190,14 @@ export interface FlagValue {
  * Semantic nodes capture the MEANING of hyperscript constructs.
  */
 export interface SemanticNode {
-  readonly kind: 'command' | 'event-handler' | 'conditional' | 'compound' | 'loop';
+  readonly kind:
+    | 'command'
+    | 'event-handler'
+    | 'conditional'
+    | 'compound'
+    | 'loop'
+    | 'behavior'
+    | 'def';
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
@@ -303,6 +310,45 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly loopVariable?: string;
   /** Index variable name if specified (e.g., 'i' in 'for item with index i') */
   readonly indexVariable?: string;
+}
+
+/**
+ * A behavior semantic node — represents a `behavior Name(params) … end` block:
+ * a reusable, named module of event handlers (and an optional init block). Unlike
+ * the single-statement nodes above, this is a BLOCK construct decomposed by the
+ * structural layer (see `parser/block-parser.ts`); its handlers are parsed by the
+ * ordinary single-statement engine and re-assembled here.
+ */
+export interface BehaviorSemanticNode extends SemanticNode {
+  readonly kind: 'behavior';
+  readonly action: 'behavior';
+  /** Behavior name (PascalCase identifier). */
+  readonly name: string;
+  /** Declared parameter names (`behavior Toggleable(cls, target)`). */
+  readonly parameters: readonly string[];
+  /** The behavior's event handlers, each a fully-parsed event-handler node. */
+  readonly eventHandlers: EventHandlerSemanticNode[];
+  /** Commands in the optional `init … end` block. */
+  readonly initBlock?: SemanticNode[];
+}
+
+/**
+ * A function-definition semantic node — represents a `def name(params) … end`
+ * block. Like {@link BehaviorSemanticNode} it is a block construct decomposed by
+ * the structural layer, but its body is a flat sequence of commands rather than
+ * event handlers.
+ */
+export interface DefSemanticNode extends SemanticNode {
+  readonly kind: 'def';
+  // `action` stays the inherited ActionType (set to 'def' via the factory) — `def`
+  // is a node KIND, not a command action, so it's kept out of the ActionType union
+  // (mirrors `compound`); discrimination is on `kind`.
+  /** Function name (may be namespaced, e.g. `utils.calculate`). */
+  readonly name: string;
+  /** Declared parameter names. */
+  readonly parameters: readonly string[];
+  /** The function body commands. */
+  readonly body: SemanticNode[];
 }
 
 // =============================================================================
@@ -682,6 +728,56 @@ export function createEventHandler(
     (node as { additionalEvents?: readonly SemanticValue[] }).additionalEvents = additionalEvents;
   }
 
+  return node;
+}
+
+/**
+ * Create a behavior semantic node (a `behavior Name(params) … end` block).
+ */
+export function createBehaviorNode(
+  name: string,
+  parameters: string[],
+  eventHandlers: EventHandlerSemanticNode[],
+  initBlock?: SemanticNode[],
+  metadata?: SemanticMetadata
+): BehaviorSemanticNode {
+  const node: BehaviorSemanticNode = {
+    kind: 'behavior',
+    action: 'behavior',
+    roles: new Map(),
+    name,
+    parameters,
+    eventHandlers,
+  };
+  if (initBlock !== undefined && initBlock.length > 0) {
+    (node as { initBlock?: SemanticNode[] }).initBlock = initBlock;
+  }
+  if (metadata !== undefined) {
+    (node as { metadata?: SemanticMetadata }).metadata = metadata;
+  }
+  return node;
+}
+
+/**
+ * Create a function-definition semantic node (a `def name(params) … end` block).
+ */
+export function createDefNode(
+  name: string,
+  parameters: string[],
+  body: SemanticNode[],
+  metadata?: SemanticMetadata
+): DefSemanticNode {
+  const node: DefSemanticNode = {
+    kind: 'def',
+    action: 'def' as ActionType,
+    roles: new Map(),
+    name,
+    parameters,
+    body,
+  };
+  if (metadata !== undefined) {
+    (node as { metadata?: SemanticMetadata }).metadata = metadata;
+  }
   return node;
 }
 

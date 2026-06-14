@@ -18,6 +18,8 @@ import type {
   ConditionalSemanticNode,
   CompoundSemanticNode,
   LoopSemanticNode,
+  BehaviorSemanticNode,
+  DefSemanticNode,
   SemanticRole,
 } from '../types';
 
@@ -154,9 +156,50 @@ export class ASTBuilder {
         return this.buildCompound(node as CompoundSemanticNode);
       case 'loop':
         return this.buildLoop(node as LoopSemanticNode);
+      case 'behavior':
+        return this.buildBehavior(node as BehaviorSemanticNode);
+      case 'def':
+        return this.buildDef(node as DefSemanticNode);
       default:
         throw new Error(`Unknown semantic node kind: ${(node as SemanticNode).kind}`);
     }
+  }
+
+  /**
+   * Build a core-compatible BehaviorNode from a BehaviorSemanticNode.
+   * Each handler/init sub-node was parsed by the single-statement engine, so this
+   * is pure re-assembly into the `{ type: 'behavior', name, parameters,
+   * eventHandlers, initBlock? }` shape the runtime expects.
+   */
+  private buildBehavior(node: BehaviorSemanticNode): ASTNode {
+    const eventHandlers = node.eventHandlers.map(h => this.buildEventHandler(h));
+    const behaviorNode: ASTNode = {
+      type: 'behavior',
+      name: node.name,
+      parameters: [...node.parameters],
+      eventHandlers,
+    };
+    if (node.initBlock && node.initBlock.length > 0) {
+      behaviorNode.initBlock = {
+        type: 'initBlock',
+        commands: node.initBlock.map(c => this.build(c)),
+      };
+    }
+    return behaviorNode;
+  }
+
+  /**
+   * Build a core-compatible DefNode from a DefSemanticNode. The body sub-nodes were
+   * parsed by the single-statement engine; this re-assembles them into the
+   * `{ type: 'def', name, params, body }` shape the runtime expects.
+   */
+  private buildDef(node: DefSemanticNode): ASTNode {
+    return {
+      type: 'def',
+      name: node.name,
+      params: [...node.parameters],
+      body: node.body.map(c => this.build(c)),
+    };
   }
 
   /**

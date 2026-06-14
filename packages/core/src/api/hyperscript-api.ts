@@ -698,7 +698,11 @@ async function toLSECode(code: string, language?: string): Promise<string> {
     throw new Error(`Failed to parse "${code}" as ${lang} hyperscript`);
   }
 
-  return await renderExplicit(result.node);
+  // The semantic SemanticNode union now includes block kinds (`behavior`/`def`)
+  // that the intent-typed LSE renderer doesn't enumerate; the structures are
+  // otherwise compatible, so bridge the type at this boundary (block constructs
+  // aren't rendered to LSE bracket syntax).
+  return await renderExplicit(result.node as Parameters<typeof renderExplicit>[0]);
 }
 
 /**

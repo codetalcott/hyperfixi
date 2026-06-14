@@ -393,6 +393,18 @@ export class PatternMatcher {
         captured.set(patternToken.role, ofPossessive);
         return true;
       }
+      // Post-nominal (property-first) possessive: `textContent لي` (ar),
+      // `textContent saya` (id), `textContent yangu` (sw) — the possessor follows
+      // the property in `after-object` languages. The pre-nominal matcher below
+      // only handles possessor-first (`my value`), so these either failed to parse
+      // (ar/id/sw) or parsed lossily, dropping the possessor (ru/pl/uk). Gated to
+      // property-path roles (set's destination) so it can't misread an ordinary
+      // role value. See MULTILINGUAL_BEHAVIORS_PLAN.md Phase 2 tail.
+      const postNominalPossessive = this.tryMatchPostNominalPossessiveExpression(tokens);
+      if (postNominalPossessive) {
+        captured.set(patternToken.role, postNominalPossessive);
+        return true;
+      }
     }
 
     // Check for possessive expression (e.g., 'my value', 'its innerHTML')
@@ -955,6 +967,96 @@ export class PatternMatcher {
     // Not a valid property, revert
     tokens.reset(mark);
     return null;
+  }
+
+  /**
+   * Match a POST-NOMINAL possessive expression: `<property> <possessor>`.
+   *
+   * The pre-nominal {@link tryMatchPossessiveExpression} handles possessor-first
+   * order (`my value`, `لي قيمة`). Languages whose possessive `markerPosition` is
+   * `after-object` put the possessor AFTER the property (ar `textContent لي`,
+   * id `textContent saya`, sw `textContent yangu`), so the pre-nominal matcher
+   * never fires — `set my textContent to "x"` failed to parse (ar/id/sw) or parsed
+   * lossily with the possessor dropped (ru/pl/uk). This recovers the property-path
+   * for that order. Gated to `after-object` profiles, so possessor-first languages
+   * are untouched.
+   */
+  private tryMatchPostNominalPossessiveExpression(tokens: TokenStream): SemanticValue | null {
+    if (!this.currentProfile) return null;
+    if (this.currentProfile.possessive?.markerPosition !== 'after-object') return null;
+
+    const isPossessor = (t: { value: string; normalized?: string }): boolean => {
+      for (const cand of [t.value, t.normalized].filter(Boolean) as string[]) {
+        if (
+          getPossessiveReference(this.currentProfile!, cand) ??
+          getPossessiveReference(this.currentProfile!, cand.toLowerCase())
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const propertyToken = tokens.peek();
+    if (!propertyToken) return null;
+
+    // The head must be a plausible property name — a bare identifier or a dot /
+    // `*` / `@` property selector — and must not itself be a possessor, structural
+    // keyword, or role-marker concept (those are handled elsewhere / are not
+    // properties).
+    const isDotSelector =
+      propertyToken.kind === 'selector' &&
+      propertyToken.value.startsWith('.') &&
+      /^\.[a-zA-Z_]\w*/.test(propertyToken.value);
+    const isPropHead =
+      (propertyToken.kind === 'identifier' &&
+        !this.isStructuralKeyword(propertyToken.value) &&
+        !(propertyToken.normalized && this.isStructuralKeyword(propertyToken.normalized)) &&
+        !(propertyToken.normalized && this.isRoleMarkerConcept(propertyToken.normalized))) ||
+      (propertyToken.kind === 'selector' &&
+        (propertyToken.value.startsWith('*') || propertyToken.value.startsWith('@'))) ||
+      isDotSelector;
+    if (!isPropHead || isPossessor(propertyToken)) return null;
+
+    const mark = tokens.mark();
+
+    let propertyName = propertyToken.value;
+    if (isDotSelector) propertyName = propertyName.substring(1);
+    tokens.advance();
+
+    // Consume chained dot-property access (`.style.display`) before the possessor.
+    let chainedProps = propertyName;
+    while (
+      tokens.peek()?.kind === 'selector' &&
+      tokens.peek()!.value.startsWith('.') &&
+      /^\.[a-zA-Z_]\w*/.test(tokens.peek()!.value)
+    ) {
+      chainedProps += tokens.peek()!.value;
+      tokens.advance();
+    }
+
+    // Now require the possessor keyword.
+    const possessorToken = tokens.peek();
+    if (!possessorToken) {
+      tokens.reset(mark);
+      return null;
+    }
+    let baseRef: string | undefined;
+    for (const cand of [possessorToken.value, possessorToken.normalized].filter(
+      Boolean
+    ) as string[]) {
+      baseRef =
+        getPossessiveReference(this.currentProfile, cand) ??
+        getPossessiveReference(this.currentProfile, cand.toLowerCase());
+      if (baseRef) break;
+    }
+    if (!baseRef) {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.advance();
+
+    return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
   }
 
   /**
