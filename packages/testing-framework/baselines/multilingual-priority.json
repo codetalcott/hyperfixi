@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-13T22:17:37.247Z",
-  "commit": "fdd01ec4",
+  "timestamp": "2026-06-14T00:12:12.246Z",
+  "commit": "61ef63f8",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -5713,9 +5713,9 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8379396202925594,
       "avgFidelity": 0.9803921568627451,
-      "avgRoleFidelity": 0.8149173955296405,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["modal-close-button"],
+      "avgRoleFidelity": 0.8237042436022028,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
       "bundleSize": 425708,
@@ -11420,9 +11420,9 @@
       "parseRate": 1,
       "avgConfidence": 0.8401154401154378,
       "avgFidelity": 1,
-      "avgRoleFidelity": 0.8279922779922779,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["accordion-exclusive"],
+      "avgRoleFidelity": 0.8401705276705276,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
       "bundleSize": 425708,
@@ -13316,11 +13316,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8098948670377222,
+      "avgConfidence": 0.8110492681921234,
       "avgFidelity": 0.9935064935064936,
-      "avgRoleFidelity": 0.8295125482625483,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["make-toast-element"],
+      "avgRoleFidelity": 0.8317648005148005,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
       "bundleSize": 425708,
@@ -13430,6 +13430,10 @@
           "confidence": 1
         },
         "send-event-to-form": {
+          "success": true,
+          "confidence": 1
+        },
+        "on-custom-event-receive": {
           "success": true,
           "confidence": 1
         },
@@ -13630,10 +13634,6 @@
           "confidence": 0.8222222222222222
         },
         "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "on-custom-event-receive": {
           "success": true,
           "confidence": 0.8222222222222222
         },

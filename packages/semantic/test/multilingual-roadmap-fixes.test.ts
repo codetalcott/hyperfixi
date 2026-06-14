@@ -6150,3 +6150,97 @@ describe('qu make-toast: single-quote strings + fused-body at-end (qu arc wave 3
     expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });
+
+describe('uk make-toast: apostrophe-as-letter no longer eats string quotes (R2 tails batch)', () => {
+  // The Ukrainian CyrillicKeywordExtractor's char class includes the apostrophe
+  // because it is an internal Ukrainian letter (п'ять, об'єкт). canExtract
+  // therefore matched the OPENING quote of a string literal, so `'Saved!'`
+  // tokenized as `'Saved` + `!` + `'`. That scrambled the make-toast fused body
+  // (make + put + put): the trailing `put it at end of body` lost its position
+  // role and threw `put requires content and position` at runtime. The fix
+  // rejects a LEADING apostrophe in canExtract (an apostrophe is never
+  // word-initial in Ukrainian); internal apostrophes still tokenize via the
+  // extract loop's isIdentifierChar. Cleared uk make-toast (execution −1).
+  it('[uk] single-quoted string `\x27Saved!\x27` tokenizes as one string literal', () => {
+    const toks = getTokenizer('uk')!.tokenize("покласти 'Saved!' в це").tokens;
+    const lit = toks.find(t => t.value.startsWith("'"));
+    expect(lit?.value).toBe("'Saved!'");
+  });
+
+  it('[uk] internal apostrophe (п\x27ять, об\x27єкт) still tokenizes whole (no regression)', () => {
+    const toks = getTokenizer('uk')!.tokenize("п'ять об'єкт").tokens;
+    expect(toks.map(t => t.value)).toEqual(["п'ять", "об'єкт"]);
+  });
+
+  it('[uk] make-toast parses make + put(Saved!→it) + put(it→body, at end of)', () => {
+    const n = parse(
+      "при клік створити a <div.toast/> тоді покласти 'Saved!' в це тоді покласти це в кінець з тіло",
+      'uk'
+    ) as {
+      body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
+    };
+    const body = n.body ?? [];
+    expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
+    const p1 = body[1]?.roles?.get('patient');
+    expect(String(p1?.raw ?? p1?.value)).toContain('Saved!');
+    expect(body[1]?.roles?.get('destination')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('patient')).toMatchObject({ value: 'it' });
+    expect(body[2]?.roles?.get('destination')).toMatchObject({ value: 'body' });
+    expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
+  });
+});
+
+describe('it remove `da X` is the source, not destination (R2 tails batch)', () => {
+  // The hand-crafted remove-it-full/simple patterns labeled the trailing
+  // `da {X}` group as `destination`. The removeMapper reads `source` ONLY, so
+  // `rimuovere .modal-open da corpo` silently removed from `me` (#btn) instead
+  // of body — the body effect vanished (it modal-close-button R2 cell). Every
+  // other language's remove pattern uses `source`; aligned it to match.
+  it('[it] `rimuovere .modal-open da corpo` resolves source=body', () => {
+    const n = parse('rimuovere .modal-open da corpo', 'it') as {
+      action?: string;
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.action).toBe('remove');
+    expect(n.roles?.get('source')).toMatchObject({ value: 'body' });
+    expect(n.roles?.get('destination')).toBeUndefined();
+  });
+
+  it('[it] bare `rimuovere .x` defaults source=me (not destination)', () => {
+    const n = parse('rimuovere .highlight', 'it') as {
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.roles?.get('source')).toMatchObject({ value: 'me' });
+  });
+});
+
+describe('th add destination: positional phrase captured (R2 tails batch)', () => {
+  // The hand-crafted th add patterns were redundant and harmful: add-th-simple
+  // (no destination) was priority 100, ABOVE add-th-with-dest (95), so it
+  // shadowed the destination clause; and add-th-with-dest used a fixed
+  // `position: 3` extraction that grabs a single token, dropping multi-token
+  // positional destinations like `ใกล้สุด .accordion-item` (closest
+  // .accordion-item). Removing them lets the generated marker-based pattern
+  // route the destination through tryMatchPositionalExpression — exactly like
+  // English. Clears th accordion-exclusive.
+  it('[th] add `ใน ใกล้สุด .accordion-item` → destination closest expression', () => {
+    const n = parse(
+      'เมื่อ คลิก เพิ่ม .open ใน ใกล้สุด .accordion-item',
+      'th'
+    ) as { body?: Array<{ action?: string; roles?: Map<string, { type?: string; raw?: string }> }> };
+    const add = (n.body ?? []).find(c => c.action === 'add');
+    expect(add?.roles?.get('destination')).toMatchObject({
+      type: 'expression',
+      raw: 'closest .accordion-item',
+    });
+  });
+
+  it('[th] plain-selector and bare add destinations still resolve', () => {
+    const withDest = parse('เพิ่ม .selected ใน #item', 'th') as {
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(withDest.roles?.get('destination')).toMatchObject({ value: '#item' });
+    const bare = parse('เพิ่ม .highlight', 'th') as { roles?: Map<string, { value?: unknown }> };
+    expect(bare.roles?.get('destination')).toMatchObject({ value: 'me' });
+  });
+});

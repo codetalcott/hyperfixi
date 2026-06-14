@@ -378,45 +378,18 @@ function getAddPatternsRu(): LanguagePattern[] {
 }
 
 function getAddPatternsTh(): LanguagePattern[] {
-  return [
-    // Simple pattern: เพิ่ม .active
-    {
-      id: 'add-th-simple',
-      language: 'th',
-      command: 'add',
-      priority: 100,
-      template: {
-        format: 'เพิ่ม {patient}',
-        tokens: [
-          { type: 'literal', value: 'เพิ่ม' },
-          { type: 'role', role: 'patient' },
-        ],
-      },
-      extraction: {
-        patient: { position: 1 },
-      },
-    },
-    // With destination: เพิ่ม .active ใน #button
-    {
-      id: 'add-th-with-dest',
-      language: 'th',
-      command: 'add',
-      priority: 95,
-      template: {
-        format: 'เพิ่ม {patient} ใน {destination}',
-        tokens: [
-          { type: 'literal', value: 'เพิ่ม' },
-          { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'ใน' },
-          { type: 'role', role: 'destination' },
-        ],
-      },
-      extraction: {
-        patient: { position: 1 },
-        destination: { marker: 'ใน', position: 3 },
-      },
-    },
-  ];
+  // No hand-crafted Thai add patterns: the generated patterns
+  // (add-th-generated `เพิ่ม {patient} [ใน {destination}]` + add-th-generated-simple)
+  // cover both the bare and with-destination forms, exactly like English (which
+  // ships no hand-crafted add patterns). The previous hand-crafted pair was both
+  // redundant and harmful: add-th-simple (no destination) sat at priority 100 —
+  // ABOVE add-th-with-dest (95) — so it shadowed the destination clause, and
+  // add-th-with-dest used a fixed `position: 3` extraction that can only grab a
+  // single token, dropping multi-token positional destinations like
+  // `ใกล้สุด .accordion-item` (closest .accordion-item). The marker-based generated
+  // pattern routes the destination through tryMatchPositionalExpression, so the
+  // positional phrase is captured (th accordion-exclusive R2 cell).
+  return [];
 }
 
 function getAddPatternsUk(): LanguagePattern[] {

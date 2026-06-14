@@ -23,6 +23,38 @@
 > wiring) (1). The "accusative over-stripping" was an unknown-word artifact, not a
 > particle bug. **Session total: 19 cells, 32 → 13.** Next: the deferred S1
 > tabs-aria family (×5) or per-language tails.
+>
+> **Progress (R2 tails batch — 13 → 10):** three independent per-language tails
+> cleared, each a localized one-mechanism fix (avgExecutionFidelity 0.9818 →
+> 0.9860), all probed-before-edit, gate-green, lock-tested:
+>
+> - **uk make-toast-element** — the Ukrainian CyrillicKeywordExtractor char class
+>   includes the apostrophe (internal letter: п'ять, об'єкт), so `canExtract`
+>   matched the OPENING quote and `'Saved!'` tokenized as `'Saved`+`!`+`'`,
+>   scrambling the fused put body. Reject a LEADING apostrophe in `canExtract`
+>   (never word-initial in Ukrainian). The predicted "string-truncation" cause was
+>   right; the mechanism was the keyword extractor, not the string extractor (the
+>   inverse of the qu fix).
+> - **it modal-close-button** — hand-crafted `remove-it-full`/`-simple` labeled the
+>   trailing `da {X}` group `destination`; the removeMapper reads `source` only, so
+>   `rimuovere .x da corpo` removed from `me`. Aligned to `source` (matches every
+>   other language; the format string already said `{target}`). zh's hand-crafted
+>   remove patterns share the `destination` label but zh's corpus matches its
+>   _generated_ `source` pattern, so zh was left untouched.
+> - **th accordion-exclusive** — hand-crafted th add patterns were redundant +
+>   harmful (no-dest `add-th-simple` at prio 100 ABOVE with-dest at 95; the
+>   with-dest used `position: 3` extraction that can't span a multi-token
+>   positional). Removed them; the generated marker-based patterns route the
+>   destination through `tryMatchPositionalExpression` (like en).
+>
+> Two surface "tokens-look-fine" cells (it/th) were actually pattern role/priority
+> bugs, not dict gaps — probe the role map, not just the tokenizer. Remaining R2
+> tails are higher-effort: **id set-style** (two-word possessive _connector_
+> `saya punya` — needs possessive-matcher or transformer work), **ja
+> put-content-basic** (S4 SOV verb-final put), **tr if-matches** (conditional
+> condition `I match .x` malformed), **tr set-attribute** (SOV `@attr` fronting),
+> **hi halt-propagation** (blocked, §7y), and **tabs-aria ×5** (S1, deliberate
+> re-baseline).
 
 > **Scope:** the **32 remaining R2 execution-failing cells** after the cheap
 > dict/profile-alignment wins were exhausted (waves 12–16 + the multi-word
@@ -223,6 +255,12 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 tr ×2 (if-matches, set-attribute), id set-style, it modal-close-button, ja
 put-content-basic, th accordion-exclusive, uk make-toast, hi halt-propagation.
 zh ×0, ms ×0, qu ×0; hi ×2.
+
+**Cluster snapshot after R2 tails batch (10 cells):** tabs-aria ×5
+(bn/hi/ja/ko/tr → S1), tr ×2 (if-matches, set-attribute), id set-style, ja
+put-content-basic, hi halt-propagation. Cleared this batch: uk make-toast, it
+modal-close-button, th accordion-exclusive. it ×0, th ×0, uk ×0; id ×1, ja ×1,
+tr ×2, hi ×2 (halt + tabs-aria), bn/ko ×1 (tabs-aria).
 
 ## Stopping rule (carried from §9)
 
