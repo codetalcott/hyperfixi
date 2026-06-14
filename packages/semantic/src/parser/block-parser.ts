@@ -63,6 +63,56 @@ function tokenMatches(tok: LanguageToken, forms: Set<string>): boolean {
 }
 
 /**
+ * Target/reference words that follow a destination `on` (`toggle .x on me`),
+ * never a handler trigger. Used to tell a trigger `on` (`on click`, followed by
+ * an EVENT) from a target `on` (followed by one of these or a selector). Listed
+ * by their NORMALIZED form — non-English tokenizers normalize the native word
+ * (es `me`, ja `自分`, ko `나`) to these English bases.
+ */
+const TARGET_REFERENCES = new Set([
+  'me',
+  'it',
+  'you',
+  'the',
+  'body',
+  'window',
+  'document',
+  'its',
+  'event',
+  'result',
+  'target',
+  'self',
+  'this',
+  'them',
+  'parent',
+  'next',
+  'previous',
+  'closest',
+  'first',
+  'last',
+]);
+
+/** Role-concept normalized forms a token can carry — markers, not event names. */
+const ROLE_CONCEPTS = new Set(['destination', 'source', 'style', 'patient', 'on', 'from', 'to']);
+
+/**
+ * Does `tok` look like an EVENT name — meaning the `on`-marker before it begins a
+ * handler TRIGGER — as opposed to a target reference/selector that makes the
+ * `on` a destination marker (`toggle .x on me`)? Selectors (`.x`/`#y`/`<…>`),
+ * known reference words (me/it/the/…), and role-marker concepts are targets;
+ * anything else (click, keyup, a custom event name) reads as an event.
+ */
+function looksLikeEvent(tok: LanguageToken | undefined): boolean {
+  if (!tok) return false;
+  if (tok.kind === 'selector') return false;
+  const norm = (tok.normalized ?? tok.value).toLowerCase();
+  const val = tok.value.toLowerCase();
+  if (TARGET_REFERENCES.has(norm) || TARGET_REFERENCES.has(val)) return false;
+  if (ROLE_CONCEPTS.has(norm)) return false;
+  return true;
+}
+
+/**
  * Parse the block header (`<keyword> <Name>` + optional `(params)`) from source
  * position — NOT by scanning for `on`, which fails in SOV where the handler starts
  * with the event (`click を で …`). Returns the declared parameters and the source
@@ -126,37 +176,72 @@ export function tryParseBlock(
  * rest into its body (the trailing `on keyup …` is swallowed as a compound
  * command), so a script with N>1 top-level handlers silently loses all but the
  * first — broken in every language. This splits the input into its top-level
- * handler segments using the SAME end-delimited, trigger-AGNOSTIC technique as
- * {@link parseBehaviorBlock}'s body split: depth counts only nested openers
- * (if/unless/repeat/for/while), the handler trigger is never counted, so it works
- * regardless of how a language surfaces the trigger (`on`, de `wenn`, zh idiom,
- * SOV mid-clause marker). Each segment is parsed by the ordinary single-statement
- * engine and the handlers are re-assembled into a `compound` (which buildAST maps
- * to a core `Program`, so the runtime registers each handler).
+ * handler segments by two complementary boundaries, both at depth 0 (depth counts
+ * only nested if/unless/repeat/for/while openers, never the handler trigger):
+ *
+ *  - **end-delimited** (Phase A) — a depth-0 `end` closes a handler. Trigger-
+ *    AGNOSTIC, so it works however a language surfaces the trigger (`on`, de
+ *    `wenn`, zh idiom, SOV mid-clause marker). This is the common, unambiguous
+ *    form (`on click … end on keyup … end`).
+ *  - **trigger-delimited** (Phase B) — a depth-0 `on`-marker that begins a NEW
+ *    handler starts a segment, for the no-`end` feature chain (`on click … on
+ *    keyup …`). The `on` marker is matched by its surface form (en `on`, es `al`,
+ *    …) and disambiguated from a destination `on` (`toggle .x on me`) by event-
+ *    name lookahead: the next token must look like an EVENT, not a target
+ *    reference/selector. This is inherently marker-dependent, so SOV chains with
+ *    no trigger marker (ja `… 切り替え keyup を …`) are NOT split — they rely on
+ *    the end-delimited form.
+ *
+ * Each segment is parsed by the ordinary single-statement engine and re-assembled
+ * into a `compound` (which buildAST maps to a core `Program`, so the runtime
+ * registers each handler).
  *
  * Returns null (fast) unless it finds ≥2 segments that ALL parse as event
  * handlers — so single handlers, single commands, and conditionals fall straight
  * through to single-statement parsing unchanged.
- *
- * NOTE: the no-`end` feature chain (`on click … on keyup …`, no delimiters) is
- * deliberately NOT split here. Distinguishing a trigger `on` from a target `on`
- * (`toggle .x on me`) needs event-name lookahead and is language-sensitive — a
- * separate follow-up. The end-delimited form is the common, unambiguous case.
  */
 export function tryParseProgram(
   input: string,
   language: string,
   parsers: BlockParsers
 ): SemanticNode | null {
-  if (!tryGetProfile(language)) return null;
+  const profile = tryGetProfile(language);
+  if (!profile) return null;
 
-  // Cheap pre-guard: the end-delimited multi-handler form needs ≥1 `end`
-  // keyword. Skip the tokenize for the overwhelming majority of single-statement
-  // inputs that contain no `end` form at all. (A substring hit on `end` inside
-  // `append`/`send` only costs a tokenize that then yields <2 segments → null.)
+  // The no-`end` trigger split uses FORWARD event-name lookahead (`<on> <event>`),
+  // which only holds where the `on` marker PRECEDES the event — SVO/VSO/V2 (en
+  // `on click`, es `al click`, ar `على click`, de `bei click`). SOV languages are
+  // POSTPOSITIONAL: the marker follows the event (`click पर`, `click を で`) and
+  // is typically homonymous with the locative/destination marker (hi `पर`, ja
+  // `で`), so a forward lookahead both misses the real boundary and mis-fires on
+  // `<target> <marker> <verb>`. SOV no-`end` chains are therefore NOT trigger-
+  // split; they rely on the end-delimited form (Phase A), which is word-order
+  // agnostic. (The end split below still runs for SOV.)
+  const triggerSplit = profile.wordOrder !== 'SOV';
+
+  // Cheap pre-guard: a multi-handler program needs either ≥1 `end` keyword (the
+  // end-delimited form) or — for trigger-split languages — ≥2 `on`-trigger surface
+  // forms (the no-`end` chain). Skip the tokenize for the overwhelming majority of
+  // single-statement inputs that have neither. Over-counting only costs a tokenize
+  // that then yields <2 segments → null; under-counting would miss a real program,
+  // so this errs toward proceeding.
   const endForms = keywordForms(language, 'end');
+  const onForms = keywordForms(language, 'on');
   const lower = input.toLowerCase();
-  if (![...endForms].some(f => lower.includes(f))) return null;
+  const hasEnd = [...endForms].some(f => lower.includes(f));
+  const hasMultiTrigger =
+    triggerSplit &&
+    (() => {
+      let hits = 0;
+      for (const f of onForms) {
+        if (!f) continue;
+        for (let i = lower.indexOf(f); i >= 0; i = lower.indexOf(f, i + f.length)) {
+          if (++hits >= 2) return true;
+        }
+      }
+      return false;
+    })();
+  if (!hasEnd && !hasMultiTrigger) return null;
 
   const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
   if (tokens.length < 2) return null;
@@ -165,9 +250,11 @@ export function tryParseProgram(
   const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
-  // Split into top-level handler segments by depth-aware `end` matching: a `end`
-  // at depth > 0 closes a NESTED if/repeat (decrement only); a depth-0 `end`
-  // closes a handler segment. A final handler with no trailing `end` is the tail.
+  // Split into top-level handler segments. At depth 0: a `end` closes the current
+  // handler (end-delimited form); an `on`-marker that BEGINS a new handler (its
+  // lookahead is an event, not a target) starts a new segment (no-`end` chain). A
+  // `end` at depth > 0 closes a NESTED if/repeat (decrement only). A final handler
+  // with no trailing `end` is the tail segment.
   const segments: string[] = [];
   let depth = 0;
   let segStart = 0;
@@ -183,6 +270,17 @@ export function tryParseProgram(
       segStart = j + 1;
     } else if (isOpener(tok)) {
       depth++;
+    } else if (
+      triggerSplit &&
+      depth === 0 &&
+      j > segStart &&
+      tokenMatches(tok, onForms) &&
+      looksLikeEvent(tokens[j + 1])
+    ) {
+      // A new handler trigger at top level ends the previous (un-`end`ed) handler.
+      const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+      if (text) segments.push(text);
+      segStart = j;
     }
   }
   if (segStart < tokens.length) {

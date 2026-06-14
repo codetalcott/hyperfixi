@@ -74,6 +74,70 @@ describe('multi-handler program — parse (end-delimited)', () => {
   });
 });
 
+describe('multi-handler program — parse (no-end feature chain, Phase B)', () => {
+  it('splits a no-end chain at the trigger boundary (EN)', () => {
+    const node = parse('on click toggle .active on keyup add .x to me', 'en') as SNode;
+    expect(node.kind).toBe('compound');
+    expect(node.statements).toHaveLength(2);
+    expect(node.statements!.map(eventOf)).toEqual(['click', 'keyup']);
+    expect(actionsOf(node.statements![0])).toEqual(['toggle']);
+    expect(actionsOf(node.statements![1])).toEqual(['add']);
+  });
+
+  it('splits a three-handler no-end chain', () => {
+    const node = parse(
+      'on click add .a to me on mouseenter remove .b from me on mouseleave toggle .c',
+      'en'
+    ) as SNode;
+    expect(node.statements).toHaveLength(3);
+    expect(node.statements!.map(eventOf)).toEqual(['click', 'mouseenter', 'mouseleave']);
+  });
+
+  it('mixes a no-end handler followed by an end-delimited one', () => {
+    const node = parse('on click toggle .a on keyup add .b end', 'en') as SNode;
+    expect(node.statements).toHaveLength(2);
+    expect(node.statements!.map(eventOf)).toEqual(['click', 'keyup']);
+  });
+
+  // The on-trigger / on-target ambiguity — these must NOT split.
+  it('does not split a single handler whose body ends in an `on`-target', () => {
+    expect((parse('on click toggle .active on me', 'en') as SNode).kind).toBe('event-handler');
+  });
+
+  it('does not split on `on me` inside a then-chained body', () => {
+    // `to me` and `on me` are both destinations here, not new triggers.
+    expect(
+      (parse('on click add .a to me then toggle .b on me', 'en') as SNode).kind
+    ).toBe('event-handler');
+  });
+
+  it('splits no-end chains in trigger-prepositional languages (es SVO, de V2, ar VSO)', () => {
+    const cases: Record<string, string> = {
+      es: 'al click alternar .active al keyup agregar .x',
+      de: 'bei click umschalten .active bei keyup hinzufügen .x',
+      ar: 'على click بدّل .active على keyup أضف .x',
+    };
+    for (const [lang, src] of Object.entries(cases)) {
+      const node = parse(src, lang) as SNode;
+      expect(node.kind, lang).toBe('compound');
+      expect(node.statements, lang).toHaveLength(2);
+      expect(node.statements!.map(eventOf), lang).toEqual(['click', 'keyup']);
+    }
+  });
+
+  it('does NOT trigger-split SOV chains (postpositional marker) — stays one handler', () => {
+    // SOV `on` markers are postpositional and homonymous with the locative, so a
+    // forward event lookahead can't split safely; these rely on the end-delimited
+    // form (Phase A). A single SOV handler must remain a single handler.
+    expect(
+      (parse('click पर .open को #panel पर टॉगल', 'hi') as SNode).kind
+    ).toBe('event-handler');
+    expect(
+      (parse('click を で .active を 切り替え keyup を で .x を 追加', 'ja') as SNode).kind
+    ).toBe('event-handler');
+  });
+});
+
 describe('multi-handler program — buildAST → core Program', () => {
   it('emits a Program node with one eventHandler statement per handler', () => {
     const ast = astOf(parse('on click toggle .active end on keyup add .x to me end', 'en') as SNode);
