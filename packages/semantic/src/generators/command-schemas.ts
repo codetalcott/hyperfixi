@@ -535,6 +535,16 @@ export const setSchema: CommandSchema = {
         qu: 'man', // "x ta 10 man churay" - destination marker on value
         hi: 'में', // value (patient) gets में — see the destination note above
       },
+      // Turkish dative is allomorphic under vowel harmony: the i18n transformer
+      // emits `e` for quoted-string values (`"red" e`) but `-ya` for a value
+      // ending in a vowel (`doğru ya` = "true" in set-attribute). markerOverride
+      // is a single string, so the generated tr set patterns carried only `e`
+      // and set-attribute fell to the role-scrambling generic SOV extraction.
+      // markerVariants supplies the allomorphs the SOV two-role generators merge
+      // in as marker alternatives. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
+      markerVariants: {
+        tr: ['e', 'a', 'ye', 'ya'],
+      },
     },
   ],
   // Runtime error documentation
