@@ -457,6 +457,17 @@ export class ASTBuilder {
       };
     }
 
+    // A compound whose every child is a top-level event handler is a multi-handler
+    // PROGRAM (`on click … on keyup …`), not a then-chained command sequence. Emit
+    // a Program node so the runtime's executeProgram registers each handler;
+    // CommandSequence would execute them as ordered commands instead. Only the
+    // multi-handler structural layer (tryParseProgram) produces such a compound —
+    // then-chains contain commands, never event handlers — so this never reroutes
+    // an ordinary then-chain.
+    if (statements.every(s => s.type === 'eventHandler')) {
+      return { type: 'Program', statements };
+    }
+
     // Convert to CommandSequence for runtime compatibility
     // Runtime handles 'CommandSequence' type in executeCommandSequence()
     const result: CommandSequenceNode = {

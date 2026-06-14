@@ -65,6 +65,20 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a compound node (multiple statements chained with then/and).
    */
   private renderCompound(node: CompoundSemanticNode, language: string): string {
+    // A compound whose every statement is an event handler is a multi-handler
+    // PROGRAM (produced by tryParseProgram), not a then-chain. Render each handler
+    // closed by `end` — the end-delimited form tryParseProgram splits on — so it
+    // round-trips. Joining handlers with the chain word instead collapses them
+    // back into a single handler with a merged body on re-parse. Mirrors
+    // renderBehavior's handler loop (no indent — these are top-level features).
+    if (node.statements.length > 1 && node.statements.every(s => s.kind === 'event-handler')) {
+      const endKw = this.keyword(language, 'end');
+      const lines: string[] = [];
+      for (const handler of node.statements) {
+        lines.push(this.render(handler, language), endKw);
+      }
+      return lines.join('\n');
+    }
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
     const chainWord = this.getChainWord(node.chainType, language);
     return renderedStatements.join(` ${chainWord} `);
