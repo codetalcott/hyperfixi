@@ -120,8 +120,12 @@ export function resolveElements(
     return target.filter(isHTMLElement) as HTMLElement[];
   }
 
-  if (target instanceof NodeList) {
-    return Array.from(target).filter(isHTMLElement) as HTMLElement[];
+  // Cross-realm / missing-global safe: a NodeList from another realm (iframe,
+  // or JSDOM in tests where `NodeList` isn't a global) fails `instanceof` (or
+  // throws ReferenceError). `isNodeList` is a structural check — same guard
+  // resolveTargetsFromArgs already uses.
+  if (isNodeList(target)) {
+    return Array.from(target as ArrayLike<unknown>).filter(isHTMLElement) as HTMLElement[];
   }
 
   // Handle single element

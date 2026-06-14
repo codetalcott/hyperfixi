@@ -546,6 +546,47 @@ export const setSchema: CommandSchema = {
         tr: ['e', 'a', 'ye', 'ya'],
       },
     },
+    {
+      // The element(s) the attribute/property is set ON — `set @aria-selected to
+      // "false" on .tab`. Distinct from `destination` (the attribute) so it does
+      // not collide with the value. Optional: a scope-less `set` defaults to `me`
+      // (handled in the core runtime). The marker is the literal `on` in every
+      // language (passthrough-alignment): the i18n transformer keeps `on <scope>`
+      // verbatim, so the same marker captures it back across all languages.
+      // See STRUCTURAL_ARCS_ROADMAP.md (S1 tabs-aria) and CORRECTNESS §7bb.
+      role: 'scope',
+      description: 'The element(s) the attribute/property is set on (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      svoPosition: 3,
+      sovPosition: 3,
+      markerOverride: {
+        en: 'on',
+        es: 'on',
+        pt: 'on',
+        fr: 'on',
+        de: 'on',
+        it: 'on',
+        id: 'on',
+        ms: 'on',
+        sw: 'on',
+        tl: 'on',
+        zh: 'on',
+        vi: 'on',
+        ru: 'on',
+        uk: 'on',
+        pl: 'on',
+        th: 'on',
+        he: 'on',
+        ar: 'on',
+        ja: 'on',
+        ko: 'on',
+        tr: 'on',
+        hi: 'on',
+        bn: 'on',
+        qu: 'on',
+      },
+    },
   ],
   // Runtime error documentation
   errorCodes: ['MISSING_TARGET', 'INVALID_TARGET', 'MISSING_VALUE', 'INVALID_SYNTAX'],

@@ -66,6 +66,9 @@ export type SemanticRole =
   | 'source' // Origin (from #input, from URL)
   | 'destination' // Target location — intentionally broad: DOM element (#output),
   //                  URL (/home), variable (:count). Disambiguated by value type per command.
+  | 'scope' // The element(s) a command acts ON, distinct from its destination.
+  //          Used by `set @attr to V on <scope>` where destination is the attribute
+  //          and scope is the element set (`on .tab` / `on me`). See setSchema.
   | 'goal' // Target value/state (to 'red', to 100)
   | 'event' // Trigger (click, input, keydown)
   | 'condition' // Boolean expression (if x > 5)

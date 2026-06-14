@@ -141,7 +141,12 @@ const setPossessiveEnglish: LanguagePattern = {
   command: 'set',
   priority: 100,
   template: {
-    format: 'set {destination} to {patient}',
+    // Optional trailing `on <scope>` (S1 tabs-aria): `set @aria-selected to
+    // "false" on .tab` writes the attribute to every scope-matched element.
+    // This hand-crafted pattern ties the generated `set-en-generated` on
+    // priority and wins on stable-sort order, so the scope group must live
+    // here too or `on .tab` is silently dropped.
+    format: 'set {destination} to {patient} [on {scope}]',
     tokens: [
       { type: 'literal', value: 'set' },
       {
@@ -151,11 +156,20 @@ const setPossessiveEnglish: LanguagePattern = {
       },
       { type: 'literal', value: 'to' },
       { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+      {
+        type: 'group',
+        optional: true,
+        tokens: [
+          { type: 'literal', value: 'on' },
+          { type: 'role', role: 'scope', optional: true, expectedTypes: ['selector', 'reference'] },
+        ],
+      },
     ],
   },
   extraction: {
     destination: { position: 1 },
     patient: { marker: 'to' },
+    scope: { marker: 'on' },
   },
 };
 
