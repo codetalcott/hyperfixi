@@ -6213,3 +6213,34 @@ describe('it remove `da X` is the source, not destination (R2 tails batch)', () 
     expect(n.roles?.get('source')).toMatchObject({ value: 'me' });
   });
 });
+
+describe('th add destination: positional phrase captured (R2 tails batch)', () => {
+  // The hand-crafted th add patterns were redundant and harmful: add-th-simple
+  // (no destination) was priority 100, ABOVE add-th-with-dest (95), so it
+  // shadowed the destination clause; and add-th-with-dest used a fixed
+  // `position: 3` extraction that grabs a single token, dropping multi-token
+  // positional destinations like `ใกล้สุด .accordion-item` (closest
+  // .accordion-item). Removing them lets the generated marker-based pattern
+  // route the destination through tryMatchPositionalExpression — exactly like
+  // English. Clears th accordion-exclusive.
+  it('[th] add `ใน ใกล้สุด .accordion-item` → destination closest expression', () => {
+    const n = parse(
+      'เมื่อ คลิก เพิ่ม .open ใน ใกล้สุด .accordion-item',
+      'th'
+    ) as { body?: Array<{ action?: string; roles?: Map<string, { type?: string; raw?: string }> }> };
+    const add = (n.body ?? []).find(c => c.action === 'add');
+    expect(add?.roles?.get('destination')).toMatchObject({
+      type: 'expression',
+      raw: 'closest .accordion-item',
+    });
+  });
+
+  it('[th] plain-selector and bare add destinations still resolve', () => {
+    const withDest = parse('เพิ่ม .selected ใน #item', 'th') as {
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(withDest.roles?.get('destination')).toMatchObject({ value: '#item' });
+    const bare = parse('เพิ่ม .highlight', 'th') as { roles?: Map<string, { value?: unknown }> };
+    expect(bare.roles?.get('destination')).toMatchObject({ value: 'me' });
+  });
+});
