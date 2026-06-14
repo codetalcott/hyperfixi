@@ -1768,38 +1768,42 @@ describe('destination `on` is not confused with the event head `on`', () => {
   });
 });
 
-describe('ko event marker 할 때 + selector-event marker suppression', () => {
+describe('ko event marker 할 때 + set `on <scope>` capture (S1 tabs-aria)', () => {
   // koreanProfile gained the event-role marker 할 때 — the semantic
   // *-event-ko-sov-* patterns anchor on it; before, every ko handler emitted a
-  // bare event name no fused pattern could match. The companion guard lives in
-  // insertMarkers: a SELECTOR-shaped "event" (the dangling target of a locative
-  // `on` — `set @role to "alert" on #sr-announce` — split off as a headless
-  // pseudo-handler because set/put are deliberately NOT in ON_TARGET_COMMANDS)
-  // must NOT receive the marker, or the emission grows a spurious mid-stream
-  // event anchor (`#sr-announce 할 때` / ja `#sr-announce で`).
+  // bare event name no fused pattern could match. A SELECTOR-shaped "event" (the
+  // dangling target of a locative `on`) must NOT receive that marker, or the
+  // emission grows a spurious mid-stream event anchor (`#sr-announce 할 때` / ja
+  // `#sr-announce で`). For `set @role to "alert" on #sr-announce` the locative
+  // `on` is now the set's SCOPE (S1): the transformer keeps it attached and
+  // positions it before the clause-final verb (`on #sr-announce 설정` / `設定`),
+  // so the scope is captured rather than dropped — and there is still exactly ONE
+  // event marker (the real `success`), never a spurious one on the selector.
   it('[ko] a real event gets the marker', () => {
     const t = new GrammarTransformer('en', 'ko');
     expect(t.transform('on click increment #counter')).toBe('#counter 를 클릭 할 때 증가');
   });
 
-  it('[ko] a dangling selector pseudo-event does NOT get the marker', () => {
+  it('[ko] set `on <scope>` is captured, with no spurious event marker', () => {
     const t = new GrammarTransformer('en', 'ko');
     const out = t.transform(
       'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce'
     );
     // The real event keeps its marker…
     expect(out).toContain('success 할 때');
-    // …the selector tail does not.
-    expect(out.endsWith('#sr-announce')).toBe(true);
+    // …and it is the ONLY event marker (the locative `on` is the set's scope,
+    // not a second event anchor).
     expect(out.match(/할 때/g)?.length).toBe(1);
+    // The set's scope is emitted (passthrough `on`) before the clause-final verb.
+    expect(out).toContain('on #sr-announce 설정');
   });
 
-  it('[ja] the same suppression strips the spurious で', () => {
+  it('[ja] set `on <scope>` is captured before the verb, no spurious で', () => {
     const t = new GrammarTransformer('en', 'ja');
     const out = t.transform(
       'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce'
     );
-    expect(out.endsWith('#sr-announce')).toBe(true);
+    expect(out).toContain('on #sr-announce 設定');
   });
 });
 
