@@ -9,6 +9,8 @@ import type {
   SemanticNode,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  BehaviorSemanticNode,
+  DefSemanticNode,
   SemanticValue,
   SemanticRenderer as ISemanticRenderer,
   LanguagePattern,
@@ -32,6 +34,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // Handle compound nodes specially (e.g., "cmd1 then cmd2")
     if (node.kind === 'compound') {
       return this.renderCompound(node as CompoundSemanticNode, language);
+    }
+    // Block constructs render to multi-line target-language source so a whole
+    // behavior/function round-trips between languages (Phase 4).
+    if (node.kind === 'behavior') {
+      return this.renderBehavior(node as BehaviorSemanticNode, language);
+    }
+    if (node.kind === 'def') {
+      return this.renderDef(node as DefSemanticNode, language);
     }
 
     const patterns = getPatternsForLanguageAndCommand(language, node.action);
@@ -58,6 +68,56 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
     const chainWord = this.getChainWord(node.chainType, language);
     return renderedStatements.join(` ${chainWord} `);
+  }
+
+  /**
+   * Resolve a structural keyword (`behavior`/`def`/`init`/`end`) in the target
+   * language, falling back to the English form when the profile has no translation.
+   */
+  private keyword(language: string, action: string): string {
+    return tryGetProfile(language)?.keywords?.[action]?.primary ?? action;
+  }
+
+  /** `Name` or `Name(p1, p2)` — the parameter list renders verbatim (identifiers). */
+  private renderBlockHeader(keyword: string, name: string, parameters: readonly string[]): string {
+    return parameters.length > 0
+      ? `${keyword} ${name}(${parameters.join(', ')})`
+      : `${keyword} ${name}`;
+  }
+
+  /**
+   * Render a behavior block to target-language source:
+   * `<behavior> Name(params)` + each handler (closed by `end`) + optional `init`
+   * block + closing `end`. Handlers/commands render through the normal paths.
+   */
+  private renderBehavior(node: BehaviorSemanticNode, language: string): string {
+    const endKw = this.keyword(language, 'end');
+    const lines = [
+      this.renderBlockHeader(this.keyword(language, 'behavior'), node.name, node.parameters),
+    ];
+    for (const handler of node.eventHandlers) {
+      lines.push(`  ${this.render(handler, language)}`, `  ${endKw}`);
+    }
+    if (node.initBlock && node.initBlock.length > 0) {
+      lines.push(`  ${this.keyword(language, 'init')}`);
+      for (const cmd of node.initBlock) lines.push(`    ${this.render(cmd, language)}`);
+      lines.push(`  ${endKw}`);
+    }
+    lines.push(endKw);
+    return lines.join('\n');
+  }
+
+  /**
+   * Render a function definition to target-language source:
+   * `<def> name(params)` + body commands + closing `end`.
+   */
+  private renderDef(node: DefSemanticNode, language: string): string {
+    const lines = [
+      this.renderBlockHeader(this.keyword(language, 'def'), node.name, node.parameters),
+    ];
+    for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
+    lines.push(this.keyword(language, 'end'));
+    return lines.join('\n');
   }
 
   /**

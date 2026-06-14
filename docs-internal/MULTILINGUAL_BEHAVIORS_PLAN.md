@@ -179,6 +179,22 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
 - Faithful translation of whole behaviors/functions between languages (understand
   an arbitrary behavior, not just the curated set). Depends on Phase 1 + Phase 3.
 
+> **2026-06-14: Phase 4 ✅ — block renderer.** The renderer was block-blind (a
+> behavior rendered to just its keyword `comportamiento`, body dropped). Added
+> `renderBehavior` / `renderDef` + a `keyword()` resolver to
+> `packages/semantic/src/explicit/renderer.ts` (dispatched from `render()` on
+> `kind`). A behavior renders to target-language source — `<behavior> Name(params)`
+>
+> - each handler (closed by `end`) + optional `init` + closing `end` — handlers and
+>   commands via the normal (Phase-1-clean) paths; `def` similarly. **Whole behaviors
+>   and functions now translate between languages and round-trip:** EN→ES
+>   `comportamiento Toggleable(cls) / al click alternar .{cls} / fin / fin` →
+>   re-parses to a behavior with `[toggle]`; EN→ja renders 振る舞い…終わり. semantic
+>   **6049/6049**; lock `test/block-renderer.test.ts`; typecheck clean. **Gate
+>   untouched** — the renderer is a separate path from the i18n transformer the gate
+>   uses (parse-only), so render-only changes are gate-neutral (baseline unmodified).
+>   SOV trigger cosmetics (ja `click を で`) carry over from Phase 2 but round-trip.
+
 ### Phase 5 — Curated localized metadata _(parallel, anytime)_
 
 - Localized names / param-names / hover-docs for the 11 shipped behaviors
