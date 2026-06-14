@@ -139,11 +139,23 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
 >   (es/ja/ko/de/fr +0.012–0.014, zh/ar/he +0.008–0.010); a few non-priority langs
 >   (tl −0.016, th −0.010, hi −0.009) drop as their incomplete behavior bodies
 >   become honestly measured. All baseline deltas are behavior-only.
-> - **Known body-content gaps (orthogonal, affect single statements too):**
->   newline-separated handler bodies capture only the first command (engine splits
->   on `then`, not newlines); `.{cls}` dynamic class selectors aren't tokenized.
->   These cap per-language behavior fidelity and are the next sub-step. `def`
->   functions / multi-handler top-level programs reuse the same layer (not yet wired).
+> - **2026-06-14: body-content fixes ✅.** A re-diagnosis corrected the earlier
+>   "newline-body" framing — **newline/space/`then`-separated multi-command bodies
+>   already parse** (`[add, remove]` for all three). The real gaps were two general
+>   single-statement issues that capped real behaviors:
+>   - **`remove me` / `remove it` (remove-self)** — threw, because the remove
+>     `patient` only accepted `selector`. Added `reference` to its expectedTypes
+>     (`command-schemas.ts`). `remove #el` / `remove .x from me` unchanged.
+>   - **`.{cls}` dynamic class interpolation** — un-tokenized (the class regex
+>     required a letter after `.`). Added a `.\{varName\}` branch to the CSS selector
+>     extractor (`tokenizers/extractors/css-selector.ts`).
+>     The real `Toggleable(cls)` / `Removable` behaviors now parse end-to-end.
+>     semantic **6041/6041**; lock test `test/behavior-body-content.test.ts`;
+>     gate green (baseline regen: only pl/uk `behavior-removable` shifts, fid −0.000 —
+>     the richer EN reference effect; corpus impact negligible, value is correctness).
+> - **Still un-tokenized / remaining body-content:** other dynamic forms as they
+>   surface; `def` functions / multi-handler top-level programs reuse the block
+>   layer (not yet wired). Phase 4 = block renderer (round-trip translation).
 
 ### Phase 4 — Block renderer + round-trip
 

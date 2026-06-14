@@ -121,9 +121,9 @@ describe('behavior block — multilingual', () => {
 
 describe('behavior block — honesty + non-interference', () => {
   it('reports low confidence when a handler body is silently dropped', () => {
-    // `.{cls}` (dynamic class) isn't yet parsed by the statement engine, so the
-    // handler body is empty — the block must NOT report a false 1.0.
-    const src = 'behavior Bad\n  on click add .{cls} to me\n  end\nend';
+    // An unknown command (`frobnicate`) leaves the handler body empty — the block
+    // must NOT report a false 1.0.
+    const src = 'behavior Bad\n  on click frobnicate .x\n  end\nend';
     const node = parse(src, 'en') as unknown as Behavior;
     expect(node.kind).toBe('behavior');
     expect(node.metadata?.confidence ?? 1).toBeLessThan(0.5);

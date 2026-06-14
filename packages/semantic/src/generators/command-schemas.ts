@@ -352,9 +352,13 @@ export const removeSchema: CommandSchema = {
   roles: [
     {
       role: 'patient',
-      description: 'The class or attribute to remove',
+      // `remove .class from #el` / `remove @attr from #el` removes a class/attr;
+      // `remove me` / `remove it` / `remove #el` removes the ELEMENT itself, where
+      // the patient is a reference/selector. Accept references so remove-self (a
+      // core behavior pattern) parses instead of throwing.
+      description: 'The class/attribute to remove, or the element to remove',
       required: true,
-      expectedTypes: ['selector'],
+      expectedTypes: ['selector', 'reference'],
       svoPosition: 1,
       sovPosition: 2,
     },

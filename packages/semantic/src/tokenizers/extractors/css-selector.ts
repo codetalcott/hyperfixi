@@ -20,8 +20,13 @@ export function extractCssSelector(input: string, position: number): string | nu
     return match ? match[0] : null;
   }
 
-  // Class selector: .identifier
+  // Class selector: .identifier — or dynamic class interpolation .{varName}, where
+  // a variable resolves to the class name at runtime (used by parameterized
+  // behaviors: `toggle .{cls} on me`). Kept as one selector token so it fills the
+  // role; otherwise `.{cls}` splits into a bare `.` (mangled patient) + `{cls}`.
   if (char === '.') {
+    const dynamic = input.slice(position).match(/^\.\{[a-zA-Z_$][\w$]*\}/);
+    if (dynamic) return dynamic[0];
     const match = input.slice(position).match(/^\.[a-zA-Z_][\w-]*/);
     return match ? match[0] : null;
   }
