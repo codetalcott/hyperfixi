@@ -532,6 +532,27 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
           currentPart.push(token);
           continue;
         }
+        // `set @attr to V on <scope>` (S1 tabs-aria): the trailing `on <scope>`
+        // is the element(s) the attribute is set on, not a new command. `set` is
+        // deliberately NOT in ON_TARGET_COMMANDS (its role parser would clobber
+        // the value), so this is a dedicated guard — kept attached only when a
+        // selector/reference scope follows, then positioned by transformSingle's
+        // set-scope handler (transformSetWithScope). A `set` whose `on` is
+        // followed by a verb is left to split as before.
+        if (lowerToken === 'on' && verb === 'set') {
+          const nextTok = tokens[i + 1];
+          const nextLower = nextTok?.toLowerCase();
+          const scopeLike =
+            !!nextTok &&
+            (/^[#.<@[]/.test(nextTok) ||
+              nextLower === 'me' ||
+              nextLower === 'it' ||
+              nextLower === 'you');
+          if (scopeLike) {
+            currentPart.push(token);
+            continue;
+          }
+        }
       }
 
       if (!boundaryModifiers.has(prevLower) && !commandKeywords.has(prevLower)) {
@@ -1683,6 +1704,14 @@ export class GrammarTransformer {
       return this.transformBlock(block);
     }
 
+    // 0b. `set @attr to V on <scope>` (S1 tabs-aria): strip the trailing
+    //     `on <scope>`, transform the scope-less set normally, then re-insert
+    //     `on <scope>` where the semantic set patterns expect it.
+    const setScope = this.transformSetWithScope(input);
+    if (setScope !== null) {
+      return setScope;
+    }
+
     // 1. Parse into semantic roles
     const parsed = parseStatement(input, this.sourceProfile.code);
     if (!parsed) {
@@ -1930,6 +1959,79 @@ export class GrammarTransformer {
     // input no longer leads with a modifier, so this never re-enters here.
     const bodyOut = this.transform(rebuilt);
     return [modifierPhrase, bodyOut].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform a `set <stuff> on <scope>` clause (S1 tabs-aria). The trailing
+   * `on <scope>` is the element(s) the attribute is set on — kept attached by
+   * splitOnCommandBoundaries. The semantic parser captures it as a `scope` role
+   * via the passthrough literal `on` (setSchema's scope markerOverride is `on`
+   * in every language), so `on` is emitted verbatim and only the scope *value*
+   * is translated (selectors pass through; `me`/`it`/`you` translate to the
+   * native reference, which the parser also accepts).
+   *
+   * Positioning matches where the set patterns expect the scope: at the clause
+   * end for verb-first orders (SVO/VSO), and immediately before the clause-final
+   * verb for SOV (the generated SOV pattern is `{dest} {patient} on {scope}
+   * {verb}`). Returns null (fall through) when there is no trailing `on <scope>`.
+   *
+   * Source is English in the sync-translations pipeline, so the `set` verb and
+   * `on` marker are matched as English literals.
+   */
+  private transformSetWithScope(input: string): string | null {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    const m = input.match(/^(.*\bset\b.*\S)\s+on\s+([#.<@[]\S*|me|it|you)\s*$/i);
+    if (!m) return null;
+    const head = m[1];
+    const scopeRaw = m[2];
+
+    // Transform the scope-less clause via the normal path; `head` no longer ends
+    // in `on <scope>`, so this never re-enters transformSetWithScope.
+    const headOut = this.transformSingle(head);
+
+    const scopeT = /^[#.<@[]/.test(scopeRaw) ? scopeRaw : translateWord(scopeRaw, src, dst);
+
+    // SOV needs the scope positioned per how the semantic set patterns match:
+    //  - Event-handler set (`on <event> set …`): the dest-first SOV event-handler
+    //    pattern is verb-MEDIAL and carries an optional trailing `[on {scope}]`,
+    //    so append the scope at the clause end.
+    //  - Standalone then-clause set: SOV emits verb-MEDIAL (`{dest} {verb}
+    //    {patient}`), but the only command set pattern with scope is verb-LAST
+    //    (`{dest} {patient} on {scope} {verb}`). Move the medial verb to the end
+    //    and place `on {scope}` before it, so the generated command pattern matches.
+    if (this.targetProfile.wordOrder === 'SOV') {
+      const verb = translateWord('set', 'en', dst);
+      const firstTok = input.trim().split(/\s+/)[0]?.toLowerCase();
+      const isEventHandler = !!firstTok && EVENT_KEYWORDS.has(firstTok);
+      const toks = headOut.split(/\s+/).filter(Boolean);
+      if (!isEventHandler) {
+        // Standalone then-clause set: SOV emits verb-MEDIAL; move the verb to the
+        // end and place `on {scope}` before it so the verb-last command set
+        // pattern (scope before verb) matches.
+        const vIdx = toks.indexOf(verb);
+        if (vIdx >= 0) {
+          toks.splice(vIdx, 1);
+          toks.push('on', scopeT, verb);
+          return toks.join(' ');
+        }
+      } else if (toks.length > 0 && toks[toks.length - 1] === verb) {
+        // Event-handler set whose verb is clause-final (e.g. qu
+        // `{dest} ta {patient} man {event} pi {verb}`): the parser extracts the
+        // event and matches the body as a verb-last command, so the scope must
+        // sit before the verb. Verb-MEDIAL SOV event handlers (ja/ko/tr/bn/hi)
+        // fall through to the append branch, where their fused event-handler set
+        // pattern carries the trailing `[on {scope}]` group.
+        toks.splice(toks.length - 1, 0, 'on', scopeT);
+        return toks.join(' ');
+      }
+      return `${headOut} on ${scopeT}`;
+    }
+
+    // Verb-first (SVO/VSO/V2): append `on <scope>` at the clause end, which the
+    // trailing `[on {scope}]` group on the set patterns matches.
+    return `${headOut} on ${scopeT}`;
   }
 
   /**

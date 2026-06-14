@@ -1030,42 +1030,81 @@ function getSetPatternsZh(): LanguagePattern[] {
 /**
  * Get set patterns for a specific language.
  */
+/**
+ * Append an optional trailing `[on {scope}]` group to each hand-crafted set
+ * pattern (S1 tabs-aria). These patterns tie the generated `set-*-generated`
+ * pattern on priority and win on stable-sort order, so without the scope group
+ * they silently shadow it and drop `on <scope>`. The i18n transformer appends
+ * `on <scope>` at the clause end in every word order (transformSetWithScope),
+ * which a trailing group matches for verb-first (SVO/VSO) orders; SOV is handled
+ * by the dedicated event-handler scope patterns. Idempotent: skips a pattern
+ * that already declares a scope role. See setSchema's scope role.
+ */
+function withTrailingScope(patterns: LanguagePattern[]): LanguagePattern[] {
+  return patterns.map(p => {
+    if (p.extraction?.scope) return p;
+    return {
+      ...p,
+      template: {
+        ...p.template,
+        tokens: [
+          ...p.template.tokens,
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'on' },
+              {
+                type: 'role',
+                role: 'scope',
+                optional: true,
+                expectedTypes: ['selector', 'reference'],
+              },
+            ],
+          },
+        ],
+      },
+      extraction: { ...p.extraction, scope: { marker: 'on' } },
+    };
+  });
+}
+
 export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'bn':
-      return getSetPatternsBn();
+      return withTrailingScope(getSetPatternsBn());
     case 'de':
-      return getSetPatternsDe();
+      return withTrailingScope(getSetPatternsDe());
     case 'es':
-      return getSetPatternsEs();
+      return withTrailingScope(getSetPatternsEs());
     case 'fr':
-      return getSetPatternsFr();
+      return withTrailingScope(getSetPatternsFr());
     case 'he':
-      return getSetPatternsHe();
+      return withTrailingScope(getSetPatternsHe());
     case 'hi':
-      return getSetPatternsHi();
+      return withTrailingScope(getSetPatternsHi());
     case 'id':
-      return getSetPatternsId();
+      return withTrailingScope(getSetPatternsId());
     case 'ms':
-      return getSetPatternsMs();
+      return withTrailingScope(getSetPatternsMs());
     case 'it':
-      return getSetPatternsIt();
+      return withTrailingScope(getSetPatternsIt());
     case 'pl':
-      return getSetPatternsPl();
+      return withTrailingScope(getSetPatternsPl());
     case 'pt':
-      return getSetPatternsPt();
+      return withTrailingScope(getSetPatternsPt());
     case 'ru':
-      return getSetPatternsRu();
+      return withTrailingScope(getSetPatternsRu());
     case 'sw':
-      return getSetPatternsSw();
+      return withTrailingScope(getSetPatternsSw());
     case 'th':
-      return getSetPatternsTh();
+      return withTrailingScope(getSetPatternsTh());
     case 'uk':
-      return getSetPatternsUk();
+      return withTrailingScope(getSetPatternsUk());
     case 'vi':
-      return getSetPatternsVi();
+      return withTrailingScope(getSetPatternsVi());
     case 'zh':
-      return getSetPatternsZh();
+      return withTrailingScope(getSetPatternsZh());
     default:
       return [];
   }

@@ -7,7 +7,7 @@
  * Extracted from pattern-generator.ts for maintainability.
  */
 
-import type { LanguagePattern, PatternToken } from '../types';
+import type { LanguagePattern, PatternToken, ExtractionRule } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema } from './command-schemas';
 import {
@@ -16,6 +16,7 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
+import { appendOptionalScope } from './event-handlers-sov';
 
 /**
  * Generate VSO event handler pattern (Arabic).
@@ -234,6 +235,13 @@ export function generateVSOVerbFirstTwoRoleEventHandlerPattern(
 
   const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+  };
+  appendOptionalScope(tokens, extraction, commandSchema);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-verb-first-2role`,
     language: profile.code,
@@ -243,11 +251,7 @@ export function generateVSOVerbFirstTwoRoleEventHandlerPattern(
       format: `${keyword.primary} ${roleNames} ${eventMarker.primary} {event}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
-    },
+    extraction,
   };
 }
 /**
@@ -328,6 +332,13 @@ export function generateVSOTwoRoleEventHandlerPattern(
   // Build format string
   const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action }, // Extract the wrapped command
+    event: { fromRole: 'event' },
+    ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+  };
+  appendOptionalScope(tokens, extraction, commandSchema);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-2role`,
     language: profile.code,
@@ -337,11 +348,7 @@ export function generateVSOTwoRoleEventHandlerPattern(
       format: `${eventMarker.primary} {event} ${keyword.primary} ${roleNames}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action }, // Extract the wrapped command
-      event: { fromRole: 'event' },
-      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
-    },
+    extraction,
   };
 }
 

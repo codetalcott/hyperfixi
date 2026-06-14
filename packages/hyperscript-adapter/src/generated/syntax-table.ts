@@ -60,7 +60,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   scroll: [['destination', 'to']],
   select: [['patient', '']],
   send: [['event', ''], ['destination', 'to']],
-  set: [['destination', ''], ['patient', 'to']],
+  set: [['destination', ''], ['patient', 'to'], ['scope', 'on']],
   settle: [['patient', '']],
   show: [['patient', ''], ['style', 'with']],
   socket: [],

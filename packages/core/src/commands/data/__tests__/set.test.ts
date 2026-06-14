@@ -303,7 +303,7 @@ describe('SetCommand (Standalone V2)', () => {
       const output = await command.execute(
         {
           type: 'attribute',
-          element: context.me as HTMLElement,
+          elements: [context.me as HTMLElement],
           name: 'data-theme',
           value: 'dark',
         },
@@ -322,7 +322,7 @@ describe('SetCommand (Standalone V2)', () => {
       await command.execute(
         {
           type: 'attribute',
-          element: context.me as HTMLElement,
+          elements: [context.me as HTMLElement],
           name: 'aria-label',
           value: 'Close button',
         },
@@ -336,7 +336,7 @@ describe('SetCommand (Standalone V2)', () => {
       const context = createMockContext();
 
       await command.execute(
-        { type: 'attribute', element: context.me as HTMLElement, name: 'data-count', value: 42 },
+        { type: 'attribute', elements: [context.me as HTMLElement], name: 'data-count', value: 42 },
         context
       );
 
@@ -349,7 +349,7 @@ describe('SetCommand (Standalone V2)', () => {
       await command.execute(
         {
           type: 'attribute',
-          element: context.me as HTMLElement,
+          elements: [context.me as HTMLElement],
           name: 'data-value',
           value: 'test',
         },
@@ -357,6 +357,89 @@ describe('SetCommand (Standalone V2)', () => {
       );
 
       expect(context.it).toBe('test');
+    });
+  });
+
+  // The S1 tabs-aria arc: `set @attr to V on <scope>` writes the attribute to
+  // EVERY element the scope matches, not just `me`. `on .tab` (two tabs) →
+  // both; `on me` → just me; no scope → me (the common single-target case).
+  describe('execute - attribute on a multi-element scope', () => {
+    it('should set the attribute on every scope-matched element', async () => {
+      const context = createMockContext();
+      const a = document.createElement('div');
+      const b = document.createElement('div');
+
+      await command.execute(
+        { type: 'attribute', elements: [a, b], name: 'aria-selected', value: 'false' },
+        context
+      );
+
+      expect(a.getAttribute('aria-selected')).toBe('false');
+      expect(b.getAttribute('aria-selected')).toBe('false');
+    });
+
+    it('should resolve `on .tab` to all matching elements end-to-end', async () => {
+      const context = createMockContext();
+      const tab1 = document.createElement('div');
+      const tab2 = document.createElement('div');
+      tab1.className = 'tab';
+      tab2.className = 'tab';
+      document.body.append(tab1, tab2);
+      try {
+        const evaluator = createMockEvaluator();
+        const input = await command.parseInput(
+          {
+            args: [
+              { type: 'attributeAccess', attributeName: 'aria-selected' } as unknown as ASTNode,
+            ],
+            modifiers: {
+              to: {
+                type: 'literal',
+                value: 'false',
+              } as unknown as import('../../../types/base-types').ExpressionNode,
+              on: {
+                type: 'literal',
+                value: '.tab',
+              } as unknown as import('../../../types/base-types').ExpressionNode,
+            },
+          },
+          evaluator,
+          context
+        );
+        expect(input.type).toBe('attribute');
+        if (input.type === 'attribute') expect(input.elements).toHaveLength(2);
+        await command.execute(input, context);
+
+        expect(tab1.getAttribute('aria-selected')).toBe('false');
+        expect(tab2.getAttribute('aria-selected')).toBe('false');
+        // `me` is untouched — the scope, not the handler element, is the target.
+        expect((context.me as HTMLElement).getAttribute('aria-selected')).toBeNull();
+      } finally {
+        tab1.remove();
+        tab2.remove();
+      }
+    });
+
+    it('should default an un-scoped attribute write to `me`', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'attributeAccess', attributeName: 'aria-selected' } as unknown as ASTNode],
+          modifiers: {
+            to: {
+              type: 'literal',
+              value: 'true',
+            } as unknown as import('../../../types/base-types').ExpressionNode,
+          },
+        },
+        evaluator,
+        context
+      );
+      expect(input.type).toBe('attribute');
+      if (input.type === 'attribute') expect(input.elements).toEqual([context.me]);
+      await command.execute(input, context);
+      expect((context.me as HTMLElement).getAttribute('aria-selected')).toBe('true');
     });
   });
 
@@ -493,7 +576,7 @@ describe('SetCommand (Standalone V2)', () => {
 
     it('should validate correct attribute input', () => {
       const element = document.createElement('div');
-      const input = { type: 'attribute', element, name: 'data-theme', value: 'dark' };
+      const input = { type: 'attribute', elements: [element], name: 'data-theme', value: 'dark' };
       expect(command.validate(input)).toBe(true);
     });
 

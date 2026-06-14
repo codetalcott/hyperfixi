@@ -191,6 +191,7 @@ const setMapper: CommandMapper = {
   toAST(node, _builder) {
     const destination = convertRoleValue(node, 'destination');
     const patient = convertRoleValue(node, 'patient');
+    const scope = convertRoleValue(node, 'scope');
 
     const args: ExpressionNode[] = [];
     const modifiers: Record<string, ExpressionNode> = {};
@@ -202,6 +203,11 @@ const setMapper: CommandMapper = {
 
     // The patient is the value being set
     if (patient) modifiers['to'] = patient;
+
+    // The scope (`set @attr to V on <scope>`) is the element(s) to set on —
+    // routed to `modifiers.on`, which the core SetCommand applies to every
+    // matched element (defaulting to `me` when absent). See S1 tabs-aria arc.
+    if (scope) modifiers['on'] = scope;
 
     return createCommandNode('set', args, modifiers);
   },

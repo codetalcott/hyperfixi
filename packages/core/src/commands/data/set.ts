@@ -41,7 +41,7 @@ import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensi
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
   | { type: 'variable'; name: string; value: unknown }
-  | { type: 'attribute'; element: HTMLElement; name: string; value: unknown }
+  | { type: 'attribute'; elements: HTMLElement[]; name: string; value: unknown }
   | { type: 'property'; element: HTMLElement; property: string; value: unknown }
   | { type: 'style'; element: HTMLElement; property: string; value: string }
   | { type: 'object-literal'; properties: Record<string, unknown>; targets: HTMLElement[] }
@@ -104,7 +104,7 @@ export class SetCommand implements DecoratedCommand {
     const attrTarget = await this.resolveAttributeWriteTarget(firstArg, raw, evaluator, context);
     if (attrTarget) {
       const value = await this.extractValue(raw, evaluator, context);
-      return { type: 'attribute', element: attrTarget.element, name: attrTarget.name, value };
+      return { type: 'attribute', elements: attrTarget.elements, name: attrTarget.name, value };
     }
 
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
@@ -182,8 +182,8 @@ export class SetCommand implements DecoratedCommand {
     if (typeof firstValue === 'string' && isAttributeSyntax(firstValue)) {
       const name = firstValue.substring(1).trim();
       const value = await this.extractValue(raw, evaluator, context);
-      const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
-      return { type: 'attribute', element, name, value };
+      const elements = await this.resolveTargets(raw.modifiers.on, evaluator, context);
+      return { type: 'attribute', elements, name, value };
     }
 
     // Possessive syntax: my/its property
@@ -236,7 +236,12 @@ export class SetCommand implements DecoratedCommand {
         return { target: input.name, value: input.value, targetType: 'variable' };
 
       case 'attribute':
-        input.element.setAttribute(input.name, String(input.value));
+        // A scope (`set @attr to V on <scope>`) can match many elements
+        // (e.g. `on .tab`); apply the write to each. With no scope the
+        // resolver yields `[me]`, so the common single-target case is intact.
+        for (const el of input.elements) {
+          el.setAttribute(input.name, String(input.value));
+        }
         Object.assign(context, { it: input.value });
         return { target: `@${input.name}`, value: input.value, targetType: 'attribute' };
 
@@ -297,13 +302,14 @@ export class SetCommand implements DecoratedCommand {
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<{ element: HTMLElement; name: string } | null> {
+  ): Promise<{ elements: HTMLElement[]; name: string } | null> {
     const node = firstArg as Record<string, any>;
 
-    // Standalone `@attr` / `[@attr]` — writes to the `on` target or `me`.
+    // Standalone `@attr` / `[@attr]` — writes to the `on` scope (which may match
+    // many elements, e.g. `set @aria-selected to "false" on .tab`) or `me`.
     if (node?.type === 'attributeAccess') {
-      const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
-      return { element, name: node.attributeName as string };
+      const elements = await this.resolveTargets(raw.modifiers.on, evaluator, context);
+      return { elements, name: node.attributeName as string };
     }
 
     // `@attr of X` / `[@attr] of X` — binary `of` with an attributeAccess LHS.
@@ -313,13 +319,13 @@ export class SetCommand implements DecoratedCommand {
       node.left?.type === 'attributeAccess'
     ) {
       const element = await this.evaluateToElement(node.right as ASTNode, evaluator, context);
-      if (element) return { element, name: node.left.attributeName as string };
+      if (element) return { elements: [element], name: node.left.attributeName as string };
     }
 
     // `X[@attr]` — computed member access whose property is an attributeAccess.
     if (node?.type === 'memberExpression' && node.property?.type === 'attributeAccess') {
       const element = await this.evaluateToElement(node.object as ASTNode, evaluator, context);
-      if (element) return { element, name: node.property.attributeName as string };
+      if (element) return { elements: [element], name: node.property.attributeName as string };
     }
 
     return null;
@@ -453,7 +459,12 @@ export class SetCommand implements DecoratedCommand {
       case 'variable':
         return typeof obj.name === 'string' && 'value' in obj;
       case 'attribute':
-        return typeof obj.name === 'string' && isHTMLElement(obj.element) && 'value' in obj;
+        return (
+          typeof obj.name === 'string' &&
+          Array.isArray(obj.elements) &&
+          obj.elements.every(isHTMLElement) &&
+          'value' in obj
+        );
       case 'property':
         return typeof obj.property === 'string' && isHTMLElement(obj.element) && 'value' in obj;
       case 'style':

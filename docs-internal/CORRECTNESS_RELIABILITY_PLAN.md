@@ -1766,6 +1766,61 @@ remains. The next R2 move is S1 (a deliberate en-reference band-inversion + full
 re-record) or, per the stopping rule, switch to behaviors (Track 2). See
 STRUCTURAL_ARCS_ROADMAP.md.
 
+## 7bb. Status update (S1 tabs-aria — the en-reference band inversion: 5 → 0)
+
+**The deferred S1 arc is complete; the R2 execution tail is fully cleared (0
+cells).** `set @attr to V on <scope>` now captures its `on`-scope end-to-end, the
+en reference flipped from lossy to scoped, and **all 24 languages reproduce it**.
+avgExecutionFidelity **0.9930 → 1.0000**.
+
+**The lossy reference (probed):** `on click set @aria-selected to "false" on .tab
+set @aria-selected to "true" on me` parsed to two `set`s that BOTH dropped their
+`on <scope>` (the semantic `setSchema` had only destination + patient), so both
+wrote `me` (#btn) → net `aria-selected=true on #btn`. The 5 SOV translations
+(bn/hi/ja/ko/tr) only reached the first set; the ~18 other languages PASSED by
+sharing en's lossiness (§7g). So a real fix HAD to invert the band.
+
+**The fix — a 4-layer scope plumb (not just an en parse change):**
+
+1. **`scope` SemanticRole + `setSchema` role** (optional; marker `on` in every
+   language — passthrough-alignment; svo/sovPosition 3). The set mapper routes it
+   to `modifiers.on`.
+2. **Core `SetCommand`** — the attribute write applies to EVERY scope-matched
+   element (`resolveTargets`, defaulting to `[me]` when scope is absent so the
+   common case is unchanged). `resolveElements` made cross-realm/missing-global
+   safe (`isNodeList` vs `instanceof NodeList` — the exec harness installs no
+   `NodeList` global).
+3. **i18n transformer** (`transformSetWithScope` + a dedicated splitter guard,
+   since `set` is excluded from `ON_TARGET_COMMANDS` for the dual-destination
+   collision) — keeps `on <scope>` attached and positions it per word order:
+   appended at clause end for verb-first orders and verb-MEDIAL SOV event-handler
+   sets; verb-LAST repositioning (`on <scope>` before the moved verb) for SOV
+   standalone then-clause sets; before a clause-final verb for qu's
+   `{dest}{patient}{event}{verb}` order.
+4. **Pattern capture** — the hand-crafted set patterns (`withTrailingScope`) and
+   the SOV/VSO two-role event-handler generators (`appendOptionalScope`, gated on
+   the scope role → no-op for put) gained an optional trailing `[on {scope}]`.
+
+**Band inversion ABSORBED (the §10.5 worst case did NOT materialize):** because
+every language was fixed in the same PR, the `--regression` gate vs the OLD
+baseline showed **no new execution failures** — the previously-lossy passers now
+pass against the scoped reference, and the 5-cluster improved (fail → pass). The
+baseline was regenerated to RECORD the gains (execFid 1.0000, empty
+executionFailures across all 24). parse-rate unchanged (0.9949); a small
+avgConfidence dip (≤0.03 on a few langs, from the extra optional scope token) is
+within tolerance.
+
+**Re-qualifies §10.6's excluded `set @attr … on <sel>` family** — the
+runtime/parse gap that excluded it is closed.
+
+**Lock tests:** the `S1 tabs-aria` describe-block in
+`packages/semantic/test/multilingual-roadmap-fixes.test.ts` (8 cases: en
+standalone + `on me`, es SVO, ja verb-medial event-handler + verb-last
+standalone, ko, qu clause-final verb, and a scope-less-set no-op guard) + the
+`execute - attribute on a multi-element scope` block in
+`packages/core/src/commands/data/__tests__/set.test.ts`. Semantic 5977 green;
+core set 84 green; typechecks clean.
+
 ## 11. Next-arc handoffs (post-#416)
 
 The cheap dict/profile-alignment wins are exhausted (R2 execution: 13 cells after
@@ -1779,8 +1834,11 @@ S2+S6+qu, parse ship line held). The next work is decomposed into focused handof
   tabs-aria (S1) remains.
 - ✅ **qu tokenizer arc:** DONE (session 23, §7z; 19→13; qu 6→0).
 - ✅ **R2 structural tails — S3/S4/tails:** DONE (§7aa; 10→5). tr set-attribute, ja
-  put-content-basic, id set-style, tr if-matches, hi halt-propagation. Only S1
-  tabs-aria ×5 remains.
+  put-content-basic, id set-style, tr if-matches, hi halt-propagation.
+- ✅ **S1 — tabs-aria ×5 (en-reference band inversion):** DONE (§7bb; 5→0). The
+  `set @attr to V on <scope>` scope plumb; band inversion absorbed in-PR; all 24
+  langs reproduce the scoped reference; avgExecutionFidelity → 1.0000. **R2
+  execution tail fully cleared (0 cells).**
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·
