@@ -7,7 +7,7 @@
  * Extracted from pattern-generator.ts for maintainability.
  */
 
-import type { LanguagePattern, PatternToken } from '../types';
+import type { LanguagePattern, PatternToken, ExtractionRule } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema, RoleSpec } from './command-schemas';
 import {
@@ -59,6 +59,31 @@ function resolveRoleMarker(
   }
 
   return { marker, alternatives };
+}
+
+/**
+ * Append an optional trailing `[on {scope}]` group to a SOV event-handler
+ * pattern when the schema declares a non-required `scope` role (S1 tabs-aria:
+ * `set @attr to V on <scope>`). The i18n transformer appends `on <scope>` at the
+ * clause end for SOV event-handler sets, so the scope is captured here. No-op for
+ * commands without a scope role (e.g. put), keeping those patterns byte-identical.
+ */
+export function appendOptionalScope(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema
+): void {
+  const scopeRole = commandSchema.roles.find(r => r.role === 'scope' && !r.required);
+  if (!scopeRole) return;
+  tokens.push({
+    type: 'group',
+    optional: true,
+    tokens: [
+      { type: 'literal', value: 'on' },
+      { type: 'role', role: 'scope', optional: true, expectedTypes: ['selector', 'reference'] },
+    ],
+  });
+  extraction.scope = { fromRole: 'scope' };
 }
 
 /**
@@ -615,6 +640,13 @@ export function generateSOVTwoRoleEventHandlerPattern(
   // Build format string
   const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action }, // Extract the wrapped command
+    event: { fromRole: 'event' },
+    ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+  };
+  appendOptionalScope(tokens, extraction, commandSchema);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-2role`,
     language: profile.code,
@@ -624,11 +656,7 @@ export function generateSOVTwoRoleEventHandlerPattern(
       format: `{event} ${eventMarker.primary} ${roleNames} ${keyword.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action }, // Extract the wrapped command
-      event: { fromRole: 'event' },
-      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
-    },
+    extraction,
   };
 }
 
@@ -699,6 +727,13 @@ export function generateSOVTwoRoleEventLastEventHandlerPattern(
 
   const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+  };
+  appendOptionalScope(tokens, extraction, commandSchema);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-2role-event-last`,
     language: profile.code,
@@ -709,11 +744,7 @@ export function generateSOVTwoRoleEventLastEventHandlerPattern(
       format: `${roleNames} ${keyword.primary} {event} ${eventMarker.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
-    },
+    extraction,
   };
 }
 
@@ -799,6 +830,14 @@ export function generateSOVTwoRoleDestFirstEventHandlerPattern(
     tokens.push(markerToken);
   }
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [firstRole.role]: { fromRole: firstRole.role },
+    [secondRole.role]: { fromRole: secondRole.role },
+  };
+  appendOptionalScope(tokens, extraction, commandSchema);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-2role-dest-first`,
     language: profile.code,
@@ -808,11 +847,6 @@ export function generateSOVTwoRoleDestFirstEventHandlerPattern(
       format: `{${firstRole.role}} {event} ${eventMarker.primary} ${keyword.primary} {${secondRole.role}}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      [firstRole.role]: { fromRole: firstRole.role },
-      [secondRole.role]: { fromRole: secondRole.role },
-    },
+    extraction,
   };
 }

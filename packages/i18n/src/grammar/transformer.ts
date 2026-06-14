@@ -1993,10 +1993,32 @@ export class GrammarTransformer {
 
     const scopeT = /^[#.<@[]/.test(scopeRaw) ? scopeRaw : translateWord(scopeRaw, src, dst);
 
-    // Append `on <scope>` at the clause end for every word order. The semantic
-    // set patterns capture a trailing `on <scope>` (the scope role's optional
-    // group / trailing-scope consumer), so position-independent emission keeps
-    // this layer simple and avoids guessing the translated verb's location.
+    // SOV needs the scope positioned per how the semantic set patterns match:
+    //  - Event-handler set (`on <event> set …`): the dest-first SOV event-handler
+    //    pattern is verb-MEDIAL and carries an optional trailing `[on {scope}]`,
+    //    so append the scope at the clause end.
+    //  - Standalone then-clause set: SOV emits verb-MEDIAL (`{dest} {verb}
+    //    {patient}`), but the only command set pattern with scope is verb-LAST
+    //    (`{dest} {patient} on {scope} {verb}`). Move the medial verb to the end
+    //    and place `on {scope}` before it, so the generated command pattern matches.
+    if (this.targetProfile.wordOrder === 'SOV') {
+      const firstTok = input.trim().split(/\s+/)[0]?.toLowerCase();
+      const isEventHandler = !!firstTok && EVENT_KEYWORDS.has(firstTok);
+      if (!isEventHandler) {
+        const verb = translateWord('set', 'en', dst);
+        const toks = headOut.split(/\s+/).filter(Boolean);
+        const vIdx = toks.indexOf(verb);
+        if (vIdx >= 0) {
+          toks.splice(vIdx, 1);
+          toks.push('on', scopeT, verb);
+          return toks.join(' ');
+        }
+      }
+      return `${headOut} on ${scopeT}`;
+    }
+
+    // Verb-first (SVO/VSO/V2): append `on <scope>` at the clause end, which the
+    // trailing `[on {scope}]` group on the set patterns matches.
     return `${headOut} on ${scopeT}`;
   }
 
