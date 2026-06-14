@@ -57,6 +57,11 @@ export const indonesianProfile: LanguageProfile = {
       nya: 'it', // third person clitic (suffix form: -nya)
       dia: 'it', // third person pronoun
     },
+    // `saya punya *background` = "I have *background" = "my *background". The
+    // i18n dict's `my` is the two-word `saya punya`; `punya` ("have/own") is a
+    // connector between the possessor (saya→me) and the property. Skipped by the
+    // possessive matcher so the property is reached (set-style set-text rows).
+    connectors: ['punya'],
   },
   roleMarkers: {
     destination: { primary: 'pada', alternatives: ['ke', 'di'], position: 'before' },

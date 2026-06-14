@@ -75,6 +75,14 @@ export interface PossessiveConfig {
    * Example: { my: 'me', your: 'you', its: 'it' }
    */
   readonly keywords?: Record<string, string>;
+  /**
+   * Connector words that sit BETWEEN a possessor keyword and the property in a
+   * possessor-first construction, e.g. Indonesian `saya punya *background`
+   * ("I have *background" = "my *background"). The pattern matcher skips a
+   * connector after the possessor keyword so the property is reached.
+   * English ("my value") needs none; this is only for multi-word possessives.
+   */
+  readonly connectors?: readonly string[];
 }
 
 /**

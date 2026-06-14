@@ -835,6 +835,23 @@ export class PatternMatcher {
     const mark = tokens.mark();
     tokens.advance();
 
+    // Skip a possessive CONNECTOR for multi-word possessor-first constructions
+    // (Indonesian `saya punya *background` = "I have *background" = "my
+    // *background"). The connector sits between the possessor keyword and the
+    // property; without skipping it, `punya` is read as the property and the
+    // whole set body fails to parse (id set-style/set-text).
+    const connectors = this.currentProfile.possessive?.connectors;
+    if (connectors && connectors.length > 0) {
+      const next = tokens.peek();
+      if (next) {
+        const nv = next.value.toLowerCase();
+        const nn = (next.normalized ?? '').toLowerCase();
+        if (connectors.some(c => c.toLowerCase() === nv || c.toLowerCase() === nn)) {
+          tokens.advance();
+        }
+      }
+    }
+
     const propertyToken = tokens.peek();
     if (!propertyToken) {
       // Just the possessive keyword, no property - revert
