@@ -633,6 +633,91 @@ export function generateSOVTwoRoleEventHandlerPattern(
 }
 
 /**
+ * Generate event-LAST SOV two-role event handler pattern.
+ *
+ * Some SOV emissions place the whole event phrase AFTER the command verb, as a
+ * trailing afterthought:
+ * - Japanese put: "Done!" を 私 に 置く クリック で
+ *   [patient] [pMarker] [destination] [dMarker] [verb] [event] [eventMarker]
+ *
+ * The event-first (`{event} で {p} {d} 置く`) and dest-first
+ * (`{p} {event} で 置く {d}`) variants both expect the event before the verb, so
+ * this order fell to the bare command pattern (`put-ja-generated`) — which runs
+ * immediately at execute() time, before the click is dispatched, so the effect
+ * is invisible to the R2 execution snapshot (S4, ja put-content-basic).
+ */
+export function generateSOVTwoRoleEventLastEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  const requiredRoles = commandSchema.roles.filter(r => r.required);
+  const sortedRoles = [...requiredRoles].sort((a, b) => {
+    const aPos = a.sovPosition ?? 999;
+    const bPos = b.sovPosition ?? 999;
+    return aPos - bPos;
+  });
+
+  // Roles + their markers first (SOV position order)
+  for (const roleSpec of sortedRoles) {
+    tokens.push({ type: 'role', role: roleSpec.role, optional: false });
+    const { marker, alternatives: markerAlternatives } = resolveRoleMarker(roleSpec, profile);
+    if (marker) {
+      tokens.push(
+        markerAlternatives
+          ? { type: 'literal', value: marker, alternatives: markerAlternatives }
+          : { type: 'literal', value: marker }
+      );
+    }
+  }
+
+  // Command verb (SOV: after the roles)
+  tokens.push(
+    keyword.alternatives
+      ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+      : { type: 'literal', value: keyword.primary }
+  );
+
+  // Trailing event phrase: {event} {eventMarker}
+  tokens.push({ type: 'role', role: 'event', optional: false });
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) tokens.push({ type: 'literal', value: word });
+    } else {
+      tokens.push(
+        eventMarker.alternatives
+          ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+          : { type: 'literal', value: eventMarker.primary }
+      );
+    }
+  }
+
+  const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-2role-event-last`,
+    language: profile.code,
+    command: 'on',
+    // Below the event-first / dest-first variants — this is the fallback order.
+    priority: (config.basePriority ?? 100) + 40,
+    template: {
+      format: `${roleNames} ${keyword.primary} {event} ${eventMarker.primary}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+    },
+  };
+}
+
+/**
  * Generate destination-first SOV two-role event handler pattern.
  *
  * For languages where the roles precede the event in SOV order:
