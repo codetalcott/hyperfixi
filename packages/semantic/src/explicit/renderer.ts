@@ -132,6 +132,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         }
       }
 
+      // Positional variants (`put X at end of Y`, `at start of`) are handcrafted
+      // for PARSING that specific surface form; they carry the position as baked-in
+      // literals, not a role, so role scoring can't distinguish them from the
+      // canonical `put X into Y`. Some carry a higher parse priority (e.g.
+      // `put-bn-at-end` at 110) and would otherwise win render selection, emitting
+      // the verbose positional form for every plain put. Penalize them for
+      // rendering only — parsing is priority-ordered in the matcher, not here, so
+      // positional INPUT still matches its pattern via the literals.
+      if (/-at-end|-at-start/i.test(pattern.id)) {
+        score -= 30;
+      }
+
       // For English rendering, prefer "standard" patterns over "native idiom" patterns
       // This ensures "on click" is preferred over "when clicked" for English output
       // Only apply this boost for English - other languages should use their native idioms
@@ -221,6 +233,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             const destValue = node.roles.get('destination');
             if (destValue?.type === 'reference' && destValue.value === 'me') {
               return null; // Skip rendering default "me" destination
+            }
+          }
+        }
+
+        // For optional groups with a `quantity` role, skip when it equals the
+        // schema default (1). The parser injects `quantity: 1` for
+        // increment/decrement even when unspecified, so rendering it produces a
+        // redundant "by 1" — harmless in most languages but a real bug in vi,
+        // where the quantity marker `thêm` is also the `add` keyword, so
+        // `tăng :count thêm 1` re-parses as increment + a phantom `add`. Omitting
+        // the default-1 quantity is recall-neutral (the action set is unchanged)
+        // and renders increment/decrement naturally everywhere.
+        if (token.optional) {
+          const qtyToken = token.tokens.find(
+            (t: any) => t.type === 'role' && t.role === 'quantity'
+          );
+          if (qtyToken) {
+            const qtyValue = node.roles.get('quantity');
+            if (qtyValue?.type === 'literal' && Number(qtyValue.value) === 1) {
+              return null; // Skip rendering default quantity of 1
             }
           }
         }

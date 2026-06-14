@@ -190,15 +190,38 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
   none are in the priority gate, so the committed baseline is untouched.
   **Result: 85.9% → 96.9%** (th 12→0 imperfect, bn 11→2). Regression: semantic
   6004/6004; lock test `event-handler-render-no-phantom.test.ts` extended to 27.
-- **Phase 2 tail (diagnosed, distinct per-language root causes — STRUCTURAL_ARCS):**
-  - **bn `put`** — `into #out` destination marker renders as multiple tokens that
-    re-glue into the patient (`এশেষর#out`); `"hi"` loses quotes → phantom command.
-  - **bn `wait`** — duration `200ms` (before the SOV verb) not captured into the
-    `duration` role → phantom command.
-  - **ar/id/sw `set` + possessive** — `set my textContent to "x"` renders
-    plausibly (`اضبط textContent لي إلى "x"`) but parses to an **empty body** (the
-    possessive-property target isn't matched). _ar is a priority language._
-  - **vi `increment`** — renders idiomatically as `tăng :count thêm 1`
-    ("increase by 1"); the `thêm 1` re-parses as a phantom `add` command.
-- **Next:** decide depth on the Phase-2 tail (4 separate per-language fixes), then
-  Phase 3 (general structural/block layer).
+- **2026-06-14: Phase 2 tail — 2 of 4 fixed (vi, bn put); gate green.** Rung-2
+  round-trip now **97.9% clean** (188/192).
+  - ✅ **vi `increment`** — parser injects default `quantity: 1`; it rendered
+    everywhere, and in vi the quantity marker `thêm` _is_ the `add` keyword, so
+    `tăng :count thêm 1` re-parsed as increment + phantom `add`. Fix: the renderer
+    omits an optional role value equal to its schema default (here `quantity == 1`),
+    mirroring the existing `destination == me` skip
+    (`packages/semantic/src/explicit/renderer.ts`). Recall-neutral; explicit
+    non-default amounts (`by 5`) still render. Also cleans up es/ja increment output.
+  - ✅ **bn `put`** — the handcrafted positional `put-bn-at-end` (prio 110)
+    outranked the canonical put in **render** selection (role scoring can't see the
+    position, which is baked-in literals), emitting the verbose "at end of" form for
+    every plain put. Fix: `findBestPattern` penalizes positional (`-at-end` /
+    `-at-start`) patterns for rendering only — parsing is priority-ordered in the
+    matcher (not `findBestPattern`), so positional _input_ still matches via its
+    literals. Same class as the Phase-1 `-event-` filter.
+- **Phase 2 tail — 2 deferred (each its own careful mini-arc):**
+  - **ar/id/sw `set` + possessive** — _framework gap, ar is PRIORITY._
+    `tryMatchPossessiveExpression` (`packages/semantic/src/parser/pattern-matcher.ts`)
+    is strictly **pre-nominal** (possessor-first: `my value` / `لي قيمة`).
+    Post-nominal (`textContent لي` / `textContent saya` / `textContent yangu`,
+    property-first — `markerPosition: 'after-object'`) isn't matched, so the set
+    body fails entirely. Scoped fix: an **additive post-nominal branch** gated on
+    `possessive.markerPosition === 'after-object'` (peek property identifier/selector,
+    then a possessor keyword → property-path). Gated so it only touches after-object
+    languages (which currently can't parse possessives at all). **Requires the full
+    gate + baseline regen** (ar priority) + cross-language verification (he/id/sw).
+  - **bn `wait`** — _deep shared body-parser, non-priority._ Standalone
+    `200ms অপেক্ষা` parses correctly (`wait{duration:200ms}`); only the
+    multi-clause **then-chain body** path drops/duplicates it (`[200ms, wait, add]`).
+    Same "control-flow body parsing" cluster tracked in
+    CORRECTNESS_RELIABILITY_PLAN; high-risk to touch for one non-priority edge case.
+- **Next:** either pick up the 2 deferred tail arcs (start with ar/id/sw
+  possessive — priority, additive, scoped above) or proceed to Phase 3 (general
+  structural/block layer).

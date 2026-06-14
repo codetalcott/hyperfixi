@@ -132,3 +132,37 @@ describe('event-handler render — no duplicated trigger marker (Phase 2)', () =
     }
   });
 });
+
+describe('render — default quantity (Phase 2 tail: vi increment)', () => {
+  // The parser injects `quantity: 1` for increment/decrement even when
+  // unspecified; rendering it produced a redundant amount. In vi the quantity
+  // marker `thêm` is also the `add` keyword, so `tăng :count thêm 1` re-parsed as
+  // increment + a phantom `add`. The renderer now omits a default-1 quantity.
+  it('omits the default quantity of 1 (no phantom add in vi)', () => {
+    const ref = sorted(leafActions(parse('on click increment :count then log :count', 'en')));
+    for (const lang of ['vi', 'es', 'ja', 'en']) {
+      const translated = translate('on click increment :count then log :count', 'en', lang);
+      expect(sorted(leafActions(parse(translated, lang)))).toEqual(ref);
+    }
+    expect(translate('increment :count', 'en', 'vi')).not.toContain('thêm');
+  });
+
+  it('still renders an explicit non-default quantity', () => {
+    expect(translate('increment :count by 5', 'en', 'vi')).toContain('5');
+    expect(translate('increment :count by 5', 'en', 'vi')).toContain('thêm');
+  });
+});
+
+describe('render — canonical put over positional variant (Phase 2 tail: bn put)', () => {
+  // `put-bn-at-end` (a handcrafted "at end of" pattern, priority 110) outranked
+  // the canonical put and rendered every plain `put X into Y` as the verbose
+  // positional form, which re-parsed into a scrambled patient + phantom. The
+  // renderer now penalizes positional (`-at-end`/`-at-start`) patterns.
+  it('bn renders plain put canonically and round-trips to [put]', () => {
+    const ref = sorted(leafActions(parse('on click put "hi" into #out', 'en')));
+    expect(ref).toEqual(['put']);
+    const translated = translate('on click put "hi" into #out', 'en', 'bn');
+    expect(translated).not.toContain('শেষ'); // no spurious "end" token
+    expect(sorted(leafActions(parse(translated, 'bn')))).toEqual(['put']);
+  });
+});
