@@ -2,20 +2,20 @@
  * Structural / block layer.
  *
  * The single-statement semantic parser cannot parse multi-line BLOCK constructs
- * (`behavior Name(params) … end`): it matches the leading keyword and drops the
- * whole body, returning a degenerate `command` node at confidence 1.0. This module
- * adds the missing layer. It does NOT re-implement statement parsing — it
- * decomposes a block into its sub-blocks (event handlers, init) using the
- * already-translated `behavior`/`on`/`init`/`end` keywords + depth-aware `end`
- * matching, slices each sub-block's ORIGINAL source text by token position (so it
- * works for space-less scripts like ja/zh), and feeds each to the ordinary
- * single-statement engine. The results are re-assembled into a `BehaviorSemanticNode`.
+ * (`behavior Name(params) … end`, `def name(params) … end`): it matches the
+ * leading keyword and drops the whole body, returning a degenerate node. This
+ * module adds the missing layer. It does NOT re-implement statement parsing — it
+ * decomposes a block into its sub-blocks using the already-translated keywords +
+ * depth-aware `end` matching, slices each sub-block's ORIGINAL source text by
+ * token position (so it works for space-less scripts like ja/zh), and feeds each
+ * to the ordinary single-statement engine. The results are re-assembled into a
+ * `BehaviorSemanticNode` / `DefSemanticNode`.
  *
  * See docs-internal/MULTILINGUAL_BEHAVIORS_PLAN.md Phase 3.
  */
 
 import type { LanguageToken, SemanticNode, EventHandlerSemanticNode } from '../types';
-import { createBehaviorNode } from '../types';
+import { createBehaviorNode, createDefNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 
@@ -24,10 +24,22 @@ import { tokenize } from '../tokenizers';
  * excludes the handler-level trigger (`on`) and `init`: those are the sub-blocks
  * we are splitting INTO, and the trigger surface form is unreliable across
  * languages (de renders `wenn`/when, zh the `一…就` idiom, SOV puts the marker
- * mid-clause). Only these reliably-keyworded constructs nest inside a handler
- * body, so counting just them keeps the depth tracking trigger-agnostic.
+ * mid-clause). Only these reliably-keyworded constructs nest inside a body, so
+ * counting just them keeps the depth tracking trigger-agnostic.
  */
 const OPENER_ACTIONS = ['if', 'unless', 'repeat', 'for', 'while'] as const;
+
+/**
+ * Parsers injected to avoid a circular import with semantic-parser.
+ * - `statement` parses one statement (an `on …` clause → an event-handler node).
+ * - `body` parses a multi-command sequence into a flat statement list (def bodies,
+ *   behavior `init` blocks) — the path that splits then-chains / newlines / nested
+ *   blocks, which `statement` alone does not for a bare command sequence.
+ */
+interface BlockParsers {
+  statement: (text: string, lang: string) => SemanticNode;
+  body: (text: string, lang: string) => SemanticNode[];
+}
 
 /**
  * Build the set of surface forms (native primary + alternatives, plus the English
@@ -51,54 +63,18 @@ function tokenMatches(tok: LanguageToken, forms: Set<string>): boolean {
 }
 
 /**
- * Attempt to parse `input` as a `behavior … end` block. Returns null (fast) when
- * the input is not a behavior block, so the caller falls through to ordinary
- * single-statement parsing.
- *
- * @param parseStatement the single-statement parser (injected to avoid a circular
- *   import with semantic-parser; sub-blocks are parsed through it).
+ * Parse the block header (`<keyword> <Name>` + optional `(params)`) from source
+ * position — NOT by scanning for `on`, which fails in SOV where the handler starts
+ * with the event (`click を で …`). Returns the declared parameters and the source
+ * offset where the body begins.
  */
-export function tryParseBehaviorBlock(
+function parseHeader(
   input: string,
-  language: string,
-  parseStatement: (text: string, lang: string) => SemanticNode
-): SemanticNode | null {
-  const profile = tryGetProfile(language);
-  if (!profile) return null;
-
-  // Cheap pre-guard: skip the tokenize on the overwhelming majority of parses
-  // (ordinary statements) — only inputs mentioning the `behavior` keyword can be
-  // a behavior block.
-  const behaviorForms = keywordForms(language, 'behavior');
-  const lowerInput = input.toLowerCase();
-  if (![...behaviorForms].some(f => lowerInput.includes(f))) return null;
-
-  const stream = tokenize(input, language);
-  const tokens = stream.tokens as readonly LanguageToken[];
-  if (tokens.length < 2) return null;
-
-  const initForms = keywordForms(language, 'init');
-  const endForms = keywordForms(language, 'end');
-  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-
-  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
-
-  // 1. Must start with the `behavior` keyword.
-  if (!tokenMatches(tokens[0], behaviorForms)) return null;
-
-  // 2. Behavior name — the next token, required PascalCase to avoid false positives.
-  const nameToken = tokens[1];
-  const name = nameToken.value;
-  if (!/^[A-Z][A-Za-z0-9_]*$/.test(name)) return null;
-
-  // 3. Header: `behavior <Name>` + optional `(params)`. Found by source position
-  //    (not by scanning for `on`, which fails in SOV where the handler starts with
-  //    the event, e.g. `click を で …`). The body begins after the parameter list.
+  nameToken: LanguageToken
+): { parameters: string[]; headerEnd: number } {
   const parameters: string[] = [];
   let headerEnd = nameToken.position.end;
-  const afterName = input.slice(nameToken.position.end);
-  const paren = afterName.match(/^\s*\(([^)]*)\)/);
+  const paren = input.slice(nameToken.position.end).match(/^\s*\(([^)]*)\)/);
   if (paren) {
     headerEnd = nameToken.position.end + paren[0].length;
     for (const raw of paren[1].split(/[,،、]/)) {
@@ -106,14 +82,89 @@ export function tryParseBehaviorBlock(
       if (p) parameters.push(p);
     }
   }
+  return { parameters, headerEnd };
+}
+
+/**
+ * Attempt to parse `input` as a block construct (`behavior`/`def`). Returns null
+ * (fast) for non-block input so the caller falls through to single-statement
+ * parsing. `parseStatement` parses each sub-block.
+ */
+export function tryParseBlock(
+  input: string,
+  language: string,
+  parsers: BlockParsers
+): SemanticNode | null {
+  if (!tryGetProfile(language)) return null;
+
+  // Cheap pre-guard: skip the tokenize on the overwhelming majority of parses.
+  const behaviorForms = keywordForms(language, 'behavior');
+  const defForms = keywordForms(language, 'def');
+  const lower = input.toLowerCase();
+  const mightBehavior = [...behaviorForms].some(f => lower.includes(f));
+  const mightDef =
+    /\bdef\b/.test(lower) || [...defForms].some(f => f !== 'def' && lower.includes(f));
+  if (!mightBehavior && !mightDef) return null;
+
+  const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
+  if (tokens.length < 2) return null;
+
+  if (tokenMatches(tokens[0], behaviorForms)) {
+    return parseBehaviorBlock(input, language, tokens, parsers);
+  }
+  if (tokenMatches(tokens[0], defForms)) {
+    return parseDefBlock(input, language, tokens, parsers);
+  }
+  return null;
+}
+
+/** Mean of a confidence list (0 when empty). */
+function meanConfidence(confidences: number[]): number {
+  return confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
+}
+
+/**
+ * Flatten a single wrapping `compound` (the body parser groups a then-chain /
+ * juxtaposed sequence under one node) into its statements, so a `def` body and an
+ * `init` block are flat command lists rather than `[CommandSequence]`.
+ */
+function flattenStatements(stmts: SemanticNode[]): SemanticNode[] {
+  const out: SemanticNode[] = [];
+  for (const s of stmts) {
+    const inner = (s as { statements?: SemanticNode[] }).statements;
+    if (s.kind === 'compound' && Array.isArray(inner)) out.push(...inner);
+    else out.push(s);
+  }
+  return out;
+}
+
+/** Parse a `behavior Name(params) … end` block into a BehaviorSemanticNode. */
+function parseBehaviorBlock(
+  input: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  parsers: BlockParsers
+): SemanticNode | null {
+  // Behavior name — required PascalCase to avoid false positives.
+  const nameToken = tokens[1];
+  const name = nameToken.value;
+  if (!/^[A-Z][A-Za-z0-9_]*$/.test(name)) return null;
+
+  const { parameters, headerEnd } = parseHeader(input, nameToken);
   let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
   if (bodyStart < 2) bodyStart = 2;
 
-  // 4. Split the body into sub-blocks by depth-aware `end` matching. Segmentation
-  //    is END-delimited, not opener-prefixed: a sub-block runs until the `end` that
-  //    returns depth to 0. This works for SVO (handler starts with `on`), SOV
-  //    (handler starts with the event, `on`-marker mid-clause), and VSO alike. The
-  //    behavior's own closing `end` is the one reached while depth is already 0.
+  const initForms = keywordForms(language, 'init');
+  const endForms = keywordForms(language, 'end');
+  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
+  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+
+  // Split the body into sub-blocks by depth-aware `end` matching. Segmentation is
+  // END-delimited, not opener-prefixed: a sub-block runs until the `end` that
+  // returns depth to 0. Works for SVO (handler starts with `on`), SOV (handler
+  // starts with the event), and VSO alike. The behavior's own closing `end` is the
+  // one reached while depth is already 0 with no content accumulated.
   const eventHandlers: EventHandlerSemanticNode[] = [];
   const initCommands: SemanticNode[] = [];
   const confidences: number[] = [];
@@ -128,22 +179,17 @@ export function tryParseBehaviorBlock(
         depth--; // closes a NESTED block (if/repeat/…) inside the current handler
         continue;
       }
-      // depth === 0: this `end` closes a handler/init sub-block — unless no content
-      // has accumulated since the last sub-block, in which case it is the
-      // behavior's own closing `end`.
       if (j === segStart) {
-        sawClosingEnd = true;
+        sawClosingEnd = true; // behavior's own closing `end`
         break;
       }
-      const isInitBlock = tokenMatches(tokens[segStart], initForms);
-      if (isInitBlock) {
-        // Drop the leading `init` keyword; parse the remaining commands.
+      if (tokenMatches(tokens[segStart], initForms)) {
         const initText = input.slice(tokens[segStart].position.end, tok.position.start).trim();
         if (initText) {
           try {
-            const node = parseStatement(initText, language);
-            initCommands.push(node);
-            confidences.push(node.metadata?.confidence ?? 0.75);
+            const stmts = flattenStatements(parsers.body(initText, language));
+            initCommands.push(...stmts);
+            confidences.push(meanConfidence(stmts.map(s => s.metadata?.confidence ?? 0.75)));
           } catch {
             confidences.push(0);
           }
@@ -151,20 +197,19 @@ export function tryParseBehaviorBlock(
       } else {
         const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
         try {
-          const parsed = parseStatement(handlerText, language);
+          const parsed = parsers.statement(handlerText, language);
           if (parsed && parsed.kind === 'event-handler') {
             const handler = parsed as EventHandlerSemanticNode;
             eventHandlers.push(handler);
             // An empty handler body means the sub-parse silently dropped the
-            // commands. Don't inherit its (often misleadingly high) confidence —
-            // score it low so the block can't report a false success.
+            // commands. Don't inherit its (often misleadingly high) confidence.
             const bodyEmpty = !handler.body || handler.body.length === 0;
             confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
           } else {
             confidences.push(0); // parsed, but not a handler — structural miss
           }
         } catch {
-          confidences.push(0); // sub-block failed to parse
+          confidences.push(0);
         }
       }
       segStart = j + 1;
@@ -173,16 +218,9 @@ export function tryParseBehaviorBlock(
     }
   }
 
-  // Nothing recognizable parsed — not a behavior block we can represent.
   if (eventHandlers.length === 0 && initCommands.length === 0) return null;
 
-  // Confidence reflects how faithfully the sub-blocks parsed — a dropped or failed
-  // handler pulls it down, so a partial parse no longer reports a false 1.0.
-  const avgConfidence =
-    confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
-  // A missing closing `end` means the block was malformed/truncated.
-  const confidence = sawClosingEnd ? avgConfidence : avgConfidence * 0.8;
-
+  const confidence = (sawClosingEnd ? 1 : 0.8) * meanConfidence(confidences);
   return createBehaviorNode(
     name,
     parameters,
@@ -190,4 +228,64 @@ export function tryParseBehaviorBlock(
     initCommands.length > 0 ? initCommands : undefined,
     { sourceLanguage: language, confidence, sourceText: input }
   );
+}
+
+/** Parse a `def name(params) … end` block into a DefSemanticNode. */
+function parseDefBlock(
+  input: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  parsers: BlockParsers
+): SemanticNode | null {
+  // Function name — any identifier (optionally namespaced, e.g. `utils.calc`).
+  const nameToken = tokens[1];
+  const name = nameToken.value;
+  if (!/^[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*$/.test(name)) return null;
+
+  const { parameters, headerEnd } = parseHeader(input, nameToken);
+  let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
+  if (bodyStart < 2) bodyStart = 2;
+
+  const endForms = keywordForms(language, 'end');
+  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
+  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+
+  // The def body is a flat command sequence (no event handlers). Find the def's
+  // own closing `end` via depth-aware matching (nested if/repeat have their own
+  // ends), slice the body text, and parse it as one statement.
+  let depth = 0;
+  let endIdx = -1;
+  for (let j = bodyStart; j < tokens.length; j++) {
+    if (isEnd(tokens[j])) {
+      if (depth === 0) {
+        endIdx = j;
+        break;
+      }
+      depth--;
+    } else if (isOpener(tokens[j])) {
+      depth++;
+    }
+  }
+
+  const bodyStartPos = tokens[bodyStart]?.position.start ?? headerEnd;
+  const bodyEndPos = endIdx >= 0 ? tokens[endIdx].position.start : input.length;
+  const bodyText = input.slice(bodyStartPos, bodyEndPos).trim();
+  if (!bodyText) return null;
+
+  let body: SemanticNode[];
+  try {
+    body = flattenStatements(parsers.body(bodyText, language));
+  } catch {
+    return null;
+  }
+  if (body.length === 0) return null;
+  let confidence = meanConfidence(body.map(s => s.metadata?.confidence ?? 0.75));
+  if (endIdx < 0) confidence *= 0.8; // missing closing `end`
+
+  return createDefNode(name, parameters, body, {
+    sourceLanguage: language,
+    confidence,
+    sourceText: input,
+  });
 }

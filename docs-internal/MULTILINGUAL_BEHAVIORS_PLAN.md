@@ -153,9 +153,26 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
 >     semantic **6041/6041**; lock test `test/behavior-body-content.test.ts`;
 >     gate green (baseline regen: only pl/uk `behavior-removable` shifts, fid −0.000 —
 >     the richer EN reference effect; corpus impact negligible, value is correctness).
-> - **Still un-tokenized / remaining body-content:** other dynamic forms as they
->   surface; `def` functions / multi-handler top-level programs reuse the block
->   layer (not yet wired). Phase 4 = block renderer (round-trip translation).
+> - **2026-06-14: `def` functions ✅ + multi-command body fix.** Generalized the
+>   block layer to a dispatcher (`tryParseBlock`) handling both `behavior` and
+>   `def name(params) … end` (new `DefSemanticNode` + `buildAST` → core `DefNode`).
+>   Key supporting fix: added `parseStatements()` (routes through
+>   `parseBodyWithClauses`) — the top-level `parse()` returns on the FIRST command,
+>   so a bare multi-command sequence (`add .a` ⏎ `remove .b`) was truncating to
+>   `[add]`. `def` bodies AND behavior `init` blocks now use it and keep every
+>   command. `def` keyword recognized via the English form (native-keyword
+>   translation deferred, like event-names — fidelity-neutral); body parses
+>   multilingually. semantic **6049/6049**; lock `test/def-block.test.ts`; gate
+>   green (baseline regen: behavior-draggable/-removable shift ±0.004 — richer-EN
+>   init effect; all behavior-scoped).
+> - **Multi-handler top-level programs — DEFERRED (assessed).** Two forms: the
+>   clean `end`-delimited (`on … end on … end`) is uncommon/low-value; the common
+>   no-`end` feature-chain (`on click … on keyup …`) has an `on`-marker ambiguity
+>   (trigger-`on` vs `toggle .x on me`) that risks single-handler parsing and needs
+>   its own careful design. Tangential to behaviors (which wrap handlers in
+>   `behavior…end`). Not shipped to avoid a low-value/risky version.
+> - **Remaining:** native `def`/event-name keyword translations; multi-handler
+>   programs (feature-chain); Phase 4 = block renderer (round-trip translation).
 
 ### Phase 4 — Block renderer + round-trip
 

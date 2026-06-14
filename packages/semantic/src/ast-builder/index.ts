@@ -19,6 +19,7 @@ import type {
   CompoundSemanticNode,
   LoopSemanticNode,
   BehaviorSemanticNode,
+  DefSemanticNode,
   SemanticRole,
 } from '../types';
 
@@ -157,6 +158,8 @@ export class ASTBuilder {
         return this.buildLoop(node as LoopSemanticNode);
       case 'behavior':
         return this.buildBehavior(node as BehaviorSemanticNode);
+      case 'def':
+        return this.buildDef(node as DefSemanticNode);
       default:
         throw new Error(`Unknown semantic node kind: ${(node as SemanticNode).kind}`);
     }
@@ -183,6 +186,20 @@ export class ASTBuilder {
       };
     }
     return behaviorNode;
+  }
+
+  /**
+   * Build a core-compatible DefNode from a DefSemanticNode. The body sub-nodes were
+   * parsed by the single-statement engine; this re-assembles them into the
+   * `{ type: 'def', name, params, body }` shape the runtime expects.
+   */
+  private buildDef(node: DefSemanticNode): ASTNode {
+    return {
+      type: 'def',
+      name: node.name,
+      params: [...node.parameters],
+      body: node.body.map(c => this.build(c)),
+    };
   }
 
   /**
