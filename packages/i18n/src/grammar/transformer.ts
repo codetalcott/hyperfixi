@@ -2002,17 +2002,29 @@ export class GrammarTransformer {
     //    (`{dest} {patient} on {scope} {verb}`). Move the medial verb to the end
     //    and place `on {scope}` before it, so the generated command pattern matches.
     if (this.targetProfile.wordOrder === 'SOV') {
+      const verb = translateWord('set', 'en', dst);
       const firstTok = input.trim().split(/\s+/)[0]?.toLowerCase();
       const isEventHandler = !!firstTok && EVENT_KEYWORDS.has(firstTok);
+      const toks = headOut.split(/\s+/).filter(Boolean);
       if (!isEventHandler) {
-        const verb = translateWord('set', 'en', dst);
-        const toks = headOut.split(/\s+/).filter(Boolean);
+        // Standalone then-clause set: SOV emits verb-MEDIAL; move the verb to the
+        // end and place `on {scope}` before it so the verb-last command set
+        // pattern (scope before verb) matches.
         const vIdx = toks.indexOf(verb);
         if (vIdx >= 0) {
           toks.splice(vIdx, 1);
           toks.push('on', scopeT, verb);
           return toks.join(' ');
         }
+      } else if (toks.length > 0 && toks[toks.length - 1] === verb) {
+        // Event-handler set whose verb is clause-final (e.g. qu
+        // `{dest} ta {patient} man {event} pi {verb}`): the parser extracts the
+        // event and matches the body as a verb-last command, so the scope must
+        // sit before the verb. Verb-MEDIAL SOV event handlers (ja/ko/tr/bn/hi)
+        // fall through to the append branch, where their fused event-handler set
+        // pattern carries the trailing `[on {scope}]` group.
+        toks.splice(toks.length - 1, 0, 'on', scopeT);
+        return toks.join(' ');
       }
       return `${headOut} on ${scopeT}`;
     }
