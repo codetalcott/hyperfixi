@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 31 curated patterns', () => {
+  it('contains exactly the 32 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -82,6 +82,12 @@ describe('R2 execution subset (lock)', () => {
         // + contextReference body. The last R2 candidate excluded for an
         // unusable en reference is now in.
         'make-toast-element',
+        // Expansion wave 4 (the deferred S1 follow-up): the first non-click,
+        // event-reading cell. buildEventHandler binds the custom `success`
+        // event (carried as an expression role) instead of defaulting to click;
+        // PATTERN_TRIGGER dispatches a CustomEvent whose detail.message the
+        // handler reads. set @role on the #sr-announce scope landed in S1.
+        'announce-screen-reader',
       ].sort()
     );
   });
@@ -152,6 +158,37 @@ describe('R2 execution validator (lock)', () => {
     );
     expect(backdrop.error).toBeUndefined();
     expect(backdrop.effects.length).toBeGreaterThan(0);
+  });
+
+  it('the announce-screen-reader cell executes via its custom-event trigger', async () => {
+    // First non-click cell: `on success put event.detail.message into
+    // #sr-announce set @role to "alert" on #sr-announce`. PATTERN_TRIGGER
+    // dispatches a `success` CustomEvent carrying detail.message; the handler
+    // writes that text into #sr-announce and sets role=alert on it. Locks both
+    // the per-cell trigger wiring and the two-line effect signature.
+    const res = await validator.execute(
+      'announce-screen-reader',
+      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
+      'en'
+    );
+    expect(res.error).toBeUndefined();
+    expect(res.effects).toEqual([
+      'Δ#sr-announce cls[] attr[id=sr-announce,role=alert] style[] text[Saved successfully]',
+    ]);
+  });
+
+  it('a click trigger does not fire the success-only handler (trigger isolation)', async () => {
+    // The default click dispatch must NOT execute a handler bound to a custom
+    // event — proves PATTERN_TRIGGER actually routes the event name, rather than
+    // the handler firing on any event.
+    const clickOnly = await validator.execute(
+      'toggle-class-basic', // a click cell, but force the wrong source text:
+      'on success add .x to me',
+      'en'
+    );
+    // No PATTERN_TRIGGER for toggle-class-basic → click dispatched → success
+    // handler never runs → empty signature.
+    expect(clickOnly.effects).toEqual([]);
   });
 
   it('a parse failure comes back as an error, never a throw', async () => {
