@@ -1830,6 +1830,17 @@ body parse, not the scope). Adding it would need that en body-parse fix +
 per-cell trigger/`detail` support in the execution harness (a separate arc, not
 the set-scope concern). The §7g exclusion bullet is annotated RESOLVED.
 
+> **LANDED (§7cc) — and the diagnosis above was imprecise.** The deferred
+> follow-up shipped. On re-probe the body did **not** degenerate: `parseSemantic`
+> already splits it into `compound[put, set]` with all roles intact (the scope on
+> the `set`, the `event.detail.message` property path on the `put`). The real
+> en-side gap was one layer down — `buildAST` mapped the `on success` event role
+> (tokenized as an `expression`, not a recognized event keyword) to the **`click`
+> default**, so the handler bound to the wrong event and the harness's hardcoded
+> click (carrying no `detail`) produced nothing. Fixed in §7cc. The "yields no
+> effect" symptom was the event-name + missing-`detail` combination, not a body
+> split.
+
 **Lock tests:** the `S1 tabs-aria` describe-block in
 `packages/semantic/test/multilingual-roadmap-fixes.test.ts` (8 cases: en
 standalone + `on me`, es SVO, ja verb-medial event-handler + verb-last
@@ -1837,6 +1848,54 @@ standalone, ko, qu clause-final verb, and a scope-less-set no-op guard) + the
 `execute - attribute on a multi-element scope` block in
 `packages/core/src/commands/data/__tests__/set.test.ts`. Semantic 5977 green;
 core set 84 green; typechecks clean.
+
+## 7cc. Status update (announce-screen-reader — the deferred S1 follow-up: lands)
+
+**The R2 execution subset gains its first non-click, event-reading cell;
+`announce-screen-reader` PASSES 24/24.** Subset 31 → 32; avgExecutionFidelity
+stays 1.0000 across all 24 languages (empty `executionFailures` everywhere). This
+is the follow-up explicitly deferred in §7bb / #425.
+
+**Two real gaps (NOT the body split §7bb suspected):**
+
+1. **en — custom event name defaulted to `click` (`buildAST`).** `on success` is
+   not a recognized event keyword, so the tokenizer carries the event role as an
+   `expression` (`{type:'expression', raw:'success'}`), the same shape namespaced
+   events like `on htmx:afterRequest` take. `buildEventHandler`
+   (`packages/semantic/src/ast-builder/index.ts`) only handled `literal` and
+   `reference` event roles and fell through to `event = 'click'` for everything
+   else — so every custom/namespaced-event handler silently bound to `click`. Fix:
+   consolidate the event-name extraction to also read `expression.raw`, feeding the
+   same name parsing (incl. the `a or b` multi-event split). `on success` now binds
+   `success`; the latent `htmx:*` mis-binding is fixed in the same stroke. The
+   semantic PARSE was already correct (`compound[put, set]`, scope + property path
+   intact) — this is a buildAST-only change, so R0/R1 parse fidelity is untouched.
+2. **harness — no per-cell trigger / `detail` (`execution-validator.ts`).** The
+   validator hardcoded a bare `Event('click')`. Added a `PATTERN_TRIGGER` map
+   (`{event, detail?}`, default click/no-detail): with a `detail`, a `CustomEvent`
+   is dispatched so `event.detail.message` resolves. The payload is harness-supplied
+   and identical for en and every translation, so effect signatures stay comparable.
+   `#sr-announce` added to `FIXTURE_HTML` (appended last — existing positional
+   snapshot indexes unchanged). announce's trigger: `success` + `{message:'Saved
+successfully'}`.
+
+**Why 24/24 with no residuals:** the `set @attr … on <scope>` plumb (S1, §7bb) was
+the hard part and already landed; the event name (`success`) and the
+`event.detail.message` path are code, preserved verbatim across translations. So
+every language reproduces the en effect exactly: `Δ#sr-announce … role=alert …
+text[Saved successfully]`. Probed through the validator across all 24 before
+regenerating — all MATCH.
+
+**Lock tests:** `binds a custom/namespaced event name carried as an expression
+role` in `packages/semantic/test/ast-builder.test.ts` (success + htmx:afterRequest)
+
+- two cases in `execution-validator.test.ts` (the cell executes via its custom-event
+  trigger with the exact two-field signature; a click trigger does NOT fire a
+  success-only handler — trigger-routing isolation) + the membership lock bumped
+  31 → 32. Baseline regenerated against a freshly `populate`d DB (the only
+  non-metadata baseline delta is the priority bundle +33 bytes from the added
+  branch; bands/parseRate/execFid unchanged). Semantic 5977 green; testing-framework
+  validator+reporter 21 green; typechecks clean.
 
 ## 11. Next-arc handoffs (post-#416)
 
@@ -1856,6 +1915,11 @@ S2+S6+qu, parse ship line held). The next work is decomposed into focused handof
   `set @attr to V on <scope>` scope plumb; band inversion absorbed in-PR; all 24
   langs reproduce the scoped reference; avgExecutionFidelity → 1.0000. **R2
   execution tail fully cleared (0 cells).**
+- ✅ **announce-screen-reader — the deferred S1 follow-up:** DONE (§7cc). Subset
+  31 → 32 (first non-click, event-reading cell); 24/24 pass, execFid stays 1.0000.
+  Fixes were a buildAST custom-event-name default (`success`/`htmx:*` → `click`)
+  and a per-cell trigger/`detail` harness gap — NOT the body split §7bb suspected
+  (the parse was already `compound[put, set]`).
 - **Per-language structural arcs (the R2 tail):**
   [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md). Every remaining R2 cell
   mapped to an arc, with a triage rubric (yield · leverage · confidence · risk ·

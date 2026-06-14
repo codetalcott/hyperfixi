@@ -324,6 +324,29 @@ describe('ASTBuilder', () => {
       expect((result as any).event).toBe('click');
       expect((result as any).commands).toHaveLength(1);
     });
+
+    it('binds a custom/namespaced event name carried as an expression role', () => {
+      // `on success` / `on htmx:afterRequest` are not recognized event
+      // keywords, so the tokenizer emits the event role as an expression whose
+      // `raw` IS the event name. Without the expression branch in
+      // buildEventHandler these silently bound to the `click` default.
+      for (const name of ['success', 'htmx:afterRequest']) {
+        const node: EventHandlerSemanticNode = {
+          kind: 'event-handler',
+          roles: new Map([['event', { type: 'expression', raw: name }]]),
+          body: [
+            {
+              kind: 'command',
+              action: 'toggle',
+              roles: new Map([
+                ['patient', { type: 'selector', value: '.active', selectorKind: 'class' }],
+              ]),
+            },
+          ],
+        };
+        expect((builder.build(node) as any).event).toBe(name);
+      }
+    });
   });
 
   describe('build conditional', () => {

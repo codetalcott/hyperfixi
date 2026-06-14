@@ -263,24 +263,33 @@ export class ASTBuilder {
    * Build an EventHandlerNode from an EventHandlerSemanticNode.
    */
   private buildEventHandler(node: EventHandlerSemanticNode): EventHandlerNode {
-    // Extract event name(s)
+    // Extract event name(s).
     const eventValue = node.roles.get('event');
-    let event: string;
+    let event = 'click'; // Default when the event role is absent or opaque.
     let events: string[] | undefined;
 
-    if (eventValue?.type === 'literal') {
-      const eventStr = String(eventValue.value);
-      // Handle "click or keydown" syntax
+    // A recognized event keyword (`on click`) tokenizes as a literal; a custom
+    // or namespaced event name (`on success`, `on htmx:afterRequest`) is not a
+    // keyword, so it tokenizes as an expression whose `raw` IS the event name.
+    // Both feed the same name parsing (including the `click or keydown`
+    // multi-event split). Without the expression branch, every custom-event
+    // handler silently bound to `click` instead.
+    const eventStr =
+      eventValue?.type === 'literal'
+        ? String(eventValue.value)
+        : eventValue?.type === 'expression'
+          ? eventValue.raw
+          : eventValue?.type === 'reference'
+            ? eventValue.value
+            : undefined;
+
+    if (eventStr !== undefined) {
       if (eventStr.includes('|') || eventStr.includes(' or ')) {
         events = eventStr.split(/\s+or\s+|\|/).map(e => e.trim());
         event = events[0];
       } else {
         event = eventStr;
       }
-    } else if (eventValue?.type === 'reference') {
-      event = eventValue.value;
-    } else {
-      event = 'click'; // Default event
     }
 
     // Build body commands recursively

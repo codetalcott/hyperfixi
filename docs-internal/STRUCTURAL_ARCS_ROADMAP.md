@@ -1,5 +1,17 @@
 # Per-language structural arcs roadmap (R2 execution tail)
 
+> **Progress (announce-screen-reader — the deferred S1 follow-up — LANDED):**
+> the R2 subset gains its first non-click, event-reading cell and it passes
+> 24/24 on arrival (subset 31 → 32, avgExecutionFidelity stays 1.0000). This was
+> an EXPANSION, not a tail-clearing — the tail was already 0 (§7bb). Two fixes,
+> neither the body split §7bb suspected: (1) `buildAST` bound the custom `on
+success` event (carried as an `expression` role, like `htmx:*`) to the `click`
+> default — now reads `expression.raw`; (2) the execution validator gained a
+> per-cell `PATTERN_TRIGGER` ({event, detail?}) so a `success` `CustomEvent` with
+> `event.detail.message` can fire the handler. The `set @attr … on <scope>` plumb
+> (S1) did the heavy lifting; the event name + property path are code, preserved
+> verbatim across all 24 languages. See CORRECTNESS_RELIABILITY_PLAN.md §7cc.
+
 > **Progress (S1 tabs-aria ×5 — 5 → 0 — ARC COMPLETE):** the deferred
 > en-reference band-inversion arc is done. `set @attr to V on <scope>` now
 > captures the `on`-scope across the whole stack: a new `scope` SemanticRole +

@@ -116,6 +116,15 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // keys, and contextReference body/document/window resolve. The en
   // reference appends the toast at end of body: one clean effect line.
   'make-toast-element',
+  // Expansion wave 4 (the deferred S1 follow-up): the first non-click,
+  // event-reading cell. `on success put event.detail.message into #sr-announce
+  // set @role to "alert" on #sr-announce` exercises (1) a custom event name
+  // carried as an expression role — buildEventHandler now binds it instead of
+  // defaulting to `click`; (2) the `set @attr … on <scope>` plumb landed in S1;
+  // (3) per-cell trigger support (PATTERN_TRIGGER) dispatching a CustomEvent
+  // with a `detail` payload. The en reference writes the announcement text into
+  // #sr-announce and sets role=alert on it: two clean effect lines.
+  'announce-screen-reader',
 ];
 
 /**
@@ -139,6 +148,7 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div class="accordion-item open"></div>
   <div id="container"></div>
   <div class="dropdown-menu"></div>
+  <div id="sr-announce"></div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */
@@ -163,6 +173,27 @@ const PATTERN_SETUP: Record<string, (doc: Document) => void> = {
     doc.querySelector('.card')!.classList.add('modal');
     doc.body.classList.add('modal-open');
   },
+};
+
+/**
+ * Per-pattern trigger override. The subset is overwhelmingly `on click`, so the
+ * default (dispatched in `executeInner`) is a bare `Event('click')`. A handler
+ * that listens for a different event — or that READS the triggering event (e.g.
+ * `on success put event.detail.message …`) — declares the event name and, when
+ * needed, a `detail` payload here. With a `detail`, a `CustomEvent` is
+ * dispatched so `event.detail.*` resolves; the payload is identical for the en
+ * reference and every translation (it is harness-supplied, not translated), so
+ * effect signatures stay comparable across languages.
+ */
+interface PatternTrigger {
+  readonly event: string;
+  readonly detail?: unknown;
+}
+const PATTERN_TRIGGER: Record<string, PatternTrigger> = {
+  // `on success put event.detail.message into #sr-announce set @role to "alert"
+  // on #sr-announce` — a custom event carrying the announcement text. The fixed
+  // message lands in #sr-announce's text; role=alert is set on the same node.
+  'announce-screen-reader': { event: 'success', detail: { message: 'Saved successfully' } },
 };
 
 /** Result of executing one pattern translation. */
@@ -348,7 +379,12 @@ export class ExecutionValidator {
       await runtime.execute(built.ast, ctx);
 
       const before = snapshot(document);
-      btn.dispatchEvent(new dom.window.Event('click', { bubbles: true }));
+      const trigger = PATTERN_TRIGGER[codeExampleId];
+      const triggerEvent =
+        trigger?.detail !== undefined
+          ? new dom.window.CustomEvent(trigger.event, { bubbles: true, detail: trigger.detail })
+          : new dom.window.Event(trigger?.event ?? 'click', { bubbles: true });
+      btn.dispatchEvent(triggerEvent);
       await new Promise(r => setTimeout(r, SETTLE_MS));
       const after = snapshot(document);
 
