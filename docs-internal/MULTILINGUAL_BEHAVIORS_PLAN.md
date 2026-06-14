@@ -206,22 +206,29 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
     `-at-start`) patterns for rendering only — parsing is priority-ordered in the
     matcher (not `findBestPattern`), so positional _input_ still matches via its
     literals. Same class as the Phase-1 `-event-` filter.
-- **Phase 2 tail — 2 deferred (each its own careful mini-arc):**
-  - **ar/id/sw `set` + possessive** — _framework gap, ar is PRIORITY._
-    `tryMatchPossessiveExpression` (`packages/semantic/src/parser/pattern-matcher.ts`)
-    is strictly **pre-nominal** (possessor-first: `my value` / `لي قيمة`).
-    Post-nominal (`textContent لي` / `textContent saya` / `textContent yangu`,
-    property-first — `markerPosition: 'after-object'`) isn't matched, so the set
-    body fails entirely. Scoped fix: an **additive post-nominal branch** gated on
-    `possessive.markerPosition === 'after-object'` (peek property identifier/selector,
-    then a possessor keyword → property-path). Gated so it only touches after-object
-    languages (which currently can't parse possessives at all). **Requires the full
-    gate + baseline regen** (ar priority) + cross-language verification (he/id/sw).
-  - **bn `wait`** — _deep shared body-parser, non-priority._ Standalone
-    `200ms অপেক্ষা` parses correctly (`wait{duration:200ms}`); only the
-    multi-clause **then-chain body** path drops/duplicates it (`[200ms, wait, add]`).
-    Same "control-flow body parsing" cluster tracked in
-    CORRECTNESS_RELIABILITY_PLAN; high-risk to touch for one non-priority edge case.
-- **Next:** either pick up the 2 deferred tail arcs (start with ar/id/sw
-  possessive — priority, additive, scoped above) or proceed to Phase 3 (general
-  structural/block layer).
+- **2026-06-14: ar/id/sw possessive arc ✅ DONE — fixed 7 languages.** Added a
+  **post-nominal** possessive branch (`tryMatchPostNominalPossessiveExpression` in
+  `packages/semantic/src/parser/pattern-matcher.ts`), gated on
+  `possessive.markerPosition === 'after-object'` and to property-path roles (set's
+  destination). It matches `<property> <possessor>` order (the mirror of the
+  existing pre-nominal `<possessor> <property>`).
+  - **ar/id/sw/tr**: parse-FAIL → `destination = me.textContent`.
+  - **ru/pl/uk** (bonus): were silently **lossy** (possessor dropped, destination
+    a bare `textContent` — recall-passing, role-fidelity-divergent) → possessor
+    recovered, now matches the en reference.
+  - pre-nominal langs (en/es/ms/he) unaffected; non-possessive targets
+    (`set #x to "v"`) unaffected. **qu** still fails — separate possessor-first
+    root cause (`noqa-pa textContent` not recognized), non-priority, left as tail.
+  - **Verified:** rung-2 round-trip **97.9% → 99.5%** (only bn `wait` remains);
+    semantic 6020/6020; full `--regression` gate **green**; new lock test
+    `test/post-nominal-possessive.test.ts` 12/12. The gate corpus contains no
+    `set`-possessive pattern, so corpus fidelity numbers are unchanged (the only
+    `--save-baseline` delta was bundleSize + array formatting — **not committed**,
+    gate passes against the existing baseline within tolerance).
+- **Phase 2 tail — 1 deferred (non-priority):**
+  - **bn `wait`** — _deep shared body-parser._ Standalone `200ms অপেক্ষা` parses
+    correctly (`wait{duration:200ms}`); only the multi-clause **then-chain body**
+    path drops/duplicates it (`[200ms, wait, add]`). Same "control-flow body
+    parsing" cluster tracked in CORRECTNESS_RELIABILITY_PLAN; high-risk to touch
+    for one non-priority edge case. (qu possessor-first possessive also remains.)
+- **Next:** Phase 3 — general structural/block layer (behaviors / `def` / programs).
