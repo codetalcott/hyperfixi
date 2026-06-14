@@ -532,6 +532,27 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
           currentPart.push(token);
           continue;
         }
+        // `set @attr to V on <scope>` (S1 tabs-aria): the trailing `on <scope>`
+        // is the element(s) the attribute is set on, not a new command. `set` is
+        // deliberately NOT in ON_TARGET_COMMANDS (its role parser would clobber
+        // the value), so this is a dedicated guard — kept attached only when a
+        // selector/reference scope follows, then positioned by transformSingle's
+        // set-scope handler (transformSetWithScope). A `set` whose `on` is
+        // followed by a verb is left to split as before.
+        if (lowerToken === 'on' && verb === 'set') {
+          const nextTok = tokens[i + 1];
+          const nextLower = nextTok?.toLowerCase();
+          const scopeLike =
+            !!nextTok &&
+            (/^[#.<@[]/.test(nextTok) ||
+              nextLower === 'me' ||
+              nextLower === 'it' ||
+              nextLower === 'you');
+          if (scopeLike) {
+            currentPart.push(token);
+            continue;
+          }
+        }
       }
 
       if (!boundaryModifiers.has(prevLower) && !commandKeywords.has(prevLower)) {
@@ -1683,6 +1704,14 @@ export class GrammarTransformer {
       return this.transformBlock(block);
     }
 
+    // 0b. `set @attr to V on <scope>` (S1 tabs-aria): strip the trailing
+    //     `on <scope>`, transform the scope-less set normally, then re-insert
+    //     `on <scope>` where the semantic set patterns expect it.
+    const setScope = this.transformSetWithScope(input);
+    if (setScope !== null) {
+      return setScope;
+    }
+
     // 1. Parse into semantic roles
     const parsed = parseStatement(input, this.sourceProfile.code);
     if (!parsed) {
@@ -1930,6 +1959,45 @@ export class GrammarTransformer {
     // input no longer leads with a modifier, so this never re-enters here.
     const bodyOut = this.transform(rebuilt);
     return [modifierPhrase, bodyOut].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform a `set <stuff> on <scope>` clause (S1 tabs-aria). The trailing
+   * `on <scope>` is the element(s) the attribute is set on — kept attached by
+   * splitOnCommandBoundaries. The semantic parser captures it as a `scope` role
+   * via the passthrough literal `on` (setSchema's scope markerOverride is `on`
+   * in every language), so `on` is emitted verbatim and only the scope *value*
+   * is translated (selectors pass through; `me`/`it`/`you` translate to the
+   * native reference, which the parser also accepts).
+   *
+   * Positioning matches where the set patterns expect the scope: at the clause
+   * end for verb-first orders (SVO/VSO), and immediately before the clause-final
+   * verb for SOV (the generated SOV pattern is `{dest} {patient} on {scope}
+   * {verb}`). Returns null (fall through) when there is no trailing `on <scope>`.
+   *
+   * Source is English in the sync-translations pipeline, so the `set` verb and
+   * `on` marker are matched as English literals.
+   */
+  private transformSetWithScope(input: string): string | null {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    const m = input.match(/^(.*\bset\b.*\S)\s+on\s+([#.<@[]\S*|me|it|you)\s*$/i);
+    if (!m) return null;
+    const head = m[1];
+    const scopeRaw = m[2];
+
+    // Transform the scope-less clause via the normal path; `head` no longer ends
+    // in `on <scope>`, so this never re-enters transformSetWithScope.
+    const headOut = this.transformSingle(head);
+
+    const scopeT = /^[#.<@[]/.test(scopeRaw) ? scopeRaw : translateWord(scopeRaw, src, dst);
+
+    // Append `on <scope>` at the clause end for every word order. The semantic
+    // set patterns capture a trailing `on <scope>` (the scope role's optional
+    // group / trailing-scope consumer), so position-independent emission keeps
+    // this layer simple and avoids guessing the translated verb's location.
+    return `${headOut} on ${scopeT}`;
   }
 
   /**
