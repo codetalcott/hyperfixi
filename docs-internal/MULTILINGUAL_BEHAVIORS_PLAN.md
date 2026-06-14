@@ -116,6 +116,35 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
 - Behaviors are the **first consumer**; `def` functions and multi-handler scripts
   come essentially free.
 
+> **2026-06-14: Phase 3 first slice ✅ — `behavior … end` blocks now parse.**
+> New `parser/block-parser.ts` (`tryParseBehaviorBlock`) + `BehaviorSemanticNode`
+> kind + `createBehaviorNode` + `buildAST` `buildBehavior` → core `BehaviorNode`.
+> Hooked as **Stage 0** of `parse()` (cheap substring pre-guard; returns null fast
+> for non-block input). Decomposition is **end-delimited** (depth counts only
+> NESTED openers `if`/`unless`/`repeat`/`for`/`while`, NOT the handler trigger),
+> which is **trigger-agnostic** — works where the trigger is `on` (SVO/VSO),
+> `wenn`/when (de), the `一…就` idiom (zh), or a mid-clause SOV marker (ja/ko `で`/
+> `할 때`). Each sub-block's ORIGINAL source is sliced by token position (robust for
+> space-less scripts) and parsed by the single-statement engine.
+>
+> - **Verified** across en/es/ja/ko/ar/de/zh/tr: name + params + handler bodies
+>   preserved (`[add,remove]`), multi-handler, and nested `if` inside a handler
+>   depth-contained. buildAST → `{type:'behavior', name, parameters, eventHandlers}`.
+> - **Honesty:** a handler whose body the engine silently drops (e.g. `.{cls}`)
+>   scores the block < 0.5, not a false 1.0.
+> - semantic **6032/6032**; lock test `test/behavior-block.test.ts` 12/12; typecheck
+>   clean. **Baseline regenerated** — behaviors were trivially-faithful 1.0 before
+>   (EN + every lang dropped the body identically); now really parsed, so the gate
+>   shows true per-language fidelity. Net **improvement on priority langs**
+>   (es/ja/ko/de/fr +0.012–0.014, zh/ar/he +0.008–0.010); a few non-priority langs
+>   (tl −0.016, th −0.010, hi −0.009) drop as their incomplete behavior bodies
+>   become honestly measured. All baseline deltas are behavior-only.
+> - **Known body-content gaps (orthogonal, affect single statements too):**
+>   newline-separated handler bodies capture only the first command (engine splits
+>   on `then`, not newlines); `.{cls}` dynamic class selectors aren't tokenized.
+>   These cap per-language behavior fidelity and are the next sub-step. `def`
+>   functions / multi-handler top-level programs reuse the same layer (not yet wired).
+
 ### Phase 4 — Block renderer + round-trip
 
 - Faithful translation of whole behaviors/functions between languages (understand

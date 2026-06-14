@@ -20,8 +20,16 @@ export const FIDELITY_THRESHOLD = 0.5;
 /** The structural `compound` wrapper is not a command; never counts as an action. */
 const STRUCTURAL_ACTIONS = new Set(['compound']);
 
-/** Node-array fields the walk recurses into (event/loop/conditional bodies). */
-const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'] as const;
+/** Node-array fields the walk recurses into (event/loop/conditional/behavior bodies). */
+const CHILD_FIELDS = [
+  'body',
+  'statements',
+  'thenBranch',
+  'elseBranch',
+  'branches',
+  'eventHandlers',
+  'initBlock',
+] as const;
 
 /**
  * Collect the distinct command actions anywhere in a parsed semantic node tree

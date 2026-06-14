@@ -80,7 +80,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Delegates to @lokascript/framework/ir for the core logic.
    */
   renderExplicit(node: SemanticNode): string {
-    return renderExplicitBase(node);
+    // The framework IR renderer predates the `behavior` block kind and types its
+    // input to the single-statement node union. A behavior block is not rendered
+    // through the explicit IR path, so bridge the (structurally compatible) type
+    // at this boundary rather than widen the framework package's union.
+    return renderExplicitBase(node as Parameters<typeof renderExplicitBase>[0]);
   }
 
   /**

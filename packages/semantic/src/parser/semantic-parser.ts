@@ -37,6 +37,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
+import { tryParseBehaviorBlock } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { render as renderExplicitFn } from '../explicit/renderer';
@@ -149,6 +150,15 @@ export class SemanticParserImpl implements ISemanticParser {
    * Accumulates diagnostics from each fallback stage (Phase 3.4).
    */
   parse(input: string, language: string): SemanticNode {
+    // Stage 0: structural / block layer. A `behavior … end` block is decomposed
+    // into its handlers (each parsed by the single-statement path below) and
+    // re-assembled — otherwise the leading keyword matches and the whole body is
+    // dropped at a false confidence 1.0. Returns null (fast) for non-block input.
+    const blockNode = tryParseBehaviorBlock(input, language, (text, lang) =>
+      this.parse(text, lang)
+    );
+    if (blockNode) return blockNode;
+
     // Extract standalone event modifiers (once, debounced, throttled) from input
     const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
     const modInput = remainingInput || input;
