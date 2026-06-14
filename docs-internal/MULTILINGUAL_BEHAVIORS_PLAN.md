@@ -177,4 +177,28 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
   scoped separately rather than rushed into Phase 1.
 - **Deferred (Phase 2):** SOV trigger-marker cosmetics (ja renders `click を で`,
   slightly non-idiomatic but round-trips correctly).
-- **Next: Phase 2** — harden rung-2 SOV/VSO handler-body _parsing_.
+- **2026-06-14: Phase 2 in progress — doubled trigger-marker phantom fixed.**
+  A precision-signal round-trip probe (12 handler shapes × 16 non-SVO-Latin langs)
+  measured **85.9% clean** and surfaced a systemic defect the recall gate was
+  blind to: bn/hi/th use the **same word** for the `on` trigger keyword and the
+  event-role marker (bn `তে`, hi `पर`, th `เมื่อ`), so the generator emitted it
+  twice (`<event> তে তে`); the duplicate re-parsed as a phantom command (`তে আমি`
+  → `on me`; `เมื่อ click` → stray `click`). Root fix: `buildTokens`
+  (`packages/semantic/src/generators/pattern-generator.ts`) collapses adjacent
+  identical literals. Scan confirmed this touches **only the `on` patterns of
+  bn/hi/th** — no other command/language has adjacent duplicate literals, and
+  none are in the priority gate, so the committed baseline is untouched.
+  **Result: 85.9% → 96.9%** (th 12→0 imperfect, bn 11→2). Regression: semantic
+  6004/6004; lock test `event-handler-render-no-phantom.test.ts` extended to 27.
+- **Phase 2 tail (diagnosed, distinct per-language root causes — STRUCTURAL_ARCS):**
+  - **bn `put`** — `into #out` destination marker renders as multiple tokens that
+    re-glue into the patient (`এশেষর#out`); `"hi"` loses quotes → phantom command.
+  - **bn `wait`** — duration `200ms` (before the SOV verb) not captured into the
+    `duration` role → phantom command.
+  - **ar/id/sw `set` + possessive** — `set my textContent to "x"` renders
+    plausibly (`اضبط textContent لي إلى "x"`) but parses to an **empty body** (the
+    possessive-property target isn't matched). _ar is a priority language._
+  - **vi `increment`** — renders idiomatically as `tăng :count thêm 1`
+    ("increase by 1"); the `thêm 1` re-parses as a phantom `add` command.
+- **Next:** decide depth on the Phase-2 tail (4 separate per-language fixes), then
+  Phase 3 (general structural/block layer).

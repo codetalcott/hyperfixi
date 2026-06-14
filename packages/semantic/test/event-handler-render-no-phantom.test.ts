@@ -101,3 +101,34 @@ describe('event-handler render — no phantom command', () => {
     }
   });
 });
+
+describe('event-handler render — no duplicated trigger marker (Phase 2)', () => {
+  // bn (তে), hi (पर), th (เมื่อ) use the same word for the trigger keyword and the
+  // event role marker, so the generator emitted it twice (`<event> তে তে`). The
+  // duplicate paired with the following token as a phantom command (`তে আমি` →
+  // `on me`; `เมื่อ click` → a stray `click` command). `buildTokens` now collapses
+  // adjacent identical literals.
+  const DOUBLED = ['bn', 'hi', 'th'] as const;
+  const cases = [
+    'on click add .active to me',
+    'on click toggle .open on #panel',
+    'on click add .a to me then remove .b from me',
+  ];
+
+  for (const code of cases) {
+    const reference = sorted(leafActions(parse(code, 'en')));
+    for (const lang of DOUBLED) {
+      it(`${lang}: "${code}" — no phantom trigger command`, () => {
+        const translated = translate(code, 'en', lang);
+        expect(sorted(leafActions(parse(translated, lang)))).toEqual(reference);
+      });
+    }
+  }
+
+  it('does not render the trigger marker twice in a row', () => {
+    const doubled: Record<string, string> = { bn: 'তে তে', hi: 'पर पर', th: 'เมื่อ เมื่อ' };
+    for (const lang of DOUBLED) {
+      expect(translate('on click add .active to me', 'en', lang)).not.toContain(doubled[lang]);
+    }
+  });
+});
