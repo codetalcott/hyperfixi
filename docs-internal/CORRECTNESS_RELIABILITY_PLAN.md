@@ -456,7 +456,15 @@ baseline). accordion-exclusive passes 24/24 on arrival.
   * `halt the event then toggle …` — runtime halt exits the WHOLE handler
     (patient parses as bare 'the'); the second command never runs.
   * `set @attr … on <sel>` — "Invalid selector @aria-selected" (joins the
-    set-attribute/toggle-visibility family).
+    set-attribute/toggle-visibility family). **RESOLVED §7bb (S1):** `set @attr
+to V on <scope>` now captures the `on`-scope (scope role + core scope-apply).
+    The dispatchable member `tabs-aria` is in the subset and PASSES (execFid
+    1.0000). The only other set@scope corpus cell, `announce-screen-reader`
+    (`on success put event.detail.message into #X set @role to "alert" on #X`),
+    now parses with the scope captured but stays excluded for a SEPARATE en gap —
+    its body degenerates to a bare `compound` (the `on success` + `event.detail`
+    put/set juxtaposition doesn't split), so its en reference produces no effect
+    (verified: qu executes the same shape end-to-end, so it is NOT the scope).
   * `hide closest .modal …` — the en SEMANTIC PARSE drops the hide command
     entirely; only the following remove survives.
   * `toggle .open on next .dropdown-menu halt` — buildAST emits a
@@ -1811,7 +1819,16 @@ avgConfidence dip (≤0.03 on a few langs, from the extra optional scope token) 
 within tolerance.
 
 **Re-qualifies §10.6's excluded `set @attr … on <sel>` family** — the
-runtime/parse gap that excluded it is closed.
+runtime/parse gap that excluded it is closed. Re-probe outcome (no new subset
+cell to add): the family's only dispatchable member, `tabs-aria`, was already in
+the subset (wave 2b) and now PASSES; the only other set@scope corpus cell,
+`announce-screen-reader`, now parses with the scope captured but stays excluded
+for a SEPARATE en gap — its `on success put event.detail.message into #X set
+@role to "alert" on #X` body degenerates to a bare `compound` so its en
+reference yields no effect (qu executes the identical shape, proving it is the
+body parse, not the scope). Adding it would need that en body-parse fix +
+per-cell trigger/`detail` support in the execution harness (a separate arc, not
+the set-scope concern). The §7g exclusion bullet is annotated RESOLVED.
 
 **Lock tests:** the `S1 tabs-aria` describe-block in
 `packages/semantic/test/multilingual-roadmap-fixes.test.ts` (8 cases: en
