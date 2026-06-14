@@ -140,7 +140,12 @@ function getRemovePatternsIt(): LanguagePattern[] {
       command: 'remove',
       priority: 100,
       template: {
-        format: 'rimuovere {patient} da {target}',
+        // The trailing `da X` is the element to remove FROM — role `source`,
+        // matching every other language's remove pattern and the removeMapper
+        // (which reads `source` only). It previously used `destination`, which
+        // the mapper ignores, so `rimuovere .x da corpo` silently removed from
+        // `me` instead of body (it modal-close-button R2 cell).
+        format: 'rimuovere {patient} da {source}',
         tokens: [
           {
             type: 'literal',
@@ -153,14 +158,14 @@ function getRemovePatternsIt(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'da', alternatives: ['di'] },
-              { type: 'role', role: 'destination' },
+              { type: 'role', role: 'source' },
             ],
           },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: {
+        source: {
           marker: 'da',
           markerAlternatives: ['di'],
           default: { type: 'reference', value: 'me' },
@@ -185,7 +190,7 @@ function getRemovePatternsIt(): LanguagePattern[] {
       },
       extraction: {
         patient: { position: 1 },
-        destination: { default: { type: 'reference', value: 'me' } },
+        source: { default: { type: 'reference', value: 'me' } },
       },
     },
   ];

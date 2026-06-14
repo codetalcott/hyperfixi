@@ -6189,3 +6189,27 @@ describe('uk make-toast: apostrophe-as-letter no longer eats string quotes (R2 t
     expect(body[2]?.roles?.get('manner')).toMatchObject({ value: 'at end of' });
   });
 });
+
+describe('it remove `da X` is the source, not destination (R2 tails batch)', () => {
+  // The hand-crafted remove-it-full/simple patterns labeled the trailing
+  // `da {X}` group as `destination`. The removeMapper reads `source` ONLY, so
+  // `rimuovere .modal-open da corpo` silently removed from `me` (#btn) instead
+  // of body — the body effect vanished (it modal-close-button R2 cell). Every
+  // other language's remove pattern uses `source`; aligned it to match.
+  it('[it] `rimuovere .modal-open da corpo` resolves source=body', () => {
+    const n = parse('rimuovere .modal-open da corpo', 'it') as {
+      action?: string;
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.action).toBe('remove');
+    expect(n.roles?.get('source')).toMatchObject({ value: 'body' });
+    expect(n.roles?.get('destination')).toBeUndefined();
+  });
+
+  it('[it] bare `rimuovere .x` defaults source=me (not destination)', () => {
+    const n = parse('rimuovere .highlight', 'it') as {
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(n.roles?.get('source')).toMatchObject({ value: 'me' });
+  });
+});
