@@ -15,7 +15,7 @@
  */
 
 import type { LanguageToken, SemanticNode, EventHandlerSemanticNode } from '../types';
-import { createBehaviorNode, createDefNode } from '../types';
+import { createBehaviorNode, createDefNode, createCompoundNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 
@@ -116,6 +116,108 @@ export function tryParseBlock(
     return parseDefBlock(input, language, tokens, parsers);
   }
   return null;
+}
+
+/**
+ * Attempt to parse `input` as a multi-handler PROGRAM — a top-level "feature"
+ * script with two or more event handlers (`on click … end on keyup … end`).
+ *
+ * The single-statement parser matches only the FIRST handler and absorbs the
+ * rest into its body (the trailing `on keyup …` is swallowed as a compound
+ * command), so a script with N>1 top-level handlers silently loses all but the
+ * first — broken in every language. This splits the input into its top-level
+ * handler segments using the SAME end-delimited, trigger-AGNOSTIC technique as
+ * {@link parseBehaviorBlock}'s body split: depth counts only nested openers
+ * (if/unless/repeat/for/while), the handler trigger is never counted, so it works
+ * regardless of how a language surfaces the trigger (`on`, de `wenn`, zh idiom,
+ * SOV mid-clause marker). Each segment is parsed by the ordinary single-statement
+ * engine and the handlers are re-assembled into a `compound` (which buildAST maps
+ * to a core `Program`, so the runtime registers each handler).
+ *
+ * Returns null (fast) unless it finds ≥2 segments that ALL parse as event
+ * handlers — so single handlers, single commands, and conditionals fall straight
+ * through to single-statement parsing unchanged.
+ *
+ * NOTE: the no-`end` feature chain (`on click … on keyup …`, no delimiters) is
+ * deliberately NOT split here. Distinguishing a trigger `on` from a target `on`
+ * (`toggle .x on me`) needs event-name lookahead and is language-sensitive — a
+ * separate follow-up. The end-delimited form is the common, unambiguous case.
+ */
+export function tryParseProgram(
+  input: string,
+  language: string,
+  parsers: BlockParsers
+): SemanticNode | null {
+  if (!tryGetProfile(language)) return null;
+
+  // Cheap pre-guard: the end-delimited multi-handler form needs ≥1 `end`
+  // keyword. Skip the tokenize for the overwhelming majority of single-statement
+  // inputs that contain no `end` form at all. (A substring hit on `end` inside
+  // `append`/`send` only costs a tokenize that then yields <2 segments → null.)
+  const endForms = keywordForms(language, 'end');
+  const lower = input.toLowerCase();
+  if (![...endForms].some(f => lower.includes(f))) return null;
+
+  const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
+  if (tokens.length < 2) return null;
+
+  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
+  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+
+  // Split into top-level handler segments by depth-aware `end` matching: a `end`
+  // at depth > 0 closes a NESTED if/repeat (decrement only); a depth-0 `end`
+  // closes a handler segment. A final handler with no trailing `end` is the tail.
+  const segments: string[] = [];
+  let depth = 0;
+  let segStart = 0;
+  for (let j = 0; j < tokens.length; j++) {
+    const tok = tokens[j];
+    if (isEnd(tok)) {
+      if (depth > 0) {
+        depth--;
+        continue;
+      }
+      const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+      if (text) segments.push(text);
+      segStart = j + 1;
+    } else if (isOpener(tok)) {
+      depth++;
+    }
+  }
+  if (segStart < tokens.length) {
+    const text = input.slice(tokens[segStart].position.start).trim();
+    if (text) segments.push(text);
+  }
+
+  if (segments.length < 2) return null;
+
+  // Every segment must parse as an event handler; otherwise this isn't a
+  // multi-handler program (it may be a single conditional, a command sequence, a
+  // mixed init/def program) and we defer to the existing single-statement path.
+  const handlers: SemanticNode[] = [];
+  const confidences: number[] = [];
+  for (const seg of segments) {
+    let parsed: SemanticNode;
+    try {
+      parsed = parsers.statement(seg, language);
+    } catch {
+      return null;
+    }
+    if (!parsed || parsed.kind !== 'event-handler') return null;
+    const handler = parsed as EventHandlerSemanticNode;
+    handlers.push(handler);
+    // An empty handler body means the sub-parse silently dropped its commands —
+    // don't inherit a misleadingly high confidence (mirrors parseBehaviorBlock).
+    const bodyEmpty = !handler.body || handler.body.length === 0;
+    confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
+  }
+
+  return createCompoundNode(handlers, 'then', {
+    sourceLanguage: language,
+    confidence: meanConfidence(confidences),
+    sourceText: input,
+  });
 }
 
 /** Mean of a confidence list (0 when empty). */

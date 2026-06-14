@@ -37,7 +37,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
-import { tryParseBlock } from './block-parser';
+import { tryParseBlock, tryParseProgram } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { render as renderExplicitFn } from '../explicit/renderer';
@@ -159,6 +159,18 @@ export class SemanticParserImpl implements ISemanticParser {
       body: (text, lang) => this.parseStatements(text, lang),
     });
     if (blockNode) return blockNode;
+
+    // Stage 0.5: multi-handler PROGRAM layer. A top-level script with ≥2 event
+    // handlers (`on click … end on keyup … end`) otherwise matches only the first
+    // handler at Stage 1 and silently absorbs the rest into its body. This splits
+    // the input into top-level handler segments (end-delimited, trigger-agnostic)
+    // and re-assembles them. Returns null (fast) unless ≥2 segments all parse as
+    // handlers, so single statements fall through unchanged.
+    const programNode = tryParseProgram(input, language, {
+      statement: (text, lang) => this.parse(text, lang),
+      body: (text, lang) => this.parseStatements(text, lang),
+    });
+    if (programNode) return programNode;
 
     // Extract standalone event modifiers (once, debounced, throttled) from input
     const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
