@@ -1,5 +1,26 @@
 # Per-language structural arcs roadmap (R2 execution tail)
 
+> **Progress (S1 tabs-aria ×5 — 5 → 0 — ARC COMPLETE):** the deferred
+> en-reference band-inversion arc is done. `set @attr to V on <scope>` now
+> captures the `on`-scope across the whole stack: a new `scope` SemanticRole +
+> optional role on `setSchema` (passthrough marker `on` in every language); the
+> core `SetCommand` applies the attribute to every scope-matched element
+> (`modifiers.on`, defaulting to `me`); the i18n transformer keeps `on <scope>`
+> attached and positions it per word order (`transformSetWithScope`); and the
+> SOV/VSO event-handler generators carry an optional trailing `[on {scope}]`
+> group (`appendOptionalScope`). **The en reference flipped from the lossy
+> `aria-selected=true on #btn` to the scoped `aria-selected=false on .tab ×2 +
+aria-selected=true on #btn`, and ALL 24 languages reproduce it** — the band
+> inversion was absorbed in the same PR (no language left lossy), so the gate is
+> green with NO new execution failures. **avgExecutionFidelity 0.9930 → 1.0000;
+> R2 execution cluster → 0.** Baseline regenerated; 8 lock tests added
+> (`multilingual-roadmap-fixes.test.ts`). See CORRECTNESS_RELIABILITY_PLAN.md §7bb.
+>
+> **The R2 execution tail is now fully cleared (0 cells).** Next R2 move per the
+> stopping rule: switch to behaviors (Track 2). The §10.6 excluded
+> `set @attr … on <sel>` family is re-qualified — the set-scope runtime/parse
+> gap that excluded it is closed.
+
 > **Progress (R2 structural tails batch 2 — 10 → 5):** the five remaining
 > non-S1 cells were each cleared as a localized, probed-before-edit,
 > gate-green, zero-regression fix (avgExecutionFidelity 0.9860 → **0.9930**).
@@ -225,18 +246,34 @@ Score each arc on five axes (H/M/L), then rank by leverage-adjusted value.
   the cleanest shared sub-lever). halt's leaked-`the` and set-attribute's `@attr`
   front are separate small fixes. make-element overlaps S3.
 
-### S1 — en-reference-lossy patterns (`set @attr … on <scope>`) ⚠ high-risk
+### S1 — en-reference-lossy patterns (`set @attr … on <scope>`) ✅ DONE
 
-- **Cells (~5):** tabs-aria (bn, hi, ja, ko, tr). Also gates the excluded
-  set-attribute@scope family.
-- **Mechanism:** the **en reference itself is lossy** — `set @aria-selected to "x"
-on .tab set … on me` drops the `on <scope>` modifier even in English (two sets,
-  no scope). Translations diverge by capturing the 2nd set's roles differently.
-- **Layer:** TWO layers — fix the **en parse** (`on <scope>` capture) first, which
-  **inverts the gate band** (today's passers become failers), then per-language.
-- **Yield M (5) · Leverage M · Confidence H (probed §7g/§10.5) · Risk **H** (en
-  reference change → baseline re-record) · Unblocks: re-qualifies the @attr family.**
-- **Verdict:** defer unless ready for a deliberate band-inversion + full re-baseline.
+- **Cleared (5):** tabs-aria (bn, hi, ja, ko, tr) — and the band-inversion
+  casualties it would have created (es/fr/de/zh/vi/it/pt/ru/tl/ar/qu, which were
+  passing via shared en-lossiness) were ALL fixed in the same PR, so **all 24
+  languages** reproduce the scoped reference. avgExecutionFidelity 0.9930 → 1.0000.
+- **What it actually was (a 4-layer scope plumb, not just an en parse change):**
+  1. **`scope` SemanticRole + setSchema role** — optional, marker `on` in every
+     language (passthrough-alignment), svo/sov position 3. The set mapper routes
+     it to `modifiers.on`.
+  2. **Core `SetCommand`** — `set @attr` applies to every element the scope
+     resolves to (`resolveTargets`, defaulting to `[me]`); `resolveElements` made
+     cross-realm/missing-global safe (`isNodeList`).
+  3. **i18n transformer** — `transformSetWithScope` keeps `on <scope>` attached
+     (dedicated splitter guard, since `set` is excluded from `ON_TARGET_COMMANDS`)
+     and positions it per word order: appended at clause end for verb-first
+     orders + verb-medial SOV event handlers; verb-LAST repositioning for SOV
+     standalone then-clause sets; before a clause-final verb for qu.
+  4. **Pattern capture** — the hand-crafted set patterns + the SOV/VSO two-role
+     event-handler generators gained an optional trailing `[on {scope}]` group
+     (`withTrailingScope` / `appendOptionalScope`, gated on the scope role → no-op
+     for put).
+- **Band inversion absorbed:** the en effect signature changed (lossy → scoped),
+  but because every language was fixed in the same PR, the `--regression` gate vs
+  the OLD baseline showed NO new execution failures — the previously-lossy passers
+  now pass against the scoped reference, and the 5-cluster improved. Baseline
+  regenerated to record the gains. See CORRECTNESS_RELIABILITY_PLAN.md §7bb.
+- **Unblocks:** re-qualifies the §10.6-excluded `set @attr … on <sel>` family.
 
 ### S3 — SOV `@attr` / `set` role-scramble ✅ DONE
 
@@ -311,8 +348,9 @@ on .tab set … on me` drops the `on <scope>` modifier even in English (two sets
 6. ✅ **S4** SOV verb-final put — **DONE** (qu via wave 1; ja put-content-basic via
    batch 2's event-last wrapper). Per-language tails (it/th) cleared in R2 tails
    batch; tr if-matches + hi halt-propagation cleared in batch 2.
-7. **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — **the only remaining
-   cluster**; high-risk band-inversion, do only with a deliberate re-baseline.
+7. ✅ **S1** en-reference-lossy tabs-aria (×5: bn/hi/ja/ko/tr) — **DONE** (band
+   inversion absorbed; all 24 langs reproduce the scoped reference;
+   avgExecutionFidelity → 1.0000; cluster → 0). See §7bb.
 
 **Cluster snapshot after qu (13 cells):** tabs-aria ×5 (bn/hi/ja/ko/tr → S1),
 tr ×2 (if-matches, set-attribute), id set-style, it modal-close-button, ja
@@ -332,7 +370,12 @@ halt-propagation. id ×0, ja ×0, tr ×0 except tabs-aria; hi ×1 (tabs-aria onl
 avgExecutionFidelity 0.9860 → 0.9930. The next R2 move is S1 (deliberate
 band-inversion) — or, per the stopping rule, switch to behaviors (Track 2).
 
-## S1 — tabs-aria ×5: the only remaining cluster (deferred, deliberate)
+## S1 — tabs-aria ×5: DONE (band inversion absorbed)
+
+> **Resolved.** The arc below described the deferred plan; it was executed as
+> described (with the band inversion absorbed in-PR — see the progress note at
+> the top of this file and CORRECTNESS_RELIABILITY_PLAN.md §7bb). The R2
+> execution tail is now 0 cells. The historical framing is kept below.
 
 The en reference is itself lossy: `on click set @aria-selected to "false" on .tab
 set @aria-selected to "true" on me` parses to two `set` commands that BOTH drop

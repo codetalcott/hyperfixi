@@ -6390,3 +6390,72 @@ describe('hi halt-propagation — leaked `the` before a fronted patient (R2 batc
     expect((halt!.args as unknown[]).length).toBeGreaterThan(0);
   });
 });
+
+describe('S1 tabs-aria — `set @attr to V on <scope>` scope capture (band inversion)', () => {
+  // The en reference itself was lossy: both sets dropped their `on <scope>`
+  // modifier, so the visible effect was just `aria-selected=true on #btn`. The
+  // scope role (setSchema) + passthrough `on` marker make the en reference, and
+  // every translation, write aria-selected to the scope. The strings below are
+  // the i18n transformer's tabs-aria output per word order (verified at parse
+  // conf 1.00) — they lock the per-word-order scope capture that cleared the
+  // cluster. See STRUCTURAL_ARCS_ROADMAP.md (S1) and CORRECTNESS_RELIABILITY_PLAN.md §7bb.
+
+  /** The `on <scope>` of a set command lands on modifiers.on AND semanticRoles.scope. */
+  function setScopeOf(code: string, lang: string): { mod?: unknown; role?: unknown } {
+    const set = findAstCommand(buildAST(parse(code, lang)).ast, 'set');
+    expect(set, `no set command parsed for [${lang}] ${code}`).not.toBeNull();
+    const mods = (set!.modifiers ?? {}) as Record<string, unknown>;
+    const roles = (set!.semanticRoles ?? {}) as Record<string, unknown>;
+    return { mod: mods.on, role: roles.scope };
+  }
+
+  it('[en] standalone `set @attr to "false" on .tab` captures scope=.tab', () => {
+    const { mod, role } = setScopeOf('set @aria-selected to "false" on .tab', 'en');
+    expect(mod).toMatchObject({ value: '.tab' });
+    expect(role).toMatchObject({ value: '.tab' });
+  });
+
+  it('[en] `on me` scope captures the me reference', () => {
+    const { mod } = setScopeOf('set @aria-selected to "true" on me', 'en');
+    expect(mod).toMatchObject({ name: 'me' });
+  });
+
+  // SVO (es) — verb-first, scope appended at the clause end.
+  it('[es] `establecer @attr a "false" on .tab` captures scope=.tab', () => {
+    const { role } = setScopeOf('establecer @aria-selected a "false" on .tab', 'es');
+    expect(role).toMatchObject({ value: '.tab' });
+  });
+
+  // SOV event-handler set — verb-MEDIAL, scope trails (the appended optional
+  // `[on {scope}]` group on the fused dest-first pattern).
+  it('[ja] event-handler set (verb-medial) captures the trailing scope', () => {
+    const { role } = setScopeOf('@aria-selected を クリック で 設定 "false" に on .tab', 'ja');
+    expect(role).toMatchObject({ value: '.tab' });
+  });
+
+  // SOV standalone then-clause set — emitted verb-LAST with scope before the
+  // verb (transformSetWithScope reposition) → generated command pattern.
+  it('[ja] standalone set (verb-last) captures scope=me', () => {
+    const { mod } = setScopeOf('@aria-selected を "true" に on 私 設定', 'ja');
+    expect(mod).toMatchObject({ name: 'me' });
+  });
+
+  it('[ko] standalone set (verb-last) captures scope=.tab', () => {
+    const { role } = setScopeOf('@aria-selected 를 "false" 에 on .tab 설정', 'ko');
+    expect(role).toMatchObject({ value: '.tab' });
+  });
+
+  // qu — `{dest} {patient} {event} {verb}` event order: the event is extracted
+  // and the body matched as a verb-LAST command, so the scope sits before the
+  // clause-final verb.
+  it('[qu] event-handler set with clause-final verb captures the scope', () => {
+    const { role } = setScopeOf('@aria-selected ta "false" man ñitiy pi on .tab churanay', 'qu');
+    expect(role).toMatchObject({ value: '.tab' });
+  });
+
+  it('[en] a scope-less set is unaffected (no on modifier)', () => {
+    const { mod, role } = setScopeOf('set @disabled to true', 'en');
+    expect(mod).toBeUndefined();
+    expect(role).toBeUndefined();
+  });
+});

@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-06-14T02:05:49.459Z",
-  "commit": "66c63361",
+  "timestamp": "2026-06-14T04:56:51.147Z",
+  "commit": "08393962",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8679433429145073,
+      "avgConfidence": 0.8425858314888838,
       "avgFidelity": 0.9771241830065359,
       "avgRoleFidelity": 0.8616456106252026,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["repeat-until-event", "window-scroll"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -28,18 +28,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -127,14 +115,6 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
         "form-submit-prevent": {
           "success": true,
           "confidence": 1
@@ -152,18 +132,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-color-variable": {
           "success": true,
           "confidence": 1
         },
@@ -207,14 +175,6 @@
           "success": true,
           "confidence": 1
         },
-        "two-way-binding": {
-          "success": true,
-          "confidence": 1
-        },
-        "computed-value": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
@@ -227,14 +187,6 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -243,23 +195,11 @@
           "success": true,
           "confidence": 1
         },
-        "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -284,10 +224,6 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
-          "success": true,
-          "confidence": 1
-        },
-        "beep-debug-expression": {
           "success": true,
           "confidence": 1
         },
@@ -320,10 +256,6 @@
           "confidence": 1
         },
         "bind-non-form-display": {
-          "success": true,
-          "confidence": 1
-        },
-        "caret-var-write": {
           "success": true,
           "confidence": 1
         },
@@ -455,6 +387,58 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
         "take-class-from-siblings": {
           "success": true,
           "confidence": 0.7777777777777777
@@ -487,6 +471,10 @@
           "success": true,
           "confidence": 0.7142857142857143
         },
+        "set-color-variable": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
         "event-key-combo": {
           "success": true,
           "confidence": 0.7142857142857143
@@ -503,6 +491,14 @@
           "success": true,
           "confidence": 0.7142857142857143
         },
+        "two-way-binding": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "computed-value": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
         "render-template-with-data": {
           "success": true,
           "confidence": 0.7142857142857143
@@ -516,6 +512,10 @@
           "confidence": 0.7142857142857143
         },
         "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "beep-debug-expression": {
           "success": true,
           "confidence": 0.7142857142857143
         },
@@ -636,14 +636,14 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8575345289631005,
+      "avgConfidence": 0.8397628269808716,
       "avgFidelity": 0.9962121212121211,
-      "avgRoleFidelity": 0.7921734234234235,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["tabs-aria"],
+      "avgRoleFidelity": 0.7971283783783784,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": ["fetch-do-not-throw", "unless-condition"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -662,18 +662,6 @@
           "confidence": 1
         },
         "remove-class-from-all": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -829,15 +817,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-clear": {
           "success": true,
           "confidence": 1
         },
@@ -846,14 +826,6 @@
           "confidence": 1
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
           "success": true,
           "confidence": 1
         },
@@ -945,23 +917,11 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -974,14 +934,6 @@
           "confidence": 1
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -1045,10 +997,6 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-write": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-increment": {
           "success": true,
           "confidence": 1
@@ -1080,6 +1028,58 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "swap-content": {
           "success": true,
@@ -1274,7 +1274,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1898,7 +1898,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2529,7 +2529,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3159,7 +3159,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3803,7 +3803,7 @@
         "tell-command",
         "tell-other-element"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4426,11 +4426,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9560915275200976,
-      "avgFidelity": 0.928030303030303,
-      "avgRoleFidelity": 0.6893018018018019,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["tabs-aria"],
+      "avgConfidence": 0.9383198255378694,
+      "avgFidelity": 0.9301948051948052,
+      "avgRoleFidelity": 0.6942567567567569,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -4442,7 +4442,6 @@
         "live-multiple-deps"
       ],
       "lossyPasses": [
-        "announce-screen-reader",
         "breakpoint-command",
         "event-throttle",
         "fetch-do-not-throw",
@@ -4451,7 +4450,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -4470,18 +4469,6 @@
           "confidence": 1
         },
         "remove-class-from-all": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -4673,15 +4660,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-clear": {
           "success": true,
           "confidence": 1
         },
@@ -4702,14 +4681,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
           "success": true,
           "confidence": 1
         },
@@ -4829,23 +4800,11 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -4862,14 +4821,6 @@
           "confidence": 1
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -4953,10 +4904,6 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-write": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-increment": {
           "success": true,
           "confidence": 1
@@ -5008,6 +4955,58 @@
         "form-disable-on-submit": {
           "success": true,
           "confidence": 0.8857142857142858
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "swap-content": {
           "success": true,
@@ -5082,7 +5081,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5707,12 +5706,12 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8379396202925594,
       "avgFidelity": 0.9803921568627451,
-      "avgRoleFidelity": 0.8237042436022028,
+      "avgRoleFidelity": 0.8248380304502754,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6335,11 +6334,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8431560502989076,
+      "avgConfidence": 0.8253843483166787,
       "avgFidelity": 0.9680735930735931,
-      "avgRoleFidelity": 0.7770752895752897,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["tabs-aria"],
+      "avgRoleFidelity": 0.7806788931788933,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -6347,7 +6346,7 @@
         "behavior-sortable"
       ],
       "lossyPasses": ["fetch-do-not-throw", "form-disable-on-submit", "unless-condition"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6366,18 +6365,6 @@
           "confidence": 1
         },
         "remove-class-from-all": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -6533,23 +6520,7 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
           "success": true,
           "confidence": 1
         },
@@ -6637,23 +6608,11 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -6666,14 +6625,6 @@
           "confidence": 1
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -6733,10 +6684,6 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-write": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-increment": {
           "success": true,
           "confidence": 1
@@ -6768,6 +6715,58 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "go-back": {
           "success": true,
@@ -6971,11 +6970,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8251185322613894,
+      "avgConfidence": 0.8073468302791607,
       "avgFidelity": 0.9588744588744588,
-      "avgRoleFidelity": 0.770382882882883,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["tabs-aria"],
+      "avgRoleFidelity": 0.7753378378378379,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -6990,7 +6989,7 @@
         "input-validation",
         "unless-condition"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7009,18 +7008,6 @@
           "confidence": 1
         },
         "remove-class-from-all": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -7168,27 +7155,11 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
           "success": true,
           "confidence": 1
         },
-        "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
         "window-scroll": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
           "success": true,
           "confidence": 1
         },
@@ -7264,23 +7235,11 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -7293,14 +7252,6 @@
           "confidence": 1
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -7352,10 +7303,6 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-write": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-increment": {
           "success": true,
           "confidence": 1
@@ -7387,6 +7334,58 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "fetch-json": {
           "success": true,
@@ -7621,7 +7620,7 @@
       "executionFailures": [],
       "degeneratePasses": ["socket-basic"],
       "lossyPasses": ["last-in-collection", "set-color-variable"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8243,12 +8242,12 @@
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8037866998651292,
       "avgFidelity": 0.9782135076252723,
-      "avgRoleFidelity": 0.826943634596696,
+      "avgRoleFidelity": 0.8280774214447684,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["get-value"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8878,7 +8877,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9503,7 +9502,7 @@
       "parseRate": 1,
       "avgConfidence": 0.7194083694083694,
       "avgFidelity": 0.9632034632034633,
-      "avgRoleFidelity": 0.7616473616473615,
+      "avgRoleFidelity": 0.7618725868725866,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [
@@ -9518,7 +9517,7 @@
         "take-class-from-siblings",
         "unless-condition"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10142,14 +10141,14 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8117913832199526,
+      "avgConfidence": 0.8114306328592022,
       "avgFidelity": 0.9935064935064936,
-      "avgRoleFidelity": 0.8429134491634492,
+      "avgRoleFidelity": 0.8440395752895754,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10731,10 +10730,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "install-behavior": {
-          "success": true,
-          "confidence": 0.5555555555555556
-        },
         "repeat-forever": {
           "success": true,
           "confidence": 0.5555555555555556
@@ -10766,6 +10761,10 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5555555555555556
+        },
+        "install-behavior": {
+          "success": true,
+          "confidence": 0.5
         }
       }
     },
@@ -10780,7 +10779,7 @@
       "executionFailures": [],
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": ["event-debounce", "repeat-until-event", "set-color-variable"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11402,12 +11401,12 @@
       "parseRate": 1,
       "avgConfidence": 0.8401154401154378,
       "avgFidelity": 1,
-      "avgRoleFidelity": 0.8401705276705276,
+      "avgRoleFidelity": 0.8412966537966537,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12031,14 +12030,14 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8494027914195967,
+      "avgConfidence": 0.8242099391590747,
       "avgFidelity": 0.9983766233766234,
       "avgRoleFidelity": 0.8884250321750323,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": ["window-scroll"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12049,18 +12048,6 @@
           "confidence": 1
         },
         "add-class-to-other": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -12140,14 +12127,6 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
         "form-submit-prevent": {
           "success": true,
           "confidence": 1
@@ -12165,18 +12144,6 @@
           "confidence": 1
         },
         "document-ready": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-color-variable": {
           "success": true,
           "confidence": 1
         },
@@ -12220,14 +12187,6 @@
           "success": true,
           "confidence": 1
         },
-        "two-way-binding": {
-          "success": true,
-          "confidence": 1
-        },
-        "computed-value": {
-          "success": true,
-          "confidence": 1
-        },
         "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
@@ -12240,14 +12199,6 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -12256,23 +12207,11 @@
           "success": true,
           "confidence": 1
         },
-        "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -12297,10 +12236,6 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
-          "success": true,
-          "confidence": 1
-        },
-        "beep-debug-expression": {
           "success": true,
           "confidence": 1
         },
@@ -12333,10 +12268,6 @@
           "confidence": 1
         },
         "bind-non-form-display": {
-          "success": true,
-          "confidence": 1
-        },
-        "caret-var-write": {
           "success": true,
           "confidence": 1
         },
@@ -12391,6 +12322,58 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "remove-class-basic": {
           "success": true,
@@ -12516,6 +12499,10 @@
           "success": true,
           "confidence": 0.7142857142857143
         },
+        "set-color-variable": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
         "event-key-combo": {
           "success": true,
           "confidence": 0.7142857142857143
@@ -12529,6 +12516,14 @@
           "confidence": 0.7142857142857143
         },
         "if-empty": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "two-way-binding": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "computed-value": {
           "success": true,
           "confidence": 0.7142857142857143
         },
@@ -12549,6 +12544,10 @@
           "confidence": 0.7142857142857143
         },
         "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "beep-debug-expression": {
           "success": true,
           "confidence": 0.7142857142857143
         },
@@ -12662,11 +12661,11 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8442784521215895,
+      "avgConfidence": 0.826390595224444,
       "avgFidelity": 0.9635076252723311,
-      "avgRoleFidelity": 0.7761904761904761,
-      "avgExecutionFidelity": 0.967741935483871,
-      "executionFailures": ["tabs-aria"],
+      "avgRoleFidelity": 0.7811791383219955,
+      "avgExecutionFidelity": 1,
+      "executionFailures": [],
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -12675,7 +12674,7 @@
         "default-value"
       ],
       "lossyPasses": ["fetch-do-not-throw", "unless-condition"],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12694,18 +12693,6 @@
           "confidence": 1
         },
         "remove-class-from-all": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-text-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-attribute": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-style": {
           "success": true,
           "confidence": 1
         },
@@ -12861,27 +12848,11 @@
           "success": true,
           "confidence": 1
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
           "success": true,
           "confidence": 1
         },
-        "input-clear": {
-          "success": true,
-          "confidence": 1
-        },
         "form-disable-on-submit": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-opacity": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-transform": {
           "success": true,
           "confidence": 1
         },
@@ -12965,23 +12936,11 @@
           "success": true,
           "confidence": 1
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
         "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -12994,14 +12953,6 @@
           "confidence": 1
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-interpolation": {
-          "success": true,
-          "confidence": 1
-        },
-        "template-literal-list-build": {
           "success": true,
           "confidence": 1
         },
@@ -13061,10 +13012,6 @@
           "success": true,
           "confidence": 1
         },
-        "caret-var-write": {
-          "success": true,
-          "confidence": 1
-        },
         "caret-var-increment": {
           "success": true,
           "confidence": 1
@@ -13092,6 +13039,58 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
+        },
+        "set-text-basic": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-attribute": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-style": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "input-clear": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-opacity": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-transform": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-interpolation": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 0.7894736842105263
+        },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.7894736842105263
         },
         "swap-content": {
           "success": true,
@@ -13298,14 +13297,14 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8110492681921234,
+      "avgConfidence": 0.810688517831373,
       "avgFidelity": 0.9935064935064936,
-      "avgRoleFidelity": 0.8317648005148005,
+      "avgRoleFidelity": 0.8328909266409267,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13887,10 +13886,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "install-behavior": {
-          "success": true,
-          "confidence": 0.5555555555555556
-        },
         "repeat-forever": {
           "success": true,
           "confidence": 0.5555555555555556
@@ -13922,6 +13917,10 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5555555555555556
+        },
+        "install-behavior": {
+          "success": true,
+          "confidence": 0.5
         }
       }
     },
@@ -13942,7 +13941,7 @@
         "set-color-variable",
         "unless-condition"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14581,7 +14580,7 @@
         "tell-other-element",
         "unless-condition"
       ],
-      "bundleSize": 427405,
+      "bundleSize": 428314,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15203,7 +15202,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 427405,
+      "size": 428314,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
