@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { collectActions, computeFidelity, FIDELITY_THRESHOLD } from './fidelity';
+import {
+  collectActions,
+  collectActionsMultiset,
+  computeFidelity,
+  computePrecision,
+  spuriousActions,
+  FIDELITY_THRESHOLD,
+} from './fidelity';
 
 describe('collectActions', () => {
   it('collects distinct actions across a nested event-handler tree', () => {
@@ -55,5 +62,75 @@ describe('computeFidelity', () => {
 
   it('returns undefined when there is no reference to score against', () => {
     expect(computeFidelity([], ['on'])).toBeUndefined();
+  });
+});
+
+describe('collectActionsMultiset', () => {
+  it('preserves duplicate actions the Set-based collector drops', () => {
+    // The ja/ko/tr round-trip of `on click toggle .open then put "hi" into #out`
+    // renders a phantom `toggle` ahead of the real one: [on, toggle, toggle, put].
+    const node = {
+      kind: 'event-handler',
+      action: 'on',
+      body: [
+        { kind: 'command', action: 'toggle' }, // phantom, injected by the renderer
+        { kind: 'command', action: 'toggle' }, // the real one
+        { kind: 'command', action: 'put' },
+      ],
+    };
+    expect(collectActionsMultiset(node)).toEqual(['on', 'put', 'toggle', 'toggle']);
+    // The existing Set-based collector cannot see the duplicate:
+    expect(collectActions(node)).toEqual(['on', 'put', 'toggle']);
+  });
+
+  it('still excludes the structural `compound` wrapper', () => {
+    const node = { action: 'compound', statements: [{ action: 'toggle' }, { action: 'toggle' }] };
+    expect(collectActionsMultiset(node)).toEqual(['toggle', 'toggle']);
+  });
+});
+
+describe('computePrecision', () => {
+  it('scores a faithful (reordered) parse 1.0', () => {
+    const en = ['focus', 'halt', 'if', 'on'];
+    expect(computePrecision(en, ['on', 'if', 'halt', 'focus'])).toBe(1);
+  });
+
+  it('catches the phantom `toggle` recall is blind to (the renderer bug)', () => {
+    // Real shape: EN `on click add .x then remove .y` round-tripped through ja
+    // renders as [on, toggle, add, remove] — recall stays 1.0, precision drops.
+    const en = ['add', 'on', 'remove'];
+    const ja = ['add', 'on', 'remove', 'toggle'];
+    expect(computeFidelity(en, ja)).toBe(1); // recall is fooled
+    expect(computePrecision(en, ja)).toBeCloseTo(3 / 4); // precision is not
+  });
+
+  it('penalizes a duplicated spurious action (multiset)', () => {
+    // [toggle, toggle, put] vs reference [put, toggle]: one toggle is spurious.
+    expect(computePrecision(['put', 'toggle'], ['put', 'toggle', 'toggle'])).toBeCloseTo(2 / 3);
+  });
+
+  it('scores 0 when every candidate action is spurious (ar/ru substitutive case)', () => {
+    // ar `on click if … end` collapsed to just a phantom [toggle].
+    expect(computePrecision(['if', 'on'], ['toggle'])).toBe(0);
+  });
+
+  it('returns undefined when there is no candidate to score', () => {
+    expect(computePrecision(['on'], [])).toBeUndefined();
+  });
+});
+
+describe('spuriousActions', () => {
+  it('lists the hallucinated commands a render/parse introduced', () => {
+    expect(spuriousActions(['add', 'on', 'remove'], ['add', 'on', 'remove', 'toggle'])).toEqual([
+      'toggle',
+    ]);
+  });
+
+  it('counts duplicates as spurious beyond the reference multiset', () => {
+    expect(spuriousActions(['put', 'toggle'], ['put', 'toggle', 'toggle'])).toEqual(['toggle']);
+  });
+
+  it('is empty for a faithful subset/reorder', () => {
+    expect(spuriousActions(['focus', 'halt', 'if', 'on'], ['on', 'if', 'focus'])).toEqual([]);
   });
 });
