@@ -309,6 +309,82 @@ export function normalizeEventName(event: string, language: string): string {
 }
 
 // =============================================================================
+// Event Name Localization (English → native, render path) — Phase 1b
+// =============================================================================
+
+/**
+ * English → canonical-native event names, per language. Derived by inverting
+ * {@link eventNameTranslations} with **first-wins** per English key: the
+ * first-listed native form is the canonical one (e.g. ja `load` → `ロード`, the
+ * registered tokenizer form, not the later `読み込み`).
+ *
+ * This is the reverse of the parse-path normalization and is used only on the
+ * render/translate path to emit native event names instead of English ones.
+ */
+const eventNameLocalizations: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.entries(eventNameTranslations).map(([lang, table]) => {
+    const reverse: Record<string, string> = {};
+    for (const [native, english] of Object.entries(table)) {
+      if (!(english in reverse)) reverse[english] = native; // first-wins
+    }
+    return [lang, reverse];
+  })
+);
+
+/**
+ * Round-trip-unsafe (language, English-event) pairs whose canonical native does
+ * NOT re-parse back to the same event — so we keep English for them.
+ *
+ * The source of truth for "parseable native event word" is each tokenizer's
+ * `{native, normalized}` keyword entries + the handler grammar, NOT
+ * {@link eventNameTranslations} (which is aspirational — it lists natives a
+ * tokenizer never registers, or that re-parse as a different command). This
+ * denylist is **evidence-based and test-locked**: it is exactly the failure set of
+ * the exhaustive round-trip case in `test/event-name-translation.test.ts`.
+ * Regenerate it from that test if the tokenizers or `eventNameTranslations`
+ * change; do not hand-add speculative entries.
+ *
+ * Notable classes: `de.load`→`laden` and `qu.submit`→`apachiy` re-parse as other
+ * commands (`fetch`/`send`); the weaker SOV/agglutinative handler grammars (sw,
+ * tr) reject many compounded native event words outright.
+ */
+const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
+  ar: new Set(['mouseover']),
+  bn: new Set(['resize']),
+  de: new Set(['keydown', 'keyup', 'load', 'mouseout', 'mouseover']),
+  fr: new Set(['blur']),
+  id: new Set(['input', 'keyup', 'mouseout', 'mouseover']),
+  ja: new Set(['keypress', 'mousedown', 'mouseup', 'resize']),
+  qu: new Set(['change', 'focus', 'load', 'resize', 'submit']),
+  sw: new Set(['change', 'click', 'input', 'keydown', 'keyup', 'mouseout', 'mouseover', 'submit']),
+  tr: new Set([
+    'keydown',
+    'keyup',
+    'load',
+    'mousedown',
+    'mouseout',
+    'mouseover',
+    'mouseup',
+    'resize',
+    'scroll',
+  ]),
+  zh: new Set(['focus', 'keyup', 'mouseout', 'mouseover']),
+};
+
+/**
+ * Localize a single English event name to the target language, or return it
+ * unchanged when there is no round-trip-safe native (non-covered language,
+ * unmapped event, or a denylisted pair). Passthrough is always safe because
+ * English event names already round-trip.
+ */
+export function localizeEventName(englishEvent: string, language: string): string {
+  if (eventLocalizationDenylist[language]?.has(englishEvent)) {
+    return englishEvent;
+  }
+  return eventNameLocalizations[language]?.[englishEvent] ?? englishEvent;
+}
+
+// =============================================================================
 // Per-Language Event Handler Patterns
 // =============================================================================
 

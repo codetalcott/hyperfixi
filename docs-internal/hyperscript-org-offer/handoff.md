@@ -1,55 +1,12 @@
-# Carson hand-off message
+# Hand-off message
 
-Two variants below — pick whichever matches the channel you use to reach
-Carson (GitHub issue or email). Both stay short on purpose; the integration
+The integration
 guide and live demo do the heavy lifting.
 
 ---
 
-## Variant A — GitHub issue on `bigskysoftware/_hyperscript`
-
-**Title:** `Optional plugin: write _hyperscript in 24 languages (no fork, MIT)`
-
-**Body:**
-
-> Hey Carson — the recent hyperscript.org refresh is great. Wanted to put
-> something in front of you that's been ready for a while: a runtime plugin
-> that lets visitors write `_=` attributes in any of 24 languages, and a
-> companion build-time tool for translating docs/code samples.
->
-> **Live demo:** https://lokascript.org/patterns — click a language chip to
-> flip every pattern; toggle "Live execution" and the patterns run in the
-> chosen language. Same engine; just a `getScript()` override.
->
-> **Integration guide:** https://lokascript.org/integration-guide (one
-> screen, all the install snippets and tradeoffs).
->
-> **Packages (MIT, namespace-neutral):**
->
-> - [`@hyperscript-tools/multilingual`](https://www.npmjs.com/package/@hyperscript-tools/multilingual)
->   — runtime plugin. One `<script>` tag, auto-registers.
-> - [`@hyperscript-tools/i18n`](https://www.npmjs.com/package/@hyperscript-tools/i18n)
->   — build-time CLI + Eleventy plugin for pre-translated docs.
->
-> The plugin is non-invasive: it overrides `runtime.getScript()` only, hands
-> English to your existing lexer, and falls through unchanged when parse
-> confidence is too low. No AST work. Bundle sizes range from ~140 KB
-> (single language) to ~720 KB (all 24).
->
-> No expectation of merge — happy if you just point people at it from the
-> docs, or fork the demo, or ignore it. If you'd rather we transfer the
-> packages to a `bigskysoftware`-owned scope, or co-maintain, let me know.
->
-> — _William Talcott_
-
----
-
-## Variant B — email
-
 **Subject:** `_hyperscript in 24 languages — drop-in plugin if you want it`
 
-> Hey Carson,
->
 > Site refresh looks great. Quick share in case it's useful.
 >
 > We've been running a runtime plugin that lets people write `_=` attributes
@@ -57,7 +14,7 @@ guide and live demo do the heavy lifting.
 > It overrides exactly one function (`runtime.getScript()`) and hands
 > English back to your existing lexer. No AST changes, no fork, no patches.
 >
-> Live demo: https://lokascript.org/patterns
+> Live demo: <https://lokascript.org/patterns>
 >
 > Click a chip; every pattern flips. Hit "Live execution"; they run.
 >
@@ -71,7 +28,7 @@ guide and live demo do the heavy lifting.
 > Full guide (one screen) with bundle sizes, language coverage, and the
 > build-time companion (`@hyperscript-tools/i18n` for pre-translated docs):
 >
-> https://lokascript.org/integration-guide
+> <https://lokascript.org/integration-guide>
 >
 > MIT, namespace-neutral, zero HyperFixi/LokaScript runtime dependency. If
 > you want to ship language support on hyperscript.org, the bare minimum is
@@ -81,8 +38,6 @@ guide and live demo do the heavy lifting.
 >
 > No expectation of any specific outcome. Throwing it over the fence in case
 > it's useful.
->
-> — William
 >
 > P.S. The runtime is a few hundred lines on top of a precomputed semantic
 > pattern catalog. Below-threshold input falls through unchanged, so a

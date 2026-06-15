@@ -20,6 +20,7 @@ import type {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
+import { localizeEventName } from '../patterns/event-handler';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 // =============================================================================
@@ -288,6 +289,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // Use default if available
           return null;
         }
+        // The event role of an event handler is the one literal we localize to
+        // the target language (Phase 1b) — scoped here so other role literals
+        // (selectors, string literals) are never touched.
+        if (token.role === 'event' && node.kind === 'event-handler') {
+          return this.renderEventName(value, language);
+        }
         return this.valueToNaturalString(value, language);
       }
 
@@ -356,6 +363,32 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       default:
         return null;
     }
+  }
+
+  /**
+   * Render an event-handler's event name in the target language (Phase 1b).
+   *
+   * Only a known DOM event name arrives as a `literal`; namespaced (`htmx:load`)
+   * and unknown/custom events arrive as `expression` and pass through unchanged.
+   * Compound triggers (`click or keydown`) are one combined literal — localize
+   * each sub-name and keep the English ` or ` connector (a native connector adds
+   * no round-trip benefit, and ja/zh/ko cannot re-parse compound triggers either
+   * way — a documented pre-existing limitation).
+   */
+  private renderEventName(value: SemanticValue, language: string): string {
+    if (value.type !== 'literal' || typeof value.value !== 'string') {
+      return this.valueToNaturalString(value, language);
+    }
+    const raw = value.value;
+    const localizeOne = (name: string): string =>
+      name.includes(':') ? name : localizeEventName(name, language);
+    if (raw.includes(' or ')) {
+      return raw
+        .split(' or ')
+        .map(part => localizeOne(part.trim()))
+        .join(' or ');
+    }
+    return localizeOne(raw);
   }
 
   /**

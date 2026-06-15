@@ -122,6 +122,7 @@ export {
   getEventHandlerPatternsForLanguage,
   eventNameTranslations,
   normalizeEventName,
+  localizeEventName,
 } from './patterns';
 
 // =============================================================================
