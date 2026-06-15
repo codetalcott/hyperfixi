@@ -233,7 +233,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 - **Parallel execution**: jobs run in parallel after build completes
 - **Two-tier job set**: full matrix on `pull_request`, slim skew-detector set on `push` to main/develop
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
-- **Smart failure handling**: Known failures (behaviors, SOV/VSO languages) marked with `continue-on-error`
+- **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
 
 **Jobs:**
 
@@ -260,8 +260,8 @@ The four PR-only jobs already ran against the merged-as-PR code, so re-running t
 
 **Known Issues:**
 
-- Behavior tests: Draggable, Sortable, Resizable not fully implemented (continue-on-error)
-- SOV/VSO languages: Japanese, Korean, Turkish have lower pass rates than SVO languages (continue-on-error)
+- Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
+- SOV/VSO languages (Japanese, Korean, Turkish, Hindi) have lower round-trip **fidelity** than SVO languages — every non-behavior pattern parses in all 24 priority languages, but faithful command-for-command translation still lags on the hardest reorders. Tracked by the multilingual fidelity ratchet (not `continue-on-error`).
 
 ### Multilingual parse rate ≠ fidelity
 
