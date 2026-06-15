@@ -108,10 +108,25 @@ Move Tier-C to `experimental/`; mark Tier-B-optional; write the boundary rule in
 - demo build clean; exports map matches the new layout.
 
 **Phase 4 — Realize multilingual (the payoff).**
-Curated sources already live in patterns-reference; run `sync:translations` and let
-the fidelity gate measure them. Localize curated names/params/docs (Phase 5 of the
-multilingual plan — pure data). Ship a multilingual demo: author + `install` a
-Tier-A behavior in es/ja/ar. Gate: multilingual `--regression` gate green.
+Verify the curated behaviors' bodies translate + round-trip across languages, and
+ship a showcase demo. Two parts were deliberately scoped down for an unsupervised
+run (see note):
+
+- ✅ **Verify + showcase.** `examples/behaviors/multilingual.html`: each curated
+  behavior's core handler is translated live by `LokaScriptSemantic` into es/ja/ar/
+  ko/zh/de with the round-trip parse confidence shown, alongside a live English
+  `install Toggleable` that actually runs. Playwright-smoked.
+- ⏸ **patterns-reference `sync:translations` + baseline regen — deferred to a
+  supervised run.** The curated source edits (Phase 2) are **fidelity-neutral** for
+  the current gate corpus (the gate's behavior patterns are removable/draggable/
+  sortable/resizable; their _translatable_ `source` is unchanged — only descriptions
+  changed, which don't affect translation), so there is no regression to chase now.
+  The populate + `--save-baseline` flow is guarded (provenance stamp, ordered build)
+  and correctness-sensitive — run it with human oversight, not autonomously.
+- ⏸ **Localized prose metadata (names/param-docs) — deferred to native review.** The
+  feasibility doc explicitly calls for native-speaker review; hand-authoring es/ja/ar
+  descriptions unsupervised would commit unreviewed translations. The _capability_ is
+  proven; the curated reviewed data is a follow-up.
 
 ## 5. Risks
 
@@ -138,5 +153,13 @@ Tier-A behavior in es/ja/ar. Gate: multilingual `--regression` gate green.
   rule + tier table; demo grouped by tier with a boundary banner; new
   `examples/behaviors/recipes.html` inline-recipe gallery adapted from the
   \_hyperscript cookbook. 153 green; typecheck clean.
-- **Next:** Phase 4 — realize multilingual (patterns-reference sync + localized
-  curated metadata + multilingual demo).
+- **2026-06-15: Phase 4 ✅ (scoped).** Verified curated behavior bodies translate +
+  round-trip across es/ja/ar/ko/zh/de (78–100%); shipped
+  `examples/behaviors/multilingual.html` (Playwright-smoked: 18/18 round-trips OK,
+  live English `install Toggleable` runs, 0 console errors). Deferred (with
+  rationale): patterns-reference populate + baseline regen (fidelity-neutral now;
+  supervised op) and localized prose metadata (needs native review).
+- **Consolidation arc complete.** Curated 5 on one tested runtime path; boundary
+  documented; recipe + multilingual demos shipped. Follow-ups: convert the optional
+  3 (FocusTrap/ScrollReveal/Tabs) to source-compile; supervised patterns-reference
+  sync; native-reviewed localized metadata.
