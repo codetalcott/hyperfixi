@@ -25,6 +25,7 @@ describe('multilingual multi-handler program — bridge → core Program', () =>
     ['en', 'on click toggle .active on keyup add .x to me'], // no-end chain (Phase B)
     ['es', 'al click alternar .active fin al keyup agregar .x a me fin'],
     ['ja', 'click を で .active を 切り替え 終わり keyup を で .x を 追加 終わり'],
+    ['ja', 'click を で .active を 切り替え keyup を で .x を 追加'], // SOV no-end signature split
   ] as const;
 
   for (const [lang, src] of cases) {

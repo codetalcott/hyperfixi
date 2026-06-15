@@ -113,6 +113,31 @@ function looksLikeEvent(tok: LanguageToken | undefined): boolean {
 }
 
 /**
+ * SOV languages whose no-`end` handler chain (`click を で … keyup を で …`) can be
+ * split by the trigger SIGNATURE — the event-marker immediately followed by the
+ * on-marker (ja `を で`, ko `을 에`). The forward `<on> <event>` lookahead used for
+ * SVO/VSO does NOT work here (SOV is postpositional and the `on` marker is
+ * homonymous with the locative), but these two languages have a DISTINCT,
+ * separable event-marker and on-marker, so the adjacent pair uniquely identifies
+ * a trigger: the patient marker (also `を`/`을`) is followed by a verb/value, never
+ * by the on-marker. hi/bn are excluded — their event-marker and on-marker are the
+ * SAME surface form (`पर`/`তে`), so no two-token signature exists; tr (agglutinative
+ * suffixes) and qu (non-priority, unverified) are deferred. Such chains keep using
+ * the word-order-agnostic end-delimited form there.
+ */
+const TRIGGER_SIGNATURE_LANGS = new Set(['ja', 'ko']);
+
+/** Lowercased native surface forms (primary + alternatives) of a marker spec. */
+function markerSurfaceForms(
+  spec: { primary?: string; alternatives?: readonly string[] } | undefined
+): Set<string> {
+  const set = new Set<string>();
+  if (spec?.primary) set.add(spec.primary.toLowerCase());
+  for (const alt of spec?.alternatives ?? []) set.add(alt.toLowerCase());
+  return set;
+}
+
+/**
  * Parse the block header (`<keyword> <Name>` + optional `(params)`) from source
  * position — NOT by scanning for `on`, which fails in SOV where the handler starts
  * with the event (`click を で …`). Returns the declared parameters and the source
@@ -188,9 +213,15 @@ export function tryParseBlock(
  *    keyup …`). The `on` marker is matched by its surface form (en `on`, es `al`,
  *    …) and disambiguated from a destination `on` (`toggle .x on me`) by event-
  *    name lookahead: the next token must look like an EVENT, not a target
- *    reference/selector. This is inherently marker-dependent, so SOV chains with
- *    no trigger marker (ja `… 切り替え keyup を …`) are NOT split — they rely on
- *    the end-delimited form.
+ *    reference/selector. This forward lookahead assumes a PREPOSITIONAL `on`
+ *    (SVO/VSO/V2); SOV is postpositional, so it is gated off there.
+ *  - **signature-delimited** (Phase B, SOV) — for the no-`end` chain in ja/ko
+ *    ({@link TRIGGER_SIGNATURE_LANGS}), a depth-0 trigger SIGNATURE — the event-
+ *    marker immediately followed by the on-marker (ja `を で`, ko `을 에`) — starts
+ *    a new handler at the event token that precedes it. Their patient marker is
+ *    the same particle (`を`/`을`) but is followed by a verb, never the on-marker,
+ *    so the adjacent pair is an unambiguous trigger anchor. SOV languages without
+ *    a distinct two-token signature (hi/bn) still rely on the end-delimited form.
  *
  * Each segment is parsed by the ordinary single-statement engine and re-assembled
  * into a `compound` (which buildAST maps to a core `Program`, so the runtime
@@ -219,18 +250,28 @@ export function tryParseProgram(
   // agnostic. (The end split below still runs for SOV.)
   const triggerSplit = profile.wordOrder !== 'SOV';
 
+  // ja/ko no-`end` chains are split by the trigger SIGNATURE (event-marker
+  // immediately followed by on-marker) instead — see TRIGGER_SIGNATURE_LANGS.
+  const eventMarkerForms = TRIGGER_SIGNATURE_LANGS.has(language)
+    ? markerSurfaceForms(profile.roleMarkers?.event)
+    : new Set<string>();
+  const onMarkerForms = TRIGGER_SIGNATURE_LANGS.has(language)
+    ? markerSurfaceForms(profile.keywords?.on)
+    : new Set<string>();
+  const signatureSplit = eventMarkerForms.size > 0 && onMarkerForms.size > 0;
+
   // Cheap pre-guard: a multi-handler program needs either ≥1 `end` keyword (the
-  // end-delimited form) or — for trigger-split languages — ≥2 `on`-trigger surface
-  // forms (the no-`end` chain). Skip the tokenize for the overwhelming majority of
-  // single-statement inputs that have neither. Over-counting only costs a tokenize
-  // that then yields <2 segments → null; under-counting would miss a real program,
-  // so this errs toward proceeding.
+  // end-delimited form) or — for trigger/signature-split languages — ≥2 `on`-marker
+  // surface forms (the no-`end` chain has one per handler). Skip the tokenize for
+  // the overwhelming majority of single-statement inputs that have neither. Over-
+  // counting only costs a tokenize that then yields <2 segments → null; under-
+  // counting would miss a real program, so this errs toward proceeding.
   const endForms = keywordForms(language, 'end');
   const onForms = keywordForms(language, 'on');
   const lower = input.toLowerCase();
   const hasEnd = [...endForms].some(f => lower.includes(f));
   const hasMultiTrigger =
-    triggerSplit &&
+    (triggerSplit || signatureSplit) &&
     (() => {
       let hits = 0;
       for (const f of onForms) {
@@ -251,10 +292,11 @@ export function tryParseProgram(
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // Split into top-level handler segments. At depth 0: a `end` closes the current
-  // handler (end-delimited form); an `on`-marker that BEGINS a new handler (its
-  // lookahead is an event, not a target) starts a new segment (no-`end` chain). A
-  // `end` at depth > 0 closes a NESTED if/repeat (decrement only). A final handler
-  // with no trailing `end` is the tail segment.
+  // handler (end-delimited form); a prepositional `on`-marker that BEGINS a new
+  // handler (its lookahead is an event, not a target) starts a new segment (no-`end`
+  // chain, SVO/VSO); or a ja/ko trigger signature (event-marker + on-marker) starts
+  // a new segment at the event token before it. A `end` at depth > 0 closes a NESTED
+  // if/repeat (decrement only). A final handler with no trailing `end` is the tail.
   const segments: string[] = [];
   let depth = 0;
   let segStart = 0;
@@ -281,6 +323,23 @@ export function tryParseProgram(
       const text = input.slice(tokens[segStart].position.start, tok.position.start).trim();
       if (text) segments.push(text);
       segStart = j;
+    } else if (
+      signatureSplit &&
+      depth === 0 &&
+      j - 1 > segStart &&
+      tokenMatches(tok, eventMarkerForms) &&
+      tokens[j + 1] !== undefined &&
+      tokenMatches(tokens[j + 1], onMarkerForms)
+    ) {
+      // ja/ko trigger signature `<event> <event-marker> <on-marker>` (`keyup を で`,
+      // `keyup 을 에`): the marker pair at j / j+1 means the token at j-1 is the new
+      // handler's event. The previous handler ends just before it. The patient
+      // marker is the same particle but is followed by a verb (not the on-marker),
+      // so this pair only matches a real trigger.
+      const eventTok = tokens[j - 1];
+      const text = input.slice(tokens[segStart].position.start, eventTok.position.start).trim();
+      if (text) segments.push(text);
+      segStart = j - 1;
     }
   }
   if (segStart < tokens.length) {

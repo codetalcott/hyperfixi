@@ -125,16 +125,49 @@ describe('multi-handler program — parse (no-end feature chain, Phase B)', () =
     }
   });
 
-  it('does NOT trigger-split SOV chains (postpositional marker) — stays one handler', () => {
-    // SOV `on` markers are postpositional and homonymous with the locative, so a
-    // forward event lookahead can't split safely; these rely on the end-delimited
-    // form (Phase A). A single SOV handler must remain a single handler.
-    expect(
-      (parse('click पर .open को #panel पर टॉगल', 'hi') as SNode).kind
-    ).toBe('event-handler');
-    expect(
-      (parse('click を で .active を 切り替え keyup を で .x を 追加', 'ja') as SNode).kind
-    ).toBe('event-handler');
+  it('does NOT split SOV chains without a distinct trigger signature (hi)', () => {
+    // hi's event-marker and on-marker are the SAME surface form (`पर`), so there is
+    // no two-token signature to anchor a split — and a single handler whose body
+    // ends in a locative `#panel पर` must stay one handler. These rely on the
+    // end-delimited form.
+    expect((parse('click पर .open को #panel पर टॉगल', 'hi') as SNode).kind).toBe('event-handler');
+  });
+});
+
+describe('multi-handler program — ja/ko trigger-signature split (SOV no-end)', () => {
+  // ja/ko have a DISTINCT event-marker + on-marker (`を で`, `을 에`); the adjacent
+  // pair uniquely anchors a handler trigger, so the no-end chain splits even though
+  // the marker is postpositional. The patient particle is the same (`を`/`을`) but is
+  // followed by a verb, never the on-marker, so single handlers don't false-split.
+  const chains: Record<string, string> = {
+    ja: 'click を で .active を 切り替え keyup を で .x を 追加',
+    ko: 'click 을 에 .active 을 토글 keyup 을 에 .x 을 추가',
+  };
+  for (const [lang, src] of Object.entries(chains)) {
+    it(`${lang}: splits a space-separated no-end chain into two handlers`, () => {
+      const node = parse(src, lang) as SNode;
+      expect(node.kind, lang).toBe('compound');
+      expect(node.statements, lang).toHaveLength(2);
+      expect(node.statements!.map(eventOf), lang).toEqual(['click', 'keyup']);
+      expect(actionsOf(node.statements![0]), lang).toEqual(['toggle']);
+      expect(actionsOf(node.statements![1]), lang).toEqual(['add']);
+    });
+  }
+
+  it('ja: splits a newline-separated no-end chain', () => {
+    const node = parse('click を で .active を 切り替え\nkeyup を で .x を 追加', 'ja') as SNode;
+    expect(node.kind).toBe('compound');
+    expect(node.statements).toHaveLength(2);
+  });
+
+  it('ja: a single handler is NOT split (patient `を` is not a trigger signature)', () => {
+    expect((parse('click を で .active を 切り替え', 'ja') as SNode).kind).toBe('event-handler');
+  });
+
+  it('ja: buildAST → core Program with two eventHandlers', () => {
+    const ast = astOf(parse(chains.ja, 'ja') as SNode);
+    expect(ast.type).toBe('Program');
+    expect(ast.statements!.map(s => s.event)).toEqual(['click', 'keyup']);
   });
 });
 
