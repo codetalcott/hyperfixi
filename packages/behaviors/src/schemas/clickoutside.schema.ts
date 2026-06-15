@@ -41,7 +41,7 @@ behavior ClickOutside(active)
     end
   end
   on pointerdown from document
-    js(me, active)
+    js(me, active, event)
       if (!me.isConnected) return;
       if (active && !me.contains(event.target)) {
         me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
