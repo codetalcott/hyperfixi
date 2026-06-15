@@ -65,29 +65,32 @@ behavior Clipboard(text, source, feedback, feedbackDuration)
       set copyText to source's textContent
     end
     js(me, copyText, feedback, feedbackDuration)
-      async function copyToClipboard(t) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(t);
-          return;
+      // Wrapped in an async IIFE: hyperscript's js() block has no top-level await.
+      (async function() {
+        async function copyToClipboard(t) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(t);
+            return;
+          }
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
         }
-        var ta = document.createElement('textarea');
-        ta.value = t;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
-      }
-      try {
-        await copyToClipboard(copyText);
-        var feedbackEl = feedback ? (typeof feedback === 'string' ? document.querySelector(feedback) : feedback) : me;
-        if (!feedbackEl) feedbackEl = me;
-        feedbackEl.classList.add('copied');
-        me.dispatchEvent(new CustomEvent('clipboard:copied', { bubbles: true, detail: { text: copyText } }));
-        setTimeout(function() { feedbackEl.classList.remove('copied'); }, feedbackDuration);
-      } catch(err) {
-        me.dispatchEvent(new CustomEvent('clipboard:error', { bubbles: true, detail: { error: err } }));
-      }
+        try {
+          await copyToClipboard(copyText);
+          var feedbackEl = feedback ? (typeof feedback === 'string' ? document.querySelector(feedback) : feedback) : me;
+          if (!feedbackEl) feedbackEl = me;
+          feedbackEl.classList.add('copied');
+          me.dispatchEvent(new CustomEvent('clipboard:copied', { bubbles: true, detail: { text: copyText } }));
+          setTimeout(function() { feedbackEl.classList.remove('copied'); }, feedbackDuration);
+        } catch(err) {
+          me.dispatchEvent(new CustomEvent('clipboard:error', { bubbles: true, detail: { error: err } }));
+        }
+      })();
     end
   end
 end`.trim(),

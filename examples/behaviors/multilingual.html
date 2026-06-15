@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Behaviors — Multilingual</title>
+  <link rel="stylesheet" href="../gallery.css">
+  <style>
+    body.example-page { max-width: 1000px; padding: 2rem; }
+    .card { background: var(--color-surface,#fff); padding:1.5rem; border-radius:8px; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+    .card h2 { margin-top:0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .en-src { background:#18181b; color:#e4e4e7; padding:.6rem .9rem; border-radius:6px; display:inline-block; }
+    table.tr { width:100%; border-collapse:collapse; margin-top:.75rem; }
+    table.tr th, table.tr td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--color-border,#e4e4e7); vertical-align:top; }
+    table.tr th { font-size:.8rem; color:var(--color-text-muted,#71717a); text-transform:uppercase; letter-spacing:.03em; }
+    .native { font-size:1.05rem; }
+    .rtl { direction:rtl; }
+    .ok { color:#16a34a; font-weight:600; }
+    .warn { color:#d97706; font-weight:600; }
+    .order { font-size:.7rem; padding:1px 6px; border-radius:4px; background:#e0e7ff; color:#3730a3; }
+    .live-demo button.active { background:#6366f1; color:#fff; }
+    .note { background:#eef2ff; border:1px solid #c7d2fe; }
+  </style>
+</head>
+<body class="example-page">
+  <div class="breadcrumb">
+    <a href="../index.html">← Back to Gallery</a> / <a href="demo.html">Behaviors</a> / Multilingual
+  </div>
+
+  <h1>Author behaviors in your language</h1>
+  <p class="muted mb-lg">
+    The curated behaviors are defined in <strong>pure hyperscript</strong>, so their
+    logic isn't English-only. A behavior body like <code>on click toggle .active</code>
+    translates — with grammar transformation (SVO / SOV / VSO word order) — into any of
+    24 languages, and round-trips back to the same intent. This is what the imperative-JS
+    detour threw away: you can't translate a JavaScript installer, but you can translate
+    hyperscript. Below, each curated behavior's core handler is translated live by the
+    <code>LokaScriptSemantic</code> engine.
+  </p>
+
+  <!-- Live English behavior (proves the curated behavior actually runs) -->
+  <div class="card live-demo">
+    <h2>Live — the behavior itself works</h2>
+    <p>This button installs the curated <code>Toggleable</code> behavior (English source, one runtime path):</p>
+    <button _="install Toggleable(cls: 'active')">Toggle me</button>
+    <p class="muted" style="margin-bottom:0;">Same behavior, its handler translated into 6 languages below.</p>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="card note">
+    <strong>Why this matters.</strong> Translation only works because the behavior is
+    hyperscript — you can't translate a JavaScript installer. <code>Toggleable</code> and
+    <code>Removable</code> have fully hyperscript bodies and translate end-to-end. The
+    behaviors with a small <code>js()</code> core (<code>ClickOutside</code>'s containment
+    check, <code>Clipboard</code>'s Clipboard-API call, <code>AutoDismiss</code>'s timers)
+    translate their <em>trigger</em> surface but keep that core English — honestly
+    labeled, fidelity-neutral.
+  </div>
+
+  <!-- semantic engine: the verified parse/translate APIs -->
+  <script src="../../packages/semantic/dist/browser.global.js"></script>
+  <!-- core + resolver: makes the live English Toggleable button actually work -->
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script src="../../packages/behaviors/dist/resolver.browser.global.js"></script>
+  <script>
+    const Semantic = window.LokaScriptSemantic;
+    const cards = document.getElementById('cards');
+
+    // Curated behaviors' core handlers + a representative inline-behavior body.
+    // These are the multilingually-meaningful parts (real hyperscript, not js()).
+    const BEHAVIORS = [
+      { name: 'Toggleable',       tier: 'curated', src: 'on click toggle .active on me' },
+      { name: 'Removable',        tier: 'curated', src: 'on click remove me' },
+      { name: 'Highlight (inline)', tier: 'recipe', src: 'on mouseenter add .highlight to me' },
+    ];
+
+    const LANGS = [
+      { code: 'es', name: 'Español',  order: 'SVO', rtl: false },
+      { code: 'ja', name: '日本語',    order: 'SOV', rtl: false },
+      { code: 'ar', name: 'العربية',  order: 'VSO', rtl: true  },
+      { code: 'ko', name: '한국어',    order: 'SOV', rtl: false },
+      { code: 'zh', name: '中文',      order: 'SVO', rtl: false },
+      { code: 'de', name: 'Deutsch',  order: 'V2',  rtl: false },
+    ];
+
+    function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c])); }
+
+    function render() {
+      if (!Semantic) {
+        cards.innerHTML = '<div class="card" style="color:#dc2626;">LokaScriptSemantic bundle not loaded. Run <code>npm run build:browser --prefix packages/semantic</code>.</div>';
+        return;
+      }
+      for (const b of BEHAVIORS) {
+        let rows = '';
+        for (const lang of LANGS) {
+          let translated = '[—]', conf = null;
+          try { translated = Semantic.translate(b.src, 'en', lang.code); } catch (e) { translated = '[error]'; }
+          // Semantic.parse returns a node; confidence lives on node.metadata.confidence.
+          try { const p = Semantic.parse(translated, lang.code); conf = p && ((p.metadata && p.metadata.confidence) ?? p.confidence); } catch (e) { conf = null; }
+          const round = conf != null
+            ? `<span class="${conf >= 0.75 ? 'ok' : 'warn'}">round-trips ${(conf*100).toFixed(0)}%</span>`
+            : '<span class="warn">—</span>';
+          rows += `<tr>
+            <td>${lang.name} <span class="order">${lang.order}</span></td>
+            <td class="native ${lang.rtl ? 'rtl' : ''}">${esc(translated)}</td>
+            <td>${round}</td>
+          </tr>`;
+        }
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h2>${b.name} <span class="order">${b.tier}</span></h2>
+          <p>English source: <code class="en-src">${esc(b.src)}</code></p>
+          <table class="tr">
+            <thead><tr><th>Language</th><th>Translated behavior body</th><th>Round-trip parse</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+        cards.appendChild(card);
+      }
+    }
+    render();
+  </script>
+</body>
+</html>

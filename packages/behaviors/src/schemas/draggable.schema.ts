@@ -11,7 +11,8 @@ export const draggableSchema: BehaviorSchema = {
   category: 'ui',
   tier: 'core',
   version: '1.0.0',
-  description: 'Makes elements draggable with pointer events',
+  description:
+    'Makes elements draggable with pointer events (EXPERIMENTAL — stateful async component, beyond the inline-scripting boundary; not part of the curated set)',
   parameters: [
     {
       name: 'dragHandle',

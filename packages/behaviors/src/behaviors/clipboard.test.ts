@@ -2,25 +2,31 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('Clipboard behavior', () => {
   describe('registerClipboard', () => {
-    it('should register with synthetic node via execute', async () => {
-      const { registerClipboard } = await import('./clipboard');
+    it('should compile its hyperscript source and execute', async () => {
+      const { registerClipboard, clipboardSource } = await import('./clipboard');
       const mock = {
-        compileSync: vi.fn(),
+        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
         execute: vi.fn().mockResolvedValue(undefined),
         createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
       };
 
       await registerClipboard(mock);
 
-      expect(mock.compileSync).not.toHaveBeenCalled();
+      expect(mock.compileSync).toHaveBeenCalledWith(clipboardSource, { traditional: true });
       expect(mock.execute).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'behavior',
-          name: 'Clipboard',
-          imperativeInstaller: expect.any(Function),
-        }),
+        { type: 'behavior' },
         expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
       );
+    });
+
+    it('should throw on compile failure', async () => {
+      const { registerClipboard } = await import('./clipboard');
+      const mock = {
+        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
+        execute: vi.fn(),
+        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      };
+      await expect(registerClipboard(mock)).rejects.toThrowError(/Failed to compile Clipboard/);
     });
 
     it('should throw when no runtime available', async () => {
@@ -31,7 +37,7 @@ describe('Clipboard behavior', () => {
     it('should fall back to manual context when createContext is missing', async () => {
       const { registerClipboard } = await import('./clipboard');
       const mock = {
-        compileSync: vi.fn(),
+        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
         execute: vi.fn().mockResolvedValue(undefined),
       };
 

@@ -1,8 +1,11 @@
 /**
- * ClickOutside Behavior — Imperative Implementation
+ * ClickOutside Behavior
  *
  * Fires a clickoutside event when the user clicks outside the element.
  * Uses pointerdown instead of click to avoid timing issues.
+ *
+ * Compiled from its hyperscript `source` (the single source of truth shared with
+ * the CDN resolver bundle and patterns-reference).
  */
 
 import { clickOutsideSchema } from '../schemas/clickoutside.schema';
@@ -14,36 +17,8 @@ export const clickOutsideSource = clickOutsideSchema.source;
 export const clickOutsideMetadata = clickOutsideSchema;
 
 /**
- * Imperative installer for ClickOutside behavior.
- */
-function installClickOutside(element: HTMLElement, params: Record<string, any>): void {
-  let active = params.active !== false;
-
-  function onPointerDown(e: Event) {
-    // Auto-cleanup if element has been removed from DOM
-    if (!element.isConnected) {
-      document.removeEventListener('pointerdown', onPointerDown);
-      return;
-    }
-
-    if (active && !element.contains(e.target as Node)) {
-      element.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
-    }
-  }
-
-  document.addEventListener('pointerdown', onPointerDown);
-
-  // Programmatic activation/deactivation via custom events
-  element.addEventListener('clickoutside:activate', () => {
-    active = true;
-  });
-  element.addEventListener('clickoutside:deactivate', () => {
-    active = false;
-  });
-}
-
-/**
- * Register the ClickOutside behavior with LokaScript.
+ * Register the ClickOutside behavior with LokaScript by compiling its
+ * hyperscript source and executing the resulting behavior definition.
  */
 export async function registerClickOutside(hyperfixi?: LokaScriptInstance): Promise<void> {
   const hf = hyperfixi || resolveRuntime();
@@ -54,15 +29,14 @@ export async function registerClickOutside(hyperfixi?: LokaScriptInstance): Prom
     );
   }
 
-  const syntheticNode = {
-    type: 'behavior',
-    name: 'ClickOutside',
-    parameters: ['active'],
-    eventHandlers: [],
-    imperativeInstaller: installClickOutside,
-  };
+  const result = hf.compileSync(clickOutsideSchema.source, { traditional: true });
+
+  if (!result.ok) {
+    throw new Error(`Failed to compile ClickOutside behavior: ${JSON.stringify(result.errors)}`);
+  }
+
   const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(syntheticNode, ctx);
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

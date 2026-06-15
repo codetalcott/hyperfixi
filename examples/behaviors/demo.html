@@ -246,10 +246,22 @@
   <h1>HyperFixi Behaviors Demo</h1>
   <p class="muted mb-lg">Reusable behaviors defined in pure hyperscript. Each behavior can be installed on any element with <code>_="install BehaviorName(params)"</code>.</p>
 
+  <div class="demo-section" style="background:#eef2ff;border:1px solid #c7d2fe;">
+    <h2 style="margin-top:0;">The boundary rule</h2>
+    <p><strong>A behavior is a reusable inline script — <code>on event → DOM action</code>. Not a component.</strong> When something needs an observer, a focus model, or an async pointer loop, it has left the inline-scripting lane.</p>
+    <p class="muted" style="margin-bottom:0;">
+      <strong>Curated</strong> (reliable, supported): Toggleable, Removable, ClickOutside, Clipboard, AutoDismiss ·
+      <strong>Optional</strong> (primitives / nice-to-have): FocusTrap, ScrollReveal, Tabs ·
+      <strong>Experimental</strong> (beyond the boundary): Draggable, Sortable, Resizable.
+      Most "behaviors" are really just short scripts — see <a href="recipes.html">Recipes</a>.
+      Behaviors are pure hyperscript, so their logic translates — see <a href="multilingual.html">Multilingual</a>.
+    </p>
+  </div>
+
   <!-- Draggable Demo -->
-  <div class="demo-section">
-    <h2>Draggable</h2>
-    <p>Drag the box around the container.</p>
+  <div class="demo-section" style="border-left:4px solid #f59e0b;">
+    <h2>Draggable <span style="font-size:0.7em;background:#f59e0b;color:#18181b;padding:2px 8px;border-radius:4px;vertical-align:middle;">EXPERIMENTAL</span></h2>
+    <p>Drag the box around the container. <em class="muted">Stateful async component — beyond the inline-scripting boundary; not part of the curated set.</em></p>
     <div class="draggable-container">
       <div class="draggable-box" _="install Draggable" style="left: 20px; top: 20px;">
         Drag me!
