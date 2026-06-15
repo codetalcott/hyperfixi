@@ -26,7 +26,8 @@ each `src/schemas/*.schema.ts`. The npm `register*()` functions, the CDN
 `resolver.browser.global.js` bundle, and `@hyperfixi/patterns-reference` all compile
 that **same source** — one runtime path, identical in the browser and Node. (The
 old imperative-JS installers were a mistaken experiment that forked a second,
-diverging path; they have been removed for the curated set.)
+diverging path; they have been removed for the curated **and optional** sets. Only
+the three experimental components still ship an imperative installer — see below.)
 
 ## Tiers
 
@@ -57,7 +58,11 @@ asserting both the effect and its lifecycle events — "parses ≠ works".
 
 `FocusTrap` · `ScrollReveal` · `Tabs`. `FocusTrap` + `ClickOutside` are the
 primitives a Modal composes from; `Tabs` is high-value but heavy (a future
-web-component candidate).
+web-component candidate). They carry their web-API logic (a focus model, an
+`IntersectionObserver`, ARIA/keyboard wiring) in an `init`-block `js()` body, but
+flow through the **same single compile path** as the curated set — no
+imperative-installer fork. Each has a real-runtime DOM test in
+[`src/behaviors/optional-runtime.test.ts`](src/behaviors/optional-runtime.test.ts).
 
 ### Experimental (3) — beyond the boundary
 

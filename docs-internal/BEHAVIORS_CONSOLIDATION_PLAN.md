@@ -160,6 +160,21 @@ run (see note):
   rationale): patterns-reference populate + baseline regen (fidelity-neutral now;
   supervised op) and localized prose metadata (needs native review).
 - **Consolidation arc complete.** Curated 5 on one tested runtime path; boundary
-  documented; recipe + multilingual demos shipped. Follow-ups: convert the optional
-  3 (FocusTrap/ScrollReveal/Tabs) to source-compile; supervised patterns-reference
-  sync; native-reviewed localized metadata.
+  documented; recipe + multilingual demos shipped.
+- **2026-06-15: Optional-3 conversion ✅** (follow-up #1). FocusTrap/ScrollReveal/
+  Tabs now compile their `schema.source` (`compileSync` + `execute`) instead of a
+  synthetic node with `imperativeInstaller` — the last curated/optional fork between
+  the CDN resolver and the npm path is closed. Their web-API logic (focus model,
+  `IntersectionObserver`, ARIA/keyboard wiring) was already complete in each
+  schema's `init`-block `js()` body, so the conversion is mechanically identical to
+  the Phase-1 curated collapse. New `src/behaviors/optional-runtime.test.ts` drives
+  all three through the real core runtime under happy-dom (focus-trap wrap,
+  intersection reveal via a stubbed observer, tab ARIA/keyboard nav + cancelable
+  `tabs:change`) — the "parses ≠ works" gate. `integration.test.ts` moves the three
+  into `compiledBehaviors`; mock unit tests assert the compile path. **Only the
+  experimental 3 (Draggable/Sortable/Resizable) remain imperative** — deliberate, as
+  async components beyond the inline-scripting boundary (§3b/§3d). behaviors
+  **167 green**; typecheck + tsup build clean; dist verified (optional-3 globals
+  carry `compileSync`, `imperativeInstaller` only in the experimental-3 globals).
+- **Remaining follow-ups:** supervised patterns-reference sync; native-reviewed
+  localized metadata. Both require human/native oversight (see §4 Phase 4 notes).

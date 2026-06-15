@@ -1,8 +1,14 @@
 /**
- * ScrollReveal Behavior — Imperative Implementation
+ * ScrollReveal Behavior
  *
  * Adds a class or fires events when the element enters or exits the viewport.
- * Uses the IntersectionObserver web standard API.
+ * Uses the IntersectionObserver web standard API (in its hyperscript `source`'s
+ * `init`-block `js()` body).
+ *
+ * Compiled from its hyperscript `source` — the single source of truth shared with
+ * the CDN resolver bundle and patterns-reference. This collapses ScrollReveal onto
+ * the one runtime path (no more imperative-installer fork between CDN and npm);
+ * see docs-internal/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
  */
 
 import { scrollRevealSchema } from '../schemas/scrollreveal.schema';
@@ -14,37 +20,8 @@ export const scrollRevealSource = scrollRevealSchema.source;
 export const scrollRevealMetadata = scrollRevealSchema;
 
 /**
- * Imperative installer for ScrollReveal behavior.
- */
-function installScrollReveal(element: HTMLElement, params: Record<string, any>): void {
-  const cls = typeof params.cls === 'string' ? params.cls : 'revealed';
-  const threshold = typeof params.threshold === 'number' ? params.threshold : 0.1;
-  const once = params.once !== false;
-  const rootMargin = typeof params.rootMargin === 'string' ? params.rootMargin : '0px';
-
-  const observer = new IntersectionObserver(
-    entries => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          element.classList.add(cls);
-          element.dispatchEvent(new CustomEvent('scrollreveal:enter', { bubbles: true }));
-          if (once) {
-            observer.disconnect();
-          }
-        } else if (!once) {
-          element.classList.remove(cls);
-          element.dispatchEvent(new CustomEvent('scrollreveal:exit', { bubbles: true }));
-        }
-      }
-    },
-    { threshold, rootMargin }
-  );
-
-  observer.observe(element);
-}
-
-/**
- * Register the ScrollReveal behavior with LokaScript.
+ * Register the ScrollReveal behavior with LokaScript by compiling its
+ * hyperscript source and executing the resulting behavior definition.
  */
 export async function registerScrollReveal(hyperfixi?: LokaScriptInstance): Promise<void> {
   const hf = hyperfixi || resolveRuntime();
@@ -55,15 +32,14 @@ export async function registerScrollReveal(hyperfixi?: LokaScriptInstance): Prom
     );
   }
 
-  const syntheticNode = {
-    type: 'behavior',
-    name: 'ScrollReveal',
-    parameters: ['cls', 'threshold', 'once', 'rootMargin'],
-    eventHandlers: [],
-    imperativeInstaller: installScrollReveal,
-  };
+  const result = hf.compileSync(scrollRevealSchema.source, { traditional: true });
+
+  if (!result.ok) {
+    throw new Error(`Failed to compile ScrollReveal behavior: ${JSON.stringify(result.errors)}`);
+  }
+
   const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(syntheticNode, ctx);
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag
