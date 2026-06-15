@@ -22,26 +22,29 @@ function createMockInstance(overrides: Partial<LokaScriptInstance> = {}): LokaSc
 }
 
 // Source-compiled behaviors (use compileSync + execute).
-// The curated set (BEHAVIORS_CONSOLIDATION_PLAN.md §3) all compile their
-// hyperscript `source` — one runtime path, identical browser/npm.
+// The curated set + the optional set (BEHAVIORS_CONSOLIDATION_PLAN.md §3) all
+// compile their hyperscript `source` — one runtime path, identical browser/npm.
+// The optional three (FocusTrap/ScrollReveal/Tabs) carry their web-API logic in
+// an `init`-block `js()` body, but still flow through the single compile path.
 const compiledBehaviors = [
   { name: 'Removable', register: registerRemovable, source: removableSource },
   { name: 'Toggleable', register: registerToggleable, source: toggleableSource },
   { name: 'Clipboard', register: registerClipboard, source: clipboardSource },
   { name: 'AutoDismiss', register: registerAutoDismiss, source: autoDismissSource },
   { name: 'ClickOutside', register: registerClickOutside, source: clickOutsideSource },
+  { name: 'FocusTrap', register: registerFocusTrap, source: focusTrapSource },
+  { name: 'ScrollReveal', register: registerScrollReveal, source: scrollRevealSource },
+  { name: 'Tabs', register: registerTabs, source: tabsSource },
 ] as const;
 
 // Imperative behaviors (use synthetic node with imperativeInstaller).
-// Tier-C over-reach (Draggable/Sortable/Resizable) + optional behaviors still
-// pending conversion (FocusTrap/ScrollReveal/Tabs) — see consolidation plan.
+// Only the Tier-C async-component over-reach (Draggable/Sortable/Resizable) stays
+// imperative — these sit beyond the inline-scripting boundary and are deliberately
+// kept as experimental components, not part of the one-runtime-path story (§3b/§3d).
 const imperativeBehaviors = [
   { name: 'Draggable', register: registerDraggable, source: draggableSource },
   { name: 'Sortable', register: registerSortable, source: sortableSource },
   { name: 'Resizable', register: registerResizable, source: resizableSource },
-  { name: 'FocusTrap', register: registerFocusTrap, source: focusTrapSource },
-  { name: 'ScrollReveal', register: registerScrollReveal, source: scrollRevealSource },
-  { name: 'Tabs', register: registerTabs, source: tabsSource },
 ] as const;
 
 describe('behavior registration integration', () => {
