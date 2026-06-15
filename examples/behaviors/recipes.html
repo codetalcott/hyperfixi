@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Behaviors — Inline Recipes</title>
+  <link rel="stylesheet" href="../gallery.css">
+  <style>
+    body.example-page { max-width: 900px; padding: 2rem; }
+    .recipe {
+      background: var(--color-surface, #fff);
+      padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .recipe h2 { margin-top: 0; }
+    .recipe pre {
+      background: #18181b; color: #e4e4e7; padding: 0.75rem 1rem;
+      border-radius: 6px; overflow-x: auto; font-size: 0.85rem;
+    }
+    .try { padding: 1rem; background: var(--color-border, #e4e4e7); border-radius: 6px; margin-top: 0.75rem; }
+    .fun { background: #6366f1; color: #fff; }
+    .removable-item { padding: 0.75rem 1rem; margin: 0.4rem 0; background: #fee2e2; border-radius: 4px; cursor: pointer; }
+    .quotes { height: 11em; overflow-y: auto; margin-top: 0.5rem; }
+    .quotes blockquote { margin: 0.3rem 0; padding: 0.4rem 0.7rem; background: #f4f4f5; border-left: 3px solid #a1a1aa; }
+    output { font-variant-numeric: tabular-nums; font-weight: 600; }
+  </style>
+</head>
+<body class="example-page">
+  <div class="breadcrumb">
+    <a href="../index.html">← Back to Gallery</a> / <a href="demo.html">Behaviors</a> / Recipes
+  </div>
+
+  <h1>Inline Recipes — most "behaviors" are just short scripts</h1>
+  <p class="muted mb-lg">
+    Before reaching for <code>install BehaviorName</code>, check whether a short inline
+    <code>_="…"</code> script does the job. These recipes are adapted from the upstream
+    <a href="https://hyperscript.org/cookbook/">_hyperscript cookbook</a>
+    (<code>www/patterns/</code>), which is almost entirely inline patterns — not
+    <code>behavior</code> definitions. Promote a recipe to an installed behavior only
+    when it is genuinely reusable and parameterized. They run on the full
+    <code>hyperfixi.js</code> bundle.
+  </p>
+
+  <!-- 1. Toggle a class -->
+  <div class="recipe">
+    <h2>Toggle a class</h2>
+    <p>The hello-world of inline scripting. No behavior needed.</p>
+    <pre>_="on click toggle .fun on me"</pre>
+    <div class="try">
+      <button _="on click toggle .fun on me">Click me</button>
+      <p class="muted" style="margin-bottom:0;">Reusable + parameterized? Then it's worth promoting — that's exactly <code>install Toggleable(cls)</code>.</p>
+    </div>
+  </div>
+
+  <!-- 2. Fade and remove -->
+  <div class="recipe">
+    <h2>Fade out and remove</h2>
+    <p>Transition a property, then remove the element.</p>
+    <pre>_="on click transition *opacity to 0 over 300ms then remove me"</pre>
+    <div class="try">
+      <div class="removable-item" _="on click transition *opacity to 0 over 300ms then remove me">Click to dismiss me</div>
+      <div class="removable-item" _="on click transition *opacity to 0 over 300ms then remove me">…and me</div>
+      <p class="muted" style="margin-bottom:0;">The reusable, parameterized version is <code>install Removable(effect: 'fade')</code>.</p>
+    </div>
+  </div>
+
+  <!-- 3. Character counter -->
+  <div class="recipe">
+    <h2>Character counter</h2>
+    <p>Write to a sibling <code>&lt;output/&gt;</code> on every input — no IDs, no wiring.</p>
+    <pre>_="on input put my value's length into the next &lt;output/&gt;"</pre>
+    <div class="try">
+      <input type="text" maxlength="40" placeholder="Type here…"
+             _="on input put my value's length into the next <output/>">
+      <output>0</output> / 40
+      <p class="muted" style="margin-bottom:0;">For a live reactive version (<code>bind $msg to me</code>), use the <code>hyperfixi-hx-v4.js</code> reactive bundle.</p>
+    </div>
+  </div>
+
+  <!-- 4. Filter by search -->
+  <div class="recipe">
+    <h2>Filter a list by search</h2>
+    <p>The <code>show … when</code> form filters visibility against a condition.</p>
+    <pre>_="on keyup
+    show &lt;blockquote/&gt; in the next &lt;div/&gt;
+      when its textContent contains my value"</pre>
+    <div class="try">
+      <input type="text" placeholder="Search quotes…"
+             _="on keyup show <blockquote/> in the next <div/> when its textContent contains my value">
+      <div class="quotes">
+        <blockquote>"Talk is cheap. Show me the code." — Linus Torvalds</blockquote>
+        <blockquote>"Programs must be written for people to read." — Harold Abelson</blockquote>
+        <blockquote>"Truth can only be found in one place: the code." — Robert C. Martin</blockquote>
+        <blockquote>"I'm just a good programmer with great habits." — Kent Beck</blockquote>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. When to promote to a behavior -->
+  <div class="recipe" style="border-left:4px solid #6366f1;">
+    <h2>When to promote a recipe to a behavior</h2>
+    <p>
+      A recipe earns <code>install</code> when it is (a) used in several places and
+      (b) parameterized. Outside-click dismissal is a good example — it's a reusable
+      primitive, so it ships as <code>ClickOutside</code> rather than as copy-pasted
+      inline script:
+    </p>
+    <pre>&lt;div _="install ClickOutside
+         on clickoutside add .hidden to me"&gt; … &lt;/div&gt;</pre>
+    <p class="muted" style="margin-bottom:0;">See the <a href="demo.html">curated behaviors demo</a>.</p>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script src="../../packages/behaviors/dist/resolver.browser.global.js"></script>
+</body>
+</html>

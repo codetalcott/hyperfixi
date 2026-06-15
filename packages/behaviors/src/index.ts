@@ -186,6 +186,20 @@ export {
 } from './generated/metadata';
 
 // =============================================================================
+// Curation status (curated / optional / experimental) — see curation.ts
+// =============================================================================
+
+export type { CurationStatus } from './curation';
+export {
+  CURATED_BEHAVIORS,
+  OPTIONAL_BEHAVIORS,
+  EXPERIMENTAL_BEHAVIORS,
+  CURATION_STATUS,
+  curationStatusOf,
+  isCurated,
+} from './curation';
+
+// =============================================================================
 // Convenience functions
 // =============================================================================
 

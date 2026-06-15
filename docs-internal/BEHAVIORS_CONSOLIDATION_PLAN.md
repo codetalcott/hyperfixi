@@ -60,11 +60,19 @@ primitive), copy button, toast. The **Tier-A three lead the multilingual showcas
 (their bodies are real hyperscript); Clipboard/AutoDismiss ship but are honestly
 labeled JS-backed (their `js()` core stays English — fine, fidelity-neutral).
 
-### 3b. Demote to `experimental/` (kept, not curated, clearly "beyond inline scripting"): **3**
+### 3b. Demote experimental (kept, not curated, clearly "beyond inline scripting"): **3**
 
 **Draggable · Sortable · Resizable** — documented as advanced/experimental
 components, explicitly outside the boundary rule. Not in the "reliable behaviors"
 story.
+
+> **Implementation note (Phase 3):** the demotion is delivered via a programmatic
+> **curation status** (`src/curation.ts`: `CURATED`/`OPTIONAL`/`EXPERIMENTAL`),
+> in-file `EXPERIMENTAL` markers on the three schemas, README tiering, and demo
+> grouping — **not** a physical move to `experimental/`. A directory move would
+> churn `tsup.config.ts`, the package.json exports map (dist paths), and 6+ internal
+> files for zero external benefit (no consumer imports the Tier-C subpaths). The
+> curation status is the thing code can rely on; the directory is cosmetic.
 
 ### 3c. Optional (kept, documented as primitives/nice-to-have): **3**
 
@@ -118,4 +126,17 @@ Tier-A behavior in es/ja/ar. Gate: multilingual `--regression` gate green.
 - **2026-06-14:** audit complete; decisions in §3 locked. **Owner signed off on the
   curated-5 cut list** (Toggleable/Removable/ClickOutside/Clipboard/AutoDismiss
   curated; Draggable/Sortable/Resizable → experimental; FocusTrap/ScrollReveal/Tabs
-  optional). Next: Phase 1.
+  optional).
+- **2026-06-15: Phase 1 ✅** — curated 5 collapsed onto one source-compiled runtime
+  path; imperative installers removed; unit tests assert source-compile. 143 green.
+- **2026-06-15: Phase 2 ✅** — `curated-runtime.test.ts` drives each curated behavior
+  through the real core runtime under happy-dom. **Caught + fixed two source bugs the
+  imperative path masked:** ClickOutside read `event.target` without passing `event`
+  into js(); Clipboard used top-level `await` in a js() block. 148 green.
+- **2026-06-15: Phase 3 ✅** — demotion via `src/curation.ts` (curated/optional/
+  experimental) + in-file EXPERIMENTAL markers; package README with the boundary
+  rule + tier table; demo grouped by tier with a boundary banner; new
+  `examples/behaviors/recipes.html` inline-recipe gallery adapted from the
+  \_hyperscript cookbook. 153 green; typecheck clean.
+- **Next:** Phase 4 — realize multilingual (patterns-reference sync + localized
+  curated metadata + multilingual demo).

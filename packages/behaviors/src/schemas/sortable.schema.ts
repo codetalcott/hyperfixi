@@ -15,7 +15,8 @@ export const sortableSchema: BehaviorSchema = {
   category: 'ui',
   tier: 'common',
   version: '1.0.0',
-  description: 'Makes child elements reorderable via drag-and-drop',
+  description:
+    'Makes child elements reorderable via drag-and-drop (EXPERIMENTAL — stateful async component, beyond the inline-scripting boundary; not part of the curated set)',
   parameters: [
     {
       name: 'dragClass',
