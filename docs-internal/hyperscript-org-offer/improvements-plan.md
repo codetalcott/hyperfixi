@@ -203,7 +203,7 @@ and confirm:
   auto-registers and processes a `_="alternar .active on me"` button.
 
 **Fix:** Add this as a manual step in the
-[carson-handoff.md pre-send checklist](./carson-handoff.md), or wire into a
+[handoff.md pre-send checklist](./handoff.md), or wire into a
 Playwright smoke test in `packages/multilingual-hyperscript/test/`.
 
 **Effort:** 30 minutes manual; 2 hours automated.

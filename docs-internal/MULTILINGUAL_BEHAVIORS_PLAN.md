@@ -200,9 +200,17 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
 - Localized names / param-names / hover-docs for the 11 shipped behaviors
   (`packages/behaviors`). Pure data, zero parser risk, immediate broad
   understand-value. Independent of the ladder.
-- **Do not** re-localize the shipped behaviors' hyperscript `source` — they run
+- ~~**Do not** re-localize the shipped behaviors' hyperscript `source` — they run
   **imperative JS installers**, so the `source` string is near-worthless to
-  translate. Authoring value is in _user-defined_ behaviors (Phase 3).
+  translate.~~ **Superseded (2026-06-15, behaviors consolidation — see
+  [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md)):** the curated
+  shipped behaviors no longer run imperative JS installers — they **compile their
+  hyperscript `source`** (one runtime path). So that source _is_ now meaningful to
+  translate: Toggleable/Removable translate end-to-end; the js()-core behaviors
+  (ClickOutside/Clipboard/AutoDismiss) translate their trigger surface. A live
+  showcase shipped at `examples/behaviors/multilingual.html`. Localized prose
+  metadata (names/param-docs) still wants native review before committing.
+  Authoring value remains greatest in _user-defined_ behaviors (Phase 3).
 
 ## 5. Invariants (every phase)
 
@@ -242,13 +250,30 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
   lock `test/event-handler-render-no-phantom.test.ts` 17/17; typecheck clean. The
   fix is provably **recall-neutral** (removes only spurious commands), so the
   committed multilingual gate baseline cannot regress on its recall/R1 signals.
-- **Deferred (Phase 1b):** **event-name translation.** Event names render as
-  English (`click`, not native) — functionally correct (DOM event names;
-  round-trips fine) and **fidelity-neutral** (a value, not a command), so it does
-  not violate any invariant. Native rendering needs the _reverse_ of
-  `eventNameTranslations` (which maps native→English) plus careful handling of
-  compound (`click or keydown`), namespaced (`htmx:load`), and modifier forms —
-  scoped separately rather than rushed into Phase 1.
+- **2026-06-15: Phase 1b ✅ complete — event-name translation.** Event names now
+  render in the target language (`on click …` → es `al clic …`, ja `クリック … で`,
+  ar `على النقر …`, zh `一 点击 就 …`, ko `클릭 …`). Implementation:
+  `localizeEventName()` in `packages/semantic/src/patterns/event-handler.ts`
+  inverts `eventNameTranslations` (English→native, first-wins); `renderer.ts`
+  routes **only** the event role of an event-handler node through a new
+  `renderEventName()` (other role literals untouched). The single render-path edit
+  also covers behaviors/defs/multi-handler programs. Non-literal values (namespaced
+  `htmx:load`, unknown/custom events) and compound `a or b` triggers pass each
+  sub-name through, keeping the English `or` connector (native connectors add no
+  round-trip benefit; ja/zh/ko compound stays a pre-existing known-limitation).
+  - **Round-trip safety:** `eventNameTranslations` proved _aspirational_ — it lists
+    natives some tokenizers never register or that re-parse as other commands (de
+    `load`→`laden`→fetch; qu `submit`→`apachiy`→send; weak sw/tr handler grammars).
+    A **test-locked, evidence-based denylist** keeps English for every unsafe pair
+    (English always round-trips); the exhaustive case in
+    `test/event-name-translation.test.ts` _proves_ every native the localizer emits
+    re-parses back to the same event.
+  - **Gate-neutral** (a value, not a command): the multilingual gate scores
+    pre-synced patterns.db translations (i18n transformer), not the semantic
+    renderer — so this changes no scored output. Re-`populate`d + `--regression`
+    gate **green**, baseline byte-unchanged.
+  - Regression: new lock test (15); no-phantom lock unchanged (30); full semantic
+    suite 6096 passed / 9 skipped; build + typecheck clean.
 - **Deferred (Phase 2):** SOV trigger-marker cosmetics (ja renders `click を で`,
   slightly non-idiomatic but round-trips correctly).
 - **2026-06-14: Phase 2 in progress — doubled trigger-marker phantom fixed.**
@@ -305,4 +330,12 @@ Dependency shape: **Phase 0 gates 1–4 · 1→4 · 2→3 · 5 is free-floating.
     path drops/duplicates it (`[200ms, wait, add]`). Same "control-flow body
     parsing" cluster tracked in CORRECTNESS_RELIABILITY_PLAN; high-risk to touch
     for one non-priority edge case. (qu possessor-first possessive also remains.)
-- **Next:** Phase 3 — general structural/block layer (behaviors / `def` / programs).
+- **2026-06-15: behaviors consolidation merged (PR #430).** The shipped curated
+  behaviors (Toggleable/Removable/ClickOutside/Clipboard/AutoDismiss) now compile
+  their hyperscript `source` on one runtime path; Phase 1's parse/render block layer
+  is exercised live by `examples/behaviors/multilingual.html` (curated bodies
+  translate + round-trip 78–100% across es/ja/ar/ko/zh/de). See
+  [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md).
+- **Next:** native-reviewed localized metadata (Phase 5); multi-handler top-level
+  programs (feature-chain, deferred in §4); supervised patterns-reference behavior
+  corpus sync.

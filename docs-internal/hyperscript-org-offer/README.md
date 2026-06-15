@@ -12,7 +12,7 @@ whichever sub-doc you need.
 | 3a   | lokascript-docs patterns page: language chip grid + live-execution toggle (in shared partial, gated by `enableTranslations`) | ✅ landed in `_hyper_min` commit `80214fd`                                      |
 | 3b   | hyperfixi-docs patterns page: verify engine showcase                                                                         | 📄 verification doc ready: [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md) |
 | 4    | Drop-in integration guide for hyperscript.org's audience (lives on lokascript.org)                                           | 📄 ready: [integration-guide.md](./integration-guide.md)                        |
-| 5    | Carson hand-off message                                                                                                      | 📄 ready (two variants): [carson-handoff.md](./carson-handoff.md)               |
+| 5    | Carson hand-off message                                                                                                      | 📄 ready (two variants): [handoff.md](./handoff.md)                             |
 
 ## What's done in the monorepo (no further code work required)
 
@@ -38,4 +38,4 @@ whichever sub-doc you need.
 2. `npm publish` from `packages/hyperscript-tools-i18n/`.
 3. Apply the lokascript-docs patch, deploy, smoke-test.
 4. Deploy the integration guide page.
-5. Walk through the pre-send checklist in [carson-handoff.md](./carson-handoff.md).
+5. Walk through the pre-send checklist in [handoff.md](./handoff.md).
