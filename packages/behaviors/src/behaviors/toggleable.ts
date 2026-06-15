@@ -1,12 +1,13 @@
 /**
- * Toggleable Behavior — Imperative Implementation
+ * Toggleable Behavior
  *
  * A behavior that toggles a CSS class on click.
  * Useful for accordions, dropdowns, and toggle buttons.
  *
- * Uses direct DOM APIs instead of compiling hyperscript source,
- * because `toggle .{cls}` template interpolation doesn't resolve
- * behavior parameters at runtime.
+ * Compiled from its hyperscript `source` (the single source of truth shared with
+ * the CDN resolver bundle and patterns-reference). The `.{cls}` dynamic class
+ * selector resolves the behavior's `cls` parameter at runtime — see
+ * `packages/core/src/commands/behaviors/__tests__/template-interpolation.test.ts`.
  *
  * @example
  * ```html
@@ -25,35 +26,8 @@ export const toggleableSource = toggleableSchema.source;
 export const toggleableMetadata = toggleableSchema;
 
 /**
- * Imperative installer for Toggleable behavior.
- * Called directly by the runtime when `install Toggleable` is executed.
- */
-function installToggleable(element: HTMLElement, params: Record<string, any>): void {
-  const cls = params.cls || 'active';
-
-  // Resolve target element
-  let targetEl: HTMLElement = element;
-  if (params.target && params.target !== 'me') {
-    if (typeof params.target === 'string') {
-      const found = document.querySelector(params.target);
-      if (found instanceof HTMLElement) targetEl = found;
-    } else if (params.target instanceof HTMLElement) {
-      targetEl = params.target;
-    }
-  }
-
-  element.addEventListener('click', () => {
-    const wasOn = targetEl.classList.contains(cls);
-    targetEl.classList.toggle(cls);
-    targetEl.dispatchEvent(
-      new CustomEvent(wasOn ? 'toggleable:off' : 'toggleable:on', { bubbles: true })
-    );
-  });
-}
-
-/**
- * Register the Toggleable behavior with LokaScript.
- * Uses imperative installer via synthetic behavior node.
+ * Register the Toggleable behavior with LokaScript by compiling its
+ * hyperscript source and executing the resulting behavior definition.
  */
 export async function registerToggleable(hyperfixi?: LokaScriptInstance): Promise<void> {
   const hf = hyperfixi || resolveRuntime();
@@ -64,15 +38,14 @@ export async function registerToggleable(hyperfixi?: LokaScriptInstance): Promis
     );
   }
 
-  const syntheticNode = {
-    type: 'behavior',
-    name: 'Toggleable',
-    parameters: ['cls', 'target'],
-    eventHandlers: [],
-    imperativeInstaller: installToggleable,
-  };
+  const result = hf.compileSync(toggleableSchema.source, { traditional: true });
+
+  if (!result.ok) {
+    throw new Error(`Failed to compile Toggleable behavior: ${JSON.stringify(result.errors)}`);
+  }
+
   const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(syntheticNode, ctx);
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

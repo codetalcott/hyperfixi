@@ -2,24 +2,32 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('ClickOutside behavior', () => {
   describe('registerClickOutside', () => {
-    it('should register with synthetic node via execute', async () => {
-      const { registerClickOutside } = await import('./clickoutside');
+    it('should compile its hyperscript source and execute', async () => {
+      const { registerClickOutside, clickOutsideSource } = await import('./clickoutside');
       const mock = {
-        compileSync: vi.fn(),
+        compileSync: vi.fn().mockReturnValue({ ok: true, ast: { type: 'behavior' } }),
         execute: vi.fn().mockResolvedValue(undefined),
         createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
       };
 
       await registerClickOutside(mock);
 
-      expect(mock.compileSync).not.toHaveBeenCalled();
+      expect(mock.compileSync).toHaveBeenCalledWith(clickOutsideSource, { traditional: true });
       expect(mock.execute).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'behavior',
-          name: 'ClickOutside',
-          imperativeInstaller: expect.any(Function),
-        }),
+        { type: 'behavior' },
         expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
+      );
+    });
+
+    it('should throw on compile failure', async () => {
+      const { registerClickOutside } = await import('./clickoutside');
+      const mock = {
+        compileSync: vi.fn().mockReturnValue({ ok: false, errors: [{ message: 'boom' }] }),
+        execute: vi.fn(),
+        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      };
+      await expect(registerClickOutside(mock)).rejects.toThrowError(
+        /Failed to compile ClickOutside/
       );
     });
 

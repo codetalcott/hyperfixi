@@ -21,20 +21,24 @@ function createMockInstance(overrides: Partial<LokaScriptInstance> = {}): LokaSc
   };
 }
 
-// Source-compiled behaviors (use compileSync + execute)
+// Source-compiled behaviors (use compileSync + execute).
+// The curated set (BEHAVIORS_CONSOLIDATION_PLAN.md §3) all compile their
+// hyperscript `source` — one runtime path, identical browser/npm.
 const compiledBehaviors = [
   { name: 'Removable', register: registerRemovable, source: removableSource },
-] as const;
-
-// Imperative behaviors (use synthetic node with imperativeInstaller)
-const imperativeBehaviors = [
-  { name: 'Draggable', register: registerDraggable, source: draggableSource },
   { name: 'Toggleable', register: registerToggleable, source: toggleableSource },
-  { name: 'Sortable', register: registerSortable, source: sortableSource },
-  { name: 'Resizable', register: registerResizable, source: resizableSource },
   { name: 'Clipboard', register: registerClipboard, source: clipboardSource },
   { name: 'AutoDismiss', register: registerAutoDismiss, source: autoDismissSource },
   { name: 'ClickOutside', register: registerClickOutside, source: clickOutsideSource },
+] as const;
+
+// Imperative behaviors (use synthetic node with imperativeInstaller).
+// Tier-C over-reach (Draggable/Sortable/Resizable) + optional behaviors still
+// pending conversion (FocusTrap/ScrollReveal/Tabs) — see consolidation plan.
+const imperativeBehaviors = [
+  { name: 'Draggable', register: registerDraggable, source: draggableSource },
+  { name: 'Sortable', register: registerSortable, source: sortableSource },
+  { name: 'Resizable', register: registerResizable, source: resizableSource },
   { name: 'FocusTrap', register: registerFocusTrap, source: focusTrapSource },
   { name: 'ScrollReveal', register: registerScrollReveal, source: scrollRevealSource },
   { name: 'Tabs', register: registerTabs, source: tabsSource },
