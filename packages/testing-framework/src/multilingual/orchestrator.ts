@@ -20,7 +20,7 @@ import type {
   Reporter,
   BundleInfo,
 } from './types';
-import { computeFidelity, FIDELITY_THRESHOLD } from './fidelity';
+import { computeFidelity, computePrecision, FIDELITY_THRESHOLD } from './fidelity';
 
 const execAsync = promisify(exec);
 
@@ -254,11 +254,16 @@ export class TestOrchestrator {
 
     // codeExampleId -> English action signature (only successful en parses).
     const reference = new Map<string, string[]>();
+    // R0-precision: codeExampleId -> English action MULTISET (duplicates kept).
+    const multisetReference = new Map<string, string[]>();
     // R1: codeExampleId -> English role signature (action.role:valueType set).
     const roleReference = new Map<string, string[]>();
     for (const r of en.parseResults) {
       if (r.success && r.actionSignature && r.actionSignature.length > 0) {
         reference.set(r.pattern.codeExampleId, r.actionSignature);
+      }
+      if (r.success && r.actionMultisetSignature && r.actionMultisetSignature.length > 0) {
+        multisetReference.set(r.pattern.codeExampleId, r.actionMultisetSignature);
       }
       if (r.success && r.roleSignature && r.roleSignature.length > 0) {
         roleReference.set(r.pattern.codeExampleId, r.roleSignature);
@@ -271,6 +276,7 @@ export class TestOrchestrator {
       const degenerate: string[] = [];
       const lossy: string[] = [];
       const scores: number[] = [];
+      const precisionScores: number[] = [];
       const roleScores: number[] = [];
 
       for (const result of lang.parseResults) {
@@ -286,6 +292,17 @@ export class TestOrchestrator {
         if (fidelity < FIDELITY_THRESHOLD) degenerate.push(result.pattern.codeExampleId);
         else if (fidelity < 1) lossy.push(result.pattern.codeExampleId);
 
+        // R0-precision — fraction of THIS parse's actions justified by the en
+        // multiset reference (catches phantom/spurious commands recall misses).
+        const multisetRef = multisetReference.get(result.pattern.codeExampleId);
+        if (multisetRef && result.actionMultisetSignature) {
+          const precision = computePrecision(multisetRef, result.actionMultisetSignature);
+          if (precision !== undefined) {
+            result.precision = precision;
+            precisionScores.push(precision);
+          }
+        }
+
         // R1 — role recall vs the en role signature (role name + value type).
         const roleRef = roleReference.get(result.pattern.codeExampleId);
         if (roleRef && result.roleSignature) {
@@ -299,6 +316,10 @@ export class TestOrchestrator {
 
       lang.avgFidelity =
         scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
+      lang.avgPrecision =
+        precisionScores.length > 0
+          ? precisionScores.reduce((a, b) => a + b, 0) / precisionScores.length
+          : undefined;
       lang.avgRoleFidelity =
         roleScores.length > 0
           ? roleScores.reduce((a, b) => a + b, 0) / roleScores.length

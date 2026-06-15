@@ -124,6 +124,13 @@ export interface ParseResult {
   actionSignature?: string[];
 
   /**
+   * R0-precision — multiset of command actions (duplicates preserved). Lets a
+   * *duplicated* spurious action (a phantom `toggle` ahead of a real one) be
+   * counted, which the deduped `actionSignature` absorbs. Set by the validator.
+   */
+  actionMultisetSignature?: string[];
+
+  /**
    * R1 — role-level signature: `action.role:valueType` for every command node
    * in the tree (`add.patient:selector`, `put.destination:reference`).
    * Cross-language comparison is by role name + value TYPE, never the value
@@ -140,6 +147,15 @@ export interface ParseResult {
    * usable English reference or this parse failed.
    */
   fidelity?: number;
+
+  /**
+   * R0-precision vs the English reference, in [0, 1]: the fraction of *this*
+   * parse's actions justified by the English reference (multiset-aware). Falls
+   * below 1.0 when the parse/render adds commands the source never had — the
+   * phantom-injection signal recall cannot see. `undefined` when this parse has
+   * no actions or there is no usable English reference.
+   */
+  precision?: number;
 
   /**
    * R1 — role fidelity vs the English reference, in [0, 1]: the fraction of the
@@ -181,6 +197,13 @@ export interface LanguageResults {
    * reference (see ParseResult.fidelity). `undefined` for English itself.
    */
   avgFidelity?: number | undefined;
+
+  /**
+   * R0-precision — mean `precision` over successful parses with an English
+   * reference. Recorded + ratcheted alongside avgFidelity: a drop means a parser
+   * change started injecting phantom/spurious commands (invisible to recall).
+   */
+  avgPrecision?: number | undefined;
 
   /**
    * R1 — mean `roleFidelity` over successful parses with an English reference.
@@ -273,6 +296,8 @@ export interface Baseline {
         avgConfidence: number;
         /** Mean structural fidelity vs the English reference parse (see ParseResult.fidelity). */
         avgFidelity?: number | undefined;
+        /** R0-precision — mean precision vs the English reference (see ParseResult.precision). */
+        avgPrecision?: number | undefined;
         /** R1 — mean role fidelity vs the English reference (see ParseResult.roleFidelity). */
         avgRoleFidelity?: number | undefined;
         /** R2 — mean execution fidelity over the curated execution subset (see LanguageResults.avgExecutionFidelity). */
@@ -308,6 +333,8 @@ export interface RegressionResult {
   avgConfidenceDelta: number; // absolute change
   /** Absolute change in avgFidelity (current − baseline). Negative = correctness drop. */
   avgFidelityDelta: number;
+  /** R0-precision — absolute change in avgPrecision (current − baseline). 0 when either side lacks data. Negative = phantom commands introduced. */
+  avgPrecisionDelta: number;
   /** R1 — absolute change in avgRoleFidelity (current − baseline). 0 when either side lacks data. */
   avgRoleFidelityDelta: number;
   /** R2 — absolute change in avgExecutionFidelity (current − baseline). 0 when either side lacks data. */
