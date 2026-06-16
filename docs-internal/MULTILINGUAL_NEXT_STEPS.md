@@ -78,6 +78,14 @@ Draggable/Sortable/Resizable violate this (`imperativeInstaller`); the other 8 a
 
 The fix is to **eliminate imperative JS first**, then align curation, then invest in the system:
 
+> **Status: item 1 DONE (2026-06-16, branch `feat/behaviors-no-imperative-js`).** Draggable /
+> Sortable / Resizable now compile from `source`; `imperativeInstaller` under behaviors/ = 0.
+> Required: parser CSS-interp whitespace fix (merged #440), `repeat until event … from <target>`
+> resolution fix (core `repeat.ts`), and three source-idiom swaps (Resizable `*width`, Sortable
+> `target.closest("li")`, `or pointerup` in the inner waits). Three runtime bugs surfaced en route
+> — see **Runtime correctness follow-ups** below. Items 2 (`behavior-removable`) and 3 (the system)
+> remain.
+
 1. **Resolve the Experimental 3 to hyperscript `source` — fix-vs-cut is per-behavior and
    runtime-driven, not a blanket cut.** Each already has real source; the imperative installer
    exists because the runtime historically couldn't execute the source's advanced features.
@@ -176,13 +184,31 @@ lowest-ROI remaining parse work.
    The 2026-06-15 marker-disambiguation fix lifted it +0.016; more phantom-command sources
    remain in the hi profile.
 
+## Runtime correctness follow-ups (core `_hyperscript`-compat — surfaced during Track 1a)
+
+These are general core-runtime bugs (not multilingual) found while making the behavior
+sources execute. The behaviors shipped via working idioms, so none are blocking — but each
+is a real `_hyperscript` compatibility gap worth its own focused fix + test.
+
+1. **Top-level `on event(args)` doesn't bind event args.** `on click(button)` / `on
+keydown(key)` at the top level leave the destructured args `undefined`; only the
+   _behavior_ handler path binds them (runtime-base.ts binds the `args` field but the
+   top-level handler stores `params`). Medium priority — it's a documented event-destructure
+   feature. Fix: bind `params` from event properties the same way the behavior `args` path does.
+2. **`set my style.X` resolves to the read-only _computed_ style.** `set my style.width to "50px"`
+   throws "styles are computed … read-only" instead of writing inline `element.style.width`.
+   Medium priority — natural idiom. Workaround in use: `set my *width to …`. Fix: make `my style`
+   member-write target inline `element.style`.
+3. **`closest <X/> to Y` positional returns null.** The positional `the closest <li/> to the
+target` idiom yields null even when a match exists (`target.closest("li")` works). Lower
+   priority — workaround is clean. Fix: the `closest <selector/> to <expr>` evaluator.
+
 ## Recommended sequence
 
-1. **Track 1a — eliminate imperative JS** (the hard constraint): probe the Draggable `source`
-   against the runtime; route it through `source` and delete the imperative installer if it runs
-   (then Sortable/Resizable). Cut only a behavior whose source can't execute without a too-costly
-   runtime feature. Also fix the curated `behavior-removable` parse bug (he/zh hard fails). Target:
-   `imperativeInstaller` count → 0.
+1. ~~**Track 1a — eliminate imperative JS**~~ **DONE** (2026-06-16, branch
+   `feat/behaviors-no-imperative-js`): Draggable/Sortable/Resizable compile from `source`;
+   `imperativeInstaller` → 0. Still open under Track 1: the curated `behavior-removable` he/zh
+   parse bug, and the three **Runtime correctness follow-ups** above.
 2. **Track 1b — behavior _system_ hardening**: the authoring guide + the resolver-as-public-API
    docs + the missing agent/MCP "write-and-validate-a-behavior" path. The stated priority;
    parallelizable with the parser work below.
