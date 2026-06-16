@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-15T20:51:09.831Z",
-  "commit": "cdd2af08",
+  "timestamp": "2026-06-15T21:28:36.532Z",
+  "commit": "0af855c0",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -4456,9 +4456,9 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9383198255378694,
-      "avgFidelity": 0.9228896103896104,
-      "avgPrecision": 0.796780600352029,
-      "avgRoleFidelity": 0.6790945540945543,
+      "avgFidelity": 0.9409271284271283,
+      "avgPrecision": 0.8129727415441702,
+      "avgRoleFidelity": 0.6818294318294321,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [
@@ -4466,7 +4466,6 @@
         "bind-explicit-property",
         "bind-non-form-display",
         "bind-two-way",
-        "install-behavior",
         "intercept-cache-strategies",
         "live-derived-value",
         "live-multiple-deps"
@@ -4476,12 +4475,8 @@
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "breakpoint-command",
-        "event-throttle",
         "fetch-do-not-throw",
-        "fetch-json",
         "keydown-key-is-syntax",
-        "template-literal-list-build",
         "unless-condition"
       ],
       "bundleSize": 438024,

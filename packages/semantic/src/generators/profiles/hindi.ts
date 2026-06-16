@@ -61,7 +61,10 @@ export const hindiProfile: LanguageProfile = {
   },
   roleMarkers: {
     patient: { primary: 'को', position: 'after' },
-    destination: { primary: 'में', alternatives: ['को', 'पर'], position: 'after' },
+    // `को` is the accusative/patient marker only — NOT a destination alternative.
+    // Listing it here made a `को`-marked patient mis-parse as a destination, the
+    // dominant source of phantom `into` commands in hi (precision audit 2026-06-15).
+    destination: { primary: 'में', alternatives: ['पर'], position: 'after' },
     source: { primary: 'से', position: 'after' },
     style: { primary: 'से', position: 'after' },
     event: { primary: 'पर', position: 'after' },
@@ -170,7 +173,9 @@ export const hindiProfile: LanguageProfile = {
     pick: { primary: 'चुनें', alternatives: [], normalized: 'pick' },
     render: { primary: 'रेंडर', alternatives: [], normalized: 'render' },
     // Modifiers
-    into: { primary: 'में', alternatives: ['को'], normalized: 'into' },
+    // `में` (locative "into") only — `को` (accusative) is not an `into` keyword.
+    // The overload made every `को`-marked patient emit a phantom `into` command.
+    into: { primary: 'में', alternatives: [], normalized: 'into' },
     before: { primary: 'से पहले', alternatives: ['पहले'], normalized: 'before' },
     after: { primary: 'के बाद', alternatives: ['बाद'], normalized: 'after' },
     until: { primary: 'तक', alternatives: [], normalized: 'until' },
@@ -202,7 +207,9 @@ export const hindiProfile: LanguageProfile = {
     // Event marker: पर (at/on), used in SOV pattern
     // Pattern: [event] पर [destination का?] [patient] को [action]
     // Example: क्लिक पर #button का .active को टॉगल
-    eventMarker: { primary: 'पर', alternatives: ['में'], position: 'after' },
+    // `में` is the locative/destination marker, NOT an event marker — listing it
+    // here made a `में`-marked destination mis-parse as a phantom event handler (`on`).
+    eventMarker: { primary: 'पर', alternatives: [], position: 'after' },
     temporalMarkers: ['जब', 'जब भी'], // temporal conjunctions (when, whenever)
   },
 };
