@@ -682,13 +682,30 @@ jobs:
         run: npx playwright test --project=quick
         working-directory: packages/core
 
+      # NOTE: paths are relative to the repo root, NOT this job's
+      # working-directory. The report/traces are written under
+      # packages/core/ (the Playwright cwd), so the path must be
+      # `packages/core/...` — a bare `./core/...` resolves to a
+      # nonexistent repo-root dir and silently uploads nothing.
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
-          path: ./core/playwright-report/
+          path: packages/core/playwright-report/
           retention-days: 3
+
+      # Traces (trace: 'on-first-retry') + error-context land in test-results/.
+      # Without this, a failing run leaves nothing to inspect — which is exactly
+      # why the semantic-bundle load flake went undiagnosed for so long.
+      - name: Upload Playwright traces
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-traces
+          path: packages/core/test-results/**
+          retention-days: 3
+          if-no-files-found: ignore
 
   # ============================================
   # Job 7: Multilingual Validation

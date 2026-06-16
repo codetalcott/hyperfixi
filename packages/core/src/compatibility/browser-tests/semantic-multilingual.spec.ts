@@ -6,12 +6,13 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { gotoSemanticPage } from './helpers/semantic-page';
 
 test.describe('Semantic Multilingual Parser', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the semantic package test page
-    // page.goto waits for 'load' event, so the bundle should be ready after this
-    await page.goto('/packages/semantic/test-browser.html');
+    // Navigate to the semantic package test page, waiting for the bundle's
+    // global and reloading to recover from a transient CI bundle-load flake.
+    await gotoSemanticPage(page);
   });
 
   test('bundle loads and exposes LokaScriptSemantic global @quick', async ({ page }) => {
