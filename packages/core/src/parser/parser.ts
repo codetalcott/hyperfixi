@@ -2809,7 +2809,11 @@ export class Parser {
       event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
       events: eventNames, // Store all event names for runtime
       commands,
-      ...(eventParams.length > 0 && { params: eventParams }), // Add event parameters
+      // Event-argument destructure names (`on click(button)`). Emit as `args` —
+      // the `EventHandlerNode.args` field the runtime binds from (and the field the
+      // behavior-handler parser already uses). Previously emitted as the untyped,
+      // unread `params`, so top-level `on event(args)` never bound the names.
+      ...(eventParams.length > 0 && { args: eventParams }),
       ...(condition && { condition }), // Add condition if present
       ...(target && { target }), // Add target if present
       ...(attributeName && { attributeName }), // Add attributeName if present
