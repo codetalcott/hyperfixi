@@ -6,6 +6,16 @@
 > silently dropping commands. This plan reframes the work around **fidelity**
 > (avgFidelity 0.928 at writing; **0.9495 as of #356** — see §7) and prioritizes
 > correctness/reliability **before** behaviors (Track 2 runtime).
+>
+> **Figures snapshot (current vs. this doc's origin).** The §1 distribution below is the
+> **original assessment** that launched this campaign — kept verbatim as the starting line.
+> **Current state (2026-06-15 baseline, commit `0af855c0`, `browser-priority`):** lossy
+> **113** (was 471) · degenerate **39** (was 69) · faithful **~3534** (was 3133) ·
+> avgFidelity **0.982** (was 0.928) · avgPrecision 0.960 · avgRoleFidelity 0.831. The
+> **authoritative** numbers always live in the committed baseline,
+> `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp` +
+> `commit` fields stamp each regeneration). The §7a–§7cc session logs track the path between
+> the two; the forward plan is [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md).
 
 ## 1. The measurement (full fidelity distribution)
 

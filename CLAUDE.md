@@ -276,11 +276,20 @@ the fraction of the English reference parse's command actions present in each
 translation. By fidelity, passes fall into three bands, each tracked per-language in
 the committed baseline:
 
-- **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. ~69.
+- **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. ~39.
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
-  command): `lossyPasses`. **~471 — the larger, previously-untracked correctness
-  band.** See `docs-internal/CORRECTNESS_RELIABILITY_PLAN.md`.
-- **faithful** (fid = 1.0). ~3133. Cross-language `avgFidelity` ≈ 0.93.
+  command): `lossyPasses`. **~113 — the larger correctness band.** See
+  `docs-internal/CORRECTNESS_RELIABILITY_PLAN.md`.
+- **faithful** (fid = 1.0). ~3534. Cross-language `avgFidelity` ≈ 0.98,
+  `avgPrecision` ≈ 0.96, `avgRoleFidelity` ≈ 0.83 (the laggard — SOV reorders).
+
+> **Figures snapshot:** the band counts and averages above are illustrative as of
+> the **2026-06-15** baseline (commit `0af855c0`, `browser-priority` bundle, 3686 /
+> 3696 patterns passing). They drift as work lands — the **authoritative** numbers
+> always live in the committed baseline,
+> `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
+> and `commit` fields stamp each regeneration). Treat the prose here as orientation,
+> not truth.
 
 The `--regression` gate ratchets on **six** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field

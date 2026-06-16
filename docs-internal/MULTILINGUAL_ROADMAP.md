@@ -1082,6 +1082,16 @@ own transformer/parser project (no shared lever remains):
 
 ## Remaining work
 
+> **Figures snapshot (2026-06-16).** The per-track counts in this section are historical
+> waypoints, not current. **Current state (2026-06-15 baseline, commit `0af855c0`,
+> `browser-priority`):** degenerate **39** (the "~159" below is stale) · lossy **113** ·
+> avgFidelity **0.982** · avgPrecision 0.960 · avgRoleFidelity 0.831 · avgExecutionFidelity
+> 1.000. The **authoritative** numbers always live in the committed baseline,
+> `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp` +
+> `commit` fields stamp each regeneration). For the forward plan, see
+> [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md); for the correctness/fidelity
+> campaign log, [CORRECTNESS_RELIABILITY_PLAN.md](CORRECTNESS_RELIABILITY_PLAN.md).
+
 ### Track 5 — Parse fidelity (parse rate ≠ faithful) — NEW, tracked
 
 The non-behavior parse rate hit 100% (all 24 priority languages), but that metric

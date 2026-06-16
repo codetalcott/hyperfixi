@@ -1,8 +1,10 @@
 /**
- * Resizable Behavior — Imperative Implementation
+ * Resizable Behavior
  *
- * Makes elements resizable by dragging edges or corners.
- * Supports minimum/maximum dimensions and resize handles.
+ * Makes elements resizable by dragging. Compiled from its hyperscript `source`
+ * (single source of truth) — no imperative installer. The source measures the
+ * start size, runs a `repeat until event pointerup` loop, clamps to
+ * min/max dimensions, and writes `*width` / `*height` inline styles.
  *
  * @example
  * ```html
@@ -21,56 +23,8 @@ export const resizableSource = resizableSchema.source;
 export const resizableMetadata = resizableSchema;
 
 /**
- * Imperative installer for Resizable behavior.
- */
-function installResizable(element: HTMLElement, params: Record<string, any>): void {
-  // Resolve handle element
-  let handleEl: HTMLElement = element;
-  if (params.handle && params.handle !== 'me') {
-    if (typeof params.handle === 'string') {
-      const found = element.querySelector(params.handle);
-      if (found instanceof HTMLElement) handleEl = found;
-    } else if (params.handle instanceof HTMLElement) {
-      handleEl = params.handle;
-    }
-  }
-
-  const minW = params.minWidth ?? 50;
-  const minH = params.minHeight ?? 50;
-  const maxW = params.maxWidth ?? 9999;
-  const maxH = params.maxHeight ?? 9999;
-
-  handleEl.addEventListener('pointerdown', (e: PointerEvent) => {
-    e.preventDefault();
-    element.dispatchEvent(new CustomEvent('resizable:start', { bubbles: true }));
-
-    const startWidth = element.offsetWidth;
-    const startHeight = element.offsetHeight;
-    const startX = e.clientX;
-    const startY = e.clientY;
-
-    function onMove(ev: PointerEvent) {
-      const newWidth = Math.max(minW, Math.min(maxW, startWidth + (ev.clientX - startX)));
-      const newHeight = Math.max(minH, Math.min(maxH, startHeight + (ev.clientY - startY)));
-
-      element.style.width = `${newWidth}px`;
-      element.style.height = `${newHeight}px`;
-      element.dispatchEvent(new CustomEvent('resizable:resize', { bubbles: true }));
-    }
-
-    function onUp() {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      element.dispatchEvent(new CustomEvent('resizable:end', { bubbles: true }));
-    }
-
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-  });
-}
-
-/**
- * Register the Resizable behavior with LokaScript.
+ * Register the Resizable behavior with LokaScript by compiling its hyperscript
+ * source and executing the resulting behavior definition.
  */
 export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise<void> {
   const hf = hyperfixi || resolveRuntime();
@@ -81,15 +35,14 @@ export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise
     );
   }
 
-  const syntheticNode = {
-    type: 'behavior',
-    name: 'Resizable',
-    parameters: [],
-    eventHandlers: [],
-    imperativeInstaller: installResizable,
-  };
+  const result = hf.compileSync(resizableSchema.source, { traditional: true });
+
+  if (!result.ok) {
+    throw new Error(`Failed to compile Resizable behavior: ${JSON.stringify(result.errors)}`);
+  }
+
   const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(syntheticNode, ctx);
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

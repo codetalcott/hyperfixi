@@ -43,7 +43,7 @@ behavior Sortable(dragClass)
     end
   end
   on pointerdown(clientY) from me
-    set item to the closest <li/> to the target
+    set item to the target.closest("li")
     if item is null
       exit
     end
@@ -51,7 +51,7 @@ behavior Sortable(dragClass)
     add .{dragClass} to item
     trigger sortable:start on me
     repeat until event pointerup from document
-      wait for pointermove(clientY) from document
+      wait for pointermove(clientY) or pointerup(clientY) from document
       trigger sortable:move on me
     end
     remove .{dragClass} from item
