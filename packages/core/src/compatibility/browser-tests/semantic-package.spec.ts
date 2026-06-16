@@ -10,10 +10,13 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { gotoSemanticPage } from './helpers/semantic-page';
 
 test.describe('HyperFixi Semantic Parser Bundle', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/packages/semantic/test-browser.html');
+    // Loads the fixture + ~906 KB semantic bundle and waits for
+    // window.LokaScriptSemantic, failing with a clear, trace-pointing error.
+    await gotoSemanticPage(page);
   });
 
   test('bundle loads and exposes LokaScriptSemantic global @quick', async ({ page }) => {

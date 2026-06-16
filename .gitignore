@@ -189,6 +189,13 @@ packages/*/html/
 !**/test-dashboard.html
 !**/test-measure-css-properties.html
 !examples/**/test-*.html
+# Playwright browser-test fixtures (load the semantic / multilingual bundles).
+# These are CI test infrastructure, not throwaway debug files — they MUST be
+# tracked, or a fresh CI checkout 404s on them and the whole semantic /
+# multilingual browser-test cluster fails with `window.LokaScriptSemantic`
+# undefined. (Regression fixed after they were silently ignored by test-*.html.)
+!**/test-browser.html
+!**/test-multilingual-e2e.html
 
 # MCP server files
 mcp-server-hyperscript/dist/
