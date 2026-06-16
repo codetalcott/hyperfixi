@@ -175,7 +175,7 @@ describe('registry', () => {
   });
 
   describe('registerWithRuntime', () => {
-    it('should load and call module.register (imperative behavior)', async () => {
+    it('should load and call module.register (Draggable — now source-compiled)', async () => {
       const mockInstance = {
         compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
         execute: vi.fn().mockResolvedValue(undefined),
@@ -185,15 +185,10 @@ describe('registry', () => {
       await loadBehavior('Draggable');
       await registerWithRuntime('Draggable', mockInstance);
 
-      // Imperative behaviors use execute with synthetic node, not compileSync
-      expect(mockInstance.execute).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'behavior',
-          name: 'Draggable',
-          imperativeInstaller: expect.any(Function),
-        }),
-        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
-      );
+      // Draggable used to install imperatively; it now compiles its hyperscript
+      // `source` like every other behavior (no imperative installer).
+      expect(mockInstance.compileSync).toHaveBeenCalled();
+      expect(mockInstance.execute).toHaveBeenCalled();
     });
 
     it('should load and call module.register (compiled behavior)', async () => {
@@ -221,7 +216,7 @@ describe('registry', () => {
 
       await loadAll();
       await registerAllWithRuntime(mockInstance);
-      // execute called for each behavior (imperative + compiled)
+      // execute called for each behavior (all source-compiled now)
       expect(mockInstance.execute.mock.calls.length).toBeGreaterThanOrEqual(10);
     });
   });

@@ -1,12 +1,12 @@
 /**
- * Sortable Behavior — Imperative Implementation
+ * Sortable Behavior
  *
- * Drag-and-drop reordering of list items.
- * Apply to a container element; children become sortable.
+ * Drag-and-drop reordering of list items. Apply to a container element; its
+ * `<li>` children become sortable. Compiled from its hyperscript `source` (single
+ * source of truth) — no imperative installer.
  *
- * Note: This behavior fires lifecycle events but does NOT automatically
- * reorder DOM elements. Users must handle actual reordering in their
- * `sortable:move` event handlers.
+ * Note: This behavior fires lifecycle events but does NOT automatically reorder
+ * DOM elements. Users handle actual reordering in their `sortable:move` handlers.
  *
  * @example
  * ```html
@@ -26,50 +26,8 @@ export const sortableSource = sortableSchema.source;
 export const sortableMetadata = sortableSchema;
 
 /**
- * Imperative installer for Sortable behavior.
- */
-function installSortable(element: HTMLElement, params: Record<string, any>): void {
-  const dragClass = params.dragClass || 'sorting';
-  const handleSelector = params.handle || null;
-
-  element.addEventListener('pointerdown', (e: PointerEvent) => {
-    const target = e.target as HTMLElement;
-    const item = target.closest('li');
-    if (!item || !element.contains(item)) return;
-
-    // If a handle selector is specified, only start drag from the handle
-    if (handleSelector) {
-      const handleEl = target.closest(handleSelector);
-      if (!handleEl) return;
-    }
-
-    e.preventDefault();
-    item.classList.add(dragClass);
-    element.dispatchEvent(new CustomEvent('sortable:start', { bubbles: true, detail: { item } }));
-
-    function onMove(ev: PointerEvent) {
-      element.dispatchEvent(
-        new CustomEvent('sortable:move', {
-          bubbles: true,
-          detail: { clientY: ev.clientY, item },
-        })
-      );
-    }
-
-    function onUp() {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      item!.classList.remove(dragClass);
-      element.dispatchEvent(new CustomEvent('sortable:end', { bubbles: true, detail: { item } }));
-    }
-
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-  });
-}
-
-/**
- * Register the Sortable behavior with LokaScript.
+ * Register the Sortable behavior with LokaScript by compiling its hyperscript
+ * source and executing the resulting behavior definition.
  */
 export async function registerSortable(hyperfixi?: LokaScriptInstance): Promise<void> {
   const hf = hyperfixi || resolveRuntime();
@@ -80,15 +38,14 @@ export async function registerSortable(hyperfixi?: LokaScriptInstance): Promise<
     );
   }
 
-  const syntheticNode = {
-    type: 'behavior',
-    name: 'Sortable',
-    parameters: ['dragClass'],
-    eventHandlers: [],
-    imperativeInstaller: installSortable,
-  };
+  const result = hf.compileSync(sortableSchema.source, { traditional: true });
+
+  if (!result.ok) {
+    throw new Error(`Failed to compile Sortable behavior: ${JSON.stringify(result.errors)}`);
+  }
+
   const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
-  await hf.execute(syntheticNode, ctx);
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

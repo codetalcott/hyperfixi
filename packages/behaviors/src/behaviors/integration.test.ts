@@ -22,10 +22,11 @@ function createMockInstance(overrides: Partial<LokaScriptInstance> = {}): LokaSc
 }
 
 // Source-compiled behaviors (use compileSync + execute).
-// The curated set + the optional set (BEHAVIORS_CONSOLIDATION_PLAN.md §3) all
-// compile their hyperscript `source` — one runtime path, identical browser/npm.
-// The optional three (FocusTrap/ScrollReveal/Tabs) carry their web-API logic in
-// an `init`-block `js()` body, but still flow through the single compile path.
+// EVERY behavior compiles its hyperscript `source` — one runtime path, identical
+// browser/npm, no imperative JS installer (the "no imperative JS" rule). The optional
+// three (FocusTrap/ScrollReveal/Tabs) carry their web-API logic in an `init`-block
+// `js()` body, and the experimental three (Draggable/Sortable/Resizable) run their
+// pointer-drag loops via `repeat until event` — all through the single compile path.
 const compiledBehaviors = [
   { name: 'Removable', register: registerRemovable, source: removableSource },
   { name: 'Toggleable', register: registerToggleable, source: toggleableSource },
@@ -35,13 +36,6 @@ const compiledBehaviors = [
   { name: 'FocusTrap', register: registerFocusTrap, source: focusTrapSource },
   { name: 'ScrollReveal', register: registerScrollReveal, source: scrollRevealSource },
   { name: 'Tabs', register: registerTabs, source: tabsSource },
-] as const;
-
-// Imperative behaviors (use synthetic node with imperativeInstaller).
-// Only the Tier-C async-component over-reach (Draggable/Sortable/Resizable) stays
-// imperative — these sit beyond the inline-scripting boundary and are deliberately
-// kept as experimental components, not part of the one-runtime-path story (§3b/§3d).
-const imperativeBehaviors = [
   { name: 'Draggable', register: registerDraggable, source: draggableSource },
   { name: 'Sortable', register: registerSortable, source: sortableSource },
   { name: 'Resizable', register: registerResizable, source: resizableSource },
@@ -94,62 +88,6 @@ describe('behavior registration integration', () => {
 
           expect(mock.execute).toHaveBeenCalledWith(
             { type: 'behavior' },
-            expect.objectContaining({
-              locals: expect.any(Map),
-              globals: expect.any(Map),
-            })
-          );
-        });
-      });
-    }
-  });
-
-  describe('imperative behaviors', () => {
-    for (const { name, register } of imperativeBehaviors) {
-      describe(name, () => {
-        it('should register via synthetic node with imperativeInstaller', async () => {
-          const mock = createMockInstance();
-          await register(mock);
-
-          // Imperative behaviors do NOT call compileSync
-          expect(mock.compileSync).not.toHaveBeenCalled();
-
-          // They call execute with a synthetic node containing imperativeInstaller
-          expect(mock.execute).toHaveBeenCalledWith(
-            expect.objectContaining({
-              type: 'behavior',
-              name,
-              imperativeInstaller: expect.any(Function),
-            }),
-            expect.objectContaining({
-              locals: expect.any(Map),
-              globals: expect.any(Map),
-            })
-          );
-        });
-
-        it('should create context', async () => {
-          const mock = createMockInstance();
-          await register(mock);
-          expect(mock.createContext).toHaveBeenCalled();
-        });
-
-        it('should throw when lokascript is not available', async () => {
-          await expect(register(undefined)).rejects.toThrowError(/LokaScript not found/);
-        });
-
-        it('should fall back to manual context when createContext is missing', async () => {
-          const mock = createMockInstance();
-          delete (mock as Partial<LokaScriptInstance>).createContext;
-
-          await register(mock);
-
-          expect(mock.execute).toHaveBeenCalledWith(
-            expect.objectContaining({
-              type: 'behavior',
-              name,
-              imperativeInstaller: expect.any(Function),
-            }),
             expect.objectContaining({
               locals: expect.any(Map),
               globals: expect.any(Map),

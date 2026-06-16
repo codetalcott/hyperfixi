@@ -60,15 +60,15 @@ behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)
     set startX to clientX
     set startY to clientY
     repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) from document
+      wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document
       set newWidth to startWidth + clientX - startX
       set newHeight to startHeight + clientY - startY
       if newWidth < minWidth then set newWidth to minWidth end
       if newWidth > maxWidth then set newWidth to maxWidth end
       if newHeight < minHeight then set newHeight to minHeight end
       if newHeight > maxHeight then set newHeight to maxHeight end
-      set my style.width to newWidth + "px"
-      set my style.height to newHeight + "px"
+      set my *width to newWidth + "px"
+      set my *height to newHeight + "px"
       trigger resizable:resize
     end
     trigger resizable:end
