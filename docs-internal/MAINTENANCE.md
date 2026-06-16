@@ -370,7 +370,7 @@ npm run typecheck
 ### Technical Documentation
 
 - **[packages/core/docs/API.md](packages/core/docs/API.md)** - API reference
-- **[packages/core/BEHAVIORS.md](packages/core/BEHAVIORS.md)** - Behavior system
+- **[packages/behaviors/AUTHORING.md](packages/behaviors/AUTHORING.md)** - Behavior system: authoring & installing
 - **[packages/core/TREE_SHAKING_GUIDE.md](packages/core/TREE_SHAKING_GUIDE.md)** - Bundle optimization
 
 ## Troubleshooting

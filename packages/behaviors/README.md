@@ -19,15 +19,19 @@ DOM action`. It is not a component.** When something needs an observer, a focus
 > in a web component or a plain module instead.
 
 This rule is why the set is small and tiered. Most "behaviors" people reach for are
-really just short inline scripts — see [Recipes](#recipes-most-things-are-inline-scripts).
+really just short inline scripts — see [Recipes](#recipes--most-things-are-inline-scripts).
 
 A single source of truth drives every consumer: the hyperscript `source` string in
 each `src/schemas/*.schema.ts`. The npm `register*()` functions, the CDN
 `resolver.browser.global.js` bundle, and `@hyperfixi/patterns-reference` all compile
-that **same source** — one runtime path, identical in the browser and Node. (The
-old imperative-JS installers were a mistaken experiment that forked a second,
-diverging path; they have been removed for the curated **and optional** sets. Only
-the three experimental components still ship an imperative installer — see below.)
+that **same source** — one runtime path, identical in the browser and Node. **Every
+behavior compiles from `source`; there is no imperative-JS installer.** (An earlier
+imperative-installer experiment forked a second, diverging path; it has been removed
+for all tiers — including the three experimental components, which now run their
+pointer loops from `source` like everything else.)
+
+**Writing or installing a behavior?** See **[AUTHORING.md](AUTHORING.md)** — the
+canonical guide (boundary test, anatomy, schema, install/resolver, agent checklist).
 
 ## Tiers
 

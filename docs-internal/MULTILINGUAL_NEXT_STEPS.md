@@ -103,19 +103,20 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    this is a parse/i18n bug, not an imperative-JS one — check the `install … Removable` block
    parses in he/zh.
 3. **The actual priority — the authoring + install system for community & LLM agents:**
-   - **Authoring guide:** consolidate `packages/core/BEHAVIORS.md` + the `curation.ts` boundary
-     rule into one canonical "what is a behavior / how to write one / the boundary test" doc,
-     written for humans _and_ agents.
+   - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
+     canonical "what is a behavior / boundary test / how to write one / install + resolver /
+     agent checklist" doc, for humans _and_ agents. Stale `core/BEHAVIORS.md` +
+     `SORTABLE_BEHAVIOR_GUIDE.md` (old imperative architecture) replaced with redirects.
    - **Install path:** the resolver hook already works (`install X` → `_hyperscript.behaviors.resolve(X)`
-     → compile-on-first-use, `packages/behaviors/src/behavior-resolver.ts`). Document it as the
-     public extension point.
-   - **LLM-agent path (the gap):** there is no MCP tool / validator that lets an agent generate a
-     candidate behavior and check it against the boundary rule. Add one — schema + a
-     "stays-in-lane?" validator (reject component-shaped behaviors that need observers/async loops).
+     → compile-on-first-use, `packages/behaviors/src/behavior-resolver.ts`) — now documented in
+     AUTHORING.md §7 as the public extension point.
+   - **LLM-agent path (the remaining gap):** AUTHORING.md §9 gives agents a boundary checklist,
+     but there is still no MCP tool / programmatic validator that _enforces_ it. Add one — schema +
+     a "stays-in-lane?" validator (reject component-shaped behaviors that need observers/async loops).
 
 **Layer:** runtime (execute the Experimental-3 source + the Removable parse bug) + product
-curation + DX/tooling (the system). **Owner docs:** MULTILINGUAL_BEHAVIORS_PLAN.md,
-BEHAVIORS_CONSOLIDATION_PLAN.md, `packages/core/BEHAVIORS.md`. **Audit cmd:** grep
+curation + DX/tooling (the system). **Owner docs:** `packages/behaviors/AUTHORING.md`,
+MULTILINGUAL_BEHAVIORS_PLAN.md, BEHAVIORS_CONSOLIDATION_PLAN.md. **Audit cmd:** grep
 `imperativeInstaller` under `packages/behaviors/src/behaviors/` — must reach 0.
 
 ### Track 2 — Reactivity (htmx v4): bring the multilingual parse path up to the runtime
