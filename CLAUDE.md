@@ -233,7 +233,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 - **Parallel execution**: jobs run in parallel after build completes
 - **Two-tier job set**: full matrix on `pull_request`, slim skew-detector set on `push` to main/develop
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
-- **Smart failure handling**: Known failures (behaviors, SOV/VSO languages) marked with `continue-on-error`
+- **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
 
 **Jobs:**
 
@@ -260,8 +260,8 @@ The four PR-only jobs already ran against the merged-as-PR code, so re-running t
 
 **Known Issues:**
 
-- Behavior tests: Draggable, Sortable, Resizable not fully implemented (continue-on-error)
-- SOV/VSO languages: Japanese, Korean, Turkish have lower pass rates than SVO languages (continue-on-error)
+- Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
+- SOV/VSO languages (Japanese, Korean, Turkish, Hindi) have lower round-trip **fidelity** than SVO languages — every non-behavior pattern parses in all 24 priority languages, but faithful command-for-command translation still lags on the hardest reorders. Tracked by the multilingual fidelity ratchet (not `continue-on-error`).
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -282,15 +282,26 @@ the committed baseline:
   band.** See `docs-internal/CORRECTNESS_RELIABILITY_PLAN.md`.
 - **faithful** (fid = 1.0). ~3133. Cross-language `avgFidelity` ≈ 0.93.
 
-The `--regression` gate ratchets on **three** signals (each fails CI; each guarded so
-an un-regenerated baseline never retro-flags):
+The `--regression` gate ratchets on **six** signals (each fails CI; each guarded so
+an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
+yields a 0 delta):
 
 1. **parse-rate** drop > 2pts.
 2. **degenerate ratchet** — a faithful baseline pass that became _degenerate_
    (tolerance 3).
-3. **correctness ratchet (R0)** — a faithful baseline pass that became _lossy_
-   (tolerance 3), **plus** a per-language **avgFidelity** drop > 0.01. This catches
-   the silent command-drops the degenerate ratchet misses (a 1.0 → 0.8 pass).
+3. **correctness ratchet (R0-recall)** — a faithful baseline pass that became _lossy_
+   (tolerance 3), **plus** a per-language **avgFidelity** drop > 0.02. Catches the
+   silent command-drops the degenerate ratchet misses (a 1.0 → 0.8 pass).
+4. **precision ratchet (R0-precision, the "trust floor")** — a per-language
+   **avgPrecision** drop > 0.02. The mirror of recall: catches a parse/render that
+   _adds_ phantom/spurious commands the source never had (a phantom `toggle` ahead of
+   a real one) — invisible to every recall-based signal above. Multiset-aware, so a
+   _duplicated_ phantom (`[toggle, toggle]`) is seen too.
+5. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
+   (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
+   verb but drops/mistypes a role).
+6. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
+   matched the en reference and now diverges (pass→fail; tolerance 0).
 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a

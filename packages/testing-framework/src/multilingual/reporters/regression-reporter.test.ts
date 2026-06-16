@@ -327,3 +327,80 @@ describe('RegressionReporter execution ratchet — R2 (session 5)', () => {
     expect(saved.languages.ja!.executionFailures).toEqual(['was-failing']);
   });
 });
+
+describe('RegressionReporter precision ratchet — R0-precision (trust floor)', () => {
+  // LOCK: avgPrecision is the phantom-command signal recall (avgFidelity) cannot
+  // see — the fraction of each parse's actions justified by the en reference. The
+  // reporter computes avgPrecisionDelta with the SAME both-sides guard as R1/R2 (an
+  // un-regenerated baseline carries no avgPrecision, so the delta is 0 and nothing
+  // retro-flags). The CLI turns a delta < -0.02 into a CI failure.
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'precision-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  function langWithPrecision(avgPrecision: number): LanguageResults {
+    const l = lang([pass('stable')], []);
+    l.avgPrecision = avgPrecision;
+    return l;
+  }
+
+  const baseline: Baseline = {
+    timestamp: '',
+    commit: 'base',
+    languages: {
+      ja: {
+        parseSuccess: 1,
+        parseFailure: 0,
+        parseRate: 1,
+        avgConfidence: 1,
+        avgFidelity: 1,
+        avgPrecision: 1,
+        degeneratePasses: [],
+        lossyPasses: [],
+        bundleSize: undefined,
+        patterns: { stable: { success: true, confidence: 1 } },
+      },
+    },
+    bundles: {},
+  };
+
+  it('reports a negative avgPrecisionDelta when precision drops (phantom commands injected)', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithPrecision(0.9)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.avgPrecisionDelta).toBeCloseTo(-0.1, 5);
+  });
+
+  it('reports ~0 delta when precision is unchanged', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithPrecision(1)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.avgPrecisionDelta).toBeCloseTo(0, 5);
+  });
+
+  it('never retro-flags when the baseline has no precision data', () => {
+    const noPrecision: Baseline = structuredClone(baseline);
+    delete noPrecision.languages.ja!.avgPrecision;
+    const reporter = reporterWith(noPrecision);
+    reporter.reportComplete(results(langWithPrecision(0.1)));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.avgPrecisionDelta).toBe(0);
+  });
+
+  it('persists avgPrecision when saving a baseline', () => {
+    const reporter = reporterWith(baseline);
+    const res = results(langWithPrecision(0.95));
+    reporter.reportComplete(res);
+    reporter.saveAsBaseline(res);
+    const saved = JSON.parse(readFileSync(join(dir, 'baseline.json'), 'utf-8')) as Baseline;
+    expect(saved.languages.ja!.avgPrecision).toBeCloseTo(0.95, 5);
+  });
+});

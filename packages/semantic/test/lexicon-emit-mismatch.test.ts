@@ -9,15 +9,32 @@
  * (the kung/آخر/mettre/동안/wyczyść class — 30+ instances across sessions 2–4)
  * or as nothing at all.
  *
- * KNOWN_MISMATCHES is the ratchet baseline: the mismatches that existed when
- * this test landed (mostly commands with no live corpus pattern — catch,
- * pushUrl — plus tails tracked in the roadmap §10). Fixing one REMOVES its
- * entry (the test fails if an allowlisted entry disappears but is still
- * listed — keep it pruned). Introducing a NEW mismatch fails immediately.
+ * KNOWN_MISMATCHES is the ratchet baseline — the mismatches that existed when
+ * this test landed. Three guards run over it:
+ *   1. NO NEW mismatches — a fresh dict↔profile disagreement fails immediately.
+ *   2. NO STALE entries — an allowlisted entry that is no longer a real mismatch
+ *      (dict changed its emission, or the word now reads correctly) fails so the
+ *      allowlist stays pruned. (Previously promised in this comment but never
+ *      enforced; added 2026-06-15.)
+ *   3. EVERY entry is categorized — see the two buckets below.
+ *
+ * Two categories of allowlisted mismatch:
+ *   • DEAD — the action has no semantic ActionType/schema, so the semantic side
+ *     models no such command and the dict's translation can never be parsed
+ *     (harmless: never exercised by the corpus). These are `DEAD_SCHEMA_COMMANDS`
+ *     (`catch`/`pushUrl`/`replaceUrl` are real _hyperscript commands not yet
+ *     ported to the semantic schema set; `until` is only a loop sub-keyword).
+ *     They are deliberately KEPT — the translations are useful data for when the
+ *     commands gain schemas — not deleted.
+ *   • LIVE — the action IS modeled, but the dict emits a word the profile/patterns
+ *     don't read as that action: a genuine i18n↔profile gap. Fixing one is a
+ *     dict↔profile realign (the proven family) and is fidelity-affecting, so it
+ *     belongs to the fidelity track (Phase 1), not this instrumentation pass.
  */
 import { describe, it, expect } from 'vitest';
 import '../src';
 import { getPatternsForLanguage, tryGetProfile } from '../src/registry';
+import { commandSchemas } from '../src/generators/command-schemas';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
 const LANGS = ['ar','bn','de','es','fr','he','hi','id','it','ja','ko','ms','pl','pt','qu','ru','sw','th','tl','tr','uk','vi','zh'];
@@ -50,7 +67,6 @@ const KNOWN_MISMATCHES = new Set([
   'hi:replaceUrl:url_बदलें',
   'hi:select:चुनें',
   'hi:unless:जब_तक_नहीं',
-  'hi:while:जब_तक',
   'id:break:hentikan',
   'id:catch:tangkap',
   'id:close:tutup',
@@ -197,4 +213,84 @@ describe('i18n dict emissions are readable as the action they translate', () => 
       expect(fresh, `new dict↔profile mismatches:\n${fresh.join('\n')}`).toEqual([]);
     });
   }
+});
+
+// Memoize readings per language for the guards below.
+const readingsCache = new Map<string, Map<string, Set<string>>>();
+function readingsForCached(lang: string): Map<string, Set<string>> {
+  let r = readingsCache.get(lang);
+  if (!r) {
+    r = readingsFor(lang);
+    readingsCache.set(lang, r);
+  }
+  return r;
+}
+
+/**
+ * Commands present in the i18n dicts but with NO semantic ActionType/schema, so
+ * the emission can never be parsed (harmless — never exercised by the corpus).
+ * `catch`/`pushUrl`/`replaceUrl` are real _hyperscript commands not yet ported to
+ * the semantic schema set; `until` is only a loop sub-keyword (`repeat until …`).
+ * Kept (not deleted) so the translations survive for when the commands gain schemas.
+ */
+const DEAD_SCHEMA_COMMANDS = new Set(['catch', 'pushUrl', 'replaceUrl', 'until']);
+
+function parseKey(key: string): { lang: string; action: string; word: string } {
+  const [lang, action, ...rest] = key.split(':');
+  return { lang, action, word: rest.join(':') };
+}
+
+describe('KNOWN_MISMATCHES stays pruned (no stale allowlist entries)', () => {
+  it('every allowlisted entry is still a real, current mismatch', () => {
+    const stale: string[] = [];
+    for (const key of KNOWN_MISMATCHES) {
+      const { lang, action, word } = parseKey(key);
+      const dict = (dictionaries as any)[lang];
+      const emitted = dict?.commands?.[action];
+      if (emitted === undefined) {
+        stale.push(`${key} — dict no longer defines commands.${action}`);
+        continue;
+      }
+      if (String(emitted) !== word) {
+        stale.push(`${key} — dict now emits "${emitted}", not "${word}"`);
+        continue;
+      }
+      const readAs = readingsForCached(lang).get(String(word).toLowerCase()) ?? new Set<string>();
+      if (readAs.has(action)) {
+        stale.push(`${key} — now reads correctly as [${[...readAs].join(',')}]; remove from allowlist`);
+      }
+    }
+    expect(
+      stale,
+      `stale KNOWN_MISMATCHES entries (fixed but still listed — prune them):\n${stale.join('\n')}`
+    ).toEqual([]);
+  });
+});
+
+describe('KNOWN_MISMATCHES entries are categorized (dead-schema vs live-gap)', () => {
+  const modeled = new Set(Object.keys(commandSchemas));
+
+  it('DEAD_SCHEMA_COMMANDS are genuinely unmodeled (no semantic schema)', () => {
+    const wronglyDead = [...DEAD_SCHEMA_COMMANDS].filter(a => modeled.has(a));
+    expect(
+      wronglyDead,
+      `listed DEAD but now HAVE a semantic schema — reclassify as a live i18n gap:\n${wronglyDead.join('\n')}`
+    ).toEqual([]);
+  });
+
+  it('every allowlisted action is either dead-listed or schema-modeled', () => {
+    const uncategorized: string[] = [];
+    for (const key of KNOWN_MISMATCHES) {
+      const { action } = parseKey(key);
+      if (!DEAD_SCHEMA_COMMANDS.has(action) && !modeled.has(action)) {
+        uncategorized.push(`${key} — action "${action}" is neither dead-listed nor schema-modeled`);
+      }
+    }
+    expect(
+      uncategorized,
+      `uncategorized allowlist entries (add the action to DEAD_SCHEMA_COMMANDS or give it a schema):\n${uncategorized.join(
+        '\n'
+      )}`
+    ).toEqual([]);
+  });
 });

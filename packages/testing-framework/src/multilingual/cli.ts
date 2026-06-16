@@ -376,6 +376,17 @@ async function main(): Promise<void> {
           r => r.avgFidelityDelta < -AVG_FIDELITY_DROP_TOLERANCE
         );
 
+        // R0-precision ratchet: same semantics as the avgFidelity ratchet, on
+        // the precision signal (fraction of each parse's actions justified by the
+        // en reference). A drop means a parser/render change started injecting
+        // phantom/spurious commands — invisible to recall. Deltas are 0 unless
+        // the baseline carries avgPrecision, so an un-regenerated baseline never
+        // retro-flags.
+        const AVG_PRECISION_DROP_TOLERANCE = 0.02;
+        const precisionDrops = allResults.filter(
+          r => r.avgPrecisionDelta < -AVG_PRECISION_DROP_TOLERANCE
+        );
+
         // R1 — role-fidelity ratchet (§8): same semantics as the avgFidelity
         // ratchet, on the role-recall signal (action.role:valueType vs the en
         // reference). Deltas are 0 unless the baseline carries avgRoleFidelity,
@@ -456,6 +467,19 @@ async function main(): Promise<void> {
           );
           for (const r of fidelityDrops) {
             console.error(`   ${r.language}: ΔavgFidelity ${r.avgFidelityDelta.toFixed(4)}`);
+          }
+          console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
+        if (precisionDrops.length > 0) {
+          console.error(
+            `\n✗ avgPrecision dropped > ${AVG_PRECISION_DROP_TOLERANCE} in ` +
+              `${precisionDrops.length} language(s) — a parse/render started injecting ` +
+              `phantom commands the source never had:`
+          );
+          for (const r of precisionDrops) {
+            console.error(`   ${r.language}: ΔavgPrecision ${r.avgPrecisionDelta.toFixed(4)}`);
           }
           console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
           failed = true;

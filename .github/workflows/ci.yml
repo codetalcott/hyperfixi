@@ -681,7 +681,6 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --project=quick
         working-directory: packages/core
-        continue-on-error: true # Known failures: behaviors not fully implemented
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
