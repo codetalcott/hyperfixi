@@ -164,9 +164,26 @@ export class RepeatCommand implements DecoratedCommand {
       if (!eventName) throw new Error('until-event loops require an event name');
       let eventTarget: EventTarget = context.me as EventTarget;
       if (raw.args[2]) {
-        const target = await evaluator.evaluate(raw.args[2], context);
-        if (target instanceof EventTarget) eventTarget = target;
-        else if (target === 'document') eventTarget = document;
+        const targetArg = raw.args[2] as { type?: string; name?: string };
+        // `document` / `window` often arrive as bare identifiers the expression
+        // evaluator doesn't resolve to the global EventTarget in this context
+        // (which silently left the listener on `me` — so `repeat until event
+        // pointerup from document` never terminated). Resolve them by name first,
+        // then fall back to evaluating arbitrary target expressions.
+        if (targetArg?.type === 'identifier' && targetArg.name === 'document') {
+          eventTarget = document;
+        } else if (
+          targetArg?.type === 'identifier' &&
+          targetArg.name === 'window' &&
+          typeof window !== 'undefined'
+        ) {
+          eventTarget = window;
+        } else {
+          const target = await evaluator.evaluate(raw.args[2], context);
+          if (target instanceof EventTarget) eventTarget = target;
+          else if (target === 'document') eventTarget = document;
+          else if (typeof window !== 'undefined' && target === window) eventTarget = window;
+        }
       }
       return {
         type: 'until-event',
