@@ -1972,6 +1972,12 @@ export class Parser {
       const valueTokens: string[] = [];
       let hasTemplateExpression = false;
       let braceDepth = 0;
+      // Track source offsets so we can reconstruct the value verbatim (preserving
+      // internal whitespace). Joining token values discards the whitespace the
+      // tokenizer skipped, which corrupts both `${a - b}` interpolation
+      // expressions and multi-word CSS values (`1px solid red`, `calc(100% - 2px)`).
+      let valueStart = -1;
+      let valueEnd = -1;
 
       while (!this.isAtEnd()) {
         // Check for end of value (only when not inside ${})
@@ -1981,6 +1987,8 @@ export class Parser {
 
         const token = this.advance();
         valueTokens.push(token.value);
+        if (valueStart < 0 && typeof token.start === 'number') valueStart = token.start;
+        if (typeof token.end === 'number') valueEnd = token.end;
 
         // Track brace depth for ${} template expressions
         if (token.value === '$' && this.check('{')) {
@@ -1994,8 +2002,12 @@ export class Parser {
         }
       }
 
-      // Combine tokens into a single value string
-      const valueString = valueTokens.join('');
+      // Reconstruct the value verbatim from source when offsets are available
+      // (preserves internal whitespace); fall back to a tight token join.
+      const valueString =
+        this.originalInput && valueStart >= 0 && valueEnd > valueStart
+          ? this.originalInput.slice(valueStart, valueEnd)
+          : valueTokens.join('');
 
       // Create value node - if it has ${} syntax, make it a template literal
       const value: ASTNode = hasTemplateExpression
