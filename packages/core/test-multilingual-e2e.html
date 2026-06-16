@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Multilingual E2E Test</title>
+</head>
+<body>
+  <div id="test-element"></div>
+  <button id="test-button">Click</button>
+
+  <!-- Load semantic bundle first (absolute path) -->
+  <script src="/packages/semantic/dist/browser.global.js"></script>
+
+  <!-- Then load multilingual bundle (absolute path) -->
+  <script src="/packages/core/dist/lokascript-multilingual.js"></script>
+
+  <script>
+    // Mark bundles as ready
+    window.bundlesReady = false;
+    if (typeof window.LokaScriptSemantic !== 'undefined' && typeof window.lokascript !== 'undefined') {
+      window.bundlesReady = true;
+      console.log('Both bundles loaded successfully');
+    } else {
+      console.error('Bundle loading failed:', {
+        semantic: typeof window.LokaScriptSemantic !== 'undefined',
+        hyperfixi: typeof window.lokascript !== 'undefined'
+      });
+    }
+  </script>
+</body>
+</html>

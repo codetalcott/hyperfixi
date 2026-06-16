@@ -14,8 +14,8 @@ import { gotoSemanticPage } from './helpers/semantic-page';
 
 test.describe('HyperFixi Semantic Parser Bundle', () => {
   test.beforeEach(async ({ page }) => {
-    // Loads the ~906 KB semantic bundle and waits for window.LokaScriptSemantic,
-    // reloading to recover from a transient CI bundle-load flake.
+    // Loads the fixture + ~906 KB semantic bundle and waits for
+    // window.LokaScriptSemantic, failing with a clear, trace-pointing error.
     await gotoSemanticPage(page);
   });
 
