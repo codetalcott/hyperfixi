@@ -190,15 +190,14 @@ These are general core-runtime bugs (not multilingual) found while making the be
 sources execute. The behaviors shipped via working idioms, so none are blocking — but each
 is a real `_hyperscript` compatibility gap worth its own focused fix + test.
 
-1. **Top-level `on event(args)` doesn't bind event args.** `on click(button)` / `on
-keydown(key)` at the top level leave the destructured args `undefined`; only the
-   _behavior_ handler path binds them (runtime-base.ts binds the `args` field but the
-   top-level handler stores `params`). Medium priority — it's a documented event-destructure
-   feature. Fix: bind `params` from event properties the same way the behavior `args` path does.
-2. **`set my style.X` resolves to the read-only _computed_ style.** `set my style.width to "50px"`
-   throws "styles are computed … read-only" instead of writing inline `element.style.width`.
-   Medium priority — natural idiom. Workaround in use: `set my *width to …`. Fix: make `my style`
-   member-write target inline `element.style`.
+1. ~~**Top-level `on event(args)` doesn't bind event args.**~~ **DONE** (branch
+   `fix/runtime-event-args-and-style`). The top-level parser emitted the destructure names as
+   an untyped `params` field the runtime never read; now emits `args` (the field the runtime
+   binds from + the behavior parser already uses). `on click(button)` etc. now bind.
+2. ~~**`set my style.X` resolves to the read-only _computed_ style.**~~ **DONE** (same branch).
+   The set member-assignment path now targets the writable inline `element.style` for
+   `.style.<prop>` writes (reads unchanged). `set my style.width to "50px"` works; the
+   Resizable `*width` idiom remains valid (not retrofitted — `*prop` is equally canonical).
 3. **`closest <X/> to Y` positional returns null.** The positional `the closest <li/> to the
 target` idiom yields null even when a match exists (`target.closest("li")` works). Lower
    priority — workaround is clean. Fix: the `closest <selector/> to <expr>` evaluator.

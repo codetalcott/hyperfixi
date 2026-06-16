@@ -365,7 +365,31 @@ export class SetCommand implements DecoratedCommand {
     const objectAst = firstArg.object as ASTNode | undefined;
     const computed = firstArg.computed as boolean | undefined;
     if (objectAst) {
-      const container = await evaluator.evaluate(objectAst, context);
+      // `set <el>.style.<prop> to V` must target the WRITABLE inline style
+      // (`element.style`). A plain `.style` member read resolves to the read-only
+      // computed style (`getComputedStyle`), which throws on assignment.
+      const objMember = objectAst as {
+        type?: string;
+        object?: ASTNode;
+        property?: { name?: string };
+        computed?: boolean;
+      };
+      let container: unknown;
+      if (
+        objMember.type === 'memberExpression' &&
+        !objMember.computed &&
+        objMember.property?.name === 'style' &&
+        objMember.object
+      ) {
+        const el = await evaluator.evaluate(objMember.object, context);
+        const inlineStyle =
+          el && typeof el === 'object' && 'style' in (el as object)
+            ? (el as HTMLElement).style
+            : undefined;
+        container = inlineStyle ?? (await evaluator.evaluate(objectAst, context));
+      } else {
+        container = await evaluator.evaluate(objectAst, context);
+      }
       if (container != null && typeof container === 'object') {
         const property = computed
           ? String(await evaluator.evaluate(firstArg.property as ASTNode, context))
