@@ -45,6 +45,17 @@ _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (deg
 
 ## Current state
 
+> **Snapshot 2026-06-17 (baseline commit `18939a01`, `browser-priority`).** parse rate
+> **3688/3696 (99.78%)**, 8 hard fails (all reactivity: ms `bind-*` ×4, sw
+> `two-way`/`computed`/`input-char-count`, tr `window-resize`) · degenerate **29** · lossy
+> **94** · faithful **~3565** · avgFidelity **0.985** · avgPrecision 0.960 (hi 0.815 outlier)
+> · avgRoleFidelity 0.833. The figures in the "Focus shift" note below are the **original
+> 2026-06-11 assessment** that launched the fidelity arc — kept as the starting line;
+> superseded by this snapshot and the authoritative baseline JSON
+> (`packages/testing-framework/baselines/multilingual-priority.json`). Forward plan:
+> [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md) (now: Track 2 reactivity is top
+> priority — it owns all 8 remaining hard fails).
+
 > **Focus shift (2026-06-11): from parse rate to _fidelity_.** Parse rate (~99.4%
 > non-null) is effectively maxed, but it overstates health: a full fidelity sweep
 > (24 langs × 154 patterns = 3696 instances) shows **84.8% faithful, 12.7% lossy,

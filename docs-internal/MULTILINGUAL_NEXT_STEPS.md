@@ -9,42 +9,57 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-06-15 baseline · commit `0af855c0` · `browser-priority`)
+## Where we are (2026-06-17 baseline · commit `18939a01` · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                   | Notes                                          |
-| ------------------------------ | ----------------------- | ---------------------------------------------- |
-| parse rate                     | **3686 / 3696 (99.7%)** | 10 hard fails                                  |
-| degenerate passes (fid < 0.5)  | **39**                  | was ~69                                        |
-| lossy passes (0.5 ≤ fid < 1.0) | **113**                 | was ~471 — the bulk of correctness debt        |
-| faithful (fid = 1.0)           | **~3534**               |                                                |
-| avgFidelity (R0-recall)        | **0.982**               | was 0.928                                      |
-| avgPrecision (R0 trust floor)  | **0.960**               | newest ratchet; hi 0.813 is the outlier        |
-| avgRoleFidelity (R1)           | **0.831**               | **the laggard dimension**                      |
-| avgExecutionFidelity (R2)      | **1.000**               | curated subset fully reproduces en DOM effects |
+| Signal                         | Value                    | Notes                                          |
+| ------------------------------ | ------------------------ | ---------------------------------------------- |
+| parse rate                     | **3688 / 3696 (99.78%)** | 8 hard fails (was 10)                          |
+| degenerate passes (fid < 0.5)  | **29**                   | was 39                                         |
+| lossy passes (0.5 ≤ fid < 1.0) | **94**                   | was 113 — still the bulk of correctness debt   |
+| faithful (fid = 1.0)           | **~3565**                | was ~3534                                      |
+| avgFidelity (R0-recall)        | **0.985**                | was 0.982                                      |
+| avgPrecision (R0 trust floor)  | **0.960**                | hi 0.815 is the outlier (next-lowest ja ~0.91) |
+| avgRoleFidelity (R1)           | **0.833**                | **the laggard dimension**                      |
+| avgExecutionFidelity (R2)      | **1.000**                | curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
-## The leverage map (what's actually non-faithful)
+> **Update 2026-06-17 (PR #445, behavior-removable he/zh).** The two he/zh
+> `behavior-removable` hard fails are fixed (null → lossy: he 0.556, zh 0.667).
+> Root cause was two stacked bugs: (1) the i18n transformer inserted a
+> pre-positioned object marker before the behavior name in he/zh
+> (`behavior את Removable` / `behavior 把 Removable`), which broke the semantic
+> block parser's `tokens[1]` name detection; (2) `parseConditional` dropped the
+> condition of block-style `if <cond>` (no inline `then`) in **all** non-English
+> languages. The condition fix is cross-language, so it rippled positively:
+> `behavior-removable` degen→lossy in 7 other langs, and draggable/resizable
+> collapsed from ~23 → 8–9 non-faithful each. Zero regressions; avgFidelity and
+> avgRoleFidelity up in every language. **All 8 remaining hard fails are now
+> reactivity (Track 2).**
 
-Of the **162** non-faithful instances (39 degenerate + 113 lossy + 10 hard-fail),
+## The leverage map (what's actually non-faithful) — 2026-06-17
+
+Of the **131** non-faithful instances (29 degenerate + 94 lossy + 8 hard-fail),
 two clusters dominate:
 
 | Cluster                                                                         | degenerate | lossy | hard-fail |  total |   share |
 | ------------------------------------------------------------------------------- | ---------: | ----: | --------: | -----: | ------: |
-| **Behaviors** (draggable/resizable/sortable/removable + install)                |         28 |    64 |         2 | **94** | **58%** |
-| **Reactivity** (bind-\* / live-\* / two-way / computed / intercept / window-\*) |          8 |     2 |         7 | **17** |     10% |
-| **Control-flow** (`unless-condition` + then-chain bodies)                       |          1 |     8 |         0 |      9 |      6% |
-| Long tail (fetch-do-not-throw, get-value, tell-\*, set-color-variable, …)       |          2 |    39 |         1 |    ~42 |     26% |
+| **Behaviors** (removable/sortable/resizable/draggable + install)                |         18 |    47 |         0 | **65** | **50%** |
+| **Reactivity** (bind-\* / live-\* / two-way / computed / intercept / window-\*) |          8 |     0 |         8 | **16** |     12% |
+| **Control-flow** (`unless-condition` + then-chain bodies)                       |          1 |    10 |         0 |     11 |      8% |
+| Long tail (fetch-do-not-throw, get-value, tell-\*, set-color-variable, …)       |          2 |    37 |         0 |     39 |     30% |
 
-Per-pattern: `behavior-draggable` 23 lossy · `behavior-resizable` 21 lossy + 2 degen ·
-`behavior-removable` 13 degen + 8 lossy + 2 hard-fail · `behavior-sortable` 11 degen +
-12 lossy · `unless-condition` 8 lossy. The 10 hard fails: he/zh `behavior-removable`,
-ms `bind-*` ×4, sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`.
+Per-pattern: `behavior-removable` 6 degen + 17 lossy (was 13 degen + 8 lossy + 2 hard) ·
+`behavior-sortable` 9 degen + 14 lossy · `unless-condition` 1 degen + 8 lossy ·
+`behavior-resizable` 1 degen + 8 lossy (was 21 lossy + 2 degen — the block-`if` fix) ·
+`behavior-draggable` 8 lossy (was 23 lossy). **All 8 hard fails are now reactivity:**
+ms `bind-auto-detect`/`bind-two-way`/`bind-explicit-property`/`bind-non-form-display`,
+sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`.
 
 > **Read the behavior share through the implementation lens.** ~56 of the 94 behavior
 > instances are the **Experimental 3** (Draggable/Sortable/Resizable) — the _only_ three
@@ -98,12 +113,20 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    without a runtime feature too costly to add — and even then, prefer fixing the feature, since
    it's likely shared (`repeat-until-event` is already a tracked gate pattern). Start with
    Draggable (we had it working before; richest source) as the bellwether for Sortable/Resizable.
-2. **Fix `behavior-removable` — it is CURATED, so its failures are real bugs.** 13 degen, 8 lossy,
-   and the only behavior with **hard** parse failures (he/zh). It is already source-compiled, so
-   this is a parse/i18n bug, not an imperative-JS one — the he/zh translation of the Removable
-   block returns a **null parse**. **Handoff written:**
-   [`HANDOFF-behavior-removable-he-zh.md`](HANDOFF-behavior-removable-he-zh.md) (reproduction,
-   file pointers, method, gotchas). This is the recommended next contained behavior item.
+2. ~~**Fix `behavior-removable` — it is CURATED, so its failures are real bugs.**~~ **DONE**
+   (2026-06-17, PR #445). Was the only behavior with **hard** parse failures (he/zh null parse).
+   Two stacked bugs, both fixed: (a) the i18n transformer inserted a pre-positioned object marker
+   before the behavior name in he/zh (`behavior את Removable` / `behavior 把 Removable`), breaking
+   the semantic block parser's `tokens[1]` name detection — fixed by `resolveNameTokenIndex`
+   skipping a leading patient-marker token ([`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts));
+   (b) `parseConditional` dropped the condition of block-style `if <cond>` (no inline `then`) in
+   **all** non-English languages — fixed in [`transformer.ts`](../packages/i18n/src/grammar/transformer.ts).
+   he/zh now parse 154/154 (lossy: he 0.556, zh 0.667). The condition fix is cross-language, so it
+   rippled: `behavior-removable` degen→lossy in 7 other langs, draggable/resizable ~23 → 8–9
+   non-faithful each, avgFidelity + avgRoleFidelity up everywhere, zero regressions. It is still
+   6 degen + 17 lossy (the body sub-parse drops `trigger`/`remove`/`halt` after the conditionals) —
+   a faithful pass is future headroom, not a regression. Remaining behavior debt is now
+   `behavior-sortable` (9 degen + 14 lossy) and the Experimental-3 source execution (item 1).
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
      canonical "what is a behavior / boundary test / how to write one / install + resolver /
@@ -128,8 +151,9 @@ MULTILINGUAL_BEHAVIORS_PLAN.md, BEHAVIORS_CONSOLIDATION_PLAN.md. **Audit cmd:** 
 supported — including in the multilingual path.** So this is not an exclusion; it's a
 parser/profile build-out.
 
-**Why:** owns 8 of 10 hard parse failures (ms `bind-*` ×4, sw `two-way-binding`/`computed-value`/
-`input-char-count`, tr `window-resize`) plus all 7 hi degenerate (`bind-*`/`live-*`/`intercept`).
+**Why:** as of 2026-06-17 owns **all 8** remaining hard parse failures (ms `bind-*` ×4, sw
+`two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`) plus the hi degenerate
+cluster (`bind-*`/`live-*`/`intercept`).
 The hx-v4 **runtime** already handles these (`hx-live` → `live … end` block + `@hyperfixi/reactivity`,
 shipped in `hyperfixi-hx-v4.js`). The gap is purely the **semantic / multilingual parse path** —
 it doesn't yet model the reactive block shapes, so these patterns drop to hard-fail/degenerate
@@ -148,10 +172,10 @@ genuine _parser_ effort remaining now that behaviors resolve mostly by curation.
 
 ### Track 3 — R1 role-fidelity burn-down (the untouched dimension)
 
-**Why:** avgRoleFidelity **0.831** is the laggard, and it has _never had a dedicated
-campaign_ — it drifted up incidentally from 0.7505 (first measured, #365) to 0.831 as a
+**Why:** avgRoleFidelity **0.833** is the laggard, and it has _never had a dedicated
+campaign_ — it drifted up incidentally from 0.7505 (first measured, #365) to 0.833 as a
 side effect of other work. The worst languages are the hard SOV/reorder set:
-**hi 0.682 · qu 0.769 · bn 0.778 · ko 0.787 · ja/tr 0.792**. R1 measures
+**hi 0.683 · qu 0.770 · bn 0.780 · ko 0.788 · ja/tr 0.793**. R1 measures
 `action.role:valueType` recall — a parse that keeps the verb but drops or mistypes a role.
 
 **Action:** triage R1 on hi/qu/bn first (worst three). For each, dump the role-signature
@@ -175,18 +199,20 @@ lowest-ROI remaining parse work.
 
 ### Track 5 — Reliability hygiene (do alongside, not after)
 
-1. **Refresh stale headline numbers in the detailed docs.** CORRECTNESS_RELIABILITY_PLAN.md
-   §1 still says lossy 471 / avgFidelity 0.928; MULTILINGUAL_ROADMAP.md "Remaining work"
-   says ~159 degenerate. Reality: 113 / 0.982 / 39. (CLAUDE.md was refreshed 2026-06-16
-   with a dated snapshot note + pointer to the baseline JSON — apply the same pattern here.)
+1. **Refresh stale headline numbers in the detailed docs.** _Partly done 2026-06-17:_ this
+   file + a dated snapshot note added to CORRECTNESS_RELIABILITY_PLAN.md §1 and
+   MULTILINGUAL_ROADMAP.md "Remaining work" pointing at the 06-17 baseline
+   (lossy **94** / avgFidelity **0.985** / degenerate **29**). The prose bodies of those two
+   docs still carry their original session-era figures inline — left as historical context,
+   superseded by the dated snapshot + the baseline JSON (the authoritative source).
 2. **Make `populate` deterministic.** CLAUDE.md flags the "minor residual jitter" on a few
    boundary patterns that forces the ratchet tolerances (3 lossy / 3 degen flips, 0.02 avg).
    A deterministic populate lets us tighten those tolerances toward 0 and trust the gate more.
 3. **Consider an absolute fidelity floor**, not just a ratchet — once a language clears a
    threshold, ratchet the floor upward so it can't silently backslide within tolerance.
-4. **hi precision follow-up.** hi avgPrecision 0.813 is a clear outlier (next-lowest ~0.91).
+4. **hi precision follow-up.** hi avgPrecision **0.815** is a clear outlier (next-lowest ja ~0.91).
    The 2026-06-15 marker-disambiguation fix lifted it +0.016; more phantom-command sources
-   remain in the hi profile.
+   remain in the hi profile. (Largely subsumed by Track 2 — the hi degenerate cluster is reactivity.)
 
 ## Runtime correctness follow-ups (core `_hyperscript`-compat — surfaced during Track 1a)
 
@@ -213,13 +239,18 @@ target` idiom yields null even when a match exists (`target.closest("li")` works
    style) also **DONE** (#442); #3 (`closest`) deferred.
 2. ~~**Track 1b — authoring guide**~~ **DONE** (#443, `packages/behaviors/AUTHORING.md`). The
    boundary **validator** is **skipped** for this stage (see item 3 above).
-3. **`behavior-removable` he/zh** — the recommended next contained behavior item; handoff ready at
-   [`HANDOFF-behavior-removable-he-zh.md`](HANDOFF-behavior-removable-he-zh.md).
-4. **Track 2 — reactivity (htmx v4) in the multilingual parse path**: teach the semantic parser
-   the `bind`/`live`/`intercept` block shapes; profile keywords for ms/sw/tr/hi first. The largest
-   genuine parser effort now, and required (htmx v4 is in scope).
-5. **Track 3 — R1 role-fidelity burn-down** on hi/qu/bn — greenfield headroom on the laggard dimension.
-6. **Track 4 control-flow** opportunistically; **Track 5 hygiene** continuously.
+3. ~~**`behavior-removable` he/zh**~~ **DONE** (2026-06-17, PR #445). See Track 1 item 2.
+4. **Track 2 — reactivity (htmx v4) in the multilingual parse path — NOW THE TOP PRIORITY.**
+   With behavior-removable fixed, reactivity owns **all 8** remaining hard parse failures
+   (ms `bind-*` ×4, sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`)
+   plus the hi degenerate cluster and the hi precision outlier (0.815). Teach the semantic parser
+   the `bind … end` / `live … end` / `intercept` block shapes (mirror the behavior/`def` structural
+   layer, PRs #426–#430 / `block-parser.ts`); add profile keywords for ms → sw → tr → hi. The largest
+   genuine parser effort remaining, and required (htmx v4 is in scope).
+5. **Track 3 — R1 role-fidelity burn-down** on hi (0.683)/qu (0.770)/bn (0.780) — greenfield headroom
+   on the laggard dimension (avgRoleFidelity 0.833); good fill-in between Track 2 sub-steps.
+6. **Track 4 control-flow** opportunistically (`unless-condition` 1 degen + 8 lossy is the
+   representative); **Track 5 hygiene** continuously.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).

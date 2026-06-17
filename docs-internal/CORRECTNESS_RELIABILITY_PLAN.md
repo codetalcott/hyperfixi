@@ -9,9 +9,12 @@
 >
 > **Figures snapshot (current vs. this doc's origin).** The §1 distribution below is the
 > **original assessment** that launched this campaign — kept verbatim as the starting line.
-> **Current state (2026-06-15 baseline, commit `0af855c0`, `browser-priority`):** lossy
-> **113** (was 471) · degenerate **39** (was 69) · faithful **~3534** (was 3133) ·
-> avgFidelity **0.982** (was 0.928) · avgPrecision 0.960 · avgRoleFidelity 0.831. The
+> **Current state (2026-06-17 baseline, commit `18939a01`, `browser-priority`):** parse rate
+> **3688/3696 (99.78%)**, 8 hard fails (all reactivity) · lossy **94** (was 471) · degenerate
+> **29** (was 69) · faithful **~3565** (was 3133) · avgFidelity **0.985** (was 0.928) ·
+> avgPrecision 0.960 (hi 0.815 outlier) · avgRoleFidelity 0.833. (Prior snapshot: 2026-06-15
+> `0af855c0` — lossy 113 / degen 39 / avgFidelity 0.982; the 2026-06-17 regen is PR #445,
+> behavior-removable he/zh null→lossy + a cross-language block-`if` condition fix.) The
 > **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp` +
 > `commit` fields stamp each regeneration). The §7a–§7cc session logs track the path between
