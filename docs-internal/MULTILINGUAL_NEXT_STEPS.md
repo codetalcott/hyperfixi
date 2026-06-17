@@ -224,9 +224,33 @@ side effect of other work. The worst languages are the hard SOV/reorder set:
 **Action:** triage R1 on hi/qu/bn first (worst three). For each, dump the role-signature
 diff vs the en reference per pattern and find the recurring mistype/drop (likely a
 marker→role mapping or a value-type classification in the per-language profile). This is
-profile/parser work, same method as the R0 dict-alignment arcs — but targeting _roles_,
-not _presence_. New `--regression` won't flag drift here until someone drives it; this is
-greenfield headroom.
+profile/parser work — but targeting _roles_, not _presence_. New `--regression` won't flag
+drift here until someone drives it; this is greenfield headroom.
+
+> **Triage DONE (2026-06-17) — the dominant cause is STRUCTURAL SOV, not dict-alignment.**
+> A per-pattern role-signature diff (`action.role:valueType` recall vs en) across hi/qu/bn
+> found the same two signals dominate all three: **`on.event:literal`** (hi 22×) and
+> **`fetch.source:literal`** (hi/qu/bn **13× each**), with `repeat.loopType`/`repeat.event`
+> (~7× each lang) and `halt.patient:literal` (6×) behind them. These are **not** independent
+> dict gaps — they trace to ONE SOV root cause: when the SOV reorder fronts a **literal or
+> expression** (a URL, a `fn()` call), the parser mistakes it for the **event** (hi parses
+> `fetch /api/data` → `/api/data को लाएं` as `on /api/data … fetch`; `on click call myFunction()`
+> → `myFunction()` becomes the event), or fails to match the bare SOV command at all (qu
+> `/api/data ta apamuy` and bn `/api/data কে আনুন` return **NULL**). The control case proves it:
+> when the fronted element is a **selector** (`on click toggle .active` → `.active को क्लिक पर
+टॉगल`) the parse is **R1-perfect**. So selector-fronted SOV works; literal/expression-fronted
+> SOV is mis-anchored. This is the **same structural frontier** as the deferred `tr
+window-resize` hard-fail and the SOV behavior reorders — NOT the R0 dict-alignment family.
+>
+> **Implication for sequencing.** The biggest remaining multilingual headroom — the last
+> reactivity hard-fail (tr), the hi/qu/bn R1 laggard, and the SOV `fetch` NULLs — **converges on
+> one arc: SOV bare-command / event-anchor disambiguation** (don't treat a fronted
+> literal/expression as an event; match the bare `<obj> <marker> <verb>` SOV command for the
+> qu/bn NULL cases). One focused structural fix could move all three at once — but it edits the
+> hottest, most regression-sensitive parser path (every SOV language currently passing), so it
+> deserves a dedicated arc with careful R0/precision/parse-rate guards, not a tail-end increment.
+> The quick dict-alignment R1 wins are largely already harvested by the R0 arcs; what's left here
+> is structural.
 
 ### Track 4 — Control-flow + long-tail lossy
 
@@ -283,17 +307,19 @@ target` idiom yields null even when a match exists (`target.closest("li")` works
 2. ~~**Track 1b — authoring guide**~~ **DONE** (#443, `packages/behaviors/AUTHORING.md`). The
    boundary **validator** is **skipped** for this stage (see item 3 above).
 3. ~~**`behavior-removable` he/zh**~~ **DONE** (2026-06-17, PR #445). See Track 1 item 2.
-4. **Track 2 — reactivity (htmx v4) in the multilingual parse path — NOW THE TOP PRIORITY.**
-   With behavior-removable fixed, reactivity owns **all 8** remaining hard parse failures
-   (ms `bind-*` ×4, sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`)
-   plus the hi degenerate cluster and the hi precision outlier (0.815). Teach the semantic parser
-   the `bind … end` / `live … end` / `intercept` block shapes (mirror the behavior/`def` structural
-   layer, PRs #426–#430 / `block-parser.ts`); add profile keywords for ms → sw → tr → hi. The largest
-   genuine parser effort remaining, and required (htmx v4 is in scope).
-5. **Track 3 — R1 role-fidelity burn-down** on hi (0.683)/qu (0.770)/bn (0.780) — greenfield headroom
-   on the laggard dimension (avgRoleFidelity 0.833); good fill-in between Track 2 sub-steps.
-6. **Track 4 control-flow** opportunistically (`unless-condition` 1 degen + 8 lossy is the
-   representative); **Track 5 hygiene** continuously.
+4. ~~**Track 2 — reactivity in the multilingual parse path**~~ **7 of 8 hard-fails DONE**
+   (PRs #446 ms `bind`×4 + hi keywords, #447 sw `input` event). Parse rate **3688 → 3695/3696**.
+   Only `tr window-resize` remains — deferred as **structural SOV** (see Track 2 increment notes).
+   The hi `live`/`intercept` bareKeyword block-shape work is the remaining genuine block-parser arc.
+5. **Track 3 — R1 role-fidelity** triaged (2026-06-17): the laggard (hi 0.683 / qu 0.770 / bn 0.780)
+   is **dominated by structural SOV mis-anchoring**, not dict-alignment (see the Track 3 triage
+   note) — `on.event:literal` + `fetch.source:literal` are the top drops and both trace to "fronted
+   literal/expression mistaken for the event / bare SOV command not matched."
+6. **The convergent next arc — SOV bare-command / event-anchor disambiguation.** `tr window-resize`,
+   the hi/qu/bn R1 laggard, and the SOV `fetch` NULLs are **one structural problem**. A focused arc
+   here is now the highest-leverage remaining parser work — but it's regression-sensitive (hottest
+   SOV path), so guard R0/precision/parse-rate carefully. Alternative if smaller wins are preferred:
+   **Track 4** lossy long-tail (94 lossy ≫ the 1 remaining hard-fail).
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
