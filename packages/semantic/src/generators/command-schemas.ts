@@ -698,7 +698,7 @@ export const bindSchema: CommandSchema = {
         de: 'zu',
         it: 'in',
         id: 'ke',
-        ms: 'to', // no i18n grammar profile: prepositions stay English in generated text
+        ms: 'ke', // Malay grammar profile now emits the dative `ke` (mirrors id)
         vi: 'vào', // generic destination preposition (matches set/put `into`), not "với"/with
         ru: 'в', // generic destination preposition (matches set/put `into`)
         uk: 'в',
@@ -714,6 +714,7 @@ export const bindSchema: CommandSchema = {
         tl: 'sa',
         bn: 'তে',
         qu: 'man',
+        hi: 'में', // SOV locative the transformer emits for the bind target
       },
     },
   ],

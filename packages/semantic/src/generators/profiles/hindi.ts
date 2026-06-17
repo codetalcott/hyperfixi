@@ -196,6 +196,12 @@ export const hindiProfile: LanguageProfile = {
       alternatives: ['इवेंटसोर्स'],
       normalized: 'eventsource',
     },
+    // Reactivity / service-worker commands: same English-literal emission as the
+    // streaming commands above (no i18n hi dict entry), so English primary with
+    // native transliteration alternatives. Previously absent — `bind`/`intercept`
+    // dropped to a degenerate parse in hi.
+    bind: { primary: 'bind', alternatives: ['बाइंड', 'बांधें'], normalized: 'bind' },
+    intercept: { primary: 'intercept', alternatives: ['इंटरसेप्ट'], normalized: 'intercept' },
   },
   tokenization: {
     particles: ['को', 'में', 'पर', 'से', 'का', 'की', 'के', 'तक', 'ने'],
