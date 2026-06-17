@@ -100,8 +100,10 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    Draggable (we had it working before; richest source) as the bellwether for Sortable/Resizable.
 2. **Fix `behavior-removable` — it is CURATED, so its failures are real bugs.** 13 degen, 8 lossy,
    and the only behavior with **hard** parse failures (he/zh). It is already source-compiled, so
-   this is a parse/i18n bug, not an imperative-JS one — check the `install … Removable` block
-   parses in he/zh.
+   this is a parse/i18n bug, not an imperative-JS one — the he/zh translation of the Removable
+   block returns a **null parse**. **Handoff written:**
+   [`HANDOFF-behavior-removable-he-zh.md`](HANDOFF-behavior-removable-he-zh.md) (reproduction,
+   file pointers, method, gotchas). This is the recommended next contained behavior item.
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
      canonical "what is a behavior / boundary test / how to write one / install + resolver /
@@ -110,9 +112,10 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    - **Install path:** the resolver hook already works (`install X` → `_hyperscript.behaviors.resolve(X)`
      → compile-on-first-use, `packages/behaviors/src/behavior-resolver.ts`) — now documented in
      AUTHORING.md §7 as the public extension point.
-   - **LLM-agent path (the remaining gap):** AUTHORING.md §9 gives agents a boundary checklist,
-     but there is still no MCP tool / programmatic validator that _enforces_ it. Add one — schema +
-     a "stays-in-lane?" validator (reject component-shaped behaviors that need observers/async loops).
+   - **LLM-agent path (boundary _validator_) — SKIPPED for now** (decision 2026-06-16: too heavy
+     for this stage of adoption). AUTHORING.md §9 already gives agents a boundary checklist; an
+     MCP/programmatic validator that _enforces_ it (reject component-shaped behaviors) is deferred
+     until adoption justifies the weight. Revisit when there's real third-party behavior authoring.
 
 **Layer:** runtime (execute the Experimental-3 source + the Removable parse bug) + product
 curation + DX/tooling (the system). **Owner docs:** `packages/behaviors/AUTHORING.md`,
@@ -205,18 +208,18 @@ target` idiom yields null even when a match exists (`target.closest("li")` works
 
 ## Recommended sequence
 
-1. ~~**Track 1a — eliminate imperative JS**~~ **DONE** (2026-06-16, branch
-   `feat/behaviors-no-imperative-js`): Draggable/Sortable/Resizable compile from `source`;
-   `imperativeInstaller` → 0. Still open under Track 1: the curated `behavior-removable` he/zh
-   parse bug, and the three **Runtime correctness follow-ups** above.
-2. **Track 1b — behavior _system_ hardening**: the authoring guide + the resolver-as-public-API
-   docs + the missing agent/MCP "write-and-validate-a-behavior" path. The stated priority;
-   parallelizable with the parser work below.
-3. **Track 2 — reactivity (htmx v4) in the multilingual parse path**: teach the semantic parser
+1. ~~**Track 1a — eliminate imperative JS**~~ **DONE** (PRs #440–#442): Draggable/Sortable/Resizable
+   compile from `source`; `imperativeInstaller` → 0. Runtime follow-ups #1 (event-args) + #2 (inline
+   style) also **DONE** (#442); #3 (`closest`) deferred.
+2. ~~**Track 1b — authoring guide**~~ **DONE** (#443, `packages/behaviors/AUTHORING.md`). The
+   boundary **validator** is **skipped** for this stage (see item 3 above).
+3. **`behavior-removable` he/zh** — the recommended next contained behavior item; handoff ready at
+   [`HANDOFF-behavior-removable-he-zh.md`](HANDOFF-behavior-removable-he-zh.md).
+4. **Track 2 — reactivity (htmx v4) in the multilingual parse path**: teach the semantic parser
    the `bind`/`live`/`intercept` block shapes; profile keywords for ms/sw/tr/hi first. The largest
    genuine parser effort now, and required (htmx v4 is in scope).
-4. **Track 3 — R1 role-fidelity burn-down** on hi/qu/bn — greenfield headroom on the laggard dimension.
-5. **Track 4 control-flow** opportunistically; **Track 5 hygiene** continuously.
+5. **Track 3 — R1 role-fidelity burn-down** on hi/qu/bn — greenfield headroom on the laggard dimension.
+6. **Track 4 control-flow** opportunistically; **Track 5 hygiene** continuously.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
