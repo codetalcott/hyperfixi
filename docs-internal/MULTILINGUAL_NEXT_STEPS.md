@@ -145,30 +145,64 @@ curation + DX/tooling (the system). **Owner docs:** `packages/behaviors/AUTHORIN
 MULTILINGUAL_BEHAVIORS_PLAN.md, BEHAVIORS_CONSOLIDATION_PLAN.md. **Audit cmd:** grep
 `imperativeInstaller` under `packages/behaviors/src/behaviors/` — must reach 0.
 
-### Track 2 — Reactivity (htmx v4): bring the multilingual parse path up to the runtime
+### Track 2 — Reactivity: bring the multilingual parse path up to the runtime
 
-**Decision (settled): htmx v4 features, including reactivity, are in scope and must be
-supported — including in the multilingual path.** So this is not an exclusion; it's a
-parser/profile build-out.
+> **htmx v4 syntax verified (2026-06-17, against four.htmx.org).** htmx v4 reactivity is the
+> **`hx-live` extension only** — a JS-expression body re-run via a document-wide
+> `MutationObserver` + `input`/`change` events + post-swap, with a `q()` selector proxy and
+> `debounce`/`timeout`/`trigger`/`take`/`nextFrame` scope helpers — plus the separate `hx-sse`
+> / `hx-ws` streaming extensions. **htmx v4 has NO `hx-bind`, `hx-computed`, two-way binding,
+> or signals.** So of the gate's reactivity patterns, only **`live`** descends from htmx v4
+> (`hx-live` → hyperfixi's `live … end`, with a hyperscript body instead of upstream's JS — a
+> documented divergence). **`bind` / `computed` / `two-way` are hyperfixi-native reactivity
+> DSL, not htmx v4.** The old "reactivity (htmx v4)" framing conflated the two; corrected here.
+> (Possible follow-up unrelated to the gate: hyperfixi's SSE/WS compat uses the htmx-2-era
+> `sse-connect`/`ws-connect` attribute names; htmx v4 ships these as the `hx-sse`/`hx-ws`
+> extensions. Worth reconciling in the htmx-compat layer, but out of scope for the parse path.)
 
-**Why:** as of 2026-06-17 owns **all 8** remaining hard parse failures (ms `bind-*` ×4, sw
-`two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`) plus the hi degenerate
-cluster (`bind-*`/`live-*`/`intercept`).
-The hx-v4 **runtime** already handles these (`hx-live` → `live … end` block + `@hyperfixi/reactivity`,
-shipped in `hyperfixi-hx-v4.js`). The gap is purely the **semantic / multilingual parse path** —
-it doesn't yet model the reactive block shapes, so these patterns drop to hard-fail/degenerate
-when authored in non-English.
+**Decision (settled): reactivity is in scope and must be supported in the multilingual path.**
+This is a parser/profile build-out, not an exclusion.
 
-**Action:**
+> **Increment 1 DONE (2026-06-17, PR pending — `feat/track2-reactivity-ms-bind-hi-keywords`).**
+> Recon disproved the "all 8 are reactive block shapes" framing: the 8 hard fails split three
+> ways. Cleared the clean half:
+>
+> - **ms `bind`×4 (hard-fail → parse).** `bindSchema` source `markerOverride` had `ms:'to'`
+>   (stale comment "no i18n grammar profile") but ms gained the Malay grammar profile, so the
+>   transformer emits the dative `ke`. Pattern expected `to`, text had `ke` → NULL. Fixed
+>   `ms:'to'`→`'ke'` (mirrors `id`) in `command-schemas.ts`.
+> - **hi `bind`×4 + `intercept` (degenerate → faithful/improved).** The hi profile was missing
+>   `bind` and `intercept` keywords entirely (English-literal emission, like `worker`/
+>   `eventsource`); added them + a hi `bind` source marker (`में`).
+>
+> Result: parse rate **3688 → 3692/3696**, degenerate **29 → 24**, hi avgFidelity **+0.033**,
+> gate green, **zero regressions**. Semantic suite 6099 green.
 
-1. Teach the semantic parser the `bind … end` / `live … end` (and `intercept`) block shapes,
-   mirroring how the behavior/`def` blocks were added (PRs #426–#430, the structural-layer work).
-2. Add the per-language profile keywords (`bind`/`live`/`two-way`/`computed`) for the priority langs,
-   starting with the hard-fail set (ms, sw, tr) and the hi degenerate cluster.
-3. Re-baseline; expect hi precision (0.813, the outlier) and the ms/sw/tr hard fails to clear together.
+**Remaining hard fails (4) + hi block cluster — precise diagnoses (deferred, each its own arc):**
 
-**Layer:** semantic parser + per-language profiles (block-structure parsing). This is the largest
-genuine _parser_ effort remaining now that behaviors resolve mostly by curation.
+1. **sw `input-char-count` / `two-way-binding` / `computed-value` (3 hard-fail).** All three are
+   plain **`on input` event handlers** (NOT reactive commands — the names mislead). They reduce
+   to one breaker: an **`on input` / `on keyup` handler with a `set` body** → NULL in sw
+   (`kwenye ingizo seti …`). Isolation: `on input` + `add`/`put`/`log` parse; `on submit`/`on
+change` + `set` parse; standalone `set #x.y to my value` parses. So it's the
+   `(input|keyup)`-event × `set`-body interaction specifically — likely a sw event-extraction /
+   morphology-normalizer edge on `ingizo`/`kitufe_juu` adjacent to `seti`. Highest remaining
+   leverage (3 fails, one root cause).
+2. **tr `window-resize` (1 hard-fail).** `on resize from window debounced at 200ms call
+adjustLayout()` → the SOV reorder scrambles the handler
+   (`adjustLayout() i boyut_değiştir de çağır pencere den`) **and** the `debounced at 200ms`
+   modifier is left untranslated. This is an i18n-transformer SOV event-handler-reorder +
+   event-modifier-translation gap, not a semantic-parser gap.
+3. **hi `live-derived-value` / `live-multiple-deps` (degenerate); also `intercept` blocks.** The
+   genuine **reactive block-shape** work: `live`/`intercept` (and `eventsource`/`socket`/
+   `worker`) are `bareKeyword` blocks (`hasBody:true`), but `block-parser.ts` only handles
+   `behavior`/`def`. In non-English the `live … end` / `intercept … end` block parses as a bare
+   `on`, dropping the block action. Teach the block layer the bareKeyword block shape (mirrors
+   the behavior/`def` structural layer).
+
+**Layer:** (1) sw semantic parser/tokenizer · (2) i18n transformer (SOV event reorder + modifier
+xlate) · (3) semantic block-parser (bareKeyword blocks). Start with (1) — most leverage, cleanest
+scope.
 
 ### Track 3 — R1 role-fidelity burn-down (the untouched dimension)
 
