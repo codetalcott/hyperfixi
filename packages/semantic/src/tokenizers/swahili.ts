@@ -101,6 +101,12 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'pakia', normalized: 'load' },
   { native: 'sukuma', normalized: 'scroll' },
   { native: 'input', normalized: 'input' },
+  // The i18n transformer emits the Swahili `ingizo` for the `input` event;
+  // without it the event tokenizes as a bare identifier, and after the
+  // homonymous on/into marker `kwenye` the handler is ambiguous — a `set` body
+  // then fails to parse (input-char-count / two-way-binding / computed-value
+  // hard-failed in sw for exactly this reason).
+  { native: 'ingizo', normalized: 'input' },
 
   // References
   { native: 'yangu', normalized: 'my' },

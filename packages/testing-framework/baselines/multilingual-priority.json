@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-17T03:48:32.337Z",
-  "commit": "21cf41b4",
+  "timestamp": "2026-06-17T04:02:26.110Z",
+  "commit": "d95bf7a2",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -10788,13 +10788,13 @@
       }
     },
     "sw": {
-      "parseSuccess": 151,
-      "parseFailure": 3,
-      "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.7907074529591067,
-      "avgFidelity": 0.9824319352465046,
-      "avgPrecision": 0.9804635761589403,
-      "avgRoleFidelity": 0.8526946042463285,
+      "parseSuccess": 154,
+      "parseFailure": 0,
+      "parseRate": 1,
+      "avgConfidence": 0.793413729128013,
+      "avgFidelity": 0.9849386724386724,
+      "avgPrecision": 0.9792207792207791,
+      "avgRoleFidelity": 0.8641264703764705,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["behavior-sortable"],
@@ -10802,7 +10802,6 @@
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
-        "event-debounce",
         "repeat-until-event",
         "set-color-variable"
       ],
@@ -11024,6 +11023,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "input-char-count": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "input-clear": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11060,6 +11063,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "event-debounce": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "event-throttle": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11069,6 +11076,14 @@
           "confidence": 0.8222222222222222
         },
         "stagger-animation": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "two-way-binding": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "computed-value": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11388,22 +11403,9 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "input-char-count": {
-          "success": false
-        },
         "repeat-until-event": {
           "success": true,
           "confidence": 0.5
-        },
-        "event-debounce": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "two-way-binding": {
-          "success": false
-        },
-        "computed-value": {
-          "success": false
         },
         "behavior-removable": {
           "success": true,

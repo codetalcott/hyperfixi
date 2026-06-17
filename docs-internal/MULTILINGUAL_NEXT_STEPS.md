@@ -57,9 +57,10 @@ two clusters dominate:
 Per-pattern: `behavior-removable` 6 degen + 17 lossy (was 13 degen + 8 lossy + 2 hard) ·
 `behavior-sortable` 9 degen + 14 lossy · `unless-condition` 1 degen + 8 lossy ·
 `behavior-resizable` 1 degen + 8 lossy (was 21 lossy + 2 degen — the block-`if` fix) ·
-`behavior-draggable` 8 lossy (was 23 lossy). **All 8 hard fails are now reactivity:**
-ms `bind-auto-detect`/`bind-two-way`/`bind-explicit-property`/`bind-non-form-display`,
-sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`.
+`behavior-draggable` 8 lossy (was 23 lossy). **Hard fails were all reactivity** (ms `bind-*`×4,
+sw `two-way-binding`/`computed-value`/`input-char-count`, tr `window-resize`); **PRs #446 + #447
+cleared ms+sw (7 of 8)** — only `tr window-resize` remains (parse rate now **3695/3696**). See
+the Track 2 increment notes below.
 
 > **Read the behavior share through the implementation lens.** ~56 of the 94 behavior
 > instances are the **Experimental 3** (Draggable/Sortable/Resizable) — the _only_ three
@@ -163,7 +164,7 @@ MULTILINGUAL_BEHAVIORS_PLAN.md, BEHAVIORS_CONSOLIDATION_PLAN.md. **Audit cmd:** 
 **Decision (settled): reactivity is in scope and must be supported in the multilingual path.**
 This is a parser/profile build-out, not an exclusion.
 
-> **Increment 1 DONE (2026-06-17, PR pending — `feat/track2-reactivity-ms-bind-hi-keywords`).**
+> **Increment 1 DONE (2026-06-17, PR #446).**
 > Recon disproved the "all 8 are reactive block shapes" framing: the 8 hard fails split three
 > ways. Cleared the clean half:
 >
@@ -178,22 +179,30 @@ This is a parser/profile build-out, not an exclusion.
 > Result: parse rate **3688 → 3692/3696**, degenerate **29 → 24**, hi avgFidelity **+0.033**,
 > gate green, **zero regressions**. Semantic suite 6099 green.
 
-**Remaining hard fails (4) + hi block cluster — precise diagnoses (deferred, each its own arc):**
+> **Increment 2 DONE (2026-06-17, PR pending — `feat/track2-sw-input-event`).** Cleared the
+> sw `input` cluster (3 hard-fails: `input-char-count` / `two-way-binding` / `computed-value`).
+> Root cause was NOT an event×`set` interaction (my first guess) but a dict↔tokenizer mismatch:
+> the i18n transformer emits the Swahili `ingizo` for the `input` event, but the sw tokenizer
+> only listed the English literal `input`, so `ingizo` tokenized as a bare **identifier**. After
+> the homonymous on/into marker `kwenye` (normalized to `destination`), an unknown event +
+> `set`-body became ambiguous → NULL (recognized events like `bonyeza`→click parsed fine; same
+> handler with `add`/`put` survived). Fix: add `{ native: 'ingizo', normalized: 'input' }` to
+> `tokenizers/swahili.ts` (same dict↔profile-alignment family as id `toggle`, qu/tl `get`).
+> Result: sw 151 → 154/154, parse rate **3692 → 3695/3696**, gate green, zero regressions (sw
+> precision −0.0012, within tolerance — the computed-value complex-expr phantom). Semantic 6099 green.
 
-1. **sw `input-char-count` / `two-way-binding` / `computed-value` (3 hard-fail).** All three are
-   plain **`on input` event handlers** (NOT reactive commands — the names mislead). They reduce
-   to one breaker: an **`on input` / `on keyup` handler with a `set` body** → NULL in sw
-   (`kwenye ingizo seti …`). Isolation: `on input` + `add`/`put`/`log` parse; `on submit`/`on
-change` + `set` parse; standalone `set #x.y to my value` parses. So it's the
-   `(input|keyup)`-event × `set`-body interaction specifically — likely a sw event-extraction /
-   morphology-normalizer edge on `ingizo`/`kitufe_juu` adjacent to `seti`. Highest remaining
-   leverage (3 fails, one root cause).
-2. **tr `window-resize` (1 hard-fail).** `on resize from window debounced at 200ms call
-adjustLayout()` → the SOV reorder scrambles the handler
-   (`adjustLayout() i boyut_değiştir de çağır pencere den`) **and** the `debounced at 200ms`
-   modifier is left untranslated. This is an i18n-transformer SOV event-handler-reorder +
-   event-modifier-translation gap, not a semantic-parser gap.
-3. **hi `live-derived-value` / `live-multiple-deps` (degenerate); also `intercept` blocks.** The
+**Remaining: 1 hard fail + hi block cluster — precise diagnoses (deferred, each its own arc):**
+
+1. **tr `window-resize` (the last hard-fail).** Two stacked issues. (a) The sw-style event-name
+   gap, but worse: the i18n transformer emits `boyut_değiştir` for `resize`, and the tr tokenizer
+   **splits on `_`** → `boyut` / `_` / `değiştir`, where `değiştir` alone normalizes to **`toggle`**
+   (collision). So the resize event is destroyed, not just unrecognized. The click form
+   (`tıklama`, single token) parses identically, so a single-token resize recognition is the core
+   fix — but it needs the underscore-split resolved (cf. the `enyakın` fused-token fix), likely an
+   i18n-side single-word resize emission + tr tokenizer entry. (b) Independently, the `debounced
+at 200ms` event modifier is left untranslated and fronted by the SOV reorder. Both needed for
+   the full gate pattern. 1 hard-fail, ~2 fixes — lower ROI than the hi block cluster.
+2. **hi `live-derived-value` / `live-multiple-deps` (degenerate); also `intercept` blocks.** The
    genuine **reactive block-shape** work: `live`/`intercept` (and `eventsource`/`socket`/
    `worker`) are `bareKeyword` blocks (`hasBody:true`), but `block-parser.ts` only handles
    `behavior`/`def`. In non-English the `live … end` / `intercept … end` block parses as a bare
