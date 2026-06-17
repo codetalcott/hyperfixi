@@ -240,6 +240,63 @@ function markerlessFetch(
   };
 }
 
+// Verb-FINAL SOV `fetch <url>` recovery. The transformer reorders `fetch /api/data`
+// to `{source} <patient-marker> <verb>` (ja `/api/data を フェッチ`, qu `/api/data ta
+// apamuy`) — the URL is fronted and marked with the *patient* (object) marker, since
+// the generic argument parser defaults the first unmarked arg to `patient` and SOV is
+// verb-final. The generated `fetch-{lang}-generated` requires the SOURCE marker
+// (qu `manta`, bn `থেকে`), which the transformer never emits here, so the bare SOV
+// fetch matched nothing and returned NULL (ja/ko/tr/hi/qu/bn). This accepts the
+// patient marker before the verb-final fetch verb and maps the URL to `source`
+// (mirroring fetch-zh-ba, which tolerates zh's BA object marker `把` for the source).
+// The patient marker is optional so a hand-written marker-less `<url> <verb>` also
+// parses. responseType (`as json`) is intentionally omitted: its SOV surface marker
+// varies per language (ja none, ko 로, tr olarak, hi के रूप में) and is not in the
+// R1 drop cluster — the trailing tokens are left unconsumed (source still captured).
+function sovFetch(
+  id: string,
+  language: string,
+  verb: string,
+  patientMarker: string,
+  verbAlternatives?: string[],
+  patientMarkerAlternatives?: string[]
+): LanguagePattern {
+  return {
+    id,
+    language,
+    command: 'fetch',
+    priority: 105,
+    template: {
+      format: `{source} ${patientMarker} ${verb}`,
+      tokens: [
+        { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+        {
+          type: 'group',
+          optional: true,
+          tokens: [
+            {
+              type: 'literal',
+              value: patientMarker,
+              ...(patientMarkerAlternatives ? { alternatives: patientMarkerAlternatives } : {}),
+            },
+          ],
+        },
+        {
+          type: 'literal',
+          value: verb,
+          ...(verbAlternatives ? { alternatives: verbAlternatives } : {}),
+        },
+      ],
+    },
+    extraction: {
+      source: {
+        marker: patientMarker,
+        ...(patientMarkerAlternatives ? { markerAlternatives: patientMarkerAlternatives } : {}),
+      },
+    },
+  };
+}
+
 /**
  * Get fetch patterns for a specific language.
  */
@@ -289,6 +346,31 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       return [
         markerlessFetch('fetch-tl', 'tl', 'kuhanin_mula', 'mula_sa', 'bilang', ['kunin_mula']),
       ];
+    // Verb-final SOV `fetch <url>` — patient-marked URL → source (see sovFetch).
+    // Verbs/markers from each profile (the transformer may emit a keyword
+    // *alternative*, e.g. ko 가져오기, so both primary + alternatives are listed).
+    case 'ja':
+      return [sovFetch('fetch-ja-sov', 'ja', 'フェッチ', 'を', ['取得'])];
+    case 'ko':
+      return [sovFetch('fetch-ko-sov', 'ko', '패치', '을', ['가져오기'], ['를'])];
+    case 'tr':
+      return [
+        sovFetch('fetch-tr-sov', 'tr', 'getir', 'i', undefined, [
+          'ı',
+          'u',
+          'ü',
+          'yi',
+          'yı',
+          'yu',
+          'yü',
+        ]),
+      ];
+    case 'hi':
+      return [sovFetch('fetch-hi-sov', 'hi', 'लाएं', 'को')];
+    case 'qu':
+      return [sovFetch('fetch-qu-sov', 'qu', 'apamuy', 'ta', ['taripakaramuy'])];
+    case 'bn':
+      return [sovFetch('fetch-bn-sov', 'bn', 'আনুন', 'কে')];
     default:
       return [];
   }

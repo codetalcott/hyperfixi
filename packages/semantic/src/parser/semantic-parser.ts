@@ -1618,6 +1618,16 @@ export class SemanticParserImpl implements ISemanticParser {
     tr: new Set(['de', 'da', 'te', 'ta']),
     bn: new Set(['এ']),
     qu: new Set(['pi']),
+    // hi's event-on marker (`क्लिक पर` = "on click"). hi was the only priority SOV
+    // language WITHOUT a Stage-3 SOV event-extraction fallback, so an event handler
+    // whose generated pattern doesn't cover the emitted role order — notably the
+    // patient-first 2-role shape `{patient} को {event} पर {verb} {destination} में`
+    // (append-content) — used to survive only via the bare-event mis-anchor (the
+    // fronted patient grabbed as a degenerate "event"). With the event-anchor guard
+    // rejecting that, this fallback recovers the real `<known-event> पर` trigger and
+    // re-parses the body. Stage 3 runs only when Stages 1–2 fail, and the known-event
+    // gate + body re-parse keep it additive (NULL → parse, never overriding a match).
+    hi: new Set(['पर']),
   };
 
   /**
