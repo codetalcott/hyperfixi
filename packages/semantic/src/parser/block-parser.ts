@@ -161,6 +161,29 @@ function parseHeader(
 }
 
 /**
+ * Resolve the block NAME token that follows the `behavior`/`def` keyword at
+ * `keywordIdx`. Normally the name is the very next token (`behavior Foo`), but
+ * languages with a PRE-positioned object/patient marker emit it between the
+ * keyword and the name when the declaration line is (mis-)translated as a
+ * markable command: he `behavior את Foo`, zh `behavior 把 Foo`. That spurious
+ * marker is not part of the name, so skip a single leading patient-marker token
+ * before reading the name. Returns the name token index, or -1 if none follows.
+ */
+function resolveNameTokenIndex(
+  tokens: readonly LanguageToken[],
+  keywordIdx: number,
+  language: string
+): number {
+  let idx = keywordIdx + 1;
+  if (idx >= tokens.length) return -1;
+  const patientForms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.patient);
+  if (patientForms.size > 0 && tokenMatches(tokens[idx], patientForms)) {
+    idx++; // skip the spurious leading object marker (he את / zh 把)
+  }
+  return idx < tokens.length ? idx : -1;
+}
+
+/**
  * Attempt to parse `input` as a block construct (`behavior`/`def`). Returns null
  * (fast) for non-block input so the caller falls through to single-statement
  * parsing. `parseStatement` parses each sub-block.
@@ -404,14 +427,17 @@ function parseBehaviorBlock(
   tokens: readonly LanguageToken[],
   parsers: BlockParsers
 ): SemanticNode | null {
-  // Behavior name — required PascalCase to avoid false positives.
-  const nameToken = tokens[1];
+  // Behavior name — required PascalCase to avoid false positives. Skip a
+  // leading object marker (he `behavior את Foo`, zh `behavior 把 Foo`) first.
+  const nameIdx = resolveNameTokenIndex(tokens, 0, language);
+  if (nameIdx < 0) return null;
+  const nameToken = tokens[nameIdx];
   const name = nameToken.value;
   if (!/^[A-Z][A-Za-z0-9_]*$/.test(name)) return null;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
   let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
-  if (bodyStart < 2) bodyStart = 2;
+  if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
 
   const initForms = keywordForms(language, 'init');
   const endForms = keywordForms(language, 'end');
@@ -497,13 +523,16 @@ function parseDefBlock(
   parsers: BlockParsers
 ): SemanticNode | null {
   // Function name — any identifier (optionally namespaced, e.g. `utils.calc`).
-  const nameToken = tokens[1];
+  // Skip a leading object marker (he `def את foo`, zh `def 把 foo`) first.
+  const nameIdx = resolveNameTokenIndex(tokens, 0, language);
+  if (nameIdx < 0) return null;
+  const nameToken = tokens[nameIdx];
   const name = nameToken.value;
   if (!/^[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*$/.test(name)) return null;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
   let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
-  if (bodyStart < 2) bodyStart = 2;
+  if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
 
   const endForms = keywordForms(language, 'end');
   const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));

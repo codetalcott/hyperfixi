@@ -1232,6 +1232,17 @@ function parseConditional(tokens: string[], _profile: LanguageProfile): ParsedSt
       role: 'condition',
       value: conditionValue,
     });
+  } else if (thenIndex === -1 && tokens.length > 1) {
+    // Block-style `if <cond>` with the body on following lines (no inline
+    // `then`). Capture everything after `if` as the condition; otherwise the
+    // condition is silently dropped and the rendered block becomes a bare
+    // `if`/`אם`/`如果`, which the semantic block parser then rejects (null
+    // parse). This is the dominant failure for nested control-flow bodies in
+    // non-Latin languages (he, zh).
+    roles.set('condition', {
+      role: 'condition',
+      value: tokens.slice(1).join(' '),
+    });
   }
 
   return {
