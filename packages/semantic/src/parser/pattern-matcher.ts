@@ -38,6 +38,13 @@ import { defaultConfidenceModel } from './confidence-model';
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
+  /**
+   * Command of the pattern currently being matched. Used to scope the
+   * event-anchor guard to event-HANDLER patterns (`on`) — the `event` role on
+   * `send`/`trigger` command patterns is a payload that CAN be a string literal
+   * (`send "hello"`) or identifier (`trigger refresh`), and must not be gated.
+   */
+  private currentPatternCommand: string | undefined;
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
   /**
@@ -61,6 +68,7 @@ export class PatternMatcher {
 
     // Get language profile for possessive keyword lookup
     this.currentProfile = tryGetProfile(pattern.language);
+    this.currentPatternCommand = pattern.command;
 
     // Reset match counters for this pattern
     this.stemMatchCount = 0;
@@ -337,6 +345,24 @@ export class PatternMatcher {
       return patternToken.optional || false;
     }
 
+    // Event-anchor guard. An event name is a bare identifier or known event
+    // keyword (`click`, `keyup`, a custom `myEvent`) — NEVER a selector, URL,
+    // method call (`fn()`), or string/number literal. In an SOV reorder the
+    // object is fronted ahead of the verb, so a bare-event pattern (`{event}`)
+    // or `{event} <marker>` pattern would otherwise mis-anchor a fronted
+    // `/api/data` / `myFunction()` as the handler event (every role matched any
+    // token). Reject non-event-shaped tokens for the `event` role so the input
+    // falls through to the command stage (or the per-command SOV event pattern
+    // whose patient role legitimately captures it). See
+    // docs-internal/HANDOFF-sov-event-anchor.md.
+    if (
+      patternToken.role === 'event' &&
+      this.currentPatternCommand === 'on' &&
+      !PatternMatcher.tokenLooksLikeEvent(token)
+    ) {
+      return patternToken.optional || false;
+    }
+
     // A `duration` slot is never a positional/scope keyword. The temporal
     // `in {duration}` idiom (`in 2s`) otherwise greedily swallows a *locative*
     // `in closest <form/>` (the scope of `focus first <input/> in closest <form/>`)
@@ -435,6 +461,47 @@ export class PatternMatcher {
         }
       }
       captured.set(patternToken.role, methodCallValue);
+      return true;
+    }
+
+    // Check for a bare function-call expression (e.g., `myFunction()`,
+    // `adjustLayout(a, b)`). The multilingual tokenizers split this into
+    // `myFunction` `(` `…` `)` (the parens tokenize as identifiers, not
+    // punctuation, so `tryMatchMethodCallExpression` — which needs a
+    // `selector.method()` shape — does not fold it). Verb-first SVO/VSO leaves
+    // the dangling `( )` harmlessly after a captured `{patient}`, but a
+    // verb-final SOV role (`{patient} <marker> … <verb>`) captures only the
+    // bare name, and the dangling `( )` then break the marker match — dropping
+    // the whole command (qu/bn `call myFunction()` → NULL) or letting a
+    // bare-event pattern mis-anchor the name (hi). Fold the whole `name(...)`
+    // into one expression value so the role captures it cleanly.
+    //
+    // Skipped in two cases:
+    //  - the `event` role: `on pointerdown(clientX, clientY)` destructures EVENT
+    //    PARAMS, not a call — the event name (`pointerdown`) must be captured
+    //    alone, with params handled by the event-handler builder (folding would
+    //    corrupt the event name to `pointerdown(clientX, clientY)`).
+    //  - DECLARATION commands (`behavior`/`def`/`install`): `Draggable(dragHandle)`
+    //    is a declaration SIGNATURE, not a call. Folding it lets the single-command
+    //    declaration pattern (e.g. SOV `{name} কে আচরণ`) consume the first line of a
+    //    multi-line `behavior … end` block and return a degenerate match, shadowing
+    //    the faithful full-block parse (bn draggable/sortable/…). Leaving the
+    //    dangling `(params)` makes that pattern fail, so the block falls through to
+    //    the faithful path; the header's params are read separately by parseHeader.
+    const skipBareCall =
+      patternToken.role === 'event' ||
+      PatternMatcher.DECLARATION_COMMANDS.has(this.currentPatternCommand ?? '');
+    const bareCallValue = skipBareCall ? null : this.tryMatchBareCallExpression(tokens);
+    if (bareCallValue) {
+      if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
+        if (
+          !patternToken.expectedTypes.includes(bareCallValue.type) &&
+          !patternToken.expectedTypes.includes('expression')
+        ) {
+          return patternToken.optional || false;
+        }
+      }
+      captured.set(patternToken.role, bareCallValue);
       return true;
     }
 
@@ -1129,6 +1196,82 @@ export class PatternMatcher {
   }
 
   /**
+   * Does `token` look like an EVENT name for the `event` role? Events are bare
+   * identifiers / known event keywords (click, keyup, custom `myEvent`), never
+   * selectors, URLs, method calls (`fn()`), or string/number literals.
+   * Value-based so it works for any language's native event words (no special
+   * chars). See the event-anchor guard in matchRoleToken and
+   * docs-internal/HANDOFF-sov-event-anchor.md.
+   */
+  private static tokenLooksLikeEvent(token: LanguageToken): boolean {
+    // Selectors (.class/#id/<tag/>/[attr]) and URLs are never events.
+    if (token.kind === 'selector' || (token.kind as string) === 'url') return false;
+    // Quoted strings / numbers tokenize as `literal`; events never do.
+    if (token.kind === 'literal') return false;
+    const v = token.value;
+    // URL/path (`/api/data`) or selector/attr punctuation (`#id`, `*prop`, `@attr`):
+    // never an event head. The KEY case is the fronted fetch URL — `fetch /api/data`
+    // → SOV `/api/data को लाएं`, where the bare-event pattern (priority 80, Stage 1)
+    // would otherwise anchor `/api/data` as the event before the command-stage
+    // fetch pattern (Stage 2) runs. Rejecting it lets the fetch command pattern win.
+    // Parens are deliberately NOT rejected: the `when (<expr>) changes` reactive
+    // patterns capture a watched EXPRESSION in the `event` role whose first token is
+    // `(` (when-value-changes), and a fronted `myFunction()` mis-anchor is already
+    // outranked by the per-command patient-first pattern (priority 145 > 80).
+    if (/[/#@*]/.test(v)) return false;
+    if (v.startsWith('"') || v.startsWith("'") || v.startsWith('`')) return false;
+    return true;
+  }
+
+  /**
+   * Try to match a bare function-call expression like `myFunction()` or
+   * `adjustLayout(a, b)`. The multilingual tokenizers split this into
+   * `name` `(` [args] `)` with the parens as `identifier`-kind tokens (not
+   * `punctuation`, which `tryMatchMethodCallExpression` requires). Folds the
+   * whole call into one `expression` value so an SOV role (`{patient} <marker>`)
+   * captures `name(...)` instead of just `name`, leaving the marker to match.
+   * Returns null (no stream movement) unless a balanced `name( … )` is present.
+   */
+  private tryMatchBareCallExpression(tokens: TokenStream): SemanticValue | null {
+    const token = tokens.peek();
+    if (!token || token.kind !== 'identifier') return null;
+    // Must look like a function name (rejects selectors/urls/`:local`/`$global`).
+    if (!/^[A-Za-z_][\w$]*$/.test(token.value)) return null;
+    const next = tokens.peek(1);
+    if (!next || next.value !== '(') return null;
+
+    const mark = tokens.mark();
+    tokens.advance(); // function name
+    tokens.advance(); // (
+
+    const args: string[] = [];
+    let closed = false;
+    let guard = 0;
+    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_METHOD_ARGS + 2) {
+      const argToken = tokens.peek();
+      if (!argToken) break;
+      if (argToken.value === ')') {
+        tokens.advance(); // consume )
+        closed = true;
+        break;
+      }
+      if (argToken.value === ',') {
+        tokens.advance();
+        continue;
+      }
+      args.push(argToken.value);
+      tokens.advance();
+    }
+
+    if (!closed) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    return { type: 'expression', raw: `${token.value}(${args.join(', ')})` } as SemanticValue;
+  }
+
+  /**
    * Try to match a method call expression like '#dialog.showModal()'.
    * Pattern: selector + '.' + identifier + '(' + [args] + ')'
    * Returns an expression value if matched, or null if not.
@@ -1508,6 +1651,13 @@ export class PatternMatcher {
 
   /** Maximum number of arguments in method calls */
   private static readonly MAX_METHOD_ARGS = 20;
+
+  /**
+   * Commands whose primary argument is a DECLARATION signature `name(params)`, not
+   * a call expression — the bare-call fold must not consume the `(params)` for
+   * these (see the fold call site in matchRoleToken).
+   */
+  private static readonly DECLARATION_COMMANDS = new Set(['behavior', 'def', 'install']);
 
   /**
    * Convert a language token to a semantic value.

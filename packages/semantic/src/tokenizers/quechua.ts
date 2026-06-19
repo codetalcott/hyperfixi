@@ -236,6 +236,16 @@ export class QuechuaTokenizer extends BaseTokenizer {
     if (SUFFIXES.has(lower)) return 'particle';
     // O(1) Map lookup instead of O(n) array search
     if (this.isKeyword(lower)) return 'keyword';
+    // URLs/paths before selectors (./path vs .class) — matches the other
+    // tokenizers (hindi/japanese/…). Without this `/api/data` fell through to
+    // `identifier` → `expression`, breaking the `fetch.source:literal` R1 match.
+    if (
+      token.startsWith('/') ||
+      token.startsWith('./') ||
+      token.startsWith('../') ||
+      token.startsWith('http')
+    )
+      return 'url';
     // Check for event modifiers before CSS selectors
     if (/^\.(once|prevent|stop|debounce|throttle|queue)(\(.*\))?$/.test(token))
       return 'event-modifier';

@@ -143,6 +143,13 @@ const SMOKE_SKIPS: Record<string, ReadonlySet<string>> = {
   vi: new Set(['replace', 'process']),
   sw: new Set(['replace']),
   qu: new Set(['replace', 'process']),
+  // hi `बदलें_यूआरएल` (replace_url) underscore-splits to `बदलें`(→toggle) + `_` +
+  // `यूआरएल` — the same compound-split root cause as tr `değiştir_url` / qu
+  // `tikray_url` above. It only appeared to pass before the event-anchor guard,
+  // via a degenerate parse that mis-anchored the fronted string literal `"/x"` as
+  // the event; with that crutch gone the underscore-split is exposed (the real
+  // transformer emits `"/x" को replace`, not this hand-crafted compound form).
+  hi: new Set(['replace']),
 };
 
 describe('Navigation/DOM commands — remaining languages (smoke / canParse)', () => {

@@ -321,5 +321,56 @@ target` idiom yields null even when a match exists (`target.closest("li")` works
    SOV path), so guard R0/precision/parse-rate carefully. Alternative if smaller wins are preferred:
    **Track 4** lossy long-tail (94 lossy ≫ the 1 remaining hard-fail).
 
+> **Increment DONE (2026-06-17 — SOV event-anchor / bare-command).** The structural root cause
+> (a fronted **literal / expression / URL** mis-anchored as the handler event in SOV reorders) is
+> fixed. Five changes, all semantic-side, gate green (`--regression` exit 0), **zero regressions**:
+>
+> - **Event-anchor guard** ([`pattern-matcher.ts`](../packages/semantic/src/parser/pattern-matcher.ts)
+>   `tokenLooksLikeEvent`) — the `event` role of an event-HANDLER pattern (`command === 'on'`) now
+>   rejects selectors / URLs / `#@*`-punctuation / string-number literals, so a fronted `/api/data`
+>   can't anchor a bare-event pattern. Scoped to `on` (send/trigger payloads keep literal events) and
+>   parens-tolerant (the `when (<expr>) changes` reactive patterns capture an expression in `event`).
+> - **Bare-call fold** (same file, `tryMatchBareCallExpression`) — folds `name(args)` (parens tokenize
+>   as identifiers in the multilingual tokenizers) into one expression so a verb-final SOV role
+>   captures `myFunction()` whole instead of stranding `( )`. Skipped for the `event` role
+>   (`on pointerdown(clientX, clientY)` destructures params, not a call) and for DECLARATION commands
+>   (`behavior`/`def`/`install` — `Draggable(dragHandle)` is a signature; folding it let a single-command
+>   pattern shadow the faithful `behavior … end` block parse).
+> - **SOV `fetch` command patterns** ([`patterns/fetch.ts`](../packages/semantic/src/patterns/fetch.ts)
+>   `sovFetch`, ja/ko/tr/hi/qu/bn) — verb-final `{source} [<patient-marker>] <verb>` mapping the
+>   patient-marked URL to `source` (the transformer marks `fetch <url>` with the object marker; mirrors
+>   `fetch-zh-ba`). Standalone SOV `fetch /api/data` was NULL in all five marker langs → now faithful
+>   (`fetch.source:literal`).
+> - **qu/tr URL tokenization** (`classifyToken` in tokenizers/quechua.ts + turkish.ts) — `/path` → `url`
+>   (was `identifier`→`expression`), so `fetch.source` types match the en `literal` reference.
+> - **hi added to `SOV_EVENT_MARKERS`** (`पर`, [`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts))
+>   — hi was the only priority SOV lang without a Stage-3 SOV event-extraction fallback, so its
+>   patient-first 2-role event handlers (e.g. `append-content` `{patient} को {event} पर {verb}
+{destination} में`) had survived only via the now-removed bare-event mis-anchor. The fallback is
+>   additive (Stage 3 runs only after Stages 1–2 fail; known-event gate + body re-parse).
+>
+> **Result:** **hi avgRoleFidelity 0.683 → 0.713 (+0.030)** — the worst R1 laggard, driven by the
+> `on.event:literal` cluster (hi had no SOV fallback). hi avgPrecision +0.010, global avgPrecision
+> +0.0015, avgFidelity flat, parse rate **3695/3696** (unchanged; the corpus fetch was already
+> non-null — these are fidelity gains). Baseline regenerated. Semantic unit suite 6098 green.
+> One unit test (`commands-scroll-push-replace-process` hi `replace`) added `hi` to its skip set: its
+> hand-crafted `बदलें_यूआरएल` input underscore-splits (same root cause as the already-skipped tr/qu
+> `_url` forms) and had only "passed" via the degenerate string-literal-as-event crutch the guard removes.
+>
+> **Still open (out of this increment):**
+>
+> - **`tr window-resize`** — the lone remaining hard-fail (still 3695/3696). Compounded: (1) the i18n
+>   transformer emits `boyut_değiştir` for `resize`, which the tr tokenizer splits on `_` →
+>   `değiştir`(→`toggle` collision); (2) the `debounced at 200ms` modifier is left untranslated and
+>   fronted. Deferred — it needs an i18n single-token-resize emission + tr tokenizer fused-token entry
+>   (cf. `enyakın`) **and** modifier translation, a high-risk multi-part change to the hottest path for
+>   the single lowest-ROI pattern.
+> - **Complex multi-clause SOV `fetch`** (e.g. `fetch-do-not-throw` = `fetch … as JSON do not throw
+then if …`) — still lossy in hi/qu/bn. The standalone/simple SOV `fetch` is fixed, but the heavy
+>   `as/do-not-throw/then/if` reorder routes through a path the `sovFetch` command pattern doesn't
+>   reach (mis-typed `fetch.patient` via verb-anchoring); a verb-anchoring `fetch`→`source` remap was
+>   tried and proved **inert** on the current corpus, so it was dropped. This is the remaining slice of
+>   the qu/bn `fetch.source` cluster.
+
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
