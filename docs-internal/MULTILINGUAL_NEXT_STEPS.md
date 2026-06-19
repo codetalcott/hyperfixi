@@ -236,7 +236,16 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    >   (`Foo(x) を behavior`), so `tryParseBlock` never routed it to `parseBehaviorBlock` →
    >   kind=compound/event-handler, behavior+init lost. **DONE (Increment 5 below).**
    > - **A2a — bare-`if` body command drop** (ja/ko/qu/tr): a standalone `if cond / cmd / end`
-   >   (the behavior `init`) drops its body command (`set`). `parseConditional`/body. OPEN.
+   >   (the behavior `init`) drops its body command (`set`). Root cause: `tryParseConditionalBlock`'s
+   >   condition/then split (semantic-parser.ts) finds the then-branch via `tokensBeginCommand`,
+   >   which (using bare `matchBest`) fails on a SOV verb-final command with a **bare-identifier
+   >   patient** (`x を 設定 …`) — a selector patient (`.a を 追加 …`) is recognized, so `add` survives
+   >   but `set` is swallowed into the condition. OPEN. **Prototype tried + rejected (2026-06-19):** a
+   >   gated SOV copula-split (re-partition `condTokens` after the copula's predicate) is **clean
+   >   (zero gate regressions)** but only recovers **ko** — `이다` normalizes to `is`, but ja `である`
+   >   tokenizes to `で`+`ある` (and `で` IS the event marker — can't treat as copula), tr `dir`/qu
+   >   `kanqa` don't normalize to a copula. Real fix needs per-language SOV copula normalization OR
+   >   scan-from-end verb-final then-branch detection — materially larger/riskier than defect A.
    > - **A2b — command after a nested block dropped** (ja/ko/qu/tr): the SOV analogue of the
    >   merged #452/#453 fixes — the command right after a nested `if … end` in a handler body is
    >   dropped (`trigger removable:before`). `parseBodyWithClauses` SOV path. OPEN.
