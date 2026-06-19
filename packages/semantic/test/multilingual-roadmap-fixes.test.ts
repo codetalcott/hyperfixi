@@ -6569,3 +6569,71 @@ describe('Multi-statement handler body with a js-bearing nested if (behavior-rem
     expect(a.has('halt')).toBe(true);
   });
 });
+
+describe('js(…) … end blocks are opaque to the body parser (no phantom JS-body commands)', () => {
+  // A `js(…) … end` block's body is raw JavaScript. When the block is nested in a
+  // handler/conditional body, the clause loop used to split it at its internal
+  // `end` and re-parse the JS body through the command patterns, emitting phantom
+  // `return`/`if`/… commands. behavior-removable's `js(me) … if (…) return "cancel";
+  // … end` injected a spurious `return` into the EN reference action set — which
+  // translations (whose js body is masked) could never reproduce, capping removable
+  // at fidelity 0.889. The body parser now consumes the whole block as one opaque
+  // `js` command, so the JS body never reaches the command patterns. A STANDALONE
+  // js block already parsed clean (the main parser stops after the first command);
+  // this guards the NESTED case.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const NESTED_JS = [
+    'on click',
+    '  if confirmRemoval',
+    '    js(me)',
+    '      if (!window.confirm("Are you sure?")) return "cancel";',
+    '    end',
+    '    if it is "cancel"',
+    '      halt',
+    '    end',
+    '  end',
+    '  remove me',
+    'end',
+  ].join('\n');
+
+  it('[en] does not extract `return` from a nested js body', () => {
+    const a = actions(parse(NESTED_JS, 'en'));
+    expect(a.has('js')).toBe(true); // the block itself is captured
+    expect(a.has('return')).toBe(false); // …but its raw-JS body is opaque
+    expect(a.has('halt')).toBe(true); // real commands after the js block survive
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[es] keeps the js block opaque too (keyword survives translation)', () => {
+    // The i18n transformer masks the js body, so the keyword stays English `js`.
+    const input = [
+      'en clic',
+      '  si confirmRemoval',
+      '    js(me)',
+      '      if (!window.confirm("Are you sure?")) return "cancel";',
+      '    end',
+      '    si ello es "cancel"',
+      '      detener',
+      '    fin',
+      '  fin',
+      '  quitar yo',
+      'fin',
+    ].join('\n');
+    const a = actions(parse(input, 'es'));
+    expect(a.has('js')).toBe(true);
+    expect(a.has('return')).toBe(false);
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+});

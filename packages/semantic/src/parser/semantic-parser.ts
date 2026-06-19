@@ -771,6 +771,22 @@ export class SemanticParserImpl implements ISemanticParser {
       // null without consuming when the head isn't a usable conditional — so a
       // non-conditional clause is byte-identical to the previous behavior.
       if (currentClauseTokens.length === 0) {
+        // A `js(…) … end` block is raw JavaScript and must stay OPAQUE. Its body
+        // tokens (`if (…) return …;`) look like hyperscript keywords, so if the
+        // clause loop splits the block at its internal `end`, parseClause re-parses
+        // the body and emits phantom `if`/`return`/… commands — the spurious
+        // `return` the en reference extracted from behavior-removable's js body,
+        // which capped it at fid 0.889 (translations mask the js body, so they
+        // never reproduced it). Consume the whole block — up to and including its
+        // first `end` — and parse it as one unit, so matchBest matches the single
+        // `js` command (as it already does for a standalone block) and the JS body
+        // never reaches the command patterns.
+        const jsNode = this.consumeJsBlock(tokens, language);
+        if (jsNode) {
+          clauses.push(jsNode);
+          continue;
+        }
+
         const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
         if (conditional) {
           clauses.push(conditional);
@@ -2182,6 +2198,72 @@ export class SemanticParserImpl implements ISemanticParser {
     const curated = endKeywords[language];
     if (curated) return v === 'end' || curated.has(v);
     return v === 'end' || this.profileKeywordMatches(language, 'end', v);
+  }
+
+  /**
+   * Whether a token opens a `js` block. The `js` command keyword survives
+   * translation verbatim (the i18n transformer masks the whole block, so the
+   * keyword stays English), so the English literal is the reliable signal; the
+   * profile form is also accepted for completeness.
+   */
+  private isJsKeyword(token: LanguageToken): boolean {
+    const v = (token.normalized ?? token.value).toLowerCase();
+    return v === 'js' || this.profileKeywordMatches('en', 'js', v);
+  }
+
+  /**
+   * Consume a `js(…) … end` block from the stream as one opaque unit and return a
+   * single `js` command node. The FIRST `end` after the `js` keyword closes the
+   * block — the same heuristic the i18n transformer's js-masking uses (raw JS never
+   * carries a bare hyperscript `end` token). Returns null without consuming when
+   * the head isn't a js keyword or the block has no closing `end` (malformed —
+   * leave it to the normal path).
+   *
+   * The node is built directly rather than re-parsed: `matchBest` in `parseClause`
+   * would match the `js` head and then keep matching the raw JS body (`if`,
+   * `return`, …) as sibling commands — the exact phantom actions this skip exists
+   * to suppress. Emitting `{ action: 'js', roles: { patient: expression } }`
+   * mirrors the shape a standalone `js(…)` parse produces, and applies uniformly to
+   * English and every translation (the keyword survives translation verbatim), so
+   * the reference and candidate js nodes stay identical for fidelity scoring.
+   */
+  private consumeJsBlock(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    language: string
+  ): SemanticNode | null {
+    const head = tokens.peek();
+    if (!head || !this.isJsKeyword(head)) return null;
+
+    const startMark = tokens.mark();
+    const bodyTokens: LanguageToken[] = [];
+    tokens.advance(); // consume `js`
+
+    let sawEnd = false;
+    while (!tokens.isAtEnd()) {
+      const t = tokens.peek();
+      if (!t) break;
+      tokens.advance();
+      if (this.isEndKeyword(t.value, language)) {
+        sawEnd = true;
+        break;
+      }
+      bodyTokens.push(t);
+    }
+
+    if (!sawEnd) {
+      tokens.reset(startMark);
+      return null;
+    }
+
+    const raw = bodyTokens
+      .map(t => t.value)
+      .join(' ')
+      .trim();
+    return createCommandNode(
+      'js' as ActionType,
+      { patient: { type: 'expression', raw: raw || '()' } },
+      { sourceLanguage: language, patternId: `js-opaque-${language}`, confidence: 1 }
+    );
   }
 
   /**
