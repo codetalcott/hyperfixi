@@ -231,7 +231,16 @@ export function tryParseBlock(
   if (tokens.length < 2) return null;
 
   if (tokenMatches(tokens[0], behaviorForms)) {
-    return parseBehaviorBlock(input, language, tokens, parsers);
+    return parseBehaviorBlock(input, language, tokens, parsers, 0);
+  }
+  // SOV verb-final declaration: the `behavior` keyword is reordered AFTER the
+  // name + its object marker (ja `Foo(params) を behavior`, ko `를`, qu `ta`,
+  // tr `i`), so it never lands at index 0 and the keyword-led check above misses
+  // it. Detect a `behavior` keyword token past index 0 with a PascalCase name at
+  // index 0 (the declaration head is `<Name>(params) <marker> behavior …`).
+  const sovKeywordIdx = tokens.findIndex((t, i) => i > 0 && tokenMatches(t, behaviorForms));
+  if (sovKeywordIdx > 0 && /^[A-Z][A-Za-z0-9_]*$/.test(tokens[0].value)) {
+    return parseBehaviorBlock(input, language, tokens, parsers, sovKeywordIdx);
   }
   if (tokenMatches(tokens[0], defForms)) {
     return parseDefBlock(input, language, tokens, parsers);
@@ -443,23 +452,36 @@ function flattenStatements(stmts: SemanticNode[]): SemanticNode[] {
   return out;
 }
 
-/** Parse a `behavior Name(params) … end` block into a BehaviorSemanticNode. */
+/**
+ * Parse a `behavior Name(params) … end` block into a BehaviorSemanticNode.
+ *
+ * `keywordIdx` is the token index of the `behavior` keyword: 0 for the normal
+ * keyword-led form (en/SVO/VSO/V2), or > 0 for the SOV verb-final form where the
+ * keyword is reordered after the name + object marker (`Foo(params) を behavior`).
+ */
 function parseBehaviorBlock(
   input: string,
   language: string,
   tokens: readonly LanguageToken[],
-  parsers: BlockParsers
+  parsers: BlockParsers,
+  keywordIdx: number
 ): SemanticNode | null {
-  // Behavior name — required PascalCase to avoid false positives. Skip a
-  // leading object marker (he `behavior את Foo`, zh `behavior 把 Foo`) first.
-  const nameIdx = resolveNameTokenIndex(tokens, 0, language);
+  const sovFinal = keywordIdx > 0;
+  // Behavior name — required PascalCase to avoid false positives. For the
+  // SOV verb-final form the name leads the line (index 0); otherwise it follows
+  // the keyword, skipping a leading object marker (he `behavior את Foo`, zh
+  // `behavior 把 Foo`).
+  const nameIdx = sovFinal ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return null;
   const nameToken = tokens[nameIdx];
   const name = nameToken.value;
   if (!/^[A-Z][A-Za-z0-9_]*$/.test(name)) return null;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
-  let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
+  // Body begins after the header for the keyword-led form. For the SOV verb-final
+  // form the keyword (and its preceding object marker) sit between the header and
+  // the body, so start past the keyword token instead.
+  let bodyStart = sovFinal ? keywordIdx + 1 : tokens.findIndex(t => t.position.start >= headerEnd);
   if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
 
   const initForms = keywordForms(language, 'init');
