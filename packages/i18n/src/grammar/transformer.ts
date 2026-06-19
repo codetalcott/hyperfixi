@@ -409,11 +409,18 @@ function getBoundaryModifiersForLocale(locale: string): Set<string> {
  * the locative reading for the DOM class/attribute mutators where it's the
  * documented idiom (`toggle .open on #menu`, `toggle @hidden on #panel`).
  *
+ * `trigger`/`send` — `trigger X on Y` / `send X on Y` fire an event on a target
+ * element; the trailing `on Y` is that target (destination), not a new clause.
+ * Previously excluded: keeping `on Y` attached produced `trigger X → #y` output
+ * that was thought to destabilise the semantic parser's multi-line behaviour
+ * fallback (behavior-sortable's `trigger sortable:start on me`). That concern is
+ * stale — the recent semantic-parser body increments fold the surrounding block
+ * cleanly, and splitting instead injected a spurious `then` (`disparar
+ * sortable:start entonces en yo`) that glued the following `repeat until event`
+ * loop into a then-chain and dropped it. Keeping `on Y` attached restores
+ * behavior-sortable to faithful across the SVO languages.
+ *
  * Excluded on purpose:
- *  - `trigger`/`send` — `on Y` is a valid target, but the cleaner output
- *    (`trigger X → #y` instead of split garbage) destabilises the semantic
- *    parser's multi-line behaviour/compound fallback (e.g. behavior-sortable's
- *    `trigger sortable:start on me`), a separate, out-of-scope concern.
  *  - `set` — `set @attr to V on Y` carries BOTH `to` (value) and `on` (target);
  *    English marks both as `destination`, so remapping `on` would collide with
  *    and clobber the value. Needs distinct value/target roles first (deferred).
@@ -422,7 +429,7 @@ function getBoundaryModifiersForLocale(locale: string): Set<string> {
  * `add`/`remove` use `to`/`from` for their target in practice (not `on`), so
  * their inclusion is a harmless no-op that documents intent.
  */
-const ON_TARGET_COMMANDS = new Set(['toggle', 'add', 'remove']);
+const ON_TARGET_COMMANDS = new Set(['toggle', 'add', 'remove', 'trigger', 'send']);
 
 /**
  * Find the command verb of a partially-collected statement: the first command
