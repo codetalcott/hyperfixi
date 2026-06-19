@@ -225,12 +225,43 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
 <target>` keeps its target — no spurious then (behavior-sortable)". removable byte-identical
    > (its `trigger removable:before/removed` carry no `on <target>`).
    >
-   > **Still open after Increment 4:** (1) **SOV/VSO degeneracy** (ar/de/ja/qu/tl/tr on sortable;
-   > ar/qu/tl/tr on removable) — the behavior-head/`init` reorder (SOV `behavior` keyword moved
-   > block-final breaking opener detection; VSO handler-head leading with `from <target>` before
-   > `on <event>`), the remaining structural frontier. (2) sortable's **SOV trigger-drop tail**
-   > (bn/hi/th/ko still miss `trigger`) — the SOV `trigger … on me` reorder drops the trigger verb
-   > even after the SVO fix; a smaller follow-on to the same arc.
+   > **SOV/VSO arc — fully mapped (2026-06-19 deep diagnosis).** The handoff lumped this as one
+   > "behavior-head/`init` reorder," but isolation probing (each command parsed alone, then the
+   > init/handler sub-structures) shows it is **five separable defects**, NOT a deep SOV verb-final
+   > gap. Every plain SOV handler command (`set`/`trigger`/`remove`/`add`/`halt`, chained, and
+   > `trigger X on me`) parses faithfully — the loss is in **opener routing** + **control-flow body
+   > parsing**, the documented dominant cluster:
+   >
+   > - **A — SOV behavior-final opener** (ja/ko/qu/tr): the `behavior` verb reorders block-final
+   >   (`Foo(x) を behavior`), so `tryParseBlock` never routed it to `parseBehaviorBlock` →
+   >   kind=compound/event-handler, behavior+init lost. **DONE (Increment 5 below).**
+   > - **A2a — bare-`if` body command drop** (ja/ko/qu/tr): a standalone `if cond / cmd / end`
+   >   (the behavior `init`) drops its body command (`set`). `parseConditional`/body. OPEN.
+   > - **A2b — command after a nested block dropped** (ja/ko/qu/tr): the SOV analogue of the
+   >   merged #452/#453 fixes — the command right after a nested `if … end` in a handler body is
+   >   dropped (`trigger removable:before`). `parseBodyWithClauses` SOV path. OPEN.
+   > - **B — VSO/Austronesian handler-head** (ar/tl): opener IS recognized but the handler head
+   >   leads with `from <target>` before the `on <event>` marker, so the handler isn't recognized
+   >   ([`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts) L509). OPEN.
+   > - **C — de (V2) sortable body collapse**: opener + handler recognized, but the V2-reordered
+   >   pointerdown body drops most commands. A separate V2 body-parse defect. OPEN.
+   >
+   > Plus sortable's **SOV trigger-drop tail** (bn/hi/th/ko miss `trigger`) — same A2b family.
+   > Making ja/ko/qu/tr faithful needs **A + A2a + A2b** (sequenced); B and C are smaller arcs.
+   >
+   > **Increment 5 DONE (2026-06-19, PR pending — SOV behavior-final opener, defect A).**
+   > [`tryParseBlock`](../packages/semantic/src/parser/block-parser.ts) now also detects a
+   > `behavior` keyword past index 0 with a PascalCase name at index 0 (the SOV verb-final
+   > declaration `Foo(x) <marker> behavior`), and `parseBehaviorBlock` takes the keyword index so
+   > the name leads and the body starts past the (verb-final) keyword. ja/ko/qu/tr now parse as
+   > `kind=behavior`: removable qu/tr **degenerate→lossy** (0.625), ja/ko lossy 0.5→0.625; sortable
+   > qu→0.889, ko/tr→0.778, qu/tr **degenerate→lossy**. Priority gate **degenerate 19→15**, lossy
+   > 68→65, parse-rate unchanged (3695/3696), execution 1.0, **zero regressions**; 6109 semantic
+   > tests pass (+4 guards). NOT yet faithful — the residual is A2a (init `set`) + A2b (handler
+   > `trigger`/`remove` after the nested blocks), the next two increments. ja sortable + ar/de/tl
+   > unaffected by A (their causes are A2b-heavy / B / C). Guard:
+   > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
+   > "SOV verb-final behavior declaration opener".
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
