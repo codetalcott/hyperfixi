@@ -1,7 +1,21 @@
 # Handoff — multilingual behavior fidelity (i18n transformer nested-body arc)
 
-> Paste into a fresh session to pick up the work. Self-contained. A **staged** arc
-> (multi-increment), not a one-shot fix.
+> **⚠️ SUPERSEDED — WRONG DIAGNOSIS (2026-06-19). Do not follow this doc's
+> root-cause.** It blames the i18n `GrammarTransformer` for "flattening nested
+> `if {…}` bodies," reproduced via `MultilingualHyperscript.translate`. But
+> `ml.translate` is `semantic.translate` = **parse→render**, a path the fidelity
+> **gate never uses**. The gate measures `patterns.db`, populated by
+> `sync:translations` → `GrammarTransformer.transform`, whose output is **faithful**
+> (precision 1.000 — it does NOT flatten the nested bodies). The real defect is
+> **pure recall in the SEMANTIC PARSER**: it drops the handler-body commands after
+> the first nested `if`/`repeat` block. First increment fixed (semantic
+> `buildEventHandler` fold-rewind + `isEndKeyword` English-`end`): removable 0.667 →
+> 0.889 across SVO langs. See **MULTILINGUAL_NEXT_STEPS.md → Track 1 item 2** for the
+> corrected diagnosis, the remaining increments (js-opaque for removable's `return`
+> artifact; sortable's `repeat`/`wait` loop-block fold; SOV head-reorder), and how
+> to reproduce the gate path correctly (`GrammarTransformer` + `maskSpans`, then
+> `parseSemantic`). The historical content below is kept only for context — it was
+> written as a self-contained staged-arc handoff before the diagnosis was corrected.
 
 ## Why this matters (read first)
 

@@ -6459,3 +6459,113 @@ describe('S1 tabs-aria — `set @attr to V on <scope>` scope capture (band inver
     expect(role).toBeUndefined();
   });
 });
+
+describe('Multi-statement handler body with a js-bearing nested if (behavior-removable shape)', () => {
+  // The removable/sortable behaviors put a nested `if … end` (containing a
+  // `js(…) … end` block) FIRST in the handler body, then trailing commands
+  // (`trigger …`, `remove me`). Two bugs dropped everything after the nested
+  // block in non-English languages:
+  //   1. buildEventHandler's fold-rewind only recognized a TOP-LEVEL conditional,
+  //      but parseBodyWithClauses wraps a multi-clause body in a `compound` — so
+  //      the fold was missed and the flat path dropped the trailing commands.
+  //   2. isEndKeyword rejected the English literal `end` for curated languages
+  //      (es `fin`, ja `終わり`, …). A masked `js(…) … end` block restores its
+  //      terminator as English `end`, so the conditional's depth tracker counted
+  //      the js body's `if` (+1) but not the js `end` (−1), unbalancing depth and
+  //      over-consuming the rest of the body into the conditional.
+  // These inputs mirror what the i18n GrammarTransformer emits for the Removable
+  // handler (the js body is masked, so its `end` stays English). Guards the
+  // `trigger`/`remove` recall that drove behavior-removable's lossy band.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[es] keeps trigger + remove after the js-bearing if (was dropped)', () => {
+    const input = [
+      'en clic de triggerEl',
+      '  si confirmRemoval',
+      '    js(me)',
+      '      if (!window.confirm("Are you sure?")) return "cancel";',
+      '    end',
+      '    si ello es "cancel"',
+      '      detener',
+      '    fin',
+      '  fin',
+      '  disparar removable:before',
+      '  si effect es "fade"',
+      '    transición opacity a 0 300ms',
+      '  fin',
+      '  disparar removable:removed',
+      '  quitar yo',
+      'fin',
+    ].join('\n');
+    const node = parse(input, 'es');
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('trigger')).toBe(true); // disparar — dropped before the fix
+    expect(a.has('remove')).toBe(true); // quitar — dropped before the fix
+  });
+
+  it('[de] keeps trigger + remove after the js-bearing if (English js `end`)', () => {
+    // de end keyword is `ende`; the js block keeps the English `end`. Without the
+    // universal-`end` recognition the depth tracker would over-consume here too.
+    const input = [
+      'bei klick von triggerEl',
+      '  falls confirmRemoval',
+      '    js(me)',
+      '      if (!window.confirm("Are you sure?")) return "cancel";',
+      '    end',
+      '    falls es ist "cancel"',
+      '      anhalten',
+      '    ende',
+      '  ende',
+      '  auslösen removable:before',
+      '  falls effect ist "fade"',
+      '    übergang opacity zu 0 300ms',
+      '  ende',
+      '  auslösen removable:removed',
+      '  entfernen ich',
+      'ende',
+    ].join('\n');
+    const node = parse(input, 'de');
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('trigger')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[en] reference keeps the full body (unchanged baseline behavior)', () => {
+    const input = [
+      'on click from triggerEl',
+      '  if confirmRemoval',
+      '    js(me)',
+      '      if (!window.confirm("Are you sure?")) return "cancel";',
+      '    end',
+      '    if it is "cancel"',
+      '      halt',
+      '    end',
+      '  end',
+      '  trigger removable:before',
+      '  if effect is "fade"',
+      '    transition opacity to 0 over 300ms',
+      '  end',
+      '  trigger removable:removed',
+      '  remove me',
+      'end',
+    ].join('\n');
+    const a = actions(parse(input, 'en'));
+    expect(a.has('trigger')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+});
