@@ -128,6 +128,17 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    6 degen + 17 lossy (the body sub-parse drops `trigger`/`remove`/`halt` after the conditionals) —
    a faithful pass is future headroom, not a regression. Remaining behavior debt is now
    `behavior-sortable` (9 degen + 14 lossy) and the Experimental-3 source execution (item 1).
+
+   > **Multilingual behavior fidelity is a PRIORITY (user, 2026-06-17).** The faithful-pass
+   > headroom above is the next behavior arc, not optional. **Root-cause triage (2026-06-19):**
+   > `behavior-removable` + `behavior-sortable` are non-faithful in **all 23 non-en langs** (the
+   > high-leverage targets; draggable/resizable are SOV-only). The defect is in the **i18n
+   > `GrammarTransformer`** (NOT the parser) — verified on **SVO Spanish**, where the translated
+   > Removable body is already mangled: nested `if {…}` bodies flattened into a then-chain (`js()`/
+   > `halt`/`transition` dropped), `init` reordered + its body dropped, `is undefined` untranslated.
+   > Staged arc handoff: [`HANDOFF-transformer-behavior-fidelity.md`](HANDOFF-transformer-behavior-fidelity.md).
+   > **This is the recommended next behavior item.**
+
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
      canonical "what is a behavior / boundary test / how to write one / install + resolver /
