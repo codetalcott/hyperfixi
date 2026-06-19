@@ -62,6 +62,29 @@ function tokenMatches(tok: LanguageToken, forms: Set<string>): boolean {
   return tok.normalized ? forms.has(tok.normalized.toLowerCase()) : false;
 }
 
+/** The block-opener actions whose `end` participates in depth tracking. */
+const OPENER_NORMS: ReadonlySet<string> = new Set(OPENER_ACTIONS);
+
+/**
+ * Whether a token opens a nested block (if/unless/repeat/for/while) for depth
+ * tracking — NOT a plain `tokenMatches` against the opener forms, because some
+ * languages reuse a block-keyword's surface form for a role marker: Portuguese
+ * `para` is BOTH the `for` loop keyword AND the dative "to" marker, so
+ * `set X to Y` → `definir X para Y` had its marker `para` mis-counted as a `for`
+ * opener, corrupting the behavior-body depth split (the init segment swallowed the
+ * whole handler — pt/sw behavior-removable lost on/remove/trigger). The tokenizer
+ * already resolved the ambiguity: it normalizes the marker to its ROLE
+ * (`destination`), not to `for`. So when a token carries a normalized form, trust
+ * it — count it as an opener only if that normalized form IS an opener action. A
+ * token with NO normalized form (e.g. a raw js-body `if`) falls back to the surface
+ * match, preserving the existing js-block depth balance.
+ */
+function isBlockOpener(tok: LanguageToken, openerSets: ReadonlyArray<Set<string>>): boolean {
+  const norm = tok.normalized?.toLowerCase();
+  if (norm) return OPENER_NORMS.has(norm);
+  return openerSets.some(s => tokenMatches(tok, s));
+}
+
 /**
  * Target/reference words that follow a destination `on` (`toggle .x on me`),
  * never a handler trigger. Used to tell a trigger `on` (`on click`, followed by
@@ -311,7 +334,7 @@ export function tryParseProgram(
   if (tokens.length < 2) return null;
 
   const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // Split into top-level handler segments. At depth 0: a `end` closes the current
@@ -442,7 +465,7 @@ function parseBehaviorBlock(
   const initForms = keywordForms(language, 'init');
   const endForms = keywordForms(language, 'end');
   const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // Split the body into sub-blocks by depth-aware `end` matching. Segmentation is
@@ -536,7 +559,7 @@ function parseDefBlock(
 
   const endForms = keywordForms(language, 'end');
   const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
-  const isOpener = (tok: LanguageToken): boolean => openerSets.some(s => tokenMatches(tok, s));
+  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
   const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
 
   // The def body is a flat command sequence (no event handlers). Find the def's

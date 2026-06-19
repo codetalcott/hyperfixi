@@ -6637,3 +6637,76 @@ describe('js(…) … end blocks are opaque to the body parser (no phantom JS-bo
     expect(a.has('remove')).toBe(true);
   });
 });
+
+describe('Block depth tracking ignores marker/opener homonyms (pt `para`, sw)', () => {
+  // The behavior-body splitter tracks `if/unless/repeat/for/while` openers vs `end`
+  // to find where the init block and each handler begin. Some languages reuse a
+  // block-keyword's surface form for a role marker: Portuguese `para` is BOTH the
+  // `for` loop keyword AND the dative "to" marker, so `set triggerEl to me` →
+  // `definir triggerEl para eu` had its marker `para` mis-counted as a `for` opener
+  // — the depth never returned to 0 at the init's `end`, so the init segment
+  // swallowed the whole `on click` handler (eventHandlers empty; trigger/remove
+  // dropped). pt/sw behavior-removable were the only SVO languages still lossy
+  // (0.625) after the js-opacity fix. The opener check now trusts the tokenizer's
+  // normalized role (`destination`) over the colliding surface form.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['initBlock', 'eventHandlers', 'body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[pt] init block with `set X para me` does not swallow the handler', () => {
+    // `para` (set's "to" marker) collides with pt `for`; before the fix it opened a
+    // phantom block and the handler was lost.
+    const input = [
+      'behavior Removable(triggerEl)',
+      '  init',
+      '    se triggerEl é indefinido',
+      '      definir triggerEl para eu',
+      '    fim',
+      '  fim',
+      '  em clique de triggerEl',
+      '    disparar removable:before',
+      '    remover eu',
+      '  fim',
+      'fim',
+    ].join('\n');
+    const node = parse(input, 'pt');
+    expect(node.action).toBe('behavior');
+    const handlers = (node as { eventHandlers?: unknown[] }).eventHandlers ?? [];
+    expect(handlers.length).toBe(1); // the `on click` handler is recognized
+    const a = actions(node);
+    expect(a.has('set')).toBe(true); // init body survives
+    expect(a.has('trigger')).toBe(true); // handler body survives…
+    expect(a.has('remove')).toBe(true); // …including the trailing remove
+  });
+
+  it('[sw] init block with `seti X kwa me` keeps the handler separate', () => {
+    const input = [
+      'behavior Removable(triggerEl)',
+      '  init',
+      '    kama triggerEl ni haijafafanuliwa',
+      '      seti triggerEl kwa mimi',
+      '    mwisho',
+      '  mwisho',
+      '  kwenye bonyeza kutoka triggerEl',
+      '    chochea removable:before',
+      '    ondoa mimi',
+      '  mwisho',
+      'mwisho',
+    ].join('\n');
+    const node = parse(input, 'sw');
+    expect(node.action).toBe('behavior');
+    const handlers = (node as { eventHandlers?: unknown[] }).eventHandlers ?? [];
+    expect(handlers.length).toBe(1);
+    const a = actions(node);
+    expect(a.has('trigger')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+});
