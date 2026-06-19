@@ -1837,3 +1837,39 @@ describe('command blur translates via commands.blur, not the blur EVENT word', (
     expect(out).toContain('defokussieren');
   });
 });
+
+describe('trigger/send `on <target>` keeps its target — no spurious then (behavior-sortable)', () => {
+  // `trigger X on me` / `send X on me` fire an event on a TARGET element. `on`
+  // was treated as a command boundary (not in ON_TARGET_COMMANDS), so the
+  // statement split into `trigger X` | `on me`, the line-join re-inserted the
+  // target language's `then` (`disparar sortable:start entonces en yo`), and the
+  // dangling `then` glued the FOLLOWING `repeat until event …` loop into a
+  // then-chain — dropping `repeat`/`wait`. This kept behavior-sortable lossy
+  // (fid 0.778) in every SVO language. `trigger`/`send` are now in
+  // ON_TARGET_COMMANDS so `on <target>` stays attached. Guards the i18n half of
+  // the sortable arc (semantic gate parse fidelity is guarded by the baseline).
+  const cases: Array<[string, string]> = [
+    ['es', 'yo'],
+    ['fr', 'moi'],
+    ['de', 'ich'],
+    ['it', 'io'],
+  ];
+  for (const [lang, pronoun] of cases) {
+    it(`[${lang}] trigger sortable:start on me — single statement, target preserved, no then`, () => {
+      const out = new GrammarTransformer('en', lang).transform('trigger sortable:start on me');
+      // The event name survives and the target pronoun is preserved.
+      expect(out).toContain('sortable:start');
+      expect(out.trim().endsWith(pronoun)).toBe(true);
+      // No split: exactly `<verb> sortable:start <marker> <pronoun>` (4 tokens).
+      // The old bug produced 5 (an extra `then` connective before the target).
+      expect(out.trim().split(/\s+/)).toHaveLength(4);
+    });
+
+    it(`[${lang}] send foo:bar on me — target stays attached (no extra connective)`, () => {
+      const out = new GrammarTransformer('en', lang).transform('send foo:bar on me');
+      expect(out).toContain('foo:bar');
+      expect(out.trim().endsWith(pronoun)).toBe(true);
+      expect(out.trim().split(/\s+/)).toHaveLength(4);
+    });
+  }
+});

@@ -205,9 +205,32 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
    > "Block depth tracking ignores marker/opener homonyms".
    >
-   > **Still open after Increment 3:** (1) **`behavior-sortable`** (coupled transformer+parser arc,
-   > above); (2) **SOV/VSO degeneracy** (ar/ja/ko/qu/tl/tr) on both behaviors — the behavior-head/
-   > `init` reorder, the remaining structural frontier.
+   > **Increment 4 DONE (2026-06-19, PR pending — sortable `trigger … on me` rendering).** The
+   > "coupled transformer+parser" framing was **half wrong**: an isolation probe (replicating the
+   > gate path — `maskSpans → GrammarTransformer → unmaskSpans`, then `ml.parse`) showed the parser
+   > already folds a clean `repeat until event … end` block in a handler body (the SVO loss was NOT
+   > a parser gap). The **sole** cause was the i18n transformer: `trigger X on me` / `send X on me`
+   > were not in `ON_TARGET_COMMANDS`, so `splitOnCommandBoundaries` split at the locative `on`
+   > (`trigger sortable:start` | `on me`) and the line-join re-inserted the target `then`
+   > (`disparar sortable:start entonces en yo`); the dangling `then` glued the FOLLOWING
+   > `repeat until event …` loop into a then-chain and dropped `repeat`/`wait`. Fix: add
+   > `trigger`/`send` to `ON_TARGET_COMMANDS` ([`transformer.ts`](../packages/i18n/src/grammar/transformer.ts))
+   > so `on <target>` stays attached (also flows through the SVO `buildArgumentModifierMap`
+   > event→destination remap). The old "destabilises the parser" comment was stale (predated the
+   > #452–#454 body increments). Result: **behavior-sortable lossy → FAITHFUL (1.0) in 13 SVO/other
+   > languages** (es/fr/he/id/it/ms/pl/pt/ru/sw/uk/vi/zh); ko degenerate→lossy; bn/hi/th lossy→0.889.
+   > Priority gate **lossy 80→68, degenerate 20→19**, parse-rate unchanged (3695/3696), avgFidelity +
+   > avgRoleFidelity up, precision flat, **zero regressions**; 846 i18n tests pass + 8 new guards.
+   > Guard: [`grammar.test.ts`](../packages/i18n/src/grammar/grammar.test.ts) "trigger/send `on
+<target>` keeps its target — no spurious then (behavior-sortable)". removable byte-identical
+   > (its `trigger removable:before/removed` carry no `on <target>`).
+   >
+   > **Still open after Increment 4:** (1) **SOV/VSO degeneracy** (ar/de/ja/qu/tl/tr on sortable;
+   > ar/qu/tl/tr on removable) — the behavior-head/`init` reorder (SOV `behavior` keyword moved
+   > block-final breaking opener detection; VSO handler-head leading with `from <target>` before
+   > `on <event>`), the remaining structural frontier. (2) sortable's **SOV trigger-drop tail**
+   > (bn/hi/th/ko still miss `trigger`) — the SOV `trigger … on me` reorder drops the trigger verb
+   > even after the SVO fix; a smaller follow-on to the same arc.
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
