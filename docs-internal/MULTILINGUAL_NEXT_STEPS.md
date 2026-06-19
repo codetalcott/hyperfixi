@@ -161,15 +161,33 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
    > ("Multi-statement handler body with a js-bearing nested if").
    >
-   > **Still open (each its own increment):** (1) removable's last gap is the en reference parsing
-   > `return` (and a spurious `if`) from inside the raw `js(…)` body — masked in translations, so they
-   > can't match it (caps removable at 0.889, not 1.0). Fix = treat `js(…) … end` as **opaque** in the
-   > parser for ALL langs incl. en (removes `return`/js-internal-`if` from the reference → faithful).
-   > (2) **`behavior-sortable`** is unmoved — its loss is `repeat`/`wait` inside a `repeat until event
-pointerup … end` block (a loop block, NOT a conditional), so the conditional fold doesn't reach
-   > it; needs the analogous loop-block fold on the fused-event path. (3) **SOV/VSO degeneracy**
+   > **Increment 2 DONE (2026-06-19, PR pending — js-block opacity).** Removed removable's last
+   > non-SOV gap: the en reference parsed a phantom `return` (and a surplus `if`) from inside the raw
+   > `js(me) … if (…) return "cancel"; … end` body — masked in translations, so they could never
+   > match it (capped removable at 0.889). A standalone `js(…) … end` already parsed clean (the main
+   > parser stops after the first command), but **nested** in a handler/conditional body the clause
+   > loop split the block at its internal `end` and re-parsed the JS body through the command
+   > patterns. Fix: `parseBodyWithClauses` now consumes a `js(…) … end` block as one opaque `js`
+   > command (`consumeJsBlock` — first `end` closes it, same heuristic as the i18n js-mask), built
+   > directly so the JS body never reaches `matchBest`. Applies to en + every translation (the `js`
+   > keyword survives translation verbatim). Result: **behavior-removable now FAITHFUL (1.0) in 11
+   > languages** (es/fr/de/it/id/ms/zh/vi/ru/pl/he); priority gate **lossy 93→84, degenerate 24→22**,
+   > avgFidelity + avgRoleFidelity up, precision flat, **zero regressions** across all 8 js-using
+   > behaviors; 6101 semantic tests pass. Guard:
+   > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
+   > "js(…) … end blocks are opaque to the body parser".
+   >
+   > **Still open (each its own increment):** (1) **`behavior-sortable`** is unmoved — its loss is
+   > `repeat`/`wait` inside a `repeat until event pointerup … end` block, BUT triage (2026-06-19)
+   > shows the real blocker is the i18n transformer rendering `trigger sortable:start on me` as
+   > `disparar sortable:start entonces en yo` (a spurious `then` + a stray `en yo` = "on me") right
+   > before the loop block — the exact `trigger … on me` artifact `ON_TARGET_COMMANDS`
+   > ([`transformer.ts`](../packages/i18n/src/grammar/transformer.ts)) deliberately leaves split. So
+   > sortable is a **coupled transformer+parser** arc (clean the `trigger … on me` rendering AND
+   > teach the body parser the loop-block fold), not a single-defect fix. (2) **SOV/VSO degeneracy**
    > (ja/ko/tr/qu/ar/tl) on both behaviors is the behavior-head/`init` reorder, a separate structural
-   > problem. **(2) is the recommended next behavior item.**
+   > problem (removable still degenerate in ar/qu/tl/tr). (3) **pt/sw removable** lose `on`/`remove`/
+   > `trigger` even as SVO — a distinct handler-parse gap worth its own look.
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
