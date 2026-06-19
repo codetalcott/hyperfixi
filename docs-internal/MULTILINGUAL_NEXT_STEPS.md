@@ -130,14 +130,46 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    `behavior-sortable` (9 degen + 14 lossy) and the Experimental-3 source execution (item 1).
 
    > **Multilingual behavior fidelity is a PRIORITY (user, 2026-06-17).** The faithful-pass
-   > headroom above is the next behavior arc, not optional. **Root-cause triage (2026-06-19):**
-   > `behavior-removable` + `behavior-sortable` are non-faithful in **all 23 non-en langs** (the
-   > high-leverage targets; draggable/resizable are SOV-only). The defect is in the **i18n
-   > `GrammarTransformer`** (NOT the parser) — verified on **SVO Spanish**, where the translated
-   > Removable body is already mangled: nested `if {…}` bodies flattened into a then-chain (`js()`/
-   > `halt`/`transition` dropped), `init` reordered + its body dropped, `is undefined` untranslated.
-   > Staged arc handoff: [`HANDOFF-transformer-behavior-fidelity.md`](HANDOFF-transformer-behavior-fidelity.md).
-   > **This is the recommended next behavior item.**
+   > headroom above is the next behavior arc, not optional.
+   >
+   > **⚠️ DIAGNOSIS CORRECTION (2026-06-19).** The earlier triage above — and
+   > [`HANDOFF-transformer-behavior-fidelity.md`](HANDOFF-transformer-behavior-fidelity.md) — blamed
+   > the **i18n `GrammarTransformer`** ("nested `if {…}` bodies flattened into a then-chain"). That
+   > was reproduced via `MultilingualHyperscript.translate`, which is **`semantic.translate` =
+   > parse→render**, a path the **fidelity gate does not use**. The gate measures the translations in
+   > `patterns.db`, populated by `sync:translations` → the **i18n `GrammarTransformer.transform`**,
+   > whose output is in fact **faithful** (precision **1.000** in every language — no flattening, no
+   > dropped `js()`/`halt`/`transition`). The real loss is **pure recall in the SEMANTIC PARSER**:
+   > parsing the (faithful) translation drops the handler-body commands that follow the first nested
+   > `if`/`repeat` block — exactly the "body sub-parse drops `trigger`/`remove`/`halt` after the
+   > conditionals" line above. **It is a parser bug, not a transformer bug.** Do NOT spend effort on
+   > `transformer.ts` for this; the HANDOFF doc is superseded.
+   >
+   > **Increment DONE (2026-06-19, semantic parser).** Two stacked bugs in
+   > [`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts) `buildEventHandler`:
+   > (a) the fused-pattern **fold-rewind guard** only saw a TOP-LEVEL conditional, but
+   > `parseBodyWithClauses` wraps a multi-statement body in a `compound` — so the fold was missed and
+   > the flat path dropped every command after the SECOND `end` (`trigger removable:removed`,
+   > `remove me`); fixed to look inside the single-`compound` wrapper. (b) `isEndKeyword` rejected the
+   > **English literal `end`** for curated langs (es `fin`, ja `終わり`, …), but a masked `js(…) … end`
+   > block restores its terminator as English `end` → the conditional's depth tracker counted the js
+   > body's `if` (+1) but not the js `end` (−1), unbalancing depth so the conditional over-consumed
+   > the rest of the body; fixed to accept English `end` universally. Result: **behavior-removable
+   > 0.667 → 0.889** across the clean SVO/other langs (es/fr/de/zh/it/id/ms/vi/ru/pl/he), per-language
+   > avgFidelity +0.0014–0.0022, avgRoleFidelity up everywhere, **gate green, zero regressions**,
+   > 6098 semantic tests pass. Regression guards in
+   > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
+   > ("Multi-statement handler body with a js-bearing nested if").
+   >
+   > **Still open (each its own increment):** (1) removable's last gap is the en reference parsing
+   > `return` (and a spurious `if`) from inside the raw `js(…)` body — masked in translations, so they
+   > can't match it (caps removable at 0.889, not 1.0). Fix = treat `js(…) … end` as **opaque** in the
+   > parser for ALL langs incl. en (removes `return`/js-internal-`if` from the reference → faithful).
+   > (2) **`behavior-sortable`** is unmoved — its loss is `repeat`/`wait` inside a `repeat until event
+pointerup … end` block (a loop block, NOT a conditional), so the conditional fold doesn't reach
+   > it; needs the analogous loop-block fold on the fused-event path. (3) **SOV/VSO degeneracy**
+   > (ja/ko/tr/qu/ar/tl) on both behaviors is the behavior-head/`init` reorder, a separate structural
+   > problem. **(2) is the recommended next behavior item.**
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the

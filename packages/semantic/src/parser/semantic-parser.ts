@@ -559,7 +559,22 @@ export class SemanticParserImpl implements ISemanticParser {
           .sort((a, b) => b.priority - a.priority);
         const bodyStream = new TokenStreamImpl(all.slice(ifIdx), language);
         const folded = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
-        if (folded.some(n => n.kind === 'conditional')) {
+        // A conditional folded if it sits at the top level (body is the single
+        // `if` block) OR nested inside the single `compound` wrapper that
+        // parseBodyWithClauses returns whenever the body has >1 clause
+        // (`if confirmRemoval … end trigger … remove me`). The original guard only
+        // checked the top level, so a multi-statement handler body — exactly the
+        // removable/sortable shape — fell through to the flat path below, which
+        // captures `if` as a bare command and then drops every command after the
+        // SECOND `end` (`trigger removable:removed`, `remove me`). Looking inside
+        // the compound lets the whole faithful body (the conditional + its trailing
+        // siblings) survive, matching the English `parseBodyWithClauses` result.
+        const foldedConditional =
+          folded.some(n => n.kind === 'conditional') ||
+          (folded.length === 1 &&
+            folded[0]?.kind === 'compound' &&
+            (folded[0] as CompoundSemanticNode).statements.some(s => s.kind === 'conditional'));
+        if (foldedConditional) {
           while (!tokens.isAtEnd()) tokens.advance(); // body fully consumed by the fold
           return createEventHandler(resolvedEventValue, folded, eventModifiers, {
             sourceLanguage: language,
@@ -2154,10 +2169,18 @@ export class SemanticParserImpl implements ISemanticParser {
       qu: new Set(['tukukuy', 'tukuy', 'puchukay']),
       sw: new Set(['mwisho', 'maliza', 'tamati']),
     };
-    // See isThenKeyword: curated langs unchanged; the rest fall back to the
-    // profile's `end` form + the English literal.
+    // The English literal `end` is accepted in EVERY language, not just the
+    // profile-fallback ones: hyperscript keywords that pass through a translation
+    // untouched keep their English form, and crucially a masked `js(…) … end`
+    // block restores its terminator as the English `end`. If a curated language
+    // (es `fin`, ja `終わり`, …) rejected that literal, the depth tracker in
+    // `tryParseConditionalBlock` would count the js body's `if` (+1) but never the
+    // js block's `end` (−1) — leaving depth unbalanced so the conditional
+    // over-consumes the rest of the handler body (the removable/sortable
+    // command-drop: `trigger`, `remove`, … vanish after the js-bearing `if`).
+    // en already works because `end` is in its curated set; this aligns the rest.
     const curated = endKeywords[language];
-    if (curated) return curated.has(v);
+    if (curated) return v === 'end' || curated.has(v);
     return v === 'end' || this.profileKeywordMatches(language, 'end', v);
   }
 
