@@ -714,6 +714,51 @@ describe('SOV put-into verb-final reorder — ko/tr/bn (Track 5)', () => {
   });
 });
 
+describe('SOV verb-final behavior declaration opener — ja/ko/qu/tr (behavior-removable/sortable)', () => {
+  // In SOV the `behavior` verb is reordered to the end of the declaration line,
+  // after the name + its object marker: `Foo(x) を behavior` (ja), `를` (ko),
+  // `ta` (qu), `i` (tr). tryParseBlock only recognized the keyword-LED form
+  // (`behavior Foo …`), so the SOV declaration was never routed to
+  // parseBehaviorBlock — the whole block fell through to single-statement
+  // parsing (kind=compound/event-handler, the `behavior` node + init lost). This
+  // was the dominant cause of behavior-removable/sortable degeneracy in
+  // ja/ko/qu/tr. tryParseBlock now also detects a `behavior` keyword past index 0
+  // with a PascalCase name at index 0, and parseBehaviorBlock takes the keyword
+  // index so the name leads and the body starts past the (verb-final) keyword.
+  // Transformer output of `behavior Foo(x) init … on click add .a to me end end`.
+  const sovBehaviors: Array<[string, string]> = [
+    [
+      'ja',
+      'Foo(x) を behavior\n    init\n        もし x である 未定義\n            x を 設定 私 に\n        終わり\n    終わり\n    クリック で\n        .a を 追加 私 に\n    終わり\n終わり',
+    ],
+    [
+      'ko',
+      'Foo(x) 를 behavior\n    init\n        만약 x 이다 정의안됨\n            x 를 설정 나 에\n        끝\n    끝\n    클릭 할 때\n        .a 를 추가 나 에\n    끝\n끝',
+    ],
+    [
+      'qu',
+      'Foo(x) ta behavior\n    init\n        sichus x kanqa mana_riqsisqa\n            x ta noqa man churanay\n        tukuy\n    tukuy\n    ñitiy pi\n        .a ta noqa man yapay\n    tukuy\ntukuy',
+    ],
+    [
+      'tr',
+      'Foo(x) i behavior\n    init\n        eğer x dir tanımsız\n            x i ayarla ben e\n        son\n    son\n    tıklama de\n        .a i ekle ben e\n    son\nson',
+    ],
+  ];
+  for (const [lang, input] of sovBehaviors) {
+    it(`[${lang}] SOV verb-final declaration parses as a behavior block`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      // Routed to parseBehaviorBlock — recognized as a behavior, not a stray
+      // compound/event-handler with the keyword stranded.
+      expect(node.kind).toBe('behavior');
+      expect(node.name).toBe('Foo');
+      // The handler (with its `add`) is recovered, not swallowed by the head.
+      const handlers = node.eventHandlers as Array<unknown> | undefined;
+      expect(Array.isArray(handlers) && handlers.length).toBeGreaterThan(0);
+    });
+  }
+});
+
 describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
   // For SOV languages the i18n transformer surfaces a block loop's keyword
   // (반복/পুনরাবৃত্তি/kutipay = repeat) — or a leading `while`/`for` clause — ahead of
