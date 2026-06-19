@@ -186,8 +186,28 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > sortable is a **coupled transformer+parser** arc (clean the `trigger … on me` rendering AND
    > teach the body parser the loop-block fold), not a single-defect fix. (2) **SOV/VSO degeneracy**
    > (ja/ko/tr/qu/ar/tl) on both behaviors is the behavior-head/`init` reorder, a separate structural
-   > problem (removable still degenerate in ar/qu/tl/tr). (3) **pt/sw removable** lose `on`/`remove`/
-   > `trigger` even as SVO — a distinct handler-parse gap worth its own look.
+   > problem (removable still degenerate in ar/qu/tl/tr). (3) ~~**pt/sw removable** lose `on`/`remove`/
+   > `trigger` even as SVO~~ **DONE** (see Increment 3 below).
+   >
+   > **Increment 3 DONE (2026-06-19, PR pending — block-parser marker/opener homonym).** pt/sw were
+   > the only SVO languages still lossy (0.625) on removable. Root cause: `parseBehaviorBlock`'s
+   > depth tracker mis-counted the Portuguese dative marker `para` ("to", from `set triggerEl to me`
+   > → `definir triggerEl para eu`) as the `for` LOOP opener — they share the surface form `para` in
+   > pt — so depth never returned to 0 at the init's `end` and the init segment swallowed the entire
+   > `on click` handler (`eventHandlers` empty; trigger/remove dropped). The tokenizer had already
+   > resolved the ambiguity (it normalizes the marker to its role `destination`, not `for`); the
+   > opener check ([`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts) `isBlockOpener`)
+   > now trusts that normalized role over the colliding surface form. A token with no normalized form
+   > (a raw js-body `if`) still falls back to the surface match, preserving js-block depth balance.
+   > Result: **pt + sw removable now FAITHFUL (1.0)** → removable faithful in **13** languages;
+   > priority gate lossy 84→80, degenerate 22→20, avgFidelity + avgRoleFidelity up, precision flat,
+   > zero regressions; 6103 semantic tests pass. Guard:
+   > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
+   > "Block depth tracking ignores marker/opener homonyms".
+   >
+   > **Still open after Increment 3:** (1) **`behavior-sortable`** (coupled transformer+parser arc,
+   > above); (2) **SOV/VSO degeneracy** (ar/ja/ko/qu/tl/tr) on both behaviors — the behavior-head/
+   > `init` reorder, the remaining structural frontier.
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
