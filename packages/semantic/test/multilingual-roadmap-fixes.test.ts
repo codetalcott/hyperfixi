@@ -6987,3 +6987,48 @@ describe('Juxtaposed verb-medial SOV command in a body (parseClause gap recovery
     });
   }
 });
+
+describe('Quechua word reader does not split native words at English fallbacks (init)', () => {
+  // The qu word reader broke a word at any embedded keyword-at-boundary, which
+  // includes the English canonical fallbacks (me/it/you/…) injected into every
+  // language's keyword table: `init` → `in` + `it`. The behavior `init` block
+  // keyword was therefore never recognised (the block-parser saw `in`), so the
+  // whole init body — `if triggerEl is undefined / set triggerEl to me / end` —
+  // was treated as a handler and dropped (qu behavior-removable/sortable lost the
+  // init `set`). The reader now breaks only on real Quechua case-marker suffixes.
+  function tokens(input: string): string[] {
+    const r = getTokenizer('qu').tokenize(input) as unknown;
+    const arr = Array.isArray(r) ? r : ((r as { tokens?: unknown[] }).tokens ?? []);
+    return (arr as Array<{ value: string }>).map(t => t.value);
+  }
+
+  it('tokenizes `init` as a single word (was `in` + `it`)', () => {
+    expect(tokens('init')).toEqual(['init']);
+  });
+
+  it('still splits a real agglutinated case marker (`triggerElta` → stem + `ta`)', () => {
+    expect(tokens('triggerElta')).toEqual(['triggerEl', 'ta']);
+  });
+
+  it('recovers the behavior `init` block body (if + set)', () => {
+    const input =
+      'Foo(triggerEl) ta behavior\n    init\n        sichus triggerEl kanqa mana_riqsisqa\n            triggerEl ta noqa man churanay\n        tukuy\n    tukuy\n    ñitiy pi\n        .x ta tikray\n    tukuy\ntukuy';
+    const node = parse(input, 'qu') as Record<string, unknown>;
+    expect(node.kind).toBe('behavior');
+    const acc = new Set<string>();
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, unknown>;
+      if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+        const c = rec[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    const ib = node.initBlock;
+    (Array.isArray(ib) ? ib : [ib]).forEach(walk);
+    expect(acc.has('if')).toBe(true);
+    expect(acc.has('set')).toBe(true);
+  });
+});

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-20T14:10:41.895Z",
-  "commit": "f7734e8f",
+  "timestamp": "2026-06-20T15:32:57.489Z",
+  "commit": "87c5c459",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -9499,18 +9499,16 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7291486291486292,
-      "avgFidelity": 0.986904761904762,
-      "avgPrecision": 0.930555555555556,
-      "avgRoleFidelity": 0.7716267778767776,
+      "avgConfidence": 0.7316532673675531,
+      "avgFidelity": 0.988365800865801,
+      "avgPrecision": 0.9311969415865524,
+      "avgRoleFidelity": 0.7701570389070387,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [
         "append-content",
         "behavior-draggable",
-        "behavior-removable",
-        "behavior-sortable",
         "modal-close-escape",
         "take-class-from-siblings",
         "unless-condition"
@@ -9789,6 +9787,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9886,10 +9888,6 @@
           "confidence": 0.5
         },
         "append-content": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "trigger-event": {
           "success": true,
           "confidence": 0.5
         },
