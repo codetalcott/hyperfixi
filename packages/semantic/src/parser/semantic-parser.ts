@@ -1010,12 +1010,56 @@ export class SemanticParserImpl implements ISemanticParser {
     const clauseStream = new TokenStreamImpl(clauseTokens, language);
     const commands: SemanticNode[] = [];
 
+    // Count of commands produced by the existing paths (matchBest + the `repeat`
+    // special-case). Used to decide between per-gap recovery and the legacy
+    // whole-clause fallback below — see the `directHits === 0` branch.
+    let directHits = 0;
+
+    // Tokens matchBest could not anchor on. In SOV a *verb-medial* command
+    // (`triggerEl を 設定 私 に` = `set triggerEl to me`) doesn't match matchBest
+    // (it anchors on a selector/typed role), so when such a command is JUXTAPOSED
+    // before a matchable one (`set X to me` then `toggle .y`, no `then` between),
+    // matchBest skips the whole verb-medial command one token at a time and it is
+    // silently dropped — the all-or-nothing whole-clause fallback at the end never
+    // fired because a later command DID match. Collect each skipped run and recover
+    // verb-medial commands from it (in order, so execution semantics are kept).
+    const skipped: LanguageToken[] = [];
+    const flushSkipped = () => {
+      if (skipped.length === 0) return;
+      const run = skipped.slice();
+      skipped.length = 0;
+      // Recover only a *value-led* run (a verb-medial command always opens with
+      // its first role value — identifier/selector/literal). A keyword-led run is
+      // an event-clause leak (`스크롤 …` / `scroll …`, where the event word is also
+      // a command verb) and must NOT be turned into a command.
+      const head = run[0];
+      const headIsValue =
+        head &&
+        (head.kind === 'identifier' ||
+          head.kind === 'selector' ||
+          head.kind === 'literal' ||
+          (head.kind as string) === 'reference');
+      if (!headIsValue) return;
+      // Verb-anchoring on a *fragment* can still mis-fire on a stray marker/keyword
+      // (`from`/`into`/`or`/`until`). Keep only well-formed recoveries: a real
+      // command schema with at least one captured role.
+      for (const node of this.parseSOVClauseByVerbAnchoring(run, language)) {
+        const action = (node as { action?: string }).action;
+        const roles = (node as { roles?: unknown }).roles;
+        if (action && getSchema(action as ActionType) && roles instanceof Map && roles.size > 0) {
+          commands.push(node);
+        }
+      }
+    };
+
     while (!clauseStream.isAtEnd()) {
       // Try to match as a command
       const commandMatch = patternMatcher.matchBest(clauseStream, commandPatterns);
       if (commandMatch) {
+        flushSkipped();
         const cmd = this.buildCommand(commandMatch, language);
         commands.push(cmd);
+        directHits++;
         this.tryAttachTrailingRole(clauseStream, cmd, language);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
@@ -1028,6 +1072,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // `repeat` loop keyword, emit the loop action directly so it survives.
         const tok = clauseStream.peek();
         if (tok && tok.normalized?.toLowerCase() === 'repeat') {
+          flushSkipped();
           commands.push(
             createCommandNode(
               'repeat' as ActionType,
@@ -1035,17 +1080,22 @@ export class SemanticParserImpl implements ISemanticParser {
               { sourceLanguage: language, confidence: 0.6 }
             )
           );
+          directHits++;
+        } else if (tok) {
+          skipped.push(tok);
         }
         // Skip unrecognized token
         clauseStream.advance();
       }
     }
+    flushSkipped();
 
-    // If pattern matching produced nothing, try verb-anchored SOV parsing.
-    // The grammar transformer often puts the verb BETWEEN roles for two-role commands:
-    //   e.g., "destination を verb patient に" instead of "destination を patient に verb"
-    // Pattern matching fails because it expects strict SOV order (verb at end).
-    if (commands.length === 0) {
+    // No command matched via matchBest or the `repeat` special-case: prefer the
+    // legacy whole-clause verb-anchoring (byte-identical to the prior behavior).
+    // It handles a single verb-FINAL command (`call updateScrollPosition()`) that
+    // the per-gap recovery would mis-split into fragments — so a clause that is one
+    // such command is parsed correctly, and any per-gap noise is discarded.
+    if (directHits === 0) {
       const sovCommands = this.parseSOVClauseByVerbAnchoring(clauseTokens, language);
       if (sovCommands.length > 0) {
         return sovCommands;
