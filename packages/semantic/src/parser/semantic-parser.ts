@@ -803,6 +803,9 @@ export class SemanticParserImpl implements ISemanticParser {
   ): SemanticNode[] {
     const clauses: SemanticNode[] = [];
     const currentClauseTokens: LanguageToken[] = [];
+    // Nesting depth of block openers (`if`/`unless`/`while`/`for`/`repeat`)
+    // accumulated into the pending clause — see the depth-aware `end` note below.
+    let pendingBlockDepth = 0;
 
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
@@ -867,12 +870,33 @@ export class SemanticParserImpl implements ISemanticParser {
         this.isEndKeyword(current.value, language) &&
         !isPositionalEndNoun;
 
+      // Depth-aware termination. An `end` that closes a NESTED block accumulated
+      // mid-clause must not terminate the whole body. A nested `if`/`unless`/
+      // `while`/`for`/`repeat` is normally consumed as a unit by the fold guards
+      // above — but those only fire at a clause boundary (currentClauseTokens
+      // empty). In SOV/VSO the event-handler pattern leaves the leading
+      // `from <source>` clause (removable `triggerEl 에서`) or event-param clause
+      // (sortable `(clientY) … me から`) unconsumed at the head of the body, so the
+      // pending clause is non-empty at the first nested opener and the fold never
+      // fires. The naive break below would then terminate the body at that nested
+      // block's `end`, dropping every command after it (`trigger`/`remove` after
+      // the conditional — the SOV/VSO analogue of the #452/#453 fused-body fixes).
+      // While inside a nested block (depth > 0), treat `end` as block content and
+      // keep accumulating so the whole body reaches the per-clause parser.
+      if (isEnd && pendingBlockDepth > 0) {
+        pendingBlockDepth--;
+        currentClauseTokens.push(current);
+        tokens.advance();
+        continue;
+      }
+
       if (isConjunction) {
         // We've reached a clause boundary - parse accumulated tokens
         if (currentClauseTokens.length > 0) {
           const clauseNodes = this.parseClause(currentClauseTokens, commandPatterns, language);
           clauses.push(...clauseNodes);
           currentClauseTokens.length = 0; // Clear for next clause
+          pendingBlockDepth = 0;
         }
         tokens.advance(); // Consume conjunction token
         continue;
@@ -935,7 +959,22 @@ export class SemanticParserImpl implements ISemanticParser {
         break;
       }
 
-      // Accumulate token for current clause
+      // Accumulate token for current clause. Count nested-block openers so the
+      // depth-aware `end` check above knows when an `end` closes a nested block
+      // rather than the body itself. (Openers reached at a clause boundary are
+      // consumed by the fold guards instead and never get here.)
+      if (current.kind === 'keyword') {
+        const cv = (current.normalized ?? current.value).toLowerCase();
+        if (
+          this.isIfKeyword(cv, language) ||
+          this.isUnlessKeyword(cv, language) ||
+          cv === 'while' ||
+          cv === 'for' ||
+          cv === 'repeat'
+        ) {
+          pendingBlockDepth++;
+        }
+      }
       currentClauseTokens.push(current);
       tokens.advance();
     }

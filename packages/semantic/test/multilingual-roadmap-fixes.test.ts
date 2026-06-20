@@ -6802,3 +6802,63 @@ describe('VSO from-first event-handler head — ar/tl (behavior-removable/sortab
     expect(a.has('add')).toBe(true);
   });
 });
+
+describe('Depth-aware end: command after a nested block in SOV bodies (A2b)', () => {
+  // `parseBodyWithClauses` terminated the WHOLE body at the first `end` *keyword*
+  // it scanned. That was harmless when nested blocks were folded as units — but
+  // the fold guards only fire at a clause boundary (pending clause empty). In
+  // SOV/VSO the event-handler pattern leaves the leading `from <source>` clause
+  // unconsumed at the head of the body (removable: `triggerEl 에서` / `triggerEl
+  // から`), so the pending clause is non-empty at the first nested opener, the
+  // fold never fires, and the first nested block's `end` truncated the body —
+  // dropping every command after it (`trigger`/`remove` after the conditional).
+  // The SOV/VSO analogue of the #452/#453 fused-body fixes. The parser now tracks
+  // nested-block opener depth (if/unless/while/for/repeat) and treats `end` as
+  // block content while inside one. Strings below are post-transform output of
+  // the behavior-removable `on click from triggerEl` handler (two nested ifs with
+  // a `trigger` between them and a trailing `trigger`/`remove`).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    [
+      'ko',
+      '클릭 할 때 triggerEl 에서\n    만약 confirmRemoval\n        만약 그것 이다 "cancel"\n            정지\n        끝\n    끝\n    removable:before 를 트리거\n    만약 effect 이다 "fade"\n        opacity 를 전환 0 에 300ms\n    끝\n    removable:removed 를 트리거\n    나 를 제거\n끝',
+    ],
+    [
+      'ja',
+      'クリック で triggerEl から\n    もし confirmRemoval\n        もし それ である "cancel"\n            停止\n        終わり\n    終わり\n    removable:before を 引き金\n    もし effect である "fade"\n        opacity を 遷移 0 に 300ms\n    終わり\n    removable:removed を 引き金\n    私 を 削除\n終わり',
+    ],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] keeps trigger + remove after the nested if blocks (were dropped)`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      expect(node.kind).toBe('event-handler');
+      const a = actions(node);
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      // The commands after the first nested `end` — previously truncated away.
+      expect(a.has('trigger')).toBe(true);
+      expect(a.has('remove')).toBe(true);
+    });
+  }
+
+  // Regression guard: a single-clause body with no nested block must be byte
+  // -identical to before — the depth counter only changes behavior when an `end`
+  // is encountered while inside an accumulated opener.
+  it('[ko] a plain single-command body is unaffected', () => {
+    const a = actions(parse('클릭 할 때\n    .active 를 토글\n끝', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+});
