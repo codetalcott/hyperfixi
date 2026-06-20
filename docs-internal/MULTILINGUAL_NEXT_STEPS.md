@@ -250,8 +250,8 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    >   merged #452/#453 fixes — the command right after a nested `if … end` in a handler body is
    >   dropped (`trigger removable:before`). `parseBodyWithClauses` SOV path. OPEN.
    > - **B — VSO/Austronesian handler-head** (ar/tl): opener IS recognized but the handler head
-   >   leads with `from <target>` before the `on <event>` marker, so the handler isn't recognized
-   >   ([`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts) L509). OPEN.
+   >   leads with `from <target>` before the `on <event>` marker, so the handler isn't recognized.
+   >   **DONE (Increment 6 below).**
    > - **C — de (V2) sortable body collapse**: opener + handler recognized, but the V2-reordered
    >   pointerdown body drops most commands. A separate V2 body-parse defect. OPEN.
    >
@@ -271,6 +271,27 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > unaffected by A (their causes are A2b-heavy / B / C). Guard:
    > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
    > "SOV verb-final behavior declaration opener".
+   >
+   > **Increment 6 DONE (2026-06-19, PR pending — VSO from-first handler-head, defect B).** The VSO
+   > transform fronts a handler's `from <source>` clause ahead of the `on <event>` marker
+   > (`on click from triggerEl` → ar `من triggerEl عند نقر`, tl `mula_sa triggerEl kapag click`), so
+   > no event pattern anchored on the leading source marker and the whole handler + body dropped
+   > (the bare `on click` form parsed fine). The parse entry
+   > ([`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts)) now detects a
+   > leading `source`-marker + a following `on`-marker (VSO-gated), moves the from-clause to AFTER
+   > the event, and re-parses the normalized `on <event> from <source>` order (the order the SVO
+   > event path already handles). The source is moved, not dropped, so role-fidelity is intact.
+   > **removable ar+tl → FAITHFUL (1.0)** (were degenerate); **sortable tl → FAITHFUL**, sortable ar
+   > degenerate→lossy 0.889 (residual: `wait` inside the repeat loop — A2b). Priority gate
+   > **degenerate 15→11**, lossy 65→66 (the one ar-sortable flip), parse-rate unchanged (3695/3696),
+   > execution 1.0, **zero regressions**; 6112 semantic tests pass (+3 guards). de sortable (C) +
+   > ja/ko/qu/tr (A2a/A2b) unaffected. Guard:
+   > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
+   > "VSO from-first event-handler head".
+   >
+   > **Still open after Increment 6:** **A2a** (SOV bare-`if` body `set` — prototype rejected, needs
+   > copula normalization or scan-from-end), **A2b** (SOV/VSO command after a nested block — the
+   > sortable ar `wait` + bn/hi/th/ko trigger-tail + ja sortable), **C** (de V2 sortable body).
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the

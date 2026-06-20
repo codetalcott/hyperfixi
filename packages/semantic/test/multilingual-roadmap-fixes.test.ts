@@ -6755,3 +6755,50 @@ describe('Block depth tracking ignores marker/opener homonyms (pt `para`, sw)', 
     expect(a.has('remove')).toBe(true);
   });
 });
+
+describe('VSO from-first event-handler head — ar/tl (behavior-removable/sortable)', () => {
+  // In VSO the handler's `from <source>` clause is fronted ahead of the
+  // `on <event>` marker: `on click from triggerEl` → `من triggerEl عند نقر` (ar) /
+  // `mula_sa triggerEl kapag click` (tl). No event pattern anchors on the leading
+  // source marker, so the whole handler + body dropped (ar/tl behavior-removable
+  // were degenerate; the bare `on click` form parsed fine). The parser now detects
+  // a leading source marker + a following `on`-marker (VSO-gated), moves the
+  // from-clause to after the event, and re-parses the normalized
+  // `on <event> from <source>` order. Strings below are post-transform output of
+  // `on click from triggerEl / add .a to me / end`.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    ['ar', 'من triggerEl عند نقر\n    أضف .a إلى أنا\nالنهاية'],
+    ['tl', 'mula_sa triggerEl kapag click\n    idagdag .a sa ako\nwakas'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] VSO from-first head parses as an event handler with its body`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      expect(node.kind).toBe('event-handler');
+      const a = actions(node);
+      expect(a.has('on')).toBe(true);
+      expect(a.has('add')).toBe(true); // body recovered, not dropped with the head
+    });
+  }
+
+  // Regression guard: a VSO handler with NO from-clause (bare `on click`) must
+  // still parse via the normal event path — the reorder only fires on a leading
+  // source marker, so this is untouched.
+  it('[ar] bare `on click` head (no from-clause) is unaffected', () => {
+    const a = actions(parse('عند نقر\n    أضف .a إلى أنا\nالنهاية', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+});
