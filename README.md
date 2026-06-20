@@ -84,6 +84,21 @@ The plugin scans your files for `_="..."` attributes and generates a minimal bun
 
 Use `@hyperfixi/*` packages. Add `@lokascript/*` only if you need multilingual support.
 
+## Under the Hood: the Multilingual Engine
+
+The optional `@lokascript/*` layer lets you author hyperscript in 24 languages with
+real SOV/VSO/V2 **word-order transformation** — and, unusually, it **proves** the
+translation preserved meaning rather than merely "parsed". Two writeups go deep:
+
+- **[Word order across 24 languages](docs/WORD-ORDER.md)** -- the linguistic
+  phenomena the semantic engine solves (verb-medial commands, fronted markers,
+  nested-block bodies, agglutinative tokenization, homonym disambiguation), each
+  tied to an executable guard test.
+- **[Structural fidelity](docs/FIDELITY.md)** -- how a recall/precision/role/execution
+  ratchet catches _silent meaning-drops_ that text-diff and parse-success both miss.
+  A transferable methodology for any meaning-preserving transform (i18n of program
+  structure, codegen, AST migrations).
+
 ## Learn More
 
 - [Choosing a bundle](https://hyperfixi.org/guide/bundles/) -- 6 bundles from 1.9 KB to 200 KB
