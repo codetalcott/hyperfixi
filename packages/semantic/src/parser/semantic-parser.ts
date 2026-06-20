@@ -216,6 +216,53 @@ export class SemanticParserImpl implements ISemanticParser {
     // Sort patterns by priority (descending)
     const sortedPatterns = [...patterns].sort((a, b) => b.priority - a.priority);
 
+    // VSO from-first event-handler head. The VSO transform fronts a handler's
+    // `from <source>` clause ahead of the `on <event>` marker (`من triggerEl عند
+    // نقر` / `mula_sa triggerEl kapag click` = `on click from triggerEl`), so no
+    // event pattern anchors on the leading source marker and the whole handler +
+    // body drop (ar/tl behavior-removable/sortable were degenerate). When the
+    // input leads with a `source` marker and an `on`-marker follows, move the
+    // leading from-clause to AFTER the event and re-parse the normalized
+    // `on <event> from <source>` order — the same order the event path already
+    // handles in SVO (es `en clic de triggerEl`). The reorder preserves the
+    // source (it is moved, not dropped), so role-fidelity is intact. Gated to VSO
+    // + this exact `<source-marker> … <on-marker> <event>` token shape and only
+    // returned when the re-parse yields an event-handler, so it can only add parses.
+    {
+      const arr = tokens.tokens as LanguageToken[];
+      if (
+        tryGetProfile(language)?.wordOrder === 'VSO' &&
+        arr.length >= 4 &&
+        arr[0]?.normalized === 'source'
+      ) {
+        const onIdx = arr.findIndex(t => t.normalized === 'on');
+        if (onIdx >= 2 && onIdx + 1 < arr.length) {
+          const fromClause = parseInput
+            .slice(arr[0].position.start, arr[onIdx].position.start)
+            .trim();
+          const eventEnd = arr[onIdx + 1].position.end;
+          const reordered =
+            parseInput.slice(arr[onIdx].position.start, eventEnd) +
+            ' ' +
+            fromClause +
+            parseInput.slice(eventEnd);
+          if (reordered !== parseInput) {
+            try {
+              const reparsed = this.parse(reordered, language);
+              if (reparsed && reparsed.kind === 'event-handler') {
+                const result = modifiers
+                  ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                  : reparsed;
+                return withDiagnostics(result, diagnostics);
+              }
+            } catch {
+              // fall through to the normal stages unchanged
+            }
+          }
+        }
+      }
+    }
+
     // Stage 1: Try event handler patterns first (they wrap commands)
     const eventPatterns = sortedPatterns.filter(p => p.command === 'on');
     const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
