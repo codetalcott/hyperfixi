@@ -6862,3 +6862,79 @@ describe('Depth-aware end: command after a nested block in SOV bodies (A2b)', ()
     expect(a.has('toggle')).toBe(true);
   });
 });
+
+describe('Verb-medial SOV command head in a conditional body (A2a init `set` drop)', () => {
+  // The behavior `init` block `if triggerEl is undefined / set triggerEl to me /
+  // end` dropped its `set` in SOV: tryParseConditionalBlock's condition/then split
+  // located the then-branch via tokensBeginCommand (bare matchBest), which can't
+  // recognise an SOV *verb-medial* command (`triggerEl 를 설정 나 에` = `set
+  // triggerEl to me` — matchBest anchors on a selector/typed role, not a bare
+  // variable). So the `set` clause was absorbed into the condition and lost. The
+  // split now also recognises a verb-medial command head (sovCommandStartsAt). The
+  // then-branch parser already handled `set` once it received it. Strings below are
+  // the post-transform behavior with the init block + an unrelated handler.
+  function initActions(node: unknown): Set<string> {
+    const acc = new Set<string>();
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, unknown>;
+      if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+        const c = rec[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    const ib = (node as Record<string, unknown> | null)?.initBlock;
+    (Array.isArray(ib) ? ib : [ib]).forEach(walk);
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    [
+      'ko',
+      'Foo(triggerEl) 를 behavior\n    init\n        만약 triggerEl 이다 정의안됨\n            triggerEl 를 설정 나 에\n        끝\n    끝\n    클릭 할 때\n        .x 를 토글\n    끝\n끝',
+    ],
+    [
+      'tr',
+      'Foo(triggerEl) i behavior\n    init\n        eğer triggerEl dir tanımsız\n            triggerEl i ayarla ben e\n        son\n    son\n    tıklama de\n        .x i değiştir\n    son\nson',
+    ],
+    [
+      'bn',
+      'Foo(triggerEl) কে আচরণ\n    শুরু\n        যদি triggerEl হয় অনির্ধারিত\n            triggerEl কে সেট আমি তে\n        শেষ\n    শেষ\n    ক্লিক এ\n        .x কে টগল\n    শেষ\nশেষ',
+    ],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] init keeps the verb-medial \`set\` in the if body (was dropped)`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      expect(node).toBeTruthy();
+      expect(node.kind).toBe('behavior');
+      const a = initActions(node);
+      expect(a.has('if')).toBe(true); // the conditional still folds
+      expect(a.has('set')).toBe(true); // …and its verb-medial body survives
+    });
+  }
+
+  // Regression guard: a conditional whose then-branch is a SELECTOR-patient
+  // command (matchBest already recognises it) is unchanged — the SOV path only
+  // adds recognition, never removes the matchBest one.
+  it('[ko] selector-patient then-branch still parses (unaffected)', () => {
+    const node = parse('클릭 할 때\n  만약 confirmRemoval\n    .y 를 토글\n  끝\n끝', 'ko') as Record<
+      string,
+      unknown
+    >;
+    const acc = new Set<string>();
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, unknown>;
+      if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+        const c = rec[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    expect(acc.has('toggle')).toBe(true);
+  });
+});

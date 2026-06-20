@@ -2483,6 +2483,10 @@ export class SemanticParserImpl implements ISemanticParser {
     // Split blockTokens into condition / then-branch / else-branch. The condition
     // ends at the first depth-0 `then` keyword, or at the first depth-0 token that
     // begins a command (copula-guarded). then/else are split at depth-0 `else`.
+    // For SOV, also recognise a verb-medial command head (matchBest can't — A2a).
+    const sovProfile = tryGetProfile(language);
+    const sovVerbLookup =
+      sovProfile?.wordOrder === 'SOV' ? SemanticParserImpl.buildVerbLookup(sovProfile) : null;
     let i = 0;
     let bodyDepth = 0;
     const condTokens: LanguageToken[] = [];
@@ -2506,7 +2510,8 @@ export class SemanticParserImpl implements ISemanticParser {
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
           !SemanticParserImpl.CONDITION_COPULAS.has(prev) &&
-          this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language)
+          (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
+            this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
         ) {
           break; // this token starts the then-branch
         }
@@ -2584,6 +2589,49 @@ export class SemanticParserImpl implements ISemanticParser {
     if (toks.length === 0) return false;
     const stream = new TokenStreamImpl(toks, language);
     return patternMatcher.matchBest(stream, commandPatterns) !== null;
+  }
+
+  /**
+   * Whether the token slice begins an SOV *verb-medial* command
+   * (`{value} {marker} … {verb} …`, e.g. `triggerEl を 設定 私 に` = `set triggerEl
+   * to me`). matchBest can't recognise these — it anchors on a selector/typed
+   * role — so the conditional split's {@link tokensBeginCommand} misses a
+   * verb-medial then-branch head and folds it into the condition (the A2a
+   * behavior-`init` `set` drop: the then-branch parser handles `set` fine once it
+   * *receives* it; only the boundary detection was blind to it).
+   *
+   * Mirrors the recognition {@link parseSOVClauseByVerbAnchoring} relies on: one
+   * or more `{value}{particle-marker}` role pairs followed by a command verb
+   * keyword. Conservative by construction — a bare-verb command (no leading role)
+   * already matches via matchBest, and a condition predicate (`X is empty`,
+   * `X exists`) carries copulas/operators rather than a `{value}{marker}{verb}`
+   * head, so it can't spuriously trip this.
+   */
+  private sovCommandStartsAt(
+    toks: LanguageToken[],
+    verbLookup: Map<string, string> | null
+  ): boolean {
+    if (!verbLookup) return false;
+    const isVerb = (t: LanguageToken): boolean =>
+      verbLookup.has(t.value.toLowerCase()) ||
+      (!!t.normalized && verbLookup.has(t.normalized.toLowerCase()));
+    const isValue = (t: LanguageToken): boolean =>
+      t.kind === 'identifier' ||
+      t.kind === 'selector' ||
+      t.kind === 'literal' ||
+      (t.kind as string) === 'reference';
+    let i = 0;
+    let pairs = 0;
+    while (i + 1 < toks.length) {
+      const val = toks[i];
+      const mark = toks[i + 1];
+      if (!isValue(val) || mark.kind !== 'particle') break;
+      pairs += 1;
+      i += 2;
+      const next = toks[i];
+      if (pairs >= 1 && next && isVerb(next)) return true;
+    }
+    return false;
   }
 
   /**
