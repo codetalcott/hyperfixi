@@ -160,6 +160,18 @@
         .badge-sov { background: #e91e63; color: white; }
         .badge-vso { background: #22c55e; color: white; }
         .badge-explicit { background: #ff9800; color: black; }
+        .badge-faithful { background: #16a34a; color: white; }
+        .badge-lossy { background: #f59e0b; color: black; }
+        .badge-degenerate { background: #dc2626; color: white; }
+        .badge-nullparse { background: #6b7280; color: white; }
+        .fidelity-note {
+            margin: 12px 0 4px;
+            padding: 10px 14px;
+            border-left: 3px solid #16a34a;
+            background: rgba(22,163,74,0.08);
+            font-size: 13px;
+            line-height: 1.5;
+        }
 
         .result-content {
             padding: 15px;
@@ -570,6 +582,50 @@
             sw: { name: 'Kiswahili', flag: '\u{1F1F0}\u{1F1EA}', wordOrder: 'SVO', rtl: false },
         };
 
+        // --- Structural fidelity (see ../../docs/FIDELITY.md) ---------------
+        // Collect the distinct command actions anywhere in a parsed node tree,
+        // excluding the structural `compound` wrapper. Same signature the
+        // multilingual --regression gate uses (fidelity.ts collectActions).
+        function collectActions(node, acc) {
+            acc = acc || new Set();
+            if (!node || typeof node !== 'object') return acc;
+            if (typeof node.action === 'string' && node.action !== 'compound') acc.add(node.action);
+            for (const f of ['body','statements','thenBranch','elseBranch','branches','eventHandlers','initBlock']) {
+                const c = node[f];
+                if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+                else if (c && typeof c === 'object') collectActions(c, acc);
+            }
+            return acc;
+        }
+        // Recall: fraction of the reference (source) actions present in the
+        // round-tripped translation. 1.0 = faithful; 0.5–1.0 lossy; <0.5 degenerate.
+        function recall(ref, cand) {
+            if (ref.size === 0) return null;
+            let hits = 0;
+            for (const a of ref) if (cand.has(a)) hits++;
+            return hits / ref.size;
+        }
+        // Round-trip a rendered translation back through the parser and score it
+        // against the source's action set. This is exactly what the CI gate does:
+        // it proves the translation preserved the commands, not just that it parsed.
+        function fidelityBadge(refActions, translation, lang) {
+            if (!refActions || refActions.size === 0) return '';
+            let cand;
+            try {
+                const rt = Semantic.parse(translation, lang);
+                cand = collectActions((rt && (rt.semantic || rt)) || null);
+            } catch (e) { cand = new Set(); }
+            if (cand.size === 0) {
+                return `<span class="badge badge-nullparse" title="round-trip parse returned nothing">no round-trip</span>`;
+            }
+            const r = recall(refActions, cand);
+            const missing = [...refActions].filter(a => !cand.has(a));
+            const frac = `${refActions.size - missing.length}/${refActions.size}`;
+            if (r >= 1) return `<span class="badge badge-faithful" title="all source commands preserved">faithful ${frac}</span>`;
+            if (r >= 0.5) return `<span class="badge badge-lossy" title="dropped: ${missing.join(', ')}">lossy ${frac}</span>`;
+            return `<span class="badge badge-degenerate" title="dropped: ${missing.join(', ')}">degenerate ${frac}</span>`;
+        }
+
         function updateParserDemo() {
             const input = document.getElementById('parser-input').value.trim();
             const sourceLang = document.getElementById('source-lang').value;
@@ -629,8 +685,23 @@ ${rolesHtml}  },
   <span class="key">explicit</span>: <span class="value">"${escapeHtml(explicitStr)}"</span>
 }`;
 
+                // Reference action set from the source parse — each translation
+                // is round-tripped (rendered, then re-parsed) and scored against it.
+                const refActions = collectActions(semantic);
+
                 // Generate translations to all languages
                 let translationsHtml = '';
+                if (refActions.size > 0) {
+                    translationsHtml += `<div class="fidelity-note">
+                        <strong>Fidelity badges</strong> below aren't decoration: each translation is
+                        <em>rendered, then parsed back</em>, and its recovered commands are compared to the
+                        source's (${refActions.size} command${refActions.size === 1 ? '' : 's'}:
+                        ${[...refActions].join(', ')}). <span class="badge badge-faithful">faithful</span>
+                        = all preserved; <span class="badge badge-lossy">lossy</span> = some silently dropped.
+                        This is the same recall signal the CI gate ratchets — see
+                        <a href="../../docs/FIDELITY.md" style="color:#16a34a;">FIDELITY.md</a>.
+                    </div>`;
+                }
 
                 for (const [code, lang] of Object.entries(languages)) {
                     let translation = input; // Default to input
@@ -655,6 +726,7 @@ ${rolesHtml}  },
                                 <span class="lang-name">${lang.name}</span>
                                 ${isSource ? '<span class="badge" style="background: #667eea; color: white;">SOURCE</span>' : ''}
                                 <span class="badge ${badgeClass}">${lang.wordOrder}</span>
+                                ${isSource ? '' : fidelityBadge(refActions, translation, code)}
                             </div>
                             <div class="result-content ${lang.rtl ? 'rtl' : ''}">${escapeHtml(translation)}</div>
                         </div>
