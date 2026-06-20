@@ -64,6 +64,33 @@ const POSTPOSITIONS = new Set([
 ]);
 
 /**
+ * Standalone (unhyphenated) Quechua case-marker forms that legitimately
+ * agglutinate onto a stem — used by the word reader to decide where to break.
+ * Derived from {@link SUFFIXES}/{@link POSTPOSITIONS} (hyphen stripped, plus the
+ * `rayku` postposition the suffix set lists only hyphenated).
+ */
+const AGGLUTINATIVE_MARKERS: ReadonlySet<string> = new Set(
+  [...SUFFIXES, ...POSTPOSITIONS].map(s => (s.startsWith('-') ? s.slice(1) : s))
+);
+
+/**
+ * Whether a Quechua case-marker suffix starts at `pos` and ends at a word
+ * boundary (end of input or a non-Quechua-letter). Unlike a generic
+ * isKeywordStart check, this never fires on the English canonical fallbacks
+ * injected into the keyword table, so native words containing `it`/`me`/… are
+ * not split (`init`, `ñit'iy`).
+ */
+function quechuaSuffixStartsAt(input: string, pos: number): boolean {
+  const remaining = input.slice(pos);
+  for (const marker of AGGLUTINATIVE_MARKERS) {
+    if (!remaining.startsWith(marker)) continue;
+    const after = input[pos + marker.length];
+    if (after === undefined || !isQuechuaLetter(after)) return true;
+  }
+  return false;
+}
+
+/**
  * QuechuaKeywordExtractor - Context-aware extractor for Quechua words.
  *
  * Handles:
@@ -176,12 +203,15 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     let pos = position;
 
     while (pos < input.length && isQuechuaLetter(input[pos])) {
-      // Break for an attached keyword (agglutinative suffix like `-ta`, `-man`)
-      // only when the match ends at a word boundary. A raw isKeywordStart check
-      // splits native words around embedded English-fallback keywords (me, it,
-      // you, … are injected for every language): ñit'iy → ñ + it + 'iy.
-      // isQuechuaLetter keeps the glottal apostrophe inside the word.
-      if (word.length > 0 && this.context.isKeywordStartAtBoundary?.(input, pos, isQuechuaLetter)) {
+      // Break for an attached agglutinative case-marker suffix (`-ta`, `-man`,
+      // `-pi`, …) at a word boundary. Restricted to the Quechua suffix set — a
+      // generic isKeywordStart(AtBoundary) check also fires on the English
+      // canonical fallbacks (me, it, you, …) injected into every language's
+      // keyword table, splitting native words around them: `init` → `in` + `it`
+      // (which silently dropped the behavior `init` block — the parser saw `in`,
+      // not the `init` keyword), `ñit'iy` → `ñ` + `it` + `'iy`. Only real case
+      // markers legitimately agglutinate onto a stem; English fallbacks never do.
+      if (word.length > 0 && quechuaSuffixStartsAt(input, pos)) {
         break;
       }
       word += input[pos];
