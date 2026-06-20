@@ -6938,3 +6938,52 @@ describe('Verb-medial SOV command head in a conditional body (A2a init `set` dro
     expect(acc.has('toggle')).toBe(true);
   });
 });
+
+describe('Juxtaposed verb-medial SOV command in a body (parseClause gap recovery)', () => {
+  // A verb-medial SOV command (`triggerEl を 設定 私 に` = `set triggerEl to me`)
+  // doesn't match matchBest. When JUXTAPOSED before a matchable command (`set X to
+  // me` then `toggle .y`, no `then` between), the matchBest loop skipped the whole
+  // `set` and the all-or-nothing whole-clause fallback never fired (a later command
+  // matched), so `set` was dropped. parseClause now recovers verb-medial commands
+  // from each skipped run, in order. (This also clears the behavior-sortable
+  // SOV `trigger … on me` tail.) Strings below are post-transform.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const jux: Array<[string, string]> = [
+    ['ko', '클릭 할 때\n    triggerEl 를 설정 나 에\n    .x 를 토글\n끝'],
+    ['ja', 'クリック で\n    triggerEl を 設定 私 に\n    .x を 切り替え\n終わり'],
+    ['tr', 'tıklama de\n    triggerEl i ayarla ben e\n    .x i değiştir\nson'],
+  ];
+  for (const [lang, input] of jux) {
+    it(`[${lang}] keeps the juxtaposed verb-medial \`set\` before \`toggle\` (was dropped)`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('set')).toBe(true); // the verb-medial command, previously skipped
+      expect(a.has('toggle')).toBe(true); // the matchBest command still there
+    });
+  }
+
+  // Regression guard: a clause that is a SINGLE verb-final command (no matchBest
+  // hit) must still go through the whole-clause fallback, not the per-gap path —
+  // the per-gap recovery could fragment it. `call updateScrollPosition()` is the
+  // canonical case (the event-throttle body).
+  const verbFinal: Array<[string, string]> = [
+    ['ko', '스크롤 할 때\n    updateScrollPosition() 를 호출\n끝'],
+    ['tr', 'kaydır de\n    updateScrollPosition() i çağır\nson'],
+  ];
+  for (const [lang, input] of verbFinal) {
+    it(`[${lang}] a single verb-final \`call\` body still parses (whole-clause path)`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('call')).toBe(true);
+    });
+  }
+});
