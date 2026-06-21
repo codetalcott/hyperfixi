@@ -7082,3 +7082,42 @@ describe('exit/end keyword collision does not collapse the handler body (ja/de)'
     });
   }
 });
+
+describe('Arabic VSO from-first wait clause parses (behavior-sortable)', () => {
+  // VSO fronts a `wait for <events> from <source>` clause's source ahead of the
+  // events: `wait for pointermove or pointerup from document` → `انتظر من وثيقة
+  // pointermove أو pointerup` (`wait from document …`). Two breaks: (1) the ar
+  // tokenizer split وثيقة (document) into the proclitic و (`and`) + ثيقة, and the
+  // spurious `and` conjunction became a clause boundary that dropped the command;
+  // (2) the generated `wait {duration}` pattern can't anchor when the token after
+  // the verb is the source particle من. Fix: keep وثيقة whole (proclitic extractor
+  // NON_PROCLITIC_WORDS) + a hand-crafted `wait-ar-from-first` pattern.
+  function bodyActions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => bodyActions(x, acc));
+      else if (c && typeof c === 'object') bodyActions(c, acc);
+    }
+    return acc;
+  }
+
+  it('document (وثيقة) tokenizes as one identifier, not و + ثيقة', () => {
+    const r = getTokenizer('ar').tokenize('من وثيقة') as unknown;
+    const arr = Array.isArray(r) ? r : ((r as { tokens?: unknown[] }).tokens ?? []);
+    const values = (arr as Array<{ value: string }>).map(t => t.value);
+    expect(values).toEqual(['من', 'وثيقة']);
+  });
+
+  it('recovers the fronted-source wait inside a repeat-until-event loop', () => {
+    const input =
+      'من أنا عند pointerdown\n    كرر حتى حدث pointerup من وثيقة\n        انتظر من وثيقة pointermove(clientY) أو pointerup(clientY)\n        تشغيل move إلى أنا\n    النهاية\nالنهاية';
+    const a = bodyActions(parse(input, 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+    expect(a.has('trigger')).toBe(true);
+  });
+});
