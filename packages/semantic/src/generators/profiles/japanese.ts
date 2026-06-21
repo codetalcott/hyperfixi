@@ -137,7 +137,11 @@ export const japaneseProfile: LanguageProfile = {
     return: { primary: '戻る', alternatives: ['返す', 'リターン'], normalized: 'return' },
     then: { primary: 'それから', alternatives: ['次に', 'ならば', 'なら'], normalized: 'then' },
     and: { primary: 'また', alternatives: ['と', 'そして'], normalized: 'and' },
-    end: { primary: '終わり', alternatives: ['終了', 'おわり'], normalized: 'end' },
+    // 終了 removed: it is the i18n dict's `exit` emission (ja.ts), so listing it
+    // as an `end` alternative made an `exit` inside `if … exit … end` read as the
+    // block terminator and collapse the handler body (behavior-sortable). 終わり is
+    // the dict's `end` emission; おわり the kana variant.
+    end: { primary: '終わり', alternatives: ['おわり'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS実行', alternatives: ['js'], normalized: 'js' },
     async: { primary: '非同期', alternatives: ['アシンク'], normalized: 'async' },

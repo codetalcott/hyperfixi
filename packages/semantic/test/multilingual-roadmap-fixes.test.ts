@@ -7032,3 +7032,53 @@ describe('Quechua word reader does not split native words at English fallbacks (
     expect(acc.has('set')).toBe(true);
   });
 });
+
+describe('exit/end keyword collision does not collapse the handler body (ja/de)', () => {
+  // The i18n dict emits the `exit` command as a word that the semantic end-keyword
+  // set ALSO listed: ja `exit: 終了` (end set had 終了; real end is 終わり), de
+  // `exit: beenden` (hardcoded end set had beenden; real end is ende). Inside an
+  // `if … exit … end` block the `exit` token therefore decremented the body
+  // parser's block depth one too early, so the block's real `end` was seen at
+  // depth 0 and terminated the WHOLE handler body — dropping every command after a
+  // following nested block (behavior-sortable: ja degenerate, de lossy — the
+  // post-`repeat` `remove`/`trigger`). Fix: the exit emission is no longer read as
+  // an `end` keyword (semantic-parser.isEndKeyword + ja profile end alternatives).
+  function bodyActions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => bodyActions(x, acc));
+      else if (c && typeof c === 'object') bodyActions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped (behavior-sortable handler): `on pointerdown(clientY) from me /
+  // set item … / if item is null / exit / end / halt … / add … / repeat until … /
+  // … / end / remove … / trigger … end`. The post-`repeat` `remove`/`trigger`
+  // must survive — they were dropped while exit doubled as an end keyword.
+  const cases: Array<[string, string]> = [
+    [
+      'ja',
+      'pointerdown(clientY) で 私 から\n    item を 設定 the target.closest("li") に\n    もし item である null\n        終了\n    終わり\n    the イベント を 停止\n    .active を 追加 item に\n    まで イベント pointerup を 繰り返し ドキュメント から\n        move を 引き金 私 に\n    終わり\n    .active を 削除 item から\n    done を 引き金 私 に\n終わり',
+    ],
+    [
+      'de',
+      'bei pointerdown(clientY) von ich\n    festlegen item zu the target.closest("li")\n    falls item ist null\n        beenden\n    ende\n    anhalten the ereignis\n    hinzufügen .active zu item\n    wiederholen bis ereignis pointerup von dokument\n        auslösen move zu ich\n    ende\n    entfernen .active von item\n    auslösen done zu ich\nende',
+    ],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] keeps commands after the if/exit/end block + nested loop`, () => {
+      const a = bodyActions(parse(input, lang));
+      expect(a.has('on')).toBe(true);
+      // The post-`repeat` commands — the ones the collision dropped.
+      expect(a.has('remove')).toBe(true);
+      expect(a.has('trigger')).toBe(true);
+      // The pre-loop body also survives.
+      for (const action of ['halt', 'add', 'repeat']) expect(a.has(action)).toBe(true);
+    });
+  }
+});
