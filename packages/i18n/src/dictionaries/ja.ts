@@ -19,7 +19,7 @@ export const ja: Dictionary = {
     hide: '隠す',
     show: '表示',
     if: 'もし',
-    unless: 'でなければ',
+    unless: 'ない限り', // not でなければ — leading で particle shatters the marker
     repeat: '繰り返し',
     for: 'ために',
     while: 'の間',

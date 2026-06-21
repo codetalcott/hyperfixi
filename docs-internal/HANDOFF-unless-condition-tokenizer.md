@@ -30,16 +30,16 @@ when it can, the marker must first **tokenize** as a single `unless` token.
 Verified with a token probe (`tokenize(text, lang)`) over the DB translations. The
 `unless` action is lost for a **different reason in each language**:
 
-| Lang   | marker              | tokenizes as           | cause                                                                                                |
-| ------ | ------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| **tr** | `değilse`           | `unless` ✓             | clean single Latin word → **faithful (this PR)**                                                     |
-| **zh** | `除非`              | `unless` ✓             | clean token, **but still lossy** — pure **structural**: front marker, condition mid-`把 … 切换`      |
-| **ja** | `でなければ`        | `で` `で` `なければ` ✗ | the `で` particle (on/destination/style) **prefix-collides**, splitting the marker                   |
-| **ko** | `아니면`            | → `else` ✗             | marker **is** the `else` primary (`else: { primary: '아니면' }`) — collision                         |
-| **hi** | `जब_तक_नहीं`        | `जब`(when) + … ✗       | **keyword-prefix collision** (`जब`=when) + the `_` join splits                                       |
-| **vi** | (DB renders spaced) | `trừ` `khi`(on) ✗      | space split + `khi`→on (the underscore form `trừ_khi` is in the profile but the dict renders spaced) |
-| **bn** | (en `unless` leaks) | literal `unless`       | i18n dict has no `unless` entry                                                                      |
-| **he** | (en `unless` leaks) | body collapses         | **degenerate** — RTL + **untranslated English condition** `I match .disabled`; not the marker        |
+| Lang   | marker                        | tokenizes as      | cause                                                                                                |
+| ------ | ----------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| **tr** | `değilse`                     | `unless` ✓        | clean single Latin word → **faithful (this PR)**                                                     |
+| **zh** | `除非`                        | `unless` ✓        | clean token, **but still lossy** — pure **structural**: front marker, condition mid-`把 … 切换`      |
+| **ja** | ~~`でなければ`~~ → `ない限り` | `unless` ✓        | was split by leading `で` particle; **fixed** by moving to `ない限り` (`な`-initial) → **faithful**  |
+| **ko** | ~~`아니면`~~ → `아니라면`     | `unless` ✓        | was the `else` primary (collision); **fixed** via `아니라면` + trailing-guard → **faithful**         |
+| **hi** | `जब_तक_नहीं`                  | `जब`(when) + … ✗  | **keyword-prefix collision** (`जब`=when) + the `_` join splits                                       |
+| **vi** | (DB renders spaced)           | `trừ` `khi`(on) ✗ | space split + `khi`→on (the underscore form `trừ_khi` is in the profile but the dict renders spaced) |
+| **bn** | (en `unless` leaks)           | literal `unless`  | i18n dict has no `unless` entry                                                                      |
+| **he** | (en `unless` leaks)           | body collapses    | **degenerate** — RTL + **untranslated English condition** `I match .disabled`; not the marker        |
 
 Key proof the gap is **not** keyword/dict alignment: adding `unless: でなければ` to the
 ja profile left ja at **0.67** (marker still split by `で`); zh has the keyword in
@@ -57,7 +57,7 @@ passes — only tr (which already tokenized cleanly) went faithful.
 - Baseline: tr `unless-condition` moved out of `lossyPasses` (→ faithful 1.0). Gate
   clean, parse-rate steady 3695/3696.
 
-## Follow-up landed (2026-06-21) — ko + bn via a **structural** trailing-guard
+## Follow-up landed (2026-06-21) — ko + bn + ja via a **structural** trailing-guard
 
 > This overturns _this doc's own_ "Remaining work #3 (ko)" framing the same way the
 > doc overturned the priorities handoff: **the ko collision swap was necessary but
@@ -94,12 +94,21 @@ never hit it — their last token isn't the marker).
   (was the bogus `event`) — a small R1 gain.
 - **Bonus: bn** also moved faithful — its English-literal `unless` leaks at the tail,
   which the same trailing-guard catches (no bn dict change needed).
-- Guard: the "Trailing SOV unless guard recovery (unless-condition, ko/bn)" describe
-  in `multilingual-roadmap-fixes.test.ts` (red without the parser change — all 3
-  cases, incl. a Map-aware structural assertion). Pruned the now-stale
-  `ko:unless:아니면` entry from `lexicon-emit-mismatch.test.ts`.
-- Baseline: lossy band **52 → 50** (ko + bn out of `lossyPasses`). Gate clean, zero
-  regressions, parse-rate steady, degenerate unchanged (he remains).
+- **ja** (second commit) moved faithful the same way once its marker was taken off the
+  `で` particle: `でなければ` → **`ない限り`** (i18n dict + semantic profile). `で` is
+  peeled by the particle extractor and shatters `でなければ` into `で`+`なければ` —
+  registering it as a keyword does NOT beat the particle extractor (a prior attempt
+  confirmed this). `ない限り` starts with `な` (not a particle), so it tokenizes as a
+  single `unless` token (the same reason else `そうでなければ` tokenizes clean), and the
+  trailing-guard recovers it. ja parse is now the most-correct form too:
+  `unless(condition:"I match .disabled") + toggle(.selected)`.
+- Guard: the "Trailing SOV unless guard recovery (unless-condition, ko/bn/ja)" describe
+  in `multilingual-roadmap-fixes.test.ts` (each case red without its enabling change —
+  parser for ko/bn, profile marker for ja; incl. a Map-aware structural assertion).
+  Pruned the now-stale `ko:unless:아니면` and `ja:unless:でなければ` entries from
+  `lexicon-emit-mismatch.test.ts`.
+- Baseline: lossy band **52 → 49** (ko + bn + ja out of `lossyPasses`). Gate clean,
+  zero regressions, parse-rate steady, degenerate unchanged (he remains).
 
 ## Remaining `unless-condition` work — ranked by leverage
 
@@ -143,12 +152,13 @@ never hit it — their last token isn't the marker).
    if it renders clause-leading (vi is SVO), the schema-generated `unless {condition}`
    pattern handles it directly once tokenized (the guard is trailing-only).
 
-2. **ja `でなければ` particle collision.** Pick a ja `unless` marker that doesn't begin
-   with the `で` particle, or guard the `で`-extractor against a longer keyword match.
-   Verify the chosen marker tokenizes to a single `unless` token (token probe below).
-   **Once it does, the trailing-`unless` guard (2026-06-21) recovers the clause
-   automatically — ja is SOV/marker-final, so no further parser work is needed.** This
-   is now the highest-leverage remaining item (one clean tokenization away).
+2. **ja `でなければ` particle collision — ✅ DONE (2026-06-21).** Resolved by moving the
+   marker off the `で` particle: `でなければ` → `ない限り` (i18n dict + semantic profile).
+   `ない限り` starts with `な` (not a particle) so it tokenizes as a single `unless`
+   token, and the trailing-guard recovers the clause. ja `unless-condition` is faithful.
+   **The pattern for hi (and any SOV laggard): the only work left is finding a marker
+   that tokenizes as ONE clause-final `unless` token — avoid particle/keyword-prefix
+   collisions; the guard does the rest.**
 3. **ko `아니면` = else collision — ✅ DONE (2026-06-21).** Resolved via the dict/profile
    swap (`아니라면`, distinct from else `아니면`) **plus** the structural trailing-guard —
    see "Follow-up landed" above. ko `unless-condition` is faithful; bn came along free.

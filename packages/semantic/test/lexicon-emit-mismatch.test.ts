@@ -81,7 +81,6 @@ const KNOWN_MISMATCHES = new Set([
   'ja:pushUrl:URLプッシュ',
   'ja:replaceUrl:URL置換',
   'ja:select:選択',
-  'ja:unless:でなければ',
   'ko:catch:잡다',
   'ko:exit:종료',
   'ko:pushUrl:URL푸시',
