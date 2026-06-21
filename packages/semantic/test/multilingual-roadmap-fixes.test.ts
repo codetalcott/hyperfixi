@@ -7225,7 +7225,7 @@ describe('Turkish unless keyword alignment (değilse)', () => {
   });
 });
 
-describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn)', () => {
+describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn/ja)', () => {
   // tr (above) tokenizes its trailing `unless` marker cleanly but only RECALLED
   // the action via a structurally-wrong parse (toggle.patient = the condition's
   // .disabled, unless carrying a bogus event role). The deeper defect: the
@@ -7240,7 +7240,10 @@ describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn)', () =>
   // head — en-parity `[unless(cond), toggle]`, with the toggle patient kept correct
   // (a *structural* fix, not a bare action-name recovery). ko additionally needed
   // its profile + i18n dict `unless` keyword disambiguated from `else` (아니면 →
-  // 아니라면) so the marker tokenizes as `unless` rather than `else`.
+  // 아니라면) so the marker tokenizes as `unless` rather than `else`. ja needed its
+  // marker moved off the `で` particle (でなければ → ない限り): `で` is peeled by the
+  // particle extractor and shatters the marker, but `ない限り` starts with `な` (not a
+  // particle) so it tokenizes as a single `unless` token — then the guard recovers it.
   // See docs-internal/HANDOFF-unless-condition-tokenizer.md.
   const collectActions = (node: unknown, acc: string[] = []): string[] => {
     if (!node || typeof node !== 'object') return acc;
@@ -7259,6 +7262,7 @@ describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn)', () =>
   const cases: Array<[string, string]> = [
     ['ko', 'I match .disabled 토글 .selected 를 클릭 할 때 아니라면'],
     ['bn', 'I match .disabled টগল .selected কে ক্লিক এ unless'],
+    ['ja', 'I match .disabled 切り替え .selected を クリック で ない限り'],
   ];
 
   for (const [lang, input] of cases) {

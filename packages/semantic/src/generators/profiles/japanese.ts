@@ -127,6 +127,14 @@ export const japaneseProfile: LanguageProfile = {
     when: { primary: 'とき', alternatives: ['ときに'], normalized: 'when' },
     where: { primary: 'どこ', normalized: 'where' },
     else: { primary: 'そうでなければ', alternatives: ['それ以外'], normalized: 'else' },
+    // `ない限り` ("as long as not" = unless). Deliberately NOT `でなければ`: that
+    // begins with the `で` particle, which the tokenizer peels off the front
+    // (`で`+`なければ`), shattering the marker — registering it as a keyword does
+    // NOT win against the particle extractor. `ない限り` starts with `な` (not a
+    // particle), so it tokenizes as a single `unless` token (the same reason else
+    // `そうでなければ` tokenizes clean), and the trailing-`unless` guard recovers the
+    // clause. See docs-internal/HANDOFF-unless-condition-tokenizer.md.
+    unless: { primary: 'ない限り', normalized: 'unless' },
     repeat: { primary: '繰り返し', alternatives: ['繰り返す', 'リピート'], normalized: 'repeat' },
     for: { primary: 'ために', alternatives: ['各'], normalized: 'for' },
     while: { primary: 'の間', alternatives: ['間'], normalized: 'while' },
