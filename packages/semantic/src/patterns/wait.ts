@@ -73,12 +73,53 @@ function getWaitPatternsHe(): LanguagePattern[] {
   ];
 }
 
+/**
+ * Arabic (VSO) wait patterns.
+ *
+ * The grammar transformer fronts a `wait for <events> from <source>` clause's
+ * source ahead of the events for ar — `wait for pointermove or pointerup from
+ * document` → `انتظر من وثيقة pointermove أو pointerup` (`wait from document
+ * pointermove or pointerup`). The auto-generated `<verb> {duration}` pattern then
+ * can't anchor: the token right after the verb is the source particle `من`, not a
+ * duration/event. So the trailing `wait` was dropped (behavior-sortable's loop
+ * body, ar lossy). This recovers it by matching the fronted `from <source>` and
+ * capturing the first following event as the duration; the remaining `or <event>`
+ * tail is harmless trailing tokens (no command anchors on it). The natural
+ * source-last order (`انتظر … من وثيقة`) is already covered by the generated
+ * pattern, so this only adds the fronted form.
+ */
+function getWaitPatternsAr(): LanguagePattern[] {
+  return [
+    {
+      id: 'wait-ar-from-first',
+      language: 'ar',
+      command: 'wait',
+      priority: 105,
+      template: {
+        format: 'انتظر من {source} {duration}',
+        tokens: [
+          { type: 'literal', value: 'انتظر', alternatives: ['انتظري'] },
+          { type: 'literal', value: 'من' },
+          { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
+          { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        ],
+      },
+      extraction: {
+        source: { position: 2 },
+        duration: { position: 3 },
+      },
+    },
+  ];
+}
+
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'zh':
       return getWaitPatternsZh();
     case 'he':
       return getWaitPatternsHe();
+    case 'ar':
+      return getWaitPatternsAr();
     default:
       return [];
   }

@@ -54,6 +54,21 @@ const PROCLITICS = new Map<string, ProcliticMetadata>([
 ]);
 
 /**
+ * Whole words that BEGIN with a proclitic letter (و/ف/ب/ل/ك) but are NOT a
+ * proclitic + stem — splitting them destroys a real word. `isKeyword(fullWord)`
+ * already protects command keywords (بدل, etc.); this covers content words the
+ * i18n dict emits that aren't hyperscript keywords. `وثيقة` (document, `from
+ * document`) is the motivating case: split into و (`and`) + ثيقة, the spurious
+ * `and` conjunction became a clause boundary that dropped the surrounding command
+ * (ar behavior-sortable's `wait … from document` clause parsed as null). Returning
+ * null here routes the word to the identifier extractor — kept as a single
+ * `identifier` token (so a role can capture it), matching how en lexes `document`.
+ */
+const NON_PROCLITIC_WORDS = new Set<string>([
+  'وثيقة', // document
+]);
+
+/**
  * ArabicProcliticExtractor - Extracts Arabic proclitics with role metadata.
  *
  * Prevents splitting keywords by checking full word against keyword map first.
@@ -91,6 +106,11 @@ export class ArabicProcliticExtractor implements ContextAwareExtractor {
     // Check if full word is a keyword (with or without diacritics)
     if (this.context.isKeyword(fullWord)) {
       return null; // Let keyword extractor handle it
+    }
+
+    // Known content word that merely begins with a proclitic letter — keep whole.
+    if (NON_PROCLITIC_WORDS.has(fullWord)) {
+      return null; // Let the identifier extractor handle it
     }
 
     // Try multi-character proclitics first (longest match)
