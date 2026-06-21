@@ -7330,3 +7330,54 @@ describe('Bare-event mis-anchor guard (hi unless-condition — SOV event-anchor 
     expect(actions.has('unless')).toBe(true); // was dropped (lossy) before the guard
   });
 });
+
+describe('Verb-split reserves the fronted condition (trailing-unless body patient — SOV #5)', () => {
+  // With a trailing-`unless` guard the body command's verb is verb-medial
+  // (`… टॉगल .selected को`). A patient-BEFORE-verb pattern (hi `toggle-hi-simple`)
+  // would grab the fronted condition's trailing `.disabled` as the toggle patient,
+  // stranding the real को-marked `.selected`. The verb-split reserves everything
+  // before the first command-verb keyword as the condition, so the body binds the
+  // real `.selected`. This is a *value* correctness fix the valueType-based R1 metric
+  // undercounts — yet it's a real execution bug: tr previously toggled `.disabled`
+  // (the wrong class), now `.selected`; hi's patient went expression→selector. The
+  // unless condition also captures the full `I match .disabled`, not a truncated `I`.
+  const findRole = (node: unknown, action: string, role: string): unknown => {
+    let found: unknown;
+    const walk = (n: unknown) => {
+      if (found !== undefined || !n || typeof n !== 'object') return;
+      const rec = n as Record<string, unknown>;
+      if (rec.action === action) {
+        const roles = rec.roles instanceof Map ? rec.roles : new Map(Object.entries(rec.roles ?? {}));
+        if (roles.has(role)) {
+          found = roles.get(role);
+          return;
+        }
+      }
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+        const c = rec[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return found;
+  };
+
+  // Corpus-shaped transformer output (`on click unless I match .disabled toggle .selected`).
+  const cases: Array<[string, string]> = [
+    ['hi', 'I match .disabled टॉगल .selected को क्लिक पर जब तक नहीं'],
+    ['ko', 'I match .disabled 토글 .selected 를 클릭 할 때 아니라면'],
+    ['tr', 'I match .disabled değiştir .selected i tıklama de değilse'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] toggle binds the marked .selected, not the condition's .disabled`, () => {
+      const node = parse(input, lang);
+      const patient = findRole(node, 'toggle', 'patient') as { value?: string } | undefined;
+      expect(patient?.value).toBe('.selected');
+      // The fronted condition is reserved on the unless, not consumed by the body.
+      const cond = findRole(node, 'unless', 'condition') as { raw?: string } | undefined;
+      expect(cond?.raw).toContain('.disabled');
+    });
+  }
+});

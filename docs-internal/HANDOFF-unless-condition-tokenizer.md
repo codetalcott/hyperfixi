@@ -143,11 +143,22 @@ low blast radius (`event-hi-bare` is the only bare-event pattern → effectively
 - Guard: "Bare-event mis-anchor guard (hi unless-condition — SOV event-anchor #5)" in
   `multilingual-roadmap-fixes.test.ts` (red without the parser guard). Pruned the
   now-stale `hi:unless:जब_तक_नहीं` lexicon entry.
-- **Residual (next #5 increment):** hi's `toggle.patient` is still mis-captured as the
-  fronted `match .disabled` (an unmarked expression) instead of the `को`-marked
-  `.selected` — `matchBest` prefers the unmarked patient-before-verb over the marked one.
-  R0 is faithful and R1 improved, but a marked-patient preference would close the
-  remaining hi role gap.
+- **Residual — ✅ FIXED (2026-06-21, verb-split).** hi's `toggle.patient` was
+  mis-captured as the fronted `match .disabled` (an unmarked expression) instead of the
+  `को`-marked `.selected` — a patient-before-verb pattern (`toggle-hi-simple` =
+  `{patient} टॉगल`) grabbing the condition's trailing selector. Fix: in the
+  trailing-`unless` guard, **reserve everything before the first command-verb keyword as
+  the condition and parse only from the verb** (`parseClause`, gated to a real command
+  verb — not an operator like `matches` — that is verb-medial). The body then sees
+  `टॉगल .selected को` and binds the real patient. Generalized across the cluster: all
+  five verb-medial langs now produce the **fully correct** parse
+  `unless(condition:"I match .disabled") + toggle(.selected)` — **tr included**, which
+  was faithful-by-luck and previously toggled the WRONG class (`.disabled`, an execution
+  bug). hi `toggle.patient` moved expression→selector (avgRoleFidelity 0.745→0.747); the
+  remaining value-level gains (tr `.disabled`→`.selected`, full conditions) are real
+  correctness the valueType-based R1 metric undercounts. Guard: "Verb-split reserves the
+  fronted condition" in `multilingual-roadmap-fixes.test.ts` (hi/tr red without it; ko a
+  regression guard). Gate clean, band steady (48), zero regressions.
 
 ## Remaining `unless-condition` work — ranked by leverage
 

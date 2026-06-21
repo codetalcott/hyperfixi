@@ -1066,6 +1066,38 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // Verb-split for the trailing-`unless` guard. The fronted condition (`I match
+    // .disabled`) precedes the body command's verb (ko `… 토글 .selected 를`, hi `…
+    // टॉगल .selected को`). A patient-BEFORE-verb pattern (hi `toggle-hi-simple` =
+    // `{patient} टॉगल`) otherwise grabs the condition's trailing selector
+    // (`match .disabled`) as the body patient and strands the real marked `.selected`
+    // — leaving the body faithful-by-recall but role-wrong (the hi residual). Reserve
+    // everything before the first command-verb KEYWORD as the condition and parse
+    // only from the verb, so the body command sees `टॉगल .selected को` and binds the
+    // real patient. Gated to a real command verb (not an operator like `matches`)
+    // that is verb-MEDIAL (a fronted condition before it AND tokens after it); a
+    // non-medial / verb-first body finds no split and the skip-based capture below
+    // stands (byte-identical). Already-correct verb-medial langs (ko/ja/bn) resolve
+    // to the same `[condition][verb …]` split they reached via skip-capture.
+    let presetCondition: LanguageToken[] | null = null;
+    if (trailingGuard && bodyTokens.length >= 3) {
+      const profile = tryGetProfile(language);
+      const verbLookup = profile ? SemanticParserImpl.buildVerbLookup(profile) : null;
+      if (verbLookup) {
+        for (let i = 1; i < bodyTokens.length - 1; i++) {
+          const t = bodyTokens[i];
+          const action =
+            verbLookup.get(t.value.toLowerCase()) ??
+            (t.normalized ? verbLookup.get(t.normalized.toLowerCase()) : undefined);
+          if (action && !SemanticParserImpl.CONDITION_OPERATORS.has(action)) {
+            presetCondition = bodyTokens.slice(0, i);
+            bodyTokens = bodyTokens.slice(i);
+            break;
+          }
+        }
+      }
+    }
+
     // Create a TokenStream from the (guard-stripped) clause tokens
     const clauseStream = new TokenStreamImpl(bodyTokens, language);
     const commands: SemanticNode[] = [];
@@ -1084,10 +1116,10 @@ export class SemanticParserImpl implements ISemanticParser {
     // fired because a later command DID match. Collect each skipped run and recover
     // verb-medial commands from it (in order, so execution semantics are kept).
     const skipped: LanguageToken[] = [];
-    // For a trailing-`unless` guard clause, the fronted condition surfaces as the
-    // first unmatched run before any body command — claim it as the condition
-    // (rather than trying to recover a command from it).
-    let leadingCondition: LanguageToken[] | null = null;
+    // For a trailing-`unless` guard clause, the fronted condition is either the
+    // reserved verb-split prefix (above) or — when no clean verb-medial split
+    // exists — the first unmatched run before any body command (claimed below).
+    let leadingCondition: LanguageToken[] | null = presetCondition;
     const flushSkipped = () => {
       if (skipped.length === 0) return;
       const run = skipped.slice();
