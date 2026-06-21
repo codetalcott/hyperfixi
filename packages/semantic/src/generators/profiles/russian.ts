@@ -282,7 +282,12 @@ export const russianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     behavior: { primary: 'поведение', normalized: 'behavior' },
-    install: { primary: 'установить_пакет', normalized: 'install', form: 'infinitive' },
+    // `install` is the loanword `инсталлировать` — NOT `установить`, which is the
+    // `set` primary (ru "install" and "set" are homonyms). The previous
+    // disambiguator `установить_пакет` was inert: the ru tokenizer splits on `_`,
+    // so it tokenized back to `установить` → `set`, dropping the install action
+    // (install-behavior degenerate). The loanword is a single Cyrillic token.
+    install: { primary: 'инсталлировать', normalized: 'install', form: 'infinitive' },
     measure: {
       primary: 'измерить',
       alternatives: ['измерь'],

@@ -59,7 +59,7 @@ export const ukrainianDictionary: Dictionary = {
     append: 'дописати', // profile alternative; the compound splits and додати parses as add
     exit: 'вийти',
     else: 'інакше',
-    install: 'встановити',
+    install: 'інсталювати', // loanword — `встановити` is `set` (homonym); see ukrainian profile
     init: 'ініціалізувати',
     behavior: 'поведінка',
     focus: 'сфокусувати',

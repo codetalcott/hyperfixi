@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-21T03:29:07.996Z",
-  "commit": "56de00fa",
+  "timestamp": "2026-06-21T04:02:23.359Z",
+  "commit": "935bd419",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -10132,13 +10132,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8121727478870315,
-      "avgFidelity": 0.9935064935064936,
-      "avgPrecision": 0.980871212121212,
-      "avgRoleFidelity": 0.8360403672903675,
+      "avgConfidence": 0.8142650999793837,
+      "avgFidelity": 1,
+      "avgPrecision": 0.9873647186147186,
+      "avgRoleFidelity": 0.8427971240471241,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
-      "degeneratePasses": ["install-behavior"],
+      "degeneratePasses": [],
       "lossyPasses": [],
       "bundleSize": 441987,
       "patterns": {
@@ -10355,6 +10355,10 @@
           "confidence": 0.8222222222222222
         },
         "default-value": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -10753,10 +10757,6 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5555555555555556
-        },
-        "install-behavior": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
@@ -13296,13 +13296,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8114306328592024,
-      "avgFidelity": 0.9935064935064936,
-      "avgPrecision": 0.980871212121212,
-      "avgRoleFidelity": 0.8248917186417187,
+      "avgConfidence": 0.8135229849515544,
+      "avgFidelity": 1,
+      "avgPrecision": 0.9873647186147185,
+      "avgRoleFidelity": 0.8316484753984756,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
-      "degeneratePasses": ["install-behavior"],
+      "degeneratePasses": [],
       "lossyPasses": [],
       "bundleSize": 441987,
       "patterns": {
@@ -13515,6 +13515,10 @@
           "confidence": 0.8222222222222222
         },
         "default-value": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13917,10 +13921,6 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5555555555555556
-        },
-        "install-behavior": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },

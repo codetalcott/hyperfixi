@@ -7153,3 +7153,34 @@ describe('bareKeyword block keyword is not mis-anchored as a bare event (hi live
     expect(node.kind).toBe('event-handler');
   });
 });
+
+describe('ru/uk install keyword is distinct from set (install-behavior)', () => {
+  // ru "install" and "set" are homonyms (установить). The profile tried to
+  // disambiguate install as `установить_пакет`, but the ru/uk tokenizer splits on
+  // `_`, so it tokenized back to `установить` → `set`, dropping the install action
+  // (install-behavior degenerate in ru/uk). Fix: install uses the single-token
+  // loanword `инсталлировать` (ru) / `інсталювати` (uk), distinct from set.
+  const installCases: Array<[string, string]> = [
+    ['ru', 'инсталлировать Draggable'],
+    ['uk', 'інсталювати Draggable'],
+  ];
+  for (const [lang, input] of installCases) {
+    it(`[${lang}] parses the install command (not set)`, () => {
+      const node = parse(input, lang) as { kind?: string; action?: string };
+      expect(node.kind).toBe('command');
+      expect(node.action).toBe('install');
+    });
+  }
+
+  // Un-regression: the set primary (установить/встановити) must still parse as set.
+  const setCases: Array<[string, string]> = [
+    ['ru', 'установить :x в 5'],
+    ['uk', 'встановити :x в 5'],
+  ];
+  for (const [lang, input] of setCases) {
+    it(`[${lang}] still parses set (install change did not shadow it)`, () => {
+      const node = parse(input, lang) as { action?: string };
+      expect(node.action).toBe('set');
+    });
+  }
+});
