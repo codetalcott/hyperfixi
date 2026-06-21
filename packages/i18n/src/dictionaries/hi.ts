@@ -19,7 +19,7 @@ export const hindiDictionary: Dictionary = {
     hide: 'छिपाएं',
     show: 'दिखाएं',
     if: 'अगर',
-    unless: 'जब_तक_नहीं',
+    unless: 'जब तक नहीं', // spaced (not जब_तक_नहीं) → one multi-word `unless` token
     repeat: 'दोहराएं',
     for: 'हेतु', // single token — के_लिए splits at _ in the hi extractor
     while: 'जब तक',

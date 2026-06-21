@@ -66,7 +66,6 @@ const KNOWN_MISMATCHES = new Set([
   'hi:pushUrl:url_जोड़ें',
   'hi:replaceUrl:url_बदलें',
   'hi:select:चुनें',
-  'hi:unless:जब_तक_नहीं',
   'id:break:hentikan',
   'id:catch:tangkap',
   'id:close:tutup',

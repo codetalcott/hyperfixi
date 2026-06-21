@@ -142,6 +142,12 @@ export const hindiProfile: LanguageProfile = {
     // SOV for-loop).
     for: { primary: 'के लिए', alternatives: ['हेतु'], normalized: 'for' },
     while: { primary: 'जब तक', alternatives: [], normalized: 'while' },
+    // `जब तक नहीं` ("as long as not" = unless), the SPACED form so it registers as
+    // a multi-word keyword. It is a strict superset of while `जब तक`, but
+    // multiWordKeywords are matched longest-first, so the full unless phrase wins
+    // over the while prefix; tryMultiWordKeyword emits it as a single `unless`
+    // token (the underscore form `जब_तक_नहीं` shattered: `जब`=when + `_` splits).
+    unless: { primary: 'जब तक नहीं', normalized: 'unless' },
     continue: { primary: 'जारी', alternatives: [], normalized: 'continue' },
     halt: { primary: 'रोकें', alternatives: ['रोक'], normalized: 'halt' },
     throw: { primary: 'फेंकें', alternatives: ['फेंक'], normalized: 'throw' },

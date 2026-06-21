@@ -275,6 +275,43 @@ export class SemanticParserImpl implements ISemanticParser {
           'pattern-match'
         )
       );
+
+      // Event-anchor guard. A bare-event pattern (`event-<lang>-bare`: a single
+      // `{event}` token at position 0) anchors on whatever leads the stream — so a
+      // SOV reorder that fronts an untranslated condition (`I match .disabled … क्लिक
+      // पर जब तक नहीं`, hi unless-condition) makes it grab `I` as the event, burying
+      // the real `<known-event> पर` trigger mid-body where it can't be recovered (the
+      // toggle then mis-anchors on the fronted condition). When the bare capture is
+      // NOT a known event AND SOV extraction can recover a real mid-stream event,
+      // prefer that — it strips the true `<event> पर` and re-parses the body (where the
+      // trailing-`unless` guard then fires). Additive: gated to a non-event bare
+      // capture and only taken when trySOVEventExtraction actually succeeds, so a
+      // genuine bare event (`क्लिक`) or a lang without SOV markers is byte-identical.
+      if (/^event-[a-z]+-bare$/.test(eventMatch.pattern.id)) {
+        const ev = eventMatch.captured.get('event') as { raw?: string; value?: string } | undefined;
+        const evVal = (ev?.raw ?? ev?.value ?? '').toString().toLowerCase();
+        const langEvents = eventNameTranslations[language];
+        const evIsKnownEvent =
+          SemanticParserImpl.KNOWN_EVENTS.has(evVal) ||
+          (!!langEvents && Object.keys(langEvents).some(n => n.toLowerCase() === evVal));
+        if (evVal && !evIsKnownEvent) {
+          const sov = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
+          if (sov) {
+            diagnostics.push(
+              parseDiagnostic(
+                `bare-event mis-anchor on "${evVal}" rejected; SOV extraction preferred`,
+                'info',
+                'stage-bare-event-guard'
+              )
+            );
+            const guarded = modifiers
+              ? this.applyModifiers(sov as EventHandlerSemanticNode, modifiers)
+              : sov;
+            return withDiagnostics(guarded, diagnostics);
+          }
+        }
+      }
+
       const handler = this.buildEventHandler(eventMatch, tokens, language);
       const result = modifiers ? this.applyModifiers(handler, modifiers) : handler;
       return withDiagnostics(result, diagnostics);

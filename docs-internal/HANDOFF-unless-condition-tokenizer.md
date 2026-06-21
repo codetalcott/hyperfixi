@@ -30,16 +30,16 @@ when it can, the marker must first **tokenize** as a single `unless` token.
 Verified with a token probe (`tokenize(text, lang)`) over the DB translations. The
 `unless` action is lost for a **different reason in each language**:
 
-| Lang   | marker                        | tokenizes as      | cause                                                                                                |
-| ------ | ----------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| **tr** | `değilse`                     | `unless` ✓        | clean single Latin word → **faithful (this PR)**                                                     |
-| **zh** | `除非`                        | `unless` ✓        | clean token, **but still lossy** — pure **structural**: front marker, condition mid-`把 … 切换`      |
-| **ja** | ~~`でなければ`~~ → `ない限り` | `unless` ✓        | was split by leading `で` particle; **fixed** by moving to `ない限り` (`な`-initial) → **faithful**  |
-| **ko** | ~~`아니면`~~ → `아니라면`     | `unless` ✓        | was the `else` primary (collision); **fixed** via `아니라면` + trailing-guard → **faithful**         |
-| **hi** | `जब_तक_नहीं`                  | `जब`(when) + … ✗  | **keyword-prefix collision** (`जब`=when) + the `_` join splits                                       |
-| **vi** | (DB renders spaced)           | `trừ` `khi`(on) ✗ | space split + `khi`→on (the underscore form `trừ_khi` is in the profile but the dict renders spaced) |
-| **bn** | (en `unless` leaks)           | literal `unless`  | i18n dict has no `unless` entry                                                                      |
-| **he** | (en `unless` leaks)           | body collapses    | **degenerate** — RTL + **untranslated English condition** `I match .disabled`; not the marker        |
+| Lang   | marker                          | tokenizes as      | cause                                                                                                                                |
+| ------ | ------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **tr** | `değilse`                       | `unless` ✓        | clean single Latin word → **faithful (this PR)**                                                                                     |
+| **zh** | `除非`                          | `unless` ✓        | clean token, **but still lossy** — pure **structural**: front marker, condition mid-`把 … 切换`                                      |
+| **ja** | ~~`でなければ`~~ → `ない限り`   | `unless` ✓        | was split by leading `で` particle; **fixed** by moving to `ない限り` (`な`-initial) → **faithful**                                  |
+| **ko** | ~~`아니면`~~ → `아니라면`       | `unless` ✓        | was the `else` primary (collision); **fixed** via `아니라면` + trailing-guard → **faithful**                                         |
+| **hi** | ~~`जब_तक_नहीं`~~ → `जब तक नहीं` | `unless` ✓        | was `जब`=when prefix + `_` split AND a bare-event mis-anchor on `I`; **fixed** via spaced marker + event-anchor guard → **faithful** |
+| **vi** | (DB renders spaced)             | `trừ` `khi`(on) ✗ | space split + `khi`→on (the underscore form `trừ_khi` is in the profile but the dict renders spaced)                                 |
+| **bn** | (en `unless` leaks)             | literal `unless`  | i18n dict has no `unless` entry                                                                                                      |
+| **he** | (en `unless` leaks)             | body collapses    | **degenerate** — RTL + **untranslated English condition** `I match .disabled`; not the marker                                        |
 
 Key proof the gap is **not** keyword/dict alignment: adding `unless: でなければ` to the
 ja profile left ja at **0.67** (marker still split by `で`); zh has the keyword in
@@ -108,7 +108,46 @@ never hit it — their last token isn't the marker).
   Pruned the now-stale `ko:unless:아니면` and `ja:unless:でなければ` entries from
   `lexicon-emit-mismatch.test.ts`.
 - Baseline: lossy band **52 → 49** (ko + bn + ja out of `lossyPasses`). Gate clean,
-  zero regressions, parse-rate steady, degenerate unchanged (he remains).
+  zero regressions, parse-rate steady, degenerate unchanged (he remains). Landed as
+  PRs **#476** (ko/bn) and **#477** (ja).
+
+## #5 event-anchor guard landed (2026-06-21) — hi via the SOV event-anchor arc
+
+> This **corrects** item #1 below, which claimed "tokenization is the ONLY remaining hi
+> work." It wasn't — hi needed the tokenization fix **plus** a structural event-anchor
+> fix. Confirmed empirically (`parseWithConfidence` diagnostics + parse-tree dumps).
+
+hi's spaced `जब तक नहीं` (item #1) tokenizes cleanly (longest-first multi-word match
+beats the `जब तक`=while prefix — the hypothesis held), **but hi still dropped `unless`.**
+Root cause is **not** tokenization: hi's SOV reorder fronts the untranslated condition
+`I match .disabled` ahead of the real `<event> पर` trigger, and the bare-event pattern
+**`event-hi-bare`** (`{event}` at position 0, the only `event-<lang>-bare` pattern)
+anchored on `I` as the event (diagnostic: `event pattern matched: event-hi-bare`),
+burying the real `क्लिक पर` (on click) mid-body. The toggle then mis-anchored on the
+fronted condition and the marker was unreachable — the priorities-handoff **#5** "fronted
+literal mistaken for the event" signature.
+
+**The fix (event-anchor guard).** In Stage 1, after a bare-event pattern matches, if the
+captured event is **not a known event** AND `trySOVEventExtraction` can recover a real
+mid-stream `<event> पर`, prefer that — it strips the true event and re-parses the body,
+where the trailing-`unless` guard fires. Additive (gated to a non-event bare capture +
+a successful SOV recovery; a genuine bare event like `क्लिक` is byte-identical), and
+low blast radius (`event-hi-bare` is the only bare-event pattern → effectively hi-only).
+
+- hi `unless-condition` → **faithful** (lossy band **49 → 48**; only hi moved, no
+  collateral).
+- **hi avgRoleFidelity 0.717 → 0.745** — the guard corrected the event role across
+  several hi patterns, not just unless-condition. hi was the **worst** R1 language; this
+  is the convergent SOV event-anchor R1 burn-down the priorities handoff (#5) predicted.
+  avgFidelity 0.993→0.995, avgPrecision 0.850→0.854; zero regressions.
+- Guard: "Bare-event mis-anchor guard (hi unless-condition — SOV event-anchor #5)" in
+  `multilingual-roadmap-fixes.test.ts` (red without the parser guard). Pruned the
+  now-stale `hi:unless:जब_तक_नहीं` lexicon entry.
+- **Residual (next #5 increment):** hi's `toggle.patient` is still mis-captured as the
+  fronted `match .disabled` (an unmarked expression) instead of the `को`-marked
+  `.selected` — `matchBest` prefers the unmarked patient-before-verb over the marked one.
+  R0 is faithful and R1 improved, but a marked-patient preference would close the
+  remaining hi role gap.
 
 ## Remaining `unless-condition` work — ranked by leverage
 
@@ -146,11 +185,13 @@ never hit it — their last token isn't the marker).
    `जब तक नहीं`) and lean on `tryMultiWordKeyword` + longest-match (longest-match also
    beats the `जब` prefix collision) — **not** to touch underscore handling. Verify with
    a token probe that the spaced marker emits one `unless` token; that is the real next
-   experiment for hi/vi. **For hi (SOV/marker-final), once `जब तक नहीं` emits a single
-   trailing `unless` token, the trailing-guard (landed 2026-06-21) recovers the clause —
-   tokenization is the ONLY remaining hi work.** For vi, first confirm marker position:
-   if it renders clause-leading (vi is SVO), the schema-generated `unless {condition}`
-   pattern handles it directly once tokenized (the guard is trailing-only).
+   experiment for hi/vi. **hi — ✅ DONE (2026-06-21):** the spaced `जब तक नहीं` tokenizes
+   cleanly, but tokenization was NOT the only remaining hi work (this line's original
+   claim was wrong) — hi also needed the event-anchor guard; see the "#5 event-anchor
+   guard landed" section above. **vi remains:** first confirm marker position — if it
+   renders clause-leading (vi is SVO), the schema-generated `unless {condition}` pattern
+   handles it directly once tokenized (the guard is trailing-only); if it renders
+   clause-final, register the spaced `trừ khi` and lean on the trailing-guard.
 
 2. **ja `でなければ` particle collision — ✅ DONE (2026-06-21).** Resolved by moving the
    marker off the `で` particle: `でなければ` → `ない限り` (i18n dict + semantic profile).
