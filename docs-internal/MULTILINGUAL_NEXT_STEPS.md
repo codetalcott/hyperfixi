@@ -425,6 +425,40 @@ at 200ms` event modifier is left untranslated and fronted by the SOV reorder. Bo
 xlate) · (3) semantic block-parser (bareKeyword blocks). Start with (1) — most leverage, cleanest
 scope.
 
+> **Increment DONE (2026-06-21 — reactivity degenerate cluster, hi live + ms socket).**
+> The "teach `block-parser.ts` the bareKeyword block shape" diagnosis above was
+> **wrong** (methodology lesson #2 — verify the layer empirically). es/ja/zh already
+> parse `live … end` / `socket … end` as a single `command` (the bareKeyword pattern
+> matches at the command stage; `collectActions` doesn't descend into the body, so the
+> dropped body costs no fidelity). The two degenerate causes were per-language and in
+> two **different** layers:
+>
+> - **hi `live-derived-value` + `live-multiple-deps` (semantic parser).** The hi
+>   bare-event pattern `event-hi-bare` (`{event}`, priority 80) runs at Stage 1 —
+>   before the command stage — and its single event role anchored the fronted `लाइव`
+>   (live) keyword, so the block parsed as a bare `on` + `put`, dropping `live`. Fix:
+>   the event-anchor guard (`pattern-matcher.tokenLooksLikeEvent`) now rejects a token
+>   whose normalized form is a bareKeyword block action (`live`/`socket`/`eventsource`/
+>   `worker`/`intercept`, derived from the schemas), so it falls through to the command
+>   stage where the `live` pattern wins. Same guard family as the existing selector/URL
+>   rejection.
+> - **ms `socket-basic` (i18n dict).** The ms dictionary was missing the `socket`
+>   command entry, so the transformer emitted English `socket`; the semantic ms profile
+>   expects native `soket`, so the token tokenized as a bare identifier and `put`
+>   (`letak`) won as the head. Fix: add `socket: 'soket'` to the ms dictionary (mirrors
+>   ja `socket: ソケット`). (The full `generate-i18n-dictionaries` regen would also pull
+>   in 7 unrelated stale ms derived entries incl. a `replace`/`replaceUrl` collision —
+>   deferred as a separate ms-dict resync.)
+>
+> Net (priority gate): degenerate **9 → 6**, hi avgFidelity 0.980 → 0.993 + avgPrecision
+> 0.837 → 0.850, ms avgFidelity/avgPrecision +0.007, zero regressions; 6134 semantic +
+> 855 i18n tests pass. Guards: `multilingual-roadmap-fixes.test.ts` "bareKeyword block
+> keyword is not mis-anchored as a bare event (hi live)" + `grammar.test.ts` "Malay
+> socket command translates to native soket" (both verified failing without the fix).
+> The remaining reactivity item is `intercept`/`eventsource`/`worker` block coverage if a
+> future corpus exercises them in a SOV/bare-event language — the same guard now protects
+> them, but they're untested in the priority corpus.
+
 ### Track 3 — R1 role-fidelity burn-down (the untouched dimension)
 
 **Why:** avgRoleFidelity **0.833** is the laggard, and it has _never had a dedicated

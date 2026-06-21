@@ -1406,6 +1406,25 @@ describe('Possessive Dot Notation Translation', () => {
     });
   });
 
+  // ──── Malay `socket` keyword is translated to native `soket` ────
+  // The ms dictionary was missing the `socket` command entry, so the
+  // transformer emitted the English literal `socket`. The semantic ms
+  // profile maps `socket` to its native primary `soket` (not the English
+  // form), so the untranslated `socket` token tokenized as a bare
+  // identifier and the `socket` block command was dropped — `socket-basic`
+  // parsed as a degenerate `put`. (es only worked by coincidence: its
+  // profile's socket.primary IS the English literal.) Fix: add
+  // `socket: 'soket'` to the ms dictionary, mirroring ja `socket: ソケット`.
+  describe('Malay socket command translates to native soket', () => {
+    it('(ms) emits soket, not the English literal socket', () => {
+      const result = new GrammarTransformer('en', 'ms').transform(
+        'socket ChatSocket ws://localhost:8080 on message put it into #chat end'
+      );
+      expect(result, `expected native soket in: ${result}`).toMatch(/\bsoket\b/);
+      expect(result, `English socket leaked in: ${result}`).not.toMatch(/\bsocket\b/);
+    });
+  });
+
   // ──── Block extraction for `when`, `unless`, and SOV `live` ────
   // Block-syntactic tokens are pulled out before parseStatement so
   // they don't end up as command verbs (`live` → action role) or get

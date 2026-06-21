@@ -67,6 +67,7 @@ export const malayDictionary: Dictionary = {
     close: 'tutup',
     open: 'buka',
     select: 'pilih',
+    socket: 'soket', // derived from the ms profile (socket.primary); see generate-i18n-dictionaries
   },
 
   modifiers: {

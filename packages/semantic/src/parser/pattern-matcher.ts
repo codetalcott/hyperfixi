@@ -31,6 +31,20 @@ import { isAtEndConnective } from '../patterns/put';
 import type { ConfidenceModel } from './confidence-model';
 import { defaultConfidenceModel } from './confidence-model';
 
+/**
+ * Body-bearing command keywords that front their own block (`bareKeyword` schemas:
+ * `live`/`eventsource`/`socket`/`worker`/`intercept`). The keyword leads the
+ * construct (`live put … end`, `socket Name url on message … end`) and is NEVER an
+ * event name, so it must not anchor a bare-event pattern at Stage 1 — see
+ * tokenLooksLikeEvent. Derived from the schemas so a new bareKeyword block is
+ * covered automatically.
+ */
+const BAREKEYWORD_BLOCK_ACTIONS: ReadonlySet<string> = new Set(
+  Object.values(commandSchemas)
+    .filter(s => s.bareKeyword === true)
+    .map(s => s.action)
+);
+
 // =============================================================================
 // Pattern Matcher
 // =============================================================================
@@ -1220,6 +1234,14 @@ export class PatternMatcher {
     // outranked by the per-command patient-first pattern (priority 145 > 80).
     if (/[/#@*]/.test(v)) return false;
     if (v.startsWith('"') || v.startsWith("'") || v.startsWith('`')) return false;
+    // A body-bearing block keyword fronting the input (`live`/`socket`/… → SOV
+    // `लाइव …`) is a command, not an event: the bare-event pattern (priority 80,
+    // Stage 1) would otherwise anchor it as the handler event before the command
+    // stage's bareKeyword pattern (Stage 2) runs, dropping the block action (hi
+    // live-derived-value/live-multiple-deps parsed as a bare `on` + `put`).
+    // Rejecting it lets the `live`/`socket` command pattern win at Stage 2.
+    const norm = token.normalized?.toLowerCase();
+    if (norm && BAREKEYWORD_BLOCK_ACTIONS.has(norm)) return false;
     return true;
   }
 
