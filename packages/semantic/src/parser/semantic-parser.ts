@@ -1006,8 +1006,31 @@ export class SemanticParserImpl implements ISemanticParser {
       return [];
     }
 
-    // Create a TokenStream from the clause tokens
-    const clauseStream = new TokenStreamImpl(clauseTokens, language);
+    // SOV/postpositional trailing `unless` guard. The leading-fold path
+    // (tryParseConditionalBlock) only fires when the block marker is the clause
+    // HEAD, but a verb-final reorder renders the negated-conditional marker
+    // clause-FINAL (ko `… 토글 .selected 를 아니라면`, tr `… değiştir .selected i
+    // değilse`) with its condition fronted ahead of the guarded command. That
+    // leaves the `unless` action unparsed and the fronted condition orphaned — the
+    // dominant `unless-condition` lossy cluster. Detect the trailing marker, parse
+    // the body without it, then re-emit `unless` carrying the recovered fronted
+    // condition, mirroring en's flat `[unless(cond), toggle]` compound. Only
+    // `unless` is handled here: `if` keeps its existing leading-fold semantics, and
+    // a conditional node would relabel the action `unless`→`if` (see
+    // tryParseConditionalBlock), desyncing the cross-language action set.
+    let trailingGuard: ActionType | null = null;
+    let bodyTokens = clauseTokens;
+    const lastTok = clauseTokens[clauseTokens.length - 1];
+    if (lastTok && clauseTokens.length >= 2) {
+      const lv = (lastTok.normalized ?? lastTok.value).toLowerCase();
+      if (this.isUnlessKeyword(lv, language)) {
+        trailingGuard = 'unless' as ActionType;
+        bodyTokens = clauseTokens.slice(0, -1);
+      }
+    }
+
+    // Create a TokenStream from the (guard-stripped) clause tokens
+    const clauseStream = new TokenStreamImpl(bodyTokens, language);
     const commands: SemanticNode[] = [];
 
     // Count of commands produced by the existing paths (matchBest + the `repeat`
@@ -1024,10 +1047,18 @@ export class SemanticParserImpl implements ISemanticParser {
     // fired because a later command DID match. Collect each skipped run and recover
     // verb-medial commands from it (in order, so execution semantics are kept).
     const skipped: LanguageToken[] = [];
+    // For a trailing-`unless` guard clause, the fronted condition surfaces as the
+    // first unmatched run before any body command — claim it as the condition
+    // (rather than trying to recover a command from it).
+    let leadingCondition: LanguageToken[] | null = null;
     const flushSkipped = () => {
       if (skipped.length === 0) return;
       const run = skipped.slice();
       skipped.length = 0;
+      if (trailingGuard && commands.length === 0 && leadingCondition === null) {
+        leadingCondition = run;
+        return;
+      }
       // Recover only a *value-led* run (a verb-medial command always opens with
       // its first role value — identifier/selector/literal). A keyword-led run is
       // an event-clause leak (`스크롤 …` / `scroll …`, where the event word is also
@@ -1090,19 +1121,43 @@ export class SemanticParserImpl implements ISemanticParser {
     }
     flushSkipped();
 
+    let bodyCommands = commands;
     // No command matched via matchBest or the `repeat` special-case: prefer the
     // legacy whole-clause verb-anchoring (byte-identical to the prior behavior).
     // It handles a single verb-FINAL command (`call updateScrollPosition()`) that
     // the per-gap recovery would mis-split into fragments — so a clause that is one
     // such command is parsed correctly, and any per-gap noise is discarded.
     if (directHits === 0) {
-      const sovCommands = this.parseSOVClauseByVerbAnchoring(clauseTokens, language);
+      const sovCommands = this.parseSOVClauseByVerbAnchoring(bodyTokens, language);
       if (sovCommands.length > 0) {
-        return sovCommands;
+        bodyCommands = sovCommands;
       }
     }
 
-    return commands;
+    // Re-emit a stripped trailing `unless` guard ahead of its body, carrying the
+    // fronted condition recovered from the clause head. Conservative: fires only
+    // when a real body command parsed AND a fronted condition was captured — a bare
+    // trailing marker with no condition is left unparsed rather than fabricated, so
+    // this can't inject a phantom `unless` (precision-safe).
+    // `leadingCondition` is only assigned inside the `flushSkipped` closure, which
+    // TS's flow analysis can't see — the cast restores its declared union so the
+    // truthiness guard narrows correctly.
+    const cond = leadingCondition as LanguageToken[] | null;
+    if (trailingGuard && bodyCommands.length > 0 && cond && cond.length > 0) {
+      const guardNode = createCommandNode(
+        trailingGuard,
+        { condition: { type: 'expression', raw: this.joinTokenText(cond) } },
+        {
+          sourceLanguage: language,
+          patternId: `${trailingGuard}-${language}-trailing-guard`,
+          confidence: 0.85,
+        }
+      );
+      // Mirror en's flat `[unless(cond), toggle]` order: guard first, then body.
+      return [guardNode, ...bodyCommands];
+    }
+
+    return bodyCommands;
   }
 
   /**

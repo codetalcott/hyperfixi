@@ -19,7 +19,7 @@ export const ko: Dictionary = {
     hide: '숨기다',
     show: '보이다',
     if: '만약',
-    unless: '아니면',
+    unless: '아니라면', // distinct from else `아니면` (line ~131) — was a homonym
     repeat: '반복',
     for: '각각', // profile's for word — 동안 is while (collision)
     while: '동안',

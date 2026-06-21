@@ -57,7 +57,57 @@ passes — only tr (which already tokenized cleanly) went faithful.
 - Baseline: tr `unless-condition` moved out of `lossyPasses` (→ faithful 1.0). Gate
   clean, parse-rate steady 3695/3696.
 
+## Follow-up landed (2026-06-21) — ko + bn via a **structural** trailing-guard
+
+> This overturns _this doc's own_ "Remaining work #3 (ko)" framing the same way the
+> doc overturned the priorities handoff: **the ko collision swap was necessary but
+> NOT sufficient.** Verified empirically (raw parse-tree dumps through `ml.parse`).
+
+**What the ko swap alone did and didn't do.** Renaming ko `unless` `아니면`→`아니라면`
+(i18n dict + semantic profile, distinct from else `아니면`) made the marker tokenize
+cleanly as a single `unless` token (probe-confirmed) and fixed the toggle patient —
+**but ko still dropped the `unless` action.** Root cause is **not** the tokenizer:
+the `unless` schema's `condition` role is **required**, and under the verb-final
+reorder the marker renders **clause-FINAL** (`… 토글 .selected 를 아니라면`) with its
+condition **fronted** ahead of the guarded command. `tryParseConditionalBlock` only
+folds a **leading** marker, so the trailing marker never anchored and the fronted
+condition was orphaned.
+
+**tr was faithful-by-luck.** Its "faithful" parse was structurally wrong —
+`toggle.patient = .disabled` (the _condition's_ selector) and `unless` carrying a
+bogus `event:.selected` role — but it happened to emit the action _names_
+`{on,toggle,unless}`, so recall-fidelity read 1.0. (Reminder: parse-rate/recall ≠
+correctness.)
+
+**The fix (structural, general).** `parseClause`
+(`packages/semantic/src/parser/semantic-parser.ts`) now detects a **clause-final
+`unless` marker**, strips it, parses the body without it (ko's toggle stays correct),
+captures the **fronted condition** from the clause head, and re-emits
+`[unless(condition), …body]` — en-parity. `unless`-only (an `if` would relabel to a
+conditional node and desync the action set); fires only when a real body command
+parsed **and** a condition was captured (precision-safe — can't inject a phantom
+`unless`). Behavior is byte-identical when no trailing marker is present (SVO/en
+never hit it — their last token isn't the marker).
+
+- ko parse is now the **most correct of the three**: `unless(condition:"I match
+.disabled") + toggle(.selected)`. tr's `unless` also gained a real `condition` role
+  (was the bogus `event`) — a small R1 gain.
+- **Bonus: bn** also moved faithful — its English-literal `unless` leaks at the tail,
+  which the same trailing-guard catches (no bn dict change needed).
+- Guard: the "Trailing SOV unless guard recovery (unless-condition, ko/bn)" describe
+  in `multilingual-roadmap-fixes.test.ts` (red without the parser change — all 3
+  cases, incl. a Map-aware structural assertion). Pruned the now-stale
+  `ko:unless:아니면` entry from `lexicon-emit-mismatch.test.ts`.
+- Baseline: lossy band **52 → 50** (ko + bn out of `lossyPasses`). Gate clean, zero
+  regressions, parse-rate steady, degenerate unchanged (he remains).
+
 ## Remaining `unless-condition` work — ranked by leverage
+
+> **Updated 2026-06-21 (post ko/bn):** the **trailing-`unless` guard now exists** in
+> `parseClause`. So for any lang whose marker renders/tokenizes as a **single
+> clause-final `unless` token**, the guard recovers it automatically — these langs
+> now need **only** clean tokenization, not parser work. zh (front marker) and he
+> (degenerate) are unaffected by the guard (it handles **trailing** markers only).
 
 1. **Underscore-split tokenizer fix — MEASURED INERT, do NOT pursue as framed.** The
    original hypothesis was that the tokenizer emits underscore as its own token,
@@ -87,14 +137,21 @@ passes — only tr (which already tokenized cleanly) went faithful.
    `जब तक नहीं`) and lean on `tryMultiWordKeyword` + longest-match (longest-match also
    beats the `जब` prefix collision) — **not** to touch underscore handling. Verify with
    a token probe that the spaced marker emits one `unless` token; that is the real next
-   experiment for hi/vi.
+   experiment for hi/vi. **For hi (SOV/marker-final), once `जब तक नहीं` emits a single
+   trailing `unless` token, the trailing-guard (landed 2026-06-21) recovers the clause —
+   tokenization is the ONLY remaining hi work.** For vi, first confirm marker position:
+   if it renders clause-leading (vi is SVO), the schema-generated `unless {condition}`
+   pattern handles it directly once tokenized (the guard is trailing-only).
 
 2. **ja `でなければ` particle collision.** Pick a ja `unless` marker that doesn't begin
    with the `で` particle, or guard the `で`-extractor against a longer keyword match.
-   Verify the chosen marker tokenizes to a single `unless` (token probe below).
-3. **ko `아니면` = else collision.** `아니면` is the ko `else` primary. Choose a distinct
-   ko `unless` (e.g. `아니라면`) for both the i18n dict and the profile; confirm no new
-   else/unless ambiguity via the gate.
+   Verify the chosen marker tokenizes to a single `unless` token (token probe below).
+   **Once it does, the trailing-`unless` guard (2026-06-21) recovers the clause
+   automatically — ja is SOV/marker-final, so no further parser work is needed.** This
+   is now the highest-leverage remaining item (one clean tokenization away).
+3. **ko `아니면` = else collision — ✅ DONE (2026-06-21).** Resolved via the dict/profile
+   swap (`아니라면`, distinct from else `아니면`) **plus** the structural trailing-guard —
+   see "Follow-up landed" above. ko `unless-condition` is faithful; bn came along free.
 4. **zh structural (front marker + `把`).** zh tokenizes `除非` cleanly yet drops the
    clause — the fused event pattern captures `toggle` and the mid-stream `除非 把 …`
    condition is never reattached. This is the SVO analogue of the SOV event-anchor
