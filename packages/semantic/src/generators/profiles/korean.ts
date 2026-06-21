@@ -118,6 +118,11 @@ export const koreanProfile: LanguageProfile = {
     when: { primary: '때', normalized: 'when' },
     where: { primary: '어디', normalized: 'where' },
     else: { primary: '아니면', normalized: 'else' },
+    // `아니라면` ("if it isn't"), deliberately distinct from else `아니면`. The
+    // i18n dict previously rendered unless as `아니면` too, so the marker
+    // tokenized as `else` (homonym collision) and the `unless` action dropped.
+    // Longest-match beats the `아니` (not) prefix, so this tokenizes clean.
+    unless: { primary: '아니라면', normalized: 'unless' },
     repeat: { primary: '반복', normalized: 'repeat' },
     for: { primary: '각각', normalized: 'for' }, // "each" — avoids collision with while 동안
     while: { primary: '동안', normalized: 'while' },

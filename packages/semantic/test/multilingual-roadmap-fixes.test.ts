@@ -7224,3 +7224,61 @@ describe('Turkish unless keyword alignment (değilse)', () => {
     expect(actions.has('unless')).toBe(true);
   });
 });
+
+describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn)', () => {
+  // tr (above) tokenizes its trailing `unless` marker cleanly but only RECALLED
+  // the action via a structurally-wrong parse (toggle.patient = the condition's
+  // .disabled, unless carrying a bogus event role). The deeper defect: the
+  // negated-conditional marker renders CLAUSE-FINAL under the verb-final reorder
+  // (ko `… 토글 .selected 를 아니라면`) — or leaks the English literal at the tail
+  // (bn) — with its condition FRONTED ahead of the guarded command. The
+  // leading-fold path (tryParseConditionalBlock) only fires on a *leading* marker,
+  // so the trailing marker was dropped and its fronted condition orphaned:
+  // `unless-condition` was lossy (recall 0.67, a bare `toggle` under the event).
+  // parseClause now detects a trailing `unless` marker, parses the body without it,
+  // and re-emits `unless` carrying the fronted condition recovered from the clause
+  // head — en-parity `[unless(cond), toggle]`, with the toggle patient kept correct
+  // (a *structural* fix, not a bare action-name recovery). ko additionally needed
+  // its profile + i18n dict `unless` keyword disambiguated from `else` (아니면 →
+  // 아니라면) so the marker tokenizes as `unless` rather than `else`.
+  // See docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  // Corpus-shaped transformer output from the multilingual baseline for
+  // `on click unless I match .disabled toggle .selected`:
+  const cases: Array<[string, string]> = [
+    ['ko', 'I match .disabled 토글 .selected 를 클릭 할 때 아니라면'],
+    ['bn', 'I match .disabled টগল .selected কে ক্লিক এ unless'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers the trailing unless clause alongside the toggle body`, () => {
+      expect(canParse(input, lang)).toBe(true);
+      const actions = new Set(collectActions(parse(input, lang)));
+      // Without the trailing-guard recovery this set is {on, toggle} — guard red.
+      expect(actions.has('toggle')).toBe(true);
+      expect(actions.has('unless')).toBe(true);
+    });
+  }
+
+  it('[ko] is structural: the recovered unless keeps its fronted condition and the toggle its patient', () => {
+    // `roles` is a Map — a plain JSON.stringify would drop its contents, so use a
+    // Map-aware replacer to assert on the captured role values.
+    const ser = (o: unknown) =>
+      JSON.stringify(o, (_k, v) => (v instanceof Map ? Object.fromEntries(v) : v));
+    const json = ser(parse('I match .disabled 토글 .selected 를 클릭 할 때 아니라면', 'ko'));
+    expect(json).toContain('"action":"unless"');
+    expect(json).toContain('.disabled'); // fronted condition selector preserved
+    expect(json).toContain('.selected'); // toggle patient preserved (not the condition's)
+  });
+});
