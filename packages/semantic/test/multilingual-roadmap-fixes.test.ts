@@ -7286,3 +7286,47 @@ describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn/ja)', ()
     expect(json).toContain('.selected'); // toggle patient preserved (not the condition's)
   });
 });
+
+describe('Bare-event mis-anchor guard (hi unless-condition — SOV event-anchor #5)', () => {
+  // hi's SOV reorder fronts the (untranslated) condition `I match .disabled` ahead of
+  // the real `<event> पर` trigger. The bare-event pattern `event-hi-bare` ({event} at
+  // position 0) anchored on `I`, burying the real `क्लिक पर` (on click) mid-body where
+  // it couldn't be recovered — the `unless` action dropped and the body mis-anchored
+  // (`unless-condition` was lossy in hi, and hi's avgRoleFidelity was the worst at
+  // 0.717). The event-anchor guard now rejects a bare-event capture that ISN'T a known
+  // event when SOV extraction can recover a real mid-stream event, so `क्लिक` becomes
+  // the event and the trailing-`unless` guard recovers the clause. The hi `unless`
+  // marker also had to move from the shattering underscore form `जब_तक_नहीं` to the
+  // spaced `जब तक नहीं` so it tokenizes as a single `unless` token (longest-first
+  // multi-word match beats the `जब तक`=while prefix). See
+  // docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  const input = 'I match .disabled टॉगल .selected को क्लिक पर जब तक नहीं';
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  it('anchors on the real event (click), not the fronted condition (I)', () => {
+    const node = parse(input, 'hi') as Record<string, unknown>;
+    expect(node.action).toBe('on');
+    const ser = (o: unknown) =>
+      JSON.stringify(o, (_k, v) => (v instanceof Map ? Object.fromEntries(v) : v));
+    const evJson = ser(node.roles);
+    // Without the guard the event is the fronted `I`; with it, the real `click`.
+    expect(evJson).toContain('click');
+    expect(evJson).not.toContain('"I"');
+  });
+
+  it('recovers both toggle and unless once the event anchors correctly', () => {
+    const actions = new Set(collectActions(parse(input, 'hi')));
+    expect(actions.has('toggle')).toBe(true);
+    expect(actions.has('unless')).toBe(true); // was dropped (lossy) before the guard
+  });
+});
