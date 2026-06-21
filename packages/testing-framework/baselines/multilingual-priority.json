@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-21T03:18:56.534Z",
-  "commit": "3a2eafab",
+  "timestamp": "2026-06-21T03:29:07.996Z",
+  "commit": "56de00fa",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -7598,13 +7598,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8363327149041414,
-      "avgFidelity": 0.987012987012987,
-      "avgPrecision": 0.9717532467532468,
+      "avgConfidence": 0.8395794681508945,
+      "avgFidelity": 0.9935064935064936,
+      "avgPrecision": 0.9782467532467533,
       "avgRoleFidelity": 0.8692660380160381,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
-      "degeneratePasses": ["socket-basic"],
+      "degeneratePasses": [],
       "lossyPasses": ["last-in-collection", "set-color-variable"],
       "bundleSize": 441987,
       "patterns": {
@@ -7813,6 +7813,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -8219,10 +8223,6 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5555555555555556
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
