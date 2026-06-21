@@ -7184,3 +7184,43 @@ describe('ru/uk install keyword is distinct from set (install-behavior)', () => 
     });
   }
 });
+
+describe('Turkish unless keyword alignment (değilse)', () => {
+  // The i18n dict emits `unless` → değilse, but the tr semantic profile had no
+  // `unless` keyword, so the negated-conditional clause was silently dropped on
+  // parse-back: `unless-condition` was *lossy* in tr (the `unless` action
+  // vanished, leaving a bare `toggle` under the event — recall 0.67 vs the en
+  // reference's {on, toggle, unless}). Registering değilse=unless lets the
+  // trailing SOV marker tokenize as a single `unless` keyword and the clause is
+  // recovered (tr unless-condition → faithful 1.0).
+  //
+  // değilse tokenizes cleanly (one Latin word) — unlike the other lossy langs,
+  // whose markers shatter on the `_` join (hi جब_تک_नہیں, vi trừ_khi → khi=on),
+  // collide with a particle (ja でなければ split by the で marker) or with `else`
+  // (ko 아니면 = else), or fail structurally with a front marker (zh 除非 mid-`把`).
+  // Those remain lossy — see docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  //
+  // Corpus-shaped SOV transformer output from the multilingual baseline
+  // (`on click unless I match .disabled toggle .selected`):
+  const input = 'I match .disabled değiştir .selected i tıklama de değilse';
+
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  it('recovers the unless clause (değilse) alongside the toggle body', () => {
+    expect(canParse(input, 'tr')).toBe(true);
+    const actions = new Set(collectActions(parse(input, 'tr')));
+    // Without değilse=unless this set is {on, toggle} — the guard goes red.
+    expect(actions.has('toggle')).toBe(true);
+    expect(actions.has('unless')).toBe(true);
+  });
+});

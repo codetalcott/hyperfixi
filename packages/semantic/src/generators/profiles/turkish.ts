@@ -154,6 +154,7 @@ export const turkishProfile: LanguageProfile = {
     settle: { primary: 'sabitlen', normalized: 'settle' },
     // Control flow
     if: { primary: 'eğer', normalized: 'if' },
+    unless: { primary: 'değilse', normalized: 'unless' },
     when: { primary: 'iken', alternatives: ['durumunda', 'olduğunda'], normalized: 'when' },
     where: { primary: 'nerede', normalized: 'where' },
     else: { primary: 'yoksa', normalized: 'else' },

@@ -142,7 +142,6 @@ const KNOWN_MISMATCHES = new Set([
   'tr:pushUrl:urlEkle',
   'tr:replaceUrl:urlDeğiştir',
   'tr:select:seç',
-  'tr:unless:değilse',
   'tr:while:iken',
   'uk:catch:зловити',
   'uk:pushUrl:додати_url',
