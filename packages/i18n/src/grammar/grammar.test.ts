@@ -1425,6 +1425,29 @@ describe('Possessive Dot Notation Translation', () => {
     });
   });
 
+  // ──── ru/uk install keyword is the loanword, not the set homonym ────
+  // ru "install" and "set" are both `установить` (uk: `встановити`). The dict
+  // emitted plain `установить` for install, which the semantic parser resolves to
+  // `set` (the install action dropped → install-behavior degenerate). The install
+  // command now uses the single-token loanword `инсталлировать` (ru) /
+  // `інсталювати` (uk), distinct from the set primary.
+  describe('ru/uk install command uses the loanword, not the set homonym', () => {
+    // NB: substring (not /\b…\b/) — JS word boundaries are ASCII-only and never
+    // match adjacent to Cyrillic text.
+    const cases: Array<[string, string, string]> = [
+      // [lang, expected install loanword, the set homonym that must NOT appear]
+      ['ru', 'инсталлировать', 'установить'],
+      ['uk', 'інсталювати', 'встановити'],
+    ];
+    for (const [lang, want, banned] of cases) {
+      it(`(${lang}) emits the install loanword, not the set homonym`, () => {
+        const result = new GrammarTransformer('en', lang).transform('install Draggable');
+        expect(result, `expected install loanword in: ${result}`).toContain(want);
+        expect(result, `set homonym leaked in: ${result}`).not.toContain(banned);
+      });
+    }
+  });
+
   // ──── Block extraction for `when`, `unless`, and SOV `live` ────
   // Block-syntactic tokens are pulled out before parseStatement so
   // they don't end up as command verbs (`live` → action role) or get

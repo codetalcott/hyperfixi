@@ -414,6 +414,17 @@ This is a parser/profile build-out, not an exclusion.
    i18n-side single-word resize emission + tr tokenizer entry. (b) Independently, the `debounced
 at 200ms` event modifier is left untranslated and fronted by the SOV reorder. Both needed for
    the full gate pattern. 1 hard-fail, ~2 fixes — lower ROI than the hi block cluster.
+
+   > **Data point (2026-06-21, ru/uk install-behavior).** The same underscore-split bit ru/uk
+   > `install`: the profile's disambiguator `установить_пакет` / `встановити_пакет` was inert
+   > because the ru/uk tokenizer splits on `_` → `установить` → `set` (install ≡ set homonym),
+   > so `install-behavior` was degenerate. **Resolved WITHOUT touching the tokenizer** by giving
+   > install a distinct single-token loanword (`инсталлировать` / `інсталювати`) in both the
+   > semantic profile + i18n dict (degenerate 6 → 4, zero regressions). For tr `window-resize`,
+   > the equivalent single-token route would be a non-underscore resize keyword that doesn't
+   > collide with `toggle` — likely cleaner than teaching the tr tokenizer to keep `_`-compounds
+   > whole. The `debounced at 200ms` modifier is the separate, harder half.
+
 2. **hi `live-derived-value` / `live-multiple-deps` (degenerate); also `intercept` blocks.** The
    genuine **reactive block-shape** work: `live`/`intercept` (and `eventsource`/`socket`/
    `worker`) are `bareKeyword` blocks (`hasBody:true`), but `block-parser.ts` only handles

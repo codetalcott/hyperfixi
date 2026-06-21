@@ -59,7 +59,7 @@ export const russianDictionary: Dictionary = {
     append: 'дописать', // profile alternative; the compound splits and добавить parses as add
     exit: 'выйти',
     else: 'иначе',
-    install: 'установить',
+    install: 'инсталлировать', // loanword — `установить` is `set` (homonym); see russian profile
     init: 'инициализировать',
     behavior: 'поведение',
     focus: 'сфокусировать',
