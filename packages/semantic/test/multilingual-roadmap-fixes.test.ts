@@ -7121,3 +7121,35 @@ describe('Arabic VSO from-first wait clause parses (behavior-sortable)', () => {
     expect(a.has('trigger')).toBe(true);
   });
 });
+
+describe('bareKeyword block keyword is not mis-anchored as a bare event (hi live)', () => {
+  // `live`/`socket`/`eventsource`/`worker`/`intercept` are body-bearing block
+  // keywords that FRONT their construct (`live put … end`). In hi the bare-event
+  // pattern (`event-hi-bare`, priority 80) runs at Stage 1 — before the command
+  // stage — and its single `{event}` role matched the fronted `लाइव` (live)
+  // keyword, so the block parsed as a bare `on` + `put` and the `live` action was
+  // dropped (degenerate: hi live-derived-value / live-multiple-deps). es/ja/zh had
+  // no such greedy bare-event pattern, so they reached the command stage and kept
+  // `live`. Fix: the event-anchor guard (pattern-matcher.tokenLooksLikeEvent) now
+  // rejects a token whose normalized form is a bareKeyword block action, so the
+  // input falls through to the command stage where the `live` pattern wins.
+  // Corpus-shaped (the i18n transformer output stored in patterns.db).
+  const cases: Array<[string, string]> = [
+    ['hi', 'लाइव `Count: ${$count}` को रखें मैं में समाप्त'],
+    ['hi', 'लाइव `${$price * $quantity}` को रखें #total में समाप्त'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] keeps the live block action (not a bare event-handler)`, () => {
+      const node = parse(input, lang) as { kind?: string; action?: string };
+      expect(node.kind).toBe('command');
+      expect(node.action).toBe('live');
+    });
+  }
+
+  // Guard the un-regression: a genuine bare event (an event NAME, not a block
+  // keyword) must still anchor the bare-event pattern.
+  it('[hi] a genuine bare event name still parses as an event-handler', () => {
+    const node = parse('क्लिक पर टॉगल .active', 'hi') as { kind?: string };
+    expect(node.kind).toBe('event-handler');
+  });
+});
