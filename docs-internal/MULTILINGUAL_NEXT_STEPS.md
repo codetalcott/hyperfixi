@@ -9,21 +9,21 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-06-17 baseline · commit `18939a01` · `browser-priority`)
+## Where we are (2026-06-21 baseline · post #470 / #472 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                    | Notes                                          |
-| ------------------------------ | ------------------------ | ---------------------------------------------- |
-| parse rate                     | **3688 / 3696 (99.78%)** | 8 hard fails (was 10)                          |
-| degenerate passes (fid < 0.5)  | **29**                   | was 39                                         |
-| lossy passes (0.5 ≤ fid < 1.0) | **94**                   | was 113 — still the bulk of correctness debt   |
-| faithful (fid = 1.0)           | **~3565**                | was ~3534                                      |
-| avgFidelity (R0-recall)        | **0.985**                | was 0.982                                      |
-| avgPrecision (R0 trust floor)  | **0.960**                | hi 0.815 is the outlier (next-lowest ja ~0.91) |
-| avgRoleFidelity (R1)           | **0.833**                | **the laggard dimension**                      |
-| avgExecutionFidelity (R2)      | **1.000**                | curated subset fully reproduces en DOM effects |
+| Signal                         | Value                    | Notes                                                  |
+| ------------------------------ | ------------------------ | ------------------------------------------------------ |
+| parse rate                     | **3695 / 3696 (99.97%)** | 1 hard fail (`tr window-resize`); was 8                |
+| degenerate passes (fid < 0.5)  | **9**                    | was 29 — `behavior-sortable` cluster cleared           |
+| lossy passes (0.5 ≤ fid < 1.0) | **53**                   | was 94                                                 |
+| faithful (fid = 1.0)           | **~3633**                | was ~3565                                              |
+| avgFidelity (R0-recall)        | **0.993**                | was 0.985                                              |
+| avgPrecision (R0 trust floor)  | **0.962**                | hi 0.837 is the outlier (next-lowest ja ~0.91)         |
+| avgRoleFidelity (R1)           | **0.837**                | **still the laggard** (hi 0.717 · qu 0.770 · bn 0.780) |
+| avgExecutionFidelity (R2)      | **1.000**                | curated subset fully reproduces en DOM effects         |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
@@ -42,7 +42,44 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 > avgRoleFidelity up in every language. **All 8 remaining hard fails are now
 > reactivity (Track 2).**
 
+> **Update 2026-06-21 (PRs #470 + #472, `behavior-sortable` residuals — all three
+> cleared).** The three remaining `behavior-sortable` residuals tracked in
+> `HANDOFF-sov-sortable-residuals.md` (now complete) are fixed; `behavior-sortable`
+> is faithful in every priority language except `th` (a pre-existing lossy, not one
+> of the three). **Two of the three handoff diagnoses were wrong** — the real causes
+> were simpler and both semantic-side:
+>
+> - **#470 — `exit`/`end` keyword collision (ja degenerate, de lossy).** The i18n
+>   dict emits the `exit` command as a word the semantic end-keyword set ALSO listed
+>   (ja `終了`, de `beenden`, ko `종료`; the real `end` is 終わり/ende/끝). Inside an
+>   `if … exit … end` block the `exit` token decremented the body parser's
+>   block-depth one step early, so the block's real `end` terminated the WHOLE
+>   handler body — dropping every command after a following nested block. This was
+>   the actual cause of "defect C — de (V2) sortable body" (NOT a V2 body-parse bug)
+>   and of ja's degeneracy (the A2a verb-medial `set` it was blamed on survives via
+>   `ml.parse` — it was never the gate blocker). Fix: `isEndKeyword` (ja/ko/de) +
+>   the ja profile `end` alternatives no longer read the `exit` emission as `end`.
+> - **#472 — ar VSO from-first `wait` clause (ar lossy).** The handoff guessed an
+>   i18n-transformer mask-split / doubled clause; the real cause is the **ar
+>   tokenizer** splitting `وثيقة` (document) at the proclitic `و` (`and`) → `و` +
+>   `ثيقة`, where the spurious `and` conjunction became a clause boundary that
+>   dropped the command — plus the generated `wait {duration}` pattern not anchoring
+>   when the post-verb token is the source particle `من`. Fix: keep `وثيقة` whole
+>   (proclitic-extractor `NON_PROCLITIC_WORDS`) + a hand-crafted `wait-ar-from-first`
+>   pattern. The i18n transformer/dict output was clean — no transformer change.
+>
+> Net (priority gate): degenerate **10→9** (ja sortable was the only sortable
+> degenerate), lossy **55→53**, parse-rate unchanged (3695/3696), zero regressions;
+> guards in `multilingual-roadmap-fixes.test.ts`. The A2a/A2b SOV reorder defects the
+> handoff theorized for sortable turned out NOT to gate it; whether they remain real
+> for other patterns is untested (no longer sortable-blocking).
+
 ## The leverage map (what's actually non-faithful) — 2026-06-17
+
+> **Snapshot — superseded by the 2026-06-21 baseline** (degenerate 9, lossy 53; see the
+> "Where we are" table + the #470/#472 note above). The per-pattern counts below are the
+> 2026-06-17 figures; in particular `behavior-sortable` (then 9 degen + 14 lossy) is now
+> faithful in every priority lang but `th`. Kept as the historical cluster analysis.
 
 Of the **131** non-faithful instances (29 degenerate + 94 lossy + 8 hard-fail),
 two clusters dominate:
@@ -289,9 +326,19 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > [`multilingual-roadmap-fixes.test.ts`](../packages/semantic/test/multilingual-roadmap-fixes.test.ts)
    > "VSO from-first event-handler head".
    >
-   > **Still open after Increment 6:** **A2a** (SOV bare-`if` body `set` — prototype rejected, needs
-   > copula normalization or scan-from-end), **A2b** (SOV/VSO command after a nested block — the
-   > sortable ar `wait` + bn/hi/th/ko trigger-tail + ja sortable), **C** (de V2 sortable body).
+   > **Still open after Increment 6 (as understood 2026-06-19):** **A2a** (SOV bare-`if` body
+   > `set`), **A2b** (SOV/VSO command after a nested block — the sortable ar `wait` + bn/hi/th/ko
+   > trigger-tail + ja sortable), **C** (de V2 sortable body).
+   >
+   > **⚠️ SUPERSEDED for `behavior-sortable` (2026-06-21, PRs #470 + #472 — see the dated note at
+   > the top of this file).** The sortable items above were misattributed. ja-sortable-degenerate
+   > and de-sortable-lossy ("defect C") were BOTH the `exit`/`end` keyword collision (`終了`/`beenden`
+   > read as `end`), not the A2a/A2b SOV reorders or a V2 body-parse — fixed in `isEndKeyword` (#470).
+   > ar-sortable-`wait` was the ar tokenizer splitting `وثيقة` at the `و` proclitic + a missing
+   > from-first `wait` pattern (#472), not the transformer. `behavior-sortable` is now faithful in
+   > all priority langs but `th`. **A2a/A2b/C were never the gate blockers for sortable**; whether
+   > A2a/A2b remain real defects for OTHER patterns (e.g. bn/hi/th/ko trigger-tail on other
+   > behaviors) is untested — re-triage before assuming they're open.
 
 3. **The actual priority — the authoring + install system for community & LLM agents:**
    - ~~**Authoring guide**~~ **DONE** (2026-06-16): `packages/behaviors/AUTHORING.md` — the
