@@ -2303,18 +2303,29 @@ export class SemanticParserImpl implements ISemanticParser {
     const v = value.toLowerCase();
     const endKeywords: Record<string, Set<string>> = {
       en: new Set(['end']),
-      ja: new Set(['終わり', '終了', 'おわり']),
+      // 終了 is deliberately ABSENT: it is the i18n dict's `exit` emission
+      // (`exit: 終了`, ja.ts), and listing it as an `end` alternative made the
+      // body parser count an `exit` inside an `if … exit … end` block as the
+      // block terminator — so the real 終わり closed the whole handler body,
+      // dropping every command after the block (behavior-sortable degenerate).
+      // 終わり is the dict's `end` emission; おわり is the kana variant.
+      ja: new Set(['終わり', 'おわり']),
       // ar آخر is deliberately ABSENT: it is the positional `last` keyword;
       // listing it here chopped clauses at every positional last (ar focus-trap
       // lost its if-branch body). النهاية is what the i18n dict emits for end.
       ar: new Set(['نهاية', 'انتهى', 'النهاية']),
       es: new Set(['fin', 'final', 'terminar']),
-      ko: new Set(['끝', '종료', '마침']),
+      // 종료 is deliberately ABSENT — same exit/end collision as ja above
+      // (`exit: 종료`, ko.ts). 끝 is the dict's `end` emission; 마침 a variant.
+      ko: new Set(['끝', '마침']),
       zh: new Set(['结束', '终止', '完']),
       tr: new Set(['son', 'bitiş', 'bitti']),
       pt: new Set(['fim', 'final', 'término']),
       fr: new Set(['fin', 'terminer', 'finir']),
-      de: new Set(['ende', 'beenden', 'fertig']),
+      // beenden is deliberately ABSENT — same exit/end collision as ja above
+      // (`exit: beenden`, de.ts; the de profile's `end` alternatives are only
+      // ['ende', 'fertig'], so this hardcoded set was the lone offender).
+      de: new Set(['ende', 'fertig']),
       id: new Set(['selesai', 'akhir', 'tamat']),
       tl: new Set(['wakas', 'tapos']),
       bn: new Set(['সমাপ্ত']),
