@@ -1152,7 +1152,7 @@ The remaining clusters:
 | Cluster                     | Examples (langs)                                                                                                                       |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | control-flow blocks         | `if-empty` (5), `unless-condition` (2) — `if-exists` (0) + most `if-empty`/`input-validation` cleared by Tier 1                        |
-| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3)                                        |
+| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (0 — was 5, cleared PR #481)               |
 | async / streaming           | `async-block` (8 — was 13, ar/de/it/th/tl cleared by Async Tier 1; SOV+zh+fr/pt+ms remain), `socket-basic` (9), `eventsource`/`worker` |
 | validation / forms          | `input-validation` (2 — was 14, cleared by Tier 1), `form-submit-prevent` (9)                                                          |
 | positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                                                                  |
