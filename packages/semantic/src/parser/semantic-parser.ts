@@ -187,7 +187,20 @@ export class SemanticParserImpl implements ISemanticParser {
     // its execution semantics across languages is Track 5 Tier 2). Gated to the
     // async keyword token, so non-async inputs are byte-identical.
     const asyncStrip = this.stripAsyncModifier(modInput, language);
-    const parseInput = asyncStrip.remainingInput ?? modInput;
+    const asyncInput = asyncStrip.remainingInput ?? modInput;
+
+    // Strip the `do [not] throw` fetch-error modifier (en `fetch … as JSON do not
+    // throw`). It is a fetch OPTION (suppress the error throw), not a command — en
+    // drops it entirely (no `throw` action). The SOV grammar transform mangles it:
+    // the English `do` leaks untranslated and the throw VERB is reordered out, so
+    // in a multi-clause body (`… 投げる それから もし …`) it anchors a spurious
+    // `throw` command (the fetch-do-not-throw phantom-throw, a precision defect in
+    // bn/hi/ja/ko/tr). Removing the `do … throw` span before parsing matches en and
+    // is a no-op on en's action set. Gated to a literal `do` followed within two
+    // tokens by a `throw`-normalized verb, so a real `throw` (no leaked `do`) and a
+    // pl/pt `do`-marker not adjacent to a throw verb are byte-identical.
+    const dntStrip = this.stripDoNotThrowModifier(asyncInput, language);
+    const parseInput = dntStrip.remainingInput ?? asyncInput;
 
     // Diagnostics accumulator (Phase 3.4)
     const diagnostics: Diagnostic[] = [];
@@ -2979,6 +2992,50 @@ export class SemanticParserImpl implements ISemanticParser {
       .trim();
     if (stripped.length === 0) return { remainingInput: null };
     return { remainingInput: stripped };
+  }
+
+  /**
+   * Strip the `do [not] throw` fetch-error modifier (see the call site for why).
+   * Anchored on the leaked English `do` literal — present in every SOV translation
+   * of the phrase — followed within two tokens by a `throw`-normalized verb (a
+   * negation may sit between: ja `ではない`, ko `아니`, hi `नहीं`, tr `değil`, bn
+   * `না`, en `not`). Removes the `do … throw` span from the source string. Returns
+   * `{ remainingInput: null }` when no such span exists, so the caller leaves the
+   * input untouched.
+   */
+  private stripDoNotThrowModifier(
+    input: string,
+    language: string
+  ): {
+    remainingInput: string | null;
+  } {
+    const allTokens = tokenizeInternal(input, language).tokens;
+    for (let i = 0; i < allTokens.length - 1; i++) {
+      if (allTokens[i].value.toLowerCase() !== 'do') continue;
+      // Scan a small window for the throw verb. The negation between `do` and
+      // `throw` may be one token (en `not`, tr `değil`) or several (ja `ではない`
+      // shatters into `で`/`は`/`ない` particles), so a 2-token window misses ja.
+      // Stop at a value / conjunction — only negation filler may separate them.
+      let throwIdx = -1;
+      for (let j = i + 1; j <= i + 5 && j < allTokens.length; j++) {
+        const tj = allTokens[j];
+        if (tj.normalized?.toLowerCase() === 'throw') {
+          throwIdx = j;
+          break;
+        }
+        const k = tj.kind as string;
+        if (k === 'selector' || k === 'literal' || k === 'reference' || k === 'conjunction') {
+          break;
+        }
+      }
+      if (throwIdx === -1) continue;
+      const start = allTokens[i].position.start;
+      const end = allTokens[throwIdx].position.end;
+      const stripped = (input.slice(0, start) + input.slice(end)).replace(/\s{2,}/g, ' ').trim();
+      if (stripped.length === 0) return { remainingInput: null };
+      return { remainingInput: stripped };
+    }
+    return { remainingInput: null };
   }
 
   /**

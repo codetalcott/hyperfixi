@@ -7381,3 +7381,55 @@ describe('Verb-split reserves the fronted condition (trailing-unless body patien
     });
   }
 });
+
+describe('`do not throw` fetch modifier strip (fetch-do-not-throw phantom-throw)', () => {
+  // `do not throw` is a fetch error-handling OPTION ("don't throw on error"), not a
+  // command — en drops it (no `throw` action). The SOV grammar transform leaks the
+  // English `do` untranslated and reorders the throw VERB out of the fetch clause, so
+  // in the multi-clause body (`… 投げる それから もし …`) it anchored a SPURIOUS
+  // `throw` command — a precision defect in bn/hi/ja/ko/tr (and a phantom in several
+  // SVO langs too). stripDoNotThrowModifier removes the `do … throw` span before
+  // parsing, anchored on the leaked `do` + a `throw`-normalized verb within a small
+  // window (ja's negation `ではない` shatters into `で`/`は`/`ない`). The if-body `set`
+  // drop is a SEPARATE, deferred recall defect — see the fetch-do-not-throw arc
+  // handoff (docs-internal/HANDOFF-fetch-do-not-throw.md).
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  it('[ja] drops the `do … 投げる` modifier — no phantom throw, fetch kept', () => {
+    const actions = new Set(
+      collectActions(
+        parse(
+          '/api/users を クリック で フェッチ JSON do ではない 投げる それから もし それ $users を 設定 それ に 終わり',
+          'ja'
+        )
+      )
+    );
+    expect(actions.has('fetch')).toBe(true);
+    expect(actions.has('throw')).toBe(false); // was a phantom throw before the strip
+  });
+
+  it('[en] is unaffected — `do not throw` never produced a throw', () => {
+    const actions = new Set(
+      collectActions(
+        parse('on click fetch /api/users as JSON do not throw then if it set it to it end', 'en')
+      )
+    );
+    expect(actions.has('fetch')).toBe(true);
+    expect(actions.has('throw')).toBe(false);
+  });
+
+  it('does not strip a genuine `throw` command (no leaked `do`)', () => {
+    const actions = new Set(collectActions(parse("throw 'boom'", 'en')));
+    expect(actions.has('throw')).toBe(true);
+  });
+});
