@@ -1461,6 +1461,16 @@ export class SemanticParserImpl implements ISemanticParser {
 
       for (let i = pos; i < clauseTokens.length; i++) {
         const token = clauseTokens[i];
+        // A known postpositional ROLE MARKER (を/に/를/에/i/কে/…) is NEVER a command
+        // verb, even when its surface form doubles as a verb keyword alternative:
+        // ja's `に` is both the `set`-value destination marker AND an `into`
+        // alternative, so anchoring the trailing `それ に` of `set $users to it`
+        // emitted a phantom `into` command (R0-precision). Gate on markerToRole,
+        // NOT on `kind==='particle'`: a clause-final loop keyword like tr `için` /
+        // bn `জন্য` (`for`) also tokenizes as a particle but is NOT a role marker,
+        // and the verb-anchoring fallback must still find it as the `for` verb (else
+        // template-literal-list-build drops its loop). See buildVerbLookup's `for` note.
+        if (markerToRole.has(token.value)) continue;
         const byValue = verbLookup.get(token.value.toLowerCase());
         const byNormalized = token.normalized
           ? verbLookup.get(token.normalized.toLowerCase())
@@ -1489,8 +1499,12 @@ export class SemanticParserImpl implements ISemanticParser {
           break;
         }
         // Stop at the next verb (start of new command) — but only if preceded by a marker
-        // This prevents stopping at "value" tokens that happen to match a verb name
-        if (i > verbIdx + 1) {
+        // This prevents stopping at "value" tokens that happen to match a verb name.
+        // A known role marker is not a verb (see the verb-find guard above): without
+        // this exclusion `に` (set's value marker, also an `into` alt) ends the `set`
+        // clause one token early, stranding its `it` patient. A non-marker loop
+        // keyword (tr `için` / bn `জন্য`) still legitimately stops the clause.
+        if (i > verbIdx + 1 && !markerToRole.has(t.value)) {
           const nextAction =
             verbLookup.get(t.value.toLowerCase()) ||
             (t.normalized ? verbLookup.get(t.normalized.toLowerCase()) : undefined);
@@ -1773,6 +1787,37 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
 
+      // Fold a leading `if … end` block into a conditional, mirroring the
+      // clause-boundary fold in parseBodyWithClauses. A fused SOV/VSO event
+      // pattern captures the FIRST body command (`fetch`) as the action and
+      // routes the trailing `then if it set $users to it end` here — but this
+      // body walker only ran matchBest, where the schema-generated bare-`if`
+      // pattern (`if-ja-generated-verb-first`) captures the if-keyword and
+      // swallows the whole block as a flat `if` with NO condition and an empty
+      // then-branch, silently dropping the block body (the verb-medial `set` of
+      // fetch-do-not-throw — lossy across bn/hi/ja/ko/tr). The if-keyword itself
+      // marks a sub-clause boundary, so flush any pending tokens first: in
+      // hi/ko/tr a leaked `as` remnant (के रूप में / 로 / olarak) strands between
+      // `then` and `if`, and without the flush skippedClauseTokens stays
+      // non-empty (the flush recovers a real pending verb-medial command and
+      // harmlessly discards non-command junk). Gated on `!clauseHadMatch` so a
+      // juxtaposed `<cmd> if` mid-clause is untouched. tryParseConditionalBlock
+      // folds `if` only and returns null without consuming when the head isn't a
+      // usable conditional, so a non-`if` clause is byte-identical to before.
+      if (
+        current &&
+        !clauseHadMatch &&
+        this.isIfKeyword((current.normalized ?? current.value).toLowerCase(), language)
+      ) {
+        flushClause();
+        const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
+        if (conditional) {
+          commands.push(conditional);
+          clauseHadMatch = true;
+          continue;
+        }
+      }
+
       let matched = false;
 
       // Try grammar-transformed continuation patterns first
@@ -1814,8 +1859,38 @@ export class SemanticParserImpl implements ISemanticParser {
 
       // Try regular command patterns
       if (!matched) {
+        const preMatch = tokens.mark();
         const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
         if (commandMatch) {
+          // A schema-generated bare-`if` pattern (`if-tr-generated`,
+          // `if-ja-generated-verb-first`, …) matches the if-keyword and yields a
+          // flat `if` with no condition and an EMPTY then-branch — dropping the
+          // block body (the verb-medial `set` of fetch-do-not-throw). It can even
+          // swallow a leaked `as` remnant just ahead of the if (tr `olarak eğer`),
+          // so the clause-head fold guard above never sees the if as the head.
+          // Whenever matchBest yields a flat `if` here, rewind, skip any non-`if`
+          // junk to the if-keyword, and fold the whole `if … end` block instead —
+          // flushing first so a pending verb-medial command is recovered, not lost.
+          // A folded `if` strictly dominates the bare one for recall (same `if`
+          // action plus the recovered branch); if the block isn't foldable
+          // (no `end`), restore the post-match position and keep the bare `if`.
+          if ((commandMatch.pattern.command as string) === 'if') {
+            const afterMatch = tokens.mark();
+            tokens.reset(preMatch);
+            while (!tokens.isAtEnd()) {
+              const h = tokens.peek();
+              if (!h || this.isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
+              tokens.advance();
+            }
+            const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
+            if (conditional) {
+              flushClause();
+              commands.push(conditional);
+              clauseHadMatch = true;
+              continue;
+            }
+            tokens.reset(afterMatch);
+          }
           const cmd = this.buildCommand(commandMatch, language);
           commands.push(cmd);
           // Reclaim a trailing post-verb source/destination phrase the matched

@@ -431,6 +431,71 @@ describe('if/else block-body in event handlers — Track 5 Tier 1', () => {
   });
 });
 
+describe('fused-event trailing `if … end` folds + verb-medial set (fetch-do-not-throw, SOV)', () => {
+  // `on click fetch /api/users as JSON do not throw then if it set $users to it end`.
+  // A fused SOV event pattern captures `fetch` as the handler action and routes the
+  // trailing `then if … end` through parseBodyWithGrammarPatterns — where a
+  // schema-generated bare-`if` pattern (`if-ja-generated-verb-first`, `if-tr-generated`)
+  // swallowed the whole block as a flat `if` with an empty then-branch, dropping the
+  // verb-medial `set`. The body walker now folds that `if … end` block (mirroring
+  // parseBodyWithClauses), recovering the `set` in its then-branch. Flips
+  // fetch-do-not-throw bn/hi/ja/ko/tr lossy→faithful (and generalizes to
+  // fetch-error-handling, form-disable-on-submit, modal-close-escape). See
+  // docs-internal/HANDOFF-fetch-do-not-throw.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang) for fetch-do-not-throw.
+  const cases: Array<[string, string]> = [
+    ['bn', '/api/users কে ক্লিক এ আনুন JSON do না নিক্ষেপ তারপর যদি এটি $users কে সেট এটি তে শেষ'],
+    [
+      'hi',
+      '/api/users को क्लिक पर लाएं JSON do नहीं फेंकें फिर के रूप में अगर यह $users को सेट यह में समाप्त',
+    ],
+    ['ja', '/api/users を クリック で フェッチ JSON do ではない 投げる それから もし それ $users を 設定 それ に 終わり'],
+    ['ko', '/api/users 를 클릭 할 때 가져오기 JSON do 아니 던지다 그러면 로 만약 그것 $users 를 설정 그것 에 끝'],
+    ['tr', '/api/users i tıklama de getir JSON do değil fırlat sonra olarak eğer o $users i ayarla o e son'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] folds the if-block and keeps fetch + if + set`, () => {
+      const node = parse(input, lang);
+      expect(node.action).toBe('on');
+      const a = actions(node);
+      expect(a.has('fetch')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('set')).toBe(true); // the recovered verb-medial then-branch set
+      // Precision: the `do not throw` strip leaves no phantom `throw`, and the set's
+      // value marker (ja に / ko 에) must not anchor a phantom `into` command.
+      expect(a.has('throw')).toBe(false);
+      expect(a.has('into')).toBe(false);
+    });
+  }
+
+  it('[tr] a non-marker clause-final loop keyword (`için`) still anchors `for`', () => {
+    // The verb-anchoring particle guard that suppresses the phantom `into` is scoped
+    // to KNOWN role markers (markerToRole), NOT all particles — else a clause-final
+    // loop keyword like tr `için` (a particle, but not a role marker) would be
+    // skipped and the `for` dropped (the template-literal-list-build regression caught
+    // by the multilingual gate). Corpus shape of `on click set $total to 0 then for
+    // item in $items set $total to $total end`.
+    const input =
+      '$total i tıklama de ayarla 0 e sonra item içinde $items i için $total i ayarla $total son';
+    const a = actions(parse(input, 'tr'));
+    expect(a.has('for')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+});
+
 describe('async modifier transparency — Track 5 Async Tier 1', () => {
   // `async` marks the *following* command for async execution — it is a modifier,
   // not a command verb. The grammar transformer reorders it as a verb, so a fused
