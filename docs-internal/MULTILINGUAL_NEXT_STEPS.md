@@ -89,7 +89,7 @@ two clusters dominate:
 | **Behaviors** (removable/sortable/resizable/draggable + install)                |         18 |    47 |         0 | **65** | **50%** |
 | **Reactivity** (bind-\* / live-\* / two-way / computed / intercept / window-\*) |          8 |     0 |         8 | **16** |     12% |
 | **Control-flow** (`unless-condition` + then-chain bodies)                       |          1 |    10 |         0 |     11 |      8% |
-| Long tail (fetch-do-not-throw, get-value, tell-\*, set-color-variable, …)       |          2 |    37 |         0 |     39 |     30% |
+| Long tail (get-value, tell-\*, set-color-variable, …)                           |          2 |    37 |         0 |     39 |     30% |
 
 Per-pattern: `behavior-removable` 6 degen + 17 lossy (was 13 degen + 8 lossy + 2 hard) ·
 `behavior-sortable` 9 degen + 14 lossy · `unless-condition` 1 degen + 8 lossy ·
@@ -514,7 +514,8 @@ window-resize` hard-fail and the SOV behavior reorders — NOT the R0 dict-align
 **Why:** `unless-condition` (8 lossy + 1 degen) is the largest non-behavior lossy pattern;
 the docs' long-standing diagnosis is **control-flow body parsing** (`if`/`unless` headers +
 then-chain `put`/`set` bodies collapsing). The rest is a singleton long tail
-(`fetch-do-not-throw` 5, `get-value` 4, `tell-*` 4, `set-color-variable` 4).
+(`get-value` 4, `tell-*` 4, `set-color-variable` 4 — `fetch-do-not-throw` 5→0, cleared by the
+fused-event if-block fold, PR #481).
 
 **Action:** opportunistic, lower ROI than Tracks 1–2. Take `unless-condition` as the
 representative and fix the enclosing block/then-chain collapse; the tail is per-pattern.
@@ -622,12 +623,17 @@ target` idiom yields null even when a match exists (`target.closest("li")` works
 >   fronted. Deferred — it needs an i18n single-token-resize emission + tr tokenizer fused-token entry
 >   (cf. `enyakın`) **and** modifier translation, a high-risk multi-part change to the hottest path for
 >   the single lowest-ROI pattern.
-> - **Complex multi-clause SOV `fetch`** (e.g. `fetch-do-not-throw` = `fetch … as JSON do not throw
-then if …`) — still lossy in hi/qu/bn. The standalone/simple SOV `fetch` is fixed, but the heavy
->   `as/do-not-throw/then/if` reorder routes through a path the `sovFetch` command pattern doesn't
->   reach (mis-typed `fetch.patient` via verb-anchoring); a verb-anchoring `fetch`→`source` remap was
->   tried and proved **inert** on the current corpus, so it was dropped. This is the remaining slice of
->   the qu/bn `fetch.source` cluster.
+> - **Complex multi-clause SOV `fetch` — ✅ R0 set-drop resolved (PR #481, #480).**
+>   `fetch-do-not-throw` (`fetch … as JSON do not throw then if it set $users to it end`) is now
+>   **faithful in all priority langs** (was lossy in bn/hi/ja/ko/tr). #480 stripped the phantom
+>   `throw`; #481 made the fused-event body **fold its trailing `if … end` block** and recover the
+>   verb-medial `set` in the then-branch (`parseBodyWithGrammarPatterns`), and scoped the
+>   verb-anchoring particle guard to known role markers so the `set`-value marker (`に`) no longer
+>   anchors a phantom `into`. The same root-cause fold also cleared `fetch-error-handling`,
+>   `form-disable-on-submit`, `modal-close-escape` (1→0 each) and `take-class-from-siblings` (2→1).
+>   Any remaining qu/bn `fetch.source` **role-typing** slice (R1 — mis-typed `fetch.patient` via
+>   verb-anchoring) is a separate matter; the `fetch`→`source` verb-anchoring remap tried earlier
+>   proved **inert** on the corpus and was dropped.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
