@@ -39,7 +39,7 @@
     "@hono/node-server": "^2.0.0",
     "@hyperfixi/patterns-reference": "^2.5.1",
     "@lokascript/framework": "^2.5.1",
-    "hono": "^4.6.0"
+    "hono": "^4.12.27"
   },
   "peerDependencies": {
     "@lokascript/domain-bdd": "^2.5.1",
