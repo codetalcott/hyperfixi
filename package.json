@@ -125,5 +125,11 @@
   "homepage": "https://github.com/codetalcott/hyperfixi#readme",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "allowScripts": {
+    "better-sqlite3": true,
+    "esbuild": true,
+    "fsevents": true,
+    "nx": true
   }
 }
