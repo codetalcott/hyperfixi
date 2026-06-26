@@ -1713,6 +1713,13 @@ export class GrammarTransformer {
       // across the event handler's role soup.
       const eventBlock = this.tryTransformEventWithBlockBody(input);
       if (eventBlock !== null) return eventBlock;
+
+      // Event handler whose body is an un-terminated inline `unless` guard
+      // (`on click unless I match .disabled toggle .selected`): route the guard
+      // through the standalone block path so Hebrew's accusative marker lands on
+      // the body command, not the condition. Hebrew-only; null elsewhere.
+      const eventGuard = this.tryTransformEventWithUnlessGuard(input);
+      if (eventGuard !== null) return eventGuard;
     }
 
     // Check if input has multi-line structure worth preserving
@@ -1935,6 +1942,61 @@ export class GrammarTransformer {
     // rather than substituting in place.
     const eventClause = headOut.replace(placeholder, '').replace(/\s+/g, ' ').trim();
     return [eventClause, blockOut].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform an event handler whose body is an inline `unless` guard with NO
+   * `end` (`on <event> unless <cond> <body>` — the `unless-condition` shape).
+   *
+   * Hebrew-only. `parseEventHandler` reads `unless` as the action and sweeps the
+   * whole `<cond> <body>` tail into a single `patient` blob; Hebrew then prefixes
+   * that blob with the accusative object marker את (`… אלא את I match .disabled מתג
+   * .selected`) and the inner toggle loses its own את. The semantic parser can't
+   * recover the guard from that — את ahead of the condition blocks the `unless`
+   * pattern AND the markerless `מתג .selected` fails the he toggle pattern (which
+   * requires את) — so the body collapses (degenerate). Marker-less languages
+   * (de/it/ar/pl) tolerate the same role-blob and stay faithful, so this is a
+   * Hebrew accusative-marker artifact, not a general parse gap.
+   *
+   * The standalone `unless <cond> <body>` path already produces the correct shape
+   * (`extractBlockStructure` → `transformBlock`: condition kept marker-free, body
+   * command keeps its את — `אלא I match .disabled מתג את .selected`). So we split
+   * the event head off, transform the guard through that path, and emit the event
+   * clause first (he is SVO — event leads). Returns `null` (fall through) when the
+   * input isn't a he event handler with an un-terminated inline `unless` guard.
+   */
+  private tryTransformEventWithUnlessGuard(input: string): string | null {
+    if (this.targetProfile.code !== 'he') return null;
+
+    const tokens = tokenize(input, this.sourceProfile);
+    if (tokens.length === 0) return null;
+    if (!EVENT_KEYWORDS.has(tokens[0]?.toLowerCase())) return null;
+
+    let guardIdx = -1;
+    for (let i = 1; i < tokens.length; i++) {
+      if (tokens[i].toLowerCase() === 'unless') {
+        guardIdx = i;
+        break;
+      }
+    }
+    if (guardIdx <= 0) return null;
+    // The terminated form (`… unless … end`) is handled by
+    // tryTransformEventWithBlockBody's masking path; only take the inline guard.
+    if (tokens[tokens.length - 1].toLowerCase() === 'end') return null;
+
+    const eventHead = tokens.slice(0, guardIdx);
+    const guard = tokens.slice(guardIdx).join(' ');
+
+    // `unless` is a BLOCK_HEAD keyword, so transform() routes the guard through
+    // extractBlockStructure → transformBlock (the standalone shape that parses).
+    const guardOut = this.transform(guard);
+    if (!guardOut) return null;
+
+    const placeholder = 'EVENTGUARDPLACEHOLDER';
+    const headOut = this.transformSingle([...eventHead, placeholder].join(' '));
+    if (!headOut.includes(placeholder)) return null;
+    const eventClause = headOut.replace(placeholder, '').replace(/\s+/g, ' ').trim();
+    return [eventClause, guardOut].filter(s => s.length > 0).join(' ');
   }
 
   /**

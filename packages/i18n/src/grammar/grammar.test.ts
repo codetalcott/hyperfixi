@@ -1977,3 +1977,32 @@ describe('Hebrew scroll/last command translations (he last-in-collection dict ga
     expect(he('for item in $items log item')).toContain(' in ');
   });
 });
+
+describe('Hebrew event-handler inline `unless` guard (he unless-condition degenerate)', () => {
+  // `on click unless I match .disabled toggle .selected` is an inline guard with no
+  // `end`. parseEventHandler read `unless` as the action and swept the whole
+  // `<cond> <body>` tail into one patient blob; Hebrew then prefixed that blob with
+  // the accusative object marker את (`… אלא את I match .disabled מתג .selected`) and
+  // the inner toggle lost its own את. The semantic parser collapsed that (degenerate):
+  // את ahead of the condition blocks the `unless` pattern, AND the markerless `מתג
+  // .selected` fails the he toggle pattern (which requires את). Marker-less langs
+  // (de/it/ar/pl) parse the same role-blob faithfully — a Hebrew accusative-marker
+  // artifact, not a general gap. The guard now routes through the standalone block
+  // path (extractBlockStructure → transformBlock): condition kept marker-free, body
+  // command keeps its את. Needs the he dict `unless: אלא` entry too.
+  const he = (s: string) => new GrammarTransformer('en', 'he').transform(s);
+
+  it('[he] unless guard: unless translates, condition is marker-free, toggle keeps its את', () => {
+    const out = he('on click unless I match .disabled toggle .selected');
+    expect(out).toContain('אלא I match .disabled'); // unless→אלא, no fronted את before the condition
+    expect(out).not.toContain('אלא את'); // condition is NOT object-marked
+    expect(out).toContain('מתג את .selected'); // body toggle keeps its accusative marker
+    expect(out).not.toContain('unless'); // no English leak
+  });
+
+  it('[he] the event clause leads (SVO): `ב לחיצה` before the unless guard', () => {
+    const out = he('on click unless I match .disabled toggle .selected');
+    expect(out.indexOf('ב לחיצה')).toBeGreaterThanOrEqual(0);
+    expect(out.indexOf('ב לחיצה')).toBeLessThan(out.indexOf('אלא'));
+  });
+});

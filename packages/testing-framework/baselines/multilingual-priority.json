@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-26T17:08:00.794Z",
-  "commit": "e047c00a",
+  "timestamp": "2026-06-26T19:27:04.605Z",
+  "commit": "fccd8139",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -3791,13 +3791,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8244897959183674,
-      "avgFidelity": 0.9943722943722944,
+      "avgConfidence": 0.8237889095031952,
+      "avgFidelity": 0.9987012987012988,
       "avgPrecision": 0.9835497835497835,
-      "avgRoleFidelity": 0.9021600584100584,
+      "avgRoleFidelity": 0.9055384367884368,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
-      "degeneratePasses": ["unless-condition"],
+      "degeneratePasses": [],
       "lossyPasses": ["form-submit-prevent"],
       "bundleSize": 444343,
       "patterns": {
@@ -4205,10 +4205,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "unless-condition": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "copy-to-clipboard": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4382,6 +4378,10 @@
           "confidence": 0.7142857142857143
         },
         "if-empty": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "unless-condition": {
           "success": true,
           "confidence": 0.7142857142857143
         },

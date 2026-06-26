@@ -24,6 +24,7 @@ export const he: Dictionary = {
     halt: 'עצור',
     hide: 'הסתר',
     if: 'אם',
+    unless: 'אלא',
     increment: 'הגדל',
     install: 'התקן',
     js: 'js',
