@@ -1160,6 +1160,7 @@ export const getCommandSchema: CommandSchema = {
         ar: 'على', // Arabic preposition: احصل على #element
         tr: 'i', // Turkish accusative: #element i al
         id: '',
+        he: 'את', // Hebrew accusative: קבל את #element (the transformer marks get's object with את)
         sw: '', // Swahili SVO: pata #element (no marker)
         tl: '', // Tagalog VSO: kunin #element (no marker)
         bn: 'কে', // Bengali SOV: #element কে পান (patient marker)
@@ -1946,7 +1947,11 @@ export const tellSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference'],
       svoPosition: 1,
       sovPosition: 1,
-      markerOverride: { en: '' }, // "tell #element ..." (no preposition)
+      // "tell #element ..." (no preposition in en). Hebrew: the transformer marks
+      // tell's object with the accusative את (`אמור את #element`), so the generated
+      // he pattern must expect it — without this the `את` token breaks the match and
+      // `tell` is dropped (tell-command / tell-other-element lossy).
+      markerOverride: { en: '', he: 'את' },
     },
   ],
 };
