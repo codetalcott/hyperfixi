@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-22T04:44:08.728Z",
-  "commit": "2d69207e",
+  "timestamp": "2026-06-26T16:12:34.150Z",
+  "commit": "bf4f3be2",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -3792,18 +3792,15 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8244897959183674,
-      "avgFidelity": 0.9786796536796535,
-      "avgPrecision": 0.9851731601731601,
-      "avgRoleFidelity": 0.8861690674190673,
+      "avgFidelity": 0.984090909090909,
+      "avgPrecision": 0.9835497835497835,
+      "avgRoleFidelity": 0.891799698049698,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["unless-condition"],
       "lossyPasses": [
-        "event-once",
         "form-submit-prevent",
         "get-value",
-        "if-empty",
-        "input-validation",
         "last-in-collection",
         "tell-command",
         "tell-other-element"

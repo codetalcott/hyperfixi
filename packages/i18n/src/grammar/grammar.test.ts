@@ -1915,3 +1915,42 @@ describe('trigger/send `on <target>` keeps its target — no spurious then (beha
     });
   }
 });
+
+describe('Hebrew fronted accusative marker is repaired (he add-body att-fronting)', () => {
+  // An event-handler body that leads with a command-modifier (`on click once add …`)
+  // or is a control block (`on blur if … add … end`) could emit the accusative
+  // marker את AHEAD of the body command's verb — `add .error to me` rendering
+  // `… את הוסף .error …` instead of the canonical `… הוסף את .error …`. את before a
+  // verb is always ungrammatical Hebrew, and the semantic parser dropped the command
+  // in every parse path (fused-event, multi-clause, conditional-body), keeping he
+  // `if-empty` / `input-validation` / `event-once` lossy. transform() now repairs the
+  // `<accusative-marker> <verb>` adjacency back to `<verb> <accusative-marker>`.
+  const he = (src: string) => new GrammarTransformer('en', 'he').transform(src);
+
+  it('[he] conditional-body add: את follows the verb (not fronted)', () => {
+    const out = he(
+      'on blur if my value is empty add .error to me put "Required" into next .error-message end'
+    );
+    expect(out).toContain('הוסף את .error');
+    expect(out).not.toContain('את הוסף');
+  });
+
+  it('[he] if/else-body add: את follows the verb', () => {
+    const out = he('on blur if my value is empty add .error to me else remove .error from me end');
+    expect(out).toContain('הוסף את .error');
+    expect(out).not.toContain('את הוסף');
+  });
+
+  it('[he] modifier-prefixed (once) body add: את follows the verb', () => {
+    const out = he('on click once add .initialized to me call setup()');
+    expect(out).toContain('הוסף את .initialized');
+    expect(out).not.toContain('את הוסף');
+  });
+
+  it('[he] a legitimate `<verb> את <obj>` form is left untouched', () => {
+    // send already emits `שלח את refresh` (verb then accusative); the repair must only
+    // swap the ungrammatical marker-then-verb adjacency, never a real `<verb> את`.
+    expect(he('send refresh to #widget')).toContain('שלח את refresh');
+    expect(he('add .error to me')).toContain('הוסף את .error');
+  });
+});

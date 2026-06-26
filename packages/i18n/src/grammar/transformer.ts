@@ -51,6 +51,36 @@ function getCommandKeywordsForLocale(locale: string): Set<string> {
 }
 
 /**
+ * Repair a FRONTED Hebrew accusative marker in transformed output.
+ *
+ * When an event-handler body leads with a command-modifier (`on click once add …`,
+ * via {@link GrammarTransformer.tryTransformEventWithModifierBody}) or is a control
+ * block (`on blur if … add … end`, via `tryTransformEventWithBlockBody`), the body
+ * command's accusative marker את can be emitted AHEAD of its verb — `add .error to me`
+ * renders `… את הוסף .error …` instead of the canonical `… הוסף את .error …`. את before
+ * a verb is always ungrammatical Hebrew (it only ever marks a FOLLOWING definite
+ * object), and the semantic parser drops the command in every parse path (fused-event,
+ * multi-clause, conditional-body) when the marker is fronted but parses it when the
+ * marker follows the verb. So an `<accusative-marker> <command-verb>` adjacency is a
+ * pure transformer artifact: swap it back. Idempotent and safe — only touches `את
+ * <verb>`, never the ~40 generated `<verb> את {patient}` patterns that embed את legitimately.
+ */
+function repairHebrewFrontedAccusative(text: string): string {
+  const ACC = 'את'; // hebrewProfile.markers patient marker
+  const verbs = getCommandKeywordsForLocale('he');
+  const tokens = text.split(/\s+/);
+  let changed = false;
+  for (let i = 0; i + 1 < tokens.length; i++) {
+    if (tokens[i] === ACC && verbs.has(tokens[i + 1].toLowerCase())) {
+      [tokens[i], tokens[i + 1]] = [tokens[i + 1], tokens[i]];
+      changed = true;
+      i++; // skip the marker we just moved
+    }
+  }
+  return changed ? tokens.join(' ') : text;
+}
+
+/**
  * Split a compound statement into parts at "then" boundaries, newlines,
  * AND command keyword boundaries.
  *
@@ -1641,6 +1671,14 @@ export class GrammarTransformer {
    * For multi-line input, preserves line structure (indentation, blank lines).
    */
   transform(input: string): string {
+    const out = this.transformInternal(input);
+    // Hebrew: repair a fronted accusative marker the body-split heuristics can emit
+    // (`… את הוסף .x …` → `… הוסף את .x …`). Applied to the assembled output; idempotent
+    // across the internal recursion. See repairHebrewFrontedAccusative.
+    return this.targetProfile.code === 'he' ? repairHebrewFrontedAccusative(out) : out;
+  }
+
+  private transformInternal(input: string): string {
     // Caret-scoped variable reads (`^name on <selector>`) carry a second,
     // overloaded `on` that the splitter/event-parser would mistake for an event
     // or command boundary — mangling `put ^count on #host into me`. Mask the
