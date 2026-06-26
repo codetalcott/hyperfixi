@@ -7447,6 +7447,42 @@ describe('Verb-split reserves the fronted condition (trailing-unless body patien
   }
 });
 
+describe('Hebrew leading `unless` guard (he unless-condition degenerate → faithful)', () => {
+  // he is SVO with a clause-LEADING unless marker (unlike the trailing-SOV ko/bn/ja
+  // cases above). `on click unless I match .disabled toggle .selected` was DEGENERATE
+  // in he: the i18n transformer left `unless` English and emitted a fronted accusative
+  // את ahead of the condition while the toggle lost its own את, collapsing the body.
+  // Two-part fix: (1) the i18n transformer routes the inline unless guard through the
+  // standalone block path (condition marker-free, toggle keeps את — grammar.test.ts
+  // guards that); (2) the he semantic profile gains `unless: אלא` so the leading
+  // marker recognizes as `unless` and the schema-generated `unless {condition}`
+  // pattern anchors. This guard covers (2): without `unless: אלא` in the he profile
+  // the action set drops to {on, toggle} (אלא parses as an unknown identifier).
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  // Corpus-shaped transformer output for `on click unless I match .disabled toggle .selected`.
+  const input = 'ב לחיצה אלא I match .disabled מתג את .selected';
+
+  it('[he] recovers the unless guard alongside the toggle body', () => {
+    expect(canParse(input, 'he')).toBe(true);
+    const actions = new Set(collectActions(parse(input, 'he')));
+    // Without `unless: אלא` in the he profile this set is {on, toggle} — guard red.
+    expect(actions.has('on')).toBe(true);
+    expect(actions.has('toggle')).toBe(true);
+    expect(actions.has('unless')).toBe(true);
+  });
+});
+
 describe('`do not throw` fetch modifier strip (fetch-do-not-throw phantom-throw)', () => {
   // `do not throw` is a fetch error-handling OPTION ("don't throw on error"), not a
   // command — en drops it (no `throw` action). The SOV grammar transform leaks the

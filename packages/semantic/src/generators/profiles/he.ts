@@ -107,6 +107,7 @@ export const hebrewProfile: LanguageProfile = {
     settle: { primary: 'התייצב', normalized: 'settle' },
     // Control flow
     if: { primary: 'אם', normalized: 'if' },
+    unless: { primary: 'אלא', normalized: 'unless' },
     when: { primary: 'כאשר', alternatives: ['כש'], normalized: 'when' },
     where: { primary: 'איפה', alternatives: ['היכן'], normalized: 'where' },
     else: { primary: 'אחרת', alternatives: ['אם לא'], normalized: 'else' },
