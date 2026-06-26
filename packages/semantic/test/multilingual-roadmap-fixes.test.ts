@@ -7602,3 +7602,48 @@ describe('Hebrew get/tell accusative marker tolerance (he get/tell att, Defect 2
     expect(actions.has('tell')).toBe(true);
   });
 });
+
+describe('Korean command-homonym event head (ko window-scroll degenerate → faithful)', () => {
+  // `on scroll from window if … add … else remove … end` was DEGENERATE in ko ({scroll}).
+  // ko's event word `스크롤` is ALSO the `scroll` command. With no single-token event
+  // marker, ko's Stage-1 fused event pattern can't anchor once the `from window` clause
+  // (`창 에서`) splits the handler head — so Stage 2 matched `스크롤` as the scroll command
+  // (absorbing `from window` as a role) and returned before the SOV extraction stage, losing
+  // the whole if/else body. Fix: when Stage 2 matches a command whose action is a known-event
+  // homonym AND the input carries an SOV event-marker head (`스크롤 할 때` = "on scroll"),
+  // prefer SOV extraction (hasSOVEventMarkerHead gate). The body itself always parsed — a
+  // non-homonym event (`클릭 … 창 에서 …`) was already faithful via the same path.
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  // Corpus-shaped transformer output for
+  // `on scroll from window if window.scrollY > 100 add .sticky to #header else remove .sticky from #header end`.
+  const input =
+    '스크롤 할 때 창 에서 만약 window.scrollY > 100 .sticky 를 추가 #header 에 아니면 .sticky 를 제거 #header 에서 끝';
+
+  it('[ko] anchors `스크롤` as the event, not the scroll command', () => {
+    const actions = new Set(collectActions(parse(input, 'ko')));
+    // Before the fix the parse anchored on the scroll command and lost the if/else body.
+    expect(actions.has('on')).toBe(true);
+    expect(actions.has('if')).toBe(true);
+    expect(actions.has('add')).toBe(true);
+    expect(actions.has('remove')).toBe(true);
+    expect(actions.has('scroll')).toBe(false);
+  });
+
+  it('[ko] a genuine bare scroll command (no event-marker head) is untouched', () => {
+    // `스크롤 #panel` has no `할 때` head, so hasSOVEventMarkerHead is false and the guard
+    // does not fire — the scroll command still parses as `scroll`.
+    const node = parse('스크롤 #panel', 'ko');
+    expect(node.action).toBe('scroll');
+  });
+});
