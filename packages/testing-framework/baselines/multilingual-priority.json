@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-26T16:34:55.362Z",
-  "commit": "56babc92",
+  "timestamp": "2026-06-26T17:08:00.794Z",
+  "commit": "e047c00a",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -3792,13 +3792,13 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8244897959183674,
-      "avgFidelity": 0.9911255411255411,
+      "avgFidelity": 0.9943722943722944,
       "avgPrecision": 0.9835497835497835,
-      "avgRoleFidelity": 0.89878168003168,
+      "avgRoleFidelity": 0.9021600584100584,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": ["unless-condition"],
-      "lossyPasses": ["form-submit-prevent", "last-in-collection"],
+      "lossyPasses": ["form-submit-prevent"],
       "bundleSize": 444343,
       "patterns": {
         "put-content-basic": {

@@ -38,6 +38,7 @@ export const he: Dictionary = {
     render: 'רנדר',
     repeat: 'חזור',
     return: 'החזר',
+    scroll: 'גלול',
     send: 'שלח',
     set: 'קבע',
     settle: 'התייצב',
@@ -101,5 +102,7 @@ export const he: Dictionary = {
 
   attributes: {},
 
-  expressions: {},
+  expressions: {
+    last: 'אחרון',
+  },
 };
