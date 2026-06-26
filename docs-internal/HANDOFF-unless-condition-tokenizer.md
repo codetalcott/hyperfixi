@@ -218,9 +218,27 @@ low blast radius (`event-hi-bare` is the only bare-event pattern → effectively
    clause — the fused event pattern captures `toggle` and the mid-stream `除非 把 …`
    condition is never reattached. This is the SVO analogue of the SOV event-anchor
    work (priorities handoff item #5); shares shape with vi once vi tokenizes cleanly.
-5. **he degenerate (separate defect).** Not the marker — the **untranslated English
-   condition** in RTL context collapses the body. Belongs with the transformer
-   expression-translation / bidi work, not this cluster.
+5. **he degenerate — ✅ DONE (2026-06-26, PR #490).** Was the lone he degenerate.
+   The prior diagnosis here ("untranslated English condition collapses the body")
+   and the later handoff guess ("a spurious את before the condition subject is THE
+   blocker") were **both wrong** — verified through `ml.parse`, the את ahead of the
+   condition is a **red herring** (removing it alone changes nothing). The real cause:
+   `parseEventHandler` reads the inline `unless` guard as the action and sweeps the
+   whole `<cond> <body>` tail into one `patient` blob, which Hebrew object-marks with
+   את — and the inner toggle **loses its own את**, so the markerless `מתג .selected`
+   fails the he toggle pattern (which requires את) while the fronted את blocks the
+   `unless` pattern. Marker-less langs (de/it/ar/pl) parse the same blob faithfully,
+   so it's a Hebrew accusative-marker artifact. Fix (he-scoped): route the
+   un-terminated inline `unless` guard through the standalone block path
+   (`tryTransformEventWithUnlessGuard` → `extractBlockStructure`/`transformBlock`) so
+   the condition stays marker-free and the body keeps its את + `unless: אלא` in the he
+   dict **and** semantic profile. he transform → `ב לחיצה אלא I match .disabled מתג
+את .selected` → `[on, toggle, unless]` faithful. Priority gate degenerate 4→3,
+   lossy steady (32), zero regressions. Guards in `grammar.test.ts` + `multilingual-
+roadmap-fixes.test.ts`.
+
+The cluster is now down to the **zh structural** item (#4 above) plus the SOV/SVO
+lossy tail (qu/vi/zh `unless-condition`).
 
 ## Gate-faithful repro (recreate, then delete — not committed)
 
