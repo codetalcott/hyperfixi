@@ -142,6 +142,12 @@ export const turkishProfile: LanguageProfile = {
     submit: { primary: 'gönderme', normalized: 'submit' },
     input: { primary: 'giriş', alternatives: ['girdi', 'giris'], normalized: 'input' },
     change: { primary: 'değişiklik', alternatives: ['değişim', 'degisim'], normalized: 'change' },
+    // `load` event: the i18n dict emits yükle for `load`. Without this keyword the
+    // SOV reorder's mid-stream `yükle de` (on load) tokenized as the `install`
+    // command (install's primary was also yükle) and the `on load` handler dropped
+    // — `default-value` was degenerate in tr. install now keys off kur (the form
+    // the dict already emits for install), freeing yükle for the load event.
+    load: { primary: 'yükle', normalized: 'load' },
     // Navigation
     go: { primary: 'git', normalized: 'go' },
     scroll: { primary: 'kaydır', alternatives: ['kaydir'], normalized: 'scroll' },
@@ -178,7 +184,10 @@ export const turkishProfile: LanguageProfile = {
     default: { primary: 'varsayılan', normalized: 'default' },
     init: { primary: 'başlat', normalized: 'init' },
     behavior: { primary: 'davranış', normalized: 'behavior' },
-    install: { primary: 'yükle', alternatives: ['kur', 'yüklemek'], normalized: 'install' },
+    // primary is kur (the form the i18n dict emits for install); yükle is reserved
+    // for the load event (see the `load` keyword above). yüklemek stays as the
+    // infinitive surface form.
+    install: { primary: 'kur', alternatives: ['yüklemek'], normalized: 'install' },
     measure: { primary: 'ölç', normalized: 'measure' },
     beep: { primary: 'bip', normalized: 'beep' },
     break: { primary: 'dur', normalized: 'break' },
