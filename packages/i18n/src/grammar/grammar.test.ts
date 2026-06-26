@@ -1954,3 +1954,26 @@ describe('Hebrew fronted accusative marker is repaired (he add-body att-fronting
     expect(he('add .error to me')).toContain('הוסף את .error');
   });
 });
+
+describe('Hebrew scroll/last command translations (he last-in-collection dict gap)', () => {
+  // `scroll` (command) and `last` (positional) were missing from the he i18n
+  // dictionary, so `scroll to last <.message/> in #chat` emitted English scroll/last
+  // that the semantic he parser dropped (last-in-collection lossy — scroll missing).
+  // Adding scroll→גלול and last→אחרון (both already recognized on the semantic side)
+  // makes it faithful. `in` is deliberately NOT translated: it would also rewrite the
+  // `for X in Y` loop iterator and break template-literal-list-build (the for-loop's
+  // English `in` already parses).
+  const he = (s: string) => new GrammarTransformer('en', 'he').transform(s);
+
+  it('[he] scroll command translates to גלול', () => {
+    expect(he('scroll to last <.message/> in #chat')).toContain('גלול');
+  });
+
+  it('[he] positional last translates to אחרון', () => {
+    expect(he('scroll to last <.message/> in #chat')).toContain('אחרון');
+  });
+
+  it('[he] for-loop `in` is left English (not rewritten — guards template-literal-list-build)', () => {
+    expect(he('for item in $items log item')).toContain(' in ');
+  });
+});
