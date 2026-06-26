@@ -7498,3 +7498,34 @@ describe('`do not throw` fetch modifier strip (fetch-do-not-throw phantom-throw)
     expect(actions.has('throw')).toBe(true);
   });
 });
+
+describe('Hebrew get/tell accusative marker tolerance (he get/tell att, Defect 2)', () => {
+  // The i18n transformer marks get's source and tell's destination with the Hebrew
+  // accusative את (`קבל את #input.value`, `אמור את #modal`), but the generated he
+  // patterns had no `he` markerOverride for those roles — so the `את` token broke the
+  // match and `get`/`tell` were dropped (get-value / tell-command / tell-other-element
+  // lossy). Adding `he: 'את'` to the get-source and tell-destination markerOverride
+  // (mirroring ja を / ko 를 / bn কে / qu ta) lets the generated pattern expect it.
+  const collect = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collect(x, acc));
+      else if (c && typeof c === 'object') collect(c, acc);
+    }
+    return acc;
+  };
+
+  it('[he] get with accusative את: `קבל את #input.value` is recognized', () => {
+    const actions = new Set(collect(parse('ב לחיצה קבל את #input.value אז רשום את זה', 'he')));
+    expect(actions.has('get')).toBe(true);
+    expect(actions.has('log')).toBe(true);
+  });
+
+  it('[he] tell with accusative את: `אמור את #modal` is recognized', () => {
+    const actions = new Set(collect(parse('ב לחיצה אמור את #modal על הראה', 'he')));
+    expect(actions.has('tell')).toBe(true);
+  });
+});
