@@ -7483,6 +7483,43 @@ describe('Hebrew leading `unless` guard (he unless-condition degenerate → fait
   });
 });
 
+describe('Turkish load/install homonym disambiguation (tr default-value degenerate → faithful)', () => {
+  // `on load default my @data-count to "0"` was DEGENERATE in tr. The i18n dict
+  // emits yükle for the `load` event (and kur for install), but the tr profile's
+  // install primary was ALSO yükle. Under the SOV reorder the event surfaces
+  // mid-stream as `yükle de` (on load); the parser read that yükle as the `install`
+  // command and the whole `on load` handler dropped (parse anchored on install,
+  // {on} lost). Fix: register `load: yükle` as a tr event and move install's primary
+  // to kur (the form the dict already emits for install), freeing yükle for `load`.
+  const collectActions = (node: unknown, acc: string[] = []): string[] => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  // Corpus-shaped transformer output for `on load default my @data-count to "0"`.
+  const input = 'benim @data-count i yükle de varsayılan "0" e';
+
+  it('[tr] recovers the on-load handler (not mis-anchored as install)', () => {
+    const actions = new Set(collectActions(parse(input, 'tr')));
+    // Before the fix the parse anchored on `install` and lost {on}.
+    expect(actions.has('on')).toBe(true);
+    expect(actions.has('install')).toBe(false);
+  });
+
+  it('[tr] install still parses via kur — freeing yükle does not regress install', () => {
+    // `install Draggable` → SOV reorder → `Draggable i kur` (the dict emits kur).
+    const actions = new Set(collectActions(parse('Draggable i kur', 'tr')));
+    expect(actions.has('install')).toBe(true);
+  });
+});
+
 describe('`do not throw` fetch modifier strip (fetch-do-not-throw phantom-throw)', () => {
   // `do not throw` is a fetch error-handling OPTION ("don't throw on error"), not a
   // command — en drops it (no `throw` action). The SOV grammar transform leaks the

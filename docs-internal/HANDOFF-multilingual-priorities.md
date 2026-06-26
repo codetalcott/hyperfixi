@@ -149,10 +149,22 @@ it; greenfield headroom.
 > **Lower priority / known-hard, not in the ranked set:** `tr window-resize` (the
 > lone hard-fail) — compounded i18n underscore-split (`boyut_değiştir` → `değiştir`
 > collides with `toggle`) + an untranslated `debounced at 200ms` modifier; high-risk
-> multi-part change to the hottest path for the single lowest-ROI pattern. `ko
-window-scroll` / `tr default-value` degenerate are isolated singletons. The
+> multi-part change to the hottest path for the single lowest-ROI pattern. The
 > singleton lossy tail (`get-value`, `set-color-variable`, `tell-*`, …) is per-pattern
 > mop-up — defer behind the clusters above.
+>
+> **Update 2026-06-26.** Two of the four degenerates cleared: **he `unless-condition`**
+> (PR #490 — inline-unless-guard transformer routing + `unless: אלא` he dict/profile;
+> he now fully faithful) and **tr `default-value`** (PR #491 — `load`/`install` `yükle`
+> homonym disambiguation in the tr semantic profile; tr now fully faithful, avgFidelity
+> 1.0). `tr default-value` was NOT actually "known-hard" — it was a routine dict↔profile
+> homonym (the i18n dict already emitted `kur`/`yükle`; only the profile was misaligned).
+> The **2 remaining priority degenerates** (`ko window-scroll`, `tl behavior-resizable`)
+> have grounded, empirically-verified diagnoses + ready-to-resume scope in
+> [`HANDOFF-remaining-degenerate-singletons.md`](HANDOFF-remaining-degenerate-singletons.md).
+> Headline: ko window-scroll is the **SOV `from <source>` handler-head** (the if/else body
+> is a red herring — it parses; ablation-confirmed), the SOV mirror of the merged VSO
+> from-first fix; tl behavior-resizable is the heavy Experimental-3 behavior loop-body arc.
 
 ## How to resume (gate-faithful repro + the gate)
 
