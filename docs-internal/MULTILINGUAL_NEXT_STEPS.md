@@ -29,6 +29,19 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-26 (priority degenerate band → 0).** The last two priority
+> degenerates are cleared (see
+> [`HANDOFF-remaining-degenerate-singletons.md`](HANDOFF-remaining-degenerate-singletons.md)):
+> **ko `window-scroll`** (semantic Stage-2 command-homonym event-head guard —
+> `hasSOVEventMarkerHead`; the if/else body was a red herring, the blocker was Stage 2
+> short-circuiting on the `스크롤` scroll-command homonym) and **tl `behavior-resizable`**
+> (i18n tokenizer keeping an attached `(arg, list)` atomic so the VSO from-first reorder
+> stops splitting `pointerdown(clientX, clientY)`; collateral: ar resizable 0.667→0.889).
+> Priority gate: **degenerate 2 → 0**, lossy unchanged (32), parse-rate 3695/3696, zero
+> regressions. Remaining multilingual work is the **lossy tail (Track 4)** — incl. the
+> behavior `measure`-drop (ar) and th-wide body-parse tail, which were NOT the resizable
+> degenerate's cause — and the **R1/SOV role-fidelity burn-down (Track 3)**.
+
 > **Update 2026-06-17 (PR #445, behavior-removable he/zh).** The two he/zh
 > `behavior-removable` hard fails are fixed (null → lossy: he 0.556, zh 0.667).
 > Root cause was two stacked bugs: (1) the i18n transformer inserted a
