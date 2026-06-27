@@ -850,15 +850,39 @@ export class PatternMatcher {
   }
 
   /**
+   * The connector the i18n transformer emits for English `of` in a property-path
+   * possessive (`set the X of #y to Z`), per language, when it does NOT tokenize
+   * to a `source`/`of` normalized form. EN `of` / AR `من` (→ `source`) / TL `ng`
+   * are handled by the literal/normalized check in {@link isOfPossessiveMarker};
+   * these are possessive particles / genitive linkers that surface as bare
+   * identifiers or particles (ms `daripada`, sw `ya`, vi `của`, zh `的`). Mirrors
+   * the i18n dict `of` modifier. Without these, `set the *--primary-color of #theme
+   * to …` dropped its `set` in ms/sw/vi/zh (the patient property-path never matched).
+   */
+  private static readonly OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
+    ms: new Set(['daripada']),
+    sw: new Set(['ya']),
+    vi: new Set(['của']),
+    zh: new Set(['的']),
+  };
+
+  /**
    * Markers that introduce the owner in a prepositional ("of") possessive:
    * EN `of`; AR من / others that tokenize with a `source`/`of` normalized form;
-   * TL genitive linker `ng`. Kept narrow and only consulted for property-path
+   * TL genitive linker `ng`; plus the per-language `of` connectors in
+   * {@link OF_POSSESSIVE_MARKERS}. Kept narrow and only consulted for property-path
    * roles, so it never shadows a real source role.
    */
   private isOfPossessiveMarker(token: LanguageToken): boolean {
     const value = token.value.toLowerCase();
     const normalized = (token.normalized ?? '').toLowerCase();
-    return value === 'of' || value === 'ng' || normalized === 'of' || normalized === 'source';
+    if (value === 'of' || value === 'ng' || normalized === 'of' || normalized === 'source') {
+      return true;
+    }
+    const langMarkers = this.currentProfile?.code
+      ? PatternMatcher.OF_POSSESSIVE_MARKERS[this.currentProfile.code]
+      : undefined;
+    return !!langMarkers && langMarkers.has(value);
   }
 
   /**
