@@ -416,6 +416,36 @@ export class SemanticParserImpl implements ISemanticParser {
             : midLoop;
           return withDiagnostics(result, diagnostics);
         }
+      } else if (
+        SemanticParserImpl.KNOWN_EVENTS.has(commandMatch.pattern.command) &&
+        this.hasSOVEventMarkerHead(parseInput, language)
+      ) {
+        // SOV command-homonym event head (ko `window-scroll`): the handler's event
+        // word is also a real command (`스크롤` = scroll event AND scroll command).
+        // With no single-token event marker, ko's Stage-1 fused event pattern can't
+        // anchor once a `from <source>` clause (`창 에서`) splits the head, so Stage 2
+        // matches `스크롤` as the scroll command (absorbing `from window` as a role) and
+        // returns before Stage 3. When the matched action is itself a known event AND
+        // the input carries an SOV event-marker head (`스크롤 할 때` = "on scroll"),
+        // prefer SOV extraction — it anchors the homonym as the event and re-parses the
+        // body (the same path that already parses the non-homonym `클릭 … 창 에서 …`
+        // faithfully). trySOVEventExtraction returns null for a genuine bare command
+        // (no marker head / unparseable body), so this is additive. Mirrors the
+        // BLOCK_BODY_ACTIONS guard above.
+        const sovHomonym = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
+        if (sovHomonym) {
+          diagnostics.push(
+            parseDiagnostic(
+              `SOV event extraction preferred over command-homonym event ${commandMatch.pattern.command}`,
+              'info',
+              'stage-sov-homonym'
+            )
+          );
+          const result = modifiers
+            ? this.applyModifiers(sovHomonym as EventHandlerSemanticNode, modifiers)
+            : sovHomonym;
+          return withDiagnostics(result, diagnostics);
+        }
       } else if (tryGetProfile(language)?.wordOrder === 'VSO') {
         // VSO (verb-initial: ar, tl): a *plain* leading command (not a block/loop)
         // can be followed by a mid-stream event clause — `احذف .x من .y عند نقر ثم …`
@@ -2034,6 +2064,54 @@ export class SemanticParserImpl implements ISemanticParser {
       if (phrase.every((w, j) => allTokens[startIdx + j]?.value === w)) return phrase.length;
     }
     return 0;
+  }
+
+  /**
+   * Does the input carry an SOV event-handler head — a known-event token
+   * immediately followed by this language's single-token event marker (ja で,
+   * tr de/da/te/ta, …) or multi-token marker phrase (ko 할 때)?
+   *
+   * Used to distinguish a genuine standalone command from an event handler whose
+   * verb is a command-homonym event word (scroll/resize/focus/…). With no
+   * single-token event marker (ko), the Stage-1 fused event pattern can't anchor
+   * once a `from <source>` clause (`창 에서`) splits the head, so Stage 2 matches the
+   * homonym as its literal command and returns before the SOV extraction stage. This
+   * structural cue (`<event> <marker>`) gates the Stage-2 preference for SOV
+   * extraction, so a real bare command (`스크롤 #panel` — no marker) is untouched.
+   * Returns false for languages with no SOV event-marker config.
+   */
+  private hasSOVEventMarkerHead(input: string, language: string): boolean {
+    const eventMarkers = SemanticParserImpl.SOV_EVENT_MARKERS[language];
+    if (eventMarkers === undefined) return false;
+
+    const { tokens } = tokenizeInternal(input, language);
+    const langEvents = eventNameTranslations[language];
+    const nativeEventNames = new Set<string>();
+    if (langEvents) {
+      for (const native of Object.keys(langEvents)) nativeEventNames.add(native.toLowerCase());
+    }
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      const value = token.value.toLowerCase();
+      const normalized = token.normalized?.toLowerCase();
+      const isEvent =
+        (!!normalized && SemanticParserImpl.KNOWN_EVENTS.has(normalized)) ||
+        SemanticParserImpl.KNOWN_EVENTS.has(value) ||
+        nativeEventNames.has(value);
+      if (!isEvent) continue;
+
+      const next = tokens[i + 1];
+      if (
+        next &&
+        (next.kind === 'particle' || next.kind === 'keyword') &&
+        eventMarkers.has(next.value)
+      ) {
+        return true;
+      }
+      if (this.matchEventMarkerPhrase(tokens, i + 1, language) > 0) return true;
+    }
+    return false;
   }
 
   /**
