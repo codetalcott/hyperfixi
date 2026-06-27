@@ -25,7 +25,7 @@ export const qu: Dictionary = {
     hide: 'pakay',
     show: 'rikuchiy',
     if: 'sichus',
-    unless: 'mana_sichus',
+    unless: 'mana sichus', // spaced phrase ("if not"); `_` form split to `mana`+`sichus`(=if) at parse time
     repeat: 'kutipay',
     for: 'sapankaq', // profile's for word — rayku doubles as `by`
     while: 'kay_kaq',
