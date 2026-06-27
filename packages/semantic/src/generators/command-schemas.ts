@@ -37,6 +37,16 @@ export interface RoleSpec {
    */
   readonly markerOverride?: Record<string, string>;
   /**
+   * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
+   * an optional group), per language, so both the marked and unmarked surface forms
+   * parse. Used for roles whose value is sometimes an unmarked expression — e.g.
+   * `call`'s function-call patient, which the transformer leaves unmarked in a
+   * multi-command body but marks (את / 把) elsewhere. Scoped per language (only the
+   * langs that need it) so it doesn't relax marking — and role typing — everywhere.
+   * Independent of `profile.markersOptional` (which applies the same to every command).
+   */
+  readonly markerOptional?: Record<string, boolean>;
+  /**
    * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
    * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
    * recognize any of the listed markers as signaling this role.
@@ -1871,6 +1881,14 @@ export const callSchema: CommandSchema = {
       description: 'The function to call',
       required: true,
       expectedTypes: ['expression', 'reference'],
+      // A function-call patient (`validateForm()`) is an expression, not a definite
+      // DOM object, so the transformer emits it UNMARKED in a multi-command body
+      // (`קרא validateForm()` / `调用 validateForm()`) — but a marked patient is
+      // still emitted elsewhere. The he/zh patient marker (את / 把) is made OPTIONAL
+      // so both forms parse; without it `call` dropped (form-submit-prevent lossy).
+      // Scoped to he/zh — SOV call (ja を / ko 을) already parses, so leaving their
+      // marker required avoids relaxing their role typing.
+      markerOptional: { he: true, zh: true },
       svoPosition: 1,
       sovPosition: 1,
     },
