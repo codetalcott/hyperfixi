@@ -118,7 +118,11 @@ export const vietnameseProfile: LanguageProfile = {
     settle: { primary: 'ổn định', normalized: 'settle' },
     // Control flow
     if: { primary: 'nếu', normalized: 'if' },
-    unless: { primary: 'trừ_khi', normalized: 'unless' },
+    // Spaced phrase (`trừ khi`) — what the i18n dict + transformer emit; the
+    // BaseTokenizer's multi-word matcher catches it longest-first so the trailing
+    // `khi` (=on/when) is not mistaken for a second event handler. The underscore
+    // form is kept as an alternative for any caller that pre-joins the phrase.
+    unless: { primary: 'trừ khi', alternatives: ['trừ_khi'], normalized: 'unless' },
     when: { primary: 'lúc', normalized: 'when' },
     where: { primary: 'ở_đâu', normalized: 'where' },
     else: { primary: 'không thì', alternatives: ['nếu không'], normalized: 'else' },

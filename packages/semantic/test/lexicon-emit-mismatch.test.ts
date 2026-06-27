@@ -108,7 +108,9 @@ const KNOWN_MISMATCHES = new Set([
   'qu:select:akllay',
   'qu:throw:wikchuy',
   'qu:transition:tikray',
-  'qu:unless:mana_sichus',
+  // qu:unless resolved (HANDOFF-lossy-tail unless-condition): dict realigned to the
+  // spaced `mana sichus` + quechua profile reads it as `unless` (was `mana_sichus`,
+  // which `_`-split to mana(=false)+sichus(=if)).
   'qu:until:hayk_akama',
   'qu:while:kay_kaq',
   'ru:catch:поймать',
@@ -151,7 +153,9 @@ const KNOWN_MISMATCHES = new Set([
   'vi:render:hiển thị',
   'vi:replaceUrl:thayThếUrl',
   'vi:select:chọn',
-  'vi:unless:trừ khi',
+  // vi:unless resolved (HANDOFF-lossy-tail unless-condition): vietnamese profile
+  // primary realigned `trừ_khi`→`trừ khi` so the spaced dict form reads as `unless`
+  // (the bare `khi` was previously mistaken for a second `on` handler).
   'zh:catch:捕获',
   'zh:pushUrl:推送网址',
   'zh:replaceUrl:替换网址',

@@ -153,6 +153,36 @@ describe('Trailing event clause wraps a block body (unless-condition, ar+tl)', (
   });
 });
 
+describe('unless-condition guard parses (qu, vi, zh — unless keyword recognized)', () => {
+  // Three distinct keyword-recognition fixes that each restored `unless` to the
+  // `unless-condition` body parse (was a dropped `unless`, fid 0.667):
+  //  - vi: profile `unless` primary was `trừ_khi` (underscore) but the transformer
+  //    emits the spaced `trừ khi`; the bare `khi` (=on) was mistaken for a second
+  //    event handler. Profile primary → `trừ khi` (multi-word match).
+  //  - qu: profile had no `unless`; the dict's `mana_sichus` split to
+  //    `mana`(=false)+`sichus`(=if) and the clause parsed as `if`. Added
+  //    `unless: 'mana sichus'` (spaced, multi-word) + dict aligned to `mana sichus`.
+  //  - zh: the i18n transformer now keeps the unless condition marker-free
+  //    (`除非 I match .disabled 切换 把 .selected`, not `除非 把 I match …`); this
+  //    locks that the parser recovers the full body from the corrected form.
+  // See docs-internal/HANDOFF-lossy-tail.md (unless-condition arc).
+  const cases: Array<[string, string]> = [
+    ['vi', 'khi nhấp trừ khi I match .disabled chuyển đổi .selected'],
+    ['qu', 'I match .disabled tikray .selected ta ñitiy pi mana sichus'],
+    ['zh', '当 点击 时 除非 I match .disabled 切换 把 .selected'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers on + unless + toggle from the unless guard`, () => {
+      const node = parse(input, lang);
+      expect(node.action).toBe('on');
+      const body = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+      expect(body).toContain('unless');
+      expect(body).toContain('toggle');
+    });
+  }
+});
+
 describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
   // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
   // `@property` relies on the identifier reading, expectedTypes

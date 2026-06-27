@@ -498,6 +498,16 @@ const BLOCK_HEAD_KEYWORDS = new Set(['live', 'when', 'unless']);
  */
 const BLOCK_BODY_KEYWORDS = new Set(['if', 'repeat', 'unless', 'while', 'for']);
 
+/**
+ * SVO targets that mark the object/patient with a particle (he את, zh 把) and so
+ * mangle an inline `on <event> unless <cond> <body>` guard — the unless tail is
+ * swept into one patient blob and the marker lands ahead of the condition. These
+ * route through `tryTransformEventWithUnlessGuard`. SOV/VSO object-markers
+ * (ja/ko/tr/ar) are excluded: their event does not lead, so the SVO event-first
+ * emission there would be wrong (and they don't exhibit the artifact today).
+ */
+const UNLESS_GUARD_OBJECT_MARKING_LOCALES = new Set(['he', 'zh']);
+
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
   const boundaryModifiers = getBoundaryModifiersForLocale(sourceLocale);
@@ -1965,25 +1975,31 @@ export class GrammarTransformer {
    * Transform an event handler whose body is an inline `unless` guard with NO
    * `end` (`on <event> unless <cond> <body>` — the `unless-condition` shape).
    *
-   * Hebrew-only. `parseEventHandler` reads `unless` as the action and sweeps the
-   * whole `<cond> <body>` tail into a single `patient` blob; Hebrew then prefixes
-   * that blob with the accusative object marker את (`… אלא את I match .disabled מתג
-   * .selected`) and the inner toggle loses its own את. The semantic parser can't
-   * recover the guard from that — את ahead of the condition blocks the `unless`
-   * pattern AND the markerless `מתג .selected` fails the he toggle pattern (which
-   * requires את) — so the body collapses (degenerate). Marker-less languages
-   * (de/it/ar/pl) tolerate the same role-blob and stay faithful, so this is a
-   * Hebrew accusative-marker artifact, not a general parse gap.
+   * Object-marking SVO targets (he, zh). `parseEventHandler` reads `unless` as the
+   * action and sweeps the whole `<cond> <body>` tail into a single `patient` blob;
+   * the target then prefixes that blob with its object marker — Hebrew's accusative
+   * את (`… אלא את I match .disabled מתג .selected`) or Chinese's BA particle 把
+   * (`… 除非 把 I match .disabled 切换 .selected`) — and the inner toggle loses its
+   * own marker. The semantic parser can't recover the guard from that: the marker
+   * ahead of the condition blocks the `unless` pattern AND the now-markerless body
+   * command fails its object-marked toggle pattern, so the body collapses (`unless`
+   * dropped). Marker-less languages (de/it/ar/pl) tolerate the same role-blob and
+   * stay faithful, so this is an object-marker artifact, not a general parse gap.
    *
    * The standalone `unless <cond> <body>` path already produces the correct shape
    * (`extractBlockStructure` → `transformBlock`: condition kept marker-free, body
-   * command keeps its את — `אלא I match .disabled מתג את .selected`). So we split
-   * the event head off, transform the guard through that path, and emit the event
-   * clause first (he is SVO — event leads). Returns `null` (fall through) when the
-   * input isn't a he event handler with an un-terminated inline `unless` guard.
+   * command keeps its marker — he `אלא I match .disabled מתג את .selected`, zh
+   * `除非 I match .disabled 切换 把 .selected`). So we split the event head off,
+   * transform the guard through that path, and emit the event clause first (he and
+   * zh are both SVO — event leads). Returns `null` (fall through) when the input
+   * isn't an object-marking event handler with an un-terminated inline `unless`
+   * guard.
    */
   private tryTransformEventWithUnlessGuard(input: string): string | null {
-    if (this.targetProfile.code !== 'he') return null;
+    // SVO object-marking targets only — these front the unless tail with an object
+    // marker (he את / zh 把) that breaks the parse. Event-leads emission below
+    // assumes SVO, so SOV/VSO object-markers (ja/ko/tr/ar) are intentionally out.
+    if (!UNLESS_GUARD_OBJECT_MARKING_LOCALES.has(this.targetProfile.code)) return null;
 
     const tokens = tokenize(input, this.sourceProfile);
     if (tokens.length === 0) return null;

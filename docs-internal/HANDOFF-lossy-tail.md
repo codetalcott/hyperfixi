@@ -36,12 +36,38 @@ The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 > session — every theorized cause was wrong until `ml.parse` corrected it). Regenerate the
 > leverage map + signals below from the committed baseline before starting.
 
-| Signal                        | Value (post-#499, stamp `35d1cf8a`)                      |
+> **Update 2026-06-27 (next session — lossy 18 → 15; `unless-condition` cleared).** Sequence
+> item 3 (`unless-condition` qu/vi/zh) is **DONE**. The "control-flow body-parse / how that path
+> scopes the `unless … end` body" framing was — as the doc warned — **the trap**: the en
+> reference parses `unless I match .disabled` as a **flat sibling statement** (just a `condition`,
+> no nested body), so there is no body to scope. `ml.parse` showed **three unrelated
+> keyword/transform causes**, one per language:
+>
+> - **vi** — semantic profile `unless` primary was `trừ_khi` (underscore) but the transformer
+>   emits the spaced `trừ khi`; the bare `khi` (=on/when) was mis-read as a second event handler.
+>   Profile primary → `trừ khi` (the BaseTokenizer multi-word matcher catches it longest-first).
+> - **qu** — quechua profile had **no `unless`** at all, and the dict's `mana_sichus` `_`-split to
+>   `mana`(=false)+`sichus`(=if), so the clause parsed as **`if`**. Added
+>   `unless: 'mana sichus'` (spaced, multi-word) + realigned the i18n dict to `mana sichus`
+>   (transformer keeps the phrase contiguous clause-final).
+> - **zh** — purely a **transform** artifact: `parseEventHandler` swept the whole `unless` tail
+>   into one `patient` blob, so the BA particle `把` landed ahead of the _condition_
+>   (`除非 把 I match …`, `unless` dropped) instead of on the toggle patient. The existing
+>   **Hebrew-only** `tryTransformEventWithUnlessGuard` (which routes the guard through the
+>   standalone block path) was the same את/把 object-marker artifact — widened to `{he, zh}`.
+>
+> Guards: semantic `multilingual-roadmap-fixes.test.ts` (vi/qu/zh parse) + i18n `grammar.test.ts`
+> (zh/he marker placement, qu dict form), both verified fail-without-fix; pruned two now-stale
+> `lexicon-emit-mismatch` allowlist entries (`qu:unless`, `vi:unless`). `--regression` green,
+> baseline regenerated. **What's left (15) is the loop-body family + singleton tail** — unchanged
+> below.
+
+| Signal                        | Value (post-unless-condition, stamp `ea271f4b`)          |
 | ----------------------------- | -------------------------------------------------------- |
 | parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)        |
 | degenerate (fid < 0.5)        | **0** ✅                                                 |
-| lossy (0.5 ≤ fid < 1.0)       | **18**                                                   |
-| avgFidelity (R0-recall)       | 0.998                                                    |
+| lossy (0.5 ≤ fid < 1.0)       | **15** (was 18; `unless-condition` qu/vi/zh cleared)     |
+| avgFidelity (R0-recall)       | 0.999                                                    |
 | avgPrecision (R0 trust floor) | 0.970                                                    |
 | avgRoleFidelity (R1)          | **0.843 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784) |
 
@@ -49,7 +75,7 @@ The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 
 ```text
 control-flow body-parse:
-  unless-condition   (3)   qu,vi,zh   ← was the biggest; he cleared (#490). Body-parse arc.
+  unless-condition   (0)   ✅ DONE     ← qu/vi/zh cleared (keyword + transform; NOT body-parse).
 loop-body family:
   behavior-draggable (2)   ar,qu      ← qu drops `repeat` (no tryParseLoopBlock; grounded below)
   repeat-until-event (2)   ar,sw
@@ -286,13 +312,14 @@ The localized-alignment band is **done** (lossy 32 → 18):
 2. ~~**Arc 3 (`set-color-variable`)**~~ **DONE (#497)**; **`get-value`** (#498) + **`form-submit-prevent`**
    (#499) also cleared — see the Arc 3 DONE block.
 
-**The remaining 18 are the body-parse residue — each its own FRESH, ground-from-scratch session:**
+3. ~~**`unless-condition` (qu,vi,zh)**~~ **DONE** (lossy 18 → 15). NOT body-parse, as the framing
+   warned — three independent keyword/transform causes: vi profile `trừ_khi`→`trừ khi`; qu added
+   `unless: 'mana sichus'` + dict realign; zh widened the Hebrew-only `tryTransformEventWithUnlessGuard`
+   to `{he, zh}` (the `把`/את object-marker on the swept condition blob). See the 2026-06-27 update
+   block at the top.
 
-3. **`unless-condition` (qu,vi,zh)** — control-flow body parsing. `unless` is deliberately NOT
-   folded by `tryParseConditionalBlock` (folding relabels its action `unless`→`if` and desyncs the
-   action-set comparison), so its body goes through the flat per-clause path; the loss is how that
-   path scopes the `unless … end` body across qu/vi/zh. **Re-ground from scratch** (don't trust this
-   framing — it's the trap). Bounded-ish (3) but genuinely body-parse, not a dict tweak.
+**The remaining 15 are the loop-body residue + singleton tail — each its own FRESH, ground-from-scratch session:**
+
 4. **Arc 2 (loop-body)** — the SOV `repeat`-block fold (qu, grounded below: no `tryParseLoopBlock`
    in `parseBodyWithClauses`) + ar `measure` + `repeat-until-event` (ar/sw). Dedicated session,
    hottest body-parse path. Do the qu `until` underscore prerequisite together with the fold.

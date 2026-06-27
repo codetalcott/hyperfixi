@@ -107,6 +107,12 @@ export const quechuaProfile: LanguageProfile = {
     fetch: { primary: 'apamuy', alternatives: ['taripakaramuy'], normalized: 'fetch' },
     settle: { primary: 'tiyakuy', normalized: 'settle' },
     if: { primary: 'sichus', normalized: 'if' },
+    // `mana sichus` = "if not" (Quechua has no single-word "unless"). Spaced phrase
+    // so the BaseTokenizer multi-word matcher catches it longest-first — otherwise
+    // the tokenizer splits it into `mana`(=false) + `sichus`(=if) and the clause
+    // mis-parses as `if`. The i18n qu dict emits the same spaced form (was
+    // `mana_sichus`, whose `_`-split caused exactly that drop).
+    unless: { primary: 'mana sichus', normalized: 'unless' },
     when: { primary: 'maykama', normalized: 'when' },
     where: { primary: 'maypi', normalized: 'where' },
     else: { primary: 'manachus', alternatives: ['hukniraq'], normalized: 'else' },

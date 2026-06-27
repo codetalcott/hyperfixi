@@ -576,6 +576,39 @@ describe('GrammarTransformer', () => {
   });
 });
 
+describe('Inline `unless` guard in an event handler (no object marker on condition)', () => {
+  // `on click unless I match .disabled toggle .selected`: the event-handler body
+  // is a bare `unless <cond> <verb>` guard (no `end`). parseEventHandler sweeps the
+  // whole tail into one `patient` blob, so an object-marking SVO target used to
+  // front the *condition* with its marker (he את / zh 把) and strip the marker off
+  // the real toggle — the semantic parser then dropped `unless`.
+  // tryTransformEventWithUnlessGuard routes the guard through the standalone block
+  // path so the marker lands on the toggle patient, not the condition.
+  // See docs-internal/HANDOFF-lossy-tail.md (unless-condition arc).
+  const en = 'on click unless I match .disabled toggle .selected';
+
+  it('zh: 把 marks the toggle patient, not the unless condition', () => {
+    const result = new GrammarTransformer('en', 'zh').transform(en);
+    expect(result).toContain('除非'); // unless
+    expect(result).toContain('切换'); // toggle
+    expect(result).toContain('切换 把 .selected'); // 把 on the toggle patient
+    expect(result).not.toContain('除非 把'); // never on the condition
+  });
+
+  it('he: את marks the toggle patient, not the unless condition (unchanged)', () => {
+    const result = new GrammarTransformer('en', 'he').transform(en);
+    expect(result).toContain('אלא'); // unless
+    expect(result).toContain('מתג את .selected'); // את on the toggle patient
+    expect(result).not.toContain('אלא את'); // never on the condition
+  });
+
+  it('qu: dict emits the spaced `mana sichus`, not the `_`-split form', () => {
+    const result = new GrammarTransformer('en', 'qu').transform(en);
+    expect(result).toContain('mana sichus');
+    expect(result).not.toContain('mana_sichus');
+  });
+});
+
 // =============================================================================
 // Convenience Function Tests
 // =============================================================================
