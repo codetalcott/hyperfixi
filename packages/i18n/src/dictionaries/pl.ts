@@ -12,7 +12,11 @@ export const pl: Dictionary = {
     take: 'weź',
     put: 'umieść',
     set: 'ustaw',
-    get: 'pobierz',
+    // `uzyskaj` (the semantic pl profile's get primary), not `pobierz`: pl `pobierz`
+    // ("download") is the profile's FETCH primary, so emitting it for get made the
+    // parser read every transformed get as fetch (get-value lossy + a phantom fetch).
+    // Same dict↔profile homonym disambiguation as tr load/install, qu get.
+    get: 'uzyskaj',
     add: 'dodaj',
     remove: 'usuń',
     toggle: 'przełącz',

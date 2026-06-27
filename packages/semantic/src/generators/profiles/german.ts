@@ -73,7 +73,7 @@ export const germanProfile: LanguageProfile = {
     swap: { primary: 'austauschen', alternatives: ['tauschen', 'vertauschen'], normalized: 'swap' },
     morph: { primary: 'verwandeln', alternatives: ['transformieren'], normalized: 'morph' },
     set: { primary: 'festlegen', alternatives: ['definieren'], normalized: 'set' },
-    get: { primary: 'holen', alternatives: ['bekommen'], normalized: 'get' },
+    get: { primary: 'holen', alternatives: ['bekommen', 'erhalten'], normalized: 'get' },
     increment: { primary: 'erhöhen', normalized: 'increment' },
     decrement: { primary: 'verringern', alternatives: ['vermindern'], normalized: 'decrement' },
     log: { primary: 'protokollieren', alternatives: ['ausgeben'], normalized: 'log' },

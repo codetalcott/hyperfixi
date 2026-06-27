@@ -362,12 +362,44 @@ function getGetPatternsVi(): LanguagePattern[] {
 /**
  * Get get patterns for a specific language.
  */
+function getGetPatternsZh(): LanguagePattern[] {
+  return [
+    // `get #x.value` → zh `获取 把 #x.value` (BA object marker). The generated zh get
+    // pattern doesn't tolerate 把, so the corpus form fell through to `fetch-zh-ba`
+    // (which used to list 获得) and mis-parsed as fetch. Mirror fetch-zh-ba: the get
+    // verb (获取/获得/取得) + an optional 把-marked source.
+    {
+      id: 'get-zh-ba',
+      language: 'zh',
+      command: 'get',
+      priority: 105,
+      template: {
+        format: '获取 把 {source}',
+        tokens: [
+          { type: 'literal', value: '获取', alternatives: ['获得', '取得'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: '把', alternatives: ['从', '由'] }],
+          },
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+        ],
+      },
+      extraction: {
+        source: { marker: '把', markerAlternatives: ['从', '由'] },
+      },
+    },
+  ];
+}
+
 export function getGetPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'bn':
       return getGetPatternsBn();
     case 'de':
       return getGetPatternsDe();
+    case 'zh':
+      return getGetPatternsZh();
     case 'hi':
       return getGetPatternsHi();
     case 'it':

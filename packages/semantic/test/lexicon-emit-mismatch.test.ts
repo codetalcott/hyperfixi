@@ -47,7 +47,6 @@ const KNOWN_MISMATCHES = new Set([
   'ar:select:اختر',
   'bn:clone:কপি',
   'de:catch:fangen',
-  'de:get:erhalten',
   'de:pushUrl:urlHinzufügen',
   'de:replaceUrl:urlErsetzen',
   'de:select:auswählen',
@@ -91,7 +90,6 @@ const KNOWN_MISMATCHES = new Set([
   'ms:replaceUrl:ganti_url',
   'ms:select:pilih',
   'pl:catch:złap',
-  'pl:get:pobierz',
   'pl:pushUrl:dodajUrl',
   'pl:replaceUrl:zamieńUrl',
   'pl:select:wybierz',
@@ -157,7 +155,6 @@ const KNOWN_MISMATCHES = new Set([
   'zh:catch:捕获',
   'zh:pushUrl:推送网址',
   'zh:replaceUrl:替换网址',
-  'zh:take:获取',
   'zh:while:当',
 ]);
 
