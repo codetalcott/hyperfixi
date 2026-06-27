@@ -1965,11 +1965,12 @@ export const tellSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference'],
       svoPosition: 1,
       sovPosition: 1,
-      // "tell #element ..." (no preposition in en). Hebrew: the transformer marks
-      // tell's object with the accusative את (`אמור את #element`), so the generated
-      // he pattern must expect it — without this the `את` token breaks the match and
-      // `tell` is dropped (tell-command / tell-other-element lossy).
-      markerOverride: { en: '', he: 'את' },
+      // "tell #element ..." (no preposition in en). Object-marking targets mark
+      // tell's object with their accusative/BA particle — Hebrew את (`אמור את
+      // #element`), Chinese 把 (`告诉 把 #modal`) — so the generated pattern must
+      // expect it; without it the marker token breaks the match and `tell` is
+      // dropped (tell-command / tell-other-element lossy in he and zh).
+      markerOverride: { en: '', he: 'את', zh: '把' },
     },
   ],
 };
