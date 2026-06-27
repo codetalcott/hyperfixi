@@ -15,39 +15,49 @@
 
 The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 
-> **Update 2026-06-27 (Arc 1 DONE — #495, lossy 32 → 28).** th's four behaviors
-> (draggable/removable/resizable/sortable) are now faithful: th was the only SVO profile
-> carrying a `roleMarkers.event` (`เมื่อ`), so `trigger`/`send` command patterns expected
-> `ทริกเกอร์ เมื่อ {event}` but the transformer emits the unmarked object `ทริกเกอร์ {event}`.
-> Dropped the marker → matches the SVO peers. The numbers below are the **pre-#495** snapshot
-> (stamp `84bcac01`); the leverage map is updated. Regenerate from the baseline before use.
+> **Update 2026-06-27 (session wrap — lossy 32 → 18; the clean alignments are harvested).**
+> Five fixes landed this session, all of the _localized-alignment_ kind (a marker, keyword,
+> tokenizer rule, or homonym):
+>
+> - **#495 — th `trigger`/`send`** (Arc 1): th was the only SVO profile with a
+>   `roleMarkers.event` (`เมื่อ`); dropped it → 4 th behaviors faithful (32→28).
+> - **#497 — `set-color-variable`** (Arc 3): per-language `of`-possessive markers
+>   (`OF_POSSESSIVE_MARKERS`: ms `daripada`/sw `ya`/vi `của`/zh `的`) → ms/sw/vi/zh faithful (28→24).
+> - **#498 — `get-value`** (de/pl/zh): de profile `erhalten`; pl dict `pobierz`→`uzyskaj`
+>   (get/fetch homonym); zh `get-zh-ba` pattern + drop `获得` from `fetch-zh-ba`; **bonus** zh
+>   dict `take` `获取`→`拿取` (cleared `take-class-from-siblings` too) (24→20).
+> - **#499 — `form-submit-prevent`** (he/zh): per-language `markerOptional` on the `call`
+>   patient role (the function-call patient is unmarked in a multi-command body) (20→18).
+>
+> **What's left (lossy 18) is qualitatively different — the parser body-parse family**, which
+> this doc and the priorities handoff reserve for **dedicated sessions**: control-flow body
+> parsing (`unless-condition`) + the loop-body arc (`repeat`/`measure`/`repeat-until-event`) +
+> a singleton tail. Take each FRESH and ground from scratch (the methodology lesson held all
+> session — every theorized cause was wrong until `ml.parse` corrected it). Regenerate the
+> leverage map + signals below from the committed baseline before starting.
 
-| Signal                        | Value (post-#495)                                        |
+| Signal                        | Value (post-#499, stamp `35d1cf8a`)                      |
 | ----------------------------- | -------------------------------------------------------- |
 | parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)        |
 | degenerate (fid < 0.5)        | **0** ✅                                                 |
-| lossy (0.5 ≤ fid < 1.0)       | **28**                                                   |
-| avgFidelity (R0-recall)       | ~0.997                                                   |
-| avgPrecision (R0 trust floor) | ~0.970                                                   |
-| avgRoleFidelity (R1)          | **0.842 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784) |
+| lossy (0.5 ≤ fid < 1.0)       | **18**                                                   |
+| avgFidelity (R0-recall)       | 0.998                                                    |
+| avgPrecision (R0 trust floor) | 0.970                                                    |
+| avgRoleFidelity (R1)          | **0.843 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784) |
 
-### The lossy leverage map (post-#495 — regenerate from the baseline; do NOT trust after more lands)
+### The lossy leverage map (post-#499 — regenerate from the baseline; do NOT trust after more lands)
 
-```
-behaviors (loop-body family):
-  behavior-draggable (2)   ar,qu     ← qu drops `repeat` (Arc 2; grounded below)
-  behavior-resizable (1)   ar        ← ar drops `measure` (Arc 2)
+```text
+control-flow body-parse:
+  unless-condition   (3)   qu,vi,zh   ← was the biggest; he cleared (#490). Body-parse arc.
+loop-body family:
+  behavior-draggable (2)   ar,qu      ← qu drops `repeat` (no tryParseLoopBlock; grounded below)
   repeat-until-event (2)   ar,sw
-non-behavior clusters:
-  set-color-variable (4)   ms,sw,vi,zh   ← biggest non-behavior cluster
-  get-value          (3)   de,pl,zh
-  unless-condition   (3)   qu,vi,zh      ← was the biggest; he cleared in #490
-  form-submit-prevent(2)   he,zh
-singletons:
+  behavior-resizable (1)   ar         ← ar drops `measure`
+singletons (per-pattern mop-up):
   keydown-key-is-syntax(hi), if-empty(ko), input-validation(ko), last-in-collection(ms),
   append-content(qu), input-mirror(vi), morph-with-template(vi),
-  render-template-with-data(vi), take-class-from-siblings(zh), tell-command(zh),
-  tell-other-element(zh)
+  render-template-with-data(vi), tell-command(zh), tell-other-element(zh)
 ```
 
 Regenerate the map (the authoritative version) with:
@@ -217,18 +227,25 @@ resizable.
 
 ---
 
-## Arc 3 — `set-color-variable` (ms,sw,vi,zh) [VERIFY FIRST]
+## Arc 3 — `set-color-variable` (ms,sw,vi,zh) [DONE — #497]
 
-**The biggest non-behavior lossy cluster (4).** Likely one shared defect: setting a CSS custom
-property (a `set` whose target/value is a `--var` / `*--color`-style property) across these four
-langs. **Verify the layer** (transform vs parser) before assuming — this is exactly the shape that
-fooled the ko/tl diagnoses.
-
-**Start here:** `PATTERN=set-color-variable LANGS=ms,sw,vi,zh`; dump the missing action and the
-translation text; tokenize the failing `set` clause. Check whether the CSS-var token survives the
-i18n transform and how the semantic `set` pattern types it.
-
-**Risk:** unknown until diagnosed. **Value:** up to 4 lossy in one fix.
+> **DONE (2026-06-27, #497 — lossy 28→24).** Not the CSS-var shape theorized: the `set` target
+> is an **"of"-possessive property path** (`*--primary-color of #theme`), and the `of` connector
+> the transformer emits (ms `daripada`, sw `ya`, vi `của`, zh `的`) tokenizes as a bare
+> identifier/particle that `isOfPossessiveMarker` didn't recognize (it only knew en `of`, tl `ng`,
+> `source`-normalized ar `من`) → the property-path never matched and `set` dropped. Fix: an
+> `OF_POSSESSIVE_MARKERS` per-language map in `pattern-matcher.ts`, gated to property-path roles.
+> (The leaked English `the` was a red herring — already handled by `ENGLISH_NOISE_WORDS`.)
+>
+> **Also DONE this session (the non-behavior cluster sweep):**
+>
+> - **`get-value` (de/pl/zh) — #498.** Three causes: de profile missing `erhalten`; pl dict
+>   `pobierz` is the FETCH primary (emit `uzyskaj`); zh `获得` claimed by `fetch-zh-ba` + no
+>   ba-tolerant get pattern (`get-zh-ba`). Bonus: zh dict `take` `获取`→`拿取` cleared
+>   `take-class-from-siblings` too.
+> - **`form-submit-prevent` (he/zh) — #499.** The `call` patient is a function-call expression,
+>   emitted unmarked in a multi-command body but the he/zh object marker (`את`/`把`) was required.
+>   Fix: per-language `markerOptional` (RoleSpec) `{ he, zh }` on the call patient.
 
 ---
 
@@ -262,12 +279,24 @@ it a dedicated arc with careful R0/precision/parse-rate guards — not a tail-en
 
 ## Recommended sequence
 
-1. ~~**Arc 1 (th `trigger`/`send`)**~~ **DONE (#495)** — lossy 32 → 28. (qu/bn/hi-trigger sibling
-   investigated + intentionally NOT shipped — see the Arc 1 dead-end note.)
-2. **Arc 3 (`set-color-variable`)** — biggest non-behavior cluster (4); diagnose the layer first.
-   The cleanest bounded next target.
-3. **Arc 2 (loop-body)** — the SOV `repeat`-block fold (qu, grounded) + ar `measure`; a
-   **dedicated session** (intricate, hottest body-parse path). Do the qu `until` underscore
-   prerequisite together with the `tryParseLoopBlock` fold.
-4. **Arc 4 (R1/SOV)** — dedicate a guarded session; highest headroom, highest risk. Owns the
-   qu/bn/hi-trigger SOV event-anchor residue too.
+The localized-alignment band is **done** (lossy 32 → 18):
+
+1. ~~**Arc 1 (th `trigger`/`send`)**~~ **DONE (#495)**. (qu/bn/hi-trigger sibling investigated +
+   intentionally NOT shipped — see the Arc 1 dead-end note.)
+2. ~~**Arc 3 (`set-color-variable`)**~~ **DONE (#497)**; **`get-value`** (#498) + **`form-submit-prevent`**
+   (#499) also cleared — see the Arc 3 DONE block.
+
+**The remaining 18 are the body-parse residue — each its own FRESH, ground-from-scratch session:**
+
+3. **`unless-condition` (qu,vi,zh)** — control-flow body parsing. `unless` is deliberately NOT
+   folded by `tryParseConditionalBlock` (folding relabels its action `unless`→`if` and desyncs the
+   action-set comparison), so its body goes through the flat per-clause path; the loss is how that
+   path scopes the `unless … end` body across qu/vi/zh. **Re-ground from scratch** (don't trust this
+   framing — it's the trap). Bounded-ish (3) but genuinely body-parse, not a dict tweak.
+4. **Arc 2 (loop-body)** — the SOV `repeat`-block fold (qu, grounded below: no `tryParseLoopBlock`
+   in `parseBodyWithClauses`) + ar `measure` + `repeat-until-event` (ar/sw). Dedicated session,
+   hottest body-parse path. Do the qu `until` underscore prerequisite together with the fold.
+5. **Singleton tail** (`keydown-key-is-syntax`, `if-empty`, `input-validation`, `tell-*`, vi
+   `*-template`, …) — per-pattern mop-up; lowest ROI, defer behind 3–4.
+6. **Arc 4 (R1/SOV role-fidelity, 0.843)** — separate dimension, highest headroom + risk; the
+   convergent SOV event-anchor arc (owns the qu/bn/hi-trigger residue). Guarded dedicated session.
