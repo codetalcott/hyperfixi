@@ -7720,3 +7720,29 @@ describe('Per-language `of`-possessive markers (set-color-variable ms/sw/vi/zh l
     expect(parse('seti #x kwa "y"', 'sw').action).toBe('set'); // plain set, no of-marker
   });
 });
+
+describe('get keyword alignment de/pl/zh (get-value lossy → faithful)', () => {
+  // `on click get #input.value then log it` dropped its `get` in de/pl/zh:
+  // - de: the i18n dict emits `erhalten`, but the de profile get was holen/bekommen only
+  //   → `erhalten` unrecognized, get dropped. Fix: add `erhalten` to the de get alts.
+  // - pl: the i18n dict emitted `pobierz` for get, but `pobierz` is the pl profile's FETCH
+  //   primary → every get parsed as fetch. Fix: dict emits `uzyskaj` (pl get primary).
+  // - zh: `fetch-zh-ba` listed `获得` (the zh dict's get word) as a fetch alt, AND the
+  //   generated zh get pattern didn't tolerate the BA marker `把` → `获得 把 #x` mis-parsed
+  //   as fetch. Fix: drop `获得` from fetch-zh-ba + a `get-zh-ba` pattern (mirrors it).
+  it('[de] `erhalten` is recognized as get', () => {
+    expect(parse('erhalten #input.value', 'de').action).toBe('get');
+  });
+
+  it('[pl] `uzyskaj` parses as get (not fetch)', () => {
+    expect(parse('uzyskaj #input.value', 'pl').action).toBe('get');
+  });
+
+  it('[zh] `获得 把 #x` parses as get, not fetch', () => {
+    expect(parse('获得 把 #input.value', 'zh').action).toBe('get');
+  });
+
+  it('[zh] real fetch (`抓取 把 …`) is unaffected by removing 获得 from fetch-zh-ba', () => {
+    expect(parse('抓取 把 /api/data', 'zh').action).toBe('fetch');
+  });
+});

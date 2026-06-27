@@ -30,7 +30,10 @@ function getFetchPatternsZh(): LanguagePattern[] {
       template: {
         format: '抓取 把 {source} 的 {responseType}',
         tokens: [
-          { type: 'literal', value: '抓取', alternatives: ['取', '获得'] },
+          // `获得` removed: it is the zh dict's `get` word (profile get is 获取/获得/
+          // 取得), so listing it here let `获得 把 #x` mis-parse as fetch (get-value
+          // lossy → phantom fetch). The dedicated `get-zh-ba` pattern now claims it.
+          { type: 'literal', value: '抓取', alternatives: ['取'] },
           // BA-marked source (transformer output); 从 also tolerated for symmetry
           // with the generated source-marked form.
           {

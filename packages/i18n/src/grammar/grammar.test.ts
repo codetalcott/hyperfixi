@@ -2043,3 +2043,37 @@ describe('Attached parenthesized arg list stays one token (tl behavior-resizable
     expect(out).not.toContain('($count or 0)');
   });
 });
+
+describe('Polish get translates to uzyskaj, not pobierz (pl get-value get/fetch homonym)', () => {
+  // The pl dict emitted `pobierz` for get, but `pobierz` ("download") is the semantic pl
+  // profile's FETCH primary — so every transformed get parsed as fetch (get-value lossy +
+  // a phantom fetch). Emit `uzyskaj` (the profile's get primary) so get stays get.
+  const pl = (s: string) => new GrammarTransformer('en', 'pl').transform(s);
+
+  it('[pl] `get #x.value` emits uzyskaj (not the fetch word pobierz)', () => {
+    const out = pl('get #input.value');
+    expect(out).toContain('uzyskaj');
+    expect(out).not.toContain('pobierz');
+  });
+
+  it('[pl] `fetch /api` still emits pobierz (fetch unaffected)', () => {
+    expect(pl('fetch /api/data')).toContain('pobierz');
+  });
+});
+
+describe('Chinese take translates to 拿取, not 获取 (zh take/get homonym)', () => {
+  // The zh dict emitted `获取` for take, but `获取` is the semantic zh profile's GET primary
+  // — so `take …` parsed as get (take-class-from-siblings: phantom get + take dropped).
+  // Emit `拿取` (the profile's take primary) so take stays take.
+  const zh = (s: string) => new GrammarTransformer('en', 'zh').transform(s);
+
+  it('[zh] `take .x from .y` emits 拿取 (not the get word 获取)', () => {
+    const out = zh('take .active from .tab-button');
+    expect(out).toContain('拿取');
+    expect(out).not.toContain('获取');
+  });
+
+  it('[zh] `get #x.value` still emits a get word, not 拿取', () => {
+    expect(zh('get #input.value')).not.toContain('拿取');
+  });
+});

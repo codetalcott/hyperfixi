@@ -9,7 +9,11 @@ export const zh: Dictionary = {
     tell: '告诉',
     trigger: '触发',
     send: '发送',
-    take: '获取',
+    // `拿取` (the semantic zh profile's take primary), not `获取` — `获取` is the
+    // profile's GET primary, so emitting it for take made `take …` parse as get
+    // (take-class-from-siblings: phantom get, take dropped). Exposed by the get-zh-ba
+    // pattern; same dict↔profile homonym family as pl get/fetch.
+    take: '拿取',
     put: '放置',
     set: '设置',
     get: '获得',
