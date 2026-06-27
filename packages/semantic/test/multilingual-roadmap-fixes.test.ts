@@ -183,6 +183,29 @@ describe('unless-condition guard parses (qu, vi, zh — unless keyword recognize
   }
 });
 
+describe('vi render keyword alignment (kết xuất, not the show-colliding hiển thị)', () => {
+  // The i18n vi dict emitted `render: 'hiển thị'`, but `hiển thị` is also vi `show`
+  // and the semantic profile reads it as `show` (render primary is `kết xuất`). So
+  // `render #x with …` parsed as `show` and the `render` action dropped
+  // (render-template-with-data, morph-with-template — fid 0.5/0.667). Dict realigned
+  // to `kết xuất`. See docs-internal/HANDOFF-lossy-tail.md (render cluster).
+  const cases: Array<[string, string]> = [
+    ['kết xuất #user-list với users: $data rồi đặt nó vào #container', 'put'],
+    ['kết xuất #row với row: $data rồi biến đổi #target vào nó', undefined as unknown as string],
+  ];
+
+  for (const [body, alsoExpect] of cases) {
+    it(`parses kết xuất as render: "${body.slice(0, 28)}…"`, () => {
+      const node = parse(`khi nhấp ${body}`, 'vi');
+      expect(node.action).toBe('on');
+      const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+      expect(dumped).toContain('render');
+      expect(dumped).not.toContain('"show"');
+      if (alsoExpect) expect(dumped).toContain(alsoExpect);
+    });
+  }
+});
+
 describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
   // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
   // `@property` relies on the identifier reading, expectedTypes

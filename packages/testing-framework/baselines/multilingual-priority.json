@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-27T18:05:19.403Z",
-  "commit": "ea271f4b",
+  "timestamp": "2026-06-27T18:26:43.876Z",
+  "commit": "b29fedca",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -13903,13 +13903,13 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.803793032364459,
-      "avgFidelity": 0.9913419913419914,
-      "avgPrecision": 0.9741612554112554,
-      "avgRoleFidelity": 0.8643593456093457,
+      "avgFidelity": 0.9967532467532467,
+      "avgPrecision": 0.9795725108225107,
+      "avgRoleFidelity": 0.8679629492129495,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
-      "lossyPasses": ["input-mirror", "morph-with-template", "render-template-with-data"],
+      "lossyPasses": ["input-mirror"],
       "bundleSize": 445449,
       "patterns": {
         "toggle-class-on-other": {
