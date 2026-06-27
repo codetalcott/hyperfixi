@@ -61,7 +61,7 @@ export const qu: Dictionary = {
     swap: "t'inkuy", // profile primary; 'rantin_tikray' splits, 'tikray' is toggle's word
     morph: 'tukunay', // auditor: dict emitted a word the profile reads differently
     settle: 'tiyakuy', // auditor: dict emitted a word the profile reads differently
-    append: 'qhipaman_yapay',
+    append: 'qatichiy', // profile's append primary (single token); `qhipaman_yapay` `_`-split to qhipaman+yapay(=add) at parse time
     exit: 'lluqsiy',
     install: 'tarpuy',
     breakpoint: 'sayachinay',

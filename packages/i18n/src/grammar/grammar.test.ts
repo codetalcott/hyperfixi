@@ -623,6 +623,19 @@ describe('vi render keyword (kết xuất, distinct from show)', () => {
   });
 });
 
+describe('qu append keyword (qatichiy, not the _-splitting qhipaman_yapay)', () => {
+  // `qhipaman_yapay` `_`-splits at parse time to `qhipaman`+`yapay`(=add); the dict
+  // now emits the profile's single-token append primary `qatichiy`.
+  // See docs-internal/HANDOFF-lossy-tail.md (singleton tail).
+  it('emits the single-token `qatichiy` for append', () => {
+    const result = new GrammarTransformer('en', 'qu').transform(
+      'on click append "<li>Item</li>" to #list'
+    );
+    expect(result).toContain('qatichiy');
+    expect(result).not.toContain('qhipaman_yapay');
+  });
+});
+
 // =============================================================================
 // Convenience Function Tests
 // =============================================================================
