@@ -51,7 +51,13 @@ export const thaiProfile: LanguageProfile = {
     destination: { primary: 'ใน', alternatives: ['ไปยัง'], position: 'before' },
     source: { primary: 'จาก', position: 'before' },
     style: { primary: 'ด้วย', position: 'before' },
-    event: { primary: 'เมื่อ', position: 'before' },
+    // No `event` role marker: a command's event argument (`trigger foo` /
+    // `send foo`) is an UNMARKED object in Thai, like every other SVO profile
+    // (es/zh/id/…). `เมื่อ` is the temporal "when/on" marker and belongs only on
+    // the event-HANDLER head — which uses `eventHandler.eventMarker` (below),
+    // not this role marker. Carrying it here generated `ทริกเกอร์ เมื่อ {event}`,
+    // which never matched the transformer's `ทริกเกอร์ {event}` → trigger/send
+    // dropped (th behavior-draggable/removable/resizable/sortable lossy).
   },
   keywords: {
     // Class/Attribute operations
