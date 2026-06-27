@@ -48,7 +48,7 @@ export const vi: Dictionary = {
     beep: 'beep',
     js: 'js',
     async: 'bất đồng bộ',
-    render: 'hiển thị',
+    render: 'kết xuất', // distinct from `show` (was `hiển thị`, which collides with show: the semantic profile reads `hiển thị` as show, `kết xuất` as render)
     swap: 'hoán đổi',
     morph: 'biến đổi',
     settle: 'ổn định',

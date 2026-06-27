@@ -609,6 +609,20 @@ describe('Inline `unless` guard in an event handler (no object marker on conditi
   });
 });
 
+describe('vi render keyword (kết xuất, distinct from show)', () => {
+  // `render`/`show` both mapped to `hiển thị`, which the semantic profile reads as
+  // `show` — so vi `render …` parsed as `show`. Dict realigned render → `kết xuất`
+  // (the profile's render primary); `show` keeps `hiển thị`.
+  // See docs-internal/HANDOFF-lossy-tail.md (render cluster).
+  it('emits `kết xuất` for render, leaving show as `hiển thị`', () => {
+    const t = new GrammarTransformer('en', 'vi');
+    const rendered = t.transform('on click render #x with y: $data then put it into #out');
+    expect(rendered).toContain('kết xuất');
+    expect(rendered).not.toMatch(/hiển thị #x/);
+    expect(t.transform('on click show #x')).toContain('hiển thị');
+  });
+});
+
 // =============================================================================
 // Convenience Function Tests
 // =============================================================================

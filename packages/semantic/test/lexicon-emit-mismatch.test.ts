@@ -150,7 +150,9 @@ const KNOWN_MISMATCHES = new Set([
   'vi:clone:sao chép',
   'vi:prepend:thêm đầu',
   'vi:pushUrl:pushUrl',
-  'vi:render:hiển thị',
+  // vi:render resolved (HANDOFF-lossy-tail render cluster): dict realigned
+  // `hiển thị`→`kết xuất` (the profile's render primary); `hiển thị` collided with
+  // `show`, so render-template/morph-template parsed render as `show`.
   'vi:replaceUrl:thayThếUrl',
   'vi:select:chọn',
   // vi:unless resolved (HANDOFF-lossy-tail unless-condition): vietnamese profile
