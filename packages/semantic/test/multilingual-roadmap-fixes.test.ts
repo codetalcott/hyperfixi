@@ -206,6 +206,20 @@ describe('vi render keyword alignment (kết xuất, not the show-colliding hi�
   }
 });
 
+describe('qu append keyword alignment (qatichiy, not the _-splitting qhipaman_yapay)', () => {
+  // The i18n qu dict emitted `append: 'qhipaman_yapay'`, which the qu tokenizer
+  // `_`-splits to `qhipaman`+`yapay`(=add) so `append-content` parsed as `add`
+  // (fid 0.5). Realigned the dict to the profile's single-token append primary
+  // `qatichiy`. See docs-internal/HANDOFF-lossy-tail.md (singleton tail).
+  it('parses qatichiy as append (not add) in an SOV event body', () => {
+    const node = parse('"<li>Item</li>" ta #list man ñitiy pi qatichiy', 'qu');
+    expect(node.action).toBe('on');
+    const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+    expect(dumped).toContain('append');
+    expect(dumped).not.toContain('"add"');
+  });
+});
+
 describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
   // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
   // `@property` relies on the identifier reading, expectedTypes
