@@ -926,6 +926,7 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
   let inSelector = false;
   let selectorDepth = 0;
   let bracketDepth = 0;
+  let parenDepth = 0;
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
@@ -948,8 +949,24 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
       bracketDepth--;
     }
 
-    // Split on whitespace unless inside a selector or a bracket guard
-    if (/\s/.test(char) && !inSelector && bracketDepth === 0) {
+    // Track an ATTACHED parenthesized argument list — a `(` that immediately
+    // follows a token (a call or event destructure: `pointerdown(clientX, clientY)`,
+    // `Resizable(a, b)`, `add(a, b)`) — so the comma-space inside doesn't split it
+    // into `pointerdown(clientX,` / `clientY)`. The event-handler-head reorder then
+    // separates the two halves (event role = `pointerdown(clientX,`, the stray
+    // `clientY)` fronted), mangling the head and dropping the whole handler. Only an
+    // attached `(` is tracked: a STANDALONE `(` opening an expression (`to ($count or
+    // 0)`, preceded by whitespace → `current` empty) is left untracked so its internal
+    // operators still tokenize and translate (`or` → the target conjunction).
+    if (char === '(' && (current.length > 0 || parenDepth > 0)) {
+      parenDepth++;
+    } else if (char === ')' && parenDepth > 0) {
+      parenDepth--;
+    }
+
+    // Split on whitespace unless inside a selector, a bracket guard, or an
+    // attached parenthesized argument list
+    if (/\s/.test(char) && !inSelector && bracketDepth === 0 && parenDepth === 0) {
       if (current) {
         tokens.push(current);
         current = '';
