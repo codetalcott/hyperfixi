@@ -7647,3 +7647,26 @@ describe('Korean command-homonym event head (ko window-scroll degenerate → fai
     expect(node.action).toBe('scroll');
   });
 });
+
+describe('Thai event-argument is unmarked (th trigger/send — behavior lossy → faithful)', () => {
+  // th was the only SVO profile carrying a `roleMarkers.event` (`เมื่อ`, the temporal
+  // "when/on" marker). The generated `trigger`/`send` command pattern therefore expected
+  // `ทริกเกอร์ เมื่อ {event}`, but the transformer emits an UNMARKED object `ทริกเกอร์
+  // {event}` — so the pattern never matched and `trigger`/`send` were dropped. This made th
+  // the only language lossy across ALL FOUR behaviors (draggable/removable/resizable/
+  // sortable), each missing exactly `trigger`. Fix: drop `roleMarkers.event` so th matches
+  // its SVO peers (es/zh/id/…); `เมื่อ` stays on the event-HANDLER head via
+  // `eventHandler.eventMarker`, which is unaffected.
+  it('[th] `trigger <event>` parses (namespaced event arg)', () => {
+    expect(parse('ทริกเกอร์ resizable:start', 'th').action).toBe('trigger');
+  });
+
+  it('[th] `send <event>` parses', () => {
+    expect(parse('ส่ง foo', 'th').action).toBe('send');
+  });
+
+  it('[th] event HANDLER still parses (eventHandler.eventMarker untouched)', () => {
+    // `on click toggle .active` → th. Removing the role marker must not break the head.
+    expect(parse('เมื่อ คลิก สลับ .active', 'th').action).toBe('on');
+  });
+});
