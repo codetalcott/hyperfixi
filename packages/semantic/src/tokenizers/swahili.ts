@@ -97,6 +97,20 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'bonyeza kitufe', normalized: 'keydown' },
   { native: 'sogeza juu', normalized: 'mouseover' },
   { native: 'sogeza nje', normalized: 'mouseout' },
+  // Underscore-joined mouse/key event names AS THE i18n DICT EMITS THEM
+  // (dictionaries/sw.ts `events`). The tokenizer's identifier reader now keeps `_`
+  // inside a word (swahili-keyword.ts), so these resolve as one keyword token —
+  // otherwise `kwenye panya_shuka` split and the handler dropped (repeat-until-event
+  // sw, fid 0.75). `panya_juu` is the dict's shared mouseup/mouseover form; map it to
+  // mouseup (the corpus use). See docs-internal/HANDOFF-lossy-tail.md.
+  { native: 'panya_shuka', normalized: 'mousedown' },
+  { native: 'panya_juu', normalized: 'mouseup' },
+  { native: 'panya_ingia', normalized: 'mouseenter' },
+  { native: 'panya_toka', normalized: 'mouseleave' },
+  { native: 'panya_nje', normalized: 'mouseout' },
+  { native: 'panya_sogea', normalized: 'mousemove' },
+  { native: 'kitufe_shuka', normalized: 'keydown' },
+  { native: 'kitufe_juu', normalized: 'keyup' },
   { native: 'fifia', normalized: 'blur' },
   { native: 'pakia', normalized: 'load' },
   { native: 'sukuma', normalized: 'scroll' },

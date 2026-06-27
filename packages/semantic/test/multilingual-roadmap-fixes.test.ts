@@ -241,6 +241,261 @@ describe('zh tell BA-marked target (告诉 把 #el — tellSchema markerOverride
   }
 });
 
+describe('ko if-empty: command verb directly after copula in a split SOV predicate', () => {
+  // The SOV transform splits a verb-final `is empty` predicate so a then-branch
+  // command verb lands DIRECTLY after the copula (ko `… 내 값 이다 추가 .error 를 … 비어있는`
+  // = my value IS add .error … empty). The conditional fold's copula guard swallowed
+  // `추가`(add) into the condition and dropped it (if-empty/input-validation ko, fid
+  // 0.75 — ja/bn escaped only because their copula isn't lexed as a single `is`). The
+  // split now fires after a copula when a real SOV command-verb keyword opens here.
+  // See docs-internal/HANDOFF-lossy-tail.md (control-flow if-folding).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
+      {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ko] if-empty recovers the add buried after the copula', () => {
+    const a = actions(
+      parse(
+        '블러 할 때 만약 내 값 이다 추가 .error 를 비어있는 나 에 그러면 "Required" 를 다음 .error-message 에 넣다 끝',
+        'ko'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('add')).toBe(true); // was swallowed into the condition
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[ko] input-validation recovers add (if/else body)', () => {
+    const a = actions(
+      parse('블러 할 때 만약 내 값 이다 추가 .error 를 비어있는 나 에 아니면 .error 를 제거 나 에서 끝', 'ko')
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+
+  it('[en] a normal `is empty` predicate is unaffected (no phantom empty command)', () => {
+    const a = actions(
+      parse(
+        'on blur if my value is empty add .error to me put "Required" into next .error-message end',
+        'en'
+      )
+    );
+    expect(a.has('add')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('empty')).toBe(false); // copula guard still protects SVO predicate
+  });
+});
+
+describe('hi hyphen-compound keyword (साफ़-करें = clear) tokenizes as one keyword', () => {
+  // Several hi profile/dict command keywords are `<verb>-करें` compounds joined by a
+  // hyphen (`साफ़-करें`=clear). The keyword reader stopped at `-`, splitting it into
+  // three tokens; the command verb never matched and the action dropped
+  // (keydown-key-is-syntax hi: `clear` lost, fid 0.5). The reader now joins a `-`
+  // run when it resolves to a registered keyword. See docs-internal/HANDOFF-lossy-tail.md.
+  it('parses साफ़-करें as clear (keydown-key-is-syntax)', () => {
+    const node = parse("मैं को keyup[key is 'Escape'] पर साफ़-करें", 'hi') as Record<string, unknown>;
+    expect(node.action).toBe('on');
+    const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+    expect(dumped).toContain('clear');
+  });
+
+  it('a hyphenated selector (.error-message) is NOT fused into a keyword', () => {
+    // The join is gated to Devanagari runs that resolve to a REGISTERED keyword, so
+    // a `.error-message` CSS selector (handled by the selector extractor) stays one
+    // selector token rather than being mangled by hyphen handling.
+    const tk = getTokenizer('hi');
+    const raw = tk.tokenize('रखें .error-message में') as unknown;
+    const toks = (Array.isArray(raw) ? raw : (raw as { tokens: unknown[] }).tokens) as Array<{
+      value: string;
+      kind: string;
+    }>;
+    expect(toks.some(t => t.value === '.error-message' && t.kind === 'selector')).toBe(true);
+  });
+});
+
+describe('ms scroll keyword alignment (English `scroll` form the dict emits)', () => {
+  // The i18n ms dict keeps the scroll command in English (`scroll: 'scroll'`), but
+  // the semantic ms profile only knew `tatal`/`skrol`, so the generated scroll
+  // pattern never matched the emitted `scroll ke …` and the command dropped
+  // (last-in-collection ms, fid 0.5). Added `scroll` to the profile alternatives.
+  it('parses the English scroll form (last-in-collection)', () => {
+    const node = parse('apabila click scroll ke terakhir <.message/> dalam #chat', 'ms') as Record<
+      string,
+      unknown
+    >;
+    expect(node.action).toBe('on');
+    expect(JSON.stringify((node as { body?: unknown[] }).body ?? [])).toContain('scroll');
+  });
+});
+
+describe('vi value reference (giá trị) tokenizes as one token for possessive patient', () => {
+  // `value` is `giá trị` (two words) in vi; only `đặt giá trị`(=set) was registered,
+  // so a standalone `giá trị` split into two identifiers and the possessive patient
+  // `của tôi giá trị`(=my value) broke the `put` match, dropping it (input-mirror vi,
+  // fid 0.5). Registered `giá trị`=value; longest-first keeps `đặt giá trị`=set intact.
+  it('parses put my value (input-mirror)', () => {
+    const node = parse('khi nhập đặt của tôi giá trị vào #preview', 'vi') as Record<string, unknown>;
+    expect(node.action).toBe('on');
+    expect(JSON.stringify((node as { body?: unknown[] }).body ?? [])).toContain('put');
+  });
+
+  it('the longer đặt giá trị still tokenizes as set (not over-shadowed)', () => {
+    const tk = getTokenizer('vi');
+    const raw = tk.tokenize('đặt giá trị của #x thành 5') as unknown;
+    const toks = (Array.isArray(raw) ? raw : (raw as { tokens: unknown[] }).tokens) as Array<{
+      value: string;
+      normalized?: string;
+    }>;
+    expect(toks[0]?.value).toBe('đặt giá trị');
+    expect(toks[0]?.normalized).toBe('set');
+  });
+});
+
+describe('Multi-token event names anchor the event handler (ar multi-word, sw underscore)', () => {
+  // The i18n dicts emit DOM mouse/key event names as MULTI-token forms: ar spaces
+  // them (`فأرة أسفل`=mousedown) and sw underscore-joins them (`panya_shuka`). Neither
+  // tokenized as one event token — worse, ar stripped the leading `ف` as a `then`
+  // proclitic — so the `عند`/`kwenye <event>` handler never anchored and the WHOLE
+  // handler dropped (repeat-until-event ar+sw: `on` lost, fid 0.75). Fixes: the ar
+  // tokenizeWithExtractors override now runs tryMultiWordKeyword first; the sw
+  // identifier reader keeps `_` inside a word. See docs-internal/HANDOFF-lossy-tail.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
+      {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ar] on mousedown (فأرة أسفل) anchors the handler', () => {
+    const a = actions(parse('عند فأرة أسفل ثم زِد #counter', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  it('[ar] repeat-until-event recovers the on handler (was dropped)', () => {
+    const a = actions(
+      parse('عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية', 'ar')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  it('[sw] on mousedown (panya_shuka) anchors the handler', () => {
+    const a = actions(parse('kwenye panya_shuka kisha ongezeko #counter', 'sw'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  it('[sw] repeat-until-event recovers the on handler (was dropped)', () => {
+    const a = actions(
+      parse(
+        'kwenye panya_shuka rudia hadi tukio panya_juu kisha ongezeko #counter kisha ngoja 100ms mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+});
+
+describe('qu repeat loop-keyword swallow guard (verb-final wait eats the loop kw)', () => {
+  // An SOV verb-final loop head renders `repeat until event <ev> from <src>` with
+  // the loop keyword (qu kutipay) clause-FINAL, immediately followed by the loop
+  // body's first command whose verb is ALSO verb-final (qu `suyay` = wait). The
+  // `wait` pattern greedily anchored AT `kutipay` and consumed it as part of its
+  // argument run, so matchBest succeeded as `wait` and the `repeat` loop keyword
+  // was swallowed — the loop node never formed (behavior-draggable qu, fid 0.875).
+  // parseClause now rejects a NON-repeat match anchored at the repeat keyword and
+  // emits the bare repeat instead. See docs-internal/HANDOFF-lossy-tail.md (Arc 2).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
+      {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('recovers repeat when a verb-final wait follows the clause-final loop keyword', () => {
+    const a = actions(
+      parse(
+        'Foo(h) ta behavior\n' +
+          '    h manta pointerdown(clientX, clientY) pi\n' +
+          '        x ta tupuy\n' +
+          '        hayk_akama ruway pointerup ta qillqa manta kutipay\n' +
+          '            suyay pointermove(clientX, clientY) utaq qillqa manta pointerup(clientX, clientY)\n' +
+          '            .x ta yapay\n' +
+          '        tukuy\n' +
+          '    tukuy\n' +
+          'tukuy',
+        'qu'
+      )
+    );
+    expect(a.has('repeat')).toBe(true); // was swallowed by the verb-final wait
+    expect(a.has('wait')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('measure')).toBe(true);
+  });
+
+  it('a genuine counted `repeat N times` keeps its variant match (not over-triggered)', () => {
+    // The swallow-guard fires only when matchBest anchors a NON-repeat command at
+    // the repeat keyword. A real `repeat N times` match (command === 'repeat') must
+    // be left untouched — confirm it still yields the repeat action and was matched
+    // by the generated repeat pattern, not rewritten to a bare guard-emitted node.
+    const node = parse('repeat 3 times toggle .x end', 'en') as Record<string, unknown>;
+    expect(node.action).toBe('repeat');
+    const meta = node.metadata as { patternId?: string } | undefined;
+    expect(meta?.patternId).toContain('repeat-en');
+  });
+});
+
+describe('ar measure keyword alignment (undiacritized قس)', () => {
+  // The semantic ar profile listed measure as قياس/قِس (the kasra-diacritized
+  // imperative), but the i18n dict + real Arabic prose emit it undiacritized as
+  // قس. So `قس width`/`قس x` parsed to null and the whole `measure` command
+  // dropped from the event-handler body (behavior-draggable, behavior-resizable
+  // — fid 0.875/0.889). Added قس to the profile measure alternatives.
+  // See docs-internal/HANDOFF-lossy-tail.md (Arc 2 — ar measure).
+  for (const clause of ['قس width', 'قس x', 'قس height']) {
+    it(`parses "${clause}" as measure`, () => {
+      const node = parse(clause, 'ar');
+      expect(node?.action).toBe('measure');
+    });
+  }
+
+  it('recovers measure inside an ar behavior event body', () => {
+    const node = parse(
+      'من أنا عند pointerdown\n        قس width\n        اضبط startWidth إلى هو',
+      'ar'
+    );
+    expect(node.action).toBe('on');
+    const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+    expect(dumped).toContain('measure');
+  });
+});
+
 describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
   // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
   // `@property` relies on the identifier reading, expectedTypes

@@ -132,6 +132,21 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   { native: 'مغادرة الفأرة', normalized: 'mouseout' },
   { native: 'تحميل', normalized: 'load' },
   { native: 'تمرير', normalized: 'scroll' },
+  // Multi-word mouse/key event names AS THE i18n DICT EMITS THEM (dictionaries/ar.ts
+  // `events`). The tokenizer previously knew only the singular/colloquial forms above
+  // (`ضغط`/`تمرير الفأرة`), so the dict's `فأرة أسفل`/`فأرة أعلى` tokenized as two bare
+  // identifiers, the `عند <event>` handler never anchored, and the whole handler dropped
+  // (repeat-until-event ar: `on` lost, fid 0.75). The BaseTokenizer multi-word matcher
+  // catches these longest-first. See docs-internal/HANDOFF-lossy-tail.md (repeat-until-event).
+  { native: 'فأرة أسفل', normalized: 'mousedown' },
+  { native: 'فأرة أعلى', normalized: 'mouseup' },
+  { native: 'فأرة دخول', normalized: 'mouseenter' },
+  { native: 'فأرة خروج', normalized: 'mouseleave' },
+  { native: 'فأرة فوق', normalized: 'mouseover' },
+  { native: 'فأرة خارج', normalized: 'mouseout' },
+  { native: 'فأرة تحرك', normalized: 'mousemove' },
+  { native: 'مفتاح أسفل', normalized: 'keydown' },
+  { native: 'مفتاح أعلى', normalized: 'keyup' },
 
   // References (feminine "it" not in profile)
   { native: 'هي', normalized: 'it' },
@@ -203,6 +218,22 @@ export class ArabicTokenizer extends BaseTokenizer {
         pos++;
       }
       if (pos >= input.length) break;
+
+      // Match a space-containing profile keyword (multi-word event/command phrase)
+      // BEFORE the per-extractor pass. This override otherwise skips the base
+      // tokenizer's tryMultiWordKeyword step, so the dict's multi-word event names
+      // (`فأرة أسفل`=mousedown, `فأرة أعلى`=mouseup) were split — and worse, their
+      // leading `ف` was stripped as a `then` proclitic — so the `عند <event>`
+      // handler never anchored and the whole handler dropped (repeat-until-event
+      // ar: `on` lost, fid 0.75). Longest-first + word-boundary-gated, marker
+      // concepts excluded (base-tokenizer multiWordKeywords filter), so this can
+      // only fuse a genuine multi-word keyword that was previously mis-split.
+      const multiWord = this.tryMultiWordKeyword(input, pos);
+      if (multiWord) {
+        tokens.push(multiWord);
+        pos = multiWord.position.end;
+        continue;
+      }
 
       // Try registered extractors in order
       let extracted = false;
