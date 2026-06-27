@@ -7746,3 +7746,20 @@ describe('get keyword alignment de/pl/zh (get-value lossy → faithful)', () => 
     expect(parse('抓取 把 /api/data', 'zh').action).toBe('fetch');
   });
 });
+
+describe('Optional call patient marker he/zh (form-submit-prevent lossy → faithful)', () => {
+  // `call validateForm()` dropped in he/zh: the function-call patient is an expression,
+  // not a definite DOM object, so the transformer emits it UNMARKED in a multi-command
+  // body (`קרא validateForm()` / `调用 validateForm()`), but the he/zh patient roleMarker
+  // (את / 把) made the generated call pattern REQUIRE it → no match, `call` lost. Fix:
+  // markerOptional { he, zh } on the call patient role → the marker is an optional group,
+  // so both the unmarked (body) and marked forms parse. Scoped to he/zh (SOV call already
+  // parsed; leaving their marker required avoids relaxing role typing).
+  it('[he] unmarked function-call patient parses (`קרא validateForm()`)', () => {
+    expect(parse('קרא validateForm()', 'he').action).toBe('call');
+  });
+
+  it('[zh] unmarked function-call patient parses (`调用 validateForm()`)', () => {
+    expect(parse('调用 validateForm()', 'zh').action).toBe('call');
+  });
+});

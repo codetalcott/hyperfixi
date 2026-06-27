@@ -704,7 +704,9 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
         : { type: 'literal', value: defaultMarker.primary };
     const pushMarker = (marker: PatternToken): void => {
       tokens.push(
-        profile.markersOptional ? { type: 'group', optional: true, tokens: [marker] } : marker
+        profile.markersOptional || roleSpec.markerOptional?.[profile.code]
+          ? { type: 'group', optional: true, tokens: [marker] }
+          : marker
       );
     };
     if (defaultMarker.position === 'before') {
