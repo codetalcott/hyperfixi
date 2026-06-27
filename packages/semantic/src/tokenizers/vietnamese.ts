@@ -89,6 +89,7 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'nhân bản', normalized: 'clone' },
   { native: 'tạo ra', normalized: 'make' },
   { native: 'đặt giá trị', normalized: 'set' },
+  { native: 'giá trị', normalized: 'value' },
   { native: 'ghi nhật ký', normalized: 'log' },
   { native: 'chuyển tới', normalized: 'go' },
   { native: 'ngược lại', normalized: 'else' },

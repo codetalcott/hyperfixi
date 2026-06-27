@@ -1197,7 +1197,41 @@ export class SemanticParserImpl implements ISemanticParser {
 
     while (!clauseStream.isAtEnd()) {
       // Try to match as a command
+      const startTok = clauseStream.peek();
+      const startIsRepeatKw = !!startTok && startTok.normalized?.toLowerCase() === 'repeat';
+      const startMark = clauseStream.mark();
       const commandMatch = patternMatcher.matchBest(clauseStream, commandPatterns);
+
+      // A verb-final command (qu `… suyay` = wait, verb-LAST) can greedily span
+      // backward across the clause-final `repeat` loop keyword, anchoring its
+      // match AT that keyword and consuming it as part of the argument run — so
+      // matchBest *succeeds* (as `wait`/`set`/…), the swallowed `repeat` keyword
+      // disappears, and the bare-`repeat` recovery below (gated on matchBest
+      // failing) never fires (behavior-draggable qu: `… kutipay suyay …` matched
+      // `wait` from `kutipay`, dropping the loop — was lossy 0.875). When a
+      // NON-repeat command anchors AT the repeat keyword, reject the swallow:
+      // rewind, emit the bare repeat, and consume only that keyword so the
+      // verb-final command re-matches cleanly on the next iteration. A genuine
+      // `repeat` variant (`repeat N times`/`repeat for …`) keeps its full match.
+      if (
+        startIsRepeatKw &&
+        commandMatch &&
+        (commandMatch.pattern.command as string) !== 'repeat'
+      ) {
+        clauseStream.reset(startMark);
+        flushSkipped();
+        commands.push(
+          createCommandNode(
+            'repeat' as ActionType,
+            {},
+            { sourceLanguage: language, confidence: 0.6 }
+          )
+        );
+        directHits++;
+        clauseStream.advance(); // consume only the repeat keyword
+        continue;
+      }
+
       if (commandMatch) {
         flushSkipped();
         const cmd = this.buildCommand(commandMatch, language);
@@ -2858,9 +2892,24 @@ export class SemanticParserImpl implements ISemanticParser {
         // A condition operator (`match`/`contains`/`exists`/…) is part of the
         // expression, never a then-branch command head — don't truncate at it
         // even if a verb-last SOV command pattern spuriously matches the span.
+        //
+        // Copula guard: normally don't truncate right AFTER a copula (`is`/`be`/…),
+        // because the next token is the predicate (`X is empty …` → don't split at
+        // `empty`). But the SOV transform can split a verb-final `is empty` predicate
+        // so a then-branch command VERB lands DIRECTLY after the copula
+        // (ko `… 내 값 이다 추가 .error 를 … 비어있는 …` = my value IS add .error … empty):
+        // the guard then swallows `add` into the condition and drops it
+        // (if-empty/input-validation ko, fid 0.75). ja/bn escape only because their
+        // copula isn't lexed as a single `is` token, so the split already fires there.
+        // Allow the split after a copula when a real SOV command-VERB keyword opens
+        // here — gated to SOV (verb lookup present) and an actual verb-lookup hit, so
+        // SVO `X is empty <cmd>` (a predicate, not a verb, after the copula) is
+        // byte-identical to before.
+        const curIsSovCommandVerb =
+          sovVerbLookup !== null && sovVerbLookup.has(t.value.toLowerCase());
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
-          !SemanticParserImpl.CONDITION_COPULAS.has(prev) &&
+          (!SemanticParserImpl.CONDITION_COPULAS.has(prev) || curIsSovCommandVerb) &&
           (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
             this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
         ) {

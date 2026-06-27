@@ -15,6 +15,47 @@
 
 The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 
+> **Update 2026-06-27 (lossy tail CLEARED — lossy 10 → 0; the band is empty).** All ten
+> remaining lossy passes were fixed this session. The "hard residue / hottest-path body-parse"
+> framing held in only ONE case (ko if-folding); the rest were the same _localized-alignment_
+> family the doc kept declaring "exhausted" — the methodology lesson (theorized cause is wrong
+> until `ml.parse` corrects it) held on every single one. Fixes, each grounded + guarded
+> (`multilingual-roadmap-fixes.test.ts`, fail-without-fix verified):
+>
+> - **ar `measure`** (behavior-draggable, behavior-resizable): the dict emits the undiacritized
+>   imperative `قس`, the profile only knew `قياس`/`قِس`. Added `قس` to the profile measure
+>   alternatives (pruned the now-stale `ar:measure:قس` lexicon-emit-mismatch entry). NOT the
+>   loop-body fold the doc theorized.
+> - **qu `repeat`** (behavior-draggable): NOT a missing `tryParseLoopBlock`. A verb-final `wait`
+>   (`suyay`) greedily anchored its match AT the clause-final loop keyword `kutipay`, swallowing
+>   it — so matchBest _succeeded_ and the bare-`repeat` recovery (gated on matchBest failing)
+>   never fired. `parseClause` now rejects a non-`repeat` match anchored at the repeat keyword.
+> - **ar/sw `on`** (repeat-until-event): NOT loop-body — the multi-token event name dropped the
+>   whole handler. ar spaces events (`فأرة أسفل`=mousedown) and the leading `ف` was stripped as a
+>   `then` proclitic; the ar `tokenizeWithExtractors` override now runs `tryMultiWordKeyword`
+>   first. sw underscore-joins events (`panya_shuka`); the sw keyword reader now joins a `_` run
+>   when it resolves to a registered keyword.
+> - **hi `clear`** (keydown-key-is-syntax): `साफ़-करें` (a `-करें` compound) split on the hyphen.
+>   The hi keyword reader now joins a `-` run when it resolves to a registered keyword. (The Arc-4
+>   "SOV event-anchor mis-anchor" theory was wrong — it was a hyphen tokenization split.)
+> - **ms `scroll`** (last-in-collection): the dict keeps `scroll` English; the profile only knew
+>   `tatal`/`skrol`. Added `scroll` to the profile alternatives (cf. `push`).
+> - **vi `put`** (input-mirror): the possessive patient `của tôi giá trị` (my value) broke the
+>   match because `giá trị` (value) wasn't a registered token (only `đặt giá trị`=set was).
+>   Registered `giá trị`=value; longest-first keeps `đặt giá trị`=set.
+> - **ko `add`** (if-empty, input-validation): the ONE genuine hottest-path fix. The SOV transform
+>   splits the verb-final `is empty` predicate so the then-branch verb (`추가`=add) lands DIRECTLY
+>   after the copula `이다`(is); the conditional fold's copula guard swallowed it. ja/bn escaped
+>   only because their copula isn't lexed as a single `is` token. The condition-split now fires
+>   after a copula when a real SOV command-verb keyword opens there (gated to SOV + verb-lookup
+>   hit, so SVO `X is empty <cmd>` is byte-identical — verified on en).
+>
+> Gate: `--regression` green (3695/3696, R2 1.0), baseline regenerated (lossy 0, degenerate 0,
+> avgFidelity 1.0000, avgPrecision 0.9709, avgRoleFidelity 0.8447). Full semantic suite green
+> (6205). **What's left is no longer a lossy band** — only the R1/SOV role-fidelity burn-down
+> (Arc 4, avgRoleFidelity 0.845, hi 0.757 the laggard) and the deferred `tr window-resize`
+> hard-fail (3695/3696). Both are separate dimensions, not lossy passes.
+
 > **Update 2026-06-27 (session wrap — lossy 32 → 18; the clean alignments are harvested).**
 > Five fixes landed this session, all of the _localized-alignment_ kind (a marker, keyword,
 > tokenizer rule, or homonym):

@@ -139,7 +139,11 @@ export const arabicProfile: LanguageProfile = {
     init: { primary: 'تهيئة', alternatives: ['بدء'], normalized: 'init' },
     behavior: { primary: 'سلوك', normalized: 'behavior' },
     install: { primary: 'تثبيت', alternatives: ['ثبّت'], normalized: 'install' },
-    measure: { primary: 'قياس', alternatives: ['قِس'], normalized: 'measure' },
+    // `قِس` is the imperative with the kasra diacritic; the i18n dict (and real
+    // Arabic prose) emits it undiacritized as `قس`, so list both — otherwise the
+    // generated `قس width`/`قس x` (behavior-draggable/resizable) parse to null and
+    // the whole `measure` command drops from the event-handler body (lossy).
+    measure: { primary: 'قياس', alternatives: ['قِس', 'قس'], normalized: 'measure' },
     beep: { primary: 'صفّر', normalized: 'beep' },
     break: { primary: 'توقف', normalized: 'break' },
     copy: { primary: 'انسخ', normalized: 'copy' },

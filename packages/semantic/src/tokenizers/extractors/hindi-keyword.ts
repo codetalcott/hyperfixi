@@ -60,6 +60,31 @@ export class HindiKeywordExtractor implements ContextAwareExtractor {
       pos++;
     }
 
+    // Hyphen-joined keyword recovery. Several hi profile/dict keywords are
+    // `<verb>-करें` compounds (`साफ़-करें`=clear, `बंद-करें`=close, `खाली-करें`=empty,
+    // `चिह्नित-करें`=select). The reader stops at `-`, so `साफ़-करें` split into three
+    // tokens, the command verb never matched, and the action dropped
+    // (keydown-key-is-syntax hi: `clear` lost, fid 0.5). When a `-` joins two
+    // Devanagari runs, read the joined form and adopt it ONLY if it resolves to a
+    // REGISTERED keyword — so hyphenated identifiers/selectors stay split as before.
+    // See docs-internal/HANDOFF-lossy-tail.md (Arc 4 / keydown-key-is-syntax).
+    if (
+      this.context &&
+      input[pos] === '-' &&
+      pos + 1 < input.length &&
+      isDevanagari(input[pos + 1])
+    ) {
+      let extPos = pos;
+      let ext = word;
+      while (extPos < input.length && (input[extPos] === '-' || isDevanagari(input[extPos]))) {
+        ext += input[extPos++];
+      }
+      if (this.context.lookupKeyword(ext)) {
+        word = ext;
+        pos = extPos;
+      }
+    }
+
     if (!word) return null;
 
     // Look up keyword entry

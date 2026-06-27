@@ -99,7 +99,11 @@ export const malayProfile: LanguageProfile = {
     breakpoint: { primary: 'titik-henti', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'pergi', alternatives: ['pindah'], normalized: 'go' },
-    scroll: { primary: 'tatal', alternatives: ['skrol'], normalized: 'scroll' },
+    // The i18n ms dict keeps the `scroll` command in English (`scroll: 'scroll'`),
+    // but the profile only knew `tatal`/`skrol`, so the generated scroll pattern
+    // never matched the emitted `scroll ke …` and the command dropped
+    // (last-in-collection ms, fid 0.5). List the English form too (cf. `push`).
+    scroll: { primary: 'tatal', alternatives: ['skrol', 'scroll'], normalized: 'scroll' },
     push: { primary: 'tolak', alternatives: ['push'], normalized: 'push' },
     replace: { primary: 'ganti_url', alternatives: ['gantikan_url'], normalized: 'replace' },
     process: { primary: 'proses', normalized: 'process' },

@@ -41,7 +41,6 @@ const LANGS = ['ar','bn','de','es','fr','he','hi','id','it','ja','ko','ms','pl',
 
 const KNOWN_MISMATCHES = new Set([
   'ar:catch:التقط',
-  'ar:measure:قس',
   'ar:pushUrl:ادفع رابط',
   'ar:replaceUrl:استبدل رابط',
   'ar:select:اختر',
