@@ -38,9 +38,13 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 > (i18n tokenizer keeping an attached `(arg, list)` atomic so the VSO from-first reorder
 > stops splitting `pointerdown(clientX, clientY)`; collateral: ar resizable 0.667→0.889).
 > Priority gate: **degenerate 2 → 0**, lossy unchanged (32), parse-rate 3695/3696, zero
-> regressions. Remaining multilingual work is the **lossy tail (Track 4)** — incl. the
-> behavior `measure`-drop (ar) and th-wide body-parse tail, which were NOT the resizable
-> degenerate's cause — and the **R1/SOV role-fidelity burn-down (Track 3)**.
+> regressions. Remaining multilingual work is the **lossy tail (Track 4)** and the **R1/SOV
+> role-fidelity burn-down (Track 3)**, scoped (with Arc 1 — th `trigger`/`send` — empirically
+> grounded) in the successor handoff
+> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md). Note: the th lossy tail is NOT a
+> "th-wide body-parse" issue as earlier theorized — it is th dropping the `event`-category
+> commands (`trigger`/`send`) specifically; and the ar residual is narrower than the
+> `measure`-drop framing now that #493 cleared the handler-head mangling (re-localize first).
 
 > **Update 2026-06-17 (PR #445, behavior-removable he/zh).** The two he/zh
 > `behavior-removable` hard fails are fixed (null → lossy: he 0.556, zh 0.667).
