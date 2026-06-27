@@ -62,28 +62,59 @@ The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 > baseline regenerated. **What's left (15) is the loop-body family + singleton tail** — unchanged
 > below.
 
-| Signal                        | Value (post-unless-condition, stamp `ea271f4b`)          |
-| ----------------------------- | -------------------------------------------------------- |
-| parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)        |
-| degenerate (fid < 0.5)        | **0** ✅                                                 |
-| lossy (0.5 ≤ fid < 1.0)       | **15** (was 18; `unless-condition` qu/vi/zh cleared)     |
-| avgFidelity (R0-recall)       | 0.999                                                    |
-| avgPrecision (R0 trust floor) | 0.970                                                    |
-| avgRoleFidelity (R1)          | **0.843 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784) |
+> **Update 2026-06-27 (singleton-tail sweep — lossy 15 → 10; the clean keyword/marker band is
+> exhausted).** Three more PRs cleared every remaining singleton that was a _localized-alignment_
+> defect (a dict keyword, a tokenizer split, or a missing per-language role marker) — the same
+> family as #495–#499:
+>
+> - **#502 — vi `render`** (render-template-with-data, morph-with-template): the i18n dict mapped
+>   _both_ `show` and `render` to `hiển thị`, which the profile reads as `show`. Realigned the dict
+>   `render`→`kết xuất` (the profile's render primary). lossy 15→13.
+> - **#503 — qu `append`** (append-content): dict `qhipaman_yapay` `_`-split to `qhipaman`+`yapay`(=add),
+>   so append parsed as `add`. Realigned to the single-token append primary `qatichiy` (same
+>   `_`-split family as qu `unless`/`until`). lossy 13→12.
+> - **#504 — zh `tell`** (tell-command, tell-other-element): the transformer fronts tell's target
+>   with the BA particle (`告诉 把 #modal`), which the generated zh tell pattern didn't expect.
+>   Added `zh: '把'` to `tellSchema`'s destination `markerOverride` (mirrors the existing `he: 'את'`).
+>   lossy 12→10. **zh is now clear of the lossy band.**
+>
+> **What's left (10) is all the hard residue — no clean keyword/marker fix remains.** Grounding (via
+> `ml.parse`) of the survivors confirms each is a hottest-path body-parse / SOV-anchor defect, not a
+> dict tweak: hi `keydown-key-is-syntax` mis-anchors `साफ़-करें`(clear) as a fronted-event `on` (the
+> SOV event-anchor arc, Arc 4); ko `if-empty`/`input-validation` drop the `if` block (control-flow
+> body-parse); the ar/qu/sw loop-body cluster needs the `tryParseLoopBlock` fold (Arc 2); vi
+> `input-mirror` is a possessive-`my value` role drop. Each is its own dedicated session per the
+> arcs below — **do NOT bundle them as singletons.**
+
+| Signal                        | Value (post-singleton-sweep, lossy 10)                          |
+| ----------------------------- | --------------------------------------------------------------- |
+| parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)               |
+| degenerate (fid < 0.5)        | **0** ✅                                                        |
+| lossy (0.5 ≤ fid < 1.0)       | **10** (was 18; the clean keyword/marker band is now exhausted) |
+| avgFidelity (R0-recall)       | 0.999                                                           |
+| avgPrecision (R0 trust floor) | 0.970                                                           |
+| avgRoleFidelity (R1)          | **0.843 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784)        |
 
 ### The lossy leverage map (post-#499 — regenerate from the baseline; do NOT trust after more lands)
 
 ```text
 control-flow body-parse:
-  unless-condition   (0)   ✅ DONE     ← qu/vi/zh cleared (keyword + transform; NOT body-parse).
-loop-body family:
+  unless-condition   (0)   ✅ DONE     ← qu/vi/zh cleared (#501; keyword + transform; NOT body-parse).
+loop-body family (Arc 2 — tryParseLoopBlock fold, hottest body-parse path):
   behavior-draggable (2)   ar,qu      ← qu drops `repeat` (no tryParseLoopBlock; grounded below)
   repeat-until-event (2)   ar,sw
   behavior-resizable (1)   ar         ← ar drops `measure`
-singletons (per-pattern mop-up):
-  keydown-key-is-syntax(hi), if-empty(ko), input-validation(ko), last-in-collection(ms),
-  append-content(qu), input-mirror(vi), morph-with-template(vi),
-  render-template-with-data(vi), tell-command(zh), tell-other-element(zh)
+control-flow body-parse (if-folding):
+  if-empty(ko), input-validation(ko)  ← `if` block dropped in the SOV event body
+SOV event-anchor (Arc 4 — hottest path):
+  keydown-key-is-syntax(hi)           ← `साफ़-करें`(clear) mis-anchored as a fronted-event `on`
+role/structural singletons:
+  last-in-collection(ms)   ← untranslated `to last … in`, role drop (bundle-specific)
+  input-mirror(vi)         ← possessive `my value`; `put` patient drops
+cleared this session (keyword/marker realigns — the clean band is now empty):
+  ✅ render-template-with-data(vi) · morph-with-template(vi)  → #502 (render→kết xuất)
+  ✅ append-content(qu)                                       → #503 (append→qatichiy)
+  ✅ tell-command(zh) · tell-other-element(zh)                → #504 (tellSchema zh:把)
 ```
 
 Regenerate the map (the authoritative version) with:
@@ -318,12 +349,21 @@ The localized-alignment band is **done** (lossy 32 → 18):
    to `{he, zh}` (the `把`/את object-marker on the swept condition blob). See the 2026-06-27 update
    block at the top.
 
-**The remaining 15 are the loop-body residue + singleton tail — each its own FRESH, ground-from-scratch session:**
+The singleton-tail keyword/marker realigns are **done** (#502 vi render, #503 qu append, #504 zh
+tell — see the 2026-06-27 singleton-sweep update at the top). **The remaining 10 have no clean
+keyword/marker fix left — each is a hottest-path body-parse / SOV-anchor defect, its own FRESH,
+ground-from-scratch session:**
 
 4. **Arc 2 (loop-body)** — the SOV `repeat`-block fold (qu, grounded below: no `tryParseLoopBlock`
    in `parseBodyWithClauses`) + ar `measure` + `repeat-until-event` (ar/sw). Dedicated session,
    hottest body-parse path. Do the qu `until` underscore prerequisite together with the fold.
-5. **Singleton tail** (`keydown-key-is-syntax`, `if-empty`, `input-validation`, `tell-*`, vi
-   `*-template`, …) — per-pattern mop-up; lowest ROI, defer behind 3–4.
+5. **Control-flow if-folding** (`if-empty`, `input-validation` — ko) — the `if` block drops from
+   the SOV event body. Same body-parse family as the (now-done) `unless-condition`, but `if` _is_
+   folded by `tryParseConditionalBlock`, so re-ground from scratch.
 6. **Arc 4 (R1/SOV role-fidelity, 0.843)** — separate dimension, highest headroom + risk; the
-   convergent SOV event-anchor arc (owns the qu/bn/hi-trigger residue). Guarded dedicated session.
+   convergent SOV event-anchor arc. Now **owns** `keydown-key-is-syntax` (hi) — grounded this
+   session: `साफ़-करें`(clear) is mis-anchored as a fronted-event `on`, a Stage-2 SOV mis-anchor,
+   not a `clear` keyword gap. Also the qu/bn/hi-trigger residue. Guarded dedicated session.
+7. **Residual singletons** — `last-in-collection` (ms; untranslated `to last … in`, bundle-specific
+   role drop) and `input-mirror` (vi; possessive `my value` drops the `put` patient). Lower ROI;
+   re-ground each before assuming a cause.
