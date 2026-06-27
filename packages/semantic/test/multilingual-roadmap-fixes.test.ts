@@ -220,6 +220,27 @@ describe('qu append keyword alignment (qatichiy, not the _-splitting qhipaman_ya
   });
 });
 
+describe('zh tell BA-marked target (告诉 把 #el — tellSchema markerOverride zh:把)', () => {
+  // tell's target is unmarked in en, but object-marking targets front it with their
+  // accusative/BA particle: he את (handled), zh 把 (`告诉 把 #modal`). The generated
+  // zh tell pattern didn't expect 把, so the token broke the match and `tell`
+  // dropped (tell-command, tell-other-element — fid 0.5/0.75). Added `zh: '把'` to
+  // tellSchema's destination markerOverride. See docs-internal/HANDOFF-lossy-tail.md.
+  const cases: Array<[string, string[]]> = [
+    ['当 点击 时 告诉 把 #modal 到 显示', ['tell']],
+    ['当 点击 时 告诉 把 #panel 那么 添加 把 .open 那么 等待 把 200ms 那么 添加 把 .visible', ['tell', 'add', 'wait']],
+  ];
+
+  for (const [input, expected] of cases) {
+    it(`recovers tell from "${input.slice(0, 20)}…"`, () => {
+      const node = parse(input, 'zh');
+      expect(node.action).toBe('on');
+      const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
+      for (const e of expected) expect(dumped).toContain(e);
+    });
+  }
+});
+
 describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
   // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
   // `@property` relies on the identifier reading, expectedTypes
