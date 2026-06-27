@@ -1,5 +1,34 @@
 # Handoff — the 2 remaining priority degenerate singletons (ko window-scroll, tl behavior-resizable)
 
+> **✅ BOTH CLEARED (2026-06-26).** The priority **degenerate band is now empty (2 → 0)**.
+>
+> - **ko `window-scroll`** — fixed in `semantic-parser.ts` (branch
+>   `fix/ko-window-scroll-homonym`). The diagnosis below was right that the if/else body is
+>   a red herring, but the precise blocker was narrower than "teach `trySOVEventExtraction`
+>   to consume a trailing from-source": that extractor **already** parses the from-source
+>   faithfully (a non-homonym `클릭 … 창 에서 …` was already faithful). The sole blocker was
+>   that **Stage 2 short-circuited** on the `스크롤` command-homonym match (scroll is a known
+>   event AND the `scroll` command) before Stage 3 ran. Fix: a Stage-2 guard — when the
+>   matched action is a known-event homonym AND the input carries an SOV event-marker head
+>   (`스크롤 할 때`, new `hasSOVEventMarkerHead`), prefer SOV extraction. Mirrors the existing
+>   `BLOCK_BODY_ACTIONS` guard; additive (a bare `스크롤 #panel` still parses as scroll).
+> - **tl `behavior-resizable`** — fixed in the **i18n `GrammarTransformer` tokenizer** (branch
+>   `fix/tl-behavior-resizable-parens`, stacked on the ko branch). NOT the loop-body /
+>   `measure` arc theorized below — the loop body parsed fine. The real cause: the tokenizer
+>   tracked `<>`/`[]` depth but not `()`, so the event destructure `pointerdown(clientX,
+clientY)` split at the comma-space and the VSO from-first reorder fronted the stray
+>   `clientY)` half, mangling the whole handler head (tl dropped to `{behavior}`). Fix: keep
+>   an **attached** `(` (a call/destructure arg list) atomic; a standalone expression `(`
+>   (`($count or 0)`) stays splittable so its operators still translate. Collateral upside:
+>   ar behavior-resizable 0.667 → 0.889. The `measure`-drop / th-wide tail below is **still
+>   lossy** (not degenerate) and remains open as Track-4 work.
+>
+> Both validated through the gate (`--regression` green, zero regressions; lossy unchanged at
+> 32). Guards: semantic `multilingual-roadmap-fixes.test.ts` "Korean command-homonym event
+> head"; i18n `grammar.test.ts` "Attached parenthesized arg list stays one token". Remaining
+> multilingual work is the lossy tail (Track 4) + the R1/SOV role-fidelity burn-down (Track 3).
+> The original ready-to-resume scope is kept below for provenance.
+
 > Written 2026-06-26, after `he unless-condition` (PR #490) and `tr default-value`
 > (PR #491) cleared two of the four degenerates. Read
 > [`MULTILINGUAL_NEXT_STEPS.md`](MULTILINGUAL_NEXT_STEPS.md) +

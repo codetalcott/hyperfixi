@@ -2006,3 +2006,40 @@ describe('Hebrew event-handler inline `unless` guard (he unless-condition degene
     expect(out.indexOf('ב לחיצה')).toBeLessThan(out.indexOf('אלא'));
   });
 });
+
+describe('Attached parenthesized arg list stays one token (tl behavior-resizable degenerate)', () => {
+  // The tokenizer tracked `<>` selectors and `[]` guards but not `()`, so an event
+  // destructure `pointerdown(clientX, clientY)` split at the comma-space into
+  // `pointerdown(clientX,` + `clientY)`. In the VSO from-first event-handler-head
+  // reorder the two halves were SEPARATED (event role = `pointerdown(clientX,`, the
+  // stray `clientY)` fronted) → `clientY) mula_sa ako kapag pointerdown(clientX,`,
+  // an unparseable head that dropped the whole `on pointerdown … end` handler
+  // (tl behavior-resizable DEGENERATE → {behavior}; ar lossy). Fix: track an ATTACHED
+  // `(` (one that follows a token) as a depth scope, so the arg list stays atomic; a
+  // STANDALONE `(` opening an expression (`to ($count or 0)`) is left untracked so its
+  // internal operators still translate.
+  it('[tl] event-handler head with destructured params keeps the event atomic', () => {
+    const out = new GrammarTransformer('en', 'tl').transform(
+      'on pointerdown(clientX, clientY) from me'
+    );
+    // The from-source fronts (VSO), but the event + its params stay one clean unit.
+    expect(out).toContain('pointerdown(clientX, clientY)');
+    // Before the fix the split half `clientY)` was fronted to the very start.
+    expect(out.startsWith('clientY)')).toBe(false);
+  });
+
+  it('[ar] same head is not split at the comma either', () => {
+    const out = new GrammarTransformer('en', 'ar').transform(
+      'on pointerdown(clientX, clientY) from me'
+    );
+    expect(out).toContain('pointerdown(clientX, clientY)');
+  });
+
+  it('a standalone expression paren is still tokenized (operators translate)', () => {
+    // `($count or 0)` is NOT an attached call — its `or` must still split out and
+    // translate. Tagalog renders `or` → `o`.
+    const out = new GrammarTransformer('en', 'tl').transform('set $x to ($count or 0)');
+    expect(out).toContain(' o '); // `or` translated, i.e. the paren was NOT made atomic
+    expect(out).not.toContain('($count or 0)');
+  });
+});
