@@ -127,38 +127,40 @@ The committed baseline is authoritative (`timestamp`/`commit` stamp each regen).
 > `input-mirror` is a possessive-`my value` role drop. Each is its own dedicated session per the
 > arcs below — **do NOT bundle them as singletons.**
 
-| Signal                        | Value (post-singleton-sweep, lossy 10)                          |
-| ----------------------------- | --------------------------------------------------------------- |
-| parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)               |
-| degenerate (fid < 0.5)        | **0** ✅                                                        |
-| lossy (0.5 ≤ fid < 1.0)       | **10** (was 18; the clean keyword/marker band is now exhausted) |
-| avgFidelity (R0-recall)       | 0.999                                                           |
-| avgPrecision (R0 trust floor) | 0.970                                                           |
-| avgRoleFidelity (R1)          | **0.843 — the laggard** (hi 0.750 · qu 0.779 · bn 0.784)        |
+| Signal                        | Value (lossy band CLEARED — #506)                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| parse rate                    | **3695 / 3696** (1 hard fail: `tr window-resize`)                                       |
+| degenerate (fid < 0.5)        | **0** ✅                                                                                |
+| lossy (0.5 ≤ fid < 1.0)       | **0** ✅ (was 10; #506 cleared the loop-body + ko if-fold + role/structural singletons) |
+| faithful (fid = 1.0)          | **3695** — every parsing pattern                                                        |
+| avgFidelity (R0-recall)       | **1.000**                                                                               |
+| avgPrecision (R0 trust floor) | **0.971**                                                                               |
+| avgRoleFidelity (R1)          | **0.845 — the laggard** (hi 0.757 · bn 0.784 · qu 0.785)                                |
 
-### The lossy leverage map (post-#499 — regenerate from the baseline; do NOT trust after more lands)
+### The lossy leverage map — EMPTY (lossy → 0, #506)
+
+> **Every entry below is DONE — the lossy band is empty.** #506 cleared the last 10: the
+> loop-body family (Arc 2 — ar `measure`, qu `repeat`, ar/sw `repeat-until-event`), the ko
+> if-fold (`if-empty`/`input-validation`), and the role/structural singletons (`last-in-collection`
+> ms, `input-mirror` vi, `keydown-key-is-syntax` hi — the last turned out to be a **hyphen
+> tokenization split**, not the Arc-4 SOV event-anchor it was filed under). See the top
+> "lossy tail CLEARED" note for the per-fix grounding. The historical map is kept for provenance.
 
 ```text
-control-flow body-parse:
-  unless-condition   (0)   ✅ DONE     ← qu/vi/zh cleared (#501; keyword + transform; NOT body-parse).
-loop-body family (Arc 2 — tryParseLoopBlock fold, hottest body-parse path):
-  behavior-draggable (2)   ar,qu      ← qu drops `repeat` (no tryParseLoopBlock; grounded below)
-  repeat-until-event (2)   ar,sw
-  behavior-resizable (1)   ar         ← ar drops `measure`
-control-flow body-parse (if-folding):
-  if-empty(ko), input-validation(ko)  ← `if` block dropped in the SOV event body
-SOV event-anchor (Arc 4 — hottest path):
-  keydown-key-is-syntax(hi)           ← `साफ़-करें`(clear) mis-anchored as a fronted-event `on`
-role/structural singletons:
-  last-in-collection(ms)   ← untranslated `to last … in`, role drop (bundle-specific)
-  input-mirror(vi)         ← possessive `my value`; `put` patient drops
-cleared this session (keyword/marker realigns — the clean band is now empty):
-  ✅ render-template-with-data(vi) · morph-with-template(vi)  → #502 (render→kết xuất)
-  ✅ append-content(qu)                                       → #503 (append→qatichiy)
-  ✅ tell-command(zh) · tell-other-element(zh)                → #504 (tellSchema zh:把)
+✅ unless-condition          → #501 (qu/vi/zh; keyword + transform; NOT body-parse)
+✅ behavior-draggable (ar,qu)→ #506 (ar measure; qu repeat — parseClause repeat-keyword guard)
+✅ behavior-resizable (ar)   → #506 (ar measure: profile alt قس)
+✅ repeat-until-event (ar,sw)→ #506 (multi-token event name: ar multi-word, sw `_`-join)
+✅ if-empty(ko) · input-validation(ko) → #506 (SOV copula-split condition fold)
+✅ keydown-key-is-syntax(hi) → #506 (hi `-`-compound `साफ़-करें` join; NOT an Arc-4 anchor)
+✅ last-in-collection(ms)    → #506 (profile `scroll` alt)
+✅ input-mirror(vi)          → #506 (register `giá trị`=value)
+✅ render-template-with-data(vi) · morph-with-template(vi) → #502 (render→kết xuất)
+✅ append-content(qu)        → #503 (append→qatichiy)
+✅ tell-command(zh) · tell-other-element(zh) → #504 (tellSchema zh:把)
 ```
 
-Regenerate the map (the authoritative version) with:
+Confirm the band is still empty (the authoritative check) with:
 
 ```bash
 node -e "const b=require('./packages/testing-framework/baselines/multilingual-priority.json');
@@ -288,7 +290,24 @@ in one fix (and likely th `send`).
 
 ---
 
-## Arc 2 — behavior loop-body: SOV `repeat`-block fold (qu) + ar `measure` [PARTLY GROUNDED]
+## Arc 2 — behavior loop-body: SOV `repeat`-block fold (qu) + ar `measure` [DONE — #506]
+
+> **DONE (2026-06-27, #506).** All four loop-body lossy passes cleared — and the
+> `tryParseLoopBlock`-fold framing below was **wrong** (the methodology lesson again):
+>
+> - **qu `repeat`** was NOT a missing fold. A verb-final `wait` (`suyay`) greedily anchored its
+>   match AT the clause-final loop keyword `kutipay`, so `matchBest` _succeeded_ and the bare-`repeat`
+>   recovery (gated on matchBest failing) never fired. Fix: `parseClause` now rejects a non-`repeat`
+>   match anchored at the repeat keyword. (The qu `until` `_`-split prerequisite below was real but,
+>   as predicted, not sufficient alone.)
+> - **ar `measure`** was a dict↔profile keyword gap: the dict emits the undiacritized `قس`, the
+>   profile only knew `قياس`/`قِس`. Added `قس` to the profile measure alternatives. NOT a loop-body fold.
+> - **ar/sw `repeat-until-event`** was a multi-token event-name drop, not loop-body: ar spaces events
+>   (`فأرة أسفل`) and the leading `ف` was stripped as a `then` proclitic; sw underscore-joins them
+>   (`panya_shuka`). Fixed in the ar/sw tokenizer keyword readers.
+>
+> Guards in `multilingual-roadmap-fixes.test.ts` (fail-without-fix verified). The grounding below is
+> kept for provenance — note its central hypothesis did not survive contact with `ml.parse`.
 
 This is the loop-body family — `behavior-draggable` (ar drops `measure`, **qu drops `repeat`**),
 `behavior-resizable` (ar drops `measure`), `repeat-until-event` (ar/sw). The handoff says this
@@ -349,7 +368,7 @@ resizable.
 
 ## Arc 4 — R1 / SOV role-fidelity burn-down (Track 3) [LARGER ARC]
 
-avgRoleFidelity **0.842** is the laggard (hi 0.750 · qu 0.779 · bn 0.784 · ja 0.795 · ko 0.802 ·
+avgRoleFidelity **0.845** is the laggard (hi 0.757 · bn 0.784 · qu 0.785 · ja 0.795 · ko 0.806 ·
 tr 0.807 — the SOV/reorder set). R1 measures `action.role:valueType` recall — a parse that keeps
 the verb but drops/mistypes a role. The Track 3 triage (see `MULTILINGUAL_NEXT_STEPS.md`) found the
 dominant cause is **structural SOV mis-anchoring** (a fronted literal/expression mistaken for the
@@ -391,20 +410,28 @@ The localized-alignment band is **done** (lossy 32 → 18):
    block at the top.
 
 The singleton-tail keyword/marker realigns are **done** (#502 vi render, #503 qu append, #504 zh
-tell — see the 2026-06-27 singleton-sweep update at the top). **The remaining 10 have no clean
-keyword/marker fix left — each is a hottest-path body-parse / SOV-anchor defect, its own FRESH,
-ground-from-scratch session:**
+tell), and **#506 cleared the final 10** — the loop-body family, the ko if-fold, and the
+role/structural singletons. **The lossy band is empty.** Items 4–5 and 7 are kept struck-through
+for provenance:
 
-4. **Arc 2 (loop-body)** — the SOV `repeat`-block fold (qu, grounded below: no `tryParseLoopBlock`
-   in `parseBodyWithClauses`) + ar `measure` + `repeat-until-event` (ar/sw). Dedicated session,
-   hottest body-parse path. Do the qu `until` underscore prerequisite together with the fold.
-5. **Control-flow if-folding** (`if-empty`, `input-validation` — ko) — the `if` block drops from
-   the SOV event body. Same body-parse family as the (now-done) `unless-condition`, but `if` _is_
-   folded by `tryParseConditionalBlock`, so re-ground from scratch.
-6. **Arc 4 (R1/SOV role-fidelity, 0.843)** — separate dimension, highest headroom + risk; the
-   convergent SOV event-anchor arc. Now **owns** `keydown-key-is-syntax` (hi) — grounded this
-   session: `साफ़-करें`(clear) is mis-anchored as a fronted-event `on`, a Stage-2 SOV mis-anchor,
-   not a `clear` keyword gap. Also the qu/bn/hi-trigger residue. Guarded dedicated session.
-7. **Residual singletons** — `last-in-collection` (ms; untranslated `to last … in`, bundle-specific
-   role drop) and `input-mirror` (vi; possessive `my value` drops the `put` patient). Lower ROI;
-   re-ground each before assuming a cause.
+4. ~~**Arc 2 (loop-body)**~~ **DONE (#506)** — NOT the theorized `tryParseLoopBlock` fold: qu
+   `repeat` was a `parseClause` greedy-anchor bug, ar `measure` a profile keyword alt, ar/sw
+   `repeat-until-event` a multi-token event-name drop. See the Arc 2 DONE block.
+5. ~~**Control-flow if-folding** (`if-empty`, `input-validation` — ko)~~ **DONE (#506)** — the one
+   genuine hottest-path fix: the SOV transform lands the then-branch verb (`추가`=add) directly after
+   the copula `이다`(is), so the condition-split now fires after a copula when a real SOV
+   command-verb opens there (SVO `X is empty <cmd>` byte-identical).
+6. ~~**Residual singletons**~~ **DONE (#506)** — `last-in-collection` (ms; profile `scroll` alt),
+   `input-mirror` (vi; registered `giá trị`=value), and `keydown-key-is-syntax` (hi; a `-`-compound
+   `साफ़-करें` tokenization split — **NOT** the Arc-4 SOV anchor it was filed under).
+
+**Only two items remain — both separate dimensions, NOT lossy passes:**
+
+- **Arc 4 (R1/SOV role-fidelity, avgRoleFidelity 0.845)** — the ONLY remaining fidelity dimension
+  and the highest-headroom multilingual work. Laggards hi 0.757 · bn 0.784 · qu 0.785. The
+  convergent SOV event-anchor arc; **HIGH risk** (hottest, most regression-sensitive parser path) —
+  and `--regression` won't flag R1 drift until someone drives it, so guard R0/precision/parse-rate
+  carefully in a dedicated session. (The qu/bn/hi-trigger residue lives here too — gate-invisible,
+  see the Arc 1 dead-end note.)
+- **`tr window-resize`** — the lone parse hard-fail (3695/3696), explicitly deferred as lowest-ROI
+  (see Deferred / out of scope above).
