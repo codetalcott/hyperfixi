@@ -211,15 +211,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         }
       }
 
-      // Positional variants (`put X at end of Y`, `at start of`) are handcrafted
-      // for PARSING that specific surface form; they carry the position as baked-in
-      // literals, not a role, so role scoring can't distinguish them from the
-      // canonical `put X into Y`. Some carry a higher parse priority (e.g.
-      // `put-bn-at-end` at 110) and would otherwise win render selection, emitting
-      // the verbose positional form for every plain put. Penalize them for
-      // rendering only — parsing is priority-ordered in the matcher, not here, so
-      // positional INPUT still matches its pattern via the literals.
-      if (/-at-end|-at-start/i.test(pattern.id)) {
+      // Positional variants (`put X at end of Y`, `at start of`, `before`/`after`)
+      // are handcrafted for PARSING that specific surface form; they carry the
+      // position as baked-in literals, not a role, so role scoring can't distinguish
+      // them from the canonical `put X into Y`. Several carry a higher parse priority
+      // (e.g. `put-bn-at-end` at 110, the SOV `put-{ja,ko,hi,bn,tr,qu}-before/after`
+      // at 105/106 — needed so the matcher prefers them over the into-form / the SOV
+      // verb-anchoring fallback when the position word IS present) and would
+      // otherwise win render selection, emitting the verbose positional form (or a
+      // literal `before`/`after`) for every plain put. Penalize them for rendering
+      // only — parsing is priority-ordered in the matcher, not here, so positional
+      // INPUT still matches its pattern via the literals.
+      if (/-at-end|-at-start|-before$|-after$/i.test(pattern.id)) {
         score -= 30;
       }
 

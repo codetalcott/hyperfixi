@@ -127,7 +127,7 @@ export const tr: Dictionary = {
     equals: 'eşittir',
     has: 'var',
     have: 'var',
-    then: 'sonra',
+    then: 'ardından',
     else: 'yoksa',
     otherwise: 'aksi_halde',
     end: 'son',

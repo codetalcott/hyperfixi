@@ -2765,13 +2765,21 @@ export class SemanticParserImpl implements ISemanticParser {
       // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
       // it here split the put clause at 之后 and dropped the put.
       zh: new Set(['然后', '接着', '那么']),
-      tr: new Set(['sonra', 'ardından', 'daha sonra']),
+      // 'sonra' is deliberately ABSENT (mirrors zh dropping 之后): the tr
+      // transformer emits it as positional `after` (`{patient} sonra {dest} … koy`,
+      // put-after); keeping it here split the put clause at sonra and dropped the
+      // put. then-chains use ardından (the i18n dict's then emission).
+      tr: new Set(['ardından', 'daha sonra', 'ardindan']),
       pt: new Set(['então', 'depois', 'logo']),
       fr: new Set(['puis', 'ensuite', 'alors']),
       de: new Set(['dann', 'danach', 'anschließend']),
       id: new Set(['lalu', 'kemudian', 'setelah itu']),
       tl: new Set(['pagkatapos', 'tapos']),
-      bn: new Set(['তারপর', 'পরে']),
+      // 'পরে' is deliberately ABSENT (mirrors tr dropping 'sonra' / zh dropping
+      // 之后): the bn transformer emits it as positional `after` (`{patient} পরে
+      // {dest} … রাখুন`, put-after); keeping it here split the put clause at পরে and
+      // dropped the put. then-chains use তারপর (the bn dict's then emission).
+      bn: new Set(['তারপর']),
       qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
       sw: new Set(['kisha', 'halafu', 'baadaye']),
     };
