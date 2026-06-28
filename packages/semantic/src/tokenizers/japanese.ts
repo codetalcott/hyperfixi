@@ -97,6 +97,14 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: 'マウスオーバー', normalized: 'mouseover' },
   { native: 'マウスアウト', normalized: 'mouseout' },
 
+  // Conjunctions. `または` (or) must be listed so the keyword extractor's
+  // longest-match keeps it whole — otherwise the profile's `and` primary `また`
+  // (a 2-char prefix of the 3-char `または`) wins and the trailing `は` falls to
+  // the topic-particle extractor (`また`→and + `は`), destroying the multi-event
+  // `or` conjunction (`on click または keypress …`). `と`/`そして`/`また` already
+  // cover `and` via the profile; only `or` is missing.
+  { native: 'または', normalized: 'or' },
+
   // References (alternative forms not in profile)
   { native: '私', normalized: 'me' }, // Alternative to 自分 (jibun)
 

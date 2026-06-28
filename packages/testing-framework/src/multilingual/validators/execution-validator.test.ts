@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 39 curated patterns', () => {
+  it('contains exactly the 40 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -101,6 +101,11 @@ describe('R2 execution subset (lock)', () => {
         'set-transform',
         'accordion-toggle',
         'caret-var-on-target',
+        // Session-13 expansion wave 7: multiple-events (`on click or
+        // keypress[...] toggle .active`), the third wave-5 worklist divergence,
+        // now fixed by the semantic or-clause excision pre-pass + ja `または`→or
+        // tokenizer fix + hi/bn OR_KEYWORDS. All 23 langs match the en click effect.
+        'multiple-events',
       ].sort()
     );
   });
@@ -266,6 +271,27 @@ describe('R2 execution validator (lock)', () => {
     );
     expect(ms.error, `ms errored: ${ms.error}`).toBeUndefined();
     expect(ms.effects).toEqual(en.effects);
+  });
+
+  it('wave-7 multiple-events: en + a translation toggle .active on click', async () => {
+    // `on click or keypress[...] toggle .active` — the multi-event handler. R2
+    // dispatches click only, so both events bind but only the click effect is
+    // measured: .active toggled onto #btn. A translation whose `or`-clause used to
+    // become a phantom command (it `o`) or mangle (ko) now reproduces it exactly.
+    const en = await validator.execute(
+      'multiple-events',
+      'on click or keypress[key=="Enter"] toggle .active',
+      'en'
+    );
+    expect(en.error).toBeUndefined();
+    expect(en.effects).toEqual(['Δ#btn cls[active] attr[id=btn] style[] text[Click]']);
+    const it = await validator.execute(
+      'multiple-events',
+      'su clic o keypress[key=="Enter"] commutare .active',
+      'it'
+    );
+    expect(it.error, `it errored: ${it.error}`).toBeUndefined();
+    expect(it.effects).toEqual(en.effects);
   });
 
   it('a parse failure comes back as an error, never a throw', async () => {

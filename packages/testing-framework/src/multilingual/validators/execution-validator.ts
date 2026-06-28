@@ -145,9 +145,8 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // non-empty signature against the existing fixture (next/closest positionals fall
   // back to `me` consistently across every language; set *opacity/*transform write
   // inline style; caret-var-on-target clears #btn text — the undefined `^count` resolves
-  // the same way in every language). The THREE wave-5 candidates with REAL divergences
+  // the same way in every language). Two wave-5 candidates with REAL divergences
   // remain the next-wave worklist (re-grounded fresh-db divergent-lang counts):
-  //   multiple-events (7: ja,ko,it,hi,tr,bn,qu — the `or` multi-event separator) ·
   //   put-after (14) · put-before (14) — positional `put … after/before me`, which
   //   errors ("Unknown command: after", "put requires content and position") or inserts
   //   at the wrong offset in most languages. These are invisible to R0/R1 (parse-faithful)
@@ -159,6 +158,14 @@ export const EXECUTION_SUBSET: readonly string[] = [
   'set-transform',
   'accordion-toggle',
   'caret-var-on-target',
+  // Expansion wave 7 (session 13): `multiple-events` — `on click or
+  // keypress[key=="Enter"] toggle .active`. The third wave-5 worklist divergence,
+  // now FIXED (semantic): a scoped or-clause excision pre-pass + the ja `または`→or
+  // tokenizer fix + hi/bn OR_KEYWORDS entries. It diverged in 7 languages
+  // (ja,ko,it,hi,tr,bn,qu — the translated `or` became a phantom body command or
+  // mangled into a selector); now all 23 match the en click effect (toggles .active
+  // on #btn). R2 stays 1.0. Only put-after/put-before remain from the wave-5 list.
+  'multiple-events',
 ];
 
 /**

@@ -8271,3 +8271,73 @@ describe('Schema default-role fill (Tier 2b — SOV drops defaulted roles; R1)',
     expect(r?.has('quantity')).toBe(false);
   });
 });
+
+describe('Multi-event `or` conjunction in handler heads (multiple-events, R2)', () => {
+  // `on click or keypress[key=="Enter"] toggle .active` lists two events. en
+  // handled it (extractOrConjunctionEvents); the per-language pattern paths did
+  // not — the SVO "full" patterns captured the translated `or` (`o`/`또는`/…) as a
+  // phantom body command (it → "Unknown command: or" at runtime) and the SOV
+  // Stage-3 fallback mangled the clause (ko folded `또는keypress…할때` into an
+  // invalid CSS selector). A scoped pre-pass now excises `<or-word> <event>[filter]`
+  // and re-parses the single-event handler every language already handles, then
+  // re-attaches the extra event. See execution-validator.ts wave 7.
+  function bodyActions(node: any, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    if (typeof node.action === 'string' && node.action !== 'compound') acc.add(node.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = node[f];
+      if (Array.isArray(c)) c.forEach((x: any) => bodyActions(x, acc));
+      else if (c && typeof c === 'object') bodyActions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped multiple-events translations (en → lang). Each must parse to a
+  // single-event toggle handler — toggle present, NO phantom `or` command.
+  const cases: Array<[string, string]> = [
+    ['en', 'on click or keypress[key=="Enter"] toggle .active'],
+    ['it', 'su clic o keypress[key=="Enter"] commutare .active'],
+    ['ja', '.active を クリック または keypress[key=="Enter"] で 切り替え'],
+    ['ko', '.active 를 클릭 또는 keypress[key=="Enter"] 할 때 토글'],
+    ['hi', '.active को क्लिक या keypress[key=="Enter"] पर टॉगल'],
+    ['tr', '.active i tıklama veya keypress[key=="Enter"] de değiştir'],
+    ['bn', '.active কে ক্লিক অথবা keypress[key=="Enter"] এ টগল'],
+    ['qu', '.active ta ñitiy utaq keypress[key=="Enter"] pi tikray'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] parses to a single-event toggle handler (no phantom 'or' command)`, () => {
+      const node = parse(input, lang);
+      expect(node.action).toBe('on');
+      const actions = bodyActions(node);
+      expect(actions.has('toggle')).toBe(true);
+      expect(actions.has('or')).toBe(false);
+      // The second event is preserved (moved to additionalEvents), not dropped.
+      const extra = (node as any).additionalEvents?.map((e: any) => e.value) ?? [];
+      expect(extra).toContain('keypress');
+    });
+  }
+
+  it('[ja] `または` tokenizes as a single `or` keyword, not `また`(and) + `は`', () => {
+    const tk = getTokenizer('ja')!;
+    const toks = (tk.tokenize('または keypress') as any).tokens.map((t: any) => t.normalized ?? t.value);
+    expect(toks).toContain('or');
+    expect(toks).not.toContain('and');
+  });
+
+  // Control: `or` inside an EXPRESSION must NEVER be excised (the post-`or` token
+  // is a variable/number, not an event), so no phantom additionalEvents appear.
+  it('[en] `or` in a condition is untouched (if I match .a or I match .b)', () => {
+    const node = parse('on click if I match .a or I match .b then toggle .x end', 'en');
+    expect(node.action).toBe('on');
+    expect((node as any).additionalEvents ?? []).toHaveLength(0);
+    expect(bodyActions(node).has('if')).toBe(true);
+  });
+
+  it('[en] `or` in a value default is untouched (set $count to ($count or 0) + 1)', () => {
+    const node = parse('on click set $count to ($count or 0) + 1', 'en');
+    expect(node.action).toBe('on');
+    expect((node as any).additionalEvents ?? []).toHaveLength(0);
+    expect(bodyActions(node).has('set')).toBe(true);
+  });
+});
