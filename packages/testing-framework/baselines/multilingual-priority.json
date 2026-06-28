@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-28T19:11:45.530Z",
-  "commit": "2334ef9b",
+  "timestamp": "2026-06-28T21:06:13.662Z",
+  "commit": "e7040a10",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -4426,7 +4426,7 @@
       "avgConfidence": 0.90909904631709,
       "avgFidelity": 1,
       "avgPrecision": 0.9208653089334906,
-      "avgRoleFidelity": 0.8645979164361516,
+      "avgRoleFidelity": 0.8668501686884038,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
