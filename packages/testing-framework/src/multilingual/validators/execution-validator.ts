@@ -145,13 +145,7 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // non-empty signature against the existing fixture (next/closest positionals fall
   // back to `me` consistently across every language; set *opacity/*transform write
   // inline style; caret-var-on-target clears #btn text — the undefined `^count` resolves
-  // the same way in every language). Two wave-5 candidates with REAL divergences
-  // remain the next-wave worklist (re-grounded fresh-db divergent-lang counts):
-  //   put-after (14) · put-before (14) — positional `put … after/before me`, which
-  //   errors ("Unknown command: after", "put requires content and position") or inserts
-  //   at the wrong offset in most languages. These are invisible to R0/R1 (parse-faithful)
-  //   — exactly the class R2 exists to catch — and each must be FIXED before joining, or
-  //   it drops R2 below 1.0. Tracked in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  // the same way in every language).
   'next-element',
   'toggle-aria-expanded',
   'set-opacity',
@@ -164,8 +158,18 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // tokenizer fix + hi/bn OR_KEYWORDS entries. It diverged in 7 languages
   // (ja,ko,it,hi,tr,bn,qu — the translated `or` became a phantom body command or
   // mangled into a selector); now all 23 match the en click effect (toggles .active
-  // on #btn). R2 stays 1.0. Only put-after/put-before remain from the wave-5 list.
+  // on #btn). R2 stays 1.0.
   'multiple-events',
+  // Expansion wave 8 (session 14): `put-before` / `put-after` — `put "<p>New</p>"
+  // before/after me`, the last two wave-5 worklist divergences (14 langs each), now
+  // FIXED. The position word (`before`/`after` + translations) is now captured as the
+  // put command's `manner` role (→ the DOM-insert modifier): per-language put-before/
+  // after patterns for SVO/SOV (#516) + handcrafted high-priority VSO put-event
+  // patterns for ar/tl/uk (the fused VSO event pattern consumed the position word as
+  // a plain destination marker and dropped manner). All 23 langs now insert the <p>
+  // before/after #btn (matching en); R2 stays 1.0.
+  'put-before',
+  'put-after',
 ];
 
 /**
