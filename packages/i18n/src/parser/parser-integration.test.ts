@@ -384,7 +384,11 @@ describe('KeywordProvider Integration', () => {
       expect(trKeywords.resolve('ve')).toBe('and');
       expect(trKeywords.resolve('veya')).toBe('or');
       expect(trKeywords.resolve('değil')).toBe('not');
-      expect(trKeywords.resolve('sonra')).toBe('then'); // dictionary uses 'sonra'
+      // 'sonra' is the positional `after` (`put X sonra Y`); `then` uses 'ardından'
+      // (disambiguated so the put-after position word no longer collides with then —
+      // mirrors zh then:'那么' vs after:'之后'). See put-tr-after / the tr then-set.
+      expect(trKeywords.resolve('sonra')).toBe('after');
+      expect(trKeywords.resolve('ardından')).toBe('then');
       expect(trKeywords.resolve('yoksa')).toBe('else');
     });
 

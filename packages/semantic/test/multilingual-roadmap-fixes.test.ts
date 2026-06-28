@@ -8341,3 +8341,72 @@ describe('Multi-event `or` conjunction in handler heads (multiple-events, R2)', 
     expect(bodyActions(node).has('set')).toBe(true);
   });
 });
+
+describe('Positional put `before`/`after` captures manner (put-before/put-after, R2 worklist)', () => {
+  // `put X before/after me` must parse with roles { patient, destination:me,
+  // manner:'before'/'after' } so the put AST-mapper inserts the content relative to
+  // the target (English's DOM effect). Each language's position word was previously
+  // dropped (rendered into the destination, mis-read as a `before`/`after` COMMAND
+  // in SOV, or split as a then-clause for tr `sonra` / bn `পরে`), losing the
+  // position. Corpus translations (en → lang) of `on click put "<p>New</p>"
+  // before/after me`. ar/tl/uk (VSO) are NOT here — the fused VSO event pattern
+  // still drops manner (tracked separately).
+  function findPut(node: any): any {
+    if (!node || typeof node !== 'object') return undefined;
+    if (node.action === 'put') return node;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = node[f];
+      if (Array.isArray(c)) for (const x of c) { const r = findPut(x); if (r) return r; }
+      else if (c && typeof c === 'object') { const r = findPut(c); if (r) return r; }
+    }
+    return undefined;
+  }
+  const role = (put: any, r: string) => {
+    const v = put?.roles instanceof Map ? put.roles.get(r) : put?.roles?.[r];
+    return v?.value ?? v;
+  };
+
+  const before: Array<[string, string]> = [
+    ['ja', '"<p>New</p>" 前に 私 を クリック で 置く'],
+    ['ko', '"<p>New</p>" 전에 나 를 클릭 할 때 넣다'],
+    ['hi', '"<p>New</p>" से पहले मैं को क्लिक पर रखें'],
+    ['bn', '"<p>New</p>" আগে আমি কে ক্লিক এ রাখুন'],
+    ['tr', '"<p>New</p>" önce ben i tıklama de koy'],
+    ['qu', '"<p>New</p>" ñawpaqpi noqa ta ñitiy pi churay'],
+    ['it', 'su clic mettere "<p>New</p>" prima io'],
+    ['vi', 'khi nhấp đặt "<p>New</p>" trước tôi'],
+    ['ru', 'при клик положить "<p>New</p>" до я'],
+    ['pl', 'gdy kliknięcie umieść "<p>New</p>" przed ja'],
+    ['th', 'เมื่อ คลิก ใส่ "<p>New</p>" ก่อน ฉัน'],
+  ];
+  const after: Array<[string, string]> = [
+    ['ja', '"<p>New</p>" 後に 私 を クリック で 置く'],
+    ['ko', '"<p>New</p>" 후에 나 를 클릭 할 때 넣다'],
+    ['hi', '"<p>New</p>" के बाद मैं को क्लिक पर रखें'],
+    ['bn', '"<p>New</p>" পরে আমি কে ক্লিক এ রাখুন'],
+    ['tr', '"<p>New</p>" sonra ben i tıklama de koy'],
+    ['qu', '"<p>New</p>" qhepapi noqa ta ñitiy pi churay'],
+    ['it', 'su clic mettere "<p>New</p>" dopo io'],
+    ['vi', 'khi nhấp đặt "<p>New</p>" sau tôi'],
+    ['ru', 'при клик положить "<p>New</p>" после я'],
+    ['pl', 'gdy kliknięcie umieść "<p>New</p>" po ja'],
+    ['th', 'เมื่อ คลิก ใส่ "<p>New</p>" หลัง ฉัน'],
+  ];
+
+  for (const [lang, code] of before) {
+    it(`[${lang}] put-before captures manner=before + destination`, () => {
+      const put = findPut(parse(code, lang));
+      expect(put, `no put command parsed for ${lang}`).toBeTruthy();
+      expect(role(put, 'manner')).toBe('before');
+      expect(role(put, 'destination')).toBeTruthy();
+    });
+  }
+  for (const [lang, code] of after) {
+    it(`[${lang}] put-after captures manner=after + destination`, () => {
+      const put = findPut(parse(code, lang));
+      expect(put, `no put command parsed for ${lang}`).toBeTruthy();
+      expect(role(put, 'manner')).toBe('after');
+      expect(role(put, 'destination')).toBeTruthy();
+    });
+  }
+});

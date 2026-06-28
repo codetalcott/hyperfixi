@@ -29,6 +29,44 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28e (positional put `before`/`after` — 11 of 14 langs fixed; R1
+> +0.004–0.008; VSO ar/tl/uk residual).** The last two wave-5 R2 divergences (`put-after`
+> /`put-before`, `put "<p>New</p>" before/after me`) are a multi-family arc. The unifying
+> root cause: the position word (`before`/`after` + translations) was not captured as the
+> put command's `manner` role (what the AST-mapper turns into the DOM-insert modifier) —
+> instead it was rendered into the destination (it/vi), mis-read as a `before`/`after`
+> COMMAND in SOV (ja/ko/hi/bn/tr/qu), or split as a then-clause (tr `sonra` / bn `পরে`
+> collided with `then`). A parallel **workflow** (5 family-design agents) produced the
+> per-language pattern specs; implemented centrally:
+>
+> - **SVO (it, vi, ru, pl, th)** — handcrafted/priority-tuned put-before/after capturing
+>   `manner` (it/vi added; ru/pl bumped; th added).
+> - **SOV (ja, ko, tr)** — new verb-final put generators (`{patient} <posWord> {dest} … {verb}`),
+>   priority 105 so the matcher wins before the SOV verb-anchoring fallback; **(hi, bn)** added
+>   to their existing put functions.
+> - **Tokenizer/collision fixes** — tr `sonra`→after (dropped the stale `sonra`→then EXTRA +
+>   moved `then` to `ardından` in the dict & then-set); bn `পরে` removed from the then-set; qu
+>   `ñawpaqpi`/`qhepapi` as single position-word tokens.
+> - **Renderer** — extended the existing `-at-end`/`-at-start` render-only penalty to
+>   `-before`/`-after` so the canonical into-form still wins RENDER selection (parse stays
+>   priority-ordered) — a latent parser-vs-renderer priority conflict the high-priority
+>   positional patterns exposed.
+>
+> Result: **11 of 14 langs** now parse `put before/after me` with `manner` captured;
+> **avgRoleFidelity +0.004–0.008** across bn/hi/it/ja/ko/pl/qu/ru/th/tr/vi + precision gains,
+> **zero regressions**, R2 still 1.000. Guard: `multilingual-roadmap-fixes.test.ts`
+> "Positional put `before`/`after`" (22 cases, verified failing without the fix).
+>
+> **Residual blocking the R2 entry: `ar`, `tl`, `uk` (VSO).** Their put is captured INLINE by
+> the generated fused VSO event pattern (`put-event-{ar,tl}-vso-verb-first-2role`,
+> `put-event-uk-vso-2role`) — the position word (قبل/بعد, bago/matapos, до/після) is a
+> destination-marker ALTERNATIVE, so it's consumed as the "into" marker and `manner` is lost
+> (inserts INTO me → `+p[2]` + `Δ#btn` instead of before/after). Unlike SVO/SOV there is no
+> body re-parse to reach a command-stage put-before pattern. Fixing it needs the VSO
+> event-handler GENERATOR (`event-handlers-vso.ts`) to capture `manner` when the destination
+> marker is a position word (or handcrafted high-priority VSO put-before/after `on` patterns).
+> Once ar/tl/uk match, `put-before`/`put-after` can join `EXECUTION_SUBSET` (40 → 42).
+>
 > **Update 2026-06-28d (R2 wave 7 — multiple-events fixed; subset 39 → 40).** The first
 > of the three genuinely-divergent wave-5 candidates is FIXED. `multiple-events`
 > (`on click or keypress[key=="Enter"] toggle .active`) diverged in 7 languages

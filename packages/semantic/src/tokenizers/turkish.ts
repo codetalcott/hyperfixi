@@ -141,9 +141,6 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'milisaniye', normalized: 'ms' },
   { native: 'dakika', normalized: 'm' },
   { native: 'saat', normalized: 'h' },
-
-  // Then disambiguation (sonra for clause chaining)
-  { native: 'sonra', normalized: 'then' },
 ];
 
 // =============================================================================

@@ -11,6 +11,54 @@ import type { LanguagePattern } from '../types';
 
 function getPutPatternsBn(): LanguagePattern[] {
   return [
+    // SOV verb-final positional put: `{patient} <posWord> {destination} কে রাখুন`
+    // (put X before/after me). আগে→before / পরে→after; position word → `manner`,
+    // target (আমি→me) → `destination`, কে the pre-verb object marker. priority 105
+    // out-ranks put-bn-full(100); requires the position word so it never shadows
+    // the into-put. Without these the verb-final body fell to the SOV
+    // verb-anchorer (phantom `before` command) / a roleless put.
+    {
+      id: 'put-bn-before',
+      language: 'bn',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: '{patient} before {destination} কে রাখুন',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'before' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'কে' },
+          { type: 'literal', value: 'রাখুন', alternatives: ['রাখ'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'before' },
+        manner: { default: { type: 'literal', value: 'before' } },
+      },
+    },
+    {
+      id: 'put-bn-after',
+      language: 'bn',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: '{patient} after {destination} কে রাখুন',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'after' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'কে' },
+          { type: 'literal', value: 'রাখুন', alternatives: ['রাখ'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'after' },
+        manner: { default: { type: 'literal', value: 'after' } },
+      },
+    },
     // Full pattern: 'hello' কে #output এ রাখুন
     {
       id: 'put-bn-full',
@@ -234,6 +282,56 @@ function getPutPatternsEs(): LanguagePattern[] {
 
 function getPutPatternsHi(): LanguagePattern[] {
   return [
+    // SOV verb-final positional put: `{patient} <posWord> {destination} को रखें`
+    // (put X before/after me). से पहले→before / के बाद→after normalize to
+    // before/after, so one literal (the normalized form) covers both surface
+    // variants. The position word is captured as `manner`; the target (मैं→me) as
+    // `destination`. priority 106 out-ranks put-hi-verb-medial(105); specific
+    // enough (requires the position word) never to shadow the into-puts. Without
+    // these the verb-final body found no put pattern and the SOV verb-anchoring
+    // fallback turned `before`/`after` into a phantom command.
+    {
+      id: 'put-hi-before',
+      language: 'hi',
+      command: 'put',
+      priority: 106,
+      template: {
+        format: '{patient} before {destination} को रखें',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'before' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'को' },
+          { type: 'literal', value: 'रखें', alternatives: ['रख', 'डालें', 'डाल'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'before' },
+        manner: { default: { type: 'literal', value: 'before' } },
+      },
+    },
+    {
+      id: 'put-hi-after',
+      language: 'hi',
+      command: 'put',
+      priority: 106,
+      template: {
+        format: '{patient} after {destination} को रखें',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'after' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'को' },
+          { type: 'literal', value: 'रखें', alternatives: ['रख', 'डालें', 'डाल'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'after' },
+        manner: { default: { type: 'literal', value: 'after' } },
+      },
+    },
     // Verb-MEDIAL pattern: यह को रखें #container में (`{patient} को रखें
     // {destination} में`). The hi transformer emits put VERB-MEDIAL in a fused
     // event body's then-clause (`… बनाएं फिर यह को रखें #container में` —
@@ -434,6 +532,49 @@ function getPutPatternsIt(): LanguagePattern[] {
       },
     },
     {
+      // before/after must out-rank put-it-full (100): that pattern's destination
+      // group is optional, so it greedily matches `mettere {patient}` alone and
+      // would otherwise shadow the position clause (`prima io` dropped).
+      id: 'put-it-before',
+      language: 'it',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: 'mettere {patient} prima {target}',
+        tokens: [
+          { type: 'literal', value: 'mettere', alternatives: ['metti', 'inserire', 'put'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'prima' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { marker: 'prima' },
+        manner: { default: { type: 'literal', value: 'before' } },
+      },
+    },
+    {
+      id: 'put-it-after',
+      language: 'it',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: 'mettere {patient} dopo {target}',
+        tokens: [
+          { type: 'literal', value: 'mettere', alternatives: ['metti', 'inserire', 'put'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'dopo' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { marker: 'dopo' },
+        manner: { default: { type: 'literal', value: 'after' } },
+      },
+    },
+    {
       id: 'put-it-simple',
       language: 'it',
       command: 'put',
@@ -483,7 +624,9 @@ function getPutPatternsPl(): LanguagePattern[] {
       id: 'put-pl-before',
       language: 'pl',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-pl-full (100), which
+      // would otherwise capture `umieść {patient}` alone and drop `przed {target}`.
+      priority: 105,
       template: {
         format: 'umieść {patient} przed {destination}',
         tokens: [
@@ -503,7 +646,7 @@ function getPutPatternsPl(): LanguagePattern[] {
       id: 'put-pl-after',
       language: 'pl',
       command: 'put',
-      priority: 95,
+      priority: 105,
       template: {
         format: 'umieść {patient} po {destination}',
         tokens: [
@@ -557,7 +700,8 @@ function getPutPatternsRu(): LanguagePattern[] {
       id: 'put-ru-before',
       language: 'ru',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-ru-full (100).
+      priority: 105,
       template: {
         format: 'положить {patient} перед {destination}',
         tokens: [
@@ -577,7 +721,7 @@ function getPutPatternsRu(): LanguagePattern[] {
       id: 'put-ru-after',
       language: 'ru',
       command: 'put',
-      priority: 95,
+      priority: 105,
       template: {
         format: 'положить {patient} после {destination}',
         tokens: [
@@ -616,6 +760,51 @@ function getPutPatternsTh(): LanguagePattern[] {
       extraction: {
         patient: { position: 1 },
         destination: { marker: 'ใน', position: 3 },
+      },
+    },
+    // SVO positional put: `ใส่ {patient} ก่อน/หลัง {destination}` (put X before/after
+    // me). ก่อน→before / หลัง→after captured as `manner`; target as `destination`.
+    // priority 105 out-ranks put-th-full(100) so the position clause wins the
+    // event-handler retry's matchBest (th fuses the event, then re-parses the body
+    // clause). Without these th dropped all roles → "put requires arguments".
+    {
+      id: 'put-th-before',
+      language: 'th',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: 'ใส่ {patient} ก่อน {destination}',
+        tokens: [
+          { type: 'literal', value: 'ใส่', alternatives: ['วาง'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ก่อน' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { marker: 'ก่อน' },
+        manner: { default: { type: 'literal', value: 'before' } },
+      },
+    },
+    {
+      id: 'put-th-after',
+      language: 'th',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: 'ใส่ {patient} หลัง {destination}',
+        tokens: [
+          { type: 'literal', value: 'ใส่', alternatives: ['วาง'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'หลัง' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { marker: 'หลัง' },
+        manner: { default: { type: 'literal', value: 'after' } },
       },
     },
   ];
@@ -720,26 +909,31 @@ function getPutPatternsVi(): LanguagePattern[] {
       id: 'put-vi-before',
       language: 'vi',
       command: 'put',
-      priority: 95,
+      priority: 105,
       template: {
         format: 'đặt {patient} trước {target}',
         tokens: [
           { type: 'literal', value: 'đặt', alternatives: ['để', 'đưa'] },
           { type: 'role', role: 'patient' },
           { type: 'literal', value: 'trước', alternatives: ['trước khi'] },
-          { type: 'role', role: 'manner' },
+          { type: 'role', role: 'destination' },
         ],
       },
+      // The target is the destination (the node to insert relative to); the
+      // position word itself is the `manner` (before/after) the AST mapper turns
+      // into the DOM-insert modifier. The previous pattern captured the target as
+      // `manner` and never recorded the position → wrong insert offset.
       extraction: {
         patient: { position: 1 },
-        manner: { marker: 'trước', markerAlternatives: ['trước khi'] },
+        destination: { marker: 'trước', markerAlternatives: ['trước khi'] },
+        manner: { default: { type: 'literal', value: 'before' } },
       },
     },
     {
       id: 'put-vi-after',
       language: 'vi',
       command: 'put',
-      priority: 95,
+      priority: 105,
       template: {
         format: 'đặt {patient} sau {target}',
         tokens: [
@@ -752,6 +946,7 @@ function getPutPatternsVi(): LanguagePattern[] {
       extraction: {
         patient: { position: 1 },
         destination: { marker: 'sau', markerAlternatives: ['sau khi'] },
+        manner: { default: { type: 'literal', value: 'after' } },
       },
     },
   ];
@@ -759,6 +954,36 @@ function getPutPatternsVi(): LanguagePattern[] {
 
 function getPutPatternsQu(): LanguagePattern[] {
   return [
+    // SOV verb-final positional put: `{patient} <posWord> {destination} ta churay`
+    // (put X before/after me). ñawpaqpi→before / qhepapi→after (single keyword
+    // tokens after the quechua tokenizer fix); position word → `manner`, target
+    // (noqa→me) → `destination` marked by accusative `ta`. priority 105 out-ranks
+    // put-qu-patient-first(96) and makes matchBest win before the SOV
+    // verb-anchoring fallback. `alternatives:[manner]` accepts the normalized form.
+    ...(['before', 'after'] as const).map(manner => {
+      const posWord = manner === 'before' ? 'ñawpaqpi' : 'qhepapi';
+      return {
+        id: `put-qu-${manner}`,
+        language: 'qu',
+        command: 'put',
+        priority: 105,
+        template: {
+          format: `{patient} ${posWord} {destination} ta churay`,
+          tokens: [
+            { type: 'role', role: 'patient' },
+            { type: 'literal', value: posWord, alternatives: [manner] },
+            { type: 'role', role: 'destination' },
+            { type: 'group', optional: true, tokens: [{ type: 'literal', value: 'ta' }] },
+            { type: 'literal', value: 'churay', alternatives: ['tiyachiy'] },
+          ],
+        },
+        extraction: {
+          patient: { position: 0 },
+          destination: { position: 2 },
+          manner: { default: { type: 'literal', value: manner } },
+        },
+      } satisfies LanguagePattern;
+    }),
     // Patient-first SOV with destination: chay ta kurku man churay — the i18n
     // transformer emits PATIENT-first for qu (`chay ta noqa man churay`,
     // async-block / fetch-with-headers / if-exists then-tails); there were no
@@ -1107,6 +1332,102 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
   ];
 }
 
+// Verb-FINAL SOV positional put (`{patient} <posWord> {destination} <objMarker> <verb>`).
+// buildPositionalPutPatterns is verb-FIRST only, so ja/ko/tr need handcrafted SOV
+// patterns. The position word (前に/전에/önce → before, 後に/후에/sonra → after) is
+// captured as `manner` (the put AST-mapper turns it into the DOM-insert modifier);
+// the target (me) is the destination. Priority 105 makes matchBest succeed so the
+// SOV verb-anchoring fallback — which would mis-read the position word as a bogus
+// `before`/`after` COMMAND — is never reached. Mirrors put-en/it/vi-before/after.
+function getPutPatternsJa(): LanguagePattern[] {
+  return (['before', 'after'] as const).map(manner => {
+    const posWord = manner === 'before' ? '前に' : '後に';
+    const posAlt = manner === 'before' ? '前' : '後';
+    return {
+      id: `put-ja-${manner}`,
+      language: 'ja',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: `{patient} ${posWord} {destination} を 置く`,
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: posWord, alternatives: [posAlt] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: '置く', alternatives: ['入れる'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { position: 2 },
+        manner: { default: { type: 'literal', value: manner } },
+      },
+    } satisfies LanguagePattern;
+  });
+}
+
+function getPutPatternsKo(): LanguagePattern[] {
+  return (['before', 'after'] as const).map(manner => {
+    const posWord = manner === 'before' ? '전에' : '후에';
+    return {
+      id: `put-ko-${manner}`,
+      language: 'ko',
+      command: 'put',
+      priority: 105,
+      template: {
+        format: `{patient} ${posWord} {destination} 를 넣다`,
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: posWord },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '넣다', alternatives: ['넣기', '놓기'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { position: 2 },
+        manner: { default: { type: 'literal', value: manner } },
+      },
+    } satisfies LanguagePattern;
+  });
+}
+
+function getPutPatternsTr(): LanguagePattern[] {
+  // önce → before, sonra → after (after the turkish tokenizer drops the stale
+  // `sonra`→then EXTRA). The accusative `i` (+vowel-harmony alts) on the target
+  // is optional.
+  const mk = (manner: 'before' | 'after', posWord: string): LanguagePattern => ({
+    id: `put-tr-${manner}`,
+    language: 'tr',
+    command: 'put',
+    priority: 105,
+    template: {
+      format: `{patient} ${posWord} {destination} i koy`,
+      tokens: [
+        { type: 'role', role: 'patient' },
+        { type: 'literal', value: posWord },
+        { type: 'role', role: 'destination' },
+        {
+          type: 'group',
+          optional: true,
+          tokens: [
+            { type: 'literal', value: 'i', alternatives: ['ı', 'u', 'ü', 'yi', 'yı', 'yu', 'yü'] },
+          ],
+        },
+        { type: 'literal', value: 'koy', alternatives: ['koymak'] },
+      ],
+    },
+    extraction: {
+      patient: { position: 0 },
+      destination: { position: 2 },
+      manner: { default: { type: 'literal', value: manner } },
+    },
+  });
+  return [mk('before', 'önce'), mk('after', 'sonra')];
+}
+
 function buildPositionalPutPatterns(language: string): LanguagePattern[] {
   const spec = PUT_POSITIONAL.find(s => s.lang === language);
   if (!spec) return [];
@@ -1169,6 +1490,12 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
       return [...getPutPatternsId(), ...positional, ...atEnd];
     case 'it':
       return [...getPutPatternsIt(), ...atEnd];
+    case 'ja':
+      return [...getPutPatternsJa(), ...atEnd];
+    case 'ko':
+      return [...getPutPatternsKo(), ...atEnd];
+    case 'tr':
+      return [...getPutPatternsTr(), ...atEnd];
     case 'pl':
       return [...getPutPatternsPl(), ...atEnd];
     case 'ru':

@@ -119,6 +119,15 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'mana riqsisqa', normalized: 'undefined' },
 
   // Positional
+  // Put-position words (`put X before/after Y`): the i18n dict emits the locative
+  // -pi forms ñawpaqpi (before) / qhepapi (after). They must be exact single-token
+  // entries ABOVE the bare ñawpaq/qhipa (longest-first), else the greedy loop binds
+  // the prefix (ñawpaq→first) and strands `pi` — which the SOV parser then mis-reads
+  // as the event marker, and the position word is lost from the put.
+  { native: 'ñawpaqpi', normalized: 'before' },
+  { native: 'nawpaqpi', normalized: 'before' },
+  { native: 'qhepapi', normalized: 'after' },
+  { native: 'qhipapi', normalized: 'after' },
   { native: 'ñawpaq', normalized: 'first' },
   { native: 'nawpaq', normalized: 'first' },
   { native: 'qhipa', normalized: 'last' },
