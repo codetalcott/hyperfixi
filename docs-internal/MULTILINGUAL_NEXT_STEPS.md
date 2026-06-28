@@ -29,6 +29,53 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28j (Arc B R1 — en `repeat N times` / `repeat forever` HEAD-only
+> patterns; R1 0.9164 → 0.9189, the biggest single R1 win yet, ALL 23 langs +).** The single
+> largest R1 residue (`repeat.event:literal` 42× + `repeat.loopType:literal` 39×, all SOV langs)
+> was grounded to a **broken en REFERENCE**, not an SOV deficiency — the same shape as the
+> `halt the event` fix. The generated positional `repeat` pattern greedily captured the loop
+> BODY into bogus roles: `repeat 3 times add "…" to me` → `loopType=3, quantity="times",
+event="add"` (the body verb!), and the `add` command was **dropped entirely**. NO other
+> language reproduces that `repeat.event:literal` garbage — they all DROP it (verified across
+> hi/ja/ko/qu/bn/tr AND es/fr/de/pt/zh/it/ru) — so it dragged R1 down in every language. Fix:
+> two **head-only handcrafted en patterns** (`repeat {n} times`, `repeat forever`, priority 110)
+> that match ONLY the loop head and leave the body for the clause loop to parse — mirroring the
+> existing `repeat until event {event}` pattern (the Explore-agent map confirmed: a head-only
+> pattern at priority > the generated 100 lets the next clause-loop iteration recover the body
+> as a sibling command). **+0.0011–0.0028 per lang, EVERY language up, mean 0.9164 → 0.9189;
+> R0-recall 1.000 / precision 0.972 / R2 1.000 / parse-rate 3696/3696 all unchanged.** R2-safe
+> by construction (no `repeat-*` pattern is in `EXECUTION_SUBSET`). Two facets made it land
+> zero-regression: (a) en's own `add "<htmlLiteral>" to me` body ALSO fails to parse (an
+> es-style add-literal gap), so `repeat-times` en gains NO body role → no regression for the
+> SVO body-droppers; (b) `toggle .pulse` (selector patient) DOES parse, so `repeat-forever` en
+> gains `toggle.*` which the SOV langs already capture → pure recall gain. Guard:
+> `multilingual-roadmap-fixes.test.ts` "en repeat HEAD-only patterns" (3 cases, failing-without-fix
+> verified: 2 fail). semantic 6280 + i18n 892 green.
+>
+> **Grounded-but-DEFERRED (this session re-grounded all three; the doc's old framing was partly
+> wrong — re-read before coding):**
+>
+> - **`repeat for {var} in {coll}` / `stagger-animation` — the messy two-sided case (NOT shipped).**
+>   A head-only `repeat-en-for-each` pattern was prototyped and **dropped**: it's net-zero on R1
+>   (removing the en `event="in"` garbage is exactly offset by a NEW `repeat.source:selector`
+>   guaranteed-drop no lang captures) and showed per-pattern noise on stagger (it/ru/uk to 0.38).
+>   The real for-each gap is the **loopType value-TYPE disagreement**: en emits
+>   `repeat.loopType:literal` ("for") while SOV emits `repeat.loopType:reference` (the loop var) —
+>   a genuine two-sided alignment, lower ROI.
+> - **`bind` (4 hi patterns) — CONFIRMED fragile, the doc was RIGHT.** Probed all three verb-final
+>   hi forms (untranslated `bind`, translated `बाइंड`/`बांधें`): every one still produces a phantom
+>   `on` handler (`actions=[bind, on]`, `bind.destination:literal`) vs ja's clean
+>   `bind.destination:reference, bind.source:selector`. ja/ko/qu/bn/tr all parse the identical
+>   token shape at r=1.00; hi alone mis-anchors the fronted `$greeting` as an event. Needs the
+>   fragile SOV event-anchor work (HANDOFF-sov-event-anchor.md). hi-only, ~8 role-sig entries.
+> - **`set.destination:property-path` (26×) — NOT clean value-typing; it's a ROLE-SWAP.** The
+>   `two-way-binding` residue (`set #x.innerText to "…" + my value`, with a trailing `from #y`
+>   source clause) parses in SOV with destination↔patient SWAPPED and a spurious `style` role —
+>   because the trailing `from #firstName` source clause + the complex `+` value disrupt the SOV
+>   set role assignment. A MINIMAL `set #x.innerText to "y"` types destination as property-path
+>   correctly in all of en/hi/ja/ko — so it's the trailing-source-clause SOV reorder, not value
+>   classification. Fragile (same family as bind's event-anchor).
+>
 > **Update 2026-06-28i (Arc B R1 — `set-to` verb-final rule; R1 0.9143 → 0.9164, the
 > biggest single R1 win, all 5 SOV laggards +).** The `set` cluster — initially mis-diagnosed
 > as a two-sided, intractable role-model problem (a tested `applySetRoleSwap` regressed SVO
