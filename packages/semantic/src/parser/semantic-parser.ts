@@ -389,6 +389,70 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // Multi-event `or` conjunction normalization. A handler head can list several
+    // events: `on click or keypress[key=="Enter"] toggle .active`. English handles
+    // this in buildEventHandler (extractOrConjunctionEvents runs right after the
+    // event is captured), but the per-language pattern paths do NOT: the SVO "full"
+    // patterns capture the translated `or` (`o`/`또는`/…) as a phantom body command
+    // (it → `or` command → runtime "Unknown command: or"), and the SOV Stage-3
+    // fallback mangles the clause (ko folds `또는keypress…할때` into an invalid CSS
+    // selector), so the handler never binds the first event and the body drops.
+    // Normalize uniformly: excise the `<or-word> <event>[ <[filter]>]` span and
+    // re-parse the remaining single-event handler — which every language already
+    // parses — then re-attach the extra event(s) as `additionalEvents`. The source
+    // event is preserved (moved to additionalEvents), so fidelity is intact, and en
+    // routes through here byte-identically to its old extractOrConjunctionEvents
+    // result. Gated on a KNOWN event after the or-word, so it can NEVER fire on `or`
+    // inside an expression (`when $a or $b changes`, `($count or 0)` — the post-`or`
+    // token there is a variable/number, not an event).
+    {
+      const arr = tokens.tokens as LanguageToken[];
+      for (let i = 1; i < arr.length - 1; i++) {
+        const t = arr[i];
+        const surface = t.value;
+        const norm = (t.normalized ?? t.value).toLowerCase();
+        const isOr =
+          norm === 'or' ||
+          SemanticParserImpl.OR_KEYWORDS.has(surface) ||
+          SemanticParserImpl.OR_KEYWORDS.has(norm);
+        if (!isOr) continue;
+        const evTok = arr[i + 1];
+        const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
+        if (!SemanticParserImpl.KNOWN_EVENTS.has(evNorm)) break;
+        // Optional trailing `[filter]` selector token (`keypress[key=="Enter"]`
+        // tokenizes as `keypress` + `[key=="Enter"]`).
+        let lastIdx = i + 1;
+        const filterTok = arr[i + 2];
+        if (filterTok && filterTok.kind === 'selector' && filterTok.value.startsWith('[')) {
+          lastIdx = i + 2;
+        }
+        const exciseStart = arr[i].position.start;
+        const exciseEnd = arr[lastIdx].position.end;
+        const reduced = (
+          parseInput.slice(0, exciseStart).trimEnd() +
+          ' ' +
+          parseInput.slice(exciseEnd).trimStart()
+        ).trim();
+        if (reduced && reduced !== parseInput) {
+          try {
+            const reparsed = this.parse(reduced, language);
+            if (reparsed && reparsed.kind === 'event-handler') {
+              (reparsed as { additionalEvents?: SemanticValue[] }).additionalEvents = [
+                { type: 'literal', value: evNorm },
+              ];
+              const result = modifiers
+                ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                : reparsed;
+              return withDiagnostics(result, diagnostics);
+            }
+          } catch {
+            // fall through to the normal stages unchanged
+          }
+        }
+        break; // only the first or-clause in the head
+      }
+    }
+
     // Stage 1: Try event handler patterns first (they wrap commands)
     const eventPatterns = sortedPatterns.filter(p => p.command === 'on');
     const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
@@ -3205,6 +3269,8 @@ export class SemanticParserImpl implements ISemanticParser {
     'או', // HE
     'หรือ', // TH
     'o', // IT
+    'या', // HI (tokenizes as a bare identifier; matched here by surface form)
+    'অথবা', // BN (idem)
   ]);
 
   /**

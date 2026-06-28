@@ -29,6 +29,38 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28d (R2 wave 7 — multiple-events fixed; subset 39 → 40).** The first
+> of the three genuinely-divergent wave-5 candidates is FIXED. `multiple-events`
+> (`on click or keypress[key=="Enter"] toggle .active`) diverged in 7 languages
+> (ja, ko, it, hi, tr, bn, qu): English handled the `or` multi-event conjunction in
+> `buildEventHandler` (`extractOrConjunctionEvents`), but the per-language pattern paths did
+> not — the SVO "full" patterns captured the translated `or` (`o`/`또는`/…) as a **phantom
+> body command** (it → runtime "Unknown command: or"), and the SOV Stage-3 fallback mangled
+> the clause (ko folded `또는keypress…할때` into an invalid CSS selector). Three root causes,
+> all semantic-side:
+>
+> - **Tokenizer (ja)** — `または` (or) mis-split into `また`(→**and**!) + `は` because the
+>   profile's `and` primary `また` is a 2-char prefix of the 3-char `または`. Added
+>   `または`→`or` to the ja tokenizer EXTRAS so longest-match keeps it whole.
+> - **OR_KEYWORDS (hi/bn)** — `या`/`অথবা` tokenize as bare identifiers; added their surface
+>   forms to `OR_KEYWORDS` so the pre-pass detects them (qu `utaq` was already present).
+> - **Parser (the unifier)** — a scoped **or-clause excision pre-pass** in `parseInternal`
+>   (mirrors the VSO from-first normalization): excise `<or-word> <known-event> [filter]`,
+>   re-parse the single-event handler every language already handles, then re-attach the
+>   second event as `additionalEvents`. **Gated on a KNOWN event after the or-word**, so it
+>   can NEVER fire on `or` inside an expression (`when $a or $b changes`, `($count or 0)`,
+>   `if a or b` — the post-`or` token there is a variable/number, not an event; all three
+>   verified untouched).
+>
+> Result: all 23 langs now match the en click effect; **R2 stays 1.000 (subset 39 → 40)**.
+> Bonus, ZERO regressions: removing the phantom `or` lifts **avgPrecision** +0.0022 (it, bn,
+> qu, tr) and the clean multi-event parse lifts **avgRoleFidelity** +0.0017 (bn, hi, ja, ko,
+> qu, tr). Guards: `multilingual-roadmap-fixes.test.ts` "Multi-event \`or\` conjunction"
+> (verified failing without the fix). **Two wave-5 divergences remain**: `put-after` /
+> `put-before` (positional `put … after/before me`, 14 langs each, multiple root causes —
+> `before`/`after` parsed as a command in SOV, position role lost in it/vi, wrong insert
+> offset in ar/tl/uk).
+>
 > **Update 2026-06-28c (R2 wave 6 — subset 33 → 39; the wave-5 worklist was stale).**
 > Re-grounding the wave-5 R2 worklist against a **freshly `populate`d** patterns.db (the
 > committed db snapshot lags the current dicts) found that **six of its nine** candidates
