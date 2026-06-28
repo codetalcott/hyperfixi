@@ -343,8 +343,14 @@ The gate exits non-zero on a parse-rate drop >2pts or >3 faithful→degenerate
 flips vs the committed baseline. After an _intentional_ fidelity change, re-run
 with `--save-baseline` (instead of `--regression`) to regenerate
 `packages/testing-framework/baselines/multilingual-priority.json`, and commit the
-new baseline. Per repo convention the regenerated `patterns.db` is **not**
-committed — CI re-populates it; only the dicts/profiles + baseline are tracked.
+new baseline. **Do not commit your locally-regenerated `patterns.db`** — commit
+only the dicts/profiles + baseline. (Note: a frozen copy of `patterns.db` _is_
+tracked — `.gitignore` has an explicit `!packages/patterns-reference/data/patterns.db`
+un-ignore, and CI is built around it via `db:init:force`/`populate`. But contributors
+don't commit regenerations, to avoid binary churn, so the tracked copy can lag the
+current dicts/profiles; CI always re-populates a fresh DB for the gate. If you `git
+checkout -- packages/patterns-reference/data/patterns.db` you revert to that possibly-stale
+committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 **Other Workflows:**
 

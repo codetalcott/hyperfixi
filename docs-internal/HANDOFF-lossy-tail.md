@@ -366,7 +366,22 @@ resizable.
 
 ---
 
-## Arc 4 — R1 / SOV role-fidelity burn-down (Track 3) [LARGER ARC]
+## Arc 4 — R1 / SOV role-fidelity burn-down (Track 3) [PARTLY DONE — #508]
+
+> **First increment DONE (2026-06-28, #508 — avgRoleFidelity 0.845 → 0.872).** Grounding (the
+> gate-faithful `ml.parse` role-signature diff) showed the dominant R1 drop was NOT the
+> "fronted literal mis-anchored as the event" theory below, but a **role MISTYPE**: an
+> SOV-fronted object bound to the generic `patient` role for commands that have NO `patient`
+> role and a distinct `primaryRole` (`fetch`→source — missing 13× per language, `wait`→duration,
+> `send`/`trigger`→event, `bind`/`tell`→destination). A schema-driven post-parse normalization
+> (`normalizeCommandRoles`) relabels the spurious `patient` to the schema `primaryRole`, gated so
+> it can only ever correct a mistype (en/SVO are no-ops). **Per-SOV-lang ~+0.04** (hi 0.757→0.801,
+> bn 0.784→0.831, qu 0.785→0.826, ja 0.795→0.837, ko 0.806→0.848, tr 0.807→0.849); R0/precision/
+> execution + degenerate/lossy all unchanged. The change was LOW-risk after all (a relabel on the
+> final tree, not a rewrite of the hot matching loop). **Remaining R1 headroom** is per-command
+> value-TYPE mismatches (e.g. `send.destination` selector-vs-reference, `repeat` loop roles,
+> `set.destination` property-path in SOV) — smaller, per-command, lower priority. The HIGH-risk
+> "SOV event-anchor" framing below was not needed for the dominant slice.
 
 avgRoleFidelity **0.845** is the laggard (hi 0.757 · bn 0.784 · qu 0.785 · ja 0.795 · ko 0.806 ·
 tr 0.807 — the SOV/reorder set). R1 measures `action.role:valueType` recall — a parse that keeps
@@ -385,9 +400,13 @@ it a dedicated arc with careful R0/precision/parse-rate guards — not a tail-en
 
 ## Deferred / out of scope
 
-- **`tr window-resize`** — the lone parse hard-fail (3695/3696). Compounded i18n underscore-split
-  (`boyut_değiştir` → `değiştir` collides with `toggle`) + an untranslated `debounced at 200ms`
-  modifier; a high-risk multi-part change to the hottest path for the single lowest-ROI pattern.
+- ~~**`tr window-resize`**~~ **DONE (2026-06-28, #510 — parse rate 3696/3696, 100%).** The
+  "compounded, high-risk multi-part change" framing was wrong (grounding via `ml.parse`): the
+  `boyut_değiştir` underscore-split → `değiştir`→`toggle` homonym was the **sole** blocker; the
+  untranslated `debounced at 200ms` modifier is tolerated by the parser, not a second blocker. A
+  single-token `boyutlandırma` (i18n dict + semantic event map; mirrors the ru/uk install route)
+  keeps the event token whole. LOW-risk, contained. Zero failing patterns now remain across all
+  24 priority languages.
 - **`populate` determinism (Track 5 hygiene).** CLAUDE.md flags "minor residual jitter" on a few
   boundary patterns that forces the ratchet tolerances (3 lossy / 3 degen flips, 0.02 avg). A
   deterministic populate lets the tolerances tighten toward 0 — fold in opportunistically.
@@ -425,13 +444,16 @@ for provenance:
    `input-mirror` (vi; registered `giá trị`=value), and `keydown-key-is-syntax` (hi; a `-`-compound
    `साफ़-करें` tokenization split — **NOT** the Arc-4 SOV anchor it was filed under).
 
-**Only two items remain — both separate dimensions, NOT lossy passes:**
+**Both remaining items are now DONE (2026-06-28):**
 
-- **Arc 4 (R1/SOV role-fidelity, avgRoleFidelity 0.845)** — the ONLY remaining fidelity dimension
-  and the highest-headroom multilingual work. Laggards hi 0.757 · bn 0.784 · qu 0.785. The
-  convergent SOV event-anchor arc; **HIGH risk** (hottest, most regression-sensitive parser path) —
-  and `--regression` won't flag R1 drift until someone drives it, so guard R0/precision/parse-rate
-  carefully in a dedicated session. (The qu/bn/hi-trigger residue lives here too — gate-invisible,
-  see the Arc 1 dead-end note.)
-- **`tr window-resize`** — the lone parse hard-fail (3695/3696), explicitly deferred as lowest-ROI
-  (see Deferred / out of scope above).
+- ~~**Arc 4 (R1/SOV role-fidelity)**~~ **First increment DONE (#508 — avgRoleFidelity
+  0.845 → 0.872).** The dominant slice (SOV-fronted `patient` → schema `primaryRole` mistype) is
+  fixed; see the Arc 4 DONE block. Residual R1 headroom is per-command value-type mismatches
+  (`send.destination`, `repeat` roles, SOV `set.destination` property-path) — smaller, lower
+  priority, NOT the convergent high-risk arc once theorized. (The qu/bn/hi-trigger residue remains
+  gate-invisible — see the Arc 1 dead-end note.)
+- ~~**`tr window-resize`**~~ **DONE (#510 — parse rate 3696/3696, 100%).** See Deferred / out of
+  scope above.
+
+**Net: the priority corpus is at 100% parse rate, both correctness bands empty, R1 0.872.** No
+open items remain in this handoff beyond the smaller per-command R1 type-mismatch follow-on.
