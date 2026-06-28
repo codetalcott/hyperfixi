@@ -8106,3 +8106,75 @@ describe('Optional call patient marker he/zh (form-submit-prevent lossy → fait
     expect(parse('调用 validateForm()', 'zh').action).toBe('call');
   });
 });
+
+describe('SOV primary-role normalization (Arc 4 — fronted patient → schema primaryRole; R1)', () => {
+  // When an SOV/V2 reorder fronts a command's leading object, the fused-event path
+  // binds it to the generic `patient` role. For commands with NO `patient` role and
+  // a distinct primaryRole (fetch→source, wait→duration, send/trigger→event), this
+  // is a pure R1 role MISTYPE — the command and the value's TYPE are right, only the
+  // role NAME is wrong (`fetch.source` was missing 13× per SOV language). The
+  // normalization relabels the spurious `patient` to the schema primaryRole, lifting
+  // avgRoleFidelity ~+0.04 across hi/bn/qu/ja/ko/tr with zero R0/precision regressions.
+  // See normalizeCommandRoles in semantic-parser.ts.
+
+  // First command node with the given action anywhere in the tree → its roles map.
+  function findRoles(node: any, action: string): Map<string, any> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    if (node.action === action && node.roles instanceof Map) return node.roles;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      const child = node[f];
+      if (Array.isArray(child)) {
+        for (const c of child) {
+          const r = findRoles(c, action);
+          if (r) return r;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  // Corpus-shaped SOV translations: the fronted URL must land in `source`, never the
+  // spurious `patient` (fetch schema has no patient role).
+  const fetchCases: Array<[string, string]> = [
+    ['hi', '/api/data को क्लिक पर लाएं फिर यह को रखें #result में'],
+    ['ja', '/api/data を クリック で フェッチ それから それ を #result に 置く'],
+    ['ko', '/api/data 를 클릭 할 때 가져오기 그러면 그것 를 #result 에 넣다'],
+    ['qu', '/api/data ta ñitiy pi apamuy chayqa chay ta #result man churay'],
+  ];
+  for (const [lang, input] of fetchCases) {
+    it(`[${lang}] fronted fetch URL → fetch.source (not patient)`, () => {
+      const roles = findRoles(parse(input, lang), 'fetch');
+      expect(roles).toBeDefined();
+      expect(roles!.has('source')).toBe(true);
+      expect(roles!.has('patient')).toBe(false);
+    });
+  }
+
+  it('[hi] fronted wait duration → wait.duration (not patient)', () => {
+    const roles = findRoles(parse('2s को क्लिक पर प्रतीक्षा फिर मैं को हटाएं', 'hi'), 'wait');
+    expect(roles?.has('duration')).toBe(true);
+    expect(roles?.has('patient')).toBe(false);
+  });
+
+  it('[ja] fronted send payload → send.event (not patient)', () => {
+    const roles = findRoles(parse('"hello" を クリック で 送る ChatSocket に', 'ja'), 'send');
+    expect(roles?.has('event')).toBe(true);
+    expect(roles?.has('patient')).toBe(false);
+  });
+
+  // Control: a command that legitimately HAS a patient role (primaryRole === patient)
+  // keeps it — the normalization is gated to primaryRole !== patient, so toggle/add/etc
+  // are never touched.
+  it('[ja] toggle keeps its patient role (schema primaryRole IS patient — not remapped)', () => {
+    const roles = findRoles(parse('.active を クリック で トグル', 'ja'), 'toggle');
+    expect(roles?.has('patient')).toBe(true);
+  });
+
+  // Control: en SVO is unaffected (the standard pattern assigns source directly; the
+  // normalization is a no-op because there is no spurious patient).
+  it('[en] SVO fetch is unchanged (source, no patient)', () => {
+    const roles = findRoles(parse('on click fetch /api/data', 'en'), 'fetch');
+    expect(roles?.has('source')).toBe(true);
+    expect(roles?.has('patient')).toBe(false);
+  });
+});
