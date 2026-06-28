@@ -460,6 +460,55 @@ describe('GrammarTransformer', () => {
     });
   });
 
+  describe('SOV Transformation — set-to verb-final (set.* R1 residue)', () => {
+    // No profile carried a `set` word-order rule, so ja/ko/bn/tr/hi emitted set
+    // VERB-MEDIAL (`X को सेट Y में`), which the generated SOV set pattern (verb-final,
+    // markerOverride: को on the target / में on the value) never matched — set parsed
+    // to no/swapped roles (the dominant set.* R1 residue; qu/SVO were already fine).
+    // The `set-to` rule emits the verb-final `X को Y में सेट`, like ja's `X を Y に 設定`.
+    const langs: Array<[string, string, string]> = [
+      // [lang, set verb, destination marker]
+      ['hi', 'सेट', 'में'],
+      ['ja', '設定', 'に'],
+      ['ko', '설정', '에'],
+      ['bn', 'সেট', 'তে'],
+      ['tr', 'ayarla', 'e'],
+    ];
+    for (const [lang, verb, mark] of langs) {
+      it(`[${lang}] set X to Y → verb-final (set verb after the value)`, () => {
+        const t = new GrammarTransformer('en', lang);
+        const result = t.transform('set @disabled to true');
+        const verbIdx = result.indexOf(verb);
+        const valIdx = result.search(/true|doğru|참|真|সত্য|सच/u);
+        expect(verbIdx).toBeGreaterThan(-1);
+        // verb-final: the set verb follows the (translated) value.
+        expect(verbIdx).toBeGreaterThan(valIdx);
+        // marker present (markerOverride alignment): value carries the dest marker.
+        expect(result).toContain(mark);
+      });
+    }
+
+    // Inline `if … then set X to Y end`: the set's value sweeps up the trailing
+    // `end` token (`destination="minWidth end"`), so verb-final reordering would push
+    // the set verb PAST `end` and break the block (the bn behavior-resizable
+    // faithful→lossy flip). The set-to predicate skips such sets — they stay
+    // verb-MEDIAL, so the set verb remains BEFORE the block terminator `end`.
+    // (Without the guard the set verb lands after `end`, dropping the `if`.)
+    for (const [lang, verb] of langs.map(l => [l[0], l[1]] as const)) {
+      it(`[${lang}] inline if/then/set/end keeps the set verb before end (set-to skipped)`, () => {
+        const t = new GrammarTransformer('en', lang);
+        const result = t
+          .transform('if newWidth < minWidth then set newWidth to minWidth end')
+          .trim();
+        const endWord = t.transform('end').trim();
+        const endIdx = result.lastIndexOf(endWord);
+        expect(endIdx).toBeGreaterThan(-1);
+        // verb-medial (guarded): the set verb precedes the block terminator.
+        expect(result.indexOf(verb)).toBeLessThan(endIdx);
+      });
+    }
+  });
+
   describe('Arabic Transformation (VSO)', () => {
     const transformer = new GrammarTransformer('en', 'ar');
 
