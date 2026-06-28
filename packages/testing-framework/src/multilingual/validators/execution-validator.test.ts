@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 33 curated patterns', () => {
+  it('contains exactly the 39 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -88,12 +88,19 @@ describe('R2 execution subset (lock)', () => {
         // PATTERN_TRIGGER dispatches a CustomEvent whose detail.message the
         // handler reads. set @role on the #sr-announce scope landed in S1.
         'announce-screen-reader',
-        // Session-12 expansion wave 5: `remove me` (bare self-removal). The only
-        // one of ten fixture-eligible candidates that matched the en effect in ALL
-        // 23 languages (so avgExecutionFidelity stays 1.0); the other nine have
-        // per-language execution gaps tracked as the next-wave worklist (see the
-        // wave-5 note in execution-validator.ts).
+        // Session-12 expansion wave 5: `remove me` (bare self-removal).
         'remove-element',
+        // Session-13 expansion wave 6: six wave-5 "worklist" candidates that, when
+        // re-grounded against a freshly populated patterns.db, match the en effect in
+        // ALL 23 languages (the wave-5 divergence counts were measured against a stale
+        // committed db — see the wave-6 note in execution-validator.ts). multiple-events,
+        // put-after, put-before remain out (real cross-language execution divergences).
+        'next-element',
+        'toggle-aria-expanded',
+        'set-opacity',
+        'set-transform',
+        'accordion-toggle',
+        'caret-var-on-target',
       ].sort()
     );
   });
@@ -195,6 +202,70 @@ describe('R2 execution validator (lock)', () => {
     // No PATTERN_TRIGGER for toggle-class-basic → click dispatched → success
     // handler never runs → empty signature.
     expect(clickOnly.effects).toEqual([]);
+  });
+
+  it('wave-6 en references execute with their locked signatures', async () => {
+    // The six wave-6 additions. Each en reference must produce a non-empty,
+    // deterministic signature against the existing fixture (the foundation every
+    // language is scored against). next/closest positionals fall back to `me`
+    // when no match exists in the fixture; set *opacity/*transform write inline
+    // style; caret-var-on-target clears #btn text (undefined `^count`).
+    const cases: ReadonlyArray<[string, string, string[]]> = [
+      [
+        'next-element',
+        'on click add .highlight to next <li/>',
+        ['Δli[9] cls[active highlight items] attr[] style[] text[]'],
+      ],
+      [
+        'toggle-aria-expanded',
+        'on click toggle @aria-expanded on me toggle .open on next .panel',
+        ['Δ#btn cls[open] attr[aria-expanded=,id=btn] style[] text[Click]'],
+      ],
+      [
+        'set-opacity',
+        'on click set my *opacity to 0.5',
+        ['Δ#btn cls[] attr[id=btn] style[opacity: 0.5;] text[Click]'],
+      ],
+      [
+        'set-transform',
+        'on click set my *transform to "rotate(45deg)"',
+        ['Δ#btn cls[] attr[id=btn] style[transform: rotate(45deg);] text[Click]'],
+      ],
+      [
+        'accordion-toggle',
+        'on click toggle .open on closest .accordion-item toggle @aria-expanded',
+        ['Δ#btn cls[open] attr[aria-expanded=,id=btn] style[] text[Click]'],
+      ],
+      [
+        'caret-var-on-target',
+        'on click put ^count on #host into me',
+        ['Δ#btn cls[] attr[id=btn] style[] text[]'],
+      ],
+    ];
+    for (const [id, code, expected] of cases) {
+      const res = await validator.execute(id, code, 'en');
+      expect(res.error, `${id} errored: ${res.error}`).toBeUndefined();
+      expect(res.effects, `${id} signature`).toEqual(expected);
+    }
+  });
+
+  it('a localized translation reproduces the wave-6 en signature (ms next-element)', async () => {
+    // This is the wave-5 worklist's recorded ms "divergence": it only appeared
+    // because the committed db carried an UNTRANSLATED `to next` (a stale snapshot).
+    // A fresh populate localizes it (`ke seterusnya`), and it executes identically
+    // to en — the reason next-element joins the subset with no parser/dict fix.
+    const en = await validator.execute(
+      'next-element',
+      'on click add .highlight to next <li/>',
+      'en'
+    );
+    const ms = await validator.execute(
+      'next-element',
+      'apabila click tambah .highlight ke seterusnya <li/>',
+      'ms'
+    );
+    expect(ms.error, `ms errored: ${ms.error}`).toBeUndefined();
+    expect(ms.effects).toEqual(en.effects);
   });
 
   it('a parse failure comes back as an error, never a throw', async () => {

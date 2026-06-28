@@ -128,19 +128,37 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // Expansion wave 5 (session 12): `remove me` — the bare self-removal positional.
   // Discovery probe (every non-subset, non-network/timer/behavior pattern executed
   // against this fixture, then all 23 translations checked against the en effect
-  // signature) found ten patterns with a clean non-empty en effect, but only
-  // `remove-element` matched en in ALL 23 languages — so it's the only all-match
-  // addition that keeps avgExecutionFidelity at 1.0. No fixture/setup/trigger change
-  // (it removes #btn on the default click). The other nine eligible candidates are
-  // the grounded worklist for the next wave — each has real per-language EXECUTION
-  // gaps to fix BEFORE it can join (divergent-lang counts, session 12 probe):
-  //   next-element (1: ms) · toggle-aria-expanded (2: id,ms) ·
-  //   set-opacity (4) · set-transform (4) · multiple-events (6) · accordion-toggle (6) ·
-  //   put-after (14) · put-before (14) · caret-var-on-target (23, all).
-  // These execution divergences are invisible to R0/R1 (parse-faithful) — exactly the
-  // class R2 exists to catch — but each must be fixed (not just recorded) before adding,
-  // or it drops R2 below 1.0. Tracked in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  // signature) found ten patterns with a clean non-empty en effect.
   'remove-element',
+  // Expansion wave 6 (session 13): the six wave-5 "worklist" candidates that, when
+  // RE-GROUNDED against a freshly `populate`d patterns.db, in fact match the en effect
+  // signature in ALL 23 languages — so each keeps avgExecutionFidelity at 1.0. The
+  // wave-5 worklist's per-language divergence counts were measured against a STALE
+  // committed patterns.db snapshot (the committed copy lags the current dicts — see
+  // patterns-reference/CLAUDE.md); e.g. its ms `next-element` carried untranslated
+  // `to`/`next` (`apabila click … to next <li/>`), but a fresh populate emits the
+  // localized `apabila click tambah .highlight ke seterusnya <li/>`, which executes
+  // identically to en. Re-grounded counts (fresh db, all 24 priority langs): these six
+  // diverge in 0/23; the wave-5 worklist said next-element 1, toggle-aria-expanded 2,
+  // set-opacity 4, set-transform 4, accordion-toggle 6, caret-var-on-target 23 — all
+  // stale. No fixture/setup/trigger change needed; each en reference produces a clean
+  // non-empty signature against the existing fixture (next/closest positionals fall
+  // back to `me` consistently across every language; set *opacity/*transform write
+  // inline style; caret-var-on-target clears #btn text — the undefined `^count` resolves
+  // the same way in every language). The THREE wave-5 candidates with REAL divergences
+  // remain the next-wave worklist (re-grounded fresh-db divergent-lang counts):
+  //   multiple-events (7: ja,ko,it,hi,tr,bn,qu — the `or` multi-event separator) ·
+  //   put-after (14) · put-before (14) — positional `put … after/before me`, which
+  //   errors ("Unknown command: after", "put requires content and position") or inserts
+  //   at the wrong offset in most languages. These are invisible to R0/R1 (parse-faithful)
+  //   — exactly the class R2 exists to catch — and each must be FIXED before joining, or
+  //   it drops R2 below 1.0. Tracked in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  'next-element',
+  'toggle-aria-expanded',
+  'set-opacity',
+  'set-transform',
+  'accordion-toggle',
+  'caret-var-on-target',
 ];
 
 /**

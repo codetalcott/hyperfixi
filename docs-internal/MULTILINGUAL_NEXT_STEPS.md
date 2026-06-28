@@ -29,6 +29,31 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28c (R2 wave 6 — subset 33 → 39; the wave-5 worklist was stale).**
+> Re-grounding the wave-5 R2 worklist against a **freshly `populate`d** patterns.db (the
+> committed db snapshot lags the current dicts) found that **six of its nine** candidates
+> already match the en DOM effect in **all 23 priority languages** — their recorded
+> divergences were artifacts of the stale committed db (e.g. its ms `next-element` carried an
+> untranslated `to next`; a fresh populate emits `ke seterusnya`, which executes identically to
+> en). Those six joined `EXECUTION_SUBSET` with **no parser/dict fix** (R2 stays **1.000**,
+> subset 33 → 39): `next-element`, `toggle-aria-expanded`, `set-opacity`, `set-transform`,
+> `accordion-toggle`, `caret-var-on-target`. The wave-5 worklist counts (next-element 1,
+> toggle-aria-expanded 2, set-opacity 4, set-transform 4, accordion-toggle 6,
+> caret-var-on-target 23) are all corrected to **0** here. **Methodology lesson (again):** the
+> session-12 probe that built the worklist scored a STALE committed db — always `npm run
+populate` before grounding R2. The **three genuinely-divergent** candidates remain the
+> next-wave R2 worklist (re-grounded fresh-db divergent-lang counts):
+>
+> - **`multiple-events`** (7: ja, ko, it, hi, tr, bn, qu) — `on click or keypress[…]`: the `or`
+>   multi-event separator isn't recognized (it: "Unknown command: or"; ko: the `또는keypress…`
+>   run collapses into an invalid CSS selector; ja/hi/tr/bn/qu silently produce no effect).
+> - **`put-after`** / **`put-before`** (14 each) — positional `put "<p>New</p>" after/before me`:
+>   most langs error ("Unknown command: after", "put requires content and position", "put
+>   requires arguments"); the few that execute (ar/vi/tl/uk) insert at the wrong offset (an
+>   extra `Δ#btn` + `+p[2]` vs the en `+p[1]`).
+>
+> Each must be FIXED (not just recorded) before joining the subset, or it drops R2 below 1.0.
+>
 > **Update 2026-06-28b (R1 default-fill → 0.908; R2 wave 5).** Two more fixes:
 >
 > - **R1 schema default-fill (#512).** After Arc 4, the dominant remaining R1 drop was
