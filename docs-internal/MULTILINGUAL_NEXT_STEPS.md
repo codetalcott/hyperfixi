@@ -29,6 +29,26 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28i (Arc B R1 — `set-to` verb-final rule; R1 0.9143 → 0.9164, the
+> biggest single R1 win, all 5 SOV laggards +).** The `set` cluster — initially mis-diagnosed
+> as a two-sided, intractable role-model problem (a tested `applySetRoleSwap` regressed SVO
+> because the transformer's "backwards" set labels are load-bearing for SVO marker placement) —
+> turned out to be the **same word-order issue as put/bind**: NO profile carried a `set`
+> rule, so ja/ko/bn/tr/hi emitted set VERB-MEDIAL (`X को सेट Y में`), which the verb-final
+> generated SOV set pattern (its `markerOverride` already aligns को→destination / में→value)
+> never matched → set parsed to no/swapped roles. Added a `set-to` verb-final rule
+> (`roleOrder: ['patient','destination','action']`) to the 5 SOV profiles — NO role change, SVO
+> untouched. **+0.0073–0.0117 per laggard (ja +0.010, tr +0.012, ko +0.009, bn +0.010,
+> hi +0.007); R0-recall 1.000 / precision 0.972 / R2 unchanged.** The rule carries an
+> **inline-if guard**: a set whose value sweeps up a trailing `end` (`if … then set X to Y end`,
+> destination parsed as `"minWidth end"`) is left verb-medial — verb-final reorder would push
+> the set verb past `end` and drop the `if` (caught as a bn behavior-resizable faithful→lossy
+> flip, then fixed). i18n suite 892 + semantic 6277 green; gate clean. Guard: `grammar.test.ts`
+> "SOV Transformation — set-to verb-final" (5 verb-final + 5 inline-if cases, failing-without-fix
+> verified). Lesson (again): test the put-style word-order rule FIRST before theorizing a deeper
+> role-model fix — the swap was a red herring. Remaining set residue: finer value-type typing
+> (property-path / @attr) at rf 0.5–0.75.
+>
 > **Update 2026-06-28h (Arc B R1 — hi `put-into` word-order rule; hi 0.8669, zero
 > regressions).** Grounding the worst laggard (hi) after the `halt` fix surfaced a contained
 > bug: the **hindiProfile was missing the `put-into` grammar rule** that every other SOV
@@ -43,14 +63,15 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 >
 > **Grounded-but-deferred next R1 arcs (re-ground before coding; all bigger/riskier):**
 >
-> - **`set` (~18 hi entries, ALL SOV langs) — biggest clean-reference cluster.** The i18n
->   transformer defaults the first operand to `patient` and maps the `to`-marked operand to
->   `destination` (right for `put`/`add`; **backwards for `set`**, whose semantics are
->   destination-first), so SOV `set X to Y` swaps the destination/patient markers
->   (`#x.innerText को सेट इसका.name में`), mis-parsed in ja/ko/hi. Fix = teach the transformer
->   `set`'s leading arg is `destination` (`applyPrimaryRole` transformer.ts:1250 handles only
->   literal primaries today and the comment explicitly punts on `set`→destination). High blast
->   radius; guard precision/R0 hard.
+> - **`set` — FIXED 2026-06-28i (set-to verb-final rule; see the dated note above).** Was the
+>   biggest cluster (~18 hi entries, 5 SOV langs). The first instinct — swap set's
+>   patient↔destination labels on the en parse — was tested and REVERTED because it regressed
+>   SVO (the "backwards" labels are load-bearing for SVO marker placement). The real cause was
+>   the **same as put/bind: no profile had a `set` word-order rule, so ja/ko/bn/tr/hi emitted
+>   set VERB-MEDIAL** (`X को सेट Y में`) which the verb-final generated SOV set pattern (whose
+>   markerOverride already aligns को→dest / में→value) never matched. A `set-to` verb-final rule
+>   on the 5 profiles fixed it (no role change, no SVO touch). The remaining set residue is
+>   finer value-type typing (property-path / @attr) at rf 0.5–0.75.
 > - **`bind` (4 hi patterns, rf 0.00) — two-part, hi-only.** hindiProfile also lacks a
 >   `bind-to` rule (verb-mid); ADDING it fixes word order BUT the verb-final hi bind then still
 >   mis-parses — the fronted `$greeting` is anchored as a bare `on` event (`को#name-input`

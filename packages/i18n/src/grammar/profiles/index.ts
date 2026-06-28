@@ -106,6 +106,27 @@ export const japaneseProfile: LanguageProfile = {
       },
     },
     {
+      name: 'set-to',
+      description: 'Transform set X to Y to Japanese verb-final order',
+      priority: 90,
+      match: {
+        commands: ['set', '設定'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Skip a set whose value swept up a trailing block terminator (`set X to Y
+        // end` — the body of an inline `if … then set … end`): verb-final reorder
+        // would push the verb past `end` and break the block. These parse fine
+        // verb-medial (the default).
+        predicate: parsed => !/(^|\s)end$/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // X を Y に 設定 — verb-final, matching the generated SOV set pattern
+        // (markerOverride: を on the destination / に on the value). Default reorder
+        // emitted verb-MEDIAL (`X を 設定 Y に`), unmatched by any set pattern.
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
       name: 'bind-to',
       description: 'Transform bind $var to #el to Japanese verb-final order',
       priority: 90,
@@ -190,6 +211,25 @@ export const koreanProfile: LanguageProfile = {
       },
       transform: {
         // X 를 Y 에 넣다 (patient, destination, verb-last)
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'set-to',
+      description: 'Transform set X to Y to Korean verb-final order',
+      priority: 90,
+      match: {
+        commands: ['set', '설정'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Skip a set whose value swept up a trailing block terminator (`set X to Y
+        // end` — the body of an inline `if … then set … end`): verb-final reorder
+        // would push the verb past `end` and break the block. These parse fine
+        // verb-medial (the default).
+        predicate: parsed => !/(^|\s)end$/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // X 를 Y 에 설정 — verb-final, matching the generated SOV set pattern.
         roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
@@ -439,6 +479,25 @@ export const turkishProfile: LanguageProfile = {
       },
       transform: {
         // X i Y e koy (patient, destination, verb-last)
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'set-to',
+      description: 'Transform set X to Y to Turkish verb-final order',
+      priority: 90,
+      match: {
+        commands: ['set', 'ayarla'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Skip a set whose value swept up a trailing block terminator (`set X to Y
+        // end` — the body of an inline `if … then set … end`): verb-final reorder
+        // would push the verb past `end` and break the block. These parse fine
+        // verb-medial (the default).
+        predicate: parsed => !/(^|\s)end$/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // X i Y e ayarla — verb-final, matching the generated SOV set pattern.
         roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
@@ -733,6 +792,25 @@ export const bengaliProfile: LanguageProfile = {
       },
     },
     {
+      name: 'set-to',
+      description: 'Transform set X to Y to Bengali verb-final order',
+      priority: 90,
+      match: {
+        commands: ['set', 'সেট'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Skip a set whose value swept up a trailing block terminator (`set X to Y
+        // end` — the body of an inline `if … then set … end`): verb-final reorder
+        // would push the verb past `end` and break the block. These parse fine
+        // verb-medial (the default).
+        predicate: parsed => !/(^|\s)end$/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // X কে Y তে সেট — verb-final, matching the generated SOV set pattern.
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
       name: 'bind-to',
       description: 'Transform bind $var to #el to Bengali verb-final order',
       priority: 90,
@@ -914,6 +992,28 @@ export const hindiProfile: LanguageProfile = {
       },
       transform: {
         // "hi" को #out में रखें
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'set-to',
+      description: 'Transform set X to Y to Hindi verb-final order',
+      priority: 90,
+      match: {
+        commands: ['set', 'सेट'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Skip a set whose value swept up a trailing block terminator (`set X to Y
+        // end` — the body of an inline `if … then set … end`): verb-final reorder
+        // would push the verb past `end` and break the block. These parse fine
+        // verb-medial (the default).
+        predicate: parsed => !/(^|\s)end$/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // #x.innerText को इसका.name में सेट — verb-final, matching the generated
+        // SOV set pattern (set schema markerOverride puts को on the destination /
+        // में on the value). The default reorder emitted verb-MEDIAL
+        // (`#x को सेट … में`), which no set pattern matched → bare-event fallback.
         roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
