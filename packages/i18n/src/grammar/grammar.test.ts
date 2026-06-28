@@ -2137,3 +2137,20 @@ describe('Chinese take translates to 拿取, not 获取 (zh take/get homonym)', 
     expect(zh('get #input.value')).not.toContain('拿取');
   });
 });
+
+describe('tr resize single-token event keyword (window-resize NULL → faithful)', () => {
+  // The dict previously emitted `boyut_değiştir` for the resize event; the tr
+  // semantic tokenizer splits on `_` → `boyut` + `değiştir`, and `değiştir`
+  // normalizes to `toggle` (homonym collision) — which destroyed the resize event
+  // and made `window-resize` the lone tr parse hard-fail. A non-underscore keyword
+  // (`boyutlandırma`) keeps the event token whole (mirrors the ru/uk install
+  // single-token route). Pairs with the semantic event-map entry.
+  const transformer = new GrammarTransformer('en', 'tr');
+
+  it('emits the single-token resize keyword (no underscore, no toggle homonym)', () => {
+    const result = transformer.transform('on resize from window call adjustLayout()');
+    expect(result).toContain('boyutlandırma');
+    expect(result).not.toContain('boyut_değiştir');
+    expect(result).not.toContain('değiştir'); // the toggle-homonym fragment is gone
+  });
+});
