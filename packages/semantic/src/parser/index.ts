@@ -27,6 +27,7 @@ export {
   getCommandType,
   parseAutoDetect,
   createSemanticAnalyzer,
+  fillSchemaDefaults,
 } from './semantic-parser';
 export type { AutoDetectParseResult } from './semantic-parser';
 

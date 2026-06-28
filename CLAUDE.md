@@ -315,14 +315,18 @@ yields a 0 delta):
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
 baseline generated against a stale/transitional DB will read as drifted.
-`sync:translations` (the transformer) is deterministic, but the full `populate` has
-**minor residual jitter** on a few boundary patterns (e.g. a qu `remove-class-*` parse
-that lands exactly at fidelity 0.5); the ratchet tolerances (3 lossy / 3 degenerate
-flips, avgFidelity 0.02) absorb it as a within-tolerance **warning**, the same way the
-parse-rate ±2pt tolerance absorbs DB noise. Making the populate fully deterministic is
-a tracked reliability follow-up. Remaining degenerate/lossy passes (dominant cluster:
-control-flow body parsing — `if`/`unless` + then-chain `put`/`set`) are tracked in
-`docs-internal/CORRECTNESS_RELIABILITY_PLAN.md` and `MULTILINGUAL_ROADMAP.md`.
+`populate` is **deterministic run-to-run** (verified 2026-06-28: two back-to-back
+populates produce byte-identical `pattern_translations`, and the gate parse/score is
+identical across separate processes; the one `readdir` in the load path —
+`db-stamp.ts` — is already `.sort()`ed). The ratchet tolerances (3 lossy / 3
+degenerate flips, avgFidelity 0.02) are therefore **conservative cross-machine
+headroom** (Mac-generated baseline vs CI Linux float/collation drift), not absorbers
+of local run-to-run jitter — so don't read a green gate as "within noise." (The
+earlier "minor residual jitter" caveat here was stale; the staleness it described was
+a stale _code-version_ DB snapshot, fixed by re-`populate`, not run jitter.) The
+degenerate and lossy bands are now both **0** (every priority-corpus pattern parses
+faithfully); the remaining fidelity headroom is R1 role-fidelity, tracked in
+`docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 #### Running the multilingual `--regression` gate locally
 

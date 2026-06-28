@@ -4,6 +4,7 @@
 
 import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
+import { fillSchemaDefaults } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
 import { collectActions, collectActionsMultiset, collectRoleSignature } from '../fidelity';
 
@@ -77,6 +78,18 @@ export class ParseValidator implements Validator<ParseResult[]> {
       // Extract command and roles from semantic node
       const command = semanticNode.action;
       const roles = this.extractRoles(semanticNode);
+
+      // R1 measurement normalization: materialize schema role DEFAULTS (e.g.
+      // increment.quantity → 1, toggle.destination → me) on this throwaway parse
+      // before signature collection. The en pattern path materializes them but the
+      // SOV path doesn't, so an SOV parse would otherwise read as dropping a role it
+      // defaults identically at runtime — a false-positive in role recall. Applied
+      // uniformly here (en reference AND every translation), it only removes that
+      // false-positive. NOT done in `parse()` itself, which would make the renderer
+      // emit the materialized defaults and break round-trips. Mutation is safe: this
+      // node is the validator's own and is used only for the signatures below
+      // (actions/multiset are role-agnostic, so they're unaffected).
+      fillSchemaDefaults(semanticNode);
 
       return {
         pattern,
