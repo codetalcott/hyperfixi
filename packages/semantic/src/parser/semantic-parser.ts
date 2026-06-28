@@ -144,12 +144,88 @@ function stripQuotes(val: string): string {
 // Semantic Parser Implementation
 // =============================================================================
 
+/**
+ * R1 role-fidelity normalization (Arc 4 — SOV event-anchor role mistype).
+ *
+ * When an SOV/V2 reorder fronts a command's leading object, the fused-event and
+ * generic match paths bind it to the generic `patient` role. But many commands
+ * have NO `patient` role and a distinct `primaryRole` — `fetch`→source,
+ * `wait`→duration, `send`/`trigger`→event, `bind`/`tell`→destination. The fronted
+ * URL/duration/event then parses as `<cmd>.patient` instead of
+ * `<cmd>.<primaryRole>`: a pure role MISTYPE (the command and the value's TYPE are
+ * correct; only the role NAME is wrong) — invisible to R0 action-recall, but the
+ * dominant R1 (role-fidelity) drop across every SOV/reorder language
+ * (`fetch.source` alone was missing 13× per language).
+ *
+ * This relabels a spurious `patient` to the schema's `primaryRole`, gated so it can
+ * only ever CORRECT a mistype, never lose information:
+ *   - the schema defines `primaryRole` ≠ 'patient' and lists no `patient` role, so
+ *     any `patient` on this command is spurious by construction; and
+ *   - the `primaryRole` slot is empty, so a real value is never clobbered (e.g. a
+ *     `fetch` carrying both a `source` URL and a `body` patient keeps the patient).
+ * The value — and its type — is preserved, so `fetch.patient:literal` becomes
+ * `fetch.source:literal`, matching the en reference. Recurses into every body node
+ * and is idempotent (a second pass finds no spurious patient). Applied once on the
+ * final tree, outside the hot matching loop.
+ */
+const NORMALIZE_CHILD_FIELDS = [
+  'body',
+  'statements',
+  'thenBranch',
+  'elseBranch',
+  'eventHandlers',
+  'initBlock',
+] as const;
+
+function normalizeCommandRoles(node: SemanticNode): SemanticNode {
+  if (!node || typeof node !== 'object') return node;
+
+  if (node.action && node.roles instanceof Map) {
+    const schema = getSchema(node.action);
+    const primary = schema?.primaryRole;
+    if (
+      schema &&
+      primary &&
+      primary !== 'patient' &&
+      !schema.roles.some(r => r.role === 'patient') &&
+      node.roles.has('patient') &&
+      !node.roles.has(primary)
+    ) {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const value = roles.get('patient');
+      if (value !== undefined) {
+        roles.delete('patient');
+        roles.set(primary, value);
+      }
+    }
+  }
+
+  const rec = node as unknown as Record<string, unknown>;
+  for (const field of NORMALIZE_CHILD_FIELDS) {
+    const child = rec[field];
+    if (Array.isArray(child)) {
+      for (const c of child) normalizeCommandRoles(c as SemanticNode);
+    }
+  }
+  return node;
+}
+
 export class SemanticParserImpl implements ISemanticParser {
+  /**
+   * Parse input in the specified language to a semantic node, then apply the R1
+   * role-fidelity normalization (see {@link normalizeCommandRoles}) once on the
+   * assembled tree. Every public + recursive parse path funnels through here, so
+   * the normalization reaches body commands built by any sub-parser.
+   */
+  parse(input: string, language: string): SemanticNode {
+    return normalizeCommandRoles(this.parseInternal(input, language));
+  }
+
   /**
    * Parse input in the specified language to a semantic node.
    * Accumulates diagnostics from each fallback stage (Phase 3.4).
    */
-  parse(input: string, language: string): SemanticNode {
+  private parseInternal(input: string, language: string): SemanticNode {
     // Stage 0: structural / block layer. A `behavior … end` block is decomposed
     // into its handlers (each parsed by the single-statement path below) and
     // re-assembled — otherwise the leading keyword matches and the whole body is
