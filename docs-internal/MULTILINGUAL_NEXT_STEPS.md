@@ -29,6 +29,24 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-27 (lossy tail CLEARED — both correctness bands now empty).** The
+> degenerate band (→0, #492/#493) and the **lossy band (53 → 0, #495–#506)** are now BOTH
+> empty: **every one of the 3695/3696 parsing patterns is faithful** (fid = 1.0). The lossy
+> tail fell across a session-long sweep — th `trigger`/`send` (#495) · per-language
+> `of`-possessive markers (#497) · `get-value` de/pl/zh (#498) · `form-submit-prevent` he/zh
+> (#499) · `unless-condition` qu/vi/zh (#501) · vi `render` (#502) · qu `append` (#503) · zh
+> `tell` (#504) · the ar/qu/sw loop-body + ko if-fold residue (#506) — almost all
+> _localized-alignment_ fixes (a dict keyword, tokenizer split, or per-language role marker),
+> with the methodology lesson holding throughout (the theorized "hottest-path body-parse" cause
+> was wrong on all but the ko if-fold). Authoritative baseline (commit `12018416`,
+> `browser-priority`): parse rate **3695/3696**, degenerate **0**, lossy **0**, faithful
+> **3695**, avgFidelity **1.000**, avgPrecision **0.971**, **avgRoleFidelity 0.845** (still the
+> laggard — hi 0.757 · bn 0.784 · qu 0.785 · ja 0.795 · ko 0.806), R2 **1.000**. The
+> 2026-06-21 table below is superseded. **What remains is no longer a lossy band** — only the
+> **R1/SOV role-fidelity burn-down (Track 3 / the convergent SOV event-anchor arc)** and the
+> deferred **`tr window-resize`** hard-fail. Per-fix grounding + the remaining arcs are in
+> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md).
+
 > **Update 2026-06-26 (priority degenerate band → 0).** The last two priority
 > degenerates are cleared (see
 > [`HANDOFF-remaining-degenerate-singletons.md`](HANDOFF-remaining-degenerate-singletons.md)):
@@ -527,6 +545,13 @@ window-resize` hard-fail and the SOV behavior reorders — NOT the R0 dict-align
 > is structural.
 
 ### Track 4 — Control-flow + long-tail lossy
+
+> **DONE (2026-06-27) — the lossy band is empty (lossy → 0).** `unless-condition` (#501; three
+> independent keyword/transform causes, NOT body-parse as framed) and the full long-tail
+> (`fetch-do-not-throw` #481, `get-value` #498, `tell-*` #504, `set-color-variable` #497, `render`
+> #502, `append` #503, the ar/qu/sw loop-body + ko if-fold residue #506) are all faithful. No
+> control-flow / long-tail lossy passes remain in the priority corpus. Per-fix grounding:
+> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md).
 
 **Why:** `unless-condition` (8 lossy + 1 degen) is the largest non-behavior lossy pattern;
 the docs' long-standing diagnosis is **control-flow body parsing** (`if`/`unless` headers +
