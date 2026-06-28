@@ -188,6 +188,7 @@ export {
   parse,
   canParse,
   getCommandType,
+  fillSchemaDefaults,
   PatternMatcher,
   patternMatcher,
   matchPattern,

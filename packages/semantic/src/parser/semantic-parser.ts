@@ -145,28 +145,23 @@ function stripQuotes(val: string): string {
 // =============================================================================
 
 /**
- * R1 role-fidelity normalization (Arc 4 — SOV event-anchor role mistype).
+ * R1 primary-role relabel (Arc 4 — SOV event-anchor role mistype). Applied once on
+ * the final tree (outside the hot matching loop) to every parse. When an SOV/V2
+ * reorder fronts a command's leading object, the fused-event / generic match paths
+ * bind it to the generic `patient` role. But many commands have NO `patient` role and
+ * a distinct `primaryRole` — `fetch`→source, `wait`→duration, `send`/`trigger`→event,
+ * `bind`/`tell`→destination. The fronted URL/duration/event then parses as
+ * `<cmd>.patient` instead of `<cmd>.<primaryRole>`: a role MISTYPE (command + value
+ * TYPE correct, role NAME wrong). Relabelled iff the schema lists no `patient` role
+ * (so any `patient` is spurious) and the `primaryRole` slot is empty (never clobbers a
+ * real value — a `fetch` with both a source URL and a `body` patient keeps the
+ * patient). `fetch.patient:literal` → `fetch.source:literal`.
  *
- * When an SOV/V2 reorder fronts a command's leading object, the fused-event and
- * generic match paths bind it to the generic `patient` role. But many commands
- * have NO `patient` role and a distinct `primaryRole` — `fetch`→source,
- * `wait`→duration, `send`/`trigger`→event, `bind`/`tell`→destination. The fronted
- * URL/duration/event then parses as `<cmd>.patient` instead of
- * `<cmd>.<primaryRole>`: a pure role MISTYPE (the command and the value's TYPE are
- * correct; only the role NAME is wrong) — invisible to R0 action-recall, but the
- * dominant R1 (role-fidelity) drop across every SOV/reorder language
- * (`fetch.source` alone was missing 13× per language).
+ * This fires ONLY on a spurious `patient` (a mis-parse), so clean en / round-trip
+ * nodes are untouched and rendering is unaffected. (Contrast {@link fillSchemaDefaults},
+ * which touches clean nodes and so is a measurement-only pass, NOT applied in `parse()`.)
  *
- * This relabels a spurious `patient` to the schema's `primaryRole`, gated so it can
- * only ever CORRECT a mistype, never lose information:
- *   - the schema defines `primaryRole` ≠ 'patient' and lists no `patient` role, so
- *     any `patient` on this command is spurious by construction; and
- *   - the `primaryRole` slot is empty, so a real value is never clobbered (e.g. a
- *     `fetch` carrying both a `source` URL and a `body` patient keeps the patient).
- * The value — and its type — is preserved, so `fetch.patient:literal` becomes
- * `fetch.source:literal`, matching the en reference. Recurses into every body node
- * and is idempotent (a second pass finds no spurious patient). Applied once on the
- * final tree, outside the hot matching loop.
+ * Recurses into every body node; idempotent.
  */
 const NORMALIZE_CHILD_FIELDS = [
   'body',
@@ -205,6 +200,48 @@ function normalizeCommandRoles(node: SemanticNode): SemanticNode {
     const child = rec[field];
     if (Array.isArray(child)) {
       for (const c of child) normalizeCommandRoles(c as SemanticNode);
+    }
+  }
+  return node;
+}
+
+/**
+ * R1 default-role fill (Tier 2b) — a **fidelity-MEASUREMENT** normalization, NOT part
+ * of `parse()`. Generated SVO patterns apply a schema role's `default` when the role
+ * is absent (`toggle`/`add` destination → me, `remove`/`take` source → me,
+ * `increment`/`decrement` quantity → 1), so the en parse materializes it; the SOV
+ * fused-event / extraction paths don't, so an SOV parse drops it (en
+ * `increment.quantity:literal` vs SOV nothing). At RUNTIME both default identically,
+ * so that "gap" is a false-positive in R1 role-recall.
+ *
+ * This mutates the node IN PLACE, filling any absent role the schema declares a
+ * `default` for (shallow-copied so nodes never share the schema's object). It is
+ * deliberately NOT called from `parse()`: applying it there would make the RENDERER
+ * emit the materialized defaults (phantom tokens) and break round-trips. Instead the
+ * fidelity harness calls it on its own throwaway parse before collecting the role
+ * signature, uniformly on the en reference AND every translation — so it only ever
+ * removes the false-positive, never introduces an asymmetry. Recurses; idempotent.
+ */
+export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
+  if (!node || typeof node !== 'object') return node;
+
+  if (node.action && node.roles instanceof Map) {
+    const schema = getSchema(node.action);
+    if (schema) {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      for (const spec of schema.roles) {
+        if (spec.default !== undefined && !roles.has(spec.role)) {
+          roles.set(spec.role, { ...spec.default } as SemanticValue);
+        }
+      }
+    }
+  }
+
+  const rec = node as unknown as Record<string, unknown>;
+  for (const field of NORMALIZE_CHILD_FIELDS) {
+    const child = rec[field];
+    if (Array.isArray(child)) {
+      for (const c of child) fillSchemaDefaults(c as SemanticNode);
     }
   }
   return node;

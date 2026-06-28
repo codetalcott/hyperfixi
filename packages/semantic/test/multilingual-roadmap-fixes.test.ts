@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, getTokenizer } from '../src';
+import { parse, canParse, getTokenizer, fillSchemaDefaults } from '../src';
 
 describe('Korean fetch keyword alignment (가져오기)', () => {
   // Corpus-shaped event handlers from the multilingual baseline.
@@ -8199,5 +8199,75 @@ describe('tr resize single-token event keyword (window-resize NULL → faithful)
     const actions = (node.body || []).map((b: any) => b.action);
     expect(actions).toContain('call');
     expect(actions).not.toContain('toggle');
+  });
+});
+
+describe('Schema default-role fill (Tier 2b — SOV drops defaulted roles; R1)', () => {
+  // The generated SVO pattern materializes a schema role's `default` when the role is
+  // absent (toggle/add destination → me, increment/decrement quantity → 1), so the en
+  // parse carries it — but the SOV fused-event / extraction paths dropped it (en
+  // `increment.quantity:literal` vs SOV nothing), a false-positive in R1 role-recall
+  // (both default identically at runtime). `fillSchemaDefaults` is the
+  // fidelity-MEASUREMENT normalization the harness applies before collecting role
+  // signatures (R1 0.872 → 0.908). It is NOT applied in `parse()` — that would make
+  // the renderer emit the defaults and break round-trips — so we apply it explicitly
+  // here, exactly as the parse-validator does.
+  function rolesOf(input: string, lang: string, action: string): Map<string, any> | undefined {
+    const node: any = fillSchemaDefaults(parse(input, lang) as any);
+    function find(n: any): Map<string, any> | undefined {
+      if (!n || typeof n !== 'object') return undefined;
+      if (n.action === action && n.roles instanceof Map) return n.roles;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+        const c = n[f];
+        if (Array.isArray(c)) {
+          for (const x of c) {
+            const r = find(x);
+            if (r) return r;
+          }
+        }
+      }
+      return undefined;
+    }
+    return find(node);
+  }
+
+  it('[ja] increment fills the quantity default (1), matching en', () => {
+    expect(rolesOf('#counter を クリック で 増加', 'ja', 'increment')?.get('quantity')?.value).toBe(1);
+  });
+
+  it('[ja] toggle fills the destination default (me) when no target is given', () => {
+    expect(rolesOf('.active を クリック で 切り替え', 'ja', 'toggle')?.get('destination')?.value).toBe(
+      'me'
+    );
+  });
+
+  it('[en] increment also carries the quantity default (en/candidate symmetry)', () => {
+    expect(rolesOf('on click increment #counter', 'en', 'increment')?.get('quantity')?.value).toBe(1);
+  });
+
+  // Control: an EXPLICIT role value is never clobbered by its schema default.
+  it('[ja] explicit remove source (#foo) is not overwritten by the me default', () => {
+    expect(rolesOf('.x を クリック で 削除 #foo から', 'ja', 'remove')?.get('source')?.value).toBe(
+      '#foo'
+    );
+  });
+
+  // The default-fill is a MEASUREMENT pass only — `parse()` must NOT materialize it
+  // (else the renderer emits phantom default tokens and round-trips break).
+  it('[ja] parse() alone does NOT fill the increment quantity default', () => {
+    const r = (() => {
+      const n: any = parse('#counter を クリック で 増加', 'ja');
+      function find(x: any): Map<string, any> | undefined {
+        if (!x || typeof x !== 'object') return undefined;
+        if (x.action === 'increment' && x.roles instanceof Map) return x.roles;
+        for (const f of ['body', 'statements', 'eventHandlers']) {
+          const c = x[f];
+          if (Array.isArray(c)) for (const y of c) { const z = find(y); if (z) return z; }
+        }
+        return undefined;
+      }
+      return find(n);
+    })();
+    expect(r?.has('quantity')).toBe(false);
   });
 });
