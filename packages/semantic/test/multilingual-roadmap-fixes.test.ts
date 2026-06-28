@@ -8178,3 +8178,26 @@ describe('SOV primary-role normalization (Arc 4 — fronted patient → schema p
     expect(roles?.has('patient')).toBe(false);
   });
 });
+
+describe('tr resize single-token event keyword (window-resize NULL → faithful)', () => {
+  // `boyut_değiştir` split on `_` in the tr tokenizer → `boyut` + `değiştir`, and
+  // `değiştir` normalizes to `toggle` (homonym), destroying the resize event — the
+  // lone tr parse hard-fail. The non-underscore `boyutlandırma` (and the verb stem
+  // `boyutlandır`) keep the event token whole and resolve to the `resize` event.
+  // The window-resize corpus shape (en reference:
+  // `on resize from window debounced at 200ms call adjustLayout()`).
+  const corpus = 'debounced at 200ms adjustLayout() i boyutlandırma de çağır pencere den';
+
+  it('[tr] window-resize parses as a resize event handler (was the lone tr hard-fail)', () => {
+    const node: any = parse(corpus, 'tr');
+    expect(node.action).toBe('on');
+    expect(node.roles.get('event')?.value).toBe('resize');
+  });
+
+  it('[tr] resize keyword no longer mis-parses as the `toggle` homonym (call body, no toggle)', () => {
+    const node: any = parse(corpus, 'tr');
+    const actions = (node.body || []).map((b: any) => b.action);
+    expect(actions).toContain('call');
+    expect(actions).not.toContain('toggle');
+  });
+});

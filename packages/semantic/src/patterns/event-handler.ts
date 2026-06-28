@@ -112,7 +112,14 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     bulanıklık: 'blur',
     yükleme: 'load',
     yükle: 'load',
-    boyut_değiştir: 'resize',
+    // resize: single-token `boyutlandırma` (and the verb stem `boyutlandır`). The
+    // former i18n emission `boyut_değiştir` split on `_` in the tr tokenizer →
+    // `boyut` + `değiştir`, and `değiştir` normalizes to `toggle` — a homonym
+    // collision that destroyed the resize event (window-resize was the lone tr
+    // parse hard-fail). A non-underscore keyword (mirrors the ru/uk install and
+    // the `kaydır`/`kaydırma` scroll precedent) keeps the event token whole.
+    boyutlandırma: 'resize',
+    boyutlandır: 'resize',
     kaydırma: 'scroll',
   },
   // Portuguese event names → English

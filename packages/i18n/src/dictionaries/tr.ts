@@ -105,7 +105,7 @@ export const tr: Dictionary = {
     reset: 'sıfırla',
     load: 'yükle',
     unload: 'yükle_kaldır',
-    resize: 'boyut_değiştir',
+    resize: 'boyutlandırma',
     scroll: 'kaydır',
     touchstart: 'dokunma_başla',
     touchend: 'dokunma_bitir',
