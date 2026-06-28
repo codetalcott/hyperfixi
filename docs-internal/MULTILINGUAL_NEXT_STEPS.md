@@ -29,6 +29,35 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28g (Arc B R1 — `halt the event` article skip; avgRoleFidelity
+> 0.9125 → 0.9142, all 23 langs +, zero regressions).** First convergent burn-down of
+> the R1 value-type residue. Grounding the `halt.patient` cluster (the most consistent
+> cross-language signature: en `halt the event` → `patient:literal="the"`) showed the **en
+> reference itself was wrong** — it captured the article `the` and dropped the event, so every
+> faithful translation mismatched it. One defect, two facets in `skipNoiseWords`
+> (`pattern-matcher.ts`):
+>
+> - **en:** `event` tokenizes as a `keyword` (not selector/identifier), so the existing
+>   article-skip missed it. Added an en case: skip `the` before a valid reference word
+>   (`isValidReference`) → `patient:reference="event"`. (`the default`, a non-reference, stays
+>   `literal`; bare `halt` unchanged.)
+> - **SVO/VSO:** the transformer leaks an untranslated `the` before the translated event word
+>   (`the evento entonces …`); the pre-existing non-en skip only fired before a SOV **particle**,
+>   so these kept `patient:expression="the"`. Extended the non-en skip to also fire before a
+>   **clause boundary** (then/and/or/end/EOF) — but **never before a command verb**, preserving
+>   the §7y guard (tr form-submit-prevent's `the olay çağır …` keeps `the`; body parse intact).
+>
+> Result: en + all 23 priority langs now agree on `halt.patient:reference` for halt-propagation.
+> **avgRoleFidelity +0.0014–0.0029/lang** (SOV laggards hi/ja/ko/qu/bn/tr +0.0025–0.0029; every
+> SVO/VSO +0.0014–0.0015), **R0-recall 1.000 and R0-precision 0.972 both unchanged**, semantic
+> suite 6262 pass, gate `--regression` green. Guard: `multilingual-roadmap-fixes.test.ts`
+> "`halt the event` skips the leaked article" (15 cases incl. the §7y verb-after invariant +
+> `the default`/bare-`halt` controls; verified failing-without-fix: 8 fail). Remaining R1
+> residue (now hi 0.8646 the laggard): the **`repeat` loop-role garbage** (en reference itself
+> mis-parses `repeat N times`/`for X in Y` — body verb captured as `repeat.event`, biggest
+> cluster, two-sided en+SOV structural fix) and the **SVO `halt the event` → still `expression`
+> for VSO verb-after forms**. See HANDOFF-r1-value-type-residue.md.
+>
 > **Update 2026-06-28f (R2 wave 8 — VSO ar/tl/uk fixed; put-before/after JOIN R2; the
 > wave-5 worklist is CLOSED). subset 40 → 42.** The last residual from 2026-06-28e — `ar`,
 > `tl`, `uk`, whose put is captured inline by the generated fused VSO event pattern (position

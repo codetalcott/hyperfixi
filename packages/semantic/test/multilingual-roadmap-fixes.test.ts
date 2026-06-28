@@ -8418,3 +8418,103 @@ describe('Positional put `before`/`after` captures manner (put-before/put-after,
     });
   }
 });
+
+describe('`halt the event` skips the leaked article → patient:reference (halt.patient R1)', () => {
+  // `halt the event` parses with patient = the `event` REFERENCE, never the
+  // article. Two facets of one defect, both in skipNoiseWords (pattern-matcher):
+  //   - en: `event` tokenizes as a keyword (not selector/identifier), so the
+  //     existing article-skip missed it and the role captured `the` itself
+  //     (patient:literal="the", the event dropped). en was the odd reference that
+  //     every faithful translation mismatched.
+  //   - SVO/VSO: the i18n transformer leaves `the` untranslated before the
+  //     translated event word (`the evento entonces …`). The pre-existing
+  //     non-en skip only fired before a SOV particle, so these kept
+  //     patient:expression="the". Extending it to a clause boundary (then/end/
+  //     EOF) — but NOT a following command verb — skips the leaked article.
+  // Net: en + all 23 priority langs now agree on halt.patient:reference for
+  // halt-propagation (avgRoleFidelity +0.0014–0.0029/lang, zero regressions).
+  function findHalt(node: any): any {
+    if (!node || typeof node !== 'object') return undefined;
+    if (node.action === 'halt') return node;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+      const c = node[f];
+      if (Array.isArray(c)) for (const x of c) { const r = findHalt(x); if (r) return r; }
+      else if (c && typeof c === 'object') { const r = findHalt(c); if (r) return r; }
+    }
+    return undefined;
+  }
+  const patientType = (halt: any): string | undefined => {
+    const v = halt?.roles instanceof Map ? halt.roles.get('patient') : halt?.roles?.patient;
+    return v?.type;
+  };
+  function actions(node: any): string[] {
+    const acc = new Set<string>();
+    (function w(x: any) {
+      if (!x || typeof x !== 'object') return;
+      if (typeof x.action === 'string' && x.action !== 'compound') acc.add(x.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const c = x[f];
+        if (Array.isArray(c)) c.forEach(w);
+        else if (c && typeof c === 'object') w(c);
+      }
+    })(node);
+    return [...acc].sort();
+  }
+
+  // halt-propagation corpus translations (en → lang): `... halt the event then
+  // toggle .active`. The ref noun is followed by a clause boundary (`then` / its
+  // translation), so the leaked article is skipped and patient is the event ref.
+  const haltEventCases: Array<[string, string]> = [
+    ['en', 'on click halt the event then toggle .active'],
+    ['es', 'en clic detener the evento entonces alternar .active'],
+    ['fr', 'sur clic stopper the événement alors basculer .active'],
+    ['de', 'bei klick anhalten the ereignis dann umschalten .active'],
+    ['ru', 'при клик остановить the событие затем переключить .active'],
+    ['uk', 'при клік зупинити the подія тоді перемкнути .active'],
+    ['pl', 'gdy kliknięcie zatrzymaj the zdarzenie wtedy przełącz .active'],
+    ['zh', '当 点击 时 停止 把 the 事件 那么 切换 把 .active'],
+    ['hi', 'the घटना को क्लिक पर रोकें फिर .active को टॉगल'],
+    ['ja', 'the イベント を クリック で 停止 それから .active を 切り替え'],
+    ['ko', 'the 이벤트 를 클릭 할 때 정지 그러면 .active 를 토글'],
+  ];
+  for (const [lang, code] of haltEventCases) {
+    it(`[${lang}] halt the event → patient:reference (article skipped)`, () => {
+      const halt = findHalt(parse(code, lang));
+      expect(halt, `no halt command parsed for ${lang}`).toBeTruthy();
+      expect(patientType(halt)).toBe('reference');
+    });
+  }
+
+  // §7y guard: when a command VERB directly follows the ref noun (no clause
+  // boundary), the leaked article must NOT be skipped — skipping it breaks the
+  // fragile SOV/agglutinative body parse (tr form-submit-prevent: `the olay
+  // çağır …` = "the event call …"). The patient stays the article and the whole
+  // command sequence survives.
+  const formSubmitPrevent: Array<[string, string]> = [
+    ['tr', 'the olay çağır validateForm() i gönder de durdur eğer sonuç dir yanlış "Invalid form" i kaydet son'],
+    ['es', 'en enviar detener the evento llamar validateForm() si resultado es falso registrar "Invalid form" fin'],
+  ];
+  for (const [lang, code] of formSubmitPrevent) {
+    it(`[${lang}] §7y: verb after ref noun → article NOT skipped, body intact`, () => {
+      const node = parse(code, lang);
+      const halt = findHalt(node);
+      expect(halt, `no halt parsed for ${lang}`).toBeTruthy();
+      expect(patientType(halt)).not.toBe('reference');
+      // Body parse must survive (the §7y regression dropped commands).
+      expect(actions(node)).toEqual(['call', 'halt', 'if', 'log', 'on']);
+    });
+  }
+
+  // Controls: a non-reference keyword after `the` keeps the article (no skip),
+  // and a bare `halt` has no patient at all.
+  it('[en] `halt the default` keeps the article (default is not a reference)', () => {
+    const halt = findHalt(parse('halt the default', 'en'));
+    expect(patientType(halt)).toBe('literal');
+  });
+  it('[en] bare `halt` has no patient role', () => {
+    const halt = findHalt(parse('on click halt', 'en'));
+    expect(halt).toBeTruthy();
+    const hasPatient = halt.roles instanceof Map ? halt.roles.has('patient') : !!halt.roles?.patient;
+    expect(hasPatient).toBe(false);
+  });
+});

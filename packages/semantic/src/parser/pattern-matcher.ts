@@ -723,6 +723,16 @@ export class PatternMatcher {
   );
 
   /**
+   * Normalized clause-boundary keywords — sequence/conjunction tokens that close
+   * one command and open the next. Tokenizers normalize every language's forms
+   * to these (es `entonces`→then, uk `тоді`→then). Used by skipNoiseWords to tell
+   * a `the <ref-noun>` patient phrase that ENDS a clause (`the evento entonces …`,
+   * safe to skip the leaked article) from one whose ref-noun is followed by a
+   * command verb (`the olay çağır …`, must NOT skip — the §7y regression).
+   */
+  private static readonly CLAUSE_BOUNDARY_KEYWORDS = new Set(['then', 'and', 'or', 'end', 'else']);
+
+  /**
    * Try to match a positional query expression:
    *   <positional> <selector> [<in/from-marker> <source-selector>]
    * e.g. "last <.message/> in #chat", "first <button/> in .modal", "آخر <.message/> في #chat".
@@ -1870,19 +1880,54 @@ export class PatternMatcher {
       // the handler). The reference noun (घटना→event) then fills the patient, so
       // `halt the event` continues.
       //
-      // Gated to `the <ref-noun> <particle-marker>` — a fronted patient phrase.
-      // This deliberately does NOT fire for `the <ref-noun> <verb>` (tr
-      // form-submit-prevent's `the olay çağır …` = "the event call …", where the
-      // ref noun is followed by the `call` verb, not a marker): skipping `the`
-      // there breaks tr's fragile body parse (the §7y regression). English keeps
-      // `the` (authored, not a leak) — byte identical, so the en reference parse
-      // is untouched. See STRUCTURAL_ARCS_ROADMAP.md (hi halt-propagation).
+      // Fires for a fronted/leaked-article reference-noun patient when the noun is
+      // followed by a clause boundary, NOT a command verb:
+      //   - a particle marker   (SOV `the घटना को …`  → reference="event")
+      //   - a sequence/conjunction keyword or end-of-stream (SVO `the evento
+      //     entonces …`, `the подія тоді …` → reference="event")
+      // It deliberately does NOT fire for `the <ref-noun> <verb>` (tr
+      // form-submit-prevent's `the olay çağır …` = "the event call …", ref noun
+      // followed by the `call` verb): skipping `the` there breaks tr's fragile
+      // body parse (the §7y regression). Before the boundary cases were added, the
+      // SVO/VSO translations kept the leaked `the` as the patient
+      // (`patient:expression="the"`), mismatching both the en reference and the SOV
+      // parse — part of the `halt.patient` R1 residue. See STRUCTURAL_ARCS_ROADMAP.md
+      // (hi halt-propagation).
+      const afterRefNoun = tokens.peek(1);
+      const afterRefNorm = afterRefNoun
+        ? (afterRefNoun.normalized ?? afterRefNoun.value).toLowerCase()
+        : '';
+      const refNounFollowedByBoundary =
+        !afterRefNoun ||
+        afterRefNoun.kind === 'particle' ||
+        PatternMatcher.CLAUSE_BOUNDARY_KEYWORDS.has(afterRefNorm);
       if (
         nextToken &&
         nextToken.kind === 'keyword' &&
         this.currentProfile?.code !== 'en' &&
         isValidReference(nextNorm) &&
-        tokens.peek(1)?.kind === 'particle'
+        refNounFollowedByBoundary
+      ) {
+        return;
+      }
+
+      // English authored `the` before a reference word ("halt the event"). The
+      // reference (`event`, `result`, `target`, …) tokenizes as a `keyword`, so
+      // the selector/identifier skip (case 1) and the positional skip (case 2)
+      // both miss it, and the role would otherwise capture only the article
+      // (`halt the event` → patient:literal="the", dropping the event). Skip it so
+      // the canonical reference fills the role (patient:reference="event"). This
+      // matches what the SOV branch above already produces for the leaked-article
+      // translations (`the घटना को` → reference="event"); before this, en was the
+      // odd reference (literal="the") that every faithful SOV parse mismatched —
+      // the dominant `halt.patient` R1 residue. en-only and gated to a valid
+      // reference: an English noun ("the color") is an identifier (case 1) and a
+      // non-reference keyword ("the default") is left untouched.
+      if (
+        nextToken &&
+        nextToken.kind === 'keyword' &&
+        this.currentProfile?.code === 'en' &&
+        isValidReference(nextNorm)
       ) {
         return;
       }
