@@ -125,6 +125,22 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // with a `detail` payload. The en reference writes the announcement text into
   // #sr-announce and sets role=alert on it: two clean effect lines.
   'announce-screen-reader',
+  // Expansion wave 5 (session 12): `remove me` — the bare self-removal positional.
+  // Discovery probe (every non-subset, non-network/timer/behavior pattern executed
+  // against this fixture, then all 23 translations checked against the en effect
+  // signature) found ten patterns with a clean non-empty en effect, but only
+  // `remove-element` matched en in ALL 23 languages — so it's the only all-match
+  // addition that keeps avgExecutionFidelity at 1.0. No fixture/setup/trigger change
+  // (it removes #btn on the default click). The other nine eligible candidates are
+  // the grounded worklist for the next wave — each has real per-language EXECUTION
+  // gaps to fix BEFORE it can join (divergent-lang counts, session 12 probe):
+  //   next-element (1: ms) · toggle-aria-expanded (2: id,ms) ·
+  //   set-opacity (4) · set-transform (4) · multiple-events (6) · accordion-toggle (6) ·
+  //   put-after (14) · put-before (14) · caret-var-on-target (23, all).
+  // These execution divergences are invisible to R0/R1 (parse-faithful) — exactly the
+  // class R2 exists to catch — but each must be fixed (not just recorded) before adding,
+  // or it drops R2 below 1.0. Tracked in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  'remove-element',
 ];
 
 /**
