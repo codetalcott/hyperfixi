@@ -29,6 +29,24 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28f (R2 wave 8 — VSO ar/tl/uk fixed; put-before/after JOIN R2; the
+> wave-5 worklist is CLOSED). subset 40 → 42.** The last residual from 2026-06-28e — `ar`,
+> `tl`, `uk`, whose put is captured inline by the generated fused VSO event pattern (position
+> word consumed as a plain destination marker → manner dropped → content inserted INTO the
+> target) — is FIXED with handcrafted higher-priority (160) VSO put-before/after EVENT
+> patterns (`vsoPositionalPutPatterns` in `event-handler.ts`): ar/tl verb-first
+> (`{verb} {patient} <posWord> {dest} <evMarker> {event}`), uk event-first
+> (`<evMarker> {event} {verb} {patient} <posWord> {dest}`). They match the position word as
+> an explicit literal and record `manner`; the into-form stays on the generated pattern (its
+> `في`/`sa`/`в` marker); the `-before`/`-after` id triggers the renderer's positional penalty
+> so RENDER still prefers the into-form. **All 23 langs now match en for BOTH put-before and
+> put-after; both join `EXECUTION_SUBSET` (40 → 42); R2 stays 1.000.** ar/tl/uk avgRoleFidelity
+> +0.0027–0.0041, zero regressions; semantic suite 6262 pass; gate --regression green. Guard:
+> the "Positional put `before`/`after`" block now covers all 14 langs (28 cases) + a wave-8
+> execution lock (ar reproduces the en before/after offset). **The wave-5 R2 worklist (9
+> divergences) is now fully closed**: 6 were stale-DB artifacts (#514), `multiple-events`
+> (#515), put-before/after SVO+SOV (#516) + VSO (this). R2 subset 33 → 42.
+>
 > **Update 2026-06-28e (positional put `before`/`after` — 11 of 14 langs fixed; R1
 > +0.004–0.008; VSO ar/tl/uk residual).** The last two wave-5 R2 divergences (`put-after`
 > /`put-before`, `put "<p>New</p>" before/after me`) are a multi-family arc. The unifying

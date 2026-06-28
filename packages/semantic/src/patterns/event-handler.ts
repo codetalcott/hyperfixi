@@ -7,7 +7,7 @@
  * Phase 3.2: Consolidated from 26 files into single file.
  */
 
-import type { LanguagePattern } from '../types';
+import type { LanguagePattern, PatternToken, ExtractionRules } from '../types';
 
 // =============================================================================
 // Shared Event Name Translations
@@ -1583,8 +1583,92 @@ function getEventHandlerPatternsTh(): LanguagePattern[] {
   ];
 }
 
+/**
+ * Handcrafted VSO put-before/after EVENT patterns (ar, tl, uk).
+ *
+ * The generated fused VSO 2-role put pattern (`put-event-<lang>-vso[-verb-first]-2role`)
+ * lists the position words (قبل/بعد, bago/matapos, до/після) as destination-marker
+ * ALTERNATIVES, so it captures the target but DROPS the position — `put X before Y`
+ * then inserts INTO Y (R2 divergence: the <p> lands inside #btn, not before it).
+ * Unlike SVO/SOV there is no body re-parse to reach a command-stage put-before
+ * pattern; the put is captured inline by the event pattern. These higher-priority
+ * (160 > the generated 155/148) variants match the position word as an EXPLICIT
+ * literal and record it as `manner`, which the put AST-mapper turns into the
+ * before/after DOM-insert modifier. The into-form keeps matching the generated
+ * pattern (its `في`/`sa`/`в` marker, not a position word). The `-before`/`-after`
+ * id suffix triggers the renderer's positional-variant penalty, so the canonical
+ * into-form still wins RENDER selection (parsing is priority-ordered, not here).
+ */
+function vsoPositionalPutPatterns(spec: {
+  lang: string;
+  verb: string;
+  verbAlts?: string[];
+  eventMarker: string;
+  eventMarkerAlts?: string[];
+  before: string;
+  after: string;
+  order: 'verb-first' | 'event-first';
+}): LanguagePattern[] {
+  const verbTok: PatternToken = spec.verbAlts
+    ? { type: 'literal', value: spec.verb, alternatives: spec.verbAlts }
+    : { type: 'literal', value: spec.verb };
+  const evTok: PatternToken = spec.eventMarkerAlts
+    ? { type: 'literal', value: spec.eventMarker, alternatives: spec.eventMarkerAlts }
+    : { type: 'literal', value: spec.eventMarker };
+
+  return (['before', 'after'] as const).map(manner => {
+    const posTok: PatternToken = {
+      type: 'literal',
+      value: manner === 'before' ? spec.before : spec.after,
+    };
+    const patientTok: PatternToken = { type: 'role', role: 'patient' };
+    const destTok: PatternToken = { type: 'role', role: 'destination' };
+    const eventTok: PatternToken = { type: 'role', role: 'event' };
+
+    const tokens: PatternToken[] =
+      spec.order === 'verb-first'
+        ? [verbTok, patientTok, posTok, destTok, evTok, eventTok]
+        : [evTok, eventTok, verbTok, patientTok, posTok, destTok];
+    const extraction: ExtractionRules =
+      spec.order === 'verb-first'
+        ? {
+            action: { value: 'put' },
+            patient: { position: 1 },
+            destination: { position: 3 },
+            event: { position: 5 },
+            manner: { default: { type: 'literal', value: manner } },
+          }
+        : {
+            action: { value: 'put' },
+            event: { position: 1 },
+            patient: { position: 3 },
+            destination: { position: 5 },
+            manner: { default: { type: 'literal', value: manner } },
+          };
+
+    return {
+      id: `put-event-${spec.lang}-vso-${manner}`,
+      language: spec.lang,
+      command: 'on',
+      priority: 160,
+      template: { format: `${spec.lang} put ${manner}`, tokens },
+      extraction,
+    } satisfies LanguagePattern;
+  });
+}
+
 function getEventHandlerPatternsTl(): LanguagePattern[] {
   return [
+    ...vsoPositionalPutPatterns({
+      lang: 'tl',
+      verb: 'ilagay',
+      verbAlts: ['maglagay'],
+      eventMarker: 'kapag',
+      eventMarkerAlts: ['sa'],
+      before: 'bago',
+      after: 'matapos',
+      order: 'verb-first',
+    }),
     // VSO with source: kapag [event] mula_sa [source] [body]
     {
       id: 'event-tl-kapag-source',
@@ -1632,6 +1716,16 @@ function getEventHandlerPatternsTl(): LanguagePattern[] {
 
 function getEventHandlerPatternsUk(): LanguagePattern[] {
   return [
+    ...vsoPositionalPutPatterns({
+      lang: 'uk',
+      verb: 'покласти',
+      verbAlts: ['поклади', 'помістити', 'помісти', 'вставити', 'встав'],
+      eventMarker: 'при',
+      eventMarkerAlts: ['коли'],
+      before: 'до',
+      after: 'після',
+      order: 'event-first',
+    }),
     {
       id: 'event-handler-uk-full',
       language: 'uk',
@@ -1951,6 +2045,16 @@ function getEventHandlerPatternsTr(): LanguagePattern[] {
 
 function getEventHandlerPatternsAr(): LanguagePattern[] {
   return [
+    ...vsoPositionalPutPatterns({
+      lang: 'ar',
+      verb: 'ضع',
+      verbAlts: ['اجعل'],
+      eventMarker: 'عند',
+      eventMarkerAlts: ['في', 'لدى', 'عندما', 'حين', 'حينما', 'لمّا', 'لما'],
+      before: 'قبل',
+      after: 'بعد',
+      order: 'verb-first',
+    }),
     {
       id: 'event-ar-when',
       language: 'ar',

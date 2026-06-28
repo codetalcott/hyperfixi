@@ -8378,6 +8378,11 @@ describe('Positional put `before`/`after` captures manner (put-before/put-after,
     ['ru', 'при клик положить "<p>New</p>" до я'],
     ['pl', 'gdy kliknięcie umieść "<p>New</p>" przed ja'],
     ['th', 'เมื่อ คลิก ใส่ "<p>New</p>" ก่อน ฉัน'],
+    // VSO (ar/tl verb-first, uk event-first): the handcrafted put-event-<lang>-vso-before
+    // pattern out-ranks the generated fused pattern (which drops manner).
+    ['ar', 'ضع "<p>New</p>" قبل أنا عند نقر'],
+    ['tl', 'ilagay "<p>New</p>" bago ako kapag click'],
+    ['uk', 'при клік покласти "<p>New</p>" до я'],
   ];
   const after: Array<[string, string]> = [
     ['ja', '"<p>New</p>" 後に 私 を クリック で 置く'],
@@ -8391,6 +8396,9 @@ describe('Positional put `before`/`after` captures manner (put-before/put-after,
     ['ru', 'при клик положить "<p>New</p>" после я'],
     ['pl', 'gdy kliknięcie umieść "<p>New</p>" po ja'],
     ['th', 'เมื่อ คลิก ใส่ "<p>New</p>" หลัง ฉัน'],
+    ['ar', 'ضع "<p>New</p>" بعد أنا عند نقر'],
+    ['tl', 'ilagay "<p>New</p>" matapos ako kapag click'],
+    ['uk', 'при клік покласти "<p>New</p>" після я'],
   ];
 
   for (const [lang, code] of before) {

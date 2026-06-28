@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 40 curated patterns', () => {
+  it('contains exactly the 42 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -106,6 +106,11 @@ describe('R2 execution subset (lock)', () => {
         // now fixed by the semantic or-clause excision pre-pass + ja `または`→or
         // tokenizer fix + hi/bn OR_KEYWORDS. All 23 langs match the en click effect.
         'multiple-events',
+        // Session-14 expansion wave 8: put-before / put-after (`put X before/after me`),
+        // the last two wave-5 worklist divergences. Position word captured as `manner`
+        // across SVO/SOV (#516) + handcrafted VSO put-event patterns for ar/tl/uk.
+        'put-before',
+        'put-after',
       ].sort()
     );
   });
@@ -292,6 +297,26 @@ describe('R2 execution validator (lock)', () => {
     );
     expect(it.error, `it errored: ${it.error}`).toBeUndefined();
     expect(it.effects).toEqual(en.effects);
+  });
+
+  it('wave-8 put-before/after: en inserts the <p> at the right offset; a VSO translation matches', async () => {
+    // `put "<p>New</p>" before/after me` — the position word must land the content
+    // before/after #btn (not inside it). before → +p[1] (preceding #btn's parent
+    // diff), after → +p[2]. ar (VSO) used to drop the position (fused VSO event
+    // pattern consumed قبل/بعد as a plain destination marker → inserted INTO me);
+    // the handcrafted put-event-ar-vso-before/after now captures manner, so ar
+    // reproduces the en effect exactly.
+    for (const [id, enCode, arCode] of [
+      ['put-before', 'on click put "<p>New</p>" before me', 'ضع "<p>New</p>" قبل أنا عند نقر'],
+      ['put-after', 'on click put "<p>New</p>" after me', 'ضع "<p>New</p>" بعد أنا عند نقر'],
+    ] as const) {
+      const en = await validator.execute(id, enCode, 'en');
+      expect(en.error, `en ${id} errored: ${en.error}`).toBeUndefined();
+      expect(en.effects.join(), `en ${id} should insert a <p>`).toContain('text[New]');
+      const ar = await validator.execute(id, arCode, 'ar');
+      expect(ar.error, `ar ${id} errored: ${ar.error}`).toBeUndefined();
+      expect(ar.effects, `ar ${id} must reproduce en`).toEqual(en.effects);
+    }
   });
 
   it('a parse failure comes back as an error, never a throw', async () => {
