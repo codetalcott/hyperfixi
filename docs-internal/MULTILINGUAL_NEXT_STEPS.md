@@ -29,6 +29,28 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28 (Arc 4 R1 landed + parse rate 100%).** Two follow-on fixes shipped:
+>
+> - **Arc 4 — SOV role-fidelity (#508).** A schema-driven primary-role normalization
+>   (`normalizeCommandRoles` in `semantic-parser.ts`) relabels an SOV-fronted spurious
+>   `patient` to the command's schema `primaryRole` for commands with no patient role
+>   (fetch→source, wait→duration, send/trigger→event). **avgRoleFidelity 0.845 → 0.872**;
+>   per-SOV-lang ~+0.04 (hi 0.757→0.801, bn 0.784→0.831, qu 0.785→0.826, ja/ko/tr similar).
+>   R0/precision/execution + degenerate/lossy all unchanged; gate green, guarded.
+> - **tr `window-resize` (#510).** The lone parse hard-fail, cleared: the i18n dict's
+>   `boyut_değiştir` split on `_` → `değiştir`→`toggle` homonym destroyed the resize event; a
+>   single-token `boyutlandırma` keeps it whole. **Parse rate 3695/3696 → 3696/3696 (100%)** —
+>   zero failing patterns across all 24 priority languages. (Grounding corrected the handoff:
+>   the fronted `debounced at 200ms` modifier was NOT a second blocker — the parser tolerates it.)
+>
+> Current authoritative state: parse rate **3696/3696 (100%)**, degenerate **0**, lossy **0**,
+> avgFidelity **1.000**, avgPrecision **0.971**, **avgRoleFidelity 0.872**, R2 **1.000**.
+> The 2026-06-21 table below is superseded. **R1/SOV role-fidelity is the only open headroom**
+> (laggards now hi 0.801 · qu 0.826 · bn 0.831): the dominant patient→primaryRole mistype is
+> fixed, and the remaining R1 drops are per-command value-TYPE mismatches (e.g.
+> `send.destination` selector-vs-reference, `repeat` loop roles, `set.destination` property-path
+> in SOV) — a smaller, lower-priority follow-on, not a single convergent defect. See Track 3.
+
 > **Update 2026-06-27 (lossy tail CLEARED — both correctness bands now empty).** The
 > degenerate band (→0, #492/#493) and the **lossy band (53 → 0, #495–#506)** are now BOTH
 > empty: **every one of the 3695/3696 parsing patterns is faithful** (fid = 1.0). The lossy

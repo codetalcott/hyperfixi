@@ -47,6 +47,16 @@ _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (deg
 
 ## Current state
 
+> **Snapshot 2026-06-28 (post #508 + #510, `browser-priority`).** parse rate
+> **3696/3696 (100%)** — **zero hard fails, zero failing patterns across all 24 priority
+> languages** (`tr window-resize` cleared, #510) · degenerate **0** · lossy **0** · faithful
+> **3696** · avgFidelity **1.000** · avgPrecision **0.971** · **avgRoleFidelity 0.872** (was
+> 0.845; Arc 4 SOV primary-role normalization, #508) · avgExecutionFidelity **1.000**. R1/SOV
+> role-fidelity remains the only open headroom (laggards hi 0.801 · qu 0.826 · bn 0.831 — the
+> dominant patient→primaryRole mistype is fixed; the residue is per-command value-type
+> mismatches). See [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md). Authoritative
+> numbers always live in the baseline JSON.
+
 > **Snapshot 2026-06-27 (baseline commit `12018416`, `browser-priority`).** parse rate
 > **3695/3696 (99.97%)**, 1 hard fail (`tr window-resize`) · degenerate **0** · **lossy 0** ·
 > faithful **3695** · avgFidelity **1.000** · avgPrecision **0.971** (hi 0.917 outlier) ·
