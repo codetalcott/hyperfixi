@@ -904,6 +904,20 @@ export const hindiProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    {
+      name: 'put-into',
+      description: 'Transform put X into Y to Hindi verb-final order',
+      priority: 90,
+      match: {
+        commands: ['put', 'रखें'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // "hi" को #out में रखें
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
   ],
 };
 

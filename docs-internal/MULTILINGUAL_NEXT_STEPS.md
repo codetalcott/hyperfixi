@@ -29,6 +29,41 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28h (Arc B R1 — hi `put-into` word-order rule; hi 0.8669, zero
+> regressions).** Grounding the worst laggard (hi) after the `halt` fix surfaced a contained
+> bug: the **hindiProfile was missing the `put-into` grammar rule** that every other SOV
+> profile (ja/ko/tr/bn) carries. Without it, `put X into Y` fell through to a verb-MID default
+> (`X को रखें Y में`) which the semantic parser mis-read (destination/patient swap/mistype —
+> the put.\* R1 residue). Added the rule (mirrors ja's, `roleOrder:
+['patient','destination','action']`) → hi emits the verb-final `X को Y में रखें` and parses
+> faithfully. **hi-only** (other SOV langs already had it; qu works via its default),
+> **hi 0.8646 → 0.8669 (+0.0023)**, R0/precision/R2 unchanged, i18n suite 882 + semantic 6277
+> green. Guard: `grammar.test.ts` "Hindi Transformation (SOV) — put-into verb-final"
+> (failing-without-fix verified).
+>
+> **Grounded-but-deferred next R1 arcs (re-ground before coding; all bigger/riskier):**
+>
+> - **`set` (~18 hi entries, ALL SOV langs) — biggest clean-reference cluster.** The i18n
+>   transformer defaults the first operand to `patient` and maps the `to`-marked operand to
+>   `destination` (right for `put`/`add`; **backwards for `set`**, whose semantics are
+>   destination-first), so SOV `set X to Y` swaps the destination/patient markers
+>   (`#x.innerText को सेट इसका.name में`), mis-parsed in ja/ko/hi. Fix = teach the transformer
+>   `set`'s leading arg is `destination` (`applyPrimaryRole` transformer.ts:1250 handles only
+>   literal primaries today and the comment explicitly punts on `set`→destination). High blast
+>   radius; guard precision/R0 hard.
+> - **`bind` (4 hi patterns, rf 0.00) — two-part, hi-only.** hindiProfile also lacks a
+>   `bind-to` rule (verb-mid); ADDING it fixes word order BUT the verb-final hi bind then still
+>   mis-parses — the fronted `$greeting` is anchored as a bare `on` event (`को#name-input`
+>   smushed into a literal destination): the **SOV event-anchor** path
+>   (HANDOFF-sov-event-anchor.md). ja/ko parse the identical token shape correctly. Needs the
+>   fragile event-anchor work; deferred.
+> - **`repeat` (~24 hi entries, ALL langs) — deepest.** The **en reference itself is garbage**:
+>   the schema positional pattern stuffs `repeat 3 times add …` into
+>   `loopType=3, quantity="times", event="add"` (body verb captured as `event`); the AST mapper
+>   reads `quantity`, so even execution is wrong. SOV side equally broken
+>   (`loopType:reference="me"`). Two-sided structural rewrite (handcrafted per-form patterns
+>   like the existing `until-event` ones, en + SOV) + re-baseline. Highest reward, highest risk.
+>
 > **Update 2026-06-28g (Arc B R1 — `halt the event` article skip; avgRoleFidelity
 > 0.9125 → 0.9142, all 23 langs +, zero regressions).** First convergent burn-down of
 > the R1 value-type residue. Grounding the `halt.patient` cluster (the most consistent

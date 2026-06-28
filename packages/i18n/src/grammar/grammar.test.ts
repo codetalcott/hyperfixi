@@ -435,6 +435,31 @@ describe('GrammarTransformer', () => {
     });
   });
 
+  describe('Hindi Transformation (SOV) — put-into verb-final', () => {
+    const transformer = new GrammarTransformer('en', 'hi');
+
+    // The hindiProfile was missing the `put-into` word-order rule that every
+    // other SOV profile (ja/ko/tr/bn) carries, so `put X into Y` fell through to a
+    // verb-MID default (`X को रखें Y में`). The semantic parser then mis-read the
+    // verb-mid form — destination/patient swapped/mistyped — the put.* R1 residue
+    // (hi only; other SOV langs already had the rule). With the rule, hi emits the
+    // verb-final form `X को Y में रखें` like ja's `X を Y に 置く`.
+    it('places the put verb after its destination (verb-final), not mid-clause', () => {
+      const result = transformer.transform('put "<p>x</p>" into #out');
+      const putIdx = result.indexOf('रखें');
+      const destIdx = result.indexOf('#out');
+      expect(putIdx).toBeGreaterThan(-1);
+      expect(destIdx).toBeGreaterThan(-1);
+      // verb-final: the put verb follows its destination.
+      expect(putIdx).toBeGreaterThan(destIdx);
+    });
+
+    it('keeps the destination marker in (में) on the put target', () => {
+      const result = transformer.transform('put "hi" into #out');
+      expect(result).toContain('#out में');
+    });
+  });
+
   describe('Arabic Transformation (VSO)', () => {
     const transformer = new GrammarTransformer('en', 'ar');
 
