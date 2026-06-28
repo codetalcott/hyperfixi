@@ -29,6 +29,32 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28b (R1 default-fill → 0.908; R2 wave 5).** Two more fixes:
+>
+> - **R1 schema default-fill (#512).** After Arc 4, the dominant remaining R1 drop was
+>   DEFAULTED roles: the SVO pattern path materializes a schema role's `default` when
+>   absent (toggle/add destination → me, increment/decrement quantity → 1) so en carries
+>   it, but the SOV paths drop it (both default identically at runtime — a measurement
+>   false-positive). A `fillSchemaDefaults` MEASUREMENT pass (parse-validator, on en +
+>   every translation; NOT in `parse()`, which would pollute the renderer) lifts
+>   **avgRoleFidelity 0.872 → 0.908** (per-SOV ~+0.04). R0/precision/R2 unchanged.
+> - **R2 execution wave 5 (#513).** Added `remove-element` (`remove me`) — the only one
+>   of ten fixture-eligible candidates that matched the en effect in **all 23 languages**,
+>   so **avgExecutionFidelity stays 1.000** (subset 32 → 33). The other nine eligible
+>   candidates have real per-language EXECUTION gaps (parse-faithful but executes
+>   differently — exactly what R2 catches) and are the **grounded next-wave worklist**:
+>   `next-element` (1 lang: ms) · `toggle-aria-expanded` (2: id,ms) · `set-opacity` (4) ·
+>   `set-transform` (4) · `multiple-events` (6) · `accordion-toggle` (6) · `put-after` (14) ·
+>   `put-before` (14) · `caret-var-on-target` (23, all). Each must be FIXED (not just
+>   recorded) before it can join the subset without dropping R2 below 1.0 — the next
+>   correctness arc beyond structural fidelity.
+>
+> Current authoritative state: parse rate **3696/3696 (100%)**, degenerate **0**, lossy
+> **0**, avgFidelity **1.000**, avgPrecision **0.971**, **avgRoleFidelity 0.908**, R2
+> **1.000** (33-pattern curated subset). Remaining R1 headroom (hi 0.852 · ja 0.880 the
+> laggards) is per-command value-type mismatches (`set.destination:property-path`,
+> `repeat` loop roles, `halt.patient` literal-vs-reference) — harder/structural, lower ROI.
+
 > **Update 2026-06-28 (Arc 4 R1 landed + parse rate 100%).** Two follow-on fixes shipped:
 >
 > - **Arc 4 — SOV role-fidelity (#508).** A schema-driven primary-role normalization

@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 32 curated patterns', () => {
+  it('contains exactly the 33 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -88,6 +88,12 @@ describe('R2 execution subset (lock)', () => {
         // PATTERN_TRIGGER dispatches a CustomEvent whose detail.message the
         // handler reads. set @role on the #sr-announce scope landed in S1.
         'announce-screen-reader',
+        // Session-12 expansion wave 5: `remove me` (bare self-removal). The only
+        // one of ten fixture-eligible candidates that matched the en effect in ALL
+        // 23 languages (so avgExecutionFidelity stays 1.0); the other nine have
+        // per-language execution gaps tracked as the next-wave worklist (see the
+        // wave-5 note in execution-validator.ts).
+        'remove-element',
       ].sort()
     );
   });
