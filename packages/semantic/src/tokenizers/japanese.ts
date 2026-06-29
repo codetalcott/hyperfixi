@@ -91,6 +91,9 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: '送信', normalized: 'submit' },
   { native: '入力', normalized: 'input' },
   { native: 'ロード', normalized: 'load' },
+  // The i18n dict emits the native `読み込み` for `load` (not the loanword `ロード`);
+  // recognize it so `on load` events type as a literal, not a bare expression.
+  { native: '読み込み', normalized: 'load' },
   { native: 'スクロール', normalized: 'scroll' },
   { native: 'キーダウン', normalized: 'keydown' },
   { native: 'キーアップ', normalized: 'keyup' },

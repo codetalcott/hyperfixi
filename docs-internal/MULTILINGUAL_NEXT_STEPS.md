@@ -29,6 +29,30 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28m (Arc B R1 — cross-language event-keyword alignment sweep; mean R1
+> 0.9218 → 0.9259 (+0.0041), the biggest single-PR MEAN win of the campaign, 8 langs +, ZERO
+> regressions).** Grounding the new laggard (uk, after the bind cluster closed) found a
+> **systemic dict/profile misalignment**: the i18n dict emits one event word but the semantic
+> profile/tokenizer lists a different one, so the unrecognized word tokenized as a bare
+> `identifier` and the event role typed as `expression` instead of `literal` (the `on.event`
+> R1 residue). A sweep across the 6 common events found 10 misaligned (lang, event) pairs:
+> **submit** uk `надсилання`; **load** es `cargar` / fr `charger` / it `carica` / ru `загрузка`
+> / uk `завантаження` / ja `読み込み` (6 langs!); **change** fr `changer`; **input** pl `wejście`
+> / id `masukan`. Fix: register each i18n-emitted form as an event alternative in the semantic
+> profile (`generators/profiles/*.ts`) — or, for ja, the tokenizer EXTRAS
+> (`tokenizers/japanese.ts`, which derives events there, not from the profile). `load` is purely
+> an event (no command-collision risk); the verb forms (`cargar`/`charger`/`changer`) sit
+> alongside existing verb alternatives (`modifier`, `someter`), so no precision hit (verified:
+> precision flat in every lang). **uk +0.0200 (the laggard), es/fr/it/ru +0.0110, id/pl +0.0115,
+> ja +0.0076; R0 1.000 / R2 1.000 / parse-rate 3696/3696 unchanged.** semantic 6299 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "Event-keyword alignment" (10 cases, failing-without-fix
+> verified: all 10 fail). **Method lesson: a single language dominating the worst-pattern list
+> across UNRELATED patterns (uk in 6) signals a systemic per-language cause, not 6 one-offs —
+> grounding the common role-diff (`on.event:literal`→`expression`) found it in one pass.** A
+> broader audit of i18n-emitted-vs-profile event words across ALL 24 langs (beyond the 6 events
+> swept here) is a cheap follow-up — the same probe (`ev-sweep`) extends to keydown/keyup/focus/
+> mouseover/etc.
+>
 > **Update 2026-06-28l (Arc B R1 — English split-`'s` possessive capture; hi CROSSES 0.90
 > (0.8899 → 0.9034), 7 langs +0.0068, mean 0.9195 → 0.9218, ZERO regressions).** Completing the
 > bind cluster surfaced ANOTHER **broken en reference**: `bind $color to #picker's value` parsed

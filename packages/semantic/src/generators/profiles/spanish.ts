@@ -106,7 +106,9 @@ export const spanishProfile: LanguageProfile = {
     submit: { primary: 'envío', alternatives: ['envio', 'someter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiar'], normalized: 'change' },
-    load: { primary: 'carga', normalized: 'load' },
+    // i18n dict emits the verb `cargar` for `load` (profile primary is the noun
+    // `carga`); recognize it so `on load` events type as a literal, not expression.
+    load: { primary: 'carga', alternatives: ['cargar'], normalized: 'load' },
     scroll: { primary: 'desplazar', alternatives: ['desplazamiento'], normalized: 'scroll' },
     keydown: { primary: 'tecla abajo', normalized: 'keydown' },
     keyup: { primary: 'tecla arriba', normalized: 'keyup' },

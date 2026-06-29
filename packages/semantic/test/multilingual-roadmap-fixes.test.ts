@@ -1154,6 +1154,41 @@ describe('English split `\'s` possessive captures the property (bind-explicit-pr
   });
 });
 
+describe('Event-keyword alignment: i18n-emitted event words recognized (on.event:literal)', () => {
+  // The i18n dict emits event words the semantic profiles/tokenizer did not list, so
+  // the event role typed as a bare `expression` instead of `literal` — the on.event R1
+  // residue (uk especially, the laggard). submit uk `надсилання`; load es `cargar` /
+  // fr `charger` / it `carica` / ru `загрузка` / uk `завантаження` / ja `読み込み`;
+  // change fr `changer`; input pl `wejście` / id `masukan`. Each is now a recognized
+  // event alternative (load is purely an event → no command collision). uk +0.0200,
+  // es/fr/it/ru +0.0110, id/pl +0.0115, ja +0.0076; mean R1 +0.0041, zero regressions.
+  function eventType(text: string, lang: string): string | undefined {
+    const node = parse(text, lang) as { roles?: unknown };
+    const roles =
+      node.roles instanceof Map
+        ? node.roles
+        : new Map(Object.entries((node.roles as object) ?? {}));
+    return (roles.get('event') as { type?: string } | undefined)?.type;
+  }
+  const cases: Array<[string, string, string]> = [
+    ['uk', 'submit', 'при надсилання перемкнути .x'],
+    ['es', 'load', 'en cargar alternar .x'],
+    ['fr', 'load', 'sur charger basculer .x'],
+    ['it', 'load', 'su carica commutare .x'],
+    ['ru', 'load', 'при загрузка переключить .x'],
+    ['uk', 'load', 'при завантаження перемкнути .x'],
+    ['ja', 'load', '.x を 読み込み で 切り替え'],
+    ['fr', 'change', 'sur changer basculer .x'],
+    ['pl', 'input', 'gdy wejście przełącz .x'],
+    ['id', 'input', 'pada masukan alihkan .x'],
+  ];
+  for (const [lang, ev, text] of cases) {
+    it(`[${lang}] ${ev} event (i18n-emitted word) types as literal`, () => {
+      expect(eventType(text, lang)).toBe('literal');
+    });
+  }
+});
+
 describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
   // A leading command-modifier (async/once/debounced) used to displace the verb in
   // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The

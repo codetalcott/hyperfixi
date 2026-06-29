@@ -158,6 +158,8 @@ export const italianProfile: LanguageProfile = {
     submit: { primary: 'invio', alternatives: ['sottomettere'], normalized: 'submit' },
     input: { primary: 'inserimento', alternatives: ['input'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiamento'], normalized: 'change' },
+    // i18n dict emits `carica` for `load`; without it `on load` events type as expression.
+    load: { primary: 'carica', alternatives: ['caricamento'], normalized: 'load' },
     // Event modifiers
     until: { primary: 'fino', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },

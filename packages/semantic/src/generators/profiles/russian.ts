@@ -183,6 +183,8 @@ export const russianProfile: LanguageProfile = {
     submit: { primary: 'отправке', alternatives: ['отправка'], normalized: 'submit' },
     input: { primary: 'вводе', alternatives: ['ввод'], normalized: 'input' },
     change: { primary: 'изменении', alternatives: ['изменение'], normalized: 'change' },
+    // i18n dict emits `загрузка` for `load`; without it `on load` events type as expression.
+    load: { primary: 'загрузка', alternatives: ['загрузке'], normalized: 'load' },
     // Navigation
     go: {
       primary: 'перейти',

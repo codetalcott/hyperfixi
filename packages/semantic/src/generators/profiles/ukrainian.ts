@@ -185,9 +185,19 @@ export const ukrainianProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: 'кліку', alternatives: ['клік', 'натисканні'], normalized: 'click' },
     hover: { primary: 'наведенні', alternatives: ['наведення'], normalized: 'hover' },
-    submit: { primary: 'відправці', alternatives: ['відправка'], normalized: 'submit' },
+    // `надсилання` is the form the i18n dict emits for `submit` (the profile
+    // primary `відправці` is a different word); without it `on submit` events
+    // (fetch-with-method/-formdata, morph-form-update, form-submit-prevent) parse
+    // the event as a bare `expression`, not a `literal` (the on.event R1 residue).
+    submit: {
+      primary: 'відправці',
+      alternatives: ['відправка', 'надсилання'],
+      normalized: 'submit',
+    },
     input: { primary: 'введенні', alternatives: ['введення'], normalized: 'input' },
     change: { primary: 'зміні', alternatives: ['зміна'], normalized: 'change' },
+    // i18n dict emits `завантаження` for `load` (stagger-animation `on load`).
+    load: { primary: 'завантаження', normalized: 'load' },
     // Navigation
     go: {
       primary: 'перейти',
