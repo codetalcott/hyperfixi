@@ -1547,6 +1547,16 @@ export class PatternMatcher {
     const profileMarker = this.currentProfile?.possessive?.marker?.replace(/^-/, '');
     const isEnglishPossessive =
       !!possessiveToken && possessiveToken.kind === 'punctuation' && possessiveToken.value === "'s";
+    // The en tokenizer splits the possessive clitic `'s` into two tokens (`'` + `s`)
+    // when it trails a selector — `#picker's value` → `#picker ' s value` — so the
+    // single-token check above misses it and the property (`value`/`textContent`) is
+    // dropped, capturing only the bare `#picker` selector. ja/ko/… keep their の/의
+    // possessive whole, so they captured the full property-path while en lost it (the
+    // bind-explicit-property / bind-non-form-display R1 cap). Detect the split pair.
+    const splitEnglishPossessive =
+      !!possessiveToken &&
+      possessiveToken.value === "'" &&
+      (tokens.peek(1)?.value ?? '').toLowerCase() === 's';
     // Non-English markers (の, 의, র, pa, …) arrive as `particle` tokens. Match
     // them against the active profile's possessive marker. Empty markers
     // (Turkish, suffix-fused) don't have a standalone token and aren't handled here.
@@ -1556,11 +1566,12 @@ export class PatternMatcher {
       profileMarker !== "'s" &&
       possessiveToken.value === profileMarker &&
       (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation');
-    if (!isEnglishPossessive && !isProfilePossessive) {
+    if (!isEnglishPossessive && !isProfilePossessive && !splitEnglishPossessive) {
       tokens.reset(mark);
       return null;
     }
-    tokens.advance(); // consume the possessive marker
+    tokens.advance(); // consume the possessive marker (`'s`, profile marker, or split `'`)
+    if (splitEnglishPossessive) tokens.advance(); // consume the trailing `s` of the split pair
 
     const propertyToken = tokens.peek();
     if (!propertyToken) {
@@ -1572,9 +1583,15 @@ export class PatternMatcher {
     // `#element's *opacity`). For profile markers, only an identifier is a
     // property — otherwise a target+patient construct like `#button の .active`
     // ("toggle .active on #button") would be mis-read as a property path.
+    // A `keyword` property is also valid for the English `'s` (whole or split):
+    // some property names translate to a profile KEYWORD rather than a bare
+    // identifier (vi `value` → `giá trị`, a single keyword token), so without this
+    // the English-possessive `#picker's giá trị` lost its property and fell back to a
+    // bare `#picker` selector — mismatching the en reference's property-path.
     const propertyOk =
       propertyToken.kind === 'identifier' ||
-      (isEnglishPossessive && propertyToken.kind === 'selector');
+      ((isEnglishPossessive || splitEnglishPossessive) &&
+        (propertyToken.kind === 'selector' || propertyToken.kind === 'keyword'));
     if (!propertyOk) {
       tokens.reset(mark);
       return null;

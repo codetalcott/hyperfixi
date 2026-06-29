@@ -29,6 +29,29 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28l (Arc B R1 — English split-`'s` possessive capture; hi CROSSES 0.90
+> (0.8899 → 0.9034), 7 langs +0.0068, mean 0.9195 → 0.9218, ZERO regressions).** Completing the
+> bind cluster surfaced ANOTHER **broken en reference**: `bind $color to #picker's value` parsed
+> the source as a bare `#picker` selector, **dropping `'s value`** — because the en tokenizer
+> splits the possessive clitic `'s` into two tokens (`'` + `s`) after a selector, which the
+> single-token `'s` check in `tryMatchSelectorPropertyExpression`/`tryMatchPossessiveSelectorExpression`
+> (pattern-matcher.ts) missed. ja/ko/qu/bn/tr/zh keep their possessive (の/의/…) whole and captured
+> the full property-path, so the en reference dropping it capped `bind-explicit-property` /
+> `bind-non-form-display` (en `bind.source:selector` vs SOV `property-path`). Two-line fix in the
+> possessive matcher: (1) recognize the split `'` + `s` pair as the English possessive; (2) accept
+> a `keyword` property after the English `'s` (vi's `value` → `giá trị` is a single KEYWORD token,
+> not an identifier — without this vi REGRESSED -0.0034 as the only lang still capturing a bare
+> selector; the keyword case lifted vi back to parity → zero net regression). **hi 0.8899 → 0.9034
+> (crosses 0.90 — the first SOV lang to clear it!), ja/ko/qu/bn/tr/zh +0.0068 each, mean +0.0024;
+> hi precision +0.0065; R0 1.000 / R2 1.000 / parse-rate 3696/3696 unchanged.** ALSO clears the
+> hi bind-explicit-property/non-form-display (the possessive source now matches the bind pattern →
+> the #522 bare-event command-peek succeeds → bind, not phantom-on). semantic 6289 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "English split `'s` possessive captures the property" (4
+> cases; failing-without-fix verified: 3 fail). **The bind cluster is now fully closed** (all 4
+> patterns faithful across SOV langs). Methodology note: the vi -0.0034 was UNDER the 0.02 gate
+> tolerance (gate would have passed) but was caught by a manual per-lang A/B diff — re-grounding
+> before shipping matters even when the gate is green.
+>
 > **Update 2026-06-28k (Arc B R1 — hi `bind` two-part fix; hi 0.8764 → 0.8899 (+0.0135),
 > the biggest single-LANGUAGE jump of the campaign, + hi precision +0.0075).** The doc's
 > "bind is fragile, defer" framing was RIGHT about the mechanism but the fix turned out
