@@ -971,10 +971,19 @@ export class SemanticParserImpl implements ISemanticParser {
       // swallow the body command into the block node and DROP it (regressed
       // repeat-forever in 17 langs). Their bodies are recovered by the dedicated
       // block paths (parseBodyWithClauses fold / hasBlockBody trailing re-parse).
-      // Also skips VERB-FIRST fused patterns (`…-vso-verb-first`): there the event
-      // clause sits BETWEEN the verb and the tail, so [verb..boundary] would wrongly
-      // re-include the event head (a separate, smaller residue — left for later).
-      if (!BLOCK_BODY_ACTIONS.has(actionName) && !match.pattern.id.includes('verb-first')) {
+      //
+      // VERB-FIRST fused patterns (`…-vso-verb-first`, ar) put the event head
+      // BETWEEN the verb and the tail (`احضر /api/user عند نقر كـjson` =
+      // `fetch /api/user on click as-json`), so the [verb..boundary] slice
+      // RE-INCLUDES `عند نقر` and the standalone re-parse drops everything after it.
+      // #530 therefore skipped them. Instead we EXCISE the event head (the event
+      // token — located by its captured normalized value — plus an immediately
+      // preceding `on`-marker keyword) from the clause before re-parsing; the
+      // standalone `fetch-ar` pattern then recovers the `كـ {responseType}` tail.
+      // If the event token can't be located in the clause, the swap is skipped
+      // (re-parsing with the event still inside is the #530 hazard).
+      if (!BLOCK_BODY_ACTIONS.has(actionName)) {
+        const isVerbFirst = match.pattern.id.includes('verb-first');
         const all = tokens.tokens;
         const pos = tokens.position();
         const isClauseBoundary = (t: LanguageToken): boolean =>
@@ -998,12 +1007,36 @@ export class SemanticParserImpl implements ISemanticParser {
           let clauseEnd = pos;
           while (clauseEnd < all.length && !isClauseBoundary(all[clauseEnd])) clauseEnd++;
           const clauseTokens = all.slice(verbIdx, clauseEnd);
+          // For verb-first fused patterns the event head sits inside the clause;
+          // excise it (event token + a preceding `on`-marker keyword) so the
+          // re-parse sees only the standalone command. For every other order the
+          // event is OUTSIDE [verb..boundary], so reparseTokens === clauseTokens
+          // (a no-op — the proven #530 path is byte-identical).
+          let reparseTokens: LanguageToken[] | null = clauseTokens;
+          if (isVerbFirst) {
+            const eventNorm = String((eventValue as { value?: unknown }).value ?? '').toLowerCase();
+            const evIdx = clauseTokens.findIndex(
+              t =>
+                ((t as { normalized?: string }).normalized ?? t.value).toLowerCase() === eventNorm
+            );
+            if (evIdx < 0) {
+              // Event token not in the clause → re-parsing would re-include it.
+              reparseTokens = null;
+            } else {
+              const prev = clauseTokens[evIdx - 1];
+              const from =
+                prev && prev.kind === 'keyword' && prev.normalized?.toLowerCase() === 'on'
+                  ? evIdx - 1
+                  : evIdx;
+              reparseTokens = [...clauseTokens.slice(0, from), ...clauseTokens.slice(evIdx + 1)];
+            }
+          }
           // Only retry when there are trailing args beyond the verb to reclaim.
-          if (clauseTokens.length > 1) {
+          if (reparseTokens && reparseTokens.length > 1) {
             const commandPatterns = getPatternsForLanguage(language)
               .filter(p => p.command !== 'on')
               .sort((a, b) => b.priority - a.priority);
-            const reparsed = this.parseClause(clauseTokens, commandPatterns, language);
+            const reparsed = this.parseClause(reparseTokens, commandPatterns, language);
             const first = reparsed[0];
             // Swap ONLY when the re-parse is a SUPERSET of the fused capture: every
             // fused role must reappear with the SAME value-type. This is the safety

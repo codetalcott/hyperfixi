@@ -29,6 +29,41 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29f (Arc B R1 — verb-FIRST event-head excision extends #530 to ar/tl; mean
+> R1 0.9422 → 0.9427 (+0.0005), ar +0.0059 · tl +0.0059, ZERO regressions. ko/tr GROUNDED as a
+> deeper, separate fix and DEFERRED.)** #530's fused-body re-parse skipped verb-FIRST fused
+> patterns (`…-vso-verb-first`) outright (its guard #2): there the event head sits BETWEEN the
+> verb and the trailing secondary clause, so the `[verb..clause-boundary]` slice RE-INCLUDES it
+> and the standalone re-parse drops everything after the event. ar `fetch-event-ar-vso-verb-first`
+> is exactly this: `احضر /api/user عند نقر كـjson` (`fetch /api/user on click as-json`) keeps
+> `source` but drops `as {responseType}`. **Fix (in `buildEventHandler`, semantic-parser.ts):
+> stop skipping verb-first; instead EXCISE the event head from the clause before re-parsing —
+> the event TOKEN (located by `token.normalized === captured-event`, e.g. نقر→"click") plus an
+> immediately-preceding `on`-marker keyword (`عند`, `kind==='keyword' && normalized==='on'`).** The
+> standalone `fetch-ar` (markerlessFetch, `كـ` as-marker) then recovers `responseType:expression`.
+> Excision is a NO-OP for every non-verb-first order (the event isn't inside `[verb..boundary]`),
+> so the proven #530 path is byte-identical; and if the event token can't be located the swap is
+> skipped (re-parsing with the event still inside is the #530 hazard). The block-body skip and the
+> superset + strictly-more-roles guards are unchanged (qu's fronted-patient rail still holds).
+> **tl (Tagalog, also verb-first VSO via `fetch-event-tl-vso-verb-first` + `fetch-tl`) gained
+> identically — a bonus the handoff didn't predict.** R0 1.000 / precision flat / R2 1.000 /
+> parse-rate unchanged; semantic suite green. Guard: `multilingual-roadmap-fixes.test.ts`
+> "Fused event-handler body re-parses secondary role clauses" gained 2 ar responseType cases +
+> 1 ar no-tail control (the 2 responseType cases fail without the fix; verified by stash).
+>
+> **ko/tr deferred — grounding corrected the handoff.** The handoff theorized ko/tr just need
+> the clause "re-assembled from non-contiguous parts (fronted patient + verb + tail, minus the
+> front event)". A standalone probe of the event-excised re-assembly disproved it: ko
+> `/api/user 를 가져오기 json 로` and tr `getir /api/user json olarak` STILL parse to `source:literal`
+> only — no responseType. Cause: the SOV standalone fetch pattern (`sovFetch`, `patterns/fetch.ts`
+> ~L256) **deliberately OMITS responseType** ("its SOV surface marker varies per language: ja none,
+> ko 로, tr olarak, hi के रूप में"). So ko/tr need TWO coordinated changes, not just a re-parse: (1)
+> extend `sovFetch` with an optional trailing `{responseType} {asMarker}` clause per language, AND
+> (2) SOV non-contiguous re-assembly in the fused body (the fronted source is BEFORE the event,
+> outside `[verb..boundary]`). The superset guard keeps them regression-free today (the
+> `[verb..boundary]`-only re-parse drops the fronted source → fails the superset check → no swap).
+> A dedicated follow-up; (1) is the prerequisite and carries its own standalone-parse regression risk.
+>
 > **Update 2026-06-29e (Arc B R1 — fused-body fix LANDED; mean R1 0.9390 → 0.9422 (+0.0032),
 > 13 langs +0.0059, ZERO regressions. The largest R1 win of the campaign since the URL fix.)**
 > Supersedes 2026-06-29d (which reverted a single-site attempt): the fix DOES live in the
