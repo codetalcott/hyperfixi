@@ -123,6 +123,9 @@ export const thaiProfile: LanguageProfile = {
     repeat: { primary: 'ทำซ้ำ', alternatives: [], normalized: 'repeat' },
     for: { primary: 'สำหรับ', alternatives: [], normalized: 'for' },
     while: { primary: 'ในขณะที่', alternatives: [], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'ตลอดไป', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'ต่อไป', alternatives: [], normalized: 'continue' },
     halt: { primary: 'หยุด', alternatives: [], normalized: 'halt' },
     throw: { primary: 'โยน', alternatives: [], normalized: 'throw' },

@@ -129,6 +129,9 @@ export const vietnameseProfile: LanguageProfile = {
     repeat: { primary: 'lặp lại', normalized: 'repeat' },
     for: { primary: 'với mỗi', normalized: 'for' },
     while: { primary: 'trong khi', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'mãi mãi', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'tiếp tục', normalized: 'continue' },
     halt: { primary: 'dừng', alternatives: ['dừng lại'], normalized: 'halt' },
     throw: { primary: 'ném', normalized: 'throw' },

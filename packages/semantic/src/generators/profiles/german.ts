@@ -109,6 +109,9 @@ export const germanProfile: LanguageProfile = {
     repeat: { primary: 'wiederholen', normalized: 'repeat' },
     for: { primary: 'für', normalized: 'for' },
     while: { primary: 'solange', alternatives: ['während'], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'fortfahren', alternatives: ['weiter'], normalized: 'continue' },
     halt: { primary: 'anhalten', alternatives: ['stoppen'], normalized: 'halt' },
     throw: { primary: 'werfen', normalized: 'throw' },

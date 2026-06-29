@@ -111,6 +111,9 @@ export const swahiliProfile: LanguageProfile = {
     repeat: { primary: 'rudia', normalized: 'repeat' },
     for: { primary: 'kwa', normalized: 'for' },
     while: { primary: 'kadri', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'endelea', normalized: 'continue' },
     halt: { primary: 'simama', alternatives: ['acha'], normalized: 'halt' },
     throw: { primary: 'tupa', normalized: 'throw' },

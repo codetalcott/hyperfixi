@@ -111,6 +111,9 @@ export const frenchProfile: LanguageProfile = {
     repeat: { primary: 'répéter', normalized: 'repeat' },
     for: { primary: 'pour', normalized: 'for' },
     while: { primary: 'pendant', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'continuer', normalized: 'continue' },
     halt: { primary: 'arrêter', alternatives: ['stopper'], normalized: 'halt' },
     throw: { primary: 'lancer', normalized: 'throw' },

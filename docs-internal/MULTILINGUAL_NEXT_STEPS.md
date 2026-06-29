@@ -29,6 +29,29 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29b (Arc B R1 — `repeat forever` loop-keyword recognition; mean R1
+> 0.9382 → 0.9390 (+0.0008), 17 langs +0.0011, ZERO regressions).** The cleanest slice of the
+> `repeat.loopType:literal` residue (123×). The i18n dict never translated `forever`, so the
+> corpus leaves it the English word in most langs (`repetir forever`, `繰り返し forever`) and a
+> native word in a few (ru `всегда`, vi `mãi mãi`, tl `magpakailanman`, ms `selamanya`, th
+> `ตลอดไป`, bn `চিরকাল`, hi `हमेशा`). Unrecognized, the bare word typed `loopType:expression`
+> (SVO) / `loopType:reference=me` (SOV) instead of EN's `:literal`. Fix: add the **corpus word**
+> (English or native — taken verbatim from the corpus, so no guessing) as a `forever` keyword in
+> each profile (`generators/profiles/*.ts`), next to `while`/`until`. The generated repeat
+> pattern then types it `:literal`, matching EN — translations moving TOWARD the correct EN
+> reference (the opposite of the abandoned `trigger.event` direction; this is why it is a clean
+> win). **17 SVO/VSO langs gain (ar/de/es/fr/he/id/it/ms/pl/pt/qu/ru/sw/th/tl/uk/vi +0.0011); R0
+> 1.000 / precision 0.9743 / R2 1.000 / parse-rate unchanged.** semantic 6321 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "repeat forever loop keyword recognized" (7 cases,
+> failing-without-fix verified: 6 fail). **Excluded zh** (its generated repeat greedily grabs the
+> body verb after `forever` as a phantom `quantity:literal` → a within-tolerance lossy flip; needs
+> a HEAD-only `重复 forever` pattern — follow-up). **SOV langs ja/ko/tr/bn/hi recognize the keyword
+> but their fused/SOV repeat pattern still drops it** (`loopType:reference=me` unchanged — no gain,
+> no regression); capturing it is the SOV follow-up. **Next slices of the repeat residue:**
+> `repeat N times` needs a per-language HEAD-only `repeat {quantity} times` pattern (the generated
+> pattern grabs `N` as loopType, dropping `quantity:literal` — the `times` keyword alone doesn't
+> restructure it); the for-each `repeat for X in Y` is the two-sided EN-phantom + SOV problem.
+>
 > **Update 2026-06-29 (Arc B R1 — `trigger.event:literal` investigated and ABANDONED as
 > net-negative; NO PR. Negative result, documented so it is not re-attempted.)** Re-grounding
 > the leverage map on fresh main (post-#525, mean R1 0.9382) ranked the top remaining

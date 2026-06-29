@@ -121,6 +121,9 @@ export const tagalogProfile: LanguageProfile = {
     repeat: { primary: 'ulitin', alternatives: ['paulit-ulit'], normalized: 'repeat' },
     for: { primary: 'para_sa', normalized: 'for' },
     while: { primary: 'habang', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'magpakailanman', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'magpatuloy', normalized: 'continue' },
     halt: { primary: 'itigil', alternatives: ['huminto'], normalized: 'halt' },
     throw: { primary: 'ihagis', alternatives: ['itapon'], normalized: 'throw' },
