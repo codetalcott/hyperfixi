@@ -29,6 +29,69 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29 (Arc B R1 — `trigger.event:literal` investigated and ABANDONED as
+> net-negative; NO PR. Negative result, documented so it is not re-attempted.)** Re-grounding
+> the leverage map on fresh main (post-#525, mean R1 0.9382) ranked the top remaining
+> `action.role:valueType` recall misses (aggregate over all 24 langs × all patterns):
+> `repeat.event:literal` **138×**, `repeat.loopType:literal` **123×**, `halt.patient:reference`
+> **74×**, `repeat.source:expression` **69×** (all behaviors), … `trigger.event:literal` **15×**,
+> `if.condition:reference` 14×, `bind.source:property-path` 14×. The repeat cluster dominates but
+> is the known two-sided for-each/until-event SOV work; behaviors (sortable 105 / draggable 81 /
+> resizable 75 missed entries — the top three patterns) are off-limits (known-hard, migration
+> pending). `trigger.event:literal` (15×) looked like the cleanest single-mechanism win, so it
+> was the chosen target.
+>
+> **Root cause (correctly grounded):** `trigger init` — EN tokenizes `init` as a KEYWORD (it
+> collides with the `init`-block keyword) → `tokenToSemanticValue` keyword branch → `createLiteral`
+> → `trigger.event:literal`. All 15 other langs tokenize the (foreign) `init` as an `identifier`
+> → `{type:'expression'}` → `:expression`. A pure value-type mismatch. The fused event-handler
+> body path (`trigger-event-<lang>-vso`) captures the arg under the generic `patient` role, which
+> `normalizeCommandRoles` relabels to `event` (send/trigger→event) — so the single correct
+> coercion site is `normalizeCommandRoles` on the FINAL tree (the matchRoleToken role-site only
+> covers standalone commands, NOT the fused body — verified: standalone `disparar init` coerced
+> but `en cargar disparar init` did not).
+>
+> **Why it was abandoned (net-NEGATIVE R1 at every scoping, verified against a byte-identical
+> clean-main baseline regen — so the deltas are real, not noise):**
+>
+> - Broad coerce (any non-`on` command event, simple identifier → literal): **mean R1 −0.0022, ALL
+>   23 langs drop.** Cause: `send-with-detail` (`send update(value:42)`) — EN splits event=`update`
+>   (simple → coerced literal) + detail, but every translation captures the whole call
+>   `update(value:42)` as one expression (a call, never coerced). EN→literal vs translation→
+>   expression = fresh 23-lang mismatch.
+> - Scope to `trigger` only: **mean R1 −0.0007** (4 SOV gains, 19 drops). The drops are behaviors:
+>   EN keeps the NAMESPACED `trigger draggable:start` → `:expression` (the `:` excludes it from the
+>   simple-identifier regex), but translations STRIP the namespace to a bare `draggable` (a known
+>   behaviors-migration parse gap) → simple → coerced to literal → mismatch.
+> - Scope to `trigger` AND exclude inside-behavior nodes (`inBehavior` flag): **STILL mean R1
+>   −0.0002** (15 gains, 8 persistent drops: ms/ru/th/tl/uk/vi −0.0015, bn/hi −0.0005). The drops
+>   keep migrating as the scope narrows — other per-pattern translation event quirks beyond
+>   behaviors. Not converging to a clean win.
+>
+> **Lesson (the load-bearing one):** R1 is recall of EN's role signature, so making the EN
+> reference MORE correct (event name → literal) DROPS R1 wherever the translations parse the event
+> differently (namespace-stripped, captured-as-call, left-as-identifier). Unlike the URL/event-
+> keyword/bind wins — which aligned a translation-side TOKENIZER/DICT gap toward an already-correct
+> EN reference — `trigger.event` would move the EN reference AWAY from buggy translations. The real
+> fix is upstream **translation-side** event parsing (preserve the `:namespace` in behavior trigger
+> events; split `update(value:42)` into event+detail like EN), which belongs to the behaviors-source
+> migration, not an R1 coercion. **Deprioritize `trigger.event`** until those land. (The reusable
+> insight: a value-type coercion is only a clean R1 win when EN is the OUTLIER that translations
+> already agree against — here EN was the _correct_ one and translations disagreed in many ways.)
+>
+> **Other findings from this re-grounding (for the next session):** (1) The EN for-each reference
+> `repeat for item in .items` produces a PHANTOM `event:literal=in` (the `in` iteration keyword
+> mis-captured as an event) AND drops `.items` entirely — same greedy-generated-repeat bug PR #521
+> fixed for `times`/`forever`. Removing the phantom is a candidate but measured net-zero (drops the
+> `event` miss but the cleanest HEAD-only pattern that consumes `in .items` adds a `source`/
+> `destination` miss the translations don't match — the two-sided for-each problem). (2) The
+> `repeat.loopType:literal` (123×) residue is a **loop-keyword vocab gap**: the corpus leaves
+> `forever`/`times` UNTRANSLATED in most langs (es `repetir forever`, ja `繰り返し forever`) — the
+> es i18n dict has `while`/`until` but NOT `forever`/`times`, and `repeat-while` consequently parses
+> `loopType:literal=while` correctly while `repeat-forever` degenerates to `loopType:reference=me`.
+> Fixing it is two-sided (i18n dict + semantic profile per lang + corpus regen) — the real next big
+> lever, but a dedicated multi-file arc.
+>
 > **Update 2026-06-28n (Arc B R1 — URL tokenization in 14 tokenizers; mean R1 0.9259 → 0.9382
 > (+0.0122), the LARGEST single-PR win of the campaign by ~3×, 14 langs +0.0137–0.0218, ZERO
 > regressions).** Re-grounding after #524 found the biggest remaining residue was
