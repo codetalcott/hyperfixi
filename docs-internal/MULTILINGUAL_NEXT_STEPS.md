@@ -29,6 +29,25 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29h (Arc B R1 — `mousedown`/`mouseup` event-keyword alignment (continues
+> 2026-06-29g); mean R1 0.9433 → 0.9434 (+0.0002), es/pt/ja/ko +0.0010 each, ZERO regressions.)**
+> The `repeat-until-event` pattern (`on mousedown repeat until event mouseup …`) has TWO events:
+> the handler event (`on mousedown`) and the loop until-event (`repeat until event mouseup`). The
+> i18n dict emits native forms the profiles/tokenizers never listed (es `ratónabajo`/`ratónarriba`,
+> pt `mouseBaixo`/`mouseCima`, ja `マウス押下`/`マウス解放`, ko `마우스다운`/`마우스업`), so the HANDLER
+> event typed as `expression` instead of en's `on.event:literal="mousedown"`. **Fix: register
+> `mousedown`/`mouseup` — es/pt via profile keyword, ja/ko via tokenizer EXTRAS (non-Latin, derive
+> events in the tokenizer not the profile).** This lifts `on.event:literal` for all four (+0.0010
+> each); precision flat, no new phantoms (ja's pre-existing `event.event` node from the
+> until-event is unchanged). **The loop until-event (`repeat.event:literal="mouseup"`) is STILL
+> dropped** — that's the separate repeat-cluster residue (the verb-final/SOV `repeat until event`
+> structure drops the event), not this fix. R0 1.000 / precision flat / R2 1.000 / parse-rate
+> 3696/3696 unchanged. Guard: `multilingual-roadmap-fixes.test.ts` "Event-keyword alignment" gained
+> 4 mousedown cases (all 4 fail without the fix). **Remaining `on.event` residue:** ru/uk
+> `mousedown`/`mouseup` SPLIT the underscore-compound (`мышь_вниз` → `мышь`+`_`+`вниз`) — a
+> single-token tokenizer fix (same class as #510 tr `boyut_değiştir`); and the bigger
+> `repeat.event`/`repeat.loopType` until-event capture is the repeat-cluster arc.
+>
 > **Update 2026-06-29g (Arc B R1 — `resize` event-keyword alignment (the 2026-06-28m audit
 > follow-up); mean R1 0.9427 → 0.9433 (+0.0006), de/es/fr/it/pl/pt +0.0023 each, ZERO
 > regressions.)** Re-grounding the post-#532 leverage map (NB: a raw-`parse()` map OVER-states any

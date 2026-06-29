@@ -147,6 +147,10 @@ export const portugueseProfile: LanguageProfile = {
     submit: { primary: 'envio', alternatives: ['submeter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['inserção'], normalized: 'input' },
     change: { primary: 'alteração', alternatives: ['mudança'], normalized: 'change' },
+    // mousedown/mouseup (repeat-until-event): dict emits mouseBaixo/mouseCima —
+    // register so both the on.event and the repeat until-event type as literal.
+    mousedown: { primary: 'mouseBaixo', normalized: 'mousedown' },
+    mouseup: { primary: 'mouseCima', normalized: 'mouseup' },
     // Event modifiers (for repeat until event)
     until: { primary: 'até', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },

@@ -1190,6 +1190,13 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     ['it', 'resize', 'su ridimensiona commutare .x'],
     ['pl', 'resize', 'gdy zmieńrozmiar przełącz .x'],
     ['pt', 'resize', 'em redimensionar alternar .x'],
+    // mousedown (repeat-until-event handler event): dict emits a native form the
+    // profiles/tokenizers didn't list → the handler event typed as expression.
+    // es/pt via profile keyword; ja/ko via tokenizer EXTRAS (non-Latin).
+    ['es', 'mousedown', 'en ratónabajo alternar .x'],
+    ['pt', 'mousedown', 'em mouseBaixo alternar .x'],
+    ['ja', 'mousedown', '.x を マウス押下 で 切り替え'],
+    ['ko', 'mousedown', '.x 를 마우스다운 할 때 토글'],
   ];
   for (const [lang, ev, text] of cases) {
     it(`[${lang}] ${ev} event (i18n-emitted word) types as literal`, () => {

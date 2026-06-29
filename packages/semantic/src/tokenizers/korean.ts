@@ -108,6 +108,10 @@ const KOREAN_EXTRAS: KeywordEntry[] = [
   { native: '키업', normalized: 'keyup' },
   { native: '마우스오버', normalized: 'mouseover' },
   { native: '마우스아웃', normalized: 'mouseout' },
+  // The i18n dict emits 마우스다운/마우스업 for mousedown/mouseup (repeat-until-event);
+  // recognize them so the event types as a literal, not a bare expression.
+  { native: '마우스다운', normalized: 'mousedown' },
+  { native: '마우스업', normalized: 'mouseup' },
 
   // References (additional forms not in profile)
   { native: '내', normalized: 'my' },
