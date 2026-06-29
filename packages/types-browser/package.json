@@ -30,7 +30,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.3"
   },
   "publishConfig": {
     "access": "public"
