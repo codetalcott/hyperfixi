@@ -29,6 +29,26 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29g (Arc B R1 — `resize` event-keyword alignment (the 2026-06-28m audit
+> follow-up); mean R1 0.9427 → 0.9433 (+0.0006), de/es/fr/it/pl/pt +0.0023 each, ZERO
+> regressions.)** Re-grounding the post-#532 leverage map (NB: a raw-`parse()` map OVER-states any
+> role with a schema DEFAULT — increment.quantity / wait.duration / repeat.quantity show phantom
+> misses the gate's `fillSchemaDefaults` pass cancels; the genuinely-real non-behavior residues are
+> halt.patient §7y, set.destination role-swap, send.destination call-split, ko/tr fetch) surfaced
+> `on.event:literal` (24×). The dominant clean slice is the **`resize` event** in `window-resize`:
+> the i18n dict emits a native verb (de `größeändern`, es/pt `redimensionar`, fr `redimensionner`,
+> it `ridimensiona`, pl `zmieńrozmiar`) that the profiles never listed as the `resize` event, so
+> it tokenized as a bare `identifier` → `event:expression` instead of en's `event:literal="resize"`.
+> Exactly the 2026-06-28m mechanism. **Fix: add a `resize` event keyword to the 6 space-using Latin
+> profiles** (`generators/profiles/{german,spanish,french,italian,polish,portuguese}.ts`). `resize`
+> has no command homonym, so precision is flat (verified per-lang). **de/es/fr/it/pl/pt +0.0023;
+> R0 1.000 / precision flat / R2 1.000 / parse-rate 3696/3696 unchanged.** Guard:
+> `multilingual-roadmap-fixes.test.ts` "Event-keyword alignment" gained 6 resize cases
+> (failing-without-fix verified: all 6 fail). **Remaining `on.event` residue (follow-up):** zh/ja/ko
+> `resize` (`调整大小`/`マウス…`) need tokenizer EXTRAS (non-Latin, derive events in the tokenizer not
+> the profile); `mousedown`/`mouseup` (repeat-until-event) align for es/pt/ja/ko but ru/uk SPLIT the
+> underscore-compound (`мышь_вниз` → 3 tokens — a single-token tokenizer fix, same class as #510 tr).
+>
 > **Update 2026-06-29f (Arc B R1 — verb-FIRST event-head excision extends #530 to ar/tl; mean
 > R1 0.9422 → 0.9427 (+0.0005), ar +0.0059 · tl +0.0059, ZERO regressions. ko/tr GROUNDED as a
 > deeper, separate fix and DEFERRED.)** #530's fused-body re-parse skipped verb-FIRST fused

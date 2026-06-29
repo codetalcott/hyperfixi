@@ -157,6 +157,9 @@ export const italianProfile: LanguageProfile = {
     after: { primary: 'dopo', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'clic', alternatives: ['clicca'], normalized: 'click' },
+    // `resize` event (window-resize): dict emits ridimensiona; register it so the
+    // event types as literal="resize" (matching en) instead of expression.
+    resize: { primary: 'ridimensiona', normalized: 'resize' },
     hover: { primary: 'passaggio', alternatives: ['sorvolo'], normalized: 'hover' },
     submit: { primary: 'invio', alternatives: ['sottomettere'], normalized: 'submit' },
     input: { primary: 'inserimento', alternatives: ['input'], normalized: 'input' },

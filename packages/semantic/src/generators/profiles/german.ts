@@ -146,6 +146,10 @@ export const germanProfile: LanguageProfile = {
     submit: { primary: 'Absenden', alternatives: ['Senden'], normalized: 'submit' },
     input: { primary: 'Eingabe', normalized: 'input' },
     change: { primary: 'Änderung', alternatives: ['Ändern'], normalized: 'change' },
+    // `resize` event (window-resize): the i18n dict emits größeändern; without it
+    // the word tokenized as an identifier → event:expression (the on.event R1
+    // residue). Registering it as the resize event yields event:literal="resize".
+    resize: { primary: 'größeändern', normalized: 'resize' },
     // Event modifiers (for repeat until event)
     until: { primary: 'bis', normalized: 'until' },
     event: { primary: 'Ereignis', alternatives: ['Event'], normalized: 'event' },

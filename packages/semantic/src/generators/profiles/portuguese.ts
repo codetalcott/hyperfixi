@@ -140,6 +140,9 @@ export const portugueseProfile: LanguageProfile = {
     after: { primary: 'depois', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'clique', alternatives: ['clicar'], normalized: 'click' },
+    // `resize` event (window-resize): dict emits redimensionar; register it so the
+    // event types as literal="resize" (matching en) instead of expression.
+    resize: { primary: 'redimensionar', normalized: 'resize' },
     hover: { primary: 'sobrevoar', alternatives: ['passar'], normalized: 'hover' },
     submit: { primary: 'envio', alternatives: ['submeter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['inserção'], normalized: 'input' },
