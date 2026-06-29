@@ -29,6 +29,31 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29m (Arc B R1 — repeat-until-event recovery; mean R1 0.9451 → 0.9457 (+0.0007),
+> 12 langs, ZERO regressions. Broader than the SOV-only scope predicted — it generalizes to
+> SVO/VSO.)** The fused event-handler captures the repeat verb but leaves the until-event clause
+> `{event-kw} {event} {obj-marker} {until-marker}` (ja `繰り返し イベント マウス解放 を まで`, de
+> `wiederholen bis ereignis mausoben`) unconsumed → the loop defaulted to `loopType:reference=me`
+> AND the span broke into PHANTOM `event`/`until` body commands. **Fix (`buildEventHandler`,
+> alongside the 2026-06-29l forever recovery, as an else-branch): when the token after the repeat
+> verb is the event-kw (`normalized==='event'`), capture the NEXT token as `event:literal`, set
+> `loopType:literal="until-event"` (matching the en reference), drop the SOV default-patient leak,
+> and CONSUME the span to the next clause boundary (then/end/EOF) so the phantoms can't form.** The
+> body (increment/wait, after the boundary) is still recovered by the trailing path. This is the
+> targeted-recovery approach again (NOT the #537 re-parse — same `preservesFused`/length guards
+> would block it). **Gains: bn/ja/ko +0.0019 (both roles), ar/de/fr/it/ms/pl/th/tl/vi +0.0010 —
+> the recovery fires for any lang whose repeat-until-event routes through the fused-action path,
+> not just SOV.** R0 1.000 / precision flat (the phantom `event`/`until` removal is also a latent
+> precision win) / R2 1.000 / parse-rate 3696/3696. Guard: `multilingual-roadmap-fixes.test.ts`
+> "repeat-until-event recovery" (5 cases incl. SVO de + VSO ar; failing-without-fix verified).
+> **DEFERRED — tr/hi/qu** (NOT in the gain set): they route their repeat-until-event through a
+> different (compound/traditional) parse path that doesn't reach the fused-action recovery, AND
+> their event token is the #535-class underscore-split compound (`fare_bırak` / `माउस_ऊपर` /
+> `rat_huqariy`; qu's until-marker `hayk_akama` is also split, and qu's mousedown `rat_ñitiy`
+> mis-captures as the `click` event). A separate slice: fuse those compounds (dict + tokenizer)
+> AND route their until-event through the recovery (or a SOV until-event HEAD pattern for the
+> traditional path).
+>
 > **Update 2026-06-29l (Arc B R1 — SOV repeat-forever loop-keyword recovery; mean R1 0.9448 →
 > 0.9451 (+0.0003), all 6 SOV langs (bn/hi/ja/ko/qu/tr) +0.0011, ZERO regressions. Lifts the SOV
 > laggards directly.)** The verb-first SOV loop head `{repeat-verb} forever <body>` (ja `繰り返し

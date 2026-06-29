@@ -951,12 +951,9 @@ export class SemanticParserImpl implements ISemanticParser {
       // recovered by the trailing-body path below.
       if (actionName === 'repeat') {
         const peeked = tokens.peek();
-        if (
-          peeked &&
-          peeked.kind === 'keyword' &&
-          ((peeked as { normalized?: string }).normalized ?? peeked.value).toLowerCase() ===
-            'forever'
-        ) {
+        const norm = (t: LanguageToken): string =>
+          ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
+        if (peeked && peeked.kind === 'keyword' && norm(peeked) === 'forever') {
           roles.loopType = { type: 'literal', value: 'forever' };
           // Drop the SOV default-patient leak (`reference:me`): repeat has no patient
           // role, so `normalizeCommandRoles` would normally relabel it to the
@@ -965,6 +962,35 @@ export class SemanticParserImpl implements ISemanticParser {
           // (a precision hit). en repeat-forever is `{loopType:literal="forever"}` only.
           delete roles.patient;
           tokens.advance();
+        } else if (peeked && peeked.kind === 'keyword' && norm(peeked) === 'event') {
+          // SOV repeat-UNTIL-event: `{repeat-verb} {event-kw} {event} {obj-marker}
+          // {until-marker} <body>` (ja `繰り返し イベント マウス解放 を まで …`). The
+          // fused SOV pattern leaves the event-kw..until span unconsumed, so the loop
+          // defaults to loopType:reference=me AND the span breaks into phantom
+          // `event`/`until` body commands. Recover: capture the event token after the
+          // event-kw as event:literal, set loopType:literal="until-event" (matching
+          // the en reference), drop the SOV default-patient leak, and CONSUME the span
+          // to the clause boundary (then/end/EOF) so the phantoms can't form. The body
+          // (increment/wait, after the boundary) is still recovered by the trailing path.
+          tokens.advance(); // consume the event-kw
+          const evTok = tokens.peek();
+          if (evTok) {
+            roles.event = { type: 'literal', value: norm(evTok) };
+            roles.loopType = { type: 'literal', value: 'until-event' };
+            delete roles.patient;
+            while (!tokens.isAtEnd()) {
+              const t = tokens.peek();
+              if (
+                !t ||
+                t.kind === 'conjunction' ||
+                (t.kind === 'keyword' &&
+                  (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)))
+              ) {
+                break;
+              }
+              tokens.advance();
+            }
+          }
         }
       }
 
