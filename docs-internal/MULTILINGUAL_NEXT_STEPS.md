@@ -29,6 +29,28 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28n (Arc B R1 — URL tokenization in 14 tokenizers; mean R1 0.9259 → 0.9382
+> (+0.0122), the LARGEST single-PR win of the campaign by ~3×, 14 langs +0.0137–0.0218, ZERO
+> regressions).** Re-grounding after #524 found the biggest remaining residue was
+> **`fetch.source:literal` (188×, 19 langs)** — and it was a one-line-per-tokenizer gap, not a
+> per-pattern problem. A fetch source URL (`/api/data`) tokenized as a bare `identifier` in 14
+> space-using langs → the role typed `expression`, mismatching the en reference's `literal`.
+> Root cause: those 14 tokenizers' `classifyToken` (`tokenizers/*.ts`) **lacked the
+> `startsWith('/')|'./'|'http' → 'url'` line** that en/fr/hi/ja/ko/zh/ar/bn/qu/tr already
+> carried (the working vs broken split matched the URL-line presence EXACTLY). Added the line to
+> de/he/id/it/ms/pl/pt/ru/es/sw/th/tl/uk/vi. Lifts `fetch.source` across fetch-basic/-json/
+> -with-method/event-debounce. **14 langs +0.0137–0.0218 (de/es/he/id/it/ms/pt/sw/th/tl/vi
+> +0.0218; pl/ru/uk +0.0137); R0 1.000 / R2 1.000 / parse-rate 3696/3696 / precision all
+> unchanged.** semantic 6314 green. Guard: `multilingual-roadmap-fixes.test.ts` "URL tokenization
+> across space-using langs" (15 cases; failing-without-fix verified: 14 fail). **Method lesson
+> (recurring this arc): the biggest R1 levers keep being shared mechanism gaps (a missing
+> tokenizer line, a broken en reference, a dict/profile misalignment) masquerading as 188 separate
+> drops — re-grounding the top aggregate drop to its single root cause each time has paid off far
+> better than per-pattern fixes.** Remaining big aggregate drops (next candidates): `repeat.event`
+> / `repeat.loopType` (the two-sided for-each/until-event SOV work, ~132+116×), `halt.patient:
+reference` (70×, form-submit-prevent + behaviors), `set.destination:property-path` (47×, the
+> trailing-`from` SOV role-swap), `send.destination:reference` (42×).
+>
 > **Update 2026-06-28m (Arc B R1 — cross-language event-keyword alignment sweep; mean R1
 > 0.9218 → 0.9259 (+0.0041), the biggest single-PR MEAN win of the campaign, 8 langs +, ZERO
 > regressions).** Grounding the new laggard (uk, after the bind cluster closed) found a

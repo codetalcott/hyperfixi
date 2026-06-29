@@ -1189,6 +1189,31 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
   }
 });
 
+describe('URL tokenization across space-using langs (fetch.source:literal)', () => {
+  // 14 tokenizers' classifyToken lacked the `/`-prefixed URL check (en/fr/hi/ja/… had
+  // it), so a fetch source like `/api/data` fell through to `identifier` and the role
+  // typed as `expression` — mismatching the en reference's `fetch.source:literal`, the
+  // single biggest R1 residue (188× across fetch-basic/-json/-with-method/event-debounce
+  // in 14 space-using langs). Added `startsWith('/')|'./'|'http'` → 'url' to each. Mean
+  // R1 +0.0122 (the campaign's biggest single-PR win); 14 langs +0.0137–0.0218.
+  function firstKind(lang: string, text: string): string | undefined {
+    const raw = getTokenizer(lang).tokenize(text) as unknown;
+    const toks = (Array.isArray(raw) ? raw : (raw as { tokens: unknown[] }).tokens) as Array<{
+      kind: string;
+    }>;
+    return toks[0]?.kind;
+  }
+  const langs = ['es', 'de', 'pt', 'it', 'ru', 'uk', 'pl', 'vi', 'id', 'ms', 'sw', 'th', 'tl', 'he'];
+  for (const lang of langs) {
+    it(`[${lang}] /api/data tokenizes as a url (not a bare identifier)`, () => {
+      expect(firstKind(lang, '/api/data')).toBe('url');
+    });
+  }
+  it('[en] control: /api/data is still a url', () => {
+    expect(firstKind('en', '/api/data')).toBe('url');
+  });
+});
+
 describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
   // A leading command-modifier (async/once/debounced) used to displace the verb in
   // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The
