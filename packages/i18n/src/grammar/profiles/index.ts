@@ -1018,6 +1018,25 @@ export const hindiProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    {
+      name: 'bind-to',
+      description: 'Transform bind $var to #el to Hindi verb-final order',
+      priority: 90,
+      match: {
+        commands: ['bind', 'बाइंड', 'बांधें'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // $greeting को #name-input में bind — verb-final, matching the generated SOV
+        // bind pattern (`{destination} को {source} में bind`). The default reorder
+        // emitted verb-MEDIAL (`$greeting को bind #name-input में`), which the
+        // verb-final pattern never matched → the bare-event fallback mis-anchored
+        // the fronted `$greeting` as a phantom `on` event (the rf=0.00 bind residue).
+        // ja/ko/zh/tr/bn already carry this rule; hi was the only SOV gap.
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
   ],
 };
 

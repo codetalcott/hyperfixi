@@ -29,6 +29,41 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-28k (Arc B R1 — hi `bind` two-part fix; hi 0.8764 → 0.8899 (+0.0135),
+> the biggest single-LANGUAGE jump of the campaign, + hi precision +0.0075).** The doc's
+> "bind is fragile, defer" framing was RIGHT about the mechanism but the fix turned out
+> tractable with a tight gate. Two coordinated fixes (mirrors the doc's "two-part" prediction):
+>
+> 1. **i18n — hindiProfile `bind-to` verb-final rule.** ja/ko/zh/tr/bn already carried a
+>    `bind-to` rule; **hi was the only SOV gap**, so the transformer emitted bind VERB-MEDIAL
+>    (`$greeting को bind #name-input में`), which the generated verb-final SOV bind pattern
+>    (`{destination} को {source} में bind`) never matched. The rule (roleOrder
+>    `['patient','destination','action']`, like put-into/set-to) emits verb-final
+>    `$greeting को #name-input में bind`.
+> 2. **semantic — bare-event guard: prefer a command over a phantom REFERENCE event.** Even
+>    verb-final, the fronted `$greeting` (a `$variable` **reference**) was grabbed by the
+>    `event-<lang>-bare` pattern as the event → a phantom `on` handler (the bind.\* rf=0.00).
+>    A reference can NEVER be an event name. Extended the existing bare-event guard
+>    (`semantic-parser.ts`, the same one that handles the unknown-event SOV case): when the
+>    bare capture is a `reference`, SOV extraction finds no real event, AND a command matches
+>    the full stream (rewind via `tokens.reset(eventStart)` since matchBest re-consumes the
+>    winner), prefer the command. Tightly gated — fires ONLY on a reference mis-anchor with a
+>    matching command, so real bare events (`.active को क्लिक पर टॉगल`, custom identifiers) are
+>    byte-identical (verified: 3 regression guards + gate).
+>
+> Result: **hi bind-auto-detect + bind-two-way 0.00 → 1.00** (the two with a simple `#selector`
+> source). **hi-only** in the gate (ja/ko/qu/bn/tr already parsed bind via their existing rules);
+> hi R1 +0.0135, **hi precision +0.0075** (the phantom-`on` command is gone), R0-recall 1.000 /
+> R2 1.000 / parse-rate 3696/3696 unchanged, **zero regressions** (no other lang moved). Mean R1
+> 0.9189 → 0.9195. semantic 6285 + i18n 893 green. Guards: `grammar.test.ts` "bind-to verb-final"
+>
+> - `multilingual-roadmap-fixes.test.ts` "SOV bind: bare-event guard prefers a command" (both
+>   failing-without-fix verified). **Remaining bind residue (deferred, NOT hi-specific):**
+>   `bind-explicit-property` / `bind-non-form-display` have a **possessive source** (`#picker's
+value`, `#status's textContent`) that caps EVERY SOV lang at 0.50 (ja/ko/qu/bn/tr drop
+>   `bind.source`; hi can't match the English-`'s` possessive at all → stays 0.00). That's a
+>   possessive-source value-typing fix, cross-language, separate arc.
+>
 > **Update 2026-06-28j (Arc B R1 — en `repeat N times` / `repeat forever` HEAD-only
 > patterns; R1 0.9164 → 0.9189, the biggest single R1 win yet, ALL 23 langs +).** The single
 > largest R1 residue (`repeat.event:literal` 42× + `repeat.loopType:literal` 39×, all SOV langs)
