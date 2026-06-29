@@ -29,6 +29,39 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29j (Arc B R1 — `{verb} {quantity} times` counted-loop HEAD patterns for
+> verb-first langs; mean R1 0.9435 → 0.9440 (+0.0004), ar/tl +0.0017, he/zh +0.0034, ZERO
+> regressions. + a sharp scoping finding on the event-first majority.)** Mirrors the en
+> `repeat {quantity} times` HEAD pattern (#521) for verb-first languages: a new per-language
+> module (`packages/semantic/src/patterns/repeat.ts`, wired into `builders.ts`) emits
+> `{verb} [marker] {quantity} {countWord}` (priority 110 > the generated positional repeat's 100),
+> capturing `quantity:literal` + defaulting `loopType:literal="times"` and STOPPING after the count
+> word so the body parses separately. The count word is taken verbatim from the corpus (most langs
+> leave English `times`; th `ครั้ง`, vi `lần`, tl `beses`). Covers all verb-first langs
+> (es/de/fr/it/pt/ru/uk/pl/ar/he/id/ms/sw/th/vi/tl/zh).
+>
+> **GROUNDING FINDING (sharp, load-bearing for the next session): only the verb-first-INPUT langs
+> gain — ar/he/tl/zh.** The corpus `repeat-times` is always `on click repeat N times …`, i.e. the
+> repeat sits in the EVENT-HANDLER BODY. For ar/he/tl/zh the repeat verb is at/near the input head,
+> so it reaches the standalone command path and the HEAD pattern fires. For the event-first majority
+> (es/de/fr/it/pt/ru/uk/pl/id/ms/sw/th/vi) the repeat is captured by the fused/generated
+> event-handler body path, and **`repeat` is a BLOCK_BODY_ACTION whose fused-body re-parse is
+> deliberately SKIPPED** (#530/#532's block-body guard — re-parsing a block-body clause would
+> swallow its inline body). VERIFIED: es STANDALONE `repetir 3 times …` captures
+> `quantity:literal`+`loopType:literal` perfectly, but es IN-HANDLER `en clic repetir 3 times …`
+> still yields the phantom `loopType:literal=3`. So the event-first langs' HEAD patterns are correct
+>
+> - forward-looking but inert until the block-body unlock lands. **The unlock = a HEAD-only-aware
+>   refinement of the block-body guard: allow the fused-body re-parse for a block-body action when the
+>   re-parse is HEAD-only (consumes only up to the count/loop-keyword, leaving the body) — then the
+>   repeat HEAD pattern fires in-handler and ~13 more langs gain `repeat.quantity:literal` +
+>   `repeat.loopType:literal="times"`.** That is the next high-leverage repeat-cluster slice (also
+>   unblocks the SOV `repeat forever`/until-event drops). R0 1.000 / precision flat / R2 1.000 /
+>   parse-rate 3696/3696. Guard: `multilingual-roadmap-fixes.test.ts` "Counted-loop HEAD patterns"
+>   (5 cases incl. the es standalone-vs-in-handler distinction; failing-without-fix verified).
+>   **Also deferred:** SOV langs (ja/ko/tr/hi/bn/qu) front the count ahead of a clause-final verb —
+>   a different HEAD structure.
+>
 > **Update 2026-06-29i (Arc B R1 — ru/uk FUSED event keywords (the underscore-split follow-up to
 > 2026-06-29h); mean R1 0.9434 → 0.9435 (+0.0001), ru/uk +0.0010 each, ZERO regressions.)** The
 > ru/uk i18n dicts emitted UNDERSCORE compounds for several events (`мышь_вниз` mousedown,
