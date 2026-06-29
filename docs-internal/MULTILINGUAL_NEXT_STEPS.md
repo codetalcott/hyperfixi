@@ -29,6 +29,43 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29c (Arc B R1 — KEY INSIGHT: the fused event-handler BODY path is a SHARED
+> root cause of multiple residues; characterized, not yet fixed. NO PR — direction for the next
+> session.)** Re-grounding after #527 (the forever win) put `fetch.responseType:expression` (63×,
+> fetch-json / fetch-error-handling / fetch-do-not-throw) near the top of the non-behavior
+> residues. It looked like a clean translation-side gap (EN captures `responseType`, every
+> translation drops it) — the same winning direction as forever. But grounding revealed it is
+> **the same fused-event-body problem that sank `trigger.event`** (2026-06-29 entry):
+>
+> - es **standalone** `buscar /api/user como json` → `fetch{source:literal, responseType:expression}`
+>   ✓ (the hand-crafted `fetch-es` [105] pattern `buscar [de] {source} [como {responseType}]`
+>   captures it perfectly; de/fr identical with `als`/`comme`).
+> - es **inside an event handler** `en clic buscar /api/user como json entonces …` →
+>   `fetch{source:literal}` ✗ — the `como json` responseType is DROPPED.
+>
+> Root cause: the fused VSO event-handler pattern (`<cmd>-event-<lang>-vso`, generated in
+> `generators/event-handlers-vso.ts`) captures only the wrapped command's PRIMARY arg (a generic
+> `{patient}`, relabelled to the command's primaryRole by `normalizeCommandRoles`) and leaves every
+> SECONDARY role clause (`as {responseType}`, `via {method}`, fetch's whole tail; trigger's
+> namespaced event; …) unconsumed. `buildEventHandler`'s re-parse only re-runs the full command
+> patterns when the captured node has ZERO roles (semantic-parser.ts ~line 958) — fetch captured
+> `source`, so the tail is handed to `parseBodyWithGrammarPatterns`, which finds no command in
+> `como json` and drops it. So a command with ≥1 captured role but unconsumed secondary clauses
+> loses those clauses **only in event-handler bodies** (the dominant corpus shape).
+>
+> **This single mechanism blocks: `trigger.event` (namespaced/identifier event), `fetch.responseType`
+> (63×), and the SOV `repeat` loop-keyword capture (ja/ko/tr/bn/hi — the verb-first `繰り返し
+{loopType}` pattern exists at prio 80 but the fused body never applies it).** A correct general
+> fix — re-parse the FULL captured clause (verb → clause boundary) through the command patterns
+> whenever a full re-parse yields MORE roles than the fused capture, not only when it yields zero —
+> would unlock all three at once. It is DELICATE (the zero-role gate exists to avoid disrupting
+> already-complete fused captures; the §2/§7y special-cases around it are load-bearing), so it
+> wants a dedicated arc with the full six-signal gate, not a tail-of-session patch. **This is the
+> highest-leverage next target — but a real arc, not a quick win.** (Behaviors remain the other
+> large block, off-limits pending the source-migration. The remaining clean-ish vocab slices —
+> `repeat N times` per-language HEAD pattern for `quantity:literal`, zh `重复 forever` HEAD pattern —
+> are smaller and word-order-specific.)
+>
 > **Update 2026-06-29b (Arc B R1 — `repeat forever` loop-keyword recognition; mean R1
 > 0.9382 → 0.9390 (+0.0008), 17 langs +0.0011, ZERO regressions).** The cleanest slice of the
 > `repeat.loopType:literal` residue (123×). The i18n dict never translated `forever`, so the
