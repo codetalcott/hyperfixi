@@ -939,6 +939,35 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
 
+      // SOV repeat: recover a dropped `forever` loop keyword. The verb-first SOV
+      // loop head is `{repeat-verb} forever <body>` (ja `繰り返し forever .pulse を
+      // 切り替え`), but the fused SOV event pattern captures only the verb and
+      // leaves `forever` unconsumed — so the loop defaults to `loopType:reference=me`
+      // (the dropped-keyword residue) and the body parser later SKIPS the stray
+      // `forever`. The keyword sits immediately after the verb (at the current
+      // position); recognize it (en `forever` / native hi हमेशा / bn চিরকাল, all
+      // normalized to `forever`), set `loopType:literal="forever"` to match the en
+      // reference, and consume it so it can't leak. The body (toggle/wait) is still
+      // recovered by the trailing-body path below.
+      if (actionName === 'repeat') {
+        const peeked = tokens.peek();
+        if (
+          peeked &&
+          peeked.kind === 'keyword' &&
+          ((peeked as { normalized?: string }).normalized ?? peeked.value).toLowerCase() ===
+            'forever'
+        ) {
+          roles.loopType = { type: 'literal', value: 'forever' };
+          // Drop the SOV default-patient leak (`reference:me`): repeat has no patient
+          // role, so `normalizeCommandRoles` would normally relabel it to the
+          // primaryRole `loopType` — but with loopType now set it would instead
+          // surface as a phantom `patient:reference=me` that the en reference lacks
+          // (a precision hit). en repeat-forever is `{loopType:literal="forever"}` only.
+          delete roles.patient;
+          tokens.advance();
+        }
+      }
+
       let commandNode = createCommandNode(actionName as ActionType, roles, {
         sourceLanguage: language,
         patternId: match.pattern.id,

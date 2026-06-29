@@ -9007,3 +9007,60 @@ describe('Counted-loop HEAD patterns: `{verb} {quantity} times` (repeat.quantity
     expect(hasToggle(node)).toBe(true); // body survives
   });
 });
+
+describe('SOV repeat-forever loop-keyword recovery (loopType:literal="forever")', () => {
+  // The verb-first SOV loop head `{repeat-verb} forever <body>` (ja `繰り返し forever
+  // .pulse を 切り替え`) has its `forever` dropped by the fused SOV event pattern →
+  // loopType defaults to reference:me. buildEventHandler now recovers the trailing
+  // `forever` keyword (en `forever` / native hi हमेशा / bn চিরকাল) as
+  // loopType:literal="forever" and drops the SOV default-patient leak, matching the
+  // en reference `repeat{loopType:literal="forever"}` (no patient). Body survives.
+  function repeatNode(node: unknown): Record<string, unknown> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const r = node as Record<string, unknown>;
+    if (r.action === 'repeat' && r.roles instanceof Map) return r;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = r[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const m = repeatNode(x);
+          if (m) return m;
+        }
+      } else if (c && typeof c === 'object') {
+        const m = repeatNode(c);
+        if (m) return m;
+      }
+    }
+    return undefined;
+  }
+  function hasAction(n: unknown, act: string): boolean {
+    if (!n || typeof n !== 'object') return false;
+    const r = n as Record<string, unknown>;
+    if (r.action === act) return true;
+    return ['body', 'statements', 'thenBranch', 'elseBranch'].some(f => {
+      const c = r[f];
+      return Array.isArray(c)
+        ? c.some(x => hasAction(x, act))
+        : !!c && typeof c === 'object' && hasAction(c, act);
+    });
+  }
+  // Real corpus repeat-forever texts (head: `on <event> repeat forever toggle .pulse wait 1s end`).
+  for (const [lang, src] of [
+    ['ja', '読み込み で 繰り返し forever .pulse を 切り替え それから 待つ 1s 終わり'],
+    ['ko', '로드 할 때 반복 forever .pulse 를 토글 그러면 대기 1s 끝'],
+    ['tr', 'yükle de tekrarla forever .pulse i değiştir ardından bekle 1s son'],
+    ['hi', 'लोड पर दोहराएं हमेशा .pulse को टॉगल फिर प्रतीक्षा 1s समाप्त'],
+    ['bn', 'লোড এ পুনরাবৃত্তি চিরকাল .pulse কে টগল তারপর 1s কে অপেক্ষা শেষ'],
+    ['qu', 'apakuy pi kutipay forever .pulse ta tikray chayqa suyay 1s tukuy'],
+  ] as [string, string][]) {
+    it(`[${lang}] repeat-forever → loopType:literal="forever", no phantom patient, body survives`, () => {
+      const node = parse(src, lang);
+      const rep = repeatNode(node);
+      expect(rep).toBeTruthy();
+      const roles = rep!.roles as Map<string, { type?: string; value?: unknown }>;
+      expect(roles.get('loopType')).toMatchObject({ type: 'literal', value: 'forever' });
+      expect(roles.has('patient')).toBe(false); // no SOV default-patient leak
+      expect(hasAction(node, 'toggle')).toBe(true); // body survives
+    });
+  }
+});
