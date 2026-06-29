@@ -13,11 +13,31 @@ You're continuing a long-running multilingual parse-fidelity effort in `~/projec
 ## Current state
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
-(its `timestamp`/`commit` fields stamp each regen). **Mean R1 ≈ 0.9422** (24 langs × 154
+(its `timestamp`/`commit` fields stamp each regen). **Mean R1 ≈ 0.9427** (24 langs × 154
 patterns). R0-recall 1.000 · R0-precision ≈ 0.974 · R2 execution 1.000 · parse-rate 1.000.
-Last shipped: **#530** — the fused event-handler-body fix (the big one; see below).
+Last shipped: **the verb-first event-head excision** (ar/tl +0.0059 each; see the
+2026-06-29f entry in `MULTILINGUAL_NEXT_STEPS.md`), which extended **#530** (the fused
+event-handler-body fix; see below) to verb-FIRST VSO.
 
-## The next target: extend #530 to verb-first / SOV langs (ar, ko, tr)
+## The next target: extend the fused-body fix to SOV langs (ko, tr) — ar/tl DONE
+
+**ar/tl (verb-first VSO) are SHIPPED.** The 2026-06-29f fix excises the event head
+(`{on-marker} {event}`) from the verb-first clause before re-parsing, so `fetch-ar` /
+`fetch-tl` (markerlessFetch, `كـ`/`bilang` as-marker) recover `responseType`. ko/tr did NOT
+gain and remain open — and grounding **corrected** the original theory below:
+
+**ko/tr need a DEEPER, two-part fix (not just a re-assembly).** A standalone probe proved the
+event-excised re-assembly recovers nothing: ko `/api/user 를 가져오기 json 로` / tr
+`getir /api/user json olarak` parse to `source:literal` ONLY — the SOV standalone fetch pattern
+(`sovFetch`, `packages/semantic/src/patterns/fetch.ts` ~L256) **deliberately omits** responseType.
+So ko/tr need: (1) extend `sovFetch` with an optional trailing `{responseType} {asMarker}` clause
+(ko `로`, tr `olarak`, hi `के रूप में`) — this is the prerequisite and carries its own
+standalone-parse regression risk; AND (2) SOV non-contiguous clause re-assembly in `buildEventHandler`
+(the fronted source sits BEFORE the event, outside `[verb..boundary]`). The superset guard keeps
+ko/tr regression-free today. Expected upside is small (~+0.0003 mean, ko/tr × fetch family) — weigh
+it against the standalone-parse risk before committing.
+
+## (Original framing — superseded by the grounding above; kept for the trail) verb-first / SOV (ar, ko, tr)
 
 **Background — what #530 did.** A fused event-handler pattern (`<event> {verb} {source}`,
 e.g. `fetch-event-es-vso`) captures only the wrapped command's verb + PRIMARY arg and drops

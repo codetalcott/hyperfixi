@@ -8848,6 +8848,31 @@ describe('Fused event-handler body re-parses secondary role clauses (fetch.respo
     });
   }
 
+  // VERB-FIRST excision (ar): `fetch-event-ar-vso-verb-first` puts the event head
+  // `عند نقر` (on click) BETWEEN the verb and the `كـ {responseType}` tail, so the
+  // [verb..boundary] slice re-includes it. #530 skipped verb-first patterns; now we
+  // EXCISE the event token + its preceding `on`-marker keyword before re-parsing, so
+  // the standalone `fetch-ar` pattern recovers responseType. Corpus fetch-json /
+  // fetch-error-handling texts (head: verb-first `fetch /api on click as-json …`).
+  for (const src of [
+    'احضر /api/user عند نقر كـjson ثم اضبط #name.innerText إلى له.name',
+    'احضر /api/data عند نقر كـjson ثم إذا له.error ضع له.error إلى #error وإلا ضع له.data إلى #result النهاية',
+  ]) {
+    it(`[ar] verb-first fetch keeps responseType (event head excised): "${src.slice(0, 28)}…"`, () => {
+      const sig = commandSig(parse(src, 'ar'), 'fetch');
+      expect(sig).toBeTruthy();
+      expect(sig).toContain('responseType:expression');
+      expect(sig).toContain('source:literal');
+    });
+  }
+
+  // Verb-first excision must NOT fire when there is no secondary tail to reclaim:
+  // bare `fetch /api on click` keeps a single `source` role, never a phantom.
+  it('[ar] verb-first fetch without a tail keeps exactly source:literal', () => {
+    const sig = commandSig(parse('احضر /api/data عند نقر ثم ضع هو إلى #result', 'ar'), 'fetch');
+    expect(sig).toEqual(['source:literal']);
+  });
+
   // Superset guard: verb-FINAL SOV (qu) — the fronted patient `#score` is NOT in the
   // [verb..boundary] clause, so the re-parse fills a DEFAULT patient; the superset
   // check must REJECT that swap and keep the real `patient:selector`.
