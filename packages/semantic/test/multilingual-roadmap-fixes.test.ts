@@ -8962,12 +8962,48 @@ describe('Counted-loop HEAD patterns: `{verb} {quantity} times` (repeat.quantity
   }
 
   // The HEAD pattern is HEAD-only: a STANDALONE counted loop captures the count and
-  // leaves the body for the clause loop (es, the verb is the clause head). The
-  // in-EVENT-HANDLER es case still mis-captures (block-body fused-body re-parse is
-  // deferred — see MULTILINGUAL_NEXT_STEPS.md), so this asserts the standalone form.
+  // leaves the body for the clause loop (es, the verb is the clause head).
   it('[es] standalone repeat-times captures quantity:literal (HEAD-only)', () => {
     const roles = repeatRoles(parse('repetir 3 times agregar "<p>x</p>" a yo', 'es'));
     expect(roles).toContain('quantity:literal');
     expect(roles).toContain('loopType:literal');
+  });
+
+  // IN-EVENT-HANDLER (event-first langs): the repeat sits in the fused-event body
+  // and `repeat` is a BLOCK_BODY_ACTION, so the fused-body re-parse is normally
+  // skipped. The block-body guard now makes an exception for a HEAD-ONLY counted
+  // loop (re-parse matched a `repeat-<lang>-times` pattern), recovering quantity +
+  // loopType="times" without swallowing the body. Corpus repeat-times texts.
+  for (const [lang, src] of [
+    ['es', 'en clic repetir 3 times entonces agregar "<p>x</p>" a yo'],
+    ['de', 'bei klick wiederholen 3 times dann hinzufügen "<p>x</p>" zu ich'],
+    ['ru', 'при клик повторить 3 times затем добавить "<p>x</p>" в я'],
+    ['it', 'su clic ripetere 3 times allora aggiungere "<p>x</p>" in io'],
+  ] as [string, string][]) {
+    it(`[${lang}] in-handler repeat-times captures quantity:literal (block-body HEAD exception)`, () => {
+      const roles = repeatRoles(parse(src, lang));
+      expect(roles).toContain('quantity:literal');
+      expect(roles).toContain('loopType:literal');
+    });
+  }
+
+  // HAZARD GUARD: repeat-FOREVER in a handler must NOT trigger the block-body
+  // exception (its re-parse matches the body-swallowing generated pattern, not a
+  // `-times` HEAD) — loopType stays "forever" and the toggle body survives (#530).
+  it('[es] in-handler repeat-forever keeps loopType="forever" + body (not swallowed)', () => {
+    const node = parse('en cargar repetir forever alternar .pulse entonces esperar 1s fin', 'es');
+    const roles = repeatRoles(node);
+    expect(roles).toContain('loopType:literal');
+    expect(roles).not.toContain('quantity:literal'); // no swallowed body verb
+    const hasToggle = (n: unknown): boolean => {
+      if (!n || typeof n !== 'object') return false;
+      const r = n as Record<string, unknown>;
+      if (r.action === 'toggle') return true;
+      return ['body', 'statements', 'thenBranch', 'elseBranch'].some(f => {
+        const c = r[f];
+        return Array.isArray(c) ? c.some(hasToggle) : !!c && typeof c === 'object' && hasToggle(c);
+      });
+    };
+    expect(hasToggle(node)).toBe(true); // body survives
   });
 });

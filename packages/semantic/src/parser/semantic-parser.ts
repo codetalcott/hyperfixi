@@ -982,7 +982,15 @@ export class SemanticParserImpl implements ISemanticParser {
       // standalone `fetch-ar` pattern then recovers the `كـ {responseType}` tail.
       // If the event token can't be located in the clause, the swap is skipped
       // (re-parsing with the event still inside is the #530 hazard).
-      if (!BLOCK_BODY_ACTIONS.has(actionName)) {
+      // Block-body actions (`repeat`/`if`/`for`/`while`/`unless`) are normally NOT
+      // re-parsed: their inline body sits in the SAME clause, so re-parsing
+      // [verb..boundary] would swallow it (#530's repeat-forever regression). The
+      // ONE exception is a counted-loop HEAD (`repeat {n} times`): it is HEAD-ONLY
+      // (stops after the count word), so re-parsing recovers `quantity:literal` +
+      // `loopType:literal="times"` (which the fused capture mistypes as the number
+      // under `loopType`) WITHOUT a body — gated below on the re-parse matching a
+      // `-times` HEAD pattern, which the body-swallowing generated repeat never is.
+      if (!BLOCK_BODY_ACTIONS.has(actionName) || actionName === 'repeat') {
         const isVerbFirst = match.pattern.id.includes('verb-first');
         const all = tokens.tokens;
         const pos = tokens.position();
@@ -1078,12 +1086,24 @@ export class SemanticParserImpl implements ISemanticParser {
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 return rv !== undefined && valType(rv) === valType(val);
               });
+            // For a block-body action (only `repeat` reaches here) the swap is
+            // additionally gated on the re-parse matching a HEAD-ONLY counted-loop
+            // pattern (`repeat-<lang>-times`): it stops after the count word so no
+            // body is swallowed. The body-swallowing generated repeat (matching
+            // `repetir forever alternar …` → quantity:literal="toggle") is NOT a
+            // `-times` pattern, so the #530 repeat-forever hazard stays excluded.
+            const reparsePid =
+              (first as { metadata?: { patternId?: string } } | undefined)?.metadata?.patternId ??
+              '';
+            const headOnlyOk =
+              !BLOCK_BODY_ACTIONS.has(actionName) || /^repeat-.*-times$/.test(reparsePid);
             if (
               reparsed.length === 1 &&
               first &&
               first.kind === 'command' &&
               first.action === actionName &&
               preservesFused &&
+              headOnlyOk &&
               (first as CommandSemanticNode).roles.size > Object.keys(roles).length
             ) {
               commandNode = first as CommandSemanticNode;
