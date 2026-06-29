@@ -29,6 +29,35 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29l (Arc B R1 — SOV repeat-forever loop-keyword recovery; mean R1 0.9448 →
+> 0.9451 (+0.0003), all 6 SOV langs (bn/hi/ja/ko/qu/tr) +0.0011, ZERO regressions. Lifts the SOV
+> laggards directly.)** The verb-first SOV loop head `{repeat-verb} forever <body>` (ja `繰り返し
+forever .pulse を 切り替え`) has its `forever` DROPPED by the fused SOV event pattern, so the loop
+> defaults to `loopType:reference="me"` (the normalizeCommandRoles default-patient→primaryRole leak)
+> while en is `loopType:literal="forever"`. **Grounding showed the general #537 re-parse mechanism
+> does NOT fit here** — it fights two load-bearing guards: `preservesFused` (fused `reference` vs
+> re-parse `literal` loopType) and `reparsed.length===1` (forever juxtaposes its body, no `then`).
+> **So a CONTAINED fix instead** (`buildEventHandler`, at the fused-capture site): when the action
+> is `repeat` and the token immediately after the verb is a `forever` keyword (en `forever` / native
+> hi `हमेशा` / bn `চিরকাল`, all normalized to `forever` — recognized since #527), set
+> `loopType:literal="forever"` AND **drop the SOV default-patient leak** (`delete roles.patient` —
+> else, with loopType now occupied, it surfaces as a phantom `patient:reference=me` the en reference
+> lacks; verified the phantom appears without the delete). The body (toggle/wait) is still recovered
+> by the trailing-body path. **All 6 SOV langs match en's `repeat{loopType:literal="forever"}`
+> exactly; SVO (es) unchanged (different path).** R0 1.000 / precision flat / R2 1.000 / parse-rate
+> 3696/3696. Guard: `multilingual-roadmap-fixes.test.ts` "SOV repeat-forever loop-keyword recovery"
+> (6 cases asserting loopType + no-phantom-patient + body-survives; failing-without-fix verified).
+>
+> **DEFERRED — SOV `repeat until event` (the other half of this slice).** Grounded as a genuine
+> dedicated arc, NOT contained: (1) the until head `{verb} {event-kw} {event} {marker} {until}`
+> (ja `繰り返し イベント マウス解放 を まで`) currently breaks into PHANTOM `event` + `until` commands
+> (ja/ko/bn) or fails outright (tr/hi/qu), so it needs a SOV until-event HEAD pattern; (2) capturing
+> it via the fused-body re-parse fights the SAME `preservesFused` reference-vs-literal guard as
+> forever did (fused `loopType:reference=me` → re-parse `loopType:literal="until-event"`) — needs a
+> principled relaxation allowing a default `reference:me` loopType to be replaced; (3) the event
+> token itself is an underscore-split compound for tr/hi/qu/bn (`fare_bırak` / `माउस_ऊपर` /
+> `rat_huqariy` / mouseup) — the #535-class fuse fix, per-lang. A multi-part arc.
+>
 > **Update 2026-06-29k (Arc B R1 — block-body-guard HEAD-only exception UNLOCKS in-handler
 > repeat-times for the event-first langs; mean R1 0.9440 → 0.9448 (+0.0008), 11 langs +0.0017,
 > ZERO regressions. The largest win of this continuation; delivers the unlock predicted in 2026-06-29j.)**
