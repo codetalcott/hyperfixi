@@ -1,162 +1,126 @@
-# Handoff — HyperFixi multilingual: R1 value-type residue (the last open dimension)
+# Handoff — HyperFixi multilingual R1 (fused-body residue, verb-first/SOV next)
 
-You're continuing a long-running multilingual parse/fidelity effort in the hyperfixi
-monorepo (`~/projects/hyperfixi`, branch `main`). **The R2 execution-divergence worklist is
-fully closed** (see "What just shipped"). The one remaining multilingual dimension with real
-headroom is **R1 role-fidelity** — specifically per-command value-TYPE mismatches in the hard
-SOV/reorder languages. This is **Arc B** from the previous handoff: harder/structural, lower
-ROI than the R2 work that's now done, but it's the only open band.
+You're continuing a long-running multilingual parse-fidelity effort in `~/projects/hyperfixi`
+(branch `main`). The remaining headroom is **R1 role-fidelity** — per-command
+`action.role:valueType` recall vs the English reference. Everything is gated; the bar is
+**zero-regression** (no signal drop, not even within the ratchet's cross-machine tolerance).
 
-> Read `docs-internal/MULTILINGUAL_NEXT_STEPS.md` first — the dated notes at the TOP
-> (2026-06-28f back through 2026-06-28b) are the current state. Then `packages/semantic/CLAUDE.md`
-> and the repo-root `CLAUDE.md` "Multilingual parse rate ≠ fidelity" section.
+> **Read first:** `docs-internal/MULTILINGUAL_NEXT_STEPS.md` — the dated entries at the TOP
+> (2026-06-29e back through the 06-29 cluster) are the current state and the full reasoning
+> trail. Then repo-root `CLAUDE.md` "Multilingual parse rate ≠ fidelity" and
+> `packages/semantic/CLAUDE.md`.
 
-## Current authoritative state (`browser-priority` gate)
+## Current state
 
-Source of truth: `packages/testing-framework/baselines/multilingual-priority.json`
-(its `timestamp`/`commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
+Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
+(its `timestamp`/`commit` fields stamp each regen). **Mean R1 ≈ 0.9422** (24 langs × 154
+patterns). R0-recall 1.000 · R0-precision ≈ 0.974 · R2 execution 1.000 · parse-rate 1.000.
+Last shipped: **#530** — the fused event-handler-body fix (the big one; see below).
 
-| Signal                        | Value                  | Notes                                                        |
-| ----------------------------- | ---------------------- | ------------------------------------------------------------ |
-| parse rate                    | **3696 / 3696 (100%)** | zero hard fails                                              |
-| degenerate (fid < 0.5)        | **0**                  | band empty                                                   |
-| lossy (0.5 ≤ fid < 1.0)       | **0**                  | band empty                                                   |
-| avgFidelity (R0-recall)       | **1.000**              |                                                              |
-| avgPrecision (R0 trust floor) | **0.972**              | hi 0.921 is the outlier (next bn 0.928)                      |
-| avgRoleFidelity (R1)          | **0.9142**             | **the laggard / the work** (was 0.9125 pre-`halt the event`) |
-| avgExecutionFidelity (R2)     | **1.000**              | 42-pattern curated subset                                    |
+## The next target: extend #530 to verb-first / SOV langs (ar, ko, tr)
 
-**R1 laggards (lowest first, post-`halt the event`):** hi 0.865 · ja 0.892 · ko 0.898 ·
-qu 0.899 · bn 0.900 · uk 0.901 · tr 0.902 · pl 0.907. All SOV/reorder-heavy. R1 measures
-`action.role:valueType` recall vs the en reference — a parse that keeps the verb but
-**drops or mistypes a role**.
+**Background — what #530 did.** A fused event-handler pattern (`<event> {verb} {source}`,
+e.g. `fetch-event-es-vso`) captures only the wrapped command's verb + PRIMARY arg and drops
+every SECONDARY role clause — so `on click fetch /api as json` keeps `source` but loses
+`as {responseType}` _inside a handler_, even though a standalone parse of the same clause keeps
+it (the `fetch.responseType` ×63 residue). The fix lives in `buildEventHandler`
+(`packages/semantic/src/parser/semantic-parser.ts`, the `actionValue && actionValue.type ===
+'literal'` block, ~line 960): find the body verb by **scanning back** for the captured action,
+reconstruct `[verb..clause-boundary]`, re-parse it through the command patterns, and swap in the
+richer node — under three guards: (1) **block-body actions** (`repeat`/`if`/`for`/`while`/
+`unless`) skipped (inline body would be swallowed); (2) **verb-FIRST fused patterns**
+(`…-vso-verb-first`) skipped; (3) **superset** check — swap only if every fused role reappears
+with the same value-type (mapping the fused generic `patient`→primaryRole), the verb-final-SOV
+default-patient rail. Result: 13 langs +0.0059, zero regressions, semantic 6327 green.
 
-> **Shipped this arc (2026-06-28g): `halt the event` article skip.** The most consistent
-> R1 residue signature was `halt.patient: en=literal → SOV=reference`. Grounding showed the
-> **en reference was itself wrong** — `halt the event` captured the article `the` and dropped
-> the event (`patient:literal="the"`), so every faithful translation mismatched it. Fixed in
-> `skipNoiseWords` (pattern-matcher.ts): en now skips `the` before a valid reference word, and
-> the non-en skip was extended from "before a SOV particle" to "before a particle OR a clause
-> boundary (then/end/EOF) — never before a command verb" (preserving the §7y guard). Result:
-> en + all 23 langs agree on `halt.patient:reference`; **R1 0.9125 → 0.9142, all 23 langs +,
-> R0/precision unchanged.** Guard in `multilingual-roadmap-fixes.test.ts`. **Next R1 targets
-> (re-grounded below):** the `repeat` loop-role garbage and the VSO `halt the event`
-> verb-after residue.
+**The follow-up (guard #2 + the SOV gap).** Three langs still drop secondary clauses, and they
+are HARDER than the event-first case #530 handled — they need per-word-order clause surgery:
 
-## What just shipped (the R2 worklist campaign — all merged to main)
+- **ar** (`fetch-event-ar-vso-verb-first`): verb-first, event in the MIDDLE
+  (`احضر /api/user عند نقر كـjson`). The `[verb..boundary]` clause re-includes the `عند نقر`
+  event tokens — must be **excised** before re-parsing. (Fragile: multi-token events, marker
+  detection.)
+- **ko / tr** (`fetch-event-{ko,tr}-sov`): event-FIRST SOV, patient FRONTED before a late verb.
+  The superset guard already keeps them regression-free, but capturing `responseType` needs the
+  clause **re-assembled from non-contiguous parts** (fronted patient + verb + tail, minus the
+  front event).
 
-The wave-5 R2 execution-divergence worklist (9 items) is **fully closed**; R2 curated subset
-grew **33 → 42**, all at fidelity 1.000:
+Approach: ground each word order with a trace probe BEFORE coding (every theorized cause this
+campaign has been wrong until grounded). Likely a per-pattern-shape excision: identify the event
+marker + event token(s) (the fused match captured `event` via `match.captured.get('event')`) and
+rebuild the command clause without them. Verify on `fetch-json` first, then the whole fetch
+family. **Gate after every step; if it doesn't converge cleanly, revert and document — do not
+ship a within-tolerance regression.** Expected upside ≈ +0.0008 mean (3 langs × the fetch family).
 
-- **#514 (wave 6)** — 6 of the 9 worklist items were **stale committed-DB artifacts**, not real
-  divergences: re-grounding against a freshly `populate`d DB showed they already matched en in
-  all 23 langs (subset 33 → 39). **Lesson: the committed `patterns.db` lags the dicts; always
-  `npm run populate` before grounding.**
-- **#515 (wave 7)** — `multiple-events` (`on click or keypress[...] toggle .active`): the `or`
-  multi-event separator wasn't recognized in 7 langs. Fixed via a scoped or-clause excision
-  pre-pass + ja `または`→or tokenizer fix + hi/bn OR_KEYWORDS (subset 39 → 40).
-- **#516** — positional put `before`/`after` for 11 SVO/SOV langs (the position word is now
-  captured as the put `manner` role); **R1 +0.004–0.008 across 11 langs**. Also fixed a
-  parser-vs-renderer priority conflict (renderer `-before`/`-after` penalty).
-- **#517 (wave 8)** — VSO put `before`/`after` (ar/tl/uk) via handcrafted high-priority VSO
-  put-event patterns; `put-before`/`put-after` joined R2 (subset 40 → 42). Worklist closed.
+## Other open residues (from the re-grounded leverage map, post-#530)
 
-## Your task: Arc B — R1 value-type residue burn-down
+- `repeat.event:literal` (138×) and `repeat.source:expression` (69×) — mostly the **behaviors**
+  (sortable/draggable/resizable), which are OFF-LIMITS (known-hard, source-migration pending),
+  plus the for-each `repeat for X in Y` two-sided EN-phantom problem.
+- `repeat.loopType:literal` remainder — SOV langs (ja/ko/tr/bn/hi) recognize `forever` (#527) but
+  their fused/SOV repeat pattern drops it (same fused-body family as above); `repeat N times`
+  needs a per-language HEAD `repeat {quantity} times` pattern for `quantity:literal`.
+- `trigger.event:literal` (15×) — ABANDONED (#526): net-negative because it would move the EN
+  reference AWAY from the (differently-buggy) translations. Do NOT re-attempt without fixing the
+  upstream translation-side event parsing first.
+- `set.destination:property-path` (48×), `send.destination:reference` (44×),
+  `render.style:expression` (44×) — un-triaged; ground before assuming.
 
-**Why it's the work:** R1 (0.9125) is the only non-maxed signal. It drifted up incidentally
-(0.75 → 0.91 over many arcs) but has **never had a dedicated, convergent campaign**. The prior
-handoff characterized the residue (UNVERIFIED — re-ground it) as per-command value-TYPE
-mismatches, e.g.:
+## Methodology (load-bearing — this campaign's wins all came from it)
 
-- `set.destination:property-path` — `#x.prop` mistyped in SOV reorders.
-- `repeat` loop roles — `loopType` / `event` / `quantity` mistyped or dropped.
-- `halt.patient` — en "the event" parses as a `literal` vs SOV as a `reference`.
-  And **hi precision (0.921)** is the lowest — phantom-command sources in the hi profile (R0
-  precision, a different signal from R1; worth a parallel look since hi is the worst on both).
+1. **GROUND before coding.** Trace the EXACT parse with a throwaway probe in
+   `packages/testing-framework/tools/` or `packages/semantic/tools/` (then delete it). Standalone
+   `parse()` vs the in-event-handler parse is the key diagnostic.
+2. **The clean R1 direction is aligning TRANSLATIONS toward the correct EN reference** (URL,
+   event-keyword, forever, fused-body wins). Moving the EN reference instead (trigger.event)
+   drops R1 wherever translations disagree. If EN is the outlier translations already agree
+   against, great; otherwise stop.
+3. **Zero-regression, gate-verified.** After a change: rebuild ordered, re-populate, run the
+   `--regression` gate; it must say "✓ No regression" with NO within-tolerance warning. Then
+   `--save-baseline`, and diff the new baseline vs `git show HEAD:…baseline` per-language —
+   every lang flat-or-up, no drops. Isolate any drop to the exact pattern with a before/after
+   per-pattern R1 diff (stash the fix, rebuild, dump, restore, diff).
+4. **Guard, don't broaden.** Each #530 regression got a precise guard, not a revert.
+5. Add a guard test to `packages/semantic/test/multilingual-roadmap-fixes.test.ts` and VERIFY it
+   fails without the fix (stash → run → restore). Run the full semantic suite (`test:check`).
 
-**Suggested approach:**
+## Cold-start commands (Node 24 required — better-sqlite3 ABI)
 
-1. Triage hi / ja / ko first (the worst three). For each, dump the per-pattern
-   `action.role:valueType` signature diff vs the en reference and find the **recurring**
-   mistype/drop. The win is one or two systemic causes, not 50 one-offs.
-2. Expect the cause to be a marker→role mapping or a value-type classification in the
-   per-language profile/tokenizer — but **do not assume**: every theorized cause this project
-   has had was wrong until reproduced.
-3. This edits the hottest, most regression-sensitive SOV parser path. Guard R0/precision/
-   parse-rate carefully; a role-type change can shift other patterns.
+```bash
+# better-sqlite3 is built for Node 24; the gate/populate need it.
+nvm use 24.18.0     # or: export NVM_DIR=~/.nvm; . $NVM_DIR/nvm.sh; nvm use 24.18.0
+npm install         # if a cold checkout (links workspaces, installs bins)
 
-**Optional lower-priority follow-ups (not R1):**
+# Ordered build of the multilingual stack (NOT `npm run build` — that's unordered):
+npm run test:multilingual:build-deps
+# After editing packages/semantic: rebuild it AND core's bundled multilingual dist, in order,
+# THEN populate (so the patterns.db provenance stamp is newest and the gate won't refuse):
+npm run build --prefix packages/semantic
+npm run build:multilingual-dist --prefix packages/core
+npm run populate --prefix packages/patterns-reference
 
-- **Render quality of positional put before/after-nodes.** #516/#517 made the _into-form_ win
-  RENDER selection (so the canonical round-trip is preserved), which means a before/after
-  _node_ currently renders back as the into-form (position lost on render — same accepted
-  tradeoff as `-at-end`). Parsing is 100% correct; only `semantic.render`/`translate` output of
-  a before/after node is lossy. Fix would need the renderer to select positional patterns when
-  the node carries `manner` (the role scoring in `explicit/renderer.ts` is priority + role
-  match; manner isn't a role token). Gate doesn't measure this (it uses the i18n transformer).
-- **hi avgPrecision 0.921** phantom-command sources (R0 precision).
+# The gate (from packages/testing-framework):
+npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression
+# intentional fidelity change → regenerate the baseline (commit it; do NOT commit patterns.db):
+npx tsx src/multilingual/cli.ts --full --bundle browser-priority --save-baseline
+```
 
-## METHODOLOGY (non-negotiable — every theorized cause this project has had was wrong)
+Gotchas: the gate REFUSES on a stale `dist/` (src newer than dist) or a stale `patterns.db`
+stamp — rebuild dists first, populate last. `parse()` via `@hyperfixi/core/multilingual` uses
+core's bundled dist; `parse()` from `@lokascript/semantic` source (via tsx) uses live source —
+they can disagree if you forget to rebuild core's multilingual dist. Do NOT commit your locally
+re-populated `packages/patterns-reference/data/patterns.db` (commit only dicts/profiles +
+baseline). End commit messages with the Co-Authored-By trailer; squash-merge PRs; the user's
+standing instruction this campaign was "merge on green, then continue."
 
-1. **GROUND before coding.** Reproduce via the gate path: `ml.parse(translation, lang)` over the
-   `patterns.db` translations, diff the role/`valueType` signature vs the en reference. Do NOT
-   theorize the root cause — reproduce it. The R1 metric is `collectRoleSignature` in
-   `packages/testing-framework/src/multilingual/fidelity.ts` (`action.role:valueType`, only on
-   non-structural-action nodes — the event-handler's own event role is NOT counted).
-2. **Throwaway probe** under `packages/patterns-reference/scripts/` (jsdom globals +
-   `import { MultilingualHyperscript } from '@hyperfixi/core/multilingual'`; inline
-   `collectActions`/`collectRoleSignature` from `testing-framework/.../fidelity.ts`). **DELETE it
-   after** (untracked probe files left in `src/` show up in the diff — keep the tree clean).
-3. **Re-ground the worklist.** The R2 campaign proved the committed DB lags the dicts — if you
-   inherit any "list of N divergent patterns," re-measure it against a fresh `populate` before
-   trusting it.
+## Session log (PRs this campaign, newest first)
 
-## ENVIRONMENT + GATE WORKFLOW (gotchas that cost real time)
+Mean R1 walked 0.9195 → 0.9422 across these, every PR zero-regression:
 
-- **Node 24:** `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24`. `better-sqlite3`
-  works under it. **The shell does NOT persist between Bash calls — re-source nvm each time.**
-- **The gate REFUSES a stale dist or stale DB.** After editing a `src` package: rebuild it
-  (`npm run build --prefix packages/<pkg>`) — or the whole multilingual stack
-  (`npm run test:multilingual:build-deps`) — AND re-populate
-  (`npm run populate --prefix packages/patterns-reference`) before running the gate. A rebuild
-  bumps dist mtimes, which re-triggers the DB staleness check, so **rebuild THEN populate** (in
-  that order) or the gate refuses.
-- **Vitest semantic/i18n tests import from `../src`** (transpiled on the fly), so a guard can be
-  verified failing-without-fix by `git stash`-ing only the `src` files and re-running — no
-  rebuild needed. (The gate, by contrast, runs the built dist.)
-- **Gate run** (from `packages/testing-framework`):
-  `npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression`
-  After an intentional fidelity change: replace `--regression` with `--save-baseline`, commit
-  the new baseline. It refuses unless the stack is built + DB freshly populated.
-- **`patterns.db` is NOT committed** (CI repopulates). It's modified by `populate`; restore it
-  before committing: `git checkout -- packages/patterns-reference/data/patterns.db`. Commit
-  only the dicts/profiles/patterns + the regenerated baseline.
-- The R1 ratchet fires on a per-language **avgRoleFidelity drop > 0.02**; improvements are free.
-  Re-baseline to lock gains.
-
-## PR CONVENTIONS (also cost real time)
-
-- One defect/arc per PR, branch off `main`. **Guards required + verified failing-without-fix**
-  (semantic → `packages/semantic/test/multilingual-roadmap-fixes.test.ts`; i18n →
-  `packages/i18n/src/grammar/grammar.test.ts` or the relevant test).
-- **Run the FULL semantic suite before pushing** (`npm run test:check --prefix packages/semantic`)
-  — a role/parse change can break render/round-trip tests. (That's how a renderer regression was
-  caught in #516: a high-priority pattern shadowed the canonical render form.)
-- A **prettier pre-commit hook reformats staged files** — expect it; the change stays intact.
-- **Auto-merge is disabled; admin-merge denied.** Branch must be up-to-date with main:
-  `gh pr update-branch <n>` if behind, wait for CI, then
-  `gh pr merge <n> --squash --delete-branch`. CI ≈ 6 min build + ~3 min parallel jobs;
-  poll `gh pr checks <n>` (the `Multilingual Validation` job is the real R2/fidelity gate).
-- After merging, `git checkout main && git pull` before the next branch.
-
-## Optional: multi-agent workflow
-
-The R2 put arc used a `Workflow` (5 parallel per-family design agents) to produce per-language
-pattern specs, then implemented centrally with tight build-verify loops. Worktree agents have
-**no node_modules/dist** (can't build), so the pattern was: gather complete grounding data
-centrally → fan out **pure-reasoning design agents** (read-only, given the data) → implement +
-verify centrally. Useful for R1 if you triage many languages in parallel; the central
-build-verify loop is where the real correctness work happens (agents can't run the gate).
-
-Start by reading `MULTILINGUAL_NEXT_STEPS.md`, then ground hi's R1 residue end-to-end (dump the
-per-pattern `action.role:valueType` diff vs en) before touching code.
+- PR #530 — fused-body secondary roles (+0.0032, 13 langs)
+- PR #529 / #528 — fused-body characterization (docs)
+- PR #527 — `repeat forever` keyword (+0.0008, 17 langs)
+- PR #526 — trigger.event abandoned (docs)
+- PR #525 — URL tokenization (+0.0122, the largest single win)
+- PR #524 — event-keyword alignment
+- PR #523 — en split-`'s` possessive
