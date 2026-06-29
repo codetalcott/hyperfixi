@@ -29,6 +29,29 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29k (Arc B R1 — block-body-guard HEAD-only exception UNLOCKS in-handler
+> repeat-times for the event-first langs; mean R1 0.9440 → 0.9448 (+0.0008), 11 langs +0.0017,
+> ZERO regressions. The largest win of this continuation; delivers the unlock predicted in 2026-06-29j.)**
+> #530/#532's fused-body re-parse SKIPS block-body actions (`repeat`/`if`/`for`/`while`/`unless`)
+> because re-parsing `[verb..boundary]` would swallow their inline body (the #530 repeat-forever
+> regression). But the counted-loop HEAD (`repeat {n} times`) is HEAD-ONLY — it stops after the
+> count word — so for the event-first langs whose corpus `repeat-times` puts the loop in the FUSED
+> event body (`en clic repetir 3 times entonces …` → fused `repeat{loopType:literal=3}`, the number
+> mistyped as loopType, body dropped), the HEAD re-parse recovers `quantity:literal` +
+> `loopType:literal="times"` without a body. **Fix (`buildEventHandler`, semantic-parser.ts): allow
+> `repeat` to ENTER the re-parse block, and gate the swap on the re-parse matching a HEAD-ONLY
+> pattern (`patternId` matches `/^repeat-.*-times$/`).** The body-swallowing GENERATED repeat (which
+> matches `repetir forever alternar .pulse` → `quantity:literal="toggle"`, swallowing the toggle) is
+> NOT a `-times` pattern, so the repeat-forever hazard stays excluded — VERIFIED: es/de in-handler
+> repeat-forever keep `loopType="forever"` + the toggle body survives. **11 langs gain
+> (de/es/fr/id/it/pl/pt/ru/sw/th/uk +0.0017); R0 1.000 / precision flat / R2 1.000 / parse-rate
+> 3696/3696.** Guard: `multilingual-roadmap-fixes.test.ts` "Counted-loop HEAD patterns" gained 4
+> in-handler cases + a repeat-forever hazard guard (failing-without-fix verified). **Residual:** vi
+> (two-word verb `lặp lại`) — the verb-finder lands mid-verb so the HEAD doesn't match in-handler;
+> ms net-neutral. SOV repeat-times (fronted count) still needs its own HEAD structure. The
+> general block-body-HEAD-exception now also positions the SOV `repeat forever`/until-event capture
+> (same mechanism, a HEAD-only SOV loop pattern) as the next repeat-cluster slice.
+>
 > **Update 2026-06-29j (Arc B R1 — `{verb} {quantity} times` counted-loop HEAD patterns for
 > verb-first langs; mean R1 0.9435 → 0.9440 (+0.0004), ar/tl +0.0017, he/zh +0.0034, ZERO
 > regressions. + a sharp scoping finding on the event-first majority.)** Mirrors the en
