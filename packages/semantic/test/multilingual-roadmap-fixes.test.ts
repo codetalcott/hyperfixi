@@ -1197,6 +1197,14 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     ['pt', 'mousedown', 'em mouseBaixo alternar .x'],
     ['ja', 'mousedown', '.x を マウス押下 で 切り替え'],
     ['ko', 'mousedown', '.x 를 마우스다운 할 때 토글'],
+    // ru/uk FUSED event forms: the i18n dict emits underscore compounds
+    // (мышь_вниз) that the tokenizer splits, breaking event recognition; the dict
+    // now emits the fused form (мышьвниз) which is registered in the tokenizer
+    // EXTRAS. Covers mousedown (repeat-until-event) and resize (window-resize).
+    ['ru', 'mousedown', 'при мышьвниз переключить .x'],
+    ['ru', 'resize', 'при изменениеразмера переключить .x'],
+    ['uk', 'mousedown', 'при мишавниз перемкнути .x'],
+    ['uk', 'resize', 'при змінарозміру перемкнути .x'],
   ];
   for (const [lang, ev, text] of cases) {
     it(`[${lang}] ${ev} event (i18n-emitted word) types as literal`, () => {

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-29T18:18:29.388Z",
-  "commit": "2c64b82a",
+  "timestamp": "2026-06-29T19:20:51.923Z",
+  "commit": "c925c2f2",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -10111,10 +10111,10 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8142650999793837,
+      "avgConfidence": 0.8135642135642115,
       "avgFidelity": 1,
       "avgPrecision": 0.9902867965367965,
-      "avgRoleFidelity": 0.9444047716106543,
+      "avgRoleFidelity": 0.9453700225759052,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
@@ -10354,10 +10354,6 @@
           "confidence": 0.8222222222222222
         },
         "input-clear": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "window-resize": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -10618,6 +10614,10 @@
           "confidence": 0.7142857142857143
         },
         "window-scroll": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "window-resize": {
           "success": true,
           "confidence": 0.7142857142857143
         },
@@ -13271,10 +13271,10 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8146773861059555,
+      "avgConfidence": 0.8139764996907833,
       "avgFidelity": 1,
       "avgPrecision": 0.9902867965367963,
-      "avgRoleFidelity": 0.9444047716106543,
+      "avgRoleFidelity": 0.945370022575905,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
@@ -13518,10 +13518,6 @@
           "confidence": 0.8222222222222222
         },
         "window-scroll": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "window-resize": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13770,6 +13766,10 @@
           "confidence": 0.7142857142857143
         },
         "form-submit-prevent": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
+        "window-resize": {
           "success": true,
           "confidence": 0.7142857142857143
         },

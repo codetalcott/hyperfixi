@@ -96,8 +96,11 @@ export const russianDictionary: Dictionary = {
   events: {
     click: 'клик',
     dblclick: 'двойной_клик',
-    mousedown: 'мышь_вниз',
-    mouseup: 'мышь_вверх',
+    // Fused (no `_`): the semantic tokenizer splits on `_`, so an underscore form
+    // breaks event recognition (mousedown → bare expression). Mirrors the #510 tr
+    // resize fix (boyut_değiştir → boyutlandırma) and the enyakın superlative.
+    mousedown: 'мышьвниз',
+    mouseup: 'мышьвверх',
     mouseenter: 'мышь_вход',
     mouseleave: 'мышь_выход',
     mouseover: 'наведение',
@@ -114,7 +117,7 @@ export const russianDictionary: Dictionary = {
     reset: 'сброс',
     load: 'загрузка',
     unload: 'выгрузка',
-    resize: 'изменение_размера',
+    resize: 'изменениеразмера', // fused (no `_`) — see mousedown note above
     scroll: 'прокрутка',
     touchstart: 'касание_начало',
     touchend: 'касание_конец',

@@ -82,6 +82,13 @@ const PREPOSITIONS = new Set([
  * are now in the profile.
  */
 const RUSSIAN_EXTRAS: KeywordEntry[] = [
+  // Fused event names (the i18n dict emits these WITHOUT `_`, since the tokenizer
+  // splits on `_` — see ru.ts events note). Recognize them so the event types as
+  // a literal, not a bare expression (window-resize, repeat-until-event).
+  { native: 'мышьвниз', normalized: 'mousedown' },
+  { native: 'мышьвверх', normalized: 'mouseup' },
+  { native: 'изменениеразмера', normalized: 'resize' },
+
   // Values/Literals (not in profile - generic across all languages)
   { native: 'истина', normalized: 'true' },
   { native: 'правда', normalized: 'true' },
