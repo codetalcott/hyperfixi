@@ -29,6 +29,34 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29d (Arc B R1 — fused-body fix ATTEMPTED (one bounded, gate-guarded cycle)
+> and REVERTED; NO PR. Sharper scope for the next session.)** Implemented the "re-parse the full
+> clause when it yields STRICTLY MORE roles than the fused capture" change at the action-fused
+> re-parse site (`buildEventHandler`, semantic-parser.ts ~line 958, the original `roles.length===0`
+> gate → `> Object.keys(roles).length`). Targeted verification showed **zero effect** on
+> `fetch.responseType` in ANY language — so it was reverted (no benefit, delicate path). The reason
+> sharpens the #528 picture: **the fused-body residue is MULTI-PATH, not one site.** Two distinct
+> body parsers drop roles:
+>
+> 1. **action-fused path** (`buildEventHandler` line 930+, VSO/SOV fused `<cmd>-event-<lang>-vso`) —
+>    the site I patched; but fetch in these langs doesn't even reach the swap (the re-parse via
+>    `parseClause` doesn't recover responseType either).
+> 2. **`parseBodyWithClauses` / `parseClause`** (line 1094 / 1295, the SVO/"traditional" body path) —
+>    THIS is where es/de/fr fetch lose responseType. Proof: `parse('buscar /api/user como json …',
+'es')` (no `on click` head, → `parseInternal` Stage 2) keeps `responseType`, but the SAME text
+>    WITH the `en clic` head (→ `parseBodyWithClauses`) drops it. So `parseClause` uses a DEGRADED
+>    matcher vs the full Stage-2 parse — the optional trailing `[como {responseType}]` group of the
+>    hand-crafted `fetch-es` [105] pattern is not captured in the body path.
+>
+> The correct fix is to make the body-clause parser capture the SAME roles a standalone Stage-2
+> parse of the identical clause would — likely by routing each split clause through the full
+> command-match path rather than the trimmed `parseClause`. Both body paths carry load-bearing
+> special-cases (§2 conditional fold, §452/§453 fused-body, js-block opacity, positional-`end`-noun,
+> trailing-`unless` guard, verb-split), so this is a **dedicated arc with the full six-signal gate**,
+> NOT a quick patch. (`forever` (#527) landed cleanly precisely because it rides the GENERATED
+> repeat pattern's primary `loopType` slot — a primary role the body path DOES capture — whereas
+> responseType/method/namespaced-event are SECONDARY clauses the body path trims.)
+>
 > **Update 2026-06-29c (Arc B R1 — KEY INSIGHT: the fused event-handler BODY path is a SHARED
 > root cause of multiple residues; characterized, not yet fixed. NO PR — direction for the next
 > session.)** Re-grounding after #527 (the forever win) put `fetch.responseType:expression` (63×,
