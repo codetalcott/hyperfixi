@@ -29,6 +29,40 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29e (Arc B R1 — fused-body fix LANDED; mean R1 0.9390 → 0.9422 (+0.0032),
+> 13 langs +0.0059, ZERO regressions. The largest R1 win of the campaign since the URL fix.)**
+> Supersedes 2026-06-29d (which reverted a single-site attempt): the fix DOES live in the
+> action-fused re-parse (`buildEventHandler`), the earlier attempt just had the wrong VERB-finder.
+> es fetch uses `fetch-event-es-vso` (verb-MEDIAL: `<event> buscar /api/user`), so the verb is NOT
+> `all[pos-1]` (that's the already-consumed `source`); the original re-parse only checked pos-1, so
+> it never fired. **Fix: find the verb by scanning BACK from the consumed region for the token whose
+> normalized form is the captured action, reconstruct `[verb..clause-boundary]`, re-parse it through
+> the command patterns, and swap in the richer node** — capturing the dropped secondary clauses
+> (fetch's `as {responseType}` ×63, and more across the fetch family). Three guards make it
+> zero-regression (each found via the gate / a clean before-after diff):
+>
+> 1. **block-body actions** (`repeat`/`if`/`for`/`while`/`unless`) skipped — their inline body is in
+>    the same clause (`repeat forever toggle .pulse then …`), so re-parsing would SWALLOW the body
+>    command (regressed repeat-forever in 17 langs on the first gate run).
+> 2. **verb-FIRST fused patterns** (`…-vso-verb-first`, ar/ko/tr) skipped — the event head sits
+>    BETWEEN the verb and the tail, so `[verb..boundary]` would re-include it (a separate residue).
+> 3. **SUPERSET check** — swap only if every fused role reappears with the SAME value-type (mapping
+>    the fused generic `patient` → the command's primaryRole, since `normalizeCommandRoles` relabels
+>    later). This is the verb-FINAL SOV rail: qu `#score ta ñitiy pi yapachiy 10` has the patient
+>    FRONTED (not in `[verb..boundary]`), so re-parsing `yapachiy 10` fills a DEFAULT `patient:me`;
+>    the superset check rejects that swap (selector≠reference) and keeps the real `patient:selector`
+>    (caught a qu −0.0017 on the second gate run; this guard zeroed it).
+>
+> **Result: de/es/fr/it/ms/pl/pt/ru/sw/th/uk/vi +0.0059, id +0.0028; R0 1.000 / precision 0.9743→
+> 0.9744 (UP) / R2 1.000 / parse-rate unchanged.** semantic 6327 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "Fused event-handler body re-parses secondary role clauses"
+> (6 cases incl. the qu superset rail + the repeat block-body rail; failing-without-fix verified —
+> the 4 fetch cases fail). **Remaining fused-body residue (follow-ups):** verb-FIRST langs
+> (ar/ko/tr) still drop secondary clauses (guard #2 — needs the event excised from the clause);
+> `trigger.event` namespaced events and SOV `repeat` loop-keyword capture are still open (different
+> shapes). The general lesson HELD: aligning the BODY parse toward the standalone Stage-2 parse is
+> the right direction; the care is all in the three guards.
+>
 > **Update 2026-06-29d (Arc B R1 — fused-body fix ATTEMPTED (one bounded, gate-guarded cycle)
 > and REVERTED; NO PR. Sharper scope for the next session.)** Implemented the "re-parse the full
 > clause when it yields STRICTLY MORE roles than the fused capture" change at the action-fused

@@ -8792,3 +8792,74 @@ describe('repeat forever loop keyword recognized (repeat.loopType:literal R1)', 
     );
   });
 });
+
+describe('Fused event-handler body re-parses secondary role clauses (fetch.responseType R1)', () => {
+  // A fused event-handler pattern captures the wrapped command's VERB + PRIMARY arg
+  // and drops every SECONDARY role clause: `<event> fetch /api as json` keeps
+  // `source` but loses the `as {responseType}` tail — even though a STANDALONE parse
+  // of the same clause keeps it. buildEventHandler now re-parses [verb..clause
+  // boundary] (finding the verb by scanning BACK, so verb-MEDIAL fused captures like
+  // fetch-event-<lang>-vso are handled) and swaps in the richer node when it is the
+  // SAME command, a SUPERSET of the fused roles (never replacing a real role with a
+  // defaulted one), with strictly MORE roles. Guards: block-body actions
+  // (repeat/if/for/while) are skipped (their inline body must not be swallowed),
+  // verb-FIRST fused patterns are skipped (the event head sits inside the clause).
+  function commandSig(node: unknown, action: string): string[] | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const rec = node as Record<string, unknown>;
+    if (rec.action === action && rec.roles instanceof Map) {
+      return [...rec.roles.entries()].map(([k, v]) => {
+        const t =
+          v !== null && typeof v === 'object' && typeof (v as { type?: unknown }).type === 'string'
+            ? (v as { type: string }).type
+            : typeof v;
+        return `${k}:${t}`;
+      });
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const r = commandSig(x, action);
+          if (r) return r;
+        }
+      } else if (c && typeof c === 'object') {
+        const r = commandSig(c, action);
+        if (r) return r;
+      }
+    }
+    return undefined;
+  }
+
+  // fetch in an event handler keeps its `as {responseType}` tail (the 63× residue),
+  // across SVO (es/it/pt/sw) and the native-`as`-word langs (de `als`, fr `comme`,
+  // ru `как`). Real corpus fetch-json texts (head: `on click fetch … as json then …`).
+  for (const [lang, src] of [
+    ['es', 'en clic buscar /api/user como json entonces establecer #x a su.name'],
+    ['de', 'bei klick abrufen /api/user als json dann festlegen #x zu sein.name'],
+    ['fr', 'sur clic récupérer /api/user comme json alors définir #x à son.name'],
+    ['ru', 'при клик загрузить /api/user как json затем установить #x в его.name'],
+  ] as [string, string][]) {
+    it(`[${lang}] fetch in event handler keeps responseType`, () => {
+      const sig = commandSig(parse(src, lang), 'fetch');
+      expect(sig).toBeTruthy();
+      expect(sig).toContain('responseType:expression');
+      expect(sig).toContain('source:literal');
+    });
+  }
+
+  // Superset guard: verb-FINAL SOV (qu) — the fronted patient `#score` is NOT in the
+  // [verb..boundary] clause, so the re-parse fills a DEFAULT patient; the superset
+  // check must REJECT that swap and keep the real `patient:selector`.
+  it('[qu] verb-final increment keeps the fronted patient:selector (no default-swap)', () => {
+    const sig = commandSig(parse('#score ta ñitiy pi yapachiy 10', 'qu'), 'increment');
+    expect(sig).toContain('patient:selector');
+  });
+
+  // Block-body guard: the loop body command must survive (not be swallowed into repeat).
+  it('[es] repeat-forever keeps its toggle body command (block body not swallowed)', () => {
+    const node = parse('en cargar repetir forever alternar .pulse entonces esperar 1s fin', 'es');
+    expect(commandSig(node, 'toggle')).toBeTruthy();
+    expect(commandSig(node, 'repeat')).toBeTruthy();
+  });
+});

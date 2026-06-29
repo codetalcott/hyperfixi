@@ -945,51 +945,113 @@ export class SemanticParserImpl implements ISemanticParser {
         confidence: match.confidence,
       });
 
-      // A handcrafted fused pattern (`su {event} {action}` / `เมื่อ {event}
-      // {action}`) captures only the body VERB — the body's arguments trail
-      // unconsumed and the command node above comes out with ZERO roles, while
-      // the en reference re-parses the same clause through the command patterns
-      // and captures everything (`set my.textContent to X` → destination +
-      // patient). When that happens, retry: re-parse [verb..clause boundary]
-      // with the command patterns and swap in the result — but only when it is
-      // a single command with the SAME action and at least one role, so a body
-      // whose standalone pattern is missing (blur/transition/breakpoint) keeps
-      // the zero-roled node instead of degenerating to nothing.
-      if (Object.keys(roles).length === 0) {
+      // A fused event pattern captures the wrapped command's VERB + (at most) its
+      // PRIMARY arg, leaving every SECONDARY role clause unconsumed: `su {event}
+      // {action}` keeps only the verb (ZERO roles, args trail); `{event} {verb}
+      // {source}` (fetch-event-<lang>-vso) keeps `source` but DROPS the `as
+      // {responseType}` / `via {method}` tail. The en reference re-parses the same
+      // clause through the command patterns and captures everything — so an
+      // event-handler BODY silently loses roles a STANDALONE parse of the identical
+      // clause keeps (the fused-body R1 residue: fetch.responseType ×63, …). Retry:
+      // re-parse [verb..clause boundary] and swap in the result whenever it is the
+      // SAME single command with STRICTLY MORE roles than the fused capture.
+      //
+      // The VERB is found by scanning BACK from the consumed region for the token
+      // whose normalized form is the captured action — verb-LAST patterns put it at
+      // pos-1, verb-MEDIAL ones (fetch: `… buscar /api/user`, source already
+      // consumed between the verb and pos) put it earlier. The original code only
+      // checked pos-1, so verb-medial fused captures never re-parsed. ">" (not
+      // "> 0") subsumes the zero-role case AND the partial-capture case while never
+      // REDUCING a node — a complete fused capture (re-parse ≤ fused) and a body
+      // whose standalone pattern is missing (0 roles, not more) are left untouched.
+      //
+      // EXCLUDES block-body actions (`repeat`/`if`/`for`/`while`/`unless`): their
+      // loop/conditional BODY sits in the SAME clause (no `then` before it —
+      // `repeat forever toggle .pulse then …`), so re-parsing [verb..boundary] would
+      // swallow the body command into the block node and DROP it (regressed
+      // repeat-forever in 17 langs). Their bodies are recovered by the dedicated
+      // block paths (parseBodyWithClauses fold / hasBlockBody trailing re-parse).
+      // Also skips VERB-FIRST fused patterns (`…-vso-verb-first`): there the event
+      // clause sits BETWEEN the verb and the tail, so [verb..boundary] would wrongly
+      // re-include the event head (a separate, smaller residue — left for later).
+      if (!BLOCK_BODY_ACTIONS.has(actionName) && !match.pattern.id.includes('verb-first')) {
         const all = tokens.tokens;
         const pos = tokens.position();
-        const verbToken = pos > 0 ? all[pos - 1] : undefined;
-        const verbNormalized = verbToken
-          ? ((verbToken as { normalized?: string }).normalized ?? verbToken.value)
-          : undefined;
-        // Every action-capturing pattern puts {action} last, so the verb is the
-        // previously consumed token; require it to map to the captured action.
-        if (verbToken && verbNormalized === actionName) {
-          const clauseTokens: LanguageToken[] = [verbToken];
-          let clauseEnd = pos;
-          while (clauseEnd < all.length) {
-            const t = all[clauseEnd];
-            const isBoundary =
-              t.kind === 'conjunction' ||
-              (t.kind === 'keyword' &&
-                (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
-            if (isBoundary) break;
-            clauseTokens.push(t);
-            clauseEnd++;
+        const isClauseBoundary = (t: LanguageToken): boolean =>
+          t.kind === 'conjunction' ||
+          (t.kind === 'keyword' &&
+            (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        let verbIdx = -1;
+        for (let k = pos - 1; k >= 0; k--) {
+          const t = all[k];
+          if (isClauseBoundary(t)) break; // don't cross into a previous clause
+          const tn = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
+          if (tn === actionName) {
+            verbIdx = k;
+            break;
           }
-          // Only retry when the verb has trailing arguments to reclaim.
+        }
+        if (verbIdx >= 0) {
+          // Clause runs from the verb to the next boundary at/after the unconsumed
+          // tail (the verb..pos span is already consumed by the fused match; the
+          // tail pos..clauseEnd holds the dropped secondary clause).
+          let clauseEnd = pos;
+          while (clauseEnd < all.length && !isClauseBoundary(all[clauseEnd])) clauseEnd++;
+          const clauseTokens = all.slice(verbIdx, clauseEnd);
+          // Only retry when there are trailing args beyond the verb to reclaim.
           if (clauseTokens.length > 1) {
             const commandPatterns = getPatternsForLanguage(language)
               .filter(p => p.command !== 'on')
               .sort((a, b) => b.priority - a.priority);
             const reparsed = this.parseClause(clauseTokens, commandPatterns, language);
             const first = reparsed[0];
+            // Swap ONLY when the re-parse is a SUPERSET of the fused capture: every
+            // fused role must reappear with the SAME value-type. This is the safety
+            // rail for verb-FINAL SOV (qu `#score ta ñitiy pi yapachiy 10`): the real
+            // patient `#score` is FRONTED, ahead of the event, so it is NOT in the
+            // [verb..boundary] clause — re-parsing `yapachiy 10` fills a DEFAULT
+            // `patient:reference=me`, which would inflate the role count (2 > 1) and,
+            // without this guard, REPLACE the correctly-captured `patient:selector`.
+            // Requiring superset means the re-parse can only ADD roles (fetch's
+            // `responseType` atop a preserved `source`), never swap a real role for a
+            // defaulted one.
+            const valType = (v: unknown): string =>
+              v !== null &&
+              typeof v === 'object' &&
+              typeof (v as { type?: unknown }).type === 'string'
+                ? (v as { type: string }).type
+                : typeof v;
+            // The fused capture binds the wrapped command's PRIMARY arg under the
+            // generic `patient` role; `normalizeCommandRoles` relabels it to the
+            // command's primaryRole (fetch→source, trigger→event) LATER, on the final
+            // tree. The re-parse already uses the real role, so map fused `patient` →
+            // primaryRole here (only when the schema has no real `patient` role — the
+            // exact relabel condition) so the superset check lines them up. For commands
+            // that DO keep `patient` (increment, …) the mapping is a no-op, so a
+            // verb-final SOV default-`patient` re-parse still fails the type match.
+            const schema = getSchema(actionName as ActionType);
+            const primary = schema?.primaryRole;
+            const mapRole = (role: string): SemanticRole =>
+              (role === 'patient' &&
+              primary &&
+              primary !== 'patient' &&
+              !schema?.roles.some(r => r.role === 'patient')
+                ? primary
+                : role) as SemanticRole;
+            const preservesFused =
+              !!first &&
+              first.kind === 'command' &&
+              Object.entries(roles).every(([role, val]) => {
+                const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
+                return rv !== undefined && valType(rv) === valType(val);
+              });
             if (
               reparsed.length === 1 &&
               first &&
               first.kind === 'command' &&
               first.action === actionName &&
-              (first as CommandSemanticNode).roles.size > 0
+              preservesFused &&
+              (first as CommandSemanticNode).roles.size > Object.keys(roles).length
             ) {
               commandNode = first as CommandSemanticNode;
               while (tokens.position() < clauseEnd) tokens.advance();
