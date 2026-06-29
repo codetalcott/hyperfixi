@@ -141,7 +141,11 @@ export const frenchProfile: LanguageProfile = {
     hover: { primary: 'survol', alternatives: ['survoler'], normalized: 'hover' },
     submit: { primary: 'soumission', alternatives: ['soumettre'], normalized: 'submit' },
     input: { primary: 'saisie', alternatives: ['entrée'], normalized: 'input' },
-    change: { primary: 'changement', alternatives: ['modifier'], normalized: 'change' },
+    // i18n dict emits the verb `changer` for `change` (profile primary is the noun
+    // `changement`); recognize it so `on change` events type as a literal.
+    change: { primary: 'changement', alternatives: ['modifier', 'changer'], normalized: 'change' },
+    // i18n dict emits `charger` for `load`; without it `on load` events type as expression.
+    load: { primary: 'charger', alternatives: ['chargement'], normalized: 'load' },
     // Event modifiers (for repeat until event)
     until: { primary: "jusqu'à", alternatives: ['jusque'], normalized: 'until' },
     event: { primary: 'événement', normalized: 'event' },

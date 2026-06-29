@@ -147,7 +147,8 @@ export const indonesianProfile: LanguageProfile = {
     click: { primary: 'klik', alternatives: ['tekan'], normalized: 'click' },
     hover: { primary: 'hover', alternatives: ['arahkan'], normalized: 'hover' },
     submit: { primary: 'ajukan', normalized: 'submit' },
-    input: { primary: 'masuk', alternatives: ['input'], normalized: 'input' },
+    // i18n dict emits `masukan` for `input` (profile primary is `masuk`); recognize it.
+    input: { primary: 'masuk', alternatives: ['input', 'masukan'], normalized: 'input' },
     change: { primary: 'berubah', normalized: 'change' },
     // Event modifiers (for repeat until event)
     until: { primary: 'sampai', normalized: 'until' },

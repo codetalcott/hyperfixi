@@ -279,7 +279,8 @@ export const polishProfile: LanguageProfile = {
     click: { primary: 'kliknięciu', alternatives: ['klikniecie', 'klik'], normalized: 'click' },
     hover: { primary: 'najechaniu', alternatives: ['hover'], normalized: 'hover' },
     submit: { primary: 'wysłaniu', alternatives: ['wyslaniu', 'submit'], normalized: 'submit' },
-    input: { primary: 'wprowadzeniu', alternatives: ['input'], normalized: 'input' },
+    // i18n dict emits `wejście` for `input`; recognize it so `on input` types as literal.
+    input: { primary: 'wprowadzeniu', alternatives: ['input', 'wejście'], normalized: 'input' },
     change: { primary: 'zmianie', alternatives: ['zmiana'], normalized: 'change' },
     // Event modifiers
     until: { primary: 'aż', alternatives: ['az'], normalized: 'until' },
