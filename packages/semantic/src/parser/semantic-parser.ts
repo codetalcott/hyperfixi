@@ -455,6 +455,9 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Stage 1: Try event handler patterns first (they wrap commands)
     const eventPatterns = sortedPatterns.filter(p => p.command === 'on');
+    // matchBest re-consumes the winning match, leaving the stream past the event;
+    // the bare-event guard below needs to rewind here to peek/re-run from the start.
+    const eventStart = tokens.mark();
     const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
 
     if (eventMatch) {
@@ -477,8 +480,11 @@ export class SemanticParserImpl implements ISemanticParser {
       // trailing-`unless` guard then fires). Additive: gated to a non-event bare
       // capture and only taken when trySOVEventExtraction actually succeeds, so a
       // genuine bare event (`क्लिक`) or a lang without SOV markers is byte-identical.
+      let preferCommandStage = false;
       if (/^event-[a-z]+-bare$/.test(eventMatch.pattern.id)) {
-        const ev = eventMatch.captured.get('event') as { raw?: string; value?: string } | undefined;
+        const ev = eventMatch.captured.get('event') as
+          | { type?: string; raw?: string; value?: string }
+          | undefined;
         const evVal = (ev?.raw ?? ev?.value ?? '').toString().toLowerCase();
         const langEvents = eventNameTranslations[language];
         const evIsKnownEvent =
@@ -499,12 +505,44 @@ export class SemanticParserImpl implements ISemanticParser {
               : sov;
             return withDiagnostics(guarded, diagnostics);
           }
+          // No real event to recover, but the bare-event pattern still anchored on a
+          // `reference` lead — a `$variable`, which can NEVER be an event name (events
+          // are bare identifiers like click/keyup). This is a bare COMMAND whose
+          // fronted operand the bare-event pattern grabbed: the SOV `bind`
+          // (`$greeting को #name-input में bind` → mis-anchors `$greeting` as the
+          // event). Prefer a full command parse when one exists; if no command
+          // matches, keep the existing event-handler build (no parse-rate change).
+          if (ev?.type === 'reference') {
+            tokens.reset(eventStart); // rewind past the consumed bare event
+            const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
+            const cmdPeek = patternMatcher.matchBest(tokens, commandPatterns);
+            tokens.reset(eventStart); // restore for Stage 2 (prefer) or event re-run (below)
+            if (cmdPeek && (cmdPeek.pattern.command as string) !== 'on') {
+              preferCommandStage = true;
+              diagnostics.push(
+                parseDiagnostic(
+                  `bare-event mis-anchor on reference "${evVal}" rejected; command ${cmdPeek.pattern.command} preferred`,
+                  'info',
+                  'stage-bare-event-guard'
+                )
+              );
+            } else {
+              // No command matched — keep the existing event-handler build. Re-run the
+              // event match to restore the post-event stream position buildEventHandler
+              // expects (matchBest is deterministic, so this re-consumes the same event).
+              patternMatcher.matchBest(tokens, eventPatterns);
+            }
+          }
         }
       }
 
-      const handler = this.buildEventHandler(eventMatch, tokens, language);
-      const result = modifiers ? this.applyModifiers(handler, modifiers) : handler;
-      return withDiagnostics(result, diagnostics);
+      if (!preferCommandStage) {
+        const handler = this.buildEventHandler(eventMatch, tokens, language);
+        const result = modifiers ? this.applyModifiers(handler, modifiers) : handler;
+        return withDiagnostics(result, diagnostics);
+      }
+      // else: fall through to Stage 1.5 / Stage 2 (command), the stream rewound to
+      // eventStart, where the real command (e.g. SOV bind) matches over the full stream.
     }
     diagnostics.push(
       parseDiagnostic(

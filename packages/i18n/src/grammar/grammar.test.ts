@@ -509,6 +509,27 @@ describe('GrammarTransformer', () => {
     }
   });
 
+  describe('Hindi Transformation (SOV) — bind-to verb-final (bind.* R1 residue)', () => {
+    // The hindiProfile lacked a `bind` word-order rule (ja/ko/zh/tr/bn had one), so hi
+    // emitted bind VERB-MEDIAL (`$greeting को bind #name-input में`), which the generated
+    // verb-final SOV bind pattern never matched → the bare-event fallback mis-anchored
+    // the fronted `$greeting` as a phantom `on` event (the rf=0.00 bind residue). The
+    // `bind-to` rule emits verb-final `$greeting को #name-input में bind`, like ja's
+    // `$greeting を #name-input に バインド`.
+    it('[hi] bind $var to #el → verb-final (bind verb after the element)', () => {
+      const t = new GrammarTransformer('en', 'hi');
+      const result = t.transform('bind $greeting to #name-input');
+      const verbIdx = result.indexOf('bind');
+      const elIdx = result.indexOf('#name-input');
+      expect(verbIdx).toBeGreaterThan(-1);
+      expect(elIdx).toBeGreaterThan(-1);
+      // verb-final: the bind verb follows the element (was verb-MEDIAL before the rule).
+      expect(verbIdx).toBeGreaterThan(elIdx);
+      // markerOverride alignment: the element carries the destination locative में.
+      expect(result).toContain('में');
+    });
+  });
+
   describe('Arabic Transformation (VSO)', () => {
     const transformer = new GrammarTransformer('en', 'ar');
 

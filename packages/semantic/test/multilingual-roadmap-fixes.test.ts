@@ -1079,6 +1079,44 @@ describe('en repeat HEAD-only patterns: counted / forever loops keep their body 
   });
 });
 
+describe('SOV bind: bare-event guard prefers a command over a phantom reference event', () => {
+  // The verb-final SOV bind (`$greeting को #name-input में bind`) LEADS with a `$variable`
+  // reference, which the `event-<lang>-bare` pattern grabbed as the event → a phantom `on`
+  // handler (the bind.* rf=0.00 residue). A `$variable` reference can NEVER be an event name
+  // (events are bare identifiers like click/keyup). When the bare-event mis-anchored on a
+  // reference, SOV extraction found no real event, AND a command matches the full stream, the
+  // parser now rewinds and prefers the command. hi bind-auto-detect/two-way 0.00 → 1.00; hi
+  // R1 +0.0135, precision +0.0075, zero regressions. Pairs with the hindiProfile `bind-to`
+  // verb-final i18n rule. See docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  it('[hi] verb-final bind parses as bind, not a phantom on-handler', () => {
+    const node = parse('$greeting को #name-input में bind', 'hi') as Record<string, unknown>;
+    expect(node.action).toBe('bind');
+    const roles = node.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('destination')?.value).toBe('$greeting');
+    expect(roles.get('source')?.value).toBe('#name-input');
+  });
+
+  it('[hi] translated bind verb (बांधें) also parses as bind', () => {
+    expect((parse('$greeting को #name-input में बांधें', 'hi') as { action?: string }).action).toBe(
+      'bind'
+    );
+  });
+
+  // Regression guards — the fix must NOT over-reach beyond the reference mis-anchor:
+  it('[hi] a real bare-event handler still anchors the event (no over-reach)', () => {
+    // `.active को क्लिक पर टॉगल` = "on click toggle .active" — a genuine event handler.
+    expect((parse('.active को क्लिक पर टॉगल', 'hi') as { action?: string }).action).toBe('on');
+  });
+  it('[hi] event-led handler with a known event is untouched', () => {
+    expect((parse('click पर टॉगल .active', 'hi') as { action?: string }).action).toBe('on');
+  });
+  it('[en] plain SVO bind is unaffected', () => {
+    expect((parse('bind $greeting to #name-input', 'en') as { action?: string }).action).toBe(
+      'bind'
+    );
+  });
+});
+
 describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
   // A leading command-modifier (async/once/debounced) used to displace the verb in
   // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The
