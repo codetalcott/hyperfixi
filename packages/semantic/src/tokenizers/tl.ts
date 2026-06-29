@@ -103,6 +103,8 @@ export class TagalogTokenizer extends BaseTokenizer {
     if (token.startsWith(':')) return 'identifier';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^-?\d/.test(token)) return 'literal';
+    // URLs (`/api/data`, `./x`, `http…`) — else typed identifier→expression (fetch.source R1).
+    if (token.startsWith('/') || token.startsWith('./') || token.startsWith('http')) return 'url';
     return 'identifier';
   }
 }

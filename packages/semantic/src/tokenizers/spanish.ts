@@ -132,6 +132,10 @@ export class SpanishTokenizer extends BaseTokenizer {
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     if (['==', '!=', '<=', '>=', '<', '>', '&&', '||', '!'].includes(token)) return 'operator';
+    // URLs (`/api/data`, `./x`, `http…`) — fetch sources. Without this the URL falls
+    // through to `identifier` → typed `expression`, mismatching the en reference's
+    // `fetch.source:literal` (the on/fetch source R1 residue in 14 space-using langs).
+    if (token.startsWith('/') || token.startsWith('./') || token.startsWith('http')) return 'url';
 
     return 'identifier';
   }

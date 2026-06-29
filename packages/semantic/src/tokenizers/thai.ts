@@ -109,6 +109,8 @@ export class ThaiTokenizer extends BaseTokenizer {
     if (value.startsWith(':')) return 'identifier';
     if (value.startsWith('"') || value.startsWith("'")) return 'literal';
     if (/^-?\d/.test(value)) return 'literal';
+    // URLs (`/api/data`, `./x`, `http…`) — else typed identifier→expression (fetch.source R1).
+    if (value.startsWith('/') || value.startsWith('./') || value.startsWith('http')) return 'url';
     return 'identifier';
   }
 }

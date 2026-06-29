@@ -150,6 +150,8 @@ export class VietnameseTokenizer extends BaseTokenizer {
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     if (['==', '!=', '<=', '>=', '<', '>', '&&', '||', '!'].includes(token)) return 'operator';
+    // URLs (`/api/data`, `./x`, `http…`) — else typed identifier→expression (fetch.source R1).
+    if (token.startsWith('/') || token.startsWith('./') || token.startsWith('http')) return 'url';
 
     return 'identifier';
   }
