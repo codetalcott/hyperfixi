@@ -1181,6 +1181,15 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     ['fr', 'change', 'sur changer basculer .x'],
     ['pl', 'input', 'gdy wejście przełącz .x'],
     ['id', 'input', 'pada masukan alihkan .x'],
+    // resize (window-resize): dict emits a native verb the profiles didn't list as
+    // an event → it typed as expression. Registered as the resize event in the 6
+    // space-using Latin profiles (de/es/fr/it/pl/pt). resize has no command homonym.
+    ['de', 'resize', 'bei größeändern umschalten .x'],
+    ['es', 'resize', 'en redimensionar alternar .x'],
+    ['fr', 'resize', 'sur redimensionner basculer .x'],
+    ['it', 'resize', 'su ridimensiona commutare .x'],
+    ['pl', 'resize', 'gdy zmieńrozmiar przełącz .x'],
+    ['pt', 'resize', 'em redimensionar alternar .x'],
   ];
   for (const [lang, ev, text] of cases) {
     it(`[${lang}] ${ev} event (i18n-emitted word) types as literal`, () => {

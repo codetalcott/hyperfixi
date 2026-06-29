@@ -280,6 +280,9 @@ export const polishProfile: LanguageProfile = {
     after: { primary: 'po', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'kliknięciu', alternatives: ['klikniecie', 'klik'], normalized: 'click' },
+    // `resize` event (window-resize): dict emits zmieńrozmiar; register it so the
+    // event types as literal="resize" (matching en) instead of expression.
+    resize: { primary: 'zmieńrozmiar', normalized: 'resize' },
     hover: { primary: 'najechaniu', alternatives: ['hover'], normalized: 'hover' },
     submit: { primary: 'wysłaniu', alternatives: ['wyslaniu', 'submit'], normalized: 'submit' },
     // i18n dict emits `wejście` for `input`; recognize it so `on input` types as literal.
