@@ -29,6 +29,24 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29i (Arc B R1 — ru/uk FUSED event keywords (the underscore-split follow-up to
+> 2026-06-29h); mean R1 0.9434 → 0.9435 (+0.0001), ru/uk +0.0010 each, ZERO regressions.)** The
+> ru/uk i18n dicts emitted UNDERSCORE compounds for several events (`мышь_вниз` mousedown,
+> `изменение_размера` resize, …) which the semantic tokenizer SPLITS on `_` (→ `мышь`+`_`+`вниз`),
+> so the event typed as a bare expression — the on.event residue flagged in 2026-06-29h. **Fix
+> (the #510 tr-resize route, two-package): the i18n dict now emits the FUSED form (`мышьвниз` /
+> `изменениеразмера`; uk `мишавниз` / `змінарозміру`), registered in the ru/uk tokenizer EXTRAS.**
+> Covers the two underscore-event patterns in the priority corpus — `repeat-until-event`
+> (mousedown) and `window-resize` (resize) — so it completes BOTH the resize family (ru/uk were the
+> non-Latin gap from 2026-06-29g) and mousedown. R0 1.000 / precision flat / R2 1.000 / parse-rate
+> 3696/3696. Guards: `grammar.test.ts` "ru/uk fused … event keywords" (dict emits fused, no `_`) +
+> `multilingual-roadmap-fixes.test.ts` "Event-keyword alignment" gained 4 ru/uk cases. **Latent
+> (not in priority corpus, same fix when they get coverage):** the OTHER ru/uk underscore events
+> (dblclick/mouseenter/mouseleave/mousemove/keydown/keyup/keypress/touchstart) are still
+> underscore forms in the dict. **The `on.event` event-keyword-alignment seam is now essentially
+> exhausted** — the remaining `on.event` misses are singletons (hi default-value/load) or the
+> repeat until-event `repeat.event`/`repeat.loopType` capture (the repeat-cluster arc).
+>
 > **Update 2026-06-29h (Arc B R1 — `mousedown`/`mouseup` event-keyword alignment (continues
 > 2026-06-29g); mean R1 0.9433 → 0.9434 (+0.0002), es/pt/ja/ko +0.0010 each, ZERO regressions.)**
 > The `repeat-until-event` pattern (`on mousedown repeat until event mouseup …`) has TWO events:

@@ -2249,3 +2249,25 @@ describe('tr resize single-token event keyword (window-resize NULL → faithful)
     expect(result).not.toContain('değiştir'); // the toggle-homonym fragment is gone
   });
 });
+
+describe('ru/uk fused (no-underscore) event keywords (mousedown/mouseup/resize)', () => {
+  // The semantic tokenizer splits on `_`, so the old underscore forms
+  // (мышь_вниз / изменение_размера) broke event recognition → the event typed as
+  // a bare expression. The dict now emits the FUSED form (мышьвниз / изменениеразмера),
+  // registered in the ru/uk tokenizer EXTRAS. Mirrors the #510 tr resize route.
+  it('[ru] emits fused mousedown/mouseup/resize (no underscore)', () => {
+    const tr = new GrammarTransformer('en', 'ru');
+    expect(tr.transform('on mousedown toggle .x')).toContain('мышьвниз');
+    expect(tr.transform('on mouseup toggle .x')).toContain('мышьвверх');
+    expect(tr.transform('on resize call f()')).toContain('изменениеразмера');
+    expect(tr.transform('on mousedown toggle .x')).not.toContain('мышь_вниз');
+  });
+
+  it('[uk] emits fused mousedown/mouseup/resize (no underscore)', () => {
+    const tr = new GrammarTransformer('en', 'uk');
+    expect(tr.transform('on mousedown toggle .x')).toContain('мишавниз');
+    expect(tr.transform('on mouseup toggle .x')).toContain('мишавгору');
+    expect(tr.transform('on resize call f()')).toContain('змінарозміру');
+    expect(tr.transform('on mousedown toggle .x')).not.toContain('миша_вниз');
+  });
+});

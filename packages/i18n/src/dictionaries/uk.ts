@@ -96,8 +96,10 @@ export const ukrainianDictionary: Dictionary = {
   events: {
     click: 'клік',
     dblclick: 'подвійний_клік',
-    mousedown: 'миша_вниз',
-    mouseup: 'миша_вгору',
+    // Fused (no `_`): the semantic tokenizer splits on `_`, so an underscore form
+    // breaks event recognition. Mirrors the #510 tr resize fix + enyakın.
+    mousedown: 'мишавниз',
+    mouseup: 'мишавгору',
     mouseenter: 'миша_вхід',
     mouseleave: 'миша_вихід',
     mouseover: 'наведення',
@@ -114,7 +116,7 @@ export const ukrainianDictionary: Dictionary = {
     reset: 'скидання',
     load: 'завантаження',
     unload: 'вивантаження',
-    resize: 'зміна_розміру',
+    resize: 'змінарозміру', // fused (no `_`) — see mousedown note above
     scroll: 'прокрутка',
     touchstart: 'дотик_початок',
     touchend: 'дотик_кінець',
