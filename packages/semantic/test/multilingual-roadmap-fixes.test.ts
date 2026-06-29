@@ -8737,3 +8737,58 @@ describe('`halt the event` skips the leaked article → patient:reference (halt.
     expect(hasPatient).toBe(false);
   });
 });
+
+describe('repeat forever loop keyword recognized (repeat.loopType:literal R1)', () => {
+  // The i18n dict never translated `forever`, so the corpus leaves it as the English
+  // word in most langs (`repetir forever`) and a native word in a few (ru `всегда`,
+  // vi `mãi mãi`, tl `magpakailanman`, …). Unrecognized, it typed `loopType:expression`
+  // (SVO) instead of EN's `:literal` — the repeat.loopType R1 residue. Adding the
+  // corpus word as a `forever` keyword in each profile lets the generated repeat
+  // pattern type it as a literal, matching EN (17 SVO/VSO langs +0.0011, zero
+  // regression). SOV langs (ja/ko/tr/bn/hi) don't yet capture it (their fused/SOV
+  // repeat pattern drops the loop keyword — a separate follow-up), and zh is excluded
+  // (its generated repeat greedily grabs the body verb as a phantom `quantity`).
+  function repeatLoopType(node: unknown): string | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const rec = node as Record<string, unknown>;
+    if (rec.action === 'repeat') {
+      const roles = rec.roles instanceof Map ? rec.roles : undefined;
+      const lt = roles?.get('loopType') as { type?: string } | undefined;
+      if (lt) return lt.type;
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const r = repeatLoopType(x);
+          if (r) return r;
+        }
+      } else if (c && typeof c === 'object') {
+        const r = repeatLoopType(c);
+        if (r) return r;
+      }
+    }
+    return undefined;
+  }
+
+  // Real corpus `repeat-forever` texts (head + body), spanning English-word and
+  // native-word forms, SVO and VSO, single- and multi-word keywords.
+  for (const [lang, src] of [
+    ['es', 'en cargar repetir forever alternar .pulse entonces esperar 1s fin'],
+    ['de', 'bei laden wiederholen forever umschalten .pulse dann warten 1s ende'],
+    ['ar', 'عند تحميل كرر forever بدل .pulse ثم انتظر 1s النهاية'],
+    ['ru', 'при загрузка повторить всегда переключить .pulse затем ждать 1s конец'],
+    ['tl', 'kapag load ulitin magpakailanman palitan .pulse pagkatapos maghintay 1s wakas'],
+    ['vi', 'khi tải lặp lại mãi mãi chuyển đổi .pulse rồi chờ 1s kết thúc'],
+  ] as [string, string][]) {
+    it(`[${lang}] repeat forever → loopType is a literal`, () => {
+      expect(repeatLoopType(parse(src, lang))).toBe('literal');
+    });
+  }
+
+  it('[en] repeat forever stays a literal (reference unchanged)', () => {
+    expect(repeatLoopType(parse('on load repeat forever toggle .pulse wait 1s end', 'en'))).toBe(
+      'literal'
+    );
+  });
+});

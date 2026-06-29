@@ -118,6 +118,9 @@ export const bengaliProfile: LanguageProfile = {
     repeat: { primary: 'পুনরাবৃত্তি', alternatives: ['বার বার'], normalized: 'repeat' },
     for: { primary: 'জন্য', alternatives: [], normalized: 'for' },
     while: { primary: 'যতক্ষণ', alternatives: [], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'চিরকাল', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'চালিয়ে যান', alternatives: [], normalized: 'continue' },
     halt: { primary: 'থামুন', alternatives: ['থামাও'], normalized: 'halt' },
     throw: { primary: 'নিক্ষেপ', alternatives: ['ছুঁড়ে দিন'], normalized: 'throw' },

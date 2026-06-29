@@ -125,6 +125,9 @@ export const italianProfile: LanguageProfile = {
     repeat: { primary: 'ripetere', normalized: 'repeat' },
     for: { primary: 'per', normalized: 'for' },
     while: { primary: 'mentre', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'continuare', normalized: 'continue' },
     halt: { primary: 'fermare', normalized: 'halt' },
     throw: { primary: 'lanciare', normalized: 'throw' },

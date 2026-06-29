@@ -118,6 +118,9 @@ export const indonesianProfile: LanguageProfile = {
     repeat: { primary: 'ulangi', normalized: 'repeat' },
     for: { primary: 'untuk', normalized: 'for' },
     while: { primary: 'selama', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'lanjutkan', alternatives: ['terus'], normalized: 'continue' },
     halt: { primary: 'hentikan', alternatives: ['berhenti'], normalized: 'halt' },
     throw: { primary: 'lempar', normalized: 'throw' },

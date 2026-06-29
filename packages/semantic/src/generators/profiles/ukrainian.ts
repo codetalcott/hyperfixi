@@ -257,6 +257,9 @@ export const ukrainianProfile: LanguageProfile = {
     },
     for: { primary: 'для', alternatives: ['кожний'], normalized: 'for' },
     while: { primary: 'поки', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'завжди', normalized: 'forever', alternatives: ['forever'] },
     continue: {
       primary: 'продовжити',
       alternatives: ['продовжуй'],

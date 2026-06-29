@@ -114,6 +114,9 @@ export const hebrewProfile: LanguageProfile = {
     repeat: { primary: 'חזור', normalized: 'repeat' },
     for: { primary: 'עבור', alternatives: ['לכל'], normalized: 'for' },
     while: { primary: 'כל עוד', alternatives: ['בזמן'], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'המשך', normalized: 'continue' },
     halt: { primary: 'עצור', alternatives: ['הפסק'], normalized: 'halt' },
     throw: { primary: 'זרוק', normalized: 'throw' },

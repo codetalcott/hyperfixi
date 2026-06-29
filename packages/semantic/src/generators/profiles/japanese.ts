@@ -138,6 +138,9 @@ export const japaneseProfile: LanguageProfile = {
     repeat: { primary: '繰り返し', alternatives: ['繰り返す', 'リピート'], normalized: 'repeat' },
     for: { primary: 'ために', alternatives: ['各'], normalized: 'for' },
     while: { primary: 'の間', alternatives: ['間'], normalized: 'while' },
+    // `repeat forever` loop keyword — left English in the corpus (`繰り返し forever`);
+    // recognize it so the loopType types as `:literal` like EN (see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: '続ける', alternatives: ['継続'], normalized: 'continue' },
     halt: { primary: '停止', alternatives: ['止める', 'ハルト'], normalized: 'halt' },
     throw: { primary: '投げる', alternatives: ['スロー'], normalized: 'throw' },

@@ -142,6 +142,9 @@ export const hindiProfile: LanguageProfile = {
     // SOV for-loop).
     for: { primary: 'के लिए', alternatives: ['हेतु'], normalized: 'for' },
     while: { primary: 'जब तक', alternatives: [], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'हमेशा', normalized: 'forever', alternatives: ['forever'] },
     // `जब तक नहीं` ("as long as not" = unless), the SPACED form so it registers as
     // a multi-word keyword. It is a strict superset of while `जब तक`, but
     // multiWordKeywords are matched longest-first, so the full unless phrase wins

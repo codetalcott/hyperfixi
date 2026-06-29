@@ -118,6 +118,9 @@ export const arabicProfile: LanguageProfile = {
     repeat: { primary: 'كرر', normalized: 'repeat' },
     for: { primary: 'لكل', normalized: 'for' },
     while: { primary: 'بينما', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'واصل', normalized: 'continue' },
     halt: { primary: 'أوقف', normalized: 'halt' },
     throw: { primary: 'ارم', alternatives: ['ارمِ'], normalized: 'throw' },

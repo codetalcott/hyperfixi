@@ -167,6 +167,9 @@ export const turkishProfile: LanguageProfile = {
     repeat: { primary: 'tekrarla', normalized: 'repeat' },
     for: { primary: 'için', normalized: 'for' },
     while: { primary: 'süresince', normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: { primary: 'devam', normalized: 'continue' },
     halt: { primary: 'durdur', normalized: 'halt' },
     throw: { primary: 'fırlat', normalized: 'throw' },

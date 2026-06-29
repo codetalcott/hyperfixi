@@ -234,6 +234,9 @@ export const polishProfile: LanguageProfile = {
     },
     for: { primary: 'dla', alternatives: ['każdy', 'kazdy'], normalized: 'for' },
     while: { primary: 'dopóki', alternatives: ['dopoki', 'podczas'], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'forever', normalized: 'forever' },
     continue: {
       primary: 'kontynuuj',
       alternatives: ['dalej'],

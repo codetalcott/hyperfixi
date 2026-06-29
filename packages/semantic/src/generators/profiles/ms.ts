@@ -120,6 +120,9 @@ export const malayProfile: LanguageProfile = {
     repeat: { primary: 'ulang', normalized: 'repeat' },
     for: { primary: 'untuk', normalized: 'for' },
     while: { primary: 'selagi', alternatives: ['semasa'], normalized: 'while' },
+    // `repeat forever` loop keyword — corpus word recognized so loopType types
+    // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
+    forever: { primary: 'selamanya', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'teruskan', normalized: 'continue' },
     halt: { primary: 'henti', alternatives: ['berhenti'], normalized: 'halt' },
     throw: { primary: 'lempar', normalized: 'throw' },
