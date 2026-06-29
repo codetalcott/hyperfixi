@@ -117,6 +117,10 @@ export const spanishProfile: LanguageProfile = {
     keyup: { primary: 'tecla arriba', normalized: 'keyup' },
     mouseover: { primary: 'ratón encima', alternatives: ['raton encima'], normalized: 'mouseover' },
     mouseout: { primary: 'ratón fuera', alternatives: ['raton fuera'], normalized: 'mouseout' },
+    // mousedown/mouseup (repeat-until-event): dict emits ratónabajo/ratónarriba —
+    // register so both the on.event and the repeat until-event type as literal.
+    mousedown: { primary: 'ratónabajo', normalized: 'mousedown' },
+    mouseup: { primary: 'ratónarriba', normalized: 'mouseup' },
     // Navigation
     go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
     push: { primary: 'empujar', alternatives: ['push'], normalized: 'push' },

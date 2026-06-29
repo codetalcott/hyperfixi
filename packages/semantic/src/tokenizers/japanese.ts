@@ -99,6 +99,10 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: 'キーアップ', normalized: 'keyup' },
   { native: 'マウスオーバー', normalized: 'mouseover' },
   { native: 'マウスアウト', normalized: 'mouseout' },
+  // The i18n dict emits マウス押下/マウス解放 for mousedown/mouseup (repeat-until-event);
+  // recognize them so the event types as a literal, not a bare expression.
+  { native: 'マウス押下', normalized: 'mousedown' },
+  { native: 'マウス解放', normalized: 'mouseup' },
 
   // Conjunctions. `または` (or) must be listed so the keyword extractor's
   // longest-match keeps it whole — otherwise the profile's `and` primary `また`
