@@ -133,6 +133,56 @@ const repeatUntilEventEnglish: LanguagePattern = {
 };
 
 /**
+ * English: "repeat {N} times" — counted loop HEAD only.
+ *
+ * Captures the count as `quantity` and stops after the `times` keyword, so the
+ * loop BODY (`add "<p>Line</p>" to me`) is left for the surrounding clause loop
+ * to parse as a following command (mirrors `repeat until event {event}`). Without
+ * this, the generated positional `repeat` pattern greedily captures the body verb
+ * (`add`) as a bogus `event` role and the body is dropped (the en reference's R1
+ * `repeat.event:literal` garbage). Priority 110 > the generated pattern's 100.
+ */
+const repeatTimesEnglish: LanguagePattern = {
+  id: 'repeat-en-times',
+  language: 'en',
+  command: 'repeat',
+  priority: 110,
+  template: {
+    format: 'repeat {quantity} times',
+    tokens: [
+      { type: 'literal', value: 'repeat' },
+      { type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression'] },
+      { type: 'literal', value: 'times' },
+    ],
+  },
+  extraction: {
+    loopType: { default: { type: 'literal', value: 'times' } },
+  },
+};
+
+/**
+ * English: "repeat forever" — infinite loop HEAD only. Stops after `forever` so
+ * the body (`toggle .pulse`) is parsed by the clause loop instead of being
+ * swallowed as the generated pattern's `quantity` role.
+ */
+const repeatForeverEnglish: LanguagePattern = {
+  id: 'repeat-en-forever',
+  language: 'en',
+  command: 'repeat',
+  priority: 110,
+  template: {
+    format: 'repeat forever',
+    tokens: [
+      { type: 'literal', value: 'repeat' },
+      { type: 'literal', value: 'forever' },
+    ],
+  },
+  extraction: {
+    loopType: { default: { type: 'literal', value: 'forever' } },
+  },
+};
+
+/**
  * English: "set {target} to {value}" with possessive syntax support
  */
 const setPossessiveEnglish: LanguagePattern = {
@@ -300,6 +350,8 @@ export function buildEnglishPatterns(): LanguagePattern[] {
     swapSimpleEnglish,
     repeatUntilEventFromEnglish,
     repeatUntilEventEnglish,
+    repeatTimesEnglish,
+    repeatForeverEnglish,
     setPossessiveEnglish,
     forEnglish,
     ifEnglish,

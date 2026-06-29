@@ -995,6 +995,90 @@ describe('Juxtaposed multi-command event bodies — Track 5', () => {
   });
 });
 
+describe('en repeat HEAD-only patterns: counted / forever loops keep their body (R1)', () => {
+  // The generated positional `repeat` pattern greedily captured the loop BODY into
+  // bogus roles: `repeat 3 times add … to me` → loopType=3, quantity="times",
+  // event="add" (the body verb!), and the `add` command was dropped entirely. No
+  // other language reproduces that `repeat.event:literal` garbage (they all drop
+  // it), so it was a pure en-reference defect dragging R1 down in every language.
+  // Two head-only handcrafted patterns (`repeat {n} times`, `repeat forever`,
+  // priority 110) now match only the loop HEAD and leave the body for the clause
+  // loop — mirroring `repeat until event {event}`. en + all 23 langs +0.0011–0.0028
+  // avgRoleFidelity, zero regressions. See docs-internal/MULTILINGUAL_NEXT_STEPS.md.
+  function find(node: unknown, action: string): Record<string, unknown> | null {
+    if (!node || typeof node !== 'object') return null;
+    const n = node as Record<string, unknown>;
+    if (n.action === action) return n;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const hit = find(x, action);
+          if (hit) return hit;
+        }
+      } else if (c && typeof c === 'object') {
+        const hit = find(c, action);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+  function roleKeys(node: Record<string, unknown> | null): string[] {
+    if (!node) return [];
+    const roles = node.roles;
+    if (roles instanceof Map) return [...roles.keys()].map(String);
+    if (roles && typeof roles === 'object') return Object.keys(roles as object);
+    return [];
+  }
+  function acts(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => acts(x, acc));
+      else if (c && typeof c === 'object') acts(c, acc);
+    }
+    return acc;
+  }
+
+  it('`repeat 3 times` captures the count as quantity, NOT the body verb as event', () => {
+    const node = parse('on click repeat 3 times add ".x" to me', 'en');
+    const repeat = find(node, 'repeat');
+    expect(repeat).not.toBeNull();
+    const keys = roleKeys(repeat);
+    // The defining fix: no bogus `event` role swallowing the body verb.
+    expect(keys).not.toContain('event');
+    expect(keys).toContain('loopType');
+    expect(keys).toContain('quantity');
+    const roles = repeat!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('loopType')?.value).toBe('times');
+    expect(roles.get('quantity')?.value).toBe(3);
+  });
+
+  it('`repeat forever` keeps its body command (toggle survives, not eaten as quantity)', () => {
+    const node = parse('on load repeat forever toggle .pulse wait 1s end', 'en');
+    const a = acts(node);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('toggle')).toBe(true); // body verb recovered (was swallowed before)
+    const repeat = find(node, 'repeat');
+    expect(roleKeys(repeat)).not.toContain('event');
+    const roles = repeat!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('loopType')?.value).toBe('forever');
+  });
+
+  it('does not shadow the `repeat until event` head pattern (control)', () => {
+    const node = parse('on mousedown repeat until event mouseup increment #counter end', 'en');
+    const a = acts(node);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+    const repeat = find(node, 'repeat');
+    const roles = repeat!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('loopType')?.value).toBe('until-event');
+    expect(roles.get('event')?.value).toBe('mouseup');
+  });
+});
+
 describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
   // A leading command-modifier (async/once/debounced) used to displace the verb in
   // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The
