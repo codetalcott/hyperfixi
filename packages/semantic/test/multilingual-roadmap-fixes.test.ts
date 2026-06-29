@@ -1117,6 +1117,43 @@ describe('SOV bind: bare-event guard prefers a command over a phantom reference 
   });
 });
 
+describe('English split `\'s` possessive captures the property (bind-explicit-property R1)', () => {
+  // The en tokenizer splits the clitic `'s` into `'` + `s` after a selector
+  // (`#picker's value` → `#picker ' s value`), so the single-token `'s` check in
+  // tryMatchPossessiveSelectorExpression missed it and the property was DROPPED —
+  // capturing only the bare `#picker` selector. ja/ko/… keep their possessive (の/의)
+  // whole and captured the full property-path, so the en reference dropping it capped
+  // bind-explicit-property / bind-non-form-display across SOV langs at 0.50 (hi 0.00).
+  // The split pair is now recognized, AND a keyword property (vi `value` → `giá trị`,
+  // a single keyword token) is accepted. hi crosses 0.90; ja/ko/qu/bn/tr/zh +0.0068.
+  function source(node: unknown): { type?: string; property?: string } | undefined {
+    const n = node as { roles?: unknown };
+    const roles =
+      n.roles instanceof Map
+        ? n.roles
+        : new Map(Object.entries((n.roles as object) ?? {}));
+    return roles.get('source') as { type?: string; property?: string } | undefined;
+  }
+  it("[en] `#picker's value` is a property-path source, not a bare selector", () => {
+    const node = parse("bind $color to #picker's value", 'en') as { action?: string };
+    expect(node.action).toBe('bind');
+    const src = source(node);
+    expect(src?.type).toBe('property-path');
+    expect(src?.property).toBe('value');
+  });
+  it("[en] `#status's textContent` is a property-path source", () => {
+    expect(source(parse("bind $message to #status's textContent", 'en'))?.type).toBe(
+      'property-path'
+    );
+  });
+  it('[vi] a keyword property (giá trị) is captured as property-path (no en mismatch)', () => {
+    expect(source(parse("bind $color vào #picker's giá trị", 'vi'))?.type).toBe('property-path');
+  });
+  it('[en] a plain `#selector` source (no possessive) stays a selector', () => {
+    expect(source(parse('bind $greeting to #name-input', 'en'))?.type).toBe('selector');
+  });
+});
+
 describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
   // A leading command-modifier (async/once/debounced) used to displace the verb in
   // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The
