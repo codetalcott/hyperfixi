@@ -8912,3 +8912,62 @@ describe('Fused event-handler body re-parses secondary role clauses (fetch.respo
     expect(commandSig(node, 'repeat')).toBeTruthy();
   });
 });
+
+describe('Counted-loop HEAD patterns: `{verb} {quantity} times` (repeat.quantity:literal)', () => {
+  // Mirrors the en `repeat {quantity} times` HEAD pattern (#521) for verb-first
+  // languages. Captures quantity:literal + loopType:literal="times", stopping after
+  // the count word so the body is parsed separately. Without it the generated
+  // positional repeat grabs the NUMBER as loopType and drops quantity.
+  function repeatRoles(node: unknown): string[] | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const rec = node as Record<string, unknown>;
+    if (rec.action === 'repeat' && rec.roles instanceof Map) {
+      return [...rec.roles.entries()].map(([k, v]) => {
+        const t =
+          v !== null && typeof v === 'object' && typeof (v as { type?: unknown }).type === 'string'
+            ? (v as { type: string }).type
+            : typeof v;
+        return `${k}:${t}`;
+      });
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const r = repeatRoles(x);
+          if (r) return r;
+        }
+      } else if (c && typeof c === 'object') {
+        const r = repeatRoles(c);
+        if (r) return r;
+      }
+    }
+    return undefined;
+  }
+
+  // Verb-FIRST-input langs (the repeat reaches the standalone command path): the
+  // corpus repeat-times texts gain quantity:literal + loopType:literal="times".
+  for (const [lang, src] of [
+    ['ar', 'كرر 3 times عند نقر ثم أضف "<p>Line</p>" إلى أنا'],
+    ['he', 'ב לחיצה חזור את 3 times אז הוסף את "<p>Line</p>" על אני'],
+    ['tl', 'ulitin 3 beses kapag click pagkatapos idagdag "<p>Line</p>" sa ako'],
+    ['zh', '当 点击 时 重复 把 3 times 那么 添加 把 "<p>Line</p>" 到 我'],
+  ] as [string, string][]) {
+    it(`[${lang}] repeat-times captures quantity:literal + loopType:literal`, () => {
+      const roles = repeatRoles(parse(src, lang));
+      expect(roles).toBeTruthy();
+      expect(roles).toContain('quantity:literal');
+      expect(roles).toContain('loopType:literal');
+    });
+  }
+
+  // The HEAD pattern is HEAD-only: a STANDALONE counted loop captures the count and
+  // leaves the body for the clause loop (es, the verb is the clause head). The
+  // in-EVENT-HANDLER es case still mis-captures (block-body fused-body re-parse is
+  // deferred — see MULTILINGUAL_NEXT_STEPS.md), so this asserts the standalone form.
+  it('[es] standalone repeat-times captures quantity:literal (HEAD-only)', () => {
+    const roles = repeatRoles(parse('repetir 3 times agregar "<p>x</p>" a yo', 'es'));
+    expect(roles).toContain('quantity:literal');
+    expect(roles).toContain('loopType:literal');
+  });
+});
