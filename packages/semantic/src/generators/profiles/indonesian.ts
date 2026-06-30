@@ -56,6 +56,12 @@ export const indonesianProfile: LanguageProfile = {
       // "its/his/her"
       nya: 'it', // third person clitic (suffix form: -nya)
       dia: 'it', // third person pronoun
+      // The id dict renders the reference `it` (possessive `it.X`) as the
+      // standalone possessive pronoun `miliknya` ("belonging to it") — e.g.
+      // `it.error` → `miliknya.error` (fetch-error-handling/-with-headers/-json
+      // rows). Recognize it so the possessive matcher assembles the
+      // property-path, matching the en reference's `it.error:property-path`.
+      miliknya: 'it', // "its" (milik + -nya, standalone possessive)
     },
     // `saya punya *background` = "I have *background" = "my *background". The
     // i18n dict's `my` is the two-word `saya punya`; `punya` ("have/own") is a

@@ -46,6 +46,13 @@ export const malayProfile: LanguageProfile = {
       anda: 'you', // your (formal)
       dia: 'it', // his/her/its
       ia: 'it', // its
+      // The ms dict renders the reference `it` (possessive `it.X`) as a
+      // STANDALONE `nya` token — e.g. `it.error` → `nya.error`
+      // (fetch-error-handling/-with-headers/-json rows). The suffix `-nya` key
+      // below is a distinct lexeme (exact-match lookup), so it doesn't cover the
+      // bare form. Recognize it so the possessive matcher assembles the
+      // property-path, matching the en reference's `it.error:property-path`.
+      nya: 'it', // "its" (standalone clitic, dot-notation possessor)
       // Suffix forms (attached to nouns)
       '-ku': 'me', // my (suffix)
       '-mu': 'you', // your (suffix)
