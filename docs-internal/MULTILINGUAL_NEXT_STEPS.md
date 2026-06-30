@@ -29,6 +29,66 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-30a (Arc B R1 — residue map after the swap win; the clean contained slices are
+> EXHAUSTED. NO code change — grounding + handoff. Mean R1 holds at 0.9497.)** After the swap
+> EN-reference win (2026-06-29r), a fresh-DB leverage-map sweep + per-cluster grounding shows every
+> remaining high-count R1 residue is either a multi-step ARC or low-value/messy. Each is grounded
+> below with its ROOT CAUSE so the next session doesn't re-discover it. **The cheap wins are gone;
+> what's left needs real arcs.**
+>
+> - **`send-with-detail` etc. (send.destination 44×) — ARC, NOT a slice (a no-op `send {event} to
+{destination}` HEAD was tried and REVERTED).** Two of four send corpus shapes already parse the
+>   destination (`send refresh to #widget`, `send hello to <form/>`). The two that DROP it (default
+>   `me`) are: (a) `send update(value: 42) to #target` — the method-call event; (b) `send "hello" to
+ChatSocket` — bare-identifier destination. ROOT CAUSE for (a): the `event` role DELIBERATELY
+>   skips bare-call folding (`pattern-matcher.ts` ~L505, `skipBareCall = patternToken.role ===
+'event'`) so `on pointerdown(clientX, clientY)` captures the event NAME not a call — which means
+>   `send update(value: 42)`'s `(value: 42)` detail can't be consumed, so a `send {event} to {dest}`
+>   HEAD never reaches `to`. Fixing send needs event-WITH-DETAIL parsing (capture `update` + consume
+>   `(value: 42)` then match `to {dest}`) — a real arc touching the event-role boundary, distinct
+>   from the `on`-handler param case. (b) is a `reference`-vs-`reference` non-mismatch — ChatSocket
+>   isn't a selector — so it doesn't even contribute to the selector misses; ignore.
+> - **`repeat-for-each` (event:literal 54× / loopType:literal 53× / quantity:expression 46× — the
+>   top three) — TWO-SIDED ARC.** The EN reference is itself broken: `repeat for item in .items`
+>   parses as `repeat{loopType:literal="for", event:literal="in", quantity:expression}` — the `in`
+>   keyword is mis-captured as a phantom `event:literal`, and the loop variable + collection are
+>   never captured. es/de capture `.items` as `destination:selector` (better!) but type loopType as
+>   `expression` not `literal`; ja/ar are degenerate. Fixing it = fix the EN `repeat for X in Y`
+>   parse FIRST (kill the phantom `event:literal="in"`, capture loopVariable + collection), THEN the
+>   translations. Both sides are wrong → a genuine arc.
+> - **`if-condition` (if.condition:expression 124× in the STALE-db map; structural) — ARC.** EN/es/ar
+>   fold the `if/else` block (`conditional-X-folded`); de (V2 `wenn`) and SOV (ja/ko/hi) DON'T — the
+>   conditional collapses to a flat `compound[remove, add]`, and SOV glues `else`/`end` onto the
+>   preceding selector (`.active else` → `.activeelse`). A conditional-folding arc (the §2 cluster):
+>   recognize the if-keyword + fold in the de/SOV body paths, and fix the SOV `else`/`end` tokenizer
+>   gluing.
+> - **`accordion-toggle` (toggle.destination:expression 115×) — ARC.** EN `toggle .open on closest
+.accordion-item` has a positional `on closest X` destination expression the translations drop in
+>   the event-handler body (fused-body family); `@aria-expanded` also mis-types patient:selector vs
+>   en's patient:expression; es even splits into two `on` handlers.
+> - **`set` cluster (set.destination/patient ~150× combined) — FRAGMENTED, three sub-problems.** ko
+>   SOV destination↔patient role-SWAP (`#output.innerText 를 … 설정 "Hello" 에` → patient:selector +
+>   destination:literal, mirrored); ms drops the set body entirely (English `to` untranslated, the
+>   `tetapkan … to …` body fails); sw/qu translate set→`put` (weka/churay = put), an action-naming
+>   divergence. No single clean slice.
+> - **`wait-for-event` (wait.duration:literal 23×) — 3-WAY DISAGREEMENT, skip.** EN types the event
+>   `transitionend` as `duration:literal`, de as `duration:expression`, ja as `duration:reference` —
+>   no clear correct answer (and EN typing an event name as a "duration" is itself dubious).
+> - **`for.loopType:literal` (23×) — LOW-VALUE.** EN's handcrafted `for-en-basic` sets a redundant
+>   `loopType:literal="for"` extraction default (the for schema has NO loopType role); the generated
+>   `for-<lang>-generated` doesn't, so translations miss it. Could align either way, but loopType=
+>   "for" merely duplicates the action name — adding generator special-cases for a redundant role is
+>   poor ROI. (If pursued: inject the default in `buildExtractionRulesWithDefaults` for `action==='for'`,
+>   OR drop it from `forEnglish` — verify the for AST/createLoopNode doesn't depend on it for R2.)
+>
+> **Bottom line for the next session:** the contained translation-alignment + EN-reference slices are
+> done (repeat cluster + swap). Pick ONE arc and give it a dedicated session with the full six-signal
+> gate. Highest-value: **`repeat-for-each`** (top three residues, ~153 combined) or **`if-condition`
+> folding** (124×) — both are EN-reference/structural fixes where the translations are partly right,
+> so progress lifts many langs at once. Re-run the leverage map against a FRESH `populate` first (the
+> committed `patterns.db` lags the dicts — the 2026-06-29q qu mis-exclusion and inflated stale-db
+> counts both came from skipping that).
+>
 > **Update 2026-06-29r (Arc B R1 — en element-swap REFERENCE fix; mean R1 0.9467 → 0.9497 (+0.0029),
 > ALL 23 langs up, ZERO regressions. The biggest single R1 win since the URL fix (#525) — and a NEW
 > direction: fixing a broken EN REFERENCE where the translations were already correct.)** A
