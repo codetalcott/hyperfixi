@@ -29,6 +29,27 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29n (Arc B R1 — tr/hi/qu repeat-until-event completed via a single event fuse;
+> mean R1 0.9457 → 0.9460 (+0.0003), hi/qu/tr +0.0019, ZERO regressions. Completes the
+> repeat-until-event slice (the deferred half of 2026-06-29m).)** Grounding the 2026-06-29m
+> deferral found the two problems were ONE root cause: the underscore-split mouse events
+> (tr `fare_bas`/`fare_bırak`, hi `माउस_नीचे`/`माउस_ऊपर`, qu `rat_ñitiy`/`rat_huqariy`). The split
+> handler event (`fare_bas`→"bas") broke the fused event-handler match, ROUTING the whole handler
+> onto the compound/traditional body path — where the until-event recovery (2026-06-29m, in the
+> fused-action path) never runs, so the repeat node came out EMPTY. **Fix: just fuse the events
+> (the #535 route — dict emits `farebas`/`farebırak`/`माउसनीचे`/… + register the fused forms in the
+> tr/hi/qu tokenizer EXTRAS).** That single change cascaded: the clean handler event re-routes the
+> handler onto the fused-action path → the 2026-06-29m recovery fires → all three now match en's
+> `repeat{event:literal="mouseup", loopType:literal="until-event"}` AND get the correct handler
+> event (`mousedown`, fixing qu's prior `ñitiy`→click mis-capture). No buildEventHandler change
+> needed. **hi/qu/tr +0.0019; R0 1.000 / precision flat / R2 1.000 / parse-rate 3696/3696.** Guards:
+> `multilingual-roadmap-fixes.test.ts` "repeat-until-event recovery" gained tr/hi/qu cases +
+> `grammar.test.ts` "tr/hi/qu fused … mouse events". With this, **repeat-until-event is faithful
+> across all parsing langs**, and the repeat-cluster is largely burned down (times/forever/
+> until-event all done). Remaining repeat residue: SOV repeat-times (fronted count), vi two-word
+> verb, the for-each two-sided EN-phantom. (Latent: tr/hi/qu's OTHER underscore events —
+> keydown/keyup/mouseenter/etc. — same fuse when a corpus pattern needs them.)
+>
 > **Update 2026-06-29m (Arc B R1 — repeat-until-event recovery; mean R1 0.9451 → 0.9457 (+0.0007),
 > 12 langs, ZERO regressions. Broader than the SOV-only scope predicted — it generalizes to
 > SVO/VSO.)** The fused event-handler captures the repeat verb but leaves the until-event clause

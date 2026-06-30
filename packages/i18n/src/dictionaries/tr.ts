@@ -87,8 +87,11 @@ export const tr: Dictionary = {
   events: {
     click: 'tıklama',
     dblclick: 'çift_tıklama',
-    mousedown: 'fare_bas',
-    mouseup: 'fare_bırak',
+    // Fused (no `_`): the semantic tokenizer splits on `_`, breaking event
+    // recognition (mousedown → "bas" / mouseup mis-captured). Mirrors the #535
+    // ru/uk fuse + #510 resize fix.
+    mousedown: 'farebas',
+    mouseup: 'farebırak',
     mouseenter: 'fare_gir',
     mouseleave: 'fare_çık',
     mouseover: 'fare_üstü',

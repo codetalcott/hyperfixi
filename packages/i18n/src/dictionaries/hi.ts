@@ -93,8 +93,10 @@ export const hindiDictionary: Dictionary = {
   events: {
     click: 'क्लिक',
     dblclick: 'डबल_क्लिक',
-    mousedown: 'माउस_नीचे',
-    mouseup: 'माउस_ऊपर',
+    // Fused (no `_`): the semantic tokenizer splits on `_`, breaking event
+    // recognition (mousedown → "नीचे"). Mirrors the #535 ru/uk fuse.
+    mousedown: 'माउसनीचे',
+    mouseup: 'माउसऊपर',
     mouseenter: 'माउस_प्रवेश',
     mouseleave: 'माउस_बाहर',
     mouseover: 'माउस_ओवर',

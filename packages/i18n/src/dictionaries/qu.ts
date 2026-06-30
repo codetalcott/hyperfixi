@@ -96,8 +96,10 @@ export const qu: Dictionary = {
   events: {
     click: 'ñitiy',
     dblclick: 'iskay_ñitiy',
-    mousedown: 'rat_ñitiy',
-    mouseup: 'rat_huqariy',
+    // Fused (no `_`): the semantic tokenizer splits on `_` — and `rat_ñitiy` then
+    // mis-captured as the `click` event (ñitiy→click). Mirrors the #535 ru/uk fuse.
+    mousedown: 'ratñitiy',
+    mouseup: 'rathuqariy',
     mouseenter: 'rat_yaykuy',
     mouseleave: 'rat_lluqsiy',
     mouseover: 'rat_hawapi',

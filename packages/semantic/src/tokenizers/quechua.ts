@@ -161,6 +161,10 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'llave hawa', normalized: 'keyup' },
   { native: 'mausiri yayku', normalized: 'mouseover' },
   { native: 'mausiri lluqsi', normalized: 'mouseout' },
+  // Fused mousedown/mouseup (dict emits these WITHOUT `_` since the tokenizer
+  // splits on it; `rat_ñitiy` also mis-captured as click — see qu.ts events note).
+  { native: 'ratñitiy', normalized: 'mousedown' },
+  { native: 'rathuqariy', normalized: 'mouseup' },
   { native: 'qhaway', normalized: 'focus' },
   { native: 'mana qhaway', normalized: 'blur' },
   { native: 'kargay', normalized: 'load' },

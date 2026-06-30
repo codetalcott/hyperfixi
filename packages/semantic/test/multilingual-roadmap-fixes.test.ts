@@ -9109,6 +9109,11 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
     ['bn', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ'],
     ['de', 'bei mausunten wiederholen bis ereignis mausoben dann erhöhen #counter dann warten 100ms ende'],
     ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
+    // tr/hi/qu: FUSED mouse events (dict no longer emits the `_`-split compound),
+    // which also routes the handler onto the fused-action path so the recovery fires.
+    ['tr', 'farebas de tekrarla olay farebırak i kadar ardından #counter i artır ardından bekle 100ms son'],
+    ['hi', 'माउसनीचे पर दोहराएं घटना माउसऊपर को तक फिर #counter को बढ़ाएं फिर प्रतीक्षा 100ms समाप्त'],
+    ['qu', 'ratñitiy pi kutipay ruway rathuqariy ta hayk_akama chayqa #counter ta yapachiy chayqa suyay 100ms tukuy'],
   ] as [string, string][]) {
     it(`[${lang}] repeat-until-event → event:literal + loopType:literal="until-event", no phantom event/until`, () => {
       const node = parse(src, lang);
