@@ -29,6 +29,41 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-30e (Arc B R1 — `set-color-variable` `of`-possessive destination: GROUNDED, NOT a
+> clean slice — a multi-front ARC with per-marker conflict risk. NO code change; precise root-cause map
+> for a dedicated session.)** The leverage map's item 3(a) (`set.destination:property-path` on
+> `set the *--primary-color of #theme to "#ff6600"`, ~11 langs miss it). The mechanism is
+> `pattern-matcher.ts` `tryMatchOfPossessiveExpression` + `isOfPossessiveMarker` / `OF_POSSESSIVE_MARKERS`
+> (currently only ms `daripada` / sw `ya` / vi `của` / zh `的`; the literal/normalized check also catches
+> EN `of`, TL `ng`, and anything normalizing to `source`/`of`). **12 langs PASS** (de `von`, es/fr/pt `de`,
+> id `dari`, ar `من` — all → `source`; he `of`; tl `ng`; ms/sw/vi/zh via the map). **11 langs FAIL**, and
+> grounding the tokenization shows they fail for THREE different reasons — so a single "add the markers"
+> change does NOT converge:
+>
+> 1. **Marker mis-normalizes to a CONFLICTING concept** (adding it as an of-marker risks breaking that
+>    role/command): it `di`→`tell` (a command!), pl `z`→`style`, uk `з`→`style`, qu `pa`→`destination`,
+>    tr `nin`→`destination`. These can't be blindly added to `OF_POSSESSIVE_MARKERS` — the of-possessive
+>    matcher would then shadow real `style`/`destination`/`tell` uses. Needs careful gating (only when
+>    flanked by two selectors in a property-path role, which the matcher already requires — so MAYBE safe,
+>    but must be A/B'd per-marker for over-match).
+> 2. **Bare possessive particle, no normalized form, but COMMON** (over-match risk in other patterns):
+>    ja `の`, ko `의`, bn `র`, hi `का`, th `ของ`. `の`/`의` especially are high-frequency — adding them
+>    needs a full per-pattern A/B for phantom property-paths elsewhere.
+> 3. **Recognized but the matcher DOESN'T FIRE under the full set-command context** — the deepest one:
+>    ru `из`→`source` IS accepted by `isOfPossessiveMarker`, yet ru still parses
+>    `set{destination:selector="*--primary-color"}` and DROPS `из #theme в "#ff6600"` (the destination
+>    role greedily binds the bare `*--primary-color` selector and the of-possessive never assembles; the
+>    trailing `из`/`в` then dangle and the patient drops). pl/uk likely share this. This is a role-ordering
+>    / source-confusion interaction in `matchRoleToken`, NOT a missing marker — independent of (1)/(2).
+>
+> **Recommendation:** if pursued, do it as a dedicated arc in THREE passes matching the three causes
+> above, each with its own per-pattern A/B (the markers' conflicting normalizations make the precision
+> ratchet the real gate here). Cause (3) (ru/pl/uk) should go FIRST — it's a matcher-ordering fix that may
+> also unblock others, and it's the one that drops the WHOLE command (R1 0.33, the biggest per-lang loss).
+> Also worth checking whether the i18n DICT is emitting a wrong `of`-marker for some (ru `из` = "from",
+> pl `z` = "from/with" — ablative, not genitive; the genitive-correct fix might be a dict change, not a
+> matcher change). NOT a single-PR slice.
+>
 > **Update 2026-06-30d (Arc B R1 — en `for` reference: drop the redundant `loopType:literal="for"`.
 > LANDED. mean R1 0.9525 → 0.9531 (+0.0006); ALL 23 langs up (SVO +0.0007, SOV +0.0004), ZERO per-language
 > AND ZERO per-pattern regressions. The clean broken-EN-reference slice inside the `template-literal-list-build`
