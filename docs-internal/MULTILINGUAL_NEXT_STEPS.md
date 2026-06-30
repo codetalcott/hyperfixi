@@ -29,6 +29,54 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-30c (Arc B R1 — `<ref>.<prop>` → property-path reclassification: LANDED, all four
+> coupled fronts. mean R1 0.9497 → 0.9525 (+0.0028); ALL 23 langs up or flat, ZERO per-language AND
+> ZERO per-pattern regressions. The 2026-06-30b arc — flagged below as "ATTEMPTED & REVERTED" because
+> the EN-only slice regressed 5 langs — converges once the three coupled fronts land WITH it. R0
+> 1.000 / precision 0.9747 flat / R2 1.000 / parse-rate 3696/3696.)** The 2026-06-30b spike's gating
+> question — "can condition-position `event.X` stay expression while patient/destination flip to
+> property-path?" — RESOLVED **yes**. The 06-30b note ruled it out by `expectedTypes` (both `put.patient`
+> and `if.condition` omit `property-path`), but missed that it scopes cleanly by **role NAME**: the SOV
+> window-keydown condition DOES route through `matchRoleToken` with `patternToken.role === 'condition'`
+> (confirmed empirically — `tryMatchPropertyAccessExpression` has exactly one caller), so an
+> `allowPropertyPath = patternToken.role !== 'condition'` flag at that call site keeps the condition an
+> `expression` while every other role flips. EN's own `if event.X` is captured as a raw span (never
+> routed through the matcher), so the en reference stays `expression` and the SOV condition now matches it.
+>
+> **The four coupled fronts (all required for zero regression; each independently verified):**
+>
+> 1. **F1 — EN `it.X`/`result.X` → property-path** (`pattern-matcher.ts`
+>    `tryMatchPropertyAccessExpression`, both the fused-dot and operator-dot return points): when the
+>    dotted base `isValidReference`, emit `createPropertyPath(createReference(base), props)` instead of
+>    `{type:expression}`. **GAIN: de/es/ja + 15 others (18 langs) on `put.patient`/`set.patient`** —
+>    they already render the possessive as property-path; en was the outlier. (+0.0034/lang on the 3
+>    fetch patterns.)
+> 2. **F2 — guard the fused-dot path against trailing method-calls.** The fused path consumed
+>    `.`-selector props and returned BEFORE checking for a trailing `(`, so `target.closest("li")` →
+>    property-path. Added `fusedIsMethodCall = peek().value.startsWith('(')` → stays expression.
+>    **Protects behavior-sortable** (OFF-LIMITS) `set item to the target.closest("li")` from
+>    regressing. (Verified load-bearing: without the guard that clause flips to property-path.)
+> 3. **F3 — id/ms possessive keywords.** The i18n dict renders the reference `it` as id `miliknya` / ms
+>    bare `nya` (not in the profiles' `possessive.keywords` — id had only `nya`/`dia`, ms had `-nya`
+>    suffix / `dia`/`ia`). Without them id/ms `miliknya.error`/`nya.error` stayed `expression` and
+>    NEWLY mismatched the flipped en reference — the exact −0.0038 regression the 06-30b EN-only slice
+>    hit. Added `miliknya:'it'` (id) and bare `nya:'it'` (ms). The possessive matcher (`tryMatchPossessiveExpression`,
+>    runs BEFORE the property-access matcher) then assembles the property-path. **id/ms +0.0014.**
+> 4. **F4 — condition role exclusion** (the gating question above). ja/ko/qu `window-keydown` condition
+>    stays `expression`. **No regression** (06-30b's −0.0017 ko/qu eliminated).
+>
+> **Grounding rigor (per the methodology — a green gate's 0.02 tolerance hides per-pattern drops):**
+> ran a full per-(lang,pattern) R1 A/B (clean HEAD vs all-fronts, 3404 entries): **56 gains, 0 drops**
+> (fetch-json/-error-handling/-with-headers × 18 langs each, +2 on `its-value-possessive-dot`). Plus a
+> per-language baseline diff (every lang up or flat). Guard: `multilingual-roadmap-fixes.test.ts`
+> "`<ref>.<prop>` → property-path reclassification" (11 cases, one per front + alignment; each fails
+> if its front is reverted). semantic 6393 green.
+>
+> **Residue unchanged by this arc:** ko/qu render `put.patient` as `:selector` (`그것의.error`,
+> `chaypaq.error`), NOT property-path — they neither gained nor lost (already mismatched both before
+> and after). A separate, smaller residue (the SOV/qu possessive-dot → selector typing); not pursued
+> here. The 06-30b leverage map below otherwise still stands.
+>
 > **Update 2026-06-30b (Arc B R1 — `<ref>.<prop>` → property-path reclassification: ATTEMPTED &
 > REVERTED. A genuine high-value EN-outlier opportunity (+0.0016 mean R1, 18 langs +0.0030) that does
 > NOT converge to zero-regression in one slice — it's a multi-front ARC. Plus a FRESH-DB leverage map

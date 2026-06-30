@@ -9266,3 +9266,109 @@ describe('en element-swap reference: `swap {destination} with {patient}` (swap-c
     expect(roles!.get('destination')?.type).toBe('selector');
   });
 });
+
+describe('`<ref>.<prop>` → property-path reclassification (put/set patient R1)', () => {
+  // A dotted member access off a real reference (`it.error`, `result.name`) is
+  // semantically a property access. The en reference previously typed it as a
+  // bare `expression`, but ~18 translations render the possessive as
+  // property-path (de `sein.error`, es `su.error`, ja `その.error`), so R1
+  // (recall vs the en role signature) penalized them for `put.patient`. Emitting
+  // property-path for reference-based dotted access in
+  // `tryMatchPropertyAccessExpression` aligns en TOWARD the translations.
+  // Four coupled fronts (all required for zero per-language regression):
+  //   F1 — en `it.X` → property-path (the core flip)
+  //   F2 — guard the fused-dot path against trailing method-calls
+  //        (`target.closest("li")` is a call, NOT a property — stays expression)
+  //   F3 — id/ms possessive: the dict renders `it` as id `miliknya` / ms `nya`,
+  //        not in the profiles' possessive.keywords → without them id/ms stay
+  //        `expression` and newly MISMATCH the flipped en reference
+  //   F4 — keep the condition role as `expression` (the en `if event.X`
+  //        condition is captured as a raw span, never routed through the value
+  //        matcher; SOV window-keydown DOES route it through the matcher, so
+  //        scope property-path emission out of the `condition` role).
+  function rolesOf(node: unknown, action: string): Map<string, { type?: string }> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const r = node as Record<string, unknown>;
+    if (r.action === action && r.roles instanceof Map)
+      return r.roles as Map<string, { type?: string }>;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = r[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const m = rolesOf(x, action);
+          if (m) return m;
+        }
+      } else if (c && typeof c === 'object') {
+        const m = rolesOf(c, action);
+        if (m) return m;
+      }
+    }
+    return undefined;
+  }
+
+  // F1: en `it.X` patient → property-path (was `expression`).
+  it('[en] `put it.error into #error` → put.patient:property-path', () => {
+    const roles = rolesOf(parse('on click put it.error into #error', 'en'), 'put');
+    expect(roles?.get('patient')?.type).toBe('property-path');
+  });
+  it('[en] `set #name.innerText to it.name` → set.patient:property-path', () => {
+    const roles = rolesOf(parse('on click set #name.innerText to it.name', 'en'), 'set');
+    expect(roles?.get('patient')?.type).toBe('property-path');
+  });
+
+  // F2: a fused `<ref>.<method>(...)` is a method CALL, not a property — it must
+  // stay `expression` (else behavior-sortable's `set item to the
+  // target.closest("li")` regresses; the fused path returned before checking for
+  // a trailing `(`). behavior-sortable is OFF-LIMITS to edit; this guards the
+  // PARSER fix that protects it.
+  it('[en] `set item to the target.closest("li")` keeps patient:expression (method-call guard)', () => {
+    const roles = rolesOf(parse('set item to the target.closest("li")', 'en'), 'set');
+    expect(roles?.get('patient')?.type).toBe('expression');
+    expect(roles?.get('patient')?.type).not.toBe('property-path');
+  });
+
+  // F3: id/ms render the reference `it` as the standalone possessor `miliknya` /
+  // `nya`; with those in possessive.keywords the possessive matcher assembles the
+  // property-path, matching the flipped en reference (without them they stay
+  // `expression` and newly mismatch en → the regression the previous attempt hit).
+  it('[id] `taruh miliknya.error ke #error` → put.patient:property-path', () => {
+    const roles = rolesOf(parse('pada klik taruh miliknya.error ke #error', 'id'), 'put');
+    expect(roles?.get('patient')?.type).toBe('property-path');
+  });
+  it('[ms] `letak nya.error ke #error` → put.patient:property-path', () => {
+    const roles = rolesOf(parse('apabila click letak nya.error ke #error', 'ms'), 'put');
+    expect(roles?.get('patient')?.type).toBe('property-path');
+  });
+
+  // F4: the SOV window-keydown condition `event.ctrlKey` DOES route through the
+  // value matcher (unlike en, where it's a raw span) — but the en reference types
+  // it `expression`, so the condition role must NOT flip to property-path or
+  // ja/ko/qu regress. Scoped out by role name (`condition`).
+  for (const [lang, src] of [
+    [
+      'ja',
+      'keydown[key=="s"] で ウィンドウ から もし event.ctrlKey 呼び出し saveDocument() を 停止 終わり',
+    ],
+    ['ko', 'keydown[key=="s"] 할 때 창 에서 만약 event.ctrlKey 호출 saveDocument() 를 정지 끝'],
+    ['qu', 'k_iri manta keydown[key=="s"] pi sichus event.ctrlKey qayay saveDocument() ta sayay tukuy'],
+  ] as [string, string][]) {
+    it(`[${lang}] window-keydown condition stays if.condition:expression (not property-path)`, () => {
+      const roles = rolesOf(parse(src, lang), 'if');
+      expect(roles?.get('condition')?.type).toBe('expression');
+      expect(roles?.get('condition')?.type).not.toBe('property-path');
+    });
+  }
+
+  // Translation-alignment: the ~18 langs that already render property-path now
+  // MATCH the corrected en reference (the R1 gain).
+  for (const [lang, src] of [
+    ['de', 'bei klick setzen sein.name zu ich'],
+    ['es', 'en clic poner su.name a yo'],
+    ['ja', 'その.name を 私 に 置く'],
+  ] as [string, string][]) {
+    it(`[${lang}] possessive .name patient is property-path (aligns with en)`, () => {
+      const roles = rolesOf(parse(src, lang), 'put');
+      expect(roles?.get('patient')?.type).toBe('property-path');
+    });
+  }
+});

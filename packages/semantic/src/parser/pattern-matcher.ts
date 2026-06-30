@@ -533,7 +533,16 @@ export class PatternMatcher {
     }
 
     // Check for property access expression (e.g., 'userData.name', 'it.data')
-    const propertyAccessValue = this.tryMatchPropertyAccessExpression(tokens);
+    // The condition position keeps the raw-span expression form: the en
+    // reference's `if event.ctrlKey` is captured as a raw span (never routed
+    // through this matcher), so flipping `<ref>.<prop>` to property-path here
+    // would mismatch en for the SOV langs that DO route the condition through
+    // the matcher (ja/ko/qu window-keydown). Scope the property-path emission
+    // out of the condition role. (Role-NAME scoping, not expectedTypes —
+    // `put.patient` and `if.condition` both omit property-path, relying on the
+    // isTypeCompatible rule, so a type-list scope can't separate them.)
+    const allowPropertyPath = patternToken.role !== 'condition';
+    const propertyAccessValue = this.tryMatchPropertyAccessExpression(tokens, allowPropertyPath);
     if (propertyAccessValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
         if (
@@ -1393,7 +1402,10 @@ export class PatternMatcher {
    * Pattern: (identifier | keyword) + '.' + identifier [+ '.' + identifier ...]
    * Returns an expression value if matched, or null if not.
    */
-  private tryMatchPropertyAccessExpression(tokens: TokenStream): SemanticValue | null {
+  private tryMatchPropertyAccessExpression(
+    tokens: TokenStream,
+    allowPropertyPath = true
+  ): SemanticValue | null {
     const token = tokens.peek();
     if (!token) return null;
 
@@ -1421,16 +1433,35 @@ export class PatternMatcher {
       /^\.[a-zA-Z_]/.test(fusedFirst.value)
     ) {
       let fusedChain = token.value;
+      const fusedProps: string[] = [];
       let fusedDepth = 0;
       while (fusedDepth < PatternMatcher.MAX_PROPERTY_DEPTH) {
         const prop = tokens.peek();
         if (prop && prop.kind === 'selector' && /^\.[a-zA-Z_]/.test(prop.value)) {
           fusedChain += `.${prop.value.slice(1)}`;
+          fusedProps.push(prop.value.slice(1));
           tokens.advance();
           fusedDepth++;
         } else {
           break;
         }
+      }
+      // A fused `<ref>.<prop>` access where the base is a real reference
+      // (`it.error`, `result.name`, `event.ctrlKey`) is semantically a property
+      // access — emit property-path so it aligns with the translations that
+      // already render the possessive as property-path (the put/set.patient R1
+      // arc). Guard against a trailing method call (`target.closest("li")`): the
+      // fused path consumes the `.`-selector props but a following `(` means it's
+      // a method call, which must stay an expression (behavior-sortable).
+      const fusedTrailing = tokens.peek();
+      const fusedIsMethodCall = !!fusedTrailing && fusedTrailing.value.startsWith('(');
+      if (
+        allowPropertyPath &&
+        !fusedIsMethodCall &&
+        fusedProps.length > 0 &&
+        isValidReference(baseLower)
+      ) {
+        return createPropertyPath(createReference(baseLower), fusedProps.join('.'));
       }
       return { type: 'expression', raw: fusedChain } as SemanticValue;
     }
@@ -1516,6 +1547,15 @@ export class PatternMatcher {
       } as SemanticValue;
     }
 
+    // Un-fused `<ref> . <prop>` where the base is a real reference →
+    // property-path (mirrors the fused-dot path above). Plain identifiers
+    // (`userData.name`) keep the expression form. The method-call shape is
+    // already handled above (the `(` branch returns an expression before here).
+    const opBaseLower = token.value.toLowerCase();
+    if (allowPropertyPath && isValidReference(opBaseLower)) {
+      const opProps = chain.split('.').slice(1).join('.');
+      return createPropertyPath(createReference(opBaseLower), opProps);
+    }
     // Create expression value: userData.name
     return {
       type: 'expression',
