@@ -1,4 +1,4 @@
-# Handoff — HyperFixi multilingual R1 (fused-body residue, verb-first/SOV next)
+# Handoff — HyperFixi multilingual R1 (repeat-cluster closed; SOV repeat-times / vi / for-each next)
 
 You're continuing a long-running multilingual parse-fidelity effort in `~/projects/hyperfixi`
 (branch `main`). The remaining headroom is **R1 role-fidelity** — per-command
@@ -6,116 +6,77 @@ You're continuing a long-running multilingual parse-fidelity effort in `~/projec
 **zero-regression** (no signal drop, not even within the ratchet's cross-machine tolerance).
 
 > **Read first:** `docs-internal/MULTILINGUAL_NEXT_STEPS.md` — the dated entries at the TOP
-> (2026-06-29e back through the 06-29 cluster) are the current state and the full reasoning
-> trail. Then repo-root `CLAUDE.md` "Multilingual parse rate ≠ fidelity" and
-> `packages/semantic/CLAUDE.md`.
+> (2026-06-29n back through 2026-06-29f) are the current state and the full reasoning trail
+> for the most recent campaign (PRs #532–#540). Then repo-root `CLAUDE.md` "Multilingual parse
+> rate ≠ fidelity" and `packages/semantic/CLAUDE.md`.
+
+## Our workflow (standing approval)
+
+**With this note I approve PR merge on CI green, and to continue to the next plan task on merge.**
+For each slice: one focused PR → wait for CI → **merge on green** (squash, `--delete-branch`) →
+`git checkout main && git pull --ff-only` to **sync** → start the next slice from fresh main.
+(GitHub occasionally throws a transient GraphQL error on `gh pr merge`; just retry — the CI
+result is unaffected.) Keep the `MULTILINGUAL_NEXT_STEPS.md` dated trail current per PR.
 
 ## Current state
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
-(its `timestamp`/`commit` fields stamp each regen). **Mean R1 ≈ 0.9427** (24 langs × 154
-patterns). R0-recall 1.000 · R0-precision ≈ 0.974 · R2 execution 1.000 · parse-rate 1.000.
-Last shipped: **the verb-first event-head excision** (ar/tl +0.0059 each; see the
-2026-06-29f entry in `MULTILINGUAL_NEXT_STEPS.md`), which extended **#530** (the fused
-event-handler-body fix; see below) to verb-FIRST VSO.
+(its `timestamp`/`commit` fields stamp each regen). **Mean R1 ≈ 0.9460** (23 translation langs;
+en reference excluded). R0-recall 1.000 · R0-precision ≈ 0.974 · R2 execution 1.000 ·
+parse-rate 3696/3696. Laggards (all SOV): hi 0.9065 · qu 0.9108 · ko 0.9202 · bn 0.9217 · ja 0.9233.
+Last shipped: **#540** — tr/hi/qu repeat-until-event (event fuse). The **repeat-cluster is
+substantially burned down**: `repeat-times` (verb-first #536 + in-handler #537), `repeat-forever`
+(#538), `repeat-until-event` (#539 + #540) are all faithful across parsing langs.
 
-## The next target: extend the fused-body fix to SOV langs (ko, tr) — ar/tl DONE
+## Next targets (from the re-grounded leverage map; GROUND each before coding)
 
-**ar/tl (verb-first VSO) are SHIPPED.** The 2026-06-29f fix excises the event head
-(`{on-marker} {event}`) from the verb-first clause before re-parsing, so `fetch-ar` /
-`fetch-tl` (markerlessFetch, `كـ`/`bilang` as-marker) recover `responseType`. ko/tr did NOT
-gain and remain open — and grounding **corrected** the original theory below:
+1. **SOV repeat-times — fronted-count HEAD.** #536 added `{verb} {quantity} times` HEAD patterns
+   for verb-first langs; SOV (ja/ko/tr/hi/bn/qu) front the count ahead of a clause-final verb
+   (`3 times を … 繰り返し`), a different HEAD structure that #536 didn't cover. The block-body
+   HEAD-only exception (#537) + the SOV recovery shape (#538/#539) are the relevant precedents.
+2. **vi two-word-verb repeat** (`lặp lại`): #536's verb-finder lands mid-verb, so the HEAD doesn't
+   match in-handler. Small, contained.
+3. **repeat for-each** (`repeat for X in Y`): the two-sided EN-phantom case (en itself mis-parses
+   `event:literal="in"` + drops the collection) — re-ground; prior attempts were net-zero.
+4. After repeat: re-run the leverage map (a raw-`parse()` map OVER-states schema-DEFAULTED roles —
+   increment.quantity / wait.duration / repeat.quantity are measurement artifacts the gate's
+   `fillSchemaDefaults` cancels). Real non-behavior residues left: `halt.patient` (the §7y-excluded
+   `the`-leak — needs an UPSTREAM i18n transformer fix, not an R1 coercion), `set.destination`
+   role-swap, `send.destination` call-split. **Behaviors (sortable/draggable/resizable) are
+   OFF-LIMITS** (source-migration pending).
 
-**ko/tr need a DEEPER, two-part fix (not just a re-assembly).** A standalone probe proved the
-event-excised re-assembly recovers nothing: ko `/api/user 를 가져오기 json 로` / tr
-`getir /api/user json olarak` parse to `source:literal` ONLY — the SOV standalone fetch pattern
-(`sovFetch`, `packages/semantic/src/patterns/fetch.ts` ~L256) **deliberately omits** responseType.
-So ko/tr need: (1) extend `sovFetch` with an optional trailing `{responseType} {asMarker}` clause
-(ko `로`, tr `olarak`, hi `के रूप में`) — this is the prerequisite and carries its own
-standalone-parse regression risk; AND (2) SOV non-contiguous clause re-assembly in `buildEventHandler`
-(the fronted source sits BEFORE the event, outside `[verb..boundary]`). The superset guard keeps
-ko/tr regression-free today. Expected upside is small (~+0.0003 mean, ko/tr × fetch family) — weigh
-it against the standalone-parse risk before committing.
+## Methodology (load-bearing — every win this campaign came from it)
 
-## (Original framing — superseded by the grounding above; kept for the trail) verb-first / SOV (ar, ko, tr)
-
-**Background — what #530 did.** A fused event-handler pattern (`<event> {verb} {source}`,
-e.g. `fetch-event-es-vso`) captures only the wrapped command's verb + PRIMARY arg and drops
-every SECONDARY role clause — so `on click fetch /api as json` keeps `source` but loses
-`as {responseType}` _inside a handler_, even though a standalone parse of the same clause keeps
-it (the `fetch.responseType` ×63 residue). The fix lives in `buildEventHandler`
-(`packages/semantic/src/parser/semantic-parser.ts`, the `actionValue && actionValue.type ===
-'literal'` block, ~line 960): find the body verb by **scanning back** for the captured action,
-reconstruct `[verb..clause-boundary]`, re-parse it through the command patterns, and swap in the
-richer node — under three guards: (1) **block-body actions** (`repeat`/`if`/`for`/`while`/
-`unless`) skipped (inline body would be swallowed); (2) **verb-FIRST fused patterns**
-(`…-vso-verb-first`) skipped; (3) **superset** check — swap only if every fused role reappears
-with the same value-type (mapping the fused generic `patient`→primaryRole), the verb-final-SOV
-default-patient rail. Result: 13 langs +0.0059, zero regressions, semantic 6327 green.
-
-**The follow-up (guard #2 + the SOV gap).** Three langs still drop secondary clauses, and they
-are HARDER than the event-first case #530 handled — they need per-word-order clause surgery:
-
-- **ar** (`fetch-event-ar-vso-verb-first`): verb-first, event in the MIDDLE
-  (`احضر /api/user عند نقر كـjson`). The `[verb..boundary]` clause re-includes the `عند نقر`
-  event tokens — must be **excised** before re-parsing. (Fragile: multi-token events, marker
-  detection.)
-- **ko / tr** (`fetch-event-{ko,tr}-sov`): event-FIRST SOV, patient FRONTED before a late verb.
-  The superset guard already keeps them regression-free, but capturing `responseType` needs the
-  clause **re-assembled from non-contiguous parts** (fronted patient + verb + tail, minus the
-  front event).
-
-Approach: ground each word order with a trace probe BEFORE coding (every theorized cause this
-campaign has been wrong until grounded). Likely a per-pattern-shape excision: identify the event
-marker + event token(s) (the fused match captured `event` via `match.captured.get('event')`) and
-rebuild the command clause without them. Verify on `fetch-json` first, then the whole fetch
-family. **Gate after every step; if it doesn't converge cleanly, revert and document — do not
-ship a within-tolerance regression.** Expected upside ≈ +0.0008 mean (3 langs × the fetch family).
-
-## Other open residues (from the re-grounded leverage map, post-#530)
-
-- `repeat.event:literal` (138×) and `repeat.source:expression` (69×) — mostly the **behaviors**
-  (sortable/draggable/resizable), which are OFF-LIMITS (known-hard, source-migration pending),
-  plus the for-each `repeat for X in Y` two-sided EN-phantom problem.
-- `repeat.loopType:literal` remainder — SOV langs (ja/ko/tr/bn/hi) recognize `forever` (#527) but
-  their fused/SOV repeat pattern drops it (same fused-body family as above); `repeat N times`
-  needs a per-language HEAD `repeat {quantity} times` pattern for `quantity:literal`.
-- `trigger.event:literal` (15×) — ABANDONED (#526): net-negative because it would move the EN
-  reference AWAY from the (differently-buggy) translations. Do NOT re-attempt without fixing the
-  upstream translation-side event parsing first.
-- `set.destination:property-path` (48×), `send.destination:reference` (44×),
-  `render.style:expression` (44×) — un-triaged; ground before assuming.
-
-## Methodology (load-bearing — this campaign's wins all came from it)
-
-1. **GROUND before coding.** Trace the EXACT parse with a throwaway probe in
-   `packages/testing-framework/tools/` or `packages/semantic/tools/` (then delete it). Standalone
-   `parse()` vs the in-event-handler parse is the key diagnostic.
-2. **The clean R1 direction is aligning TRANSLATIONS toward the correct EN reference** (URL,
-   event-keyword, forever, fused-body wins). Moving the EN reference instead (trigger.event)
-   drops R1 wherever translations disagree. If EN is the outlier translations already agree
-   against, great; otherwise stop.
-3. **Zero-regression, gate-verified.** After a change: rebuild ordered, re-populate, run the
+1. **GROUND before coding.** Trace the EXACT parse with a throwaway probe (`tools/`), then delete
+   it. Standalone `parse()` vs the in-event-handler parse is the key diagnostic. Every theorized
+   cause has been wrong until grounded (e.g. #540: two problems were one root cause — the split
+   event re-routed the handler off the recovery path).
+2. **Aligning TRANSLATIONS toward the correct EN reference** is the clean direction. Moving the EN
+   reference toward buggy translations (the abandoned `trigger.event`) drops R1.
+3. **Zero-regression, gate-verified.** After a change: rebuild ordered → re-populate → run the
    `--regression` gate; it must say "✓ No regression" with NO within-tolerance warning. Then
-   `--save-baseline`, and diff the new baseline vs `git show HEAD:…baseline` per-language —
-   every lang flat-or-up, no drops. Isolate any drop to the exact pattern with a before/after
-   per-pattern R1 diff (stash the fix, rebuild, dump, restore, diff).
-4. **Guard, don't broaden.** Each #530 regression got a precise guard, not a revert.
-5. Add a guard test to `packages/semantic/test/multilingual-roadmap-fixes.test.ts` and VERIFY it
-   fails without the fix (stash → run → restore). Run the full semantic suite (`test:check`).
+   `--save-baseline`, and diff the new baseline vs `git show HEAD:…baseline` per-language — every
+   lang flat-or-up, no drops, precision/bands flat. (A per-lang diff caught sub-tolerance issues
+   the gate's tolerance would have passed.)
+4. **One focused, contained slice per PR.** Prefer a targeted recovery over relaxing a load-bearing
+   guard. If a slice doesn't converge cleanly, **revert and document** — do not ship a
+   within-tolerance regression.
+5. Add a guard to `packages/semantic/test/multilingual-roadmap-fixes.test.ts` (and
+   `packages/i18n/src/grammar/grammar.test.ts` for dict changes) and VERIFY it fails without the
+   fix (stash the src change → run → restore). Run the full semantic suite (`npx vitest run`).
 
 ## Cold-start commands (Node 24 required — better-sqlite3 ABI)
 
 ```bash
-# better-sqlite3 is built for Node 24; the gate/populate need it.
-nvm use 24.18.0     # or: export NVM_DIR=~/.nvm; . $NVM_DIR/nvm.sh; nvm use 24.18.0
-npm install         # if a cold checkout (links workspaces, installs bins)
+export NVM_DIR=~/.nvm; . $NVM_DIR/nvm.sh; nvm use 24.18.0   # prefix each shell; PATH doesn't persist
+npm install         # if a cold checkout
 
 # Ordered build of the multilingual stack (NOT `npm run build` — that's unordered):
 npm run test:multilingual:build-deps
-# After editing packages/semantic: rebuild it AND core's bundled multilingual dist, in order,
-# THEN populate (so the patterns.db provenance stamp is newest and the gate won't refuse):
+# After editing packages/semantic (and/or i18n dicts): rebuild the touched packages + core's
+# bundled multilingual dist, THEN populate (so the patterns.db provenance stamp is newest):
 npm run build --prefix packages/semantic
+npm run build --prefix packages/i18n            # only if you edited i18n (dicts/grammar/tests)
 npm run build:multilingual-dist --prefix packages/core
 npm run populate --prefix packages/patterns-reference
 
@@ -125,22 +86,22 @@ npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression
 npx tsx src/multilingual/cli.ts --full --bundle browser-priority --save-baseline
 ```
 
-Gotchas: the gate REFUSES on a stale `dist/` (src newer than dist) or a stale `patterns.db`
-stamp — rebuild dists first, populate last. `parse()` via `@hyperfixi/core/multilingual` uses
-core's bundled dist; `parse()` from `@lokascript/semantic` source (via tsx) uses live source —
-they can disagree if you forget to rebuild core's multilingual dist. Do NOT commit your locally
-re-populated `packages/patterns-reference/data/patterns.db` (commit only dicts/profiles +
-baseline). End commit messages with the Co-Authored-By trailer; squash-merge PRs; the user's
-standing instruction this campaign was "merge on green, then continue."
+**Gotchas:** the gate REFUSES on a stale `dist/` (src newer than dist — note editing a package's
+`*.test.ts` also bumps its src mtime, so rebuild that package before gating) or a stale
+`patterns.db` stamp. **Do NOT commit your locally re-populated `patterns.db`** (commit only
+dicts/profiles/tokenizers + baseline + docs). End commit messages with the Co-Authored-By trailer;
+squash-merge PRs.
 
 ## Session log (PRs this campaign, newest first)
 
-Mean R1 walked 0.9195 → 0.9422 across these, every PR zero-regression:
+Mean R1 walked 0.9422 → 0.9460 across these, every PR zero-regression:
 
-- PR #530 — fused-body secondary roles (+0.0032, 13 langs)
-- PR #529 / #528 — fused-body characterization (docs)
-- PR #527 — `repeat forever` keyword (+0.0008, 17 langs)
-- PR #526 — trigger.event abandoned (docs)
-- PR #525 — URL tokenization (+0.0122, the largest single win)
-- PR #524 — event-keyword alignment
-- PR #523 — en split-`'s` possessive
+- #540 — tr/hi/qu repeat-until-event via split-event fuse (hi/qu/tr +0.0019)
+- #539 — repeat-until-event recovery (12 langs; targeted, not the #537 re-parse)
+- #538 — SOV repeat-forever loop-keyword recovery (6 SOV langs +0.0011)
+- #537 — block-body-guard HEAD-only exception → in-handler repeat-times (11 langs +0.0017)
+- #536 — `{verb} {quantity} times` HEAD patterns, verb-first langs (ar/tl/he/zh)
+- #535 — ru/uk fused underscore event keywords (mousedown/mouseup/resize)
+- #534 — mousedown/mouseup event-keyword alignment (es/pt/ja/ko)
+- #533 — `resize` event-keyword alignment (de/es/fr/it/pl/pt +0.0023)
+- #532 — verb-first fused event-handler body excises the event head (ar/tl +0.0059)
