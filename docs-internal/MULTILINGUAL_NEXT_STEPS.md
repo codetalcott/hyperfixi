@@ -29,6 +29,92 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-30b (Arc B R1 — `<ref>.<prop>` → property-path reclassification: ATTEMPTED &
+> REVERTED. A genuine high-value EN-outlier opportunity (+0.0016 mean R1, 18 langs +0.0030) that does
+> NOT converge to zero-regression in one slice — it's a multi-front ARC. Plus a FRESH-DB leverage map
+> that CORRECTS the stale-db handoff: `if-condition` is already fixed; new top residues surfaced.)**
+> Mean R1 holds at 0.9497 (reverted). The most important output is the corrected map + the precise
+> arc grounding below, so the next session doesn't re-discover it.
+>
+> **The fresh-DB leverage map (the 2026-06-30a/-06-29 counts were STALE-db — re-run after `populate`).**
+> Ranking each EN `action.role:type` by how many of the 23 translations MISS it (a custom throwaway
+> probe over the full priority corpus, fresh `populate`). Top NON-behavior residues:
+>
+> 1. **`repeat.event/loopType:literal` + `repeat.quantity:expression`** — only TWO patterns
+>    (`repeat-for-each`, `stagger-animation`); the rest of the 123/89 counts are behaviors (OFF-LIMITS).
+>    The two-sided `repeat for X in Y` arc (2026-06-30a) — CONFIRMED messy: EN mis-captures `in` as
+>    phantom `event:literal`, drops the `.items` collection; es/de capture `.items` as
+>    `destination:selector` + loop var as `loopType:expression`; ja/ko/hi degenerate (`loopType:reference=me`);
+>    es/ja/ko even split a SEPARATE `for` node. R0 is fragile here (changing EN's action `repeat`→`for`
+>    risks the hard R0 gate). Phase-1 (EN-only fix) yields ZERO R1 gain (R1 is recall of EN's roles —
+>    fixing EN without aligning translations doesn't move it). Still the hardest arc.
+> 2. **`if-condition` is ALREADY FIXED — DROP it from the priority list.** The handoff's "124×
+>    if.condition fold" was a STALE-db artifact. Fresh DB: `if-condition` and `input-validation` fold
+>    at **R1 = 1.00 across de/es/ja/ko/hi** (de `falls`, SOV `もし`/`만약`/`अगर` all fold the if/else
+>    block; the `.active else` selector-gluing is gone). No residue here.
+> 3. **`set.destination:property-path` (48)** — NEW, not in the stale handoff; NORMAL direction (EN
+>    correct, align translations). GROUNDED this session — it's THREE distinct root causes, NOT a clean
+>    slice: (a) `set-color-variable` (11 langs miss) — the `of`-possessive destination `*--primary-color
+of #theme` isn't recognized in bn/hi/it/ja/ko/pl/qu/ru/th/tr/uk → they emit `destination:selector`
+>    (the bare `#theme`), dropping the `*--primary-color` property; (b) `two-way-binding` + `computed-value`
+>    (12, the SOV+bn cluster bn/hi/ja/ko/qu/tr) — the dotted destination `#greeting.innerText` mis-parses
+>    under SOV reorder (`#greeting.innerText を … に 設定` → `destination:literal` or a scattered
+>    `set{event:selector, source:selector, destination:literal}`); (c) `template-literal-list-build`
+>    (22, near-universal) — the trailing `set #list.innerHTML to $html` AFTER the for-loop's `end then`
+>    is DROPPED entirely (a block-continuation bug — the compound stops at the loop `end`), entangled
+>    with the repeat-for-each arc. Each sub-problem is its own slice; (c) is the biggest single root
+>    cause but structural.
+> 4. **`put.patient` / `set.patient:expression` (40 + 37)** — the `<ref>.<prop>` arc, detailed below.
+> 5. **`halt.patient:reference` (74; `form-submit-prevent` 23 non-behavior, rest behaviors)** — ground next.
+> 6. **`send.destination:reference` (44; `socket-send` 23, `send-with-detail` 21)** — known hard arc (2026-06-30a).
+>
+> **The `<ref>.<prop>` → property-path attempt (REVERTED).** Grounding `put.patient:expression` (40×;
+> `fetch-error-handling`, `fetch-with-headers`) showed the swap-style EN-OUTLIER shape: EN types
+> `it.error`/`it.name` as `patient:expression`, but 21/23 translations type their possessive rendering
+> (`su.error`, `sein.name`, `その.error`) as `patient:property-path`. Semantically `it.error` IS a
+> property access → property-path; EN was the outlier (only `my.value` already went property-path, via
+> the possessive keyword path; `it.X`/`result.X`/`event.X` fell through to a bare `expression`). The fix:
+> in `pattern-matcher.ts` `tryMatchPropertyAccessExpression`, when the dotted base is a valid reference
+> (`isValidReference`: it/me/you/event/result/target/body), emit `createPropertyPath(createReference(base),
+props.join('.'))` instead of `{type:expression}` (a `buildPropertyAccessValue` helper at the fused-dot
+> and operator-dot return points). `property-path` and `expression` are compatibility-EQUIVALENT in
+> `isTypeCompatible` (both accepted wherever selector/reference/expression is) → **zero parse/R0
+> rejection risk**. Result: **mean R1 0.9497 → 0.9512 (+0.0016), 18 langs +0.0030, R0/precision/R2 flat,
+> parse-rate 3696/3696, gate GREEN.** But **5 langs REGRESSED** (real per-pattern drops, MEASURED
+> before/after): violates the zero-regression bar even though the gate's 0.02 tolerance absorbed them —
+> a textbook case of CLAUDE.md's "don't read a green gate as within noise."
+>
+> **Why it's a multi-front ARC, not a slice (precise, measured root causes):**
+>
+> - **id (−0.0038) / ms (−0.0038): dict↔profile possessive MISMATCH** on `fetch-error-handling`,
+>   `fetch-json`, `fetch-with-headers`. The i18n transformer renders EN `it` as id `miliknya` / ms `nya`,
+>   but the semantic profiles' `possessive.keywords` list only `nya`/`dia` (id) and `-nya`/`dia`/`ia`
+>   (ms) — NOT the corpus forms. So `miliknya.error`/`nya.error` miss the possessive→property-path path
+>   and stay `expression`; when EN flipped, they newly mismatched. FIXABLE (add `miliknya:'it'` to id,
+>   bare `nya:'it'` to ms) — but bare `nya` is a common clitic → over-match risk; gate it.
+> - **ko (−0.0017) / qu (−0.0017): `window-keydown` condition `event.ctrlKey`.** In ISOLATION both EN
+>   and ja/ko parse `if event.ctrlKey` → `condition:expression` (the condition is a raw span, NOT routed
+>   through the value-matcher). But in the FULL `window-keydown` (`on keydown[…] from window if
+event.ctrlKey halt call …`) the SOV condition extraction DOES route `event.ctrlKey` through the
+>   matcher → my change flips it to `property-path`, while EN's stays `expression` → mismatch. HARD:
+>   needs condition-position exclusion or EN-condition alignment; can't be scoped by `expectedTypes`
+>   (`put.patient` AND `if.condition` both omit `property-path` from their lists, relying on the
+>   compatibility rule — so role-type scoping can't separate the gain position from the loss position).
+> - **id/ms/vi: `behavior-sortable` (OFF-LIMITS) — the hard blocker.** EN's `target.closest("li")` is a
+>   method call, but the fused-dot path (consumes `.`-prefixed selector tokens, returns BEFORE checking
+>   for a trailing `(`) treats `.closest` as a property → my change flips `target.closest` →
+>   property-path, mismatching the translation. Two problems: (a) it degrades an OFF-LIMITS behavior's
+>   R1 (can't fix the behavior), and (b) it exposes a latent BUG — the fused-dot path should bail to
+>   method-call handling when the next token is `(`.
+>
+> **The coupled clean version (for a future ARC phase, NOT this session):** EN `it.error`→property-path
+>
+> - guard the fused-dot path against method-calls + the 2 possessive profile additions (id/ms) +
+>   condition-position exclusion for `event.X` (the hard part, ko/qu). All four are needed for zero
+>   per-lang regression. The possessive-fix and the EN-fix are COUPLED — neither works alone (the
+>   possessive fix alone would flip id/ms to property-path while EN is still expression → also a
+>   regression). Worth ~+20 langs if it converges, but it's a real arc.
+>
 > **Update 2026-06-30a (Arc B R1 — residue map after the swap win; the clean contained slices are
 > EXHAUSTED. NO code change — grounding + handoff. Mean R1 holds at 0.9497.)** After the swap
 > EN-reference win (2026-06-29r), a fresh-DB leverage-map sweep + per-cluster grounding shows every
