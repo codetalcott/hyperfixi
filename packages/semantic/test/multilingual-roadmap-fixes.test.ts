@@ -8969,6 +8969,22 @@ describe('Counted-loop HEAD patterns: `{verb} {quantity} times` (repeat.quantity
     expect(roles).toContain('loopType:literal');
   });
 
+  // Two-word verb (vi `lặp lại`) tokenizes as ONE fused keyword token, so the HEAD
+  // pattern must match the verb as a single literal (not split on whitespace).
+  // Verified both standalone and in-handler (the latter via the block-body HEAD
+  // re-parse swapping in the `repeat-vi-times` match). Without the fix vi fell
+  // through to the generated positional repeat → loopType:literal=3, no quantity.
+  it('[vi] standalone two-word-verb repeat-times captures quantity:literal', () => {
+    const roles = repeatRoles(parse('lặp lại 3 lần', 'vi'));
+    expect(roles).toContain('quantity:literal');
+    expect(roles).toContain('loopType:literal');
+  });
+  it('[vi] in-handler two-word-verb repeat-times captures quantity:literal', () => {
+    const roles = repeatRoles(parse('khi nhấp lặp lại 3 lần rồi thêm "<p>Line</p>" vào tôi', 'vi'));
+    expect(roles).toContain('quantity:literal');
+    expect(roles).toContain('loopType:literal');
+  });
+
   // IN-EVENT-HANDLER (event-first langs): the repeat sits in the fused-event body
   // and `repeat` is a BLOCK_BODY_ACTION, so the fused-body re-parse is normally
   // skipped. The block-body guard now makes an exception for a HEAD-ONLY counted

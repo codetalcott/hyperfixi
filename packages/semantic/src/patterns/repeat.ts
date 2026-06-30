@@ -39,8 +39,13 @@ function repeatTimesHead(
   markerBefore?: string
 ): LanguagePattern {
   const tokens: LanguagePattern['template']['tokens'] = [];
-  // The verb may be multi-word (vi `lặp lại`); split into literal tokens.
-  for (const w of verb.split(/\s+/)) tokens.push({ type: 'literal', value: w });
+  // Match the verb as a SINGLE literal token. A multi-word surface verb (vi
+  // `lặp lại`) tokenizes as ONE fused keyword token — splitting it on whitespace
+  // would expect two tokens the tokenizer never produces, so the pattern would
+  // never match (vi's repeat-times fell through to the generated positional
+  // repeat, mis-binding the count to loopType). For single-word verbs this is
+  // identical to the previous per-word push.
+  tokens.push({ type: 'literal', value: verb });
   if (markerBefore) tokens.push({ type: 'literal', value: markerBefore });
   tokens.push({ type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression'] });
   tokens.push({ type: 'literal', value: countWord });
