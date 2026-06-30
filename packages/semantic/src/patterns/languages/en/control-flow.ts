@@ -32,7 +32,10 @@ export const forEnglish: LanguagePattern = {
   extraction: {
     patient: { position: 1 },
     source: { marker: 'in' },
-    loopType: { default: { type: 'literal', value: 'for' } },
+    // NOTE: no `loopType` default — see the rationale in patterns/en.ts
+    // `forEnglish` (the `for` schema has no loopType role; a `loopType:literal="for"`
+    // here only duplicates the action name and is the R1 outlier no translation
+    // reproduces). R2-safe (forMapper reads only patient+source). Kept in sync.
   },
 };
 

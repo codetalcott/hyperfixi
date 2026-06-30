@@ -29,6 +29,37 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-30d (Arc B R1 — en `for` reference: drop the redundant `loopType:literal="for"`.
+> LANDED. mean R1 0.9525 → 0.9531 (+0.0006); ALL 23 langs up (SVO +0.0007, SOV +0.0004), ZERO per-language
+> AND ZERO per-pattern regressions. The clean broken-EN-reference slice inside the `template-literal-list-build`
+> residue.)** Grounding the handoff's suggested "`set.destination` template-literal trailing-set-drop"
+> arc (fresh `populate`) split it into THREE distinct root causes — only one is a clean slice:
+>
+> 1. **`for.loopType:literal` missed by ALL 23 langs — LANDED (this slice).** The `for` schema
+>    (`command-schemas.ts` `forSchema`) has NO loopType role (unlike `repeat`, whose times/forever/until
+>    variants are meaningful). But the en handcrafted `for-en-basic` set an extraction default
+>    `loopType:literal="for"` — a role that merely DUPLICATES the action name and that no schema-generated
+>    translation reproduces. en was the R1 outlier. Dropped it from BOTH en for-pattern paths
+>    (`patterns/en.ts` `forEnglish` + `patterns/languages/en/control-flow.ts` `forEnglish`, kept in sync).
+>    R2-safe: `command-mappers.ts` `forMapper` reads only patient+source. Per-pattern A/B (3404 entries):
+>    **23 gains, 0 drops, all on `template-literal-list-build`** (the only `for`-pattern in the corpus).
+>    Guard: `multilingual-roadmap-fixes.test.ts` "en `for` reference: no redundant loopType role". semantic
+>    6397 green.
+> 2. **`set.destination:property-path` missed by ALL 23 — STRUCTURAL trailing-set DROP, NOT landed.** The
+>    handoff's "trailing-set-drop" is REAL but masked by action-dedup: en parses 3 sets (the trailing
+>    `set #list.innerHTML to $html` → property-path), but es/de capture only **2** — the trailing set
+>    AFTER the for-loop's `end then` is dropped (a block-continuation bug: the compound stops at the loop
+>    `end`). This is entangled with the for-loop body parse (the for `end` boundary). A real structural
+>    arc, NOT a slice.
+> 3. **SOV for-body roles (`for.patient:expression`, `for.source:reference`, `set.patient:reference`)
+>    missed by bn/hi/ja/ko/qu/tr — the repeat-for-each entanglement.** Under SOV reorder the for-loop body
+>    `set` degenerates (ja `set` destination undefined; ko captures the whole `$html+\`…\``as`patient:literal`). The hard for-loop arc.
+>
+> **Bottom line:** the `template-literal-list-build` residue's only clean lever was the redundant en
+> `for.loopType` (this slice). The trailing-set DROP (#2) and the SOV for-body (#3) are both structural —
+> they need the for-loop body/block-continuation arc, which is the same `repeat-for-each` arc flagged
+> below as the hardest remaining work. Don't re-attempt them as slices.
+>
 > **Update 2026-06-30c (Arc B R1 — `<ref>.<prop>` → property-path reclassification: LANDED, all four
 > coupled fronts. mean R1 0.9497 → 0.9525 (+0.0028); ALL 23 langs up or flat, ZERO per-language AND
 > ZERO per-pattern regressions. The 2026-06-30b arc — flagged below as "ATTEMPTED & REVERTED" because

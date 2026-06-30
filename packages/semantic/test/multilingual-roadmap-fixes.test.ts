@@ -9372,3 +9372,56 @@ describe('`<ref>.<prop>` → property-path reclassification (put/set patient R1)
     });
   }
 });
+
+describe('en `for` reference: no redundant loopType role (for.loopType R1)', () => {
+  // The `for` schema (command-schemas.ts forSchema) has NO loopType role — only
+  // patient + source. The en handcrafted `for-en-basic` pattern nonetheless set
+  // an extraction default `loopType:literal="for"`, a role that merely duplicates
+  // the action name and that NO schema-generated translation reproduces. That made
+  // en the R1 outlier: all 23 langs "missed" `for.loopType:literal` on the corpus
+  // for-pattern (template-literal-list-build). Dropping the default from both en
+  // for-pattern paths (patterns/en.ts + patterns/languages/en/control-flow.ts)
+  // aligns en TOWARD the translations. The for AST mapper (command-mappers.ts
+  // forMapper) reads only patient+source, so it's R2-safe.
+  function forRoles(node: unknown): Map<string, { type?: string }> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const r = node as Record<string, unknown>;
+    if (r.action === 'for' && r.roles instanceof Map)
+      return r.roles as Map<string, { type?: string }>;
+    for (const f of ['body', 'statements', 'commands', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = r[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const m = forRoles(x);
+          if (m) return m;
+        }
+      } else if (c && typeof c === 'object') {
+        const m = forRoles(c);
+        if (m) return m;
+      }
+    }
+    return undefined;
+  }
+
+  it('[en] `for item in $items` captures patient+source but NOT loopType', () => {
+    const roles = forRoles(parse('for item in $items', 'en'));
+    expect(roles).toBeTruthy();
+    expect(roles!.get('patient')).toBeTruthy();
+    expect(roles!.get('source')).toBeTruthy();
+    expect(roles!.has('loopType')).toBe(false); // the redundant role is gone
+  });
+
+  // The generated translations (schema-derived, no loopType) now MATCH the en
+  // reference's for role signature.
+  for (const [lang, src] of [
+    ['es', 'para item en $items'],
+    ['de', 'für item in $items'],
+    ['id', 'untuk item dalam $items'],
+  ] as [string, string][]) {
+    it(`[${lang}] for-loop has no loopType role (aligns with en)`, () => {
+      const roles = forRoles(parse(src, lang));
+      expect(roles).toBeTruthy();
+      expect(roles!.has('loopType')).toBe(false);
+    });
+  }
+});
