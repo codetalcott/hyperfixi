@@ -9061,14 +9061,18 @@ describe('SOV repeat-times fronted-count HEAD (`{quantity} {countWord} {marker} 
 
   // Corpus repeat-times translations (`on click repeat 3 times add "<p>Line</p>" to me`).
   // Before the fix: ja/ko/tr captured loopType:literal (the number) but NOT
-  // quantity:literal; hi/bn produced a roleless repeat node — so the quantity:literal
-  // assertion fails without the fix for all five.
+  // quantity:literal; hi/bn/qu produced a roleless or absent repeat node — so the
+  // quantity:literal assertion fails without the fix for all six. (qu uses the
+  // patient-first SOV order with the `ta` marker and the `kutipay` repeat verb —
+  // the FRESHLY-populated corpus form; the older committed db lagged with the
+  // `return` verb `kutichiy`, but CI re-populates so the qu HEAD fires.)
   for (const [lang, src] of [
     ['ja', '3 times を クリック で 繰り返し それから "<p>Line</p>" を 追加 私 に'],
     ['ko', '3 times 를 클릭 반복 그러면 "<p>Line</p>" 를 추가 나 에'],
     ['tr', '3 times i tıklama de tekrarla sonra "<p>Line</p>" i ekle ben e'],
     ['hi', '3 times को क्लिक पर दोहराएं फिर "<p>Line</p>" को जोड़ें मैं में'],
     ['bn', '3 বার কে ক্লিক এ পুনরাবৃত্তি তারপর "<p>Line</p>" কে যোগ আমি তে'],
+    ['qu', '3 times ta ñitiy pi kutipay chayqa "<p>Line</p>" ta noqa man yapay'],
   ] as [string, string][]) {
     it(`[${lang}] fronted-count repeat-times captures quantity:literal + loopType:literal`, () => {
       const roles = repeatRoles(parse(src, lang));

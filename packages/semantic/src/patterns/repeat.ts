@@ -12,13 +12,14 @@
  * Two surface shapes:
  * - **Verb-FIRST** (SVO/VSO): the count phrase follows the verb, so the en-shaped
  *   HEAD pattern applies directly (`repetir 3 times`).
- * - **Verb-LAST** (SOV ja/ko/tr/hi/bn): the count is FRONTED ahead of a clause-final
+ * - **Verb-LAST** (SOV ja/ko/tr/hi/bn/qu): the count is FRONTED ahead of a clause-final
  *   verb (`3 times を 繰り返し` = `{quantity} {countWord} {objMarker} {verb}`). Inside
  *   an event handler the event is stripped first, so the body clause re-parse sees
  *   exactly this 4-token shape; without a dedicated HEAD the generated positional
- *   repeat mis-binds the count to `loopType:literal=3` and drops `quantity`. (qu is
- *   excluded: its corpus repeat verb `kutichiy` normalizes to `return`, not `repeat`
- *   — a dict mismatch with the profile's `kutipay`/`muyu`, a separate fix.)
+ *   repeat mis-binds the count to `loopType:literal=3` and drops `quantity`. (qu uses
+ *   `kutipay` for repeat (normalized `repeat`) in the FRESHLY-populated corpus — the
+ *   committed patterns.db can lag with the older `kutichiy`=`return`, but CI always
+ *   re-populates, so the qu HEAD fires there.)
  *
  * The count word is taken VERBATIM from the corpus: most languages leave the
  * English `times` untranslated (es `repetir 3 times`); a few translate it
@@ -120,6 +121,7 @@ const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
   ['tr', 'times', 'i'],
   ['hi', 'times', 'को'],
   ['bn', 'বার', 'কে'],
+  ['qu', 'times', 'ta'],
 ];
 
 const BY_LANG = new Map<string, LanguagePattern[]>();

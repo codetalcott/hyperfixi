@@ -29,6 +29,33 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29q (Arc B R1 — qu repeat-times HEAD (completes the SOV set); mean R1 0.9466 →
+> 0.9467 (+0.0001), qu 0.9108 → 0.9142 (+0.0034), ZERO regressions. Lifts the SINGLE biggest
+> laggard; the counted-loop (`times`) cluster is now closed across ALL parsing langs.)** #542
+> EXCLUDED qu from the SOV repeat-times HEAD on the belief its corpus repeat verb was `kutichiy`
+> (which normalizes to `return`). Grounding the leverage map exposed that as a STALE-DB artifact:
+> the committed `patterns.db` lagged the dicts (the i18n qu dict already maps `repeat: 'kutipay'`),
+> and a FRESH `populate` (what CI always does) emits `3 times ta ñitiy pi kutipay …` — `kutipay`
+> normalizes to `repeat` (confirmed: qu repeat-forever/until-event already parse via it). So qu only
+> needed the HEAD pattern. **Fix: add `['qu', 'times', 'ta']` to `SOV_REPEAT_TIMES` (`repeat.ts`).**
+> The patient-first SOV body clause `3 times ta kutipay` (marker `ta`) then matches `repeat-qu-times`
+> → quantity:literal=3 + loopType:literal="times", matching en; the `add` body survives. **qu +0.0034
+> (the only changed lang — confirming the committed baseline already reflected `kutipay` for the
+> rest, i.e. NOT a db-freshness artifact); R0 1.000 / precision 0.9747 flat / R2 1.000 / parse-rate
+> 3696/3696.** semantic 6377 green. Guard: `multilingual-roadmap-fixes.test.ts` "SOV repeat-times
+> fronted-count HEAD" gained a qu case (hardcoded `kutipay` corpus form; fails without the fix).
+> **Methodology note for the next session:** a raw read of the COMMITTED `patterns.db` can lag the
+> dicts — always `npm run populate` before grounding a per-language corpus claim, else you score a
+> stale translation (this is how #542 mis-excluded qu). **Remaining repeat residue:** only the
+> for-each two-sided EN-phantom (`repeat for X in Y` — the EN reference itself mis-captures `in` as
+> `event:literal`, two-sided and riskier). **Next leverage targets (grounded, all structural — the
+> easy R1 wins are exhausted at this depth):** `if.condition:expression` (124× — de V2 `wenn` + SOV
+> fail to FOLD the if/else block in the handler body, SOV also glues `else`/`end` onto selectors;
+> a conditional-folding arc); `toggle.destination:expression` (115× — accordion-toggle's positional
+> `on closest X` destination dropped in the body); `set` cluster (ko SOV destination↔patient
+> role-swap, ms drops the body, sw/qu translate set→put). `fetch.source:literal` (64×) is an
+> action-naming divergence (dicts map fetch→holen/ambil/取得), not a clean fix.
+>
 > **Update 2026-06-29p (Arc B R1 — vi two-word-verb repeat-times HEAD fix; mean R1 0.9465 → 0.9466
 > (+0.0001), vi 0.9641 → 0.9657 (+0.0017), ZERO regressions.)** Grounding CORRECTED the handoff
 > theory (which blamed a mid-verb verb-finder landing): the vi tokenizer fuses the two-word verb
