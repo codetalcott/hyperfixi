@@ -272,7 +272,14 @@ const forEnglish: LanguagePattern = {
   extraction: {
     patient: { position: 1 },
     source: { marker: 'in' },
-    loopType: { default: { type: 'literal', value: 'for' } },
+    // NOTE: no `loopType` default. The `for` schema has no loopType role (unlike
+    // `repeat`, whose variants times/forever/until/for are meaningful), so a
+    // `loopType:literal="for"` here merely DUPLICATES the action name — a
+    // redundant role NO schema-generated translation reproduces. Emitting it made
+    // en the R1 outlier: all 23 langs "missed" `for.loopType:literal` on every
+    // for-pattern (template-literal-list-build). The for AST mapper
+    // (command-mappers.ts forMapper) reads only patient+source, so dropping it is
+    // R2-safe. (Kept in sync with patterns/languages/en/control-flow.ts.)
   },
 };
 
