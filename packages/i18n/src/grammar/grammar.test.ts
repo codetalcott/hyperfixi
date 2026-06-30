@@ -2271,3 +2271,28 @@ describe('ru/uk fused (no-underscore) event keywords (mousedown/mouseup/resize)'
     expect(tr.transform('on mousedown toggle .x')).not.toContain('миша_вниз');
   });
 });
+
+describe('tr/hi/qu fused (no-underscore) mouse events (mousedown/mouseup)', () => {
+  // The tokenizer splits on `_`, so the old underscore forms broke event
+  // recognition (tr `fare_bas`→"bas", qu `rat_ñitiy`→click homonym). The dict now
+  // emits the fused form, recognized in the tr/hi/qu tokenizer EXTRAS — which also
+  // routes repeat-until-event onto the fused-action recovery path. Mirrors #535.
+  it('[tr] emits fused mousedown/mouseup (no underscore)', () => {
+    const t = new GrammarTransformer('en', 'tr');
+    expect(t.transform('on mousedown toggle .x')).toContain('farebas');
+    expect(t.transform('on mouseup toggle .x')).toContain('farebırak');
+    expect(t.transform('on mousedown toggle .x')).not.toContain('fare_bas');
+  });
+  it('[hi] emits fused mousedown/mouseup (no underscore)', () => {
+    const t = new GrammarTransformer('en', 'hi');
+    expect(t.transform('on mousedown toggle .x')).toContain('माउसनीचे');
+    expect(t.transform('on mouseup toggle .x')).toContain('माउसऊपर');
+    expect(t.transform('on mousedown toggle .x')).not.toContain('माउस_नीचे');
+  });
+  it('[qu] emits fused mousedown/mouseup (no underscore, no click homonym)', () => {
+    const t = new GrammarTransformer('en', 'qu');
+    expect(t.transform('on mousedown toggle .x')).toContain('ratñitiy');
+    expect(t.transform('on mouseup toggle .x')).toContain('rathuqariy');
+    expect(t.transform('on mousedown toggle .x')).not.toContain('rat_ñitiy');
+  });
+});

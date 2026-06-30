@@ -129,6 +129,11 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'fare uzerinde', normalized: 'mouseover' },
   { native: 'fare dışında', normalized: 'mouseout' },
   { native: 'fare disinda', normalized: 'mouseout' },
+  // Fused mousedown/mouseup (dict emits these WITHOUT `_` since the tokenizer
+  // splits on it — see tr.ts events note). repeat-until-event / handler events.
+  { native: 'farebas', normalized: 'mousedown' },
+  { native: 'farebırak', normalized: 'mouseup' },
+  { native: 'farebirak', normalized: 'mouseup' },
   { native: 'kaydır', normalized: 'scroll' },
   { native: 'kaydir', normalized: 'scroll' },
   { native: 'tuş_bas', normalized: 'keydown' },

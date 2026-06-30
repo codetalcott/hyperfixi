@@ -46,6 +46,11 @@ const SINGLE_POSTPOSITIONS = new Set(['को', 'में', 'पर', 'से',
  * Extras provide: values, positional, events, modifiers
  */
 const HINDI_EXTRAS: KeywordEntry[] = [
+  // Fused mousedown/mouseup (dict emits these WITHOUT `_` since the tokenizer
+  // splits on it — see hi.ts events note). repeat-until-event / handler events.
+  { native: 'माउसनीचे', normalized: 'mousedown' },
+  { native: 'माउसऊपर', normalized: 'mouseup' },
+
   // Values
   { native: 'सच', normalized: 'true' },
   { native: 'सत्य', normalized: 'true' },
