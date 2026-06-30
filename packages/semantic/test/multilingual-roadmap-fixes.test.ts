@@ -9208,3 +9208,61 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
     });
   }
 });
+
+describe('en element-swap reference: `swap {destination} with {patient}` (swap-content)', () => {
+  // The corpus element-swap `swap #a with #b` is method-less and `with`-marked. The
+  // method form `swap {method} {destination}` (swap-en-handcrafted) greedily bound
+  // #a→method and the bare word `with`→destination:literal, DROPPING #b — a broken en
+  // REFERENCE that the (correct) translations were penalized against in R1. A dedicated
+  // `swap-en-element` pattern (`swap {destination} with {patient}`, priority 120 > 110)
+  // captures destination+patient, matching the schema and the translations. The method
+  // forms (no `with`) still take the 110 pattern.
+  function swapRoles(node: unknown): Map<string, { type?: string }> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const r = node as Record<string, unknown>;
+    if (r.action === 'swap' && r.roles instanceof Map)
+      return r.roles as Map<string, { type?: string }>;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = r[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const m = swapRoles(x);
+          if (m) return m;
+        }
+      } else if (c && typeof c === 'object') {
+        const m = swapRoles(c);
+        if (m) return m;
+      }
+    }
+    return undefined;
+  }
+
+  it('[en] `swap #a with #b` captures destination:selector + patient:selector (not method + #b dropped)', () => {
+    const roles = swapRoles(parse('on click swap #a with #b', 'en'));
+    expect(roles).toBeTruthy();
+    expect(roles!.get('destination')?.type).toBe('selector'); // #a, not the word "with"
+    expect(roles!.get('patient')?.type).toBe('selector'); // #b survives (was dropped)
+    expect(roles!.has('method')).toBe(false); // #a is no longer mis-bound as method
+  });
+
+  // Translations (correct all along) now MATCH the corrected en reference.
+  for (const [lang, src] of [
+    ['de', 'bei klick tauschen #a mit #b'],
+    ['es', 'en clic intercambiar #a con #b'],
+    ['ja', '#a を クリック で 交換 #b で'],
+  ] as [string, string][]) {
+    it(`[${lang}] swap-content has destination:selector + patient:selector (aligns with en)`, () => {
+      const roles = swapRoles(parse(src, lang));
+      expect(roles).toBeTruthy();
+      expect(roles!.get('destination')?.type).toBe('selector');
+      expect(roles!.get('patient')?.type).toBe('selector');
+    });
+  }
+
+  // The method form (no `with`) is UNCHANGED — still the 110 handcrafted pattern.
+  it('[en] `swap innerHTML #target` still parses as method + destination (unchanged)', () => {
+    const roles = swapRoles(parse('swap innerHTML #target', 'en'));
+    expect(roles!.get('method')?.type).toBe('literal');
+    expect(roles!.get('destination')?.type).toBe('selector');
+  });
+});

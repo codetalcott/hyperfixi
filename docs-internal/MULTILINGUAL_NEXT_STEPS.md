@@ -29,6 +29,44 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29r (Arc B R1 — en element-swap REFERENCE fix; mean R1 0.9467 → 0.9497 (+0.0029),
+> ALL 23 langs up, ZERO regressions. The biggest single R1 win since the URL fix (#525) — and a NEW
+> direction: fixing a broken EN REFERENCE where the translations were already correct.)** A
+> fresh-DB leverage-map re-run (the committed `patterns.db` lags the dicts, so the map MUST run
+> against a fresh `populate` — see 2026-06-29q) put `swap.destination:literal` + `swap.method:selector`
+> (~46 combined) near the top, all from the one `swap-content` pattern. Grounding flipped the usual
+> diagnosis: the EN reference is the BROKEN one. `swap #a with #b` is a method-less, `with`-marked
+> element swap, but `swap-en-handcrafted` (`swap {method} {destination}`, prio 110) greedily binds
+> `#a`→method and the bare word `with`→destination:literal, then DROPS `#b`. Every translation
+> (de/es/ja/ko/…) parses `{destination:selector, patient:selector}` CORRECTLY — so R1 (recall vs the
+> garbage en reference) scored them ~0 for swap. **Fix: a dedicated `swap-en-element` pattern
+> (`swap {destination} with {patient}`, priority 120 > 110) in BOTH en pattern paths (patterns/en.ts
+> `buildEnglishPatterns` — the registered/gate path — and patterns/languages/en/swap.ts — the
+> builders.ts path; kept in sync). The required `with` literal means it only fires on the element-swap
+> shape; `swap innerHTML #target` / `swap delete #item` (no `with`) still take the 110 method form.**
+> en now parses `swap {destination:selector="#a", patient:selector="#b"}`, matching the schema AND
+> every translation → R1 for swap-content jumps ~0 → 1.0 across the board. **ALL 23 langs gained
+> (+0.0034 most; +0.0017 for ar/bn/hi/qu/tl/tr whose swap-content was already partly degenerate); R0
+> 1.000 / precision 0.9747 flat / R2 1.000 (swap-content is NOT in the curated execution subset, so
+> no R2 risk) / parse-rate 3696/3696.** semantic 6382 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "en element-swap reference" (5 cases: the en parse — fails
+> without the fix — 3 translation-alignment, 1 method-form-unchanged control).
+>
+> **STRATEGIC NOTE — the remaining high-leverage R1 residues are BROKEN EN REFERENCES, not buggy
+> translations.** This INVERTS the campaign's default direction (align translations toward en).
+> Where en is the outlier and the translations already agree on the correct parse, fixing the EN
+> reference aligns it TOWARD them and lifts R1 broadly (the methodology's "if EN is the outlier
+> translations already agree against, great" case — the opposite of the abandoned trigger.event,
+> where en was right). The fresh-DB leverage map's top remaining clusters are this shape:
+> **`repeat-for-each`** (en mis-captures `in` as `event:literal`, never captures the loop variable or
+> collection; es/de capture `.items` as destination correctly — but it's TWO-sided: translations are
+> also imperfect (loopType:expression vs literal), so it's a real arc, fix en first); **`send-with-detail`**
+> (send.destination:reference 44× — ground next); **`set` cluster** (ko SOV destination↔patient
+> role-swap, ms drops the body, sw/qu translate set→put — fragmented). The structural `if.condition`
+> fold (de V2 `wenn` + SOV `else`/`end` selector-gluing) and `accordion-toggle` (positional `on
+closest X` destination) remain genuine arcs. **Next concrete slice candidate: `send-with-detail`
+> (one pattern, 44×) — ground it (fresh DB!) to see if it's an en-reference fix like swap.**
+>
 > **Update 2026-06-29q (Arc B R1 — qu repeat-times HEAD (completes the SOV set); mean R1 0.9466 →
 > 0.9467 (+0.0001), qu 0.9108 → 0.9142 (+0.0034), ZERO regressions. Lifts the SINGLE biggest
 > laggard; the counted-loop (`times`) cluster is now closed across ALL parsing langs.)** #542
