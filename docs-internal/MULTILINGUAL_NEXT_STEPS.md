@@ -29,6 +29,27 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29p (Arc B R1 — vi two-word-verb repeat-times HEAD fix; mean R1 0.9465 → 0.9466
+> (+0.0001), vi 0.9641 → 0.9657 (+0.0017), ZERO regressions.)** Grounding CORRECTED the handoff
+> theory (which blamed a mid-verb verb-finder landing): the vi tokenizer fuses the two-word verb
+> `lặp lại` into a SINGLE keyword token (`value="lặp lại"`, `normalized="repeat"`), but
+> `repeatTimesHead` (`repeat.ts`) SPLIT the verb on whitespace into two literal tokens
+> (`['lặp','lại']`) — which never match the one fused token. So `repeat-vi-times` failed to match
+> even STANDALONE (`lặp lại 3 lần` fell through to the generated positional repeat →
+> `loopType:literal=3`, no quantity), and a fortiori in-handler (the block-body HEAD re-parse found
+> no `-times` match to swap in). **Fix: match the verb as a SINGLE literal token (`{type:'literal',
+value: verb}`) instead of splitting on whitespace.** For the 16 single-word verb-first langs this
+> is byte-identical (one push either way); only vi changes. With it, `lặp lại 3 lần` matches
+> `repeat-vi-times` (quantity:literal=3 + loopType:literal="times"), and the in-handler HEAD re-parse
+> swaps it in — both matching en. **vi +0.0017 (the only changed lang); R0 1.000 / precision 0.9747
+> flat / R2 1.000 / parse-rate 3696/3696; ZERO drops on the other 16.** semantic 6376 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "Counted-loop HEAD patterns" gained 2 vi cases (standalone +
+> in-handler; both fail without the fix). **Remaining repeat residue:** the for-each two-sided
+> EN-phantom (`repeat for X in Y` — the EN reference itself mis-captures `in` as `event:literal`, so
+> it's two-sided and riskier — needs the EN reference fixed first), and the qu dict fix (`kutichiy`
+> ↔ `repeat`, see 2026-06-29o). The counted-loop (`times`) cluster is now closed across every
+> parsing lang except qu.
+>
 > **Update 2026-06-29o (Arc B R1 — SOV repeat-times fronted-count HEAD pattern; mean R1 0.9460 →
 > 0.9465 (+0.0005), hi/bn +0.0034 · ja/ko/tr +0.0017, ZERO regressions. Lifts the five SOV
 > laggards directly; qu excluded as a separate dict bug.)** SOV langs front the count ahead of a
