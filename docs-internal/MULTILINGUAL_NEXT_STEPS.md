@@ -29,6 +29,33 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-06-29o (Arc B R1 — SOV repeat-times fronted-count HEAD pattern; mean R1 0.9460 →
+> 0.9465 (+0.0005), hi/bn +0.0034 · ja/ko/tr +0.0017, ZERO regressions. Lifts the five SOV
+> laggards directly; qu excluded as a separate dict bug.)** SOV langs front the count ahead of a
+> clause-final verb (`on click repeat 3 times …` → ja `3 times を クリック で 繰り返し それから …`),
+> so the verb-FIRST counted-loop HEAD (#536, `{verb} [marker] {quantity} {countWord}`) can't apply.
+> Grounding (throwaway probe + tokenization dump): inside the event handler the event is stripped
+> first, so the body-clause re-parse sees the bare 4-token count phrase `{quantity} {countWord}
+{objMarker} {verb}` (ja `3 times を 繰り返し`), but the generated positional repeat mis-binds the
+> fronted count to `loopType:literal=3` and drops `quantity` (ja/ko/tr) — or produces a roleless
+> repeat node (hi/bn). **Fix: a verb-LAST SOV HEAD pattern `repeat-<lang>-times` (`repeat.ts`,
+> `repeatTimesHeadSOV`) shaped `{quantity} {countWord} {objMarker} {verb}` at priority 110 > the
+> generated 100.** The verb token matches the repeat keyword by its NORMALIZED form (`repeat`), so
+> it's robust to every conjugation/alternative; the object marker (ja `を` / ko `를` / tr `i` / hi
+> `को` / bn `কে`) and count word (`times`, bn native `বার`) come verbatim from the corpus. Result
+> matches en's `repeat{quantity:literal=3, loopType:literal="times"}` exactly: ja/ko/tr recover
+> `quantity:literal` (loopType type was already literal but VALUE was the mis-bound number 3 — now
+> corrected to "times"); hi/bn recover BOTH `quantity:literal` + `loopType:literal` (were roleless).
+> **hi 0.9065→0.9098, bn 0.9217→0.9251, ja 0.9233→0.9250, ko 0.9202→0.9219, tr 0.9257→0.9274; R0
+> 1.000 / precision 0.9747 flat / R2 1.000 / parse-rate 3696/3696.** semantic 6374 green. Guard:
+> `multilingual-roadmap-fixes.test.ts` "SOV repeat-times fronted-count HEAD" (6 cases — 5 in-handler
+> corpus + 1 standalone; all 6 fail without the fix). **qu EXCLUDED (separate dict bug):** its corpus
+> repeat verb `kutichiy` normalizes to `return`, not `repeat` (the qu profile lists `kutipay`/`muyu`),
+> so it parses to a phantom `toggle` with no repeat node — fixing it needs the qu dict corrected
+> (`kutichiy` ↔ `repeat`), a separate slice. **Remaining repeat residue:** vi two-word verb (`lặp
+lại` — the verb-finder lands mid-verb so the in-handler HEAD doesn't fire), the for-each two-sided
+> EN-phantom (`repeat for X in Y`), and the qu dict fix above.
+>
 > **Update 2026-06-29n (Arc B R1 — tr/hi/qu repeat-until-event completed via a single event fuse;
 > mean R1 0.9457 → 0.9460 (+0.0003), hi/qu/tr +0.0019, ZERO regressions. Completes the
 > repeat-until-event slice (the deferred half of 2026-06-29m).)** Grounding the 2026-06-29m

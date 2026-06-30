@@ -9008,6 +9008,68 @@ describe('Counted-loop HEAD patterns: `{verb} {quantity} times` (repeat.quantity
   });
 });
 
+describe('SOV repeat-times fronted-count HEAD (`{quantity} {countWord} {marker} {verb}`)', () => {
+  // SOV langs front the count ahead of a clause-final verb (ja `3 times を 繰り返し`),
+  // so the verb-first HEAD pattern can't apply. A verb-LAST HEAD pattern
+  // (`repeat-<lang>-times`, repeat.ts) captures quantity:literal + loopType:literal=
+  // "times", matching the en reference. Without it the generated positional repeat
+  // mis-binds the fronted count to loopType:literal=3 (ja/ko/tr) or drops it entirely
+  // (hi/bn). Inside the event handler the event is stripped first, so the body clause
+  // re-parse sees the bare 4-token count phrase and the HEAD fires.
+  function repeatRoles(node: unknown): string[] | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const rec = node as Record<string, unknown>;
+    if (rec.action === 'repeat' && rec.roles instanceof Map) {
+      return [...rec.roles.entries()].map(([k, v]) => {
+        const t =
+          v !== null && typeof v === 'object' && typeof (v as { type?: unknown }).type === 'string'
+            ? (v as { type: string }).type
+            : typeof v;
+        return `${k}:${t}`;
+      });
+    }
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const r = repeatRoles(x);
+          if (r) return r;
+        }
+      } else if (c && typeof c === 'object') {
+        const r = repeatRoles(c);
+        if (r) return r;
+      }
+    }
+    return undefined;
+  }
+
+  // Corpus repeat-times translations (`on click repeat 3 times add "<p>Line</p>" to me`).
+  // Before the fix: ja/ko/tr captured loopType:literal (the number) but NOT
+  // quantity:literal; hi/bn produced a roleless repeat node — so the quantity:literal
+  // assertion fails without the fix for all five.
+  for (const [lang, src] of [
+    ['ja', '3 times を クリック で 繰り返し それから "<p>Line</p>" を 追加 私 に'],
+    ['ko', '3 times 를 클릭 반복 그러면 "<p>Line</p>" 를 추가 나 에'],
+    ['tr', '3 times i tıklama de tekrarla sonra "<p>Line</p>" i ekle ben e'],
+    ['hi', '3 times को क्लिक पर दोहराएं फिर "<p>Line</p>" को जोड़ें मैं में'],
+    ['bn', '3 বার কে ক্লিক এ পুনরাবৃত্তি তারপর "<p>Line</p>" কে যোগ আমি তে'],
+  ] as [string, string][]) {
+    it(`[${lang}] fronted-count repeat-times captures quantity:literal + loopType:literal`, () => {
+      const roles = repeatRoles(parse(src, lang));
+      expect(roles).toBeTruthy();
+      expect(roles).toContain('quantity:literal');
+      expect(roles).toContain('loopType:literal');
+    });
+  }
+
+  // Standalone (event stripped) body clause — the HEAD fires directly.
+  it('[ja] standalone fronted-count repeat-times captures quantity:literal', () => {
+    const roles = repeatRoles(parse('3 times を 繰り返し', 'ja'));
+    expect(roles).toContain('quantity:literal');
+    expect(roles).toContain('loopType:literal');
+  });
+});
+
 describe('SOV repeat-forever loop-keyword recovery (loopType:literal="forever")', () => {
   // The verb-first SOV loop head `{repeat-verb} forever <body>` (ja `繰り返し forever
   // .pulse を 切り替え`) has its `forever` dropped by the fused SOV event pattern →
