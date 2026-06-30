@@ -9064,3 +9064,60 @@ describe('SOV repeat-forever loop-keyword recovery (loopType:literal="forever")'
     });
   }
 });
+
+describe('repeat-until-event recovery (event:literal + loopType:literal="until-event")', () => {
+  // The fused event-handler captures the repeat verb but leaves the `until-event`
+  // clause (`{event-kw} {event} {obj-marker} {until-marker}`) unconsumed → the loop
+  // defaults to loopType:reference=me AND the span breaks into phantom `event`/`until`
+  // body commands. buildEventHandler now recovers it: capture the event after the
+  // event-kw as event:literal, set loopType:literal="until-event", drop the SOV
+  // default-patient leak, and consume the span (so the phantoms can't form). Matches
+  // the en reference `repeat{event:literal, loopType:literal="until-event"}`.
+  function repeatRolesUE(node: unknown): Map<string, { type?: string }> | undefined {
+    if (!node || typeof node !== 'object') return undefined;
+    const r = node as Record<string, unknown>;
+    if (r.action === 'repeat' && r.roles instanceof Map) return r.roles as Map<string, { type?: string }>;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = r[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const m = repeatRolesUE(x);
+          if (m) return m;
+        }
+      } else if (c && typeof c === 'object') {
+        const m = repeatRolesUE(c);
+        if (m) return m;
+      }
+    }
+    return undefined;
+  }
+  function hasAct(n: unknown, act: string): boolean {
+    if (!n || typeof n !== 'object') return false;
+    const r = n as Record<string, unknown>;
+    if (r.action === act) return true;
+    return ['body', 'statements', 'thenBranch', 'elseBranch'].some(f => {
+      const c = r[f];
+      return Array.isArray(c)
+        ? c.some(x => hasAct(x, act))
+        : !!c && typeof c === 'object' && hasAct(c, act);
+    });
+  }
+  // Real corpus repeat-until-event texts (head: `on <ev> repeat until event <ev2> increment #counter wait 100ms end`).
+  for (const [lang, src] of [
+    ['ja', 'マウス押下 で 繰り返し イベント マウス解放 を まで それから #counter を 増加 それから 待つ 100ms 終わり'],
+    ['ko', '마우스다운 할 때 반복 이벤트 마우스업 를 까지 그러면 #counter 를 증가 그러면 대기 100ms 끝'],
+    ['bn', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ'],
+    ['de', 'bei mausunten wiederholen bis ereignis mausoben dann erhöhen #counter dann warten 100ms ende'],
+    ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
+  ] as [string, string][]) {
+    it(`[${lang}] repeat-until-event → event:literal + loopType:literal="until-event", no phantom event/until`, () => {
+      const node = parse(src, lang);
+      const roles = repeatRolesUE(node);
+      expect(roles).toBeTruthy();
+      expect(roles!.get('event')?.type).toBe('literal');
+      expect(roles!.get('loopType')).toMatchObject({ type: 'literal', value: 'until-event' });
+      expect(hasAct(node, 'until')).toBe(false); // phantom `until` command gone
+      expect(hasAct(node, 'increment')).toBe(true); // body survives
+    });
+  }
+});
