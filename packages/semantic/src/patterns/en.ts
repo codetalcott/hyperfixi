@@ -84,6 +84,35 @@ const swapSimpleEnglish: LanguagePattern = {
 };
 
 /**
+ * English element-swap: "swap {destination} with {patient}" (`swap #a with #b`).
+ *
+ * The method-less, `with`-marked shape the i18n transformer emits for an element
+ * swap. Without this, `swap-en-handcrafted` (`swap {method} {destination}`) greedily
+ * binds `#a`→method and the bare word `with`→destination, then DROPS `#b` — a broken
+ * en REFERENCE parse the translations (de/es/ja/ko all parse `{destination, patient}`
+ * correctly) are penalized against in R1. This captures `destination`+`patient` to
+ * match the schema (and the translations). Priority 120 > the method form's 110, and
+ * the required `with` literal means it only fires on the element-swap shape — the
+ * `swap innerHTML #target` / `swap delete #item` forms (no `with`) still take 110.
+ */
+const swapElementEnglish: LanguagePattern = {
+  id: 'swap-en-element',
+  language: 'en',
+  command: 'swap',
+  priority: 120,
+  template: {
+    format: 'swap {destination} with {patient}',
+    tokens: [
+      { type: 'literal', value: 'swap' },
+      { type: 'role', role: 'destination' },
+      { type: 'literal', value: 'with' },
+      { type: 'role', role: 'patient' },
+    ],
+  },
+  extraction: {},
+};
+
+/**
  * English: "repeat until event pointerup from document"
  */
 const repeatUntilEventFromEnglish: LanguagePattern = {
@@ -347,6 +376,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   patterns.push(
     fetchWithResponseTypeEnglish,
     fetchSimpleEnglish,
+    swapElementEnglish,
     swapSimpleEnglish,
     repeatUntilEventFromEnglish,
     repeatUntilEventEnglish,
