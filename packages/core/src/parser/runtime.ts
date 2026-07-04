@@ -1455,8 +1455,20 @@ async function evaluatePropertyAccess(
   node: PropertyAccessNode,
   context: ExecutionContext
 ): Promise<any> {
-  const object = await evaluateAST(node.object, context);
-  return resolveNamedProperty(object, node.property, context);
+  let object = await evaluateAST(node.object, context);
+  // The semantic→AST builder FLATTENS a multi-segment chain
+  // (`event.detail.message`) into a single dotted `property` string
+  // ("detail.message") rather than nesting `propertyAccess` nodes — so a naive
+  // `object["detail.message"]` lookup misses. Traverse each dot segment. A
+  // single-segment property (the common case) splits to `[property]`, i.e. one
+  // hop — unchanged behavior. (The core parser emits nested `memberExpression`
+  // for dotted access, so only semantic-sourced nodes reach here; DOM/CSS
+  // property names never contain a literal dot, so splitting is safe.)
+  for (const segment of String(node.property).split('.')) {
+    if (object == null) return undefined;
+    object = await resolveNamedProperty(object, segment, context);
+  }
+  return object;
 }
 
 /**
