@@ -9457,3 +9457,37 @@ describe('increment/decrement by-marker quantity (es por, fr par, pt por, de um)
     expect(ast.args?.[0]?.value).toBe('#counter');
   });
 });
+
+describe('SOV body-clause marker lookup: event markers must not clobber value roles', () => {
+  // append-content (`append "<li>Item</li>" to #list`) reaches the Stage-3 SOV
+  // fallback (no generated pattern matches the patient-first corpus emission),
+  // where parseSOVClauseByVerbAnchoring binds roles via the profile's marker →
+  // role lookup. The `event` roleMarker reuses a value role's particle in most
+  // SOV profiles (ja を, tr i, bn তে, ko 을) and used to CLOBBER it, so the
+  // fronted content bound as a bogus `event` role and the append executed with
+  // no content (ja/tr runtime "append requires content", bn silent no-op). ko
+  // survived only because its corpus form uses the 를 ALTERNATIVE, which never
+  // clobbered. Event markers now only fill gaps in the body-clause lookup —
+  // the event phrase is already stripped before that lookup is consulted.
+  const cases: Array<[string, string, string]> = [
+    ['ja', '"<li>Item</li>" を クリック で 末尾追加 #list に', 'clobbered patient を'],
+    ['tr', '"<li>Item</li>" i tıklama de iliştir #list e', 'clobbered patient i'],
+    ['bn', '"<li>Item</li>" কে ক্লিক এ জুড়ুন #list তে', 'clobbered destination তে'],
+    ['ko', '"<li>Item</li>" 를 클릭 할 때 덧붙이다 #list 에', 'reference (already worked)'],
+  ];
+  for (const [lang, input, why] of cases) {
+    it(`[${lang}] append-content captures content + destination (${why})`, () => {
+      const node = parse(input, lang) as {
+        kind: string;
+        body?: Array<{ action?: string; roles?: Map<string, { type: string; value: unknown }> }>;
+      };
+      expect(node.kind).toBe('event-handler');
+      const append = node.body?.find(c => c.action === 'append');
+      expect(append).toBeTruthy();
+      expect(append!.roles?.get('patient')?.value).toBe('<li>Item</li>');
+      expect(append!.roles?.get('destination')?.value).toBe('#list');
+      // The bogus `event` role must be gone from the body command.
+      expect(append!.roles?.has('event')).toBe(false);
+    });
+  }
+});
