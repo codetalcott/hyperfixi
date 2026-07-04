@@ -29,6 +29,71 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-07-04 (R2 EXECUTION-COVERAGE SWEEP — the first systematic pass at "do the faithful
+> parses actually EXECUTE correctly?" Now that R0 recall is saturated (fid 1.0, both bands 0), R2 is
+> the un-mined dimension: only ~27% of the corpus was behaviorally verified. Three increments landed
+> — one coverage wave + TWO real runtime bugs R0/R1 structurally cannot see. Plus a grounded map of
+> the remaining R2 gaps.)** A discovery probe executed every non-subset, non-async pattern's **en**
+> reference in jsdom, then scored all 23 translations against the en effect signature. Buckets:
+> add-ready (en runs + all langs match), R2-finding (en runs, some langs diverge), ineligible (en
+> errors/empty). Landed:
+>
+> 1. **Wave 9 — +3 coverage patterns (#554; subset 42 → 45, R2 stays 1.0).** `chained-access-possessive-dot`
+>    (`set my.parentElement.style.display to …`), `hide-with-transition` / `show-with-transition`
+>    (`hide me with *opacity` — SYNCHRONOUS strategies despite the name, no timer). All three already
+>    execute faithfully in every language; pure coverage. The base fixture's clean add-ready fruit is
+>    now EXHAUSTED (the probe found exactly these three).
+> 2. **`increment/decrement … by N` runtime fix (#555).** R2-found: `increment #x by 10` applied **+1**
+>    whenever the node came from the SEMANTIC parser. The AST carried the correct `by`/`quantity` value
+>    (so R0/R1 were blind — it's an EXECUTION bug), and the drop was UNIFORM across languages (so R2's
+>    translation-vs-en scoring was blind too — invisible until the en reference itself was checked for
+>    absolute correctness). `parseNumericTargetInput` read the amount only from positional `args` (the
+>    traditional-parser path); the semantic parser threads it through `modifiers.by`. Fix reads the
+>    modifier. Restores correct amounts for **en + 12 languages**.
+> 3. **Nested property-access runtime fix (#556).** R2-found: `put event.detail.message into #x` wrote
+>    EMPTY text — a two-deep access on the event object resolved to undefined (`event.detail` worked;
+>    `event.detail.message` did not). This made the curated `announce-screen-reader` cell a **FALSE R2
+>    pass** (en + all 23 langs uniformly empty). Root cause: the semantic→AST builder FLATTENS a
+>    multi-segment chain into ONE `propertyAccess` whose `property` is the dotted string
+>    `"detail.message"`; `evaluatePropertyAccess` did a single `event["detail.message"]` lookup. Fix
+>    splits on `.` and walks each segment. `announce-screen-reader` is now a TRUE pass in all 23 langs.
+>
+> **The R2 methodology lesson these two bugs teach:** R0 (action-set recall), R1 (role recall), and
+> R2 (translation-vs-en effects) ALL score translations against the **en reference**. A bug that (a)
+> lives below the parse (execution-only) AND (b) is uniform across languages is invisible to every one
+> of them — the en reference is itself wrong, so every "faithful" translation faithfully reproduces the
+> wrong effect. Catching these needs an **absolute** check of the en reference's DOM effect, which the
+> R2 coverage sweep is the first thing to do. Expect more of this class as R2 coverage grows.
+>
+> **Remaining R2 gaps (grounded; each its own increment — NOT clean coverage adds):**
+>
+> - **`increment-by-amount` 11-lang semantic gap** (would let it join the subset). My #555 runtime fix
+>   made en + 12 langs correct, but EXPOSED that 11 langs don't carry `by N` into `modifiers.by` at
+>   parse time — TWO causes: a **"by"-marker miss** in es (`por`)/de (`um`)/fr/pt (the amount is
+>   stranded → quantity defaults to 1; es even mis-captures `quantity:1`), and an **SOV trailing-amount
+>   drop** in ja/ko/hi/bn/tr/qu (the post-verb `10` isn't captured). A semantic command-schema / marker
+>   arc.
+> - **`append-content` SOV divergence.** `append "<li>…</li>" to #list` drops the fronted content
+>   patient in ja/tr (`append requires content` runtime error) and bn (silent no-op); ko/hi capture it
+>   and work. A per-language SOV content-role-capture fix.
+> - **`set`-target runtime rejections (×5).** `set command target must be a string or object literal`
+>   on heterogeneous targets: `set the *--primary-color of #theme …` (CSS custom property via
+>   of-possessive — ties to the #550 arc), `set previous <input/>.value …` (positional-selector
+>   target), the trailing `set #list.innerHTML to $html` in `template-literal-list-build` (the
+>   block-continuation arc), plus `beep!`/`breakpoint` debug forms. Not one root cause.
+> - **`default-value`** (`on load default my @data-count …`) executes to no effect — the `default`
+>   command / `on load` init path is a no-op in the harness; needs grounding.
+>
+> **Harness/workflow notes.** (1) The effect-signature keys elements by document-order index, which is
+> fragile for innerHTML-changing patterns (element count shifts the keys) — `template-literal-interpolation`
+> is a poor R2 fixture for this reason (a messy `text[${}]` en signature). A stable keying would unlock
+> that class. (2) **After editing `core` (or any upstream package), do the FULL ordered rebuild
+> (`test:multilingual:build-deps`) before `populate` + gate** — a partial rebuild left the DB in a
+> transitional state that produced a broken zh `toggle-visibility` translation and a phantom gate
+> failure (isolated: the same divergence appeared with the change reverted, and a clean full rebuild
+> restored the correct translation). The CLAUDE.md "green suite against a stale dist is vacuously green"
+> hazard applies to `populate`, not just vitest.
+
 > **Update 2026-06-30e (Arc B R1 — `set-color-variable` `of`-possessive destination: GROUNDED, NOT a
 > clean slice — a multi-front ARC with per-marker conflict risk. NO code change; precise root-cause map
 > for a dedicated session.)** The leverage map's item 3(a) (`set.destination:property-path` on
