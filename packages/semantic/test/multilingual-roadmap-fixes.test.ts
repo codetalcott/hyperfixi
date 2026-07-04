@@ -9491,3 +9491,73 @@ describe('SOV body-clause marker lookup: event markers must not clobber value ro
     });
   }
 });
+
+describe('SOV/th trailing bare quantity reclaim (increment-by-amount R2 blocker)', () => {
+  // The i18n transformer renders `increment #score by 10` with the amount AFTER
+  // the verb, bare (no marker), in the SOV languages and th — but every fused
+  // event pattern ends at the verb (SOV) or the primary role (th VSO), so the
+  // amount was left unconsumed and silently dropped: quantity defaulted to 1.
+  // The fused-capture re-parse can't reclaim it in SOV (the fronted patient is
+  // outside the [verb..boundary] slice, so the superset guard rejects the
+  // re-parse — the qu safety rail). buildEventHandler now reclaims a trailing
+  // bare NUMBER into the schema's absent optional `quantity` role. Marker langs
+  // (es/fr/pt/de, #558) and positional SVO langs (it/zh) capture it upstream
+  // and never reach the reclaim. Corpus forms from a fresh populate.
+  const cases: Array<[string, string]> = [
+    ['#score を クリック で 増加 10', 'ja'],
+    ['#score 를 클릭 할 때 증가 10', 'ko'],
+    ['#score i tıklama de artır 10', 'tr'],
+    ['#score কে ক্লিক এ বৃদ্ধি 10', 'bn'],
+    ['#score को क्लिक पर बढ़ाएं 10', 'hi'],
+    ['#score ta ñitiy pi yapachiy 10', 'qu'],
+    ['เมื่อ คลิก เพิ่มค่า #score 10', 'th'],
+  ];
+  for (const [input, lang] of cases) {
+    it(`[${lang}] captures the trailing bare amount (10) instead of defaulting to 1`, () => {
+      const node = parse(input, lang) as {
+        kind: string;
+        body?: Array<{ action?: string; roles?: Map<string, { value?: unknown }> }>;
+      };
+      expect(node.kind).toBe('event-handler');
+      const inc = node.body?.find(c => c.action === 'increment');
+      expect(inc).toBeTruthy();
+      expect(inc!.roles?.get('patient')?.value).toBe('#score');
+      expect(inc!.roles?.get('quantity')?.value).toBe(10);
+    });
+  }
+
+  it('[ja] the amount-less form still parses without a phantom quantity', () => {
+    const node = parse('#score を クリック で 増加', 'ja') as {
+      body?: Array<{ action?: string; roles?: Map<string, unknown> }>;
+    };
+    const inc = node.body?.find(c => c.action === 'increment');
+    expect(inc).toBeTruthy();
+    expect(inc!.roles?.has('quantity')).toBe(false);
+  });
+
+  it('[ja] a trailing then-chain command is not swallowed as a quantity', () => {
+    // `increment #score then wait 200ms` shape: the token after the verb is a
+    // then-keyword, not a number — the reclaim must not fire and the chain must
+    // survive as a second body command.
+    const node = parse('#score を クリック で 増加 それから 200ms 待つ', 'ja') as {
+      body?: Array<{
+        action?: string;
+        statements?: Array<{ action?: string }>;
+        roles?: Map<string, unknown>;
+      }>;
+    };
+    const actions: string[] = [];
+    for (const stmt of node.body ?? []) {
+      if (stmt.action) actions.push(stmt.action);
+      for (const s of stmt.statements ?? []) if (s.action) actions.push(s.action);
+    }
+    expect(actions).toContain('increment');
+    expect(actions).toContain('wait');
+    const inc = (node.body ?? [])
+      .flatMap(s => [s, ...(s.statements ?? [])])
+      .find(c => (c as { action?: string }).action === 'increment') as
+      | { roles?: Map<string, unknown> }
+      | undefined;
+    expect(inc?.roles?.has('quantity')).toBe(false);
+  });
+});

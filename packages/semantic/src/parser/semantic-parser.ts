@@ -1168,6 +1168,48 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
 
+      // Trailing BARE-literal quantity reclaim. The i18n transformer renders
+      // `increment #score by 10` with the amount AFTER the verb, bare (ja
+      // `#score を クリック で 増加 10`, th `เมื่อ คลิก เพิ่มค่า #score 10`), but every
+      // fused event pattern ends at the verb (SOV) or the primary role (th
+      // VSO), so the amount is left unconsumed and silently drops — quantity
+      // defaults to 1 (the R2 blocker on increment-by-amount in the SOV 6 +
+      // th). The re-parse swap above cannot reclaim it in SOV: the fronted
+      // patient sits OUTSIDE the [verb..boundary] slice, so the superset guard
+      // rejects the re-parse (by design — the qu safety rail). Reclaim the
+      // amount directly: when the schema declares an optional `quantity` role
+      // the fused capture missed and the very next unconsumed token is a bare
+      // number, capture it and consume the token. Precision-safe: gated to
+      // non-block actions (only increment/decrement carry an optional
+      // quantity outside `repeat`, whose counted-loop head has its own path
+      // above), to a NUMERIC next token (a then-keyword, `end`, selector, or
+      // duration like `200ms` never matches), and to an ABSENT quantity (the
+      // marker langs es/fr/pt/de and positional it/zh capture it upstream).
+      if (!BLOCK_BODY_ACTIONS.has(actionName)) {
+        const qNode = commandNode as CommandSemanticNode;
+        const hasOptionalQuantity = getSchema(actionName as ActionType)?.roles.some(
+          r => r.role === 'quantity' && !r.required
+        );
+        if (hasOptionalQuantity && !qNode.roles.has('quantity')) {
+          const trailing = tokens.peek();
+          if (trailing && /^-?\d+(\.\d+)?$/.test(trailing.value)) {
+            commandNode = createCommandNode(
+              actionName as ActionType,
+              {
+                ...(Object.fromEntries(qNode.roles) as Record<string, SemanticValue>),
+                quantity: {
+                  type: 'literal',
+                  value: parseFloat(trailing.value),
+                  dataType: 'number',
+                },
+              },
+              qNode.metadata
+            );
+            tokens.advance();
+          }
+        }
+      }
+
       // Check if pattern has continuation marker (then-chains).
       const continuesValue = match.captured.get('continues');
       const hasContinuesMarker =
