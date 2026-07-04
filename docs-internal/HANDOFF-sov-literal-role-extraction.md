@@ -1,5 +1,14 @@
 # Handoff — SOV literal-role extraction (the shared R2 blocker)
 
+> ✅ **ARC COMPLETE (2026-07-04, same-day): #560 (append event-marker clobber) · #561 (trailing
+> bare-quantity reclaim, SOV 6 + th) · #562 (R2 wave 10 — both join the subset, 45 → 47, R2 stays
+> 1.0 in all 23 langs).** See the 2026-07-04b update in
+> [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md) for the landed root causes — notably: the
+> ko/ja divergence was the predicted wedge (event roleMarker PRIMARY clobbering value-role markers;
+> ko survived via the `를` alternative), the two-sided increment question resolved as option (c)
+> generic extraction, and th shared the fused-capture root cause (not a tokenizer issue). Kept for
+> the grounding-methodology record.
+
 > **Written 2026-07-04**, after the R2 execution-coverage sweep (PRs #554–#558).
 > Entry context: [MULTILINGUAL_NEXT_STEPS.md](MULTILINGUAL_NEXT_STEPS.md) top-of-file
 > update dated 2026-07-04 ("R2 EXECUTION-COVERAGE SWEEP"). Read that first for the
