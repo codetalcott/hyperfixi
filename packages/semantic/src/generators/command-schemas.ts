@@ -1023,7 +1023,12 @@ export const incrementSchema: CommandSchema = {
       default: { type: 'literal', value: 1, dataType: 'number' },
       svoPosition: 2,
       sovPosition: 2,
-      markerOverride: { en: 'by' }, // "increment :count by 5"
+      // "increment :count by 5". The by-marker langs render the amount with a
+      // preposition the quantity role must recognize, else it strands and the
+      // amount defaults to 1 (surfaced by the R2 sweep on increment-by-amount).
+      // Space-marked SVO langs (it/zh/…) render the amount BARE and capture it
+      // positionally, so they need no marker.
+      markerOverride: { en: 'by', es: 'por', pt: 'por', fr: 'par', de: 'um' },
     },
   ],
 };
@@ -1053,7 +1058,8 @@ export const decrementSchema: CommandSchema = {
       default: { type: 'literal', value: 1, dataType: 'number' },
       svoPosition: 2,
       sovPosition: 2,
-      markerOverride: { en: 'by' }, // "decrement :count by 5"
+      // "decrement :count by 5" — same by-marker recognition as increment.
+      markerOverride: { en: 'by', es: 'por', pt: 'por', fr: 'par', de: 'um' },
     },
   ],
 };
