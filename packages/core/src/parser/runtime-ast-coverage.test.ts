@@ -177,6 +177,23 @@ describe('AST evaluator coverage', () => {
       ctx.locals.set('nada', null);
       expect(await evaluateAST(paNode('nada', 'x') as any, ctx)).toBeUndefined();
     });
+
+    it('traverses a flattened multi-segment chain (event.detail.message)', async () => {
+      // The semantic builder emits `event.detail.message` as a single
+      // propertyAccess whose `property` is the dotted string "detail.message"
+      // (not nested nodes). Each segment must be walked. Regression: R2 found
+      // `put event.detail.message …` writing empty text (a two-deep access on
+      // the event object silently resolved to undefined).
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      ctx.locals.set('evt', { detail: { message: 'hello' } });
+      expect(await evaluateAST(paNode('evt', 'detail.message') as any, ctx)).toBe('hello');
+    });
+
+    it('a broken link mid-chain returns undefined, not a throw', async () => {
+      const ctx = { ...createContext(), registry: FULL_REGISTRY } as any;
+      ctx.locals.set('evt', { detail: null });
+      expect(await evaluateAST(paNode('evt', 'detail.message') as any, ctx)).toBeUndefined();
+    });
   });
 
   // The semantic→AST builder emits the SURFACE form as the contextType
