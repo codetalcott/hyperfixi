@@ -170,6 +170,24 @@ export const EXECUTION_SUBSET: readonly string[] = [
   // before/after #btn (matching en); R2 stays 1.0.
   'put-before',
   'put-after',
+  // Expansion wave 9 (R2-coverage sweep): a fresh discovery probe (every
+  // non-subset, non-async pattern's en reference executed against the fixture,
+  // then all 23 translations checked against the en signature) surfaced three
+  // patterns whose en reference produces a clean, deterministic, non-empty
+  // effect AND that already match in ALL 23 languages — pure coverage, no
+  // parser/dict fix needed:
+  //  - chained-access-possessive-dot: `set my.parentElement.style.display to
+  //    "none"` — a synchronous chained-member write on the parent (.card).
+  //  - hide-with-transition / show-with-transition: `hide me with *opacity` /
+  //    `show #modal with *opacity`. Despite the names these are SYNCHRONOUS
+  //    hide/show STRATEGIES (the runtime writes display + a data-original-display
+  //    marker on hide, adds the visibility class on show) — no timer, no
+  //    animation frame, so the signature is deterministic (verified across two
+  //    back-to-back runs). Distinct from the async `transition … over Nms`
+  //    family the subset still excludes.
+  'chained-access-possessive-dot',
+  'hide-with-transition',
+  'show-with-transition',
 ];
 
 /**

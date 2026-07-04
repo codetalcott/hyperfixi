@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 42 curated patterns', () => {
+  it('contains exactly the 45 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -111,6 +111,14 @@ describe('R2 execution subset (lock)', () => {
         // across SVO/SOV (#516) + handcrafted VSO put-event patterns for ar/tl/uk.
         'put-before',
         'put-after',
+        // Wave 9 (R2-coverage sweep): three patterns whose en reference runs with
+        // a clean deterministic signature and already match in all 23 languages —
+        // pure coverage, no parser/dict fix. See the wave-9 note in
+        // execution-validator.ts (the *opacity hide/show strategies are
+        // synchronous, not the excluded async transition family).
+        'chained-access-possessive-dot',
+        'hide-with-transition',
+        'show-with-transition',
       ].sort()
     );
   });
@@ -316,6 +324,36 @@ describe('R2 execution validator (lock)', () => {
       const ar = await validator.execute(id, arCode, 'ar');
       expect(ar.error, `ar ${id} errored: ${ar.error}`).toBeUndefined();
       expect(ar.effects, `ar ${id} must reproduce en`).toEqual(en.effects);
+    }
+  });
+
+  it('wave-9 en references execute with their locked signatures', async () => {
+    // The three wave-9 additions. Each en reference must produce a non-empty,
+    // deterministic signature against the existing fixture. The `*opacity`
+    // hide/show STRATEGIES are synchronous (no timer): hide writes display:none
+    // + a data-original-display marker on #btn; show adds the visibility class
+    // on #modal. chained-access-possessive-dot writes the parent (.card) display.
+    const cases: ReadonlyArray<[string, string, string[]]> = [
+      [
+        'chained-access-possessive-dot',
+        'on click set my.parentElement.style.display to "none"',
+        ['Δdiv[0] cls[card] attr[] style[display: none;] text[]'],
+      ],
+      [
+        'hide-with-transition',
+        'on click hide me with *opacity',
+        ['Δ#btn cls[] attr[data-original-display=,id=btn] style[display: none;] text[Click]'],
+      ],
+      [
+        'show-with-transition',
+        'on click show #modal with *opacity',
+        ['Δ#modal cls[show] attr[id=modal] style[] text[]'],
+      ],
+    ];
+    for (const [id, code, expected] of cases) {
+      const res = await validator.execute(id, code, 'en');
+      expect(res.error, `${id} errored: ${res.error}`).toBeUndefined();
+      expect(res.effects, `${id} signature`).toEqual(expected);
     }
   });
 
