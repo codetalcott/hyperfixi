@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 45 curated patterns', () => {
+  it('contains exactly the 47 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -119,6 +119,14 @@ describe('R2 execution subset (lock)', () => {
         'chained-access-possessive-dot',
         'hide-with-transition',
         'show-with-transition',
+        // Wave 10 (SOV literal-role-extraction arc, PRs #560/#561): the two R2
+        // blockers — the fronted append content literal (bogus `event` role in
+        // the body-clause marker lookup) and the trailing bare increment amount
+        // (unconsumed by every fused event pattern, defaulted to 1) — now
+        // captured in all 23 languages. See the wave-10 note in
+        // execution-validator.ts.
+        'append-content',
+        'increment-by-amount',
       ].sort()
     );
   });
@@ -354,6 +362,37 @@ describe('R2 execution validator (lock)', () => {
       const res = await validator.execute(id, code, 'en');
       expect(res.error, `${id} errored: ${res.error}`).toBeUndefined();
       expect(res.effects, `${id} signature`).toEqual(expected);
+    }
+  });
+
+  it('wave-10 en references execute with their locked signatures; SOV translations match', async () => {
+    // The two SOV literal-role-extraction blockers (PRs #560/#561). The en
+    // signatures anchor on the wave-10 fixture elements (appended last, so all
+    // pre-existing document-order indices are preserved). The ja translations
+    // lock the exact failure class each fix closed: append's fronted content
+    // literal (was a bogus `event` role → runtime "append requires content")
+    // and increment's trailing bare amount (was dropped → +1 instead of +10).
+    const cases: ReadonlyArray<[string, string, string, string]> = [
+      [
+        'append-content',
+        'on click append "<li>Item</li>" to #list',
+        '"<li>Item</li>" を クリック で 末尾追加 #list に',
+        'text[Item]',
+      ],
+      [
+        'increment-by-amount',
+        'on click increment #score by 10',
+        '#score を クリック で 増加 10',
+        'text[10]',
+      ],
+    ];
+    for (const [id, enCode, jaCode, marker] of cases) {
+      const en = await validator.execute(id, enCode, 'en');
+      expect(en.error, `en ${id} errored: ${en.error}`).toBeUndefined();
+      expect(en.effects.join(), `en ${id} signature must carry ${marker}`).toContain(marker);
+      const ja = await validator.execute(id, jaCode, 'ja');
+      expect(ja.error, `ja ${id} errored: ${ja.error}`).toBeUndefined();
+      expect(ja.effects, `ja ${id} must reproduce en`).toEqual(en.effects);
     }
   });
 
