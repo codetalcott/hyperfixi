@@ -1866,7 +1866,20 @@ export class SemanticParserImpl implements ISemanticParser {
     const lookup = new Map<string, string>();
     for (const [role, marker] of Object.entries(profile.roleMarkers)) {
       if (!marker) continue;
-      lookup.set(marker.primary, role);
+      // The `event` role reuses a value role's particle in most SOV profiles
+      // (ja event を = patient を, bn event তে = destination তে, tr event i =
+      // patient i, ko event 을 = patient 을). This lookup only feeds BODY-clause
+      // role extraction (parseSOVClauseByVerbAnchoring), where the event phrase
+      // has already been stripped — so letting `event` clobber a value role's
+      // marker mis-labels the fronted value as `event` and the role is dropped
+      // downstream (ja/tr append-content "append requires content", bn silent
+      // no-op; ko survived only because its corpus form uses the 를 ALTERNATIVE,
+      // which never clobbered). Event markers may only fill gaps (qu `pi` keeps
+      // its entry — no collision — preserving the not-a-verb shield).
+      const overwrite = role !== 'event';
+      if (overwrite || !lookup.has(marker.primary)) {
+        lookup.set(marker.primary, role);
+      }
       if (marker.alternatives) {
         for (const alt of marker.alternatives) {
           // Avoid overwriting more specific roles with generic ones
