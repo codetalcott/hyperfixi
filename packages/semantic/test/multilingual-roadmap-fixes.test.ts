@@ -9425,3 +9425,35 @@ describe('en `for` reference: no redundant loopType role (for.loopType R1)', () 
     });
   }
 });
+
+describe('increment/decrement by-marker quantity (es por, fr par, pt por, de um)', () => {
+  // The R2 execution sweep found `increment #x by N` applying +1, not +N, in the
+  // by-marker langs: they render the amount with a preposition the quantity role
+  // must recognize, else it strands and defaults to 1. es/pt `por`, fr `par`
+  // added to the increment/decrement schema quantity markerOverride; de uses the
+  // hand-crafted increment-de-with-quantity (`um`, since de takes the
+  // increment-de-full path the schema markerOverride can't reach). Space-marked
+  // SVO langs (it/zh) render the amount BARE and already capture it positionally.
+  // buildAST surfaces the captured amount as the `by` modifier.
+  const cases: Array<[string, string]> = [
+    ['incrementar #score por 10', 'es'],
+    ['incrémenter #score par 10', 'fr'],
+    ['incrementar #score por 10', 'pt'],
+    ['erhöhe #score um 10', 'de'],
+  ];
+  for (const [input, lang] of cases) {
+    it(`[${lang}] captures the by-amount (10) instead of defaulting to 1`, () => {
+      const node = parse(input, lang);
+      expect(node.action).toBe('increment');
+      const { ast } = buildAST(node) as { ast: { modifiers?: { by?: { value?: unknown } } } };
+      expect(ast.modifiers?.by?.value).toBe(10);
+    });
+  }
+
+  it('[de] the patient-only form (no amount) still parses without the quantity pattern', () => {
+    const node = parse('erhöhe #counter', 'de');
+    expect(node.action).toBe('increment');
+    const { ast } = buildAST(node) as { ast: { args?: Array<{ value?: unknown }> } };
+    expect(ast.args?.[0]?.value).toBe('#counter');
+  });
+});

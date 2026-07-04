@@ -73,7 +73,31 @@ function getIncrementPatternsBn(): LanguagePattern[] {
 }
 
 function getIncrementPatternsDe(): LanguagePattern[] {
+  const verbAlternatives = ['erhoehe', 'erhöhen', 'inkrementiere', 'inkrementieren', 'increment'];
   return [
+    // With quantity: erhöhe :counter um 5 — the by-marker langs need an explicit
+    // pattern because de uses the hand-crafted `increment-de-full` (the schema
+    // markerOverride reaches only the generated es/fr/pt patterns). `um` marks
+    // the amount; priority 105 > 100 so it wins when the amount is present.
+    {
+      id: 'increment-de-with-quantity',
+      language: 'de',
+      command: 'increment',
+      priority: 105,
+      template: {
+        format: 'erhöhe {patient} um {quantity}',
+        tokens: [
+          { type: 'literal', value: 'erhöhe', alternatives: verbAlternatives },
+          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'literal', value: 'um' },
+          { type: 'role', role: 'quantity' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        quantity: { marker: 'um', position: 3 },
+      },
+    },
     {
       id: 'increment-de-full',
       language: 'de',
@@ -82,11 +106,7 @@ function getIncrementPatternsDe(): LanguagePattern[] {
       template: {
         format: 'erhöhe {patient}',
         tokens: [
-          {
-            type: 'literal',
-            value: 'erhöhe',
-            alternatives: ['erhoehe', 'erhöhen', 'inkrementiere', 'inkrementieren', 'increment'],
-          },
+          { type: 'literal', value: 'erhöhe', alternatives: verbAlternatives },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
         ],
       },
