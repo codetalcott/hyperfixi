@@ -133,6 +133,24 @@ export async function parseNumericTargetInput(
     }
   }
 
+  // The semantic parser carries `by <amount>` as a `by` MODIFIER, whereas the
+  // traditional parser threads it through a positional arg (handled by the loop
+  // above). Read the modifier too so `increment #x by 10` applies 10 — not the
+  // default 1 — regardless of which parser produced the node. (Uncaught until
+  // the R2 execution sweep: every language uniformly incremented by 1.)
+  const byModifier = raw.modifiers?.by;
+  if (byModifier) {
+    const byValue = (byModifier as { value?: unknown }).value;
+    if (getNodeType(byModifier) === 'literal' && typeof byValue === 'number') {
+      amount = byValue;
+    } else if (getNodeType(byModifier) !== 'literal') {
+      const evaluated = await evaluator.evaluate(byModifier, context);
+      if (typeof evaluated === 'number') {
+        amount = evaluated;
+      }
+    }
+  }
+
   return {
     target,
     amount,

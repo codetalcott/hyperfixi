@@ -63,6 +63,36 @@ describe('numeric-target-parser', () => {
       expect(result.amount).toBe(5);
     });
 
+    it('should read "by <amount>" from a `by` modifier (semantic-parser path)', async () => {
+      // The semantic parser threads `by 10` through modifiers.by, not a
+      // positional arg. Without reading the modifier the amount silently
+      // defaulted to 1 (surfaced by the R2 execution sweep — every language
+      // incremented #score by 1 instead of 10).
+      const raw: NumericTargetRawInput = {
+        args: [{ type: 'selector', value: '#score' } as any],
+        modifiers: { by: { type: 'literal', value: 10 } as any },
+      };
+
+      const result = await parseNumericTargetInput(raw, mockEvaluator, mockContext, 'increment');
+
+      expect(result.target).toBe('#score');
+      expect(result.amount).toBe(10);
+    });
+
+    it('should evaluate a non-literal `by` modifier', async () => {
+      const evaluator = {
+        evaluate: async () => 7,
+      } as unknown as ExpressionEvaluator;
+      const raw: NumericTargetRawInput = {
+        args: [{ type: 'selector', value: '#score' } as any],
+        modifiers: { by: { type: 'variable', name: 'step' } as any },
+      };
+
+      const result = await parseNumericTargetInput(raw, evaluator, mockContext, 'increment');
+
+      expect(result.amount).toBe(7);
+    });
+
     it('should detect global scope from args', async () => {
       const raw: NumericTargetRawInput = {
         args: [
