@@ -9,28 +9,65 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-05 baseline · post #573 · `browser-priority`)
+## Where we are (2026-07-05 baseline · post #577 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
-(its `timestamp` + `commit` fields stamp each regen — currently
-`2026-07-05T15:43Z`). 24 langs × 154 patterns = 3696.
+(its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                  | Notes                                                                           |
-| ------------------------------ | ---------------------- | ------------------------------------------------------------------------------- |
-| parse rate                     | **3696 / 3696 (100%)** | zero hard fails (`tr window-resize` cleared)                                    |
-| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                               |
-| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                               |
-| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                               |
-| avgFidelity (R0-recall)        | **1.000**              | saturated                                                                       |
-| avgPrecision (R0 trust floor)  | **0.976**              | worst: bn 0.938 · hi 0.941 · tr 0.952 · qu 0.953                                |
-| avgRoleFidelity (R1)           | **0.977**              | was 0.837 on 2026-06-21; worst: hi/qu 0.949 · ko 0.954 · tr/ja 0.959 · bn 0.961 |
-| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                       |
+| Signal                         | Value                  | Notes                                                                    |
+| ------------------------------ | ---------------------- | ------------------------------------------------------------------------ |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                                 |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                        |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                        |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                        |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                                |
+| avgPrecision (R0 trust floor)  | **0.984**              | #577 transition drill: 0.976 → 0.984, every language up                  |
+| avgRoleFidelity (R1)           | **0.977**              | was 0.837 on 2026-06-21; #577 enriched the en reference (see note below) |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.** R1 remains the
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
+
+> **Update 2026-07-05c (SESSION 3: if.condition en-noise + the transition precision
+> drill — #576 / #577; avgPrecision 0.976 → 0.984, every language up; probe mean R1
+> 0.9771 → 0.9781 (#576) → 0.9768 (#577, reference-enrichment dip — see below); gate
+> green throughout, invariants all holding.)**
+>
+> - **#576 — mid-clause if fold (if.condition ×14 en-noise).** parseClause now
+>   mirrors the fused-body walker's fold hook: a flat-`if` matchBest result rewinds
+>   and folds the whole `if … end` block via tryParseConditionalBlock, so the
+>   condition captures as a full expression instead of truncating to its first token
+>   (`if result is false` → `condition:reference="result"` was the en reference's
+>   noise; translations were right all along). Collateral: focus-trap ko/qu,
+>   behavior-removable js.patient ×6.
+> - **#577 — transition family alignment (spurious ×66 → ×6, the largest precision
+>   family, drilled for the first time).** The family was INVERTED: the "spurious"
+>   languages parsed correctly; the en reference (and 8 more languages) dropped the
+>   command. Five aligned fixes: schema patient admits expression+selector; goal
+>   markerOverride table aligned to the i18n-rendered markers (11 languages);
+>   sw `mpito` profile alternative; zh particle extractor now defers to longer
+>   profile keywords (`过渡` was split by the aspect-particle `过` — cross-extractor
+>   longest-match, a general fix); th/qu dict realignment to profile primaries
+>   (เปลี่ยนผ่าน / pasay — the #569 precedent); #561-sibling trailing TIME-literal
+>   reclaim for the SOV duration. 17 languages at full en role parity on the
+>   transition patterns; zero-lossy verified action-level in all 24.
+> - **R1-mean mechanics worth internalizing:** when a drill enriches the EN
+>   reference (en now parses transition everywhere), mean R1 _dips_ until the
+>   SOV tail matches the new entries — 0.9781 → 0.9768 here while precision
+>   jumped +0.0076. Read precision and R1 together before judging a drill.
+> - **Learned constraint (do not repeat):** making `transition.goal` optional to
+>   catch the goal-less slide-toggle form clobbers goal+duration capture in every
+>   marker language — the optional marker group lets the bare value re-bind by
+>   particle metadata. The goal-less form stays residue.
+> - **New residue from the drill:** slide-toggle goal-less spurious ×6 (SOV six);
+>   transition.duration hi/qu (body sub-parse path, not the fused-event reclaim
+>   site); behavior-removable transition roles bn/hi/ja/ko/qu/tr (nested behavior
+>   sub-parse). Next targets otherwise unchanged: set/A2 cluster (~×46, largest R1
+>   seam), SOV halt ×6 (fronted-role re-association), spurious `empty` ×28 /
+>   `add` ×22 / `go` ×21 / `morph` ×18 / `default` ×9.
 
 > **Update 2026-07-05 (R1 RESIDUAL TRIAGE FULLY HARVESTED + TWO RESIDUE SWEEPS — nine PRs
 > #564–#569 / #571–#573 across three sessions; mean R1 0.9535 → 0.9771, every language up at every
