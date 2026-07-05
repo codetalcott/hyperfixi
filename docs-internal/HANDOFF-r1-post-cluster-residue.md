@@ -64,6 +64,22 @@ single biggest identified phantom-action family with a known mechanism.
 
 ### 2. SOV fronted repeat-while (hi/qu/ko + likely ja/bn/tr; parser-side arc)
 
+> **STATUS: DONE (2026-07-05).** All SIX suspects were affected (probe confirmed
+> ja/bn split like hi; tr/qu never formed a `while` node at all). Two-part fix:
+> (a) `foldFrontedWhileIntoRepeat` in semantic-parser.ts — at the end of
+> `parseBodyWithClauses`, a flat `while{condition}` clause immediately followed
+> by a flat condition-less `repeat` merges into one
+> `repeat{loopType:"while", condition}` (junk numeric loopType from the
+> comparison tail, ko/ja/tr `loopType:10`, is overwritten; loop nodes with
+> bodies never enter the fold). (b) dict↔profile while-keyword alignment for
+> the two languages whose fronted head never parsed: qu `kay_kaq`→`kaykamaqa`,
+> tr `iken`→`süresince` (`iken` is the tr WHEN primary) — two
+> `KNOWN_MISMATCHES` entries pruned. After the fix all six languages match the
+> en reference role-for-role on repeat-while; fold blast radius corpus-wide is
+> exactly {hi,bn,ja,ko,tr,qu}×repeat-while, and the qu/tr dict words appear in
+> no other pattern. avgRoleFidelity +0.001–0.002 and avgPrecision +0.0013
+> across the six; zero metric decreased anywhere.
+
 Cluster D canonicalized en repeat-while to `repeat{loopType:literal="while",
 condition:property-path}` and added verb-first while-heads (es/it/de/… now
 match in full). The SOV translations front the while-phrase BEFORE the event

@@ -178,3 +178,48 @@ describe('existing repeat variants are not over-triggered', () => {
     expect(role(node, 'quantity')).toBeDefined();
   });
 });
+
+describe('SOV fronted repeat-while fold (R1 post-cluster residue item 2)', () => {
+  // The SOV reorder fronts a repeat-while's while-phrase BEFORE the event
+  // phrase, so the body used to split into a standalone `while{condition}`
+  // node followed by a bare `repeat` (ko/ja/tr additionally grabbed a junk
+  // numeric loopType from the condition's comparison tail) — while the en
+  // reference (cluster D) canonicalizes the same head as ONE
+  // `repeat{loopType:"while", condition}` node. `foldFrontedWhileIntoRepeat`
+  // (semantic-parser.ts) re-associates them. qu/tr additionally needed a
+  // dict↔profile while-keyword alignment (qu kay_kaq→kaykamaqa, tr
+  // iken→süresince; iken is the tr WHEN primary) before the while node could
+  // form at all. Corpus-shaped inputs (repeat-while, en:
+  // `on click repeat while #counter.innerText < 10 increment #counter wait 200ms end`).
+  const cases: Array<[string, string]> = [
+    ['hi', 'जब तक #counter.innerText < 10 को क्लिक पर दोहराएं फिर #counter को बढ़ाएं फिर प्रतीक्षा 200ms समाप्त'],
+    ['ko', '동안 #counter.innerText < 10 를 클릭 할 때 반복 그러면 #counter 를 증가 그러면 대기 200ms 끝'],
+    ['ja', 'の間 #counter.innerText < 10 を クリック で 繰り返し それから #counter を 増加 それから 待つ 200ms 終わり'],
+    ['bn', 'যতক্ষণ #counter.innerText < 10 কে ক্লিক এ পুনরাবৃত্তি তারপর #counter কে বৃদ্ধি তারপর 200ms শেষ কে অপেক্ষা'],
+    ['tr', 'süresince #counter.innerText < 10 i tıklama de tekrarla ardından #counter i artır ardından bekle 200ms son'],
+    ['qu', 'kaykamaqa #counter.innerText < 10 ta ñitiy pi kutipay chayqa #counter ta yapachiy chayqa suyay 200ms tukuy'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] fronted while-phrase folds into the repeat head (condition + loopType:"while", no standalone while)`, () => {
+      const node = parse(input, lang) as AnyNode;
+      const repeat = findRepeat(node);
+      expect(repeat).toBeTruthy();
+      expect(role(repeat!, 'loopType')).toMatchObject({ type: 'literal', value: 'while' });
+      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      // The spurious standalone `while` sibling is gone; the body survives.
+      const actions = collectActions(node);
+      expect(actions.has('while')).toBe(false);
+      expect(actions.has('increment')).toBe(true);
+      expect(actions.has('wait')).toBe(true);
+    });
+  }
+
+  it('[ko] a fronted while before a non-repeat command is left unfolded (no fabricated repeat)', () => {
+    // The fold requires an ADJACENT repeat head — a while-phrase followed by an
+    // ordinary command must not conjure a repeat or steal the condition.
+    const node = parse('동안 #counter.innerText < 10 를 클릭 할 때 #counter 를 증가', 'ko') as AnyNode;
+    expect(findRepeat(node)).toBeNull();
+    expect(collectActions(node).has('increment')).toBe(true);
+  });
+});
