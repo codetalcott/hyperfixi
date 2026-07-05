@@ -1798,7 +1798,29 @@ export class SemanticParserImpl implements ISemanticParser {
           const clauseNodes = this.parseClause(currentClauseTokens, commandPatterns, language);
           clauses.push(...clauseNodes);
           currentClauseTokens.length = 0; // Clear for next clause
-          pendingBlockDepth = 0;
+          // Re-derive the "end debt" from what the clause actually PARSED to:
+          // each blockless loop-head command (for/repeat/while with no attached
+          // body) still owes its block-terminating `end`. The i18n transformer
+          // inserts a conjunction between a loop head and its body (`para item
+          // en $items ENTONCES establecer … fin` — en renders `for item in
+          // $items set … end`, no conjunction), so the head's `end` arrives in
+          // a LATER clause; the old unconditional reset made that `fin` read as
+          // the body terminator and every command after the loop was silently
+          // dropped (template-literal-list-build ×22 — the largest set-family
+          // R1 cluster, all 22 translations losing the final `set
+          // #list.innerHTML`). Deriving from the PARSE (not token-kind
+          // heuristics) is language-independent: pt `para` and sw `kwa`
+          // tokenize as destination PARTICLES (never keyword/for), and a
+          // spurious homonym token (bn `জন্য`, both `for` and a benefactive
+          // postposition) that parsed to no loop head contributes nothing —
+          // exactly the old reset.
+          pendingBlockDepth = clauseNodes.filter(n => {
+            const rec = n as { action?: string; body?: unknown[] };
+            return (
+              (rec.action === 'for' || rec.action === 'repeat' || rec.action === 'while') &&
+              (!Array.isArray(rec.body) || rec.body.length === 0)
+            );
+          }).length;
         }
         tokens.advance(); // Consume conjunction token
         continue;
@@ -1864,7 +1886,10 @@ export class SemanticParserImpl implements ISemanticParser {
       // Accumulate token for current clause. Count nested-block openers so the
       // depth-aware `end` check above knows when an `end` closes a nested block
       // rather than the body itself. (Openers reached at a clause boundary are
-      // consumed by the fold guards instead and never get here.)
+      // consumed by the fold guards instead and never get here. A loop opener
+      // that tokenizes as a PARTICLE — es/pt `para`, sw `kwa` — is invisible
+      // here, but the conjunction boundary re-derives the owed-`end` debt from
+      // the clause's PARSE, which covers it.)
       if (current.kind === 'keyword') {
         const cv = (current.normalized ?? current.value).toLowerCase();
         if (
@@ -2771,6 +2796,30 @@ export class SemanticParserImpl implements ISemanticParser {
       clauseHadMatch = false;
     };
 
+    // Loop-head "end debt": an `end` owed to an earlier flat loop HEAD
+    // (for/repeat/while pushed without a body) is block content, not the body
+    // terminator. The i18n transformer inserts a conjunction between a loop
+    // head and its body (`para item en $items ENTONCES establecer … fin` — en
+    // renders no conjunction there), so the head's `end` arrives clauses
+    // later; breaking on it silently dropped every command after the loop
+    // (template-literal-list-build ×22 — all translations losing the final
+    // `set #list.innerHTML`). parseBodyWithClauses carries the same debt
+    // across its conjunction boundary (pendingBlockDepth).
+    let endsConsumedAsContent = 0;
+    const outstandingLoopEndDebt = (): number => {
+      let heads = 0;
+      for (const n of commands) {
+        const rec = n as { action?: string; body?: unknown[] };
+        if (
+          (rec.action === 'for' || rec.action === 'repeat' || rec.action === 'while') &&
+          (!Array.isArray(rec.body) || rec.body.length === 0)
+        ) {
+          heads++;
+        }
+      }
+      return heads - endsConsumedAsContent;
+    };
+
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
 
@@ -2797,6 +2846,13 @@ export class SemanticParserImpl implements ISemanticParser {
         );
         if (!isPositionalEnd) {
           flushClause();
+          if (outstandingLoopEndDebt() > 0) {
+            // This `end` closes an earlier conjunction-split loop head — consume
+            // it as block content and keep walking the body.
+            endsConsumedAsContent++;
+            tokens.advance();
+            continue;
+          }
           tokens.advance();
           break;
         }

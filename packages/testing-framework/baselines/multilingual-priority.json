@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-07-05T18:29:26.295Z",
-  "commit": "c6590360",
+  "timestamp": "2026-07-05T18:54:30.682Z",
+  "commit": "7e9db8ab",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -9,12 +9,12 @@
       "avgConfidence": 0.8399201626424081,
       "avgFidelity": 1,
       "avgPrecision": 0.9904761904761905,
-      "avgRoleFidelity": 0.9862049549549549,
+      "avgRoleFidelity": 0.9870495495495494,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -640,13 +640,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8462563334743781,
       "avgFidelity": 1,
-      "avgPrecision": 0.9460281385281387,
+      "avgPrecision": 0.9465476190476191,
       "avgRoleFidelity": 0.9599305106658049,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1273,12 +1273,12 @@
       "avgConfidence": 0.828035456606883,
       "avgFidelity": 1,
       "avgPrecision": 0.9967532467532467,
-      "avgRoleFidelity": 0.9829874517374517,
+      "avgRoleFidelity": 0.9838320463320464,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1903,7 +1903,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2530,12 +2530,12 @@
       "avgConfidence": 0.8338074623788887,
       "avgFidelity": 1,
       "avgPrecision": 0.9967532467532467,
-      "avgRoleFidelity": 0.9878345257021727,
+      "avgRoleFidelity": 0.9886791202967673,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3162,12 +3162,12 @@
       "avgConfidence": 0.8247371675943084,
       "avgFidelity": 1,
       "avgPrecision": 0.9941558441558441,
-      "avgRoleFidelity": 0.9829874517374517,
+      "avgRoleFidelity": 0.9838320463320464,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3794,12 +3794,12 @@
       "avgConfidence": 0.8284065141207998,
       "avgFidelity": 1,
       "avgPrecision": 0.9864718614718616,
-      "avgRoleFidelity": 0.987331081081081,
+      "avgRoleFidelity": 0.9881756756756757,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4426,12 +4426,12 @@
       "avgConfidence": 0.8993587865768304,
       "avgFidelity": 1,
       "avgPrecision": 0.9526747062461347,
-      "avgRoleFidelity": 0.9433603690956631,
+      "avgRoleFidelity": 0.9450495582848523,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5058,12 +5058,12 @@
       "avgConfidence": 0.838961038961037,
       "avgFidelity": 1,
       "avgPrecision": 0.9963203463203464,
-      "avgRoleFidelity": 0.9854005791505792,
+      "avgRoleFidelity": 0.9862451737451738,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5690,12 +5690,12 @@
       "avgConfidence": 0.8364873222016058,
       "avgFidelity": 1,
       "avgPrecision": 0.988771645021645,
-      "avgRoleFidelity": 0.9895076273752744,
+      "avgRoleFidelity": 0.990352221969869,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6322,12 +6322,12 @@
       "avgConfidence": 0.8351246080569386,
       "avgFidelity": 1,
       "avgPrecision": 0.9643939393939395,
-      "avgRoleFidelity": 0.9578438651968065,
+      "avgRoleFidelity": 0.9595330543859957,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6954,12 +6954,12 @@
       "avgConfidence": 0.8300741030064334,
       "avgFidelity": 1,
       "avgPrecision": 0.9643939393939397,
-      "avgRoleFidelity": 0.9544654868184279,
+      "avgRoleFidelity": 0.9561546760076172,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7586,12 +7586,12 @@
       "avgConfidence": 0.8377241805813213,
       "avgFidelity": 1,
       "avgPrecision": 0.9919913419913419,
-      "avgRoleFidelity": 0.9867680180180182,
+      "avgRoleFidelity": 0.9876126126126128,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8218,12 +8218,12 @@
       "avgConfidence": 0.807173778602348,
       "avgFidelity": 1,
       "avgPrecision": 0.9941829004329004,
-      "avgRoleFidelity": 0.9783589787266259,
+      "avgRoleFidelity": 0.9792035733212205,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8850,12 +8850,12 @@
       "avgConfidence": 0.7984333127190251,
       "avgFidelity": 1,
       "avgPrecision": 0.9941558441558441,
-      "avgRoleFidelity": 0.9867083995760466,
+      "avgRoleFidelity": 0.9875529941706412,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9482,12 +9482,12 @@
       "avgConfidence": 0.7251597608740467,
       "avgFidelity": 1,
       "avgPrecision": 0.9639301175015461,
-      "avgRoleFidelity": 0.9349144231497175,
+      "avgRoleFidelity": 0.9366036123389068,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10114,12 +10114,12 @@
       "avgConfidence": 0.818181818181816,
       "avgFidelity": 1,
       "avgPrecision": 0.9915854978354979,
-      "avgRoleFidelity": 0.9806755810432282,
+      "avgRoleFidelity": 0.9815201756378227,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10746,12 +10746,12 @@
       "avgConfidence": 0.800865800865799,
       "avgFidelity": 1,
       "avgPrecision": 0.9941558441558443,
-      "avgRoleFidelity": 0.9884572072072073,
+      "avgRoleFidelity": 0.9893018018018019,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11378,12 +11378,12 @@
       "avgConfidence": 0.840857555143267,
       "avgFidelity": 1,
       "avgPrecision": 0.986147186147186,
-      "avgRoleFidelity": 0.9809008062684536,
+      "avgRoleFidelity": 0.9817454008630481,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12010,12 +12010,12 @@
       "avgConfidence": 0.824382129247231,
       "avgFidelity": 1,
       "avgPrecision": 0.9909090909090909,
-      "avgRoleFidelity": 0.9929617117117115,
+      "avgRoleFidelity": 0.9938063063063062,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12642,12 +12642,12 @@
       "avgConfidence": 0.8340114355151945,
       "avgFidelity": 1,
       "avgPrecision": 0.9634972170686459,
-      "avgRoleFidelity": 0.9574464089169973,
+      "avgRoleFidelity": 0.9591355981061864,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13274,12 +13274,12 @@
       "avgConfidence": 0.818594104308388,
       "avgFidelity": 1,
       "avgPrecision": 0.9915854978354978,
-      "avgRoleFidelity": 0.9806755810432282,
+      "avgRoleFidelity": 0.9815201756378227,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13906,12 +13906,12 @@
       "avgConfidence": 0.8049474335188601,
       "avgFidelity": 1,
       "avgPrecision": 0.9920183982683983,
-      "avgRoleFidelity": 0.9917759671436144,
+      "avgRoleFidelity": 0.992620561738209,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14538,12 +14538,12 @@
       "avgConfidence": 0.9840032982890127,
       "avgFidelity": 1,
       "avgPrecision": 1,
-      "avgRoleFidelity": 0.9882158944658944,
+      "avgRoleFidelity": 0.989060489060489,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 478781,
+      "bundleSize": 479120,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15166,7 +15166,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 478781,
+      "size": 479120,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
