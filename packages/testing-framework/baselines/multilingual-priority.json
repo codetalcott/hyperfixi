@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-07-05T01:42:36.177Z",
-  "commit": "3227c8c3",
+  "timestamp": "2026-07-05T02:50:58.575Z",
+  "commit": "1697561d",
   "languages": {
     "ar": {
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8387196824503315,
+      "avgConfidence": 0.8417754502119814,
       "avgFidelity": 1,
       "avgPrecision": 0.9796536796536797,
-      "avgRoleFidelity": 0.9656927167956579,
+      "avgRoleFidelity": 0.9730129733806204,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -153,6 +153,10 @@
           "confidence": 1
         },
         "last-in-collection": {
+          "success": true,
+          "confidence": 1
+        },
+        "repeat-while": {
           "success": true,
           "confidence": 1
         },
@@ -588,10 +592,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "repeat-while": {
-          "success": true,
-          "confidence": 0.5294117647058824
-        },
         "async-block": {
           "success": true,
           "confidence": 0.5
@@ -640,13 +640,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8462563334743781,
       "avgFidelity": 1,
-      "avgPrecision": 0.9315737203972502,
-      "avgRoleFidelity": 0.9411637680020033,
+      "avgPrecision": 0.9344480519480524,
+      "avgRoleFidelity": 0.9506962764315706,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1273,12 +1273,12 @@
       "avgConfidence": 0.828035456606883,
       "avgFidelity": 1,
       "avgPrecision": 0.9967532467532467,
-      "avgRoleFidelity": 0.961509962612904,
+      "avgRoleFidelity": 0.9697954701631175,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1903,7 +1903,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2529,13 +2529,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8338074623788887,
       "avgFidelity": 1,
-      "avgPrecision": 0.9846320346320346,
-      "avgRoleFidelity": 0.9622142828025181,
+      "avgPrecision": 0.9859307359307358,
+      "avgRoleFidelity": 0.9746425441278382,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3162,12 +3162,12 @@
       "avgConfidence": 0.8247371675943084,
       "avgFidelity": 1,
       "avgPrecision": 0.9833333333333334,
-      "avgRoleFidelity": 0.9591770543976426,
+      "avgRoleFidelity": 0.9697954701631175,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3793,13 +3793,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8237889095031952,
       "avgFidelity": 1,
-      "avgPrecision": 0.9851731601731601,
-      "avgRoleFidelity": 0.9666577493783371,
+      "avgPrecision": 0.9864718614718616,
+      "avgRoleFidelity": 0.9792066670743143,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4425,13 +4425,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8993587865768304,
       "avgFidelity": 1,
-      "avgPrecision": 0.9386915303311406,
-      "avgRoleFidelity": 0.928535067873303,
+      "avgPrecision": 0.9399631753527856,
+      "avgRoleFidelity": 0.9380675763028703,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5057,13 +5057,13 @@
       "parseRate": 1,
       "avgConfidence": 0.838961038961037,
       "avgFidelity": 1,
-      "avgPrecision": 0.9829004329004329,
-      "avgRoleFidelity": 0.9588150852856733,
+      "avgPrecision": 0.9854978354978354,
+      "avgRoleFidelity": 0.9712433466109937,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5689,13 +5689,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8364873222016058,
       "avgFidelity": 1,
-      "avgPrecision": 0.976650432900433,
-      "avgRoleFidelity": 0.9649782418164772,
+      "avgPrecision": 0.9779491341991341,
+      "avgRoleFidelity": 0.9741083439612852,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6321,13 +6321,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8351246080569386,
       "avgFidelity": 1,
-      "avgPrecision": 0.9504107634789454,
-      "avgRoleFidelity": 0.939720841559077,
+      "avgPrecision": 0.9516824085005904,
+      "avgRoleFidelity": 0.9478856927386338,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6953,13 +6953,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8170870900194204,
       "avgFidelity": 1,
-      "avgPrecision": 0.9504107634789454,
-      "avgRoleFidelity": 0.9346532739915094,
+      "avgPrecision": 0.9516824085005905,
+      "avgRoleFidelity": 0.9428181251710662,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7586,12 +7586,12 @@
       "avgConfidence": 0.8377241805813213,
       "avgFidelity": 1,
       "avgPrecision": 0.9811688311688311,
-      "avgRoleFidelity": 0.9669797180826596,
+      "avgRoleFidelity": 0.9752652256328727,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8217,13 +8217,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8025561739847434,
       "avgFidelity": 1,
-      "avgPrecision": 0.9928841991341991,
-      "avgRoleFidelity": 0.9538295931678289,
+      "avgPrecision": 0.9941829004329004,
+      "avgRoleFidelity": 0.9629596953126369,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8849,13 +8849,13 @@
       "parseRate": 1,
       "avgConfidence": 0.7984333127190251,
       "avgFidelity": 1,
-      "avgPrecision": 0.9820346320346321,
-      "avgRoleFidelity": 0.961088156676392,
+      "avgPrecision": 0.9833333333333334,
+      "avgRoleFidelity": 0.9735164180017124,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9481,13 +9481,13 @@
       "parseRate": 1,
       "avgConfidence": 0.7349000206143064,
       "avgFidelity": 1,
-      "avgPrecision": 0.9512456428852532,
-      "avgRoleFidelity": 0.9252016399075224,
+      "avgPrecision": 0.9525172879068982,
+      "avgRoleFidelity": 0.9347341483370897,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10113,13 +10113,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8135642135642115,
       "avgFidelity": 1,
-      "avgPrecision": 0.9902867965367965,
-      "avgRoleFidelity": 0.9545372254931079,
+      "avgPrecision": 0.9915854978354979,
+      "avgRoleFidelity": 0.9669654868184281,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10745,13 +10745,13 @@
       "parseRate": 1,
       "avgConfidence": 0.7962481962481944,
       "avgFidelity": 1,
-      "avgPrecision": 0.9852813852813852,
-      "avgRoleFidelity": 0.9618717133423015,
+      "avgPrecision": 0.9865800865800866,
+      "avgRoleFidelity": 0.9752652256328729,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11378,12 +11378,12 @@
       "avgConfidence": 0.840857555143267,
       "avgFidelity": 1,
       "avgPrecision": 0.9753246753246753,
-      "avgRoleFidelity": 0.9611125063330948,
+      "avgRoleFidelity": 0.969398013883308,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12007,15 +12007,15 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8231816490551542,
+      "avgConfidence": 0.8262374168168043,
       "avgFidelity": 1,
       "avgPrecision": 0.9800865800865801,
-      "avgRoleFidelity": 0.9752647888677299,
+      "avgRoleFidelity": 0.9825850454526924,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12142,6 +12142,10 @@
           "confidence": 1
         },
         "last-in-collection": {
+          "success": true,
+          "confidence": 1
+        },
+        "repeat-while": {
           "success": true,
           "confidence": 1
         },
@@ -12605,10 +12609,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "repeat-while": {
-          "success": true,
-          "confidence": 0.5294117647058824
-        },
         "async-block": {
           "success": true,
           "confidence": 0.5
@@ -12641,13 +12641,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8307646822684411,
       "avgFidelity": 1,
-      "avgPrecision": 0.9508127424523529,
-      "avgRoleFidelity": 0.939323385279268,
+      "avgPrecision": 0.9520843874739979,
+      "avgRoleFidelity": 0.9474882364588247,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13273,13 +13273,13 @@
       "parseRate": 1,
       "avgConfidence": 0.8139764996907833,
       "avgFidelity": 1,
-      "avgPrecision": 0.9902867965367963,
-      "avgRoleFidelity": 0.9545372254931079,
+      "avgPrecision": 0.9915854978354978,
+      "avgRoleFidelity": 0.9669654868184281,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13906,12 +13906,12 @@
       "avgConfidence": 0.8049474335188601,
       "avgFidelity": 1,
       "avgPrecision": 0.9811958874458874,
-      "avgRoleFidelity": 0.9697803653686008,
+      "avgRoleFidelity": 0.9780658729188142,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14538,12 +14538,12 @@
       "avgConfidence": 0.9840032982890127,
       "avgFidelity": 1,
       "avgPrecision": 1,
-      "avgRoleFidelity": 0.9694730646936526,
+      "avgRoleFidelity": 0.9800914804591274,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 462138,
+      "bundleSize": 471816,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15166,7 +15166,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 462138,
+      "size": 471816,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

@@ -13,6 +13,7 @@ import { generatePatternsForLanguage } from '../generators/pattern-generator';
 import { getTogglePatternsForLanguage } from './toggle';
 import { getPutPatternsForLanguage } from './put';
 import { getEventHandlerPatternsForLanguage } from './event-handler';
+import { getRepeatPatternsForLanguage } from './repeat';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -378,6 +379,12 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   patterns.push(...getTogglePatternsForLanguage('en'));
   patterns.push(...getPutPatternsForLanguage('en'));
   patterns.push(...getEventHandlerPatternsForLanguage('en'));
+  // Repeat loop-HEAD patterns (`for-in` / `while` — R1 cluster D): kill the
+  // generated repeat's en-reference noise (`repeat for item in .items` →
+  // quantity:expression="item" + event:literal="in", `.items` dropped) by
+  // capturing the canonical loopType/patient/source head and stopping before
+  // the loop body. The `until event` variants stay hand-crafted below.
+  patterns.push(...getRepeatPatternsForLanguage('en'));
 
   // 2. English-only hand-crafted patterns
   patterns.push(

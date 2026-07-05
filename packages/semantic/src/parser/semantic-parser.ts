@@ -992,6 +992,21 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
         }
+        // Drop the SOV default-patient leak for ANY remaining repeat variant
+        // (the forever/until branches above already delete it on their paths).
+        // The fused SOV event pattern defaults `patient:reference=me`, but
+        // repeat has no patient role — left in place it (a) surfaces as a
+        // phantom `loopType:reference=me` via normalizeCommandRoles (a
+        // precision hit the en reference never has), and (b) blocks the
+        // fused re-parse swap below for the `for-in` HEAD: the superset guard
+        // maps fused `patient`→`loopType` and the re-parse's
+        // `loopType:literal="for"` can't type-match `reference`. Gated on the
+        // exact default value so a REAL fused capture (`-times`' fronted
+        // count under `patient`) is never touched.
+        const leak = roles.patient as { type?: string; value?: unknown } | undefined;
+        if (leak && leak.type === 'reference' && leak.value === 'me') {
+          delete roles.patient;
+        }
       }
 
       let commandNode = createCommandNode(actionName as ActionType, roles, {
@@ -1134,10 +1149,31 @@ export class SemanticParserImpl implements ISemanticParser {
               !schema?.roles.some(r => r.role === 'patient')
                 ? primary
                 : role) as SemanticRole;
+            // A fused role is IGNORABLE (exempt from the superset requirement)
+            // for a block-body action when the schema says it cannot be real:
+            // the mapped role isn't declared at all (es `repeat-event-es-vso`
+            // binds `.items` under `destination` — repeat has no destination
+            // role), or its captured TYPE violates the role's expectedTypes
+            // (`loopType:expression="item"` — loopType is literal-only). Such
+            // junk would otherwise block the head-only re-parse swap below
+            // (the fused mis-capture can never "reappear" in the canonical
+            // parse). Scoped to block-body actions (only `repeat` reaches
+            // here); real captures — the `-times` fronted count (patient→
+            // loopType, literal ✓ literal) and every non-block command — keep
+            // full superset protection, including the qu verb-final safety rail.
+            const isIgnorableFusedRole = (role: string, val: unknown): boolean => {
+              if (!BLOCK_BODY_ACTIONS.has(actionName) || !schema) return false;
+              const spec = schema.roles.find(r => r.role === mapRole(role));
+              if (!spec) return true;
+              return (
+                spec.expectedTypes.length > 0 && !spec.expectedTypes.includes(valType(val) as never)
+              );
+            };
             const preservesFused =
               !!first &&
               first.kind === 'command' &&
               Object.entries(roles).every(([role, val]) => {
+                if (isIgnorableFusedRole(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 return rv !== undefined && valType(rv) === valType(val);
               });
@@ -1151,7 +1187,12 @@ export class SemanticParserImpl implements ISemanticParser {
               (first as { metadata?: { patternId?: string } } | undefined)?.metadata?.patternId ??
               '';
             const headOnlyOk =
-              !BLOCK_BODY_ACTIONS.has(actionName) || /^repeat-.*-times$/.test(reparsePid);
+              !BLOCK_BODY_ACTIONS.has(actionName) ||
+              // All four repeat HEAD families are HEAD-ONLY by construction
+              // (they stop before the loop body — see patterns/repeat.ts), so
+              // the swap can never swallow a body command. The body-swallowing
+              // generated repeat matches none of these ids.
+              /^repeat-.*-(times|for-in|while-head|until-head)$/.test(reparsePid);
             if (
               reparsed.length === 1 &&
               first &&
