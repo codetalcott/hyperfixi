@@ -38,7 +38,9 @@ export const thaiDictionary: Dictionary = {
     prepend: 'เพิ่มหน้า',
     focus: 'โฟกัส',
     blur: 'เบลอ',
-    transition: 'เปลี่ยน',
+    // เปลี่ยนผ่าน, not เปลี่ยน: the semantic th profile's `change` keyword is
+    // เปลี่ยน, so a เปลี่ยน render could never anchor a transition command.
+    transition: 'เปลี่ยนผ่าน',
     settle: 'คงที่',
     measure: 'วัด',
     async: 'อะซิงค์',

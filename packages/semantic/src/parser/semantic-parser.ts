@@ -1462,6 +1462,39 @@ export class SemanticParserImpl implements ISemanticParser {
           }
         }
 
+        // Trailing DURATION reclaim — the `transition` sibling of the quantity
+        // reclaim above. The transformer renders `transition opacity to 0 over
+        // 500ms` with the duration AFTER the fused verb+goal, bare (ja `遷移 0
+        // に 500ms`, ko `전환 0 에 500ms` — the `over` marker never survives
+        // translation), so the time literal is left unconsumed and drops
+        // (transition.duration missing in the SOV six across every transition
+        // pattern). Gated to a schema-declared OPTIONAL `duration` role that is
+        // absent (today only `transition` — wait's duration is required and has
+        // its own paths) and to a TIME-shaped literal (`500ms`/`2s`/`2.5s`; a
+        // bare number is the quantity reclaim's domain and never matches here).
+        const dNode = commandNode as CommandSemanticNode;
+        const hasOptionalDuration = getSchema(actionName as ActionType)?.roles.some(
+          r => r.role === 'duration' && !r.required
+        );
+        if (hasOptionalDuration && !dNode.roles.has('duration')) {
+          const trailing = tokens.peek();
+          if (trailing && /^\d+(\.\d+)?(ms|s)$/i.test(trailing.value)) {
+            commandNode = createCommandNode(
+              actionName as ActionType,
+              {
+                ...(Object.fromEntries(dNode.roles) as Record<string, SemanticValue>),
+                duration: {
+                  type: 'literal',
+                  value: trailing.value,
+                  dataType: 'string',
+                },
+              },
+              dNode.metadata
+            );
+            tokens.advance();
+          }
+        }
+
         // Trailing RESPONSE-TYPE reclaim — the `responseType` sibling of the
         // quantity reclaim above (R1 handoff cluster B). The transformer
         // renders `fetch /api/user as json`'s tail AFTER the fused verb:

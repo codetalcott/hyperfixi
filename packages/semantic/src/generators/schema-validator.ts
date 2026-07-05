@@ -202,17 +202,12 @@ function validateTransitionSchema(schema: CommandSchema, items: SchemaValidation
   const patientRole = schema.roles.find(r => r.role === 'patient');
   const goalRole = schema.roles.find(r => r.role === 'goal');
 
-  // Check that patient (property name) only accepts literals
-  if (patientRole && patientRole.expectedTypes.includes('selector')) {
-    items.push(
-      createSchemaValidationItem(
-        SchemaErrorCodes.TRANSITION_PATIENT_ACCEPTS_SELECTOR,
-        'warning',
-        {},
-        'patient'
-      )
-    );
-  }
+  // NOTE: patient accepting 'selector' is SANCTIONED, not flagged. The rule
+  // that warned here predated the style-property reality: `*background-color`
+  // / `*max-height` tokenize as selector tokens, and the corpus-idiomatic
+  // transition forms (transition-color, slide-toggle) need them — a
+  // literal-only patient made the generated pattern unmatchable and the whole
+  // command silently dropped (the spurious-transition ×66 precision family).
 
   // Check that transition has a goal role for the target value
   if (patientRole && !goalRole) {

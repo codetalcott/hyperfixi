@@ -90,25 +90,45 @@ const MULTI_CHAR_PARTICLES = new Map<string, ParticleMetadata>([
 export class ChineseParticleExtractor implements ContextAwareExtractor {
   readonly name = 'chinese-particle';
 
-  // Context available for future use (e.g., particle boundary detection)
   private _context?: TokenizerContext;
 
   setContext(context: TokenizerContext): void {
     this._context = context;
-    void this._context; // Satisfy noUnusedLocals
+  }
+
+  /**
+   * True when a profile KEYWORD strictly longer than `particleLen` starts at
+   * this position. This extractor runs BEFORE the keyword extractor, so
+   * without the check a particle char that is also a keyword's first char
+   * splits the keyword: `过渡` (transition, the profile primary) tokenized as
+   * `过` (aspect particle) + `渡` (stray identifier) and the command verb
+   * never anchored (zh NO-TRANSITION, spurious-transition precision family).
+   * Longest-match must win across extractors, not just within one.
+   */
+  private longerKeywordAt(input: string, position: number, particleLen: number): boolean {
+    const ctx = this._context;
+    if (!ctx) return false;
+    const maxLen = Math.min(10, input.length - position); // max zh keyword length
+    for (let len = maxLen; len > particleLen; len--) {
+      if (ctx.lookupKeyword(input.slice(position, position + len))) return true;
+    }
+    return false;
   }
 
   canExtract(input: string, position: number): boolean {
     const char = input[position];
 
     // Check single-character particles
-    if (SINGLE_CHAR_PARTICLES.has(char)) {
+    if (SINGLE_CHAR_PARTICLES.has(char) && !this.longerKeywordAt(input, position, 1)) {
       return true;
     }
 
     // Check multi-character particles (greedy longest-first)
     for (const [particle] of MULTI_CHAR_PARTICLES) {
-      if (input.startsWith(particle, position)) {
+      if (
+        input.startsWith(particle, position) &&
+        !this.longerKeywordAt(input, position, particle.length)
+      ) {
         return true;
       }
     }
@@ -119,7 +139,10 @@ export class ChineseParticleExtractor implements ContextAwareExtractor {
   extract(input: string, position: number): ExtractionResult | null {
     // Try multi-character particles first (longest match)
     for (const [particle, metadata] of MULTI_CHAR_PARTICLES) {
-      if (input.startsWith(particle, position)) {
+      if (
+        input.startsWith(particle, position) &&
+        !this.longerKeywordAt(input, position, particle.length)
+      ) {
         return {
           value: particle,
           length: particle.length,
@@ -135,7 +158,7 @@ export class ChineseParticleExtractor implements ContextAwareExtractor {
     // Try single-character particles
     const char = input[position];
     const metadata = SINGLE_CHAR_PARTICLES.get(char);
-    if (metadata) {
+    if (metadata && !this.longerKeywordAt(input, position, 1)) {
       return {
         value: char,
         length: 1,

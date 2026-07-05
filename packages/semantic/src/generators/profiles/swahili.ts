@@ -81,7 +81,13 @@ export const swahiliProfile: LanguageProfile = {
     log: { primary: 'andika', alternatives: ['rekodi'], normalized: 'log' },
     show: { primary: 'onyesha', normalized: 'show' },
     hide: { primary: 'ficha', alternatives: ['mficho'], normalized: 'hide' },
-    transition: { primary: 'hamisha', alternatives: ['animisha'], normalized: 'transition' },
+    // 'mpito' is what the i18n transformer renders (dict `transition: 'mpito'`);
+    // without it the corpus transition clause never anchors (NO-TRANSITION sw).
+    transition: {
+      primary: 'hamisha',
+      alternatives: ['animisha', 'mpito'],
+      normalized: 'transition',
+    },
     on: { primary: 'unapo', alternatives: ['kwenye'], normalized: 'on' },
     trigger: { primary: 'chochea', normalized: 'trigger' },
     send: { primary: 'tuma', alternatives: ['peleka'], normalized: 'send' },
