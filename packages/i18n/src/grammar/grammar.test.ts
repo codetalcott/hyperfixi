@@ -639,6 +639,27 @@ describe('GrammarTransformer', () => {
     });
   });
 
+  describe('qu/tr while keyword alignment (fronted repeat-while head)', () => {
+    // Regression: the qu dict emitted `kay_kaq` (unknown to the semantic qu
+    // profile, whose while primary is `kaykamaqa`), and the tr dict emitted
+    // `iken` (the tr profile's WHEN primary) — so the fronted repeat-while head
+    // never formed a `while` node at parse time and the condition dropped
+    // wholesale. Align both dicts to the profile while primary.
+    const source = 'on click repeat while #counter.innerText < 10 increment #counter end';
+
+    it('qu: repeat-while emits the profile while word kaykamaqa, not kay_kaq', () => {
+      const result = new GrammarTransformer('en', 'qu').transform(source);
+      expect(result).toContain('kaykamaqa');
+      expect(result).not.toContain('kay_kaq');
+    });
+
+    it('tr: repeat-while emits süresince, not the when-homonym iken', () => {
+      const result = new GrammarTransformer('en', 'tr').transform(source);
+      expect(result).toContain('süresince');
+      expect(result).not.toMatch(/\biken\b/);
+    });
+  });
+
   describe('Duration / literal-primary marking (no spurious object particle)', () => {
     // A command whose primary argument is a literal/measure (e.g. `wait <duration>`)
     // must NOT have that argument marked as a fronted object: the generic argument

@@ -28,7 +28,12 @@ export const qu: Dictionary = {
     unless: 'mana sichus', // spaced phrase ("if not"); `_` form split to `mana`+`sichus`(=if) at parse time
     repeat: 'kutipay',
     for: 'sapankaq', // profile's for word — rayku doubles as `by`
-    while: 'kay_kaq',
+    // `kaykamaqa` (the semantic qu profile's while primary), not `kay_kaq`: the
+    // `_` form is unknown to the profile (and `_` words split at parse time, cf.
+    // qhipaman_yapay), so the fronted repeat-while head never formed a `while`
+    // node — the condition dropped wholesale. Same dict↔profile alignment as
+    // vi render / de abrufen.
+    while: 'kaykamaqa',
     until: 'hayk_akama',
     continue: 'purichiy',
     break: 'p_akiy',

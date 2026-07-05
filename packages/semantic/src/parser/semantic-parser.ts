@@ -1583,12 +1583,64 @@ export class SemanticParserImpl implements ISemanticParser {
       clauses.push(...clauseNodes);
     }
 
+    this.foldFrontedWhileIntoRepeat(clauses, language);
+
     // If we have multiple clauses, wrap in CompoundSemanticNode
     if (clauses.length > 1) {
       return [createCompoundNode(clauses, 'then', { sourceLanguage: language })];
     }
 
     return clauses;
+  }
+
+  /**
+   * Merge a fronted `while {condition}` clause into the adjacent `repeat` head.
+   *
+   * The SOV reorder fronts a repeat-while's while-phrase BEFORE the event phrase
+   * (hi `जब तक #counter.innerText < 10 को क्लिक पर दोहराएं …`, ko `동안 … 반복 …`),
+   * so the body splits into a standalone `while{condition}` node followed by a
+   * bare `repeat` — while the en reference (cluster D, #567) canonicalizes the
+   * same head as ONE `repeat{loopType:"while", condition}` node. The split costs
+   * both recall (repeat.condition/loopType missing) and precision (the standalone
+   * `while` is spurious vs the en reference). Re-associate them, mirroring the
+   * trailing-`unless` guard recovery in parseClause.
+   *
+   * Conservative: fires only when a flat `while` COMMAND node carrying a
+   * condition is immediately followed by a flat `repeat` command that has no
+   * condition of its own and no attached body. A ko/ja/tr `repeat` that grabbed a
+   * junk numeric loopType from the fronted condition's comparison tail
+   * (`loopType:10` from `< 10 를`) is overwritten — the fronted while-phrase IS
+   * the loop head, so `loopType` is `"while"` by construction. Loop nodes with
+   * bodies (`kind: 'loop'`) and conditionals never enter the fold.
+   */
+  private foldFrontedWhileIntoRepeat(clauses: SemanticNode[], language: string): void {
+    for (let i = 0; i + 1 < clauses.length; i++) {
+      const whileNode = clauses[i] as CommandSemanticNode & { body?: unknown };
+      const repeatNode = clauses[i + 1] as CommandSemanticNode & { body?: unknown };
+      if (whileNode.kind !== 'command' || whileNode.action !== 'while') continue;
+      if (repeatNode.kind !== 'command' || repeatNode.action !== 'repeat') continue;
+      const condition = whileNode.roles.get('condition');
+      if (!condition) continue;
+      if (repeatNode.roles.has('condition')) continue;
+      if (Array.isArray(whileNode.body) || Array.isArray(repeatNode.body)) continue;
+
+      const roles = new Map(repeatNode.roles);
+      roles.set('condition', condition);
+      roles.set('loopType', { type: 'literal', value: 'while', dataType: 'string' });
+      clauses.splice(i, 2, {
+        ...repeatNode,
+        roles,
+        metadata: {
+          ...repeatNode.metadata,
+          sourceLanguage: language,
+          patternId: `repeat-${language}-fronted-while-fold`,
+          confidence: Math.max(
+            repeatNode.metadata?.confidence ?? 0,
+            whileNode.metadata?.confidence ?? 0
+          ),
+        },
+      });
+    }
   }
 
   /**
