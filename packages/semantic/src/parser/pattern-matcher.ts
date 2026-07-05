@@ -369,12 +369,36 @@ export class PatternMatcher {
     // falls through to the command stage (or the per-command SOV event pattern
     // whose patient role legitimately captures it). See
     // docs-internal/HANDOFF-sov-event-anchor.md.
-    if (
-      patternToken.role === 'event' &&
-      this.currentPatternCommand === 'on' &&
-      !PatternMatcher.tokenLooksLikeEvent(token)
-    ) {
-      return patternToken.optional || false;
+    if (patternToken.role === 'event' && this.currentPatternCommand === 'on') {
+      if (!PatternMatcher.tokenLooksLikeEvent(token)) {
+        return patternToken.optional || false;
+      }
+      // R1 cluster C (the surviving tail of the #508 guard): a fronted
+      // POSITIONAL phrase or POSSESSIVE head is never an event either — the
+      // expression assemblers below would otherwise capture it wholesale into
+      // the event role (hi `पहला <input/> …` → event:expression via the
+      // positional matcher, focus-patient defaults to me; hi `मेरा @data-count
+      // को लोड पर डिफ़ॉल्ट …` → event:property-path via the possessive matcher,
+      // the default body gets garbage roles). Rejecting here lets the input
+      // fall through to the per-command pattern whose patient/destination
+      // legitimately captures the fronted phrase — the same fall-through
+      // contract as tokenLooksLikeEvent.
+      const evNorm = (token.normalized ?? token.value).toLowerCase();
+      if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(evNorm)) {
+        return patternToken.optional || false;
+      }
+      if (
+        this.currentProfile &&
+        (getPossessiveReference(this.currentProfile, token.value) ??
+          getPossessiveReference(this.currentProfile, evNorm)) !== undefined
+      ) {
+        return patternToken.optional || false;
+      }
+      // An optional-chaining head fused into one token (hi
+      // `मेरा?.dataset?.customValue`) is a property access, never an event.
+      if (token.value.includes('?.')) {
+        return patternToken.optional || false;
+      }
     }
 
     // A `duration` slot is never a positional/scope keyword. The temporal

@@ -9660,3 +9660,58 @@ describe('possessive render/parse symmetry (specialForms inversion + qu chay-paq
     expect(node.roles?.get('patient')?.type).not.toBe('property-path');
   });
 });
+
+describe('event-anchor guard: fronted positional/possessive/optional-chaining heads (R1 cluster C, hi tail)', () => {
+  // The #508 guard rejects non-event-SHAPED single tokens for the event role,
+  // but the expression assemblers still captured a fronted POSITIONAL phrase
+  // (hi `पहला <input/> …` → event:expression) or POSSESSIVE head (hi `मेरा
+  // @data-count …` → event:property-path; fused optional-chaining `मेरा?.…`)
+  // wholesale into the event role — mis-anchoring the handler and garbling the
+  // body. The guard now also rejects positional keywords, profile possessive
+  // heads, and `?.`-fused tokens for the event role of `on` patterns, letting
+  // the input fall through to the per-command pattern.
+  it('[hi] first-in-parent: the fronted positional phrase is not the event', () => {
+    const node = parse('पहला <input/> in closest <form/> को क्लिक पर फोकस', 'hi') as {
+      kind: string;
+      roles?: Map<string, { type: string; value?: unknown }>;
+      body?: Array<{ action?: string; roles?: Map<string, { type: string }> }>;
+    };
+    expect(node.kind).toBe('event-handler');
+    expect(node.roles?.get('event')?.value).toBe('click');
+    const focus = node.body?.find(c => c.action === 'focus');
+    expect(focus).toBeTruthy();
+    expect(focus!.roles?.get('patient')?.type).toBe('expression');
+  });
+
+  it('[hi] default-value: the fronted possessive is not the event', () => {
+    const node = parse('मेरा @data-count को लोड पर डिफ़ॉल्ट "0" में', 'hi') as {
+      kind: string;
+      roles?: Map<string, { value?: unknown }>;
+    };
+    expect(node.kind).toBe('event-handler');
+    expect(node.roles?.get('event')?.value).toBe('load');
+  });
+
+  it('[hi] optional-chaining-possessive: the ?.-fused head is not the event, no phantom click command', () => {
+    const node = parse('मेरा?.dataset?.customValue को क्लिक पर लॉग', 'hi') as {
+      kind: string;
+      roles?: Map<string, { value?: unknown }>;
+      body?: Array<{ action?: string }>;
+    };
+    expect(node.kind).toBe('event-handler');
+    expect(node.roles?.get('event')?.value).toBe('click');
+    expect(node.body?.some(c => c.action === 'click')).toBe(false);
+    expect(node.body?.some(c => c.action === 'log')).toBe(true);
+  });
+
+  it('[hi] a plain selector-fronted handler still parses (guard is additive)', () => {
+    const node = parse('.active को क्लिक पर टॉगल', 'hi') as {
+      kind: string;
+      roles?: Map<string, { value?: unknown }>;
+      body?: Array<{ action?: string }>;
+    };
+    expect(node.kind).toBe('event-handler');
+    expect(node.roles?.get('event')?.value).toBe('click');
+    expect(node.body?.some(c => c.action === 'toggle')).toBe(true);
+  });
+});

@@ -1,5 +1,37 @@
 # Handoff — R1 residual triage (hi/qu/ko + corpus-wide clusters)
 
+> **STATUS UPDATE (2026-07-04, same day): slices B → A1 → C are LANDED** (#564,
+> #565, #566 — each with fail-without-fix guard tests, gate green, zero-regression
+> per-(lang,pattern) A/B, baseline regen). Aggregate: **every laggard language up,
+> none down** — hi +0.013, ko/qu +0.009, bn +0.008, ja/tr +0.003; corpus mean R1
+> 0.9535 → 0.9555. Execution learnings for the next session:
+>
+> - **Cluster B** landed as a `responseType` sibling of #563's trailing-role
+>   reclaim in `buildEventHandler`, gated on a RESPONSE_TYPE_WORDS loanword set +
+>   schema-invalid-destination relabel (the ko `json 로` case). The reclaim-
+>   mechanism family now covers quantity + responseType; further trailing-role
+>   candidates should reuse it.
+> - **Cluster A sub-cause 1** turned out to be UPSTREAM of the role-swap theory:
+>   `getPossessiveReference` never read `specialForms` (render-side), so ko
+>   `그것의.name` couldn't parse back and the whole set clause fell to the
+>   scrambling fallback. Fixed by inverting specialForms in the lookup + qu
+>   `chay: it` keyword + `paq`/`pa` connectors. The mapRoleForCommand swap-fix
+>   theory was NOT needed for these patterns — re-verify before applying it
+>   elsewhere. **A2 (still open):** expression-valued set patients
+>   (`"Hello, " + my value`, two-way-binding) still fail the generated pattern's
+>   {patient} role token — needs multi-token expression-run assembly in
+>   matchRoleToken (greedy-capture risk; A/B per marker).
+> - **Cluster C** landed in the matchRoleToken event-anchor guard (positional
+>   keywords + profile possessive heads + `?.`-fused tokens). Note: the fresh
+>   populate's hi first-in-parent translation leaks English `in closest` (the
+>   fully-localized form appears in sweep context) — didn't matter for the fix,
+>   but it's a transformer artifact worth knowing. **window-resize was
+>   reassigned to cluster E** (its hi translation is scrambled — modifier words
+>   reordered mid-sentence — not an anchor bug).
+> - **Clusters D and E remain**, each a dedicated arc (D: en-reference
+>   canonicalization + baseline churn; E: transformer parenthesized-expression
+>   opacity). Start the next session from the cluster D/E sections below.
+
 > **Written 2026-07-04**, immediately after the SOV literal-role-extraction arc
 > (#560/#561/#562 — see [HANDOFF-sov-literal-role-extraction.md](HANDOFF-sov-literal-role-extraction.md)).
 > This is the **fresh grounding** of what remains in R1 role fidelity now that the
