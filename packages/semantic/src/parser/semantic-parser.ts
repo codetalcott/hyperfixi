@@ -172,7 +172,7 @@ const NORMALIZE_CHILD_FIELDS = [
   'initBlock',
 ] as const;
 
-function normalizeCommandRoles(node: SemanticNode): SemanticNode {
+function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string>): SemanticNode {
   if (!node || typeof node !== 'object') return node;
 
   if (node.action && node.roles instanceof Map) {
@@ -193,13 +193,55 @@ function normalizeCommandRoles(node: SemanticNode): SemanticNode {
         roles.set(primary, value);
       }
     }
+
+    // Canonicalize a COMMAND's `event` role: an event NAME types as `literal`,
+    // not `expression`. The type an event name gets is tokenizer-incidental —
+    // en `trigger init` captured `event:literal` only because `init` happens to
+    // be an en KEYWORD (the init-block head), while every language whose
+    // tokenizer doesn't know the untranslated name captured `event:expression`
+    // (trigger-event R1 miss in 15 languages); namespaced `behavior:phase`
+    // names (`sortable:start`) split at the colon in several tokenizers, so the
+    // translation held a bare fragment while en kept the fused form. An event
+    // name is a name, not an evaluable — and the `on`-handler convention is
+    // `event:literal` everywhere. Command nodes only (`kind: 'command'`):
+    // handler nodes keep their own event typing, and a parenthesized/dotted/
+    // spaced raw stays `expression` (a real evaluable, e.g. `click(x)`).
+    if (node.kind === 'command' && node.action !== 'on') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const ev = roles.get('event');
+      if (ev && ev.type === 'expression') {
+        const raw = (ev as { raw?: unknown }).raw;
+        if (typeof raw === 'string' && /^[A-Za-z_][A-Za-z0-9_-]*(:[A-Za-z0-9_-]+)?$/.test(raw)) {
+          roles.set('event', { type: 'literal', value: raw, dataType: 'string' });
+        }
+      }
+    }
+
+    // Canonicalize a destination holding a locally-BOUND identifier (a loop
+    // binding or set variable — see registerBoundIdentifiers) to `expression`:
+    // it is a variable read, and that is how the en reference types it (`add
+    // .processed to item` → destination:expression). Which type the marked
+    // capture got is tokenizer-incidental — ja/ko typed the untranslated `item`
+    // as a bare literal.
+    if (boundIdentifiers?.size) {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const dest = roles.get('destination');
+      if (
+        dest &&
+        dest.type === 'literal' &&
+        typeof dest.value === 'string' &&
+        boundIdentifiers.has(dest.value)
+      ) {
+        roles.set('destination', { type: 'expression', raw: dest.value } as SemanticValue);
+      }
+    }
   }
 
   const rec = node as unknown as Record<string, unknown>;
   for (const field of NORMALIZE_CHILD_FIELDS) {
     const child = rec[field];
     if (Array.isArray(child)) {
-      for (const c of child) normalizeCommandRoles(c as SemanticNode);
+      for (const c of child) normalizeCommandRoles(c as SemanticNode, boundIdentifiers);
     }
   }
   return node;
@@ -255,7 +297,46 @@ export class SemanticParserImpl implements ISemanticParser {
    * the normalization reaches body commands built by any sub-parser.
    */
   parse(input: string, language: string): SemanticNode {
-    return normalizeCommandRoles(this.parseInternal(input, language));
+    // Locally-bound identifiers are scoped to one top-level parse; recursive
+    // sub-parses (behavior handlers, block bodies) inherit the outer scope.
+    if (this.parseDepth === 0) this.boundIdentifiers.clear();
+    this.parseDepth++;
+    try {
+      return normalizeCommandRoles(this.parseInternal(input, language), this.boundIdentifiers);
+    } finally {
+      this.parseDepth--;
+    }
+  }
+
+  /** Re-entrancy depth of {@link parse} — see boundIdentifiers scoping. */
+  private parseDepth = 0;
+
+  /**
+   * Identifiers BOUND earlier in the current top-level parse: a loop binding
+   * variable (`repeat for item in .items` — repeat.patient) or a set variable
+   * (`set item to …` — set.destination). The strict trailing-`destination`
+   * reclaim (see {@link tryAttachTrailingRole}) rejects arbitrary bare
+   * identifiers by design, but an identifier the SAME input just bound is a
+   * legitimate destination (`add .processed to item` inside the loop body —
+   * the en reference captures it as destination:expression since the schema
+   * admits expression; without this the SOV trailing `item に` reclaim
+   * defaulted the destination to `me`).
+   */
+  private boundIdentifiers = new Set<string>();
+
+  /** Record identifiers a just-built command binds (repeat/for patient, set destination). */
+  private registerBoundIdentifiers(node: CommandSemanticNode): void {
+    const role =
+      node.action === 'repeat' || node.action === 'for'
+        ? 'patient'
+        : node.action === 'set'
+          ? 'destination'
+          : null;
+    if (!role) return;
+    const v = node.roles.get(role as SemanticRole) as { type?: string; raw?: unknown } | undefined;
+    if (v?.type === 'expression' && typeof v.raw === 'string' && /^[A-Za-z_]\w*$/.test(v.raw)) {
+      this.boundIdentifiers.add(v.raw);
+    }
   }
 
   /**
@@ -827,11 +908,13 @@ export class SemanticParserImpl implements ISemanticParser {
       roles[role] = value;
     }
 
-    return createCommandNode(match.pattern.command, roles, {
+    const node = createCommandNode(match.pattern.command, roles, {
       sourceLanguage: language,
       patternId: match.pattern.id,
       confidence: match.confidence,
     });
+    this.registerBoundIdentifiers(node);
+    return node;
   }
 
   /**
@@ -1014,6 +1097,7 @@ export class SemanticParserImpl implements ISemanticParser {
         patternId: match.pattern.id,
         confidence: match.confidence,
       });
+      this.registerBoundIdentifiers(commandNode);
 
       // A fused event pattern captures the wrapped command's VERB + (at most) its
       // PRIMARY arg, leaving every SECONDARY role clause unconsumed: `su {event}
@@ -1938,6 +2022,11 @@ export class SemanticParserImpl implements ISemanticParser {
         norm === 'window'
       )
         return true;
+      // A bare identifier the current parse BOUND (a loop binding variable or a
+      // set variable — see registerBoundIdentifiers) is a legitimate strict
+      // destination (`add .processed to item` in a for-body); arbitrary
+      // identifiers stay rejected per the over-capture rationale above.
+      if (this.boundIdentifiers.has(t.value)) return true;
       if (strict) return false;
       return t.kind === 'identifier' || (t.kind as string) === 'reference';
     };
