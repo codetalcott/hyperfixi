@@ -4,15 +4,15 @@ This file provides guidance for working with the `@lokascript/semantic` package.
 
 ## Package Overview
 
-**Semantic-first multilingual parsing** for Hyperscript. This package parses hyperscript commands directly from 13 languages without requiring English translation first.
+**Semantic-first multilingual parsing** for Hyperscript. This package parses hyperscript commands directly from 24 languages without requiring English translation first.
 
-**1240+ tests** | **13 languages** | **45 command schemas**
+**6400+ tests** | **24 languages** | **45+ command schemas**
 
 ## Architecture
 
 ```
 src/
-├── tokenizers/           # Language-specific tokenizers (13 languages)
+├── tokenizers/           # Language-specific tokenizers (24 languages)
 │   ├── english.ts        # SVO word order
 │   ├── japanese.ts       # SOV word order
 │   ├── arabic.ts         # VSO word order, RTL
@@ -36,7 +36,7 @@ src/
 │
 ├── generators/           # Pattern generation from schemas
 │   ├── command-schemas.ts      # 45 command definitions
-│   ├── language-profiles.ts    # Keywords for 13 languages
+│   ├── language-profiles.ts    # Keywords per language
 │   └── pattern-generator.ts    # Generate patterns from schemas
 │
 ├── parser/               # Semantic parser
@@ -67,7 +67,7 @@ src/
 ## Essential Commands
 
 ```bash
-# Run tests (1240+ tests)
+# Run tests (6400+ tests)
 npm test --prefix packages/semantic
 npm test --prefix packages/semantic -- --run  # Single run (no watch)
 
@@ -238,7 +238,7 @@ Available templates:
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `src/types.ts`                                | ActionType union (45 actions), SemanticNode types (command, event-handler, conditional, compound, loop) |
 | `src/generators/command-schemas.ts`           | Schema definitions for all commands                                                                     |
-| `src/generators/language-profiles.ts`         | Keyword translations (13 languages)                                                                     |
+| `src/generators/language-profiles.ts`         | Keyword translations (per language)                                                                     |
 | `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates                                                 |
 | `src/patterns/builders.ts`                    | Pattern registry and `buildPatternsForLanguage()`                                                       |
 | `src/parser/semantic-parser.ts`               | Main parsing logic                                                                                      |
