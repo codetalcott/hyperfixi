@@ -2095,6 +2095,43 @@ export class SemanticParserImpl implements ISemanticParser {
         continue;
       }
 
+      // Mid-clause `if` fold — the parseClause mirror of the fused-body walker's
+      // hook (see the matchBest-yields-flat-`if` fold in parseBody). A juxtaposed
+      // `<cmd> … if <condition> <cmd> …` clause (no `then` before the `if`, so the
+      // clause-boundary fold in parseBodyWithClauses never fires) otherwise
+      // pattern-matches the flat `if` head (`if-en-basic` = `if {condition}`),
+      // truncating the condition to its FIRST token (`if result is false` →
+      // condition:reference="result", the comparison silently dropped) and
+      // flattening the branch into sibling commands. This was en-REFERENCE noise:
+      // translations reach the folding walkers and capture the full condition as
+      // an expression, then mis-score against the truncated en signature
+      // (form-submit-prevent ×14). Rewind and fold the whole `if … end` block —
+      // same condition/branch split, full-expression condition. Junk between the
+      // match start and the if-keyword joins the skipped-run recovery (restored on
+      // a failed fold). tryParseConditionalBlock returns null without consuming
+      // when the head isn't a usable conditional, so a non-foldable flat `if`
+      // (e.g. no branch commands) is byte-identical to before.
+      if (commandMatch && (commandMatch.pattern.command as string) === 'if') {
+        const afterMatch = clauseStream.mark();
+        const skippedLenBefore = skipped.length;
+        clauseStream.reset(startMark);
+        while (!clauseStream.isAtEnd()) {
+          const h = clauseStream.peek();
+          if (!h || this.isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
+          skipped.push(h);
+          clauseStream.advance();
+        }
+        const conditional = this.tryParseConditionalBlock(clauseStream, commandPatterns, language);
+        if (conditional) {
+          flushSkipped();
+          commands.push(conditional);
+          directHits++;
+          continue;
+        }
+        skipped.length = skippedLenBefore;
+        clauseStream.reset(afterMatch);
+      }
+
       if (commandMatch) {
         flushSkipped();
         const cmd = this.buildCommand(commandMatch, language);

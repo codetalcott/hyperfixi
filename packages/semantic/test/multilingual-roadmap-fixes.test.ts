@@ -2338,10 +2338,6 @@ describe('`is empty` predicate keywords (de/sw) — block-body Phase 1a', () => 
       'de',
       'bei unscharf wenn mein wert ist leer hinzufügen .error zu ich dann setzen "Required" zu nächste .error-message ende',
     ],
-    [
-      'sw',
-      'kwenye poteza_macho kama yangu thamani ni tupu ongeza .error kwa mimi kisha weka "Required" kwa ijayo .error-message mwisho',
-    ],
   ];
 
   for (const [lang, input] of cases) {
@@ -2349,6 +2345,42 @@ describe('`is empty` predicate keywords (de/sw) — block-body Phase 1a', () => 
       expect(actions(parse(input, lang as 'de')).has('empty')).toBe(true);
     });
   }
+
+  it('[sw] recovers the empty predicate inside the folded condition', () => {
+    // Originally locked as a flat `empty` ACTION sibling — the truncated-if-era
+    // shape. The mid-clause if fold (parseClause hook, if.condition en-noise
+    // sweep) now folds this into a conditional whose condition carries the
+    // NORMALIZED predicate (`… is empty`) — which still exercises the Phase 1a
+    // vocabulary (`ni`→is, `tupu`→empty): without it the predicate would not
+    // normalize. The corpus if-empty (`kwenye blur kama …`) folds identically
+    // in en/de/sw, so this is the faithful shape, not a regression.
+    const node = parse(
+      'kwenye poteza_macho kama yangu thamani ni tupu ongeza .error kwa mimi kisha weka "Required" kwa ijayo .error-message mwisho',
+      'sw'
+    );
+    function findIf(n: unknown): Record<string, any> | null {
+      if (!n || typeof n !== 'object') return null;
+      const rec = n as Record<string, any>;
+      if (rec.action === 'if') return rec;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = rec[f];
+        if (Array.isArray(c)) {
+          for (const x of c) {
+            const hit = findIf(x);
+            if (hit) return hit;
+          }
+        }
+      }
+      return null;
+    }
+    const ifNode = findIf(node);
+    expect(ifNode).not.toBeNull();
+    const cond = ifNode!.roles instanceof Map ? ifNode!.roles.get('condition') : undefined;
+    expect(cond?.type).toBe('expression');
+    expect(String(cond?.raw ?? '')).toContain('empty');
+    // The predicate no longer leaks as a spurious flat `empty` action.
+    expect(actions(node).has('empty')).toBe(false);
+  });
 });
 
 describe('id toggle keyword alignment (unless-condition) — block-body Phase 1b', () => {
@@ -10053,6 +10085,55 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
       );
       expect(node).not.toBeNull();
       expect(firstAction(node, 'halt')).not.toBeNull();
+    });
+  });
+
+  describe('mid-clause if fold: full condition captured, branch nested (if.condition en-reference noise)', () => {
+    // `on submit halt the event call validateForm() if result is false log
+    // "Invalid form" end` — no `then` before the `if`, so the clause-boundary
+    // fold in parseBodyWithClauses never fires and the clause reaches
+    // parseClause with the `if` mid-clause. matchBest then pattern-matched the
+    // flat `if` head (`if-en-basic` = `if {condition}`), truncating the
+    // condition to its first token (condition:reference="result", the `is
+    // false` comparison silently dropped) and flattening `log` into a sibling.
+    // This was EN-REFERENCE noise: translations reach the folding body walkers,
+    // capture the full condition as an expression, and mis-scored against the
+    // truncated en signature (if.condition ×14, form-submit-prevent). The
+    // parseClause mirror of the fused-body fold hook now rewinds a flat-`if`
+    // match and folds the whole block (form-submit-prevent en+14; collateral:
+    // focus-trap ko/qu, behavior-removable js.patient bn/hi/ja/ko/qu/tr).
+    it('[en] mid-clause if captures the FULL comparison as an expression condition', () => {
+      const node = parse(
+        'on submit halt the event call validateForm() if result is false log "Invalid form" end',
+        'en'
+      );
+      const ifNode = firstAction(node, 'if');
+      const cond = roleOf(ifNode, 'condition');
+      expect(cond?.type).toBe('expression');
+      expect(String(cond?.raw ?? cond?.value)).toContain('is false');
+    });
+
+    it('[en] the branch command nests under thenBranch (not a flattened sibling)', () => {
+      const node = parse(
+        'on submit halt the event call validateForm() if result is false log "Invalid form" end',
+        'en'
+      );
+      const ifNode = firstAction(node, 'if');
+      expect(ifNode).not.toBeNull();
+      const thenBranch = (ifNode as Record<string, any>).thenBranch;
+      expect(Array.isArray(thenBranch)).toBe(true);
+      expect(thenBranch.some((c: Record<string, any>) => c.action === 'log')).toBe(true);
+      // halt and call remain siblings OUTSIDE the conditional
+      expect(firstAction(node, 'halt')).not.toBeNull();
+      expect(firstAction(node, 'call')).not.toBeNull();
+    });
+
+    it('[en] a clause-boundary if (existing fold path) is unchanged', () => {
+      const node = parse('on click if result is false log "bad" end', 'en');
+      const ifNode = firstAction(node, 'if');
+      const cond = roleOf(ifNode, 'condition');
+      expect(cond?.type).toBe('expression');
+      expect(String(cond?.raw ?? cond?.value)).toContain('is false');
     });
   });
 });
