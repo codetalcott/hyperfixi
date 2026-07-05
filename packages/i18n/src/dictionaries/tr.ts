@@ -22,7 +22,11 @@ export const tr: Dictionary = {
     unless: 'değilse',
     repeat: 'tekrarla',
     for: 'için',
-    while: 'iken',
+    // `süresince` (the semantic tr profile's while primary), not `iken`: `iken`
+    // is the profile's WHEN primary (logical.when below also emits it), so a
+    // fronted repeat-while head tokenized as `when` and the condition dropped
+    // wholesale. Same dict↔profile homonym disambiguation as pl get/pobierz.
+    while: 'süresince',
     until: 'kadar',
     continue: 'devam',
     break: 'dur',

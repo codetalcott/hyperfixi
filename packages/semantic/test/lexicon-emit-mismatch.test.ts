@@ -111,7 +111,8 @@ const KNOWN_MISMATCHES = new Set([
   // spaced `mana sichus` + quechua profile reads it as `unless` (was `mana_sichus`,
   // which `_`-split to mana(=false)+sichus(=if)).
   'qu:until:hayk_akama',
-  'qu:while:kay_kaq',
+  // qu:while resolved (HANDOFF-r1-post-cluster-residue item 2): dict realigned to
+  // the profile primary `kaykamaqa` (was `kay_kaq`, unknown to the profile).
   'ru:catch:поймать',
   'ru:pushUrl:добавить_url',
   'ru:replaceUrl:заменить_url',
@@ -138,7 +139,8 @@ const KNOWN_MISMATCHES = new Set([
   'tr:pushUrl:urlEkle',
   'tr:replaceUrl:urlDeğiştir',
   'tr:select:seç',
-  'tr:while:iken',
+  // tr:while resolved (HANDOFF-r1-post-cluster-residue item 2): dict realigned to
+  // the profile primary `süresince` (was `iken`, the tr WHEN primary).
   'uk:catch:зловити',
   'uk:pushUrl:додати_url',
   'uk:replaceUrl:замінити_url',
