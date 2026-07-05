@@ -9617,3 +9617,46 @@ describe('SOV/marker-swallowed fetch responseType reclaim (R1 handoff cluster B)
     expect(fetch!.roles?.has('responseType')).toBe(false);
   });
 });
+
+describe('possessive render/parse symmetry (specialForms inversion + qu chay-paq split) — R1 cluster A1', () => {
+  // The i18n transformer renders possessives via the profile's `specialForms`
+  // (concept → surface), but the matcher only consulted `keywords` (surface →
+  // concept) — so ko `그것의.name` (its.name, rendered from specialForms.it)
+  // never parsed back: the generated set pattern's {patient} failed and the
+  // whole clause fell to the role-scrambling SOV fallback. getPossessiveReference
+  // now inverts specialForms as a fallback. qu's `chaypaq.name` additionally
+  // TOKENIZES as chay + paq (agglutinative split), covered by a `chay: it`
+  // keyword + `paq`/`pa` possessive connectors. ja/hi (already-working) locked
+  // as references.
+  const cases: Array<[string, string]> = [
+    ['#name.innerText を その.name に 設定', 'ja'],
+    ['#name.innerText 를 그것의.name 에 설정', 'ko'],
+    ['#name.innerText ta chaypaq.name man churanay', 'qu'],
+    ['#name.innerText को इसका.name में सेट', 'hi'],
+  ];
+  for (const [input, lang] of cases) {
+    it(`[${lang}] set with its-possessive patient parses via the generated pattern (both roles property-path)`, () => {
+      const node = parse(input, lang) as {
+        action?: string;
+        roles?: Map<string, { type: string }>;
+        metadata?: { patternId?: string };
+      };
+      expect(node.action).toBe('set');
+      expect(node.metadata?.patternId).toBe(`set-${lang}-generated`);
+      expect(node.roles?.get('destination')?.type).toBe('property-path');
+      expect(node.roles?.get('patient')?.type).toBe('property-path');
+    });
+  }
+
+  it('[qu] a marked bare-chay patient does not form a phantom possessive', () => {
+    // `chay ta t'ikray` = "toggle it": chay is followed by the ta particle, not
+    // a property token — the possessive matcher must not fire and the patient
+    // stays a plain reference.
+    const node = parse("chay ta t'ikray", 'qu') as {
+      action?: string;
+      roles?: Map<string, { type: string }>;
+    };
+    expect(node.action).toBe('toggle');
+    expect(node.roles?.get('patient')?.type).not.toBe('property-path');
+  });
+});

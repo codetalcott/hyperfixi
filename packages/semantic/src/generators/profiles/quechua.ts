@@ -52,7 +52,18 @@ export const quechuaProfile: LanguageProfile = {
       qampa: 'you',
       // "its/his/her" - paypa
       paypa: 'it',
+      // The corpus dot-notation possessive is chaypaq (its = chay + -paq
+      // genitive), which the agglutinative tokenizer SPLITS into `chay` (it) +
+      // `paq` particle — so the one-token keyword lookup sees only `chay`.
+      // Recognize the bare head here and skip the genitive particle via
+      // `connectors` below (the same mechanism as id `saya punya X`). Guarded
+      // against over-match by the matcher itself: it only fires when a
+      // property-shaped token follows (`.name`), so a marked `chay ta …`
+      // patient or the chayqa/chaymanta then-keywords never form a phantom
+      // possessive (single tokens / particle follows).
+      chay: 'it',
     },
+    connectors: ['paq', 'pa'],
   },
   roleMarkers: {
     patient: { primary: 'ta', position: 'after' },
