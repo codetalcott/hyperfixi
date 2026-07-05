@@ -24,6 +24,18 @@ before trusting any number in this doc.
 
 ### 1. sw `kama` homonym — phantom `if` family (precision, sw-specific, smallest)
 
+> **STATUS: DONE (2026-07-05).** Dict-side fix, option 1 as suggested: the i18n
+> sw dict + grammar profile now emit `kuwa` ("to be/become" — the conversion
+> sense, cf. `badilisha kuwa`) for `as`/method, and the semantic `fetch-sw`
+> pattern reads `kuwa` as the responseType marker (hand-written `kama` still
+> tolerated in as-marker position via a new `asMarkerAlternatives` param on
+> `markerlessFetch`). A/B over all 8 kuwa-carrying sw translations: the 4
+> phantom-if patterns (computed-value, event-debounce, fetch-with-headers,
+> fetch-formdata) all reach precision 1.0, 4 unchanged, 0 regressed. sw
+> avgPrecision 0.9855 → 0.9942. The non-kama singletons surfaced by the same
+> probe (breakpoint-command `halt`, go-back `go`, behavior-sortable `empty`)
+> remain — item 3 territory.
+
 sw `kama` is both "as" and "if". The sw SEMANTIC parser reads a standalone
 `kama` as an `if` command, so any translation carrying `kama <word>` grows a
 phantom `if`. Probed spurious-action list for sw (multiset, vs en reference):

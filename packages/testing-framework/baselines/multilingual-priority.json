@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-07-05T03:16:05.387Z",
-  "commit": "fb09542c",
+  "timestamp": "2026-07-05T13:16:25.630Z",
+  "commit": "dec13c63",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -10745,7 +10745,7 @@
       "parseRate": 1,
       "avgConfidence": 0.7962481962481944,
       "avgFidelity": 1,
-      "avgPrecision": 0.9854978354978355,
+      "avgPrecision": 0.9941558441558443,
       "avgRoleFidelity": 0.9752652256328729,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
