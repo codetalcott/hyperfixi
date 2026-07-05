@@ -10243,4 +10243,93 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
       expect(roleOf2(inc, 'quantity')).toMatchObject({ type: 'literal', value: 10 });
     });
   });
+
+  describe('conjunction-split loop head: the owed `end` is block content, not the body terminator', () => {
+    // The i18n transformer inserts a conjunction between a loop head and its
+    // body (es `para item en $items ENTONCES establecer … fin`; en renders
+    // `for item in $items set … end`, no conjunction). Both body walkers
+    // treated the head's later `fin` as THE body terminator and silently
+    // dropped every command after the loop — template-literal-list-build lost
+    // its final `set #list.innerHTML to $html` in ALL 22 translations
+    // (set.destination:property-path ×46, the largest set-family R1 cluster).
+    // Now: parseBodyWithClauses carries the opener's depth across the
+    // conjunction boundary when the flushed clause really parsed to a loop
+    // head (a loop opener can tokenize as a PARTICLE — es `para` — so
+    // clause-initial particle openers count too), and
+    // parseBodyWithGrammarPatterns consumes an `end` owed to a pushed
+    // blockless loop head instead of breaking.
+    function allActions(n: unknown, acc: string[] = []): string[] {
+      if (!n || typeof n !== 'object') return acc;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) allActions(x, acc);
+      }
+      return acc;
+    }
+
+    // pt `para` and sw `kwa` tokenize as destination PARTICLES (never
+    // keyword/for), so the debt must derive from the clause PARSE, not token
+    // kinds — these two lock the particle-opener languages alongside es.
+    const conjunctionSplitCases: Array<[string, string]> = [
+      [
+        'pt',
+        'em clique definir $html para "" então para item dentro $items então definir $html para $html + `<li>${item.name}</li>` fim então definir #list.innerHTML para $html',
+      ],
+      [
+        'sw',
+        'kwenye bonyeza seti $html kwa "" kisha kwa item ndani $items kisha seti $html kwa $html + `<li>${item.name}</li>` mwisho kisha seti #list.innerHTML kwa $html',
+      ],
+    ];
+    for (const [lang, input] of conjunctionSplitCases) {
+      it(`[${lang}] particle-opener loop keeps the final set after the loop end-word`, () => {
+        const node = parse(input, lang);
+        expect(allActions(node).filter(a => a === 'set').length).toBe(3);
+      });
+    }
+
+    it('[es] template-literal-list-build keeps the final set after the loop `fin`', () => {
+      const node = parse(
+        'en clic establecer $html a "" entonces para item en $items entonces establecer $html a $html + `<li>${item.name}</li>` fin entonces establecer #list.innerHTML a $html',
+        'es'
+      );
+      const sets = allActions(node).filter(a => a === 'set');
+      expect(sets.length).toBe(3);
+      // The reclaimed final set binds the property-path destination, like en.
+      function findLastSet(x: unknown): Record<string, any> | null {
+        let last: Record<string, any> | null = null;
+        (function walk(n: unknown) {
+          if (!n || typeof n !== 'object') return;
+          const rec = n as Record<string, any>;
+          if (rec.action === 'set') last = rec;
+          for (const f of ['body', 'statements']) {
+            const c = rec[f];
+            if (Array.isArray(c)) c.forEach(walk);
+          }
+        })(x);
+        return last;
+      }
+      const lastSet = findLastSet(node)!;
+      const dest = lastSet.roles instanceof Map ? lastSet.roles.get('destination') : undefined;
+      expect(dest?.type).toBe('property-path');
+    });
+
+    it('[en] the no-conjunction en form is unchanged (depth path, byte-identical)', () => {
+      const node = parse(
+        'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
+        'en'
+      );
+      const sets = allActions(node).filter(a => a === 'set');
+      expect(sets.length).toBe(3);
+    });
+
+    it('[es] a body with no loop head still terminates at `fin` (debt never negative)', () => {
+      // `fin` with no owed loop head must terminate the body exactly as before.
+      const node = parse('en clic alternar .active fin', 'es');
+      const actions = allActions(node);
+      expect(actions).toContain('toggle');
+      expect(actions.filter(a => a === 'for' || a === 'repeat')).toHaveLength(0);
+    });
+  });
 });
