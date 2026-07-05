@@ -18,7 +18,23 @@ export function getPossessiveReference(
   profile: LanguageProfile,
   keyword: string
 ): string | undefined {
-  return profile.possessive?.keywords?.[keyword];
+  const direct = profile.possessive?.keywords?.[keyword];
+  if (direct) return direct;
+  // Render/parse symmetry: the i18n transformer renders possessives via
+  // `specialForms` (concept → surface, e.g. ko it → 그것의), but only `keywords`
+  // (surface → concept) was consulted here — so a surface form present ONLY in
+  // specialForms round-tripped out but never parsed back (ko `그것의.name`
+  // failed the whole generated set pattern and fell to the role-scrambling SOV
+  // fallback; R1 handoff cluster A). Invert specialForms as a fallback so
+  // whatever the renderer can emit, the matcher can read. `keywords` keeps
+  // precedence for languages that deliberately map a surface differently.
+  const special = profile.possessive?.specialForms;
+  if (special) {
+    for (const [concept, surface] of Object.entries(special)) {
+      if (surface === keyword) return concept;
+    }
+  }
+  return undefined;
 }
 
 /**
