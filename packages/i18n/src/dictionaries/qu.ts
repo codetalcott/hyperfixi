@@ -50,7 +50,10 @@ export const qu: Dictionary = {
     throw: 'wikchuy',
     catch: 'hapsiy',
     measure: 'tupuy',
-    transition: 'tikray',
+    // pasay, not tikray: the semantic qu profile's toggle keyword is
+    // t'ikray/tikray, so a tikray render collided with toggle and the
+    // transition command never anchored (sw kama precedent, #569).
+    transition: 'pasay',
     increment: 'yapachiy',
     decrement: 'pisiyachiy',
     default: 'ñawpaq_kaq',

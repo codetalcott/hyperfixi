@@ -10136,4 +10136,111 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
       expect(String(cond?.raw ?? cond?.value)).toContain('is false');
     });
   });
+
+  describe('transition family: schema/marker/keyword alignment (spurious-transition ×66 precision drill)', () => {
+    // The transition schema's literal-only patient rejected the idiomatic bare
+    // CSS property (`opacity` tokenizes identifier → expression; `*max-height`
+    // tokenizes selector), and the goal markerOverride table disagreed with
+    // what the i18n transformer actually renders in 11 languages — so the
+    // generated pattern never fired: en (and 8 other languages) silently
+    // DROPPED the whole command while the languages whose lax body walkers
+    // recovered it were precision-penalized as "spurious transition" (×66, the
+    // largest R0-precision family). Fixes locked here:
+    //  - patient admits expression + selector (style-property syntax);
+    //  - goal markers aligned to the rendered corpus (de zu, pl do, ru/uk в,
+    //    he על, th ใน, it in, ms ke, vi vào, zh 到, sw kwa);
+    //  - sw keyword alternative mpito (the rendered verb);
+    //  - zh particle extractor defers to longer profile keywords (过渡 was
+    //    split into 过 particle + 渡 identifier);
+    //  - trailing bare TIME literal reclaims into transition's absent optional
+    //    duration in verb-final renders (the #561 quantity-reclaim sibling).
+    function findTransition(n: unknown): Record<string, any> | null {
+      if (!n || typeof n !== 'object') return null;
+      const rec = n as Record<string, any>;
+      if (rec.action === 'transition') return rec;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+        const c = rec[f];
+        if (Array.isArray(c)) {
+          for (const x of c) {
+            const hit = findTransition(x);
+            if (hit) return hit;
+          }
+        }
+      }
+      return null;
+    }
+    const roleOf2 = (n: Record<string, any> | null, r: string) =>
+      n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+    it('[en] bare CSS property parses as the transition patient (expression)', () => {
+      const node = parse('transition opacity to 0 over 500ms', 'en');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'patient')).toMatchObject({ type: 'expression' });
+      expect(roleOf2(tr, 'goal')).toMatchObject({ type: 'literal' });
+      expect(roleOf2(tr, 'duration')).toMatchObject({ type: 'literal', value: '500ms' });
+    });
+
+    it('[en] style-property syntax parses as the transition patient (selector)', () => {
+      const node = parse('transition *background-color to "blue" over 500ms', 'en');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'patient')).toMatchObject({ type: 'selector' });
+    });
+
+    it('[de] corpus-shaped handler captures goal + duration (goal marker is zu, not auf)', () => {
+      const node = parse('bei klick übergang opacity zu 0 500ms dann entfernen ich', 'de');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'goal')).toMatchObject({ type: 'literal' });
+      expect(roleOf2(tr, 'duration')).toMatchObject({ type: 'literal', value: '500ms' });
+    });
+
+    it('[zh] 过渡 anchors the transition (particle extractor defers to the longer keyword)', () => {
+      // Without the longer-keyword guard the particle extractor split 过渡 into
+      // 过 (aspect particle) + 渡 (stray identifier) and the verb never anchored.
+      const node = parse('当 点击 时 过渡 把 opacity 到 0 500ms', 'zh');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'goal')).toMatchObject({ type: 'literal' });
+    });
+
+    it('[sw] the rendered verb mpito anchors the transition', () => {
+      const node = parse('kwenye bonyeza mpito opacity kwa 0 500ms', 'sw');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'goal')).toMatchObject({ type: 'literal' });
+    });
+
+    it('[ja] verb-final render reclaims the trailing bare duration', () => {
+      const node = parse('opacity を クリック で 遷移 0 に 500ms', 'ja');
+      const tr = findTransition(node);
+      expect(tr).not.toBeNull();
+      expect(roleOf2(tr, 'duration')).toMatchObject({ type: 'literal', value: '500ms' });
+    });
+
+    it('[en] a bare NUMBER is never reclaimed as duration (quantity domain untouched)', () => {
+      // The reclaim is gated to time-shaped literals; `increment #score 10`
+      // shapes stay the quantity reclaim's domain.
+      const node = parse('#score を クリック で 増加 10', 'ja');
+      function findAction2(n: unknown, a: string): Record<string, any> | null {
+        if (!n || typeof n !== 'object') return null;
+        const rec = n as Record<string, any>;
+        if (rec.action === a) return rec;
+        for (const f of ['body', 'statements']) {
+          const c = rec[f];
+          if (Array.isArray(c)) {
+            for (const x of c) {
+              const hit = findAction2(x, a);
+              if (hit) return hit;
+            }
+          }
+        }
+        return null;
+      }
+      const inc = findAction2(node, 'increment');
+      expect(inc).not.toBeNull();
+      expect(roleOf2(inc, 'quantity')).toMatchObject({ type: 'literal', value: 10 });
+    });
+  });
 });
