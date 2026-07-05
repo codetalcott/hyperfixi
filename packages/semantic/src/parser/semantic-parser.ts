@@ -1208,6 +1208,56 @@ export class SemanticParserImpl implements ISemanticParser {
             tokens.advance();
           }
         }
+
+        // Trailing RESPONSE-TYPE reclaim — the `responseType` sibling of the
+        // quantity reclaim above (R1 handoff cluster B). The transformer
+        // renders `fetch /api/user as json`'s tail AFTER the fused verb:
+        // bare (ja `フェッチ json`, bn `আনুন json`), word + as-postposition
+        // (tr `json olarak`, hi `json के रूप में`, qu `json hina` — the
+        // postposition stays unconsumed skip-noise exactly as before), or
+        // word + a particle the fused pattern's optional trailing DESTINATION
+        // group swallows (ko `json 로` — 로 is a destination alternative), so
+        // the responseType either drops or lands under `destination`, a role
+        // whose schema types (selector/reference) it VIOLATES. Two moves,
+        // both gated on the schema declaring an optional `responseType` that
+        // is absent AND on the word being a KNOWN response-type word
+        // (loanwords, language-invariant in the corpus):
+        //  (a) relabel a schema-invalid `destination` capture to responseType;
+        //  (b) capture a trailing bare response word and consume it.
+        const rNode = commandNode as CommandSemanticNode;
+        const rSchema = getSchema(actionName as ActionType);
+        const rSpec = rSchema?.roles.find(r => r.role === 'responseType' && !r.required);
+        if (rSpec && !rNode.roles.has('responseType')) {
+          const isResponseWord = (w: unknown): w is string =>
+            typeof w === 'string' && SemanticParserImpl.RESPONSE_TYPE_WORDS.has(w.toLowerCase());
+          const rebuildWithResponseType = (word: string, dropDestination: boolean): void => {
+            const roles = Object.fromEntries(rNode.roles) as Record<string, SemanticValue>;
+            if (dropDestination) delete roles.destination;
+            roles.responseType = { type: 'expression', raw: word } as SemanticValue;
+            commandNode = createCommandNode(actionName as ActionType, roles, rNode.metadata);
+          };
+          const dest = rNode.roles.get('destination') as
+            | { type: string; raw?: unknown; value?: unknown }
+            | undefined;
+          const destSpec = rSchema?.roles.find(r => r.role === 'destination');
+          const destWord = dest?.raw ?? dest?.value;
+          if (
+            dest &&
+            destSpec &&
+            !destSpec.expectedTypes.includes(
+              dest.type as (typeof destSpec.expectedTypes)[number]
+            ) &&
+            isResponseWord(destWord)
+          ) {
+            rebuildWithResponseType(destWord, true);
+          } else {
+            const trailing = tokens.peek();
+            if (trailing && isResponseWord(trailing.value)) {
+              rebuildWithResponseType(trailing.value, false);
+              tokens.advance();
+            }
+          }
+        }
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -2495,6 +2545,24 @@ export class SemanticParserImpl implements ISemanticParser {
    * SOV event marker particles per language (postpositions that mark the event role).
    * Korean has no event marker particle -- the event keyword stands alone.
    */
+  /**
+   * Known `fetch … as <type>` response-type words. Untranslated loanwords in
+   * every corpus language (the transformer localizes the `as` marker, never the
+   * word), so a value-set gate is language-invariant. Used by the trailing
+   * response-type reclaim in {@link buildEventHandler} — mirrors core's
+   * supported conversions (json/text/html/response + binary forms).
+   */
+  private static readonly RESPONSE_TYPE_WORDS = new Set([
+    'json',
+    'text',
+    'html',
+    'xml',
+    'blob',
+    'arraybuffer',
+    'formdata',
+    'response',
+  ]);
+
   private static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
     ja: new Set(['で']),
     ko: new Set(), // ko's marker is the two-token 할 때 phrase — see SOV_EVENT_MARKER_PHRASES
