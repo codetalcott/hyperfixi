@@ -84,6 +84,87 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
   'closest',
 ]);
 
+/**
+ * Known WAITABLE event names — the gate for treating a `wait` argument as an
+ * event wait rather than a time wait. `wait for transitionend` (en head) and
+ * the marker-less translations (`esperar transitionend`) both put the event
+ * name where a duration would sit; a bare identifier is otherwise ambiguous
+ * with a time-variable wait (`wait delay`), so the relabel/reclaim fires ONLY
+ * on names in this set. Event names are untranslated loanwords in every corpus
+ * language (the RESPONSE_TYPE_WORDS precedent), so a value-set gate is
+ * language-invariant. Superset of the handler-side KNOWN_EVENTS plus the
+ * transition/animation/pointer/touch/drag families that waits actually target.
+ */
+const WAITABLE_EVENT_WORDS = new Set([
+  // handler-side KNOWN_EVENTS
+  'click',
+  'dblclick',
+  'input',
+  'change',
+  'submit',
+  'keydown',
+  'keyup',
+  'keypress',
+  'mouseover',
+  'mouseout',
+  'mousedown',
+  'mouseup',
+  'focus',
+  'blur',
+  'load',
+  'scroll',
+  'resize',
+  'contextmenu',
+  // transition / animation
+  'transitionend',
+  'transitionstart',
+  'transitionrun',
+  'transitioncancel',
+  'animationend',
+  'animationstart',
+  'animationiteration',
+  'animationcancel',
+  // pointer / touch / mouse movement
+  'pointerdown',
+  'pointerup',
+  'pointermove',
+  'pointerenter',
+  'pointerleave',
+  'pointercancel',
+  'pointerover',
+  'pointerout',
+  'touchstart',
+  'touchend',
+  'touchmove',
+  'touchcancel',
+  'mousemove',
+  'mouseenter',
+  'mouseleave',
+  'wheel',
+  // drag & drop
+  'dragstart',
+  'dragend',
+  'dragover',
+  'dragenter',
+  'dragleave',
+  'drop',
+  'drag',
+  // lifecycle / misc
+  'loadend',
+  'loadstart',
+  'error',
+  'abort',
+  'close',
+  'open',
+  'message',
+  'popstate',
+  'hashchange',
+  'storage',
+  'online',
+  'offline',
+  'visibilitychange',
+]);
+
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
 // =============================================================================
@@ -191,6 +272,53 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       if (value !== undefined) {
         roles.delete('patient');
         roles.set(primary, value);
+      }
+    }
+
+    // tell: the generated marker extraction binds tell's element to the
+    // generic `patient` (tell has NO patient role) and the trailing verb of
+    // the dropped `to <command>` body to `destination` as a literal —
+    // schema-invalid, a tell destination is selector/reference (`decir #modal
+    // a mostrar` → patient:selector="#modal", destination:literal="show").
+    // Relabel patient→destination and drop the junk literal so translations
+    // align with the en reference (`tell #modal to show` →
+    // destination:selector="#modal"; the body verb is dropped in the en
+    // reference too — equal lossiness, no phantom). Cluster-B precedent: the
+    // schema-invalid-destination relabel (ko `json 로`).
+    if (node.action === 'tell') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const pat = roles.get('patient');
+      const dest = roles.get('destination');
+      if (
+        pat &&
+        (pat.type === 'selector' || pat.type === 'reference') &&
+        (!dest || dest.type === 'literal')
+      ) {
+        roles.delete('patient');
+        roles.set('destination', pat);
+      }
+    }
+
+    // wait: a duration that IS a known waitable event name is an EVENT wait —
+    // `wait for transitionend` (en `wait-en-for-event` head) vs the
+    // marker-less translations (`esperar transitionend`), whose generated
+    // `wait {duration}` pattern binds the event name as
+    // duration:expression. Relabel duration→event:literal so both shapes
+    // align and the waitMapper emits the runtime's `modifiers.for` event
+    // wait. Gated on WAITABLE_EVENT_WORDS so a time-variable wait
+    // (`wait delay`, `wait 2s`) is never touched.
+    if (node.action === 'wait') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      if (!roles.has('event')) {
+        const dur = roles.get('duration') as
+          | { type: string; raw?: unknown; value?: unknown }
+          | undefined;
+        const word =
+          dur?.type === 'expression' ? dur.raw : dur?.type === 'literal' ? dur.value : undefined;
+        if (typeof word === 'string' && WAITABLE_EVENT_WORDS.has(word.toLowerCase())) {
+          roles.delete('duration');
+          roles.set('event', { type: 'literal', value: word, dataType: 'string' });
+        }
       }
     }
 
@@ -1383,6 +1511,65 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
         }
+
+        // Trailing WAITABLE-EVENT reclaim — the `wait` sibling of the quantity /
+        // responseType reclaims above. The transformer renders `wait for
+        // transitionend` with the event name AFTER the verb in verb-final
+        // languages (ja `待つ transitionend`, hi `प्रतीक्षा transitionend`), but
+        // the fused event pattern ends at the verb, so the event name is left
+        // unconsumed and drops (the wait fills a junk schema-invalid
+        // duration:reference instead — wait-for-event ×23). Gated on the
+        // action being `wait`, an ABSENT event role, and the next unconsumed
+        // token being a KNOWN waitable event name (language-invariant
+        // loanwords — a then-keyword, `end`, selector, or bare number never
+        // matches). A schema-invalid duration (reference — the junk fill) is
+        // dropped in the rebuild; a real duration (literal/expression) is kept.
+        if (actionName === 'wait') {
+          const wNode = commandNode as CommandSemanticNode;
+          if (!wNode.roles.has('event')) {
+            const trailing = tokens.peek();
+            if (trailing && WAITABLE_EVENT_WORDS.has(trailing.value.toLowerCase())) {
+              const roles = Object.fromEntries(wNode.roles) as Record<string, SemanticValue>;
+              const dur = roles.duration as { type?: string } | undefined;
+              if (dur && dur.type !== 'literal' && dur.type !== 'expression') {
+                delete roles.duration;
+              }
+              // Drop the SOV default-patient leak (`patient:reference=me`, the
+              // sov-simple fused extraction default): wait has no patient
+              // role, and normalizeCommandRoles would otherwise relabel it
+              // into the empty primary `duration` slot — a junk
+              // duration:reference the en reference never has (the repeat
+              // default-patient precedent).
+              const pat = roles.patient as { type?: string; value?: unknown } | undefined;
+              if (pat && pat.type === 'reference' && pat.value === 'me') {
+                delete roles.patient;
+              }
+              roles.event = {
+                type: 'literal',
+                value: trailing.value,
+                dataType: 'string',
+              } as SemanticValue;
+              commandNode = createCommandNode(actionName as ActionType, roles, wNode.metadata);
+              tokens.advance();
+              // Consume a trailing rendered `for`-postposition (bn `transitionend
+              // জন্য` — the transformer renders the wait-for keyword AFTER the
+              // event in postpositional languages). Left in place it anchors a
+              // phantom bare `for` command in the remaining body tokens. জন্য
+              // tokenizes as a PARTICLE (no `normalized`), so also match the
+              // profile's for-keyword surface form.
+              const post = tokens.peek();
+              if (post) {
+                const postNorm = (post.normalized ?? '').toLowerCase();
+                const forKw = tryGetProfile(language)?.keywords?.for;
+                const isForWord =
+                  postNorm === 'for' ||
+                  post.value === forKw?.primary ||
+                  (forKw?.alternatives ?? []).includes(post.value);
+                if (isForWord) tokens.advance();
+              }
+            }
+          }
+        }
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -1668,6 +1855,28 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     this.foldFrontedWhileIntoRepeat(clauses, language);
+
+    // Drop phantom BARE `for` clauses: a lone for-homonym token (bn `জন্য` is
+    // both the for-keyword and the benefactive postposition) parses as a `for`
+    // command node with ZERO roles and no body — never a real command, only a
+    // rendered marker orphaned from its phrase (`অপেক্ষা transitionend জন্য`:
+    // the trailing for-postposition survives the wait clause split and anchors
+    // an empty `for` — a precision phantom vs the en reference). Real for
+    // parses always carry a patient/source role or a body (loop kinds are
+    // built with them). Scoped to `for` ONLY: a bare zero-role `repeat` is a
+    // legitimate intermediate of the loop-body recovery paths (zh
+    // repeat-forever, qu repeat-while) and must survive.
+    for (let i = clauses.length - 1; i >= 0; i--) {
+      const c = clauses[i] as CommandSemanticNode & { body?: unknown[] };
+      if (
+        c.kind === 'command' &&
+        c.action === 'for' &&
+        (!(c.roles instanceof Map) || c.roles.size === 0) &&
+        (!Array.isArray(c.body) || c.body.length === 0)
+      ) {
+        clauses.splice(i, 1);
+      }
+    }
 
     // If we have multiple clauses, wrap in CompoundSemanticNode
     if (clauses.length > 1) {

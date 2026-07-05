@@ -8728,25 +8728,37 @@ describe('`halt the event` skips the leaked article → patient:reference (halt.
     });
   }
 
-  // §7y guard: when a command VERB directly follows the ref noun (no clause
-  // boundary), the leaked article must NOT be skipped — skipping it breaks the
-  // fragile SOV/agglutinative body parse (tr form-submit-prevent: `the olay
-  // çağır …` = "the event call …"). The patient stays the article and the whole
-  // command sequence survives.
-  const formSubmitPrevent: Array<[string, string]> = [
-    ['tr', 'the olay çağır validateForm() i gönder de durdur eğer sonuç dir yanlış "Invalid form" i kaydet son'],
-    ['es', 'en enviar detener the evento llamar validateForm() si resultado es falso registrar "Invalid form" fin'],
-  ];
-  for (const [lang, code] of formSubmitPrevent) {
-    it(`[${lang}] §7y: verb after ref noun → article NOT skipped, body intact`, () => {
-      const node = parse(code, lang);
-      const halt = findHalt(node);
-      expect(halt, `no halt parsed for ${lang}`).toBeTruthy();
-      expect(patientType(halt)).not.toBe('reference');
-      // Body parse must survive (the §7y regression dropped commands).
-      expect(actions(node)).toEqual(['call', 'halt', 'if', 'log', 'on']);
-    });
-  }
+  // §7y guard, now SOV-scoped: when a command VERB directly follows the ref
+  // noun in an SOV language, the leaked article must NOT be skipped — skipping
+  // it breaks the fragile SOV/agglutinative body parse (tr form-submit-prevent:
+  // `the olay çağır …` = "the event call …"). The patient stays non-reference
+  // and the whole command sequence survives.
+  it('[tr] §7y: SOV — verb after ref noun → article NOT skipped, body intact', () => {
+    const node = parse(
+      'the olay çağır validateForm() i gönder de durdur eğer sonuç dir yanlış "Invalid form" i kaydet son',
+      'tr'
+    );
+    const halt = findHalt(node);
+    expect(halt, 'no halt parsed for tr').toBeTruthy();
+    expect(patientType(halt)).not.toBe('reference');
+    // Body parse must survive (the §7y regression dropped commands).
+    expect(actions(node)).toEqual(['call', 'halt', 'if', 'log', 'on']);
+  });
+
+  // SVO verb-boundary (R1 residue halt sweep): in a verb-first language the
+  // command verb after the ref noun IS a clause boundary (it opens the next
+  // juxtaposed body command), so the article is skipped, the patient is the
+  // event reference — and the body still survives intact.
+  it('[es] SVO — verb after ref noun IS a boundary: patient is the event reference, body intact', () => {
+    const node = parse(
+      'en enviar detener the evento llamar validateForm() si resultado es falso registrar "Invalid form" fin',
+      'es'
+    );
+    const halt = findHalt(node);
+    expect(halt, 'no halt parsed for es').toBeTruthy();
+    expect(patientType(halt)).toBe('reference');
+    expect(actions(node)).toEqual(['call', 'halt', 'if', 'log', 'on']);
+  });
 
   // Controls: a non-reference keyword after `the` keeps the article (no skip),
   // and a bare `halt` has no patient at all.
@@ -9839,5 +9851,208 @@ describe('en-reference noise sweep: for-body add.destination + trigger event typ
     const add = firstAction(node, 'add');
     const dest = roleOf(add, 'destination');
     expect(dest === undefined || (dest.type === 'reference' && dest.value === 'me')).toBe(true);
+  });
+});
+
+describe('en-reference noise: send destination dropped / event truncated (R1 residue, send family)', () => {
+  // Two EN-reference defects on the send command (socket-send ×23,
+  // send-with-detail ×21 — every language "missed" entries that were en noise):
+  //
+  // (a) `send "hello" to ChatSocket`: the bare-identifier target tokenizes as
+  //     expression, so the send schema's [selector, reference] destination
+  //     rejected the marked `to ChatSocket` phrase and silently defaulted to
+  //     `me`. The schema now admits `expression` (marker-guarded — the
+  //     add.destination precedent).
+  // (b) `send update(value: 42) to #target`: the event role skipped bare-call
+  //     folding (an `on`-handler rule, where `(clientX, clientY)` destructures
+  //     event params), so the event truncated to `literal="update"` and the
+  //     dangling `( )` broke the `to {destination}` group. The fold skip is now
+  //     scoped to the `on` handler's event role only.
+  function firstAction(node: unknown, action: string): Record<string, any> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, any>;
+    if (rec.action === action) return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const child of c) {
+          const hit = firstAction(child, action);
+          if (hit) return hit;
+        }
+      }
+    }
+    return null;
+  }
+  const roleOf = (n: Record<string, any> | null, r: string) =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  it('[en] send to a bare-identifier target captures the marked destination as expression', () => {
+    const node = parse('on click send "hello" to ChatSocket', 'en');
+    const send = firstAction(node, 'send');
+    expect(roleOf(send, 'event')).toMatchObject({ type: 'literal', value: 'hello' });
+    expect(roleOf(send, 'destination')).toMatchObject({ type: 'expression', raw: 'ChatSocket' });
+  });
+
+  it('[en] send with a call-shaped event keeps the whole call AND the destination', () => {
+    const node = parse('on click send update(value: 42) to #target', 'en');
+    const send = firstAction(node, 'send');
+    const ev = roleOf(send, 'event');
+    expect(ev?.type).toBe('expression');
+    expect(String(ev?.raw ?? '')).toContain('update');
+    expect(String(ev?.raw ?? '')).toContain('42');
+    expect(roleOf(send, 'destination')).toMatchObject({ type: 'selector', value: '#target' });
+  });
+
+  it('[ja] fused SOV send-with-detail matches the en reference role-for-role', () => {
+    const node = parse('update(value: 42) を クリック で 送る #target に', 'ja');
+    const send = firstAction(node, 'send');
+    expect(roleOf(send, 'event')?.type).toBe('expression');
+    expect(roleOf(send, 'destination')).toMatchObject({ type: 'selector', value: '#target' });
+  });
+
+  it('[en] on-handler event params are still destructured, not folded into the event name', () => {
+    // The bare-call fold must stay OFF for the `on` handler's event role.
+    const node = parse('on pointerdown(clientX, clientY) toggle .active', 'en');
+    const on = firstAction(node, 'on');
+    expect(roleOf(on, 'event')).toMatchObject({ value: 'pointerdown' });
+  });
+
+  it('[en] a plain send with a selector destination is unchanged', () => {
+    const node = parse('on click send update to #target', 'en');
+    const send = firstAction(node, 'send');
+    expect(roleOf(send, 'event')).toMatchObject({ type: 'literal', value: 'update' });
+    expect(roleOf(send, 'destination')).toMatchObject({ type: 'selector', value: '#target' });
+  });
+
+  describe('tell role alignment: patient→destination relabel over a junk literal destination', () => {
+    // `tell #modal to show`: the en reference parses destination:selector and
+    // drops the `to show` body. The generated marker extraction elsewhere bound
+    // the element to the schema-unsanctioned `patient` and the dropped body's
+    // verb to `destination` as a schema-invalid literal (`decir #modal a
+    // mostrar` → patient:selector, destination:literal="show") — a 21-language
+    // R1 miss. normalizeCommandRoles now relabels patient→destination when the
+    // patient is selector/reference-shaped and destination is absent or a junk
+    // literal.
+    const cases: Array<[string, string]> = [
+      ['es', 'en clic decir #modal a mostrar'],
+      ['ja', '#modal を クリック で 伝える 表示 に'],
+      ['qu', '#modal ta rikuchiy man ñitiy pi niy'],
+    ];
+    for (const [lang, input] of cases) {
+      it(`[${lang}] tell binds the element as destination:selector, no junk literal`, () => {
+        const node = parse(input, lang);
+        const tell = firstAction(node, 'tell');
+        expect(roleOf(tell, 'destination')).toMatchObject({ type: 'selector', value: '#modal' });
+        expect(roleOf(tell, 'patient')).toBeUndefined();
+      });
+    }
+
+    it('[en] tell with a selector destination is unchanged', () => {
+      const node = parse('on click tell #modal to show', 'en');
+      const tell = firstAction(node, 'tell');
+      expect(roleOf(tell, 'destination')).toMatchObject({ type: 'selector', value: '#modal' });
+    });
+  });
+
+  describe('wait for {event} (R1 residue: wait-for-event, the diagnosed R2-touching arc)', () => {
+    // en `wait for transitionend` captured the KEYWORD as the duration
+    // (duration:literal="for") and dropped the event name — and everything
+    // after it (`wait for X then remove me` lost the remove). Four pieces:
+    // the en `wait-en-for-event` head; the known-event duration→event relabel
+    // (marker-less translations `esperar transitionend`); the trailing
+    // event-name reclaim (SOV verb-final `待つ transitionend`); the waitMapper
+    // emitting the runtime's modifiers.for. Gated on WAITABLE_EVENT_WORDS so
+    // a time wait (`wait 2s`, `wait delay`) is never touched.
+    it('[en] wait for <event> captures the event, not the keyword', () => {
+      const node = parse('on click wait for transitionend', 'en');
+      const wait = firstAction(node, 'wait');
+      expect(roleOf(wait, 'event')).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(roleOf(wait, 'duration')).toBeUndefined();
+    });
+
+    it('[en] a then-chain after the event wait is no longer dropped', () => {
+      const node = parse('on click wait for transitionend then remove me', 'en');
+      expect(firstAction(node, 'wait')).not.toBeNull();
+      expect(firstAction(node, 'remove')).not.toBeNull();
+    });
+
+    it('[en] time waits are unchanged (relabel gate)', () => {
+      const n1 = parse('wait 2s', 'en');
+      expect(roleOf(firstAction(n1, 'wait'), 'duration')).toMatchObject({ value: '2s' });
+      expect(roleOf(firstAction(n1, 'wait'), 'event')).toBeUndefined();
+      // A bare identifier that is NOT a known event name stays a duration
+      // (time-variable wait).
+      const n2 = parse('wait delay', 'en');
+      expect(roleOf(firstAction(n2, 'wait'), 'event')).toBeUndefined();
+    });
+
+    it('[es] a marker-less known-event wait relabels duration→event', () => {
+      const node = parse('en clic esperar transitionend', 'es');
+      const wait = firstAction(node, 'wait');
+      expect(roleOf(wait, 'event')).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(roleOf(wait, 'duration')).toBeUndefined();
+    });
+
+    it('[ja] SOV trailing event name is reclaimed, junk default dropped', () => {
+      const node = parse('クリック で 待つ transitionend', 'ja');
+      const wait = firstAction(node, 'wait');
+      expect(roleOf(wait, 'event')).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(roleOf(wait, 'duration')).toBeUndefined();
+    });
+
+    it('[bn] the trailing for-postposition does not anchor a phantom `for` command', () => {
+      const node = parse('ক্লিক এ অপেক্ষা transitionend জন্য', 'bn');
+      const wait = firstAction(node, 'wait');
+      expect(roleOf(wait, 'event')).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(firstAction(node, 'for')).toBeNull();
+    });
+
+    it('[tl] the fronted-source behaviors wait line captures the event (wait-tl-from-first)', () => {
+      const node = parse('maghintay mula_sa dokumento pointermove o pointerup', 'tl');
+      const wait = firstAction(node, 'wait');
+      expect(roleOf(wait, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+    });
+  });
+
+  describe('leaked-article halt patient: verb-boundary extension (R1 residue, halt family)', () => {
+    // `halt the event` renders with the article leaked untranslated (`detener
+    // the evento llamar …`). The leaked-article skip declined to fire when the
+    // ref-noun was followed by a command VERB (the §7y tr gate), so the patient
+    // captured the bare article (`patient:expression="the"`) in every
+    // verb-first language — halt.patient missing ×74 (form-submit-prevent ×23
+    // + behaviors ×17 each). In SVO/VSO a ref-noun followed by a command verb
+    // IS a clause boundary (the verb opens the next juxtaposed body command),
+    // so the skip now fires there; SOV profiles are exempt (tr's fronted
+    // patient has its verb later in the clause — the original §7y fragility).
+    const svoCases: Array<[string, string]> = [
+      ['es', 'en enviar detener the evento llamar validateForm()'],
+      ['it', 'su invio fermare the evento chiamare validateForm()'],
+      ['zh', '当 提交 时 停止 把 the 事件 调用 validateForm()'],
+    ];
+    for (const [lang, input] of svoCases) {
+      it(`[${lang}] halt captures the leaked-article event reference`, () => {
+        const node = parse(input, lang);
+        const halt = firstAction(node, 'halt');
+        expect(roleOf(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+      });
+    }
+
+    it('[en] halt the event is unchanged', () => {
+      const node = parse('on submit halt the event', 'en');
+      const halt = firstAction(node, 'halt');
+      expect(roleOf(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+    });
+
+    it('[tr] the SOV exemption keeps the §7y parse shape (no NULL, halt present)', () => {
+      // tr is SOV: the verb-boundary must NOT fire there. This locks the parse
+      // returning a handler with a halt (the crossed roles are a known
+      // deferred residue, not this fix's concern).
+      const node = parse(
+        'the olay çağır validateForm() i gönder de durdur',
+        'tr'
+      );
+      expect(node).not.toBeNull();
+      expect(firstAction(node, 'halt')).not.toBeNull();
+    });
   });
 });

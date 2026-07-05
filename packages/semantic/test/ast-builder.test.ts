@@ -238,6 +238,46 @@ describe('Command Mappers', () => {
       expect(result.args).toHaveLength(1);
       expect(result.isBlocking).toBe(true);
     });
+
+    it('should map an event wait to the runtime `for` modifier', () => {
+      // `wait for transitionend` — the runtime's WaitCommand reads the event
+      // from modifiers.for (and the listen target from modifiers.from).
+      const node: CommandSemanticNode = {
+        kind: 'command',
+        action: 'wait',
+        roles: new Map([
+          ['event', { type: 'literal', value: 'transitionend', dataType: 'string' }],
+        ]),
+      };
+
+      const mapper = getCommandMapper('wait');
+      const builder = new ASTBuilder();
+      const result = mapper!.toAST(node, builder);
+
+      expect(result.name).toBe('wait');
+      expect(result.args).toHaveLength(0);
+      expect(result.modifiers!['for']).toMatchObject({ type: 'literal', value: 'transitionend' });
+      expect(result.isBlocking).toBe(true);
+    });
+
+    it('should map an event wait with a source to for + from modifiers', () => {
+      const node: CommandSemanticNode = {
+        kind: 'command',
+        action: 'wait',
+        roles: new Map([
+          ['event', { type: 'literal', value: 'pointermove', dataType: 'string' }],
+          ['source', { type: 'expression', raw: 'document' }],
+        ]),
+      };
+
+      const mapper = getCommandMapper('wait');
+      const builder = new ASTBuilder();
+      const result = mapper!.toAST(node, builder);
+
+      expect(result.name).toBe('wait');
+      expect(result.modifiers!['for']).toMatchObject({ type: 'literal', value: 'pointermove' });
+      expect(result.modifiers!['from']).toBeDefined();
+    });
   });
 
   describe('log mapper', () => {

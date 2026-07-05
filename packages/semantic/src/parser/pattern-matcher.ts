@@ -515,10 +515,16 @@ export class PatternMatcher {
     // into one expression value so the role captures it cleanly.
     //
     // Skipped in two cases:
-    //  - the `event` role: `on pointerdown(clientX, clientY)` destructures EVENT
-    //    PARAMS, not a call — the event name (`pointerdown`) must be captured
-    //    alone, with params handled by the event-handler builder (folding would
-    //    corrupt the event name to `pointerdown(clientX, clientY)`).
+    //  - the `on` HANDLER's `event` role: `on pointerdown(clientX, clientY)`
+    //    destructures EVENT PARAMS, not a call — the event name (`pointerdown`)
+    //    must be captured alone, with params handled by the event-handler
+    //    builder (folding would corrupt the event name to
+    //    `pointerdown(clientX, clientY)`). A COMMAND's event role (`send
+    //    update(value: 42) to #target`, trigger likewise) is the opposite: the
+    //    call shape IS the event-with-detail, and skipping the fold leaves a
+    //    dangling `( )` that breaks the following destination group — en
+    //    truncated the event to `literal="update"` AND dropped `to #target`
+    //    (send-with-detail ×21; translations captured both and were penalized).
     //  - DECLARATION commands (`behavior`/`def`/`install`): `Draggable(dragHandle)`
     //    is a declaration SIGNATURE, not a call. Folding it lets the single-command
     //    declaration pattern (e.g. SOV `{name} কে আচরণ`) consume the first line of a
@@ -527,7 +533,7 @@ export class PatternMatcher {
     //    dangling `(params)` makes that pattern fail, so the block falls through to
     //    the faithful path; the header's params are read separately by parseHeader.
     const skipBareCall =
-      patternToken.role === 'event' ||
+      (patternToken.role === 'event' && this.currentPatternCommand === 'on') ||
       PatternMatcher.DECLARATION_COMMANDS.has(this.currentPatternCommand ?? '');
     const bareCallValue = skipBareCall ? null : this.tryMatchBareCallExpression(tokens);
     if (bareCallValue) {
@@ -1978,10 +1984,24 @@ export class PatternMatcher {
       const afterRefNorm = afterRefNoun
         ? (afterRefNoun.normalized ?? afterRefNoun.value).toLowerCase()
         : '';
+      // In VERB-FIRST word orders (SVO/VSO/V2) a ref-noun followed by a
+      // COMMAND VERB is also a clause boundary: the verb begins the NEXT
+      // juxtaposed body command (`detener the evento llamar validateForm()…`
+      // — evento ends the halt clause, llamar opens the call). Without it the
+      // patient captured the bare article (`patient:expression="the"`, the
+      // halt.patient R1 residue across es/it/de/pl/zh + the behaviors ×17).
+      // Deliberately NOT applied to SOV profiles: there the fronted patient's
+      // own verb comes LATER in the clause, so a following verb is NOT a
+      // boundary (tr `the olay çağır …` — the §7y regression this branch's
+      // gate originally protected).
+      const verbBoundary =
+        this.currentProfile?.wordOrder !== 'SOV' &&
+        PatternMatcher.COMMAND_ACTION_KEYWORDS.has(afterRefNorm);
       const refNounFollowedByBoundary =
         !afterRefNoun ||
         afterRefNoun.kind === 'particle' ||
-        PatternMatcher.CLAUSE_BOUNDARY_KEYWORDS.has(afterRefNorm);
+        PatternMatcher.CLAUSE_BOUNDARY_KEYWORDS.has(afterRefNorm) ||
+        verbBoundary;
       if (
         nextToken &&
         nextToken.kind === 'keyword' &&
