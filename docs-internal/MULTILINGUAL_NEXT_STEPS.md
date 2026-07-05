@@ -65,6 +65,13 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 > The two "Remaining R2 gaps" bullets below marked ✔ RESOLVED. Still open from that list: the
 > `set`-target ×5 rejections (heterogeneous), `default-value`, and the harness's document-order
 > signature fragility.
+>
+> **Same-day follow-up: the R1 residual is freshly triaged** — see
+> [HANDOFF-r1-residual.md](HANDOFF-r1-residual.md) (five grounded clusters: SOV `set` role-swap +
+> property-path typing; fetch `as json` responseType under fused SOV; hi event-anchor on fronted
+> positional/property-path phrases; the CORPUS-WIDE `repeat for-each` head noise — the en reference
+> itself mis-parses; i18n transformer mangling of parenthesized expressions). It supersedes the
+> 2026-06-17 Track-3 triage, which is now largely harvested (hi 0.683 → 0.915).
 
 > **Update 2026-07-04 (R2 EXECUTION-COVERAGE SWEEP — the first systematic pass at "do the faithful
 > parses actually EXECUTE correctly?" Now that R0 recall is saturated (fid 1.0, both bands 0), R2 is
