@@ -28,9 +28,34 @@
 >   but it's a transformer artifact worth knowing. **window-resize was
 >   reassigned to cluster E** (its hi translation is scrambled — modifier words
 >   reordered mid-sentence — not an anchor bug).
-> - **Clusters D and E remain**, each a dedicated arc (D: en-reference
->   canonicalization + baseline churn; E: transformer parenthesized-expression
->   opacity). Start the next session from the cluster D/E sections below.
+> - **Cluster D is LANDED** (same day, later session): repeat loop-HEAD
+>   canonicalization — `for-in` / `while-head` / `until-head` patterns for en +
+>   all 23 translations (packages/semantic/src/patterns/repeat.ts), plus two
+>   parser enablers (head-only re-parse allowlist extended to the new ids; the
+>   repeat default-patient leak `reference:me` dropped so the superset guard
+>   can't block the swap, with schema-unsanctioned fused junk roles exempted).
+>   en reference now emits `repeat{loopType, patient, source}` for for-loops
+>   (killed the `event="in"`/`quantity` noise), `{loopType, condition}` for
+>   while, and translations reproduce the until-event-from head (behaviors ×3).
+>   A/B: **every language up, none down** — mean R1 0.9555 → 0.9654 (+0.0099,
+>   biggest single-arc move; es/pt/ru/uk/id +0.012, sw +0.013, he +0.0125);
+>   precision up-or-flat everywhere; parse 3696/3696; R2 1.0; gate green;
+>   baseline regenerated against a fresh populate. Execution learnings:
+>   the transformer's repeat-head emission is VERB-FIRST in every language
+>   (even the SOV six) in handler context, but UNTIL-FIRST in statement context
+>   (the behaviors' repeat line) — two surface shapes per SOV language; the
+>   `in`-word normalization is wildly inconsistent across profiles (es
+>   `en`→destination, pt `dentro`→into, fr `en`→identifier), so the heads are
+>   surface-keyed tables like the `-times` heads, NOT normalized-keyword
+>   patterns; standalone statement parses only try patterns at position 0 (no
+>   skip-ahead), which is why qu needs the `hayk _ a` junk-prefix variant AND a
+>   mid-clause variant (a preceding greedy verb-first trigger eats `hayk` in
+>   the sortable body). Remaining repeat-family residue: SOV repeat-while
+>   (fronted while-phrase parses as a separate `while` node — hi/qu miss
+>   condition+loopType, ko condition; unchanged count vs before, needs the
+>   fronted-guard machinery, not a head).
+> - **Cluster E remains** — its own arc (transformer parenthesized-expression
+>   opacity). Start the next session from the cluster E section below.
 
 > **Written 2026-07-04**, immediately after the SOV literal-role-extraction arc
 > (#560/#561/#562 — see [HANDOFF-sov-literal-role-extraction.md](HANDOFF-sov-literal-role-extraction.md)).
