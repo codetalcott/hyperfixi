@@ -9,25 +9,70 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-06-21 baseline · post #470 / #472 · `browser-priority`)
+## Where we are (2026-07-05 baseline · post #573 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
-(its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
+(its `timestamp` + `commit` fields stamp each regen — currently
+`2026-07-05T15:43Z`). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                    | Notes                                                  |
-| ------------------------------ | ------------------------ | ------------------------------------------------------ |
-| parse rate                     | **3695 / 3696 (99.97%)** | 1 hard fail (`tr window-resize`); was 8                |
-| degenerate passes (fid < 0.5)  | **9**                    | was 29 — `behavior-sortable` cluster cleared           |
-| lossy passes (0.5 ≤ fid < 1.0) | **53**                   | was 94                                                 |
-| faithful (fid = 1.0)           | **~3633**                | was ~3565                                              |
-| avgFidelity (R0-recall)        | **0.993**                | was 0.985                                              |
-| avgPrecision (R0 trust floor)  | **0.962**                | hi 0.837 is the outlier (next-lowest ja ~0.91)         |
-| avgRoleFidelity (R1)           | **0.837**                | **still the laggard** (hi 0.717 · qu 0.770 · bn 0.780) |
-| avgExecutionFidelity (R2)      | **1.000**                | curated subset fully reproduces en DOM effects         |
+| Signal                         | Value                  | Notes                                                                           |
+| ------------------------------ | ---------------------- | ------------------------------------------------------------------------------- |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails (`tr window-resize` cleared)                                    |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                               |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                               |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                               |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                                       |
+| avgPrecision (R0 trust floor)  | **0.976**              | worst: bn 0.938 · hi 0.941 · tr 0.952 · qu 0.953                                |
+| avgRoleFidelity (R1)           | **0.977**              | was 0.837 on 2026-06-21; worst: hi/qu 0.949 · ko 0.954 · tr/ja 0.959 · bn 0.961 |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                       |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
-**Direction now: stop adding gate signals; spend them down.**
+**Direction now: stop adding gate signals; spend them down.** R1 remains the
+dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
+families are the next un-mined seam.
+
+> **Update 2026-07-05 (R1 RESIDUAL TRIAGE FULLY HARVESTED + TWO RESIDUE SWEEPS — nine PRs
+> #564–#569 / #571–#573 across three sessions; mean R1 0.9535 → 0.9771, every language up at every
+> step, gate green throughout.)** The five-cluster triage in
+> [HANDOFF-r1-residual.md](HANDOFF-r1-residual.md) landed in full, then its residue was swept via
+> [HANDOFF-r1-post-cluster-residue.md](HANDOFF-r1-post-cluster-residue.md) — both handoffs carry
+> per-PR status blocks with the A/B numbers and execution learnings; this is the index:
+>
+> - **#564 (cluster B)** — fetch `as json` responseType reclaim under fused SOV event patterns
+>   (the trailing-role reclaim mechanism family: quantity #561 → responseType #564 → wait-event
+>   #573).
+> - **#565 (cluster A1)** — possessive render/parse symmetry: `getPossessiveReference` never read
+>   `specialForms` render-side; inverted lookup + qu `chay`/`paq`. The set role-swap theory was NOT
+>   needed — re-verify before applying it elsewhere. **A2 (expression-valued set patients) is still
+>   open.**
+> - **#566 (cluster C)** — event-anchor guard extended to fronted positional/possessive/
+>   optional-chaining heads (the surviving hi tail of the #508 guard).
+> - **#567 (cluster D)** — repeat loop-HEAD canonicalization for en + 23 langs: killed the en
+>   reference's own `for-in` head noise (`event:literal="in"`/quantity). Biggest single-arc move:
+>   mean 0.9555 → 0.9654, every language up.
+> - **#568 (cluster E)** — the i18n transformer treats parenthesized expressions as opaque units in
+>   grammar reorder (computed-value now renders intact in all 24 languages). Value-level fix —
+>   R0/R1 flat by design (the known blind spot), the win is correct display text + R2 eligibility.
+> - **#569 (residue item 1)** — sw as-marker is `kuwa`, not the if-homonym `kama`: the phantom-if
+>   family cleared dict-side (sw avgPrecision 0.9855 → 0.9942).
+> - **#572 (residue item 2)** — `foldFrontedWhileIntoRepeat`: the SOV fronted repeat-while head
+>   merges into the repeat node; qu/tr while-keyword dict↔profile alignment. All six SOV languages
+>   now match en role-for-role on repeat-while.
+> - **#571 (residue item 3)** — en-reference noise sweep: for-body `add.destination` admits the
+>   loop-binding expression (+ bound-identifier registry), `trigger` event names canonicalize to
+>   `literal`. Diagnosed-but-deferred `wait for {event}` →
+> - **#573 (residue sweep 2)** — send en-reference noise (destination dropped ×44, call-shaped
+>   event truncated ×21), tell patient→destination relabel (×21), the full `wait for {event}` arc
+>   (en head + WAITABLE_EVENT_WORDS relabel + SOV trailing reclaim + runtime `modifiers.for` — R2
+>   honest), and the halt leaked-article verb-boundary (×74 → ×6, SOV exempt per §7y). Probe mean
+>   0.9661 → 0.9771.
+>
+> **What's next** lives at the bottom of HANDOFF-r1-post-cluster-residue.md's status block: SOV
+> halt ×6 (needs fronted-role re-association), `if.condition` ×14 (en drops the comparison — en
+> noise), the set/A2 cluster (`set.destination:property-path` ×46 is the largest single family),
+> behavior-sortable's nested-handler add.destination, and the untouched R0-precision spurious
+> families (`transition` ×66, `empty` ×28, `add` ×22, `go` ×21, `morph` ×18).
 
 > **Update 2026-07-04b (SOV LITERAL-ROLE-EXTRACTION ARC: COMPLETE — both R2 blockers fixed +
 > joined; subset 45 → 47, R2 stays 1.0 in all 23 langs. #560 / #561 / #562.)** The arc planned in
