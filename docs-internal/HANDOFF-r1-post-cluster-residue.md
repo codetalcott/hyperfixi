@@ -108,6 +108,39 @@ Precision bonus: the merge removes the phantom standalone `while` action
 
 ### 3. Singleton families (corpus-wide, opportunistic — batch or skip)
 
+> **STATUS: PARTIAL (2026-07-05).** The suggested en-noise batch landed as one
+> PR, resolving two of the three families:
+>
+> - **add.destination (for-body)** — three-part fix: (1) the add schema's
+>   destination now admits `expression` (a loop binding var `item` tokenizes as
+>   expression, so `[selector, reference]` rejected the marked `to item` and
+>   defaulted to `me` in the EN reference and most translations alike); (2) a
+>   parse-scoped bound-identifier registry (repeat/for patients + set
+>   destinations) lets the strict trailing-destination reclaim admit `item に`
+>   in SOV; (3) a bound identifier captured as a bare literal (ja/ko typing)
+>   canonicalizes to expression in normalizeCommandRoles. repeat-for-each and
+>   stagger-animation now match en in ALL languages; only behavior-sortable's
+>   deep case remains for hi/bn/ja/ko/tr (its `set item` binding sits in a
+>   nested handler sub-parse).
+> - **trigger.event** — event NAMES canonicalize to `literal` on command nodes
+>   (normalizeCommandRoles): en typed `trigger init` literal only because
+>   `init` is an en keyword; untranslated names elsewhere typed expression, and
+>   colon-split `sortable:start` fragments hid truncation behind a vacuous
+>   expression:expression type match. Both the trigger-event 15-lang miss and
+>   the behaviors' family are gone.
+> - **wait.duration — NOT fixed, diagnosed:** en `wait for transitionend`
+>   parses as `wait{duration:literal="for"}` — the KEYWORD is captured as the
+>   duration and the event name is dropped (wait-en-generated). The honest fix
+>   needs a `wait for {event}` head + an event role on the wait schema + AST
+>   mapper support (the wait mapper reads only `duration`) + a duration→event
+>   value-shape relabel for the marker-less translations (`esperar
+transitionend`) — an R2-touching arc, out of scope for this sweep.
+>
+> Per-lang aggregate deltas from the honest-reference shift: 12 langs up
+> (qu +0.0029, it/pl +0.0022, zh/he +0.0017, …), 5 langs slightly down
+> (bn/hi −0.0010, ms/th/tl −0.0017 — vacuous matches of the old noise now
+> visible as real drops); corpus mean up. Gate green on all six signals.
+
 Carried over from the 2026-07-04 triage (counts per language unless noted),
 plus new observations from the cluster D probes:
 

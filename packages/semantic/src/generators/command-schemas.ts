@@ -326,7 +326,14 @@ export const addSchema: CommandSchema = {
       role: 'destination',
       description: 'The target element (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      // `expression` admits a loop binding VARIABLE as the destination
+      // (`repeat for item in .items add .processed to item`): the bare
+      // identifier tokenizes as expression, so [selector, reference] rejected
+      // the marked `to item` phrase and the destination silently defaulted to
+      // `me` — in the en reference AND most translations alike (it/qu already
+      // captured it; everyone else vacuously "matched" the shared noise).
+      // Marker-guarded, so an unmarked trailing identifier is not affected.
+      expectedTypes: ['selector', 'reference', 'expression'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,

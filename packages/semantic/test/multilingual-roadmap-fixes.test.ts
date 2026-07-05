@@ -9769,3 +9769,75 @@ describe('sw `as` marker is kuwa, not the if-homonym kama (phantom-if family)', 
     expect(node.body?.some(c => c.action === 'if')).toBe(true);
   });
 });
+
+describe('en-reference noise sweep: for-body add.destination + trigger event typing (R1 residue item 3)', () => {
+  // Two phantom cross-language mismatches rooted in the EN reference / in
+  // tokenizer-incidental typing (HANDOFF-r1-post-cluster-residue item 3):
+  //
+  // (a) `add .processed to item` in a for-body: `item` is a loop binding
+  //     variable; it tokenizes as expression, so the add schema's
+  //     [selector, reference] destination rejected the marked `to item` phrase
+  //     and destination silently defaulted to `me` — in the EN reference AND
+  //     most translations alike (it/qu captured it and were penalized for
+  //     being right). The schema now admits `expression`; a bound identifier
+  //     captured as a bare literal (ja/ko typing of the untranslated `item`)
+  //     is canonicalized to expression via the parse-scoped bound-identifier
+  //     registry.
+  // (b) `trigger init`: en typed the event literal only because `init` happens
+  //     to be an en KEYWORD; untranslated names elsewhere typed expression, and
+  //     colon-split namespaced names (`sortable:start`) held a bare fragment.
+  //     An event NAME now canonicalizes to `literal` on command nodes.
+  function firstAction(node: unknown, action: string): Record<string, any> | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, any>;
+    if (rec.action === action) return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const child of c) {
+          const hit = firstAction(child, action);
+          if (hit) return hit;
+        }
+      }
+    }
+    return null;
+  }
+  const roleOf = (n: Record<string, any> | null, r: string) =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  it('[en] for-body add captures the binding-var destination as expression', () => {
+    const node = parse('on click repeat for item in .items add .processed to item', 'en');
+    const add = firstAction(node, 'add');
+    expect(roleOf(add, 'destination')).toMatchObject({ type: 'expression', raw: 'item' });
+  });
+
+  it('[ja] for-body add captures the binding-var destination as expression (not a bare literal, not defaulted me)', () => {
+    const node = parse(
+      'クリック で 繰り返し item の中 .items それから .processed を 追加 item に',
+      'ja'
+    );
+    const add = firstAction(node, 'add');
+    expect(roleOf(add, 'destination')).toMatchObject({ type: 'expression', raw: 'item' });
+  });
+
+  it('[es] trigger with an untranslated bare event name types it literal', () => {
+    const node = parse('disparar init', 'es');
+    const trigger = firstAction(node, 'trigger');
+    expect(roleOf(trigger, 'event')).toMatchObject({ type: 'literal', value: 'init' });
+  });
+
+  it('[en] trigger with a namespaced event name types it literal', () => {
+    const node = parse('trigger draggable:start', 'en');
+    const trigger = firstAction(node, 'trigger');
+    expect(roleOf(trigger, 'event')).toMatchObject({ type: 'literal', value: 'draggable:start' });
+  });
+
+  it('[en] an unmarked trailing identifier is NOT captured as add destination (marker-guarded)', () => {
+    // Without a `to` marker the identifier is not a destination phrase — the
+    // schema broadening must not let `add .x item` capture item.
+    const node = parse('add .processed', 'en');
+    const add = firstAction(node, 'add');
+    const dest = roleOf(add, 'destination');
+    expect(dest === undefined || (dest.type === 'reference' && dest.value === 'me')).toBe(true);
+  });
+});
