@@ -1594,7 +1594,19 @@ export const transitionSchema: CommandSchema = {
       role: 'patient',
       description: 'The property to transition (opacity, *background-color, etc.)',
       required: true,
-      expectedTypes: ['literal'], // Only literal - CSS properties are strings, not selectors
+      // A bare CSS property name (`transition opacity to 0`) tokenizes as an
+      // identifier → expression, so a literal-only patient rejected the idiomatic
+      // unquoted form in EVERY language: en (and 8 others) dropped the whole
+      // command, while the 14 languages whose body walkers recover it via
+      // verb-anchoring parsed it — and were then precision-penalized as
+      // "spurious transition" (×66, the largest R0-precision family) against the
+      // en reference that had silently dropped it. Admitting `expression` (the
+      // add/send.destination precedent, #571/#573) lets matchBest capture the
+      // property in all languages. `selector` is admitted for the style-property
+      // syntax ONLY: `*background-color` / `*max-height` tokenize as selector
+      // (transition-color, slide-toggle — en dropped both), and translations
+      // already capture patient:selector for them via the lax body walkers.
+      expectedTypes: ['literal', 'expression', 'selector'],
       svoPosition: 1,
       sovPosition: 2,
       // No marker before the CSS property name (SVO/VSO languages)
@@ -1604,25 +1616,48 @@ export const transitionSchema: CommandSchema = {
     {
       role: 'goal',
       description: 'The target value to transition to',
+      // Required, deliberately: goal-less transition (`transition *max-height
+      // over 300ms`, slide-toggle) IS valid hyperscript, but making goal
+      // optional wraps its marker group as skippable and the bare value then
+      // re-binds by particle metadata (`a 0` → destination:literal=0),
+      // clobbering goal+duration capture in every marker language — verified
+      // regression, do not repeat. The goal-less form stays a residue item.
       required: true,
       expectedTypes: ['literal', 'expression'],
       svoPosition: 2,
       sovPosition: 3,
-      // "to" preposition before goal value (same as set's patient marker)
+      // "to" preposition before goal value. These MUST match what the i18n
+      // transformer actually renders (the corpus ground truth) — de 'auf' and
+      // sw 'kwenye' were aspirational, never matched a rendered text, so the
+      // generated pattern could not fire and the whole command was dropped
+      // (the NO-TRANSITION half of the spurious-transition ×66 precision
+      // family). SOV languages (ja/ko/tr/bn/qu) reach transition via the fused
+      // grammar-transformed paths (this override is position-BEFORE, so it
+      // cannot capture their postposed `0 に` forms anyway); their entries are
+      // kept aligned to the rendered particles for the pattern renderer.
       markerOverride: {
         en: 'to',
         ar: 'إلى',
         tl: 'sa',
-        sw: 'kwenye',
+        sw: 'kwa',
         bn: 'তে',
         qu: 'man',
         es: 'a',
         pt: 'para',
         fr: 'à',
-        de: 'auf',
+        de: 'zu',
+        he: 'על',
+        it: 'in',
         ja: 'に',
-        ko: '으로',
+        ko: '에',
+        ms: 'ke',
+        pl: 'do',
+        ru: 'в',
+        th: 'ใน',
         tr: 'e',
+        uk: 'в',
+        vi: 'vào',
+        zh: '到',
         id: 'ke',
       },
     },

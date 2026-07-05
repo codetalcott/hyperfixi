@@ -106,7 +106,8 @@ const KNOWN_MISMATCHES = new Set([
   'qu:replaceUrl:url_tikray',
   'qu:select:akllay',
   'qu:throw:wikchuy',
-  'qu:transition:tikray',
+  // qu:transition resolved (transition precision drill): dict realigned to the
+  // profile primary `pasay` (was `tikray`, which collided with toggle).
   // qu:unless resolved (HANDOFF-lossy-tail unless-condition): dict realigned to the
   // spaced `mana sichus` + quechua profile reads it as `unless` (was `mana_sichus`,
   // which `_`-split to mana(=false)+sichus(=if)).
@@ -126,10 +127,12 @@ const KNOWN_MISMATCHES = new Set([
   'sw:replaceUrl:badilishaUrl',
   'sw:return:rudi',
   'sw:select:chagua',
-  'sw:transition:mpito',
+  // sw:transition resolved (transition precision drill): `mpito` added as a
+  // profile alternative — the rendered verb now anchors.
   'th:clone:คัดลอก',
   'th:select:เลือก',
-  'th:transition:เปลี่ยน',
+  // th:transition resolved (transition precision drill): dict realigned to the
+  // profile primary `เปลี่ยนผ่าน` (was `เปลี่ยน`, the profile's `change` keyword).
   'tl:break:itigil',
   'tl:catch:hulihin',
   'tl:clone:kopyahin',
