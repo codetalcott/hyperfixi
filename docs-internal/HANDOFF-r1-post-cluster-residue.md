@@ -1,5 +1,51 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-05, session 3): two more residue items LANDED as #576
+> (mid-clause if fold) and #577 (transition family alignment).** Post-#577
+> state: probe mean R1 **0.9768**, avgPrecision mean **0.9764 → 0.9840** (every
+> language up), parse 3696/3696, degenerate/lossy 0, R2 1.0.
+>
+> 1. **if.condition:reference ×14 (#576).** Mechanism as predicted (en-noise),
+>    location wasn't the if-head PATTERN but the walker: a juxtaposed
+>    `<cmd> … if <cond> <cmd>` clause (no `then` before the if) never reaches
+>    the clause-boundary fold, so parseClause pattern-matched the flat
+>    `if-en-basic` head and truncated the condition to its first token.
+>    parseClause now mirrors the fused-body walker's fold hook (rewind a
+>    flat-`if` matchBest result and fold the whole block). Probe mean R1
+>    0.9771 → 0.9781, all 23 langs up. Collateral: focus-trap ko/qu, behavior-
+>    removable js.patient ×6. The sw if-empty Phase-1a guard test was locking
+>    the truncated-era shape (flat spurious `empty` action) — updated to the
+>    folded shape, verified strictly more faithful.
+> 2. **spurious transition ×66 (#577) — the drill found the family INVERTED:**
+>    the 14 "spurious" languages parsed the command correctly; the en reference
+>    (and 8 more languages) silently DROPPED it. The transition schema couldn't
+>    match the corpus-idiomatic forms: literal-only patient rejected the bare
+>    CSS property (identifier→expression) AND the style-property selector form
+>    (`*background-color`); the goal markerOverride table disagreed with the
+>    i18n-rendered markers in 11 languages (de auf≠zu, sw kwenye≠kwa, 9 absent);
+>    sw's rendered verb `mpito` wasn't a profile keyword; zh `过渡` was SPLIT by
+>    the particle extractor (过 aspect-particle beats the longer keyword —
+>    extractor-order longest-match bug, now fixed generally); th เปลี่ยน and qu
+>    tikray collided with `change`/`toggle` keywords (dict-side realign to
+>    profile primaries เปลี่ยนผ่าน/pasay, the #569 precedent); and a #561-sibling
+>    trailing TIME-literal reclaim recovers the SOV duration. Spurious ×66 → ×6.
+>    17 languages at full en role parity; zero-lossy verified action-level in
+>    all 24. NOTE the R1-mean mechanics: en gaining real transition.\* entries
+>    LOWERS mean R1 (0.9781 → 0.9768) until the SOV six match them — the number
+>    dips while meaning more; precision is the signal that moved (+0.0076).
+>    Learned constraint: making transition.goal OPTIONAL to catch the goal-less
+>    slide-toggle form verifiably clobbers goal+duration capture in every
+>    marker language (optional marker group → value re-binds by particle
+>    metadata) — do not repeat; the goal-less form is residue.
+>
+> Remaining residue from the menu below, updated: SOV halt ×6 (unchanged, needs
+> fronted-role re-association); set/A2 cluster (~×46, next largest R1 seam);
+> behavior-sortable deep add.destination ×5; spurious `empty` ×28, `add` ×22,
+> `go` ×21, `morph` ×18, `default` ×9 (undrilled); NEW transition residue:
+> slide-toggle goal-less spurious ×6, transition.duration hi/qu ×8,
+> behavior-removable transition roles bn/hi/ja/ko/qu/tr (nested behavior
+> sub-parse path, distinct from the fused-event reclaim site).
+
 > **STATUS UPDATE (2026-07-05, follow-up session): the open residue from items
 > 1–3 is largely LANDED** as one "R1 residue sweep 2" PR (four increments, each
 > with fail-without-fix guard tests, per-(lang,pattern) A/B showing zero
@@ -13,9 +59,10 @@
 >    silently defaulted to `me`; socket-send ×23) — now admits `expression`
 >    (the add.destination precedent); and the event role's bare-call fold skip
 >    (an `on`-handler param-destructuring rule) truncated `send update(value:
-42) to #target` to `event:literal="update"` and dropped the destination
->    (send-with-detail ×21) — the skip is now scoped to
->    `currentPatternCommand === 'on'`. Both families cleared in all languages.
+>
+> 42) to #target`to`event:literal="update"`and dropped the destination
+(send-with-detail ×21) — the skip is now scoped to`currentPatternCommand === 'on'`. Both families cleared in all languages.
+>
 > 2. **tell role alignment (21).** The generated marker extraction bound
 >    tell's element to the schema-unsanctioned `patient` and the dropped `to
 <command>` body's verb to `destination` as a schema-invalid literal.
