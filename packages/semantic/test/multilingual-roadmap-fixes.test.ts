@@ -9561,3 +9561,59 @@ describe('SOV/th trailing bare quantity reclaim (increment-by-amount R2 blocker)
     expect(inc?.roles?.has('quantity')).toBe(false);
   });
 });
+
+describe('SOV/marker-swallowed fetch responseType reclaim (R1 handoff cluster B)', () => {
+  // `fetch /api/user as json` renders its as-tail AFTER the fused verb: bare
+  // (ja/bn), word + as-postposition (tr olarak, hi के रूप में, qu hina — the
+  // postposition stays skip-noise), or word + a particle the fused pattern's
+  // optional trailing DESTINATION group swallows (ko `json 로` — 로 is a
+  // destination alternative, and `json` violates destination's selector/
+  // reference schema types). buildEventHandler now reclaims a known
+  // response-type word into the absent optional `responseType` role — either
+  // relabeling the schema-invalid destination (ko) or consuming the trailing
+  // bare word (the rest). Corpus forms from a fresh populate.
+  const cases: Array<[string, string]> = [
+    ['/api/user を クリック で フェッチ json それから #name.innerText を その.name に 設定', 'ja'],
+    ['/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 그것의.name 에 설정', 'ko'],
+    ['/api/user i tıklama de getir json olarak ardından #name.innerText i onun.name e ayarla', 'tr'],
+    ['/api/user কে ক্লিক এ আনুন json তারপর #name.innerText কে এর.name তে সেট', 'bn'],
+    ['/api/user को क्लिक पर लाएं json के रूप में फिर #name.innerText को इसका.name में सेट', 'hi'],
+    ['/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay', 'qu'],
+  ];
+  for (const [input, lang] of cases) {
+    it(`[${lang}] fetch-json captures responseType=json (and no phantom destination)`, () => {
+      const node = parse(input, lang) as {
+        kind: string;
+        body?: Array<{ action?: string; roles?: Map<string, { type: string; raw?: unknown }> }>;
+      };
+      expect(node.kind).toBe('event-handler');
+      const fetch = node.body?.find(c => c.action === 'fetch');
+      expect(fetch).toBeTruthy();
+      const rt = fetch!.roles?.get('responseType');
+      expect(rt?.type).toBe('expression');
+      expect(rt?.raw).toBe('json');
+      expect(fetch!.roles?.has('destination')).toBe(false);
+    });
+  }
+
+  it('[ko] a genuine selector destination is NOT relabeled', () => {
+    // `#output 로` is a schema-VALID destination (selector) — the reclaim must
+    // leave it alone and add no responseType.
+    const node = parse('/api/user 를 클릭 할 때 가져오기 #output 로', 'ko') as {
+      body?: Array<{ action?: string; roles?: Map<string, { type: string; value?: unknown }> }>;
+    };
+    const fetch = node.body?.find(c => c.action === 'fetch');
+    expect(fetch).toBeTruthy();
+    expect(fetch!.roles?.get('destination')?.type).toBe('selector');
+    expect(fetch!.roles?.has('responseType')).toBe(false);
+  });
+
+  it('[ja] a fetch with no as-tail gains no phantom responseType', () => {
+    const node = parse('/api/user を クリック で フェッチ', 'ja') as {
+      body?: Array<{ action?: string; roles?: Map<string, unknown> }>;
+    };
+    const fetch = node.body?.find(c => c.action === 'fetch');
+    expect(fetch).toBeTruthy();
+    expect(fetch!.roles?.has('responseType')).toBe(false);
+  });
+});
