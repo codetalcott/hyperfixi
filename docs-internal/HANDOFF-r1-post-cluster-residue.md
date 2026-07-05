@@ -1,5 +1,77 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-05, follow-up session): the open residue from items
+> 1–3 is largely LANDED** as one "R1 residue sweep 2" PR (four increments, each
+> with fail-without-fix guard tests, per-(lang,pattern) A/B showing zero
+> regressions, six-signal gate green, baseline regenerated against a fresh
+> populate — corpus probe mean role-recall 0.9661 → 0.9771, all 23 languages
+> up, none down; parse 3696/3696, R2 1.0):
+>
+> 1. **send en-reference noise (65 lang-patterns).** Two en defects: the
+>    send schema's `[selector, reference]` destination rejected a
+>    bare-identifier target (`send "hello" to ChatSocket` → destination
+>    silently defaulted to `me`; socket-send ×23) — now admits `expression`
+>    (the add.destination precedent); and the event role's bare-call fold skip
+>    (an `on`-handler param-destructuring rule) truncated `send update(value:
+42) to #target` to `event:literal="update"` and dropped the destination
+>    (send-with-detail ×21) — the skip is now scoped to
+>    `currentPatternCommand === 'on'`. Both families cleared in all languages.
+> 2. **tell role alignment (21).** The generated marker extraction bound
+>    tell's element to the schema-unsanctioned `patient` and the dropped `to
+<command>` body's verb to `destination` as a schema-invalid literal.
+>    normalizeCommandRoles now relabels patient→destination over an
+>    absent-or-junk-literal destination (the #564 schema-invalid-destination
+>    precedent). NOTE: the `to show` BODY is still dropped in en AND all
+>    translations (equal lossiness) — a future tell-body arc.
+> 3. **wait for {event} — the diagnosed R2-touching arc (23 + 2).** Four
+>    pieces: a hand-crafted en `wait-en-for-event` head (also registered in
+>    buildEnglishPatterns — the per-command loaders are NOT auto-included
+>    there, a footgun worth remembering); a known-event duration→event relabel
+>    in normalizeCommandRoles gated on a new WAITABLE_EVENT_WORDS set (so
+>    `wait 2s` / `wait delay` are never touched); a trailing event-name
+>    reclaim in buildEventHandler (the #561/#563 sibling) for SOV verb-final
+>    renders, which also drops the sov-simple `patient:reference=me` extraction
+>    default leak and consumes a rendered for-postposition (bn `জন্য`, which
+>    otherwise anchors a phantom bare `for` — a parseBodyWithClauses filter
+>    catches stragglers, scoped to zero-role zero-body `for` ONLY: a bare
+>    `repeat` is a legitimate loop-recovery intermediate); and the waitMapper
+>    now emits the runtime's `modifiers.for`/`modifiers.from`, so event waits
+>    EXECUTE as event waits (R2-honest; the curated R2 subset contains no
+>    waits, so the ratchet is unaffected). tl needed a `wait-tl-from-first`
+>    mirror of `wait-ar-from-first` (its transformer fronts the from-phrase).
+>    A then-chain after `wait for X` in a handler body is no longer dropped.
+> 4. **halt leaked-article patient (74 → 6).** `detener the evento llamar …`:
+>    the leaked-article skip's §7y gate declined to fire when the ref-noun was
+>    followed by a command VERB, so every verb-first language captured
+>    `patient:expression="the"`. In SVO/VSO a ref-noun followed by a command
+>    verb IS a clause boundary (the verb opens the next juxtaposed command) —
+>    the skip now fires there via COMMAND_ACTION_KEYWORDS, SOV profiles
+>    exempt (tr's fronted patient has its verb later — the original §7y
+>    fragility, guard test rescoped to tr-only). form-submit-prevent cleared
+>    in all 17 non-SOV languages + the three behaviors ×17 each.
+>
+> **Remaining residue after this sweep** (probe-grounded, next session's menu):
+>
+> - **SOV halt.patient ×6** (form-submit-prevent bn/hi/ja/ko/qu/tr): the
+>   fronted `the <event-word>` sits ahead of OTHER commands' clauses
+>   (compound-level scrambling); tr additionally crosses call/halt roles.
+>   Needs fronted-role re-association machinery, not the article skip.
+> - **if.condition:reference ×14** (form-submit-prevent, es/it/de/pl/…): the
+>   en reference parses `if result is false` as `condition:reference="result"`
+>   and DROPS the comparison; translations capture the full expression and
+>   mismatch. en-noise, same discipline as this sweep: fix the en if-head to
+>   capture the full condition, then re-check.
+> - **set.destination:property-path ×46** (template-literal-list-build ×22 the
+>   bulk) + `set.patient` families — cluster A2 (expression-valued set
+>   patients, multi-token expression-run assembly in matchRoleToken).
+> - **behavior-sortable deep add.destination ×5** (nested handler sub-parse
+>   binding registry gap), `js.patient:expression` ×12,
+>   `render.style:expression` ×14, `send.event` fine now but `add.patient`
+>   form-disable-on-submit ×18, `toggle.patient:expression` accordion ×15.
+> - Spurious-action families (R0-precision): `transition` ×66 (biggest),
+>   `empty` ×28, `add` ×22, `go` ×21 (go-back every lang), `morph` ×18,
+>   `default` ×9 — none touched this sweep; each needs its own drill.
+
 > **Written 2026-07-05**, immediately after clusters D (#567) and E (#568) landed
 > the same session (B/A1/C landed 2026-07-04 as #564/#565/#566 — see
 > [HANDOFF-r1-residual.md](HANDOFF-r1-residual.md) for that triage and its

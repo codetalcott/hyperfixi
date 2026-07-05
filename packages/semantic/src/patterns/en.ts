@@ -14,6 +14,7 @@ import { getTogglePatternsForLanguage } from './toggle';
 import { getPutPatternsForLanguage } from './put';
 import { getEventHandlerPatternsForLanguage } from './event-handler';
 import { getRepeatPatternsForLanguage } from './repeat';
+import { getWaitPatternsForLanguage } from './wait';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -385,6 +386,10 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   // capturing the canonical loopType/patient/source head and stopping before
   // the loop body. The `until event` variants stay hand-crafted below.
   patterns.push(...getRepeatPatternsForLanguage('en'));
+  // Wait `for {event}` head (wait-for-event R1 arc): the generated
+  // `wait {duration}` captured the KEYWORD as the duration and dropped the
+  // event name + everything after it.
+  patterns.push(...getWaitPatternsForLanguage('en'));
 
   // 2. English-only hand-crafted patterns
   patterns.push(

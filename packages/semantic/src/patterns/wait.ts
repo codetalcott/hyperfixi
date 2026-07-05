@@ -112,14 +112,89 @@ function getWaitPatternsAr(): LanguagePattern[] {
   ];
 }
 
+/**
+ * English `wait for {event}` head.
+ *
+ * The auto-generated `wait {duration}` pattern captured the KEYWORD as the
+ * duration (`wait for transitionend` → duration:literal="for") and dropped the
+ * event name — and everything after it, including a then-chain (`wait for X
+ * then remove me` lost the `remove`). This head captures the event by name;
+ * the waitMapper turns it into the runtime's `modifiers.for` event wait.
+ * Marker-less translations (`esperar transitionend`) reach the same shape via
+ * the known-event duration→event relabel in normalizeCommandRoles; SOV
+ * verb-final translations (ja `待つ transitionend`) via the trailing
+ * event-name reclaim in buildEventHandler.
+ */
+function getWaitPatternsEn(): LanguagePattern[] {
+  return [
+    {
+      id: 'wait-en-for-event',
+      language: 'en',
+      command: 'wait',
+      priority: 110,
+      template: {
+        format: 'wait for {event}',
+        tokens: [
+          { type: 'literal', value: 'wait' },
+          { type: 'literal', value: 'for' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+        ],
+      },
+      extraction: {
+        event: { position: 2 },
+      },
+    },
+  ];
+}
+
+/**
+ * Tagalog fronted-source wait — the tl mirror of `wait-ar-from-first`.
+ *
+ * The transformer fronts the from-phrase directly after the verb (`maghintay
+ * mula_sa dokumento pointermove(clientY) o pointerup(clientY)` for the
+ * behaviors' `wait for pointermove or pointerup from document` line), so the
+ * generated `maghintay {duration}` pattern can't anchor: the token after the
+ * verb is the source marker, not an event/duration. Captures the fronted
+ * source + the first following event word (the known-event duration→event
+ * relabel in normalizeCommandRoles then types it event:literal, matching the
+ * en reference); the `o <event>` tail stays harmless trailing tokens.
+ */
+function getWaitPatternsTl(): LanguagePattern[] {
+  return [
+    {
+      id: 'wait-tl-from-first',
+      language: 'tl',
+      command: 'wait',
+      priority: 105,
+      template: {
+        format: 'maghintay mula_sa {source} {duration}',
+        tokens: [
+          { type: 'literal', value: 'maghintay', alternatives: ['hintay'] },
+          { type: 'literal', value: 'mula_sa', alternatives: ['galing_sa'] },
+          { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
+          { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        ],
+      },
+      extraction: {
+        source: { position: 2 },
+        duration: { position: 3 },
+      },
+    },
+  ];
+}
+
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
+    case 'en':
+      return getWaitPatternsEn();
     case 'zh':
       return getWaitPatternsZh();
     case 'he':
       return getWaitPatternsHe();
     case 'ar':
       return getWaitPatternsAr();
+    case 'tl':
+      return getWaitPatternsTl();
     default:
       return [];
   }

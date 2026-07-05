@@ -310,6 +310,20 @@ const decrementMapper: CommandMapper = {
 const waitMapper: CommandMapper = {
   action: 'wait',
   toAST(node, _builder) {
+    // Event wait (`wait for transitionend [from document]`) — the runtime's
+    // WaitCommand reads the event from `modifiers.for` and the listen target
+    // from `modifiers.from`. The event role is set by the en
+    // `wait-en-for-event` head, the known-event duration→event relabel
+    // (normalizeCommandRoles), or the trailing event-name reclaim
+    // (buildEventHandler).
+    const event = convertRoleValue(node, 'event');
+    if (event) {
+      const modifiers: Record<string, ExpressionNode> = { for: event };
+      const source = convertRoleValue(node, 'source');
+      if (source) modifiers.from = source;
+      return createCommandNode('wait', [], modifiers, { isBlocking: true });
+    }
+
     const duration = convertRoleValue(node, 'duration');
 
     const args: ExpressionNode[] = duration ? [duration] : [];

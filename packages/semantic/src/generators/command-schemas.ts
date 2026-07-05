@@ -1333,7 +1333,13 @@ export const sendSchema: CommandSchema = {
       role: 'destination',
       description: 'The target element (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      // `expression` admits a bare-identifier target (`send "hello" to
+      // ChatSocket`): the identifier tokenizes as expression, so
+      // [selector, reference] rejected the marked `to ChatSocket` phrase and
+      // the destination silently defaulted to `me` — in the en reference AND
+      // most translations alike (socket-send ×23). Marker-guarded, same
+      // precedent as add.destination (#571).
+      expectedTypes: ['selector', 'reference', 'expression'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
