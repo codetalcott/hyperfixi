@@ -2169,10 +2169,10 @@ describe('Attached parenthesized arg list stays one token (tl behavior-resizable
   // reorder the two halves were SEPARATED (event role = `pointerdown(clientX,`, the
   // stray `clientY)` fronted) → `clientY) mula_sa ako kapag pointerdown(clientX,`,
   // an unparseable head that dropped the whole `on pointerdown … end` handler
-  // (tl behavior-resizable DEGENERATE → {behavior}; ar lossy). Fix: track an ATTACHED
-  // `(` (one that follows a token) as a depth scope, so the arg list stays atomic; a
-  // STANDALONE `(` opening an expression (`to ($count or 0)`) is left untracked so its
-  // internal operators still translate.
+  // (tl behavior-resizable DEGENERATE → {behavior}; ar lossy). Fix: track `(` as a
+  // depth scope so the group stays atomic. Since the cluster E fix, STANDALONE
+  // groups (`to ($count or 0)`) are atomic too — their interior keywords translate
+  // in place via translateMultiWordValue/translateWord's paren handling.
   it('[tl] event-handler head with destructured params keeps the event atomic', () => {
     const out = new GrammarTransformer('en', 'tl').transform(
       'on pointerdown(clientX, clientY) from me'
@@ -2190,12 +2190,63 @@ describe('Attached parenthesized arg list stays one token (tl behavior-resizable
     expect(out).toContain('pointerdown(clientX, clientY)');
   });
 
-  it('a standalone expression paren is still tokenized (operators translate)', () => {
-    // `($count or 0)` is NOT an attached call — its `or` must still split out and
-    // translate. Tagalog renders `or` → `o`.
+  it('a standalone expression paren still translates its interior operators', () => {
+    // `($count or 0)` is NOT an attached call — the group is now atomic (cluster E),
+    // but its `or` must still translate in place. Tagalog renders `or` → `o`.
     const out = new GrammarTransformer('en', 'tl').transform('set $x to ($count or 0)');
-    expect(out).toContain(' o '); // `or` translated, i.e. the paren was NOT made atomic
-    expect(out).not.toContain('($count or 0)');
+    expect(out).toContain('($count o 0)'); // atomic AND interior-translated
+  });
+});
+
+describe('Standalone parenthesized expressions are opaque units (R1 cluster E, computed-value)', () => {
+  // With standalone `(` untracked, `(the value of #price as Number)` tokenized
+  // LOOSE and its interior `of`/`as` keywords hit the argument modifier map: the
+  // parser split the expression across roles, so the transformer reordered INSIDE
+  // the parens, embedded the event phrase mid-expression (`(the valor de #price
+  // de .quantity como Number)`), and DROPPED the entire `* (my value as Number)`
+  // second operand — in every language, including the SVO controls. Fused groups
+  // keep the expression intact; interiors translate word-by-word in order.
+  const COMPUTED_VALUE =
+    'on input from .quantity set #total.innerText to (the value of #price as Number) * (my value as Number)';
+
+  const firstParenGroup = (s: string): string => {
+    const m = s.match(/\([^)]*\)/);
+    return m ? m[0] : '';
+  };
+
+  it.each(['es', 'de', 'ko', 'hi', 'ja', 'qu'])(
+    '[%s] keeps both operands and the * operator',
+    lang => {
+      const out = new GrammarTransformer('en', lang).transform(COMPUTED_VALUE);
+      // The second operand was dropped in every language before the fix.
+      expect(out).toContain(') * (');
+      // Exactly two paren groups survive, in source order.
+      expect(out.match(/\(/g)?.length).toBe(2);
+      expect(out.match(/\)/g)?.length).toBe(2);
+    }
+  );
+
+  it.each([
+    ['es', ['establecer', 'entrada']],
+    ['ko', ['설정', '입력']],
+    ['ja', ['設定', '入力']],
+  ] as Array<[string, string[]]>)(
+    '[%s] never embeds the verb or event phrase inside the parens',
+    (lang, forbidden) => {
+      const out = new GrammarTransformer('en', lang).transform(COMPUTED_VALUE);
+      const group = firstParenGroup(out);
+      expect(group).not.toBe('');
+      for (const word of forbidden) {
+        expect(group).not.toContain(word);
+      }
+      // The event source selector stays outside the expression too.
+      expect(group).not.toContain('.quantity');
+    }
+  );
+
+  it('[es] interior keywords translate in place, in order', () => {
+    const out = new GrammarTransformer('en', 'es').transform(COMPUTED_VALUE);
+    expect(out).toContain('(the valor de #price como Number) * (mi valor como Number)');
   });
 });
 
