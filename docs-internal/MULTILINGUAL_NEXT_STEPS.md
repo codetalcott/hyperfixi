@@ -29,6 +29,43 @@ The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recal
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.**
 
+> **Update 2026-07-04b (SOV LITERAL-ROLE-EXTRACTION ARC: COMPLETE — both R2 blockers fixed +
+> joined; subset 45 → 47, R2 stays 1.0 in all 23 langs. #560 / #561 / #562.)** The arc planned in
+> [HANDOFF-sov-literal-role-extraction.md](HANDOFF-sov-literal-role-extraction.md) landed in three
+> stacked increments:
+>
+> 1. **`append-content` — body-clause marker lookup, event-clobber fix (#560).** The predicted
+>    ko-works/ja-fails wedge was real and crisp: `buildMarkerToRoleLookup` let a later role's PRIMARY
+>    marker overwrite an earlier role's entry, and every SOV profile's `event` roleMarker reuses a
+>    value role's particle (ja `を`=patient, tr `i`=patient, bn `তে`=destination, ko `을`=patient). In
+>    the Stage-3 SOV fallback the fronted content literal bound to a bogus `event` role and dropped at
+>    runtime; **ko survived only because its corpus form uses the `를` ALTERNATIVE** (alternatives
+>    never clobbered). Event markers now only fill gaps in that lookup (its single caller runs after
+>    the event phrase is stripped, so an event binding there was never meaningful; qu's non-colliding
+>    `pi` keeps its not-a-verb shield). A/B: 7 per-pattern deltas, ALL improvements (append-content
+>    ja/tr/bn R1 0.75→1.0 + collateral form-disable-on-submit, beep-debug-expression gains), zero
+>    drops. 23/23 langs now reproduce the en effect (was 20/23).
+> 2. **`increment-by-amount` — trailing bare-quantity reclaim (#561).** The handoff's two-sided
+>    question resolved as option (c), generic extraction: every fused event pattern ends at the verb
+>    (SOV `-sov-patient-first`) or the primary role (**th `-vso` — th shares this root cause; it was
+>    NOT a tokenizer issue**), stranding the transformer's post-verb bare amount; the #530 re-parse
+>    can't reclaim it because the fronted patient is outside the [verb..boundary] slice (superset
+>    guard, by design). `buildEventHandler` now reclaims a trailing bare NUMBER into the schema's
+>    absent optional `quantity` role — gated to non-block actions (⇒ increment/decrement), numeric
+>    tokens, and absent-quantity only (es/fr/pt/de #558 marker langs and positional it/zh capture it
+>    upstream). Parse-level A/B: ZERO changes — expected and re-confirming the #555/#558 lesson:
+>    `fillSchemaDefaults` injects `quantity:literal=1` into the role signature, so the value bug is
+>    invisible to R0/R1; only R2 sees it. 23/23 langs now apply +10 (was 16/23).
+> 3. **R2 wave 10 — both patterns join the curated subset (#562; 45 → 47, R2 stays 1.0, zero
+>    executionFailures in all 23 langs).** Fixture adds `<ul id="list">` + `<div id="score">0</div>`
+>    (appended LAST, indices preserved); membership + ja signature locks (ja locks the exact failure
+>    class each fix closed); baseline regenerated against a fresh populate — avgRoleFidelity ticks up
+>    from #560.
+>
+> The two "Remaining R2 gaps" bullets below marked ✔ RESOLVED. Still open from that list: the
+> `set`-target ×5 rejections (heterogeneous), `default-value`, and the harness's document-order
+> signature fragility.
+
 > **Update 2026-07-04 (R2 EXECUTION-COVERAGE SWEEP — the first systematic pass at "do the faithful
 > parses actually EXECUTE correctly?" Now that R0 recall is saturated (fid 1.0, both bands 0), R2 is
 > the un-mined dimension: only ~27% of the corpus was behaviorally verified. Three increments landed
@@ -67,13 +104,15 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 >
 > **Remaining R2 gaps (grounded; each its own increment — NOT clean coverage adds):**
 >
-> - **`increment-by-amount` 11-lang semantic gap** (would let it join the subset). My #555 runtime fix
+> - ✔ **RESOLVED (2026-07-04b: #558 marker langs + #561 SOV/th reclaim; joined in #562)**
+>   **`increment-by-amount` 11-lang semantic gap** (would let it join the subset). My #555 runtime fix
 >   made en + 12 langs correct, but EXPOSED that 11 langs don't carry `by N` into `modifiers.by` at
 >   parse time — TWO causes: a **"by"-marker miss** in es (`por`)/de (`um`)/fr/pt (the amount is
 >   stranded → quantity defaults to 1; es even mis-captures `quantity:1`), and an **SOV trailing-amount
 >   drop** in ja/ko/hi/bn/tr/qu (the post-verb `10` isn't captured). A semantic command-schema / marker
 >   arc.
-> - **`append-content` SOV divergence.** `append "<li>…</li>" to #list` drops the fronted content
+> - ✔ **RESOLVED (2026-07-04b: #560 event-marker clobber fix; joined in #562)**
+>   **`append-content` SOV divergence.** `append "<li>…</li>" to #list` drops the fronted content
 >   patient in ja/tr (`append requires content` runtime error) and bn (silent no-op); ko/hi capture it
 >   and work. A per-language SOV content-role-capture fix.
 > - **`set`-target runtime rejections (×5).** `set command target must be a string or object literal`

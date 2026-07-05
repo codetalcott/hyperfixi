@@ -188,6 +188,20 @@ export const EXECUTION_SUBSET: readonly string[] = [
   'chained-access-possessive-dot',
   'hide-with-transition',
   'show-with-transition',
+  // Expansion wave 10 (the SOV literal-role-extraction arc, PRs #560/#561):
+  // the two R2 blockers whose SOV translations silently dropped a bare literal
+  // role, now capturing it in all 23 languages:
+  //  - append-content: `append "<li>Item</li>" to #list` — the fronted content
+  //    literal bound to a bogus `event` role in the body-clause marker lookup
+  //    (ja/tr runtime "append requires content", bn silent no-op). Fixture adds
+  //    `<ul id="list">` (appended last, indices preserved).
+  //  - increment-by-amount: `increment #score by 10` — the trailing bare amount
+  //    was unconsumed by every fused event pattern and defaulted to 1 in the
+  //    SOV 6 + th (invisible to R0/R1: fillSchemaDefaults injects
+  //    quantity:literal=1 into the role signature — only R2 sees the value).
+  //    Fixture adds `<div id="score">0</div>` (appended last).
+  'append-content',
+  'increment-by-amount',
 ];
 
 /**
@@ -212,6 +226,8 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div id="container"></div>
   <div class="dropdown-menu"></div>
   <div id="sr-announce"></div>
+  <ul id="list"></ul>
+  <div id="score">0</div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */
