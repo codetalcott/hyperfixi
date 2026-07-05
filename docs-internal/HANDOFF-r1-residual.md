@@ -54,8 +54,30 @@
 >   (fronted while-phrase parses as a separate `while` node — hi/qu miss
 >   condition+loopType, ko condition; unchanged count vs before, needs the
 >   fronted-guard machinery, not a head).
-> - **Cluster E remains** — its own arc (transformer parenthesized-expression
->   opacity). Start the next session from the cluster E section below.
+> - **Cluster E is LANDED** (same session as D): standalone parenthesized
+>   groups are now fused into ONE token by the i18n transformer's tokenizer
+>   (previously only ATTACHED `(` was tracked), so the interior `of`/`as`
+>   keywords never reach the argument modifier map — the mangle (reorder
+>   inside parens, event phrase embedded mid-expression, whole `* (…)` second
+>   operand dropped in EVERY language) is gone. Interior keywords still
+>   translate word-by-word IN ORDER: role values are re-split on whitespace by
+>   translateMultiWordValue, and translateWord gained paren-stripping +
+>   fused-group recursion (`($count or 0)` → tl `($count o 0)` — the old
+>   operator-translation contract holds). computed-value now renders intact in
+>   all 24 languages. R0/R1 metrics were expected NOT to move (the corruption
+>   was value-level — the known R0/R1 blind spot); the win is correct
+>   display-facing text + future R2 eligibility. One knowingly-accepted
+>   residue: sw precision -0.0011 (well inside the 0.02 ratchet) because the
+>   restored second operand carries a second `kama` ("as"), and the sw
+>   SEMANTIC parser mis-reads standalone `kama` as `if` (a PRE-EXISTING
+>   homonym family — event-debounce/fetch-with-headers/fetch-formdata already
+>   show phantom sw `if`s; fix belongs parser-side or via a non-homonym sw
+>   "as" word, the pl get/pobierz precedent).
+> - **All five clusters from this triage are now landed.** Remaining known
+>   residue: SOV fronted repeat-while (hi/qu condition+loopType, ko condition
+>   — needs fronted-guard machinery), the sw `kama` homonym family above, the
+>   `add.destination` en noise on for-body patterns (it/qu), and the smaller
+>   singleton families listed at the bottom of this doc.
 
 > **Written 2026-07-04**, immediately after the SOV literal-role-extraction arc
 > (#560/#561/#562 — see [HANDOFF-sov-literal-role-extraction.md](HANDOFF-sov-literal-role-extraction.md)).

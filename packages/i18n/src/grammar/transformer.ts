@@ -959,16 +959,24 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
       bracketDepth--;
     }
 
-    // Track an ATTACHED parenthesized argument list — a `(` that immediately
-    // follows a token (a call or event destructure: `pointerdown(clientX, clientY)`,
-    // `Resizable(a, b)`, `add(a, b)`) — so the comma-space inside doesn't split it
-    // into `pointerdown(clientX,` / `clientY)`. The event-handler-head reorder then
-    // separates the two halves (event role = `pointerdown(clientX,`, the stray
-    // `clientY)` fronted), mangling the head and dropping the whole handler. Only an
-    // attached `(` is tracked: a STANDALONE `(` opening an expression (`to ($count or
-    // 0)`, preceded by whitespace → `current` empty) is left untracked so its internal
-    // operators still tokenize and translate (`or` → the target conjunction).
-    if (char === '(' && (current.length > 0 || parenDepth > 0)) {
+    // Track EVERY parenthesized group as a depth scope so it stays ONE token:
+    //
+    // - An ATTACHED `(` (a call or event destructure: `pointerdown(clientX,
+    //   clientY)`, `Resizable(a, b)`) must not split at the comma-space — the
+    //   event-handler-head reorder would separate the halves and drop the
+    //   whole handler (tl behavior-resizable degenerate).
+    // - A STANDALONE `(` opening an expression (`to (the value of #price as
+    //   Number) * (my value as Number)`) must be OPAQUE to role segmentation:
+    //   left loose, its interior `of`/`as`/`from` keywords hit the argument
+    //   modifier map, so the parser split the expression across roles — the
+    //   R1 cluster E mangle (computed-value: the transformer reordered INSIDE
+    //   the parens, embedded the event phrase mid-expression, and dropped the
+    //   whole second operand in every language). Interior keywords still
+    //   translate IN PLACE: role values are re-split on whitespace by
+    //   translateMultiWordValue, and translateWord strips paren punctuation
+    //   before its dictionary lookup (`($count or 0)` → `($count o 0)` in tl —
+    //   the operator translates without the group being torn apart).
+    if (char === '(') {
       parenDepth++;
     } else if (char === ')' && parenDepth > 0) {
       parenDepth--;
@@ -1332,6 +1340,26 @@ function translateWord(word: string, sourceLocale: string, targetLocale: string)
   // Don't translate numbers
   if (/^\d+/.test(word)) {
     return word;
+  }
+
+  // A whole parenthesized group fused by the tokenizer (`(the value of #price
+  // as Number)`) reaching a single-token translate path: translate its
+  // interior word-by-word IN ORDER — never reordered, never re-segmented.
+  if (/\s/.test(word) && word.startsWith('(')) {
+    return word
+      .split(/\s+/)
+      .map(w => translateWord(w, sourceLocale, targetLocale))
+      .join(' ');
+  }
+
+  // A word carrying paren punctuation from a fused group after whitespace
+  // re-splitting (`(my` / `valor)` / `(($x`): strip the parens for the
+  // dictionary lookup and re-attach, so interior keywords still translate.
+  if (word.length > 1 && (word.startsWith('(') || word.endsWith(')'))) {
+    const m = word.match(/^(\(*)([^()]+)(\)*)$/);
+    if (m && (m[1] || m[3])) {
+      return m[1] + translateWord(m[2], sourceLocale, targetLocale) + m[3];
+    }
   }
 
   const sourceDict = sourceLocale === 'en' ? null : dictionaries[sourceLocale];
