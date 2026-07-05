@@ -196,7 +196,8 @@ function markerlessFetch(
   fromMarker: string,
   asMarker: string,
   verbAlternatives?: string[],
-  fromMarkerAlternatives?: string[]
+  fromMarkerAlternatives?: string[],
+  asMarkerAlternatives?: string[]
 ): LanguagePattern {
   return {
     id,
@@ -227,7 +228,11 @@ function markerlessFetch(
           type: 'group',
           optional: true,
           tokens: [
-            { type: 'literal', value: asMarker },
+            {
+              type: 'literal',
+              value: asMarker,
+              ...(asMarkerAlternatives ? { alternatives: asMarkerAlternatives } : {}),
+            },
             { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
           ],
         },
@@ -238,7 +243,10 @@ function markerlessFetch(
         marker: fromMarker,
         ...(fromMarkerAlternatives ? { markerAlternatives: fromMarkerAlternatives } : {}),
       },
-      responseType: { marker: asMarker },
+      responseType: {
+        marker: asMarker,
+        ...(asMarkerAlternatives ? { markerAlternatives: asMarkerAlternatives } : {}),
+      },
     },
   };
 }
@@ -323,7 +331,12 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       // dict emits `ambil`, profile primary is `muat` — accept both.
       return [markerlessFetch('fetch-id', 'id', 'muat', 'dari', 'sebagai', ['ambil'])];
     case 'sw':
-      return [markerlessFetch('fetch-sw', 'sw', 'leta', 'kutoka', 'kama')];
+      // `kuwa` is what the transformer now emits for `as` (sw `kama` is the IF
+      // keyword — the phantom-if homonym; see dictionaries/sw.ts). Hand-written
+      // `kama` stays tolerated in as-marker position.
+      return [
+        markerlessFetch('fetch-sw', 'sw', 'leta', 'kutoka', 'kuwa', undefined, undefined, ['kama']),
+      ];
     case 'he':
       // transformer inserts the `את` accusative particle (`הבא את /url`) where the
       // generated pattern expects `מ` (from); accept either. Verb alt `טען`.

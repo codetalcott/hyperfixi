@@ -9715,3 +9715,57 @@ describe('event-anchor guard: fronted positional/possessive/optional-chaining he
     expect(node.body?.some(c => c.action === 'toggle')).toBe(true);
   });
 });
+
+describe('sw `as` marker is kuwa, not the if-homonym kama (phantom-if family)', () => {
+  // sw `kama` is both "as/like" (idiomatic) and the IF keyword — the semantic
+  // sw parser reads a standalone `kama` as an `if` head, so any transformed
+  // `as <Type>` tail (`kama JSON`, `kama Number`) mid-body grew a phantom `if`
+  // command (computed-value precision 0.500, event-debounce / fetch-with-headers
+  // / fetch-formdata 0.667–0.750). The i18n dict + grammar profile now emit
+  // `kuwa` ("to be/become" — the conversion sense) for `as`, and the fetch-sw
+  // pattern reads `kuwa` as the responseType marker while still tolerating
+  // hand-written `kama` in as-marker position. Same dict↔profile homonym
+  // disambiguation as pl get/pobierz.
+  it('[sw] fetch with kuwa responseType parses (transformer-emitted form)', () => {
+    const node = parse('leta /api/me kuwa JSON', 'sw') as {
+      action?: string;
+      roles?: Map<string, { type: string }>;
+    };
+    expect(node.action).toBe('fetch');
+    expect(node.roles?.get('source')?.type).toBe('literal');
+    expect(node.roles?.has('responseType')).toBe(true);
+  });
+
+  it('[sw] hand-written kama in as-marker position still captures responseType', () => {
+    const node = parse('leta /api/me kama JSON', 'sw') as {
+      action?: string;
+      roles?: Map<string, { type: string }>;
+    };
+    expect(node.action).toBe('fetch');
+    expect(node.roles?.has('responseType')).toBe(true);
+  });
+
+  it('[sw] corpus-shaped fetch-with-headers body grows no phantom if', () => {
+    // Transformer output for `on click fetch /api/me with headers:{…} as JSON
+    // then put its.name into me` — with `kuwa` the trailing as-phrase must not
+    // split into a phantom `if` statement.
+    const node = parse(
+      'kwenye bonyeza leta /api/me na headers:{Authorization:`Bearer ${$token}`} kuwa JSON kisha weka yake.name kwa mimi',
+      'sw'
+    ) as { kind: string; body?: Array<{ action?: string }> };
+    expect(node.kind).toBe('event-handler');
+    const actions = (node.body ?? []).map(c => c.action);
+    expect(actions).toContain('fetch');
+    expect(actions).toContain('put');
+    expect(actions).not.toContain('if');
+  });
+
+  it('[sw] kama still parses as a real conditional inside an event body', () => {
+    const node = parse('kwenye bonyeza kama mimi ana .loading rudi mwisho', 'sw') as {
+      kind: string;
+      body?: Array<{ action?: string }>;
+    };
+    expect(node.kind).toBe('event-handler');
+    expect(node.body?.some(c => c.action === 'if')).toBe(true);
+  });
+});

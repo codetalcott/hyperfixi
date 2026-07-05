@@ -727,7 +727,10 @@ export const swahiliProfile: LanguageProfile = {
     { form: 'kwa', role: 'destination', position: 'preposition', required: false },
     { form: 'kutoka', role: 'source', position: 'preposition', required: false },
     { form: 'na', role: 'style', position: 'preposition', required: false },
-    { form: 'kama', role: 'method', position: 'preposition', required: false }, // "as/like"
+    // `kuwa`, not `kama`: sw `kama` is the IF keyword — rendering the method
+    // role ("as X") with it grew a phantom `if` at semantic parse time. See the
+    // matching comment in dictionaries/sw.ts (modifiers.as).
+    { form: 'kuwa', role: 'method', position: 'preposition', required: false }, // "as/become"
   ],
 };
 

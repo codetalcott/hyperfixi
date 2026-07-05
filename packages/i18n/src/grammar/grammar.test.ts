@@ -617,6 +617,28 @@ describe('GrammarTransformer', () => {
     });
   });
 
+  describe('Swahili Transformation (as/if disambiguation)', () => {
+    const transformer = new GrammarTransformer('en', 'sw');
+
+    it('should emit kuwa for the as-marker, not the if-homonym kama', () => {
+      // Regression: sw `kama` is both "as/like" and the IF keyword. The dict +
+      // grammar profile emitted it for `as`, so every transformed `as <Type>`
+      // tail (`kama JSON`, `kama Number`) grew a phantom `if` command at
+      // semantic parse time (computed-value precision 0.500; event-debounce,
+      // fetch-with-headers, fetch-formdata 0.667–0.750). The dict/profile now
+      // emit `kuwa` ("to be/become" — the conversion sense, cf. badilisha kuwa).
+      const result = transformer.transform('on click fetch /api/data as json');
+      expect(result).toContain('kuwa');
+      expect(result).not.toMatch(/\bkama\b/);
+    });
+
+    it('should still emit kama for a real if', () => {
+      const result = transformer.transform('if true then log "Habari"');
+      expect(result).toMatch(/\bkama\b/);
+      expect(result).not.toContain('kuwa');
+    });
+  });
+
   describe('Duration / literal-primary marking (no spurious object particle)', () => {
     // A command whose primary argument is a literal/measure (e.g. `wait <duration>`)
     // must NOT have that argument marked as a fronted object: the generic argument

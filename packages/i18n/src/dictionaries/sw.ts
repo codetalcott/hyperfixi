@@ -80,7 +80,14 @@ export const sw: Dictionary = {
     at: 'katika',
     in: 'ndani',
     of: 'ya',
-    as: 'kama',
+    // `kuwa` ("to be/become" — the conversion sense, cf. `badilisha kuwa`), not
+    // `kama`: sw `kama` is the IF keyword (commands.if above and the semantic sw
+    // profile's if primary), so emitting it for `as` grew a phantom `if` command
+    // out of every transformed `as <Type>` tail (`kama JSON`, `kama Number`) when
+    // the semantic parser split event-body statements. Same dict↔profile homonym
+    // disambiguation as pl get/pobierz. The semantic fetch-sw pattern still
+    // tolerates hand-written `kama` in as-marker position.
+    as: 'kuwa',
     by: 'na',
     before: 'kabla',
     after: 'baada',
