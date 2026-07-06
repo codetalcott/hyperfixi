@@ -446,6 +446,28 @@ export class PatternMatcher {
       return true;
     }
 
+    // Multi-token OPERATOR-RUN expression (cluster A2): `"Hello, " + my value`,
+    // `(the value of #price as Number) * (my value as Number)`. The tokenizers
+    // split these into value/operator/value token runs, so a single-token role
+    // capture takes only the first operand and the pattern then dies on the
+    // operator — the en reference silently dropped the `+ my value` tail
+    // (patient:literal="Hello, ") and every SOV set fell through to the
+    // role-swapping verb-anchoring fallback. Assembling the whole run into one
+    // expression value lets the surrounding pattern match at position 0. Strictly
+    // pairwise (value OP value (OP value)*): it fires only when a binary operator
+    // DIRECTLY follows the first operand, so every non-arithmetic capture is
+    // untouched. Skipped for the event role (an event name is never an operand).
+    if (
+      patternToken.role !== 'event' &&
+      (!patternToken.expectedTypes || patternToken.expectedTypes.includes('expression'))
+    ) {
+      const runValue = this.tryMatchOperatorRunExpression(tokens);
+      if (runValue) {
+        captured.set(patternToken.role, runValue);
+        return true;
+      }
+    }
+
     // Check for an "of"-possessive expression (e.g. "*--primary-color of #theme",
     // AR "*--primary-color من #theme", TL "*--primary-color ng #theme"). Gated to
     // roles that opt into property-path (currently `set`'s destination), so the
@@ -913,6 +935,25 @@ export class PatternMatcher {
     sw: new Set(['ya']),
     vi: new Set(['của']),
     zh: new Set(['的']),
+    // The i18n transformer keeps the en of-form order (property first) in every
+    // language and only swaps the connector word, so the genitive particles /
+    // of-prepositions below are safe to read property-first here. Several of
+    // them normalize to OTHER senses (it `di`→tell, pl `z`/uk `з`→style,
+    // qu `pa`/tr `nin`→destination), which is why the normalized-form check in
+    // isOfPossessiveMarker can't catch them. ru `из` needs no entry (normalizes
+    // to `source`, already accepted). Without these, `set the *--primary-color
+    // of #theme to …` captured a bare selector as the destination and dropped
+    // the owner (SVO) or skipped ahead past the property entirely (SOV).
+    it: new Set(['di']),
+    pl: new Set(['z']),
+    uk: new Set(['з']),
+    th: new Set(['ของ']),
+    ja: new Set(['の']),
+    ko: new Set(['의']),
+    bn: new Set(['র']),
+    hi: new Set(['का']),
+    qu: new Set(['pa']),
+    tr: new Set(['nin']),
   };
 
   /**
@@ -932,6 +973,102 @@ export class PatternMatcher {
       ? PatternMatcher.OF_POSSESSIVE_MARKERS[this.currentProfile.code]
       : undefined;
     return !!langMarkers && langMarkers.has(value);
+  }
+
+  /**
+   * Binary operators that can join operands in an operator-run expression.
+   * `*` tokenizes as a SELECTOR (the style-prefix char) but is only read as an
+   * operator here when it sits BETWEEN two operands, so a bare `*opacity`
+   * style selector (one fused token) is never affected.
+   */
+  private static readonly RUN_OPERATORS = new Set(['+', '-', '*', '/']);
+
+  /**
+   * Try to match a multi-token operator-run expression:
+   *   <operand> <op> <operand> (<op> <operand>)*
+   * where an operand is a parenthesized group (balanced `(`…`)` tokens), a
+   * possessive pair (`my value`, `私の 値`), or a single value token.
+   * Returns null — leaving the stream untouched — unless an operator DIRECTLY
+   * follows the first operand, so ordinary single-token captures never change.
+   */
+  private tryMatchOperatorRunExpression(tokens: TokenStream): SemanticValue | null {
+    const mark = tokens.mark();
+    const startIdx = tokens.position();
+
+    if (!this.tryConsumeRunOperand(tokens)) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    let operands = 1;
+    for (;;) {
+      const op = tokens.peek();
+      if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
+      const beforeOp = tokens.mark();
+      tokens.advance();
+      if (!this.tryConsumeRunOperand(tokens)) {
+        // Dangling operator — leave it (and whatever follows) unconsumed.
+        tokens.reset(beforeOp);
+        break;
+      }
+      operands++;
+    }
+
+    if (operands < 2) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    const raw = tokens.tokens
+      .slice(startIdx, tokens.position())
+      .map(t => t.value)
+      .join(' ');
+    return { type: 'expression', raw, value: raw } as SemanticValue;
+  }
+
+  /**
+   * Consume one operand of an operator run. Returns false (stream untouched)
+   * if the upcoming tokens do not form an operand.
+   */
+  private tryConsumeRunOperand(tokens: TokenStream): boolean {
+    const token = tokens.peek();
+    if (!token) return false;
+
+    // Parenthesized group: `(` … matching `)` (parens tokenize as standalone
+    // identifier tokens; role markers INSIDE the parens — hi `के_रूप_में`'s में —
+    // are opaque to the balance count, which is the point).
+    if (token.value === '(') {
+      const mark = tokens.mark();
+      let depth = 0;
+      while (!tokens.isAtEnd()) {
+        const t = tokens.advance();
+        if (t.value === '(') depth++;
+        else if (t.value === ')') {
+          depth--;
+          if (depth === 0) return true;
+        }
+      }
+      tokens.reset(mark); // unbalanced
+      return false;
+    }
+
+    // Possessive pair (`my value`, `私の 値`, `mi valor`).
+    if (this.tryMatchPossessiveExpression(tokens)) return true;
+
+    // Single value token. Particles/conjunctions/punctuation are never
+    // operands (they belong to the surrounding pattern).
+    if (
+      (token.kind === 'literal' ||
+        token.kind === 'identifier' ||
+        token.kind === 'selector' ||
+        token.kind === 'keyword') &&
+      !PatternMatcher.RUN_OPERATORS.has(token.value) &&
+      token.value !== ')'
+    ) {
+      tokens.advance();
+      return true;
+    }
+    return false;
   }
 
   /**

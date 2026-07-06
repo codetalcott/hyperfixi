@@ -10333,3 +10333,134 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
     });
   });
 });
+
+describe('set of-possessive destination + operator-run patient (the set/A2 drill)', () => {
+  // set-color-variable: `set the *--primary-color of #theme to "#ff6600"`.
+  // The of-connector the i18n transformer emits per language was unknown to
+  // isOfPossessiveMarker in 10 languages (it `di` normalizes to `tell`,
+  // pl `z`/uk `з` to `style`, th `ของ`/ja `の`/ko `의`/bn `র`/hi `का` carry no
+  // usable normalization, qu `pa`/tr `nin` normalize to `destination`), and the
+  // hand-crafted it/pl/ru/th/uk set patterns' destination tokens never opted
+  // into property-path — so the destination truncated to a bare selector (SVO)
+  // or the whole property half was skipped (SOV).
+  function findAction(n: unknown, action: string): Record<string, any> | null {
+    if (!n || typeof n !== 'object') return null;
+    const rec = n as Record<string, any>;
+    if (rec.action === action) return rec;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const hit = findAction(x, action);
+          if (hit) return hit;
+        }
+      } else if (c && typeof c === 'object') {
+        const hit = findAction(c, action);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+  function roleOf(cmd: Record<string, any> | null, role: string): any {
+    if (!cmd) return undefined;
+    return cmd.roles instanceof Map ? cmd.roles.get(role) : undefined;
+  }
+
+  // Corpus-shaped renders (i18n transformer output for set-color-variable).
+  const ofPossessiveCases: Array<[string, string]> = [
+    ['it', 'su clic impostare the *--primary-color di #theme in "#ff6600"'],
+    ['pl', 'gdy kliknięcie ustaw the *--primary-color z #theme do "#ff6600"'],
+    ['ru', 'при клик установить the *--primary-color из #theme в "#ff6600"'],
+    ['th', 'เมื่อ คลิก ตั้ง the *--primary-color ของ #theme ใน "#ff6600"'],
+    ['uk', 'при клік встановити the *--primary-color з #theme в "#ff6600"'],
+    ['ja', 'the *--primary-color の #theme を "#ff6600" に 設定 クリック で'],
+    ['ko', 'the *--primary-color 의 #theme 를 "#ff6600" 에 설정 클릭 할 때'],
+    ['hi', 'the *--primary-color का #theme को "#ff6600" में सेट क्लिक पर'],
+    ['bn', 'the *--primary-color র #theme কে "#ff6600" তে সেট ক্লিক এ'],
+    ['tr', 'the *--primary-color nin #theme i "#ff6600" e ayarla tıklama de'],
+    ['qu', 'the *--primary-color pa #theme ta "#ff6600" man ñitiy pi churanay'],
+  ];
+  for (const [lang, input] of ofPossessiveCases) {
+    it(`[${lang}] set-color-variable destination is the full of-possessive property-path`, () => {
+      const node = parse(input, lang);
+      // The handler wrapper must survive (SOV trailing-event guard: the now-
+      // whole set pattern must not swallow the trailing event phrase).
+      expect((node as Record<string, any>).action).toBe('on');
+      const set = findAction(node, 'set');
+      expect(set).not.toBeNull();
+      expect(roleOf(set, 'destination')?.type).toBe('property-path');
+      expect(roleOf(set, 'patient')?.type).toBe('literal');
+    });
+  }
+
+  it('[en] set-color-variable reference shape is unchanged', () => {
+    const node = parse('on click set the *--primary-color of #theme to "#ff6600"', 'en');
+    const set = findAction(node, 'set');
+    expect(roleOf(set, 'destination')?.type).toBe('property-path');
+    expect(roleOf(set, 'patient')?.type).toBe('literal');
+  });
+
+  // two-way-binding: `set #greeting.innerText to "Hello, " + my value`.
+  // The tokenizers split the concatenation into value/operator/value runs; a
+  // single-token capture took only `"Hello, "` — the en reference silently
+  // dropped the `+ my value` tail, and the SOV six fell through to the
+  // role-swapping verb-anchoring fallback (patient↔destination inverted).
+  it('[en] operator-run patient captures the FULL concatenation as expression', () => {
+    const node = parse(
+      'on input from #firstName set #greeting.innerText to "Hello, " + my value',
+      'en'
+    );
+    const set = findAction(node, 'set');
+    expect(roleOf(set, 'destination')?.type).toBe('property-path');
+    const patient = roleOf(set, 'patient');
+    expect(patient?.type).toBe('expression');
+    expect(String(patient?.raw ?? patient?.value)).toContain('+');
+  });
+
+  const operatorRunCases: Array<[string, string]> = [
+    ['ja', '#greeting.innerText を "Hello, " + 私の 値 に 設定 入力 で #firstName から'],
+    ['ko', '#greeting.innerText 를 "Hello, " + 내 값 에 설정 입력 할 때 #firstName 에서'],
+    ['tr', '#greeting.innerText i "Hello, " + benim değer e ayarla giriş de #firstName den'],
+    ['hi', '#greeting.innerText को "Hello, " + मेरा मान में सेट इनपुट पर #firstName से'],
+    ['bn', '#greeting.innerText কে "Hello, " + আমার মান তে সেট ইনপুট এ #firstName থেকে'],
+  ];
+  for (const [lang, input] of operatorRunCases) {
+    it(`[${lang}] two-way-binding matches the generated set pattern (no role swap)`, () => {
+      const node = parse(input, lang);
+      expect((node as Record<string, any>).action).toBe('on');
+      const set = findAction(node, 'set');
+      expect(set).not.toBeNull();
+      // destination is the selector+property lvalue, patient the expression run
+      expect(roleOf(set, 'destination')?.type).toBe('property-path');
+      expect(roleOf(set, 'patient')?.type).toBe('expression');
+    });
+  }
+
+  it('[ja] computed-value parenthesized operator-run patient assembles', () => {
+    const node = parse(
+      '#total.innerText を (the 値 の #price として Number) * (私の 値 として Number) に 設定 入力 で .quantity から',
+      'ja'
+    );
+    const set = findAction(node, 'set');
+    expect(roleOf(set, 'destination')?.type).toBe('property-path');
+    expect(roleOf(set, 'patient')?.type).toBe('expression');
+  });
+
+  // Blast-radius locks: non-arithmetic captures must be untouched.
+  it('[en] a plain literal patient does not assemble (set x to 5)', () => {
+    const set = findAction(parse('set x to 5', 'en'), 'set');
+    expect(roleOf(set, 'patient')?.type).toBe('literal');
+  });
+  it('[en] a dangling operator is left unconsumed (set x to 5 +)', () => {
+    const set = findAction(parse('set x to 5 +', 'en'), 'set');
+    expect(roleOf(set, 'patient')?.type).toBe('literal');
+  });
+  it('[ja] owner-first possessive patient is untouched (#button の .active を 切り替え)', () => {
+    // toggle.patient does not opt into property-path; the の here is the
+    // ordinary possessive scope, not the of-possessive corpus render.
+    const node = parse('#button の .active を 切り替え', 'ja');
+    const toggle = findAction(node, 'toggle');
+    expect(toggle).not.toBeNull();
+    expect(roleOf(toggle, 'patient')?.type).toBe('selector');
+  });
+});
