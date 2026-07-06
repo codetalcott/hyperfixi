@@ -675,33 +675,41 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
   if (overrideMarker !== undefined) {
     // Command-specific marker override. Multi-word markers (e.g. "partials in",
     // "with title") split into one literal token per word so the matcher
-    // consumes them sequentially.
+    // consumes them sequentially. A per-command markerOptional wraps each word
+    // in an optional group (`go to /page` and `go back` both parse — the
+    // render side drops the preposition, so the parse side can't require it).
     const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
     const position = defaultMarker?.position ?? 'before';
+    const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
+    const pushWord = (word: string): void => {
+      const literal: PatternToken = { type: 'literal', value: word };
+      tokens.push(optionalMarker ? { type: 'group', optional: true, tokens: [literal] } : literal);
+    };
     if (position === 'before') {
-      for (const word of markerWords) {
-        tokens.push({ type: 'literal', value: word });
-      }
+      for (const word of markerWords) pushWord(word);
       tokens.push(roleValueToken);
     } else {
       tokens.push(roleValueToken);
-      for (const word of markerWords) {
-        tokens.push({ type: 'literal', value: word });
-      }
+      for (const word of markerWords) pushWord(word);
     }
   } else if (defaultMarker) {
     // When the profile allows colloquial marker-dropping, the marker becomes an
     // optional group so `.active değiştir` parses as well as `.active i değiştir`.
     // The marked form still matches the marker literal directly (higher
     // confidence); the unmarked form falls back through the optional group.
-    const asMarker = (): PatternToken =>
-      defaultMarker.alternatives
-        ? {
-            type: 'literal',
-            value: defaultMarker.primary,
-            alternatives: defaultMarker.alternatives,
-          }
+    // Per-command markerVariants merge in as extra alternatives (the SOV
+    // two-role generators already do this — see event-handlers-sov.ts): the
+    // transformer can render a role with a particle the profile default
+    // doesn't cover (he את / zh 把 before go's destination in `go back`).
+    const variantAlts = roleSpec.markerVariants?.[profile.code] ?? [];
+    const asMarker = (): PatternToken => {
+      const alternatives = [
+        ...new Set([...(defaultMarker.alternatives ?? []), ...variantAlts]),
+      ].filter(a => a !== defaultMarker.primary);
+      return alternatives.length
+        ? { type: 'literal', value: defaultMarker.primary, alternatives }
         : { type: 'literal', value: defaultMarker.primary };
+    };
     const pushMarker = (marker: PatternToken): void => {
       tokens.push(
         profile.markersOptional || roleSpec.markerOptional?.[profile.code]
@@ -750,8 +758,13 @@ function buildExtractionRules(
       // Use the override marker
       rules[roleSpec.role] = overrideMarker ? { marker: overrideMarker } : {};
     } else if (defaultMarker && defaultMarker.primary) {
-      rules[roleSpec.role] = defaultMarker.alternatives
-        ? { marker: defaultMarker.primary, markerAlternatives: defaultMarker.alternatives }
+      // Merge per-command markerVariants as alternatives (mirrors buildRoleToken)
+      const variantAlts = roleSpec.markerVariants?.[profile.code] ?? [];
+      const markerAlternatives = [
+        ...new Set([...(defaultMarker.alternatives ?? []), ...variantAlts]),
+      ].filter(a => a !== defaultMarker.primary);
+      rules[roleSpec.role] = markerAlternatives.length
+        ? { marker: defaultMarker.primary, markerAlternatives }
         : { marker: defaultMarker.primary };
     } else {
       rules[roleSpec.role] = {};

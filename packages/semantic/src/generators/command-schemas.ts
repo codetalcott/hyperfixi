@@ -1582,6 +1582,13 @@ export const goSchema: CommandSchema = {
       sovPosition: 1,
       markerOverride: { en: 'to' }, // "go to /page" (parsing)
       renderOverride: { en: '' }, // "go /page" (rendering — no preposition)
+      // `go back` renders the destination bare in en (history nav has no `to`),
+      // and he/zh render it with their PATIENT marker (לך את back / 前往 把 back)
+      // while go-url keeps the destination marker (לך על url / 前往 到 url) —
+      // the corpus is ground truth, so en's `to` is optional and he/zh accept
+      // the patient particle as a destination-marker alternative, scoped to go.
+      markerOptional: { en: true },
+      markerVariants: { he: ['את'], zh: ['把'] },
     },
   ],
 };
@@ -2047,6 +2054,15 @@ export const defaultSchema: CommandSchema = {
       role: 'destination',
       description: 'The variable to set default for',
       required: true,
+      // NOTE (probed 2026-07-06, session 8): adding 'property-path' here fixes
+      // en `default my @data-count to "0"` (destination=property-path via the
+      // possessive matcher, exactly parallel to set-en-possessive) — but ONLY
+      // en: all 13 currently-dropping SVO/VSO languages still NULL on their
+      // rendered possessive+marker shapes (de `standard mein @data-count zu`,
+      // es `predeterminar mi @data-count a`, …), so an en-only enrichment
+      // would mint ~26 honest-dip A/B entries. Admit property-path only as
+      // part of the full default-value drill (per-language markers +
+      // possessive matching).
       expectedTypes: ['reference'],
       svoPosition: 1,
       sovPosition: 1,

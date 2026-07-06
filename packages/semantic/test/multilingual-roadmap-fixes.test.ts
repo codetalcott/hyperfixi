@@ -10992,3 +10992,61 @@ describe('remove source slot: bare-identifier acceptance + genitive/from-marker 
     expect(walkNodes(tr).find(r => r.action === 'bind')).toBeDefined();
   });
 });
+
+describe('go destination marker: en bare form + he/zh patient-particle variants', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] `go back` parses without the `to` marker', () => {
+    // en RENDERS go's destination bare (renderOverride ''), but the generated
+    // pattern required the `to` literal — so the en reference dropped `go back`
+    // entirely (PARSE NULL in isolation) while 21 languages captured
+    // destination="back" via their lax event-fused paths, and were then
+    // precision-flagged as "spurious go" against the empty reference (go ×21,
+    // the largest en-noise inversion of the session-7 probe set).
+    const node = parse('go back', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('go');
+    expect(role(node, 'destination')?.type).toBe('expression');
+    expect(String(role(node, 'destination')?.raw)).toBe('back');
+  });
+
+  it('[en] `go to url "/page"` still parses with the marker (marked form locked)', () => {
+    const node = parse('go to url "/page"', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('go');
+    expect(String(role(node, 'destination')?.raw ?? role(node, 'destination')?.value)).toContain(
+      'url'
+    );
+  });
+
+  for (const [lang, line] of [
+    ['he', 'לך את back'],
+    ['zh', '前往 把 back'],
+  ] as const) {
+    it(`[${lang}] \`${line}\`: the rendered patient particle marks go's destination`, () => {
+      // The transformer renders `back` with the PATIENT particle (he את /
+      // zh 把) while go-url keeps the destination marker (he על / zh 到) —
+      // both must parse. markerVariants on goSchema.destination admits the
+      // particle as a marker alternative, scoped to go only.
+      const node = parse(line, lang) as unknown as Record<string, any>;
+      expect(node.action).toBe('go');
+      expect(role(node, 'destination')?.type).toBe('expression');
+      expect(String(role(node, 'destination')?.raw)).toBe('back');
+    });
+  }
+
+  for (const [lang, line] of [
+    ['he', 'לך על url "/page"'],
+    ['zh', '前往 到 url "/page"'],
+  ] as const) {
+    it(`[${lang}] \`${line}\`: the primary destination marker still parses (go-url locked)`, () => {
+      const node = parse(line, lang) as unknown as Record<string, any>;
+      expect(node.action).toBe('go');
+      expect(String(role(node, 'destination')?.raw ?? role(node, 'destination')?.value)).toContain(
+        'url'
+      );
+    });
+  }
+});
