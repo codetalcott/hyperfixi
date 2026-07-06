@@ -299,6 +299,37 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // transition: the SOV body-walker's verb-anchoring binds the postposed
+    // goal phrase (`0 に` / `0 에`) to `destination` — に/에 is the generic
+    // destination particle — as a LITERAL, which is schema-invalid (a
+    // transition destination is a selector/reference element) while the real
+    // `goal` stays empty; and it types the bare CSS-property patient as
+    // `literal` where matchBest (and the en reference) type the identifier as
+    // `expression`. Both shapes reach this path only from in-branch sub-parses
+    // (behavior-removable's if-branch transition — the fused-event reclaim
+    // site never sees them). Relabel the junk literal destination → goal (the
+    // tell/#564 schema-invalid-destination precedent) and retype a bare
+    // identifier patient literal → expression. Gated to `transition` and to
+    // the exact invalid shapes, so a marker-language matchBest capture
+    // (goal already bound, destination a real selector/reference) is untouched.
+    if (node.action === 'transition') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const dest = roles.get('destination');
+      if (dest && dest.type === 'literal' && !roles.has('goal')) {
+        roles.delete('destination');
+        roles.set('goal', dest);
+      }
+      const pat = roles.get('patient');
+      if (
+        pat &&
+        pat.type === 'literal' &&
+        typeof pat.value === 'string' &&
+        /^[A-Za-z_][A-Za-z0-9_-]*$/.test(pat.value)
+      ) {
+        roles.set('patient', { type: 'expression', raw: pat.value } as SemanticValue);
+      }
+    }
+
     // wait: a duration that IS a known waitable event name is an EVENT wait —
     // `wait for transitionend` (en `wait-en-for-event` head) vs the
     // marker-less translations (`esperar transitionend`), whose generated
@@ -2656,13 +2687,33 @@ export class SemanticParserImpl implements ISemanticParser {
 
       // Remaining tokens without a following marker
       if (valueTokens.length > 0) {
-        const value = this.tokensToSemanticValue(valueTokens);
-        if (value) {
-          // Unmarked trailing tokens: assign based on what's missing
-          if (!roles.patient) {
-            roles.patient = value;
-          } else if (!roles.destination) {
-            roles.destination = value;
+        // A lone TIME-shaped trailing token (`300ms`, `2s`) is a DURATION, not
+        // a patient/destination: the SOV render leaves it bare after the goal
+        // phrase (`遷移 0 に 300ms` = `transition … to 0 over 300ms` — the
+        // `over` marker never survives translation), and the value-slot
+        // fallback below either mistyped it or dropped it (the in-branch
+        // sibling of the fused-path trailing-DURATION reclaim). Schema-gated
+        // to an action that declares a still-empty `duration` role.
+        const soleTime =
+          valueTokens.length === 1 &&
+          /^\d+(\.\d+)?(ms|s)$/i.test(valueTokens[0].value) &&
+          !roles.duration &&
+          getSchema(action as ActionType)?.roles.some(r => r.role === 'duration');
+        if (soleTime) {
+          roles.duration = {
+            type: 'literal',
+            value: valueTokens[0].value,
+            dataType: 'string',
+          } as SemanticValue;
+        } else {
+          const value = this.tokensToSemanticValue(valueTokens);
+          if (value) {
+            // Unmarked trailing tokens: assign based on what's missing
+            if (!roles.patient) {
+              roles.patient = value;
+            } else if (!roles.destination) {
+              roles.destination = value;
+            }
           }
         }
       }
@@ -3905,6 +3956,31 @@ export class SemanticParserImpl implements ISemanticParser {
    * those clauses don't start with a bare `if`/`unless` keyword here, so they fall
    * through to the existing per-clause path untouched.
    */
+  /**
+   * Block-terminator check for the conditional fold, by surface OR normalized
+   * form. bn renders `end` as শেষ, which the curated {@link isEndKeyword} set
+   * cannot list by value (শেষ is ALSO bn's positional `last` — the ar آخر
+   * lesson), so the value-only check never terminated a bn fold: the block
+   * consumed the rest of the handler body and every sibling after the
+   * conditional nested into the branch (behavior-removable bn dropped both
+   * `trigger`s once the junk verb-first event capture stopped masking it).
+   * The tokenizer already disambiguates the dual-use word: a KEYWORD token
+   * whose normalized form is `end` is the block terminator — except when
+   * followed by a selector, which is the positional reading (`শেষ <li/>` =
+   * `last <li/>`), never a block close. The lookahead exception is scoped to
+   * normalized-only recognition: a curated surface form (`end`, ja 終わり, …)
+   * keeps terminating even before a selector-led sibling clause.
+   */
+  private isBlockEndToken(
+    tok: LanguageToken,
+    next: LanguageToken | undefined,
+    language: string
+  ): boolean {
+    if (this.isEndKeyword(tok.value, language)) return true;
+    if (tok.kind !== 'keyword' || (tok.normalized ?? '').toLowerCase() !== 'end') return false;
+    return !(next && next.kind === 'selector');
+  }
+
   private tryParseConditionalBlock(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
@@ -3941,7 +4017,7 @@ export class SemanticParserImpl implements ISemanticParser {
         tokens.advance();
         continue;
       }
-      if (this.isEndKeyword(t.value, language)) {
+      if (this.isBlockEndToken(t, tokens.peek(1) ?? undefined, language)) {
         if (depth === 0) {
           tokens.advance(); // consume the terminating `end`
           break;
@@ -3975,7 +4051,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const t = blockTokens[i];
       const tv = (t.normalized ?? t.value).toLowerCase();
       if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) bodyDepth++;
-      else if (this.isEndKeyword(t.value, language)) bodyDepth--;
+      else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) bodyDepth--;
       if (bodyDepth === 0 && this.isThenKeyword(t.value, language)) {
         sawThen = true;
         i++; // skip the `then`
@@ -4036,7 +4112,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const t = blockTokens[i];
       const tv = (t.normalized ?? t.value).toLowerCase();
       if (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language)) branchDepth++;
-      else if (this.isEndKeyword(t.value, language)) branchDepth--;
+      else if (this.isBlockEndToken(t, blockTokens[i + 1], language)) branchDepth--;
       if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
         inElse = true;
         continue; // skip the `else`

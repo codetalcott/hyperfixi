@@ -10534,3 +10534,169 @@ describe('condition copulas: rendered identifier copulas keep the predicate in t
     expect(actions).toContain('put');
   });
 });
+
+// =============================================================================
+// Nested-behavior sub-parse drill (#582): guard-clause `exit`, in-branch
+// transition roles, structural-keyword event guard, bn fold terminator.
+// =============================================================================
+
+describe('nested-behavior sub-parse drill', () => {
+  function walkNodes(n: unknown, acc: Record<string, any>[] = []): Record<string, any>[] {
+    if (!n || typeof n !== 'object') return acc;
+    const rec = n as Record<string, any>;
+    if (typeof rec.action === 'string') acc.push(rec);
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) walkNodes(x, acc);
+      else if (c && typeof c === 'object') walkNodes(c, acc);
+    }
+    return acc;
+  }
+  const actionsOf = (n: unknown) =>
+    walkNodes(n)
+      .map(r => r.action)
+      .filter(a => a !== 'compound');
+  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] bare `exit` parses via the generated bare-keyword pattern', () => {
+    // exitSchema has zero roles; without `bareKeyword: true` NO pattern exists
+    // and the guard-clause branch (`if item is null exit end`) parses to
+    // nothing, so the conditional fold rejects and the flat `if` truncates.
+    expect(parse('exit', 'en').action).toBe('exit');
+  });
+
+  it('[en] a guard-clause `if … exit end` folds inside a handler body', () => {
+    const node = parse(
+      'on pointerdown set item to the target.closest("li") if item is null exit end halt the event',
+      'en'
+    );
+    const actions = actionsOf(node);
+    expect(actions).toContain('exit');
+    expect(actions).toContain('halt');
+    const conditional = walkNodes(node).find(r => r.kind === 'conditional');
+    expect(conditional).toBeDefined();
+    // Without the fold the condition truncates to its first token ("item").
+    expect(String(role(conditional!, 'condition')?.raw ?? '')).toContain('null');
+  });
+
+  it('[id] behavior-sortable guard clause: leftover `kosong` no longer re-parses as `empty`', () => {
+    const node = parse(
+      'pada pointerdown(clientY) dari saya\n' +
+        '  atur item ke the target.closest("li")\n' +
+        '  jika item adalah kosong\n' +
+        '    keluar\n' +
+        '  akhir\n' +
+        '  berhenti the peristiwa\n' +
+        '  tambah .{dragClass} ke item',
+      'id'
+    );
+    const actions = actionsOf(node);
+    expect(actions.filter(a => a === 'empty')).toHaveLength(0);
+    expect(actions).toContain('exit');
+    expect(actions).toContain('halt');
+    expect(actions).toContain('add');
+  });
+
+  it('[ja] 退出 parses as exit (profile primary, dict now aligned to it)', () => {
+    expect(parse('退出', 'ja').action).toBe('exit');
+  });
+
+  it('[ja] in-branch transition captures patient/goal/duration like the en reference', () => {
+    // `もし effect である "fade" opacity を 遷移 0 に 300ms 終わり` reaches the
+    // verb-anchoring path (no fused-event reclaim there): the destination
+    // particle に binds the goal as a junk literal destination, the bare 300ms
+    // dropped, and the patient typed literal. The transition normalize rule +
+    // the trailing TIME reclaim align all three.
+    const node = parse(
+      'クリック で 私 から もし effect である "fade" opacity を 遷移 0 に 300ms 終わり',
+      'ja'
+    );
+    const transition = walkNodes(node).find(r => r.action === 'transition');
+    expect(transition).toBeDefined();
+    expect(role(transition!, 'patient')?.type).toBe('expression');
+    expect(String(role(transition!, 'patient')?.raw)).toBe('opacity');
+    expect(String(role(transition!, 'goal')?.value)).toBe('0');
+    expect(String(role(transition!, 'duration')?.value)).toBe('300ms');
+  });
+
+  it('[ja] a verb-first trigger must not swallow the following if-keyword as its event', () => {
+    // The db-faithful behavior-removable handler. Without the
+    // STRUCTURAL_NEVER_EVENT guard the verb-first pattern (`引き金 {event}`)
+    // captures event:literal="if" from the もし that opens the next clause,
+    // hiding the if from the fold — the transition branch then degrades to
+    // junk verb-anchoring (style/patient garbage, no goal/duration).
+    const node = parse(
+      'クリック で triggerEl から\n' +
+        '  もし confirmRemoval\n' +
+        '    js(me)\n' +
+        '      if (!window.confirm("Are you sure?")) return "cancel";\n' +
+        '    end\n' +
+        '    もし それ である "cancel"\n' +
+        '      停止\n' +
+        '    終わり\n' +
+        '  終わり\n' +
+        '  removable:before を 引き金\n' +
+        '  もし effect である "fade"\n' +
+        '    opacity を 遷移 0 に 300ms\n' +
+        '  終わり\n' +
+        '  removable:removed を 引き金\n' +
+        '  私 を 削除',
+      'ja'
+    );
+    const triggers = walkNodes(node).filter(r => r.action === 'trigger');
+    const events = triggers.map(t => String(role(t, 'event')?.value ?? ''));
+    expect(events).toContain('removable:before');
+    expect(events).toContain('removable:removed');
+    expect(events).not.toContain('if');
+    // The if now folds: the transition inside the branch survives with full roles.
+    const transition = walkNodes(node).find(r => r.action === 'transition');
+    expect(transition).toBeDefined();
+    expect(String(role(transition!, 'goal')?.value)).toBe('0');
+    expect(String(role(transition!, 'duration')?.value)).toBe('300ms');
+  });
+
+  it('[bn] the conditional fold terminates at শেষ so trailing siblings survive', () => {
+    // শেষ cannot join the curated value set (it is also bn positional `last`),
+    // so the fold used to consume the whole tail: both triggers and the remove
+    // nested into the branch (behavior-removable). isBlockEndToken recognises
+    // the tokenizer's normalized `end` with a selector-lookahead exception.
+    // Db-faithful handler (the confirmRemoval block precedes the triggers).
+    const node = parse(
+      'ক্লিক এ triggerEl থেকে\n' +
+        '  যদি confirmRemoval\n' +
+        '    js(me)\n' +
+        '      if (!window.confirm("Are you sure?")) return "cancel";\n' +
+        '    end\n' +
+        '    যদি এটি হয় "cancel"\n' +
+        '      থামুন\n' +
+        '    শেষ\n' +
+        '  শেষ\n' +
+        '  removable:before কে ট্রিগার\n' +
+        '  যদি effect হয় "fade"\n' +
+        '    opacity কে সংক্রমণ 0 তে 300ms জন্য\n' +
+        '  শেষ\n' +
+        '  removable:removed কে ট্রিগার\n' +
+        '  আমি কে সরান',
+      'bn'
+    );
+    const all = walkNodes(node);
+    const events = all
+      .filter(r => r.action === 'trigger')
+      .map(t => String(role(t, 'event')?.value ?? ''));
+    expect(events).toContain('removable:before');
+    expect(events).toContain('removable:removed');
+    const actions = actionsOf(node);
+    expect(actions).toContain('transition');
+    expect(actions).toContain('remove');
+    // The জন্য for-postposition must not anchor a phantom zero-role `for`.
+    expect(actions.filter(a => a === 'for')).toHaveLength(0);
+  });
+});

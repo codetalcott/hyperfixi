@@ -1,5 +1,76 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-05, session 5): the nested-behavior sub-parse drill
+> LANDED as #582** (probe mean R1 **0.9812 → 0.9824**; per-(lang,pattern) A/B:
+> **46 entries fixed, 0 new**; six-signal gate green; baseline regenerated).
+> Five aligned mechanisms, all at the behavior-body sub-parse seam:
+>
+> 1. **Guard-clause `exit` never parsed anywhere** — exitSchema has zero roles
+>    and the generator emits NO pattern for roleless schemas, so `if item is
+null exit end` had an unparseable then-branch, the conditional fold
+>    rejected (empty branch → null), and the flat if-head truncated the
+>    condition; the leftover predicate re-anchored as `empty me` where it
+>    doubles as the empty keyword. Fix: `bareKeyword: true` on exitSchema (the
+>    existing `live` opt-in). Clears spurious `empty` ×4 (behavior-sortable
+>    ar/id/sw/th), spurious `exit` ×2 (bn/qu — those two were parsing exit
+>    while en dropped it), and enriches en itself (en now parses `exit` — the
+>    guard-clause was an en deficit too, the #576/#577 en-noise pattern again).
+> 2. **ja/ko dict exit realign** (the #569 precedent): the dict rendered exit
+>    as 終了/종료 — the HISTORIC exit/end collision words, deliberately absent
+>    from the end-keyword sets AND unknown to the tokenizers — so the rendered
+>    exit was an inert identifier. Realigned to the profile primaries 退出 /
+>    나가기 (both parse via exit-{ja,ko}-generated). Pruned the two
+>    KNOWN_MISMATCHES allowlist entries (the staleness test caught them).
+> 3. **In-branch transition roles bn/hi/ja/ko/qu/tr ×24 + qu standalone ×15**
+>    (fade-out-remove, transition-color/opacity/transform — most of the
+>    "transition.duration hi/qu" residue): the if-branch transition reaches
+>    verb-anchoring, not the fused-event reclaims. Three aligned pieces:
+>    normalizeCommandRoles relabels a schema-invalid literal destination →
+>    absent goal (`0 に` — に is the generic destination particle; the
+>    tell/#564 precedent) and retypes a bare-identifier literal patient →
+>    expression (en types the bare CSS property as expression); and
+>    extractRolesFromMarkedTokens reclaims a LONE trailing TIME literal
+>    (`300ms`) → duration, schema-gated (the in-branch sibling of the fused
+>    trailing-DURATION reclaim).
+> 4. **STRUCTURAL_NEVER_EVENT guard (pattern-matcher):** the SOV verb-first
+>    trigger pattern (`引き金 {event}`) swallowed the もし/যদি opening the NEXT
+>    juxtaposed clause as event:literal="if" — fabricating a junk event AND
+>    hiding the if from the folds (the transition branch then degraded to junk
+>    verb-anchoring). An event payload is never if/unless/else/end/then, in any
+>    command; `init` deliberately NOT listed (`trigger init` is a real event).
+> 5. **bn fold terminator (isBlockEndToken):** bn renders `end` as শেষ, which
+>    the curated isEndKeyword set can't list by value (শেষ is ALSO bn's
+>    positional `last` — the ar آخر lesson), so a bn conditional fold NEVER
+>    terminated: everything after an if nested into its branch (exposed at
+>    behavior-removable when the junk trigger match stopped masking it). New
+>    fold-scoped check: a KEYWORD token normalized to `end` terminates, except
+>    when followed by a selector (the positional reading `শেষ <li/>`); curated
+>    surface forms keep terminating unconditionally. Also killed bn's phantom
+>    `for` at behavior-removable (the জন্য postposition now lands in a folded
+>    branch where the zero-role `for` filter drops it).
+>
+> 7 guard tests appended to `packages/semantic/test/multilingual-roadmap-fixes.test.ts`
+> (all fail without the fix — verified by stash round-trip).
+>
+> **Residue updated after session 5:**
+>
+> - **behavior-sortable ja/ko set + add.destination — NEW sharper diagnosis:**
+>   the ja event pattern anchors `{event} で` at the `)` of
+>   `pointerdown(clientY)` (event:literal=")"), and the leaked `私 から …` body
+>   head makes the first skipped-run KEYWORD-led, so flushSkipped discards it —
+>   the handler `set item to the target.closest("li")` dies there
+>   (set.patient:expression ja/ko/qu/tr ×4), and with `item` never bound,
+>   tryAttachTrailingRole's strict destination rejects `item に` after add
+>   (add.destination:expression bn/hi/ja/ko/tr ×5). Needs an event-head
+>   param-phrase fix (`(clientY)` consumption), not more body-side patching.
+>   remove.source ×12 / remove.patient ×3 at the same site, likely same root.
+> - spurious `empty` remainder: hi/tr at behavior-sortable + tr/hi/bn if-empty
+>   ×6 — ALL transformer-side (predicate scrambled into the then-branch),
+>   unchanged, locked for a transformer arc.
+> - Everything else from the session-4 block below stands (SOV halt ×6,
+>   set/A2 qu tail, template-literal-list-build SOV six, behavior-resizable
+>   en-noise drill — still untouched).
+
 > **STATUS UPDATE (2026-07-05, session 4): the set/A2 cluster and the spurious-`empty`
 > family LANDED as #580 (set of-possessive + A2 operator-run assembly) and the
 > follow-up copula PR.** Post-session state: probe mean R1 **0.9812** (was 0.9778),

@@ -53,7 +53,10 @@ export const ko: Dictionary = {
     morph: '변형',
     settle: '안정',
     append: '덧붙이다', // profile primary; '추가' is add's word (parsed as add)
-    exit: '종료',
+    // 종료 → 나가기: realigned to the semantic profile primary (ko.ts `exit: 나가기`,
+    // whose comment already flags the 종료 end-collision). Rendered as 종료 it
+    // tokenized as a plain identifier, so a guard-clause `exit` never parsed.
+    exit: '나가기',
     install: '설치',
     breakpoint: '중단점',
     clear: '지우기',

@@ -401,6 +401,25 @@ export class PatternMatcher {
       }
     }
 
+    // A STRUCTURAL keyword (if/unless/else/end/then) is never an event payload
+    // on ANY command — unlike the shape guard above, this applies beyond `on`.
+    // The SOV verb-first trigger pattern (`引き金 {event}`) otherwise swallows
+    // the `もし` (if) that opens the NEXT juxtaposed clause as its event
+    // (`removable:before を 引き金` + `もし effect …` → event:literal="if"),
+    // which both fabricates a junk event AND hides the if-keyword from the
+    // conditional folds — the whole `if effect is "fade" transition …` block
+    // then degrades to junk verb-anchoring (behavior-removable's transition
+    // roles, SOV six). The send/trigger payload contract (string literal or
+    // identifier event names, see the currentPatternCommand note) is untouched:
+    // no real event is ever named `if`/`end`/`else`/`unless`/`then`. `init` is
+    // deliberately NOT listed — `trigger init` is a legitimate corpus event.
+    if (patternToken.role === 'event') {
+      const evStructNorm = (token.normalized ?? token.value).toLowerCase();
+      if (PatternMatcher.STRUCTURAL_NEVER_EVENT.has(evStructNorm)) {
+        return patternToken.optional || false;
+      }
+    }
+
     // A `duration` slot is never a positional/scope keyword. The temporal
     // `in {duration}` idiom (`in 2s`) otherwise greedily swallows a *locative*
     // `in closest <form/>` (the scope of `focus first <input/> in closest <form/>`)
@@ -747,6 +766,14 @@ export class PatternMatcher {
     'closest',
     'parent',
   ]);
+
+  /**
+   * Structural block keywords that can never be an event payload on any
+   * command (see the event-role guard in matchRoleToken). By NORMALIZED form,
+   * so each language's rendered keyword (ja もし, tr eğer, …) is covered.
+   * `init` is deliberately absent — `trigger init` is a real corpus event.
+   */
+  private static readonly STRUCTURAL_NEVER_EVENT = new Set(['if', 'unless', 'else', 'end', 'then']);
 
   /**
    * Reference bases that can lead a fused-dot property access (`it.value`,

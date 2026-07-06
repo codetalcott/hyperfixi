@@ -31,6 +31,33 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
 
+> **Update 2026-07-05e (SESSION 5: the nested-behavior sub-parse drill — #582;
+> probe mean R1 0.9812 → 0.9824, per-(lang,pattern) A/B 46 fixed / 0 new, gate
+> green, baseline regenerated.)** Five aligned mechanisms at the behavior-body
+> sub-parse seam — full detail in HANDOFF-r1-post-cluster-residue.md session-5
+> block:
+>
+> - **`exit` bareKeyword** — roleless schemas generate NO pattern, so a
+>   guard-clause `if item is null exit end` had an unparseable then-branch and
+>   the fold rejected; the leftover predicate re-anchored as phantom `empty`
+>   (behavior-sortable ar/id/sw/th ×4) and en itself dropped `exit` (bn/qu were
+>   flagged "spurious exit" for parsing it correctly — en-noise again).
+> - **ja/ko dict exit realign** 終了/종료 → profile primaries 退出/나가기 (the
+>   historic exit/end collision words were inert identifiers when rendered).
+> - **In-branch transition roles ×24 + qu standalone ×15** — verb-anchoring
+>   path: destination→goal relabel (junk literal), patient literal→expression
+>   retype, lone trailing TIME literal → duration reclaim.
+> - **STRUCTURAL_NEVER_EVENT** — an event payload is never if/unless/else/end/
+>   then (the SOV verb-first trigger swallowed the next clause's if-keyword).
+> - **bn fold terminator** — শেষ (also bn positional `last`) now terminates
+>   folds via normalized-form + selector-lookahead; bn conditionals no longer
+>   swallow every trailing sibling.
+> - **Residue sharpened:** behavior-sortable ja/ko `set` drop +
+>   add.destination ×5 is an EVENT-HEAD param-phrase defect
+>   (`pointerdown(clientY)` → event=")" + keyword-led `私 から` run discarded)
+>   — needs an event-head fix, not body patching. hi/tr empty remainder is
+>   transformer-side, unchanged.
+
 > **Update 2026-07-05d (SESSION 4: the set/A2 drill + the spurious-`empty` copula
 > drill — #580 + follow-up; probe mean R1 0.9778 → 0.9812, avgPrecision 0.984 →
 > 0.9849; per-language A/B zero regressions across both; gate green throughout.)**
