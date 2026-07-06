@@ -1767,6 +1767,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // Nesting depth of block openers (`if`/`unless`/`while`/`for`/`repeat`)
     // accumulated into the pending clause — see the depth-aware `end` note below.
     let pendingBlockDepth = 0;
+    // Kind of each open block, parallel to pendingBlockDepth (LIFO — an `end`
+    // closes the innermost opener). While an `if` block is open, a conjunction
+    // is BLOCK CONTENT, not a clause boundary — see the then-boundary note in
+    // the conjunction branch below.
+    const pendingOpenerKinds: Array<'if' | 'other'> = [];
 
     while (!tokens.isAtEnd()) {
       const current = tokens.peek();
@@ -1846,6 +1851,28 @@ export class SemanticParserImpl implements ISemanticParser {
       // keep accumulating so the whole body reaches the per-clause parser.
       if (isEnd && pendingBlockDepth > 0) {
         pendingBlockDepth--;
+        pendingOpenerKinds.pop();
+        currentClauseTokens.push(current);
+        tokens.advance();
+        continue;
+      }
+
+      // Then-boundary suppression for an OPEN mid-clause `if` block. The `then`
+      // between an if-head and its branch is a CONJUNCTION, so the naive split
+      // below would land the if-head clause-FINAL with no branch tokens — the
+      // mid-clause fold in parseClause then has nothing to fold (empty branch →
+      // null), the flat `if` truncates its condition to the first token, the
+      // branch command becomes the NEXT clause, and the if's owed `end` desyncs
+      // the debt bookkeeping until a later `end` terminates the walk early
+      // (behavior-resizable en: the walk broke at the 3rd of 4 ifs, dropping
+      // every following command — bn parsed MORE of the body than the en
+      // reference, so bn's flags were en deficits). While an `if` block is open
+      // in the pending clause, a conjunction is block content: keep
+      // accumulating so the whole `if … then … end` block reaches parseClause,
+      // whose mid-clause fold (tryParseConditionalBlock) splits condition/
+      // branch at the `then` and consumes the matching `end`. Ifs opened at a
+      // clause BOUNDARY never get here — the leading fold consumes them whole.
+      if (isConjunction && pendingOpenerKinds.includes('if')) {
         currentClauseTokens.push(current);
         tokens.advance();
         continue;
@@ -1880,6 +1907,11 @@ export class SemanticParserImpl implements ISemanticParser {
               (!Array.isArray(rec.body) || rec.body.length === 0)
             );
           }).length;
+          // Re-derive the opener kinds too: only blockless LOOP heads survive a
+          // clause boundary (an open `if` suppresses the boundary above, so no
+          // `if` debt can be pending here).
+          pendingOpenerKinds.length = 0;
+          for (let k = 0; k < pendingBlockDepth; k++) pendingOpenerKinds.push('other');
         }
         tokens.advance(); // Consume conjunction token
         continue;
@@ -1959,6 +1991,11 @@ export class SemanticParserImpl implements ISemanticParser {
           cv === 'repeat'
         ) {
           pendingBlockDepth++;
+          // `unless` counts as 'other': the mid-clause fold only folds `if`
+          // (folding unless would relabel its action — see
+          // tryParseConditionalBlock), so suppressing then-boundaries for an
+          // open `unless` would glue clauses with no fold to reassemble them.
+          pendingOpenerKinds.push(this.isIfKeyword(cv, language) ? 'if' : 'other');
         }
       }
       currentClauseTokens.push(current);
