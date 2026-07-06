@@ -1574,6 +1574,14 @@ export class SemanticParserImpl implements ISemanticParser {
               dNode.metadata
             );
             tokens.advance();
+            // Consume a trailing rendered duration postposition (bn `500ms
+            // জন্য` — the transformer renders `over` as the for-postposition
+            // AFTER the time literal). Left in place it anchors a phantom bare
+            // `for` command in the remaining body tokens (the wait-for
+            // precedent below, same particle). জন্য tokenizes as a PARTICLE
+            // (no `normalized`), so also match the profile's for-keyword
+            // surface form.
+            this.consumeForPostposition(tokens, language);
           }
         }
 
@@ -1669,19 +1677,8 @@ export class SemanticParserImpl implements ISemanticParser {
               // Consume a trailing rendered `for`-postposition (bn `transitionend
               // জন্য` — the transformer renders the wait-for keyword AFTER the
               // event in postpositional languages). Left in place it anchors a
-              // phantom bare `for` command in the remaining body tokens. জন্য
-              // tokenizes as a PARTICLE (no `normalized`), so also match the
-              // profile's for-keyword surface form.
-              const post = tokens.peek();
-              if (post) {
-                const postNorm = (post.normalized ?? '').toLowerCase();
-                const forKw = tryGetProfile(language)?.keywords?.for;
-                const isForWord =
-                  postNorm === 'for' ||
-                  post.value === forKw?.primary ||
-                  (forKw?.alternatives ?? []).includes(post.value);
-                if (isForWord) tokens.advance();
-              }
+              // phantom bare `for` command in the remaining body tokens.
+              this.consumeForPostposition(tokens, language);
             }
           }
         }
@@ -3122,6 +3119,28 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     flushClause();
+
+    // Drop phantom BARE `for` clauses — the parseBodyWithClauses guard,
+    // mirrored on this fused-body path: a lone for-homonym token (bn `জন্য`,
+    // both the for-keyword and a duration/benefactive postposition) orphaned
+    // from its phrase anchors a `for` command node with ZERO roles and no
+    // body (slide-toggle's then-clause `*max-height কে সংক্রমণ 300ms জন্য` —
+    // spurious vs the en reference). Real for heads always carry roles or a
+    // body; the loop-end-debt walk above has already finished, so a dropped
+    // phantom can't desync it. Scoped to `for` ONLY (see the clause-path
+    // guard: a bare `repeat` is a legitimate recovery intermediate).
+    for (let i = commands.length - 1; i >= 0; i--) {
+      const c = commands[i] as CommandSemanticNode & { body?: unknown[] };
+      if (
+        c.kind === 'command' &&
+        c.action === 'for' &&
+        (!(c.roles instanceof Map) || c.roles.size === 0) &&
+        (!Array.isArray(c.body) || c.body.length === 0)
+      ) {
+        commands.splice(i, 1);
+      }
+    }
+
     return commands;
   }
 
@@ -3869,6 +3888,26 @@ export class SemanticParserImpl implements ISemanticParser {
   /**
    * Check if a token is a 'then' keyword in the given language.
    */
+  /**
+   * Consume the next token when it is the language's rendered `for` word (bn
+   * `জন্য`, tr `için`) trailing a just-reclaimed phrase (a wait-for event, a
+   * transition duration). The word doubles as the for-loop keyword, so left in
+   * the stream it anchors a phantom bare `for` command in the remaining body
+   * tokens. Homonym particles carry no `normalized`, so the profile's surface
+   * forms are matched too.
+   */
+  private consumeForPostposition(tokens: TokenStream, language: string): void {
+    const post = tokens.peek();
+    if (!post) return;
+    const postNorm = (post.normalized ?? '').toLowerCase();
+    const forKw = tryGetProfile(language)?.keywords?.for;
+    const isForWord =
+      postNorm === 'for' ||
+      post.value === forKw?.primary ||
+      (forKw?.alternatives ?? []).includes(post.value);
+    if (isForWord) tokens.advance();
+  }
+
   private isThenKeyword(value: string, language: string): boolean {
     const v = value.toLowerCase();
     const thenKeywords: Record<string, Set<string>> = {
