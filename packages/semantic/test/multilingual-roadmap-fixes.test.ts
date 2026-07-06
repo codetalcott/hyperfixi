@@ -10700,3 +10700,97 @@ describe('nested-behavior sub-parse drill', () => {
     expect(actions.filter(a => a === 'for')).toHaveLength(0);
   });
 });
+
+describe('then-boundary if fold: an open mid-clause `if` block spans the then-conjunction', () => {
+  function walkNodes(n: unknown, acc: Record<string, any>[] = []): Record<string, any>[] {
+    if (!n || typeof n !== 'object') return acc;
+    const rec = n as Record<string, any>;
+    if (typeof rec.action === 'string') acc.push(rec);
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) walkNodes(x, acc);
+      else if (c && typeof c === 'object') walkNodes(c, acc);
+    }
+    return acc;
+  }
+  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] a mid-clause `if x < y then … end` folds with its full condition', () => {
+    // The `then` is a CONJUNCTION: the old clause split landed the if-head
+    // clause-FINAL with no branch tokens, so the mid-clause fold had nothing to
+    // fold (null) and the flat `if` truncated the condition to its first token.
+    const node = parse(
+      'on click set count to 1 if count < 2 then set count to 2 end add .done to me',
+      'en'
+    );
+    const conditional = walkNodes(node).find(r => r.kind === 'conditional');
+    expect(conditional).toBeDefined();
+    expect(String(role(conditional!, 'condition')?.raw ?? '')).toBe('count < 2');
+    const branchSets = walkNodes({ statements: conditional!.thenBranch }).filter(
+      r => r.action === 'set'
+    );
+    expect(branchSets).toHaveLength(1);
+    const actions = walkNodes(node).map(r => r.action);
+    expect(actions).toContain('add');
+  });
+
+  it('[en] behavior-resizable: the four clamp ifs fold and the loop tail survives', () => {
+    // Db-faithful handler segment. Without the then-boundary suppression the
+    // if-blocks' owed `end`s desynced the debt bookkeeping and an `end` broke
+    // the walk after the 3rd if — dropping the 4th clamp, both `set my
+    // *width/*height`, and the last two triggers (bn parsed MORE of this body
+    // than the en reference; its "spurious" set/trigger/if flags were en
+    // deficits).
+    const node = parse(
+      'on pointerdown(clientX, clientY) from me\n' +
+        '    halt the event\n' +
+        '    trigger resizable:start\n' +
+        '    measure width\n' +
+        '    set startWidth to it\n' +
+        '    measure height\n' +
+        '    set startHeight to it\n' +
+        '    set startX to clientX\n' +
+        '    set startY to clientY\n' +
+        '    repeat until event pointerup from document\n' +
+        '      wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document\n' +
+        '      set newWidth to startWidth + clientX - startX\n' +
+        '      set newHeight to startHeight + clientY - startY\n' +
+        '      if newWidth < minWidth then set newWidth to minWidth end\n' +
+        '      if newWidth > maxWidth then set newWidth to maxWidth end\n' +
+        '      if newHeight < minHeight then set newHeight to minHeight end\n' +
+        '      if newHeight > maxHeight then set newHeight to maxHeight end\n' +
+        '      set my *width to newWidth + "px"\n' +
+        '      set my *height to newHeight + "px"\n' +
+        '      trigger resizable:resize\n' +
+        '    end\n' +
+        '    trigger resizable:end',
+      'en'
+    );
+    const all = walkNodes(node);
+    const conditionals = all.filter(r => r.kind === 'conditional');
+    expect(conditionals).toHaveLength(4);
+    for (const c of conditionals) {
+      // Full comparison captured, not the first-token truncation.
+      expect(String(role(c, 'condition')?.raw ?? '')).toMatch(/[<>]/);
+      const branchSets = walkNodes({ statements: c.thenBranch }).filter(r => r.action === 'set');
+      expect(branchSets).toHaveLength(1);
+    }
+    const events = all
+      .filter(r => r.action === 'trigger')
+      .map(t => String(role(t, 'event')?.value ?? ''));
+    expect(events).toContain('resizable:start');
+    expect(events).toContain('resizable:resize');
+    expect(events).toContain('resizable:end');
+    // The post-if siblings survive: 4 leading sets + 4 clamp sets + the two
+    // style sets.
+    expect(all.filter(r => r.action === 'set').length).toBeGreaterThanOrEqual(10);
+  });
+});
