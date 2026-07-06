@@ -2370,6 +2370,14 @@ export const exitSchema: CommandSchema = {
   category: 'control-flow',
   primaryRole: 'patient',
   roles: [],
+  // A guard-clause `exit` stands alone inside a conditional branch (`if item
+  // is null exit end`, behavior-sortable). Without a bare-keyword pattern the
+  // branch parses to NOTHING, the conditional fold rejects (empty then-branch),
+  // and the flat `if` head truncates the condition — whose leftover predicate
+  // word then re-anchors as a phantom command in languages where it doubles as
+  // a command keyword (id `kosong` → `empty me`). Safe to stand alone: `exit`
+  // takes no arguments, so the single-keyword match can't swallow anything.
+  bareKeyword: true,
 };
 
 /**
