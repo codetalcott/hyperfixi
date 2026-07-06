@@ -43,7 +43,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   log: [['patient', '']],
   make: [['patient', '']],
   measure: [['patient', ''], ['source', 'of']],
-  morph: [['destination', ''], ['patient', 'to']],
+  morph: [['patient', ''], ['destination', 'to']],
   on: [['event', ''], ['source', 'from']],
   open: [['style', 'as'], ['patient', '']],
   pick: [['patient', ''], ['source', 'from']],

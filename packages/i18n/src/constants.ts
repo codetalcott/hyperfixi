@@ -67,7 +67,9 @@ export const COMMAND_PRIMARY_ROLES: Readonly<Record<string, SemanticRole>> = {
   tell: 'destination',
   default: 'destination',
   swap: 'destination',
-  morph: 'destination',
+  // morph deliberately absent: its schema primaryRole is `patient` (the
+  // element being morphed — aligned with the transformer's patient marking
+  // in the session-9 role-layout swap), and patient is the default.
   bind: 'destination',
 } as const;
 

@@ -31,13 +31,51 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
 
-> \*\*Update 2026-07-06c (SESSION 8: two spurious en-noise drills — #588 go ×21
+## LAUNCH BAR (adopted 2026-07-06, post session 8)
+
+Target for the publicized launch — **not** R1 = 1.0 (that tail is asymptotic;
+the SOV-six role-typing subtleties past this bar are invisible in demos and
+normal usage). The bar, all four together:
+
+1. **All en-facing parser gaps closed.** Every remaining en-noise inversion is
+   a real English-parser bug (en `go back` / `add "content"` didn't parse
+   until #588/#589) — user-visible to English users regardless of the metric.
+2. **Every spurious family larger than ×5 cleared** (post-session-8 inventory:
+   morph ×18, for ×14 bn, add ×11 draggable, default ×9, empty ×8, call ×7,
+   on ×7 he, transition ×6, breakpoint ×6).
+3. **avgPrecision ≥ 0.995** (0.9891 as of session 8).
+4. **avgRoleFidelity ≥ 0.985** (0.9829 as of session 8) — the big R1-missing
+   families (add.patient:selector ×20, toggle.patient:expression ×19,
+   fetch.source:literal ×18, set.patient:literal ×16,
+   bind.source:property-path ×14) carry most of this.
+
+Estimated **4–6 sessions** at the observed velocity (~30 A/B entries/session
+across sessions 4–8, full discipline included). Sequencing:
+
+| Session | Clusters                                                             | Bar signals moved  |
+| ------- | -------------------------------------------------------------------- | ------------------ |
+| L1      | morph ×18 (probe with-phrase first) + draggable add fold+cleanup ×11 | precision → ~0.997 |
+| L2      | bn `for` ×14 + transition ×6 + breakpoint ×6 (bn/SOV cluster)        | precision          |
+| L3      | he/zh marker cluster (on ×7 he, toggle he/zh, call ×7)               | precision, en gaps |
+| L4      | default-value full drill (13 langs, markers + possessives)           | en gaps, R1        |
+| L5–L6   | big R1-missing families (add/toggle patient, fetch/bind source, set) | R1 → ≥0.985        |
+
+**Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
+polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
+tr/hi/bn (transformer-side), wait-line param leak ja, SOV halt ×6, the R1
+long tail. The six-signal gate holds the bar once reached — regressions
+fail CI.
+
+Caveats: each en enrichment can mint honest-dip entries (bounded by the
+census/A-B discipline; historically <1 session total), and this scopes the
+fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06c (SESSION 8: two spurious en-noise drills — #588 go ×21
+> and the add repeat-times ×11 drill in #589; avgPrecision 0.9851 → 0.9891,
+> probe mean R1 0.9829 held; A/B 32 spurious cleared / 0 new; census identical
+> (3404); gate green throughout; baseline regenerated per-PR.)**
 >
-> - the add repeat-times ×11 drill in this PR; avgPrecision 0.9851 → 0.9891,
->   probe mean R1 0.9829 held; A/B 32 spurious cleared / 0 new; census identical
->   (3404); gate green throughout; baseline regenerated per-PR.)\*\*
->
-> * **#588 — go ×21 (en-noise, the pre-probe found THREE droppers).** The
+> - **#588 — go ×21 (en-noise, the pre-probe found THREE droppers).** The
 >   go-en pattern required the `to` marker en's own render drops (`go back` —
 >   PARSE NULL in isolation); he/zh dropped it too (the transformer marks
 >   `back` with their PATIENT particle את/把 while go-url keeps על/到). Fix at
@@ -45,13 +83,13 @@ families are the next un-mined seam.
 >   per-command `markerOptional` (en), default branch + extraction rules merge
 >   per-command `markerVariants` as marker alternatives (he/zh) — the SOV
 >   generators already did. All three enriched together, zero honest dips.
-> * **add repeat-times ×11 (this PR) — the "loop-body attachment" hypothesis
+> - **add repeat-times ×11 (#589) — the "loop-body attachment" hypothesis
 >   was WRONG.** en `add "hello" to me` is NULL in isolation — the patient
 >   slot was selector-only and rejected every string literal (`repeat forever
 toggle .pulse` composes fine, so the loop machinery was innocent).
 >   addSchema.patient += 'literal' (transition/append precedent) enriched en +
 >   12 generated-path languages together.
-> * **Residue sharpened:** behavior-draggable add ×11 is a brace-run fold
+> - **Residue sharpened:** behavior-draggable add ×11 is a brace-run fold
 >   (`{ left: ${…}px; }` shatters to ~12 identifier tokens; `.{cls}` is safe —
 >   one selector token) that must land WITH the SOV junk-role cleanup (ja's
 >   junk destination=`"draggable:move"` vs en's `me` default would flip
