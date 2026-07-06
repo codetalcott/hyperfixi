@@ -11313,3 +11313,105 @@ describe('brace-run style-object fold + ko locative/allative marker split (behav
     expect(String(role(node, 'destination')?.value)).toBe('#button');
   });
 });
+
+describe('breakpoint bare-keyword registration + hyphen-compound keyword fold (breakpoint ×6 / halt ×3 spurious drill)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const actionsOf = (node: unknown): string[] => {
+    const flat: string[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  it('[en] bare `breakpoint` parses via the generated bare-keyword pattern', () => {
+    // breakpointSchema is roleless; without `bareKeyword: true` NO pattern is
+    // generated at all (getDefinedSchemas filters zero-role schemas) and the
+    // command silently drops from every generated-path language.
+    expect((parse('breakpoint', 'en') as unknown as Record<string, any>).action).toBe('breakpoint');
+  });
+
+  it('[en] `on click breakpoint then set …` keeps BOTH body commands', () => {
+    const node = parse('on click breakpoint then set $x to 42', 'en');
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).toContain('set');
+  });
+
+  it('[ms] `titik-henti` folds to breakpoint — NOT a spurious halt from its embedded halt keyword', () => {
+    // The tokenizers shatter the hyphen compound into `titik` `-` `henti`, and
+    // `henti` is ms's halt primary — so the run mis-anchored halt-ms-generated
+    // (the spurious halt ×3 sibling: ms/sw/vi). The matchLiteralToken hyphen
+    // fold joins the run back into the breakpoint keyword.
+    const node = parse('apabila click titik-henti kemudian tetapkan $x ke 42', 'ms');
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).not.toContain('halt');
+    expect(actions).toContain('set');
+  });
+
+  it('[vi] `điểm-dừng` folds to breakpoint — NOT a spurious halt', () => {
+    const node = parse('khi nhấp điểm-dừng rồi gán $x vào 42', 'vi');
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).not.toContain('halt');
+  });
+
+  it('[it] fused {action} slot folds the hyphen run (`punto-interruzione`) to the canonical action', () => {
+    // event-handler-it-full captures the body verb via an {action} role — one
+    // token. The shattered compound left `punto` as a junk action and the
+    // whole command dropped. The matchRoleToken action fold joins the run and
+    // resolves it through the profile keywords.
+    const node = parse('su clic punto-interruzione allora impostare $x in 42', 'it');
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).toContain('set');
+  });
+
+  it('[he] the en loanword `breakpoint` parses (dict passthrough alternative)', () => {
+    // The i18n he dictionary has no breakpoint entry — the transformer emits
+    // the en word verbatim; the profile lists it as an alternative.
+    const node = parse('ב לחיצה breakpoint אז קבע את $x על 42', 'he');
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).toContain('set');
+  });
+
+  it('[de] roleless commands generate NO fused event pattern (no junk patient="then")', () => {
+    // Every fused event-handler shape hardwires a required {patient} role, so
+    // fusing a roleless command swallowed the `then` connective as its patient
+    // (`breakpoint-event-de-vso` captured patient=literal:"then"). Roleless
+    // schemas now skip fused generation and parse via the standard event
+    // pattern + bare command in the body.
+    const node = parse('bei klick haltepunkt dann festlegen $x zu 42', 'de') as unknown as Record<string, any>;
+    const actions = actionsOf(node);
+    expect(actions).toContain('breakpoint');
+    expect(actions).toContain('set');
+    const walkFind = (n: unknown): Record<string, any> | undefined => {
+      if (!n || typeof n !== 'object') return undefined;
+      const rec = n as Record<string, any>;
+      if (rec.action === 'breakpoint') return rec;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) { const hit = walkFind(x); if (hit) return hit; }
+      }
+      return undefined;
+    };
+    const bp = walkFind(node);
+    expect(bp).toBeDefined();
+    expect(role(bp!, 'patient')).toBeUndefined();
+  });
+});

@@ -335,7 +335,94 @@ export class PatternMatcher {
       }
     }
 
+    // Hyphen-compound fold: many keyword translations are hyphen compounds
+    // (ms `titik-henti`, es `punto-interrupción`) that the tokenizers shatter
+    // into word/-/word runs — and the tail word can be ANOTHER command's
+    // keyword (ms `henti` → halt), so the run mis-anchors that command
+    // instead. Join the run and compare it to any hyphen-bearing expected
+    // value; only fires after every single-token match above has failed.
+    for (const value of [patternToken.value, ...(patternToken.alternatives ?? [])]) {
+      if (value.includes('-') && this.tryMatchHyphenCompound(tokens, value)) {
+        this.totalKeywordMatches++;
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  /**
+   * Fold a shattered hyphen-compound run into a command action for an {action}
+   * role: join `word (- word)+`, look the joined form up among the current
+   * profile's command keywords (primary or alternatives, case-insensitive),
+   * and return the command's canonical action as a literal. Consumes the run
+   * on success, leaves the stream untouched on failure.
+   */
+  private tryFoldHyphenActionKeyword(tokens: TokenStream): SemanticValue | null {
+    const profile = this.currentProfile;
+    if (!profile) return null;
+    const mark = tokens.mark();
+    const parts: string[] = [];
+    for (;;) {
+      const word = tokens.peek();
+      if (!word || (word.kind !== 'identifier' && word.kind !== 'keyword')) break;
+      parts.push(word.value);
+      tokens.advance();
+      const sep = tokens.peek();
+      if (!sep || sep.value !== '-') break;
+      tokens.advance();
+      parts.push('-');
+    }
+    // A run must end on a word (parts like [w, -, w]); a trailing '-' or a
+    // single word means no compound formed.
+    if (parts.length < 3 || parts[parts.length - 1] === '-') {
+      tokens.reset(mark);
+      return null;
+    }
+    const joined = parts.join('').toLowerCase();
+    for (const [action, kw] of Object.entries(profile.keywords)) {
+      if (
+        kw.primary.toLowerCase() === joined ||
+        kw.alternatives?.some(a => a.toLowerCase() === joined)
+      ) {
+        return createLiteral(action);
+      }
+    }
+    tokens.reset(mark);
+    return null;
+  }
+
+  /**
+   * Match a hyphen-compound keyword (`titik-henti`) against a shattered token
+   * run (`titik` `-` `henti`): word segments must be identifier/keyword tokens
+   * equal to the expected segments (case-insensitive), separators lone `-`
+   * tokens. Consumes the run on success, resets the stream on failure.
+   */
+  private tryMatchHyphenCompound(tokens: TokenStream, expected: string): boolean {
+    const segments = expected.split('-');
+    if (segments.length < 2 || segments.some(s => s.length === 0)) return false;
+    const mark = tokens.mark();
+    for (let i = 0; i < segments.length; i++) {
+      if (i > 0) {
+        const sep = tokens.peek();
+        if (!sep || sep.value !== '-') {
+          tokens.reset(mark);
+          return false;
+        }
+        tokens.advance();
+      }
+      const word = tokens.peek();
+      if (
+        !word ||
+        (word.kind !== 'identifier' && word.kind !== 'keyword') ||
+        word.value.toLowerCase() !== segments[i]!.toLowerCase()
+      ) {
+        tokens.reset(mark);
+        return false;
+      }
+      tokens.advance();
+    }
+    return true;
   }
 
   /**
@@ -357,6 +444,20 @@ export class PatternMatcher {
     const token = tokens.peek();
     if (!token) {
       return patternToken.optional || false;
+    }
+
+    // Action-role hyphen-compound fold (same family as the matchLiteralToken
+    // fold): a fused event pattern's {action} slot captures ONE token, but a
+    // hyphen-compound verb translation (it `punto-interruzione`) shatters into
+    // a word/-/word run — the slot then captures the first fragment as a junk
+    // action and the whole command drops. Join the run; if it is a profile
+    // keyword for a command, capture that command's canonical action instead.
+    if (patternToken.role === 'action' && this.currentProfile && tokens.peek(1)?.value === '-') {
+      const foldedAction = this.tryFoldHyphenActionKeyword(tokens);
+      if (foldedAction) {
+        captured.set(patternToken.role as SemanticRole, foldedAction);
+        return true;
+      }
     }
 
     // Event-anchor guard. An event name is a bare identifier or known event

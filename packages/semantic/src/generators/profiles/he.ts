@@ -94,7 +94,10 @@ export const hebrewProfile: LanguageProfile = {
     select: { primary: 'סמן', normalized: 'select' },
     clear: { primary: 'נקה', normalized: 'clear' },
     reset: { primary: 'אפס', normalized: 'reset' },
-    breakpoint: { primary: 'נקודת-עצירה', normalized: 'breakpoint' },
+    // The i18n he dictionary has no breakpoint entry — the transformer passes
+    // the en loanword through verbatim, so parsing must accept it alongside
+    // the native compound.
+    breakpoint: { primary: 'נקודת-עצירה', alternatives: ['breakpoint'], normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'לך', alternatives: ['נווט'], normalized: 'go' },
     scroll: { primary: 'גלול', normalized: 'scroll' },

@@ -354,6 +354,14 @@ export function generateEventHandlerPatterns(
     return []; // No translation for this command
   }
 
+  // Roleless (bareKeyword) commands take no patient, but every fused shape
+  // below hardwires a required {patient} role — fusing would swallow the next
+  // token (a `then` connective, the following command's head) as junk patient.
+  // They parse fine via the standard event pattern + bare command in the body.
+  if (commandSchema.roles.length === 0) {
+    return [];
+  }
+
   // Check if this is a two-role command (like put, set)
   const requiredRoles = commandSchema.roles.filter(r => r.required);
   const hasTwoRequiredRoles = requiredRoles.length === 2;

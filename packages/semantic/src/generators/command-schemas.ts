@@ -1942,6 +1942,13 @@ export const breakpointSchema: CommandSchema = {
   category: 'control-flow',
   primaryRole: 'patient',
   roles: [],
+  // Roleless: without a bare-keyword pattern NO pattern is generated at all
+  // (getDefinedSchemas filters zero-role schemas), so `on click breakpoint
+  // then …` silently drops the breakpoint in every generated-path language —
+  // while lax event-fused paths (bn/hi/ja/ko/qu/th) keep it, reading as
+  // spurious vs the en reference. Same standalone-safety argument as `exit`:
+  // zero-arg, the single-keyword match can't swallow anything.
+  bareKeyword: true,
 };
 
 // =============================================================================
