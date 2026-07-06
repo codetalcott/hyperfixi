@@ -10794,3 +10794,115 @@ describe('then-boundary if fold: an open mid-clause `if` block spans the then-co
     expect(all.filter(r => r.action === 'set').length).toBeGreaterThanOrEqual(10);
   });
 });
+
+describe('event-head param phrase: parameterized SOV handler heads anchor the real event', () => {
+  function walkNodes(n: unknown, acc: Record<string, any>[] = []): Record<string, any>[] {
+    if (!n || typeof n !== 'object') return acc;
+    const rec = n as Record<string, any>;
+    if (typeof rec.action === 'string') acc.push(rec);
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) walkNodes(x, acc);
+      else if (c && typeof c === 'object') walkNodes(c, acc);
+    }
+    return acc;
+  }
+  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[ja] `pointerdown(clientY) で 私 から` anchors pointerdown, not the `)`', () => {
+    // The tokenizers split `pointerdown(clientY)` into 4 tokens, so the SOV
+    // event-marker check (marker DIRECTLY after the event keyword) never fired
+    // on a parameterized event; the custom-event second pass then anchored the
+    // `)` as the event (event:literal=")") and the leaked keyword-led `私 から`
+    // head run was discarded by flushSkipped — killing the first body command.
+    // Db-faithful behavior-sortable handler segment.
+    const node = parse(
+      'pointerdown(clientY) で 私 から\n' +
+        '  item を the target.closest("li") に 設定\n' +
+        '  もし item である null\n' +
+        '    退出\n' +
+        '  終わり\n' +
+        '  the イベント を 停止\n' +
+        '  .{dragClass} を 追加 item に',
+      'ja'
+    );
+    const handler = walkNodes(node).find(r => r.kind === 'event-handler');
+    expect(handler).toBeDefined();
+    expect(String(role(handler!, 'event')?.value)).toBe('pointerdown');
+    expect((handler as { parameterNames?: readonly string[] }).parameterNames).toEqual([
+      'clientY',
+    ]);
+    // The handler set survives with en-aligned role types…
+    const set = walkNodes(node).find(r => r.action === 'set');
+    expect(set).toBeDefined();
+    expect(role(set!, 'destination')?.type).toBe('expression');
+    expect(String(role(set!, 'destination')?.raw ?? role(set!, 'destination')?.value)).toBe(
+      'item'
+    );
+    expect(role(set!, 'patient')?.type).toBe('expression');
+    // …and with `item` bound, the add's destination is the real item, not `me`.
+    const add = walkNodes(node).find(r => r.action === 'add');
+    expect(add).toBeDefined();
+    expect(String(role(add!, 'destination')?.raw ?? role(add!, 'destination')?.value)).toBe(
+      'item'
+    );
+  });
+
+  it('[ko] `pointerdown(clientY) 할 때 나 에서` consumes params + marker phrase + source pair', () => {
+    const node = parse(
+      'pointerdown(clientY) 할 때 나 에서\n  item 를 the target.closest("li") 에 설정',
+      'ko'
+    );
+    const handler = walkNodes(node).find(r => r.kind === 'event-handler');
+    expect(handler).toBeDefined();
+    expect(String(role(handler!, 'event')?.value)).toBe('pointerdown');
+    const set = walkNodes(node).find(r => r.action === 'set');
+    expect(set).toBeDefined();
+    expect(role(set!, 'patient')?.type).toBe('expression');
+  });
+
+  it('[qu] fronted `noqa manta pointerdown(clientY) pi` strips the from-me pair', () => {
+    const node = parse(
+      'noqa manta pointerdown(clientY) pi\n  item ta the target.closest("li") man churanay',
+      'qu'
+    );
+    const handler = walkNodes(node).find(r => r.kind === 'event-handler');
+    expect(handler).toBeDefined();
+    expect(String(role(handler!, 'event')?.value)).toBe('pointerdown');
+    const set = walkNodes(node).find(r => r.action === 'set');
+    expect(set).toBeDefined();
+    expect(role(set!, 'patient')?.type).toBe('expression');
+  });
+
+  it('[ja] the fused method call folds its call parens into the expression', () => {
+    // tryMatchPropertyAccessExpression used to return `target.closest` leaving
+    // `( "li" )` in the stream — the following に marker then failed and the
+    // whole set-ja-generated match died (falling to role-swapping
+    // verb-anchoring).
+    const node = parse('item を the target.closest("li") に 設定', 'ja');
+    expect(node.action).toBe('set');
+    const n = node as unknown as Record<string, any>;
+    expect(role(n, 'destination')?.type).toBe('expression');
+    expect(String(role(n, 'destination')?.raw)).toBe('item');
+    expect(role(n, 'patient')?.type).toBe('expression');
+    expect(String(role(n, 'patient')?.raw)).toContain('target.closest');
+    expect(String(role(n, 'patient')?.raw)).toContain('"li"');
+  });
+
+  it('[ko] `repeat until event pointerup` head still parses as a loop, not a handler', () => {
+    // pointerup is now a recognizable handler event (WAITABLE family) — but an
+    // event name directly after the `event` KEYWORD is a loop phrase payload.
+    const node = parse('까지 이벤트 pointerup 를 반복 문서 에서', 'ko');
+    const all = walkNodes(node);
+    expect(all.find(r => r.kind === 'event-handler')).toBeUndefined();
+    expect(all.find(r => r.action === 'repeat')).toBeDefined();
+  });
+});
