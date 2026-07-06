@@ -9,27 +9,61 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-05 baseline · post session-4 set/A2 + empty drills · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-6 behavior drills · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                  | Notes                                                                |
-| ------------------------------ | ---------------------- | -------------------------------------------------------------------- |
-| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                             |
-| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                    |
-| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                    |
-| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                    |
-| avgFidelity (R0-recall)        | **1.000**              | saturated                                                            |
-| avgPrecision (R0 trust floor)  | **0.985**              | session-4 copula drill: 0.984 → 0.9849 (8 languages +0.0026)         |
-| avgRoleFidelity (R1)           | **0.981**              | session-4 set/A2 drill: 0.9778 → 0.9812 (11 languages up, none down) |
-| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects            |
+| Signal                         | Value                  | Notes                                                            |
+| ------------------------------ | ---------------------- | ---------------------------------------------------------------- |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                         |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                        |
+| avgPrecision (R0 trust floor)  | **0.985**              | session-6 resizable drill: 0.9849 → 0.9851 (bn up)               |
+| avgRoleFidelity (R1)           | **0.982**              | session-6 sortable drill: 0.9824 → 0.9825 (sortable families ×9) |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects        |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.** R1 remains the
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
+
+> **Update 2026-07-06 (SESSION 6: the two planned behavior drills — #583
+> then-boundary if fold + #584 event-head param-phrase; probe mean R1 0.9825,
+> baseline avgPrecision 0.9851; per-(lang,pattern) A/B 12 fixed / 0 new across
+> both; gate green throughout; baselines regenerated per-PR.)**
+>
+> - **#583 — then-boundary if fold (behavior-resizable en-noise).** A
+>   mid-clause `if … then … end` block was split at its `then` CONJUNCTION by
+>   parseBodyWithClauses: the if-head landed clause-final (fold nulls, flat if
+>   truncates the condition), the branch became the next clause, and the owed
+>   `end` desynced the walk — en broke at the 3rd of 4 clamp ifs and dropped
+>   everything after. Opener-KIND stack: while an `if` is open mid-clause, a
+>   conjunction is block content, so the whole block reaches the #576 fold.
+>   bn's spurious set/trigger/if flags at resizable were en deficits —
+>   the fourth consecutive en-noise inversion.
+> - **#584 — event-head param-phrase (behavior-sortable).** `pointerdown(clientY)`
+>   tokenizes as 4+ tokens, so the SOV event-marker check never fired; the `)`
+>   anchored as the event and the leaked keyword-led `私 から` run killed the
+>   handler set (and unbound `item` broke add.destination). Fixed at the HEAD:
+>   param-phrase consumption (→ parameterNames), WAITABLE_EVENT_WORDS
+>   recognition (guarded: after the `event` KEYWORD it's a loop payload),
+>   rendered-`from me` pair stripping (trailing + qu fronted; new hi source
+>   markers), fused method-call paren folding (`target.closest("li")`), and a
+>   `the`-skip before keyword-base property access. 9 entries fixed
+>   (set.patient ×4 + add.destination ×5), 0 new.
+> - **Residue sharpened (full detail in the handoff session-6 block):**
+>   sortable `remove.source ×12` is EN-NOISE (en's source slot rejects the
+>   bare `item` identifier and DEFAULTS to `reference:"me"` — schema default,
+>   probed in isolation; fix en's slot, but first check which languages pass
+>   via the same default); `remove.patient ×3` es/pt/tr is an
+>   of-possessive/from-marker ambiguity (needs a schema gate, not a marker
+>   change); the wait-line param leak (ja trigger.source junk literal) is the
+>   body-side sibling of the #584 head fix — value-level only, invisible to
+>   R0/R1.
 
 > **Update 2026-07-05e (SESSION 5: the nested-behavior sub-parse drill — #582;
 > probe mean R1 0.9812 → 0.9824, per-(lang,pattern) A/B 46 fixed / 0 new, gate
