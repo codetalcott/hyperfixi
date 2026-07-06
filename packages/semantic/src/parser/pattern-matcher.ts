@@ -1657,6 +1657,42 @@ export class PatternMatcher {
       ) {
         return createPropertyPath(createReference(baseLower), fusedProps.join('.'));
       }
+      if (fusedIsMethodCall) {
+        // Consume the balanced call parens into the expression. Left in the
+        // stream they broke the surrounding SOV pattern — the marker expected
+        // after the role slot (`… に 設定`) met `(` instead, the whole set
+        // pattern died, and the command fell to the role-swapping
+        // verb-anchoring fallback (behavior-sortable `set item to the
+        // target.closest("li")`, session-5 residue). The paren tokens are
+        // plain identifiers in the multilingual tokenizers, so this balances
+        // by VALUE, mirroring tryConsumeRunOperand's group logic.
+        const callMark = tokens.mark();
+        const callParts: string[] = [];
+        let parenDepth = 0;
+        let closed = false;
+        while (!tokens.isAtEnd()) {
+          const t = tokens.peek();
+          if (!t) break;
+          if (t.value === '(') parenDepth++;
+          else if (t.value === ')') {
+            callParts.push(t.value);
+            tokens.advance();
+            parenDepth--;
+            if (parenDepth === 0) {
+              closed = true;
+            }
+            if (closed) break;
+            continue;
+          }
+          callParts.push(t.value);
+          tokens.advance();
+        }
+        if (closed) {
+          fusedChain += callParts.join('');
+        } else {
+          tokens.reset(callMark); // unbalanced — leave the parens unconsumed
+        }
+      }
       return { type: 'expression', raw: fusedChain } as SemanticValue;
     }
 
@@ -2111,6 +2147,25 @@ export class PatternMatcher {
 
       if (nextToken && (nextToken.kind === 'selector' || nextToken.kind === 'identifier')) {
         // Keep the position after "the" - effectively skipping it
+        return;
+      }
+
+      // `the <ref>.<prop>` where the reference base tokenizes as a KEYWORD and
+      // the property as a fused `.`-selector (`the target .closest ("li")` in
+      // the non-English tokenizers — en fuses `target.closest` into one
+      // identifier and takes the branch above). Without the skip the role slot
+      // captures the bare article and the pattern dies on the following
+      // keyword (behavior-sortable's `set item to the target.closest("li")`).
+      // Gated on the property-access SHAPE (keyword + `.`-selector), so `the
+      // <event-noun> <marker>` keeps the leaked-article handling below.
+      const afterNext = tokens.peek(1);
+      if (
+        nextToken &&
+        nextToken.kind === 'keyword' &&
+        afterNext &&
+        afterNext.kind === 'selector' &&
+        /^\.[a-zA-Z_]/.test(afterNext.value)
+      ) {
         return;
       }
 

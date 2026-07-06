@@ -3271,12 +3271,18 @@ export class SemanticParserImpl implements ISemanticParser {
       const value = token.value.toLowerCase();
       const normalized = token.normalized?.toLowerCase();
       const isEvent =
-        (!!normalized && SemanticParserImpl.KNOWN_EVENTS.has(normalized)) ||
+        (!!normalized &&
+          (SemanticParserImpl.KNOWN_EVENTS.has(normalized) ||
+            WAITABLE_EVENT_WORDS.has(normalized))) ||
         SemanticParserImpl.KNOWN_EVENTS.has(value) ||
+        WAITABLE_EVENT_WORDS.has(value) ||
         nativeEventNames.has(value);
       if (!isEvent) continue;
 
-      const next = tokens[i + 1];
+      // A param phrase (`pointerdown(clientY)`) sits between the event keyword
+      // and its marker — skip it, mirroring trySOVEventExtraction.
+      const paramLen = this.matchEventParamPhrase(tokens, i + 1).len;
+      const next = tokens[i + 1 + paramLen];
       if (
         next &&
         (next.kind === 'particle' || next.kind === 'keyword') &&
@@ -3284,7 +3290,7 @@ export class SemanticParserImpl implements ISemanticParser {
       ) {
         return true;
       }
-      if (this.matchEventMarkerPhrase(tokens, i + 1, language) > 0) return true;
+      if (this.matchEventMarkerPhrase(tokens, i + 1 + paramLen, language) > 0) return true;
     }
     return false;
   }
@@ -3317,7 +3323,59 @@ export class SemanticParserImpl implements ISemanticParser {
       markers: new Set(['manta']),
       windowTokens: new Set(['k_iri', 'ventana', 'window', 'document']),
     },
+    hi: {
+      markers: new Set(['से']),
+      windowTokens: new Set(['विंडो', 'दस्तावेज़', 'window', 'document']),
+    },
   };
+
+  /**
+   * Length (in tokens) and declared names of an event PARAM PHRASE starting at
+   * startIdx: `( ident [, ident]* )`. The tokenizers split
+   * `pointerdown(clientY)` into 4+ tokens (`pointerdown ( clientY )`), so the
+   * SOV event-marker check — which expects the marker DIRECTLY after the event
+   * keyword — never fired on a parameterized event: the custom-event second
+   * pass then anchored the `)` as the event (event:literal=")") and the leaked
+   * keyword-led head run was discarded by flushSkipped, killing the first body
+   * command (behavior-sortable `set item to …`, the session-5 sharpened
+   * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
+   * phrase is malformed (no close-paren, or a non-identifier between).
+   */
+  private matchEventParamPhrase(
+    allTokens: readonly LanguageToken[],
+    startIdx: number
+  ): { len: number; names: string[] } {
+    if (allTokens[startIdx]?.value !== '(') return { len: 0, names: [] };
+    const names: string[] = [];
+    for (let j = startIdx + 1; j < allTokens.length; j++) {
+      const v = allTokens[j].value;
+      if (v === ')') return { len: j - startIdx + 1, names };
+      if (v === ',') continue;
+      if (allTokens[j].kind !== 'identifier') break;
+      names.push(v);
+    }
+    return { len: 0, names: [] };
+  }
+
+  /**
+   * Whether a token is a strippable event-source REFERENCE — a pronoun (`私`/
+   * `나`/`ben`/`আমি`/`मैं`/`noqa`, all normalized `me`/`i`/`it`) or a window/
+   * document token. The en reference drops the handler's `from me` phrase
+   * entirely (event role only), so stripping the rendered pair matches it.
+   * Deliberately NOT identifiers (`triggerEl から` stays in the body, where the
+   * value-led skipped-run recovery reclaims it — behavior-removable relies on
+   * that).
+   */
+  private isStrippableSourceRef(
+    tok: LanguageToken | undefined,
+    windowTokens: Set<string>
+  ): boolean {
+    if (!tok) return false;
+    const norm = tok.normalized?.toLowerCase();
+    if (tok.kind === 'keyword' && (norm === 'me' || norm === 'i' || norm === 'it')) return true;
+    const v = tok.value.toLowerCase();
+    return windowTokens.has(v) || (!!norm && windowTokens.has(norm));
+  }
 
   /**
    * Try to extract a trailing event clause that wraps a block/command body.
@@ -3493,6 +3551,7 @@ export class SemanticParserImpl implements ISemanticParser {
     let eventName = '';
     let keyFilter = '';
     let tokensToRemove = 1; // How many tokens to strip (1 = event only, 2 = event + marker)
+    let parameterNames: string[] = [];
 
     for (let i = 0; i < allTokens.length; i++) {
       const token = allTokens[i];
@@ -3508,15 +3567,34 @@ export class SemanticParserImpl implements ISemanticParser {
         tokenKeyFilter = token.value.slice(bracketIdx);
       }
 
-      // Check if this token is a known event name (by normalized value, native text, or bare value)
+      // Check if this token is a known event name (by normalized value, native
+      // text, or bare value). WAITABLE_EVENT_WORDS is accepted alongside
+      // KNOWN_EVENTS: the pointer/touch/transition families are real handler
+      // triggers (`pointerdown(clientY) で` — behavior-sortable), untranslated
+      // loanwords in every corpus language, and without them the first pass
+      // never anchored a parameterized pointer event (the custom-event second
+      // pass then matched the `)` as the event).
       const normalizedLower = token.normalized?.toLowerCase();
       const isEventByNormalized =
-        normalizedLower && SemanticParserImpl.KNOWN_EVENTS.has(normalizedLower);
+        normalizedLower &&
+        (SemanticParserImpl.KNOWN_EVENTS.has(normalizedLower) ||
+          WAITABLE_EVENT_WORDS.has(normalizedLower));
       const isEventByNative =
         nativeEventNames.has(tokenValue) || nativeEventNames.has(bareEventValue);
-      const isEventByBare = SemanticParserImpl.KNOWN_EVENTS.has(bareEventValue);
+      const isEventByBare =
+        SemanticParserImpl.KNOWN_EVENTS.has(bareEventValue) ||
+        WAITABLE_EVENT_WORDS.has(bareEventValue);
 
       if (isEventByNormalized || isEventByNative || isEventByBare) {
+        // An event name directly after the `event` KEYWORD is a loop/wait
+        // phrase payload (`repeat until event pointerup from document` — ko
+        // `까지 이벤트 pointerup 를 반복 …`), never a handler trigger: skip it
+        // so the Stage-2 loop-head match stands. (Without the WAITABLE
+        // family this could not trigger — pointerup wasn't recognized at all.)
+        const prevTok = allTokens[i - 1];
+        if (prevTok && (prevTok.normalized ?? prevTok.value).toLowerCase() === 'event') {
+          continue;
+        }
         // Resolve the English event name
         let resolvedName: string;
         if (isEventByNormalized) {
@@ -3527,14 +3605,21 @@ export class SemanticParserImpl implements ISemanticParser {
           resolvedName = bareEventValue;
         }
 
+        // A parameterized event (`pointerdown(clientY)`) tokenizes with its
+        // param phrase between the event keyword and the marker — consume it
+        // so the marker check still anchors (and the params don't leak into
+        // the body as a keyword-led run that flushSkipped discards).
+        const paramPhrase = this.matchEventParamPhrase(allTokens, i + 1);
+
         if (eventMarkers.size > 0) {
           // Languages with event markers (JA, TR): require marker after event keyword
-          // The marker may be at i+1 (direct) or i+2 (if there's a bracket key-filter selector between)
-          let markerOffset = 1;
-          const nextToken = allTokens[i + 1];
+          // The marker may be at i+1 (direct), or offset by a param phrase
+          // and/or a bracket key-filter selector between.
+          let markerOffset = 1 + paramPhrase.len;
+          const nextToken = allTokens[i + markerOffset];
           // Skip over bracket selector token (e.g., [key=="Escape"]) between event and marker
           if (nextToken && nextToken.kind === 'selector' && nextToken.value.startsWith('[')) {
-            markerOffset = 2;
+            markerOffset += 1;
           }
           const markerToken = allTokens[i + markerOffset];
           if (
@@ -3544,18 +3629,25 @@ export class SemanticParserImpl implements ISemanticParser {
           ) {
             eventIndex = i;
             eventName = resolvedName;
-            keyFilter = tokenKeyFilter || (markerOffset === 2 ? allTokens[i + 1].value : '');
-            tokensToRemove = markerOffset + 1; // Remove event keyword + optional filter + marker
+            keyFilter =
+              tokenKeyFilter ||
+              (markerOffset === paramPhrase.len + 2 ? allTokens[i + markerOffset - 1].value : '');
+            tokensToRemove = markerOffset + 1; // Remove event keyword + params + optional filter + marker
+            parameterNames = paramPhrase.names;
             break;
           }
         } else {
           // Languages without single-token event markers (KO): event keyword
-          // stands alone, or is followed by an optional marker phrase (할 때),
-          // consumed so it doesn't leak into the body parse.
+          // stands alone, or is followed by an optional param phrase and/or
+          // marker phrase (할 때), consumed so they don't leak into the body parse.
           eventIndex = i;
           eventName = resolvedName;
           keyFilter = tokenKeyFilter;
-          tokensToRemove = 1 + this.matchEventMarkerPhrase(allTokens, i + 1, language);
+          tokensToRemove =
+            1 +
+            paramPhrase.len +
+            this.matchEventMarkerPhrase(allTokens, i + 1 + paramPhrase.len, language);
+          parameterNames = paramPhrase.names;
           break;
         }
       }
@@ -3651,6 +3743,37 @@ export class SemanticParserImpl implements ISemanticParser {
           sourceMarkers.markers.has(afterToken.value)
         ) {
           removeIndices.add(afterEventEnd);
+        } else if (this.isStrippableSourceRef(afterToken, sourceMarkers.windowTokens)) {
+          // Rendered `from me` pair right after event+marker (ja `私 から`,
+          // ko `나 에서`, tr `ben den`, bn `আমি থেকে`, hi `मैं से`). Left in
+          // place it heads the body as a KEYWORD-led run that flushSkipped
+          // discards — taking the first real body command with it
+          // (behavior-sortable's `set item to …`). The en reference drops the
+          // handler's from-phrase entirely, so stripping the pair matches it.
+          const markerAfterRef = allTokens[afterEventEnd + 1];
+          if (
+            markerAfterRef &&
+            (markerAfterRef.kind === 'particle' || markerAfterRef.kind === 'keyword') &&
+            sourceMarkers.markers.has(markerAfterRef.value)
+          ) {
+            removeIndices.add(afterEventEnd);
+            removeIndices.add(afterEventEnd + 1);
+          }
+        }
+      }
+
+      // Fronted `from me` pair immediately BEFORE the event (qu renders the
+      // source phrase first: `noqa manta pointerdown(clientY) pi`). Same
+      // strippable-reference gate as the trailing pair.
+      if (eventIndex >= 2) {
+        const frontMarker = allTokens[eventIndex - 1];
+        if (
+          (frontMarker.kind === 'particle' || frontMarker.kind === 'keyword') &&
+          sourceMarkers.markers.has(frontMarker.value) &&
+          this.isStrippableSourceRef(allTokens[eventIndex - 2], sourceMarkers.windowTokens)
+        ) {
+          removeIndices.add(eventIndex - 2);
+          removeIndices.add(eventIndex - 1);
         }
       }
 
@@ -3693,7 +3816,13 @@ export class SemanticParserImpl implements ISemanticParser {
       metadata.keyFilter = keyFilter;
     }
 
-    return createEventHandler({ type: 'literal', value: eventName }, body, undefined, metadata);
+    return createEventHandler(
+      { type: 'literal', value: eventName },
+      body,
+      undefined,
+      metadata,
+      parameterNames
+    );
   }
 
   /**
