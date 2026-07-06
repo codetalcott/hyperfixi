@@ -773,9 +773,12 @@ export class SemanticParserImpl implements ISemanticParser {
           // are bare identifiers like click/keyup). This is a bare COMMAND whose
           // fronted operand the bare-event pattern grabbed: the SOV `bind`
           // (`$greeting को #name-input में bind` → mis-anchors `$greeting` as the
-          // event). Prefer a full command parse when one exists; if no command
+          // event). Same for a non-event `expression` lead (`Draggable को इंस्टॉल`
+          // mis-anchors `Draggable` as the event and the verb-anchoring fallback
+          // fabricates a junk install body — phantom handler, R0-precision).
+          // Prefer a full command parse when one exists; if no command
           // matches, keep the existing event-handler build (no parse-rate change).
-          if (ev?.type === 'reference') {
+          if (ev?.type === 'reference' || ev?.type === 'expression') {
             tokens.reset(eventStart); // rewind past the consumed bare event
             const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
             const cmdPeek = patternMatcher.matchBest(tokens, commandPatterns);

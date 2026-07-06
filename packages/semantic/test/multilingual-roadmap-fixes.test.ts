@@ -11569,3 +11569,107 @@ describe('goal-less transition variant (omitRoleVariants): `transition *max-heig
     expect(String(role(tr!, 'duration')?.value)).toBe('500ms');
   });
 });
+
+describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 drill, L3)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const actionsOf = (node: unknown): string[] => {
+    const flat: string[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const findAction = (node: unknown, action: string): Record<string, any> | undefined => {
+    let hit: Record<string, any> | undefined;
+    const walk = (n: unknown): void => {
+      if (hit || !n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (rec.action === action) { hit = rec; return; }
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return hit;
+  };
+
+  it('[he] fetch-with-method: the עם tail never spawns a phantom second handler', () => {
+    // עם is he's WITH marker; listing it as a "when"/on event alternative let
+    // the unconsumed `עם method:"POST" body:form` tail anchor event-he-when
+    // (event=expression:"method") — a phantom second `on` (spurious on ×6).
+    const node = parse('ב שליחה הבא את /api/form עם method:"POST" body:form', 'he');
+    const actions = actionsOf(node);
+    expect(actions.filter(a => a === 'on')).toHaveLength(1);
+    expect(actions).toContain('fetch');
+  });
+
+  it('[he] render-template-with-data: single handler AND the style role reclaimed from the stolen tail', () => {
+    const node = parse('ב לחיצה רנדר את #user-list עם users: $data אז שים את זה על #container', 'he');
+    const actions = actionsOf(node);
+    expect(actions.filter(a => a === 'on')).toHaveLength(1);
+    const render = findAction(node, 'render');
+    expect(render).toBeDefined();
+    // Pre-fix the phantom split consumed the עם phrase — style was lost.
+    expect(String(role(render!, 'style')?.raw ?? role(render!, 'style')?.value)).toBe('users');
+    expect(findAction(node, 'put')).toBeDefined();
+  });
+
+  it('[he] swap-content: עם still works as the with/style marker (both-ways lock)', () => {
+    const node = parse('ב לחיצה החלף את #a עם #b', 'he') as unknown as Record<string, any>;
+    const actions = actionsOf(node);
+    expect(actions.filter(a => a === 'on')).toHaveLength(1);
+    const swap = findAction(node, 'swap');
+    expect(swap).toBeDefined();
+    expect(String(role(swap!, 'patient')?.value)).toBe('#b');
+  });
+
+  it('[he] כאשר still anchors event-he-when (the surviving alternative)', () => {
+    const node = parse('כאשר click הסתר את #modal', 'he') as unknown as Record<string, any>;
+    expect(node.kind).toBe('event-handler');
+    expect(String(role(node, 'event')?.value)).toBe('click');
+    expect(findAction(node, 'hide')).toBeDefined();
+  });
+
+  it('[hi] install-behavior: `Draggable को इंस्टॉल` is an install command, not a phantom handler', () => {
+    // event-hi-bare (single `{event}` token) grabbed the leading identifier as
+    // the event and the SOV verb-anchoring fallback fabricated a junk install
+    // body (patient=literal:"को") — spurious on ×1. The bare-event guard's
+    // command peek now also covers non-event `expression` leads.
+    const node = parse('Draggable को इंस्टॉल', 'hi') as unknown as Record<string, any>;
+    expect(node.action).toBe('install');
+    expect(String(role(node, 'patient')?.raw ?? role(node, 'patient')?.value)).toBe('Draggable');
+    expect(actionsOf(node)).not.toContain('on');
+  });
+
+  it('[hi] a genuine bare literal event still wraps a handler', () => {
+    const node = parse('क्लिक .active को टॉगल', 'hi') as unknown as Record<string, any>;
+    expect(node.kind).toBe('event-handler');
+    expect(String(role(node, 'event')?.value)).toBe('click');
+    expect(findAction(node, 'toggle')).toBeDefined();
+  });
+
+  it('[hi] window-resize corpus line still parses (census / parse-rate lock)', () => {
+    // This junk-shaped render (`debounced at 200ms` survives untranslated) parses
+    // ONLY via event-hi-bare's expression anchor; the guard must stay a PEEK —
+    // when no command pattern matches the full stream, the handler build is kept.
+    const node = parse('debounced at 200ms adjustLayout() को आकार_बदलें पर कॉल विंडो से', 'hi');
+    expect(node).not.toBeNull();
+    expect(actionsOf(node)).toContain('call');
+  });
+});
