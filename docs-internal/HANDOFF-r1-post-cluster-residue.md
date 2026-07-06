@@ -67,9 +67,23 @@ null exit end` had an unparseable then-branch, the conditional fold
 > - spurious `empty` remainder: hi/tr at behavior-sortable + tr/hi/bn if-empty
 >   ×6 — ALL transformer-side (predicate scrambled into the then-branch),
 >   unchanged, locked for a transformer arc.
+> - **behavior-resizable en-noise — probed post-#582, mechanism found (drill
+>   still open):** the site is now R1 1.0 ×23 with bn-only spurious (set ×4,
+>   trigger ×2, if ×1, for ×1) — all en deficits, bn parses MORE of the body.
+>   en's `if newWidth < minWidth then set newWidth to minWidth end` folds fine
+>   in ISOLATION, but in the body the ifs sit mid-clause after sets, and the
+>   `then` CONJUNCTION splits the block across parseBodyWithClauses clause
+>   boundaries — the if head lands clause-FINAL where the mid-clause fold has
+>   no branch tokens (empty then-branch → fold nulls → flat truncated if), the
+>   branch `set` becomes the next clause, and the owed `end`s desync the debt
+>   bookkeeping until an `end` breaks the walk early: en drops the 4th
+>   if-branch set, both `set my *width/*height`, and the last two triggers.
+>   The needed machinery is a trailing flat-if fold ACROSS the then-boundary
+>   (clause-tail flat `if` + following clause as its branch + one owed `end`),
+>   distinct from #576's same-clause fold. Fix en first, then re-check bn's
+>   flags — same discipline as #576/#577.
 > - Everything else from the session-4 block below stands (SOV halt ×6,
->   set/A2 qu tail, template-literal-list-build SOV six, behavior-resizable
->   en-noise drill — still untouched).
+>   set/A2 qu tail, template-literal-list-build SOV six).
 
 > **STATUS UPDATE (2026-07-05, session 4): the set/A2 cluster and the spurious-`empty`
 > family LANDED as #580 (set of-possessive + A2 operator-run assembly) and the
