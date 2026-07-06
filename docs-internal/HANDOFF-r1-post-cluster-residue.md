@@ -1,5 +1,61 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-05, session 4): the set/A2 cluster and the spurious-`empty`
+> family LANDED as #580 (set of-possessive + A2 operator-run assembly) and the
+> follow-up copula PR.** Post-session state: probe mean R1 **0.9812** (was 0.9778),
+> baseline avgPrecision mean **0.9849** (was 0.984), parse 3696/3696,
+> degenerate/lossy 0, R2 1.0. Per-language A/B across both PRs: 11 languages up on
+> R1 (ja/ko/tr/bn/hi +0.0084, it/pl/ru/th/uk +0.0072, qu +0.0016), 8 up on
+> precision (+0.0026 each), zero meaningfully down.
+>
+> 1. **set/A2 (#580) — the re-probe changed the plan again (the #579 lesson
+>    repeated):** set-color-variable ×11 was NOT multi-token assembly but an
+>    of-possessive marker-coverage gap — 10 languages' genitive connectors
+>    (it `di`→tell, pl `z`/uk `з`→style, th `ของ`, ja `の`, ko `의`, bn `র`,
+>    hi `का`, qu `pa`/tr `nin`→destination) were invisible to the
+>    normalized-form check, and the hand-crafted it/pl/ru/th/uk set destination
+>    tokens never opted into property-path (set-es-full had it; its siblings
+>    didn't). Two knock-on mechanisms: (a) once set-XX-generated became whole at
+>    position 0, it beat the event stages and the trailing SOV event phrase
+>    dropped — a Stage-2 guard now prefers trySOVEventExtraction when a command
+>    match leaves a trailing remainder in an SOV language; (b) two-way-binding /
+>    computed-value DID need the A2 theory: matchRoleToken now assembles
+>    strictly-pairwise operator runs (`"Hello, " + my value`, parenthesized
+>    groups, possessive-pair operands) — which also fixed the EN reference's own
+>    silent `+ my value` tail drop. 58 (lang,pattern) entries fixed.
+> 2. **Spurious `empty` ×28 → ×12 (copula PR) — mechanism NOT inverted this
+>    time (unlike #577):** en was right; 8 languages grew a phantom `empty me`
+>    because their rendered copulas tokenize as bare identifiers (fr `est`,
+>    ru `есть`, pt `é`, uk `є`, tl `ay`, ms `adalah`, th `เป็น`) — or normalize
+>    to an unrelated sense (ar `هو`→`it`) — so the condition split fired at the
+>    predicate word, which doubles as the empty/null COMMAND keyword. New
+>    `CONDITION_COPULAS_SURFACE` set, matched by surface value and gated to a
+>    predicate continuation (norm empty/null/undefined) — the ar pronoun reading
+>    (`إذا هو اضبط …` = `if it set …`) still splits at the command verb
+>    (fetch-do-not-throw guard test locks it).
+>
+> **Residue updated after session 4:**
+>
+> - spurious `empty` remainder ×12: tr/hi/bn ×6 (transformer-side scrambling —
+>   the predicate lands INSIDE the then-branch: tr `… ekle .error i boş ben e`;
+>   parser-side copulas are behavior-neutral there, locked in the set for when
+>   the render heals) + behavior-sortable ×6 ar/hi/id/sw/th/tr (nested behavior
+>   sub-parse: the flat if-head truncates `jika item adalah kosong` and the
+>   leftover `kosong` re-parses as an `empty` command — the same nested-behavior
+>   drill site as behavior-removable's transition roles).
+> - set/A2 residue: template-literal-list-build `set.patient:expression` SOV six
+>   (the loop-BODY sub-parse can't match the now-enriched en middle set);
+>   two-way-binding / computed-value qu (its render interposes the source phrase
+>   `ta .quantity manta` mid-clause, so set-qu-generated can't match);
+>   template-literal-interpolation qu (possessive-head destination in fallback).
+> - **SOV halt.patient ×6 re-probed, shapes confirmed** (ja drops `halt`
+>   entirely; tr captures `halt.patient:expression="the"` and crosses call/halt
+>   roles) — still needs compound-level fronted-role re-association; untouched.
+> - **NEW en-noise site discovered:** behavior-resizable en drops one of the four
+>   `if`s and all four if-branch `set`s that bn (and likely others) now parse —
+>   the bn "spurious" flags there are en deficits. A future behavior-body en
+>   drill, same discipline as #576.
+
 > **STATUS UPDATE (2026-07-05, session 3): two more residue items LANDED as #576
 > (mid-clause if fold) and #577 (transition family alignment).** Post-#577
 > state: probe mean R1 **0.9768**, avgPrecision mean **0.9764 → 0.9840** (every
