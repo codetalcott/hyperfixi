@@ -230,6 +230,27 @@ export function generatePatternVariants(
     }
   }
 
+  // Omit-role variants: an EXTRA pattern per schema-listed role with that
+  // role (and its marker phrase) removed entirely. Covers a REQUIRED role
+  // whose phrase is legitimately absent in valid hyperscript (transition's
+  // goal: `transition *max-height over 300ms`, slide-toggle) — making the
+  // role optional inside the main pattern is the verified skippable-group
+  // re-binding regression (see the transition goal NOTE); a separate variant
+  // has no skippable group at all. Priority sits below the simple variant so
+  // any text carrying the role phrase always prefers the fuller patterns.
+  for (const omitted of schema.omitRoleVariants ?? []) {
+    const variantSchema: CommandSchema = {
+      ...schema,
+      roles: schema.roles.filter(r => r.role !== omitted),
+    };
+    const variant = generatePattern(variantSchema, profile, config);
+    patterns.push({
+      ...variant,
+      id: `${schema.action}-${profile.code}-generated-no-${omitted}`,
+      priority: (config.basePriority ?? 100) - 8,
+    });
+  }
+
   // Verb-first fallback for SOV languages (lower priority than the above).
   if (config.generateVerbFirstVariants !== false) {
     const verbFirst = generateVerbFirstPattern(schema, profile, config);

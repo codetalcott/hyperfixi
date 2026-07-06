@@ -115,6 +115,16 @@ export interface CommandSchema {
    * generated and the construct parses (body handled like other block bodies).
    */
   readonly bareKeyword?: boolean;
+  /**
+   * Generate an EXTRA, lower-priority pattern variant per listed role with
+   * that role (and its marker phrase) omitted entirely. For a REQUIRED role
+   * whose phrase is legitimately absent in valid hyperscript (`transition
+   * *max-height over 300ms` — no `to {goal}`): making the role optional
+   * inside the main pattern wraps its marker group as skippable and the bare
+   * value re-binds by particle metadata (verified regression, see the
+   * transition goal NOTE); a separate variant has no skippable group at all.
+   */
+  readonly omitRoleVariants?: ReadonlyArray<SemanticRole>;
   /** Notes about special handling */
   readonly notes?: string;
   /**
@@ -1616,6 +1626,9 @@ export const transitionSchema: CommandSchema = {
   description: 'Transition an element with animation',
   category: 'dom-visibility',
   primaryRole: 'patient',
+  // Goal-less `transition {patient} over {duration}` (slide-toggle) parses via
+  // a separate generated variant — see the goal role's required NOTE.
+  omitRoleVariants: ['goal'],
   roles: [
     {
       role: 'patient',
@@ -1648,7 +1661,9 @@ export const transitionSchema: CommandSchema = {
       // optional wraps its marker group as skippable and the bare value then
       // re-binds by particle metadata (`a 0` → destination:literal=0),
       // clobbering goal+duration capture in every marker language — verified
-      // regression, do not repeat. The goal-less form stays a residue item.
+      // regression, do not repeat. The goal-less form is covered by the
+      // SEPARATE `omitRoleVariants: ['goal']` pattern instead (no skippable
+      // group to re-bind).
       required: true,
       expectedTypes: ['literal', 'expression'],
       svoPosition: 2,

@@ -11492,3 +11492,80 @@ describe('bn জন্য duration postposition: consumed after the duration rec
     expect(actionsOf(node)).toContain('for');
   });
 });
+
+describe('goal-less transition variant (omitRoleVariants): `transition *max-height over 300ms` (spurious transition ×6, slide-toggle)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const findAction = (node: unknown, action: string): Record<string, any> | undefined => {
+    let hit: Record<string, any> | undefined;
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object' || hit) return;
+      const rec = n as Record<string, any>;
+      if (rec.action === action) {
+        hit = rec;
+        return;
+      }
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+      }
+    };
+    walk(node);
+    return hit;
+  };
+
+  it('[en] goal-less transition parses via the no-goal variant (was PARSE NULL)', () => {
+    // The goal role is required, deliberately (making it optional is the
+    // verified skippable-group re-binding regression — see the schema NOTE);
+    // the omit-role variant is a SEPARATE pattern with no goal group at all.
+    const node = parse('transition *max-height over 300ms', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('transition');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(String(role(node, 'duration')?.value)).toBe('300ms');
+    expect(role(node, 'goal')).toBeUndefined();
+  });
+
+  it('[en] slide-toggle: the JUXTAPOSED trailing transition (no `then`) survives in the body', () => {
+    // en dropped the whole clause (the SOV six kept it via lax paths →
+    // precision-flagged spurious transition ×6 against the empty reference).
+    const node = parse(
+      'on click toggle .collapsed on next .panel transition *max-height over 300ms',
+      'en'
+    );
+    expect(findAction(node, 'toggle')).toBeDefined();
+    const tr = findAction(node, 'transition');
+    expect(tr).toBeDefined();
+    expect(String(role(tr!, 'duration')?.value)).toBe('300ms');
+  });
+
+  it('[en] the goal-ful form still parses via the FULL pattern with goal captured (no variant steal)', () => {
+    const node = parse('transition opacity to 0 over 500ms', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('transition');
+    expect(String(role(node, 'goal')?.value)).toBe('0');
+    expect(String(role(node, 'duration')?.value)).toBe('500ms');
+  });
+
+  it('[es] corpus slide-toggle: bare-duration goal-less transition parses in a marker language', () => {
+    const node = parse('en clic alternar .collapsed a siguiente .panel entonces transición *max-height 300ms', 'es');
+    const tr = findAction(node, 'transition');
+    expect(tr).toBeDefined();
+    expect(role(tr!, 'patient')?.type).toBe('selector');
+    expect(String(role(tr!, 'duration')?.value)).toBe('300ms');
+    expect(findAction(node, 'toggle')).toBeDefined();
+  });
+
+  it('[es] the marker-language goal-ful transition keeps goal+duration (the do-not-repeat regression lock)', () => {
+    // transition-color, es render: goal `a "blue"` + bare duration. The
+    // optional-goal attempt re-bound `a "blue"` → destination and clobbered
+    // goal+duration in every marker language; the separate variant must not.
+    const node = parse('en clic transición *background-color a "blue" 500ms', 'es');
+    const tr = findAction(node, 'transition');
+    expect(tr).toBeDefined();
+    expect(String(role(tr!, 'goal')?.value)).toBe('blue');
+    expect(String(role(tr!, 'duration')?.value)).toBe('500ms');
+  });
+});

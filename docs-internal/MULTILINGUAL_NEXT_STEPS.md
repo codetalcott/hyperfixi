@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-9 / L1 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-10 / L2 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,8 +21,8 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.991**              | session-9 / L1 drills: 0.9891 → 0.9910 (morph+draggable)  |
-| avgRoleFidelity (R1)           | **0.983**              | 0.9831, held through session-9                            |
+| avgPrecision (R0 trust floor)  | **0.993**              | session-10 / L2 drills: 0.9910 → 0.9928 (three drills)    |
+| avgRoleFidelity (R1)           | **0.983**              | 0.9831, held through session-10                           |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
@@ -40,11 +40,13 @@ normal usage). The bar, all four together:
 1. **All en-facing parser gaps closed.** Every remaining en-noise inversion is
    a real English-parser bug (en `go back` / `add "content"` didn't parse
    until #588/#589) — user-visible to English users regardless of the metric.
-2. **Every spurious family larger than ×5 cleared** (post-session-9 inventory:
-   ~~morph ×18~~ ✓L1, for ×14 bn, ~~add ×11 draggable~~ ✓L1, default ×9,
-   empty ×8, call ×7, on ×7 he, transition ×6, breakpoint ×6).
-3. **avgPrecision ≥ 0.995** (0.9910 as of session 9).
-4. **avgRoleFidelity ≥ 0.985** (0.9831 as of session 9) — the big R1-missing
+2. **Every spurious family larger than ×5 cleared** (post-session-10 inventory:
+   ~~morph ×18~~ ✓L1, for ×14→×9 (transition half ✓L2; remainder = take-class
+   ×6 own-arc + wait-payload behaviors ×3 post-launch), ~~add ×11 draggable~~
+   ✓L1, default ×9, empty ×8, call ×7, on ×7 he, ~~transition ×6~~ ✓L2,
+   ~~breakpoint ×6~~ ✓L2 (+halt ×3 sibling).
+3. **avgPrecision ≥ 0.995** (0.9928 as of session 10).
+4. **avgRoleFidelity ≥ 0.985** (0.9831 as of session 10) — the big R1-missing
    families (add.patient:selector ×20, toggle.patient:expression ×19,
    fetch.source:literal ×18, set.patient:literal ×16,
    bind.source:property-path ×14) carry most of this.
@@ -55,15 +57,18 @@ across sessions 4–8, full discipline included). Sequencing:
 | Session | Clusters                                                             | Bar signals moved         |
 | ------- | -------------------------------------------------------------------- | ------------------------- |
 | L1 ✓    | morph ×18 + draggable add fold+cleanup ×11 (#590 + session-9 PR 2)   | precision 0.9891 → 0.9910 |
-| L2      | bn `for` ×14 + transition ×6 + breakpoint ×6 (pre-probed session 9)  | precision                 |
-| L3      | he/zh marker cluster (on ×7 he, toggle he/zh, call ×7)               | precision, en gaps        |
+| L2 ✓    | breakpoint ×6+halt ×3 + bn `for` transition-half ×5 + transition ×6  | precision 0.9910 → 0.9928 |
+| L3      | he/zh marker cluster (on ×7 he, call ×7; toggle shrank to ×1 in L2)  | precision, en gaps        |
 | L4      | default-value full drill (13 langs, markers + possessives)           | en gaps, R1               |
 | L5–L6   | big R1-missing families (add/toggle patient, fetch/bind source, set) | R1 → ≥0.985               |
 
 L1 actual precision movement (+0.0019 for 29 entries) ran well under the
 table's ~0.997 sketch — the remaining seven >×5 families plus the tail carry
 more of the gap than estimated; expect the ≥0.995 bar to need L2 AND L3 (and
-possibly part of L4) rather than L1+L2 alone.
+possibly part of L4) rather than L1+L2 alone. L2 actual: +0.0018 for 20
+entries (#592, #593, session-10 PR 3) — on the same slope; after L2 the
+remaining >×5 inventory is default ×9, for ×9 (two sub-arcs, see bar item 2),
+empty ×8, call ×7, on ×7 he, so L3+L4 must carry ~0.0022 to reach 0.995.
 
 **Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
 polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
@@ -75,12 +80,53 @@ Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
 
-> **Update 2026-07-06d (SESSION 9 = L1: the two biggest spurious families —
-> #590 morph ×18 role-layout swap and the draggable add ×11 brace-fold drill
-> in the session's second PR; avgPrecision 0.9891 → 0.9910, probe mean R1
-> 0.9829 → 0.9831; A/B 29 spurious cleared / 0 new; census identical (3404);
-> gate green; baselines regenerated per-PR.)**
+> **Update 2026-07-06e (SESSION 10 = L2, three drills across #592, #593 and
+> this PR; avgPrecision 0.9910 → 0.9928, probe mean R1 0.9831 held; A/B 20
+> spurious cleared / 0 new across the three; census identical (3404); gate
+> green; baseline regenerated per-PR.)**
 >
+> - **#592 — breakpoint ×6 + halt ×3 (en-noise, the #582 exit precedent as
+>   diagnosed, plus a tokenization seam).** Roleless breakpointSchema
+>   generated NO pattern (getDefinedSchemas filters zero-role schemas) →
+>   `bareKeyword: true`. But the pre-probe showed the ms/sw/vi halt sibling is
+>   a HYPHEN-COMPOUND shatter: tokenizers split `titik-henti` into word/-/word
+>   and the tail word IS their halt primary (henti/simama/dừng) → spurious
+>   halt via halt-\*-generated. Three aligned pieces rode along so en's
+>   enrichment minted zero missing entries: a matchLiteralToken hyphen-run
+>   fold (joins the run against hyphen-bearing expected keywords — 13
+>   languages' breakpoint words are compounds); a matchRoleToken {action}-slot
+>   fold (it's event-handler-it-full captures the verb as ONE token; shattered
+>   `punto-interruzione` left a junk `punto` action); and
+>   generateEventHandlerPatterns now SKIPS roleless schemas (every fused shape
+>   hardwires a required patient — fusing swallowed the `then` connective as
+>   junk patient). he profile got the en-loanword `breakpoint` alternative
+>   (its i18n dict has no entry; the transformer passes en through).
+> - **#593 — bn `for` transition-half ×5 (bn-side, as diagnosed).** bn renders
+>   `over 300ms` as `300ms জন্য` and জন্য is ALSO bn's for-keyword; the
+>   duration reclaim consumed the literal but left the postposition → phantom
+>   roleless `for` in the compound split. consumeForPostposition (factored
+>   from the wait-for reclaim's identical inline code) now runs after the
+>   duration reclaim; parseBodyWithGrammarPatterns gained the zero-role
+>   phantom-`for` drop parseBodyWithClauses already had (slide-toggle's body
+>   walks the fused toggle head's path). Remaining for ×9 = take-class ×6
+>   (en drops the `for me` phrase — en-facing gap — AND the transformer
+>   renders it as a separate then-clause; own arc) and
+>   draggable/sortable/resizable bn ×3 (wait-or payload leak, post-launch).
+> - **PR 3 — transition ×6 (en-noise; NOT the feared splitter arc).**
+>   slide-toggle's `transition *max-height over 300ms` was PARSE NULL in en
+>   ISOLATION — no juxtaposition gap at all: the generated pattern requires
+>   the `to {goal}` phrase this goal-less (valid) form omits. Making goal
+>   optional is the documented skippable-group re-binding regression (schema
+>   NOTE, do-not-repeat) — instead a new schema field `omitRoleVariants`
+>   generates a SEPARATE lower-priority variant with the role omitted
+>   entirely (no skippable group to re-bind). 18 languages now parse it via
+>   transition-\*-generated-no-goal; the SOV six keep their lax captures;
+>   fillSchemaDefaults aligns the destination default. Goal-ful forms locked
+>   (en + es marker-language guard tests).
+>   #590 morph ×18 role-layout swap and the draggable add ×11 brace-fold drill
+>   in the session's second PR; avgPrecision 0.9891 → 0.9910, probe mean R1
+>   0.9829 → 0.9831; A/B 29 spurious cleared / 0 new; census identical (3404);
+>   gate green; baselines regenerated per-PR.)\*\*
 > - **#590 — morph ×18.** en `morph #list to it` NULL in isolation (content
 >   slot rejected `reference`) — but the schema ALSO carried its roles swapped
 >   vs the i18n transformer's marking (element=patient を/를/i,

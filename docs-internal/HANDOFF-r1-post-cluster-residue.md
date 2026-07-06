@@ -1,5 +1,67 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 10 = L2 of the launch bar): all three
+> pre-probed L2 drills LANDED — #592 (breakpoint ×6 + halt ×3), #593 (bn জন্য
+> transition-half of for ×14→×9) and the goal-less transition variant ×6 in
+> this PR.** Post-session state: baseline avgPrecision **0.9910 → 0.9928**
+> (+0.0018 across three drills), probe mean R1 **0.9831 held**, parse
+> 3696/3696, degenerate/lossy 0, R2 1.0. Per-(lang,pattern) A/B across all
+> three: **20 spurious cleared, 0 new**; census identical (3404).
+> Remaining >×5 families: default ×9, for ×9 (two sub-arcs below), empty ×8,
+> call ×7, on ×7 he. Note toggle he/zh shrank to ×1 during L2.
+>
+> 1. **#592 — breakpoint (bareKeyword, the #582 exit precedent) + the
+>    hyphen-compound seam.** ms/sw/vi's spurious halt came from tokenizers
+>    shattering `titik-henti`-style compounds into word/-/word runs with the
+>    tail being their halt PRIMARY. New machinery, reusable: matchLiteralToken
+>    hyphen-run fold; matchRoleToken {action}-slot fold (fused it-full
+>    patterns); generateEventHandlerPatterns skips roleless schemas (junk
+>    patient="then" otherwise); he en-loanword alternative. 7 guard tests,
+>    all stash-verified.
+> 2. **#593 — bn জন্য duration postposition.** consumeForPostposition after
+>    the fused duration reclaim (factored from the wait-for reclaim's
+>    identical inline code); parseBodyWithGrammarPatterns gained the
+>    zero-role phantom-`for` drop parseBodyWithClauses already had. 4 guard
+>    tests (3 stash-verified, 1 both-ways real-for lock).
+> 3. **PR 3 — transition ×6 was NOT a splitter arc.** The goal-less form
+>    (`transition *max-height over 300ms`, valid hyperscript) was PARSE NULL
+>    in en isolation. New schema field `omitRoleVariants: ['goal']` generates a
+>    SEPARATE lower-priority no-goal variant per language (base−8, below the
+>    simple variant) — avoids the documented optional-goal skippable-group
+>    regression (schema NOTE kept). 18 languages parse via
+>    transition-\*-generated-no-goal; the SOV six keep their lax captures;
+>    the destination default aligns via fillSchemaDefaults. 5 guard tests
+>    (3 stash-verified, 2 goal-ful locks incl. the es marker-language
+>    do-not-repeat regression shape).
+>
+> **L3 next (he/zh marker cluster, pre-probe first): on ×7 he — note
+> morph-with-template is one of its patterns — and call ×7; toggle he/zh
+> already shrank to ×1.** Both were mechanism-probed at session-10 close:
+> the he `on` ×6 are all with-phrase patterns (fetch-with-method/-headers/
+> -method-body/-formdata, render-template-with-data, morph-with-template) —
+> the he render `עם method:"POST" body:form` tail is left unconsumed by
+> fetch-he and SPLITS into a phantom second event-handler anchored by
+> `event-he-when` (event=expression:"method"); fix is he-side with-phrase
+> consumption (or keep event-he-when off the עם tail). The seventh entry is
+> install-behavior hi, a different mechanism — probe separately. call ×7
+> (window-keydown, one pattern) is EN-SIDE (bar item 1): en drops the
+> JUXTAPOSED call after halt inside the if-branch — the corpus line is
+> `if event.ctrlKey halt call saveDocument() end` and the conditional fold
+> keeps halt only — while the seven keep it. An en enrichment, so budget
+> for the he/hi/bn/ja/ko/qu/tr role alignment in the same PR (the morph
+> lesson).
+> Also on the L3/L4 radar: morph-with-template
+> missing ×7 (en render `#row with row: $data` grabs a junk
+> style:expression="row" param-name role — en-side mis-capture, separate
+> from the cleared morph family); take-class-from-siblings spurious for ×6
+> (en drops the `for me` phrase — an en-facing gap, bar item 1 — AND the
+> transformer renders it as a separate then-clause `তারপর আমি কে জন্য`;
+> fixing en alone would mint missing entries in every language, so this
+> drill needs cross-language alignment or a transformer-side render fix —
+> probe both sides first). Post-launch track unchanged, now also carrying
+> draggable/sortable/resizable bn spurious for ×3 (the wait-or payload leak
+> — the SAME unconsumed or-run payload session 9 flagged for ko).
+
 > **STATUS UPDATE (2026-07-06, session 9 = L1 of the launch bar): the two
 > biggest spurious families LANDED — #590 (morph ×18: schema role-layout swap
 > plus reference admission) and the draggable add ×11 drill in this PR
