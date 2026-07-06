@@ -11201,3 +11201,115 @@ describe('morph role layout: patient=element / destination=content, reference ad
     expect(role(node, 'destination')?.type).toBe('selector');
   });
 });
+
+describe('brace-run style-object fold + ko locative/allative marker split (behavior-draggable add)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const findAction = (node: unknown, action: string): Record<string, any> | undefined => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat.find(r => r.action === action);
+  };
+
+  it('[en] `add { left: …px; top: …px; }` folds the brace run into ONE literal patient', () => {
+    // The style-object argument shatters into ~12 identifier tokens (`{`,
+    // `left`, `:`, `$`, `{`, …), so the patient role captured nothing and the
+    // whole command parsed NULL in en — while the SOV lax path fuses the run
+    // and was precision-flagged as "spurious add" against the empty en
+    // reference (the behavior-draggable half of the add ×22 family). The fold
+    // is depth-tracked for the nested `${…}` template braces.
+    const node = parse(
+      'add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }',
+      'en'
+    ) as unknown as Record<string, any>;
+    expect(node.action).toBe('add');
+    expect(role(node, 'patient')?.type).toBe('literal');
+    expect(String(role(node, 'patient')?.value)).toContain('left');
+    expect(String(role(node, 'patient')?.value)).toContain('top');
+    expect(role(node, 'destination')?.type).toBe('reference');
+  });
+
+  it('[en] `.{cls}` dynamic class selector is untouched (tokenizes as ONE selector token)', () => {
+    const node = parse('add .{cls} to me', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('add');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(String(role(node, 'patient')?.value)).toBe('.{cls}');
+  });
+
+  it('[it] handcrafted add-it-full (no expectedTypes on patient) folds the run too', () => {
+    // The handcrafted add-*-full patterns declare no expectedTypes on their
+    // patient role, so the literal-gated fold skipped them and they captured
+    // the lone `{` as an expression (it/pl/ru/uk/vi). Capturing a lone `{` is
+    // never right — the fold also fires for no-expectedTypes roles.
+    const node = parse(
+      'aggiungere { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }',
+      'it'
+    ) as unknown as Record<string, any>;
+    expect(node.action).toBe('add');
+    expect(role(node, 'patient')?.type).toBe('literal');
+    expect(role(node, 'destination')?.type).toBe('reference');
+  });
+
+  it('[ko] full draggable body: add destination defaults to me (에서 no longer a destination alternative)', () => {
+    // ko 에서 is the SOURCE primary ("at/from") but was ALSO listed as a
+    // profile-wide destination alternative, so the wait line's unconsumed
+    // tail (`문서 에서` — from document) satisfied the add clause's optional
+    // destination group: destination=expression:"문서" instead of the schema
+    // `me` default (a missing add.destination:reference vs en). Removed from
+    // the profile; toggle's LOCATIVE destination keeps it per-command via
+    // markerVariants (the #588 merge machinery).
+    const ko = [
+      'Draggable(dragHandle) 를 behavior',
+      '    init',
+      '        만약 없음 dragHandle 그러면 dragHandle 를 나 에 설정',
+      '    끝',
+      '    pointerdown(clientX, clientY) 할 때 dragHandle 에서',
+      '        the 이벤트 를 정지',
+      '        draggable:start 를 트리거',
+      '        x 를 측정',
+      '        startX 를 그것 에 설정',
+      '        y 를 측정',
+      '        startY 를 그것 에 설정',
+      '        xoff 를 clientX - startX 에 설정',
+      '        yoff 를 clientY - startY 에 설정',
+      '        까지 이벤트 pointerup 를 반복 문서 에서',
+      '            대기 pointermove(clientX, clientY) 또는',
+      '                                pointerup(clientX, clientY) 문서 에서',
+      '            { left: ${clientX - xoff}px; top: ${clientY - yoff}px; } 를 추가',
+      '            draggable:move 를 트리거',
+      '        끝',
+      '        draggable:end 를 트리거',
+      '    끝',
+      '끝',
+    ].join('\n');
+    const add = findAction(parse(ko, 'ko'), 'add');
+    expect(add).toBeDefined();
+    expect(role(add!, 'patient')?.type).toBe('literal');
+    expect(role(add!, 'destination')?.type).toBe('reference');
+    expect(String(role(add!, 'destination')?.value)).toBe('me');
+  });
+
+  it('[ko] locative toggle destination still reads 에서 (per-command markerVariants lock)', () => {
+    // `#button 에서 .active 를 토글` — "toggle .active AT #button". The
+    // locative reading is legitimate for toggle even though 에서 left the
+    // profile-wide destination alternatives.
+    const node = parse('#button 에서 .active 를 토글', 'ko') as unknown as Record<string, any>;
+    expect(node.action).toBe('toggle');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(String(role(node, 'destination')?.value)).toBe('#button');
+  });
+});
