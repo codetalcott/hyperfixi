@@ -36,7 +36,20 @@
 >
 > **L3 next (he/zh marker cluster, pre-probe first): on ×7 he — note
 > morph-with-template is one of its patterns — and call ×7; toggle he/zh
-> already shrank to ×1.** Also on the L3/L4 radar: morph-with-template
+> already shrank to ×1.** Both were mechanism-probed at session-10 close:
+> the he `on` ×6 are all with-phrase patterns (fetch-with-method/-headers/
+> -method-body/-formdata, render-template-with-data, morph-with-template) —
+> the he render `עם method:"POST" body:form` tail is left unconsumed by
+> fetch-he and SPLITS into a phantom second event-handler anchored by
+> `event-he-when` (event=expression:"method"); fix is he-side with-phrase
+> consumption (or keep event-he-when off the עם tail). The seventh entry is
+> install-behavior hi, a different mechanism — probe separately. call ×7
+> (window-keydown, one pattern) is EN-SIDE (bar item 1): en drops `call
+saveDocument()` JUXTAPOSED after `halt` inside the if-branch (`if
+event.ctrlKey halt call saveDocument() end` — the conditional fold keeps
+> halt only), while the seven keep it — an en enrichment, so budget for the
+> he/hi/bn/ja/ko/qu/tr role alignment in the same PR (the morph lesson).
+> Also on the L3/L4 radar: morph-with-template
 > missing ×7 (en render `#row with row: $data` grabs a junk
 > style:expression="row" param-name role — en-side mis-capture, separate
 > from the cleared morph family); take-class-from-siblings spurious for ×6
