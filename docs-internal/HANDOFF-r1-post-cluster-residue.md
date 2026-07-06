@@ -1,5 +1,79 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 6): both planned drills LANDED — #583
+> (then-boundary if fold, the behavior-resizable en-noise drill) and #584
+> (event-head param-phrase consumption, the behavior-sortable drill).**
+> Post-session state: probe mean R1 **0.9825** (0.9824 → held → +0.0001),
+> baseline avgPrecision **0.9851**, parse 3696/3696, degenerate/lossy 0,
+> R2 1.0. Per-(lang,pattern) A/B across both PRs: **12 fixed, 0 new**.
+>
+> 1. **#583 — then-boundary if fold (behavior-resizable, en-noise as
+>    diagnosed).** The `then` between a mid-clause if-head and its branch is a
+>    CONJUNCTION, so parseBodyWithClauses split the block at it: if-head
+>    clause-FINAL → mid-clause fold nulls → flat `if` truncates the condition →
+>    the owed `end` desyncs the debt bookkeeping → an `end` broke the walk at
+>    the 3rd of 4 clamp ifs (en dropped the 4th clamp, both `set my
+*width/*height`, the last two triggers — bn's "spurious" flags were en
+>    deficits, the fourth en-noise inversion in a row). Fix: opener-KIND stack
+>    parallel to pendingBlockDepth; while an `if` is open mid-clause, a
+>    conjunction is block content — the whole `if … then … end` block reaches
+>    parseClause's #576 fold. `unless` counts as 'other' (the fold only folds
+>    `if`). A/B: 3 fixed (bn spurious set/trigger/if), 0 new.
+> 2. **#584 — event-head param-phrase (behavior-sortable, exactly the
+>    session-5 sharpened diagnosis).** Five aligned pieces, all at the event
+>    HEAD: (a) matchEventParamPhrase consumes `( ident [, ident]* )` between
+>    event keyword and marker (first pass + ko phrase branch +
+>    hasSOVEventMarkerHead), captured as parameterNames; (b)
+>    WAITABLE_EVENT_WORDS accepted alongside KNOWN_EVENTS in the SOV extraction
+>    (pointerdown wasn't recognizable AT ALL — that's why the `)` anchored),
+>    guarded so an event name directly after the `event` KEYWORD stays a
+>    loop/wait payload (`repeat until event pointerup …`); (c) rendered
+>    `from me` pair stripping — after event+marker (ja 私 から, ko 나 에서,
+>    tr ben den, bn আমি থেকে, hi मैं से — new hi SOV_SOURCE_MARKERS entry) and
+>    fronted (qu noqa manta), gated to pronoun/window references so
+>    `triggerEl から` still reaches the body (behavior-removable's recovery);
+>    (d) tryMatchPropertyAccessExpression folds a fused method call's parens
+>    into the expression (`target.closest("li")`) — left in the stream they
+>    broke the following SOV marker and set-XX-generated died to role-swapping
+>    verb-anchoring; (e) skipNoiseWords skips `the` before a keyword-base
+>    property access (`the target .closest …`). A/B: 9 fixed
+>    (add.destination:expression ×5 bn/hi/ja/ko/tr + set.patient:expression ×4
+>    ja/ko/qu/tr), 0 new.
+>
+> 7 guard tests appended to `packages/semantic/test/multilingual-roadmap-fixes.test.ts`
+> (6 fail without the fixes — stash-verified; 1 locks the ko repeat-until-event
+> head against the WAITABLE expansion).
+>
+> **Residue updated after session 6:**
+>
+> - **behavior-sortable remove.source:reference ×12
+>   (bn/hi/it/ja/ko/pl/qu/ru/th/tr/uk/vi) is EN-NOISE, newly probed:** en's
+>   `remove .{dragClass} from item` — even in ISOLATION — silently drops
+>   `item` (the source slot rejects the bare identifier) and the source
+>   DEFAULTS to `reference:"me"` (schema default, NOT a next-line grab).
+>   Translations capturing `source:expression="item"` (it, and ja/ko
+>   post-#584) are RIGHTER than the reference. A future en drill: make
+>   remove-en-generated's source slot accept the identifier — but CHECK which
+>   languages currently pass via the same me-default first (they'd flip to
+>   missing when en enriches; the resizable-drill discipline).
+> - **behavior-sortable remove.patient:selector ×3 (es/pt/tr), probed:** the
+>   of-possessive matcher folds `quitar .{dragClass} de item` into
+>   `patient = property-path:"undefined"` — es `de` is BOTH the genitive
+>   connector (#580's marker table) and remove's from-marker. Needs a
+>   command-schema gate on the of-possessive read (remove has no property-path
+>   role), not a marker change.
+> - **wait-line param leak (ja trigger.source spurious literal):** the
+>   `wait pointermove(clientY) or pointerup(clientY) from document` line still
+>   leaks `(clientY)またはpointerup(clientY)ドキュメント` into the FOLLOWING
+>   trigger's source role — the wait event's param phrase is a body-side
+>   sibling of the #584 head fix (matchRoleToken's event role, not
+>   trySOVEventExtraction). Small, self-contained follow-up.
+> - spurious `empty` tr/hi/bn ×6 + behavior-sortable hi/tr — transformer-side,
+>   unchanged, locked for a transformer arc.
+> - Everything else from the session-5 block below stands (SOV halt ×6,
+>   set/A2 qu tail, template-literal-list-build SOV six, spurious
+>   add/go/morph/default families — undrilled).
+
 > **STATUS UPDATE (2026-07-05, session 5): the nested-behavior sub-parse drill
 > LANDED as #582** (probe mean R1 **0.9812 → 0.9824**; per-(lang,pattern) A/B:
 > **46 entries fixed, 0 new**; six-signal gate green; baseline regenerated).
