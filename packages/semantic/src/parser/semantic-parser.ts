@@ -898,6 +898,34 @@ export class SemanticParserImpl implements ISemanticParser {
           return withDiagnostics(result, diagnostics);
         }
       }
+      // SOV trailing-event guard: a fused SOV render is `<body> <event> <marker>`
+      // (ja `… に 設定 クリック で`). When the plain command pattern can now match
+      // the body AT POSITION 0 (e.g. the of-possessive destination made
+      // set-ja-generated whole), it wins Stage 2 with the trailing event phrase
+      // left unconsumed — and the handler wrapper silently drops (the event
+      // extraction stages never run after a Stage-2 return). If the match left a
+      // trailing remainder in an SOV language, prefer the event extraction; it
+      // fires only on a real event whose body parses (null otherwise), so it can
+      // only add the wrapper back, never break a genuine bare command.
+      if (
+        commandMatch.consumedTokens < tokens.tokens.length &&
+        tryGetProfile(language)?.wordOrder === 'SOV'
+      ) {
+        const sovTrailing = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
+        if (sovTrailing) {
+          diagnostics.push(
+            parseDiagnostic(
+              `SOV event extraction preferred over partial ${commandMatch.pattern.command} command (trailing remainder)`,
+              'info',
+              'stage-sov-trailing'
+            )
+          );
+          const result = modifiers
+            ? this.applyModifiers(sovTrailing as EventHandlerSemanticNode, modifiers)
+            : sovTrailing;
+          return withDiagnostics(result, diagnostics);
+        }
+      }
       diagnostics.push(
         parseDiagnostic(
           `command pattern matched: ${commandMatch.pattern.id} (confidence: ${commandMatch.confidence.toFixed(2)})`,

@@ -458,7 +458,13 @@ function getSetPatternsIt(): LanguagePattern[] {
         format: 'impostare {destination} a {patient}',
         tokens: [
           { type: 'literal', value: 'impostare', alternatives: ['imposta', 'set', 'definire'] },
-          { type: 'role', role: 'destination' },
+          {
+            type: 'role',
+            role: 'destination',
+            // property-path opts the of-possessive matcher in (mirrors set-es-full;
+            // `impostare the *--primary-color di #theme in …` truncated without it)
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           {
             type: 'group',
             optional: true,
@@ -505,7 +511,12 @@ function getSetPatternsPl(): LanguagePattern[] {
         format: 'ustaw {destination} na {patient}',
         tokens: [
           { type: 'literal', value: 'ustaw', alternatives: ['określ', 'okresl', 'przypisz'] },
-          { type: 'role', role: 'destination' },
+          {
+            type: 'role',
+            role: 'destination',
+            // property-path opts the of-possessive matcher in (mirrors set-es-full)
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           {
             type: 'group',
             optional: true,
@@ -627,7 +638,12 @@ function getSetPatternsRu(): LanguagePattern[] {
         format: 'установить {destination} в {patient}',
         tokens: [
           { type: 'literal', value: 'установить', alternatives: ['установи', 'задать', 'задай'] },
-          { type: 'role', role: 'destination' },
+          {
+            type: 'role',
+            role: 'destination',
+            // property-path opts the of-possessive matcher in (mirrors set-es-full)
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           {
             type: 'group',
             optional: true,
@@ -714,7 +730,12 @@ function getSetPatternsTh(): LanguagePattern[] {
         format: 'ตั้ง {destination} ใน {patient}',
         tokens: [
           { type: 'literal', value: 'ตั้ง', alternatives: ['กำหนด', 'ตั้งค่า'] },
-          { type: 'role', role: 'destination' },
+          {
+            type: 'role',
+            role: 'destination',
+            // property-path opts the of-possessive matcher in (mirrors set-es-full)
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           {
             type: 'group',
             optional: true,
@@ -744,7 +765,12 @@ function getSetPatternsUk(): LanguagePattern[] {
         format: 'встановити {destination} в {patient}',
         tokens: [
           { type: 'literal', value: 'встановити', alternatives: ['встанови', 'задати', 'задай'] },
-          { type: 'role', role: 'destination' },
+          {
+            type: 'role',
+            role: 'destination',
+            // property-path opts the of-possessive matcher in (mirrors set-es-full)
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           {
             type: 'group',
             optional: true,
