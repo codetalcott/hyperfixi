@@ -1,5 +1,59 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 11 = L3 of the launch bar): both L3
+> drills LANDED — #595 (spurious on ×7: he עם de-anchor + hi bare-event
+> command peek) and the halt-verb-guard drill in this PR (spurious call ×7,
+> which was en-noise ×17-wide).** Post-session state: baseline avgPrecision
+> **0.9928 → 0.9939** (+0.0011 across two drills), probe mean R1 **0.9831 →
+> 0.9838**, parse 3696/3696, degenerate/lossy 0, R2 1.0. Per-(lang,pattern)
+> A/B across both: **14 spurious + 10 missing cleared, 0 new**; census
+> identical (3404). Remaining >×5 families: **default ×9, for ×9, empty ×8** —
+> L4 must carry ~0.0011 to reach the 0.995 precision bar.
+>
+> 1. **#595 — spurious on ×7 (two mechanisms, as pre-probed).** he ×6: עם
+>    (the WITH/style marker) was listed as an event alternative in FIVE
+>    places — event-he-when alternatives, keywords.on, eventHandler.keyword,
+>    eventMarker, temporalMarkers — so the with-tail left after
+>    fetch-he/render-he captured the head (`עם method:"POST" body:form`)
+>    anchored a phantom second handler (event=expression:"method"). Removed
+>    from all five; the tail now drops exactly like en's (en never lists
+>    "with" as an event word — that asymmetry WAS the bug). Bonus: he render
+>    reclaims the tail-stolen `style` role. hi ×1 (install-behavior):
+>    event-hi-bare + the SOV verb-anchoring fallback fabricated
+>    handler(event=Draggable)+install(patient=को); the bare-event guard's
+>    command peek extended from `reference` to non-event `expression` leads.
+>    The peek stays conservative — window-resize/worker-basic hi (junk-shaped
+>    renders that parse ONLY via the bare anchor) byte-identical, census
+>    intact. 7 guard tests (3 stash-verified).
+> 2. **PR 2 — spurious call ×7 was really an en+16 drop.** The corpus line
+>    (`if event.ctrlKey halt call saveDocument() end`) loses call because
+>    halt's OPTIONAL TRAILING patient slot swallows the juxtaposed verb
+>    (patient=literal:"call") — in en and 16 SVO languages at once; the SOV
+>    seven split verb-first and kept it. Fix: a trailing optional role slot
+>    (nextPatternToken === undefined, now threaded through matchGroupToken →
+>    matchTokenSequence) never captures a keyword token whose normalized form
+>    is in commandSchemas. All 24 languages now capture call with the
+>    IDENTICAL patient=expression:"saveDocument()" — the pre-probe's
+>    role-alignment check made this a zero-honest-dip landing. Scoping
+>    lesson (cost one iteration): an UNSCOPED verb-skip let ja's no-goal
+>    transition variant complete sloppily — a MID-pattern optional slot must
+>    capture-and-FAIL so the verb-anchoring fallback reclaims goal+duration.
+>    Final-slot scoping + a ja lock test. 4 guard tests (2 stash-verified).
+>
+> **L4 next (default ×9 — pre-probed this session, an en-noise INVERSION):**
+> en parses `on load default my @data-count to "0"` WITHOUT the default
+> action; ar/bn/hi/it/ja/ko/th/tl/tr keep it with junk roles (ja/ko fused
+> possessive patient=literal:"私の@data-count" destination=literal:"0"; ar
+> destination=property-path:"undefined"; it roleless via
+> event-handler-it-full). The en enrichment (possessive + property-path +
+> to-marker) must land WITH the nine's alignment — see the in-code NOTE at
+> defaultSchema.destination. Also on the radar: for ×9 (take-class ×6
+> own-arc + behaviors bn ×3 post-launch), empty ×8, morph-with-template
+> render.style missing ×12 (six SOV langs need to GAIN the style capture —
+> en's value is truncated to the param name, a value bug invisible to R0/R1;
+> do NOT fix by removing en's capture). Hygiene: language-grammar.ts is ~890
+> lines stale vs profiles (no drift guard) — regenerate in its own increment.
+
 > **STATUS UPDATE (2026-07-06, session 10 = L2 of the launch bar): all three
 > pre-probed L2 drills LANDED — #592 (breakpoint ×6 + halt ×3), #593 (bn জন্য
 > transition-half of for ×14→×9) and the goal-less transition variant ×6 in

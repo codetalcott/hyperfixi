@@ -173,7 +173,12 @@ export class PatternMatcher {
   private matchTokenSequence(
     tokens: TokenStream,
     patternTokens: PatternToken[],
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    // What follows the sequence itself — a GROUP's last inner token must see the
+    // token after the group as its `next` (the trailing-slot verb guard in
+    // matchRoleToken keys on nextPatternToken === undefined meaning "pattern
+    // truly ends here", and a mid-pattern single-token group is not the end).
+    nextAfterSequence?: PatternToken
   ): boolean {
     // Skip leading conjunctions for Arabic (proclitics: و, ف, ول, وب, etc.)
     // BUT NOT if the pattern explicitly expects a conjunction (proclitic patterns)
@@ -208,7 +213,12 @@ export class PatternMatcher {
         this.tryConsumeEventSourceClause(tokens, captured, patternToken);
       }
 
-      const matched = this.matchPatternToken(tokens, patternToken, captured, patternTokens[i + 1]);
+      const matched = this.matchPatternToken(
+        tokens,
+        patternToken,
+        captured,
+        patternTokens[i + 1] ?? nextAfterSequence
+      );
 
       sourceWindow =
         patternToken.type === 'role' && patternToken.role === 'event'
@@ -292,7 +302,7 @@ export class PatternMatcher {
         return this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
 
       case 'group':
-        return this.matchGroupToken(tokens, patternToken, captured);
+        return this.matchGroupToken(tokens, patternToken, captured, nextPatternToken);
 
       default:
         return false;
@@ -532,6 +542,32 @@ export class PatternMatcher {
       const norm = (token.normalized ?? token.value).toLowerCase();
       if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(norm)) {
         return patternToken.optional || false;
+      }
+    }
+
+    // A TRAILING optional role slot never captures a bare command VERB. halt's
+    // optional patient (`halt {patient}`, patient is the pattern's last token)
+    // otherwise swallows the juxtaposed next command's keyword — `… halt call
+    // saveDocument()` → patient=literal:"call" — and the call drops from the en
+    // reference AND every same-path language (window-keydown, en + 16 SVO
+    // languages; the SOV seven split verb-first and kept it). Scoped to the
+    // FINAL slot only (nextPatternToken undefined): a mid-pattern optional slot
+    // must keep capturing the verb and failing the pattern — that failure is
+    // load-bearing (ja `opacity を 遷移 0 に 300ms`: the no-goal variant's
+    // duration/style slots capture 遷移, the pattern fails, and the richer
+    // verb-anchoring fallback reclaims goal+duration; skipping instead lets the
+    // sloppy pattern complete and strand the tail). Also away from
+    // `event`/`action` roles, which carry their own bespoke guards above.
+    if (
+      patternToken.optional &&
+      nextPatternToken === undefined &&
+      patternToken.role !== 'event' &&
+      patternToken.role !== 'action' &&
+      token.kind === 'keyword'
+    ) {
+      const verbNorm = (token.normalized ?? token.value).toLowerCase();
+      if (verbNorm in commandSchemas) {
+        return true; // skip the optional slot; the verb starts the next command
       }
     }
 
@@ -2109,14 +2145,20 @@ export class PatternMatcher {
   private matchGroupToken(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'group' },
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken?: PatternToken
   ): boolean {
     const mark = tokens.mark();
 
     // Track which roles were captured before this group
     const capturedBefore = new Set(captured.keys());
 
-    const success = this.matchTokenSequence(tokens, patternToken.tokens, captured);
+    const success = this.matchTokenSequence(
+      tokens,
+      patternToken.tokens,
+      captured,
+      nextPatternToken
+    );
 
     if (!success) {
       tokens.reset(mark);
