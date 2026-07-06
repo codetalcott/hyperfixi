@@ -11050,3 +11050,51 @@ describe('go destination marker: en bare form + he/zh patient-particle variants'
     });
   }
 });
+
+describe('add patient: literal content admission', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] `add "<p>Line</p>" to me` parses (quoted content patient)', () => {
+    // The selector-only patient slot rejected ANY string literal, so the whole
+    // command parsed NULL in en and the 12 generated-path languages — while 11
+    // lax-path languages captured patient=literal and were precision-flagged
+    // as "spurious add" against the empty en reference (repeat-times half of
+    // the add ×22 family). Admission precedent: transition/append patient.
+    const node = parse('add "<p>Line</p>" to me', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('add');
+    expect(role(node, 'patient')?.type).toBe('literal');
+    expect(String(role(node, 'patient')?.value)).toBe('<p>Line</p>');
+    expect(role(node, 'destination')?.type).toBe('reference');
+  });
+
+  it('[en] one-line `repeat 3 times add … to me` keeps the loop body (handler shape)', () => {
+    const node = parse('on click repeat 3 times add "<p>Line</p>" to me', 'en');
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    expect(flat.find(r => r.action === 'repeat')).toBeDefined();
+    const add = flat.find(r => r.action === 'add');
+    expect(add).toBeDefined();
+    expect(role(add!, 'patient')?.type).toBe('literal');
+  });
+
+  it('[en] `add .foo to me` still captures a selector patient (class form locked)', () => {
+    const node = parse('add .foo to me', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('add');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(String(role(node, 'patient')?.value)).toBe('.foo');
+  });
+});
