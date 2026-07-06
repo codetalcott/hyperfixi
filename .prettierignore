@@ -1,0 +1,7 @@
+# Internal working docs: blockquote-heavy prose (handoffs, session logs) where
+# prettier's markdown normalization has repeatedly mangled near-ambiguous
+# constructs (line-leading +/* continuations read as list bullets, bold spans
+# split and escaped to \*\*). CI runs no prettier --check, so this only
+# affects the lint-staged hook and editors. Outward-facing markdown (README,
+# docs/, CLAUDE.md) stays formatted.
+docs-internal/
