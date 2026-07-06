@@ -9,27 +9,56 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-05 baseline · post #577 · `browser-priority`)
+## Where we are (2026-07-05 baseline · post session-4 set/A2 + empty drills · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                  | Notes                                                                    |
-| ------------------------------ | ---------------------- | ------------------------------------------------------------------------ |
-| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                                 |
-| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                        |
-| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                        |
-| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                        |
-| avgFidelity (R0-recall)        | **1.000**              | saturated                                                                |
-| avgPrecision (R0 trust floor)  | **0.984**              | #577 transition drill: 0.976 → 0.984, every language up                  |
-| avgRoleFidelity (R1)           | **0.977**              | was 0.837 on 2026-06-21; #577 enriched the en reference (see note below) |
-| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                |
+| Signal                         | Value                  | Notes                                                                |
+| ------------------------------ | ---------------------- | -------------------------------------------------------------------- |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                             |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                    |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                    |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                    |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                            |
+| avgPrecision (R0 trust floor)  | **0.985**              | session-4 copula drill: 0.984 → 0.9849 (8 languages +0.0026)         |
+| avgRoleFidelity (R1)           | **0.981**              | session-4 set/A2 drill: 0.9778 → 0.9812 (11 languages up, none down) |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects            |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.** R1 remains the
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
+
+> **Update 2026-07-05d (SESSION 4: the set/A2 drill + the spurious-`empty` copula
+> drill — #580 + follow-up; probe mean R1 0.9778 → 0.9812, avgPrecision 0.984 →
+> 0.9849; per-language A/B zero regressions across both; gate green throughout.)**
+>
+> - **#580 — set of-possessive + A2 operator-run assembly.** The re-probe re-scoped
+>   the plan (the #579 lesson repeating): set-color-variable ×11 was an
+>   of-possessive MARKER gap (10 genitive connectors invisible to the
+>   normalized-form check; it/pl/ru/th/uk hand-crafted destination tokens missing
+>   the property-path opt-in that set-es-full already had), plus a new Stage-2
+>   SOV trailing-event guard (a position-0 command match must not swallow the
+>   trailing event phrase). two-way-binding/computed-value DID need A2:
+>   matchRoleToken assembles strictly-pairwise operator runs — which also fixed
+>   the EN reference's own silent `+ my value` tail drop. 58 entries fixed;
+>   ja/ko/tr/bn/hi +0.0084 R1 each.
+> - **Copula drill — spurious `empty` ×28 → ×12, mechanism NOT inverted** (en was
+>   right): 8 languages' rendered copulas tokenize as bare identifiers (fr est,
+>   ru есть, pt é, uk є, tl ay, ms adalah, th เป็น) or normalize to another sense
+>   (ar هو → `it`), so the condition split fired at the empty/null predicate,
+>   which doubles as the empty COMMAND keyword → phantom `empty me`. New
+>   CONDITION_COPULAS_SURFACE set, matched by surface value, gated to predicate
+>   continuations so ar's pronoun reading still splits (`if it set …`).
+> - **Residue (see HANDOFF-r1-post-cluster-residue.md session-4 block for
+>   detail):** empty tr/hi/bn ×6 (transformer scrambles the predicate into the
+>   then-branch) + behavior-sortable ×6 (nested behavior sub-parse); set/A2 qu
+>   tail (mid-clause source phrase) + template-literal-list-build SOV six
+>   (loop-body sub-parse vs enriched en); SOV halt ×6 re-probed and confirmed
+>   (compound-level fronted-role re-association, untouched); NEW en-noise site:
+>   behavior-resizable en drops an if + its 4 branch sets that bn now parses.
 
 > **Update 2026-07-05c (SESSION 3: if.condition en-noise + the transition precision
 > drill — #576 / #577; avgPrecision 0.976 → 0.984, every language up; probe mean R1

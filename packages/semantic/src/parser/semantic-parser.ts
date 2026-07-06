@@ -3836,6 +3836,40 @@ export class SemanticParserImpl implements ISemanticParser {
   ]);
 
   /**
+   * Rendered copulas that tokenize as bare IDENTIFIERS (no normalization), or —
+   * ar هو — normalize to an unrelated sense (`it`), so {@link CONDITION_COPULAS}
+   * can't catch them. Without these, the i18n-rendered `if my value <copula>
+   * <empty-word> add …` split the condition at the predicate — the empty-word
+   * doubles as the language's `empty`/`null` COMMAND keyword — and a phantom
+   * `empty me` command opened the then-branch (if-empty / input-validation, the
+   * spurious-`empty` ×22 R0-precision family).
+   *
+   * Unlike the normalized copulas above, these suppress the split ONLY when the
+   * next token is a predicate ADJECTIVE (normalizes to empty/null/undefined):
+   * several are ambiguous with other senses (ar هو is also the pronoun `it`, and
+   * `إذا هو اضبط …` = `if it set …` needs the split at the command verb). The
+   * SOV members (bn হয়, hi है, tr dir) are behavior-neutral today — their
+   * transformer scrambles the predicate away from the copula — but lock the
+   * same contract should the render heal.
+   */
+  private static readonly CONDITION_COPULAS_SURFACE = new Set([
+    'est', // fr
+    'есть', // ru
+    'є', // uk
+    'é', // pt
+    'ay', // tl
+    'هو', // ar (keyword norm=`it` — matched by surface VALUE)
+    'adalah', // ms
+    'เป็น', // th
+    'হয়', // bn
+    'है', // hi
+    'dir', // tr
+  ]);
+
+  /** Predicate adjectives (normalized) that follow a copula inside a condition. */
+  private static readonly CONDITION_PREDICATES = new Set(['empty', 'null', 'undefined']);
+
+  /**
    * Condition operators that join two operands inside an `if` condition
    * expression (`I match .x`, `me contains .y`, `#m exists`). An operator can
    * never begin a then-branch command, so the condition extraction must not
@@ -3949,7 +3983,14 @@ export class SemanticParserImpl implements ISemanticParser {
       }
       if (bodyDepth === 0 && condTokens.length > 0) {
         const prev = (blockTokens[i - 1].normalized ?? blockTokens[i - 1].value).toLowerCase();
+        const prevValue = blockTokens[i - 1].value.toLowerCase();
         const cur = (t.normalized ?? t.value).toLowerCase();
+        // Surface-value copulas (fr est, ru есть, ar هو, …) only guard a
+        // PREDICATE continuation — several double as other senses (هو = `it`).
+        const prevIsCopula =
+          SemanticParserImpl.CONDITION_COPULAS.has(prev) ||
+          (SemanticParserImpl.CONDITION_COPULAS_SURFACE.has(prevValue) &&
+            SemanticParserImpl.CONDITION_PREDICATES.has(cur));
         // A condition operator (`match`/`contains`/`exists`/…) is part of the
         // expression, never a then-branch command head — don't truncate at it
         // even if a verb-last SOV command pattern spuriously matches the span.
@@ -3970,7 +4011,7 @@ export class SemanticParserImpl implements ISemanticParser {
           sovVerbLookup !== null && sovVerbLookup.has(t.value.toLowerCase());
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
-          (!SemanticParserImpl.CONDITION_COPULAS.has(prev) || curIsSovCommandVerb) &&
+          (!prevIsCopula || curIsSovCommandVerb) &&
           (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
             this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
         ) {

@@ -10464,3 +10464,73 @@ describe('set of-possessive destination + operator-run patient (the set/A2 drill
     expect(roleOf(toggle, 'patient')?.type).toBe('selector');
   });
 });
+
+describe('condition copulas: rendered identifier copulas keep the predicate in the condition', () => {
+  // if-empty / input-validation: `if my value is empty add .error to me …`.
+  // The rendered copulas (fr est, ru есть, pt é, uk є, tl ay, ms adalah,
+  // th เป็น) tokenize as bare identifiers — and ar هو normalizes to `it` — so
+  // the copula guard missed them, the condition split fired at the predicate
+  // (vide/пустой/فارغ… doubles as the empty/null COMMAND keyword), and a
+  // phantom `empty me` command opened the then-branch in 8 languages
+  // (spurious-`empty` ×16, the R0-precision family).
+  function allActions(n: unknown, acc: string[] = []): string[] {
+    if (!n || typeof n !== 'object') return acc;
+    const rec = n as Record<string, any>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) allActions(x, acc);
+      else if (c && typeof c === 'object') allActions(c, acc);
+    }
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    [
+      'fr',
+      'sur défocaliser si mon valeur est vide ajouter .error à moi alors mettre "Required" à suivant .error-message fin',
+    ],
+    [
+      'ru',
+      'при размыть если мой значение есть пустой добавить .error в я затем положить "Required" в следующий .error-message конец',
+    ],
+    [
+      'ar',
+      'عند ضبابية إذا لي قيمة هو فارغ أضف .error إلى أنا ثم ضع "Required" إلى التالي .error-message النهاية',
+    ],
+    [
+      'ms',
+      'apabila kabur jika saya_punya nilai adalah kosong tambah .error ke saya kemudian letak "Required" ke seterusnya .error-message tamat',
+    ],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] if-empty has no phantom empty command`, () => {
+      const actions = allActions(parse(input, lang));
+      expect(actions.filter(a => a === 'empty')).toHaveLength(0);
+      expect(actions).toContain('if');
+      expect(actions).toContain('add');
+      expect(actions).toContain('put');
+    });
+  }
+
+  it('[ar] هو as the PRONOUN condition still splits at the command verb (fetch-do-not-throw)', () => {
+    // `إذا هو اضبط $users إلى هو` = `if it set $users to it` — هو here is the
+    // bare condition, not a copula; the then-branch set must not be swallowed.
+    const actions = allActions(
+      parse('احضر /api/users عند نقر كـJSON do ليس ارم ثم إذا هو اضبط $users إلى هو النهاية', 'ar')
+    );
+    expect(actions).toContain('set');
+    expect(actions.filter(a => a === 'empty')).toHaveLength(0);
+  });
+
+  it('[en] the reference shape is unchanged (condition keeps `empty`, add opens the branch)', () => {
+    const node = parse(
+      'on blur if my value is empty add .error to me put "Required" into next .error-message end',
+      'en'
+    );
+    const actions = allActions(node);
+    expect(actions.filter(a => a === 'empty')).toHaveLength(0);
+    expect(actions).toContain('add');
+    expect(actions).toContain('put');
+  });
+});
