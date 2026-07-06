@@ -10906,3 +10906,89 @@ describe('event-head param phrase: parameterized SOV handler heads anchor the re
     expect(all.find(r => r.action === 'repeat')).toBeDefined();
   });
 });
+
+describe('remove source slot: bare-identifier acceptance + genitive/from-marker collision', () => {
+  function walkNodes(n: unknown, acc: Record<string, any>[] = []): Record<string, any>[] {
+    if (!n || typeof n !== 'object') return acc;
+    const rec = n as Record<string, any>;
+    if (typeof rec.action === 'string') acc.push(rec);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) walkNodes(x, acc);
+      else if (c && typeof c === 'object') walkNodes(c, acc);
+    }
+    return acc;
+  }
+  const role = (
+    node: Record<string, any>,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] `remove .{dragClass} from item` captures the bare identifier source', () => {
+    // The source slot's expectedTypes rejected a bare identifier (expression),
+    // so the en reference — even in ISOLATION — silently dropped `item` and the
+    // schema's `me` default filled in; translations that DID capture the item
+    // were penalized against the under-captured reference (behavior-sortable
+    // remove.source ×12).
+    const node = parse('remove .{dragClass} from item', 'en');
+    expect(node.action).toBe('remove');
+    const n = node as unknown as Record<string, any>;
+    expect(role(n, 'patient')?.type).toBe('selector');
+    expect(role(n, 'source')?.type).toBe('expression');
+    expect(String(role(n, 'source')?.raw)).toBe('item');
+  });
+
+  for (const [lang, line] of [
+    ['es', 'quitar .{dragClass} de item'],
+    ['pt', 'remover .{dragClass} de item'],
+  ] as const) {
+    it(`[${lang}] \`${line}\`: \`de\` is remove's from-marker, not a possessive`, () => {
+      // es/pt `de` is BOTH the Romance genitive connector AND remove's rendered
+      // from-marker (normalized `source`). The possessive-selector matcher read
+      // `.{dragClass} de item` as ".{dragClass}'s item" — a phantom
+      // property-path patient — and the real source fell to the `me` default.
+      // The marker-role collision gate keeps the fold off commands that declare
+      // a `source` role.
+      const node = parse(line, lang);
+      expect(node.action).toBe('remove');
+      const n = node as unknown as Record<string, any>;
+      expect(role(n, 'patient')?.type).toBe('selector');
+      expect(String(role(n, 'patient')?.value)).toBe('.{dragClass}');
+      expect(role(n, 'source')?.type).toBe('expression');
+      expect(String(role(n, 'source')?.raw)).toBe('item');
+    });
+  }
+
+  it('[ja] a bound-identifier remove source retypes literal → expression', () => {
+    // The SOV marked capture types the untranslated `item` as a bare literal;
+    // en types the same variable read as expression. Same canonicalization as
+    // the add/set destination retype, extended to `source`. Corpus-shaped
+    // behavior-sortable handler segment (the set line binds `item`; a bare
+    // two-line compound is NOT the corpus shape — the body sub-parse is).
+    const node = parse(
+      'pointerdown(clientY) で 私 から\n' +
+        '  item を the target.closest("li") に 設定\n' +
+        '  .{dragClass} を 削除 item から',
+      'ja'
+    );
+    const rm = walkNodes(node).find(r => r.action === 'remove');
+    expect(rm).toBeDefined();
+    expect(role(rm!, 'patient')?.type).toBe('selector');
+    expect(role(rm!, 'source')?.type).toBe('expression');
+    expect(String(role(rm!, 'source')?.raw)).toBe('item');
+  });
+
+  it('[qu/tr] destination-normalized genitives still fold (bind possessives)', () => {
+    // The collision gate is deliberately `source`-only: qu `pa` and tr `ın`
+    // possessive folds are load-bearing on commands that declare a destination
+    // — gating on any declared role parsed these binds to NULL
+    // (bind-explicit-property / bind-non-form-display coverage regression).
+    const qu = parse('$color ta #picker pa chanin man bind', 'qu');
+    expect(qu).not.toBeNull();
+    expect(walkNodes(qu).find(r => r.action === 'bind')).toBeDefined();
+    const tr = parse('$color i #picker ın değer e bind', 'tr');
+    expect(tr).not.toBeNull();
+    expect(walkNodes(tr).find(r => r.action === 'bind')).toBeDefined();
+  });
+});

@@ -381,9 +381,14 @@ export const removeSchema: CommandSchema = {
     },
     {
       role: 'source',
+      // 'expression' admits a bare local-variable read (`remove .done from item`
+      // — `item` bound by an earlier set). Without it the slot silently rejected
+      // the identifier and the `me` default filled in, so the en reference
+      // under-captured its own source and every translation that DID capture
+      // `item` was penalized against it (behavior-sortable remove.source ×12).
       description: 'The element to remove from (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ['selector', 'reference', 'expression'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
