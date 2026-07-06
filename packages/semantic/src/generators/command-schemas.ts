@@ -282,6 +282,14 @@ export const toggleSchema: CommandSchema = {
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
+      // toggle's destination is LOCATIVE ("toggle .active on #button" — at
+      // the element), so ko 에서 ("at") is a legitimate marker HERE. It is no
+      // longer a profile-wide destination alternative: for allative
+      // destinations (add's "to me") 에서 reads as source, and it let an
+      // unconsumed wait-line tail (`문서 에서`) satisfy the next SOV clause's
+      // destination group (behavior-draggable). Per-command merge via the
+      // #588 markerVariants machinery.
+      markerVariants: { ko: ['에서'] },
     },
   ],
   // Runtime error documentation

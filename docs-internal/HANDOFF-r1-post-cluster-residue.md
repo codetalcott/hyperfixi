@@ -1,5 +1,82 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 9 = L1 of the launch bar): the two
+> biggest spurious families LANDED — #590 (morph ×18: schema role-layout swap
+> plus reference admission) and the draggable add ×11 drill in this PR
+> (brace-run fold + ko locative/allative marker split).** Post-session state:
+> baseline avgPrecision **0.9891 → 0.9910** (+0.0019 across the two drills),
+> probe mean R1 **0.9831** (0.9829 → +0.0002), parse 3696/3696,
+> degenerate/lossy 0, R2 1.0. Per-(lang,pattern) A/B across both PRs:
+> **29 spurious cleared, 0 new**; parse-coverage census identical (3404).
+> Remaining >×5 families: for ×14 bn, default ×9, empty ×8, call ×7, on ×7 he,
+> transition ×6, breakpoint ×6.
+>
+> 1. **#590 — morph ×18 (en-noise; the "one mechanism with render" guess was
+>    HALF right).** Probed first per discipline: en `morph #list to it` is
+>    PARSE NULL in isolation (`morph #list to #other` parses — the content
+>    slot rejected `reference`), and 17 generated-path languages fail the SAME
+>    schema way; the SOV-lax six capture it. The render `style` mis-capture is
+>    a SEPARATE mechanism (still open, missing ×7). But the schema ALSO
+>    carried its roles swapped vs the i18n transformer's marking (the
+>    transformer marks the morphed element PATIENT — ja を / ko 를 / tr i —
+>    and the content target DESTINATION に/에/e; the lax captures follow the
+>    markers): a reference admission alone would have flipped spurious ×18
+>    into missing ×36. Swap + admission landed together; morphMapper updated
+>    to match (it executed the six's captures with element/content transposed
+>    — R2-invisible, morph isn't in the curated subset); a
+>    normalizeCommandRoles retype aligns the lax five's fused
+>    positional+tag patient (`最も近い<form/>` literal → expression, en types
+>    `closest <form/>` expression). i18n's COMMAND_PRIMARY_ROLES morph entry
+>    dropped (schema primaryRole now patient — the i18n drift guard caught it
+>    in CI; that guard works). 6 guard tests (4 stash-verified).
+> 2. **draggable add ×11 (this PR) — the session-8 two-part diagnosis was
+>    right, but (b) mostly evaporated.** (a) The brace-run fold
+>    (`tryMatchBraceRunLiteral` + matchRoleToken call site): a depth-balanced
+>    `{ … }` identifier-token run folds to ONE literal (depth-tracked for the
+>    nested `${…}` template braces; `.{cls}` is one selector token — no
+>    collision, locked by test). The fold fires for literal-accepting roles
+>    AND roles with no expectedTypes — the handcrafted add-\*-full patient
+>    (it/pl/ru/uk/vi) declares none and had captured the lone `{`. The fold
+>    re-routed ja/tr/bn/hi/qu off the lax path onto their generated patterns,
+>    which killed the feared junk-role cleanup for free. (b) Only ko kept a
+>    junk role: 에서 (SOURCE primary, "at/from") was ALSO a profile-wide
+>    destination alternative, so the wait line's unconsumed tail (`문서 에서`)
+>    satisfied add's optional destination group → destination=문서 instead of
+>    the me default. Removed from the ko profile destination alternatives;
+>    toggle's LOCATIVE destination (`#button 에서 .active 를 토글`) keeps it
+>    per-command via the #588 markerVariants merge (the ko-idioms suite
+>    caught the over-removal — locked). 5 guard tests (3 stash-verified).
+>
+> **Residue updated after session 9 (launch-bar lens):**
+>
+> - **L2 pre-probed this session — all three are en-noise again:**
+>   - **for ×14 bn** (transition-opacity/-transform/-color + fade-out-remove):
+>     bn renders duration `500ms জন্য`, and জন্য ("for") is ALSO bn's
+>     for-loop keyword — the transition pattern consumes duration but leaves
+>     the trailing জন্য, which spawns a phantom ROLELESS `for` command node
+>     in the compound split. Fix candidates: consume the trailing duration
+>     marker in the bn transition group, or never let a lone normalized-`for`
+>     marker token anchor a command (exit-bareKeyword lesson in reverse).
+>   - **transition ×6 (slide-toggle, SOV six):** en DROPS the juxtaposed
+>     trailing command (`… toggle .collapsed on next .panel` then, with NO
+>     `then` keyword, `transition *max-height over 300ms`); the six keep it.
+>     En gap: juxtaposed command after a destination phrase.
+>   - **breakpoint ×6 (+halt ×3 ms/sw/vi, same pattern):** en DROPS the bare
+>     `breakpoint` (roleless schema → NO generated pattern → the #582 exit
+>     bareKeyword precedent is almost certainly the fix); ms/sw/vi's
+>     breakpoint words normalize to halt → their spurious halt ×3 is the
+>     sibling. One drill, two families.
+> - **default ×9 unchanged** (full L4 drill: 13 langs fail on rendered
+>   markers + possessive folds; in-code NOTE at defaultSchema.destination).
+> - **morph-with-template missing ×7 (render style:expression mis-capture
+>   from `with row: $data`) is still open** — now the dominant morph-family
+>   signal; en-side (en captures a junk param-name role the translations
+>   lack). Candidate for L3/L4 batching.
+> - Post-launch track unchanged (tr remove.patient block-walk; spurious empty
+>   tr/hi/bn + sortable hi/tr transformer-side; wait-line param leak ja —
+>   note the ko wait's or-run payload is equally unconsumed, that's what
+>   leaked 문서 에서; SOV halt ×6).
+
 > **STATUS UPDATE (2026-07-06, session 8): two spurious en-noise families
 > LANDED — #588 (go ×21: en optional to-marker + he/zh patient-particle
 > markerVariants) and the add drill in this PR (add ×22→×11: patient literal

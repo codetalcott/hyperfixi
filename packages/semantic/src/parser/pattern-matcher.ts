@@ -640,6 +640,28 @@ export class PatternMatcher {
       return true;
     }
 
+    // Brace-run STYLE-OBJECT literal fold: `{ left: ${clientX - xoff}px; … }`
+    // shatters into ~12+ identifier tokens (behavior-draggable's add patient —
+    // en and the generated-path languages captured only the lone `{` or died
+    // on it, while the SOV lax path fuses the run to ONE literal). A
+    // standalone `{` identifier token is unambiguous: `.{cls}` dynamic class
+    // selectors tokenize as ONE selector token, so no collision. Depth-tracked
+    // for the nested `${…}` template braces; fires for roles that accept a
+    // literal or declare no expectedTypes (the handcrafted add-*-full patient
+    // — capturing a lone `{` is never right), and only when the run closes —
+    // an unbalanced `{` backtracks.
+    if (
+      token.kind === 'identifier' &&
+      token.value === '{' &&
+      (!patternToken.expectedTypes?.length || patternToken.expectedTypes.includes('literal'))
+    ) {
+      const braceRun = this.tryMatchBraceRunLiteral(tokens);
+      if (braceRun) {
+        captured.set(patternToken.role, braceRun);
+        return true;
+      }
+    }
+
     // Attribute selectors (`@attr`) tokenize with kind `identifier`, not
     // `selector` — and that kind is load-bearing: roles like bind's `@property`
     // (expectedTypes ['reference','expression']) rely on the identifier reading.
@@ -1480,6 +1502,43 @@ export class PatternMatcher {
     const norm = token.normalized?.toLowerCase();
     if (norm && BAREKEYWORD_BLOCK_ACTIONS.has(norm)) return false;
     return true;
+  }
+
+  /**
+   * Fold a depth-balanced `{ … }` token run into ONE literal value (see the
+   * call site in matchRoleToken). The tokenizers emit `{`, `}`, `:`, `;`, `$`
+   * as bare identifier tokens, so a CSS style-object argument is otherwise
+   * unmatchable by a single-token role. Depth tracking covers the nested
+   * `${expr}` template braces. Returns null (with the stream reset) when the
+   * run never closes or exceeds the token cap.
+   */
+  private static readonly MAX_BRACE_RUN_TOKENS = 64;
+
+  private tryMatchBraceRunLiteral(tokens: TokenStream): SemanticValue | null {
+    const open = tokens.peek();
+    if (!open || open.kind !== 'identifier' || open.value !== '{') return null;
+
+    const mark = tokens.mark();
+    tokens.advance(); // {
+    const parts: string[] = ['{'];
+    let depth = 1;
+    let guard = 0;
+    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_BRACE_RUN_TOKENS) {
+      const t = tokens.advance();
+      if (!t) break;
+      if (t.value === '{') depth++;
+      else if (t.value === '}') {
+        depth--;
+        if (depth === 0) {
+          parts.push('}');
+          return createLiteral(parts.join(' '));
+        }
+      }
+      parts.push(t.value);
+    }
+
+    tokens.reset(mark);
+    return null;
   }
 
   /**

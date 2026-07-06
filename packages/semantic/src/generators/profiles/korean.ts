@@ -47,7 +47,13 @@ export const koreanProfile: LanguageProfile = {
   },
   roleMarkers: {
     patient: { primary: '을', alternatives: ['를'], position: 'after' },
-    destination: { primary: '에', alternatives: ['으로', '로', '에서', '의'], position: 'after' },
+    // 에서 is deliberately NOT a destination alternative: it is the SOURCE
+    // primary ("at/from"), and listing it here let an unconsumed wait-line
+    // tail (`문서 에서` — from document) satisfy the next SOV clause's
+    // optional destination group (behavior-draggable's add captured
+    // destination=문서 instead of the schema `me` default). A real Korean
+    // destination renders 에/으로/로/의.
+    destination: { primary: '에', alternatives: ['으로', '로', '의'], position: 'after' },
     source: { primary: '에서', alternatives: ['부터'], position: 'after' },
     style: { primary: '로', alternatives: ['으로'], position: 'after' },
     event: { primary: '을', alternatives: ['를'], position: 'after' }, // Event as object marker
