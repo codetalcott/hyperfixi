@@ -11415,3 +11415,80 @@ describe('breakpoint bare-keyword registration + hyphen-compound keyword fold (b
     expect(role(bp!, 'patient')).toBeUndefined();
   });
 });
+
+describe('bn জন্য duration postposition: consumed after the duration reclaim, never a phantom `for` (spurious for drill)', () => {
+  const actionsOf = (node: unknown): string[] => {
+    const flat: string[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec.action);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const rolesOf = (node: unknown, action: string): Map<string, any> | undefined => {
+    let hit: Map<string, any> | undefined;
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object' || hit) return;
+      const rec = n as Record<string, any>;
+      if (rec.action === action && rec.roles instanceof Map) { hit = rec.roles; return; }
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+      }
+    };
+    walk(node);
+    return hit;
+  };
+
+  it('[bn] transition-transform: `300ms জন্য` reclaims the duration AND consumes the postposition', () => {
+    // bn renders `over 300ms` as `300ms জন্য`; the fused pattern's duration
+    // reclaim consumed the time literal but left জন্য — which is ALSO bn's
+    // for-loop keyword, so it anchored a phantom ROLELESS `for` command in
+    // the compound split (spurious for, the transition-family half).
+    const node = parse('transform কে ক্লিক এ সংক্রমণ "scale(1.2)" তে 300ms জন্য', 'bn');
+    const actions = actionsOf(node);
+    expect(actions).toContain('transition');
+    expect(actions).not.toContain('for');
+    expect(String(rolesOf(node, 'transition')?.get('duration')?.value)).toBe('300ms');
+  });
+
+  it('[bn] transition-opacity: the then-chain after the postposition survives', () => {
+    const node = parse('opacity কে ক্লিক এ সংক্রমণ 0 তে 500ms জন্য তারপর আমি কে সরান', 'bn');
+    const actions = actionsOf(node);
+    expect(actions).toContain('transition');
+    expect(actions).toContain('remove');
+    expect(actions).not.toContain('for');
+  });
+
+  it('[bn] slide-toggle then-clause: the grammar-patterns body walker drops a ZERO-role phantom `for`', () => {
+    // This body goes through parseBodyWithGrammarPatterns (fused toggle head),
+    // which lacked the parseBodyWithClauses zero-role-for guard — the orphaned
+    // জন্য after `সংক্রমণ 300ms` anchored a bare `for` alongside the real
+    // transition.
+    const node = parse(
+      '.collapsed কে ক্লিক এ টগল পরবর্তী .panel তে তারপর *max-height কে সংক্রমণ 300ms জন্য',
+      'bn'
+    );
+    const actions = actionsOf(node);
+    expect(actions).toContain('toggle');
+    expect(actions).toContain('transition');
+    expect(actions).not.toContain('for');
+  });
+
+  it('[bn] a REAL for head still parses (the guard only drops roleless, bodyless nodes)', () => {
+    // template-literal-list-build, corpus-rendered: the for head `item এ
+    // $items কে জন্য` carries roles, so the phantom guard must not touch it.
+    const node = parse(
+      '$html কে "" তে সেট ক্লিক এ তারপর item এ $items কে জন্য তারপর $html কে সেট $html + `<li>${item.name}</li>` শেষ তে তারপর #list.innerHTML কে $html তে সেট',
+      'bn'
+    );
+    expect(actionsOf(node)).toContain('for');
+  });
+});
