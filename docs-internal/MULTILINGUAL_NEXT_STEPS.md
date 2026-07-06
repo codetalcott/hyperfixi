@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-7 remove drill · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-8 spurious drills · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,8 +21,8 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.985**              | held through session-7 (0.9851)                           |
-| avgRoleFidelity (R1)           | **0.983**              | session-7 remove drill: 0.9825 → 0.9829 (remove/hide ×16) |
+| avgPrecision (R0 trust floor)  | **0.989**              | session-8 spurious drills: 0.9851 → 0.9891 (go+add)       |
+| avgRoleFidelity (R1)           | **0.983**              | 0.9829, held through session-8                            |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
@@ -30,6 +30,36 @@ R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelit
 **Direction now: stop adding gate signals; spend them down.** R1 remains the
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
+
+> \*\*Update 2026-07-06c (SESSION 8: two spurious en-noise drills — #588 go ×21
+>
+> - the add repeat-times ×11 drill in this PR; avgPrecision 0.9851 → 0.9891,
+>   probe mean R1 0.9829 held; A/B 32 spurious cleared / 0 new; census identical
+>   (3404); gate green throughout; baseline regenerated per-PR.)\*\*
+>
+> * **#588 — go ×21 (en-noise, the pre-probe found THREE droppers).** The
+>   go-en pattern required the `to` marker en's own render drops (`go back` —
+>   PARSE NULL in isolation); he/zh dropped it too (the transformer marks
+>   `back` with their PATIENT particle את/把 while go-url keeps על/到). Fix at
+>   goSchema.destination: pattern-generator markerOverride branch honors
+>   per-command `markerOptional` (en), default branch + extraction rules merge
+>   per-command `markerVariants` as marker alternatives (he/zh) — the SOV
+>   generators already did. All three enriched together, zero honest dips.
+> * **add repeat-times ×11 (this PR) — the "loop-body attachment" hypothesis
+>   was WRONG.** en `add "hello" to me` is NULL in isolation — the patient
+>   slot was selector-only and rejected every string literal (`repeat forever
+toggle .pulse` composes fine, so the loop machinery was innocent).
+>   addSchema.patient += 'literal' (transition/append precedent) enriched en +
+>   12 generated-path languages together.
+> * **Residue sharpened:** behavior-draggable add ×11 is a brace-run fold
+>   (`{ left: ${…}px; }` shatters to ~12 identifier tokens; `.{cls}` is safe —
+>   one selector token) that must land WITH the SOV junk-role cleanup (ja's
+>   junk destination=`"draggable:move"` vs en's `me` default would flip
+>   spurious ×11 into missing ×11). default ×9 needs the full per-language
+>   drill: property-path admission fixes en only; the 13 dropping languages
+>   fail on rendered markers + possessive folds (~26 honest dips if en-only —
+>   in-code NOTE at defaultSchema.destination). morph ×18 untouched. Next up
+>   otherwise: SOV halt ×6 (stretch), wait-line param leak (value-level).
 
 > **Update 2026-07-06b (SESSION 7: the en remove.source drill + es/pt
 > remove.patient gate — #586; probe mean R1 0.9825 → 0.9829, avgPrecision

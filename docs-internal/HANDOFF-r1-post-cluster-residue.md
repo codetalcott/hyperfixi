@@ -1,5 +1,73 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 8): two spurious en-noise families
+> LANDED — #588 (go ×21: en optional to-marker + he/zh patient-particle
+> markerVariants) and the add drill in this PR (add ×22→×11: patient literal
+> admission cleared the repeat-times half).** Post-session state: probe mean
+> R1 **0.9829** (held), baseline avgPrecision **0.9851 → 0.9891** (+0.0040
+> across the two drills), parse 3696/3696, degenerate/lossy 0, R2 1.0.
+> Per-(lang,pattern) A/B across both PRs: **32 spurious entries cleared,
+> 0 new**; parse-coverage census identical before/after (3404 pairs).
+>
+> 1. **#588 — go ×21 (en-noise, built as diagnosed — but the pre-probe showed
+>    THREE droppers, not one).** en renders go's destination bare
+>    (`renderOverride: ''` → `go back`) while the generated go-en pattern
+>    REQUIRED the `to` literal — en PARSE NULL in isolation; 21 languages
+>    captured `destination="back"` via lax event-fused paths. he/zh were the
+>    other two droppers, sibling reason: the transformer renders `back` with
+>    their PATIENT particle (`לך את back` / `前往 把 back`) while go-url keeps
+>    the destination marker (`על` / `到`). Three aligned pieces, all scoped to
+>    goSchema.destination: (a) the pattern-generator markerOverride branch now
+>    honors per-command `markerOptional` (marker words wrap in an optional
+>    group) — en `go back` and `go to url "/page"` both parse; (b) the
+>    default-marker branch + extraction rules merge per-command
+>    `markerVariants[code]` as marker alternatives (the SOV two-role
+>    generators already did); (c) `markerOptional: { en: true }`,
+>    `markerVariants: { he: ['את'], zh: ['把'] }`. All three enriched
+>    together — zero honest dips. No pre-existing schema hits the new
+>    default-branch merge (put-en / set-tr markerVariants sit on
+>    override-branch roles). 6 guard tests (3 stash-verified fail-without-fix;
+>    3 lock the marked forms).
+> 2. **add repeat-times ×11 (this PR) — the session-7 "loop-body attachment"
+>    guess was WRONG.** Probed: `repeat forever toggle .pulse` composes fine
+>    (head-only repeat + sibling via the clause loop), and en
+>    `add "hello" to me` is NULL in ISOLATION — the patient slot
+>    (`expectedTypes: ['selector']`) rejected ANY string literal.
+>    addSchema.patient += 'literal' (transition/append precedent) cleared en +
+>    the 12 generated-path languages together (ar/de/es/fr/he/id/ms/pt/sw/th/
+>    tl/zh — the remove.source shared-schema pattern again); the 11 lax-path
+>    languages' captures now match. 3 guard tests (2 stash-verified).
+>
+> **Residue updated after session 8:**
+>
+> - **behavior-draggable add ×11 (the other half of add ×22) is a DIFFERENT
+>   mechanism — deferred, do not conflate with the cleared repeat-times
+>   half.** The style-object patient `add { left: ${clientX - xoff}px; … }`
+>   shatters into ~12 identifier tokens in en (a standalone `{` identifier —
+>   NO collision with `.{cls}`, which tokenizes as ONE selector token), so the
+>   generated pattern can't capture it; needs a brace-run literal fold in
+>   matchRoleToken. BUT an en-only fold trades spurious ×11 for missing ×11:
+>   the lax-path languages carry junk roles there (ja
+>   `source=(clientX,clientY)またはpointerup…` wait-line leak +
+>   `destination=literal:"draggable:move"` next-line grab vs en's
+>   destination=reference:"me" schema default → type mismatch → new missing
+>   entries). The fold and the SOV junk-role cleanup must land TOGETHER.
+> - **default ×9 — probed deeper, still open.** defaultSchema.destination +
+>   'property-path' fixes en `default my @data-count to "0"` (parallel to
+>   set-en-possessive; verified at src level) but ONLY en: all 13
+>   currently-dropping languages stay NULL on their rendered possessive+marker
+>   shapes (de `standard mein @data-count zu "0"`, es `predeterminar mi
+@data-count a "0"`, …) — their generated patterns demand profile markers
+>   the render omits, and their possessive shapes don't fold. An en-only
+>   enrichment would mint ~26 honest-dip A/B entries. Needs the full
+>   default-value drill (per-language markers + possessive matching).
+>   In-code NOTE at defaultSchema.destination.
+> - **morph ×18 — untouched this session** (probe the render with-phrase
+>   before diagnosing, per the session-7 note below).
+> - Everything else from the session-7 block below stands (tr remove.patient
+>   block-walk leak; spurious empty tr/hi/bn + sortable hi/tr
+>   transformer-side; wait-line param leak ja; SOV halt ×6 stretch).
+
 > **STATUS UPDATE (2026-07-06, session 7): the en remove.source drill LANDED as
 > #586** — batched with the es/pt remove.patient gate (same site). Post-session
 > state: probe mean R1 **0.9829** (0.9825 → +0.0004), baseline avgPrecision

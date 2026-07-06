@@ -318,7 +318,14 @@ export const addSchema: CommandSchema = {
       role: 'patient',
       description: 'The class or attribute to add',
       required: true,
-      expectedTypes: ['selector'],
+      // `literal` admits quoted HTML/text content (`add "<p>Line</p>" to me`,
+      // repeat-times + behavior-draggable): the selector-only slot rejected the
+      // string and the WHOLE command parsed NULL in en and the generated-path
+      // languages, while 11 lax-path languages captured patient=literal — and
+      // were precision-flagged as "spurious add" against the empty en
+      // reference (add ×22, en-noise). Same admission precedent as
+      // transition.patient / append.patient.
+      expectedTypes: ['selector', 'literal'],
       svoPosition: 1,
       sovPosition: 2,
     },
