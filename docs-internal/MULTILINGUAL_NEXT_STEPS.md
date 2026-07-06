@@ -9,27 +9,66 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-6 behavior drills · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-7 remove drill · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                  | Notes                                                            |
-| ------------------------------ | ---------------------- | ---------------------------------------------------------------- |
-| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                         |
-| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                |
-| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                |
-| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                |
-| avgFidelity (R0-recall)        | **1.000**              | saturated                                                        |
-| avgPrecision (R0 trust floor)  | **0.985**              | session-6 resizable drill: 0.9849 → 0.9851 (bn up)               |
-| avgRoleFidelity (R1)           | **0.982**              | session-6 sortable drill: 0.9824 → 0.9825 (sortable families ×9) |
-| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects        |
+| Signal                         | Value                  | Notes                                                     |
+| ------------------------------ | ---------------------- | --------------------------------------------------------- |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                  |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                         |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
+| avgPrecision (R0 trust floor)  | **0.985**              | held through session-7 (0.9851)                           |
+| avgRoleFidelity (R1)           | **0.983**              | session-7 remove drill: 0.9825 → 0.9829 (remove/hide ×16) |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.** R1 remains the
 dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
 families are the next un-mined seam.
+
+> **Update 2026-07-06b (SESSION 7: the en remove.source drill + es/pt
+> remove.patient gate — #586; probe mean R1 0.9825 → 0.9829, avgPrecision
+> 0.9851 held; per-(lang,pattern) A/B 16 fixed / 0 new; parse-coverage census
+> identical (3404); gate green; baseline regenerated.)**
+>
+> - **remove.source ×12 (en-noise, built as diagnosed).** The source slot
+>   rejected the bare identifier (`item` types `expression`; slot expected
+>   selector/reference) → `me` schema default. removeSchema source +=
+>   'expression' enriched en AND the nine same-default languages together —
+>   all 24 langs now capture `source:expression="item"`, zero honest dips.
+>   Plus the bound-identifier literal→expression retype extended to `source`
+>   (the SOV five typed `item` as bare literal).
+> - **remove.patient es/pt — the mechanism was owner-first, not
+>   property-first:** es/pt `de` is the profile POSSESSIVE marker (normalized
+>   `source`), so tryMatchPossessiveSelectorExpression folded
+>   `.{dragClass} de item` into a phantom property-path patient. New
+>   marker-role collision gate, **deliberately source-only** — gating on any
+>   declared role NULLed qu/tr bind patterns (qu `pa`/tr `ın` normalize
+>   `destination`; caught by the coverage census, not the missing/spurious
+>   A/B — a null parse just vanishes; census now part of the discipline).
+> - **Residue sharpened:** tr remove.patient (`last .{dragClass}`) is a
+>   block-walk leak — the repeat-block's `son` (tr `end`, ALSO positional
+>   `last`; already in isEndKeyword) leaks into the next clause head. NOT a
+>   keyword-set fix; a future walker arc.
+> - **The four undrilled spurious families were all PROBED this session —
+>   every one is an en-noise inversion (en drops the command; the flagged
+>   languages parse it):** `go ×21` — en `go back` THROWS in isolation (the
+>   go-en pattern requires the `to` marker; `go to top` parses); `default ×9`
+>   — en `default my @data-count to "0"` THROWS in isolation (the en pattern
+>   never matches the possessive+attr shape); `add ×22` — the one-line
+>   `repeat 3 times add … to me` parses head-only in en (quantity+loopType,
+>   body dropped; repeat-times + behavior-draggable); `morph ×18` — en drops
+>   the then-chained `morph #target to it` after `render … with row: $data`
+>   (the SOV six keep it; en's render also grabs a `style` role ja lacks —
+>   check the with-phrase when drilling). Four separate en-side fixes; each
+>   will need the who-passes-via-what pre-probe before enriching en (the
+>   session-7 lesson: same-schema languages can enrich together). Next up
+>   otherwise: SOV halt ×6 (stretch), wait-line param leak (value-level).
 
 > **Update 2026-07-06 (SESSION 6: the two planned behavior drills — #583
 > then-boundary if fold + #584 event-head param-phrase; probe mean R1 0.9825,

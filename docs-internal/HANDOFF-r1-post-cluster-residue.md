@@ -1,5 +1,71 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 7): the en remove.source drill LANDED as
+> #586** — batched with the es/pt remove.patient gate (same site). Post-session
+> state: probe mean R1 **0.9829** (0.9825 → +0.0004), baseline avgPrecision
+> **0.9851** (held), parse 3696/3696, degenerate/lossy 0, R2 1.0.
+> Per-(lang,pattern) A/B: **16 fixed, 0 new**; parse-coverage census identical
+> before/after (3404 pairs — run it whenever the probe's roleCount moves).
+>
+> 1. **remove.source ×12 — the en-noise diagnosis, built.** The source slot's
+>    `expectedTypes: ['selector','reference']` rejected the bare identifier
+>    (`item` types as `expression` via tokenToSemanticValue) and the optional
+>    slot skipped → schema `me` default. THREE aligned pieces: (a) removeSchema
+>    source += 'expression' — the pre-fix probe showed the 9 me-default
+>    languages (ar/de/fr/he/id/ms/sw/tl/zh) defaulted for the SAME schema
+>    reason as en, so the shared-schema fix enriched en and all nine together
+>    (zero honest dips, better than the resizable-drill expectation); (b) the
+>    marker-role collision gate below; (c) normalizeCommandRoles
+>    bound-identifier retype extended destination → destination+source
+>    (bn/hi/ja/ko/th typed `item` as bare literal on the SOV capture path).
+>    All 24 languages now capture `source:expression="item"`.
+> 2. **remove.patient es/pt — genitive/from-marker collision, gated.** The
+>    mechanism was tryMatchPossessiveSelectorExpression (owner-first), NOT the
+>    property-first of-possessive read the session-6 block guessed: es/pt `de`
+>    (particle, normalized `source`) is the profile POSSESSIVE marker, so
+>    `quitar .{dragClass} de item` folded as ".{dragClass}'s item" → phantom
+>    property-path patient. New gate: reject the profile-possessive fold when
+>    the marker normalizes to `source` AND the command's schema declares a
+>    source role. **Deliberately source-ONLY**: the first draft gated on ANY
+>    declared role and qu `pa` / tr `ın` (both normalize `destination`) killed
+>    qu/tr bind-explicit-property + bind-non-form-display to NULL — invisible
+>    to the missing/spurious A/B (a null parse just vanishes), caught only by
+>    the coverage census. Guard test locks the bind folds. Collateral fix:
+>    modal-close-escape es/pt hide.patient (the compound's trailing
+>    `quitar .modal-open de cuerpo` un-poisoned the clause chain).
+>
+> 5 guard tests appended (4 stash-verified fail-without-fix; 1 locks qu/tr
+> bind possessives against gate over-broadening).
+>
+> **Residue updated after session 7:**
+>
+> - **tr remove.patient (`expression:"last .{dragClass}"`) is NOT the es/pt
+>   site — probed:** the tr line parses clean in ISOLATION (patient=selector,
+>   remove-tr-generated-simple); in corpus the repeat-block's `son` (tr `end`,
+>   ALSO tr's positional `last` — the bn শেষ / ar آخر family; `son` IS in
+>   isEndKeyword's tr set, so this is walker bookkeeping, not the keyword set)
+>   leaks into the remove clause head and fuses as a positional read
+>   (`last .{dragClass}`). Block-walk desync, for a future arc — do NOT touch
+>   the end-keyword sets for it.
+> - behavior-sortable remove.source/remove.patient families are CLEARED
+>   (×12 + es/pt); sortable's remaining flags are the spurious `empty` hi/tr
+>   (transformer-side, locked) + bn `for`.
+> - wait-line param leak (ja trigger.source junk literal) — unchanged, the
+>   body-side sibling of the #584 head fix.
+> - **The four spurious families were PROBED (not built) this session — ALL
+>   FOUR are en-noise inversions** (#6–#9; en drops the command, the flagged
+>   languages parse it): `go ×21` (en `go back` THROWS — go-en requires the
+>   `to` marker; `go to top` parses), `default ×9` (en `default my @data-count
+to "0"` THROWS in isolation), `add ×22` (one-line `repeat 3 times add … to
+me` parses head-only in en — quantity+loopType, body dropped), `morph ×18`
+>   (en drops the then-chained `morph #target to it` after `render … with
+row: $data`; en's render also grabs a `style:expression="row"` role the
+>   translations lack — probe the with-phrase when drilling). Each needs the
+>   who-passes-via-what pre-probe before enriching en (this session's lesson:
+>   same-schema languages can enrich together with en, zero honest dips).
+> - Everything else from the session-6 block below stands (SOV halt ×6 —
+>   stretch, compound-level fronted-role re-association).
+
 > **STATUS UPDATE (2026-07-06, session 6): both planned drills LANDED — #583
 > (then-boundary if fold, the behavior-resizable en-noise drill) and #584
 > (event-head param-phrase consumption, the behavior-sortable drill).**
