@@ -2082,7 +2082,9 @@ function getEventHandlerPatternsHe(): LanguagePattern[] {
       template: {
         format: 'כאשר {event} {body}',
         tokens: [
-          { type: 'literal', value: 'כאשר', alternatives: ['כש', 'עם'] },
+          // עם is he's WITH marker (fetch/render `עם method:"POST"` tails) — an
+          // event alternative here anchored phantom second handlers on those tails.
+          { type: 'literal', value: 'כאשר', alternatives: ['כש'] },
           { type: 'role', role: 'event' },
         ],
       },

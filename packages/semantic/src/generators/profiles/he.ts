@@ -81,7 +81,9 @@ export const hebrewProfile: LanguageProfile = {
     hide: { primary: 'הסתר', alternatives: ['החבא'], normalized: 'hide' },
     transition: { primary: 'מעבר', alternatives: ['הנפש'], normalized: 'transition' },
     // Events
-    on: { primary: 'ב', alternatives: ['עם'], normalized: 'on' },
+    // NOTE: עם is he's WITH/style marker, NOT an event word — listing it as an
+    // `on` alternative anchored phantom handlers on `עם method:"POST"` tails.
+    on: { primary: 'ב', normalized: 'on' },
     trigger: { primary: 'הפעל', alternatives: ['שגר'], normalized: 'trigger' },
     send: { primary: 'שלח', normalized: 'send' },
     // DOM focus
@@ -177,13 +179,13 @@ export const hebrewProfile: LanguageProfile = {
     prefixes: ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש'], // Common Hebrew prefixes
   },
   eventHandler: {
-    keyword: { primary: 'ב', alternatives: ['עם'], normalized: 'on' },
+    keyword: { primary: 'ב', normalized: 'on' },
     sourceMarker: { primary: 'מ', alternatives: ['מאת'], position: 'before' },
     conditionalKeyword: { primary: 'כאשר', alternatives: ['כש', 'אם'] },
     // Event marker: ב (at/upon), used in SVO pattern
     // Pattern: ב [event] [verb] [patient] על [destination?]
     // Example: בלחיצה החלף .active על #button
-    eventMarker: { primary: 'ב', alternatives: ['כש', 'עם'], position: 'before' },
-    temporalMarkers: ['כאשר', 'כש', 'עם'], // temporal conjunctions (when)
+    eventMarker: { primary: 'ב', alternatives: ['כש'], position: 'before' },
+    temporalMarkers: ['כאשר', 'כש'], // temporal conjunctions (when); עם is the WITH marker, not temporal
   },
 };
