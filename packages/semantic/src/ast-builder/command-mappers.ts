@@ -750,22 +750,25 @@ const swapMapper: CommandMapper = {
 /**
  * Morph command mapper.
  *
- * Semantic: morph destination:#element source:"<div>new</div>"
+ * Semantic: morph patient:#element destination:"<div>new</div>"
  * AST: { name: 'morph', args: ["<div>new</div>"], modifiers: { on: #element } }
+ *
+ * Role layout follows morphSchema: patient = the element being morphed,
+ * destination = the content/element to morph into (`morph #list to it`).
  */
 const morphMapper: CommandMapper = {
   action: 'morph',
   toAST(node, _builder) {
     const source = convertRoleValue(node, 'source'); // New HTML
-    const destination = convertRoleValue(node, 'destination'); // Target element
-    const patient = convertRoleValue(node, 'patient');
+    const destination = convertRoleValue(node, 'destination'); // Content target
+    const patient = convertRoleValue(node, 'patient'); // Element to morph
 
     const args: ExpressionNode[] = [];
     const modifiers: Record<string, ExpressionNode> = {};
 
-    const content = source ?? patient;
+    const content = source ?? destination;
     if (content) args.push(content);
-    if (destination) modifiers['on'] = destination;
+    if (patient) modifiers['on'] = patient;
 
     return createCommandNode('morph', args, modifiers);
   },

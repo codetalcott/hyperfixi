@@ -672,12 +672,14 @@ describe('Tier 3 Command Mappers', () => {
 
   describe('morph mapper', () => {
     it('should map morph command', () => {
+      // morphSchema layout: patient = the element being morphed,
+      // source/destination = the content to morph into.
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'morph',
         roles: new Map([
           ['source', { type: 'literal', value: '<div>Morphed</div>', dataType: 'string' }],
-          ['destination', { type: 'selector', value: '#element', selectorKind: 'id' }],
+          ['patient', { type: 'selector', value: '#element', selectorKind: 'id' }],
         ]),
       };
 

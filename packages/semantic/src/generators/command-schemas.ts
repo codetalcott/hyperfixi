@@ -2301,16 +2301,22 @@ export const swapSchema: CommandSchema = {
  *
  * Patterns:
  * - EN: morph #target to <html>
- * - EN: morph me into #template
+ * - EN: morph #list to it
+ *
+ * Role layout matches the i18n transformer's marking (the element being
+ * morphed takes the object/patient marker — ja を, ko 를, tr i — and the
+ * content target takes the destination marker — ja に, ko 에, tr e), so the
+ * generated patterns and the SOV verb-anchoring captures agree. `reference`
+ * on destination admits the then-chained `morph #list to it` corpus shape.
  */
 export const morphSchema: CommandSchema = {
   action: 'morph',
   description: 'Morph an element into another using DOM diffing',
   category: 'dom-content',
-  primaryRole: 'destination',
+  primaryRole: 'patient',
   roles: [
     {
-      role: 'destination',
+      role: 'patient',
       description: 'The element to morph',
       required: true,
       expectedTypes: ['selector', 'reference'],
@@ -2319,13 +2325,13 @@ export const morphSchema: CommandSchema = {
       markerOverride: { en: '' }, // "morph #target ..." (no preposition)
     },
     {
-      role: 'patient',
+      role: 'destination',
       description: 'The target content/element to morph into',
       required: true,
-      expectedTypes: ['literal', 'expression', 'selector'],
+      expectedTypes: ['literal', 'expression', 'selector', 'reference'],
       svoPosition: 2,
       sovPosition: 2,
-      markerOverride: { en: 'to' }, // "morph #target to <html>"
+      markerOverride: { en: 'to' }, // "morph #target to it"
     },
   ],
 };

@@ -330,6 +330,26 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // morph: the SOV verb-anchoring path fuses a positional word with a tag
+    // selector and types the patient as one bare literal (ja `最も近い<form/>`,
+    // tr `enyakın<form/>`) where matchBest — and the en reference — type the
+    // spaced form (`closest <form/>`) as `expression`. A patient literal
+    // embedding a `<tag/>` shape is an element expression, not a string.
+    // Gated to `morph` and to values containing a tag selector, so a real
+    // string-content patient is never touched (transition-retype precedent).
+    if (node.action === 'morph') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const pat = roles.get('patient');
+      if (
+        pat &&
+        pat.type === 'literal' &&
+        typeof pat.value === 'string' &&
+        /<[a-zA-Z][^>]*\/?>/.test(pat.value)
+      ) {
+        roles.set('patient', { type: 'expression', raw: pat.value } as SemanticValue);
+      }
+    }
+
     // wait: a duration that IS a known waitable event name is an EVENT wait —
     // `wait for transitionend` (en `wait-en-for-event` head) vs the
     // marker-less translations (`esperar transitionend`), whose generated

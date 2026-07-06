@@ -11098,3 +11098,106 @@ describe('add patient: literal content admission', () => {
     expect(String(role(node, 'patient')?.value)).toBe('.foo');
   });
 });
+
+describe('morph role layout: patient=element / destination=content, reference admission', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  it('[en] `morph #list to it` parses (reference content target)', () => {
+    // The content slot lacked `reference` in expectedTypes, so the corpus
+    // shape `morph #list to it` parsed NULL in en and 17 generated-path
+    // languages — while the 6 lax-path languages captured it and were
+    // precision-flagged as "spurious morph" against the empty en reference
+    // (the morph ×18 family, en-noise). The schema also carried the roles
+    // swapped vs the i18n transformer's marking (element=patient を/를/i,
+    // content=destination に/에/e), so an admission without the swap would
+    // have flipped spurious ×18 into missing ×36.
+    const node = parse('morph #list to it', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('morph');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(String(role(node, 'patient')?.value)).toBe('#list');
+    expect(role(node, 'destination')?.type).toBe('reference');
+  });
+
+  it('[en] then-chained morph stays attached (morph-fetch-result shape)', () => {
+    const node = parse('on click fetch /api/items then morph #list to it', 'en');
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    expect(flat.find(r => r.action === 'fetch')).toBeDefined();
+    const morph = flat.find(r => r.action === 'morph');
+    expect(morph).toBeDefined();
+    expect(role(morph!, 'patient')?.type).toBe('selector');
+    expect(role(morph!, 'destination')?.type).toBe('reference');
+  });
+
+  it('[de] `verwandeln #list zu es` parses via the generated pattern (same-schema enrichment)', () => {
+    // The 17 generated-path droppers failed for the same schema reason as en
+    // (reference rejection on the content slot) — one shared-schema change
+    // enriches them together (#586/#589 precedent).
+    const node = parse('verwandeln #list zu es', 'de') as unknown as Record<string, any>;
+    expect(node.action).toBe('morph');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(role(node, 'destination')?.type).toBe('reference');
+  });
+
+  const findMorph = (node: unknown): Record<string, any> | undefined => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat.find(r => r.action === 'morph');
+  };
+
+  it('[ja] lax-path capture keeps the marker-aligned layout (corpus morph-fetch-result line)', () => {
+    // The SOV verb-anchoring path (reachable in the fused-event context; the
+    // bare line does not parse standalone) always read the transformer's
+    // markers correctly (を=patient, に=destination); the schema swap makes
+    // the generated/en layout agree with it instead of fighting it.
+    const node = parse('/api/items を クリック で フェッチ それから #list を 変形 それ に', 'ja');
+    const morph = findMorph(node);
+    expect(morph).toBeDefined();
+    expect(role(morph!, 'patient')?.type).toBe('selector');
+    expect(String(role(morph!, 'patient')?.value)).toBe('#list');
+    expect(role(morph!, 'destination')?.type).toBe('reference');
+  });
+
+  it('[ja] fused positional+tag patient retypes literal → expression (corpus morph-form-update line)', () => {
+    // ja fuses `最も近い` + `<form/>` into one bare literal on the lax path;
+    // en types the spaced `closest <form/>` as expression. The
+    // normalizeCommandRoles retype (transition-patient precedent) aligns the
+    // type; a plain string-content patient is never touched.
+    const node = parse('/api/save を 送信 で フェッチ それから 最も近い <form/> を 変形 それ に', 'ja');
+    const morph = findMorph(node);
+    expect(morph).toBeDefined();
+    expect(role(morph!, 'patient')?.type).toBe('expression');
+    expect(role(morph!, 'destination')?.type).toBe('reference');
+  });
+
+  it('[en] `morph #list to #other` still parses (selector content locked)', () => {
+    const node = parse('morph #list to #other', 'en') as unknown as Record<string, any>;
+    expect(node.action).toBe('morph');
+    expect(role(node, 'patient')?.type).toBe('selector');
+    expect(role(node, 'destination')?.type).toBe('selector');
+  });
+});
