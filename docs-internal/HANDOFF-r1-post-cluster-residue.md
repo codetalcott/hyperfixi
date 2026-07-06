@@ -44,11 +44,12 @@
 > `event-he-when` (event=expression:"method"); fix is he-side with-phrase
 > consumption (or keep event-he-when off the עם tail). The seventh entry is
 > install-behavior hi, a different mechanism — probe separately. call ×7
-> (window-keydown, one pattern) is EN-SIDE (bar item 1): en drops `call
-saveDocument()` JUXTAPOSED after `halt` inside the if-branch (`if
-event.ctrlKey halt call saveDocument() end` — the conditional fold keeps
-> halt only), while the seven keep it — an en enrichment, so budget for the
-> he/hi/bn/ja/ko/qu/tr role alignment in the same PR (the morph lesson).
+> (window-keydown, one pattern) is EN-SIDE (bar item 1): en drops the
+> JUXTAPOSED call after halt inside the if-branch — the corpus line is
+> `if event.ctrlKey halt call saveDocument() end` and the conditional fold
+> keeps halt only — while the seven keep it. An en enrichment, so budget
+> for the he/hi/bn/ja/ko/qu/tr role alignment in the same PR (the morph
+> lesson).
 > Also on the L3/L4 radar: morph-with-template
 > missing ×7 (en render `#row with row: $data` grabs a junk
 > style:expression="row" param-name role — en-side mis-capture, separate
