@@ -376,22 +376,25 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
-    // Canonicalize a destination holding a locally-BOUND identifier (a loop
-    // binding or set variable — see registerBoundIdentifiers) to `expression`:
-    // it is a variable read, and that is how the en reference types it (`add
-    // .processed to item` → destination:expression). Which type the marked
-    // capture got is tokenizer-incidental — ja/ko typed the untranslated `item`
-    // as a bare literal.
+    // Canonicalize a destination/source holding a locally-BOUND identifier (a
+    // loop binding or set variable — see registerBoundIdentifiers) to
+    // `expression`: it is a variable read, and that is how the en reference
+    // types it (`add .processed to item` → destination:expression; `remove
+    // .done from item` → source:expression). Which type the marked capture got
+    // is tokenizer-incidental — ja/ko typed the untranslated `item` as a bare
+    // literal (behavior-sortable's remove.source across the SOV group).
     if (boundIdentifiers?.size) {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
-      const dest = roles.get('destination');
-      if (
-        dest &&
-        dest.type === 'literal' &&
-        typeof dest.value === 'string' &&
-        boundIdentifiers.has(dest.value)
-      ) {
-        roles.set('destination', { type: 'expression', raw: dest.value } as SemanticValue);
+      for (const role of ['destination', 'source'] as SemanticRole[]) {
+        const val = roles.get(role);
+        if (
+          val &&
+          val.type === 'literal' &&
+          typeof val.value === 'string' &&
+          boundIdentifiers.has(val.value)
+        ) {
+          roles.set(role, { type: 'expression', raw: val.value } as SemanticValue);
+        }
       }
     }
   }

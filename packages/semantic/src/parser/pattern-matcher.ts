@@ -23,7 +23,7 @@ import {
   isValidReference,
 } from '../types';
 import { isTypeCompatible } from './utils/type-validation';
-import { commandSchemas } from '../generators/command-schemas';
+import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -1830,12 +1830,34 @@ export class PatternMatcher {
     // Non-English markers (の, 의, র, pa, …) arrive as `particle` tokens. Match
     // them against the active profile's possessive marker. Empty markers
     // (Turkish, suffix-fused) don't have a standalone token and aren't handled here.
+    //
+    // Marker-role collision gate: a Romance genitive connector doubles as a
+    // role marker (es/pt `de` is BOTH the possessive connector AND remove's
+    // from-marker, normalized `source`). When the marker normalizes to `source`
+    // and the CURRENT command's schema declares a source role, the marker
+    // belongs to the command — folding it as a possessive steals the pattern's
+    // own marker (`quitar .{dragClass} de item` read as ".{dragClass}'s item" →
+    // phantom property-path patient, source lost to the me-default). `set`
+    // declares no `source`, so set-color-variable's genitive fold is untouched.
+    // Deliberately `source`-ONLY: the SOV genitives qu `pa` / tr `nin`
+    // normalize to `destination`, and their possessive folds are load-bearing
+    // on commands that declare a destination (qu/tr bind-explicit-property /
+    // bind-non-form-display parse NULL when gated on it).
+    const markerRoleCollision = (() => {
+      if (!this.currentPatternCommand) return false;
+      if ((possessiveToken?.normalized ?? '').toLowerCase() !== 'source') return false;
+      const schema = (commandSchemas as Record<string, CommandSchema | undefined>)[
+        this.currentPatternCommand
+      ];
+      return !!schema && schema.roles.some(r => r.role === 'source');
+    })();
     const isProfilePossessive =
       !!possessiveToken &&
       !!profileMarker &&
       profileMarker !== "'s" &&
       possessiveToken.value === profileMarker &&
-      (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation');
+      (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation') &&
+      !markerRoleCollision;
     if (!isEnglishPossessive && !isProfilePossessive && !splitEnglishPossessive) {
       tokens.reset(mark);
       return null;
