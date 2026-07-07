@@ -9,7 +9,15 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-13 / L5+L6 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-14 / L7 · `browser-priority`)
+
+> ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
+>
+> All four bar items are reached and gate-held. The last blocking family —
+> take-class spurious `for` ×6 — fell in the L7 drill; the residual `for` ×3
+> (wait-payload behaviors) is below the ×5 bar threshold and stays on the
+> post-launch track. Fidelity work from here is post-launch polish; the
+> six-signal ratchet holds the bar in CI.
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,16 +29,14 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.996**              | bar 3 reached L4 (0.9953); L6 empty drill → 0.9957        |
+| avgPrecision (R0 trust floor)  | **0.996**              | bar 3 reached L4 (0.9953); L6 → 0.9957; L7 → 0.9963       |
 | avgRoleFidelity (R1)           | **0.986**              | session-13 / L5: 0.9838 → 0.9862 — **bar 4 reached**      |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
-**Direction now: stop adding gate signals; spend them down.** Bar items 3 and 4
-are both reached and gate-held; the remaining launch work is bar item 2's
-last family: spurious for ×9 (take-class ×6 own-arc + wait-payload ×3
-post-launch) — empty ×8 cleared in the session-13 L6 drill.
+**The launch bar is complete (all four items) — remaining fidelity work is the
+post-launch track below.**
 
 ## LAUNCH BAR (adopted 2026-07-06, post session 8)
 
@@ -41,12 +47,12 @@ normal usage). The bar, all four together:
 1. **All en-facing parser gaps closed.** Every remaining en-noise inversion is
    a real English-parser bug (en `go back` / `add "content"` didn't parse
    until #588/#589) — user-visible to English users regardless of the metric.
-2. **Every spurious family larger than ×5 cleared** (post-session-12 inventory:
-   ~~morph ×18~~ ✓L1, for ×14→×9 (transition half ✓L2; remainder = take-class
-   ×6 own-arc + wait-payload behaviors ×3 post-launch), ~~add ×11 draggable~~
-   ✓L1, ~~default ×9~~ ✓L4 (+before ×1 qu bonus), empty ×8, ~~call ×7~~ ✓L3,
-   ~~on ×7 he~~ ✓L3, ~~transition ×6~~ ✓L2, ~~breakpoint ×6~~ ✓L2 (+halt ×3
-   sibling). Remaining: for ×9, empty ×8.
+2. **Every spurious family larger than ×5 cleared** — **REACHED session 14 (L7).**
+   Full burn-down: ~~morph ×18~~ ✓L1, ~~for ×14~~ (transition half ✓L2;
+   take-class ×6 ✓L7; residual wait-payload ×3 is <×5, post-launch),
+   ~~add ×11 draggable~~ ✓L1, ~~default ×9~~ ✓L4 (+before ×1 qu bonus),
+   ~~empty ×8~~ ✓L6, ~~call ×7~~ ✓L3, ~~on ×7 he~~ ✓L3, ~~transition ×6~~
+   ✓L2, ~~breakpoint ×6~~ ✓L2 (+halt ×3 sibling). **Remaining: none.**
 3. **avgPrecision ≥ 0.995** — **REACHED session 12: 0.9953.** The six-signal
    gate holds it from here.
 4. **avgRoleFidelity ≥ 0.985** — **REACHED session 13: 0.9862.** The canonical
@@ -68,7 +74,7 @@ across sessions 4–8, full discipline included). Sequencing:
 | L4 ✓    | default-value full drill (24 langs: schema markers + \_-fold)        | precision 0.9939 → 0.9953 |
 | L5 ✓    | canonical @attr typing (add/toggle patient + set.destination, ×44)   | R1 0.9838 → 0.9862        |
 | L6 ✓    | empty ×8 both-sides drill (+hi add ×2 role-steal; same session)      | precision 0.9953 → 0.9957 |
-| L7      | bar item 2 last family: for ×9 take-class half (probe both sides)    | spurious >×5 → 0          |
+| L7 ✓    | take-class for ×6: loop-head guard + bn marker — **BAR COMPLETE**    | precision 0.9957 → 0.9963 |
 
 L1 actual precision movement (+0.0019 for 29 entries) ran well under the
 table's ~0.997 sketch — the remaining seven >×5 families plus the tail carry
@@ -99,16 +105,72 @@ fixed in the same increment: the healed render order let the shattering
 `ch_usaq` fuse with `.error`; dict now emits the fused `chusaq` + qu kanqa
 joined the surface-copula set). Remaining launch work: for ×9's take-class ×6
 own-arc ONLY.
+L7 actual (session 14, one drill): **take-class spurious for ×6 cleared,
+i18n-side only** — precision 0.9957 → 0.9963, R1 0.9863 held, zero new A/B
+entries (the full-corpus A/B diff was surgical: spurious `for` ×9 → ×3, no
+other line changed). The splitter's `for` boundary was the root: hyperscript's
+only statement-head `for` is `for <var> in <iterable>`, so a `for` with no
+following `in` (take's `for me` target) now stays in-clause (isLoopHeadFor);
+bn additionally needed its duration marker জন্য (which doubles as bn's `for`
+loop keyword) suppressed for pronoun values in insertMarkers. No parse-side
+change needed — with the phrase in-clause, all 24 take-parses align with en.
+**With this, every spurious family >×5 is cleared: THE LAUNCH BAR IS
+COMPLETE.**
 
-**Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
-polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
-tr/hi/bn (transformer-side), wait-line param leak ja, SOV halt ×6, the R1
-long tail. The six-signal gate holds the bar once reached — regressions
-fail CI.
+**Post-launch track (ratchet-protected, not launch-blocking):** wait-payload
+spurious for ×3 (bn draggable/sortable/resizable — the unconsumed or-run
+payload), SOV-six role polish (qu/hi ~0.956 R1), tr remove.patient block-walk
+leak, wait-line param leak ja, SOV halt ×6, the R1 long tail (fetch ×18 two
+sub-arcs, set.patient:literal ×16, bind ×14, render.style ×12,
+add.destination ×4, toggle.destination ×2), language-grammar.ts drift guard.
+The six-signal gate holds the bar — regressions fail CI.
 
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06j (SESSION 14 = L7, one drill: take-class spurious for
+> ×6 in this PR; avgPrecision 0.9957 → 0.9963; avgRoleFidelity 0.9863 held;
+> A/B surgical — spurious for ×9 → ×3, zero other changes, zero new entries;
+> census identical (3404); gate green; baseline regenerated. THE LAUNCH BAR
+> IS COMPLETE.)**
+>
+> - **The shatter was `splitOnCommandBoundaries`, probed on both sides as
+>   planned.** `for` is a command keyword (the loop), so the splitter cut
+>   `take .active from .tab-button for me` at `for` and the join re-inserted
+>   `then` — a dangling `then for me` clause in ALL 23 non-en renders, which
+>   six SOV languages (bn/hi/ja/ko/qu/tr) then parsed as a spurious `for`
+>   loop with patient "me" (the other 17 parsed it as inert junk). en itself
+>   drops the `for me` phrase at the role level (takeSchema has no
+>   target/beneficiary role) — that stays post-launch; aligning the 23 to
+>   en's [on,take] multiset needed no en change, so no both-directions en
+>   A/B was minted.
+> - **The fix is the loop-head test:** hyperscript's only statement-head
+>   `for` is `for <var> in <iterable>`, so a `for` with no `in` among the
+>   tokens before the next command keyword is a role phrase (take's target,
+>   a duration) and stays attached (`isLoopHeadFor`, source-locale-aware via
+>   translateWord). Blast radius bounded by construction: `wait for X` and
+>   `repeat for x in y` were already kept by the prev-token check, and real
+>   loops satisfy the `in` test.
+> - **bn needed one more step (the parse-side mirror surfaced render-side):**
+>   bn is the only profile besides en with a `duration` role marker — জন্য,
+>   which is ALSO bn's `for` loop keyword (deliberately findable by the SOV
+>   verb-anchoring fallback for real loops). With the phrase in-clause, en's
+>   `for`→duration lexical mapping made bn render `আমি জন্য`, re-minting the
+>   spurious `for`. `insertMarkers` now suppresses a duration marker for
+>   pronoun values (me/you/it — never time expressions), mirroring its
+>   selector-shaped-event guard. `wait for transitionend` (`transitionend
+>   জন্য`) and real durations (`300ms জন্য`) keep their marker.
+> - qu bonus: with the phrase attached, qu's take parse now captures
+>   destination=reference:"me" — the only language to capture the take
+>   target at all (extra role, no A/B entry; semantically the most faithful).
+> - 6 guards (4 stash-verified fails-without-fix + 2 both-ways negatives:
+>   real bn loop keeps জন্য + then-split; wait/duration markers untouched).
+>   i18n 924 tests green, typecheck clean.
+> - **Launch-bar postscript: all four items reached and gate-held.** The
+>   residual spurious `for` ×3 (wait-payload behaviors bn ×3) is below the
+>   ×5 threshold and is the post-launch or-run payload arc, not this
+>   mechanism.
 
 > **Update 2026-07-06i (SESSION 13 = L6, drill 2 in the same session: the
 > empty ×8 both-sides drill in this PR; avgPrecision 0.9953 → 0.9957;

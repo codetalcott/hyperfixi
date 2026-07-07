@@ -2439,6 +2439,60 @@ describe('Predicate adjective stays inside the condition clause (empty ×8 bn/hi
   });
 });
 
+describe('take `for me` target stays in-clause (take-class spurious for ×6 bn/hi/ja/ko/qu/tr)', () => {
+  // `for` is ALSO hyperscript's loop command, so splitOnCommandBoundaries cut
+  // `take .active from .tab-button for me` at `for` and the join re-inserted
+  // `then` — a dangling `then for me` clause that six SOV languages parsed as
+  // a spurious `for` loop with patient "me". Hyperscript's only statement-head
+  // `for` is `for <var> in <iterable>`: a `for` with no following `in` is a
+  // role phrase and must stay attached (isLoopHeadFor).
+  const TAKE = 'on click take .active from .tab-button for me';
+
+  it('[hi] no then-shatter: फिर absent, take clause intact', () => {
+    const out = new GrammarTransformer('en', 'hi').transform(TAKE);
+    expect(out).not.toContain('फिर');
+    expect(out).toContain('.tab-button');
+  });
+
+  it('[ja] no then-shatter: それから absent', () => {
+    const out = new GrammarTransformer('en', 'ja').transform(TAKE);
+    expect(out).not.toContain('それから');
+  });
+
+  it('[tr] no then-shatter: ardından absent', () => {
+    const out = new GrammarTransformer('en', 'tr').transform(TAKE);
+    expect(out).not.toContain('ardından');
+  });
+
+  it("[bn] no then-shatter AND the pronoun renders bare — জন্য doubles as bn's `for` loop keyword", () => {
+    // insertMarkers suppresses the duration marker for a pronoun value: en maps
+    // `for` → duration lexically, and emitting জন্য after আমি re-minted the
+    // spurious `for` on the parse side (the SOV verb-anchoring fallback must
+    // keep finding জন্য as a verb for real loops).
+    const out = new GrammarTransformer('en', 'bn').transform(TAKE);
+    expect(out).not.toContain('তারপর');
+    expect(out).not.toContain('জন্য');
+    expect(out).toContain('আমি');
+  });
+
+  it('a real `for <var> in <iterable>` loop is untouched (both-ways negative)', () => {
+    const out = new GrammarTransformer('en', 'bn').transform(
+      'on click repeat for item in .items add .processed to item'
+    );
+    expect(out).toContain('জন্য'); // bn's real loop keyword survives
+    expect(out).toContain('তারপর'); // body still splits at the real command boundary
+  });
+
+  it('`wait for <event>` and real durations keep their marker (pronoun-only suppression)', () => {
+    const wait = new GrammarTransformer('en', 'bn').transform('on click wait for transitionend');
+    expect(wait).toContain('transitionend জন্য');
+    const dur = new GrammarTransformer('en', 'bn').transform(
+      'on click transition opacity to 0 over 300ms'
+    );
+    expect(dur).toContain('300ms জন্য');
+  });
+});
+
 describe('qu fused (no-underscore) empty/null value word (chusaq)', () => {
   // The qu semantic tokenizer splits on `_` by design, so the old `ch_usaq`
   // shattered (ch / _ / usaq) and the `usaq` shard fused with the following

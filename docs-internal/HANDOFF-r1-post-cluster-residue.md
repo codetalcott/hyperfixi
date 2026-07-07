@@ -1,5 +1,30 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 14 = L7 — 🎉 THE LAUNCH BAR IS
+> COMPLETE): the take-class spurious for ×6 drill landed (this PR) —
+> avgPrecision 0.9957 → 0.9963, R1 0.9863 held, the last >×5 spurious family
+> cleared. All four bar items reached and gate-held.**
+>
+> 0. **L7 drill in brief — full detail in NEXT_STEPS 2026-07-06j:**
+>    `splitOnCommandBoundaries` cut `take … for me` at `for` (a command
+>    keyword — the loop) and the join re-inserted `then`, shattering a
+>    dangling `then for me` clause in all 23 non-en renders; bn/hi/ja/ko/qu/tr
+>    parsed it as a spurious `for` loop. Fix i18n-side only: (a)
+>    `isLoopHeadFor` — a `for` with no following `in` before the next command
+>    keyword is a role phrase, never a loop head, stays in-clause; (b) bn's
+>    duration marker জন্য (the only profile besides en with one; ALSO bn's
+>    `for` loop keyword) suppressed for pronoun values in `insertMarkers`.
+>    No parse-side change; all 24 take-parses align with en's [on,take].
+>    6 guards (4 stash-verified + 2 both-ways negatives); A/B surgical
+>    (spurious for ×9 → ×3, zero other lines); census 3404; gate green;
+>    baseline regenerated. en's own `for me` role capture (takeSchema has no
+>    target role) stays post-launch — qu incidentally captures
+>    destination="me" already.
+> 1. **Post-launch track (per NEXT_STEPS):** wait-payload for ×3 bn
+>    behaviors, fetch ×18 two sub-arcs, set.patient:literal ×16, bind ×14,
+>    render.style ×12, add.destination ×4, toggle.destination ×2, SOV-six R1
+>    polish, language-grammar.ts drift guard.
+
 > **STATUS UPDATE (2026-07-06, session 13 = L5 + L6 of the launch bar): TWO
 > drills landed — #598 (canonical `@attr` typing: avgRoleFidelity 0.9838 →
 > 0.9862, LAUNCH BAR item 4 REACHED) and the empty ×8 both-sides drill (this
