@@ -1,6 +1,16 @@
 # domain-bdd Improvement Plan
 
-## Current State
+> **Status (2026-07-06): COMPLETE except Phase 5c.** Everything below has landed:
+> escaping helpers (`escapeForString`/`escapeForRegex` in `playwright-generator.ts`),
+> AND-step error reporting (`scenario-parser.ts`), named `Scenario:`/`Feature:`
+> blocks with `Background:` → `beforeEach`, the `render()` path
+> (`generators/bdd-renderer.ts` + roundtrip tests), and 8 languages
+> (en/es/ja/ar/ko/zh/tr/fr). Current state: ~115 tests across 3 suites.
+> **Still open: Phase 5c** — wire `packages/domain-bdd` into `.github/workflows/ci.yml`
+> (tracked as part of the framework↔semantic bridge arc, which covers CI for all
+> domain packages). The phases below are kept for historical context.
+
+## Current State (historical, pre-plan)
 
 39 tests passing, 4 languages (EN/ES/JA/AR), 3 BDD commands + AND continuation, Playwright code generation, MCP tools registered. Functional but has production gaps in code generation, test coverage, and scenario composition.
 

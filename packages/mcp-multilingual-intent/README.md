@@ -181,7 +181,7 @@ RAG lookup over the patterns-reference SQLite database. Returns up to N few-shot
 
 **Output:** `{ prompt, language, count, examples: [{ id, patternId, language, prompt, completion, qualityScore }] }`.
 
-> **Note on coverage:** the patterns database currently ships with 118 patterns (English translations only) and 19 LLM few-shot examples. Multilingual translations and additional examples are a tracked content gap.
+> **Note on coverage:** the patterns database currently ships with 164 patterns translated into 24 languages (3,936 translations) and 648 LLM few-shot examples (English prompts only). Multilingual few-shot examples are a tracked content gap.
 
 ### `list_supported_languages`
 
