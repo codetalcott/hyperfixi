@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-12 / L4 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-13 / L5 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -22,14 +22,14 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
 | avgPrecision (R0 trust floor)  | **0.995**              | session-12 / L4: 0.9939 → 0.9953 — **bar 3 reached**      |
-| avgRoleFidelity (R1)           | **0.984**              | 0.9838 held through L4                                    |
+| avgRoleFidelity (R1)           | **0.986**              | session-13 / L5: 0.9838 → 0.9862 — **bar 4 reached**      |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
-**Direction now: stop adding gate signals; spend them down.** R1 remains the
-dimension with headroom (SOV six ~0.95); R0-precision's spurious-action
-families are the next un-mined seam.
+**Direction now: stop adding gate signals; spend them down.** Bar items 3 and 4
+are both reached and gate-held; the remaining launch work is bar item 2
+(spurious for ×9 + empty ×8).
 
 ## LAUNCH BAR (adopted 2026-07-06, post session 8)
 
@@ -48,10 +48,13 @@ normal usage). The bar, all four together:
    sibling). Remaining: for ×9, empty ×8.
 3. **avgPrecision ≥ 0.995** — **REACHED session 12: 0.9953.** The six-signal
    gate holds it from here.
-4. **avgRoleFidelity ≥ 0.985** (0.9838 as of session 12) — the big R1-missing
-   families (add.patient:selector ×20, toggle.patient:expression ×19,
-   fetch.source:literal ×18, set.patient:literal ×16,
-   bind.source:property-path ×14) carry most of this.
+4. **avgRoleFidelity ≥ 0.985** — **REACHED session 13: 0.9862.** The canonical
+   `@attr` typing drill cleared add.patient ×18 + toggle.patient ×19 +
+   set.destination ×7 in one step (44 entries, all three families were the
+   same slot-dependent type divergence). The remaining big families
+   (fetch.source:literal ×18, set.patient:literal ×16,
+   bind.source:property-path ×14, render.style ×12) are now post-launch
+   polish — the gate holds the bar from here.
 
 Estimated **4–6 sessions** at the observed velocity (~30 A/B entries/session
 across sessions 4–8, full discipline included). Sequencing:
@@ -62,7 +65,8 @@ across sessions 4–8, full discipline included). Sequencing:
 | L2 ✓    | breakpoint ×6+halt ×3 + bn `for` transition-half ×5 + transition ×6  | precision 0.9910 → 0.9928 |
 | L3 ✓    | on ×7 he/hi (#595) + call ×7 halt-verb-guard (session-11 PR 2)       | precision 0.9928 → 0.9939 |
 | L4 ✓    | default-value full drill (24 langs: schema markers + \_-fold)        | precision 0.9939 → 0.9953 |
-| L5–L6   | big R1-missing families (add/toggle patient, fetch/bind source, set) | R1 → ≥0.985               |
+| L5 ✓    | canonical @attr typing (add/toggle patient + set.destination, ×44)   | R1 0.9838 → 0.9862        |
+| L6      | bar item 2 remainder: empty ×8 (transformer-side) + for ×9 take-half | spurious >×5 → 0          |
 
 L1 actual precision movement (+0.0019 for 29 entries) ran well under the
 table's ~0.997 sketch — the remaining seven >×5 families plus the tail carry
@@ -78,6 +82,14 @@ L4 actual: +0.0014 for 10 spurious cleared (default ×9 + the qu before ×1
 bonus from the ñawpaq_kaq underscore fold) — **the ≥0.995 bar is reached**;
 remaining >×5 inventory is for ×9 and empty ×8 (bar item 2), and L5–L6 carry
 the R1 bar (0.9838 → ≥0.985).
+L5 actual: **+0.0024 for 44 R1-missing entries cleared in ONE parser-side
+step** (the pre-probed add ×20 / toggle ×19 opposite-direction asymmetry was
+indeed one root cause — slot-dependent `@attr` typing — and set.destination ×7
+was the same bug in a third family; the two hi add entries that remain belong
+to the empty-arc role steal). Zero honest dips, zero new A/B entries, census
+identical — **the ≥0.985 R1 bar is reached**. Remaining launch work is bar
+item 2 only: empty ×8 (transformer-side, pre-probed session 12) + for ×9
+(take-class ×6 own-arc; wait-payload ×3 post-launch).
 
 **Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
 polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
@@ -88,6 +100,42 @@ fail CI.
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06h (SESSION 13 = L5, one drill: canonical `@attr` typing
+> in the shared value-builder; avgRoleFidelity 0.9838 → 0.9862 — LAUNCH BAR
+> item 4 (≥0.985) REACHED; avgPrecision 0.9953 held; A/B 44 missing cleared /
+> 0 new; census identical (3404); gate green incl. R2; baseline regenerated.)**
+>
+> - **The add ×20 / toggle ×19 opposite-direction asymmetry was ONE bug, and
+>   set.destination ×7 was its third face.** `@attr` tokens (kind
+>   `identifier`) were typed per-slot: a slot whose expectedTypes included
+>   `selector` hit the pattern-matcher's @→selector conversion; a LAX slot (no
+>   expectedTypes — the generated event-role slots, and toggle-en-full's
+>   patient) fell to the identifier→expression fall-through. Same token,
+>   different type depending on which pattern captured it: add `@disabled`
+>   en=selector / 18 langs=expression, toggle `@aria-expanded` the exact
+>   opposite, set-attribute `@disabled` destination diverged ar/bn/hi/ja/ko/
+>   tl/tr. The fix is ONE canonical rule in the shared value-builder
+>   (`tokenToSemanticValue`): an `@`-prefixed identifier is ALWAYS a selector
+>   (mirrors semantic-parser's own value path and the css-selector extractor).
+>   The old conversion block is deleted; slots that expect only
+>   `['reference','expression']` (bind's destination) still capture an @attr —
+>   as the canonical selector — via a narrow @-gated compatibility rule in the
+>   strict expectedTypes check. All 24 languages now byte-identical on
+>   form-disable-on-submit, accordion-toggle, toggle-aria-expanded,
+>   toggle-visibility, and set-attribute. 5 guards (3 stash-verified flips +
+>   2 both-ways); 1 existing hi set-attribute test updated to the canonical
+>   shape (was locked to the `.raw` expression reading).
+> - **Not taken (post-launch tail):** add.destination:selector ×4 (bn/hi/ja/ko
+>   — the SOV renders keep the en-ish `<button/> in me` phrase and the slot
+>   captures the `me` adjacent to the destination particle; the bar is already
+>   exceeded without it). toggle.destination ×2 (qu/th simple patterns drop
+>   the destination). The remaining big R1 families (fetch ×18 two sub-arcs,
+>   set.patient:literal ×16, bind ×14, render.style ×12) keep their own-arc
+>   notes in the session-12 block below.
+> - **Remaining launch work: bar item 2 only** — empty ×8 (bn/hi/tr,
+>   transformer-side, pre-probed session 12 — see the L5 paragraph of the
+>   handoff doc) + for ×9's take-class ×6 own-arc.
 
 > **Update 2026-07-06g (SESSION 12 = L4, one drill: the default-value full
 > drill in this PR; avgPrecision 0.9939 → 0.9953 — LAUNCH BAR item 3 (≥0.995)

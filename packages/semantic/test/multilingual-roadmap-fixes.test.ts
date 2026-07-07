@@ -496,13 +496,16 @@ describe('ar measure keyword alignment (undiacritized قس)', () => {
   });
 });
 
-describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
-  // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
-  // `@property` relies on the identifier reading, expectedTypes
-  // ['reference','expression']). When a role explicitly expects a `selector`
-  // (add/remove/toggle patient), an `@`-identifier is an attribute selector and
-  // is now accepted. This clears `add @disabled to <button/>`, which gated the
-  // form-disable-on-submit body. See docs-internal/MULTILINGUAL_ROADMAP.md.
+describe('Attribute selectors (@attr) — canonical selector typing in every slot', () => {
+  // `@disabled` tokenizes with kind `identifier`, but its SemanticValue type is
+  // canonically `selector` regardless of which pattern slot captures it (the
+  // shared value-builder, pattern-matcher.tokenToSemanticValue). The old
+  // slot-dependent reading (selector when the slot expected one, expression
+  // when the slot was lax) made the SAME token type-diverge between en's
+  // patterns and the generated event-role slots — add `@disabled` en=selector
+  // vs 18 langs=expression, toggle `@aria-expanded` the exact opposite — the
+  // launch-bar L5 R1 drill. Slots that expect ['reference','expression'] only
+  // (bind's destination) still capture an @attr — as the canonical selector.
   it('parses `add @disabled to <button/>` (attribute patient)', () => {
     expect(canParse('add @disabled to <button/>', 'en')).toBe(true);
     expect(parse('add @disabled to <button/>', 'en').action).toBe('add');
@@ -513,9 +516,44 @@ describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)
   });
 
   it('does not change bind, whose @property is a non-selector role', () => {
-    // bind's destination is expectedTypes ['reference','expression'] — the @attr
-    // conversion is gated to selector-expecting roles, so bind is untouched.
+    // bind's destination is expectedTypes ['reference','expression'] — an
+    // @attr is still accepted there (captured as the canonical selector).
     expect(parse('$color を #pickerの 値 に バインド', 'ja').action).toBe('bind');
+  });
+
+  const roleOf = (node: unknown, role: string) => {
+    const cmd = ((node as { body?: unknown[] }).body ?? [node])[0] as {
+      roles?: Map<string, { type?: string; value?: unknown }>;
+    };
+    return cmd.roles?.get(role);
+  };
+
+  it('en toggle via a LAX slot types @attr as selector (toggle-en-full patient)', () => {
+    // The en reference flip of the L5 drill: toggle-en-full's patient slot has
+    // no expectedTypes, so `@aria-expanded` read as expression while the
+    // generated toggle patterns of other languages read selector — 19 R1
+    // entries from one token. Canonical typing: selector everywhere.
+    const node = parse('on click toggle @aria-expanded on me', 'en');
+    expect(roleOf(node, 'patient')).toMatchObject({ type: 'selector', value: '@aria-expanded' });
+  });
+
+  it('en add via a selector-expecting slot types @attr as selector (unchanged direction)', () => {
+    const node = parse('on submit add @disabled to <button/> in me', 'en');
+    expect(roleOf(node, 'patient')).toMatchObject({ type: 'selector', value: '@disabled' });
+  });
+
+  it('en set destination @attr is a selector (set-attribute family, ×7 alignment)', () => {
+    const node = parse('on click set @disabled to true', 'en');
+    expect(roleOf(node, 'destination')).toMatchObject({ type: 'selector', value: '@disabled' });
+  });
+
+  it('a lax generated event-role slot (de vso) types @attr as selector', () => {
+    // de rides add-event-de-vso (no expectedTypes on the wrapped patient slot)
+    // and read expression pre-drill; must match en's selector byte-for-byte.
+    // (Corpus render of form-disable-on-submit, first clause.)
+    const node = parse('bei absenden hinzufügen @disabled zu <button/> in me', 'de');
+    expect(node.action).toBe('on');
+    expect(roleOf(node, 'patient')).toMatchObject({ type: 'selector', value: '@disabled' });
   });
 
   const formDisable: Array<[string, string]> = [
@@ -6731,10 +6769,12 @@ describe('hi set-family marker alignment (S6 — fronted target before event)', 
 
   it('[hi] set-attribute: destination=@disabled, patient=true', () => {
     const cmd = setBody('@disabled को क्लिक पर सेट सच में') as
-      | { action?: string; roles?: Map<string, { raw?: string; value?: unknown }> }
+      | { action?: string; roles?: Map<string, { type?: string; raw?: string; value?: unknown }> }
       | undefined;
     expect(cmd?.action).toBe('set');
-    expect(cmd?.roles?.get('destination')?.raw).toBe('@disabled');
+    // canonical @attr typing: an attribute reference is a selector in EVERY
+    // slot (`.raw` was the old slot-dependent expression reading)
+    expect(cmd?.roles?.get('destination')).toMatchObject({ type: 'selector', value: '@disabled' });
     expect(cmd?.roles?.get('patient')?.value).toBe('true');
   });
 });

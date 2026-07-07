@@ -1,5 +1,45 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 13 = L5 of the launch bar): the
+> canonical `@attr` typing drill LANDED (this PR) — avgRoleFidelity 0.9838 →
+> 0.9862, LAUNCH BAR item 4 (≥0.985) REACHED. Bar items 1/3/4 now all hold;
+> only item 2 remains (spurious for ×9 + empty ×8).**
+> Post-session state: parse 3696/3696, degenerate/lossy 0, avgPrecision
+> 0.9953 held, R2 1.0, census 3404, A/B 44 missing cleared / 0 new, gate
+> green, baseline regenerated.
+>
+> 1. **One rule cleared three families (44 entries).** As pre-probed at
+>    session-12 close, add ×20 and toggle ×19 were the same root cause in
+>    opposite directions — and set.destination:selector ×7 (set-attribute
+>    ar/bn/hi/ja/ko/tl/tr) turned out to be its third face. `@attr` tokens
+>    type-diverged per capturing slot: selector-expecting slots hit the
+>    pattern-matcher's gated @→selector conversion; lax no-expectedTypes slots
+>    (the generated event-role slots + toggle-en-full's patient) fell through
+>    to identifier→expression. The fix: `tokenToSemanticValue` now types ANY
+>    `@`-prefixed identifier as a selector (the canonical typing — mirrors
+>    semantic-parser's own value path and the css-selector extractor); the
+>    per-slot conversion block is deleted; a narrow @-gated compatibility rule
+>    in the strict expectedTypes check keeps `['reference','expression']`-only
+>    slots (bind destination) capturing @attrs — as selectors. en moved WITH
+>    the other languages on toggle/set (its lax-slot expression reading was
+>    half the asymmetry), so both-directions A/B was run: zero honest dips,
+>    zero new entries, census identical. R2 green (attribute toggles are in
+>    the curated subset). 5 guards (3 stash-verified flips + 2 both-ways
+>    negatives); the hi set-attribute roadmap test updated from the `.raw`
+>    expression reading to the canonical selector shape.
+> 2. **Deliberately not taken:** add.destination ×4 (bn/hi/ja/ko — the SOV
+>    renders embed en-ish `<button/> in me` before the destination particle
+>    and the slot captures the adjacent `me`; post-launch tail now that the
+>    bar is exceeded), toggle.destination ×2 (qu/th simple patterns).
+> 3. **L6 = the last launch-bar increment (item 2):** (a) empty ×8 bn/hi/tr —
+>    transformer-side, CONFIRMED and fully pre-probed in the session-12 L5
+>    paragraph below (the SOV reorder displaces the `is empty` predicate
+>    adjective into the next command's argument zone; fix keeps it inside the
+>    condition clause, then re-probe parse side against NEW renders +
+>    repopulate; behavior-sortable hi/tr same mechanism). (b) for ×9's
+>    take-class ×6 own-arc (probe BOTH transformer and parse sides first);
+>    wait-payload behaviors ×3 stay post-launch.
+
 > **STATUS UPDATE (2026-07-06, session 12 = L4 of the launch bar): the
 > default-value full drill LANDED (this PR) — spurious default ×9 cleared
 > with all 24 languages aligned in ONE step, plus the qu spurious before ×1
