@@ -3579,5 +3579,1292 @@
         }
       }
     ]
+  },
+  "de": {
+    "navigate": [
+      {
+        "id": "navigate-de-generated",
+        "language": "de",
+        "command": "navigate",
+        "priority": 100,
+        "template": {
+          "format": "navigieren zu {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "navigieren"
+            },
+            {
+              "type": "literal",
+              "value": "zu"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "destination": {
+            "marker": "zu"
+          }
+        }
+      }
+    ],
+    "click": [
+      {
+        "id": "click-de-generated",
+        "language": "de",
+        "command": "click",
+        "priority": 100,
+        "template": {
+          "format": "klicken {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "klicken"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "type": [
+      {
+        "id": "type-de-generated",
+        "language": "de",
+        "command": "type",
+        "priority": 100,
+        "template": {
+          "format": "eingeben {patient} in {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "eingeben"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "in"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression", "selector"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "in"
+          }
+        }
+      }
+    ],
+    "scroll": [
+      {
+        "id": "scroll-de-generated",
+        "language": "de",
+        "command": "scroll",
+        "priority": 100,
+        "template": {
+          "format": "scrollen {manner} um {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "scrollen"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "um"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {},
+          "quantity": {
+            "marker": "um"
+          }
+        }
+      }
+    ],
+    "read": [
+      {
+        "id": "read-de-generated",
+        "language": "de",
+        "command": "read",
+        "priority": 100,
+        "template": {
+          "format": "lesen {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "lesen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "zoom": [
+      {
+        "id": "zoom-de-generated",
+        "language": "de",
+        "command": "zoom",
+        "priority": 100,
+        "template": {
+          "format": "zoomen {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "zoomen"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {}
+        }
+      }
+    ],
+    "select": [
+      {
+        "id": "select-de-generated",
+        "language": "de",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "auswählen {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "auswählen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "back": [
+      {
+        "id": "back-de-generated",
+        "language": "de",
+        "command": "back",
+        "priority": 100,
+        "template": {
+          "format": "zurück {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "zurück"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "forward": [
+      {
+        "id": "forward-de-generated",
+        "language": "de",
+        "command": "forward",
+        "priority": 100,
+        "template": {
+          "format": "vorwärts {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "vorwärts"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "focus": [
+      {
+        "id": "focus-de-generated",
+        "language": "de",
+        "command": "focus",
+        "priority": 100,
+        "template": {
+          "format": "fokussieren {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fokussieren"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "close": [
+      {
+        "id": "close-de-generated",
+        "language": "de",
+        "command": "close",
+        "priority": 100,
+        "template": {
+          "format": "schließen {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "schließen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "open-de-generated",
+        "language": "de",
+        "command": "open",
+        "priority": 100,
+        "template": {
+          "format": "öffnen {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "öffnen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "search": [
+      {
+        "id": "search-de-generated",
+        "language": "de",
+        "command": "search",
+        "priority": 100,
+        "template": {
+          "format": "suchen {patient} in {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "suchen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "in"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "in"
+          }
+        }
+      }
+    ],
+    "help": [
+      {
+        "id": "help-de-generated",
+        "language": "de",
+        "command": "help",
+        "priority": 100,
+        "template": {
+          "format": "hilfe {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "hilfe"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ]
+  },
+  "pt": {
+    "navigate": [
+      {
+        "id": "navigate-pt-generated",
+        "language": "pt",
+        "command": "navigate",
+        "priority": 100,
+        "template": {
+          "format": "navegar para {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "navegar"
+            },
+            {
+              "type": "literal",
+              "value": "para"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "destination": {
+            "marker": "para"
+          }
+        }
+      }
+    ],
+    "click": [
+      {
+        "id": "click-pt-generated",
+        "language": "pt",
+        "command": "click",
+        "priority": 100,
+        "template": {
+          "format": "clicar {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "clicar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "type": [
+      {
+        "id": "type-pt-generated",
+        "language": "pt",
+        "command": "type",
+        "priority": 100,
+        "template": {
+          "format": "digitar {patient} em {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "digitar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "em"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression", "selector"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "em"
+          }
+        }
+      }
+    ],
+    "scroll": [
+      {
+        "id": "scroll-pt-generated",
+        "language": "pt",
+        "command": "scroll",
+        "priority": 100,
+        "template": {
+          "format": "rolar {manner} por {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "rolar"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "por"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {},
+          "quantity": {
+            "marker": "por"
+          }
+        }
+      }
+    ],
+    "read": [
+      {
+        "id": "read-pt-generated",
+        "language": "pt",
+        "command": "read",
+        "priority": 100,
+        "template": {
+          "format": "ler {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ler"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "zoom": [
+      {
+        "id": "zoom-pt-generated",
+        "language": "pt",
+        "command": "zoom",
+        "priority": 100,
+        "template": {
+          "format": "ampliar {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ampliar"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {}
+        }
+      }
+    ],
+    "select": [
+      {
+        "id": "select-pt-generated",
+        "language": "pt",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "selecionar {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "selecionar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "back": [
+      {
+        "id": "back-pt-generated",
+        "language": "pt",
+        "command": "back",
+        "priority": 100,
+        "template": {
+          "format": "voltar {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "voltar"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "forward": [
+      {
+        "id": "forward-pt-generated",
+        "language": "pt",
+        "command": "forward",
+        "priority": 100,
+        "template": {
+          "format": "avançar {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "avançar"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "focus": [
+      {
+        "id": "focus-pt-generated",
+        "language": "pt",
+        "command": "focus",
+        "priority": 100,
+        "template": {
+          "format": "focar {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "focar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "close": [
+      {
+        "id": "close-pt-generated",
+        "language": "pt",
+        "command": "close",
+        "priority": 100,
+        "template": {
+          "format": "fechar {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fechar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "open-pt-generated",
+        "language": "pt",
+        "command": "open",
+        "priority": 100,
+        "template": {
+          "format": "abrir {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "abrir"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "search": [
+      {
+        "id": "search-pt-generated",
+        "language": "pt",
+        "command": "search",
+        "priority": 100,
+        "template": {
+          "format": "procurar {patient} em {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "procurar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "em"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "em"
+          }
+        }
+      }
+    ],
+    "help": [
+      {
+        "id": "help-pt-generated",
+        "language": "pt",
+        "command": "help",
+        "priority": 100,
+        "template": {
+          "format": "ajuda {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ajuda"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ]
+  },
+  "ru": {
+    "navigate": [
+      {
+        "id": "navigate-ru-generated",
+        "language": "ru",
+        "command": "navigate",
+        "priority": 100,
+        "template": {
+          "format": "перейти на {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "перейти"
+            },
+            {
+              "type": "literal",
+              "value": "на"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "destination": {
+            "marker": "на"
+          }
+        }
+      }
+    ],
+    "click": [
+      {
+        "id": "click-ru-generated",
+        "language": "ru",
+        "command": "click",
+        "priority": 100,
+        "template": {
+          "format": "нажать {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "нажать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "type": [
+      {
+        "id": "type-ru-generated",
+        "language": "ru",
+        "command": "type",
+        "priority": 100,
+        "template": {
+          "format": "ввести {patient} в {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ввести"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "в"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression", "selector"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "в"
+          }
+        }
+      }
+    ],
+    "scroll": [
+      {
+        "id": "scroll-ru-generated",
+        "language": "ru",
+        "command": "scroll",
+        "priority": 100,
+        "template": {
+          "format": "прокрутить {manner} на {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "прокрутить"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "на"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {},
+          "quantity": {
+            "marker": "на"
+          }
+        }
+      }
+    ],
+    "read": [
+      {
+        "id": "read-ru-generated",
+        "language": "ru",
+        "command": "read",
+        "priority": 100,
+        "template": {
+          "format": "читать {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "читать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "zoom": [
+      {
+        "id": "zoom-ru-generated",
+        "language": "ru",
+        "command": "zoom",
+        "priority": 100,
+        "template": {
+          "format": "масштаб {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "масштаб"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "manner": {}
+        }
+      }
+    ],
+    "select": [
+      {
+        "id": "select-ru-generated",
+        "language": "ru",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "выбрать {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "выбрать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "back": [
+      {
+        "id": "back-ru-generated",
+        "language": "ru",
+        "command": "back",
+        "priority": 100,
+        "template": {
+          "format": "назад {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "назад"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "forward": [
+      {
+        "id": "forward-ru-generated",
+        "language": "ru",
+        "command": "forward",
+        "priority": 100,
+        "template": {
+          "format": "вперёд {quantity}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "вперёд"
+            },
+            {
+              "type": "role",
+              "role": "quantity",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "quantity": {}
+        }
+      }
+    ],
+    "focus": [
+      {
+        "id": "focus-ru-generated",
+        "language": "ru",
+        "command": "focus",
+        "priority": 100,
+        "template": {
+          "format": "фокус {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "фокус"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "close": [
+      {
+        "id": "close-ru-generated",
+        "language": "ru",
+        "command": "close",
+        "priority": 100,
+        "template": {
+          "format": "закрыть {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "закрыть"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "open-ru-generated",
+        "language": "ru",
+        "command": "open",
+        "priority": 100,
+        "template": {
+          "format": "открыть {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "открыть"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ],
+    "search": [
+      {
+        "id": "search-ru-generated",
+        "language": "ru",
+        "command": "search",
+        "priority": 100,
+        "template": {
+          "format": "искать {patient} в {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "искать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "в"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "в"
+          }
+        }
+      }
+    ],
+    "help": [
+      {
+        "id": "help-ru-generated",
+        "language": "ru",
+        "command": "help",
+        "priority": 100,
+        "template": {
+          "format": "помощь {patient}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "помощь"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {}
+        }
+      }
+    ]
   }
 }

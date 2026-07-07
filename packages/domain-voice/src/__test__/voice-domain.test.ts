@@ -35,7 +35,7 @@ describe('Voice Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 8 languages', () => {
+    it('should support 11 languages', () => {
       const langs = voice.getSupportedLanguages();
       expect(langs).toContain('en');
       expect(langs).toContain('es');
@@ -45,7 +45,10 @@ describe('Voice Domain', () => {
       expect(langs).toContain('zh');
       expect(langs).toContain('tr');
       expect(langs).toContain('fr');
-      expect(langs).toHaveLength(8);
+      expect(langs).toContain('de');
+      expect(langs).toContain('pt');
+      expect(langs).toContain('ru');
+      expect(langs).toHaveLength(11);
     });
 
     it('should reject unsupported language', () => {

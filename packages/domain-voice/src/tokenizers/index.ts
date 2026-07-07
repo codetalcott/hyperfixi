@@ -64,3 +64,6 @@ export const KoreanVoiceTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseVoiceTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishVoiceTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchVoiceTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanVoiceTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseVoiceTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianVoiceTokenizer: LanguageTokenizer = tokenizerFor('ru');

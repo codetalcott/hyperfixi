@@ -26,6 +26,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '导航',
     tr: 'git',
     fr: 'naviguer',
+    de: 'navigieren',
+    pt: 'navegar',
+    ru: 'перейти',
   },
   click: {
     en: 'click',
@@ -36,6 +39,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '点击',
     tr: 'tıkla',
     fr: 'cliquer',
+    de: 'klicken',
+    pt: 'clicar',
+    ru: 'нажать',
   },
   type: {
     en: 'type',
@@ -46,6 +52,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '输入',
     tr: 'yaz',
     fr: 'taper',
+    de: 'eingeben',
+    pt: 'digitar',
+    ru: 'ввести',
   },
   scroll: {
     en: 'scroll',
@@ -56,6 +65,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '滚动',
     tr: 'kaydır',
     fr: 'défiler',
+    de: 'scrollen',
+    pt: 'rolar',
+    ru: 'прокрутить',
   },
   read: {
     en: 'read',
@@ -66,6 +78,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '朗读',
     tr: 'oku',
     fr: 'lire',
+    de: 'lesen',
+    pt: 'ler',
+    ru: 'читать',
   },
   zoom: {
     en: 'zoom',
@@ -76,6 +91,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '缩放',
     tr: 'yakınlaş',
     fr: 'zoomer',
+    de: 'zoomen',
+    pt: 'ampliar',
+    ru: 'масштаб',
   },
   select: {
     en: 'select',
@@ -86,6 +104,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '选择',
     tr: 'seç',
     fr: 'sélectionner',
+    de: 'auswählen',
+    pt: 'selecionar',
+    ru: 'выбрать',
   },
   back: {
     en: 'back',
@@ -96,6 +117,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '返回',
     tr: 'geri',
     fr: 'retour',
+    de: 'zurück',
+    pt: 'voltar',
+    ru: 'назад',
   },
   forward: {
     en: 'forward',
@@ -106,6 +130,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '前进',
     tr: 'ileri',
     fr: 'avancer',
+    de: 'vorwärts',
+    pt: 'avançar',
+    ru: 'вперёд',
   },
   focus: {
     en: 'focus',
@@ -116,6 +143,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '聚焦',
     tr: 'odakla',
     fr: 'focaliser',
+    de: 'fokussieren',
+    pt: 'focar',
+    ru: 'фокус',
   },
   close: {
     en: 'close',
@@ -126,6 +156,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '关闭',
     tr: 'kapat',
     fr: 'fermer',
+    de: 'schließen',
+    pt: 'fechar',
+    ru: 'закрыть',
   },
   open: {
     en: 'open',
@@ -136,6 +169,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '打开',
     tr: 'aç',
     fr: 'ouvrir',
+    de: 'öffnen',
+    pt: 'abrir',
+    ru: 'открыть',
   },
   search: {
     en: 'search',
@@ -146,6 +182,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '搜索',
     tr: 'ara',
     fr: 'chercher',
+    de: 'suchen',
+    pt: 'procurar',
+    ru: 'искать',
   },
   help: {
     en: 'help',
@@ -156,6 +195,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '帮助',
     tr: 'yardım',
     fr: 'aide',
+    de: 'hilfe',
+    pt: 'ajuda',
+    ru: 'помощь',
   },
 };
 

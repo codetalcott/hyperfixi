@@ -30,6 +30,9 @@ export const koProfile: PatternGenLanguageProfile = profileFor('ko');
 export const zhProfile: PatternGenLanguageProfile = profileFor('zh');
 export const trProfile: PatternGenLanguageProfile = profileFor('tr');
 export const frProfile: PatternGenLanguageProfile = profileFor('fr');
+export const deProfile: PatternGenLanguageProfile = profileFor('de');
+export const ptProfile: PatternGenLanguageProfile = profileFor('pt');
+export const ruProfile: PatternGenLanguageProfile = profileFor('ru');
 
 export const allProfiles = [
   enProfile,
@@ -40,4 +43,7 @@ export const allProfiles = [
   zhProfile,
   trProfile,
   frProfile,
+  deProfile,
+  ptProfile,
+  ruProfile,
 ];
