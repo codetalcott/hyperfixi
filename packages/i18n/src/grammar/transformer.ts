@@ -82,6 +82,43 @@ function isPredicateAdjectivePosition(tokens: string[], i: number, copulas: Set<
 }
 
 /**
+ * Source-locale surface forms of the `for` command keyword and the loop's
+ * `in` preposition, for the loop-head test below.
+ */
+function getForLoopWordsForLocale(locale: string): { forWords: Set<string>; inWords: Set<string> } {
+  const forWords = new Set(['for']);
+  const inWords = new Set(['in']);
+  if (locale !== 'en') {
+    forWords.add(translateWord('for', 'en', locale).toLowerCase());
+    inWords.add(translateWord('in', 'en', locale).toLowerCase());
+  }
+  return { forWords, inWords };
+}
+
+/**
+ * True when a `for` at tokens[i] heads a real loop. Hyperscript's only
+ * statement-head `for` is `for <var> in <iterable>`, so a `for` with no `in`
+ * among the tokens before the next command keyword is a ROLE PHRASE — take's
+ * target (`take .active from .tab-button for me`) or a duration (`for 2s`) —
+ * and must never split the statement: the split shattered the phrase into a
+ * dangling `then for me` clause, which six SOV languages then parsed as a
+ * spurious `for` loop with patient "me" (the take-class ×6 family).
+ */
+function isLoopHeadFor(
+  tokens: string[],
+  i: number,
+  inWords: Set<string>,
+  commandKeywords: Set<string>
+): boolean {
+  for (let j = i + 1; j < tokens.length; j++) {
+    const lt = tokens[j].toLowerCase();
+    if (inWords.has(lt)) return true;
+    if (commandKeywords.has(lt)) return false;
+  }
+  return false;
+}
+
+/**
  * Repair a FRONTED Hebrew accusative marker in transformed output.
  *
  * When an event-handler body leads with a command-modifier (`on click once add …`,
@@ -545,6 +582,7 @@ const UNLESS_GUARD_OBJECT_MARKING_LOCALES = new Set(['he', 'zh']);
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
   const boundaryModifiers = getBoundaryModifiersForLocale(sourceLocale);
+  const { forWords, inWords } = getForLoopWordsForLocale(sourceLocale);
   const tokens = input.split(/\s+/);
 
   if (tokens.length === 0) return [input];
@@ -595,6 +633,13 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
       // Don't split inside a block (live/when/bind/unless body, etc.).
       // The block head and its body must transform as one statement.
       if (blockDepth > 0) {
+        currentPart.push(token);
+        continue;
+      }
+
+      // A `for` that doesn't head a real loop (`for <var> in <iterable>`) is a
+      // role phrase of the current command — see isLoopHeadFor.
+      if (forWords.has(lowerToken) && !isLoopHeadFor(tokens, i, inWords, commandKeywords)) {
         currentPart.push(token);
         continue;
       }

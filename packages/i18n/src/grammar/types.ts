@@ -551,6 +551,16 @@ export function insertMarkers(
       marker = undefined;
     }
 
+    // A pronoun-valued "duration" is never a time expression. It's the target
+    // phrase of `take … for me` (en maps `for` → duration lexically), kept
+    // in-clause by splitOnCommandBoundaries' loop-head guard. Emitting the
+    // duration marker after it (bn জন্য — also bn's `for` loop keyword) anchors
+    // a spurious `for` command in the semantic parse; suppress the marker and
+    // emit the bare pronoun, which take-pattern matchers skip harmlessly.
+    if (marker?.role === 'duration' && /^(me|you|it)$/i.test(element.value)) {
+      marker = undefined;
+    }
+
     if (marker) {
       if (adpositionType === 'preposition') {
         // Marker before element: "to element"
