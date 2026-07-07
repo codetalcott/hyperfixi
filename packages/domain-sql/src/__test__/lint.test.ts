@@ -21,6 +21,9 @@ import {
   ChineseSQLTokenizer,
   TurkishSQLTokenizer,
   FrenchSQLTokenizer,
+  GermanSQLTokenizer,
+  PortugueseSQLTokenizer,
+  RussianSQLTokenizer,
 } from '../tokenizers';
 import { COMMAND_KEYWORDS, MARKERS } from '../generators/sql-renderer';
 
@@ -38,6 +41,9 @@ function buildInput(): DomainLintInput {
       zh: ChineseSQLTokenizer,
       tr: TurkishSQLTokenizer,
       fr: FrenchSQLTokenizer,
+      de: GermanSQLTokenizer,
+      pt: PortugueseSQLTokenizer,
+      ru: RussianSQLTokenizer,
     },
     renderer: {
       commandKeywords: COMMAND_KEYWORDS,

@@ -2255,5 +2255,847 @@
         }
       }
     ]
+  },
+  "de": {
+    "select": [
+      {
+        "id": "select-de-generated",
+        "language": "de",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "auswählen {columns} von {source} wo {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "auswählen",
+              "alternatives": ["wähle"]
+            },
+            {
+              "type": "role",
+              "role": "columns",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "von"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "wo"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "columns": {},
+          "source": {
+            "marker": "von"
+          },
+          "condition": {
+            "marker": "wo"
+          }
+        }
+      }
+    ],
+    "insert": [
+      {
+        "id": "insert-de-generated",
+        "language": "de",
+        "command": "insert",
+        "priority": 100,
+        "template": {
+          "format": "einfügen {values} in {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "einfügen",
+              "alternatives": ["hinzufügen"]
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "in"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "values": {},
+          "destination": {
+            "marker": "in"
+          }
+        }
+      }
+    ],
+    "update": [
+      {
+        "id": "update-de-generated",
+        "language": "de",
+        "command": "update",
+        "priority": 100,
+        "template": {
+          "format": "aktualisieren {source} setzen {values} wo {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "aktualisieren",
+              "alternatives": ["ändern"]
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "setzen"
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "wo"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "values": {
+            "marker": "setzen"
+          },
+          "condition": {
+            "marker": "wo"
+          }
+        }
+      }
+    ],
+    "delete": [
+      {
+        "id": "delete-de-generated",
+        "language": "de",
+        "command": "delete",
+        "priority": 100,
+        "template": {
+          "format": "löschen von {source} wo {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "löschen",
+              "alternatives": ["entfernen"]
+            },
+            {
+              "type": "literal",
+              "value": "von"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "wo"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {
+            "marker": "von"
+          },
+          "condition": {
+            "marker": "wo"
+          }
+        }
+      }
+    ],
+    "get": [
+      {
+        "id": "get-de-generated",
+        "language": "de",
+        "command": "get",
+        "priority": 100,
+        "template": {
+          "format": "holen {source} wo {condition} limit {limit}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "holen"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "wo"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "limit"
+                },
+                {
+                  "type": "role",
+                  "role": "limit",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "condition": {
+            "marker": "wo"
+          },
+          "limit": {
+            "marker": "limit"
+          }
+        }
+      }
+    ]
+  },
+  "pt": {
+    "select": [
+      {
+        "id": "select-pt-generated",
+        "language": "pt",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "selecionar {columns} de {source} onde {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "selecionar"
+            },
+            {
+              "type": "role",
+              "role": "columns",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "de"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "onde"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "columns": {},
+          "source": {
+            "marker": "de"
+          },
+          "condition": {
+            "marker": "onde"
+          }
+        }
+      }
+    ],
+    "insert": [
+      {
+        "id": "insert-pt-generated",
+        "language": "pt",
+        "command": "insert",
+        "priority": 100,
+        "template": {
+          "format": "inserir {values} em {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "inserir",
+              "alternatives": ["adicionar", "acrescentar"]
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "em"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "values": {},
+          "destination": {
+            "marker": "em"
+          }
+        }
+      }
+    ],
+    "update": [
+      {
+        "id": "update-pt-generated",
+        "language": "pt",
+        "command": "update",
+        "priority": 100,
+        "template": {
+          "format": "atualizar {source} definir {values} onde {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "atualizar",
+              "alternatives": ["alterar", "modificar"]
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "definir"
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "onde"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "values": {
+            "marker": "definir"
+          },
+          "condition": {
+            "marker": "onde"
+          }
+        }
+      }
+    ],
+    "delete": [
+      {
+        "id": "delete-pt-generated",
+        "language": "pt",
+        "command": "delete",
+        "priority": 100,
+        "template": {
+          "format": "excluir de {source} onde {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "excluir",
+              "alternatives": ["remover", "apagar"]
+            },
+            {
+              "type": "literal",
+              "value": "de"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "onde"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {
+            "marker": "de"
+          },
+          "condition": {
+            "marker": "onde"
+          }
+        }
+      }
+    ],
+    "get": [
+      {
+        "id": "get-pt-generated",
+        "language": "pt",
+        "command": "get",
+        "priority": 100,
+        "template": {
+          "format": "obter {source} onde {condition} limite {limit}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "obter"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "onde"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "limite"
+                },
+                {
+                  "type": "role",
+                  "role": "limit",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "condition": {
+            "marker": "onde"
+          },
+          "limit": {
+            "marker": "limite"
+          }
+        }
+      }
+    ]
+  },
+  "ru": {
+    "select": [
+      {
+        "id": "select-ru-generated",
+        "language": "ru",
+        "command": "select",
+        "priority": 100,
+        "template": {
+          "format": "выбрать {columns} из {source} где {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "выбрать",
+              "alternatives": ["выбери"]
+            },
+            {
+              "type": "role",
+              "role": "columns",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "из"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "где"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "columns": {},
+          "source": {
+            "marker": "из"
+          },
+          "condition": {
+            "marker": "где"
+          }
+        }
+      }
+    ],
+    "insert": [
+      {
+        "id": "insert-ru-generated",
+        "language": "ru",
+        "command": "insert",
+        "priority": 100,
+        "template": {
+          "format": "вставить {values} в {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "вставить",
+              "alternatives": ["добавить"]
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "в"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "values": {},
+          "destination": {
+            "marker": "в"
+          }
+        }
+      }
+    ],
+    "update": [
+      {
+        "id": "update-ru-generated",
+        "language": "ru",
+        "command": "update",
+        "priority": 100,
+        "template": {
+          "format": "обновить {source} установить {values} где {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "обновить",
+              "alternatives": ["изменить"]
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "установить"
+            },
+            {
+              "type": "role",
+              "role": "values",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "где"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "values": {
+            "marker": "установить"
+          },
+          "condition": {
+            "marker": "где"
+          }
+        }
+      }
+    ],
+    "delete": [
+      {
+        "id": "delete-ru-generated",
+        "language": "ru",
+        "command": "delete",
+        "priority": 100,
+        "template": {
+          "format": "удалить из {source} где {condition}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "удалить",
+              "alternatives": ["убрать"]
+            },
+            {
+              "type": "literal",
+              "value": "из"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "где"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {
+            "marker": "из"
+          },
+          "condition": {
+            "marker": "где"
+          }
+        }
+      }
+    ],
+    "get": [
+      {
+        "id": "get-ru-generated",
+        "language": "ru",
+        "command": "get",
+        "priority": 100,
+        "template": {
+          "format": "получить {source} где {condition} лимит {limit}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "получить"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "где"
+                },
+                {
+                  "type": "role",
+                  "role": "condition",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "лимит"
+                },
+                {
+                  "type": "role",
+                  "role": "limit",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "condition": {
+            "marker": "где"
+          },
+          "limit": {
+            "marker": "лимит"
+          }
+        }
+      }
+    ]
   }
 }

@@ -31,3 +31,6 @@ export const KoreanSQLTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseSQLTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishSQLTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchSQLTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanSQLTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseSQLTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianSQLTokenizer: LanguageTokenizer = tokenizerFor('ru');
