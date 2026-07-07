@@ -24,7 +24,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.6.0"
+    "@lokascript/framework": "^2.6.0",
+    "@lokascript/semantic": "^2.6.0"
   },
   "devDependencies": {
     "@lokascript/domain-toolkit": "^2.6.0",
