@@ -157,7 +157,7 @@ plus morphology tables the bridge doesn't cover): migrate only its
 
 ### Phase 3 — Registry, CI, and drift guards (1 PR)
 
-> **Status: complete (2026-07-07, PR #614).** domain-config registers all 9
+> **Status: complete (2026-07-07, PR #615).** domain-config registers all 9
 > domains (learn wired in, `DOMAIN_PRIORITY` appends it last) with true
 > per-domain language sets; laziness is preserved by keeping the lists static
 > and adding a drift test (`domain-config/src/__tests__/languages.test.ts`)
