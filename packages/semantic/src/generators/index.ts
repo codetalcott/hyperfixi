@@ -44,6 +44,9 @@ export {
 // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
 export { KNOWN_PROFILES } from './known-profiles';
 
+// Query helpers over the manifest (public API for mcp-server/LSP/domain bridges)
+export { getKeywordTranslations, getRoleMarkers } from './profile-queries';
+
 // Command schemas
 export {
   type CommandSchema,

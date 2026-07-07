@@ -302,6 +302,10 @@ export {
   // Static all-known-profiles manifest
   KNOWN_PROFILES,
 
+  // Query helpers over the manifest (for mcp-server/LSP/domain bridges)
+  getKeywordTranslations,
+  getRoleMarkers,
+
   // Command schemas
   type CommandSchema,
   type RoleSpec,
