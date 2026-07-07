@@ -345,16 +345,19 @@ export class PatternMatcher {
       }
     }
 
-    // Hyphen-compound fold: many keyword translations are hyphen compounds
-    // (ms `titik-henti`, es `punto-interrupción`) that the tokenizers shatter
-    // into word/-/word runs — and the tail word can be ANOTHER command's
-    // keyword (ms `henti` → halt), so the run mis-anchors that command
-    // instead. Join the run and compare it to any hyphen-bearing expected
-    // value; only fires after every single-token match above has failed.
+    // Hyphen/underscore-compound fold: many keyword translations are compounds
+    // (ms `titik-henti`, es `punto-interrupción`, ru `по_умолчанию`,
+    // qu `ñawpaq_kaq`) that the tokenizers shatter into word/sep/word runs —
+    // and a segment can be ANOTHER command's keyword (ms `henti` → halt,
+    // qu `ñawpaq` → first), so the run mis-anchors that command instead.
+    // Join the run and compare it to any separator-bearing expected value;
+    // only fires after every single-token match above has failed.
     for (const value of [patternToken.value, ...(patternToken.alternatives ?? [])]) {
-      if (value.includes('-') && this.tryMatchHyphenCompound(tokens, value)) {
-        this.totalKeywordMatches++;
-        return true;
+      for (const sep of ['-', '_'] as const) {
+        if (value.includes(sep) && this.tryMatchShatteredCompound(tokens, value, sep)) {
+          this.totalKeywordMatches++;
+          return true;
+        }
       }
     }
 
@@ -403,19 +406,25 @@ export class PatternMatcher {
   }
 
   /**
-   * Match a hyphen-compound keyword (`titik-henti`) against a shattered token
-   * run (`titik` `-` `henti`): word segments must be identifier/keyword tokens
-   * equal to the expected segments (case-insensitive), separators lone `-`
-   * tokens. Consumes the run on success, resets the stream on failure.
+   * Match a compound keyword (`titik-henti`, `по_умолчанию`) against a
+   * shattered token run (`titik` `-` `henti` / `по` `_` `умолчанию`): word
+   * segments must be identifier/keyword/particle tokens equal to the expected
+   * segments (case-insensitive; particle because prepositions like ru `по` /
+   * uk `за` lead some underscore compounds), separators lone `sep` tokens.
+   * Consumes the run on success, resets the stream on failure.
    */
-  private tryMatchHyphenCompound(tokens: TokenStream, expected: string): boolean {
-    const segments = expected.split('-');
+  private tryMatchShatteredCompound(
+    tokens: TokenStream,
+    expected: string,
+    sep: '-' | '_'
+  ): boolean {
+    const segments = expected.split(sep);
     if (segments.length < 2 || segments.some(s => s.length === 0)) return false;
     const mark = tokens.mark();
     for (let i = 0; i < segments.length; i++) {
       if (i > 0) {
-        const sep = tokens.peek();
-        if (!sep || sep.value !== '-') {
+        const sepToken = tokens.peek();
+        if (!sepToken || sepToken.value !== sep) {
           tokens.reset(mark);
           return false;
         }
@@ -424,7 +433,7 @@ export class PatternMatcher {
       const word = tokens.peek();
       if (
         !word ||
-        (word.kind !== 'identifier' && word.kind !== 'keyword') ||
+        (word.kind !== 'identifier' && word.kind !== 'keyword' && word.kind !== 'particle') ||
         word.value.toLowerCase() !== segments[i]!.toLowerCase()
       ) {
         tokens.reset(mark);

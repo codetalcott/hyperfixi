@@ -97,7 +97,9 @@ const KNOWN_MISMATCHES = new Set([
   'qu:break:p_akiy',
   'qu:catch:hapsiy',
   'qu:continue:purichiy',
-  'qu:default:ñawpaq_kaq',
+  // qu:default resolved (default-value drill, L4): profile primary realigned to
+  // the dict render ñawpaq_kaq + the underscore-compound fold forms it from the
+  // shattered ñawpaq/_/kaq run.
   'qu:on:kaqpi',
   'qu:open:kichay',
   'qu:pushUrl:url_tanqay',
@@ -120,7 +122,8 @@ const KNOWN_MISMATCHES = new Set([
   'sw:async:sainkroni',
   'sw:catch:shika',
   'sw:copy:nakili',
-  'sw:default:msingi',
+  // sw:default resolved (default-value drill, L4): `msingi` (the dict render)
+  // added as a profile alternative alongside chaguo-msingi.
   'sw:pushUrl:sukumaUrl',
   'sw:replaceUrl:badilishaUrl',
   'sw:return:rudi',

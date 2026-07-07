@@ -2091,19 +2091,17 @@ export const defaultSchema: CommandSchema = {
       role: 'destination',
       description: 'The variable to set default for',
       required: true,
-      // NOTE (probed 2026-07-06, session 8): adding 'property-path' here fixes
-      // en `default my @data-count to "0"` (destination=property-path via the
-      // possessive matcher, exactly parallel to set-en-possessive) — but ONLY
-      // en: all 13 currently-dropping SVO/VSO languages still NULL on their
-      // rendered possessive+marker shapes (de `standard mein @data-count zu`,
-      // es `predeterminar mi @data-count a`, …), so an en-only enrichment
-      // would mint ~26 honest-dip A/B entries. Admit property-path only as
-      // part of the full default-value drill (per-language markers +
-      // possessive matching).
-      expectedTypes: ['reference'],
+      // Full default-value drill (session 12): property-path opts this role
+      // into the possessive matchers (`default my @data-count to "0"`),
+      // exactly parallel to set's destination. Enriched together with the
+      // per-language markers below so all 24 languages align in one step
+      // (an en-only enrichment would have minted honest-dip A/B entries in
+      // every still-dropping language).
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
-      // Same overrides as SET: no marker before variable in VSO/SVO
+      // Same overrides as SET: no marker before variable in VSO/SVO;
+      // SOV languages mark the variable with their patient/accusative marker.
       markerOverride: {
         en: '',
         ar: '',
@@ -2111,6 +2109,24 @@ export const defaultSchema: CommandSchema = {
         sw: '',
         bn: 'কে',
         qu: 'ta',
+        ja: 'を',
+        ko: '를',
+        tr: 'i',
+        hi: 'को',
+        de: '',
+        es: '',
+        fr: '',
+        it: '',
+        pt: '',
+        pl: '',
+        ru: '',
+        uk: '',
+        vi: '',
+        id: '',
+        ms: '',
+        th: '',
+        zh: '把',
+        he: 'את',
       },
     },
     {
@@ -2120,14 +2136,35 @@ export const defaultSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'],
       svoPosition: 2,
       sovPosition: 2,
-      // Same overrides as SET: value gets destination preposition
+      // Same shape as SET: the value carries the language's "to" marker.
+      // Markers mirror what the transformer actually renders for default
+      // (dict-driven), which differs from set in places (de zu vs auf,
+      // sw kwa vs kwenye).
       markerOverride: {
         en: 'to',
         ar: 'إلى',
         tl: 'sa',
-        sw: 'kwenye',
+        sw: 'kwa',
         bn: 'তে',
         qu: 'man',
+        ja: 'に',
+        ko: '에',
+        tr: 'e',
+        hi: 'में',
+        de: 'zu',
+        es: 'a',
+        fr: 'à',
+        it: 'in',
+        pt: 'para',
+        pl: 'do',
+        ru: 'в',
+        uk: 'в',
+        vi: 'vào',
+        id: 'ke',
+        ms: 'ke',
+        th: 'ใน',
+        zh: '到',
+        he: 'על',
       },
     },
   ],

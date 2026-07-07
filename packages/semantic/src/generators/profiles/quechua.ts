@@ -144,7 +144,10 @@ export const quechuaProfile: LanguageProfile = {
     js: { primary: 'js', normalized: 'js' },
     async: { primary: 'mana waqtalla', normalized: 'async' },
     tell: { primary: 'niy', alternatives: [], normalized: 'tell' },
-    default: { primary: 'qallariy', normalized: 'default' },
+    // The qu dict renders default as ñawpaq_kaq ("the prior one"); qallariy
+    // ("to begin") kept as alternative for back-compat — but note the qu dict
+    // uses qallariy for RESET, so primary must stay ñawpaq_kaq.
+    default: { primary: 'ñawpaq_kaq', alternatives: ['qallariy'], normalized: 'default' },
     init: { primary: 'qallarichiy', normalized: 'init' },
     behavior: { primary: 'ruwana', normalized: 'behavior' },
     install: { primary: 'tarpuy', normalized: 'install' },

@@ -1,5 +1,48 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
+> **STATUS UPDATE (2026-07-06, session 12 = L4 of the launch bar): the
+> default-value full drill LANDED (this PR) — spurious default ×9 cleared
+> with all 24 languages aligned in ONE step, plus the qu spurious before ×1
+> bonus. avgPrecision 0.9939 → 0.9953: LAUNCH BAR item 3 (≥0.995) REACHED.**
+> Post-session state: probe mean R1 0.9838 held, parse 3696/3696,
+> degenerate/lossy 0, R2 1.0, census 3404, A/B 10 cleared / 0 new, gate
+> green, baseline regenerated.
+>
+> 1. **The en-noise inversion resolved without a single honest dip.** Three
+>    mechanisms: (1) defaultSchema roles enriched to set-parallel shape —
+>    destination admits selector/reference/expression/property-path (the
+>    possessive matchers), BOTH roles carry a complete 24-language
+>    markerOverride table matching the dict renders (de zu ≠ set's auf, sw
+>    kwa ≠ kwenye, SOV dest markers ja を / ko 를 / tr i / hi को). All 24 now
+>    parse `on load default my @data-count to "0"` with byte-identical roles
+>    (destination=property-path{me,@data-count}, patient=literal:"0"); the
+>    SOV four ride the existing sov-2role-dest-first event patterns the
+>    instant their markers exist. (2) NEW general machinery: the #592
+>    hyphen-compound fold generalized to `tryMatchShatteredCompound` (seps
+>    `-` and `_`, particle segments accepted) — ru по_умолчанию and uk
+>    за_замовчуванням form across their tokenizers' by-design `_` splits.
+>    (3) qu profile default primary → dict render ñawpaq_kaq (this also
+>    killed the qu spurious `before` — the ñawpaq shard read as first);
+>    sw += bare msingi. 9 guard tests (8 stash-verified, 1 both-ways
+>    negative); lexicon-emit-mismatch allowlist pruned (its qu/sw default
+>    entries self-flagged as now-parsing).
+>
+> **L5 next — two arcs, in order:** (a) **empty ×8 (bn/hi/tr), pre-probed
+> this session, transformer-side CONFIRMED:** the SOV reorder displaces the
+> `is empty` predicate adjective INTO the next command's argument zone (hi
+> `अगर मेरा मान है जोड़ें .error को खाली मैं में` — खाली lands after the add
+> patient; bn খালি / tr boş identical), and the displaced adjective anchors
+> `empty-{lang}-generated` and STEALS a neighboring role (hi steals the add's
+> .error as its patient). Fix transformer-side (keep the predicate adjective
+> inside the condition clause under reorder), then re-probe the parse side
+> against the NEW renders + repopulate; behavior-sortable hi/tr is the same
+> mechanism in a behavior body. (b) **the big R1-missing families** for bar
+> item 4 (0.9838 → ≥0.985): add.patient:selector ×20,
+> toggle.patient:expression ×19, fetch.source:literal ×18,
+> set.patient:literal ×16, bind.source:property-path ×14. Bar item 2 also
+> still carries for ×9 (take-class ×6 own-arc — cross-language + transformer
+> probe BOTH sides first — + wait-payload behaviors ×3 post-launch).
+
 > **STATUS UPDATE (2026-07-06, session 11 = L3 of the launch bar): both L3
 > drills LANDED — #595 (spurious on ×7: he עם de-anchor + hi bare-event
 > command peek) and the halt-verb-guard drill in this PR (spurious call ×7,
