@@ -4146,6 +4146,7 @@ export class SemanticParserImpl implements ISemanticParser {
     'হয়', // bn
     'है', // hi
     'dir', // tr
+    'kanqa', // qu (bare identifier, no norm; guards `kanqa chusaq` = `is empty/null`)
   ]);
 
   /** Predicate adjectives (normalized) that follow a copula inside a condition. */
@@ -4313,9 +4314,20 @@ export class SemanticParserImpl implements ISemanticParser {
         // Allow the split after a copula when a real SOV command-VERB keyword opens
         // here — gated to SOV (verb lookup present) and an actual verb-lookup hit, so
         // SVO `X is empty <cmd>` (a predicate, not a verb, after the copula) is
-        // byte-identical to before.
+        // byte-identical to before. EXCEPT when the verb-lookup hit is itself a
+        // condition PREDICATE word (hi खाली / tr boş → `null`, bn খালি →
+        // `empty` — each doubles as the language's empty/null COMMAND verb):
+        // with the transformer's predicate-adjective guard the renders now keep
+        // `<copula> <predicate>` adjacent inside the condition, and the verb
+        // exception would re-split there — re-minting the spurious `empty`
+        // command this whole guard exists to prevent (empty ×8 bn/hi/tr, incl.
+        // the behavior-sortable `if item is null` shape). A REAL then-branch
+        // verb after a copula (the ko displaced shape this exception was built
+        // for) never normalizes to a predicate word, so ko is untouched.
         const curIsSovCommandVerb =
-          sovVerbLookup !== null && sovVerbLookup.has(t.value.toLowerCase());
+          sovVerbLookup !== null &&
+          sovVerbLookup.has(t.value.toLowerCase()) &&
+          !SemanticParserImpl.CONDITION_PREDICATES.has(cur);
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
           (!prevIsCopula || curIsSovCommandVerb) &&

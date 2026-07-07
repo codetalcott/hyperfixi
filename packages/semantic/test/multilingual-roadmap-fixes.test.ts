@@ -11883,3 +11883,95 @@ describe('default-value full drill: possessive destination + per-language marker
     expect(String(role(node, 'patient')?.value)).toBe('5');
   });
 });
+
+describe('Condition-final predicate adjective never anchors a spurious empty (empty ×8)', () => {
+  // The transformer now keeps `<copula> <predicate>` adjacent inside an if
+  // condition (hi `मेरा मान है खाली`, tr `benim değer dir boş`). The
+  // tryParseConditionalBlock copula guard already suppressed the split there —
+  // but its SOV verb-lookup exception (built for ko's old DISPLACED renders,
+  // where a real then-branch verb landed right after the copula) re-split when
+  // the predicate word doubles as the language's empty/null COMMAND verb
+  // (खाली/boş → `null`, খালি → `empty`). The exception now excludes
+  // CONDITION_PREDICATES, so the healed renders parse without the phantom
+  // `empty` command that stole a neighboring role.
+  const collectActions = (n: unknown, out: string[] = []): string[] => {
+    if (!n || typeof n !== 'object') return out;
+    const rec = n as Record<string, unknown>;
+    if (typeof rec.action === 'string') out.push(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) for (const x of c) collectActions(x, out);
+      else if (c && typeof c === 'object') collectActions(c, out);
+    }
+    return out;
+  };
+
+  const RENDERS: Array<[string, string]> = [
+    ['hi', 'धुंधला पर अगर मेरा मान है खाली .error को जोड़ें मैं में वरना .error को हटाएं मैं से समाप्त'],
+    ['tr', 'bulanık de eğer benim değer dir boş .error i ekle ben e yoksa .error i kaldır ben den son'],
+    ['bn', 'ঝাপসা এ যদি আমার মান হয় খালি .error কে যোগ আমি তে নতুবা .error কে সরান আমি থেকে শেষ'],
+  ];
+  for (const [lang, render] of RENDERS) {
+    it(`[${lang}] input-validation render parses [on,if,add,remove] with no empty`, () => {
+      const node = parse(render, lang);
+      const actions = collectActions(node).sort();
+      expect(actions).toEqual(['add', 'if', 'on', 'remove']);
+    });
+  }
+
+  it('[hi] the add keeps its own patient (no role steal)', () => {
+    const node = parse(RENDERS[0][1], 'hi') as Record<string, unknown>;
+    const dumped = JSON.stringify(
+      collectActions(node) // sanity: structure walked
+    );
+    expect(dumped).toContain('add');
+    // walk to the then-branch add and check patient
+    const body = (node as { body?: Array<Record<string, unknown>> }).body ?? [];
+    const cond = body.find(n => n.action === 'if') as
+      | { thenBranch?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown }> }> }
+      | undefined;
+    const add = cond?.thenBranch?.find(c => c.action === 'add');
+    expect(add?.roles?.get('patient')).toMatchObject({ type: 'selector', value: '.error' });
+  });
+
+  it('[hi] the behavior-sortable condition shape (`अगर item है खाली`) stays inside the if', () => {
+    // `if item is null` renders condition-final खाली on its own line — the same
+    // predicate word; it must not open a phantom empty command in the body.
+    const node = parse('अगर item है खाली\n  बाहर\nसमाप्त', 'hi');
+    const actions = collectActions(node);
+    expect(actions).not.toContain('empty');
+  });
+
+  it('[ko] the displaced-verb exception still splits at a REAL verb after the copula', () => {
+    // The exception this fix narrows was built for ko renders where the
+    // then-branch verb lands directly after the copula. A real verb (추가 =
+    // add, not a predicate word) must still start the body — the add survives.
+    const node = parse('흐림 할 때 만약 내 값 이다 추가 .error 를 나 에 종료', 'ko');
+    const actions = collectActions(node);
+    expect(actions).toContain('add');
+  });
+});
+
+describe('qu kanqa chusaq predicate stays inside the condition (empty-arc qu ripple)', () => {
+  // kanqa (is) tokenizes as a bare identifier — registered in
+  // CONDITION_COPULAS_SURFACE like bn হয় / hi है / tr dir — and chusaq (the
+  // fused dict render) normalizes to `null`, a CONDITION_PREDICATE. The add
+  // must keep its own patient (.error), not fuse with a predicate shard.
+  it('[qu] input-validation render: add keeps patient .error, no empty', () => {
+    const node = parse(
+      'paqariy pi sichus noqaq chanin kanqa chusaq .error ta noqa man yapay manachus .error ta noqa manta qichuy tukuy',
+      'qu'
+    ) as { body?: Array<Record<string, unknown>> };
+    const cond = (node.body ?? []).find(n => n.action === 'if') as
+      | {
+          thenBranch?: Array<{
+            action?: string;
+            roles?: Map<string, { type?: string; value?: unknown }>;
+          }>;
+        }
+      | undefined;
+    const add = cond?.thenBranch?.find(c => c.action === 'add');
+    expect(add?.roles?.get('patient')).toMatchObject({ type: 'selector', value: '.error' });
+    expect(JSON.stringify(cond?.thenBranch?.map(c => c.action))).not.toContain('empty');
+  });
+});

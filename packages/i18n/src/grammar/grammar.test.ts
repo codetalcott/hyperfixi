@@ -2390,3 +2390,69 @@ describe('tr/hi/qu fused (no-underscore) mouse events (mousedown/mouseup)', () =
     expect(t.transform('on mousedown toggle .x')).not.toContain('rat_ñitiy');
   });
 });
+
+describe('Predicate adjective stays inside the condition clause (empty ×8 bn/hi/tr)', () => {
+  // `empty` is ALSO a hyperscript command (v0.9.90), so the block-body scans
+  // (transformBlockBody, extractBlockStructure's unless path) cut the condition
+  // of `if my value is empty add .error to me` at `is` and displaced the
+  // adjective into the add's argument zone — where it anchored a spurious
+  // `empty-{lang}-generated` parse and stole a neighboring role (hi took the
+  // add's `.error` patient). A command-keyword candidate immediately after a
+  // copula is a predicate adjective, never the body's first verb.
+  const IF_EMPTY = 'on blur if my value is empty add .error to me else remove .error from me end';
+
+  it('[hi] keeps है खाली adjacent inside the condition, verb after', () => {
+    const out = new GrammarTransformer('en', 'hi').transform(IF_EMPTY);
+    expect(out).toContain('है खाली'); // copula + predicate stay adjacent
+    // the adjective precedes the then-branch (no displacement past .error)
+    expect(out.indexOf('खाली')).toBeLessThan(out.indexOf('.error'));
+  });
+
+  it('[tr] keeps dir boş adjacent inside the condition', () => {
+    const out = new GrammarTransformer('en', 'tr').transform(IF_EMPTY);
+    expect(out).toContain('dir boş');
+    expect(out.indexOf('boş')).toBeLessThan(out.indexOf('.error'));
+  });
+
+  it('[bn] keeps হয় খালি adjacent inside the condition', () => {
+    const out = new GrammarTransformer('en', 'bn').transform(IF_EMPTY);
+    expect(out).toContain('হয় খালি');
+    expect(out.indexOf('খালি')).toBeLessThan(out.indexOf('.error'));
+  });
+
+  it('unless-path body scan applies the same copula guard', () => {
+    // extractBlockStructure's unless heuristic shares the scan: the condition
+    // runs through the predicate adjective to the real body verb.
+    const out = new GrammarTransformer('en', 'hi').transform(
+      'unless my value is empty add .error to me'
+    );
+    expect(out.indexOf('खाली')).toBeLessThan(out.indexOf('.error'));
+  });
+
+  it('a real body verb right after the condition still starts the body', () => {
+    // No copula before `add` — the scan must still cut there (byte-identical
+    // pre/post for conditions without a trailing predicate adjective).
+    const out = new GrammarTransformer('en', 'hi').transform(
+      'on blur if my value add .error to me end'
+    );
+    expect(out).toContain('.error');
+  });
+});
+
+describe('qu fused (no-underscore) empty/null value word (chusaq)', () => {
+  // The qu semantic tokenizer splits on `_` by design, so the old `ch_usaq`
+  // shattered (ch / _ / usaq) and the `usaq` shard fused with the following
+  // selector once the predicate-adjective guard healed the render order —
+  // `add` captured patient=expression:"usaq.error" (input-validation/if-empty
+  // qu). The dict now emits the fused `chusaq`, which the tokenizer already
+  // recognizes (norm `null`). Mirrors the #535 ru/uk fused-event route and the
+  // L4 qu ñawpaq_kaq dict↔profile realignment.
+  it('emits chusaq (fused) for is-empty conditions', () => {
+    const out = new GrammarTransformer('en', 'qu').transform(
+      'on blur if my value is empty add .error to me else remove .error from me end'
+    );
+    expect(out).toContain('kanqa chusaq');
+    expect(out).not.toContain('ch_usaq');
+    expect(out.indexOf('chusaq')).toBeLessThan(out.indexOf('.error'));
+  });
+});

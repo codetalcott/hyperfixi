@@ -176,7 +176,7 @@ export const qu: Dictionary = {
   values: {
     true: 'cheqaq',
     false: 'llulla',
-    null: 'ch_usaq',
+    null: 'chusaq',
     undefined: 'mana_riqsisqa',
     it: 'chay',
     its: 'chaypaq',
@@ -221,7 +221,7 @@ export const qu: Dictionary = {
     children: 'wawakuna',
     within: 'ukupi',
     no: 'mana_kanchu',
-    empty: 'ch_usaq',
+    empty: 'chusaq',
     some: 'wakin',
     'starts with': 'qallarisqa wan',
     'ends with': 'tukusqa wan',
