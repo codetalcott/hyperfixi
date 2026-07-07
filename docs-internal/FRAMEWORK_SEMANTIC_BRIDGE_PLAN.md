@@ -1,6 +1,8 @@
 # Framework ↔ Semantic Bridge Arc
 
-**Status:** planned (2026-07-07) · follows the v2.6.0 multilingual launch
+**Status:** Phases 0–3 complete (2026-07-07); Phase 4 (SOV rendering) is a
+separate, unscheduled decision — see per-phase status notes · follows the
+v2.6.0 multilingual launch
 **Goal:** end the 8-vs-24 language drift — domain packages (and through them the MCP
 servers) inherit the semantic stack's 24 language profiles instead of hand-authoring
 grammar scaffolding per language.
@@ -154,6 +156,25 @@ plus morphology tables the bridge doesn't cover): migrate only its
 `patternProfile` construction; morphology stays hand-authored.
 
 ### Phase 3 — Registry, CI, and drift guards (1 PR)
+
+> **Status: complete (2026-07-07, PR #614).** domain-config registers all 9
+> domains (learn wired in, `DOMAIN_PRIORITY` appends it last) with true
+> per-domain language sets; laziness is preserved by keeping the lists static
+> and adding a drift test (`domain-config/src/__tests__/languages.test.ts`)
+> asserting each list equals the DSL's `getSupportedLanguages()`. R5
+> (keyword-classification) landed in domain-toolkit and immediately found 220
+> real profile↔tokenizer drift findings in the three domains with pre-bridge
+> tokenizers (bdd 82, behaviorspec 46, learn 92) — fixed by adding the missing
+> keywords, all suites green, no waivers. The hand-rolled keyword-translation
+> copies in language-server and mcp-server now call semantic's
+> `getKeywordTranslations`. CI already built+tested all domains; added were the
+> domain-config test step and the missing voice/learn/config entries in the
+> root `test:check` script.
+>
+> **Known follow-up (out of this arc):** `mcp-multilingual-intent` still ships
+> its own trimmed `src/domain-registry.ts` copy (predates domain-config; its
+> language lists have already drifted — bdd shows 4 languages there). Migrating
+> it to `@lokascript/domain-config` should ride the siren-mcp/publish decision.
 
 - **domain-config** (`packages/domain-config/src/index.ts`): stop hardcoding
   `['en','es','ja','ar','ko','zh','tr','fr']` ×8 — each registration derives
