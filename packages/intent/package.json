@@ -60,6 +60,6 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/intent#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=24"
   }
 }

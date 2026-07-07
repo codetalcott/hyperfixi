@@ -124,7 +124,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=24"
   },
   "allowScripts": {
     "better-sqlite3": true,
