@@ -11742,3 +11742,104 @@ describe('trailing optional slot never captures a command verb (halt swallows ju
     expect(String(role(transition!, 'duration')?.value)).toBe('300ms');
   });
 });
+
+describe('default-value full drill: possessive destination + per-language markers + underscore-compound fold (spurious default ×9 / en-noise inversion, L4)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown; object?: any; property?: string } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const walkNodesL4 = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const expectAlignedDefault = (nodes: Record<string, any>[]) => {
+    const dflt = nodes.find(r => r.action === 'default');
+    expect(dflt).toBeDefined();
+    const dest = role(dflt!, 'destination');
+    expect(dest?.type).toBe('property-path');
+    expect(dest?.object?.value).toBe('me');
+    expect(dest?.property).toBe('@data-count');
+    const patient = role(dflt!, 'patient');
+    expect(patient?.type).toBe('literal');
+    expect(String(patient?.value)).toBe('0');
+    return dflt!;
+  };
+
+  it('[en] the reference itself keeps the default action (the en-noise inversion: en used to drop it)', () => {
+    // Before the drill, `on load default my @data-count to "0"` parsed as a
+    // bare `on load` handler — the reference was WRONG, so the nine languages
+    // that kept default read as spurious default ×9. defaultSchema.destination
+    // now admits property-path (possessive matcher, parallel to set).
+    const node = parse('on load default my @data-count to "0"', 'en');
+    const nodes = walkNodesL4(node);
+    expect(nodes.find(r => r.action === 'on')).toBeDefined();
+    expectAlignedDefault(nodes);
+  });
+
+  it('[ja] SOV event-fused variant aligns (dest を … で 既定 patient に)', () => {
+    const nodes = walkNodesL4(parse('私の @data-count を 読み込み で 既定 "0" に', 'ja'));
+    expect(nodes.find(r => r.action === 'on')).toBeDefined();
+    expectAlignedDefault(nodes);
+  });
+
+  it('[de] SVO marker alignment (default renders zu, not set’s auf)', () => {
+    const nodes = walkNodesL4(parse('bei laden standard mein @data-count zu "0"', 'de'));
+    expectAlignedDefault(nodes);
+  });
+
+  it('[ru] underscore-compound keyword folds (по_умолчанию shatters to по/_/умолчанию)', () => {
+    // The ru tokenizer splits on `_` by design (see RUSSIAN_EXTRAS fused-event
+    // note); the literal matcher now folds word/_/word runs the same way it
+    // folds hyphen compounds (#592). The leading segment is a PARTICLE (по),
+    // which the fold must accept.
+    const nodes = walkNodesL4(parse('при загрузка по_умолчанию мой @data-count в "0"', 'ru'));
+    expectAlignedDefault(nodes);
+  });
+
+  it('[uk] same fold, uk shape (за_замовчуванням)', () => {
+    const nodes = walkNodesL4(parse('при завантаження за_замовчуванням мій @data-count в "0"', 'uk'));
+    expectAlignedDefault(nodes);
+  });
+
+  it('[qu] ñawpaq_kaq folds to default — and no spurious before/first from the ñawpaq shard', () => {
+    // Before the drill the qu line minted spurious `before` ×1: the ñawpaq
+    // shard (keyword "first") mis-anchored. The profile primary is now the
+    // dict render ñawpaq_kaq; the underscore fold forms it from the run.
+    const nodes = walkNodesL4(parse('noqaq @data-count ta "0" man apakuy pi ñawpaq_kaq', 'qu'));
+    expectAlignedDefault(nodes);
+    expect(nodes.find(r => r.action === 'before')).toBeUndefined();
+  });
+
+  it('[sw] bare msingi (the dict render) is accepted alongside chaguo-msingi', () => {
+    const nodes = walkNodesL4(parse('kwenye pakia msingi yangu @data-count kwa "0"', 'sw'));
+    expectAlignedDefault(nodes);
+  });
+
+  it('[ru] the fold needs the FULL run — a bare leading particle never anchors default (both-ways lock)', () => {
+    // `по` alone (no _/умолчанию continuation) must not fold into по_умолчанию.
+    const nodes = walkNodesL4(parse('при загрузка по мой @data-count в "0"', 'ru'));
+    expect(nodes.find(r => r.action === 'default')).toBeUndefined();
+  });
+
+  it('[en] simple variable form parses too (destination=expression)', () => {
+    // destination now admits expression, so the non-possessive hyperscript
+    // form works in isolation as well.
+    const node = parse('default x to "5"', 'en') as unknown as Record<string, any>;
+    expect(node?.action).toBe('default');
+    expect(String(role(node, 'patient')?.value)).toBe('5');
+  });
+});

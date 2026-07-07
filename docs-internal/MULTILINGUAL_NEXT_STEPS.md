@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-11 / L3 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-12 / L4 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,8 +21,8 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.994**              | session-11 / L3 drills: 0.9928 → 0.9939 (two drills)      |
-| avgRoleFidelity (R1)           | **0.984**              | 0.9831 → 0.9838 (L3 side-effect: reclaimed roles)         |
+| avgPrecision (R0 trust floor)  | **0.995**              | session-12 / L4: 0.9939 → 0.9953 — **bar 3 reached**      |
+| avgRoleFidelity (R1)           | **0.984**              | 0.9838 held through L4                                    |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
@@ -40,13 +40,15 @@ normal usage). The bar, all four together:
 1. **All en-facing parser gaps closed.** Every remaining en-noise inversion is
    a real English-parser bug (en `go back` / `add "content"` didn't parse
    until #588/#589) — user-visible to English users regardless of the metric.
-2. **Every spurious family larger than ×5 cleared** (post-session-11 inventory:
+2. **Every spurious family larger than ×5 cleared** (post-session-12 inventory:
    ~~morph ×18~~ ✓L1, for ×14→×9 (transition half ✓L2; remainder = take-class
    ×6 own-arc + wait-payload behaviors ×3 post-launch), ~~add ×11 draggable~~
-   ✓L1, default ×9, empty ×8, ~~call ×7~~ ✓L3, ~~on ×7 he~~ ✓L3,
-   ~~transition ×6~~ ✓L2, ~~breakpoint ×6~~ ✓L2 (+halt ×3 sibling).
-3. **avgPrecision ≥ 0.995** (0.9939 as of session 11).
-4. **avgRoleFidelity ≥ 0.985** (0.9838 as of session 11) — the big R1-missing
+   ✓L1, ~~default ×9~~ ✓L4 (+before ×1 qu bonus), empty ×8, ~~call ×7~~ ✓L3,
+   ~~on ×7 he~~ ✓L3, ~~transition ×6~~ ✓L2, ~~breakpoint ×6~~ ✓L2 (+halt ×3
+   sibling). Remaining: for ×9, empty ×8.
+3. **avgPrecision ≥ 0.995** — **REACHED session 12: 0.9953.** The six-signal
+   gate holds it from here.
+4. **avgRoleFidelity ≥ 0.985** (0.9838 as of session 12) — the big R1-missing
    families (add.patient:selector ×20, toggle.patient:expression ×19,
    fetch.source:literal ×18, set.patient:literal ×16,
    bind.source:property-path ×14) carry most of this.
@@ -59,7 +61,7 @@ across sessions 4–8, full discipline included). Sequencing:
 | L1 ✓    | morph ×18 + draggable add fold+cleanup ×11 (#590 + session-9 PR 2)   | precision 0.9891 → 0.9910 |
 | L2 ✓    | breakpoint ×6+halt ×3 + bn `for` transition-half ×5 + transition ×6  | precision 0.9910 → 0.9928 |
 | L3 ✓    | on ×7 he/hi (#595) + call ×7 halt-verb-guard (session-11 PR 2)       | precision 0.9928 → 0.9939 |
-| L4      | default-value full drill (13 langs, markers + possessives)           | en gaps, R1               |
+| L4 ✓    | default-value full drill (24 langs: schema markers + \_-fold)        | precision 0.9939 → 0.9953 |
 | L5–L6   | big R1-missing families (add/toggle patient, fetch/bind source, set) | R1 → ≥0.985               |
 
 L1 actual precision movement (+0.0019 for 29 entries) ran well under the
@@ -72,6 +74,10 @@ empty ×8, call ×7, on ×7 he, so L3+L4 must carry ~0.0022 to reach 0.995.
 L3 actual: +0.0011 for 14 spurious + 10 missing entries cleared (#595 +
 session-11 PR 2) — remaining >×5 inventory is default ×9 (en-noise inversion,
 the L4 drill), for ×9, empty ×8, so L4 must carry ~0.0011 to reach 0.995.
+L4 actual: +0.0014 for 10 spurious cleared (default ×9 + the qu before ×1
+bonus from the ñawpaq_kaq underscore fold) — **the ≥0.995 bar is reached**;
+remaining >×5 inventory is for ×9 and empty ×8 (bar item 2), and L5–L6 carry
+the R1 bar (0.9838 → ≥0.985).
 
 **Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
 polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
@@ -82,6 +88,61 @@ fail CI.
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06g (SESSION 12 = L4, one drill: the default-value full
+> drill in this PR; avgPrecision 0.9939 → 0.9953 — LAUNCH BAR item 3 (≥0.995)
+> REACHED; probe mean R1 0.9838 held; A/B 10 spurious cleared / 0 new; census
+> identical (3404); gate green; baseline regenerated.)**
+>
+> - **The default ×9 en-noise inversion cleared with all 24 languages aligned
+>   in one step.** Three mechanisms, exactly as pre-probed: (1)
+>   `defaultSchema.destination` admitted only `reference` — now the full
+>   set-parallel list (selector/reference/expression/property-path, opting in
+>   the possessive matchers) plus a complete 24-language markerOverride table
+>   on BOTH roles (dict-driven: default renders de `zu` where set uses `auf`,
+>   sw `kwa` vs `kwenye`; SOV destination markers ja を / ko 를 / tr i / hi को
+>   mirror set's). en went from dropping the action (the wrong reference) to
+>   `destination=property-path{me,@data-count} patient=literal:"0"`, and every
+>   language matched byte-identically — zero honest dips, zero new A/B
+>   entries. (2) ru/uk NULLed because their tokenizers split `_` by design
+>   (по_умолчанию → по/_/умолчанию): the #592 hyphen-compound fold is now a
+>   general shattered-compound fold (`tryMatchShatteredCompound`, seps `-` and
+>   `_`, particle segments accepted — ru по / uk за lead their compounds). (3)
+>   two profile↔dict keyword mismatches: qu default primary realigned to the
+>   dict render `ñawpaq_kaq` (qallariy kept as alternative — NB the qu dict
+>   uses qallariy for RESET), sw gained the bare `msingi` dict render. The qu
+>   fix also cleared **spurious before ×1** (the ñawpaq shard read as
+>   "first/before") — the drill's bonus entry. 9 guard tests (8
+>   stash-verified); the lexicon-emit-mismatch allowlist self-flagged its two
+>   now-parsing entries and was pruned.
+> - **empty ×8 pre-probed for L5 (bn/hi/tr — transformer-side CONFIRMED):**
+>   the SOV reorder DISPLACES the `is empty` predicate adjective into the
+>   following command's argument zone — hi input-validation renders
+>   `अगर मेरा मान है जोड़ें .error को खाली मैं में` (खाली after the add
+>   patient; bn খালি / tr boş identical). Parse side: the displaced adjective
+>   anchors `empty-{lang}-generated` AND STEALS a neighboring role (hi
+>   patient=selector:".error" — the add's patient; bn/tr patient=reference:
+>   "me"). The fix must be transformer-side (keep the predicate adjective
+>   inside the condition clause when reordering); the parse side then needs
+>   re-probing against the NEW renders + repopulate. behavior-sortable hi/tr
+>   is the same mechanism inside a behavior body.
+> - Remaining bar work: item 2 (for ×9 = take-class ×6 own-arc + wait-payload
+>   behaviors ×3; empty ×8 above) and item 4 (R1 0.9838 → ≥0.985 via the big
+>   R1-missing families). **Top-three R1 families pre-probed at session-12
+>   close:** add ×20 and toggle ×19 are the SAME root cause in opposite
+>   directions — `@attribute` type inference diverges between en's patterns
+>   and the lax generated event-role slots (add `@disabled`: en=selector /
+>   others=expression; toggle `@aria-expanded`: en=expression /
+>   others=selector). One canonical `@attr` typing in the shared
+>   value-builder could clear both (≈0.0012 R1 = the whole bar-4 gap); it
+>   changes the en reference, so budget both-sides A/B + R2. The add SOV trio
+>   (hi/ja/ko) also mis-captures destination (`reference:"me"` vs
+>   `selector:"<button/>"`). fetch ×18 is two unrelated sub-arcs:
+>   event-debounce is a template-literal shatter (`${my value}` breaks at the
+>   space; en itself keeps a TRUNCATED source — an R0-invisible en value bug)
+>   and fetch-with-\* pl/ru/uk ×12 mis-roles the with-tail (URL→patient,
+>   source="method" junk — the #595 with-phrase family). Full detail in the
+>   handoff doc.
 
 > **Update 2026-07-06f (SESSION 11 = L3, two drills: #595 and this PR;
 > avgPrecision 0.9928 → 0.9939, probe mean R1 0.9831 → 0.9838; A/B 14

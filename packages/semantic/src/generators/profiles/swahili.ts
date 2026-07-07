@@ -135,7 +135,9 @@ export const swahiliProfile: LanguageProfile = {
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'isiyo sawia', normalized: 'async' },
     tell: { primary: 'sema', alternatives: ['ambia'], normalized: 'tell' },
-    default: { primary: 'chaguo-msingi', normalized: 'default' },
+    // The sw dict renders default as bare `msingi` (chaguo-msingi is the full
+    // compound); both accepted.
+    default: { primary: 'chaguo-msingi', alternatives: ['msingi'], normalized: 'default' },
     init: { primary: 'anzisha', alternatives: ['anza'], normalized: 'init' },
     behavior: { primary: 'tabia', normalized: 'behavior' },
     install: { primary: 'sakinisha', normalized: 'install' },
