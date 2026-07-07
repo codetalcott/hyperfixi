@@ -284,12 +284,12 @@ describe('buildDomainTokenizer', () => {
     expect(tokenizer.classifyToken('条件')).toBe('keyword'); // vocab roleMarkerOverride
   });
 
-  it('includes operators by default and honors includeOperators: false', () => {
-    const withOps = buildDomainTokenizer(EN_SLICE, EN_VOCAB);
-    const withoutOps = buildDomainTokenizer(EN_SLICE, EN_VOCAB, { includeOperators: false });
+  it('excludes operators by default (matching createSimpleTokenizer) and honors includeOperators: true', () => {
+    const defaultTokenizer = buildDomainTokenizer(EN_SLICE, EN_VOCAB);
+    const withOps = buildDomainTokenizer(EN_SLICE, EN_VOCAB, { includeOperators: true });
 
+    expect(defaultTokenizer.classifyToken('=')).toBe('identifier');
     expect(withOps.classifyToken('=')).toBe('operator');
-    expect(withoutOps.classifyToken('=')).toBe('identifier');
   });
 
   it('keeps diacritic identifiers whole for latin-script slices (R8 by construction)', () => {

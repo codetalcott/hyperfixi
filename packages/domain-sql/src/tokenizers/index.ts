@@ -20,7 +20,9 @@ import { SQL_LANGUAGES } from '../vocab';
 
 function tokenizerFor(code: string): LanguageTokenizer {
   const { slice, vocab } = SQL_LANGUAGES[code];
-  return buildDomainTokenizer(slice, vocab);
+  // SQL grammar contains operators (e.g. `WHERE age > 18`), so recognize them.
+  // (buildDomainTokenizer defaults includeOperators to false.)
+  return buildDomainTokenizer(slice, vocab, { includeOperators: true });
 }
 
 export const EnglishSQLTokenizer: LanguageTokenizer = tokenizerFor('en');
