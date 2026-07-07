@@ -24,7 +24,7 @@ describe('SQL Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 8 languages', () => {
+    it('should support 11 languages', () => {
       const languages = sql.getSupportedLanguages();
       expect(languages).toContain('en');
       expect(languages).toContain('es');
@@ -34,7 +34,11 @@ describe('SQL Domain', () => {
       expect(languages).toContain('zh');
       expect(languages).toContain('tr');
       expect(languages).toContain('fr');
-      expect(languages).toHaveLength(8);
+      // Bridge-era languages (arc Phase 1 expansion)
+      expect(languages).toContain('de');
+      expect(languages).toContain('pt');
+      expect(languages).toContain('ru');
+      expect(languages).toHaveLength(11);
     });
 
     it('should reject unsupported language', () => {

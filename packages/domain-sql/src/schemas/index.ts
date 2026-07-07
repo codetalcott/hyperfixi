@@ -6,7 +6,40 @@
  * source, condition, etc.) and per-language marker overrides for 8 languages.
  */
 
-import { defineCommand, defineRole } from '@lokascript/framework';
+import { defineCommand, defineRole, deriveRoleMarkers } from '@lokascript/framework';
+import type { GrammarProfileSlice } from '@lokascript/framework';
+import { germanProfile as deSlice } from '@lokascript/semantic/languages/de';
+import { portugueseProfile as ptSlice } from '@lokascript/semantic/languages/pt';
+import { russianProfile as ruSlice } from '@lokascript/semantic/languages/ru';
+
+// =============================================================================
+// Bridge-derived markers (arc Phase 1 expansion)
+// =============================================================================
+//
+// The original 8 languages keep their hand-authored markerOverride entries.
+// Bridge-era languages derive SQL markers from their semantic grammar slice
+// where the semantic role lines up (FROM ≙ source, INTO ≙ destination);
+// SQL-only markers (WHERE/SET/LIMIT) have no semantic role and stay explicit.
+
+const BRIDGED_SLICES: Readonly<Record<string, GrammarProfileSlice>> = {
+  de: deSlice,
+  pt: ptSlice,
+  ru: ruSlice,
+};
+
+/**
+ * Compose a per-language `markerOverride` map for one domain role: markers
+ * derived from the bridged slices' `semanticRole`, then explicit entries
+ * (spread last, so they stay authoritative).
+ */
+function markerMap(semanticRole: string, explicit: Record<string, string>): Record<string, string> {
+  const derived: Record<string, string> = {};
+  for (const [lang, slice] of Object.entries(BRIDGED_SLICES)) {
+    const marker = deriveRoleMarkers(slice, { role: semanticRole }).role;
+    if (marker) derived[lang] = marker;
+  }
+  return { ...derived, ...explicit };
+}
 
 // =============================================================================
 // SELECT
@@ -33,7 +66,8 @@ export const selectSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 2,
-      markerOverride: {
+      // de/pt/ru derive from their semantic slices (von/de/из).
+      markerOverride: markerMap('source', {
         en: 'from',
         es: 'de',
         ja: 'から',
@@ -42,7 +76,7 @@ export const selectSchema = defineCommand({
         zh: '从',
         tr: 'den',
         fr: 'de',
-      },
+      }),
     }),
     defineRole({
       role: 'condition',
@@ -61,6 +95,9 @@ export const selectSchema = defineCommand({
         zh: '条件',
         tr: 'koşul',
         fr: 'où',
+        de: 'wo',
+        pt: 'onde',
+        ru: 'где',
       },
     }),
   ],
@@ -91,7 +128,9 @@ export const insertSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 2,
-      markerOverride: {
+      // pt/ru derive from their semantic slices (em/в); German's slice
+      // destination ('auf') is wrong for INSERT INTO, so 'in' is explicit.
+      markerOverride: markerMap('destination', {
         en: 'into',
         es: 'en',
         ja: 'に',
@@ -100,7 +139,8 @@ export const insertSchema = defineCommand({
         zh: '到',
         tr: 'e',
         fr: 'dans',
-      },
+        de: 'in',
+      }),
     }),
   ],
 });
@@ -141,6 +181,9 @@ export const updateSchema = defineCommand({
         zh: '设置',
         tr: 'ayarla',
         fr: 'définir',
+        de: 'setzen',
+        pt: 'definir',
+        ru: 'установить',
       },
     }),
     defineRole({
@@ -160,6 +203,9 @@ export const updateSchema = defineCommand({
         zh: '条件',
         tr: 'koşul',
         fr: 'où',
+        de: 'wo',
+        pt: 'onde',
+        ru: 'где',
       },
     }),
   ],
@@ -182,7 +228,8 @@ export const deleteSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 1,
-      markerOverride: {
+      // de/pt/ru derive from their semantic slices (von/de/из).
+      markerOverride: markerMap('source', {
         en: 'from',
         es: 'de',
         ja: 'から',
@@ -191,7 +238,7 @@ export const deleteSchema = defineCommand({
         zh: '从',
         tr: 'den',
         fr: 'de',
-      },
+      }),
     }),
     defineRole({
       role: 'condition',
@@ -210,6 +257,9 @@ export const deleteSchema = defineCommand({
         zh: '条件',
         tr: 'koşul',
         fr: 'où',
+        de: 'wo',
+        pt: 'onde',
+        ru: 'где',
       },
     }),
   ],
@@ -267,6 +317,9 @@ export const getSchema = defineCommand({
         zh: '条件',
         tr: 'koşul',
         fr: 'où',
+        de: 'wo',
+        pt: 'onde',
+        ru: 'где',
       },
     }),
     defineRole({
@@ -285,6 +338,9 @@ export const getSchema = defineCommand({
         zh: '限制',
         tr: 'limit',
         fr: 'limite',
+        de: 'limit',
+        pt: 'limite',
+        ru: 'лимит',
       },
     }),
   ],

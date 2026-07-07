@@ -22,6 +22,9 @@ export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '查询',
     tr: 'seç',
     fr: 'sélectionner',
+    de: 'auswählen',
+    pt: 'selecionar',
+    ru: 'выбрать',
   },
   insert: {
     en: 'insert',
@@ -32,6 +35,9 @@ export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '插入',
     tr: 'ekle',
     fr: 'insérer',
+    de: 'einfügen',
+    pt: 'inserir',
+    ru: 'вставить',
   },
   update: {
     en: 'update',
@@ -42,6 +48,9 @@ export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '更新',
     tr: 'güncelle',
     fr: 'mettre-à-jour',
+    de: 'aktualisieren',
+    pt: 'atualizar',
+    ru: 'обновить',
   },
   delete: {
     en: 'delete',
@@ -52,6 +61,9 @@ export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '删除',
     tr: 'sil',
     fr: 'supprimer',
+    de: 'löschen',
+    pt: 'excluir',
+    ru: 'удалить',
   },
   get: {
     en: 'get',
@@ -62,12 +74,39 @@ export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '获取',
     tr: 'al',
     fr: 'obtenir',
+    de: 'holen',
+    pt: 'obter',
+    ru: 'получить',
   },
 };
 
 export const MARKERS: Record<string, Record<string, string>> = {
-  from: { en: 'from', es: 'de', ja: 'から', ar: 'من', ko: '에서', zh: '从', tr: 'den', fr: 'de' },
-  into: { en: 'into', es: 'en', ja: 'に', ar: 'في', ko: '에', zh: '到', tr: 'e', fr: 'dans' },
+  from: {
+    en: 'from',
+    es: 'de',
+    ja: 'から',
+    ar: 'من',
+    ko: '에서',
+    zh: '从',
+    tr: 'den',
+    fr: 'de',
+    de: 'von',
+    pt: 'de',
+    ru: 'из',
+  },
+  into: {
+    en: 'into',
+    es: 'en',
+    ja: 'に',
+    ar: 'في',
+    ko: '에',
+    zh: '到',
+    tr: 'e',
+    fr: 'dans',
+    de: 'in',
+    pt: 'em',
+    ru: 'в',
+  },
   where: {
     en: 'where',
     es: 'donde',
@@ -77,6 +116,9 @@ export const MARKERS: Record<string, Record<string, string>> = {
     zh: '条件',
     tr: 'koşul',
     fr: 'où',
+    de: 'wo',
+    pt: 'onde',
+    ru: 'где',
   },
   set: {
     en: 'set',
@@ -87,6 +129,9 @@ export const MARKERS: Record<string, Record<string, string>> = {
     zh: '设置',
     tr: 'ayarla',
     fr: 'définir',
+    de: 'setzen',
+    pt: 'definir',
+    ru: 'установить',
   },
   limit: {
     en: 'limit',
@@ -97,6 +142,9 @@ export const MARKERS: Record<string, Record<string, string>> = {
     zh: '限制',
     tr: 'limit',
     fr: 'limite',
+    de: 'limit',
+    pt: 'limite',
+    ru: 'лимит',
   },
 };
 
