@@ -44,16 +44,12 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 // Import modular components
 import type { ServerSettings, ServerMode } from './types.js';
 import { defaultSettings } from './types.js';
-import {
-  detectLokascriptFeatures,
-  getCommandsForMode,
-  HYPERSCRIPT_COMMANDS,
-} from './command-tiers.js';
+import { detectLokascriptFeatures } from './command-tiers.js';
 import { isHtmlDocument, extractHyperscriptRegions, findRegionAtPosition } from './extraction.js';
-import { getWordAtPosition, findNextNonEmptyLine } from './utils.js';
+import { getWordAtPosition } from './utils.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
-import { getSymbolTable, invalidateSymbolTable } from './symbol-table.js';
+import { getSymbolTable } from './symbol-table.js';
 
 // Localized descriptions for completions and hover (Phase 7.3)
 import { getCommandDescription } from './localized-descriptions.js';
@@ -492,7 +488,7 @@ let globalSettings: ServerSettings = envDefaultMode
 // Initialization
 // =============================================================================
 
-connection.onInitialize((params: InitializeParams): InitializeResult => {
+connection.onInitialize((_params: InitializeParams): InitializeResult => {
   // Resolve mode on initialization
   resolvedMode = resolveMode(globalSettings);
   const brand = getBranding(resolvedMode);
@@ -998,13 +994,6 @@ function getContextualCompletions(context: string, language: string): Completion
     return eng;
   };
 
-  // Get available commands based on mode
-  // hyperscript-i18n uses hyperscript command set (multilingual but hyperscript-compatible)
-  const commandMode = isHyperscriptCompatMode(resolvedMode) ? 'hyperscript' : 'lokascript';
-  const availableCommands = getCommandsForMode(commandMode);
-  const isCommandAvailable = (cmd: string) =>
-    availableCommands.includes(cmd as (typeof availableCommands)[number]);
-
   // Phase 7.3: Localized detail/documentation for commands
   const getDetail = (command: string, fallback: string): string => {
     const desc = getCommandDescription(command, effectiveLanguage);
@@ -1012,7 +1001,7 @@ function getContextualCompletions(context: string, language: string): Completion
   };
 
   switch (context) {
-    case 'event':
+    case 'event': {
       // Use canonical event names from @hyperfixi/core/lsp-metadata, with fallback
       const eventNames: readonly string[] = lspMetadata?.EVENT_NAMES ?? FALLBACK_EVENT_NAMES;
       for (const eventName of eventNames) {
@@ -1023,6 +1012,7 @@ function getContextualCompletions(context: string, language: string): Completion
         });
       }
       break;
+    }
 
     case 'command':
       // Core commands (available in both modes)
@@ -1439,7 +1429,9 @@ let translationCache: Map<string, string> | null = null;
 function buildTranslationCache(): Map<string, string> {
   const cache = new Map<string, string>();
 
-  if (!semanticPackage) return cache;
+  // Keyword lookups go through semantic's exported query helper rather than
+  // hand-rolled profile iteration (see @lokascript/semantic getKeywordTranslations).
+  if (!semanticPackage?.getKeywordTranslations) return cache;
 
   const langMap: Record<string, string> = {
     es: 'Spanish',
@@ -1477,20 +1469,16 @@ function buildTranslationCache(): Map<string, string> {
   ];
 
   for (const canonicalKey of canonicalKeywords) {
-    const translations: string[] = [];
+    const byLang: Record<string, { primary?: string }> = semanticPackage.getKeywordTranslations(
+      canonicalKey,
+      Object.keys(langMap)
+    );
 
+    const translations: string[] = [];
     for (const [lang, langName] of Object.entries(langMap)) {
-      try {
-        const profile = semanticPackage.tryGetProfile(lang);
-        const kw = profile?.keywords?.[canonicalKey as keyof typeof profile.keywords];
-        if (kw) {
-          const trans = kw as { primary?: string };
-          if (trans.primary && trans.primary !== canonicalKey) {
-            translations.push(`${langName}: \`${trans.primary}\``);
-          }
-        }
-      } catch (e) {
-        connection.console.log(`[lokascript-ls] Translation cache: profile '${lang}' not found`);
+      const primary = byLang[lang]?.primary;
+      if (primary && primary !== canonicalKey) {
+        translations.push(`${langName}: \`${primary}\``);
       }
     }
 

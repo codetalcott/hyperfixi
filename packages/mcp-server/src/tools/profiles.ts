@@ -9,6 +9,7 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import {
   tryGetProfile,
   getRegisteredLanguages,
+  getKeywordTranslations,
   type LanguageProfile,
   type KeywordTranslation,
 } from '@lokascript/semantic';
@@ -288,14 +289,18 @@ function handleGetKeywordTranslations(args: Record<string, unknown>): {
   const targetLanguages = args.languages as string[] | undefined;
   const languages = targetLanguages || getRegisteredLanguages();
 
-  const translations: Record<string, string> = {};
-
+  // Resolve requested codes (incl. regional variants like pt-BR) to profile
+  // codes, then defer the actual lookup to semantic's shared query helper.
+  const resolved = new Map<string, string>();
   for (const lang of languages) {
     const profile = tryGetProfile(lang);
-    if (!profile) continue;
+    if (profile) resolved.set(lang, profile.code);
+  }
+  const byCode = getKeywordTranslations(keyword, [...new Set(resolved.values())]);
 
-    const kw = profile.keywords?.[keyword as keyof typeof profile.keywords];
-    translations[lang] = formatKeyword(kw as KeywordTranslation | string | undefined);
+  const translations: Record<string, string> = {};
+  for (const [lang, code] of resolved) {
+    translations[lang] = formatKeyword(byCode[code]);
   }
 
   return {
