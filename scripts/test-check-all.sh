@@ -21,6 +21,15 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent" \
   "$REPO_ROOT/packages/domain-toolkit" \
+  "$REPO_ROOT/packages/domain-sql" \
+  "$REPO_ROOT/packages/domain-bdd" \
+  "$REPO_ROOT/packages/domain-behaviorspec" \
+  "$REPO_ROOT/packages/domain-jsx" \
+  "$REPO_ROOT/packages/domain-todo" \
+  "$REPO_ROOT/packages/domain-llm" \
+  "$REPO_ROOT/packages/domain-flow" \
+  "$REPO_ROOT/packages/domain-voice" \
+  "$REPO_ROOT/packages/domain-learn" \
   "$REPO_ROOT/packages/domain-config" \
   "$REPO_ROOT/packages/planner"
 
@@ -37,14 +46,17 @@ PACKAGES=(
   "hyperscript-adapter:Hyperscript Adapter"
   "server-bridge:Server Bridge"
 
-  # Domain DSLs
+  # Domain DSLs (+ shared registry wiring)
   "domain-bdd:BDD"
   "domain-behaviorspec:BehaviorSpec"
   "domain-flow:Flow"
   "domain-jsx:JSX"
+  "domain-learn:Learn"
   "domain-llm:LLM"
   "domain-sql:SQL"
   "domain-todo:Todo"
+  "domain-voice:Voice"
+  "domain-config:Domain Config"
 
   # MCP & Language Servers
   "mcp-server:MCP Server"
