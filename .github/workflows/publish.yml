@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: write
       id-token: write # Required for npm trusted publishing (OIDC provenance)
+      pull-requests: write # Fallback: open a PR when main is push-protected
 
     steps:
       - name: Checkout
@@ -239,6 +240,8 @@ jobs:
         # here, and running the step risks corrupting state (see lockfile
         # handling below). Skip cleanly so tags + release still run.
         if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.version-type != 'current' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="${{ github.ref_name }}"
@@ -260,7 +263,30 @@ jobs:
           # `main` — release branches (release/x.y.z) need to stay on the
           # release branch, not pull main into themselves.
           git pull --rebase origin "$BRANCH" || git pull --no-rebase origin "$BRANCH"
-          git push origin HEAD:"$BRANCH"
+
+          # main is a protected branch, so the direct push is expected to be
+          # rejected unless github-actions[bot] is on the protection bypass
+          # list. Fall back to a release-bump branch + PR. (This bit the
+          # v2.6.0 release: packages published fine, then the push failed and
+          # the bump had to be landed by hand — see PR #603.)
+          if git push origin HEAD:"$BRANCH"; then
+            echo "Pushed version bump directly to $BRANCH"
+          else
+            echo "Direct push rejected (branch protection) — opening a PR instead"
+            BUMP_BRANCH="release-bump/v$VERSION"
+            git push -f origin HEAD:"$BUMP_BRANCH"
+            PR_BODY=$(printf '%s\n\n%s' \
+              "Version-bump bookkeeping for v$VERSION (packages are already on npm). Opened automatically by publish.yml because $BRANCH is push-protected." \
+              "NOTE: PRs created with GITHUB_TOKEN do not trigger CI. If required checks stay pending, close and reopen this PR (or push an empty commit) to start them, then merge.")
+            gh pr create --base "$BRANCH" --head "$BUMP_BRANCH" \
+              --title "chore: release v$VERSION" \
+              --body "$PR_BODY" \
+              || echo "PR already exists for $BUMP_BRANCH"
+            # Auto-merge fires once required checks pass (needs repo
+            # auto-merge enabled + checks started per the note above).
+            gh pr merge "$BUMP_BRANCH" --auto --squash \
+              || echo "::warning::Auto-merge unavailable — merge the release-bump PR manually"
+          fi
 
       - name: Create Git tags
         if: ${{ github.event.inputs.dry-run == 'false' }}
