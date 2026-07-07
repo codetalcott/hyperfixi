@@ -12,9 +12,9 @@ npm install @hyperfixi/patterns-reference
 
 The package ships with a **pre-populated SQLite database** containing:
 
-- 106 code examples covering hyperscript commands and real-world UI patterns
-- 1,378 translations (106 patterns × 13 languages)
-- 414 LLM few-shot examples for code generation
+- 164 code examples covering hyperscript commands and real-world UI patterns
+- 3,936 translations (164 patterns × 24 languages)
+- 648 LLM few-shot examples for code generation
 
 No setup required - just install and use:
 
@@ -132,7 +132,7 @@ These scripts are for contributors regenerating the database. **End users don't 
 | `npm run populate`          | Full database setup (init + translations + LLM examples) |
 | `npm run db:init`           | Initialize database with seed patterns                   |
 | `npm run db:init:force`     | Reinitialize database (overwrites existing)              |
-| `npm run sync:translations` | Generate translations for all 13 languages               |
+| `npm run sync:translations` | Generate translations for all 24 languages               |
 | `npm run seed:llm`          | Generate LLM few-shot examples                           |
 | `npm run validate`          | Validate all patterns parse correctly                    |
 | `npm run validate:fix`      | Validate and update verified_parses flag                 |
@@ -185,23 +185,18 @@ Prompt/completion pairs for few-shot learning.
 
 ## Supported Languages
 
-The database supports 13 languages with different word orders:
+The database supports 24 languages with different word orders:
 
-| Language   | Code | Word Order |
-| ---------- | ---- | ---------- |
-| English    | en   | SVO        |
-| Spanish    | es   | SVO        |
-| French     | fr   | SVO        |
-| Portuguese | pt   | SVO        |
-| Indonesian | id   | SVO        |
-| Swahili    | sw   | SVO        |
-| Chinese    | zh   | SVO        |
-| Japanese   | ja   | SOV        |
-| Korean     | ko   | SOV        |
-| Turkish    | tr   | SOV        |
-| Quechua    | qu   | SOV        |
-| Arabic     | ar   | VSO        |
-| German     | de   | V2         |
+| Word Order | Languages                                  |
+| ---------- | ------------------------------------------ |
+| SVO        | en, es, fr, pt, it, id, ms, sw, zh, vi, tl |
+| SOV        | ja, ko, tr, qu, hi, bn                     |
+| VSO        | ar                                         |
+| V2         | de                                         |
+| Other      | ru, uk, pl, th, he                         |
+
+Languages are derived dynamically from `KNOWN_PROFILES` in `@lokascript/semantic`;
+adding a profile there automatically picks up in the next `npm run sync:translations`.
 
 ## Integration with @lokascript/semantic
 

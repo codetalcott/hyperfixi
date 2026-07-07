@@ -27,7 +27,7 @@ packages/patterns-reference/
 │   └── semantic-bridge.ts # Bridge to @lokascript/semantic registry
 ├── scripts/
 │   ├── init-db.ts        # Database initialization with 53 seed patterns
-│   ├── sync-translations.ts # Generate translations for 13 languages
+│   ├── sync-translations.ts # Generate translations for 24 languages
 │   ├── seed-llm-examples.ts # Generate LLM few-shot examples
 │   └── validate-all.ts   # Validate all patterns parse correctly
 ├── data/
