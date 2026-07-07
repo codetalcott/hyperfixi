@@ -1,0 +1,1914 @@
+{
+  "en": {
+    "test": [
+      {
+        "id": "test-en-generated",
+        "language": "en",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "test {name}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "test"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-en-generated",
+        "language": "en",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "given {subject} {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "given"
+            },
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-en-generated",
+        "language": "en",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "when {actor} {action} on {target} into {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "when"
+            },
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "on"
+                },
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "into"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "on"
+          },
+          "destination": {
+            "marker": "into"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-en-generated",
+        "language": "en",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "expect {target} {assertion} saying {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "expect"
+            },
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "saying"
+                },
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "saying"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-en-generated",
+        "language": "en",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "after {duration}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "after"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-en-generated",
+        "language": "en",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "not {content}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "not"
+            },
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "es": {
+    "test": [
+      {
+        "id": "test-es-generated",
+        "language": "es",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "prueba {name}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "prueba"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-es-generated",
+        "language": "es",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "dado {subject} {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "dado"
+            },
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-es-generated",
+        "language": "es",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "cuando {actor} {action} en {target} dentro {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "cuando"
+            },
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "en"
+                },
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "dentro"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "en"
+          },
+          "destination": {
+            "marker": "dentro"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-es-generated",
+        "language": "es",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "esperar {target} {assertion} diciendo {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "esperar"
+            },
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "diciendo"
+                },
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "diciendo"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-es-generated",
+        "language": "es",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "despues {duration}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "despues"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-es-generated",
+        "language": "es",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "no {content}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "no"
+            },
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "ja": {
+    "test": [
+      {
+        "id": "test-ja-generated",
+        "language": "ja",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "{name} テスト",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "テスト"
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-ja-generated",
+        "language": "ja",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "{subject} {value} 前提",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "前提"
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-ja-generated",
+        "language": "ja",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "{actor} {action} を {target} に {destination} 操作",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "を"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "に"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "操作"
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "を"
+          },
+          "destination": {
+            "marker": "に"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-ja-generated",
+        "language": "ja",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "{target} {assertion} と {value} 期待",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                },
+                {
+                  "type": "literal",
+                  "value": "と"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "期待"
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "と"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-ja-generated",
+        "language": "ja",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "{duration} 後",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "後"
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-ja-generated",
+        "language": "ja",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "{content} 否定",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "否定"
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "ar": {
+    "test": [
+      {
+        "id": "test-ar-generated",
+        "language": "ar",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "اختبار {name}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "اختبار"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-ar-generated",
+        "language": "ar",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "بافتراض {subject} {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "بافتراض"
+            },
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-ar-generated",
+        "language": "ar",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "عندما {actor} {action} على {target} في {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "عندما"
+            },
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "على"
+                },
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "في"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "على"
+          },
+          "destination": {
+            "marker": "في"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-ar-generated",
+        "language": "ar",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "توقع {target} {assertion} يقول {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "توقع"
+            },
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "يقول"
+                },
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "يقول"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-ar-generated",
+        "language": "ar",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "بعد {duration}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "بعد"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-ar-generated",
+        "language": "ar",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "ليس {content}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ليس"
+            },
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "ko": {
+    "test": [
+      {
+        "id": "test-ko-generated",
+        "language": "ko",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "{name} 테스트",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "테스트"
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-ko-generated",
+        "language": "ko",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "{subject} {value} 전제",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "전제"
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-ko-generated",
+        "language": "ko",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "{actor} {action} 을 {target} 에 {destination} 동작",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "을"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "에"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "동작"
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "을"
+          },
+          "destination": {
+            "marker": "에"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-ko-generated",
+        "language": "ko",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "{target} {assertion} 으로 {value} 기대",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                },
+                {
+                  "type": "literal",
+                  "value": "으로"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "기대"
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "으로"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-ko-generated",
+        "language": "ko",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "{duration} 후",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "후"
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-ko-generated",
+        "language": "ko",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "{content} 아님",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "아님"
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "zh": {
+    "test": [
+      {
+        "id": "test-zh-generated",
+        "language": "zh",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "测试 {name}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "测试"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-zh-generated",
+        "language": "zh",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "假设 {subject} {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "假设"
+            },
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-zh-generated",
+        "language": "zh",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "当 {actor} {action} 在 {target} 到 {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "当"
+            },
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "在"
+                },
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "到"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "在"
+          },
+          "destination": {
+            "marker": "到"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-zh-generated",
+        "language": "zh",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "期望 {target} {assertion} 显示 {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "期望"
+            },
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "显示"
+                },
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "显示"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-zh-generated",
+        "language": "zh",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "之后 {duration}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "之后"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-zh-generated",
+        "language": "zh",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "不 {content}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "不"
+            },
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "fr": {
+    "test": [
+      {
+        "id": "test-fr-generated",
+        "language": "fr",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "test {name}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "test"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-fr-generated",
+        "language": "fr",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "soit {subject} {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "soit"
+            },
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-fr-generated",
+        "language": "fr",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "quand {actor} {action} sur {target} dans {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "quand"
+            },
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "sur"
+                },
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "dans"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "sur"
+          },
+          "destination": {
+            "marker": "dans"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-fr-generated",
+        "language": "fr",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "attendre {target} {assertion} disant {value}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "attendre"
+            },
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "disant"
+                },
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "disant"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-fr-generated",
+        "language": "fr",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "apres {duration}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "apres"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-fr-generated",
+        "language": "fr",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "pas {content}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "pas"
+            },
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  },
+  "tr": {
+    "test": [
+      {
+        "id": "test-tr-generated",
+        "language": "tr",
+        "command": "test",
+        "priority": 100,
+        "template": {
+          "format": "{name} test",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "test"
+            }
+          ]
+        },
+        "extraction": {
+          "name": {}
+        }
+      }
+    ],
+    "given": [
+      {
+        "id": "given-tr-generated",
+        "language": "tr",
+        "command": "given",
+        "priority": 100,
+        "template": {
+          "format": "{subject} {value} verilen",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "subject",
+              "optional": false,
+              "expectedTypes": ["expression", "selector"]
+            },
+            {
+              "type": "role",
+              "role": "value",
+              "optional": true,
+              "expectedTypes": ["expression", "literal"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "verilen"
+            }
+          ]
+        },
+        "extraction": {
+          "subject": {},
+          "value": {}
+        }
+      }
+    ],
+    "when": [
+      {
+        "id": "when-tr-generated",
+        "language": "tr",
+        "command": "when",
+        "priority": 100,
+        "template": {
+          "format": "{actor} {action} üzerinde {target} içine {destination} eylem",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "actor",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "target",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "üzerinde"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "içine"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "eylem"
+            }
+          ]
+        },
+        "extraction": {
+          "actor": {},
+          "action": {},
+          "target": {
+            "marker": "üzerinde"
+          },
+          "destination": {
+            "marker": "içine"
+          }
+        }
+      }
+    ],
+    "expect": [
+      {
+        "id": "expect-tr-generated",
+        "language": "tr",
+        "command": "expect",
+        "priority": 100,
+        "template": {
+          "format": "{target} {assertion} diyen {value} bekle",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "target",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "value",
+                  "optional": true,
+                  "expectedTypes": ["literal", "expression"],
+                  "greedy": true
+                },
+                {
+                  "type": "literal",
+                  "value": "diyen"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "bekle"
+            }
+          ]
+        },
+        "extraction": {
+          "target": {},
+          "assertion": {},
+          "value": {
+            "marker": "diyen"
+          }
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "after-tr-generated",
+        "language": "tr",
+        "command": "after",
+        "priority": 100,
+        "template": {
+          "format": "{duration} sonra",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["literal", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "sonra"
+            }
+          ]
+        },
+        "extraction": {
+          "duration": {}
+        }
+      }
+    ],
+    "not": [
+      {
+        "id": "not-tr-generated",
+        "language": "tr",
+        "command": "not",
+        "priority": 100,
+        "template": {
+          "format": "{content} degil",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "content",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            },
+            {
+              "type": "literal",
+              "value": "degil"
+            }
+          ]
+        },
+        "extraction": {
+          "content": {}
+        }
+      }
+    ]
+  }
+}

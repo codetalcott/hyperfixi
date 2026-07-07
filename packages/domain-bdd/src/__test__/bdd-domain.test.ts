@@ -36,7 +36,7 @@ describe('BDD Domain', () => {
     });
 
     it('should reject unsupported language', () => {
-      expect(() => bdd.parse('given #button is exists', 'de')).toThrow();
+      expect(() => bdd.parse('given #button is exists', 'xx')).toThrow();
     });
   });
 
