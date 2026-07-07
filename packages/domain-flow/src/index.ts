@@ -2,7 +2,7 @@
  * @lokascript/domain-flow — Declarative Reactive Data Flow DSL
  *
  * A multilingual data flow domain built on @lokascript/framework.
- * Parses data flow commands written in 8 languages, compiling to
+ * Parses data flow commands written in 11 languages, compiling to
  * vanilla JS (fetch, EventSource, setInterval) or HTMX attributes.
  *
  * @example
@@ -56,6 +56,9 @@ import {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 } from './profiles/index.js';
 import {
   EnglishFlowTokenizer,
@@ -66,11 +69,14 @@ import {
   ChineseFlowTokenizer,
   TurkishFlowTokenizer,
   FrenchFlowTokenizer,
+  GermanFlowTokenizer,
+  PortugueseFlowTokenizer,
+  RussianFlowTokenizer,
 } from './tokenizers/index.js';
 import { flowCodeGenerator } from './generators/flow-generator.js';
 
 /**
- * Create a multilingual FlowScript DSL instance with all 8 supported languages.
+ * Create a multilingual FlowScript DSL instance with all 11 supported languages.
  */
 export function createFlowDSL(): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
@@ -133,6 +139,27 @@ export function createFlowDSL(): MultilingualDSL {
         tokenizer: FrenchFlowTokenizer,
         patternProfile: frenchProfile,
       },
+      {
+        code: 'de',
+        name: 'German',
+        nativeName: 'Deutsch',
+        tokenizer: GermanFlowTokenizer,
+        patternProfile: germanProfile,
+      },
+      {
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+        tokenizer: PortugueseFlowTokenizer,
+        patternProfile: portugueseProfile,
+      },
+      {
+        code: 'ru',
+        name: 'Russian',
+        nativeName: 'Русский',
+        tokenizer: RussianFlowTokenizer,
+        patternProfile: russianProfile,
+      },
     ],
     codeGenerator: flowCodeGenerator,
   });
@@ -156,6 +183,10 @@ export {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
+  allProfiles,
 } from './profiles/index.js';
 export { flowCodeGenerator, toFlowSpec, parseDuration } from './generators/flow-generator.js';
 export { renderFlow } from './generators/flow-renderer.js';
@@ -174,6 +205,9 @@ export {
   ChineseFlowTokenizer,
   TurkishFlowTokenizer,
   FrenchFlowTokenizer,
+  GermanFlowTokenizer,
+  PortugueseFlowTokenizer,
+  RussianFlowTokenizer,
 } from './tokenizers/index.js';
 export type { FlowSpec, FlowAction, WorkflowSpec, WorkflowStep } from './types.js';
 export { toWorkflowSpec, toSirenGrailSteps } from './generators/workflow-generator.js';

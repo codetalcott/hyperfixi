@@ -3,16 +3,7 @@ import { lintDomain, formatResult } from '@lokascript/domain-toolkit';
 import type { DomainLintInput } from '@lokascript/domain-toolkit';
 
 import { allSchemas } from '../schemas';
-import {
-  englishProfile,
-  spanishProfile,
-  japaneseProfile,
-  arabicProfile,
-  koreanProfile,
-  chineseProfile,
-  turkishProfile,
-  frenchProfile,
-} from '../profiles';
+import { allProfiles } from '../profiles';
 import {
   EnglishFlowTokenizer,
   SpanishFlowTokenizer,
@@ -22,22 +13,16 @@ import {
   ChineseFlowTokenizer,
   TurkishFlowTokenizer,
   FrenchFlowTokenizer,
+  GermanFlowTokenizer,
+  PortugueseFlowTokenizer,
+  RussianFlowTokenizer,
 } from '../tokenizers';
 
 function buildInput(): DomainLintInput {
   return {
     name: 'flow',
     schemas: allSchemas,
-    profiles: [
-      englishProfile,
-      spanishProfile,
-      japaneseProfile,
-      arabicProfile,
-      koreanProfile,
-      chineseProfile,
-      turkishProfile,
-      frenchProfile,
-    ],
+    profiles: allProfiles,
     tokenizers: {
       en: EnglishFlowTokenizer,
       es: SpanishFlowTokenizer,
@@ -47,6 +32,9 @@ function buildInput(): DomainLintInput {
       zh: ChineseFlowTokenizer,
       tr: TurkishFlowTokenizer,
       fr: FrenchFlowTokenizer,
+      de: GermanFlowTokenizer,
+      pt: PortugueseFlowTokenizer,
+      ru: RussianFlowTokenizer,
     },
   };
 }

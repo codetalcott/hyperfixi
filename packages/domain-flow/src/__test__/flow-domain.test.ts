@@ -9,7 +9,6 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { createFlowDSL, renderFlow, toFlowSpec } from '../index.js';
 import type { MultilingualDSL } from '@lokascript/framework';
 import { extractRoleValue } from '@lokascript/framework';
-import type { FlowSpec } from '../types.js';
 import { parseDuration } from '../generators/flow-generator.js';
 
 describe('FlowScript Domain', () => {
@@ -24,7 +23,7 @@ describe('FlowScript Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 8 languages', () => {
+    it('should support 11 languages', () => {
       const languages = flow.getSupportedLanguages();
       expect(languages).toContain('en');
       expect(languages).toContain('es');
@@ -34,11 +33,14 @@ describe('FlowScript Domain', () => {
       expect(languages).toContain('zh');
       expect(languages).toContain('tr');
       expect(languages).toContain('fr');
-      expect(languages).toHaveLength(8);
+      expect(languages).toContain('de');
+      expect(languages).toContain('pt');
+      expect(languages).toContain('ru');
+      expect(languages).toHaveLength(11);
     });
 
     it('should reject unsupported language', () => {
-      expect(() => flow.parse('fetch /api/users', 'de')).toThrow();
+      expect(() => flow.parse('fetch /api/users', 'xx')).toThrow();
     });
   });
 

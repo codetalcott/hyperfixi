@@ -130,3 +130,6 @@ export const KoreanFlowTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseFlowTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishFlowTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchFlowTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanFlowTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseFlowTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianFlowTokenizer: LanguageTokenizer = tokenizerFor('ru');
