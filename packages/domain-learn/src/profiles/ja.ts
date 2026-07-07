@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const jaProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'ja',
-    wordOrder: 'SOV',
-    keywords: {
-      add: { primary: '追加' },
-      remove: { primary: '削除' },
-      toggle: { primary: '切り替え' },
-      put: { primary: '置' },
-      set: { primary: '設定' },
-      show: { primary: '表示' },
-      hide: { primary: '隠' },
-      get: { primary: '取得' },
-      wait: { primary: '待' },
-      fetch: { primary: '取得' },
-      send: { primary: '送' },
-      go: { primary: '行' },
-      increment: { primary: '増加' },
-      decrement: { primary: '減少' },
-      take: { primary: '取' },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.ja.slice, LEARN_LANGUAGES.ja.vocab),
   morphologyTable: {
     add: {
       dictionary: '追加する',

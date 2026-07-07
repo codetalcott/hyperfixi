@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const frProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'fr',
-    wordOrder: 'SVO',
-    keywords: {
-      add: { primary: 'ajouter', alternatives: ['ajoute'] },
-      remove: { primary: 'retirer', alternatives: ['retire'] },
-      toggle: { primary: 'basculer', alternatives: ['bascule'] },
-      put: { primary: 'mettre', alternatives: ['mets'] },
-      set: { primary: 'définir', alternatives: ['définis'] },
-      show: { primary: 'montrer', alternatives: ['montre'] },
-      hide: { primary: 'cacher', alternatives: ['cache'] },
-      get: { primary: 'obtenir', alternatives: ['obtiens'] },
-      wait: { primary: 'attendre', alternatives: ['attends'] },
-      fetch: { primary: 'récupérer', alternatives: ['récupère'] },
-      send: { primary: 'envoyer', alternatives: ['envoie'] },
-      go: { primary: 'aller', alternatives: ['va'] },
-      increment: { primary: 'incrémenter', alternatives: ['incrémente'] },
-      decrement: { primary: 'décrémenter', alternatives: ['décrémente'] },
-      take: { primary: 'prendre', alternatives: ['prends'] },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.fr.slice, LEARN_LANGUAGES.fr.vocab),
   morphologyTable: {
     add: {
       infinitive: 'ajouter',

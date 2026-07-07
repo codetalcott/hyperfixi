@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const enProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'en',
-    wordOrder: 'SVO',
-    keywords: {
-      add: { primary: 'add' },
-      remove: { primary: 'remove' },
-      toggle: { primary: 'toggle' },
-      put: { primary: 'put' },
-      set: { primary: 'set' },
-      show: { primary: 'show' },
-      hide: { primary: 'hide' },
-      get: { primary: 'get' },
-      wait: { primary: 'wait' },
-      fetch: { primary: 'fetch' },
-      send: { primary: 'send' },
-      go: { primary: 'go' },
-      increment: { primary: 'increment' },
-      decrement: { primary: 'decrement' },
-      take: { primary: 'take' },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.en.slice, LEARN_LANGUAGES.en.vocab),
   morphologyTable: {
     add: {
       base: 'add',

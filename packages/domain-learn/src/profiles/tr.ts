@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const trProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'tr',
-    wordOrder: 'SOV',
-    keywords: {
-      add: { primary: 'ekle', alternatives: ['eklemek'] },
-      remove: { primary: 'kaldir', alternatives: ['kaldirmak'] },
-      toggle: { primary: 'degistir', alternatives: ['degistirmek'] },
-      put: { primary: 'koy', alternatives: ['koymak'] },
-      set: { primary: 'ayarla', alternatives: ['ayarlamak'] },
-      show: { primary: 'goster', alternatives: ['gostermek'] },
-      hide: { primary: 'gizle', alternatives: ['gizlemek'] },
-      get: { primary: 'al', alternatives: ['almak'] },
-      wait: { primary: 'bekle', alternatives: ['beklemek'] },
-      fetch: { primary: 'getir', alternatives: ['getirmek'] },
-      send: { primary: 'gonder', alternatives: ['gondermek'] },
-      go: { primary: 'git', alternatives: ['gitmek'] },
-      increment: { primary: 'artir', alternatives: ['artirmak'] },
-      decrement: { primary: 'azalt', alternatives: ['azaltmak'] },
-      take: { primary: 'al', alternatives: ['almak'] },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.tr.slice, LEARN_LANGUAGES.tr.vocab),
   morphologyTable: {
     add: {
       dictionary: 'eklemek',
