@@ -1,0 +1,3674 @@
+{
+  "en": {
+    "fetch": [
+      {
+        "id": "fetch-en-generated",
+        "language": "en",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "fetch {source} as {style} into {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fetch"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "as"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "into"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "as"
+          },
+          "destination": {
+            "marker": "into"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-en-generated",
+        "language": "en",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "poll {source} every {duration} as {style} into {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "poll"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "every"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "as"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "into"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "every"
+          },
+          "style": {
+            "marker": "as"
+          },
+          "destination": {
+            "marker": "into"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-en-generated",
+        "language": "en",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "stream {source} as {style} into {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "stream"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "as"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "into"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "as"
+          },
+          "destination": {
+            "marker": "into"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-en-generated",
+        "language": "en",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "submit {patient} to {destination} as {style}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "submit"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "to"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "as"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "to"
+          },
+          "style": {
+            "marker": "as"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-en-generated",
+        "language": "en",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "transform {patient} with {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "transform"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "with"
+            },
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "with"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-en-generated",
+        "language": "en",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "enter {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "enter"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-en-generated",
+        "language": "en",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "follow {patient} item {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "follow"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "item"
+                },
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "item"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-en-generated",
+        "language": "en",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "perform {patient} with {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "perform"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "with"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "with"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-en-generated",
+        "language": "en",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "capture {patient} as {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "capture"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "as"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "as"
+          }
+        }
+      }
+    ]
+  },
+  "es": {
+    "fetch": [
+      {
+        "id": "fetch-es-generated",
+        "language": "es",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "obtener {source} como {style} en {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "obtener"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "en"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "como"
+          },
+          "destination": {
+            "marker": "en"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-es-generated",
+        "language": "es",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "sondear {source} cada {duration} como {style} en {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "sondear"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "cada"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "en"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "cada"
+          },
+          "style": {
+            "marker": "como"
+          },
+          "destination": {
+            "marker": "en"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-es-generated",
+        "language": "es",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "transmitir {source} como {style} en {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "transmitir"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "en"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "como"
+          },
+          "destination": {
+            "marker": "en"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-es-generated",
+        "language": "es",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "enviar {patient} a {destination} como {style}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "enviar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "a"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "a"
+          },
+          "style": {
+            "marker": "como"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-es-generated",
+        "language": "es",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "transformar {patient} con {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "transformar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "con"
+            },
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "con"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-es-generated",
+        "language": "es",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "entrar {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "entrar"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-es-generated",
+        "language": "es",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "seguir {patient} elemento {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "seguir"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "elemento"
+                },
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "elemento"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-es-generated",
+        "language": "es",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "ejecutar {patient} con {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ejecutar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "con"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "con"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-es-generated",
+        "language": "es",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "capturar {patient} como {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "capturar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "como"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "como"
+          }
+        }
+      }
+    ]
+  },
+  "ja": {
+    "fetch": [
+      {
+        "id": "fetch-ja-generated",
+        "language": "ja",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "{source} で {style} に {destination} 取得",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "で"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "に"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "取得"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "で"
+          },
+          "destination": {
+            "marker": "に"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-ja-generated",
+        "language": "ja",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "{source} ごとに {duration} で {style} に {destination} ポーリング",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "ごとに"
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "で"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "に"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "ポーリング"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "ごとに"
+          },
+          "style": {
+            "marker": "で"
+          },
+          "destination": {
+            "marker": "に"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-ja-generated",
+        "language": "ja",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "{source} で {style} に {destination} ストリーム",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "で"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "に"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "ストリーム"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "で"
+          },
+          "destination": {
+            "marker": "に"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-ja-generated",
+        "language": "ja",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "{patient} に {destination} で {style} 送信",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "に"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "で"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "送信"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "に"
+          },
+          "style": {
+            "marker": "で"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-ja-generated",
+        "language": "ja",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} で {instrument} 変換",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "で"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "変換"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "で"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-ja-generated",
+        "language": "ja",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "{source} 入る",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "入る"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-ja-generated",
+        "language": "ja",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "{patient} の {instrument} 辿る",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "の"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "辿る"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "の"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-ja-generated",
+        "language": "ja",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} で {source} 実行",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "で"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "実行"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "で"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-ja-generated",
+        "language": "ja",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "{patient} として {destination} 取得変数",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "として"
+            },
+            {
+              "type": "literal",
+              "value": "取得変数"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "として"
+          }
+        }
+      }
+    ]
+  },
+  "ar": {
+    "fetch": [
+      {
+        "id": "fetch-ar-generated",
+        "language": "ar",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "جلب {source} ك {style} في {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "جلب"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "ك"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "في"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "ك"
+          },
+          "destination": {
+            "marker": "في"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-ar-generated",
+        "language": "ar",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "استطلع {source} كل {duration} ك {style} في {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "استطلع"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "كل"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "ك"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "في"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "كل"
+          },
+          "style": {
+            "marker": "ك"
+          },
+          "destination": {
+            "marker": "في"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-ar-generated",
+        "language": "ar",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "بث {source} ك {style} في {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "بث"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "ك"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "في"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "ك"
+          },
+          "destination": {
+            "marker": "في"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-ar-generated",
+        "language": "ar",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "أرسل {patient} إلى {destination} ك {style}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "أرسل"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "إلى"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "ك"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "إلى"
+          },
+          "style": {
+            "marker": "ك"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-ar-generated",
+        "language": "ar",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "حوّل {patient} ب {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "حوّل"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "ب"
+            },
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "ب"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-ar-generated",
+        "language": "ar",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "ادخل {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ادخل"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-ar-generated",
+        "language": "ar",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "اتبع {patient} عنصر {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "اتبع"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "عنصر"
+                },
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "عنصر"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-ar-generated",
+        "language": "ar",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "نفّذ {patient} ب {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "نفّذ"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "ب"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "ب"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-ar-generated",
+        "language": "ar",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "التقط {patient} ك {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "التقط"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "ك"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "ك"
+          }
+        }
+      }
+    ]
+  },
+  "ko": {
+    "fetch": [
+      {
+        "id": "fetch-ko-generated",
+        "language": "ko",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "{source} 로 {style} 에 {destination} 가져오기",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "로"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "에"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "가져오기"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "로"
+          },
+          "destination": {
+            "marker": "에"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-ko-generated",
+        "language": "ko",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "{source} 마다 {duration} 로 {style} 에 {destination} 폴링",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "마다"
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "로"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "에"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "폴링"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "마다"
+          },
+          "style": {
+            "marker": "로"
+          },
+          "destination": {
+            "marker": "에"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-ko-generated",
+        "language": "ko",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "{source} 로 {style} 에 {destination} 스트리밍",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "로"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "에"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "스트리밍"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "로"
+          },
+          "destination": {
+            "marker": "에"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-ko-generated",
+        "language": "ko",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "{patient} 로 {destination} 로 {style} 제출",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "로"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "로"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "제출"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "로"
+          },
+          "style": {
+            "marker": "로"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-ko-generated",
+        "language": "ko",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} 로 {instrument} 변환",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "로"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "변환"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "로"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-ko-generated",
+        "language": "ko",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "{source} 진입",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "진입"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-ko-generated",
+        "language": "ko",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "{patient} 항목 {instrument} 따라가기",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "항목"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "따라가기"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "항목"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-ko-generated",
+        "language": "ko",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} 로 {source} 실행",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "로"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "실행"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "로"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-ko-generated",
+        "language": "ko",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "{patient} 로 {destination} 캡처",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "로"
+            },
+            {
+              "type": "literal",
+              "value": "캡처"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "로"
+          }
+        }
+      }
+    ]
+  },
+  "zh": {
+    "fetch": [
+      {
+        "id": "fetch-zh-generated",
+        "language": "zh",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "获取 {source} 以 {style} 到 {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "获取"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "以"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "到"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "以"
+          },
+          "destination": {
+            "marker": "到"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-zh-generated",
+        "language": "zh",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "轮询 {source} 每 {duration} 以 {style} 到 {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "轮询"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "每"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "以"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "到"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "每"
+          },
+          "style": {
+            "marker": "以"
+          },
+          "destination": {
+            "marker": "到"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-zh-generated",
+        "language": "zh",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "流式 {source} 以 {style} 到 {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "流式"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "以"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "到"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "以"
+          },
+          "destination": {
+            "marker": "到"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-zh-generated",
+        "language": "zh",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "提交 {patient} 到 {destination} 以 {style}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "提交"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "到"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "以"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "到"
+          },
+          "style": {
+            "marker": "以"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-zh-generated",
+        "language": "zh",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "转换 {patient} 用 {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "转换"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "用"
+            },
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "用"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-zh-generated",
+        "language": "zh",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "进入 {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "进入"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-zh-generated",
+        "language": "zh",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "跟随 {patient} 项 {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "跟随"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "项"
+                },
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "项"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-zh-generated",
+        "language": "zh",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "执行 {patient} 用 {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "执行"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "用"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "用"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-zh-generated",
+        "language": "zh",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "捕获 {patient} 为 {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "捕获"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "为"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "为"
+          }
+        }
+      }
+    ]
+  },
+  "tr": {
+    "fetch": [
+      {
+        "id": "fetch-tr-generated",
+        "language": "tr",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "{source} olarak {style} e {destination} getir",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "olarak"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "e"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "getir"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "olarak"
+          },
+          "destination": {
+            "marker": "e"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-tr-generated",
+        "language": "tr",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "{source} her {duration} olarak {style} e {destination} yokla",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "her"
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "olarak"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "e"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "yokla"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "her"
+          },
+          "style": {
+            "marker": "olarak"
+          },
+          "destination": {
+            "marker": "e"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-tr-generated",
+        "language": "tr",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "{source} olarak {style} e {destination} aktar",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "olarak"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "e"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "aktar"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "olarak"
+          },
+          "destination": {
+            "marker": "e"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-tr-generated",
+        "language": "tr",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "{patient} e {destination} olarak {style} gönder",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "e"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "olarak"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "gönder"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "e"
+          },
+          "style": {
+            "marker": "olarak"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-tr-generated",
+        "language": "tr",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} ile {instrument} dönüştür",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "literal",
+              "value": "ile"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "dönüştür"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "ile"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-tr-generated",
+        "language": "tr",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "{source} gir",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "gir"
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-tr-generated",
+        "language": "tr",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "{patient} öğe {instrument} izle",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "öğe"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "izle"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "öğe"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-tr-generated",
+        "language": "tr",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "{patient} ile {source} yürüt",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "ile"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "yürüt"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "ile"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-tr-generated",
+        "language": "tr",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "{patient} olarak {destination} yakala",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "olarak"
+            },
+            {
+              "type": "literal",
+              "value": "yakala"
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "olarak"
+          }
+        }
+      }
+    ]
+  },
+  "fr": {
+    "fetch": [
+      {
+        "id": "fetch-fr-generated",
+        "language": "fr",
+        "command": "fetch",
+        "priority": 100,
+        "template": {
+          "format": "récupérer {source} comme {style} dans {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "récupérer"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "comme"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "dans"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "comme"
+          },
+          "destination": {
+            "marker": "dans"
+          }
+        }
+      }
+    ],
+    "poll": [
+      {
+        "id": "poll-fr-generated",
+        "language": "fr",
+        "command": "poll",
+        "priority": 100,
+        "template": {
+          "format": "interroger {source} chaque {duration} comme {style} dans {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "interroger"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "chaque"
+            },
+            {
+              "type": "role",
+              "role": "duration",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "comme"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "dans"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "duration": {
+            "marker": "chaque"
+          },
+          "style": {
+            "marker": "comme"
+          },
+          "destination": {
+            "marker": "dans"
+          }
+        }
+      }
+    ],
+    "stream": [
+      {
+        "id": "stream-fr-generated",
+        "language": "fr",
+        "command": "stream",
+        "priority": 100,
+        "template": {
+          "format": "diffuser {source} comme {style} dans {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "diffuser"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "comme"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "dans"
+                },
+                {
+                  "type": "role",
+                  "role": "destination",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "style": {
+            "marker": "comme"
+          },
+          "destination": {
+            "marker": "dans"
+          }
+        }
+      }
+    ],
+    "submit": [
+      {
+        "id": "submit-fr-generated",
+        "language": "fr",
+        "command": "submit",
+        "priority": 100,
+        "template": {
+          "format": "soumettre {patient} vers {destination} comme {style}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "soumettre"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "literal",
+              "value": "vers"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "comme"
+                },
+                {
+                  "type": "role",
+                  "role": "style",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "vers"
+          },
+          "style": {
+            "marker": "comme"
+          }
+        }
+      }
+    ],
+    "transform": [
+      {
+        "id": "transform-fr-generated",
+        "language": "fr",
+        "command": "transform",
+        "priority": 100,
+        "template": {
+          "format": "transformer {patient} avec {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "transformer"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "avec"
+            },
+            {
+              "type": "role",
+              "role": "instrument",
+              "optional": false,
+              "expectedTypes": ["expression", "literal"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "avec"
+          }
+        }
+      }
+    ],
+    "enter": [
+      {
+        "id": "enter-fr-generated",
+        "language": "fr",
+        "command": "enter",
+        "priority": 100,
+        "template": {
+          "format": "entrer {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "entrer"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {}
+        }
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-fr-generated",
+        "language": "fr",
+        "command": "follow",
+        "priority": 100,
+        "template": {
+          "format": "suivre {patient} élément {instrument}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "suivre"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "élément"
+                },
+                {
+                  "type": "role",
+                  "role": "instrument",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "instrument": {
+            "marker": "élément"
+          }
+        }
+      }
+    ],
+    "perform": [
+      {
+        "id": "perform-fr-generated",
+        "language": "fr",
+        "command": "perform",
+        "priority": 100,
+        "template": {
+          "format": "exécuter {patient} avec {source}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "exécuter"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "avec"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["selector", "expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "avec"
+          }
+        }
+      }
+    ],
+    "capture": [
+      {
+        "id": "capture-fr-generated",
+        "language": "fr",
+        "command": "capture",
+        "priority": 100,
+        "template": {
+          "format": "capturer {patient} comme {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "capturer"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "comme"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "destination": {
+            "marker": "comme"
+          }
+        }
+      }
+    ]
+  }
+}
