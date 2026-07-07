@@ -6,17 +6,21 @@
  * agreement). Consumed by one lint test per domain — see the integration
  * pattern in packages/domain-sql/src/__test__/lint.test.ts.
  *
- * Phase 1 rules:
- *   - Schema structure (R1, R2) — delegates to @lokascript/semantic's
+ * Implemented rules:
+ *   - R1/R2 (schema-structure): delegates to @lokascript/semantic's
  *     existing validator.
- *
- * Planned rules (phase 2+):
- *   - R5: Profile keywords present in tokenizer keyword lists.
- *   - R6: Every schema command has profile keywords for all declared langs.
- *   - R7: Every markerOverride word tokenizes as a single token.
- *   - R8: Latin-script tokenizers include LatinExtendedIdentifierExtractor.
- *   - R9: Schema role positions are unique per word-order.
- *   - R10: Renderer table keywords match profile/schema translations.
+ *   - R5 (keyword-classification): profile keywords/markers classify as
+ *     'keyword' in the language's tokenizer.
+ *   - R6 (keyword-coverage): every schema command has profile keywords for
+ *     all declared languages.
+ *   - R7 (marker-tokenization): every marker/keyword tokenizes as a single
+ *     token.
+ *   - R8 (extractor-coverage): Latin-script tokenizers handle diacritic
+ *     identifiers (warning).
+ *   - R9 (position-ordering): schema role positions are unique per
+ *     word-order (warning).
+ *   - R10 (renderer-coherence): renderer table keywords match
+ *     profile/schema translations (opt-in via `renderer`).
  */
 
 import { runRules } from './rules';

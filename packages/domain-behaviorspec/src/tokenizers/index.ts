@@ -190,6 +190,11 @@ const EN_KEYWORDS = new Set([
   'class',
   'feature',
   'setup',
+  // Profile role markers (R5: keyword-classification)
+  'as',
+  'from',
+  'using',
+  'via',
 ]);
 
 export class EnglishBehaviorSpecTokenizer extends BaseTokenizer {
@@ -226,6 +231,9 @@ const ES_KEYWORDS = new Set([
   'dentro',
   'funcionalidad',
   'preparacion',
+  // Profile role markers (R5: keyword-classification)
+  'de',
+  'desde',
 ]);
 
 export class SpanishBehaviorSpecTokenizer extends BaseTokenizer {
@@ -261,6 +269,8 @@ const JA_KEYWORDS = new Set([
   'の',
   '機能',
   '準備',
+  // Profile role markers (R5: keyword-classification)
+  'から',
 ]);
 
 const JA_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -321,6 +331,9 @@ const AR_KEYWORDS = new Set([
   'من',
   'ميزة',
   'إعداد',
+  // Profile role markers (R5: keyword-classification)
+  'باستخدام',
+  'بـ',
 ]);
 
 const AR_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -380,6 +393,11 @@ const KO_KEYWORDS = new Set([
   '의',
   '기능',
   '설정',
+  // Profile role markers (R5: keyword-classification)
+  '로',
+  '를',
+  '부터',
+  '에서',
 ]);
 
 const KO_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -437,6 +455,12 @@ const ZH_KEYWORDS = new Set([
   '显示',
   '功能',
   '设置',
+  // Profile role markers (R5: keyword-classification)
+  '从',
+  '以',
+  '把',
+  '用',
+  '由',
 ]);
 
 const ZH_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -495,6 +519,9 @@ const FR_KEYWORDS = new Set([
   'avec',
   'fonctionnalite',
   'preparation',
+  // Profile role markers (R5: keyword-classification)
+  'de',
+  'depuis',
 ]);
 
 export class FrenchBehaviorSpecTokenizer extends BaseTokenizer {
@@ -528,6 +555,27 @@ const TR_KEYWORDS = new Set([
   'ile',
   'ozellik',
   'hazirlik',
+  // Profile role markers (R5: keyword-classification)
+  'dan',
+  'den',
+  'i',
+  'la',
+  'le',
+  'ni',
+  'nu',
+  'nü',
+  'nı',
+  'tan',
+  'ten',
+  'u',
+  'yi',
+  'yla',
+  'yle',
+  'yu',
+  'yü',
+  'yı',
+  'ü',
+  'ı',
 ]);
 
 export class TurkishBehaviorSpecTokenizer extends BaseTokenizer {

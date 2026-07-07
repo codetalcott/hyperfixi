@@ -88,6 +88,14 @@ const EN_KEYWORDS = new Set([
   'with',
   'the',
   'that',
+  // Profile role markers (R5: keyword-classification)
+  'as',
+  'by',
+  'from',
+  'of',
+  'to',
+  'using',
+  'via',
 ]);
 
 export class EnglishBDDTokenizer extends BaseTokenizer {
@@ -126,6 +134,11 @@ const ES_KEYWORDS = new Set([
   'el',
   'la',
   'que',
+  // Profile role markers (R5: keyword-classification)
+  'a',
+  'de',
+  'desde',
+  'sobre',
 ]);
 
 export class SpanishBDDTokenizer extends BaseTokenizer {
@@ -162,6 +175,9 @@ const JA_KEYWORDS = new Set([
   'に',
   'で',
   'の',
+  // Profile role markers (R5: keyword-classification)
+  'から',
+  'へ',
 ]);
 
 const JA_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -221,6 +237,14 @@ const AR_KEYWORDS = new Set([
   'على',
   'ب',
   'أن',
+  // Profile role markers (R5: keyword-classification)
+  'إلى',
+  'باستخدام',
+  'بعد',
+  'بـ',
+  'في',
+  'قبل',
+  'من',
 ]);
 
 const AR_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -280,6 +304,10 @@ const KO_KEYWORDS = new Set([
   '에',
   '의',
   '로',
+  // Profile role markers (R5: keyword-classification)
+  '부터',
+  '에서',
+  '으로',
 ]);
 
 const KO_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -329,7 +357,23 @@ export class KoreanBDDTokenizer extends BaseTokenizer {
 // Chinese BDD Tokenizer (SVO)
 // =============================================================================
 
-const ZH_KEYWORDS = new Set(['假设', '当', '那么', '并且', '是', '有', '在', '用']);
+const ZH_KEYWORDS = new Set([
+  '假设',
+  '当',
+  '那么',
+  '并且',
+  '是',
+  '有',
+  '在',
+  '用',
+  '于',
+  '从',
+  '以',
+  '到',
+  '把',
+  '由',
+  '的',
+]);
 
 const ZH_KEYWORD_EXTRAS: KeywordEntry[] = [
   { native: '假设', normalized: 'given' },
@@ -386,6 +430,44 @@ const TR_KEYWORDS = new Set([
   'üzerinde',
   'ile',
   'de',
+  // Profile role markers (R5: keyword-classification)
+  'a',
+  'da',
+  'dan',
+  'den',
+  'e',
+  'i',
+  'in',
+  'la',
+  'le',
+  'na',
+  'ne',
+  'ni',
+  'nin',
+  'nu',
+  'nun',
+  'nü',
+  'nün',
+  'nı',
+  'nın',
+  'ta',
+  'tan',
+  'te',
+  'ten',
+  'u',
+  'un',
+  'ya',
+  'ye',
+  'yi',
+  'yla',
+  'yle',
+  'yu',
+  'yü',
+  'yı',
+  'ü',
+  'ün',
+  'ı',
+  'ın',
 ]);
 
 const TR_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -434,7 +516,20 @@ export class TurkishBDDTokenizer extends BaseTokenizer {
 // French BDD Tokenizer (SVO)
 // =============================================================================
 
-const FR_KEYWORDS = new Set(['soit', 'quand', 'alors', 'et', 'est', 'a', 'sur', 'avec']);
+const FR_KEYWORDS = new Set([
+  'soit',
+  'quand',
+  'alors',
+  'et',
+  'est',
+  'a',
+  'sur',
+  'avec',
+  'dans',
+  'de',
+  'depuis',
+  'à',
+]);
 
 const FR_KEYWORD_EXTRAS: KeywordEntry[] = [
   { native: 'soit', normalized: 'given' },
