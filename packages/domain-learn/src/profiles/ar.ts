@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const arProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'ar',
-    wordOrder: 'VSO',
-    keywords: {
-      add: { primary: 'أضف' },
-      remove: { primary: 'احذف' },
-      toggle: { primary: 'بدّل' },
-      put: { primary: 'ضع' },
-      set: { primary: 'عيّن' },
-      show: { primary: 'أظهر' },
-      hide: { primary: 'أخفِ' },
-      get: { primary: 'احصل' },
-      wait: { primary: 'انتظر' },
-      fetch: { primary: 'أحضر' },
-      send: { primary: 'أرسل' },
-      go: { primary: 'اذهب' },
-      increment: { primary: 'زد' },
-      decrement: { primary: 'أنقص' },
-      take: { primary: 'خذ' },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.ar.slice, LEARN_LANGUAGES.ar.vocab),
   morphologyTable: {
     add: {
       root: 'ض-ي-ف',

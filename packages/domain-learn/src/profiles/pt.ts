@@ -1,3 +1,5 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile, PortugueseForms, LanguageFrames } from '../types';
 
 const morphologyTable: Record<string, PortugueseForms> = {
@@ -457,27 +459,7 @@ const frames: LanguageFrames = {
 };
 
 export const ptProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'pt',
-    wordOrder: 'SVO',
-    keywords: {
-      add: { primary: 'adicionar', alternatives: ['adicione'] },
-      remove: { primary: 'remover', alternatives: ['remova'] },
-      toggle: { primary: 'alternar', alternatives: ['alterne'] },
-      put: { primary: 'colocar', alternatives: ['coloque'] },
-      set: { primary: 'definir', alternatives: ['defina'] },
-      show: { primary: 'mostrar', alternatives: ['mostre'] },
-      hide: { primary: 'esconder', alternatives: ['esconda'] },
-      get: { primary: 'obter', alternatives: ['obtenha'] },
-      wait: { primary: 'esperar', alternatives: ['espere'] },
-      fetch: { primary: 'buscar', alternatives: ['busque'] },
-      send: { primary: 'enviar', alternatives: ['envie'] },
-      go: { primary: 'ir', alternatives: ['vá'] },
-      increment: { primary: 'incrementar', alternatives: ['incremente'] },
-      decrement: { primary: 'decrementar', alternatives: ['decremente'] },
-      take: { primary: 'pegar', alternatives: ['pegue'] },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.pt.slice, LEARN_LANGUAGES.pt.vocab),
   morphologyTable,
   frames,
   defaultSubject: 'o sistema',

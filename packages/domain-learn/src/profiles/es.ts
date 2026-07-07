@@ -1,3 +1,5 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile, SpanishForms, LanguageFrames } from '../types';
 
 const morphologyTable: Record<string, SpanishForms> = {
@@ -802,27 +804,7 @@ const frames: LanguageFrames = {
 };
 
 export const esProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'es',
-    wordOrder: 'SVO',
-    keywords: {
-      add: { primary: 'agregar', alternatives: ['agrega'] },
-      remove: { primary: 'quitar', alternatives: ['quita'] },
-      toggle: { primary: 'alternar', alternatives: ['alterna'] },
-      put: { primary: 'poner', alternatives: ['pon'] },
-      set: { primary: 'establecer', alternatives: ['establece'] },
-      show: { primary: 'mostrar', alternatives: ['muestra'] },
-      hide: { primary: 'ocultar', alternatives: ['oculta'] },
-      get: { primary: 'obtener', alternatives: ['obtén'] },
-      wait: { primary: 'esperar', alternatives: ['espera'] },
-      fetch: { primary: 'buscar', alternatives: ['busca'] },
-      send: { primary: 'enviar', alternatives: ['envía'] },
-      go: { primary: 'ir', alternatives: ['ve'] },
-      increment: { primary: 'incrementar', alternatives: ['incrementa'] },
-      decrement: { primary: 'decrementar', alternatives: ['decrementa'] },
-      take: { primary: 'tomar', alternatives: ['toma'] },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.es.slice, LEARN_LANGUAGES.es.vocab),
   morphologyTable,
   frames,
   defaultSubject: 'el sistema',

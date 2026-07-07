@@ -1,27 +1,9 @@
+import { buildPatternProfile } from '@lokascript/framework';
+import { LEARN_LANGUAGES } from '../vocab';
 import type { LearnLanguageProfile } from '../types';
 
 export const zhProfile: LearnLanguageProfile = {
-  patternProfile: {
-    code: 'zh',
-    wordOrder: 'SVO',
-    keywords: {
-      add: { primary: '添加' },
-      remove: { primary: '移除' },
-      toggle: { primary: '切换' },
-      put: { primary: '放置' },
-      set: { primary: '设置' },
-      show: { primary: '显示' },
-      hide: { primary: '隐藏' },
-      get: { primary: '获取' },
-      wait: { primary: '等待' },
-      fetch: { primary: '抓取' },
-      send: { primary: '发送' },
-      go: { primary: '前往' },
-      increment: { primary: '增加' },
-      decrement: { primary: '减少' },
-      take: { primary: '拿取' },
-    },
-  },
+  patternProfile: buildPatternProfile(LEARN_LANGUAGES.zh.slice, LEARN_LANGUAGES.zh.vocab),
   morphologyTable: {
     add: {
       base: '添加',

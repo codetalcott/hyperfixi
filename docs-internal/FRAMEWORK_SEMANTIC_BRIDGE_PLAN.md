@@ -138,6 +138,13 @@ Mechanical migration of the remaining registered domains: **bdd, behaviorspec,
 jsx, todo, llm, flow, voice**. Same recipe as the pilot (golden-snapshot parity
 for existing 8 languages, then vocab-only expansion). Batch 2–3 domains per PR.
 
+> **Status: complete (2026-07-07).** Batch 1 todo+llm (#609), batch 2 jsx+voice
+> (#610), batch 3 bdd+behaviorspec (#611), batch 4 flow (#612) + learn (#613).
+> All eight fan-out domains are at 11 languages except bdd/behaviorspec (8 —
+> renderer/marker tables make expansion non-vocab-sized; see the vocab-tooling
+> backlog below) and learn (10, its pre-existing set; patternProfile-only
+> migration per the note below). Next: Phase 3 (registry, CI, drift guards).
+
 Language expansion beyond the pilot's 11 is *demand-driven per domain* — the
 bridge makes it a vocab-file-sized task, so we don't need to force 24×9 at once.
 Recommended floor: bring every domain to the pilot's language set.
