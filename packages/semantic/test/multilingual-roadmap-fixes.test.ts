@@ -11673,3 +11673,72 @@ describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 dri
     expect(actionsOf(node)).toContain('call');
   });
 });
+
+describe('trailing optional slot never captures a command verb (halt swallows juxtaposed call — spurious call ×7 / en-noise drill, L3)', () => {
+  const role = (
+    node: Record<string, any> | null | undefined,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+
+  const walkNodesL3 = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  it('[en] window-keydown: the if-branch keeps BOTH halt and call with the call patient captured', () => {
+    // halt-en-generated's optional trailing patient swallowed the juxtaposed
+    // `call` keyword (patient=literal:"call") and saveDocument() stranded —
+    // the en reference lost the call, reading the seven SOV keepers as
+    // spurious call ×7 while 16 SVO languages silently dropped it too.
+    const node = parse('on keydown[key=="s"] from window if event.ctrlKey halt call saveDocument() end', 'en');
+    const nodes = walkNodesL3(node);
+    const halt = nodes.find(r => r.action === 'halt');
+    expect(halt).toBeDefined();
+    expect(role(halt!, 'patient')).toBeUndefined();
+    const call = nodes.find(r => r.action === 'call');
+    expect(call).toBeDefined();
+    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe('saveDocument()');
+  });
+
+  it('[de] the same-path SVO language enriches together with en (no honest dip)', () => {
+    const node = parse('bei keydown[key=="s"] von fenster falls event.ctrlKey anhalten aufrufen saveDocument() ende', 'de');
+    const nodes = walkNodesL3(node);
+    expect(nodes.find(r => r.action === 'halt')).toBeDefined();
+    const call = nodes.find(r => r.action === 'call');
+    expect(call).toBeDefined();
+    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe('saveDocument()');
+  });
+
+  it('[en] halt still captures its legitimate non-verb patients (both-ways lock)', () => {
+    const theEvent = parse('halt the event', 'en') as unknown as Record<string, any>;
+    expect(theEvent.action).toBe('halt');
+    expect(String(role(theEvent, 'patient')?.value)).toBe('event');
+    const bubbling = parse('halt bubbling', 'en') as unknown as Record<string, any>;
+    expect(bubbling.action).toBe('halt');
+    expect(String(role(bubbling, 'patient')?.raw ?? role(bubbling, 'patient')?.value)).toBe('bubbling');
+  });
+
+  it('[ja] a mid-pattern optional group slot still captures-and-fails on a verb (goal reclaim lock)', () => {
+    // The guard is scoped to the pattern's FINAL slot (nextPatternToken
+    // undefined, threaded through groups): the ja no-goal variant's mid-pattern
+    // duration/style group slots must keep capturing 遷移 and failing the
+    // pattern so the verb-anchoring fallback reclaims goal+duration.
+    const node = parse('クリック で 私 から もし effect である "fade" opacity を 遷移 0 に 300ms 終わり', 'ja');
+    const transition = walkNodesL3(node).find(r => r.action === 'transition');
+    expect(transition).toBeDefined();
+    expect(String(role(transition!, 'goal')?.value)).toBe('0');
+    expect(String(role(transition!, 'duration')?.value)).toBe('300ms');
+  });
+});

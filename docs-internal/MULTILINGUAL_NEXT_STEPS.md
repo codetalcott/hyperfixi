@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-10 / L2 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-11 / L3 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,8 +21,8 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.993**              | session-10 / L2 drills: 0.9910 → 0.9928 (three drills)    |
-| avgRoleFidelity (R1)           | **0.983**              | 0.9831, held through session-10                           |
+| avgPrecision (R0 trust floor)  | **0.994**              | session-11 / L3 drills: 0.9928 → 0.9939 (two drills)      |
+| avgRoleFidelity (R1)           | **0.984**              | 0.9831 → 0.9838 (L3 side-effect: reclaimed roles)         |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
@@ -40,13 +40,13 @@ normal usage). The bar, all four together:
 1. **All en-facing parser gaps closed.** Every remaining en-noise inversion is
    a real English-parser bug (en `go back` / `add "content"` didn't parse
    until #588/#589) — user-visible to English users regardless of the metric.
-2. **Every spurious family larger than ×5 cleared** (post-session-10 inventory:
+2. **Every spurious family larger than ×5 cleared** (post-session-11 inventory:
    ~~morph ×18~~ ✓L1, for ×14→×9 (transition half ✓L2; remainder = take-class
    ×6 own-arc + wait-payload behaviors ×3 post-launch), ~~add ×11 draggable~~
-   ✓L1, default ×9, empty ×8, call ×7, on ×7 he, ~~transition ×6~~ ✓L2,
-   ~~breakpoint ×6~~ ✓L2 (+halt ×3 sibling).
-3. **avgPrecision ≥ 0.995** (0.9928 as of session 10).
-4. **avgRoleFidelity ≥ 0.985** (0.9831 as of session 10) — the big R1-missing
+   ✓L1, default ×9, empty ×8, ~~call ×7~~ ✓L3, ~~on ×7 he~~ ✓L3,
+   ~~transition ×6~~ ✓L2, ~~breakpoint ×6~~ ✓L2 (+halt ×3 sibling).
+3. **avgPrecision ≥ 0.995** (0.9939 as of session 11).
+4. **avgRoleFidelity ≥ 0.985** (0.9838 as of session 11) — the big R1-missing
    families (add.patient:selector ×20, toggle.patient:expression ×19,
    fetch.source:literal ×18, set.patient:literal ×16,
    bind.source:property-path ×14) carry most of this.
@@ -58,7 +58,7 @@ across sessions 4–8, full discipline included). Sequencing:
 | ------- | -------------------------------------------------------------------- | ------------------------- |
 | L1 ✓    | morph ×18 + draggable add fold+cleanup ×11 (#590 + session-9 PR 2)   | precision 0.9891 → 0.9910 |
 | L2 ✓    | breakpoint ×6+halt ×3 + bn `for` transition-half ×5 + transition ×6  | precision 0.9910 → 0.9928 |
-| L3      | he/zh marker cluster (on ×7 he, call ×7; toggle shrank to ×1 in L2)  | precision, en gaps        |
+| L3 ✓    | on ×7 he/hi (#595) + call ×7 halt-verb-guard (session-11 PR 2)       | precision 0.9928 → 0.9939 |
 | L4      | default-value full drill (13 langs, markers + possessives)           | en gaps, R1               |
 | L5–L6   | big R1-missing families (add/toggle patient, fetch/bind source, set) | R1 → ≥0.985               |
 
@@ -69,6 +69,9 @@ possibly part of L4) rather than L1+L2 alone. L2 actual: +0.0018 for 20
 entries (#592, #593, session-10 PR 3) — on the same slope; after L2 the
 remaining >×5 inventory is default ×9, for ×9 (two sub-arcs, see bar item 2),
 empty ×8, call ×7, on ×7 he, so L3+L4 must carry ~0.0022 to reach 0.995.
+L3 actual: +0.0011 for 14 spurious + 10 missing entries cleared (#595 +
+session-11 PR 2) — remaining >×5 inventory is default ×9 (en-noise inversion,
+the L4 drill), for ×9, empty ×8, so L4 must carry ~0.0011 to reach 0.995.
 
 **Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
 polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
@@ -79,6 +82,56 @@ fail CI.
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06f (SESSION 11 = L3, two drills: #595 and this PR;
+> avgPrecision 0.9928 → 0.9939, probe mean R1 0.9831 → 0.9838; A/B 14
+> spurious and 10 missing cleared / 0 new across the two; census identical
+> (3404); gate green; baseline regenerated per-PR.)**
+>
+> - **#595 — spurious on ×7 (he ×6 + hi ×1, two mechanisms as pre-probed).**
+>   he: עם is the WITH/style marker but was ALSO an event alternative in five
+>   places (event-he-when, keywords.on, eventHandler.keyword, eventMarker,
+>   temporalMarkers) — the unconsumed with-tail after fetch-he/render-he
+>   anchored a phantom second handler. עם removed from every event-anchoring
+>   site; the tail now drops exactly like en's. Bonus: he render reclaims the
+>   stolen `style` role (missing render.style ×14→×12). hi (install-behavior):
+>   event-hi-bare grabbed the leading `Draggable` as the event and the SOV
+>   verb-anchoring fallback fabricated a junk install body — the existing
+>   bare-event guard's command PEEK extended from `reference` to non-event
+>   `expression` leads; window-resize/worker-basic hi (junk renders that parse
+>   ONLY via the bare anchor) stay byte-identical, census intact.
+> - **PR 2 — spurious call ×7 was en-noise ×17-wide (bar item 1).** halt's
+>   optional trailing patient swallowed the juxtaposed next verb
+>   (`… halt call saveDocument()` → patient=literal:"call") in en AND 16 SVO
+>   languages; the SOV seven split verb-first and kept call. New
+>   pattern-matcher guard: a TRAILING optional role slot (nextPatternToken
+>   undefined, threaded through groups) never captures a keyword whose
+>   normalized form is a registered command action. All 24 languages now
+>   capture call with the identical patient=expression:"saveDocument()" —
+>   zero honest dips. The FINAL-slot scoping is load-bearing: an earlier
+>   unscoped draft let ja's no-goal transition variant complete sloppily
+>   (mid-pattern duration/style slots must capture-and-FAIL so the
+>   verb-anchoring fallback reclaims goal+duration — locked by test).
+> - **L4 pre-probed (default ×9 = an en-noise INVERSION, bar item 1):** en
+>   itself parses `on load default my @data-count to "0"` WITHOUT the default
+>   action (reference wrong); ar/bn/hi/it/ja/ko/th/tl/tr keep it but with
+>   misaligned junk roles (ja/ko fused possessive patient=literal:"私の@data-count"
+>   destination=literal:"0"; ar destination=property-path:"undefined"; it via
+>   event-handler-it-full, roleless). The en enrichment (possessive +
+>   property-path + to-marker) must land WITH the nine's role alignment — the
+>   in-code NOTE at defaultSchema.destination stands, ~2 roles × 9 langs of
+>   honest dips if en-only.
+> - **morph-with-template missing ×7 re-probed post-he-drill (now ×12 across
+>   render-template-with-data + morph-with-template, six SOV langs):** en's
+>   style capture is real but value-truncated (`style=expression:"row"` — the
+>   param NAME; `$data` dropped, a value bug invisible to R0/R1). The six need
+>   to GAIN style:expression (SOV with-phrase capture), NOT en losing it —
+>   en-side removal would delete genuine template-param info. L4+ scope.
+> - **Hygiene flag:** `packages/semantic/src/parser/generated/language-grammar.ts`
+>   is ~890 lines stale vs current profiles (regeneration produces real new
+>   keyword entries; no CI drift guard exists). Deliberately NOT folded into
+>   the L3 PRs (עם stays in the map either way — zero semantic overlap);
+>   regenerate in its own increment, ideally with a drift guard.
 
 > **Update 2026-07-06e (SESSION 10 = L2, three drills across #592, #593 and
 > this PR; avgPrecision 0.9910 → 0.9928, probe mean R1 0.9831 held; A/B 20
