@@ -1,0 +1,848 @@
+{
+  "en": {
+    "add": [
+      {
+        "id": "add-en-generated",
+        "language": "en",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "add {item} to {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "add"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "to"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "to"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-en-generated",
+        "language": "en",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "complete {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "complete",
+              "alternatives": ["done", "finish"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-en-generated",
+        "language": "en",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "list {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "list",
+              "alternatives": ["show"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "es": {
+    "add": [
+      {
+        "id": "add-es-generated",
+        "language": "es",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "agregar {item} a {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "agregar",
+              "alternatives": ["añadir"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "a"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "a"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-es-generated",
+        "language": "es",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "completar {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "completar",
+              "alternatives": ["terminar"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-es-generated",
+        "language": "es",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "listar {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "listar",
+              "alternatives": ["mostrar"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "ja": {
+    "add": [
+      {
+        "id": "add-ja-generated",
+        "language": "ja",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "を {item} に {list} 追加",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "に"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "を"
+            },
+            {
+              "type": "literal",
+              "value": "追加"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {
+            "marker": "を"
+          },
+          "list": {
+            "marker": "に"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-ja-generated",
+        "language": "ja",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "を {item} 完了",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "を"
+            },
+            {
+              "type": "literal",
+              "value": "完了"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {
+            "marker": "を"
+          }
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-ja-generated",
+        "language": "ja",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "を {list} 一覧",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "を"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "一覧"
+            }
+          ]
+        },
+        "extraction": {
+          "list": {
+            "marker": "を"
+          }
+        }
+      }
+    ]
+  },
+  "ar": {
+    "add": [
+      {
+        "id": "add-ar-generated",
+        "language": "ar",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "أضف {item} إلى {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "أضف"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "إلى"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "إلى"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-ar-generated",
+        "language": "ar",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "أكمل {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "أكمل"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-ar-generated",
+        "language": "ar",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "اعرض {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "اعرض"
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "ko": {
+    "add": [
+      {
+        "id": "add-ko-generated",
+        "language": "ko",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "를 {item} 에 {list} 추가",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "에"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "를"
+            },
+            {
+              "type": "literal",
+              "value": "추가"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {
+            "marker": "를"
+          },
+          "list": {
+            "marker": "에"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-ko-generated",
+        "language": "ko",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "를 {item} 완료",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "를"
+            },
+            {
+              "type": "literal",
+              "value": "완료"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {
+            "marker": "를"
+          }
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-ko-generated",
+        "language": "ko",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "를 {list} 목록",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "를"
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": "목록"
+            }
+          ]
+        },
+        "extraction": {
+          "list": {
+            "marker": "를"
+          }
+        }
+      }
+    ]
+  },
+  "zh": {
+    "add": [
+      {
+        "id": "add-zh-generated",
+        "language": "zh",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "添加 {item} 到 {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "添加"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "到"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "到"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-zh-generated",
+        "language": "zh",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "完成 {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "完成"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-zh-generated",
+        "language": "zh",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "列出 {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "列出"
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "tr": {
+    "add": [
+      {
+        "id": "add-tr-generated",
+        "language": "tr",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "{item} e {list} ekle",
+          "tokens": [
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                },
+                {
+                  "type": "literal",
+                  "value": "e"
+                }
+              ]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "ekle"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "e"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-tr-generated",
+        "language": "tr",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "{item} tamamla",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "tamamla"
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-tr-generated",
+        "language": "tr",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "{list} listele",
+          "tokens": [
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "listele"
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "fr": {
+    "add": [
+      {
+        "id": "add-fr-generated",
+        "language": "fr",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "ajouter {item} à {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "ajouter"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "à"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "à"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-fr-generated",
+        "language": "fr",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "terminer {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "terminer"
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-fr-generated",
+        "language": "fr",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "lister {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "lister",
+              "alternatives": ["afficher"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  }
+}
