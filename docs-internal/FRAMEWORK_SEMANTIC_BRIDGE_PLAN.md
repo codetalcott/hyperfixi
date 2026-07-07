@@ -201,6 +201,24 @@ facts, with semantic (parsing), i18n (generation), and framework/domains
 consolidation is a post-arc (v2.7+) decision, made after the bridge reveals
 which slice domains actually consume.
 
+**Vocab-authoring ergonomics (backlog, surfaced authoring Phase 1–2):** hand-writing
+`src/vocab/{lang}.ts` per domain is repetitive, and the same translation currently
+lives in three unsynced places — `vocab` keywords, schema `markerOverride[lang]`,
+and the renderer's `COMMAND_KEYWORDS`/`MARKERS` tables. A mismatch only surfaces as
+a round-trip test failure. Two follow-ups:
+
+- *Near-term — a vocab CLI:* `dump` (export a domain's vocab across all languages
+  as one editable concept × language table), `scaffold` (generate a new-language
+  vocab file from a template), and `validate` (every schema-marker word + vocab
+  keyword must appear in that language's `tokenizerKeywords`, or it won't tokenize —
+  the R5-adjacent lint).
+- *Aspirational — a single lexicon:* one `concept → lang → translation` store as the
+  source of truth, with vocab files, schema markers, and renderer tables all
+  *generated* from it (kills the 3× authoring). This is the "language pack" end-state
+  above, made concrete. Foothold already in the tree: `domain-voice`'s renderer
+  derives markers from schemas via `buildMarkerLookup` instead of a parallel table —
+  the pattern to generalize.
+
 ### Phase 4 (stretch, separate decision) — SOV/agglutinative rendering
 
 Domains that render natural-language text back out (bdd/behaviorspec `render()`,
