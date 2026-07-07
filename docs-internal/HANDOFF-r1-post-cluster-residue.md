@@ -1,9 +1,20 @@
 # Handoff — R1 residue after the five-cluster triage (fronted repeat-while · sw kama homonym · singletons)
 
-> **STATUS UPDATE (2026-07-06, session 13 = L5 of the launch bar): the
-> canonical `@attr` typing drill LANDED (this PR) — avgRoleFidelity 0.9838 →
-> 0.9862, LAUNCH BAR item 4 (≥0.985) REACHED. Bar items 1/3/4 now all hold;
-> only item 2 remains (spurious for ×9 + empty ×8).**
+> **STATUS UPDATE (2026-07-06, session 13 = L5 + L6 of the launch bar): TWO
+> drills landed — #598 (canonical `@attr` typing: avgRoleFidelity 0.9838 →
+> 0.9862, LAUNCH BAR item 4 REACHED) and the empty ×8 both-sides drill (this
+> PR: spurious empty ×8 + hi add ×2 role-steal cleared; avgPrecision 0.9953 →
+> 0.9957, R1 0.9863). Bar items 1/3/4 hold; item 2 is down to ONE family:
+> for ×9 (take-class ×6 own-arc + wait-payload ×3 post-launch).**
+>
+> 0. **L6 drill (this PR) in brief — full detail in NEXT_STEPS 2026-07-06i:**
+>    transformer condition/body scans cut `if my value is empty …` at the
+>    copula (`empty` is a command keyword) → shared predicate-adjective guard;
+>    parse-side SOV verb-lookup exception re-split the healed adjacency
+>    (खाली/boş/খালি double as command verbs) → `CONDITION_PREDICATES` excluded
+>    (this alone cleared behavior-sortable hi/tr); qu ripple (shattered
+>    `ch_usaq` fused into add.patient) → fused `chusaq` dict render + kanqa in
+>    the surface-copula set. 13 stash-verified guards; zero new A/B entries.**
 > Post-session state: parse 3696/3696, degenerate/lossy 0, avgPrecision
 > 0.9953 held, R2 1.0, census 3404, A/B 44 missing cleared / 0 new, gate
 > green, baseline regenerated.

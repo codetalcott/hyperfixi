@@ -51,6 +51,37 @@ function getCommandKeywordsForLocale(locale: string): Set<string> {
 }
 
 /**
+ * English copula forms. A command keyword IMMEDIATELY after one of these is a
+ * predicate adjective, not a command verb: in `if my value is empty add .error
+ * to me` the `empty` belongs to the condition (`empty` is also a hyperscript
+ * command, v0.9.90). Without this guard the condition/body scans cut the
+ * condition at `is` and displace the adjective into the body's argument zone,
+ * where it anchors a spurious `empty-{lang}-generated` parse AND steals a
+ * neighboring role (the empty ×8 bn/hi/tr family). Source-locale copulas are
+ * added via the dictionary in `isPredicateAdjectivePosition`.
+ */
+const EN_COPULAS = ['is', 'are', 'was', 'were', 'am', 'be'];
+
+function getCopulasForLocale(locale: string): Set<string> {
+  const copulas = new Set(EN_COPULAS);
+  if (locale !== 'en') {
+    for (const form of EN_COPULAS) {
+      copulas.add(translateWord(form, 'en', locale).toLowerCase());
+    }
+  }
+  return copulas;
+}
+
+/**
+ * True when tokens[i] sits right after a copula — a predicate-adjective
+ * position that must never be read as the start of a body command.
+ */
+function isPredicateAdjectivePosition(tokens: string[], i: number, copulas: Set<string>): boolean {
+  const prev = tokens[i - 1]?.toLowerCase();
+  return !!prev && copulas.has(prev);
+}
+
+/**
  * Repair a FRONTED Hebrew accusative marker in transformed output.
  *
  * When an event-handler body leads with a command-modifier (`on click once add …`,
@@ -171,11 +202,14 @@ function extractBlockStructure(input: string, sourceLocale: string): BlockStruct
   // `unless <cond> <body>`: condition runs up to the first command
   // keyword in `inner`. Heuristic — works because hyperscript bodies
   // always start with a command verb, and `unless` conditions rarely
-  // contain bare command keywords as values.
+  // contain bare command keywords as values. A candidate right after a
+  // copula (`… is empty`) is a predicate adjective inside the condition,
+  // not a body verb — skip it.
   const commands = getCommandKeywordsForLocale(sourceLocale);
+  const copulas = getCopulasForLocale(sourceLocale);
   let bodyStart = -1;
   for (let i = 0; i < inner.length; i++) {
-    if (commands.has(inner[i].toLowerCase())) {
+    if (commands.has(inner[i].toLowerCase()) && !isPredicateAdjectivePosition(inner, i, copulas)) {
       bodyStart = i;
       break;
     }
@@ -2230,8 +2264,14 @@ export class GrammarTransformer {
     const tail = hasEnd ? blockTokens[blockTokens.length - 1] : '';
     const inner = blockTokens.slice(1, hasEnd ? -1 : undefined);
 
+    // Skip predicate-adjective positions (`… is empty`): the adjective is
+    // part of the condition clause, not the body's first verb — cutting there
+    // displaced it into the next command's argument zone (empty ×8 bn/hi/tr).
     const commands = getCommandKeywordsForLocale(src);
-    let bodyStart = inner.findIndex(t => commands.has(t.toLowerCase()));
+    const copulas = getCopulasForLocale(src);
+    let bodyStart = inner.findIndex(
+      (t, i) => commands.has(t.toLowerCase()) && !isPredicateAdjectivePosition(inner, i, copulas)
+    );
     if (bodyStart < 0) bodyStart = inner.length;
 
     const clause = inner.slice(0, bodyStart).join(' ');

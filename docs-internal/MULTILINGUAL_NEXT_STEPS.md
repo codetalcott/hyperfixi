@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-13 / L5 · `browser-priority`)
+## Where we are (2026-07-06 baseline · post session-13 / L5+L6 · `browser-priority`)
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
@@ -21,15 +21,16 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.995**              | session-12 / L4: 0.9939 → 0.9953 — **bar 3 reached**      |
+| avgPrecision (R0 trust floor)  | **0.996**              | bar 3 reached L4 (0.9953); L6 empty drill → 0.9957        |
 | avgRoleFidelity (R1)           | **0.986**              | session-13 / L5: 0.9838 → 0.9862 — **bar 4 reached**      |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
 
 The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
 R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **Direction now: stop adding gate signals; spend them down.** Bar items 3 and 4
-are both reached and gate-held; the remaining launch work is bar item 2
-(spurious for ×9 + empty ×8).
+are both reached and gate-held; the remaining launch work is bar item 2's
+last family: spurious for ×9 (take-class ×6 own-arc + wait-payload ×3
+post-launch) — empty ×8 cleared in the session-13 L6 drill.
 
 ## LAUNCH BAR (adopted 2026-07-06, post session 8)
 
@@ -66,7 +67,8 @@ across sessions 4–8, full discipline included). Sequencing:
 | L3 ✓    | on ×7 he/hi (#595) + call ×7 halt-verb-guard (session-11 PR 2)       | precision 0.9928 → 0.9939 |
 | L4 ✓    | default-value full drill (24 langs: schema markers + \_-fold)        | precision 0.9939 → 0.9953 |
 | L5 ✓    | canonical @attr typing (add/toggle patient + set.destination, ×44)   | R1 0.9838 → 0.9862        |
-| L6      | bar item 2 remainder: empty ×8 (transformer-side) + for ×9 take-half | spurious >×5 → 0          |
+| L6 ✓    | empty ×8 both-sides drill (+hi add ×2 role-steal; same session)      | precision 0.9953 → 0.9957 |
+| L7      | bar item 2 last family: for ×9 take-class half (probe both sides)    | spurious >×5 → 0          |
 
 L1 actual precision movement (+0.0019 for 29 entries) ran well under the
 table's ~0.997 sketch — the remaining seven >×5 families plus the tail carry
@@ -90,6 +92,13 @@ to the empty-arc role steal). Zero honest dips, zero new A/B entries, census
 identical — **the ≥0.985 R1 bar is reached**. Remaining launch work is bar
 item 2 only: empty ×8 (transformer-side, pre-probed session 12) + for ×9
 (take-class ×6 own-arc; wait-payload ×3 post-launch).
+L6 actual (same session, PR 2): **empty ×8 + the hi add.patient ×2 role-steal
+cleared in one both-sides drill** — precision 0.9953 → 0.9957, R1 0.9862 →
+0.9863, zero new A/B entries (a qu ripple was caught by the A/B discipline and
+fixed in the same increment: the healed render order let the shattering
+`ch_usaq` fuse with `.error`; dict now emits the fused `chusaq` + qu kanqa
+joined the surface-copula set). Remaining launch work: for ×9's take-class ×6
+own-arc ONLY.
 
 **Post-launch track (ratchet-protected, not launch-blocking):** SOV-six role
 polish (qu/hi ~0.956 R1), tr remove.patient block-walk leak, spurious empty
@@ -100,6 +109,43 @@ fail CI.
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the
 fidelity grind only — docs/demo/npm-publish polish is separate scope.
+
+> **Update 2026-07-06i (SESSION 13 = L6, drill 2 in the same session: the
+> empty ×8 both-sides drill in this PR; avgPrecision 0.9953 → 0.9957;
+> avgRoleFidelity 0.9862 → 0.9863 (the hi add ×2 role-steal rode along); A/B
+> 10 cleared (8 spurious empty + 2 missing) / 0 new; census identical (3404);
+> gate green; baseline regenerated.)**
+>
+> - **The displacement was the transformer's condition/body scan, exactly as
+>   pre-probed — `empty` is itself a hyperscript command (v0.9.90).** The
+>   body-start scans (`transformBlockBody` + `extractBlockStructure`'s unless
+>   path) cut `if my value is empty add .error to me` at the first command
+>   keyword — `empty`, right after the copula — so the adjective landed in the
+>   add's argument zone. The fix is a shared copula guard
+>   (`isPredicateAdjectivePosition`): a command-keyword candidate immediately
+>   after a copula is a predicate adjective, never the body's first verb. The
+>   healed SOV renders also reorder the then-branch correctly now (hi
+>   `.error को जोड़ें` patient-first, was verb-first junk).
+> - **The parse side needed the mirror: the SOV verb-lookup exception (built
+>   for ko's old DISPLACED renders) re-split the healed `<copula> <predicate>`
+>   adjacency** because खाली/boş/খালি double as the language's empty/null
+>   COMMAND verb. `CONDITION_PREDICATES` is now excluded from that exception —
+>   this alone also cleared behavior-sortable hi/tr (`if item is null` renders
+>   condition-final खाली; null and empty share the word), which never needed a
+>   render change. ko's real-verb-after-copula case still splits (locked by
+>   test).
+> - **qu ripple caught by the zero-new-entries A/B discipline:** the healed
+>   order put qu's `ch_usaq` right before `.error`, and its tokenizer's
+>   by-design `_` split let the `usaq` shard fuse into the add's patient
+>   (`expression:"usaq.error"` — 2 NEW entries). Dict now emits the fused
+>   `chusaq` (the qu tokenizer already recognized it, norm `null` — the #535
+>   fused-forms route), and qu `kanqa` joined `CONDITION_COPULAS_SURFACE`
+>   (the bn হয় / hi है / tr dir mechanism). Final A/B: zero new entries.
+> - 13 guards across the two sides (6 i18n incl. a both-ways negative; 7
+>   semantic incl. the ko displaced-verb lock), all stash-verified.
+> - **Remaining launch-bar work (item 2): for ×9's take-class ×6 own-arc
+>   only** — probe BOTH transformer and parse sides first; wait-payload
+>   behaviors ×3 stay post-launch.
 
 > **Update 2026-07-06h (SESSION 13 = L5, one drill: canonical `@attr` typing
 > in the shared value-builder; avgRoleFidelity 0.9838 → 0.9862 — LAUNCH BAR
