@@ -49,6 +49,9 @@ import {
   zhProfile,
   trProfile,
   frProfile,
+  deProfile,
+  ptProfile,
+  ruProfile,
 } from './profiles/index';
 import {
   EnglishTodoTokenizer,
@@ -59,6 +62,9 @@ import {
   ChineseTodoTokenizer,
   TurkishTodoTokenizer,
   FrenchTodoTokenizer,
+  GermanTodoTokenizer,
+  PortugueseTodoTokenizer,
+  RussianTodoTokenizer,
 } from './tokenizers/index';
 import { todoCodeGenerator } from './generators/todo-generator';
 
@@ -126,6 +132,27 @@ export function createTodoDSL(): MultilingualDSL {
         tokenizer: FrenchTodoTokenizer,
         patternProfile: frProfile,
       },
+      {
+        code: 'de',
+        name: 'German',
+        nativeName: 'Deutsch',
+        tokenizer: GermanTodoTokenizer,
+        patternProfile: deProfile,
+      },
+      {
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+        tokenizer: PortugueseTodoTokenizer,
+        patternProfile: ptProfile,
+      },
+      {
+        code: 'ru',
+        name: 'Russian',
+        nativeName: 'Русский',
+        tokenizer: RussianTodoTokenizer,
+        patternProfile: ruProfile,
+      },
     ],
     codeGenerator: todoCodeGenerator,
   });
@@ -144,6 +171,9 @@ export {
   zhProfile,
   trProfile,
   frProfile,
+  deProfile,
+  ptProfile,
+  ruProfile,
   allProfiles,
 } from './profiles/index';
 
@@ -161,6 +191,9 @@ export {
   ChineseTodoTokenizer,
   TurkishTodoTokenizer,
   FrenchTodoTokenizer,
+  GermanTodoTokenizer,
+  PortugueseTodoTokenizer,
+  RussianTodoTokenizer,
 } from './tokenizers/index';
 
 // =============================================================================

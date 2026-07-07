@@ -49,6 +49,9 @@ import {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 } from './profiles/index.js';
 import {
   EnglishLLMTokenizer,
@@ -59,6 +62,9 @@ import {
   ChineseLLMTokenizer,
   TurkishLLMTokenizer,
   FrenchLLMTokenizer,
+  GermanLLMTokenizer,
+  PortugueseLLMTokenizer,
+  RussianLLMTokenizer,
 } from './tokenizers/index.js';
 import { llmCodeGenerator } from './generators/llm-generator.js';
 
@@ -126,6 +132,27 @@ export function createLLMDSL(): MultilingualDSL {
         tokenizer: FrenchLLMTokenizer,
         patternProfile: frenchProfile,
       },
+      {
+        code: 'de',
+        name: 'German',
+        nativeName: 'Deutsch',
+        tokenizer: GermanLLMTokenizer,
+        patternProfile: germanProfile,
+      },
+      {
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+        tokenizer: PortugueseLLMTokenizer,
+        patternProfile: portugueseProfile,
+      },
+      {
+        code: 'ru',
+        name: 'Russian',
+        nativeName: 'Русский',
+        tokenizer: RussianLLMTokenizer,
+        patternProfile: russianProfile,
+      },
     ],
     codeGenerator: llmCodeGenerator,
   });
@@ -148,6 +175,9 @@ export {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 } from './profiles/index.js';
 export { llmCodeGenerator } from './generators/llm-generator.js';
 export { renderLLM } from './generators/llm-renderer.js';
@@ -160,6 +190,9 @@ export {
   ChineseLLMTokenizer,
   TurkishLLMTokenizer,
   FrenchLLMTokenizer,
+  GermanLLMTokenizer,
+  PortugueseLLMTokenizer,
+  RussianLLMTokenizer,
 } from './tokenizers/index.js';
 export type { LLMPromptSpec, LLMMessage, LLMModelPreferences, LLMAction } from './types.js';
 

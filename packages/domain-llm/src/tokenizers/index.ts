@@ -1,17 +1,27 @@
 /**
  * LLM Tokenizers
  *
- * Language-specific tokenizers for LLM commands (8 languages).
- * Created via the framework's createSimpleTokenizer factory.
- * Each tokenizer handles keyword classification for command verbs and markers.
+ * Language-specific tokenizers, built through the framework↔semantic bridge:
+ * `buildDomainTokenizer` derives direction, script handling (diacritic-safe
+ * Latin identifiers, case sensitivity), particle keywords, and the
+ * keyword-normalization profile from `@lokascript/semantic`'s language profile;
+ * the domain's vocabulary (`../vocab`) supplies the LLM verbs and marker words.
+ *
+ * Two LLM-specific tokenizer settings are preserved through the bridge:
+ * - a `CSSSelectorExtractor` so `#id`/`.class` context selectors stay single
+ *   tokens (registered before the bridge's Latin identifier extractor);
+ * - `includeOperators: false`, matching the pre-bridge tokenizers.
+ * Case-insensitivity is script-derived by the bridge (latin → true, CJK/
+ * Arabic/Hangul → false), matching the old per-language settings.
  */
 
-import { createSimpleTokenizer, LatinExtendedIdentifierExtractor } from '@lokascript/framework';
+import { buildDomainTokenizer } from '@lokascript/framework';
 import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
+import { LLM_LANGUAGES } from '../vocab';
 
 // =============================================================================
 // CSS Selector Extractor
-// Handles #id and .class tokens as single tokens (must come before default
+// Handles #id and .class tokens as single tokens (must come before the default
 // identifier extractor, which would otherwise split '#' from 'article')
 // =============================================================================
 
@@ -35,312 +45,22 @@ class CSSSelectorExtractor implements ValueExtractor {
   }
 }
 
-// =============================================================================
-// English LLM Tokenizer
-// =============================================================================
+function tokenizerFor(code: string): LanguageTokenizer {
+  const { slice, vocab } = LLM_LANGUAGES[code];
+  return buildDomainTokenizer(slice, vocab, {
+    includeOperators: false,
+    customExtractors: [new CSSSelectorExtractor()],
+  });
+}
 
-export const EnglishLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'en',
-  customExtractors: [new CSSSelectorExtractor()],
-  keywords: [
-    // Commands
-    'ask',
-    'summarize',
-    'analyze',
-    'translate',
-    // Role markers
-    'from',
-    'as',
-    'in',
-    'to',
-    // Common connectives
-    'and',
-    'or',
-  ],
-  includeOperators: false,
-  caseInsensitive: true,
-});
-
-// =============================================================================
-// Spanish LLM Tokenizer
-// =============================================================================
-
-export const SpanishLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'es',
-  customExtractors: [new CSSSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
-  keywords: [
-    // Commands
-    'preguntar',
-    'resumir',
-    'analizar',
-    'traducir',
-    // Role markers
-    'de',
-    'como',
-    'en',
-    'a',
-    // Common connectives
-    'y',
-    'o',
-  ],
-  keywordExtras: [
-    { native: 'preguntar', normalized: 'ask' },
-    { native: 'resumir', normalized: 'summarize' },
-    { native: 'analizar', normalized: 'analyze' },
-    { native: 'traducir', normalized: 'translate' },
-    { native: 'de', normalized: 'from' },
-    { native: 'como', normalized: 'as' },
-    { native: 'a', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: 'preguntar' },
-      summarize: { primary: 'resumir' },
-      analyze: { primary: 'analizar' },
-      translate: { primary: 'traducir' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: true,
-});
-
-// =============================================================================
-// Japanese LLM Tokenizer
-// =============================================================================
-
-export const JapaneseLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'ja',
-  customExtractors: [new CSSSelectorExtractor()],
-  keywords: [
-    // Commands
-    '聞く',
-    '要約',
-    '分析',
-    '翻訳',
-    // Role markers
-    'から',
-    'として',
-    'で',
-    'に',
-  ],
-  keywordExtras: [
-    { native: '聞く', normalized: 'ask' },
-    { native: '要約', normalized: 'summarize' },
-    { native: '分析', normalized: 'analyze' },
-    { native: '翻訳', normalized: 'translate' },
-    { native: 'から', normalized: 'from' },
-    { native: 'として', normalized: 'as' },
-    { native: 'に', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: '聞く' },
-      summarize: { primary: '要約' },
-      analyze: { primary: '分析' },
-      translate: { primary: '翻訳' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: false,
-});
-
-// =============================================================================
-// Arabic LLM Tokenizer
-// =============================================================================
-
-export const ArabicLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'ar',
-  direction: 'rtl',
-  customExtractors: [new CSSSelectorExtractor()],
-  keywords: [
-    // Commands
-    'اسأل',
-    'لخّص',
-    'حلّل',
-    'ترجم',
-    // Role markers
-    'من',
-    'ك',
-    'في',
-    'إلى',
-  ],
-  keywordExtras: [
-    { native: 'اسأل', normalized: 'ask' },
-    { native: 'لخّص', normalized: 'summarize' },
-    { native: 'حلّل', normalized: 'analyze' },
-    { native: 'ترجم', normalized: 'translate' },
-    { native: 'من', normalized: 'from' },
-    { native: 'ك', normalized: 'as' },
-    { native: 'إلى', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: 'اسأل' },
-      summarize: { primary: 'لخّص' },
-      analyze: { primary: 'حلّل' },
-      translate: { primary: 'ترجم' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: false,
-});
-
-// =============================================================================
-// Korean LLM Tokenizer
-// =============================================================================
-
-export const KoreanLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'ko',
-  customExtractors: [new CSSSelectorExtractor()],
-  keywords: [
-    // Commands
-    '질문',
-    '요약',
-    '분석',
-    '번역',
-    // Role markers
-    '에서',
-    '로',
-  ],
-  keywordExtras: [
-    { native: '질문', normalized: 'ask' },
-    { native: '요약', normalized: 'summarize' },
-    { native: '분석', normalized: 'analyze' },
-    { native: '번역', normalized: 'translate' },
-    { native: '에서', normalized: 'from' },
-    { native: '로', normalized: 'as' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: '질문' },
-      summarize: { primary: '요약' },
-      analyze: { primary: '분석' },
-      translate: { primary: '번역' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: false,
-});
-
-// =============================================================================
-// Chinese LLM Tokenizer
-// =============================================================================
-
-export const ChineseLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'zh',
-  customExtractors: [new CSSSelectorExtractor()],
-  keywords: [
-    // Commands
-    '提问',
-    '总结',
-    '分析',
-    '翻译',
-    // Role markers
-    '从',
-    '以',
-    '用',
-    '到',
-  ],
-  keywordExtras: [
-    { native: '提问', normalized: 'ask' },
-    { native: '总结', normalized: 'summarize' },
-    { native: '分析', normalized: 'analyze' },
-    { native: '翻译', normalized: 'translate' },
-    { native: '从', normalized: 'from' },
-    { native: '以', normalized: 'as' },
-    { native: '用', normalized: 'in' },
-    { native: '到', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: '提问' },
-      summarize: { primary: '总结' },
-      analyze: { primary: '分析' },
-      translate: { primary: '翻译' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: false,
-});
-
-// =============================================================================
-// Turkish LLM Tokenizer
-// =============================================================================
-
-export const TurkishLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'tr',
-  customExtractors: [new CSSSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
-  keywords: [
-    // Commands
-    'sor',
-    'özetle',
-    'çözümle',
-    'çevir',
-    // Role markers
-    'dan',
-    'olarak',
-    'ile',
-    'e',
-  ],
-  keywordExtras: [
-    { native: 'sor', normalized: 'ask' },
-    { native: 'özetle', normalized: 'summarize' },
-    { native: 'çözümle', normalized: 'analyze' },
-    { native: 'çevir', normalized: 'translate' },
-    { native: 'dan', normalized: 'from' },
-    { native: 'olarak', normalized: 'as' },
-    { native: 'ile', normalized: 'in' },
-    { native: 'e', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: 'sor' },
-      summarize: { primary: 'özetle' },
-      analyze: { primary: 'çözümle' },
-      translate: { primary: 'çevir' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: true,
-});
-
-// =============================================================================
-// French LLM Tokenizer
-// =============================================================================
-
-export const FrenchLLMTokenizer: LanguageTokenizer = createSimpleTokenizer({
-  language: 'fr',
-  customExtractors: [new CSSSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
-  keywords: [
-    // Commands
-    'demander',
-    'résumer',
-    'analyser',
-    'traduire',
-    // Role markers
-    'de',
-    'comme',
-    'en',
-    'vers',
-  ],
-  keywordExtras: [
-    { native: 'demander', normalized: 'ask' },
-    { native: 'résumer', normalized: 'summarize' },
-    { native: 'analyser', normalized: 'analyze' },
-    { native: 'traduire', normalized: 'translate' },
-    { native: 'de', normalized: 'from' },
-    { native: 'comme', normalized: 'as' },
-    { native: 'en', normalized: 'in' },
-    { native: 'vers', normalized: 'to' },
-  ],
-  keywordProfile: {
-    keywords: {
-      ask: { primary: 'demander' },
-      summarize: { primary: 'résumer' },
-      analyze: { primary: 'analyser' },
-      translate: { primary: 'traduire' },
-    },
-  },
-  includeOperators: false,
-  caseInsensitive: true,
-});
+export const EnglishLLMTokenizer: LanguageTokenizer = tokenizerFor('en');
+export const SpanishLLMTokenizer: LanguageTokenizer = tokenizerFor('es');
+export const JapaneseLLMTokenizer: LanguageTokenizer = tokenizerFor('ja');
+export const ArabicLLMTokenizer: LanguageTokenizer = tokenizerFor('ar');
+export const KoreanLLMTokenizer: LanguageTokenizer = tokenizerFor('ko');
+export const ChineseLLMTokenizer: LanguageTokenizer = tokenizerFor('zh');
+export const TurkishLLMTokenizer: LanguageTokenizer = tokenizerFor('tr');
+export const FrenchLLMTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanLLMTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseLLMTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianLLMTokenizer: LanguageTokenizer = tokenizerFor('ru');

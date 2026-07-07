@@ -1,144 +1,39 @@
 /**
  * LLM Language Profiles
  *
- * Pattern generation profiles for 8 supported languages.
- * Covers SVO (EN, ES, ZH, FR), SOV (JA, KO, TR), and VSO (AR) word orders.
+ * Pattern-generation profiles for each supported language, built through the
+ * framework↔semantic bridge: `@lokascript/semantic`'s language profiles supply
+ * the grammar (word order, marker positions), the domain's vocabularies
+ * (`../vocab`) supply the LLM verbs. Nothing per-language is hand-authored here
+ * anymore.
  *
- * Role markers are specified via markerOverride on each schema role.
- * Profile roleMarkers are used only when positional defaults need overriding.
+ * Role markers are specified via `markerOverride` on each schema role (in
+ * schemas/index.ts). The vocab suppresses the slices' general-purpose
+ * source/destination/patient markers (see vocab/shared.ts); profile-level
+ * roleMarkers only carry position overrides where the SOV default is wrong
+ * (ja manner/quantity → 'before').
  */
 
+import { buildPatternProfile } from '@lokascript/framework';
 import type { PatternGenLanguageProfile } from '@lokascript/framework';
+import { LLM_LANGUAGES } from '../vocab';
 
-// =============================================================================
-// English (SVO)
-// =============================================================================
+function profileFor(code: string): PatternGenLanguageProfile {
+  const { slice, vocab } = LLM_LANGUAGES[code];
+  return buildPatternProfile(slice, vocab);
+}
 
-export const englishProfile: PatternGenLanguageProfile = {
-  code: 'en',
-  wordOrder: 'SVO',
-  keywords: {
-    ask: { primary: 'ask' },
-    summarize: { primary: 'summarize' },
-    analyze: { primary: 'analyze' },
-    translate: { primary: 'translate' },
-  },
-};
-
-// =============================================================================
-// Spanish (SVO)
-// =============================================================================
-
-export const spanishProfile: PatternGenLanguageProfile = {
-  code: 'es',
-  wordOrder: 'SVO',
-  keywords: {
-    ask: { primary: 'preguntar' },
-    summarize: { primary: 'resumir' },
-    analyze: { primary: 'analizar' },
-    translate: { primary: 'traducir' },
-  },
-};
-
-// =============================================================================
-// Japanese (SOV)
-// =============================================================================
-
-export const japaneseProfile: PatternGenLanguageProfile = {
-  code: 'ja',
-  wordOrder: 'SOV',
-  keywords: {
-    ask: { primary: '聞く' },
-    summarize: { primary: '要約' },
-    analyze: { primary: '分析' },
-    translate: { primary: '翻訳' },
-  },
-  roleMarkers: {
-    // 'として' (as) marks manner — acts as prefix in SOV position
-    manner: { primary: 'として', position: 'before' },
-    // 'で' (in/by) marks quantity — acts as prefix in SOV
-    quantity: { primary: 'で', position: 'before' },
-  },
-};
-
-// =============================================================================
-// Arabic (VSO)
-// =============================================================================
-
-export const arabicProfile: PatternGenLanguageProfile = {
-  code: 'ar',
-  wordOrder: 'VSO',
-  keywords: {
-    ask: { primary: 'اسأل' },
-    summarize: { primary: 'لخّص' },
-    analyze: { primary: 'حلّل' },
-    translate: { primary: 'ترجم' },
-  },
-};
-
-// =============================================================================
-// Korean (SOV)
-// =============================================================================
-
-export const koreanProfile: PatternGenLanguageProfile = {
-  code: 'ko',
-  wordOrder: 'SOV',
-  keywords: {
-    ask: { primary: '질문' },
-    summarize: { primary: '요약' },
-    analyze: { primary: '분석' },
-    translate: { primary: '번역' },
-  },
-};
-
-// =============================================================================
-// Chinese (SVO)
-// =============================================================================
-
-export const chineseProfile: PatternGenLanguageProfile = {
-  code: 'zh',
-  wordOrder: 'SVO',
-  keywords: {
-    ask: { primary: '提问' },
-    summarize: { primary: '总结' },
-    analyze: { primary: '分析' },
-    translate: { primary: '翻译' },
-  },
-};
-
-// =============================================================================
-// Turkish (SOV)
-// =============================================================================
-
-export const turkishProfile: PatternGenLanguageProfile = {
-  code: 'tr',
-  wordOrder: 'SOV',
-  keywords: {
-    ask: { primary: 'sor' },
-    summarize: { primary: 'özetle' },
-    analyze: { primary: 'çözümle' },
-    translate: { primary: 'çevir' },
-  },
-};
-
-// =============================================================================
-// French (SVO)
-// =============================================================================
-
-export const frenchProfile: PatternGenLanguageProfile = {
-  code: 'fr',
-  wordOrder: 'SVO',
-  keywords: {
-    ask: { primary: 'demander' },
-    summarize: { primary: 'résumer' },
-    analyze: { primary: 'analyser' },
-    translate: { primary: 'traduire' },
-  },
-};
-
-// =============================================================================
-// All Profiles
-// =============================================================================
+export const englishProfile: PatternGenLanguageProfile = profileFor('en');
+export const spanishProfile: PatternGenLanguageProfile = profileFor('es');
+export const japaneseProfile: PatternGenLanguageProfile = profileFor('ja');
+export const arabicProfile: PatternGenLanguageProfile = profileFor('ar');
+export const koreanProfile: PatternGenLanguageProfile = profileFor('ko');
+export const chineseProfile: PatternGenLanguageProfile = profileFor('zh');
+export const turkishProfile: PatternGenLanguageProfile = profileFor('tr');
+export const frenchProfile: PatternGenLanguageProfile = profileFor('fr');
+export const germanProfile: PatternGenLanguageProfile = profileFor('de');
+export const portugueseProfile: PatternGenLanguageProfile = profileFor('pt');
+export const russianProfile: PatternGenLanguageProfile = profileFor('ru');
 
 export const allProfiles = [
   englishProfile,
@@ -149,4 +44,7 @@ export const allProfiles = [
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 ];

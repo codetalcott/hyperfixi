@@ -44,6 +44,10 @@ export const addSchema = defineCommand({
         zh: '到',
         tr: 'e',
         fr: 'à',
+        // Bridge-era languages (arc Phase 2 expansion), all SVO.
+        de: 'zu',
+        pt: 'a',
+        ru: 'в',
       },
     }),
   ],

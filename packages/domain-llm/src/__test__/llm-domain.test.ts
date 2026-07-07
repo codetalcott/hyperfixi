@@ -27,7 +27,7 @@ describe('LLM Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 8 languages', () => {
+    it('should support 11 languages', () => {
       const languages = llm.getSupportedLanguages();
       expect(languages).toContain('en');
       expect(languages).toContain('es');
@@ -37,11 +37,14 @@ describe('LLM Domain', () => {
       expect(languages).toContain('zh');
       expect(languages).toContain('tr');
       expect(languages).toContain('fr');
-      expect(languages).toHaveLength(8);
+      expect(languages).toContain('de');
+      expect(languages).toContain('pt');
+      expect(languages).toContain('ru');
+      expect(languages).toHaveLength(11);
     });
 
     it('should reject unsupported language', () => {
-      expect(() => llm.parse('ask "hello" ', 'de')).toThrow();
+      expect(() => llm.parse('ask "hello" ', 'hi')).toThrow();
     });
   });
 
