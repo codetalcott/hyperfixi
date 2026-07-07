@@ -49,7 +49,7 @@ describe('Voice Domain', () => {
     });
 
     it('should reject unsupported language', () => {
-      expect(() => voice.parse('click submit', 'de')).toThrow();
+      expect(() => voice.parse('click submit', 'xx')).toThrow();
     });
   });
 

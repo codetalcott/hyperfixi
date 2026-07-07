@@ -41,7 +41,7 @@ describe('Todo Domain', () => {
     });
 
     it('should reject unsupported language', () => {
-      expect(() => todo.parse('add milk', 'hi')).toThrow();
+      expect(() => todo.parse('add milk', 'xx')).toThrow();
     });
   });
 

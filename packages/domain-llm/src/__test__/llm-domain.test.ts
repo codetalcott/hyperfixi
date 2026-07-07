@@ -44,7 +44,7 @@ describe('LLM Domain', () => {
     });
 
     it('should reject unsupported language', () => {
-      expect(() => llm.parse('ask "hello" ', 'hi')).toThrow();
+      expect(() => llm.parse('ask "hello" ', 'xx')).toThrow();
     });
   });
 
