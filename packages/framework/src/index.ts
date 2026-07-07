@@ -46,6 +46,26 @@ export type {
   AdpositionType,
 } from './grammar/types';
 
+// Multilingual bridge — inject semantic language profiles into domain DSLs
+// (explicit list: the module also re-exports grammar types already exported above)
+export {
+  buildPatternProfile,
+  buildDomainTokenizer,
+  buildLanguageConfig,
+  deriveRoleMarkers,
+} from './multilingual';
+export type {
+  GrammarProfileSlice,
+  DomainVocabulary,
+  DomainKeywordTranslation,
+  DomainKeywordEntry,
+  RoleMarkerSlice,
+  TokenizationSlice,
+  VerbSlice,
+  DomainTokenizerOptions,
+  LanguageConfigMeta,
+} from './multilingual';
+
 // Core - export classes and utilities
 export * from './core';
 

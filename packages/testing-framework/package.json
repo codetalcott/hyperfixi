@@ -120,5 +120,8 @@
   "bugs": {
     "url": "https://github.com/codetalcott/hyperfixi/issues"
   },
-  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/testing-framework#readme"
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/testing-framework#readme",
+  "engines": {
+    "node": ">=24"
+  }
 }

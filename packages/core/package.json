@@ -278,7 +278,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/core#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=24"
   },
   "sideEffects": false,
   "publishConfig": {
