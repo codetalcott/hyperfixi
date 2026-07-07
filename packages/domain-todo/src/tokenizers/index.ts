@@ -30,3 +30,6 @@ export const KoreanTodoTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseTodoTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishTodoTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchTodoTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanTodoTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseTodoTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianTodoTokenizer: LanguageTokenizer = tokenizerFor('ru');

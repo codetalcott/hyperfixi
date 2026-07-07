@@ -22,6 +22,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '添加',
     tr: 'ekle',
     fr: 'ajouter',
+    de: 'hinzufügen',
+    pt: 'adicionar',
+    ru: 'добавить',
   },
   complete: {
     en: 'complete',
@@ -32,6 +35,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '完成',
     tr: 'tamamla',
     fr: 'terminer',
+    de: 'erledigen',
+    pt: 'concluir',
+    ru: 'завершить',
   },
   list: {
     en: 'list',
@@ -42,6 +48,9 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     zh: '列出',
     tr: 'listele',
     fr: 'lister',
+    de: 'auflisten',
+    pt: 'listar',
+    ru: 'показать',
   },
 };
 
@@ -55,6 +64,9 @@ const MARKERS: Record<string, Record<string, string>> = {
     zh: '到',
     tr: 'e',
     fr: 'à',
+    de: 'zu',
+    pt: 'a',
+    ru: 'в',
   },
   wo: {
     ja: 'を',

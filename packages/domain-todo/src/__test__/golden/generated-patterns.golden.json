@@ -844,5 +844,311 @@
         }
       }
     ]
+  },
+  "de": {
+    "add": [
+      {
+        "id": "add-de-generated",
+        "language": "de",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "hinzufügen {item} zu {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "hinzufügen",
+              "alternatives": ["ergänzen"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "zu"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "zu"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-de-generated",
+        "language": "de",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "erledigen {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "erledigen",
+              "alternatives": ["abschließen"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-de-generated",
+        "language": "de",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "auflisten {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "auflisten",
+              "alternatives": ["anzeigen"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "pt": {
+    "add": [
+      {
+        "id": "add-pt-generated",
+        "language": "pt",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "adicionar {item} a {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "adicionar",
+              "alternatives": ["acrescentar"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "a"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "a"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-pt-generated",
+        "language": "pt",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "concluir {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "concluir",
+              "alternatives": ["terminar"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-pt-generated",
+        "language": "pt",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "listar {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "listar",
+              "alternatives": ["mostrar"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
+  },
+  "ru": {
+    "add": [
+      {
+        "id": "add-ru-generated",
+        "language": "ru",
+        "command": "add",
+        "priority": 100,
+        "template": {
+          "format": "добавить {item} в {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "добавить",
+              "alternatives": ["прибавить"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "в"
+                },
+                {
+                  "type": "role",
+                  "role": "list",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {},
+          "list": {
+            "marker": "в"
+          }
+        }
+      }
+    ],
+    "complete": [
+      {
+        "id": "complete-ru-generated",
+        "language": "ru",
+        "command": "complete",
+        "priority": 100,
+        "template": {
+          "format": "завершить {item}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "завершить",
+              "alternatives": ["выполнить"]
+            },
+            {
+              "type": "role",
+              "role": "item",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "item": {}
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-ru-generated",
+        "language": "ru",
+        "command": "list",
+        "priority": 100,
+        "template": {
+          "format": "показать {list}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "показать",
+              "alternatives": ["перечислить"]
+            },
+            {
+              "type": "role",
+              "role": "list",
+              "optional": true,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "list": {}
+        }
+      }
+    ]
   }
 }

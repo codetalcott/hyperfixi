@@ -24,7 +24,7 @@ describe('Todo Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 8 languages', () => {
+    it('should support 11 languages', () => {
       const langs = todo.getSupportedLanguages();
       expect(langs).toContain('en');
       expect(langs).toContain('es');
@@ -34,11 +34,14 @@ describe('Todo Domain', () => {
       expect(langs).toContain('zh');
       expect(langs).toContain('tr');
       expect(langs).toContain('fr');
-      expect(langs).toHaveLength(8);
+      expect(langs).toContain('de');
+      expect(langs).toContain('pt');
+      expect(langs).toContain('ru');
+      expect(langs).toHaveLength(11);
     });
 
     it('should reject unsupported language', () => {
-      expect(() => todo.parse('add milk', 'de')).toThrow();
+      expect(() => todo.parse('add milk', 'hi')).toThrow();
     });
   });
 
