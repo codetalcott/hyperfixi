@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsup && npm run build:types",
     "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
+    "pretest": "../../scripts/ensure-fresh.sh ../framework ../semantic ../intent ../domain-sql ../domain-bdd ../domain-behaviorspec ../domain-jsx ../domain-todo ../domain-llm ../domain-flow ../domain-voice ../domain-learn",
     "test": "vitest",
     "test:run": "vitest run",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
@@ -27,6 +28,7 @@
     "@lokascript/domain-behaviorspec": "^2.6.0",
     "@lokascript/domain-flow": "^2.6.0",
     "@lokascript/domain-jsx": "^2.6.0",
+    "@lokascript/domain-learn": "^2.6.0",
     "@lokascript/domain-llm": "^2.6.0",
     "@lokascript/domain-sql": "^2.6.0",
     "@lokascript/domain-todo": "^2.6.0",

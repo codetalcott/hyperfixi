@@ -525,6 +525,9 @@ jobs:
       - name: Test domain-learn
         run: npm test --prefix packages/domain-learn
 
+      - name: Test domain-config
+        run: npm test --prefix packages/domain-config
+
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run
 

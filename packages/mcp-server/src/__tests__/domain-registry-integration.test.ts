@@ -11,16 +11,26 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers all 8 domains', () => {
+  it('registers all 9 domains', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual(['bdd', 'behaviorspec', 'flow', 'jsx', 'llm', 'sql', 'todo', 'voice']);
+    expect(names).toEqual([
+      'bdd',
+      'behaviorspec',
+      'flow',
+      'jsx',
+      'learn',
+      'llm',
+      'sql',
+      'todo',
+      'voice',
+    ]);
   });
 
-  it('generates 32 tool definitions (4 per domain)', () => {
+  it('generates 36 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(32);
+    expect(tools).toHaveLength(36);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
@@ -30,6 +40,21 @@ describe('DomainRegistry Integration', () => {
     expect(toolNames).toContain('parse_bdd');
     expect(toolNames).toContain('parse_jsx');
     expect(toolNames).toContain('parse_behaviorspec');
+    expect(toolNames).toContain('parse_learn');
+  });
+
+  it('tool descriptions advertise the expanded language sets', () => {
+    const registry = createDomainRegistry();
+    const tools = registry.getToolDefinitions();
+
+    // Bridge-expanded domains list all 11 languages (was 8 pre-bridge).
+    const parseSql = tools.find(t => t.name === 'parse_sql')!;
+    expect(parseSql.description).toContain('en, es, ja, ar, ko, zh, tr, fr, de, pt, ru');
+
+    // learn's 10-language set (no ru).
+    const parseLearn = tools.find(t => t.name === 'parse_learn')!;
+    expect(parseLearn.description).toContain('en, es, ja, ar, ko, zh, tr, fr, de, pt');
+    expect(parseLearn.description).not.toContain('ru');
   });
 
   it('uses correct inputLabel per domain', () => {
@@ -97,6 +122,44 @@ describe('DomainRegistry Integration', () => {
     const registry = createDomainRegistry();
     const result = await registry.handleToolCall('parse_unknown', { input: 'test' });
     expect(result).toBeNull();
+  });
+
+  // Bridge-expansion end-to-end: the three languages added by the
+  // framework↔semantic bridge dispatch through the registry, not just
+  // through direct DSL calls (arc Phase 3 verification).
+  it.each([
+    ['de', 'auswählen name von users'],
+    ['pt', 'selecionar nome de usuarios'],
+    ['ru', 'выбрать name из users'],
+  ])('SQL parse + compile round-trips %s through the registry', async (language, query) => {
+    const registry = createDomainRegistry();
+
+    const parsed = await registry.handleToolCall('parse_sql', { query, language });
+    expect(parsed).not.toBeNull();
+    expect(parsed!.isError).toBeUndefined();
+    const parsedData = JSON.parse(parsed!.content[0].text);
+    expect(parsedData.action).toBe('select');
+    expect(parsedData.language).toBe(language);
+
+    const compiled = await registry.handleToolCall('compile_sql', { query, language });
+    expect(compiled).not.toBeNull();
+    expect(compiled!.isError).toBeUndefined();
+    const compiledData = JSON.parse(compiled!.content[0].text);
+    expect(compiledData.ok).toBe(true);
+    expect(compiledData.code).toMatch(/^SELECT /);
+  });
+
+  it('learn dispatches through the registry', async () => {
+    const registry = createDomainRegistry();
+    const result = await registry.handleToolCall('parse_learn', {
+      sentence: 'add .active to #button',
+      language: 'en',
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.isError).toBeUndefined();
+    const data = JSON.parse(result!.content[0].text);
+    expect(data.action).toBe('add');
   });
 });
 

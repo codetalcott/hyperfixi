@@ -52,14 +52,14 @@ packages/
 ├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
-├── domain-sql/      # SQL DSL (8 languages: en, es, ja, ar, ko, zh, tr, fr)
+├── domain-sql/      # SQL DSL (11 languages: en, es, ja, ar, ko, zh, tr, fr, de, pt, ru)
 ├── domain-bdd/      # BDD/Gherkin DSL (8 languages)
 ├── domain-behaviorspec/  # Interaction testing DSL (8 languages)
-├── domain-jsx/      # JSX/React DSL (8 languages)
-├── domain-llm/      # LLM prompt DSL (8 languages)
-├── domain-todo/     # Todo management DSL (8 languages)
-├── domain-flow/     # Reactive data flow DSL (8 languages)
-├── domain-voice/    # Voice/accessibility commands DSL (8 languages)
+├── domain-jsx/      # JSX/React DSL (11 languages)
+├── domain-llm/      # LLM prompt DSL (11 languages)
+├── domain-todo/     # Todo management DSL (11 languages)
+├── domain-flow/     # Reactive data flow DSL (11 languages)
+├── domain-voice/    # Voice/accessibility commands DSL (11 languages)
 ├── domain-learn/    # Language learning DSL (10 languages)
 │
 ├── patterns-reference/  # Queryable patterns database with multilingual translations

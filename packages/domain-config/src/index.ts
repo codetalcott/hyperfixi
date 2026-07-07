@@ -6,7 +6,8 @@
  * domains behind a CrossDomainDispatcher).
  *
  * Single source of truth for:
- *   - Which domains exist (sql, bdd, jsx, todo, behaviorspec, llm, flow, voice)
+ *   - Which domains exist (sql, bdd, jsx, todo, behaviorspec, llm, flow,
+ *     voice, learn)
  *   - How each domain loads its DSL and renderer (lazy dynamic imports)
  *   - How each domain surfaces for AOT/Vite plugin scanning (scanConfig)
  *   - How the dispatcher breaks ambiguity when multiple domains match
@@ -19,7 +20,34 @@
 import { DomainRegistry } from '@lokascript/framework';
 
 /**
- * Create and populate a DomainRegistry with all 8 LokaScript domains.
+ * Per-domain language sets.
+ *
+ * Kept static (not derived from the DSLs) so registration stays lazy —
+ * `getDSL` is a dynamic import, and deriving languages at registration time
+ * would force-load every domain package. Drift is caught instead by
+ * `src/__tests__/languages.test.ts`, which asserts each list matches the
+ * DSL's actual registered languages.
+ */
+const BRIDGE_LANGUAGES = [
+  'en',
+  'es',
+  'ja',
+  'ar',
+  'ko',
+  'zh',
+  'tr',
+  'fr',
+  'de',
+  'pt',
+  'ru',
+] as const;
+/** learn's pre-existing 10-language set (no ru; morphology is hand-authored per language). */
+const LEARN_LANGUAGES = BRIDGE_LANGUAGES.slice(0, 10);
+/** bdd/behaviorspec — still the pre-bridge 8 (renderer/marker tables gate vocab-only expansion). */
+const CLASSIC_LANGUAGES = BRIDGE_LANGUAGES.slice(0, 8);
+
+/**
+ * Create and populate a DomainRegistry with all 9 LokaScript domains.
  *
  * Schemas are loaded lazily on first access so startup stays fast. An
  * asynchronous pass attaches each domain's schemas to the registry (used by
@@ -33,7 +61,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'sql',
     description: 'natural language SQL',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'query',
     inputDescription: 'SQL query in natural language (e.g., "select name from users")',
     outputDescription: 'a SQL query string',
@@ -49,7 +77,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'bdd',
     description: 'BDD scenario',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: CLASSIC_LANGUAGES,
     inputLabel: 'scenario',
     inputDescription: 'BDD scenario text (e.g., "given #button is exists")',
     outputDescription: 'Playwright test code with Given/When/Then assertions',
@@ -65,7 +93,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'jsx',
     description: 'natural language JSX/React',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'code',
     inputDescription:
       'JSX description in natural language (e.g., "element div with className app")',
@@ -82,7 +110,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'todo',
     description: 'natural language todo management',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'command',
     inputDescription: 'Todo command in natural language (e.g., "add milk to groceries")',
     outputDescription: 'a structured todo operation object',
@@ -98,7 +126,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'behaviorspec',
     description: 'interaction testing specification',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: CLASSIC_LANGUAGES,
     inputLabel: 'scenario',
     inputDescription: 'BehaviorSpec scenario text (e.g., "given page /home")',
     outputDescription: 'a Playwright interaction test with page assertions',
@@ -114,7 +142,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'llm',
     description: 'natural language LLM prompts (ask, summarize, analyze, translate)',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'command',
     inputDescription:
       'LLM command in natural language (e.g., "ask claude to summarize #article as bullets")',
@@ -131,7 +159,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'flow',
     description: 'declarative reactive data flow pipelines (fetch, poll, stream, submit)',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'pipeline',
     inputDescription: 'FlowScript pipeline (e.g., "fetch /api/users as json into #list")',
     outputDescription: 'reactive data flow JavaScript (fetch/poll/stream handlers)',
@@ -147,7 +175,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'voice',
     description: 'voice/accessibility commands for speech-controlled web interaction',
-    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
+    languages: BRIDGE_LANGUAGES,
     inputLabel: 'command',
     inputDescription: 'Voice command in natural language (e.g., "click the submit button")',
     outputDescription: 'a DOM interaction command (click, scroll, type, navigate)',
@@ -156,6 +184,24 @@ export function createDomainRegistry(): DomainRegistry {
     scanConfig: {
       attributes: ['data-voice', '_voice'],
       scriptTypes: ['text/voice'],
+      defaultLanguage: 'en',
+    },
+  });
+
+  registry.register({
+    name: 'learn',
+    description:
+      'language-learning sentence patterns (multilingual command drills with morphology)',
+    languages: LEARN_LANGUAGES,
+    inputLabel: 'sentence',
+    inputDescription:
+      'Learning-domain sentence in natural language (e.g., "add .active to #button")',
+    outputDescription: 'a rendered sentence with per-language morphology',
+    getDSL: () => import('@lokascript/domain-learn').then(m => m.createLearnDSL()),
+    getRenderer: () => import('@lokascript/domain-learn').then(m => m.renderLearn),
+    scanConfig: {
+      attributes: ['data-learn', '_learn'],
+      scriptTypes: ['text/learn-dsl'],
       defaultLanguage: 'en',
     },
   });
@@ -187,6 +233,10 @@ async function loadAllSchemas(registry: DomainRegistry): Promise<void> {
       domain: 'voice',
       load: () => import('@lokascript/domain-voice').then(m => [...m.allSchemas]),
     },
+    {
+      domain: 'learn',
+      load: () => import('@lokascript/domain-learn').then(m => [...m.allSchemas]),
+    },
   ];
 
   await Promise.allSettled(
@@ -209,6 +259,10 @@ async function loadAllSchemas(registry: DomainRegistry): Promise<void> {
  * Load-bearing: the dispatcher routing guard in mcp-multilingual-intent's
  * detect-domain.test.ts pins `sql` before `todo`, which is relied on by the
  * natural-language `add X into Y` → sql routing.
+ *
+ * `learn` is last: its vocabulary is generic hyperscript-style verbs
+ * (add/remove/toggle/…), so anything earlier would steal matches from the
+ * more specific domains.
  */
 export const DOMAIN_PRIORITY: readonly string[] = [
   'sql',
@@ -219,4 +273,5 @@ export const DOMAIN_PRIORITY: readonly string[] = [
   'llm',
   'flow',
   'voice',
+  'learn',
 ];

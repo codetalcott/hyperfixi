@@ -9,11 +9,11 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
-    "prebuild": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../domain-config ../planner",
+    "prebuild": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../domain-config ../domain-learn ../planner",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
-    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../domain-config ../planner",
+    "pretest": "../../scripts/ensure-fresh.sh ../compilation-service ../semantic ../framework ../intent ../domain-config ../domain-learn ../planner",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "service:setup": "echo 'Copy com.lokascript.mcp-server.plist.example to com.lokascript.mcp-server.plist and update paths, then run service:install'",
@@ -55,6 +55,7 @@
     "@lokascript/domain-behaviorspec": "^2.6.0",
     "@lokascript/domain-flow": "^2.6.0",
     "@lokascript/domain-jsx": "^2.6.0",
+    "@lokascript/domain-learn": "^2.6.0",
     "@lokascript/domain-llm": "^2.6.0",
     "@lokascript/domain-sql": "^2.6.0",
     "@lokascript/domain-todo": "^2.6.0",
@@ -90,6 +91,9 @@
     "@lokascript/domain-jsx": {
       "optional": true
     },
+    "@lokascript/domain-learn": {
+      "optional": true
+    },
     "@lokascript/domain-flow": {
       "optional": true
     },
@@ -115,6 +119,7 @@
     "@lokascript/domain-behaviorspec": "^2.6.0",
     "@lokascript/domain-flow": "^2.6.0",
     "@lokascript/domain-jsx": "^2.6.0",
+    "@lokascript/domain-learn": "^2.6.0",
     "@lokascript/domain-llm": "^2.6.0",
     "@lokascript/domain-sql": "^2.6.0",
     "@lokascript/domain-todo": "^2.6.0",

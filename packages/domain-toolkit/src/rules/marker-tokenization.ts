@@ -21,7 +21,7 @@ function tokenCount(tokenizer: LanguageTokenizer, word: string): number {
   return stream.tokens.length;
 }
 
-function collectLexicalItems(input: DomainLintInput): Array<{
+export function collectLexicalItems(input: DomainLintInput): Array<{
   lang: string;
   word: string;
   source: string; // "schema marker <action>.<role>" | "profile keyword <action>.primary" | ...
