@@ -37,11 +37,28 @@
 > inside the condition clause under reorder), then re-probe the parse side
 > against the NEW renders + repopulate; behavior-sortable hi/tr is the same
 > mechanism in a behavior body. (b) **the big R1-missing families** for bar
-> item 4 (0.9838 → ≥0.985): add.patient:selector ×20,
-> toggle.patient:expression ×19, fetch.source:literal ×18,
-> set.patient:literal ×16, bind.source:property-path ×14. Bar item 2 also
-> still carries for ×9 (take-class ×6 own-arc — cross-language + transformer
-> probe BOTH sides first — + wait-payload behaviors ×3 post-launch).
+> item 4 (0.9838 → ≥0.985) — the top three were pre-probed at session-12
+> close: **add ×20 and toggle ×19 are the SAME root cause in OPPOSITE
+> directions** — `@attribute` tokens type-diverge between en's patterns and
+> the generated event patterns (add `@disabled`: en=selector, other 18
+> =expression via the lax no-expectedTypes event-role slots; toggle
+> `@aria-expanded`: en toggle-en-full=expression, others=selector). One
+> canonical `@attr` typing (shared value-builder, not per-pattern
+> expectedTypes) could clear BOTH — ≈0.0012 R1, i.e. the whole bar-4 gap —
+> but it changes the en reference either way, so budget both-sides A/B + R2
+> (attribute toggles are in the curated subset). The add SOV trio (hi/ja/ko)
+> ALSO mis-captures destination (`reference:"me"` instead of
+> `selector:"<button/>"` — the trailing `in me` wins). **fetch ×18 is two
+> UNRELATED sub-arcs:** event-debounce (bn/hi/ja/ko/qu/tr) is a template-
+> literal shatter — `/api/search?q=${my value}` breaks at the interpolation
+> space, en KEEPS A TRUNCATED source `"/api/search?q=${my"` (an R0-invisible
+> en value bug, morph-lesson shape) while the SOV six capture garbage
+> `"}"` — a tokenizer arc, fix must repair en's value too; fetch-with-\*
+> (pl/ru/uk ×12) mis-roles the with-tail — URL lands in patient and
+> source=expression:"method" junk (the #595 with-phrase family, pl/ru/uk
+> never got the he treatment). Bar item 2 also still carries for ×9
+> (take-class ×6 own-arc — cross-language + transformer probe BOTH sides
+> first — + wait-payload behaviors ×3 post-launch).
 
 > **STATUS UPDATE (2026-07-06, session 11 = L3 of the launch bar): both L3
 > drills LANDED — #595 (spurious on ×7: he עם de-anchor + hi bare-event

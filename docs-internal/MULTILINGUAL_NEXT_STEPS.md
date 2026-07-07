@@ -128,9 +128,21 @@ fidelity grind only — docs/demo/npm-publish polish is separate scope.
 >   is the same mechanism inside a behavior body.
 > - Remaining bar work: item 2 (for ×9 = take-class ×6 own-arc + wait-payload
 >   behaviors ×3; empty ×8 above) and item 4 (R1 0.9838 → ≥0.985 via the big
->   R1-missing families: add.patient:selector ×20, toggle.patient:expression
->   ×19, fetch.source:literal ×18, set.patient:literal ×16,
->   bind.source:property-path ×14).
+>   R1-missing families). **Top-three R1 families pre-probed at session-12
+>   close:** add ×20 and toggle ×19 are the SAME root cause in opposite
+>   directions — `@attribute` type inference diverges between en's patterns
+>   and the lax generated event-role slots (add `@disabled`: en=selector /
+>   others=expression; toggle `@aria-expanded`: en=expression /
+>   others=selector). One canonical `@attr` typing in the shared
+>   value-builder could clear both (≈0.0012 R1 = the whole bar-4 gap); it
+>   changes the en reference, so budget both-sides A/B + R2. The add SOV trio
+>   (hi/ja/ko) also mis-captures destination (`reference:"me"` vs
+>   `selector:"<button/>"`). fetch ×18 is two unrelated sub-arcs:
+>   event-debounce is a template-literal shatter (`${my value}` breaks at the
+>   space; en itself keeps a TRUNCATED source — an R0-invisible en value bug)
+>   and fetch-with-\* pl/ru/uk ×12 mis-roles the with-tail (URL→patient,
+>   source="method" junk — the #595 with-phrase family). Full detail in the
+>   handoff doc.
 
 > **Update 2026-07-06f (SESSION 11 = L3, two drills: #595 and this PR;
 > avgPrecision 0.9928 → 0.9939, probe mean R1 0.9831 → 0.9838; A/B 14
