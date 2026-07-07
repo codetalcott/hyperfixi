@@ -18,6 +18,9 @@ import { koreanProfile as koSlice } from '@lokascript/semantic/languages/ko';
 import { chineseProfile as zhSlice } from '@lokascript/semantic/languages/zh';
 import { turkishProfile as trSlice } from '@lokascript/semantic/languages/tr';
 import { frenchProfile as frSlice } from '@lokascript/semantic/languages/fr';
+import { germanProfile as deSlice } from '@lokascript/semantic/languages/de';
+import { portugueseProfile as ptSlice } from '@lokascript/semantic/languages/pt';
+import { russianProfile as ruSlice } from '@lokascript/semantic/languages/ru';
 
 import { enVocabulary } from './en';
 import { esVocabulary } from './es';
@@ -27,6 +30,9 @@ import { koVocabulary } from './ko';
 import { zhVocabulary } from './zh';
 import { trVocabulary } from './tr';
 import { frVocabulary } from './fr';
+import { deVocabulary } from './de';
+import { ptVocabulary } from './pt';
+import { ruVocabulary } from './ru';
 
 export { enVocabulary } from './en';
 export { esVocabulary } from './es';
@@ -36,6 +42,9 @@ export { koVocabulary } from './ko';
 export { zhVocabulary } from './zh';
 export { trVocabulary } from './tr';
 export { frVocabulary } from './fr';
+export { deVocabulary } from './de';
+export { ptVocabulary } from './pt';
+export { ruVocabulary } from './ru';
 export { SCHEMA_OWNED_MARKERS } from './shared';
 
 export interface LLMLanguageSource {
@@ -53,4 +62,8 @@ export const LLM_LANGUAGES: Readonly<Record<string, LLMLanguageSource>> = {
   zh: { slice: zhSlice, vocab: zhVocabulary },
   tr: { slice: trSlice, vocab: trVocabulary },
   fr: { slice: frSlice, vocab: frVocabulary },
+  // Bridge-era languages (arc Phase 2 expansion) — one vocab file each.
+  de: { slice: deSlice, vocab: deVocabulary },
+  pt: { slice: ptSlice, vocab: ptVocabulary },
+  ru: { slice: ruSlice, vocab: ruVocabulary },
 };

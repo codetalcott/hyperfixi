@@ -61,3 +61,6 @@ export const KoreanLLMTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseLLMTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishLLMTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchLLMTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanLLMTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseLLMTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianLLMTokenizer: LanguageTokenizer = tokenizerFor('ru');

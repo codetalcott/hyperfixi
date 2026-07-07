@@ -1766,5 +1766,668 @@
         }
       }
     ]
+  },
+  "de": {
+    "ask": [
+      {
+        "id": "ask-de-generated",
+        "language": "de",
+        "command": "ask",
+        "priority": 100,
+        "template": {
+          "format": "fragen {patient} aus {source} als {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fragen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "aus"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "als"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "aus"
+          },
+          "manner": {
+            "marker": "als"
+          }
+        }
+      }
+    ],
+    "summarize": [
+      {
+        "id": "summarize-de-generated",
+        "language": "de",
+        "command": "summarize",
+        "priority": 100,
+        "template": {
+          "format": "zusammenfassen {patient} in {quantity} als {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "zusammenfassen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "in"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "als"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "quantity": {
+            "marker": "in"
+          },
+          "manner": {
+            "marker": "als"
+          }
+        }
+      }
+    ],
+    "analyze": [
+      {
+        "id": "analyze-de-generated",
+        "language": "de",
+        "command": "analyze",
+        "priority": 100,
+        "template": {
+          "format": "analysieren {patient} als {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "analysieren"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "als"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "manner": {
+            "marker": "als"
+          }
+        }
+      }
+    ],
+    "translate": [
+      {
+        "id": "translate-de-generated",
+        "language": "de",
+        "command": "translate",
+        "priority": 100,
+        "template": {
+          "format": "übersetzen {patient} aus {source} nach {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "übersetzen"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "aus"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "nach"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "aus"
+          },
+          "destination": {
+            "marker": "nach"
+          }
+        }
+      }
+    ]
+  },
+  "pt": {
+    "ask": [
+      {
+        "id": "ask-pt-generated",
+        "language": "pt",
+        "command": "ask",
+        "priority": 100,
+        "template": {
+          "format": "perguntar {patient} de {source} como {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "perguntar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "de"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "de"
+          },
+          "manner": {
+            "marker": "como"
+          }
+        }
+      }
+    ],
+    "summarize": [
+      {
+        "id": "summarize-pt-generated",
+        "language": "pt",
+        "command": "summarize",
+        "priority": 100,
+        "template": {
+          "format": "resumir {patient} em {quantity} como {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "resumir"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "em"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "como"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "quantity": {
+            "marker": "em"
+          },
+          "manner": {
+            "marker": "como"
+          }
+        }
+      }
+    ],
+    "analyze": [
+      {
+        "id": "analyze-pt-generated",
+        "language": "pt",
+        "command": "analyze",
+        "priority": 100,
+        "template": {
+          "format": "analisar {patient} como {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "analisar"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "como"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "manner": {
+            "marker": "como"
+          }
+        }
+      }
+    ],
+    "translate": [
+      {
+        "id": "translate-pt-generated",
+        "language": "pt",
+        "command": "translate",
+        "priority": 100,
+        "template": {
+          "format": "traduzir {patient} de {source} para {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "traduzir"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "de"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "para"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "de"
+          },
+          "destination": {
+            "marker": "para"
+          }
+        }
+      }
+    ]
+  },
+  "ru": {
+    "ask": [
+      {
+        "id": "ask-ru-generated",
+        "language": "ru",
+        "command": "ask",
+        "priority": 100,
+        "template": {
+          "format": "спросить {patient} из {source} как {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "спросить"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "из"
+                },
+                {
+                  "type": "role",
+                  "role": "source",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "как"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "из"
+          },
+          "manner": {
+            "marker": "как"
+          }
+        }
+      }
+    ],
+    "summarize": [
+      {
+        "id": "summarize-ru-generated",
+        "language": "ru",
+        "command": "summarize",
+        "priority": 100,
+        "template": {
+          "format": "суммировать {patient} в {quantity} как {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "суммировать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "в"
+                },
+                {
+                  "type": "role",
+                  "role": "quantity",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "как"
+                },
+                {
+                  "type": "role",
+                  "role": "manner",
+                  "optional": true,
+                  "expectedTypes": ["expression"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "quantity": {
+            "marker": "в"
+          },
+          "manner": {
+            "marker": "как"
+          }
+        }
+      }
+    ],
+    "analyze": [
+      {
+        "id": "analyze-ru-generated",
+        "language": "ru",
+        "command": "analyze",
+        "priority": 100,
+        "template": {
+          "format": "анализировать {patient} как {manner}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "анализировать"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "как"
+            },
+            {
+              "type": "role",
+              "role": "manner",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "manner": {
+            "marker": "как"
+          }
+        }
+      }
+    ],
+    "translate": [
+      {
+        "id": "translate-ru-generated",
+        "language": "ru",
+        "command": "translate",
+        "priority": 100,
+        "template": {
+          "format": "перевести {patient} из {source} на {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "перевести"
+            },
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "из"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "на"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "patient": {},
+          "source": {
+            "marker": "из"
+          },
+          "destination": {
+            "marker": "на"
+          }
+        }
+      }
+    ]
   }
 }

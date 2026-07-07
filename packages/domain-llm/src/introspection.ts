@@ -25,7 +25,19 @@ import { allSchemas } from './schemas/index.js';
  * Language codes supported by the LLM DSL, in priority order.
  * Shared by introspection and any consumer that needs the full set.
  */
-export const LLM_LANGUAGE_CODES = ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'] as const;
+export const LLM_LANGUAGE_CODES = [
+  'en',
+  'es',
+  'ja',
+  'ar',
+  'ko',
+  'zh',
+  'tr',
+  'fr',
+  'de',
+  'pt',
+  'ru',
+] as const;
 
 export type LLMLanguageCode = (typeof LLM_LANGUAGE_CODES)[number];
 
@@ -88,6 +100,9 @@ const COMMAND_EXAMPLES: Record<string, Record<LLMLanguageCode, string>> = {
     zh: '提问 "What is this?" 从 #article',
     tr: '#article dan "What is this?" sor',
     fr: 'demander "What is this?" de #article',
+    de: 'fragen "What is this?" aus #article',
+    pt: 'perguntar "What is this?" de #article',
+    ru: 'спросить "What is this?" из #article',
   },
   summarize: {
     en: 'summarize #document',
@@ -98,6 +113,9 @@ const COMMAND_EXAMPLES: Record<string, Record<LLMLanguageCode, string>> = {
     zh: '总结 #document',
     tr: '#document özetle',
     fr: 'résumer #document',
+    de: 'zusammenfassen #document',
+    pt: 'resumir #document',
+    ru: 'суммировать #document',
   },
   analyze: {
     en: 'analyze #review as sentiment',
@@ -108,6 +126,9 @@ const COMMAND_EXAMPLES: Record<string, Record<LLMLanguageCode, string>> = {
     zh: '分析 #review 以 sentiment',
     tr: 'sentiment olarak #review çözümle',
     fr: 'analyser #review comme sentiment',
+    de: 'analysieren #review als sentiment',
+    pt: 'analisar #review como sentiment',
+    ru: 'анализировать #review как sentiment',
   },
   translate: {
     en: 'translate #text from english to japanese',
@@ -118,6 +139,9 @@ const COMMAND_EXAMPLES: Record<string, Record<LLMLanguageCode, string>> = {
     zh: '翻译 #text 从 english 到 japanese',
     tr: '#text english dan japanese e çevir',
     fr: 'traduire #text de english vers japanese',
+    de: 'übersetzen #text aus english nach japanese',
+    pt: 'traduzir #text de english para japanese',
+    ru: 'перевести #text из english на japanese',
   },
 };
 

@@ -31,6 +31,9 @@ export const koreanProfile: PatternGenLanguageProfile = profileFor('ko');
 export const chineseProfile: PatternGenLanguageProfile = profileFor('zh');
 export const turkishProfile: PatternGenLanguageProfile = profileFor('tr');
 export const frenchProfile: PatternGenLanguageProfile = profileFor('fr');
+export const germanProfile: PatternGenLanguageProfile = profileFor('de');
+export const portugueseProfile: PatternGenLanguageProfile = profileFor('pt');
+export const russianProfile: PatternGenLanguageProfile = profileFor('ru');
 
 export const allProfiles = [
   englishProfile,
@@ -41,4 +44,7 @@ export const allProfiles = [
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 ];
