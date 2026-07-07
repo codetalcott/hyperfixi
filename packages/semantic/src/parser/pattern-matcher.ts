@@ -808,23 +808,6 @@ export class PatternMatcher {
       }
     }
 
-    // Attribute selectors (`@attr`) tokenize with kind `identifier`, not
-    // `selector` — and that kind is load-bearing: roles like bind's `@property`
-    // (expectedTypes ['reference','expression']) rely on the identifier reading.
-    // But when a role *explicitly expects a selector* (e.g. add/remove/toggle's
-    // patient), an `@`-identifier is an attribute selector — so convert it here,
-    // gated on the role opting into `selector`. This lets `add @disabled to
-    // <button/>` fill its patient without disturbing the non-selector @-roles.
-    if (
-      token.kind === 'identifier' &&
-      token.value.startsWith('@') &&
-      patternToken.expectedTypes?.includes('selector')
-    ) {
-      captured.set(patternToken.role, createSelector(token.value));
-      tokens.advance();
-      return true;
-    }
-
     // Try to extract a semantic value from the token
     const value = this.tokenToSemanticValue(token);
     if (!value) {
@@ -834,7 +817,23 @@ export class PatternMatcher {
     // Validate expected types if specified
     if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
       if (!patternToken.expectedTypes.includes(value.type)) {
-        return patternToken.optional || false;
+        // Canonical `@attr` typing: an attribute reference is ALWAYS a
+        // selector (tokenToSemanticValue), regardless of which slot captures
+        // it — the old slot-dependent reading (selector when the slot expected
+        // one, expression when lax) made the SAME token type-diverge between
+        // en's patterns and the generated event-role slots (add `@disabled`
+        // en=selector / 18 langs=expression; toggle `@aria-expanded` the exact
+        // opposite). Slots that relied on the identifier/expression reading
+        // (bind's `@property`, expectedTypes ['reference','expression']) still
+        // capture it — as the canonical selector.
+        const isAttrRef =
+          value.type === 'selector' && String((value as { value: unknown }).value).startsWith('@');
+        const slotTakesExpr = patternToken.expectedTypes.some(
+          t => t === 'expression' || t === 'reference'
+        );
+        if (!(isAttrRef && slotTakesExpr)) {
+          return patternToken.optional || false;
+        }
       }
     }
 
@@ -2255,6 +2254,14 @@ export class PatternMatcher {
         return createLiteral(token.normalized || token.value);
 
       case 'identifier':
+        // Canonical `@attr` typing: an attribute reference is a selector no
+        // matter which slot captures it (mirrors semantic-parser's own
+        // tokenToSemanticValue and the css-selector extractor). The former
+        // slot-dependent reading typed the SAME token differently between
+        // en's patterns and the lax generated event-role slots.
+        if (token.value.startsWith('@')) {
+          return createSelector(token.value);
+        }
         // Check if it's a variable reference (:local or $global)
         // Note: these don't match the ReferenceValue union but are used as a
         // reference token downstream — this cast preserves existing behavior
