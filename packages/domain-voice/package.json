@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-voice",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "Multilingual voice/accessibility commands — 14 commands in 8 languages for speech-controlled web interaction",
   "type": "module",
   "sideEffects": false,
@@ -23,10 +23,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.5.1"
+    "@lokascript/framework": "^2.6.0"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.5.1",
+    "@lokascript/domain-toolkit": "^2.6.0",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
