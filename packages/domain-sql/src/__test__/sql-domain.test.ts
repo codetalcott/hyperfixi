@@ -42,7 +42,8 @@ describe('SQL Domain', () => {
     });
 
     it('should reject unsupported language', () => {
-      expect(() => sql.parse('select name from users', 'de')).toThrow();
+      // 'xx' is never a supported language (de/pt/ru ARE supported now).
+      expect(() => sql.parse('select name from users', 'xx')).toThrow();
     });
   });
 

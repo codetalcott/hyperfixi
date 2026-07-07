@@ -17,13 +17,15 @@
   "scripts": {
     "build": "tsup && npm run build:types",
     "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
+    "pretest": "../../scripts/ensure-fresh.sh ../framework ../semantic ../intent ../domain-toolkit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.6.0"
+    "@lokascript/framework": "^2.6.0",
+    "@lokascript/semantic": "^2.6.0"
   },
   "devDependencies": {
     "@lokascript/domain-toolkit": "^2.6.0",

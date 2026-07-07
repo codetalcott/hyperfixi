@@ -78,7 +78,11 @@ export function buildPatternProfile(
 
 /** Options for {@link buildDomainTokenizer}, overriding the slice-derived defaults. */
 export interface DomainTokenizerOptions {
-  /** Recognize operator tokens (default: true) */
+  /**
+   * Recognize operator tokens (default: false, matching `createSimpleTokenizer`).
+   * Domains whose grammar contains operators (e.g. SQL's `WHERE age > 18`) pass
+   * `true`; most natural-language DSLs leave it off.
+   */
   readonly includeOperators?: boolean;
   /**
    * Case-insensitive keyword matching. Defaults to true for bicameral scripts
@@ -151,7 +155,7 @@ export function buildDomainTokenizer(
     keywords: [...keywords],
     ...(vocab.keywordExtras?.length && { keywordExtras: vocab.keywordExtras.map(e => ({ ...e })) }),
     keywordProfile,
-    includeOperators: options.includeOperators ?? true,
+    includeOperators: options.includeOperators ?? false,
     caseInsensitive: options.caseInsensitive ?? defaultCaseInsensitive(slice.script),
     ...(customExtractors.length > 0 && { customExtractors }),
   });
