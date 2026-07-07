@@ -2326,5 +2326,878 @@
         }
       }
     ]
+  },
+  "de": {
+    "element": [
+      {
+        "id": "element-de-generated",
+        "language": "de",
+        "command": "element",
+        "priority": 100,
+        "template": {
+          "format": "element {tag} mit {props} enthaltend {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "element"
+            },
+            {
+              "type": "role",
+              "role": "tag",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "mit"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "enthaltend"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "tag": {},
+          "props": {
+            "marker": "mit"
+          },
+          "children": {
+            "marker": "enthaltend"
+          }
+        }
+      }
+    ],
+    "component": [
+      {
+        "id": "component-de-generated",
+        "language": "de",
+        "command": "component",
+        "priority": 100,
+        "template": {
+          "format": "komponente {name} mit {props} liefernd {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "komponente"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "mit"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "liefernd"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "props": {
+            "marker": "mit"
+          },
+          "children": {
+            "marker": "liefernd"
+          }
+        }
+      }
+    ],
+    "render": [
+      {
+        "id": "render-de-generated",
+        "language": "de",
+        "command": "render",
+        "priority": 100,
+        "template": {
+          "format": "rendern {source} in {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "rendern"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "in"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "destination": {
+            "marker": "in"
+          }
+        }
+      }
+    ],
+    "state": [
+      {
+        "id": "state-de-generated",
+        "language": "de",
+        "command": "state",
+        "priority": 100,
+        "template": {
+          "format": "zustand {name} initial {initial}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "zustand"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "initial"
+                },
+                {
+                  "type": "role",
+                  "role": "initial",
+                  "optional": true,
+                  "expectedTypes": ["expression", "literal"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "initial": {
+            "marker": "initial"
+          }
+        }
+      }
+    ],
+    "effect": [
+      {
+        "id": "effect-de-generated",
+        "language": "de",
+        "command": "effect",
+        "priority": 100,
+        "template": {
+          "format": "effekt {callback} bei {deps}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "effekt"
+            },
+            {
+              "type": "role",
+              "role": "callback",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "bei"
+                },
+                {
+                  "type": "role",
+                  "role": "deps",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "callback": {},
+          "deps": {
+            "marker": "bei"
+          }
+        }
+      }
+    ],
+    "fragment": [
+      {
+        "id": "fragment-de-generated",
+        "language": "de",
+        "command": "fragment",
+        "priority": 100,
+        "template": {
+          "format": "fragment {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fragment"
+            },
+            {
+              "type": "role",
+              "role": "children",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "children": {}
+        }
+      }
+    ]
+  },
+  "pt": {
+    "element": [
+      {
+        "id": "element-pt-generated",
+        "language": "pt",
+        "command": "element",
+        "priority": 100,
+        "template": {
+          "format": "elemento {tag} com {props} contendo {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "elemento"
+            },
+            {
+              "type": "role",
+              "role": "tag",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "com"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "contendo"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "tag": {},
+          "props": {
+            "marker": "com"
+          },
+          "children": {
+            "marker": "contendo"
+          }
+        }
+      }
+    ],
+    "component": [
+      {
+        "id": "component-pt-generated",
+        "language": "pt",
+        "command": "component",
+        "priority": 100,
+        "template": {
+          "format": "componente {name} com {props} retornando {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "componente"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "com"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "retornando"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "props": {
+            "marker": "com"
+          },
+          "children": {
+            "marker": "retornando"
+          }
+        }
+      }
+    ],
+    "render": [
+      {
+        "id": "render-pt-generated",
+        "language": "pt",
+        "command": "render",
+        "priority": 100,
+        "template": {
+          "format": "renderizar {source} em {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "renderizar"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "em"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "destination": {
+            "marker": "em"
+          }
+        }
+      }
+    ],
+    "state": [
+      {
+        "id": "state-pt-generated",
+        "language": "pt",
+        "command": "state",
+        "priority": 100,
+        "template": {
+          "format": "estado {name} inicial {initial}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "estado"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "inicial"
+                },
+                {
+                  "type": "role",
+                  "role": "initial",
+                  "optional": true,
+                  "expectedTypes": ["expression", "literal"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "initial": {
+            "marker": "inicial"
+          }
+        }
+      }
+    ],
+    "effect": [
+      {
+        "id": "effect-pt-generated",
+        "language": "pt",
+        "command": "effect",
+        "priority": 100,
+        "template": {
+          "format": "efeito {callback} em {deps}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "efeito"
+            },
+            {
+              "type": "role",
+              "role": "callback",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "em"
+                },
+                {
+                  "type": "role",
+                  "role": "deps",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "callback": {},
+          "deps": {
+            "marker": "em"
+          }
+        }
+      }
+    ],
+    "fragment": [
+      {
+        "id": "fragment-pt-generated",
+        "language": "pt",
+        "command": "fragment",
+        "priority": 100,
+        "template": {
+          "format": "fragmento {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "fragmento"
+            },
+            {
+              "type": "role",
+              "role": "children",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "children": {}
+        }
+      }
+    ]
+  },
+  "ru": {
+    "element": [
+      {
+        "id": "element-ru-generated",
+        "language": "ru",
+        "command": "element",
+        "priority": 100,
+        "template": {
+          "format": "элемент {tag} с {props} содержащий {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "элемент"
+            },
+            {
+              "type": "role",
+              "role": "tag",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "с"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "содержащий"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "tag": {},
+          "props": {
+            "marker": "с"
+          },
+          "children": {
+            "marker": "содержащий"
+          }
+        }
+      }
+    ],
+    "component": [
+      {
+        "id": "component-ru-generated",
+        "language": "ru",
+        "command": "component",
+        "priority": 100,
+        "template": {
+          "format": "компонент {name} с {props} возвращающий {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "компонент"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "с"
+                },
+                {
+                  "type": "role",
+                  "role": "props",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "возвращающий"
+                },
+                {
+                  "type": "role",
+                  "role": "children",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "props": {
+            "marker": "с"
+          },
+          "children": {
+            "marker": "возвращающий"
+          }
+        }
+      }
+    ],
+    "render": [
+      {
+        "id": "render-ru-generated",
+        "language": "ru",
+        "command": "render",
+        "priority": 100,
+        "template": {
+          "format": "отрисовать {source} в {destination}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "отрисовать"
+            },
+            {
+              "type": "role",
+              "role": "source",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "literal",
+              "value": "в"
+            },
+            {
+              "type": "role",
+              "role": "destination",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            }
+          ]
+        },
+        "extraction": {
+          "source": {},
+          "destination": {
+            "marker": "в"
+          }
+        }
+      }
+    ],
+    "state": [
+      {
+        "id": "state-ru-generated",
+        "language": "ru",
+        "command": "state",
+        "priority": 100,
+        "template": {
+          "format": "состояние {name} начально {initial}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "состояние"
+            },
+            {
+              "type": "role",
+              "role": "name",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "начально"
+                },
+                {
+                  "type": "role",
+                  "role": "initial",
+                  "optional": true,
+                  "expectedTypes": ["expression", "literal"]
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "name": {},
+          "initial": {
+            "marker": "начально"
+          }
+        }
+      }
+    ],
+    "effect": [
+      {
+        "id": "effect-ru-generated",
+        "language": "ru",
+        "command": "effect",
+        "priority": 100,
+        "template": {
+          "format": "эффект {callback} при {deps}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "эффект"
+            },
+            {
+              "type": "role",
+              "role": "callback",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
+            {
+              "type": "group",
+              "optional": true,
+              "tokens": [
+                {
+                  "type": "literal",
+                  "value": "при"
+                },
+                {
+                  "type": "role",
+                  "role": "deps",
+                  "optional": true,
+                  "expectedTypes": ["expression"],
+                  "greedy": true
+                }
+              ]
+            }
+          ]
+        },
+        "extraction": {
+          "callback": {},
+          "deps": {
+            "marker": "при"
+          }
+        }
+      }
+    ],
+    "fragment": [
+      {
+        "id": "fragment-ru-generated",
+        "language": "ru",
+        "command": "fragment",
+        "priority": 100,
+        "template": {
+          "format": "фрагмент {children}",
+          "tokens": [
+            {
+              "type": "literal",
+              "value": "фрагмент"
+            },
+            {
+              "type": "role",
+              "role": "children",
+              "optional": false,
+              "expectedTypes": ["expression"],
+              "greedy": true
+            }
+          ]
+        },
+        "extraction": {
+          "children": {}
+        }
+      }
+    ]
   }
 }

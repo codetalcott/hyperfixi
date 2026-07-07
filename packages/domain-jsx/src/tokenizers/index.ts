@@ -31,6 +31,9 @@ export const KoreanJSXTokenizer: LanguageTokenizer = tokenizerFor('ko');
 export const ChineseJSXTokenizer: LanguageTokenizer = tokenizerFor('zh');
 export const TurkishJSXTokenizer: LanguageTokenizer = tokenizerFor('tr');
 export const FrenchJSXTokenizer: LanguageTokenizer = tokenizerFor('fr');
+export const GermanJSXTokenizer: LanguageTokenizer = tokenizerFor('de');
+export const PortugueseJSXTokenizer: LanguageTokenizer = tokenizerFor('pt');
+export const RussianJSXTokenizer: LanguageTokenizer = tokenizerFor('ru');
 
 // Re-export the LanguageTokenizer type for consumers
 export type { LanguageTokenizer };
