@@ -45,6 +45,9 @@ import {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 } from './profiles';
 import {
   EnglishJSXTokenizer,
@@ -55,6 +58,9 @@ import {
   ChineseJSXTokenizer,
   TurkishJSXTokenizer,
   FrenchJSXTokenizer,
+  GermanJSXTokenizer,
+  PortugueseJSXTokenizer,
+  RussianJSXTokenizer,
 } from './tokenizers';
 import { jsxCodeGenerator, createJSXCodeGenerator } from './generators/jsx-generator';
 
@@ -122,6 +128,27 @@ export function createJSXDSL(): MultilingualDSL {
         tokenizer: FrenchJSXTokenizer,
         patternProfile: frenchProfile,
       },
+      {
+        code: 'de',
+        name: 'German',
+        nativeName: 'Deutsch',
+        tokenizer: GermanJSXTokenizer,
+        patternProfile: germanProfile,
+      },
+      {
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+        tokenizer: PortugueseJSXTokenizer,
+        patternProfile: portugueseProfile,
+      },
+      {
+        code: 'ru',
+        name: 'Russian',
+        nativeName: 'Русский',
+        tokenizer: RussianJSXTokenizer,
+        patternProfile: russianProfile,
+      },
     ],
     codeGenerator: jsxCodeGenerator,
   });
@@ -146,6 +173,9 @@ export {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  germanProfile,
+  portugueseProfile,
+  russianProfile,
 } from './profiles';
 export { jsxCodeGenerator, createJSXCodeGenerator } from './generators/jsx-generator';
 export { renderJSX } from './generators/jsx-renderer';
@@ -158,6 +188,9 @@ export {
   ChineseJSXTokenizer,
   TurkishJSXTokenizer,
   FrenchJSXTokenizer,
+  GermanJSXTokenizer,
+  PortugueseJSXTokenizer,
+  RussianJSXTokenizer,
 } from './tokenizers';
 
 // =============================================================================

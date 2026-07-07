@@ -44,6 +44,9 @@ import {
   zhProfile,
   trProfile,
   frProfile,
+  deProfile,
+  ptProfile,
+  ruProfile,
 } from './profiles/index';
 import {
   EnglishVoiceTokenizer,
@@ -54,6 +57,9 @@ import {
   ChineseVoiceTokenizer,
   TurkishVoiceTokenizer,
   FrenchVoiceTokenizer,
+  GermanVoiceTokenizer,
+  PortugueseVoiceTokenizer,
+  RussianVoiceTokenizer,
 } from './tokenizers/index';
 import { voiceCodeGenerator } from './generators/voice-generator';
 
@@ -121,6 +127,27 @@ export function createVoiceDSL(): MultilingualDSL {
         tokenizer: FrenchVoiceTokenizer,
         patternProfile: frProfile,
       },
+      {
+        code: 'de',
+        name: 'German',
+        nativeName: 'Deutsch',
+        tokenizer: GermanVoiceTokenizer,
+        patternProfile: deProfile,
+      },
+      {
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+        tokenizer: PortugueseVoiceTokenizer,
+        patternProfile: ptProfile,
+      },
+      {
+        code: 'ru',
+        name: 'Russian',
+        nativeName: 'Русский',
+        tokenizer: RussianVoiceTokenizer,
+        patternProfile: ruProfile,
+      },
     ],
     codeGenerator: voiceCodeGenerator,
   });
@@ -155,6 +182,9 @@ export {
   zhProfile,
   trProfile,
   frProfile,
+  deProfile,
+  ptProfile,
+  ruProfile,
   allProfiles,
 } from './profiles/index';
 
@@ -172,6 +202,9 @@ export {
   ChineseVoiceTokenizer,
   TurkishVoiceTokenizer,
   FrenchVoiceTokenizer,
+  GermanVoiceTokenizer,
+  PortugueseVoiceTokenizer,
+  RussianVoiceTokenizer,
 } from './tokenizers/index';
 
 // Re-export types and converters
