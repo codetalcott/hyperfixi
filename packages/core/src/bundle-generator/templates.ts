@@ -94,7 +94,7 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
 
       if (target.type === 'variable') {
         const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? ctx.locals : globalVars;
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
         map.set(varName, value);
         ctx.it = value;
         return value;
@@ -306,7 +306,7 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
 
       if (target.type === 'variable') {
         const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? ctx.locals : globalVars;
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
         const current = map.get(varName) || 0;
         const newVal = current + amount;
         map.set(varName, newVal);
@@ -331,7 +331,7 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
 
       if (target.type === 'variable') {
         const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? ctx.locals : globalVars;
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
         const current = map.get(varName) || 0;
         const newVal = current - amount;
         map.set(varName, newVal);

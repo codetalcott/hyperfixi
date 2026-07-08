@@ -27,6 +27,14 @@ export interface CoreExecutionContext {
   /** Current element context ('me' reference) - mutable for runtime context updates */
   me: Element | null;
 
+  /**
+   * Element that owns `:name` (element-scoped) variables. Set to the element the
+   * handler was installed on and preserved across `tell`/`you` retargeting (which
+   * reassigns `me`), so `:name` state stays with its owner. Optional: contexts
+   * built outside the handler path fall back to `me` (see `resolveScopeOwner`).
+   */
+  owner?: Element | null;
+
   /** Target element for operations ('you' reference) - mutable for runtime context updates */
   you: Element | null;
 

@@ -4,13 +4,71 @@
  */
 
 import type { ExecutionContext } from '../types/core';
-import { setGlobal } from '../parser/extensions';
+import { setGlobal, notifyLocalRead, notifyLocalWrite } from '../parser/extensions';
 
 /**
  * Shared global variables Map across all execution contexts
  * This ensures global variables persist between event handler invocations
  */
 const sharedGlobals = new Map<string, any>();
+
+/**
+ * Per-element store for `:name` (element-scoped) variables.
+ *
+ * Upstream `_hyperscript` scopes `:name` to the element that owns the handler:
+ * the value persists across event firings and is shared between all handlers on
+ * that element, but is isolated per element and never leaks to globals/window.
+ * Keyed by the owner element so entries are garbage-collected with the element.
+ */
+const elementScopes = new WeakMap<Element, Map<string, unknown>>();
+
+/**
+ * Get (lazily creating) the element-scope Map for a specific element.
+ * Exposed so tests and integrations can seed/inspect element-scoped state.
+ */
+export function getElementScopeMap(element: Element): Map<string, unknown> {
+  let map = elementScopes.get(element);
+  if (!map) {
+    map = new Map<string, unknown>();
+    elementScopes.set(element, map);
+  }
+  return map;
+}
+
+/**
+ * Resolve the element that owns `:name` scope for a context. Prefers the
+ * explicit `owner` (the element the handler was installed on — preserved across
+ * `tell`/`you` retargeting, which reassigns `me`), falling back to `me` when no
+ * owner was recorded (e.g. contexts built outside the event-handler path).
+ */
+export function resolveScopeOwner(context: ExecutionContext): Element | null {
+  const owner = (context as { owner?: Element | null }).owner;
+  if (owner) return owner;
+  return context.me instanceof Element ? context.me : null;
+}
+
+/**
+ * Read an element-scoped `:name` variable. Returns `undefined` when the owner
+ * can't be resolved or the name is unset — element scope deliberately does NOT
+ * fall through to locals/globals/window, so `:name` never leaks to global state.
+ */
+export function getElementVar(context: ExecutionContext, name: string): unknown {
+  const owner = resolveScopeOwner(context);
+  if (!owner) return undefined;
+  notifyLocalRead(name, context);
+  return getElementScopeMap(owner).get(name);
+}
+
+/**
+ * Write an element-scoped `:name` variable to the context's owner element.
+ * No-ops (without leaking to globals) when no owner element can be resolved.
+ */
+export function setElementVar(context: ExecutionContext, name: string, value: unknown): void {
+  const owner = resolveScopeOwner(context);
+  if (!owner) return;
+  getElementScopeMap(owner).set(name, value);
+  notifyLocalWrite(name, value, context);
+}
 
 /**
  * Creates a new execution context with shared globals
@@ -23,6 +81,7 @@ export function createContext(
 ): ExecutionContext {
   return {
     me: element ?? null,
+    owner: element ?? null, // Element that owns `:name` scope (see elementScopes)
     it: null,
     you: null,
     result: null,
@@ -54,6 +113,8 @@ export function createChildContext(
 ): ExecutionContext {
   return {
     me: element ?? parent.me,
+    // Element scope stays with the original owner across child contexts.
+    owner: (parent as { owner?: Element | null }).owner ?? parent.me ?? element ?? null,
     it: null,
     you: null,
     result: null,

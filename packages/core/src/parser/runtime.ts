@@ -17,6 +17,8 @@ import {
 } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal };
+import { getElementVar, setElementVar } from '../core/context';
+import { convertToNumber } from '../commands/helpers/variable-access';
 
 // Static imports limited to plain utilities + lazy-evaluating collection helpers,
 // which aren't registered as ExpressionImplementations. Named-expression dispatch
@@ -334,7 +336,7 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
     case 'selector':
       return evaluateSelectorSync(n, context);
     case 'identifier':
-      return resolveIdentifierSync(n.name, context);
+      return resolveIdentifierSync(n.name, context, (n as { scope?: string }).scope);
     case 'contextReference':
       return resolveContextReferenceSync(n.contextType, context);
     case 'arrayLiteral':
@@ -377,12 +379,14 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
 
 /** Sync identifier resolution mirroring `evaluateIdentifier` (sans the async
  *  registry / reactivity hooks, which yield the same values for these reads). */
-function resolveIdentifierSync(name: string, context: ExecutionContext): unknown {
+function resolveIdentifierSync(name: string, context: ExecutionContext, scope?: string): unknown {
   if (name === 'me' || name === 'my' || name === 'I') return context.me;
   if (name === 'you' || name === 'your' || name === 'yourself') return context.you;
   if (name === 'it' || name === 'its') return context.it ?? context.result;
   if (name === 'window') return typeof window !== 'undefined' ? window : globalThis;
   if (name === 'document') return typeof document !== 'undefined' ? document : undefined;
+  // Element-scoped `:name` — read from the owner element's store, no fallthrough.
+  if (scope === 'element') return getElementVar(context, name);
   if (context.locals?.has(name)) return context.locals.get(name);
   if (context.globals?.has(name)) return context.globals.get(name);
   if (name.startsWith('$') && context.globals?.has(name.slice(1)))
@@ -565,6 +569,12 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
     notifyGlobalRead(name, context);
     return context.globals.get(name);
   }
+  // Element-scoped `:name` (parser tags these `scope: 'element'`). Reads from the
+  // owner element's store and does NOT fall through to locals/globals/window —
+  // unset element vars are `undefined`, matching upstream and preventing leaks.
+  if ((node as { scope?: string }).scope === 'element') {
+    return getElementVar(context, name);
+  }
   if (context.locals && context.locals.has(name)) {
     notifyLocalRead(name, context);
     return context.locals.get(name);
@@ -614,6 +624,8 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
         setGlobal(context, name.slice(1), value);
       } else if (leftNode.scope === 'global') {
         setGlobal(context, name, value);
+      } else if (leftNode.scope === 'element') {
+        setElementVar(context, name, value);
       } else {
         if (!context.locals) (context as { locals?: Map<string, unknown> }).locals = new Map();
         context.locals!.set(name, value);
@@ -742,6 +754,13 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
   // Dispatch the operator to the appropriate registry.
   switch (operator) {
     case '+':
+      // Numeric-coerced `+` (flagged on binaries synthesized by the
+      // increment/decrement → `set X to (X ± n)` rewrite). Attribute reads
+      // (`@data-n`) return strings, so a plain `+` would concatenate
+      // ("1" + 1 → "11"). Coerce both operands so `increment @data-n` counts.
+      if ((node as { coerceNumeric?: boolean }).coerceNumeric) {
+        return convertToNumber(left) + convertToNumber(right);
+      }
       // JS-native: `+` concatenates if either operand is a string.
       if (typeof left === 'string' || typeof right === 'string') {
         return String(left ?? '') + String(right ?? '');

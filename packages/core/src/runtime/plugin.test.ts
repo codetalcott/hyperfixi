@@ -17,6 +17,7 @@ import { parse } from '../parser/parser';
 import { tokenize } from '../parser/tokenizer';
 import { installPlugin, type HyperfixiPlugin } from './plugin';
 import { getParserExtensionRegistry, setGlobal } from '../parser/extensions';
+import { getElementScopeMap } from '../core/context';
 import type { ASTNode } from '../types/base-types';
 import type { ExecutionContext } from '../types/core';
 
@@ -424,15 +425,16 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
 
       const runtime = new Runtime();
       const ctx = createContext(document.createElement('div'));
-      ctx.locals.set('x', 42);
+      // `:x` is element-scoped — seed it on the owner element's store, not locals.
+      getElementScopeMap(ctx.me as Element).set('x', 42);
 
-      // Read :x by setting another local from it.
+      // Read :x by setting another element var from it.
       const result = parse('set :y to :x');
       expect(result.success).toBe(true);
       await runtime.execute(result.node!, ctx);
 
       expect(reads).toContain('x');
-      expect(ctx.locals.get('y')).toBe(42);
+      expect(getElementScopeMap(ctx.me as Element).get('y')).toBe(42);
     });
 
     it('registerLocalWriteHook does NOT fire on `set $x to 1` (scope discrimination)', async () => {
@@ -495,13 +497,14 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
       const ctx = createContext(document.createElement('div'));
       ctx.globals.set('x', 7);
 
-      // ::x routes through the `scope === 'global'` branch in evaluateIdentifier.
+      // ::x routes through the `scope === 'global'` branch in evaluateIdentifier;
+      // :y is element-scoped, so the copied value lands in the owner's store.
       const result = parse('set :y to ::x');
       expect(result.success).toBe(true);
       await runtime.execute(result.node!, ctx);
 
       expect(reads).toContain('x');
-      expect(ctx.locals.get('y')).toBe(7);
+      expect(getElementScopeMap(ctx.me as Element).get('y')).toBe(7);
     });
   });
 });

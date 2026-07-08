@@ -194,11 +194,11 @@ describe('Variable Command Parsers', () => {
       expect(result.name).toBe('set');
       expect(result.type).toBe('command');
       expect(result.args).toHaveLength(3);
-      // Target should be a local-scoped identifier
+      // Target should be an element-scoped identifier (`:myVar`)
       const target = result.args[0] as any;
       expect(target.type).toBe('identifier');
       expect(target.name).toBe('myVar');
-      expect(target.scope).toBe('local');
+      expect(target.scope).toBe('element');
       // 'to' keyword
       expect((result.args[1] as any).name).toBe('to');
       // value
@@ -910,7 +910,7 @@ describe('Variable Command Parsers', () => {
       expect(result).toBeNull();
     });
 
-    it('should parse single-colon as local scope', () => {
+    it('should parse single-colon as element scope', () => {
       // :myVar
       const tokens = createTokenStream([':', 'myVar'], ['symbol', 'identifier']);
       const ctx = createMockParserContext(tokens);
@@ -919,7 +919,7 @@ describe('Variable Command Parsers', () => {
       expect(result).not.toBeNull();
       expect((result as any).type).toBe('identifier');
       expect((result as any).name).toBe('myVar');
-      expect((result as any).scope).toBe('local');
+      expect((result as any).scope).toBe('element');
     });
 
     it('should parse double-colon as global scope', () => {
@@ -1076,7 +1076,7 @@ describe('Variable Command Parsers', () => {
   });
 
   describe('parseTargetFallback', () => {
-    it('should return local variable for colon match', () => {
+    it('should return element-scoped variable for colon match', () => {
       // : myVar
       const tokens = createTokenStream([':', 'myVar'], ['symbol', 'identifier']);
       const ctx = createMockParserContext(tokens);
@@ -1085,7 +1085,7 @@ describe('Variable Command Parsers', () => {
       expect(result.expression).not.toBeNull();
       expect((result.expression as any).type).toBe('identifier');
       expect((result.expression as any).name).toBe('myVar');
-      expect((result.expression as any).scope).toBe('local');
+      expect((result.expression as any).scope).toBe('element');
       expect(result.tokens).toHaveLength(0);
     });
 
