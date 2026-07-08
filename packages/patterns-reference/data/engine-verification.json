@@ -1,0 +1,865 @@
+{
+  "meta": {
+    "bar": {
+      "lokascript": "compileSync(code).ok via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)",
+      "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
+      "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
+    },
+    "lokascriptVersion": "2.6.0",
+    "hyperscriptVersion": "0.9.93"
+  },
+  "engines": {
+    "accordion-exclusive": "both",
+    "accordion-toggle": "both",
+    "add-class-basic": "both",
+    "add-class-to-other": "both",
+    "announce-screen-reader": "lokascript",
+    "append-content": "both",
+    "async-block": "lokascript",
+    "beep-debug-expression": "both",
+    "behavior-draggable": "both",
+    "behavior-removable": "both",
+    "behavior-resizable": "lokascript",
+    "behavior-sortable": "both",
+    "bind-auto-detect": "both",
+    "bind-explicit-property": "both",
+    "bind-non-form-display": "both",
+    "bind-two-way": "both",
+    "blur-element": "both",
+    "breakpoint-command": "both",
+    "call-function": "both",
+    "caret-var-increment": "both",
+    "caret-var-on-target": "both",
+    "caret-var-write": "both",
+    "chained-access-possessive-dot": "both",
+    "closest-ancestor": "both",
+    "component-click-counter": "lokascript",
+    "component-hello-world": "lokascript",
+    "component-with-attrs": "lokascript",
+    "component-with-conditional": "lokascript",
+    "component-with-slots": "lokascript",
+    "computed-value": "both",
+    "copy-to-clipboard": "both",
+    "decrement-counter": "both",
+    "default-value": "both",
+    "document-ready": "both",
+    "dropdown-close-outside": "both",
+    "dropdown-toggle": "both",
+    "event-debounce": "lokascript",
+    "event-from-elsewhere": "both",
+    "event-key-combo": "both",
+    "event-once": null,
+    "event-throttle": "both",
+    "eventsource-basic": "both",
+    "fade-out-remove": "both",
+    "fetch-basic": "both",
+    "fetch-do-not-throw": "both",
+    "fetch-error-handling": "both",
+    "fetch-formdata": "lokascript",
+    "fetch-json": "both",
+    "fetch-loading-state": "both",
+    "fetch-with-headers": "both",
+    "fetch-with-method": "lokascript",
+    "fetch-with-method-body": "both",
+    "first-in-parent": "both",
+    "focus-element": "both",
+    "focus-trap": "both",
+    "form-disable-on-submit": "both",
+    "form-submit-prevent": "both",
+    "get-attribute-possessive-dot": "both",
+    "get-value": "both",
+    "get-value-possessive-dot": "both",
+    "go-back": "both",
+    "go-url": "both",
+    "halt-propagation": "both",
+    "hide-element": "both",
+    "hide-with-transition": "both",
+    "hx-live-attribute": "lokascript",
+    "hx-live-with-mutator": "lokascript",
+    "if-condition": "both",
+    "if-empty": "both",
+    "if-exists": "both",
+    "if-matches": "both",
+    "increment-by-amount": "both",
+    "increment-counter": "both",
+    "input-char-count": "both",
+    "input-clear": "lokascript",
+    "input-mirror": "both",
+    "input-validation": "both",
+    "install-behavior": "both",
+    "intercept-cache-strategies": null,
+    "its-value-possessive-dot": "both",
+    "js-inline": "both",
+    "keydown-key-is-syntax": "both",
+    "last-in-collection": "both",
+    "live-derived-value": "both",
+    "live-multiple-deps": "both",
+    "log-element": "both",
+    "log-value": "both",
+    "make-element": "both",
+    "make-toast-element": "both",
+    "method-call-possessive-dot": "both",
+    "modal-close-backdrop": "both",
+    "modal-close-button": "both",
+    "modal-close-escape": "both",
+    "modal-open": "both",
+    "morph-fetch-result": "both",
+    "morph-form-update": "lokascript",
+    "morph-with-template": "both",
+    "multiple-events": "both",
+    "next-element": "both",
+    "on-custom-event-receive": "both",
+    "optional-chaining-possessive": "lokascript",
+    "pick-text-range": "both",
+    "previous-element": "both",
+    "put-after": "both",
+    "put-before": "both",
+    "put-content-basic": "both",
+    "reactive-array-push": "both",
+    "remove-class-basic": "both",
+    "remove-class-from-all": "both",
+    "remove-element": "both",
+    "render-template-with-data": "both",
+    "repeat-for-each": "both",
+    "repeat-forever": "both",
+    "repeat-times": "both",
+    "repeat-until-event": "both",
+    "repeat-while": "both",
+    "send-event": "both",
+    "send-event-to-form": "both",
+    "send-with-detail": "both",
+    "set-attribute": "both",
+    "set-color-variable": "lokascript",
+    "set-inner-html-possessive-dot": "both",
+    "set-opacity": "both",
+    "set-style": "both",
+    "set-text-basic": "both",
+    "set-text-possessive-dot": "both",
+    "set-transform": "both",
+    "settle-animations": "both",
+    "show-element": "both",
+    "show-with-transition": "both",
+    "slide-toggle": "lokascript",
+    "socket-basic": "both",
+    "socket-send": "both",
+    "sse-connect-swap": "lokascript",
+    "sse-multi-event": "lokascript",
+    "stagger-animation": "lokascript",
+    "swap-content": "both",
+    "tabs-aria": "lokascript",
+    "tabs-basic": "both",
+    "tabs-content": "both",
+    "take-class-from-siblings": "both",
+    "tell-command": "lokascript",
+    "tell-other-element": "both",
+    "template-literal-interpolation": "both",
+    "template-literal-list-build": "both",
+    "toggle-aria-expanded": "both",
+    "toggle-class-basic": "both",
+    "toggle-class-on-other": "both",
+    "toggle-visibility": "both",
+    "transition-color": "both",
+    "transition-opacity": "both",
+    "transition-transform": "both",
+    "trigger-event": "both",
+    "two-way-binding": "both",
+    "unless-condition": "lokascript",
+    "wait-for-event": "both",
+    "wait-then": "both",
+    "when-multiple-changes": "both",
+    "when-value-changes": "lokascript",
+    "window-keydown": "both",
+    "window-resize": "both",
+    "window-scroll": "both",
+    "worker-basic": "both",
+    "ws-connect-send": "lokascript"
+  },
+  "details": {
+    "accordion-exclusive": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "accordion-toggle": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "add-class-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "add-class-to-other": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "announce-screen-reader": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected event name"
+    },
+    "append-content": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "async-block": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : async"
+    },
+    "beep-debug-expression": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "behavior-draggable": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "behavior-removable": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "behavior-resizable": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "You must parenthesize math operations with different operators"
+    },
+    "behavior-sortable": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "bind-auto-detect": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "bind-explicit-property": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "bind-non-form-display": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "bind-two-way": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "blur-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "breakpoint-command": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "call-function": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "caret-var-increment": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "caret-var-on-target": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "caret-var-write": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "chained-access-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "closest-ancestor": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "component-click-counter": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "component-hello-world": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "component-with-attrs": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "component-with-conditional": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "component-with-slots": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "computed-value": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "copy-to-clipboard": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "decrement-counter": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "default-value": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "document-ready": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "dropdown-close-outside": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "dropdown-toggle": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "event-debounce": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : value"
+    },
+    "event-from-elsewhere": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "event-key-combo": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "event-once": {
+      "lokascript": false,
+      "hyperscript": false,
+      "lokascriptError": "Unexpected token: add",
+      "hyperscriptError": "Unexpected Token : once"
+    },
+    "event-throttle": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "eventsource-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fade-out-remove": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-do-not-throw": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-error-handling": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-formdata": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected a CSS expression"
+    },
+    "fetch-json": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-loading-state": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-with-headers": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "fetch-with-method": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : body"
+    },
+    "fetch-with-method-body": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "first-in-parent": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "focus-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "focus-trap": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "form-disable-on-submit": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "form-submit-prevent": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "get-attribute-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "get-value": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "get-value-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "go-back": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "go-url": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "halt-propagation": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "hide-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "hide-with-transition": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "hx-live-attribute": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "hx-live-with-mutator": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "if-condition": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "if-empty": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "if-exists": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "if-matches": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "increment-by-amount": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "increment-counter": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "input-char-count": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "input-clear": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected 'to' but found '<'"
+    },
+    "input-mirror": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "input-validation": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "install-behavior": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "intercept-cache-strategies": {
+      "lokascript": false,
+      "hyperscript": false,
+      "lokascriptError": "Unexpected token: ,",
+      "hyperscriptError": "Unexpected value: ,"
+    },
+    "its-value-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "js-inline": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "keydown-key-is-syntax": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "last-in-collection": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "live-derived-value": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "live-multiple-deps": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "log-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "log-value": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "make-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "make-toast-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "method-call-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "modal-close-backdrop": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "modal-close-button": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "modal-close-escape": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "modal-open": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "morph-fetch-result": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "morph-form-update": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected 'to' but found '<<<EOF>>>'"
+    },
+    "morph-with-template": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "multiple-events": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "next-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "on-custom-event-receive": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "optional-chaining-possessive": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : ?"
+    },
+    "pick-text-range": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "previous-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "put-after": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "put-before": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "put-content-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "reactive-array-push": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "remove-class-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "remove-class-from-all": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "remove-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "render-template-with-data": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "repeat-for-each": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "repeat-forever": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "repeat-times": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "repeat-until-event": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "repeat-while": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "send-event": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "send-event-to-form": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "send-with-detail": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-attribute": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-color-variable": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected value: *"
+    },
+    "set-inner-html-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-opacity": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-style": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-text-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-text-possessive-dot": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "set-transform": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "settle-animations": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "show-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "show-with-transition": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "slide-toggle": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected 'to' but found 'over'"
+    },
+    "socket-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "socket-send": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "sse-connect-swap": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "sse-multi-event": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    },
+    "stagger-animation": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected 'end' but found 'with'"
+    },
+    "swap-content": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "tabs-aria": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected event name"
+    },
+    "tabs-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "tabs-content": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "take-class-from-siblings": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "tell-command": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Expected 'end' but found 'to'"
+    },
+    "tell-other-element": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "template-literal-interpolation": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "template-literal-list-build": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "toggle-aria-expanded": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "toggle-class-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "toggle-class-on-other": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "toggle-visibility": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "transition-color": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "transition-opacity": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "transition-transform": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "trigger-event": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "two-way-binding": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "unless-condition": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : unless"
+    },
+    "wait-for-event": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "wait-then": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "when-multiple-changes": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "when-value-changes": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected value: $"
+    },
+    "window-keydown": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "window-resize": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "window-scroll": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "worker-basic": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "ws-connect-send": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "uses hyperfixi-only attributes"
+    }
+  }
+}
