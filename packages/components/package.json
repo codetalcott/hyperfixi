@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/components",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "Template-component plugin for hyperfixi — register custom elements from `<template component=\"tag-name\">` definitions (upstream _hyperscript 0.9.90).",
   "type": "module",
   "sideEffects": false,
@@ -24,8 +24,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.7.1",
-    "@hyperfixi/reactivity": "^2.7.1"
+    "@hyperfixi/core": "^2.7.2",
+    "@hyperfixi/reactivity": "^2.7.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/behaviors",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "Reusable hyperscript behaviors for LokaScript",
   "type": "module",
   "main": "./dist/index.js",
@@ -111,10 +111,10 @@
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^2.7.1"
+    "@hyperfixi/core": "^2.7.2"
   },
   "devDependencies": {
-    "@hyperfixi/core": "^2.7.1",
+    "@hyperfixi/core": "^2.7.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"
