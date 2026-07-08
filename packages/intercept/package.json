@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/intercept",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "private": true,
   "description": "Service-worker request-interception plugin for hyperfixi — adds the `intercept ... end` feature with precache / route strategies / offline fallback (upstream _hyperscript 0.9.90).",
   "type": "module",
@@ -25,7 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.7.0"
+    "@hyperfixi/core": "^2.7.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

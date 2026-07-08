@@ -36,7 +36,6 @@
 
 import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
 import { reactive } from './signals';
-import { getElementScopeMap } from '@hyperfixi/core';
 
 export interface BindFeatureNode extends ASTNode {
   type: 'bindFeature';
@@ -160,6 +159,15 @@ export function makeEvaluateBindFeature(runtime: {
     const context = ctx as ExecutionContext;
     const owner = (context.me as Element) ?? document.body;
     const n = node as BindFeatureNode;
+
+    // Dynamically import the element-scope accessor from core. A static import
+    // would pull core's full index into this module's load graph — and core's
+    // index eagerly evaluates `morphlex` (which touches `Element.prototype` at
+    // module scope), throwing `Element is not defined` when @hyperfixi/reactivity
+    // is imported in bare Node/SSR. This evaluator only runs in a browser (it
+    // uses `document.body` above), so deferring the import keeps the package
+    // importable in Node while `:name` binds still address the core store.
+    const { getElementScopeMap } = await import('@hyperfixi/core');
 
     // Resolve sides. One is a var reference (read/write a symbol), the other
     // a DOM target (read/write a property). Determine direction from node shape.

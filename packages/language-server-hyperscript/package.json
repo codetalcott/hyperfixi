@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/language-server",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Language Server Protocol implementation for original _hyperscript — completions, diagnostics, hover docs",
   "type": "module",
   "main": "dist/server.js",
@@ -25,7 +25,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/language-server": "^2.7.0"
+    "@lokascript/language-server": "^2.7.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
