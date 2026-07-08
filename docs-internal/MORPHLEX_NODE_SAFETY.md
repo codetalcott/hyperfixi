@@ -23,6 +23,13 @@
 >   htmx-v4/fixi byte-alignment for the hx-compat layer. Follow-up: file the one-line
 >   upstream guard PR against `yippee-fun/morphlex`
 >   (`typeof Element !== 'undefined' && "moveBefore" in Element.prototype`).
+> - **Vendor-if-needed escape hatch:** morphlex is **MIT** (© 2024 Joel Drapper), so if a
+>   revisit trigger fires we can copy the 1.4.0 source into core, apply the Node guard
+>   inline, and drop both the npm dep and the shim — legally clean. The only obligation is
+>   retaining morphlex's MIT license + copyright notice alongside the vendored source
+>   (e.g. `packages/core/src/lib/vendor/morphlex/LICENSE` or a file header). fixi's
+>   paxi.js is even more permissive (BSD-0, no notice retention) if the micro-morph route
+>   is ever taken. No license action is needed for the current npm-dep + shim approach.
 
 **For a fresh Claude Code session. Enter plan mode and produce a plan covering the two
 decisions below. They are separable — you can ship Decision 1 without settling Decision 2.**
