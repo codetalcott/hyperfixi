@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-learn",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Multilingual learning domain DSL — morphology, sentence generation, and exercise support for 15 verbs × 10 languages × 7 communicative functions",
   "type": "module",
   "sideEffects": false,
@@ -24,11 +24,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.6.0",
-    "@lokascript/semantic": "^2.6.0"
+    "@lokascript/framework": "^2.7.0",
+    "@lokascript/semantic": "^2.7.0"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.6.0",
+    "@lokascript/domain-toolkit": "^2.7.0",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
