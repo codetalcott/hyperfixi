@@ -18,6 +18,7 @@ import {
   createIdentifier,
   createPropertyOfExpression,
 } from '../helpers/ast-helpers';
+import { parseOneArgument } from '../helpers/parsing-helpers';
 
 /**
  * Parse set command
@@ -275,6 +276,19 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
   // Parse value expression
   const value = ctx.parseExpression() ?? ctx.parsePrimary();
 
+  // Optional scope clause: `set @attr to <value> on <target>` applies the
+  // write to every element the target matches (mirrors the semantic parser's
+  // scope role — see setSchema in @lokascript/semantic command-schemas).
+  // `on` is a Pratt stop token, so the value expression never swallows it.
+  // Only treat `on` as a scope clause when the next token looks like an
+  // element target — a bare identifier (`on mouseover …`) still starts a new
+  // event handler.
+  let scopeTarget: ASTNode | undefined;
+  if (ctx.check(KEYWORDS.ON) && tokenLooksLikeElementTarget(ctx.peekAt(1))) {
+    ctx.advance(); // consume 'on'
+    scopeTarget = parseOneArgument(ctx);
+  }
+
   // Build final args: [target, 'to', value]
   const finalArgs: ASTNode[] = [];
   if (targetExpression) {
@@ -287,11 +301,29 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
     finalArgs.push(value);
   }
 
-  return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(...finalArgs)
-    .endingAt(ctx.getPosition())
-    .build();
+  const builder = CommandNodeBuilder.fromIdentifier(identifierNode).withArgs(...finalArgs);
+  if (scopeTarget) {
+    // SetCommand reads its element scope from modifiers.on (not args) —
+    // the same shape the semantic parser's setMapper emits.
+    builder.withModifier('on', scopeTarget as ExpressionNode);
+  }
+  return builder.endingAt(ctx.getPosition()).build();
 }
+
+/**
+ * Whether a token can start an element-target expression for a `set … on`
+ * scope clause: a CSS selector (`.tab`, `#id`), a query reference (`<div/>`),
+ * or an element pronoun. Bare identifiers are excluded on purpose — after a
+ * set command, `on click` must keep starting a new event handler.
+ */
+function tokenLooksLikeElementTarget(token: Token | null): boolean {
+  if (!token) return false;
+  if (token.kind === 'selector') return true;
+  if (token.value.startsWith('<')) return true;
+  return ELEMENT_PRONOUNS.has(token.value);
+}
+
+const ELEMENT_PRONOUNS = new Set(['me', 'my', 'it', 'its', 'you', 'your', 'yourself']);
 
 /**
  * Parse increment or decrement command

@@ -522,6 +522,24 @@ describe('Hyperscript AST Parser', () => {
     });
   });
 
+  describe('Top-level feature joining with `then`', () => {
+    it('parses `then` between two event handlers as a joiner', () => {
+      const result = parse('on click hide me then on mouseover show me');
+      expect(result.success).toBe(true);
+      const program = result.node as unknown as { type: string; statements?: unknown[] };
+      expect(program.statements).toHaveLength(2);
+    });
+
+    it('still rejects a stray trailing `then` not followed by a feature', () => {
+      // A handler body consumes its own `then` separators, so provoke the
+      // top-level case with a def feature (whose `end` closes the body) and a
+      // dangling `then` that is not followed by a feature keyword.
+      const result = parse('def foo() log "x" end then klaatu (((');
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('Unexpected token');
+    });
+  });
+
   describe('Command Parsing', () => {
     it('should parse simple commands', () => {
       expectAST('hide', {

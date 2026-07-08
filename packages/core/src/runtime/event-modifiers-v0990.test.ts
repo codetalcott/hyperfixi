@@ -152,4 +152,37 @@ describe('Event modifiers (v0.9.90)', () => {
       expect(observeCalls).toHaveLength(0);
     });
   });
+
+  describe('`debounced at` / `throttled at` keyword modifiers', () => {
+    interface ModifiersNode {
+      modifiers?: { debounce?: number; throttle?: number };
+      target?: string;
+    }
+
+    it('parses `debounced at Nms` directly after the event name', () => {
+      const ast = parse('on keyup debounced at 300ms call search()').node! as ModifiersNode;
+      expect(ast.modifiers?.debounce).toBe(300);
+    });
+
+    it('parses `debounced at Nms` after the `from <target>` clause (upstream order)', () => {
+      const result = parse('on resize from window debounced at 200ms call adjustLayout()');
+      expect(result.error).toBeUndefined();
+      const ast = result.node! as ModifiersNode;
+      expect(ast.modifiers?.debounce).toBe(200);
+      expect(ast.target).toBe('window');
+    });
+
+    it('parses `throttled at Nms` after the `from <target>` clause', () => {
+      const result = parse('on scroll from window throttled at 100ms call track()');
+      expect(result.error).toBeUndefined();
+      const ast = result.node! as ModifiersNode;
+      expect(ast.modifiers?.throttle).toBe(100);
+      expect(ast.target).toBe('window');
+    });
+
+    it('still parses `throttled at Nms` directly after the event name', () => {
+      const ast = parse('on mousemove throttled at 100ms call track()').node! as ModifiersNode;
+      expect(ast.modifiers?.throttle).toBe(100);
+    });
+  });
 });
