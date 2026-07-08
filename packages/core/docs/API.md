@@ -130,6 +130,16 @@ if (result.valid) {
 
 **Returns:** `Promise<ValidateResult>`
 
+> **Validation matches runtime acceptance.** `validate()`, `compileSync()`, and
+> the `_=` attribute path all run the same parser: a string is accepted by
+> `validate()`/`compileSync()` exactly when the attribute processor would accept
+> it. There is no separate, narrower "validation grammar". One caveat: plugins
+> (e.g. `@hyperfixi/reactivity` registering `live`/`when`/`bind`/`$var`
+> syntax) extend the shared parser registry at install time, so validation
+> performed _before_ a plugin installs can reject code the runtime would accept
+> _after_. When mechanically verifying code, install the same plugins the page
+> loads before calling `validate()`.
+
 ---
 
 #### `createContext(element?: HTMLElement | null, parent?: ExecutionContext): ExecutionContext`

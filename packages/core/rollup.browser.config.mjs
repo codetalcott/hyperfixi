@@ -31,7 +31,10 @@ export default {
           pure_getters: true,
           unsafe: false,
           unsafe_comps: false,
-          drop_console: true,
+          // Keep console.warn/error so parse failures on the _= path stay
+          // observable in the shipped bundle (drop_console: true silently
+          // stripped them — see attribute-processor.reportCompileError).
+          drop_console: ['log', 'info', 'debug', 'trace'],
           passes: 1,
           pure_funcs: [
             'debug.command',

@@ -299,7 +299,9 @@ export class BundleOptimizer {
         const result = await Terser.minify(content, {
           compress: {
             dead_code: true,
-            drop_console: true,
+            // Drop noisy console methods but keep warn/error so runtime
+            // failures stay observable in optimized bundles.
+            drop_console: ['log', 'info', 'debug', 'trace'],
             drop_debugger: true,
             pure_funcs: ['console.log', 'console.info'],
           },
