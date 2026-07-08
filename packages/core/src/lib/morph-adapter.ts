@@ -5,6 +5,9 @@
  * when the server re-renders a region during typing.
  */
 
+// MUST stay the first import: ESM evaluates dependencies in declaration
+// order, so the shim runs before morphlex's module-scope Element access.
+import { domGlobalsEnsured } from './dom-globals-shim';
 import { morph as morphlexMorph, morphInner as morphlexMorphInner } from 'morphlex';
 
 export interface MorphOptions {
@@ -17,7 +20,9 @@ export interface MorphOptions {
 }
 
 function toMorphlexOptions(options?: MorphOptions): { preserveChanges: boolean } {
-  return { preserveChanges: options?.preserveChanges ?? true };
+  // domGlobalsEnsured is always true; using it creates a hard data dependency
+  // on the shim (see dom-globals-shim.ts).
+  return { preserveChanges: domGlobalsEnsured && (options?.preserveChanges ?? true) };
 }
 
 export const morphAdapter = {

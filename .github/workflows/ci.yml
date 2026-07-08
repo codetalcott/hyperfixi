@@ -335,6 +335,12 @@ jobs:
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
+      # Bare-Node import of @hyperfixi/core (+ /commands, /behaviors): guards
+      # the dom-globals shim ordering ahead of morphlex's module-scope
+      # `Element.prototype` access (see packages/core/src/lib/dom-globals-shim.ts).
+      - name: Bare-Node import check (core)
+        run: node scripts/check-node-import.mjs
+
   # ============================================
   # Job 3: Lint & Typecheck
   # ============================================
