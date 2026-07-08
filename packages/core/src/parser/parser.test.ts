@@ -1101,7 +1101,7 @@ describe('Hyperscript AST Parser', () => {
           expect.objectContaining({
             type: 'identifier',
             name: 'x',
-            scope: 'local',
+            scope: 'element',
           }),
         ]),
       });
@@ -1110,7 +1110,7 @@ describe('Hyperscript AST Parser', () => {
     it('should parse :variable in expressions', () => {
       const result = parse('put :x into #result');
       expect(result.success).toBe(true);
-      // The :x should be parsed as an identifier with scope: 'local'
+      // The :x should be parsed as an identifier with scope: 'element'
       const putCommand = result.node;
       expect(putCommand!.type).toBe('command');
       expect(putCommand!.name).toBe('put');
@@ -1118,7 +1118,7 @@ describe('Hyperscript AST Parser', () => {
       expect(((putCommand as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'x',
-        scope: 'local',
+        scope: 'element',
       });
     });
 
@@ -1135,7 +1135,7 @@ describe('Hyperscript AST Parser', () => {
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'counter',
-        scope: 'local',
+        scope: 'element',
       });
       expect(((command as { args?: unknown }).args as unknown[])[1]).toMatchObject({
         type: 'identifier',
@@ -1155,11 +1155,11 @@ describe('Hyperscript AST Parser', () => {
       const command = result.node;
       expect(command!.type).toBe('command');
       expect(command!.name).toBe('set'); // Transformed from 'increment'
-      // Target :sum should have scope: 'local'
+      // Target :sum should have scope: 'element'
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'sum',
-        scope: 'local',
+        scope: 'element',
       });
       // Binary expression contains target and amount
       const binaryExpr = ((command as { args?: unknown }).args as unknown[])[2];
@@ -1169,7 +1169,7 @@ describe('Hyperscript AST Parser', () => {
       expect((binaryExpr as { right?: unknown }).right).toMatchObject({
         type: 'identifier',
         name: 'amount',
-        scope: 'local',
+        scope: 'element',
       });
     });
 
@@ -1182,7 +1182,7 @@ describe('Hyperscript AST Parser', () => {
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'name',
-        scope: 'local',
+        scope: 'element',
       });
       expect(((command as { args?: unknown }).args as unknown[])[1]).toMatchObject({
         type: 'identifier',
@@ -1213,9 +1213,9 @@ describe('Hyperscript AST Parser', () => {
       const localCommand = localResult.node;
       const globalCommand = globalResult.node;
 
-      // :x should have scope: 'local'
+      // :x should have scope: 'element'
       expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
-        'local'
+        'element'
       );
       // x should have no scope (or undefined)
       expect(
@@ -1230,7 +1230,7 @@ describe('Hyperscript AST Parser', () => {
       expect(((command as { args?: unknown }).args as unknown[])[0]).toMatchObject({
         type: 'identifier',
         name: 'result',
-        scope: 'local',
+        scope: 'element',
       });
     });
 
@@ -1336,9 +1336,9 @@ describe('Hyperscript AST Parser', () => {
       const localCommand = localResult.node;
       const globalCommand = globalResult.node;
 
-      // :x should have scope: 'local'
+      // :x should have scope: 'element'
       expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
-        'local'
+        'element'
       );
       // ::x should have scope: 'global'
       expect((((globalCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
@@ -1398,7 +1398,7 @@ describe('Hyperscript AST Parser', () => {
       expect((binaryExpr as { right?: unknown }).right).toMatchObject({
         type: 'identifier',
         name: 'localAmount',
-        scope: 'local',
+        scope: 'element',
       });
     });
 

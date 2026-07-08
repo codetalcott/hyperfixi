@@ -1565,12 +1565,12 @@ export class Parser {
           column: varToken.column,
         } as ASTNode;
       } else {
-        // This is `:variable` (local scope)
+        // This is `:variable` (element scope — persists per-element across firings)
         const varToken = this.advance(); // get variable name
         return {
           type: 'identifier',
           name: varToken.value,
-          scope: 'local', // Mark as local variable
+          scope: 'element', // Mark as element-scoped variable
           start: varToken.start - 1, // Include the `:` in the start position
           end: varToken.end,
           line: varToken.line,

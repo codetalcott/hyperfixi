@@ -15,6 +15,7 @@
 import type { ExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
 import { setGlobal, notifyLocalWrite, notifyLocalRead } from '../../parser/extensions';
+import { getElementVar, setElementVar } from '../../core/context';
 
 /**
  * Convert any value to a number for arithmetic operations
@@ -89,6 +90,11 @@ export function getVariableValue(
   context: ExecutionContext,
   preferredScope?: string
 ): unknown {
+  // Element-scoped `:name` — read from the owner element's store (no fallthrough).
+  if (preferredScope === 'element') {
+    return getElementVar(context, name);
+  }
+
   // If preferred scope is specified, check that first
   if (preferredScope === 'global' && context.globals && context.globals.has(name)) {
     return context.globals.get(name);
@@ -150,6 +156,12 @@ export function setVariableValue(
   context: ExecutionContext,
   preferredScope?: string
 ): void {
+  // Element-scoped `:name` — write to the owner element's store (no global leak).
+  if (preferredScope === 'element') {
+    setElementVar(context, name, value);
+    return;
+  }
+
   // If preferred scope is specified, handle it
   if (preferredScope === 'global') {
     setGlobal(context, name, value);
@@ -330,6 +342,9 @@ export function getCurrentNumericValue(
   // Handle string (variable name or element reference)
   if (typeof target === 'string') {
     // Handle scoped variables
+    if (scope === 'element') {
+      return convertToNumber(getVariableValue(target, context, 'element'));
+    }
     if (scope === 'global') {
       const value = getVariableValue(target, context, 'global');
       return convertToNumber(value);
@@ -406,6 +421,10 @@ export function setTargetValue(
   // Handle string (variable name or element reference)
   if (typeof target === 'string') {
     // Handle scoped variables
+    if (scope === 'element') {
+      setVariableValue(target, newValue, context, 'element');
+      return;
+    }
     if (scope === 'global') {
       setVariableValue(target, newValue, context, 'global');
       return;

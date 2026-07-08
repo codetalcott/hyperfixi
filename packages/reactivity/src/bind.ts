@@ -36,6 +36,7 @@
 
 import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
 import { reactive } from './signals';
+import { getElementScopeMap } from '@hyperfixi/core';
 
 export interface BindFeatureNode extends ASTNode {
   type: 'bindFeature';
@@ -249,7 +250,10 @@ export function makeEvaluateBindFeature(runtime: {
     };
     const readVar = (): unknown => {
       if (varSide!.isGlobal) return context.globals?.get(varSide!.name);
-      return context.locals?.get(varSide!.name);
+      // `:name` is element-scoped — read from the owner element's store, the same
+      // place the core `set :name` writes. (Direct Map access, not getElementVar,
+      // so we don't double-fire the read hook; bind tracks via trackElement.)
+      return getElementScopeMap(owner).get(varSide!.name);
     };
     const writeVar = (value: unknown): void => {
       if (varSide!.isGlobal) {
@@ -258,9 +262,10 @@ export function makeEvaluateBindFeature(runtime: {
         // notify the reactive graph manually for the var→DOM effect.
         reactive.notifyGlobal(varSide!.name);
       } else {
-        context.locals?.set(varSide!.name, value);
-        // Same rationale for locals — direct Map write skips the localWriteHook,
-        // so we notify the element-scoped subscription set directly.
+        // Element-scoped `:name`: write to the owner element's store (same place
+        // core's `set :name` writes), then notify manually — the direct Map write
+        // skips the localWriteHook.
+        getElementScopeMap(owner).set(varSide!.name, value);
         reactive.notifyElement(owner, varSide!.name);
       }
     };
@@ -309,17 +314,17 @@ export function makeEvaluateBindFeature(runtime: {
  * The hyperfixi parser emits `identifier` nodes for both globals and locals,
  * but with different shapes:
  *   - `$foo` → `{ type: 'identifier', name: '$foo' }` (no scope field)
- *   - `:foo` → `{ type: 'identifier', name: 'foo', scope: 'local' }`
+ *   - `:foo` → `{ type: 'identifier', name: 'foo', scope: 'element' }` (element-scoped)
  *   - `::foo` → `{ type: 'identifier', name: 'foo', scope: 'global' }`
  *
- * We accept all three. The legacy `$`-prefix sniff stays as a fallback because
+ * We accept all of them. The legacy `$`-prefix sniff stays as a fallback because
  * `parseExpression` doesn't always set `scope`.
  */
 function isVarRef(node: ASTNode): boolean {
   if (!node) return false;
   if (node.type !== 'identifier') return false;
   const scope = node.scope as string | undefined;
-  if (scope === 'local' || scope === 'global') return true;
+  if (scope === 'local' || scope === 'element' || scope === 'global') return true;
   const name = (node.name as string) ?? '';
   return name.startsWith('$') || name.startsWith(':');
 }
@@ -335,7 +340,7 @@ function varRefInfo(node: ASTNode): { name: string; isGlobal: boolean } {
   if (scope === 'global') {
     isGlobal = true;
     name = rawName;
-  } else if (scope === 'local') {
+  } else if (scope === 'local' || scope === 'element') {
     isGlobal = false;
     name = rawName;
   } else if (rawName.startsWith('$')) {

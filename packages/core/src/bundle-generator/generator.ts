@@ -85,6 +85,14 @@ interface Context {
 }
 
 const globalVars = new Map<string, any>();
+// Per-element store for \`:name\` variables (scope 'local' from the mini-parser).
+// Persists per-element across event firings, isolated per element.
+const elementVars = new WeakMap<Element, Map<string, any>>();
+function elemScope(el: Element): Map<string, any> {
+  let m = elementVars.get(el);
+  if (!m) { m = new Map<string, any>(); elementVars.set(el, m); }
+  return m;
+}
 ${hasBlocks ? `const MAX_LOOP_ITERATIONS = ${maxLoopIterations};` : ''}
 
 async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
@@ -104,7 +112,7 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
       return node.value;
 
     case 'variable':
-      if (node.scope === 'local') return ctx.locals.get(node.name.slice(1));
+      if (node.scope === 'local') return elemScope(ctx.me).get(node.name.slice(1));
       const gName = node.name.slice(1);
       if (globalVars.has(gName)) return globalVars.get(gName);
       return (window as any)[node.name];

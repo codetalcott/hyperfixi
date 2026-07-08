@@ -69,12 +69,12 @@ export function parseColonVariable(ctx: ParserContext): IdentifierNode | null {
     };
   }
 
-  // Single colon: local scope (:localVar)
+  // Single colon: element scope (:localVar persists per-element across firings)
   const varToken = ctx.advance();
   return {
     type: 'identifier',
     name: varToken.value,
-    scope: 'local',
+    scope: 'element',
     start: varToken.start - 1,
     end: varToken.end,
   };
@@ -164,7 +164,7 @@ export function parseTargetFallback(ctx: ParserContext): {
       expression: {
         type: 'identifier',
         name: varToken.value,
-        scope: 'local',
+        scope: 'element',
         start: varToken.start,
         end: varToken.end,
       },
@@ -417,6 +417,10 @@ export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken:
     column: commandToken.column,
   };
   const binaryExpr = createBinaryExpression(operator, target, amount, pos);
+  // increment/decrement are numeric operations. Flag the synthesized binary so
+  // the `+` evaluator coerces string operands (e.g. `@data-n` attribute reads,
+  // which return strings) instead of concatenating them.
+  (binaryExpr as { coerceNumeric?: boolean }).coerceNumeric = true;
 
   // Create the 'to' keyword identifier
   const toIdentifier = createIdentifier(KEYWORDS.TO, pos);

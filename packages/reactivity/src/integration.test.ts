@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Runtime, hyperscript } from '@hyperfixi/core';
 import { parse } from '@hyperfixi/core';
-import { getParserExtensionRegistry, installPlugin } from '@hyperfixi/core';
+import { getParserExtensionRegistry, installPlugin, getElementScopeMap } from '@hyperfixi/core';
 import type { ExecutionContext } from '@hyperfixi/core/src/types/core';
 import { reactivityPlugin, reactive } from './index';
 
@@ -209,7 +209,8 @@ describe('@hyperfixi/reactivity — integration', () => {
       input.value = 'initial';
       document.body.appendChild(input);
       const ctx = createContext(input);
-      ctx.locals.set('greeting', 'pending');
+      // `:greeting` is element-scoped (keyed by the handler element).
+      getElementScopeMap(input).set('greeting', 'pending');
 
       const r = parse('bind :greeting to me');
       expect(r.success).toBe(true);
@@ -217,13 +218,13 @@ describe('@hyperfixi/reactivity — integration', () => {
       await settle();
 
       // DOM → var on init (DOM wins).
-      expect(ctx.locals.get('greeting')).toBe('initial');
+      expect(getElementScopeMap(input).get('greeting')).toBe('initial');
 
-      // User input updates the local via DOM→var effect.
+      // User input updates the element-scoped var via the DOM→var effect.
       input.value = 'typed';
       input.dispatchEvent(new Event('input'));
       await settle();
-      expect(ctx.locals.get('greeting')).toBe('typed');
+      expect(getElementScopeMap(input).get('greeting')).toBe('typed');
 
       document.body.removeChild(input);
     });
@@ -502,7 +503,8 @@ describe('@hyperfixi/reactivity — integration', () => {
       expect(r.success).toBe(true);
       await runtime.execute(r.node!, ctx);
       await settle();
-      expect(ctx.locals.get('t')).toBe('dark');
+      // `:t` is element-scoped on `child` (the context element).
+      expect(getElementScopeMap(child).get('t')).toBe('dark');
 
       document.body.removeChild(parent);
     });
@@ -523,7 +525,8 @@ describe('@hyperfixi/reactivity — integration', () => {
       await runtime.execute(r.node!, ctx);
       await settle();
 
-      expect(ctx.locals.get('v')).toBe(99);
+      // `:v` is element-scoped on `a` (the context element).
+      expect(getElementScopeMap(a).get('v')).toBe(99);
 
       document.body.removeChild(a);
       document.body.removeChild(b);
@@ -535,14 +538,15 @@ describe('@hyperfixi/reactivity — integration', () => {
       const el = document.createElement('div');
       document.body.appendChild(el);
       const ctx = createContext(el);
-      ctx.locals.set('foo', 'initial');
+      // `:foo` is element-scoped (keyed by the context element).
+      getElementScopeMap(el).set('foo', 'initial');
 
-      // Effect tracking the local read via the runtime path (so localReadHook fires).
+      // Effect tracking the element-scoped read via the runtime path (so localReadHook fires).
       let lastSeen: unknown = undefined;
       const stop = reactive.createEffect(
         async () => await runtime.execute(parse('set :v to :foo').node!, ctx),
         () => {
-          lastSeen = ctx.locals.get('v');
+          lastSeen = getElementScopeMap(el).get('v');
         },
         el
       );

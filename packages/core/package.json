@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/core",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
   "main": "dist/index.js",
@@ -285,14 +285,14 @@
     "access": "public"
   },
   "dependencies": {
-    "@lokascript/intent": "^2.6.0",
-    "@lokascript/semantic": "^2.6.0",
+    "@lokascript/intent": "^2.7.0",
+    "@lokascript/semantic": "^2.7.0",
     "morphlex": "^1.0.5",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@hyperfixi/patterns-reference": "^2.6.0",
-    "@lokascript/framework": "^2.6.0"
+    "@hyperfixi/patterns-reference": "^2.7.0",
+    "@lokascript/framework": "^2.7.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/patterns-reference": {

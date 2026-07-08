@@ -85,6 +85,11 @@ jobs:
           # (intent and domain-config are public, published packages.)
           npm run build --prefix packages/intent
           npm run build --prefix packages/framework
+          # semantic must precede the domain-* packages: their vocab modules
+          # import @lokascript/semantic/languages/* (bridge migration), so
+          # domain-bdd's build:types (tsc) fails without semantic's dist first.
+          # Mirrors the known-green order in ci.yml (build job).
+          npm run build --prefix packages/semantic
           npm run build --prefix packages/domain-bdd
           npm run build --prefix packages/domain-sql
           npm run build --prefix packages/domain-jsx
@@ -94,7 +99,6 @@ jobs:
           npm run build --prefix packages/domain-flow
           npm run build --prefix packages/domain-voice
           npm run build --prefix packages/domain-learn
-          npm run build --prefix packages/semantic
           npm run build --prefix packages/domain-toolkit
           npm run build --prefix packages/domain-config
           npm run build --prefix packages/behaviors

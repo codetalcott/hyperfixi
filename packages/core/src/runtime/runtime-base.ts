@@ -1155,6 +1155,7 @@ export class RuntimeBase {
     // event/mutation/change contexts below which spread `...context`.
     const baseBehaviorContext: ExecutionContext = {
       me: element,
+      owner: element, // Element that owns `:name` scope; preserved via `...context` spreads below
       you: null,
       it: null,
       result: null,

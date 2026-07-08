@@ -130,6 +130,39 @@ test.describe('HyperFixi Hybrid Complete Bundle', () => {
       await expect(page.locator('#result')).toHaveText('1');
     });
 
+    test('`:count` persists across firings — counter counts 1, 2, 3 @quick', async ({ page }) => {
+      // No in-handler reset: `:count` must survive between clicks (element scope).
+      await page.evaluate(() => {
+        document.body.innerHTML =
+          '<button id="counter" _="on click increment :count then put :count into me">0</button>';
+        (window as any).hyperfixi.init();
+      });
+
+      const btn = page.locator('#counter');
+      await btn.click();
+      await expect(btn).toHaveText('1');
+      await btn.click();
+      await expect(btn).toHaveText('2');
+      await btn.click();
+      await expect(btn).toHaveText('3');
+    });
+
+    test('`:count` is isolated per element @quick', async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.innerHTML = `
+          <button id="a" _="on click increment :count then put :count into me">0</button>
+          <button id="b" _="on click increment :count then put :count into me">0</button>
+        `;
+        (window as any).hyperfixi.init();
+      });
+
+      await page.click('#a');
+      await page.click('#a');
+      await page.click('#b');
+      await expect(page.locator('#a')).toHaveText('2');
+      await expect(page.locator('#b')).toHaveText('1');
+    });
+
     test('wait delays execution', async ({ page }) => {
       await page.evaluate(() => {
         document.body.innerHTML =

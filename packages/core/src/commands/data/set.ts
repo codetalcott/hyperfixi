@@ -24,6 +24,7 @@ import { setElementProperty, isPlainObject } from '../helpers/element-property-a
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
 import { setVariableValue } from '../helpers/variable-access';
+import { setElementVar } from '../../core/context';
 import {
   isPropertyTargetString,
   resolveAnyPropertyTarget,
@@ -40,7 +41,7 @@ import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensi
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
-  | { type: 'variable'; name: string; value: unknown }
+  | { type: 'variable'; name: string; value: unknown; scope?: 'element' | 'global' }
   | { type: 'attribute'; elements: HTMLElement[]; name: string; value: unknown }
   | { type: 'property'; element: HTMLElement; property: string; value: unknown }
   | { type: 'style'; element: HTMLElement; property: string; value: string }
@@ -82,6 +83,10 @@ export class SetCommand implements DecoratedCommand {
 
     const firstArg = raw.args[0] as Record<string, unknown>;
     const argName = (firstArg?.name || firstArg?.value) as string | undefined;
+    // Variable scope tag from the parser: `:name` → 'element', `::name`/`global x`
+    // → 'global'. Threaded into the variable input so `execute` routes the write
+    // to element scope / globals instead of execution-locals.
+    const argScope = firstArg?.scope as 'element' | 'global' | 'local' | undefined;
 
     // Plugin-defined write targets — e.g. `set ^count to 0` routes through
     // the reactivity plugin's caretVar writer. Dispatch BEFORE evaluating
@@ -219,16 +224,24 @@ export class SetCommand implements DecoratedCommand {
     }
 
     const value = await this.extractValue(raw, evaluator, context);
-    return { type: 'variable', name: firstValue, value };
+    const scope = argScope === 'element' || argScope === 'global' ? argScope : undefined;
+    return { type: 'variable', name: firstValue, value, scope };
   }
 
   async execute(input: SetCommandInput, context: TypedExecutionContext): Promise<SetCommandOutput> {
     switch (input.type) {
       case 'variable':
-        // Route through setVariableValue so `$name` globals go to context.globals
-        // (and notify registered plugin hooks), while `:name`/plain locals land in
-        // context.locals. Matches hyperscript scoping conventions.
-        setVariableValue(input.name, input.value, context);
+        // Scope routing (hyperscript conventions):
+        //   `:name`  → element scope (persists per-element across firings)
+        //   `::name`/`global x` → globals
+        //   `$name`/plain → setVariableValue ($ → globals, else execution-locals)
+        if (input.scope === 'element') {
+          setElementVar(context, input.name, input.value);
+        } else if (input.scope === 'global') {
+          setVariableValue(input.name, input.value, context, 'global');
+        } else {
+          setVariableValue(input.name, input.value, context);
+        }
         if (input.name === 'result' || input.name === 'it') {
           Object.assign(context, { [input.name]: input.value });
         }

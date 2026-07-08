@@ -30,7 +30,7 @@ export interface Position {
 export interface IdentifierNode extends ASTNode {
   type: 'identifier';
   name: string;
-  scope?: 'local' | 'global'; // For :local and ::global variables
+  scope?: 'local' | 'element' | 'global'; // local keyword, :element vars, ::global vars
 }
 
 /**

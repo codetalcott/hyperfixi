@@ -44,6 +44,22 @@ export interface Context {
 }
 
 const globalVars = new Map<string, any>();
+
+// Per-element store for `:name` (element-scoped) variables. In this mini-parser
+// a `variable` node with `scope: 'local'` is a `:name` (there is no `local`
+// keyword), so these persist per-element across event firings — matching the
+// full runtime's element-scope semantics. Keyed by the element the handler runs
+// on (`ctx.me`), which is stable across firings for a given handler.
+const elementVars = new WeakMap<Element, Map<string, any>>();
+function elemScope(el: Element): Map<string, any> {
+  let m = elementVars.get(el);
+  if (!m) {
+    m = new Map<string, any>();
+    elementVars.set(el, m);
+  }
+  return m;
+}
+
 const MAX_LOOP_ITERATIONS = 1000;
 
 async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
@@ -65,7 +81,7 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
       return node.value;
 
     case 'variable':
-      if (node.scope === 'local') return ctx.locals.get(node.name.slice(1));
+      if (node.scope === 'local') return elemScope(ctx.me).get(node.name.slice(1));
       const gName = node.name.slice(1);
       if (globalVars.has(gName)) return globalVars.get(gName);
       return (window as any)[node.name];
@@ -406,7 +422,7 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
 
       if (target.type === 'variable') {
         const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? ctx.locals : globalVars;
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
         map.set(varName, value);
         ctx.it = value;
         return value;
@@ -562,7 +578,7 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
 
       if (target.type === 'variable') {
         const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? ctx.locals : globalVars;
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
         const current = map.get(varName) || 0;
         const newVal = current + delta;
         map.set(varName, newVal);

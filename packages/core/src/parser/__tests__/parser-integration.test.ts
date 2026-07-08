@@ -74,7 +74,7 @@ describe('Parser Integration Tests', () => {
       expect(args[0]).toMatchObject({
         type: 'identifier',
         name: 'x',
-        scope: 'local',
+        scope: 'element',
       });
     });
 
@@ -273,7 +273,7 @@ describe('Parser Integration Tests', () => {
       expect(args[0]).toMatchObject({
         type: 'identifier',
         name: 'msg',
-        scope: 'local',
+        scope: 'element',
       });
     });
 
@@ -300,7 +300,7 @@ describe('Parser Integration Tests', () => {
       expect(args[0]).toMatchObject({
         type: 'identifier',
         name: 'lives',
-        scope: 'local',
+        scope: 'element',
       });
       expect(args[2]).toMatchObject({
         type: 'binaryExpression',

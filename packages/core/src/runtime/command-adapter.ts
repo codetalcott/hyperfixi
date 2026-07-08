@@ -102,6 +102,11 @@ export class ContextBridge {
     return {
       // Core context elements
       me: context.me,
+      // Owner of `:name` element scope. Must be propagated (not derived from
+      // `me`) so element-scoped vars stay with the handler's element even when
+      // `me` is retargeted — e.g. inside a `tell` block, where `me` becomes the
+      // told element but `:name` must remain bound to the owner.
+      ...(context.owner !== undefined && { owner: context.owner }),
       it: context.it,
       you: context.you,
       result: context.result,

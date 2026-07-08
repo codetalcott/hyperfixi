@@ -290,6 +290,20 @@ function parseCommand(code: string): LiteCommand | null {
 
 // ============== RUNTIME ==============
 
+// Per-element store for `:name` variables. Keyed by the handler's element so
+// `:name` persists across event firings and is isolated per element (matching
+// the full runtime's element-scope semantics), rather than resetting with the
+// per-firing `locals` map.
+const elementVars = new WeakMap<Element, Map<string, any>>();
+function elemScope(el: Element): Map<string, any> {
+  let m = elementVars.get(el);
+  if (!m) {
+    m = new Map<string, any>();
+    elementVars.set(el, m);
+  }
+  return m;
+}
+
 /**
  * Resolve a target selector to element(s)
  */
@@ -345,7 +359,7 @@ function evaluateValue(expr: string, me: Element, locals: Map<string, any>): any
 
   // Local variables
   if (e.startsWith(':')) {
-    return locals.get(e.slice(1));
+    return elemScope(me).get(e.slice(1));
   }
 
   // References
@@ -391,7 +405,7 @@ function evaluateCondition(expr: string, me: Element, locals: Map<string, any>):
 
   // Local variable
   if (e.startsWith(':')) {
-    return Boolean(locals.get(e.slice(1)));
+    return Boolean(elemScope(me).get(e.slice(1)));
   }
 
   return Boolean(evaluateValue(e, me, locals));
@@ -483,9 +497,9 @@ async function executeCommand(
       const [targetExpr, valueExpr] = cmd.args;
       const value = evaluateValue(valueExpr, me, locals);
 
-      // Local variable
+      // Element-scoped `:name` variable
       if (targetExpr.startsWith(':')) {
-        locals.set(targetExpr.slice(1), value);
+        elemScope(me).set(targetExpr.slice(1), value);
         return value;
       }
 
@@ -507,8 +521,8 @@ async function executeCommand(
       const delta = parseInt(amount) || 1;
 
       if (targetExpr.startsWith(':')) {
-        const current = locals.get(targetExpr.slice(1)) || 0;
-        locals.set(targetExpr.slice(1), current + delta);
+        const current = elemScope(me).get(targetExpr.slice(1)) || 0;
+        elemScope(me).set(targetExpr.slice(1), current + delta);
         return current + delta;
       }
 
@@ -537,8 +551,8 @@ async function executeCommand(
       const delta = parseInt(amount) || 1;
 
       if (targetExpr.startsWith(':')) {
-        const current = locals.get(targetExpr.slice(1)) || 0;
-        locals.set(targetExpr.slice(1), current - delta);
+        const current = elemScope(me).get(targetExpr.slice(1)) || 0;
+        elemScope(me).set(targetExpr.slice(1), current - delta);
         return current - delta;
       }
 

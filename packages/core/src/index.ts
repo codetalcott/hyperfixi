@@ -40,7 +40,14 @@ export { parse } from './parser/parser';
 export type { KeywordResolver, ParserOptions } from './parser/types';
 export { Runtime, type RuntimeOptions } from './runtime/runtime';
 export { RuntimeBase, type RuntimeBaseOptions } from './runtime/runtime-base';
-export { createContext, createChildContext } from './core/context';
+export {
+  createContext,
+  createChildContext,
+  getElementScopeMap,
+  resolveScopeOwner,
+  getElementVar,
+  setElementVar,
+} from './core/context';
 export { Lexer, Tokens } from './tokenizer';
 
 // Export enhanced feature implementations
