@@ -57,6 +57,12 @@ import type { LokaScriptRegistry, LokaScriptPlugin } from '../registry';
 import { registerFetchResponseType } from '../commands/async/fetch';
 import { installPlugin } from '../runtime/plugin';
 import { getParserExtensionRegistry } from '../parser/extensions';
+
+// Bundled plugins — the full bundle ships with reactivity (live/when/bind/$var)
+// and realtime (socket/eventsource/worker) installed, so every corpus pattern
+// works on hyperfixi.js without extra script tags.
+import { reactivityPlugin } from '@hyperfixi/reactivity';
+import { realtimePlugin } from '@hyperfixi/realtime';
 import {
   validatePartialContent,
   configurePartialValidation,
@@ -311,6 +317,19 @@ const hyperfixiAPI = {
   // Version info
   version: '2.0.0-full',
 };
+
+// Install the bundled plugins on the default runtime BEFORE the attribute
+// processor runs, so `_="socket …"` / `bind …` attributes compile on first
+// scan. Both installs are idempotent (hasFeature guards) and the parser
+// extension registry is globalThis-hoisted, so loading multiple bundles on
+// one page is safe. Casts through `never` for the same dist-vs-src nominal
+// type reason as browser-bundle-hybrid-hx-v4.ts.
+function installBundledPlugins(): void {
+  const runtime = hyperscript.getDefaultRuntime();
+  installPlugin(runtime as never, reactivityPlugin as never);
+  installPlugin(runtime as never, realtimePlugin as never);
+}
+installBundledPlugins();
 
 // Export to global for browser testing
 if (typeof window !== 'undefined') {

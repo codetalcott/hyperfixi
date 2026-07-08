@@ -205,6 +205,11 @@ jobs:
       - name: Build reactivity package
         run: npm run build --prefix packages/reactivity
 
+      # realtime depends only on core; must build before the core browser
+      # bundles (browser-bundle.ts inlines reactivity + realtime dists)
+      - name: Build realtime package
+        run: npm run build --prefix packages/realtime
+
       - name: Build components package
         run: npm run build --prefix packages/components
 
@@ -264,6 +269,7 @@ jobs:
             packages/vite-plugin/dist/
             packages/language-server/dist/
             packages/reactivity/dist/
+            packages/realtime/dist/
             packages/components/dist/
             packages/speech/dist/
             packages/intent-element/dist/
@@ -533,6 +539,9 @@ jobs:
 
       - name: Test reactivity
         run: npm test --prefix packages/reactivity -- --run
+
+      - name: Test realtime
+        run: npm test --prefix packages/realtime -- --run
 
       - name: Test speech
         run: npm test --prefix packages/speech -- --run

@@ -42,6 +42,7 @@
 import hyperfixiAPI from './browser-bundle.js';
 
 import { reactivityPlugin } from '@hyperfixi/reactivity';
+import { realtimePlugin } from '@hyperfixi/realtime';
 
 import {
   HtmxAttributeProcessor,
@@ -78,17 +79,20 @@ installI18nPublicAPI();
 // `hx-live` blocks. `getDefaultRuntime()` is the public, intent-revealing
 // way to force construction (returns the singleton directly; no indirection
 // through `globalThis._hyperscript.runtime`).
-function installReactivityOnDefaultRuntime(): void {
+function installBundledPluginsOnDefaultRuntime(): void {
   const runtime = hyperfixiAPI.getDefaultRuntime();
-  // Cast both args through `never` because `@hyperfixi/reactivity` is built
-  // against `dist/` types of `@hyperfixi/core` while this entry file
-  // imports from `src/`. The shapes are identical at runtime (same module
-  // pre- vs post-build) but TypeScript treats them as distinct nominal
-  // types due to private-property identity in CommandRegistryV2.
+  // Cast both args through `never` because the plugins are built against
+  // `dist/` types of `@hyperfixi/core` while this entry file imports from
+  // `src/`. The shapes are identical at runtime (same module pre- vs
+  // post-build) but TypeScript treats them as distinct nominal types due to
+  // private-property identity in CommandRegistryV2.
+  // (browser-bundle.ts already installs both; these are idempotent and kept
+  // for explicitness should the import graph change.)
   hyperfixiAPI.installPlugin(runtime as never, reactivityPlugin as never);
+  hyperfixiAPI.installPlugin(runtime as never, realtimePlugin as never);
 }
 
-installReactivityOnDefaultRuntime();
+installBundledPluginsOnDefaultRuntime();
 
 // ============== HTMX/FIXI COMPATIBILITY ==============
 

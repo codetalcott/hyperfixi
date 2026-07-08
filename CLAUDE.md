@@ -680,7 +680,7 @@ Quick selection (sizes gzipped):
 | `hyperfixi-hybrid-complete.js` | 7.3 KB   | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
 | `hyperfixi-hx.js`              | 9.7 KB   | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
 | `hyperfixi-hx-v4.js`           | ~257 KB  | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | 203.5 KB | Full bundle with parser (`window.hyperfixi`)                                               |
+| `hyperfixi.js`                 | ~286 KB  | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
 | `hyperfixi-multilingual.js`    | 64.3 KB  | Multilingual, parser-free (pair with a semantic bundle)                                    |
 | semantic bundles               | 16–90 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
 

@@ -132,11 +132,13 @@ const hyperfixi = {
 
 // Export to global for browser usage
 if (typeof window !== 'undefined') {
-  // Use type assertion since this modular bundle exports a subset of the full interface
+  // Use type assertions since this modular bundle exports a subset of the full
+  // interface (the full Window augmentation lives in browser-bundle.ts, which
+  // is excluded from the declaration build).
   (window as any).hyperfixi = hyperfixi;
-  window.evalHyperScript = evalHyperScript;
-  window.evalHyperScriptAsync = evalHyperScriptAsync;
-  window.evalHyperScriptSmart = evalHyperScriptSmart;
+  (window as any).evalHyperScript = evalHyperScript;
+  (window as any).evalHyperScriptAsync = evalHyperScriptAsync;
+  (window as any).evalHyperScriptSmart = evalHyperScriptSmart;
 
   // Auto-initialize: preload features then init processor
   // init() sets up MutationObserver for dynamic elements and dispatches hyperscript:ready
