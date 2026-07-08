@@ -197,6 +197,24 @@ export interface HyperscriptConfig {
    * (`config.conversions.dynamicResolvers.push((name, val) => …)`).
    */
   conversions: ConversionConfig;
+
+  /**
+   * Called when hyperscript sourced from markup (`_=` attributes or
+   * `<script type="text/hyperscript">` tags) fails to compile. Receives the
+   * compile errors, the source code, and the originating element (null for
+   * detached sources). Independent of this hook, failures are always reported
+   * via console.error and a bubbling `hyperfixi:compile-error` CustomEvent on
+   * the element.
+   * Default: null.
+   */
+  onCompileError:
+    | ((info: {
+        source: 'attribute' | 'script';
+        code: string;
+        errors: CompileError[];
+        element: Element | null;
+      }) => void)
+    | null;
 }
 
 /**
@@ -220,6 +238,7 @@ export const config: HyperscriptConfig = {
   // Shared singleton so `convertValue` and `config.conversions` see the same
   // registry (named converters + dynamicResolvers).
   conversions: conversionConfig.conversions,
+  onCompileError: null,
 };
 
 /**

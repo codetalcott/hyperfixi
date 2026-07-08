@@ -225,12 +225,14 @@ export async function getPatternStats(connOptions?: ConnectionOptions): Promise<
 /**
  * Get behavior definition patterns.
  *
- * Returns patterns with feature='behavior' — these are installable
- * behavior definitions (behavior Name(params) ... end) that can be
- * compiled and registered with a LokaScript runtime.
+ * Returns installable behavior definitions (behavior Name(params) ... end)
+ * that can be compiled and registered with a LokaScript runtime. The
+ * 'behavior' category also holds usage examples (`install Draggable`,
+ * `tell #modal …`), so filter to actual definitions by source shape.
  */
 export async function getBehaviorPatterns(options?: ConnectionOptions): Promise<Pattern[]> {
-  return getPatternsByCategory('behavior', options);
+  const patterns = await getPatternsByCategory('behavior', options);
+  return patterns.filter(p => /^\s*behavior\s/.test(p.rawCode));
 }
 
 // =============================================================================

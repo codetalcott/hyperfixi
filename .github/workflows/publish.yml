@@ -113,6 +113,7 @@ jobs:
           npm run build --prefix packages/language-server
           # Plugin packages (HyperfixiPlugin) — reactivity before components (components depends on reactivity)
           npm run build --prefix packages/reactivity
+          npm run build --prefix packages/realtime
           npm run build --prefix packages/components
           npm run build --prefix packages/speech
           # intent-element depends on @lokascript/intent + @hyperfixi/core (both built above)
@@ -123,7 +124,8 @@ jobs:
           npm run build --prefix packages/language-server-hyperscript
           npm run build --prefix packages/multilingual-hyperscript
           npm run build --prefix packages/hyperscript-tools-i18n
-          # Core browser bundles depend on i18n/dist/browser.js + reactivity/dist (for hybrid-hx-v4)
+          # Core browser bundles depend on i18n/dist/browser.js + reactivity/dist
+          # and realtime/dist (browser-bundle.ts inlines both plugins)
           npm run build:browser --prefix packages/core
 
       - name: Run tests
@@ -191,7 +193,7 @@ jobs:
                         framework server-bridge types-browser aot-compiler \
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn domain-config \
                         compilation-service planner mcp-server vite-plugin \
-                        behaviors reactivity components speech intent-element testing-framework language-server \
+                        behaviors reactivity realtime components speech intent-element testing-framework language-server \
                         mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n"
 

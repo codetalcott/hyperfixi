@@ -3,7 +3,8 @@
  * Automatically detects and processes _="" attributes on elements
  */
 
-import { hyperscript } from '../api/hyperscript-api';
+import { hyperscript, config } from '../api/hyperscript-api';
+import type { CompileError } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
 import { unwrapCommandResult } from '../runtime/runtime-base';
 import { debug } from '../utils/debug';
@@ -188,6 +189,45 @@ export class AttributeProcessor {
   }
 
   /**
+   * Report a compile failure for hyperscript sourced from markup.
+   * Always logs via console.error with the originating element, dispatches a
+   * bubbling `hyperfixi:compile-error` CustomEvent on the element, and invokes
+   * the `config.onCompileError` hook when set. Never throws.
+   */
+  private reportCompileError(
+    source: 'attribute' | 'script',
+    code: string,
+    errors: CompileError[] | undefined,
+    element: Element | null
+  ): void {
+    const errs = errors ?? [];
+    const label =
+      source === 'attribute'
+        ? '[LokaScript] Compilation failed for _= attribute:'
+        : '[LokaScript] Compilation failed for hyperscript script tag:';
+    console.error(label, errs, element ?? '');
+
+    try {
+      config.onCompileError?.({ source, code, errors: errs, element });
+    } catch (hookError) {
+      console.error('[LokaScript] onCompileError hook threw:', hookError);
+    }
+
+    try {
+      const target = element ?? (typeof document !== 'undefined' ? document : null);
+      target?.dispatchEvent(
+        new CustomEvent('hyperfixi:compile-error', {
+          bubbles: true,
+          cancelable: false,
+          detail: { source, code, errors: errs, element },
+        })
+      );
+    } catch (dispatchError) {
+      debug.parse('ATTR: Error dispatching hyperfixi:compile-error event:', dispatchError);
+    }
+  }
+
+  /**
    * Process a <script type="text/hyperscript"> tag
    * Supports optional 'for' attribute to bind to specific elements
    */
@@ -235,10 +275,7 @@ export class AttributeProcessor {
       const compilationResult = hyperscript.compileSync(hyperscriptCode);
 
       if (!compilationResult.ok) {
-        console.warn(
-          `[LokaScript] Script for="${selector}" compilation failed:`,
-          compilationResult.errors
-        );
+        this.reportCompileError('script', hyperscriptCode, compilationResult.errors, script);
         return;
       }
 
@@ -279,7 +316,7 @@ export class AttributeProcessor {
       debug.parse('SCRIPT: Compilation result:', compilationResult.ok ? 'SUCCESS' : 'FAILED');
 
       if (!compilationResult.ok) {
-        console.warn('[LokaScript] Script compilation failed:', compilationResult.errors);
+        this.reportCompileError('script', hyperscriptCode, compilationResult.errors, script);
         return;
       }
 
@@ -351,11 +388,7 @@ export class AttributeProcessor {
       debug.parse('ATTR: Compilation result:', compilationResult);
 
       if (!compilationResult.ok) {
-        console.warn(
-          '[LokaScript] Compilation failed for _= attribute:',
-          compilationResult.errors,
-          element
-        );
+        this.reportCompileError('attribute', hyperscriptCode, compilationResult.errors, element);
         return;
       }
 
@@ -433,7 +466,7 @@ export class AttributeProcessor {
         // user activation for security-sensitive APIs (clipboard, fullscreen, etc.)
         const result = hyperscript.compileSync(code);
         if (!result.ok || !result.ast) {
-          console.warn('[LokaScript] Lazy compilation failed:', result.errors, element);
+          this.reportCompileError('attribute', code, result.errors, element);
           return;
         }
 

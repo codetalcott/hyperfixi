@@ -46,12 +46,45 @@ npm run db:init:force      # Initialize with 53 patterns
 npm run sync:translations  # Generate 689 translations
 npm run seed:llm           # Generate 212 LLM examples
 npm run validate:fix       # Validate and update verified_parses
+npm run verify:engines     # Re-verify the engine column (see below)
 
 # Development
 npm run typecheck          # TypeScript validation
 npm run test:run           # Run vitest tests
 npm run build              # Build package
 ```
+
+## Engine verification (`code_examples.engine`)
+
+The `engine` column ('both' | 'lokascript' | 'hyperscript' | NULL) is filled
+**mechanically** by [scripts/verify-engines.ts](scripts/verify-engines.ts),
+which runs every pattern's en `raw_code` against both engines:
+
+- **lokascript** — `compileSync()` via `@hyperfixi/core` (the exact call the
+  browser `_=` attribute path makes) with `@hyperfixi/reactivity` and
+  `@hyperfixi/realtime` installed (both ship pre-installed in `hyperfixi.js`),
+  plus a jsdom top-level install smoke (no error within a 500 ms settle
+  window, with synthesized `#id`/`.class` fixtures).
+- **hyperscript** — upstream `_hyperscript` (pinned `hyperscript.org`
+  devDependency) with its official socket/worker/eventsource extensions;
+  parse-level: zero recovered parse errors.
+- HTML-markup patterns: each `_=`/`hx-live`/script-tag snippet is verified
+  individually; `hx-live`/`sse-*`/`ws-*` markup is hyperfixi-only and blocks
+  the upstream claim.
+
+Results are written to `data/engine-verification.json` (committed;
+`init-db.ts` seeds the column from it, so `npm run populate` needs no core
+build) and, with `--update-db`, stamped into `data/patterns.db` directly
+(this also refreshes `patterns.db.stamp`, since the JSON is a stamped DB
+input). Re-run after parser/plugin changes:
+
+```bash
+npm run verify:engines --prefix packages/patterns-reference   # needs core + reactivity dist fresh
+```
+
+Do NOT hand-author engine values in `init-db.ts` seeds — the JSON overrides
+them. (The old heuristic `verify-engine-compat.ts`, which guessed 'both' from
+semantic canParse + extension-syntax scans, was removed in favor of this.)
 
 ## Database Contents
 

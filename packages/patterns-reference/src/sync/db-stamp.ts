@@ -57,6 +57,9 @@ function dbInputFiles(dbPath: string): string[] {
     join(pr, 'scripts', 'init-db.ts'),
     join(pr, 'scripts', 'sync-translations.ts'),
     join(pr, 'src', 'sync', 'span-mask.ts'),
+    // Committed engine-verification results are seeded into the engine
+    // column by init-db.ts, so they are DB input too.
+    join(pr, 'data', 'engine-verification.json'),
   ]) {
     if (existsSync(f)) files.push(f);
   }

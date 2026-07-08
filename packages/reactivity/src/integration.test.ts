@@ -141,6 +141,36 @@ describe('@hyperfixi/reactivity — integration', () => {
   });
 
   describe('bind', () => {
+    it('parses and runs a `then`-joined bind chain (two-way share between inputs)', async () => {
+      const inputA = document.createElement('input');
+      const inputB = document.createElement('input');
+      inputA.id = 'input-a';
+      inputB.id = 'input-b';
+      inputA.value = 'first';
+      document.body.append(inputA, inputB);
+      const ctx = createContext(inputA);
+
+      const r = parse('bind $name to #input-a then bind $name to #input-b');
+      expect(r.success).toBe(true);
+      const program = r.node as unknown as { type: string; statements?: { type: string }[] };
+      expect(program.statements).toHaveLength(2);
+      expect(program.statements![0].type).toBe('bindFeature');
+      expect(program.statements![1].type).toBe('bindFeature');
+
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // Both inputs share $name: typing in A propagates to B.
+      inputA.value = 'typed';
+      inputA.dispatchEvent(new Event('input'));
+      await settle();
+      expect(ctx.globals.get('name')).toBe('typed');
+      expect(inputB.value).toBe('typed');
+
+      inputA.remove();
+      inputB.remove();
+    });
+
     it('two-way binds a global var to an input value', async () => {
       const input = document.createElement('input');
       input.type = 'text';

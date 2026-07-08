@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '../test-setup.js';
 import { AttributeProcessor, defaultAttributeProcessor } from './attribute-processor';
+import { config } from '../api/hyperscript-api';
 
 describe('AttributeProcessor System Events', () => {
   let processor: AttributeProcessor;
@@ -875,5 +876,141 @@ describe('AttributeProcessor System Events', () => {
       // Single handler with preposition target - should be lazy (no load event yet)
       expect(loadFired).toBe(false);
     });
+  });
+});
+
+describe('Compile-error observability (_= path)', () => {
+  let processor: AttributeProcessor;
+  let testContainer: HTMLDivElement;
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    defaultAttributeProcessor.destroy();
+    testContainer = document.createElement('div');
+    document.body.appendChild(testContainer);
+    processor = new AttributeProcessor({ autoScan: false });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+    config.onCompileError = null;
+    processor.destroy();
+    testContainer.remove();
+  });
+
+  it('logs console.error with element context for unparseable _= code', async () => {
+    const el = document.createElement('div');
+    el.setAttribute('_', 'klaatu barada nikto (((');
+    testContainer.appendChild(el);
+
+    await processor.processElementAsync(el);
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[LokaScript] Compilation failed for _= attribute:',
+      expect.arrayContaining([expect.objectContaining({ message: expect.any(String) })]),
+      el
+    );
+  });
+
+  it('dispatches a bubbling hyperfixi:compile-error event on the element', async () => {
+    const el = document.createElement('div');
+    el.setAttribute('_', 'klaatu barada nikto (((');
+    testContainer.appendChild(el);
+
+    let detail: Record<string, unknown> | null = null;
+    const listener = (e: Event) => {
+      detail = (e as CustomEvent).detail;
+    };
+    document.addEventListener('hyperfixi:compile-error', listener);
+
+    await processor.processElementAsync(el);
+    document.removeEventListener('hyperfixi:compile-error', listener);
+
+    expect(detail).not.toBeNull();
+    expect(detail!.source).toBe('attribute');
+    expect(detail!.code).toBe('klaatu barada nikto (((');
+    expect(detail!.element).toBe(el);
+    expect(Array.isArray(detail!.errors)).toBe(true);
+    expect((detail!.errors as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  it('invokes the config.onCompileError hook', async () => {
+    const hook = vi.fn();
+    config.onCompileError = hook;
+
+    const el = document.createElement('div');
+    el.setAttribute('_', 'klaatu barada nikto (((');
+    testContainer.appendChild(el);
+
+    await processor.processElementAsync(el);
+
+    expect(hook).toHaveBeenCalledTimes(1);
+    expect(hook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'attribute',
+        code: 'klaatu barada nikto (((',
+        element: el,
+      })
+    );
+  });
+
+  it('a throwing onCompileError hook does not break processing', async () => {
+    config.onCompileError = () => {
+      throw new Error('hook boom');
+    };
+
+    const el = document.createElement('div');
+    el.setAttribute('_', 'klaatu barada nikto (((');
+    testContainer.appendChild(el);
+
+    await expect(processor.processElementAsync(el)).resolves.toBeUndefined();
+    // Both the compile failure and the hook failure are logged
+    expect(errorSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('reports compile failures from <script type="text/hyperscript"> tags', async () => {
+    const script = document.createElement('script');
+    script.type = 'text/hyperscript';
+    script.textContent = 'klaatu barada nikto (((';
+    testContainer.appendChild(script);
+
+    let detail: Record<string, unknown> | null = null;
+    const listener = (e: Event) => {
+      detail = (e as CustomEvent).detail;
+    };
+    document.addEventListener('hyperfixi:compile-error', listener);
+
+    await processor.scanAndProcessAll();
+    document.removeEventListener('hyperfixi:compile-error', listener);
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[LokaScript] Compilation failed for hyperscript script tag:',
+      expect.any(Array),
+      script
+    );
+    expect(detail).not.toBeNull();
+    expect(detail!.source).toBe('script');
+  });
+
+  it('reports lazy-path compile failures on first event', async () => {
+    const lazy = new AttributeProcessor({ autoScan: false, lazyParsing: true });
+    const el = document.createElement('button');
+    el.setAttribute('_', 'on click klaatu barada nikto (((');
+    testContainer.appendChild(el);
+
+    await lazy.scanAndProcessAll();
+    expect(errorSpy).not.toHaveBeenCalled(); // not compiled yet
+
+    el.click();
+    // Lazy stub compiles synchronously within the event dispatch, but allow a tick
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[LokaScript] Compilation failed for _= attribute:',
+      expect.any(Array),
+      el
+    );
+    lazy.destroy();
   });
 });

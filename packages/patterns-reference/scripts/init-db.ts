@@ -11,7 +11,7 @@
  */
 
 import Database from 'better-sqlite3';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
 import { dirname, resolve } from 'path';
 
 // Import behavior schemas as single source of truth
@@ -658,14 +658,14 @@ const SEED_EXAMPLES: SeedExample[] = [
     title: 'Install Behavior',
     raw_code: 'install Draggable',
     description: 'Install a reusable behavior on an element. Replace "Draggable" with any defined behavior name (e.g., Sortable, Closeable).',
-    feature: 'behaviors',
+    feature: 'behavior',
   },
   {
     id: 'tell-command',
     title: 'Tell Command',
     raw_code: 'on click tell #modal to show',
     description: 'Tell another element to execute a command',
-    feature: 'behaviors',
+    feature: 'behavior',
   },
 
   // ==========================================================================
@@ -713,6 +713,11 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tabs-aria',
     title: 'Accessible Tabs',
+    // NOTE: `set <value> on <target>` parses via the semantic surface (and
+    // translates faithfully in all 24 languages — it's in the R2 execution
+    // subset) but not via compileSync or upstream, so engine reads NULL.
+    // A dual-legal `of` rewrite was tried and reverted: it broke translation
+    // execution fidelity in bn/hi/ja/qu/tr/ru/th/uk.
     raw_code: 'on click set @aria-selected to "false" on .tab set @aria-selected to "true" on me',
     description: 'Tab navigation with ARIA attributes',
     feature: 'ui-components',
@@ -966,6 +971,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'event-once',
     title: 'Event Once',
+    // NOTE: `on click once` is semantic-surface-only (engine NULL). The
+    // dual-legal `on first click` rewrite went lossy in the SOV languages
+    // (bn/hi/ja/qu/tr) and was reverted.
     raw_code: 'on click once add .initialized to me call setup()',
     description: 'Handle event only once',
     feature: 'events',
@@ -1116,6 +1124,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'announce-screen-reader',
     title: 'Screen Reader Announcement',
+    // NOTE: same story as tabs-aria — the `set … on <target>` form is
+    // semantic-surface-only (engine NULL); the dual-legal `of` rewrite
+    // regressed translation execution fidelity and was reverted.
     raw_code: 'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
     description: 'Announce message to screen readers',
     feature: 'accessibility',
@@ -1260,7 +1271,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'eventsource-basic',
     title: 'Server-Sent Events Source',
-    raw_code: 'eventsource ChatStream from /events on message put it into #messages end',
+    // Upstream's eventsource grammar closes each `on` block AND the feature,
+    // so two `end`s are required.
+    raw_code: 'eventsource ChatStream from /events on message put it into #messages end end',
     description: 'Subscribe to a server-sent events endpoint and append messages to the DOM',
     feature: 'realtime',
     engine: 'both',
@@ -1437,7 +1450,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'bind-two-way',
     title: 'Two-Way Bind Two Inputs',
-    raw_code: 'bind $name to #input-a then bind $name to #input-b',
+    // `then` does not join top-level features in either engine; two bind
+    // features in sequence parse in both.
+    raw_code: 'bind $name to #input-a bind $name to #input-b',
     description: 'Share a global between two inputs by binding both to it; edits in either propagate to the other',
     feature: 'reactivity',
     engine: 'both',
@@ -1806,6 +1821,26 @@ function initDatabase() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
+    // Engine values come from the committed verification results when
+    // available (scripts/verify-engines.ts — mechanical dual-engine
+    // verification), falling back to the seed's hand-authored value for
+    // patterns the harness hasn't covered.
+    const engineVerificationPath = resolve(__dirname, '../data/engine-verification.json');
+    let verifiedEngines: Record<string, string | null> = {};
+    if (existsSync(engineVerificationPath)) {
+      try {
+        const parsed = JSON.parse(readFileSync(engineVerificationPath, 'utf-8')) as {
+          engines?: Record<string, string | null>;
+        };
+        verifiedEngines = parsed.engines ?? {};
+        console.log(
+          `Applying verified engine values for ${Object.keys(verifiedEngines).length} patterns`
+        );
+      } catch (e) {
+        console.warn('Could not read engine-verification.json; using seed engine values:', e);
+      }
+    }
+
     for (const ex of SEED_EXAMPLES) {
       insertExample.run(
         ex.id,
@@ -1813,7 +1848,7 @@ function initDatabase() {
         ex.raw_code,
         ex.description,
         ex.feature,
-        ex.engine ?? null,
+        ex.id in verifiedEngines ? verifiedEngines[ex.id] : (ex.engine ?? null),
         ex.translatable === false ? 0 : 1,
         ex.non_translatable_reason ?? null
       );

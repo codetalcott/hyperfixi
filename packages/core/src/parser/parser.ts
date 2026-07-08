@@ -336,6 +336,26 @@ export class Parser {
             continue;
           }
 
+          // Allow an optional `then` joining two top-level features
+          // (`bind $a to #x then bind $b to #y`). Command sequences consume
+          // their own `then` separators before control returns here, so a
+          // `then` at this level is only ever a feature joiner. A stray
+          // `then` not followed by a feature keyword falls through to the
+          // Unexpected-token guard below.
+          if (this.check('then')) {
+            const next = this.peekAt(1);
+            const startsFeature =
+              next !== null &&
+              (next.value === 'init' ||
+                next.value === 'on' ||
+                next.value === 'def' ||
+                getRegisteredFeature(next.value) !== undefined);
+            if (startsFeature) {
+              this.advance(); // consume 'then'
+              continue;
+            }
+          }
+
           // Check for init, on, or def
           if (this.check('init')) {
             this.advance(); // consume 'init'
@@ -2433,6 +2453,43 @@ export class Parser {
     }
   }
 
+  /**
+   * Parse original _hyperscript temporal keyword modifiers
+   * ("debounced at Nms" / "throttled at Nms") into the given modifiers object.
+   * No-op when the current token is neither keyword. Called from two spots in
+   * parseEventHandler because upstream grammar allows the modifiers both
+   * directly after the event name and after the `from <target>` clause.
+   */
+  private parseTemporalKeywordModifiers(modifiers: { debounce?: number; throttle?: number }): void {
+    if (!this.check('debounced') && !this.check('throttled')) {
+      return;
+    }
+
+    const modToken = this.advance();
+    const modName = modToken.value.toLowerCase();
+    const modifierKey: 'debounce' | 'throttle' = modName === 'debounced' ? 'debounce' : 'throttle';
+
+    if (this.match('at')) {
+      if (this.checkTimeExpression()) {
+        const timeToken = this.advance();
+        const delayMs = parseTimeToMs(timeToken.value);
+        modifiers[modifierKey] = delayMs;
+        debug.parse(
+          `🔧 parseEventHandler: Parsed '${modName} at ${timeToken.value}' (${delayMs}ms)`
+        );
+      } else if (this.matchNumber()) {
+        // Bare number: "debounced at 200"
+        const delayMs = parseInt(this.previous().value, 10);
+        modifiers[modifierKey] = delayMs;
+        debug.parse(`🔧 parseEventHandler: Parsed '${modName} at ${delayMs}'`);
+      } else {
+        this.addError(`Expected time expression after '${modName} at', got: ${this.peek().value}`);
+      }
+    } else {
+      this.addError(`Expected 'at' after '${modName}'`);
+    }
+  }
+
   private parseEventHandler(): EventHandlerNode {
     debug.parse(`🔧 parseEventHandler: ENTRY - parsing event handler`);
 
@@ -2555,34 +2612,7 @@ export class Parser {
     }
 
     // Handle original _hyperscript keyword syntax: "debounced at Nms" / "throttled at Nms"
-    if (this.check('debounced') || this.check('throttled')) {
-      const modToken = this.advance();
-      const modName = modToken.value.toLowerCase();
-      const modifierKey: 'debounce' | 'throttle' =
-        modName === 'debounced' ? 'debounce' : 'throttle';
-
-      if (this.match('at')) {
-        if (this.checkTimeExpression()) {
-          const timeToken = this.advance();
-          const delayMs = parseTimeToMs(timeToken.value);
-          modifiers[modifierKey] = delayMs;
-          debug.parse(
-            `🔧 parseEventHandler: Parsed '${modName} at ${timeToken.value}' (${delayMs}ms)`
-          );
-        } else if (this.matchNumber()) {
-          // Bare number: "debounced at 200"
-          const delayMs = parseInt(this.previous().value, 10);
-          modifiers[modifierKey] = delayMs;
-          debug.parse(`🔧 parseEventHandler: Parsed '${modName} at ${delayMs}'`);
-        } else {
-          this.addError(
-            `Expected time expression after '${modName} at', got: ${this.peek().value}`
-          );
-        }
-      } else {
-        this.addError(`Expected 'at' after '${modName}'`);
-      }
-    }
+    this.parseTemporalKeywordModifiers(modifiers);
 
     // Merge the `on first <event>` alias into modifiers.once after the
     // `.once`/`.prevent`/... block so both forms coexist consistently.
@@ -2610,6 +2640,11 @@ export class Parser {
       debug.parse(
         `🔧 parseEventHandler: Parsed 'from' target: ${target} (kind: ${targetToken.kind})`
       );
+
+      // Upstream _hyperscript grammar puts temporal modifiers AFTER the from
+      // clause ("on resize from window debounced at 200ms"), so accept them
+      // here as well as directly after the event name.
+      this.parseTemporalKeywordModifiers(modifiers);
     }
 
     // Optional: handle "of attribute" for mutation events
@@ -4193,6 +4228,12 @@ export class Parser {
     return this.tokens[this.current];
   }
 
+  /** Look ahead without consuming: offset 0 = current token, 1 = next, … */
+  private peekAt(offset: number): Token | null {
+    const index = this.current + offset;
+    return index >= 0 && index < this.tokens.length ? this.tokens[index] : null;
+  }
+
   private previous(): Token {
     return this.tokens[this.current - 1];
   }
@@ -4493,10 +4534,7 @@ export class Parser {
       restorePosition: (pos: number): void => {
         parser.current = pos;
       },
-      peekAt: (offset: number): Token | null => {
-        const index = parser.current + offset;
-        return index >= 0 && index < parser.tokens.length ? parser.tokens[index] : null;
-      },
+      peekAt: (offset: number): Token | null => parser.peekAt(offset),
 
       // Raw Input Access (for preserving literal code like JS in js...end blocks)
       getInputSlice: (start: number, end?: number): string => {

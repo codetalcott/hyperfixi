@@ -55,7 +55,9 @@ export default {
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
-        drop_console: true,
+        // Keep console.warn/error so parse failures stay observable (see
+        // rollup.browser.config.mjs).
+        drop_console: ['log', 'info', 'debug', 'trace'],
         pure_funcs: [
           'debug.command',
           'debug.event',

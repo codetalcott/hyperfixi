@@ -39,10 +39,8 @@
     "validate:fix": "tsx scripts/validate-all.ts --fix",
     "verify": "tsx scripts/verify-translations.ts",
     "verify:verbose": "tsx scripts/verify-translations.ts --verbose",
-    "verify:engine": "tsx scripts/verify-engine-compat.ts",
-    "verify:engine:verbose": "tsx scripts/verify-engine-compat.ts --verbose",
-    "verify:engine:dry-run": "tsx scripts/verify-engine-compat.ts --dry-run --verbose",
-    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
+    "verify:engines": "tsx scripts/verify-engines.ts --update-db"
   },
   "keywords": [
     "hyperscript",
@@ -72,8 +70,13 @@
     "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {
+    "@hyperfixi/core": "*",
+    "@hyperfixi/reactivity": "*",
+    "@hyperfixi/realtime": "*",
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.0.0",
+    "hyperscript.org": "0.9.93",
+    "jsdom": "^26.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
