@@ -8,9 +8,10 @@
  *
  * Prints one `PASS <desc>` / `FAIL <desc>` line per check; exits 1 if any fail.
  *
- * NOTE: @hyperfixi/core and @hyperfixi/components reference browser globals
- * (`Element`) at module scope and cannot be imported in bare Node — they are
- * verified by the browser-bundle stage of run.mjs instead.
+ * NOTE: @hyperfixi/components references browser globals (`Element`) at
+ * module scope and cannot be imported in bare Node — it is verified by the
+ * browser-bundle stage of run.mjs instead. @hyperfixi/core is Node-safe
+ * since 2.7.2 (dom-globals shim ahead of morphlex) and is checked below.
  */
 
 let failed = 0;
@@ -28,6 +29,14 @@ async function check(desc, fn) {
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
+
+await check('@hyperfixi/core — bare-Node import (dom-globals shim)', async () => {
+  const m = await import('@hyperfixi/core');
+  assert(typeof m.getElementScopeMap === 'function', 'getElementScopeMap missing');
+  const commands = await import('@hyperfixi/core/commands');
+  assert(typeof commands.swap === 'function', 'commands.swap missing');
+  return `${Object.keys(m).length} exports + /commands`;
+});
 
 await check('@hyperfixi/speech — plugin + commands', async () => {
   const m = await import('@hyperfixi/speech');

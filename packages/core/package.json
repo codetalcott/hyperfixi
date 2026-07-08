@@ -287,7 +287,7 @@
   "dependencies": {
     "@lokascript/intent": "^2.7.1",
     "@lokascript/semantic": "^2.7.1",
-    "morphlex": "^1.0.5",
+    "morphlex": "^1.4.0",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
