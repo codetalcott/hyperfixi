@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/mcp-multilingual-intent",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "private": true,
   "description": "Multilingual-intent MCP server — parses natural language in 24 languages, emits LSE protocol JSON. Wraps @lokascript/framework + @hyperfixi/patterns-reference behind a Siren HTTP API that siren-mcp bridges to MCP.",
   "type": "module",
@@ -37,19 +37,19 @@
   "license": "MIT",
   "dependencies": {
     "@hono/node-server": "^2.0.0",
-    "@hyperfixi/patterns-reference": "^2.7.0",
-    "@lokascript/framework": "^2.7.0",
+    "@hyperfixi/patterns-reference": "^2.7.1",
+    "@lokascript/framework": "^2.7.1",
     "hono": "^4.6.0"
   },
   "peerDependencies": {
-    "@lokascript/domain-bdd": "^2.7.0",
-    "@lokascript/domain-behaviorspec": "^2.7.0",
-    "@lokascript/domain-flow": "^2.7.0",
-    "@lokascript/domain-jsx": "^2.7.0",
-    "@lokascript/domain-llm": "^2.7.0",
-    "@lokascript/domain-sql": "^2.7.0",
-    "@lokascript/domain-todo": "^2.7.0",
-    "@lokascript/domain-voice": "^2.7.0"
+    "@lokascript/domain-bdd": "^2.7.1",
+    "@lokascript/domain-behaviorspec": "^2.7.1",
+    "@lokascript/domain-flow": "^2.7.1",
+    "@lokascript/domain-jsx": "^2.7.1",
+    "@lokascript/domain-llm": "^2.7.1",
+    "@lokascript/domain-sql": "^2.7.1",
+    "@lokascript/domain-todo": "^2.7.1",
+    "@lokascript/domain-voice": "^2.7.1"
   },
   "peerDependenciesMeta": {
     "@lokascript/domain-bdd": {
@@ -78,14 +78,14 @@
     }
   },
   "devDependencies": {
-    "@lokascript/domain-bdd": "^2.7.0",
-    "@lokascript/domain-behaviorspec": "^2.7.0",
-    "@lokascript/domain-flow": "^2.7.0",
-    "@lokascript/domain-jsx": "^2.7.0",
-    "@lokascript/domain-llm": "^2.7.0",
-    "@lokascript/domain-sql": "^2.7.0",
-    "@lokascript/domain-todo": "^2.7.0",
-    "@lokascript/domain-voice": "^2.7.0",
+    "@lokascript/domain-bdd": "^2.7.1",
+    "@lokascript/domain-behaviorspec": "^2.7.1",
+    "@lokascript/domain-flow": "^2.7.1",
+    "@lokascript/domain-jsx": "^2.7.1",
+    "@lokascript/domain-llm": "^2.7.1",
+    "@lokascript/domain-sql": "^2.7.1",
+    "@lokascript/domain-todo": "^2.7.1",
+    "@lokascript/domain-voice": "^2.7.1",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",

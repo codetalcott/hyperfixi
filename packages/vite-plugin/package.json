@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/vite-plugin",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Vite plugin for automatic tree-shaken hyperscript bundles",
   "type": "module",
   "main": "dist/index.cjs",
@@ -29,7 +29,7 @@
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "peerDependencies": {
-    "@hyperfixi/server-bridge": "^2.7.0",
+    "@hyperfixi/server-bridge": "^2.7.1",
     "vite": ">=4.0.0"
   },
   "peerDependenciesMeta": {
@@ -38,7 +38,7 @@
     }
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.7.0",
+    "@hyperfixi/core": "^2.7.1",
     "glob": "^11.0.0"
   },
   "devDependencies": {
