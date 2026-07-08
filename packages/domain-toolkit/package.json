@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-toolkit",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "private": true,
   "description": "Lint rules for @lokascript/domain-* packages. Checks schema structure + cross-file invariants (profile ↔ tokenizer ↔ schema ↔ renderer agreement).",
   "type": "module",
@@ -24,9 +24,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.7.1",
-    "@lokascript/intent": "^2.7.1",
-    "@lokascript/semantic": "^2.7.1"
+    "@lokascript/framework": "^2.7.2",
+    "@lokascript/intent": "^2.7.2",
+    "@lokascript/semantic": "^2.7.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
