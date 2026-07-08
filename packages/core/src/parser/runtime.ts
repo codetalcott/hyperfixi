@@ -753,28 +753,38 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
 
   // Dispatch the operator to the appropriate registry.
   switch (operator) {
-    case '+':
+    case '+': {
       // Numeric-coerced `+` (flagged on binaries synthesized by the
       // increment/decrement → `set X to (X ± n)` rewrite). Attribute reads
       // (`@data-n`) return strings, so a plain `+` would concatenate
-      // ("1" + 1 → "11"). Coerce both operands so `increment @data-n` counts.
+      // ("1" + 1 → "11"). Coerce only STRING operands so `increment @data-n`
+      // counts numerically — non-strings are left to the `addition` evaluator
+      // below, which already handles them (element → numeric textContent for
+      // `increment #count`, undefined → 0 for an unset `:count`).
+      let addLeft = left;
+      let addRight = right;
       if ((node as { coerceNumeric?: boolean }).coerceNumeric) {
-        return convertToNumber(left) + convertToNumber(right);
+        if (typeof addLeft === 'string') addLeft = convertToNumber(addLeft);
+        if (typeof addRight === 'string') addRight = convertToNumber(addRight);
       }
       // JS-native: `+` concatenates if either operand is a string.
-      if (typeof left === 'string' || typeof right === 'string') {
-        return String(left ?? '') + String(right ?? '');
+      if (typeof addLeft === 'string' || typeof addRight === 'string') {
+        return String(addLeft ?? '') + String(addRight ?? '');
       }
       // Upstream `_hyperscript` array semantics: when the left operand is an
       // array, `+` concatenates rather than coerces. `[1,2] + [3,4]` →
       // [1,2,3,4]; `[1,2] + 3` → [1,2,3]. Always returns a fresh array so the
       // original is never mutated.
-      if (Array.isArray(left)) {
-        return Array.isArray(right) ? [...left, ...right] : [...left, right];
+      if (Array.isArray(addLeft)) {
+        return Array.isArray(addRight) ? [...addLeft, ...addRight] : [...addLeft, addRight];
       }
       return unwrapTypedResult(
-        await getExpr(context, 'addition').evaluate(context as any, { left, right })
+        await getExpr(context, 'addition').evaluate(context as any, {
+          left: addLeft,
+          right: addRight,
+        })
       );
+    }
     case '-':
       return unwrapTypedResult(
         await getExpr(context, 'subtraction').evaluate(context as any, { left, right })
