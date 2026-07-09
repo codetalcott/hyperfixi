@@ -75,6 +75,7 @@ export class Aggregator {
       triggerModifiers: new Set(),
       urlManagement: new Set(),
       usesConfirm: false,
+      needsSwapTiming: false,
       needsHxLive: false,
       needsSSE: false,
       needsWS: false,
@@ -102,6 +103,7 @@ export class Aggregator {
         for (const modifier of usage.htmx.triggerModifiers) htmx.triggerModifiers.add(modifier);
         for (const url of usage.htmx.urlManagement) htmx.urlManagement.add(url);
         if (usage.htmx.usesConfirm) htmx.usesConfirm = true;
+        if (usage.htmx.needsSwapTiming) htmx.needsSwapTiming = true;
         if (usage.htmx.needsHxLive) htmx.needsHxLive = true;
         if (usage.htmx.needsSSE) htmx.needsSSE = true;
         if (usage.htmx.needsWS) htmx.needsWS = true;
@@ -200,7 +202,8 @@ export class Aggregator {
       this.setsEqual(a.swapStrategies, b.swapStrategies) &&
       this.setsEqual(a.triggerModifiers, b.triggerModifiers) &&
       this.setsEqual(a.urlManagement, b.urlManagement) &&
-      a.usesConfirm === b.usesConfirm
+      a.usesConfirm === b.usesConfirm &&
+      !!a.needsSwapTiming === !!b.needsSwapTiming
     );
   }
 }

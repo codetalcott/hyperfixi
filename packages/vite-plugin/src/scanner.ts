@@ -244,6 +244,7 @@ export class Scanner {
       triggerModifiers: new Set(),
       urlManagement: new Set(),
       usesConfirm: false,
+      needsSwapTiming: false,
       needsHxLive: false,
       needsSSE: false,
       needsWS: false,
@@ -273,11 +274,24 @@ export class Scanner {
       usage.httpMethods.add(match[1].toUpperCase());
     }
 
-    // Detect swap strategies
+    // Detect swap strategies. `hx-swap` is a head style token followed by HCON
+    // modifiers, so the first token is only a style when it isn't a `key:value`
+    // pair — otherwise `hx-swap="swap:200ms"` would register `swap:200ms` as a
+    // strategy. `morph:innerHTML` is the exception: a style that looks like a pair.
     const swapPattern = new RegExp(HTMX_SWAP_PATTERN.source, 'gi');
     while ((match = swapPattern.exec(code))) {
       usage.hasHtmxAttributes = true;
-      usage.swapStrategies.add(match[2].split(/\s+/)[0]);
+
+      const spec = match[2].trim();
+      const head = spec.split(/\s+/)[0];
+      if (head.startsWith('morph') || !/^\S*:/.test(spec)) {
+        usage.swapStrategies.add(head);
+      }
+
+      // `swap:`/`settle:` timings compile to `wait <n>ms`.
+      if (/\b(swap|settle):/.test(spec)) {
+        usage.needsSwapTiming = true;
+      }
     }
 
     // Detect trigger modifiers
@@ -383,16 +397,21 @@ export class Scanner {
 
     // Swap strategy inference
     for (const swap of htmx.swapStrategies) {
-      switch (swap.toLowerCase()) {
-        case 'morph':
-          usage.commands.add('morph');
-          break;
-        case 'delete':
-          usage.commands.add('remove');
-          break;
-        default:
-          usage.commands.add('put');
+      const strategy = swap.toLowerCase();
+      // `morph`, `morph:innerHTML` and `morph:outerHTML` all emit `morph`.
+      if (strategy.startsWith('morph')) {
+        usage.commands.add('morph');
+        if (strategy === 'morph:innerhtml') usage.commands.add('put');
+      } else if (strategy === 'delete') {
+        usage.commands.add('remove');
+      } else {
+        usage.commands.add('put');
       }
+    }
+
+    // `hx-swap="... swap:200ms settle:100ms"` compiles to `wait <n>ms`.
+    if (htmx.needsSwapTiming) {
+      usage.commands.add('wait');
     }
 
     // hx-confirm needs if block

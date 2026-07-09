@@ -473,6 +473,41 @@ describe('Scanner', () => {
       expect(usage.commands.has('put')).toBe(true);
     });
 
+    it('takes only the head token as the swap strategy', () => {
+      const usage = scanner.scan(
+        '<div hx-get="/api" hx-swap="outerHTML swap:200ms settle:100ms">',
+        'test.html'
+      );
+      expect(usage.htmx?.swapStrategies.has('outerHTML')).toBe(true);
+      expect(usage.htmx?.swapStrategies.has('swap:200ms')).toBe(false);
+    });
+
+    it('does not mistake a modifier-only hx-swap for a strategy', () => {
+      const usage = scanner.scan('<div hx-get="/api" hx-swap="swap:200ms">', 'test.html');
+      expect(usage.htmx?.swapStrategies.has('swap:200ms')).toBe(false);
+      expect(usage.htmx?.swapStrategies.size).toBe(0);
+    });
+
+    it('keeps morph:innerHTML as a strategy despite its colon', () => {
+      const usage = scanner.scan('<div hx-get="/api" hx-swap="morph:innerHTML">', 'test.html');
+      expect(usage.htmx?.swapStrategies.has('morph:innerHTML')).toBe(true);
+      expect(usage.commands.has('morph')).toBe(true);
+    });
+
+    it('pulls in the wait command for swap/settle timings', () => {
+      const usage = scanner.scan(
+        '<div hx-get="/api" hx-swap="innerHTML swap:200ms settle:100ms">',
+        'test.html'
+      );
+      expect(usage.htmx?.needsSwapTiming).toBe(true);
+      expect(usage.commands.has('wait')).toBe(true);
+    });
+
+    it('does not pull in wait when there are no timings', () => {
+      const usage = scanner.scan('<div hx-get="/api" hx-swap="innerHTML">', 'test.html');
+      expect(usage.commands.has('wait')).toBe(false);
+    });
+
     it('scans hx-on:click as hyperscript', () => {
       const usage = scanner.scan('<button hx-on:click="toggle .active">', 'test.html');
       expect(usage.htmx?.hasHtmxAttributes).toBe(true);
