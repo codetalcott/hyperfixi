@@ -21,7 +21,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createVoiceDSL, renderVoice, toVoiceActionSpec, voiceCodeGenerator } from '../index';
 import type { MultilingualDSL } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import {
+  extractRoleValue,
+  toProtocolJSON,
+  fromProtocolJSON,
+  renderExplicit,
+} from '@lokascript/framework';
 
 describe('Voice Domain', () => {
   let voice: MultilingualDSL;
@@ -1230,6 +1235,103 @@ describe('Voice Domain', () => {
       const spec = toVoiceActionSpec(node, 'en');
       expect(spec.action).toBe('navigate');
       expect(spec.target).toBe('home');
+    });
+  });
+
+  // ===========================================================================
+  // Behavior verbs (toggle/add/remove/show/hide) — sourced from the
+  // @lokascript/semantic profiles, not hand-authored. See src/vocab/behavior-verbs.ts
+  // and src/schemas/behavior.ts.
+  // ===========================================================================
+
+  describe('Behavior verbs (sourced from multilingual layer)', () => {
+    // English (SVO) — the brief's acceptance criteria
+    it('parses "toggle .active on #box" (patient + destination)', () => {
+      const { node, confidence } = voice.parseWithConfidence('toggle .active on #box', 'en');
+      expect(node.action).toBe('toggle');
+      expect(extractRoleValue(node, 'patient')).toBe('.active');
+      expect(extractRoleValue(node, 'destination')).toBe('#box');
+      expect(confidence).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('parses bare "toggle .active" (destination defaults to me)', () => {
+      const node = voice.parse('toggle .active', 'en');
+      expect(node.action).toBe('toggle');
+      expect(extractRoleValue(node, 'patient')).toBe('.active');
+      expect(extractRoleValue(node, 'destination')).toBe('me');
+    });
+
+    it('parses "add .highlighted to #box"', () => {
+      const node = voice.parse('add .highlighted to #box', 'en');
+      expect(node.action).toBe('add');
+      expect(extractRoleValue(node, 'patient')).toBe('.highlighted');
+      expect(extractRoleValue(node, 'destination')).toBe('#box');
+    });
+
+    it('parses "remove .x from #box" (captured as source, not destination)', () => {
+      const node = voice.parse('remove .x from #box', 'en');
+      expect(node.action).toBe('remove');
+      expect(extractRoleValue(node, 'patient')).toBe('.x');
+      expect(extractRoleValue(node, 'source')).toBe('#box');
+    });
+
+    it('parses "show #panel"', () => {
+      const node = voice.parse('show #panel', 'en');
+      expect(node.action).toBe('show');
+      expect(extractRoleValue(node, 'patient')).toBe('#panel');
+    });
+
+    it('parses "hide .menu"', () => {
+      const node = voice.parse('hide .menu', 'en');
+      expect(node.action).toBe('hide');
+      expect(extractRoleValue(node, 'patient')).toBe('.menu');
+    });
+
+    // Cross-order — proves the destination marker derived from the semantic slice
+    // works in non-SVO word orders (not an English-only addition).
+    it('parses German "umschalten .active auf #box" (derived marker auf)', () => {
+      const node = voice.parse('umschalten .active auf #box', 'de');
+      expect(node.action).toBe('toggle');
+      expect(extractRoleValue(node, 'patient')).toBe('.active');
+      expect(extractRoleValue(node, 'destination')).toBe('#box');
+    });
+
+    it('parses Japanese SOV "#box に .active 切り替え" (derived marker に)', () => {
+      const node = voice.parse('#box に .active 切り替え', 'ja');
+      expect(node.action).toBe('toggle');
+      expect(extractRoleValue(node, 'patient')).toBe('.active');
+      expect(extractRoleValue(node, 'destination')).toBe('#box');
+    });
+
+    // Round-trip (the brief's acceptance): SemanticNode ↔ protocol JSON, + explicit render.
+    it('round-trips toggle through protocol JSON', () => {
+      const node = voice.parse('toggle .active on #box', 'en');
+      const proto = toProtocolJSON(node);
+      expect(proto).toBeTruthy();
+      const back = fromProtocolJSON(proto);
+      expect(back.action).toBe('toggle');
+      expect(extractRoleValue(back, 'patient')).toBe('.active');
+      expect(extractRoleValue(back, 'destination')).toBe('#box');
+      expect(JSON.stringify(toProtocolJSON(back))).toBe(JSON.stringify(proto));
+    });
+
+    it('renders toggle/add/remove to explicit syntax', () => {
+      expect(renderExplicit(voice.parse('toggle .active on #box', 'en'))).toBe(
+        '[toggle patient:.active destination:#box]'
+      );
+      expect(renderExplicit(voice.parse('add .x to #y', 'en'))).toBe(
+        '[add patient:.x destination:#y]'
+      );
+      expect(renderExplicit(voice.parse('remove .x from #y', 'en'))).toBe(
+        '[remove patient:.x source:#y]'
+      );
+    });
+
+    // No-regression guard: existing page-control verbs still parse.
+    it('still parses existing verbs (click, navigate, scroll)', () => {
+      expect(voice.parse('click #login-btn', 'en').action).toBe('click');
+      expect(voice.parse('navigate to home', 'en').action).toBe('navigate');
+      expect(voice.parse('scroll down', 'en').action).toBe('scroll');
     });
   });
 });

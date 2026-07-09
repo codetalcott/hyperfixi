@@ -424,7 +424,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{action_type} を {target} で {value} したら",
+          "format": "を {target} {action_type} で {value} したら",
           "tokens": [
             {
               "type": "group",
@@ -802,7 +802,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{action_type} 를 {target} 로 {value} 만약",
+          "format": "를 {target} {action_type} 로 {value} 만약",
           "tokens": [
             {
               "type": "group",
@@ -1180,7 +1180,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{action_type} üzerinde {target} ile {value} olduğunda",
+          "format": "üzerinde {target} {action_type} ile {value} olduğunda",
           "tokens": [
             {
               "type": "group",

@@ -33,6 +33,7 @@ import { frVocabulary } from './fr';
 import { deVocabulary } from './de';
 import { ptVocabulary } from './pt';
 import { ruVocabulary } from './ru';
+import { withBehaviorVerbs } from './behavior-verbs';
 
 export { enVocabulary } from './en';
 export { esVocabulary } from './es';
@@ -52,18 +53,25 @@ export interface VoiceLanguageSource {
   readonly vocab: DomainVocabulary;
 }
 
-/** Grammar slice + voice vocabulary per supported language. */
+/**
+ * Grammar slice + voice vocabulary per supported language.
+ *
+ * Each vocab is augmented with the UI-behavior verbs (toggle/add/remove/show/
+ * hide) sourced from its own grammar slice via {@link withBehaviorVerbs} — the
+ * raw slice import is passed (it still carries `.keywords`, which the widened
+ * `GrammarProfileSlice` type drops). Hand-authored voice verbs win on collision.
+ */
 export const VOICE_LANGUAGES: Readonly<Record<string, VoiceLanguageSource>> = {
-  en: { slice: enSlice, vocab: enVocabulary },
-  es: { slice: esSlice, vocab: esVocabulary },
-  ja: { slice: jaSlice, vocab: jaVocabulary },
-  ar: { slice: arSlice, vocab: arVocabulary },
-  ko: { slice: koSlice, vocab: koVocabulary },
-  zh: { slice: zhSlice, vocab: zhVocabulary },
-  tr: { slice: trSlice, vocab: trVocabulary },
-  fr: { slice: frSlice, vocab: frVocabulary },
+  en: { slice: enSlice, vocab: withBehaviorVerbs(enSlice, enVocabulary) },
+  es: { slice: esSlice, vocab: withBehaviorVerbs(esSlice, esVocabulary) },
+  ja: { slice: jaSlice, vocab: withBehaviorVerbs(jaSlice, jaVocabulary) },
+  ar: { slice: arSlice, vocab: withBehaviorVerbs(arSlice, arVocabulary) },
+  ko: { slice: koSlice, vocab: withBehaviorVerbs(koSlice, koVocabulary) },
+  zh: { slice: zhSlice, vocab: withBehaviorVerbs(zhSlice, zhVocabulary) },
+  tr: { slice: trSlice, vocab: withBehaviorVerbs(trSlice, trVocabulary) },
+  fr: { slice: frSlice, vocab: withBehaviorVerbs(frSlice, frVocabulary) },
   // Bridge-era languages (arc Phase 2 expansion) — one vocab file each.
-  de: { slice: deSlice, vocab: deVocabulary },
-  pt: { slice: ptSlice, vocab: ptVocabulary },
-  ru: { slice: ruSlice, vocab: ruVocabulary },
+  de: { slice: deSlice, vocab: withBehaviorVerbs(deSlice, deVocabulary) },
+  pt: { slice: ptSlice, vocab: withBehaviorVerbs(ptSlice, ptVocabulary) },
+  ru: { slice: ruSlice, vocab: withBehaviorVerbs(ruSlice, ruVocabulary) },
 };

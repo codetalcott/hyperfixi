@@ -721,7 +721,7 @@
         "command": "render",
         "priority": 100,
         "template": {
-          "format": "{source} に {destination} 描画",
+          "format": "に {destination} {source} 描画",
           "tokens": [
             {
               "type": "role",
@@ -805,7 +805,7 @@
         "command": "effect",
         "priority": 100,
         "template": {
-          "format": "{callback} で {deps} エフェクト",
+          "format": "で {deps} {callback} エフェクト",
           "tokens": [
             {
               "type": "group",
@@ -1303,7 +1303,7 @@
         "command": "render",
         "priority": 100,
         "template": {
-          "format": "{source} 에 {destination} 렌더링",
+          "format": "에 {destination} {source} 렌더링",
           "tokens": [
             {
               "type": "role",
@@ -1387,7 +1387,7 @@
         "command": "effect",
         "priority": 100,
         "template": {
-          "format": "{callback} 에서 {deps} 효과",
+          "format": "에서 {deps} {callback} 효과",
           "tokens": [
             {
               "type": "group",
@@ -1885,7 +1885,7 @@
         "command": "render",
         "priority": 100,
         "template": {
-          "format": "{source} e {destination} isle",
+          "format": "e {destination} {source} isle",
           "tokens": [
             {
               "type": "role",
@@ -1969,7 +1969,7 @@
         "command": "effect",
         "priority": 100,
         "template": {
-          "format": "{callback} de {deps} etki",
+          "format": "de {deps} {callback} etki",
           "tokens": [
             {
               "type": "group",

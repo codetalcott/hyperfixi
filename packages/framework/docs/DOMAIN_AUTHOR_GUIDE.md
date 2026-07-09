@@ -101,13 +101,13 @@ export const createSchema = defineCommand({
       role: 'name',
       required: true,
       expectedTypes: ['expression'],
-      svoPosition: 1,
+      svoPosition: 2, // higher = earlier: name appears first
     }),
     defineRole({
       role: 'type',
       required: false,
       expectedTypes: ['expression'],
-      svoPosition: 2,
+      svoPosition: 1, // lower = later: type appears after name
       markerOverride: {
         en: 'as',
         es: 'como',
@@ -121,7 +121,7 @@ export const createSchema = defineCommand({
 **Key concepts:**
 
 - `primaryRole` — the main argument (appears right after the keyword in SVO)
-- `svoPosition` — order in SVO languages (lower = earlier in surface form, matching the pattern generator's sort)
+- `svoPosition` — order in SVO languages (**higher = earlier** in surface form, matching the pattern generator's descending sort). NB: `@lokascript/semantic`'s reference schemas use the _opposite_ 1-based convention (lower = earlier); reusing them in a framework domain requires inverting positions.
 - `markerOverride` — the preposition/particle before this role per language
   - SVO: `create "mydb" as database` → "as" marks the `type` role
   - SOV: `"mydb" を データベース として 作成` → "として" marks the `type` role

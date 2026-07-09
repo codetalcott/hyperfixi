@@ -272,7 +272,11 @@ function buildFormatString(
     parts.push(keyword);
   }
 
-  for (const role of schema.roles) {
+  // Order roles the same way buildTokens does (descending position). Iterating
+  // declaration order here would disagree with the token order whenever a
+  // schema's roles are declared in a different order than their positions imply.
+  const sortedRoles = sortRolesByWordOrder(schema.roles, profile.wordOrder);
+  for (const role of sortedRoles) {
     const marker = getMarkerForRole(role, profile);
     const roleName = `{${role.role}}`;
 

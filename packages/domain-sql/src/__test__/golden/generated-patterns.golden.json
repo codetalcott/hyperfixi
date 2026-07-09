@@ -567,7 +567,7 @@
         "command": "select",
         "priority": 100,
         "template": {
-          "format": "{columns} から {source} 条件 {condition} 選択",
+          "format": "から {source} {columns} 条件 {condition} 選択",
           "tokens": [
             {
               "type": "role",
@@ -626,7 +626,7 @@
         "command": "insert",
         "priority": 100,
         "template": {
-          "format": "{values} に {destination} 挿入",
+          "format": "に {destination} {values} 挿入",
           "tokens": [
             {
               "type": "role",
@@ -1133,7 +1133,7 @@
         "command": "select",
         "priority": 100,
         "template": {
-          "format": "{columns} 에서 {source} 조건 {condition} 선택",
+          "format": "에서 {source} {columns} 조건 {condition} 선택",
           "tokens": [
             {
               "type": "role",
@@ -1192,7 +1192,7 @@
         "command": "insert",
         "priority": 100,
         "template": {
-          "format": "{values} 에 {destination} 삽입",
+          "format": "에 {destination} {values} 삽입",
           "tokens": [
             {
               "type": "role",
@@ -1699,7 +1699,7 @@
         "command": "select",
         "priority": 100,
         "template": {
-          "format": "{columns} den {source} koşul {condition} seç",
+          "format": "den {source} {columns} koşul {condition} seç",
           "tokens": [
             {
               "type": "role",
@@ -1758,7 +1758,7 @@
         "command": "insert",
         "priority": 100,
         "template": {
-          "format": "{values} e {destination} ekle",
+          "format": "e {destination} {values} ekle",
           "tokens": [
             {
               "type": "role",

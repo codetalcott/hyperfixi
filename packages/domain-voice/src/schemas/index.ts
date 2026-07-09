@@ -1,5 +1,6 @@
 import { defineCommand, defineRole } from '@lokascript/framework';
 import type { CommandSchema } from '@lokascript/framework';
+import { behaviorSchemas } from './behavior';
 
 // =============================================================================
 // navigate — Go to URL, page section, or ARIA landmark
@@ -524,4 +525,19 @@ export const allSchemas: CommandSchema[] = [
   openSchema,
   searchSchema,
   helpSchema,
+  // UI-behavior verbs sourced from the multilingual layer (see ./behavior).
+  // Appended last: first-schema-wins in match order, and these have distinct
+  // leading keywords, so they cannot regress the 14 page-control schemas above.
+  ...behaviorSchemas,
 ];
+
+// Re-export the behavior-verb schemas (reused from @lokascript/semantic with
+// slice-derived destination/source markers).
+export {
+  voiceToggleSchema,
+  voiceAddSchema,
+  voiceRemoveSchema,
+  voiceShowSchema,
+  voiceHideSchema,
+  behaviorSchemas,
+} from './behavior';
