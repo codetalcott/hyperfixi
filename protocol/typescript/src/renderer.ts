@@ -54,6 +54,20 @@ export function renderExplicit(node: SemanticNode): string {
   return `[${parts.join(' ')}]`;
 }
 
+/**
+ * Whether a selector must be wrapped in `<.../>` to survive a re-parse.
+ *
+ * A bare token re-classifies as a selector only if it starts with one of
+ * `# . @ *`. A space would split the token, and a leading `[` in a structural
+ * role would re-parse as a nested command — so both must wrap. `.a>.b` needs no
+ * wrapping: it has no space and keeps its leading `.`.
+ */
+function needsSelectorWrap(value: string): boolean {
+  if (value.includes(' ')) return true;
+  const first = value[0];
+  return !(first === '#' || first === '.' || first === '@' || first === '*');
+}
+
 /** Converts a SemanticValue to its explicit syntax string form. */
 export function valueToString(v: SemanticValue): string {
   switch (v.type) {
@@ -69,7 +83,12 @@ export function valueToString(v: SemanticValue): string {
       return String(v.value);
     }
 
-    case 'selector':
+    case 'selector': {
+      const s = typeof v.value === 'string' ? v.value : String(v.value ?? '');
+      if (!s) return s;
+      return needsSelectorWrap(s) ? `<${s}/>` : s;
+    }
+
     case 'reference':
       return typeof v.value === 'string' ? v.value : String(v.value ?? '');
 

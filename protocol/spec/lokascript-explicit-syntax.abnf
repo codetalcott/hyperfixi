@@ -1,5 +1,5 @@
 ; LokaScript Explicit Syntax (LSE) - Formal Grammar
-; Version 1.2.0
+; Version 2.0.0
 ;
 ; RFC 5234 ABNF (Augmented Backus-Naur Form)
 ; https://www.rfc-editor.org/rfc/rfc5234
@@ -8,9 +8,9 @@
 ; used by LokaScript for language-agnostic semantic interchange.
 ;
 ; IMPORTANT: ABNF is context-free, but LSE tokenization is context-sensitive.
-; The tokenizer splits on spaces only at bracket-depth 0 and outside quoted
-; strings. See "Tokenization Algorithm" in the spec README for the stateful
-; tokenizer specification.
+; The tokenizer splits on spaces only at bracket-depth 0, outside quoted
+; strings, and outside selector literals. See "Tokenization Algorithm" in the
+; spec README for the stateful tokenizer specification.
 
 ; =============================================================================
 ; 1. Document (streaming format)
@@ -95,19 +95,21 @@ role-name      = 1*( ALPHA / DIGIT / "-" / "_" )
 ; Values are classified by their syntactic form. Parsers MUST apply these
 ; rules in the listed priority order (first match wins):
 ;
-;   1. selector     - starts with # . [ @ *
-;   2. string       - starts with " or '
-;   3. boolean      - exact match: true / false
-;   4. reference    - matches a known reference name (case-insensitive)
-;   5. duration     - number followed by ms/s/m/h
-;   6. number       - digits with optional decimal
-;   7. plain-value  - fallback: any non-whitespace characters
+;   1. selector-literal - delimited by "<" ... "/>"
+;   2. selector         - starts with # . [ @ *
+;   3. string           - starts with " or '
+;   4. boolean          - exact match: true / false
+;   5. reference        - matches a known reference name (case-insensitive)
+;   6. duration         - number followed by ms/s/m/h
+;   7. number           - digits with optional decimal
+;   8. plain-value      - fallback: any non-whitespace characters
 ;
 ; NOTE: Structural role detection (role in structural-role-names with value
 ; starting "[") is handled at the role-parsing level, before value
 ; classification. See "Structural Roles" in the spec README for details.
 
-value          = selector
+value          = selector-literal
+               / selector
                / string-literal
                / boolean-literal
                / reference
@@ -115,8 +117,36 @@ value          = selector
                / number-literal
                / plain-value
 
+; --- Selector Literal (v2.0) ---
+; Any CSS selector, delimited by "<" and "/>". This is the only form that can
+; carry a selector containing a space, a combinator (> + ~), or a comma — the
+; tokenizer would otherwise split it. It is also the only way to write an
+; attribute selector in a structural role, where a bare "[" always begins a
+; nested command (see "Structural Roles" below).
+;
+; The delimiters are stripped: <ul > li/> yields the selector "ul > li".
+; The literal ends at the FIRST "/>" that is not inside a quoted string, so
+; interior ">" characters need no escaping:
+;
+;   patient:<ul > li/>              -> selector "ul > li"
+;   patient:<div:has(> .child)/>    -> selector "div:has(> .child)"
+;   patient:<.a, .b/>               -> selector ".a, .b"
+;   condition:<[data-active]/>      -> selector "[data-active]"
+;
+; This mirrors hyperscript's query-literal syntax and htmx's HCON, so the same
+; form means "a CSS selector" in all three.
+;
+; A "<" begins a selector literal ONLY at the start of a value (after the ":"
+; of a role-pair, or as the first character of a bare token). Elsewhere it is
+; an ordinary character. An unterminated literal is a parse error.
+
+selector-literal = "<" 1*sel-lit-char "/>"
+sel-lit-char     = ( VCHAR / SP ) ; any visible char or space; the literal ends
+                                  ; at the first "/>" outside a quoted string
+
 ; --- Selectors ---
-; CSS-like selectors detected by leading character.
+; CSS-like selectors detected by leading character. These bare forms cannot
+; contain spaces, combinators, or commas; use a selector-literal for those.
 
 selector       = id-selector
                / class-selector
@@ -134,6 +164,8 @@ ident-char     = ALPHA / DIGIT / "-" / "_"
 attr-char      = VCHAR  ; any visible character except ] (see note)
 ; NOTE: attr-char excludes "]" which terminates the attribute selector.
 ; Implementations track bracket depth to find the matching "]".
+; A bare attr-selector is valid only in a NON-structural role. In a structural
+; role, "[" always begins a nested command; write <[attr]/> for the selector.
 
 ; --- String Literals ---
 ; Quoted strings with backslash escapes. Both quote styles supported.
@@ -185,16 +217,24 @@ reference      = "me" / "you" / "it" / "result"
 ; --- Structural Roles ---
 ; Certain role names carry nested bracket commands instead of plain values.
 ; When a role name is in the structural-role-names set AND the value starts
-; with "[", parsers apply a disambiguation check: the value is a nested
-; bracket command if the inner content (after stripping outer []) contains
-; at least one ASCII space or ":" at bracket-depth 0. Otherwise it is
-; treated as an attribute selector.
+; with "[", the value is ALWAYS a nested bracket command.
 ;
-; This allows [on event:click body:[toggle patient:.active]] (nested command)
-; and [if condition:[data-active]] (attribute selector) to coexist.
+;   [on event:click body:[toggle patient:.active]]   ; nested command
+;   [on event:click body:[halt]]                     ; nested command (zero-arg)
+;   [if condition:<[data-active]/>]                  ; attribute selector
 ;
 ; Parsers MUST track bracket depth to find the matching "]".
 ; The nested content is recursively parsed as a bracket-cmd.
+;
+; RATIONALE (changed in v2.0): v1.x disambiguated by inspecting the inner
+; content — a nested command if it held a space or ":" at bracket-depth 0,
+; otherwise an attribute selector. That heuristic is unsound. "[halt]" is both
+; a well-formed zero-argument command and a well-formed attribute selector, so
+; v1.x silently parsed `body:[halt]` as a selector and dropped the command.
+; Symmetrically, `condition:[aria-label="Close menu"]` holds a space and was
+; misparsed as a nested command. The ambiguity is irreducible without a
+; delimiter, so structural "[" now always means "command" and attribute
+; selectors in structural roles use the selector-literal form.
 
 structural-role-names = "body" / "then" / "else" / "condition" / "loop-body" / "variable"
                       / "catch" / "finally"

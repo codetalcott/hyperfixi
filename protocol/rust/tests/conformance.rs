@@ -115,6 +115,17 @@ fn assert_roles_match(
                         role_name
                     );
                 }
+
+                // Only asserted when the fixture supplies it, so kind-less fixtures stay green.
+                if let Some(expected_kind) = expected.get("selectorKind").and_then(|k| k.as_str()) {
+                    assert_eq!(
+                        actual.selector_kind.as_deref().unwrap_or(""),
+                        expected_kind,
+                        "[{}] Role {} selectorKind mismatch",
+                        test_id,
+                        role_name
+                    );
+                }
             }
         }
     }
@@ -430,6 +441,11 @@ fn test_structural_roles_conformance() {
 
         if let Some(then_data) = expected.get("thenBranch").and_then(|t| t.as_array()) {
             assert_node_array_match(&node.then_branch, then_data, id, "thenBranch");
+        }
+
+        // Without this, a dropped zero-arg command in an event-handler body goes unnoticed.
+        if let Some(body_data) = expected.get("body").and_then(|b| b.as_array()) {
+            assert_node_array_match(&node.body, body_data, id, "body");
         }
     }
 }
@@ -1312,9 +1328,21 @@ fn test_round_trip_conformance() {
                 .roles
                 .get(role_name)
                 .unwrap_or_else(|| panic!("[{}] role '{}' lost after round-trip", id, role_name));
+            // Comparing only value_type would let a selector silently degrade into a
+            // literal (or lose its kind) without failing.
             assert_eq!(
                 reparsed_val.value_type, orig_val.value_type,
                 "[{}] role '{}' type changed after round-trip",
+                id, role_name
+            );
+            assert_eq!(
+                reparsed_val.value, orig_val.value,
+                "[{}] role '{}' value changed after round-trip",
+                id, role_name
+            );
+            assert_eq!(
+                reparsed_val.selector_kind, orig_val.selector_kind,
+                "[{}] role '{}' selectorKind changed after round-trip",
                 id, role_name
             );
         }

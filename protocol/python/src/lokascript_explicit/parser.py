@@ -28,28 +28,76 @@ class ParseError(Exception):
     pass
 
 
-# Structural role names whose bracket-enclosed values may be nested commands.
-_STRUCTURAL_ROLES = frozenset({"body", "then", "else", "condition", "loop-body", "variable"})
+# Structural role names whose bracket-enclosed values are nested commands.
+#
+# In these roles a value starting with '[' is ALWAYS a nested command; write an
+# attribute selector as a selector literal ('<[data-active]/>'). Prior to v2.0 the
+# parser guessed from the inner content, which silently dropped zero-argument
+# commands -- '[halt]' is both a valid command and a valid attribute selector.
+_STRUCTURAL_ROLES = frozenset(
+    {"body", "then", "else", "condition", "loop-body", "variable", "catch", "finally"}
+)
+
+_COMBINATOR_CHARS = (" ", ">", "+", "~", ",")
+
+_ESCAPES = {"\\": "\\", '"': '"', "'": "'", "n": "\n", "r": "\r", "t": "\t"}
 
 
-def _is_nested_command(value: str) -> bool:
-    """Check whether a bracket-enclosed value is a nested command (vs. attribute selector).
-
-    A value starting with '[' is a nested command if the inner content
-    contains at least one ASCII space or ':' at bracket-depth 0.
-    """
-    if len(value) < 2:
-        return False
-    inner = value[1:-1]
-    depth = 0
-    for ch in inner:
-        if ch == "[":
-            depth += 1
-        elif ch == "]":
-            depth -= 1
-        elif depth == 0 and ch in (" ", ":"):
+def _has_unquoted_combinator(value: str) -> bool:
+    """Whether a combinator appears outside any quoted span."""
+    quote = ""
+    for ch in value:
+        if quote:
+            if ch == quote:
+                quote = ""
+            continue
+        if ch in ('"', "'"):
+            quote = ch
+            continue
+        if ch in _COMBINATOR_CHARS:
             return True
     return False
+
+
+def infer_selector_kind(value: str) -> str | None:
+    """Infer a selector's kind.
+
+    Combinators are tested first, so '.a > .b' is 'complex' rather than 'class'.
+    A combinator inside a quoted span does not count, so '[aria-label="Close menu"]'
+    is 'attribute'.
+    """
+    if not value:
+        return None
+    if _has_unquoted_combinator(value):
+        return "complex"
+
+    first = value[0]
+    if first == "#":
+        return "id"
+    if first == ".":
+        return "class"
+    if first == "[":
+        return "attribute"
+    if first == "*":
+        return "element"
+    return None
+
+
+def unescape_string(s: str) -> str:
+    r"""Expand the escape sequences defined by the grammar: \\ \" \' \n \r \t"""
+    if "\\" not in s:
+        return s
+
+    out: list[str] = []
+    i = 0
+    while i < len(s):
+        if s[i] == "\\" and i + 1 < len(s) and s[i + 1] in _ESCAPES:
+            out.append(_ESCAPES[s[i + 1]])
+            i += 2
+            continue
+        out.append(s[i])
+        i += 1
+    return "".join(out)
 
 
 def is_explicit_syntax(text: str) -> bool:
@@ -127,12 +175,8 @@ def parse_explicit(
         role_name = token[:colon_idx]
         value_str = token[colon_idx + 1 :]
 
-        # Handle nested explicit syntax for structural roles (body, then, else, etc.)
-        if (
-            role_name in _STRUCTURAL_ROLES
-            and value_str.startswith("[")
-            and _is_nested_command(value_str)
-        ):
+        # In a structural role, '[...]' is always a nested command.
+        if role_name in _STRUCTURAL_ROLES and value_str.startswith("["):
             roles[role_name] = ExpressionValue(raw=value_str)
             continue
 
@@ -201,12 +245,21 @@ def _extract_structural_branch(
 def _tokenize(content: str) -> list[str]:
     """Tokenize explicit syntax content.
 
-    Splits on spaces, but respects quoted strings and bracket nesting.
+    Splits on spaces at bracket-depth 0, outside quoted strings, and outside
+    selector literals ('<...selector.../>'). The branch order is normative: the
+    string check precedes the selector check, so a '/>' inside a quoted string
+    does not close the literal. A '<' opens a selector literal only at the start
+    of a value -- when the token buffer is empty or ends with ':' -- so a stray
+    '<' in a plain value cannot swallow the following token.
+
+    '[' and ']' inside a selector literal never change bracket_depth; the
+    closing '/>' already delimits them.
     """
     tokens: list[str] = []
     current = ""
     in_string = False
     string_char = ""
+    in_selector = False
     bracket_depth = 0
 
     for i, char in enumerate(content):
@@ -226,6 +279,17 @@ def _tokenize(content: str) -> list[str]:
         if char in ('"', "'"):
             in_string = True
             string_char = char
+            current += char
+            continue
+
+        if in_selector:
+            current += char
+            if char == ">" and current.endswith("/>"):
+                in_selector = False
+            continue
+
+        if char == "<" and (not current or current.endswith(":")):
+            in_selector = True
             current += char
             continue
 
@@ -259,40 +323,54 @@ def _parse_value(
     """Parse a value string into a SemanticValue.
 
     Detection priority:
-    1. Selector (#, ., [, @, *)
-    2. String literal ("..." or '...')
-    3. Boolean (true/false)
-    4. Reference (me, you, it, ...)
-    5. Duration (500ms, 2s, ...)
-    6. Number (42, 3.14, ...)
-    7. Plain value (fallback -> string literal)
+    1. Selector literal (<...selector.../>)
+    2. Selector (#, ., [, @, *)
+    3. String literal ("..." or '...')
+    4. Boolean (true/false)
+    5. Reference (me, you, it, ...)
+    6. Duration (500ms, 2s, ...)
+    7. Number (42, 3.14, ...)
+    8. Plain value (fallback -> string literal)
     """
-    # 1. CSS selector
-    if value_str and value_str[0] in ("#", ".", "[", "@", "*"):
-        return SelectorValue(value=value_str)
+    # 1. Selector literal -- the delimiters force selector interpretation, so a
+    #    bare tag name or an attribute selector with a space both land here.
+    if value_str and value_str[0] == "<":
+        if not value_str.endswith("/>"):
+            raise ParseError(
+                f"Unterminated selector literal: {value_str!r}. Expected a closing '/>'"
+            )
+        inner = value_str[1:-2]
+        if not inner:
+            raise ParseError(f"Empty selector literal: {value_str!r}")
+        return SelectorValue(value=inner, selectorKind=infer_selector_kind(inner))
 
-    # 2. String literal
+    # 2. CSS selector
+    if value_str and value_str[0] in ("#", ".", "[", "@", "*"):
+        return SelectorValue(value=value_str, selectorKind=infer_selector_kind(value_str))
+
+    # 3. String literal -- escapes are expanded here and re-applied on render, so
+    #    a value containing a quote survives parse -> render -> parse unchanged.
     if value_str and value_str[0] in ('"', "'"):
         inner = value_str[1:-1]
-        return LiteralValue(value=inner, dataType="string")
+        return LiteralValue(value=unescape_string(inner), dataType="string")
 
-    # 3. Boolean
+    # 4. Boolean
     if value_str == "true":
         return LiteralValue(value=True, dataType="boolean")
     if value_str == "false":
         return LiteralValue(value=False, dataType="boolean")
 
-    # 4. Reference (case-insensitive lookup)
+    # 5. Reference (case-insensitive lookup)
     lower_ref = value_str.lower()
     if is_valid_reference(lower_ref, reference_set):
         return ReferenceValue(value=lower_ref)
 
-    # 5. Duration
+    # 6. Duration
     dur_match = _DURATION_RE.match(value_str)
     if dur_match:
         return LiteralValue(value=value_str, dataType="duration")
 
-    # 6. Number
+    # 7. Number
     num_match = _NUMBER_RE.match(value_str)
     if num_match:
         num = float(num_match.group(1))
@@ -301,7 +379,7 @@ def _parse_value(
             num = int(num)
         return LiteralValue(value=num, dataType="number")
 
-    # 7. Fallback: plain string
+    # 8. Fallback: plain string
     return LiteralValue(value=value_str, dataType="string")
 
 

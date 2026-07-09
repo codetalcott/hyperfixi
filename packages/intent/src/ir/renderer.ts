@@ -119,16 +119,33 @@ function renderBracketCommand(node: SemanticNode): string {
   return `[${parts.join(' ')}]`;
 }
 
+/**
+ * Whether a selector must be wrapped in `<.../>` to survive a re-parse.
+ *
+ * A bare token re-classifies as a selector only if it starts with one of
+ * `# . @ *`. A space would split the token, and a leading `[` in a structural
+ * role would re-parse as a nested command — so both must wrap.
+ */
+function needsSelectorWrap(value: string): boolean {
+  if (value.includes(' ')) return true;
+  const first = value[0];
+  return !(first === '#' || first === '.' || first === '@' || first === '*');
+}
+
 function valueToString(value: SemanticValue): string {
   switch (value.type) {
     case 'literal':
       if (typeof value.value === 'string') {
-        if (value.dataType === 'string' || /\s/.test(value.value)) return `"${value.value}"`;
+        // JSON.stringify escapes backslashes and quotes; a raw `"${v}"` would emit
+        // an unparseable literal for a value containing a quote.
+        if (value.dataType === 'string' || /\s/.test(value.value))
+          return JSON.stringify(value.value);
         return value.value;
       }
       return String(value.value);
     case 'selector':
-      return value.value;
+      if (!value.value) return value.value;
+      return needsSelectorWrap(value.value) ? `<${value.value}/>` : value.value;
     case 'reference':
       return value.value;
     case 'property-path':

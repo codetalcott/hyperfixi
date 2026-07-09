@@ -84,11 +84,11 @@ LSE is used as the interchange format for [LokaScript](https://github.com/codeta
 | Directory                        | Package name                  | Status          | Description                                            |
 | -------------------------------- | ----------------------------- | --------------- | ------------------------------------------------------ |
 | [spec/](spec/)                   | —                             | —               | Formal ABNF grammar, wire format, streaming convention |
-| [test-fixtures/](test-fixtures/) | `@lokascript/lse-conformance` | in-repo, v1.2.0 | 121 language-independent conformance test cases        |
-| [typescript/](typescript/)       | `@lokascript/explicit-syntax` | in-repo, v1.2.0 | TypeScript reference parser                            |
-| [python/](python/)               | `lokascript-explicit`         | in-repo, v1.2.0 | Python reference parser                                |
+| [test-fixtures/](test-fixtures/) | `@lokascript/lse-conformance` | in-repo, v2.0.0 | 142 language-independent conformance test cases        |
+| [typescript/](typescript/)       | `@lokascript/explicit-syntax` | in-repo, v2.0.0 | TypeScript reference parser                            |
+| [python/](python/)               | `lokascript-explicit`         | in-repo, v2.0.0 | Python reference parser                                |
 | [go/](go/)                       | (in-repo, see note)           | in-repo         | Go reference parser                                    |
-| [rust/](rust/)                   | `lokascript-explicit`         | in-repo, v1.2.0 | Rust reference parser                                  |
+| [rust/](rust/)                   | `lokascript-explicit`         | in-repo, v2.0.0 | Rust reference parser                                  |
 
 > **Go module note:** the Go `go.mod` declares the module path `github.com/lokascript/explicit-syntax-go`, but the code lives at `github.com/codetalcott/hyperfixi/protocol/go`. This path mismatch will be corrected when the protocol reaches a publishing decision.
 
@@ -230,9 +230,10 @@ If you're building a tool (DSL compiler, LLM agent, code generator) that produce
 1. **Format**: `[action role:value ...]` — brackets required, action first, then space-separated `role:value` pairs
 2. **Roles**: Use standard semantic roles (`patient`, `destination`, `source`, `condition`, `instrument`, `quantity`)
 3. **Values**: Selectors (`.class`, `#id`), literals (`'string'`, `42`, `true`), references (`me`, `it`, `result`)
-4. **Flags**: `+flag` for boolean true, `~flag` for negated
-5. **Nesting**: `body:[...]` for event handlers, conditionals, loops
-6. **Validation**: Use the [ABNF grammar](spec/lokascript-explicit-syntax.abnf) or [JSON Schema](spec/lse-wire-format.schema.json)
+4. **Selector literals**: `<...selector.../>` for any selector containing a space, a combinator, or a comma — e.g. `patient:<ul > li/>`. Also required for an attribute selector in a structural role: `condition:<[data-active]/>`.
+5. **Flags**: `+flag` for boolean true, `~flag` for negated
+6. **Nesting**: `body:[...]` for event handlers, conditionals, loops. Inside a structural role a `[...]` value is always a nested command
+7. **Validation**: Use the [ABNF grammar](spec/lokascript-explicit-syntax.abnf) or [JSON Schema](spec/lse-wire-format.schema.json)
 
 Example for an LLM system prompt:
 
@@ -241,17 +242,24 @@ When generating UI behavior, emit LSE bracket syntax:
   [toggle patient:.active destination:#menu]
   [on event:click body:[add patient:.highlight destination:me]]
   [fetch source:/api/users destination:#user-list]
+  [toggle patient:<.list > li/>]
 ```
 
 See [spec/wire-format.md](spec/wire-format.md) for the JSON wire format (for structured tool output).
 
 ## Specification
 
-- [ABNF Grammar](spec/lokascript-explicit-syntax.abnf) — formal syntax definition (v1.2.0)
+- [ABNF Grammar](spec/lokascript-explicit-syntax.abnf) — formal syntax definition (v2.0.0)
 - [Wire Format](spec/wire-format.md) — JSON representation for APIs and LLM tool use
 - [JSON Schema](spec/lse-wire-format.schema.json) — machine-readable schema for validation
 - [Streaming Convention](spec/streaming.md) — conventions for streaming LSE over WebSocket/SSE
 
 ## Spec Version
 
-1.2.0
+2.0.0
+
+### Breaking changes in 2.0.0
+
+- **Selector literals.** `<...selector.../>` is a new value form. It is the only way to write a selector containing a space, a combinator (`> + ~`), or a comma — previously impossible, since the tokenizer split on the space.
+- **Structural roles no longer guess.** In `body`, `then`, `else`, `condition`, `loop-body`, `variable`, `catch` and `finally`, a value starting with `[` is now **always** a nested command. Write `<[data-active]/>` for an attribute selector there. This fixes v1.x silently dropping zero-argument commands (`body:[halt]` parsed as a selector) and misparsing attribute selectors containing a space.
+- **Renderer wraps.** Selectors that would not round-trip bare are emitted wrapped: `patient:[data-active]` renders as `patient:<[data-active]/>`.

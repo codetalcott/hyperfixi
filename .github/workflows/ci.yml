@@ -57,12 +57,16 @@ jobs:
     if: github.event_name == 'pull_request'
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      protocol: ${{ steps.filter.outputs.protocol }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           # `code` is true when any changed file is OUTSIDE the doc set.
+          # `protocol` is true when the LSE spec, fixtures, or any of the four
+          # reference parsers changed — those live outside the npm workspaces and
+          # are otherwise never exercised by CI.
           filters: |
             code:
               - '**'
@@ -73,6 +77,8 @@ jobs:
               - '!**/*.txt'
               - '!.gitignore'
               - '!LICENSE'
+            protocol:
+              - 'protocol/**'
 
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
@@ -1006,7 +1012,75 @@ jobs:
           retention-days: 7
 
   # ============================================
-  # Job 10: Performance Benchmarks (main branch only)
+  # Job 10: LSE protocol conformance (4 reference parsers)
+  #
+  # protocol/ lives outside the npm workspaces, so `build` and `unit-tests` never
+  # touch it. A grammar change must land identically in TypeScript, Python, Go and
+  # Rust (protocol/docs/boundary.md Rule 3); without this job that fork is silent.
+  #
+  # Gated on `paths: protocol/**`, so it costs nothing on an ordinary PR.
+  # fail-fast: false so all four report independently — for a cross-language
+  # grammar change, knowing *which* parsers disagree is the whole signal.
+  # ============================================
+  protocol-conformance:
+    name: Protocol Conformance (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.protocol == 'true'
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [typescript, python, go, rust]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        if: matrix.lang == 'typescript'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: TypeScript conformance
+        if: matrix.lang == 'typescript'
+        working-directory: protocol/typescript
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+
+      - name: Setup Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python conformance
+        if: matrix.lang == 'python'
+        working-directory: protocol/python
+        run: |
+          pip install -e ".[dev]"
+          pytest -q
+
+      - name: Setup Go
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Go conformance
+        if: matrix.lang == 'go'
+        working-directory: protocol/go
+        run: go test ./...
+
+      - name: Setup Rust
+        if: matrix.lang == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust conformance
+        if: matrix.lang == 'rust'
+        working-directory: protocol/rust
+        run: cargo test
+
+  # ============================================
+  # Job 11: Performance Benchmarks (main branch only)
   # ============================================
   benchmarks:
     name: Performance Benchmarks

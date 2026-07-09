@@ -50,6 +50,7 @@ import {
   createDiagnosticCollector,
   filterBySeverity,
 } from './index';
+import type { EventHandlerSemanticNode } from './index';
 
 // ─── Factories ──────────────────────────────────────────────────────────────
 
@@ -264,6 +265,45 @@ describe('STRUCTURAL_ROLES', () => {
   });
 });
 
+// ─── Selector literals (v2.0) ────────────────────────────────────────────────
+
+describe('selector literals', () => {
+  it.each([
+    ['[toggle patient:<ul > li/>]', 'ul > li', 'complex'],
+    ['[toggle patient:<.a, .b/>]', '.a, .b', 'complex'],
+    ['[toggle patient:<[data-active]/>]', '[data-active]', 'attribute'],
+    ['[toggle patient:<div:has(> .child)/>]', 'div:has(> .child)', 'complex'],
+    ['[toggle patient:<[aria-label="Close menu"]/>]', '[aria-label="Close menu"]', 'attribute'],
+  ])('parses %s', (input, value, selectorKind) => {
+    const node = parseExplicit(input);
+    expect(node.roles.get('patient' as never)).toMatchObject({
+      type: 'selector',
+      value,
+      selectorKind,
+    });
+  });
+
+  it('rejects an unterminated selector literal', () => {
+    expect(() => parseExplicit('[toggle patient:<ul > li]')).toThrow(/Unterminated selector/);
+  });
+
+  it('treats a structural [...] value as a command, never a selector', () => {
+    // v1.x parsed `body:[halt]` as an attribute selector and dropped the command.
+    const node = parseExplicit('[on event:click body:[halt]]') as EventHandlerSemanticNode;
+    expect(node.kind).toBe('event-handler');
+    expect(node.body.map(b => b.action)).toEqual(['halt']);
+  });
+
+  it('keeps a bare attribute selector in a non-structural role', () => {
+    const node = parseExplicit('[toggle patient:[data-active]]');
+    expect(node.roles.get('patient' as never)).toMatchObject({
+      type: 'selector',
+      value: '[data-active]',
+      selectorKind: 'attribute',
+    });
+  });
+});
+
 // ─── Renderer ────────────────────────────────────────────────────────────────
 
 describe('renderExplicit', () => {
@@ -273,6 +313,24 @@ describe('renderExplicit', () => {
     expect(output).toContain('toggle');
     expect(output).toContain('patient');
     expect(output).toContain('.active');
+  });
+
+  it.each([
+    '[toggle patient:<ul > li/>]',
+    '[toggle patient:<.a, .b/>]',
+    '[toggle patient:[data-active]]',
+    '[on event:click body:[halt]]',
+    '[log patient:"he said \\"hi\\""]',
+  ])('parse → render → parse is identity for %s', input => {
+    const node = parseExplicit(input);
+    const reparsed = parseExplicit(renderExplicit(node));
+    expect(reparsed.action).toBe(node.action);
+    expect(reparsed.roles).toEqual(node.roles);
+  });
+
+  it('re-wraps a bare attribute selector so it re-parses as a selector', () => {
+    const node = parseExplicit('[toggle patient:[data-active]]');
+    expect(renderExplicit(node)).toBe('[toggle patient:<[data-active]/>]');
   });
 
   it('renders a document via renderDocument', () => {

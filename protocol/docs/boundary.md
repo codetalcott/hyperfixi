@@ -139,7 +139,7 @@ The hyperfixi layer is allowed to be hyperscript-centric — that's what it's fo
    - Update `spec/wire-format.md` and `spec/lse-wire-format.schema.json` to include the new JSON shape
    - Implement parsing/serialization in all four reference parsers
    - Add conformance fixtures in `test-fixtures/datetime.json`
-   - Bump the spec version (1.2.0 → 1.3.0)
+   - Bump the spec version (2.0.0 → 2.1.0)
 
 2. **Hyperfixi layer (after protocol change lands):**
    - Update `@lokascript/intent` to match the new reference parser behavior

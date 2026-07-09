@@ -74,5 +74,91 @@
         "destination": { "type": "selector", "value": "#container" }
       }
     }
+  },
+  {
+    "id": "sel-007",
+    "description": "Selector literal with a child combinator (v2.0)",
+    "input": "[toggle patient:<ul > li/>]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": "ul > li", "selectorKind": "complex" }
+      }
+    }
+  },
+  {
+    "id": "sel-008",
+    "description": "Selector literal carrying an attribute selector",
+    "input": "[add patient:<[data-active]/> destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": "[data-active]", "selectorKind": "attribute" },
+        "destination": { "type": "selector", "value": "#output", "selectorKind": "id" }
+      }
+    }
+  },
+  {
+    "id": "sel-009",
+    "description": "Selector literal forces a bare tag name to be a selector",
+    "input": "[remove patient:<div/>]",
+    "expected": {
+      "kind": "command",
+      "action": "remove",
+      "roles": {
+        "patient": { "type": "selector", "value": "div" }
+      }
+    }
+  },
+  {
+    "id": "sel-010",
+    "description": "Selector literal with a comma-separated group",
+    "input": "[toggle patient:<.a, .b/>]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".a, .b", "selectorKind": "complex" }
+      }
+    }
+  },
+  {
+    "id": "sel-011",
+    "description": "Interior > does not close the literal; only the trailing /> does",
+    "input": "[toggle patient:<div:has(> .child)/> destination:#out]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": "div:has(> .child)", "selectorKind": "complex" },
+        "destination": { "type": "selector", "value": "#out", "selectorKind": "id" }
+      }
+    }
+  },
+  {
+    "id": "sel-012",
+    "description": "A /> inside a quoted attribute value does not close the literal",
+    "input": "[toggle patient:<[data-x=\"a/>b\"]/>]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": "[data-x=\"a/>b\"]", "selectorKind": "attribute" }
+      }
+    }
+  },
+  {
+    "id": "sel-013",
+    "description": "Combinator wins over leading-character kind inference",
+    "input": "[toggle patient:<.a > .b/>]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".a > .b", "selectorKind": "complex" }
+      }
+    }
   }
 ]

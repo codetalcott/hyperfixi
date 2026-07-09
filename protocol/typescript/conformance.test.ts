@@ -75,6 +75,14 @@ function assertRolesMatch(
             `[${testId}] role "${roleName}" dataType`,
           ).toBe(expectedDT);
         }
+        // Only asserted when the fixture supplies it, so kind-less fixtures stay green.
+        const expectedKind = expectedVal['selectorKind'];
+        if (expectedKind !== undefined) {
+          expect(
+            actualVal.selectorKind,
+            `[${testId}] role "${roleName}" selectorKind`,
+          ).toBe(expectedKind);
+        }
       }
     }
   }
@@ -194,6 +202,9 @@ describe('round-trip.json', () => {
       const rendered = renderExplicit(node);
       const reparsed = parseExplicit(rendered);
 
+      // NOTE: the fixture's `roundtrip` field documents the rendered shape but is
+      // not compared literally — the renderer sorts roles alphabetically, so the
+      // token order differs from the input.
       expect(reparsed.action, `${id}: action preserved`).toBe(node.action);
       expect(
         Object.keys(reparsed.roles).length,
@@ -203,10 +214,20 @@ describe('round-trip.json', () => {
       for (const [roleName, origVal] of Object.entries(node.roles)) {
         const reparsedVal = reparsed.roles[roleName];
         expect(reparsedVal, `${id}: role "${roleName}" preserved`).toBeDefined();
+        // Comparing only `type` would let a selector silently degrade into a
+        // literal (or lose its kind) without failing.
         expect(
           reparsedVal.type,
           `${id}: role "${roleName}" type preserved`,
         ).toBe(origVal.type);
+        expect(
+          reparsedVal.value,
+          `${id}: role "${roleName}" value preserved`,
+        ).toBe(origVal.value);
+        expect(
+          reparsedVal.selectorKind,
+          `${id}: role "${roleName}" selectorKind preserved`,
+        ).toBe(origVal.selectorKind);
       }
     });
   }
@@ -297,6 +318,20 @@ describe('structural-roles.json', () => {
             eb['roles'] as Record<string, unknown>,
             `${id}.thenBranch[${i}]`,
           );
+        }
+      }
+
+      // Check body if present in expected — without this, a dropped zero-arg
+      // command in an event-handler body would go unnoticed.
+      const expectedBody = expected['body'] as Record<string, unknown>[] | undefined;
+      if (expectedBody) {
+        expect(node.body?.length, `${id}: body length`).toBe(expectedBody.length);
+        for (let i = 0; i < expectedBody.length; i++) {
+          const eb = expectedBody[i];
+          const ab = node.body![i];
+          expect(ab.kind, `${id}: body[${i}].kind`).toBe(eb['kind']);
+          expect(ab.action, `${id}: body[${i}].action`).toBe(eb['action']);
+          assertRolesMatch(ab.roles, eb['roles'] as Record<string, unknown>, `${id}.body[${i}]`);
         }
       }
     });

@@ -165,7 +165,9 @@ function buildProtocolSection(): PromptSection {
 3. No spaces around the colon in role:value pairs
 4. Strings with spaces must be quoted: \`patient:"hello world"\`
 5. Selectors start with \`#\`, \`.\`, \`[\`, \`@\`, or \`*\`
-6. Output must be valid bracket syntax: \`[action role:value ...]\``;
+6. A selector containing a space, a combinator (\`>\` \`+\` \`~\`), or a comma must use a selector literal: \`patient:<ul > li/>\`, \`patient:<.a, .b/>\`
+7. Inside a structural role (\`body\`, \`then\`, \`else\`, \`condition\`, \`loop-body\`, \`variable\`, \`catch\`, \`finally\`) a \`[...]\` value is always a nested command. Write an attribute selector there as \`condition:<[data-active]/>\`
+8. Output must be valid bracket syntax: \`[action role:value ...]\``;
 
   return {
     id: 'protocol',
@@ -180,6 +182,7 @@ function buildValueTypeSection(): PromptSection {
 
 | Type | Syntax | Example |
 |------|--------|---------|
+| Selector literal | Delimited by \`<\` and \`/>\` | \`<ul > li/>\`, \`<.a, .b/>\`, \`<[data-id]/>\` |
 | Selector | Starts with \`#\` \`.\` \`[\` \`@\` \`*\` | \`#button\`, \`.active\`, \`[data-id]\` |
 | String | Quoted with \`"\` or \`'\` | \`"hello world"\`, \`'json'\` |
 | Boolean | Exact: \`true\` / \`false\` | \`visible:true\` |

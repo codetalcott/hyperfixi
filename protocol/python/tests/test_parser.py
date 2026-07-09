@@ -28,8 +28,8 @@ class TestParseBasic:
         node = parse_explicit("[toggle patient:.active destination:#button]")
         assert node.kind == "command"
         assert node.action == "toggle"
-        assert node.roles["patient"] == SelectorValue(value=".active")
-        assert node.roles["destination"] == SelectorValue(value="#button")
+        assert node.roles["patient"] == SelectorValue(value=".active", selectorKind="class")
+        assert node.roles["destination"] == SelectorValue(value="#button", selectorKind="id")
 
     def test_command_name_lowercased(self):
         node = parse_explicit("[Toggle patient:.active]")

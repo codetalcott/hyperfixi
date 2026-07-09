@@ -89,6 +89,13 @@ func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expect
 					t.Errorf("[%s] Role %q dataType: got %q, want %q", testID, roleName, actual.DataType, expectedDT)
 				}
 			}
+
+			// Only asserted when the fixture supplies it, so kind-less fixtures stay green.
+			if expectedKind, ok := expected["selectorKind"].(string); ok {
+				if actual.SelectorKind != expectedKind {
+					t.Errorf("[%s] Role %q selectorKind: got %q, want %q", testID, roleName, actual.SelectorKind, expectedKind)
+				}
+			}
 		}
 	}
 }
@@ -306,6 +313,11 @@ func TestStructuralRolesConformance(t *testing.T) {
 
 			if thenData, ok := expected["thenBranch"].([]any); ok {
 				assertNodeArrayMatch(t, node.ThenBranch, thenData, id, "thenBranch")
+			}
+
+			// Without this, a dropped zero-arg command in an event-handler body goes unnoticed.
+			if bodyData, ok := expected["body"].([]any); ok {
+				assertNodeArrayMatch(t, node.Body, bodyData, id, "body")
 			}
 		})
 	}
@@ -1047,8 +1059,16 @@ func TestRoundTripConformance(t *testing.T) {
 					t.Errorf("role %q lost after round-trip", roleName)
 					continue
 				}
+				// Comparing only Type would let a selector silently degrade into a
+				// literal (or lose its kind) without failing.
 				if origVal.Type != reparsedVal.Type {
 					t.Errorf("role %q type changed: %q -> %q", roleName, origVal.Type, reparsedVal.Type)
+				}
+				if !valuesEqual(reparsedVal.Value, origVal.Value) {
+					t.Errorf("role %q value changed: %v -> %v", roleName, origVal.Value, reparsedVal.Value)
+				}
+				if origVal.SelectorKind != reparsedVal.SelectorKind {
+					t.Errorf("role %q selectorKind changed: %q -> %q", roleName, origVal.SelectorKind, reparsedVal.SelectorKind)
 				}
 			}
 		})

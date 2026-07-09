@@ -12,25 +12,81 @@ import { DEFAULT_REFERENCES, isValidReference } from './references';
 const DURATION_RE = /^(-?\d+(?:\.\d+)?)(ms|s|m|h)$/;
 const NUMBER_RE = /^-?\d+(?:\.\d+)?$/;
 
-/** Structural role names whose bracket-enclosed values may be nested commands. */
+/**
+ * Structural role names whose bracket-enclosed values are nested commands.
+ *
+ * In these roles a value starting with `[` is ALWAYS a nested command; write an
+ * attribute selector as a selector literal (`<[data-active]/>`). Prior to v2.0
+ * the parser guessed from the inner content, which silently dropped zero-argument
+ * commands — `[halt]` is both a valid command and a valid attribute selector.
+ */
 export const STRUCTURAL_ROLES = new Set([
-  'body', 'then', 'else', 'condition', 'loop-body', 'variable',
+  'body', 'then', 'else', 'condition', 'loop-body', 'variable', 'catch', 'finally',
 ]);
 
+/** Selector kinds inferred from a selector's text. */
+export type SelectorKind = 'id' | 'class' | 'attribute' | 'element' | 'complex';
+
 /**
- * Checks whether a bracket-enclosed value is a nested command (vs. an attribute selector).
- * A value starting with `[` is a nested command if the inner content (after stripping
- * outer `[]`) contains at least one ASCII space or `:` at bracket-depth 0.
+ * Infers a selector's kind. Combinators are tested first, so `.a > .b` is
+ * `complex` rather than `class`.
+ *
+ * Combinator characters inside a quoted span don't count: `[aria-label="Close
+ * menu"]` is an attribute selector, not a complex one.
  */
-function isNestedCommand(value: string): boolean {
-  const inner = value.slice(1, -1);
-  let depth = 0;
-  for (const ch of inner) {
-    if (ch === '[') depth++;
-    else if (ch === ']') depth--;
-    else if (depth === 0 && (ch === ' ' || ch === ':')) return true;
+export function inferSelectorKind(value: string): SelectorKind | undefined {
+  if (!value) return undefined;
+  if (hasUnquotedCombinator(value)) return 'complex';
+
+  const first = value[0];
+  if (first === '#') return 'id';
+  if (first === '.') return 'class';
+  if (first === '[') return 'attribute';
+  if (first === '*') return 'element';
+  return undefined;
+}
+
+function hasUnquotedCombinator(value: string): boolean {
+  let quote = '';
+  for (const ch of value) {
+    if (quote) {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === ' ' || ch === '>' || ch === '+' || ch === '~' || ch === ',') return true;
   }
   return false;
+}
+
+/** Expands the escape sequences defined by the grammar: \\ \" \' \n \r \t */
+export function unescapeString(s: string): string {
+  if (!s.includes('\\')) return s;
+
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\\' && i + 1 < s.length) {
+      const next = s[i + 1];
+      const mapped =
+        next === '\\' ? '\\'
+        : next === '"' ? '"'
+        : next === "'" ? "'"
+        : next === 'n' ? '\n'
+        : next === 'r' ? '\r'
+        : next === 't' ? '\t'
+        : '';
+      if (mapped) {
+        out += mapped;
+        i++;
+        continue;
+      }
+    }
+    out += s[i];
+  }
+  return out;
 }
 
 /** Returned when explicit syntax is malformed. */
@@ -115,8 +171,8 @@ export function parseExplicit(text: string, opts?: ParseOptions): SemanticNode {
     const roleName = token.slice(0, colonIdx);
     const valueStr = token.slice(colonIdx + 1);
 
-    // Nested bracket syntax for structural roles (body, then, else, condition, loop-body, variable)
-    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[') && isNestedCommand(valueStr)) {
+    // In a structural role, `[...]` is always a nested command.
+    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[')) {
       roles[roleName] = expressionValue(valueStr);
       continue;
     }
@@ -187,13 +243,23 @@ function extractStructuralBranch(
 
 /**
  * Tokenizes explicit syntax content.
- * Splits on spaces at bracket-depth 0 and outside quoted strings.
+ *
+ * Splits on spaces at bracket-depth 0, outside quoted strings, and outside
+ * selector literals (`<...selector.../>`). The branch order is normative:
+ * the string check precedes the selector check, so a `/>` inside a quoted
+ * string does not close the literal. A `<` opens a selector literal only at the
+ * start of a value — when the token buffer is empty or ends with `:` — so a
+ * stray `<` in a plain value cannot swallow the following token.
+ *
+ * `[` and `]` inside a selector literal never change `bracketDepth`; the
+ * closing `/>` already delimits them.
  */
 export function tokenize(content: string): string[] {
   const tokens: string[] = [];
   let current = '';
   let inString = false;
   let stringChar = '';
+  let inSelector = false;
   let bracketDepth = 0;
 
   for (let i = 0; i < content.length; i++) {
@@ -213,6 +279,18 @@ export function tokenize(content: string): string[] {
     if (ch === '"' || ch === "'") {
       inString = true;
       stringChar = ch;
+      current += ch;
+      continue;
+    }
+
+    if (inSelector) {
+      current += ch;
+      if (ch === '>' && current.endsWith('/>')) inSelector = false;
+      continue;
+    }
+
+    if (ch === '<' && (current === '' || current.endsWith(':'))) {
+      inSelector = true;
       current += ch;
       continue;
     }
@@ -247,13 +325,14 @@ export function tokenize(content: string): string[] {
 /**
  * Classifies a value string into a SemanticValue.
  * Detection priority (first match wins):
- *   1. selector  — starts with # . [ @ *
- *   2. string    — starts with " or '
- *   3. boolean   — exact match: true / false (case-sensitive)
- *   4. reference — matches a known reference name (case-insensitive)
- *   5. duration  — number followed by ms/s/m/h
- *   6. number    — integer or decimal
- *   7. plain     — fallback string
+ *   1. selector literal — `<...selector.../>`; delimiters stripped
+ *   2. selector  — starts with # . [ @ *
+ *   3. string    — starts with " or '
+ *   4. boolean   — exact match: true / false (case-sensitive)
+ *   5. reference — matches a known reference name (case-insensitive)
+ *   6. duration  — number followed by ms/s/m/h
+ *   7. number    — integer or decimal
+ *   8. plain     — fallback string
  */
 export function parseValue(
   valueStr: string,
@@ -263,31 +342,47 @@ export function parseValue(
 
   const first = valueStr[0];
 
-  // 1. CSS selector
+  // 1. Selector literal — the delimiters force selector interpretation, so a
+  //    bare tag name or an attribute selector with a space both land here.
+  if (first === '<') {
+    if (!valueStr.endsWith('/>')) {
+      throw new ParseError(
+        `Unterminated selector literal: ${JSON.stringify(valueStr)}. Expected a closing "/>"`,
+      );
+    }
+    const inner = valueStr.slice(1, -2);
+    if (!inner) {
+      throw new ParseError(`Empty selector literal: ${JSON.stringify(valueStr)}`);
+    }
+    return selectorValue(inner, inferSelectorKind(inner));
+  }
+
+  // 2. CSS selector
   if (first === '#' || first === '.' || first === '[' || first === '@' || first === '*') {
-    return selectorValue(valueStr);
+    return selectorValue(valueStr, inferSelectorKind(valueStr));
   }
 
-  // 2. String literal
+  // 3. String literal — escapes are expanded here and re-applied on render, so
+  //    a value containing a quote survives parse → render → parse unchanged.
   if (first === '"' || first === "'") {
-    return literalValue(valueStr.slice(1, -1), 'string');
+    return literalValue(unescapeString(valueStr.slice(1, -1)), 'string');
   }
 
-  // 3. Boolean (case-sensitive)
+  // 4. Boolean (case-sensitive)
   if (valueStr === 'true') return literalValue(true, 'boolean');
   if (valueStr === 'false') return literalValue(false, 'boolean');
 
-  // 4. Reference (case-insensitive)
+  // 5. Reference (case-insensitive)
   if (isValidReference(valueStr, refs)) {
     return referenceValue(valueStr.toLowerCase());
   }
 
-  // 5. Duration
+  // 6. Duration
   if (DURATION_RE.test(valueStr)) {
     return literalValue(valueStr, 'duration');
   }
 
-  // 6. Number
+  // 7. Number
   const numMatch = NUMBER_RE.exec(valueStr);
   if (numMatch) {
     const f = parseFloat(numMatch[0]);
@@ -300,6 +395,6 @@ export function parseValue(
     }
   }
 
-  // 7. Plain string fallback
+  // 8. Plain string fallback
   return literalValue(valueStr, 'string');
 }
