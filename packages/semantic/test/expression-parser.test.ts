@@ -264,6 +264,22 @@ describe('ExpressionParser', () => {
       expect(result.success).toBe(true);
       expect(result.node?.type).toBe('objectLiteral');
     });
+
+    // A context-variable name is an ordinary property name in key position.
+    // `{ body: ... }` is the common case — it's a `fetch` request option, not a
+    // reference to the document body — and it used to throw 'Expected property
+    // name', silently degrading the whole object to an identifier node.
+    it.each(['body', 'me', 'it', 'result', 'event', 'target', 'detail'])(
+      'parses `%s` as an object key, not a context variable',
+      key => {
+        const result = parseExpression(`{ ${key}: 'a=1' }`);
+        expect(result.success).toBe(true);
+        expect(result.node).toMatchObject({
+          type: 'objectLiteral',
+          properties: [{ key }],
+        });
+      }
+    );
   });
 
   describe('Function Calls', () => {

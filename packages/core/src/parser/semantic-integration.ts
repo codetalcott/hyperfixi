@@ -420,10 +420,6 @@ export class SemanticIntegrationAdapter {
           modifiers['as'] = exprNode; // Response format (json, text, html)
           break;
 
-        case 'method':
-          modifiers['method'] = exprNode; // HTTP method (GET, POST)
-          break;
-
         case 'style':
           modifiers['with'] = exprNode;
           break;
@@ -433,7 +429,9 @@ export class SemanticIntegrationAdapter {
           modifiers['when'] = exprNode;
           break;
 
-        // Unknown roles become modifiers with role name as key
+        // Unknown roles become modifiers with role name as key. `method` lands
+        // here: no command reads a `method` modifier (FetchCommand takes the HTTP
+        // method from the evaluated `with` options object), so it needs no case.
         default:
           modifiers[role] = exprNode;
       }

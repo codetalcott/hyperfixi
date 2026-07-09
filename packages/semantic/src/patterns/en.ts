@@ -9,6 +9,14 @@ import type { LanguagePattern } from '../types';
 import { englishProfile } from '../generators/profiles/english';
 import { generatePatternsForLanguage } from '../generators/pattern-generator';
 
+// The fetch patterns live in their own leaf module, shared with
+// buildPatternsForLanguage(). This module used to carry a byte-identical copy of
+// them, and since it is the list the registered `en` language module actually
+// uses, editing the leaf alone had no effect at runtime. Importing the leaf (not
+// the patterns/index barrel) keeps this module's tree-shaking property and leaves
+// exactly one definition.
+import { fetchPatternsEn } from './languages/en/fetch';
+
 // Import from consolidated pattern files (Phase 3.2)
 import { getTogglePatternsForLanguage } from './toggle';
 import { getPutPatternsForLanguage } from './put';
@@ -19,49 +27,6 @@ import { getWaitPatternsForLanguage } from './wait';
 // =============================================================================
 // Hand-crafted English-only patterns
 // =============================================================================
-
-/**
- * English: "fetch /url as json" with response type.
- */
-const fetchWithResponseTypeEnglish: LanguagePattern = {
-  id: 'fetch-en-with-response-type',
-  language: 'en',
-  command: 'fetch',
-  priority: 90,
-  template: {
-    format: 'fetch {source} as {responseType}',
-    tokens: [
-      { type: 'literal', value: 'fetch' },
-      { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
-      { type: 'literal', value: 'as' },
-      { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
-    ],
-  },
-  extraction: {
-    source: { position: 1 },
-    responseType: { marker: 'as' },
-  },
-};
-
-/**
- * English: "fetch /url" without "from" preposition.
- */
-const fetchSimpleEnglish: LanguagePattern = {
-  id: 'fetch-en-simple',
-  language: 'en',
-  command: 'fetch',
-  priority: 80,
-  template: {
-    format: 'fetch {source}',
-    tokens: [
-      { type: 'literal', value: 'fetch' },
-      { type: 'role', role: 'source' },
-    ],
-  },
-  extraction: {
-    source: { position: 1 },
-  },
-};
 
 /**
  * English: "swap <strategy> <target>" without prepositions.
@@ -393,8 +358,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
 
   // 2. English-only hand-crafted patterns
   patterns.push(
-    fetchWithResponseTypeEnglish,
-    fetchSimpleEnglish,
+    ...fetchPatternsEn,
     swapElementEnglish,
     swapSimpleEnglish,
     repeatUntilEventFromEnglish,

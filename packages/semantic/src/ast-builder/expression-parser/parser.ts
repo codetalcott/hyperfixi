@@ -496,7 +496,10 @@ export class ExpressionParser {
         let key: string;
         if (this.check(TokenType.STRING)) {
           key = this.advance().value.slice(1, -1);
-        } else if (this.check(TokenType.IDENTIFIER)) {
+        } else if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.CONTEXT_VAR)) {
+          // A context-variable name is an ordinary property name in key position:
+          // `{ body: 'a=1' }` is a fetch option, not a reference to `body`. Same for
+          // `me`, `it`, `result`, `event`, `target`, `detail`, `window`, `document`.
           key = this.advance().value;
         } else {
           throw new Error('Expected property name');

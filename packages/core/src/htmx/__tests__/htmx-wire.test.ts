@@ -40,9 +40,9 @@ afterEach(() => {
 /**
  * Emits the handler for `config`, then runs just its command body.
  *
- * `traditional: true` mirrors what the hx bundles' `executeOnElement` does. The
- * semantic parser drops `fetch`'s `with { ... }` clause, so a request driven
- * through it would carry neither headers nor body — see the guard test below.
+ * Runs through the DEFAULT parser, exactly as the hx bundles' `executeOnElement`
+ * does. `fetch` is on the parser's `skipSemanticParsing` list, so its
+ * `with { ... }` options clause reaches `parseFetchCommand` and stays on the wire.
  */
 async function issueRequest(config: HtmxConfig, tag = 'button'): Promise<CapturedRequest> {
   const element = document.createElement(tag);
@@ -51,7 +51,7 @@ async function issueRequest(config: HtmxConfig, tag = 'button'): Promise<Capture
   const source = translateToHyperscript(config, element);
   // Drop the `on <event>` head; execute the commands directly.
   const body = source.split('\n').slice(1).join('\n').trim();
-  await hyperscript.eval(body, element, { traditional: true });
+  await hyperscript.eval(body, element);
 
   expect(captured, `no request was issued for:\n${source}`).not.toBeNull();
   return captured as CapturedRequest;
@@ -119,7 +119,7 @@ describe('htmx request wire format', () => {
     const source = translateToHyperscript({ method: 'POST', url: '/api/submit' }, form);
     const body = source.split('\n').slice(1).join('\n').trim();
     // `halt the event` needs an event; run only the fetch onward.
-    await hyperscript.eval(body.replace(/^halt the event\s*/, ''), form, { traditional: true });
+    await hyperscript.eval(body.replace(/^halt the event\s*/, ''), form);
 
     expect(captured).not.toBeNull();
     expect(captured!.init?.body).toBe('email=a%40b.com&n=2');
@@ -148,18 +148,37 @@ describe('htmx request wire format', () => {
   });
 });
 
-describe('parser gap this relies on', () => {
-  // Guards the reason `executeOnElement` forces `traditional: true`. If the
-  // semantic parser ever learns to carry `fetch`'s `with` options, this test
-  // fails and the workaround can be reconsidered.
-  it('the semantic parser still drops the fetch `with` clause', async () => {
+describe('the default parser carries fetch options', () => {
+  // `fetch` is on the parser's `skipSemanticParsing` list, so `with { ... }`
+  // reaches `parseFetchCommand` instead of being eaten at a command boundary.
+  // Without that, the semantic parser captures only the URL — at confidence 1.0,
+  // with no warning — and method/body never reach the wire.
+  it('transmits method and body, and parses the response as JSON', async () => {
+    // The suite-wide stub answers text/html; `as json` needs a JSON body or
+    // `response.json()` rejects before any assertion runs.
+    vi.stubGlobal('fetch', (url: unknown, init?: RequestInit) => {
+      captured = { url: String(url), init };
+      return Promise.resolve(
+        new Response('{"ok":true}', {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+    });
+
     const element = document.createElement('button');
     document.body.appendChild(element);
 
-    await hyperscript.eval("fetch '/x' with { method: 'POST', body: 'a=1' } as html", element);
+    await hyperscript.eval(
+      "fetch '/x' with { method: 'POST', body: 'a=1' } as json then put it.ok into my innerHTML",
+      element
+    );
 
     expect(captured).not.toBeNull();
-    expect(captured!.init?.method ?? null).toBeNull();
-    expect(captured!.init?.body ?? null).toBeNull();
+    expect(captured!.init?.method).toBe('POST');
+    expect(captured!.init?.body).toBe('a=1');
+    // `it.ok` only resolves if `as json` parsed the response into an object;
+    // a `text` fetch would leave `it` a string and yield ''.
+    expect(element.innerHTML).toBe('true');
   });
 });

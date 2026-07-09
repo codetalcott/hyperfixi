@@ -10,6 +10,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkDbStamp, getDefaultDbPath } from '@hyperfixi/patterns-reference';
 import { TestOrchestrator } from './orchestrator';
+import { diagnoseCoverage } from './tools/diagnose-coverage';
 import type { TestConfig, LanguageCode } from './types';
 
 /**
@@ -172,6 +173,11 @@ function parseArgs(): TestConfig {
         config.saveBaseline = true;
         break;
 
+      case '--diagnose-coverage':
+        // Read-only measurement pass; short-circuits main() before any gate.
+        config.diagnoseCoverage = true;
+        break;
+
       default:
         if (arg && arg.startsWith('-')) {
           console.error(`Unknown option: ${arg}`);
@@ -227,6 +233,12 @@ OPTIONS:
       --categories <cats>      Filter by categories (comma-separated)
       --limit <n>              Patterns per language in quick mode (default: 10)
       --save-baseline          Save current results as new baseline
+      --diagnose-coverage      Report how often the semantic parser matched a
+                               pattern that ignored part of its input, per
+                               language, with sample dropped spans. Read-only:
+                               never gates and never writes a baseline. Run it
+                               before considering an input-coverage penalty in
+                               the confidence model.
   -h, --help                   Show this help message
 
 EXAMPLES:
@@ -256,6 +268,24 @@ async function main(): Promise<void> {
 
     // --save-baseline needs the regression reporter wired so it can persist.
     if (config.saveBaseline) config.regression = true;
+
+    // --diagnose-coverage is a measurement pass, not a gate: it reads the corpus,
+    // parses each row, and reports the `unconsumed-input` firing rate. It compares
+    // nothing against the baseline and writes nothing, so it runs before (and
+    // instead of) the regression machinery. It DOES execute dist/, so a stale
+    // build would mis-measure — warn rather than refuse, since no baseline is at
+    // risk.
+    if (config.diagnoseCoverage) {
+      const staleDists = findStaleDists();
+      if (staleDists.length > 0) {
+        console.warn(
+          `⚠ Stale dist/ in: ${staleDists.join(', ')} — these numbers describe the built\n` +
+            '  output, not your checkout. Rebuild first: npm run test:multilingual:build-deps\n'
+        );
+      }
+      await diagnoseCoverage(config);
+      process.exit(0);
+    }
 
     // DB freshness guard: refuse to run a regression/baseline compare against a
     // patterns.db generated from *different* source than is currently checked out

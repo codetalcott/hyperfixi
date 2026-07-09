@@ -17,6 +17,7 @@ import type {
   LanguagePattern,
   LanguageToken,
   TokenStream,
+  PatternMatchResult,
   Diagnostic,
 } from '../types';
 import {
@@ -205,6 +206,40 @@ function parseDiagnostic(
 function withDiagnostics<T extends SemanticNode>(node: T, diagnostics: Diagnostic[]): T {
   if (diagnostics.length === 0) return node;
   return { ...node, diagnostics } as T;
+}
+
+/** Longest dropped span reported; keeps a runaway tail out of the diagnostic. */
+const MAX_UNCONSUMED_SPAN_CHARS = 120;
+
+/**
+ * Describe the suffix of `input` that a winning command pattern never consumed,
+ * or null when the pattern accounted for the whole token stream.
+ *
+ * Purely observational: callers attach the result as a diagnostic. Confidence is
+ * computed from role coverage alone and is deliberately left untouched here —
+ * penalizing an unconsumed tail is a scoring change that would move the
+ * multilingual fidelity baseline across all 24 languages, and must be measured
+ * (see the `--diagnose-coverage` sweep) before it is attempted.
+ */
+function describeUnconsumedInput(
+  match: PatternMatchResult,
+  tokens: TokenStream,
+  input: string
+): string | null {
+  const total = tokens.tokens.length;
+  if (match.consumedTokens >= total) return null;
+
+  const first = tokens.tokens[match.consumedTokens];
+  const last = tokens.tokens[total - 1];
+  if (!first || !last) return null;
+
+  const text = input.slice(first.position.start, last.position.end);
+  if (!text.trim()) return null;
+
+  const shown =
+    text.length > MAX_UNCONSUMED_SPAN_CHARS ? `${text.slice(0, MAX_UNCONSUMED_SPAN_CHARS)}…` : text;
+  const dropped = total - match.consumedTokens;
+  return `pattern ${match.pattern.id} left ${dropped} token(s) unconsumed: "${shown}"`;
 }
 
 /**
@@ -990,6 +1025,18 @@ export class SemanticParserImpl implements ISemanticParser {
           'pattern-match'
         )
       );
+      // Input-coverage signal (diagnostic ONLY — it must not move the score).
+      //
+      // The confidence model scores how many of the PATTERN's roles were filled,
+      // never how much of the INPUT was consumed. A short pattern that fills its
+      // roles therefore reports confidence 1.0 while the unmatched tail is dropped
+      // in silence — the defect behind `fetch … with { … }`, and the reason Stages
+      // 0 and 0.5 above exist. Recording the dropped span makes that blindness
+      // observable before anyone tries to price it into the score.
+      const unconsumed = describeUnconsumedInput(commandMatch, tokens, parseInput);
+      if (unconsumed) {
+        diagnostics.push(parseDiagnostic(unconsumed, 'warning', 'unconsumed-input'));
+      }
       return withDiagnostics(this.buildCommand(commandMatch, language), diagnostics);
     }
     diagnostics.push(

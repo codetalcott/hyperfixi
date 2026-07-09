@@ -2524,6 +2524,68 @@ is a real `_hyperscript` compatibility gap worth its own focused fix + test.
 target` idiom yields null even when a match exists (`target.closest("li")` works). Lower
    priority — workaround is clean. Fix: the `closest <selector/> to <expr>` evaluator.
 
+## Input coverage — the confidence model's blind spot (opened 2026-07-09)
+
+`scoreRoleCoverage` (`packages/semantic/src/parser/confidence-model.ts`) scores how many of
+**the pattern's own** roles were filled, never how much of the **input** was consumed. A short
+pattern that fills its roles scores 1.0 while its unmatched tail is discarded in silence.
+Stages 0 and 0.5 of `parseInternal` are prior workarounds for exactly this; `fetch … with { … }`
+was the third instance.
+
+Landed as a **diagnostic only** — the parser emits an `unconsumed-input` warning-severity
+diagnostic (surfaced as `compile(...).meta.warnings`); no score and no parse outcome changed.
+Measure it with the read-only sweep, which never gates and never writes a baseline:
+
+```bash
+cd packages/testing-framework
+npx tsx src/multilingual/cli.ts --full --bundle browser-priority --diagnose-coverage
+```
+
+**First measurement (2026-07-09, browser-priority, 3696 rows): 158 fire = 4.3%**, evenly spread
+(SVO ~4.5–5.8%, SOV six ~1.9%). The samples are **not** benign residue — they are the same class
+of defect, e.g. `eventsource ChatStream from /events on message put it into #messages end end`
+matching `eventsource-en-generated` at **confidence 1.00** with the whole 11-token block body
+dropped. `socket` and `worker` do the same. (Note those three, plus `live`/`intercept`, are the
+schemas that already warn `SCHEMA_NO_REQUIRED_ROLES` — zero required roles means role coverage is
+hard-coded to 1.)
+
+Known limitation: the diagnostic fires only on the **Stage-2 plain-command path**. The
+event-handler, compound, and SOV/VSO stages re-tokenize sub-segments and expose no single
+consumed count, so a `fetch … with method:"POST"` inside `on submit …` is not counted yet.
+
+Before turning this into a **scoring penalty** (which would move the baseline across all 24
+languages, so it needs its own PR):
+
+1. Thread consumed/total into `ConfidenceContext` — it currently has no token list, no input
+   length, no consumed count. This changes the injectable `ConfidenceModel` contract.
+2. Compute coverage for **all** stages, or the penalty asymmetrically biases pattern selection
+   toward whichever stage isn't measured.
+3. Re-run `--diagnose-coverage` and confirm the firings are genuine drops, not optional-token
+   residue, per language.
+4. Fix the `SCHEMA_NO_REQUIRED_ROLES` commands first — a zero-required-role schema scores 1.0
+   unconditionally, so a coverage penalty would swing them hardest.
+5. Regenerate the baseline on a fresh dist + freshly `populate`d patterns.db, and confirm the
+   six-signal ratchet stays green.
+
+If it lands well, re-evaluate whether Stages 0 / 0.5 can be simplified — they exist only because
+this signal was missing.
+
+### Deferred: multilingual `fetch … with { … }` (Part 2b)
+
+The semantic schema now models the options object (`fetchSchema`'s `style` role, marker `with`),
+the matcher folds a braced run into an exact-source `expression` value, and the AST builder emits
+a real `objectLiteral` into `modifiers.with`. **English only** — the 23 non-English handcrafted
+fetch patterns (`packages/semantic/src/patterns/fetch.ts`, priority 105) have no `with` variant,
+and the corpus's `fetch … with method:"POST" body:form` **naked named-arg** form is not captured
+in any language (no braces, so the brace fold never fires; core handles it via
+`parseFetchNakedNamedArgs`).
+
+Constraint that makes this all-or-nothing: **the R1 role-fidelity ratchet scores every language
+against the English reference parse.** Teaching English a role the other 23 lack _lowers_ their
+R1. This landed safely only because no corpus row uses the braced form, so English gained no role
+on the corpus. Adding naked-named-arg capture therefore requires doing all 24 languages in one
+change, then regenerating the baseline.
+
 ## Recommended sequence
 
 1. ~~**Track 1a — eliminate imperative JS**~~ **DONE** (PRs #440–#442): Draggable/Sortable/Resizable
