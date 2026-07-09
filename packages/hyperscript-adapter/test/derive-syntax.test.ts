@@ -67,6 +67,9 @@ describe('deriveEnglishSyntax', () => {
   it('derives fetch with renderOverride on source (no preposition)', () => {
     expect(derived.fetch).toEqual([
       ['source', ''],
+      // The request-options object: `fetch /api with { method: 'POST' }`. It rides
+      // the `style` role, whose English marker is `with` — same as hide/show.
+      ['style', 'with'],
       ['responseType', 'as'],
       ['method', 'via'],
       ['destination', 'on'],
