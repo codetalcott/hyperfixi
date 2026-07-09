@@ -1130,7 +1130,7 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "{patient} に {destination} で {style} 送信",
+          "format": "に {destination} {patient} で {style} 送信",
           "tokens": [
             {
               "type": "role",
@@ -1188,7 +1188,7 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "{patient} で {instrument} 変換",
+          "format": "で {instrument} {patient} 変換",
           "tokens": [
             {
               "type": "role",
@@ -1298,7 +1298,7 @@
         "command": "perform",
         "priority": 100,
         "template": {
-          "format": "{patient} で {source} 実行",
+          "format": "で {source} {patient} 実行",
           "tokens": [
             {
               "type": "group",
@@ -2048,7 +2048,7 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "{patient} 로 {destination} 로 {style} 제출",
+          "format": "로 {destination} {patient} 로 {style} 제출",
           "tokens": [
             {
               "type": "role",
@@ -2106,7 +2106,7 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "{patient} 로 {instrument} 변환",
+          "format": "로 {instrument} {patient} 변환",
           "tokens": [
             {
               "type": "role",
@@ -2216,7 +2216,7 @@
         "command": "perform",
         "priority": 100,
         "template": {
-          "format": "{patient} 로 {source} 실행",
+          "format": "로 {source} {patient} 실행",
           "tokens": [
             {
               "type": "group",
@@ -2966,7 +2966,7 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "{patient} e {destination} olarak {style} gönder",
+          "format": "e {destination} {patient} olarak {style} gönder",
           "tokens": [
             {
               "type": "role",
@@ -3024,7 +3024,7 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "{patient} ile {instrument} dönüştür",
+          "format": "ile {instrument} {patient} dönüştür",
           "tokens": [
             {
               "type": "role",
@@ -3134,7 +3134,7 @@
         "command": "perform",
         "priority": 100,
         "template": {
-          "format": "{patient} ile {source} yürüt",
+          "format": "ile {source} {patient} yürüt",
           "tokens": [
             {
               "type": "group",

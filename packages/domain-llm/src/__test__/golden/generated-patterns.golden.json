@@ -449,7 +449,7 @@
         "command": "ask",
         "priority": 100,
         "template": {
-          "format": "{patient} から {source} として {manner} 聞く",
+          "format": "から {source} {patient} として {manner} 聞く",
           "tokens": [
             {
               "type": "group",
@@ -577,7 +577,7 @@
         "command": "analyze",
         "priority": 100,
         "template": {
-          "format": "{patient} として {manner} 分析",
+          "format": "として {manner} {patient} 分析",
           "tokens": [
             {
               "type": "literal",
@@ -891,7 +891,7 @@
         "command": "ask",
         "priority": 100,
         "template": {
-          "format": "{patient} 에서 {source} 로 {manner} 질문",
+          "format": "에서 {source} {patient} 로 {manner} 질문",
           "tokens": [
             {
               "type": "group",
@@ -1019,7 +1019,7 @@
         "command": "analyze",
         "priority": 100,
         "template": {
-          "format": "{patient} 로 {manner} 분석",
+          "format": "로 {manner} {patient} 분석",
           "tokens": [
             {
               "type": "role",
@@ -1333,7 +1333,7 @@
         "command": "ask",
         "priority": 100,
         "template": {
-          "format": "{patient} dan {source} olarak {manner} sor",
+          "format": "dan {source} {patient} olarak {manner} sor",
           "tokens": [
             {
               "type": "group",
@@ -1461,7 +1461,7 @@
         "command": "analyze",
         "priority": 100,
         "template": {
-          "format": "{patient} olarak {manner} çözümle",
+          "format": "olarak {manner} {patient} çözümle",
           "tokens": [
             {
               "type": "role",

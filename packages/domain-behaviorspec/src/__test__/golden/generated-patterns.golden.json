@@ -545,7 +545,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} {action} を {target} に {destination} 操作",
+          "format": "{actor} を {target} {action} に {destination} 操作",
           "tokens": [
             {
               "type": "role",
@@ -616,7 +616,7 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} {assertion} と {value} 期待",
+          "format": "{target} と {value} {assertion} 期待",
           "tokens": [
             {
               "type": "role",
@@ -1023,7 +1023,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} {action} 을 {target} 에 {destination} 동작",
+          "format": "{actor} 을 {target} {action} 에 {destination} 동작",
           "tokens": [
             {
               "type": "role",
@@ -1094,7 +1094,7 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} {assertion} 으로 {value} 기대",
+          "format": "{target} 으로 {value} {assertion} 기대",
           "tokens": [
             {
               "type": "role",
@@ -1740,7 +1740,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} {action} üzerinde {target} içine {destination} eylem",
+          "format": "{actor} üzerinde {target} {action} içine {destination} eylem",
           "tokens": [
             {
               "type": "role",
@@ -1811,7 +1811,7 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} {assertion} diyen {value} bekle",
+          "format": "{target} diyen {value} {assertion} bekle",
           "tokens": [
             {
               "type": "role",

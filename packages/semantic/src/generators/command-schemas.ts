@@ -26,9 +26,18 @@ export interface RoleSpec {
   readonly expectedTypes: Array<ExpectedType>;
   /** Default value if not provided */
   readonly default?: SemanticValue;
-  /** Position hint for SVO languages (higher = earlier) */
+  /**
+   * Position hint for SVO languages. **1-based ascending: lower = earlier**
+   * (position 1 = first), matching semantic's own sorter
+   * (`parser/utils/role-positioning.ts`, `a - b`).
+   *
+   * WARNING: the `@lokascript/framework` pattern generator sorts the OPPOSITE
+   * way (descending, higher = earlier). Reusing these schemas in a
+   * framework-based domain requires inverting positions — see
+   * `packages/domain-voice/src/schemas/behavior.ts` `invertRolePositions`.
+   */
   readonly svoPosition?: number;
-  /** Position hint for SOV languages (higher = earlier) */
+  /** Position hint for SOV languages (1-based ascending: lower = earlier). See {@link svoPosition}. */
   readonly sovPosition?: number;
   /**
    * Override the default role marker for this command.

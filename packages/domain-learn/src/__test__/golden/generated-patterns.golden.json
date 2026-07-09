@@ -526,7 +526,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "{patient} {destination} 追加",
+          "format": "{destination} {patient} 追加",
           "tokens": [
             {
               "type": "role",
@@ -559,7 +559,7 @@
         "command": "remove",
         "priority": 100,
         "template": {
-          "format": "{patient} {source} 削除",
+          "format": "{source} {patient} 削除",
           "tokens": [
             {
               "type": "role",
@@ -592,7 +592,7 @@
         "command": "toggle",
         "priority": 100,
         "template": {
-          "format": "{patient} {destination} 切り替え",
+          "format": "{destination} {patient} 切り替え",
           "tokens": [
             {
               "type": "role",
@@ -625,7 +625,7 @@
         "command": "put",
         "priority": 100,
         "template": {
-          "format": "{patient} {destination} 置",
+          "format": "{destination} {patient} 置",
           "tokens": [
             {
               "type": "role",
@@ -658,7 +658,7 @@
         "command": "set",
         "priority": 100,
         "template": {
-          "format": "を {destination} に {patient} 設定",
+          "format": "に {patient} を {destination} 設定",
           "tokens": [
             {
               "type": "role",
@@ -845,7 +845,7 @@
         "command": "send",
         "priority": 100,
         "template": {
-          "format": "{patient} に {destination} 送",
+          "format": "に {destination} {patient} 送",
           "tokens": [
             {
               "type": "group",
@@ -968,7 +968,7 @@
         "command": "take",
         "priority": 100,
         "template": {
-          "format": "{patient} {source} 取",
+          "format": "{source} {patient} 取",
           "tokens": [
             {
               "type": "role",
@@ -2587,7 +2587,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "{patient} 에 {destination} 추가",
+          "format": "에 {destination} {patient} 추가",
           "tokens": [
             {
               "type": "group",
@@ -2632,7 +2632,7 @@
         "command": "remove",
         "priority": 100,
         "template": {
-          "format": "{patient} 에서 {source} 제거",
+          "format": "에서 {source} {patient} 제거",
           "tokens": [
             {
               "type": "group",
@@ -2677,7 +2677,7 @@
         "command": "toggle",
         "priority": 100,
         "template": {
-          "format": "{patient} 에 {destination} 토글",
+          "format": "에 {destination} {patient} 토글",
           "tokens": [
             {
               "type": "group",
@@ -2722,7 +2722,7 @@
         "command": "put",
         "priority": 100,
         "template": {
-          "format": "{patient} 에 {destination} 넣",
+          "format": "에 {destination} {patient} 넣",
           "tokens": [
             {
               "type": "group",
@@ -2767,7 +2767,7 @@
         "command": "set",
         "priority": 100,
         "template": {
-          "format": "를 {destination} 으로 {patient} 설정",
+          "format": "으로 {patient} 를 {destination} 설정",
           "tokens": [
             {
               "type": "role",
@@ -2954,7 +2954,7 @@
         "command": "send",
         "priority": 100,
         "template": {
-          "format": "{patient} 에게 {destination} 보내",
+          "format": "에게 {destination} {patient} 보내",
           "tokens": [
             {
               "type": "group",
@@ -3083,7 +3083,7 @@
         "command": "take",
         "priority": 100,
         "template": {
-          "format": "{patient} 에서 {source} 가져오",
+          "format": "에서 {source} {patient} 가져오",
           "tokens": [
             {
               "type": "group",
@@ -3670,7 +3670,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "{patient} a {destination} ekle",
+          "format": "a {destination} {patient} ekle",
           "tokens": [
             {
               "type": "group",
@@ -3716,7 +3716,7 @@
         "command": "remove",
         "priority": 100,
         "template": {
-          "format": "{patient} dan {source} kaldir",
+          "format": "dan {source} {patient} kaldir",
           "tokens": [
             {
               "type": "group",
@@ -3762,7 +3762,7 @@
         "command": "toggle",
         "priority": 100,
         "template": {
-          "format": "{patient} da {destination} degistir",
+          "format": "da {destination} {patient} degistir",
           "tokens": [
             {
               "type": "group",
@@ -3808,7 +3808,7 @@
         "command": "put",
         "priority": 100,
         "template": {
-          "format": "{patient} a {destination} koy",
+          "format": "a {destination} {patient} koy",
           "tokens": [
             {
               "type": "group",
@@ -3854,7 +3854,7 @@
         "command": "set",
         "priority": 100,
         "template": {
-          "format": "{destination} e {patient} ayarla",
+          "format": "e {patient} {destination} ayarla",
           "tokens": [
             {
               "type": "role",
@@ -4029,7 +4029,7 @@
         "command": "send",
         "priority": 100,
         "template": {
-          "format": "{patient} -e {destination} gonder",
+          "format": "-e {destination} {patient} gonder",
           "tokens": [
             {
               "type": "group",
@@ -4162,7 +4162,7 @@
         "command": "take",
         "priority": 100,
         "template": {
-          "format": "{patient} dan {source} al",
+          "format": "dan {source} {patient} al",
           "tokens": [
             {
               "type": "group",
