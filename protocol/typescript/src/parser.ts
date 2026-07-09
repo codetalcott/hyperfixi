@@ -83,7 +83,12 @@ export function parseExplicit(text: string, opts?: ParseOptions): SemanticNode {
   }
 
   const command = tokens[0].toLowerCase();
-  const roles: Record<string, SemanticValue> = {};
+  // Role names come from untrusted input. A plain object literal would route a
+  // role named `__proto__` through Object.prototype's setter, silently dropping
+  // the role and reparenting this object. The dict/map-based reference parsers
+  // (Python/Go/Rust) keep such a name as an ordinary key; a null-prototype
+  // object makes this parser agree with them.
+  const roles: Record<string, SemanticValue> = Object.create(null) as Record<string, SemanticValue>;
 
   for (let i = 1; i < tokens.length; i++) {
     const token = tokens[i];
