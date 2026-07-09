@@ -2,9 +2,14 @@
  * Tests for htmx attribute translation
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { translateToHyperscript, hasHtmxAttributes, type HtmxConfig } from '../htmx-translator.js';
+import {
+  translateToHyperscript,
+  hasHtmxAttributes,
+  resetUnsupportedModifierWarnings,
+  type HtmxConfig,
+} from '../htmx-translator.js';
 import { HtmxAttributeProcessor } from '../htmx-attribute-processor.js';
 
 // Set up DOM environment
@@ -39,24 +44,25 @@ describe('htmx-translator', () => {
     });
 
     describe('POST requests', () => {
-      it('translates hx-post to fetch via POST', () => {
+      it('carries the method in the fetch options', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           method: 'POST',
           url: '/api/users',
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain("fetch '/api/users' via POST");
+        expect(result).toContain("fetch '/api/users' with { method: 'POST' }");
       });
 
-      it('includes form values for form elements', () => {
+      it('sends form values as a form-encoded body', () => {
         const form = document.createElement('form');
         const config: HtmxConfig = {
           method: 'POST',
           url: '/api/submit',
         };
         const result = translateToHyperscript(config, form);
-        expect(result).toContain('with values of me');
+        expect(result).toContain('body: me as FormEncoded');
+        expect(result).toContain("'Content-Type': 'application/x-www-form-urlencoded'");
         expect(result).toContain('on submit');
         expect(result).toContain('halt the event');
       });
@@ -70,7 +76,7 @@ describe('htmx-translator', () => {
           url: '/api/resource',
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain("fetch '/api/resource' via PUT");
+        expect(result).toContain("fetch '/api/resource' with { method: 'PUT' }");
       });
 
       it('translates hx-patch', () => {
@@ -80,7 +86,7 @@ describe('htmx-translator', () => {
           url: '/api/resource',
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain("fetch '/api/resource' via PATCH");
+        expect(result).toContain("fetch '/api/resource' with { method: 'PATCH' }");
       });
 
       it('translates hx-delete', () => {
@@ -90,7 +96,7 @@ describe('htmx-translator', () => {
           url: '/api/resource',
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain("fetch '/api/resource' via DELETE");
+        expect(result).toContain("fetch '/api/resource' with { method: 'DELETE' }");
       });
     });
 
@@ -371,6 +377,156 @@ describe('htmx-translator', () => {
         const result = translateToHyperscript(config, button);
         expect(result).toContain('.once');
       });
+
+      // The old regex only matched `\d+`, so fractional and minute durations
+      // were dropped on the floor.
+      it.each([
+        ['delay:1.5s', '.debounce(1500)'],
+        ['delay:2m', '.debounce(120000)'],
+        ['delay:500', '.debounce(500)'],
+        ['throttle:0.5s', '.throttle(500)'],
+      ])('parses duration %s', (modifier, expected) => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: `click ${modifier}` };
+        expect(translateToHyperscript(config, button)).toContain(expected);
+      });
+
+      it('emits dot-modifiers before the event filter (parser requires this order)', () => {
+        const input = document.createElement('input');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/a',
+          trigger: "keyup[key=='Enter'] delay:300ms",
+        };
+        expect(translateToHyperscript(config, input)).toContain(
+          "on keyup.debounce(300)[key=='Enter']"
+        );
+      });
+
+      it('preserves an event filter that was previously dropped', () => {
+        const input = document.createElement('input');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: "keyup[key=='Enter']" };
+        expect(translateToHyperscript(config, input)).toContain("on keyup[key=='Enter']");
+      });
+
+      it.each([
+        ['from:#modal', 'from <#modal/>'],
+        ['from:.panel', 'from <.panel/>'],
+        ['from:body', 'from body'],
+        ['from:window', 'from window'],
+        ['from:this', 'from me'],
+      ])('wires %s', (modifier, expected) => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: `click ${modifier}` };
+        expect(translateToHyperscript(config, button)).toContain(expected);
+      });
+
+      it('wires target: to a matches filter', () => {
+        const div = document.createElement('div');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: 'click target:.child' };
+        expect(translateToHyperscript(config, div)).toContain("[target matches '.child']");
+      });
+
+      it('combines an event filter with target:', () => {
+        const div = document.createElement('div');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/a',
+          trigger: "keyup[key=='Enter'] target:.child",
+        };
+        expect(translateToHyperscript(config, div)).toContain(
+          "[(key=='Enter') and (target matches '.child')]"
+        );
+      });
+
+      it('quotes a value containing spaces', () => {
+        const div = document.createElement('div');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: 'click from:"#a .b"' };
+        expect(translateToHyperscript(config, div)).toContain('from <#a .b/>');
+      });
+
+      it('warns rather than silently dropping an unsupported modifier', () => {
+        resetUnsupportedModifierWarnings();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', trigger: 'click consume queue:all' };
+        translateToHyperscript(config, button);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('consume'));
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('queue'));
+        warn.mockRestore();
+      });
+
+      // `matches` only does CSS matching for `.#:[`-led or bare-tag selectors;
+      // a combinator would silently evaluate to false, so we refuse it instead.
+      it.each([['click target:"ul > li"'], ['click target:<ul > li/>']])(
+        'warns rather than emitting a matches filter that always fails: %s',
+        trigger => {
+          resetUnsupportedModifierWarnings();
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+          const div = document.createElement('div');
+          const result = translateToHyperscript({ method: 'GET', url: '/a', trigger }, div);
+          expect(result).not.toContain('matches');
+          expect(warn).toHaveBeenCalledWith(expect.stringContaining('target'));
+          warn.mockRestore();
+        }
+      );
+
+      // An unquoted complex selector splits into bare keys, exactly as in htmx.
+      // The stray tokens now surface as warnings instead of vanishing.
+      it('warns about the stray tokens of an unquoted complex selector', () => {
+        resetUnsupportedModifierWarnings();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const div = document.createElement('div');
+        translateToHyperscript({ method: 'GET', url: '/a', trigger: 'click target:ul > li' }, div);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('li'));
+        warn.mockRestore();
+      });
+    });
+
+    describe('hx-swap modifiers', () => {
+      it('parses a style followed by timing modifiers', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/a',
+          swap: 'outerHTML swap:200ms settle:100ms',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain('then wait 200ms');
+        expect(result).toContain("set me's outerHTML to it");
+        expect(result).toContain('then wait 100ms');
+        // Timing must bracket the swap, not replace the style.
+        expect(result.indexOf('wait 200ms')).toBeLessThan(result.indexOf('outerHTML to it'));
+        expect(result.indexOf('outerHTML to it')).toBeLessThan(result.indexOf('wait 100ms'));
+      });
+
+      it('falls back to the default style when only modifiers are given', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', swap: 'swap:200ms' };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain('then wait 200ms');
+        expect(result).toContain('put it into me');
+      });
+
+      // `morph:innerHTML` is a style, but it also looks like a `key:value` pair.
+      it.each([
+        ['morph:innerHTML', 'morph innerHTML of me with it'],
+        ['morph:outerHTML', 'morph me with it'],
+      ])('keeps %s as a style, not a modifier', (swap, expected) => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', swap };
+        expect(translateToHyperscript(config, button)).toContain(expected);
+      });
+
+      it('warns on an unsupported swap modifier', () => {
+        resetUnsupportedModifierWarnings();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/a', swap: 'innerHTML scroll:top' };
+        translateToHyperscript(config, button);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('scroll'));
+        warn.mockRestore();
+      });
     });
 
     describe('confirmation dialog', () => {
@@ -471,7 +627,7 @@ describe('htmx-translator', () => {
     });
 
     describe('hx-vals', () => {
-      it('includes JSON vals in fetch body for POST', () => {
+      it('re-serializes JSON vals into a form-encoded body for POST', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           method: 'POST',
@@ -479,8 +635,10 @@ describe('htmx-translator', () => {
           vals: '{"key": "value", "id": 123}',
         };
         const result = translateToHyperscript(config, button);
-        // The vals should be included in the request body
-        expect(result).toContain('{"key": "value", "id": 123}');
+        expect(result).toContain("body: { 'key': 'value', 'id': 123 } as FormEncoded");
+        expect(result).toContain("'Content-Type': 'application/x-www-form-urlencoded'");
+        // The raw attribute text must never survive into the generated source.
+        expect(result).not.toContain('{"key": "value", "id": 123}');
       });
 
       it('includes vals for PUT requests', () => {
@@ -491,37 +649,127 @@ describe('htmx-translator', () => {
           vals: '{"status": "active"}',
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain('{"status": "active"}');
+        expect(result).toContain("body: { 'status': 'active' } as FormEncoded");
+      });
+
+      it('accepts HCON vals, not just JSON', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          vals: 'status:active retries:3',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("body: { 'status': 'active', 'retries': 3 } as FormEncoded");
+      });
+
+      it('appends vals to the query string for GET', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/api/search',
+          vals: 'q:hello page:2',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("fetch '/api/search?q=hello&page=2'");
+        expect(result).not.toContain('body:');
+      });
+
+      it('merges into an existing query string for GET', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = { method: 'GET', url: '/api/search?a=1', vals: 'b:2' };
+        expect(translateToHyperscript(config, button)).toContain("fetch '/api/search?a=1&b=2'");
+      });
+
+      it('escapes quotes rather than letting attribute text become code', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          // A naive interpolation would close the literal and inject a command.
+          vals: `{"x": "' then remove <body/> then set y to '"}`,
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("\\' then remove <body/> then set y to \\'");
+        expect(result).not.toContain("'x': '' then remove");
+      });
+
+      it('drops prototype keys', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          vals: '{"__proto__": {"polluted": true}, "ok": 1}',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("body: { 'ok': 1 } as FormEncoded");
+        expect(result).not.toContain('__proto__');
+      });
+
+      it('warns and ignores a js: prefix instead of evaluating it', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          vals: 'js:{token: getToken()}',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).not.toContain('getToken');
+        expect(result).not.toContain('body:');
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('js:'));
+        warn.mockRestore();
       });
     });
 
     describe('hx-headers', () => {
-      it('stores headers in config for processing', () => {
-        // Note: headers are collected in config but not yet translated to hyperscript
-        // They would be used by the runtime for fetch options
+      it('threads headers into the fetch options', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           method: 'GET',
           url: '/api/data',
           headers: '{"X-Custom-Header": "value"}',
         };
-        // Verify headers are stored in config (translation doesn't include them yet)
-        expect(config.headers).toBe('{"X-Custom-Header": "value"}');
         const result = translateToHyperscript(config, button);
-        // Hyperscript is generated even with headers in config
-        expect(result).toContain("fetch '/api/data'");
+        expect(result).toContain(
+          "fetch '/api/data' with { headers: { 'X-Custom-Header': 'value' } }"
+        );
       });
 
-      it('stores multiple headers in config', () => {
+      it('threads multiple headers', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           method: 'POST',
           url: '/api/submit',
           headers: '{"Authorization": "Bearer token", "X-Request-Id": "123"}',
         };
-        // Verify headers are preserved in config
-        expect(config.headers).toContain('Authorization');
-        expect(config.headers).toContain('X-Request-Id');
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("'Authorization': 'Bearer token'");
+        expect(result).toContain("'X-Request-Id': '123'");
+      });
+
+      it('carries a Django-style CSRF token header', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          headers: '{"X-CSRFToken": "abc123"}',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("headers: { 'X-CSRFToken': 'abc123' }");
+      });
+
+      it('does not override an author-supplied Content-Type', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          headers: '{"Content-Type": "application/json"}',
+          vals: 'a:1',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain("'Content-Type': 'application/json'");
+        expect(result).not.toContain('x-www-form-urlencoded');
       });
     });
 

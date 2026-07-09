@@ -250,6 +250,12 @@ export interface HtmxUsage {
   usesConfirm: boolean;
 
   /**
+   * `hx-swap` carries a `swap:`/`settle:` timing modifier, which the translator
+   * emits as `wait <n>ms`. Optional so older fixture literals stay valid.
+   */
+  needsSwapTiming?: boolean;
+
+  /**
    * htmx v4 reactive/streaming surface detected. Each flag pulls in the
    * corresponding bundle module; collectively they're what makes
    * `hyperfixi-hx-v4.js` the right premade choice when none would do.

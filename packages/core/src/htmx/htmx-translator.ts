@@ -9,8 +9,14 @@
  * - fixi uses fx-action + fx-method (default: GET)
  * - htmx default swap: innerHTML
  * - fixi default swap: outerHTML
+ *
+ * Attribute values follow htmx's HCON grammar (see hcon.ts): a head token
+ * (event name / swap style) followed by `key:value` modifiers. Modifiers we
+ * cannot express in hyperscript are reported through `warnUnsupportedModifier`
+ * rather than dropped in silence.
  */
 
+import { parse as hconParse, type HconObject, type HconValue } from './hcon.js';
 import { getHooks } from './i18n-hooks.js';
 
 export interface HtmxConfig {
@@ -71,6 +77,168 @@ const TRIGGER_MAP: Record<string, string> = {
   mouseleave: 'mouseleave',
 };
 
+/** Keys that must never be emitted into generated code or a live object. */
+const PROTO_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** Content type htmx uses for `hx-vals` on non-GET requests. */
+const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded';
+
+const warnedModifiers = new Set<string>();
+
+/**
+ * Reports an htmx modifier that HCON parsed but hyperscript cannot express.
+ * Deduped, because the processor translates every matching element separately.
+ */
+function warnUnsupportedModifier(name: string, kind: 'trigger' | 'swap'): void {
+  const key = `${kind}:${name}`;
+  if (warnedModifiers.has(key)) return;
+  warnedModifiers.add(key);
+  console.warn(
+    `[hyperfixi] htmx ${kind} modifier "${name}" is recognized but not supported; ignoring it.`
+  );
+}
+
+/** Deduped warning for anything else the translator declines to do. */
+function warnOnce(message: string): void {
+  if (warnedModifiers.has(message)) return;
+  warnedModifiers.add(message);
+  console.warn(`[hyperfixi] ${message}`);
+}
+
+/**
+ * htmx evaluates `js:`-prefixed attribute values. We never do — the whole point
+ * of re-serializing these attributes is that their text stays data.
+ */
+function warnJsPrefixIgnored(attribute: string): void {
+  warnOnce(`${attribute} uses a "js:" prefix, which is not evaluated; ignoring it.`);
+}
+
+/** Test seam: the dedupe cache above would otherwise leak across test cases. */
+export function resetUnsupportedModifierWarnings(): void {
+  warnedModifiers.clear();
+}
+
+/**
+ * Quotes a string as a hyperscript single-quoted literal. Every value that
+ * originates in an HTML attribute passes through here, so attribute text can
+ * never escape into command position.
+ */
+function quoteHs(value: string): string {
+  return `'${value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')}'`;
+}
+
+function emitHyperscriptValue(value: HconValue): string {
+  if (value === null) return 'null';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'string') return quoteHs(value);
+  if (Array.isArray(value)) return `[${value.map(emitHyperscriptValue).join(', ')}]`;
+  return emitHyperscriptObjectLiteral(value);
+}
+
+/**
+ * Renders a parsed HCON object as a hyperscript object literal. Prototype keys
+ * are dropped at every level — HCON's `{`-prefixed JSON fast path can mint an
+ * own `__proto__` key (see hcon.ts).
+ */
+function emitHyperscriptObjectLiteral(obj: HconObject): string {
+  const entries = Object.entries(obj)
+    .filter(([key]) => !PROTO_KEYS.has(key))
+    .map(([key, value]) => `${quoteHs(key)}: ${emitHyperscriptValue(value)}`);
+  return entries.length ? `{ ${entries.join(', ')} }` : '{}';
+}
+
+const DURATION_RE = /^([\d.]+)\s*(ms|s|m)?$/;
+
+/**
+ * `200ms` / `1.5s` / `2m` / bare `500` → milliseconds. HCON coerces a bare
+ * number for us, so accept both. Returns null when the value isn't a duration.
+ */
+function parseDurationMs(raw: HconValue): number | null {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? Math.round(raw) : null;
+  if (typeof raw !== 'string') return null;
+
+  const match = raw.trim().match(DURATION_RE);
+  if (!match) return null;
+
+  const amount = parseFloat(match[1]);
+  if (!Number.isFinite(amount)) return null;
+
+  const unit = match[2] ?? 'ms';
+  const factor = unit === 's' ? 1000 : unit === 'm' ? 60_000 : 1;
+  return Math.round(amount * factor);
+}
+
+/** Event sources the `from` clause accepts as bare identifiers. */
+const FROM_KEYWORDS = new Set(['window', 'document', 'body', 'me']);
+
+/**
+ * Builds the `from <source>` clause of an event handler. The clause takes a
+ * single token, so htmx's compound forms (`closest form`) have no equivalent.
+ */
+function buildFromClause(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (value === 'this') return 'me';
+  if (FROM_KEYWORDS.has(value)) return value;
+
+  if (/^(closest|find|next|previous)\s+/.test(value)) {
+    warnUnsupportedModifier(`from:${value.split(/\s+/)[0]}`, 'trigger');
+    return null;
+  }
+  return `<${value}/>`;
+}
+
+/**
+ * `matches` only does CSS matching when the right-hand side *looks* like a
+ * selector — a leading `.#:[` or a bare tag name (see expressions/logical).
+ * Anything else (e.g. `ul > li`) would silently evaluate to false, so refuse it.
+ */
+const MATCHES_COMPATIBLE = /^[.#:[]|^[a-zA-Z][\w-]*$/;
+
+function buildTargetFilter(raw: string): string | null {
+  const value = raw.trim();
+  if (!MATCHES_COMPATIBLE.test(value)) {
+    warnUnsupportedModifier('target', 'trigger');
+    return null;
+  }
+  return `target matches ${quoteHs(value)}`;
+}
+
+/** htmx allows `js:`/`javascript:` values. We parse literals only; never eval. */
+function isJsPrefixed(value: string): boolean {
+  return value.startsWith('js:') || value.startsWith('javascript:');
+}
+
+/**
+ * Appends static HCON values to a URL's query string. Used for GET, where htmx
+ * encodes `hx-vals` into the query rather than a body. URLSearchParams
+ * percent-encodes quotes, so the result is always safe inside `quoteHs`.
+ */
+function appendQueryString(url: string, values: HconObject): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (PROTO_KEYS.has(key) || value === null || value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(key, String(item));
+    } else if (typeof value === 'object') {
+      params.append(key, JSON.stringify(value));
+    } else {
+      params.append(key, String(value));
+    }
+  }
+  const query = params.toString();
+  if (!query) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}${query}`;
+}
+
+function hasContentType(headers: HconObject): boolean {
+  return Object.keys(headers).some(key => key.toLowerCase() === 'content-type');
+}
+
 /**
  * Resolve an `hx-target` attribute value to its hyperscript-selector equivalent.
  * Handles the shortcut forms (`this` / `closest <sel>` / `find <sel>` / `next <sel>` /
@@ -122,72 +290,97 @@ export function resolveHxTarget(target: string): string {
  * trigger-specific hyperscript form). Identity by default; vocab
  * impls walk the per-element lang scope.
  */
-function parseTrigger(
-  trigger: string,
-  translateEventName: (value: string) => string
-): { event: string; modifiers: string[] } {
-  // Split on first space to separate event from modifiers
-  const parts = trigger.trim().split(/\s+/);
-  const eventPart = parts[0];
-  const modifiers = parts.slice(1);
+interface TriggerSpec {
+  event: string;
+  /** Contents of an `event[filter]` head, e.g. `key=='Enter'`. */
+  filter?: string;
+  modifiers: HconObject;
+}
 
-  // Handle event filters like keyup[key=='Enter']
-  const filterMatch = eventPart.match(/^(\w+)\[(.+)\]$/);
-  if (filterMatch) {
-    const localized = translateEventName(filterMatch[1]);
-    return {
-      event: TRIGGER_MAP[localized] || localized,
-      modifiers: [`filter: ${filterMatch[2]}`, ...modifiers],
-    };
+/** Head token is `event` or `event[filter]`; everything after it is HCON. */
+const TRIGGER_HEAD_RE = /^(\S+\[[^\]]*\]|\S+)\s*(.*)$/;
+const EVENT_FILTER_RE = /^(\w+)\[(.+)\]$/;
+
+function parseTrigger(trigger: string, translateEventName: (value: string) => string): TriggerSpec {
+  const match = trigger.trim().match(TRIGGER_HEAD_RE);
+  if (!match) return { event: 'click', modifiers: {} };
+
+  let head = match[1];
+  const rest = match[2] ?? '';
+  const modifiers = rest ? hconParse(rest) : {};
+
+  // Unterminated filter (`click[ctrlKey`): keep the event, drop the fragment.
+  if (/\[[^\]]*$/.test(head)) {
+    warnUnsupportedModifier('unterminated event filter', 'trigger');
+    head = head.slice(0, head.indexOf('['));
   }
 
-  const localized = translateEventName(eventPart);
-  return {
-    event: TRIGGER_MAP[localized] || localized,
-    modifiers,
-  };
+  const filterMatch = head.match(EVENT_FILTER_RE);
+  if (filterMatch) {
+    const localized = translateEventName(filterMatch[1]);
+    return { event: TRIGGER_MAP[localized] || localized, filter: filterMatch[2], modifiers };
+  }
+
+  const localized = translateEventName(head);
+  return { event: TRIGGER_MAP[localized] || localized, modifiers };
 }
 
 /**
- * Translate trigger modifiers to hyperscript event modifiers
+ * Builds the handler head from a trigger spec.
+ *
+ * The clause order is load-bearing: the parser accepts
+ * `on <event><.dotmods>[<filter>] from <source>` and rejects any other
+ * arrangement (notably `[filter]` before the dot-modifiers).
  */
-function translateModifiers(modifiers: string[]): string {
-  const result: string[] = [];
+function buildTriggerClause(spec: TriggerSpec): string {
+  let debounceMs: number | null = null;
+  let throttleMs: number | null = null;
+  let once = false;
+  let from: string | null = null;
+  let targetFilter: string | null = null;
 
-  for (const mod of modifiers) {
-    // delay:Nms
-    const delayMatch = mod.match(/^delay:(\d+)(ms|s)?$/);
-    if (delayMatch) {
-      const value = delayMatch[1];
-      const unit = delayMatch[2] || 'ms';
-      result.push(`.debounce(${value}${unit === 's' ? '000' : ''})`);
-      continue;
-    }
-
-    // throttle:Nms
-    const throttleMatch = mod.match(/^throttle:(\d+)(ms|s)?$/);
-    if (throttleMatch) {
-      const value = throttleMatch[1];
-      const unit = throttleMatch[2] || 'ms';
-      result.push(`.throttle(${value}${unit === 's' ? '000' : ''})`);
-      continue;
-    }
-
-    // once
-    if (mod === 'once') {
-      result.push('.once');
-      continue;
-    }
-
-    // changed
-    if (mod === 'changed') {
-      // This is handled differently - filter for value changes
-      // For now, skip it (native behavior for input/change events)
-      continue;
+  for (const [key, raw] of Object.entries(spec.modifiers)) {
+    switch (key) {
+      case 'delay':
+        debounceMs = parseDurationMs(raw);
+        if (debounceMs === null) warnUnsupportedModifier('delay', 'trigger');
+        break;
+      case 'throttle':
+        throttleMs = parseDurationMs(raw);
+        if (throttleMs === null) warnUnsupportedModifier('throttle', 'trigger');
+        break;
+      case 'once':
+        once = raw !== false;
+        break;
+      case 'changed':
+        // Native behaviour for input/change events; nothing to emit.
+        break;
+      case 'from':
+        from = buildFromClause(String(raw));
+        break;
+      case 'target':
+        targetFilter = buildTargetFilter(String(raw));
+        break;
+      default:
+        warnUnsupportedModifier(key, 'trigger');
     }
   }
 
-  return result.join('');
+  // Fixed order, so output doesn't depend on attribute authoring order.
+  let dots = '';
+  if (debounceMs !== null) dots += `.debounce(${debounceMs})`;
+  if (throttleMs !== null) dots += `.throttle(${throttleMs})`;
+  if (once) dots += '.once';
+
+  const filters = [spec.filter, targetFilter].filter(Boolean) as string[];
+  const filterClause =
+    filters.length === 0
+      ? ''
+      : filters.length === 1
+        ? `[${filters[0]}]`
+        : `[(${filters[0]}) and (${filters[1]})]`;
+
+  return `on ${spec.event}${dots}${filterClause}${from ? ` from ${from}` : ''}`;
 }
 
 /**
@@ -209,6 +402,59 @@ function getDefaultTrigger(element: Element): string {
   }
 
   return 'click';
+}
+
+interface SwapSpec {
+  style: string;
+  modifiers: HconObject;
+}
+
+/**
+ * Splits `hx-swap` into its head style token and HCON modifiers, e.g.
+ * `innerHTML swap:200ms settle:100ms`.
+ *
+ * The SWAP_MAP membership test must precede the `modifier:`-shape test:
+ * `morph:innerHTML` is a *style*, but it also looks like a `key:value` pair.
+ */
+function parseSwapSpec(swap: string | undefined, defaultStyle: string): SwapSpec {
+  const spec = (swap ?? '').trim();
+  if (!spec) return { style: defaultStyle, modifiers: {} };
+
+  const head = spec.split(/\s+/)[0];
+  if (Object.prototype.hasOwnProperty.call(SWAP_MAP, head) || !/^\S*:/.test(spec)) {
+    return { style: head, modifiers: hconParse(spec.slice(head.length)) };
+  }
+  // Modifiers only — the style falls back to the caller's default.
+  return { style: defaultStyle, modifiers: hconParse(spec) };
+}
+
+/**
+ * htmx's `swap:` delays the swap; `settle:` delays whatever follows it. Both
+ * become `wait <n>ms` around the swap command.
+ */
+function buildSwapTimings(modifiers: HconObject): {
+  swapWaitMs: number | null;
+  settleWaitMs: number | null;
+} {
+  let swapWaitMs: number | null = null;
+  let settleWaitMs: number | null = null;
+
+  for (const [key, raw] of Object.entries(modifiers)) {
+    switch (key) {
+      case 'swap':
+        swapWaitMs = parseDurationMs(raw);
+        if (swapWaitMs === null) warnUnsupportedModifier('swap', 'swap');
+        break;
+      case 'settle':
+        settleWaitMs = parseDurationMs(raw);
+        if (settleWaitMs === null) warnUnsupportedModifier('settle', 'swap');
+        break;
+      default:
+        warnUnsupportedModifier(key, 'swap');
+    }
+  }
+
+  return { swapWaitMs, settleWaitMs };
 }
 
 /**
@@ -289,10 +535,8 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
   // localized event names (e.g. Spanish `clic` → `click`) before
   // TRIGGER_MAP / runtime listener registration. Identity by default.
   const triggerStr = config.trigger || getDefaultTrigger(element);
-  const { event, modifiers } = parseTrigger(triggerStr, value =>
-    getHooks().eventNameOf(element, value)
-  );
-  const modifierStr = translateModifiers(modifiers);
+  const triggerSpec = parseTrigger(triggerStr, value => getHooks().eventNameOf(element, value));
+  const triggerClause = buildTriggerClause(triggerSpec);
 
   // Confirmation dialog
   if (config.confirm) {
@@ -305,47 +549,124 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
     commands.push('halt the event');
   }
 
-  // Build fetch command
-  let fetchCmd = `fetch '${config.url}'`;
-
-  if (config.method && config.method !== 'GET') {
-    fetchCmd += ` via ${config.method}`;
-  }
-
-  // Include form values for forms or if vals specified
-  if (tagName === 'form') {
-    fetchCmd += ' with values of me';
-  } else if (config.vals) {
-    // Parse JSON vals and include them
-    fetchCmd += ` with ${config.vals}`;
-  }
-
-  fetchCmd += ' as html';
-  commands.push(fetchCmd);
+  commands.push(buildFetchCommand(config, tagName));
 
   // Build swap command
   const target = config.target ? resolveHxTarget(config.target) : 'me';
-  const swap = config.swap || 'innerHTML';
-  const swapCmd = buildSwapCommand(target, swap, false);
+  const { style, modifiers: swapModifiers } = parseSwapSpec(config.swap, 'innerHTML');
+  const { swapWaitMs, settleWaitMs } = buildSwapTimings(swapModifiers);
+  const swapCmd = buildSwapCommand(target, style, false);
 
+  if (swapWaitMs !== null) {
+    commands.push(`then wait ${swapWaitMs}ms`);
+  }
   if (swapCmd) {
     commands.push(`then ${swapCmd}`);
+  }
+  if (settleWaitMs !== null) {
+    commands.push(`then wait ${settleWaitMs}ms`);
   }
 
   // URL management
   if (config.pushUrl) {
     const url = config.pushUrl === true ? config.url : config.pushUrl;
-    commands.push(`then push url '${url}'`);
+    commands.push(`then push url ${quoteHs(url)}`);
   } else if (config.replaceUrl) {
     const url = config.replaceUrl === true ? config.url : config.replaceUrl;
-    commands.push(`then replace url '${url}'`);
+    commands.push(`then replace url ${quoteHs(url)}`);
   }
 
   // Assemble the event handler
-  const handlerCode = `on ${event}${modifierStr}\n  ${commands.join('\n  ')}`;
+  const handlerCode = `${triggerClause}\n  ${commands.join('\n  ')}`;
   parts.push(handlerCode);
 
   return parts.join('\n');
+}
+
+/**
+ * Builds the `fetch` command, including the `with { headers, body }` options.
+ *
+ * `hx-vals` and `hx-headers` are parsed as HCON (or JSON) and re-emitted as a
+ * hyperscript object literal, so attribute text is always data and never code.
+ * Values are sent the way htmx sends them: query string for GET, an
+ * `application/x-www-form-urlencoded` body otherwise. That encoding is what lets
+ * server frameworks that read form fields — e.g. Django's `csrfmiddlewaretoken`
+ * out of `request.POST` — see the values at all; a JSON body would not appear
+ * there.
+ */
+function buildFetchCommand(config: HtmxConfig, tagName: string): string {
+  const isGet = !config.method || config.method === 'GET';
+
+  const headers: HconObject = {};
+  if (config.headers) {
+    if (isJsPrefixed(config.headers.trim())) {
+      warnJsPrefixIgnored('hx-headers');
+    } else {
+      Object.assign(headers, hconParse(config.headers));
+    }
+  }
+
+  let vals: HconObject | null = null;
+  if (config.vals) {
+    if (isJsPrefixed(config.vals.trim())) {
+      warnJsPrefixIgnored('hx-vals');
+    } else {
+      vals = hconParse(config.vals);
+    }
+  }
+
+  let url = config.url as string;
+  let bodyExpr: string | null = null;
+
+  if (tagName === 'form') {
+    if (vals && Object.keys(vals).length) {
+      warnOnce('hx-vals is not merged with form values; the form fields win.');
+    }
+    if (isGet) {
+      // htmx encodes a GET form's fields into the query string. The fields are
+      // only known at event time, so there is nothing to emit statically.
+      warnOnce('GET form values are not appended to the query string yet.');
+    } else {
+      // `me as FormEncoded`, not `values of me as FormEncoded`: `values of me`
+      // parses as a property access (`me.values`), which is undefined on a form.
+      // The FormEncoded conversion extracts an element's fields for us.
+      bodyExpr = 'me as FormEncoded';
+    }
+  } else if (vals && Object.keys(vals).length) {
+    if (isGet) {
+      url = appendQueryString(url, vals);
+    } else {
+      bodyExpr = `${emitHyperscriptObjectLiteral(vals)} as FormEncoded`;
+    }
+  }
+
+  // A form-encoded body is a plain string; without this the browser would label
+  // it text/plain and the server would not parse any fields out of it.
+  if (bodyExpr && !hasContentType(headers)) {
+    headers['Content-Type'] = FORM_CONTENT_TYPE;
+  }
+
+  // The method goes inside the options object rather than into a `via <METHOD>`
+  // clause. `via` exists only in the hybrid parser; in the main parser it is an
+  // unrecognized token that halts the modifier loop, so `via POST with {...}`
+  // loses BOTH the method and the whole `with` clause. `with { method: ... }` is
+  // read by fetch's RequestInit allowlist and works in every parser.
+  const withParts: string[] = [];
+  if (config.method && config.method !== 'GET') {
+    withParts.push(`method: ${quoteHs(config.method)}`);
+  }
+  if (Object.keys(headers).length) {
+    withParts.push(`headers: ${emitHyperscriptObjectLiteral(headers)}`);
+  }
+  if (bodyExpr) {
+    withParts.push(`body: ${bodyExpr}`);
+  }
+
+  let fetchCmd = `fetch ${quoteHs(url)}`;
+  if (withParts.length) {
+    fetchCmd += ` with { ${withParts.join(', ')} }`;
+  }
+  return `${fetchCmd} as html`;
 }
 
 /**

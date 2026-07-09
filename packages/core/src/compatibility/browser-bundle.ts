@@ -200,8 +200,8 @@ const hyperfixiAPI = {
     return hyperscript.compile(code, { language });
   },
   execute: hyperscript.execute,
-  run: async (code: string, context?: any) => {
-    return hyperscript.eval(code, context);
+  run: async (code: string, context?: any, options?: any) => {
+    return hyperscript.eval(code, context, options);
   },
   createContext: hyperscript.createContext,
   createRuntime: hyperscript.createRuntime,
