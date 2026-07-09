@@ -1036,6 +1036,27 @@ describe('v1.2: diagnostics', () => {
     expect(node.diagnostics).toHaveLength(1);
     expect(node.diagnostics![0].code).toBe('SCHEMA_VALUE_TYPE_MISMATCH');
     expect(node.diagnostics![0].severity).toBe('error');
+    expect(node.diagnostics![0].role).toBe('patient');
+  });
+
+  // `role` is required by the wire format's Diagnostic shape. Both directions
+  // used to drop it, and the fixtures happened to omit it, so nothing noticed.
+  it('preserves a diagnostic `role` across a protocol-JSON round-trip', () => {
+    const json: ProtocolNodeJSON = {
+      kind: 'command',
+      action: 'toggle',
+      roles: { patient: { type: 'literal', value: 'hello', dataType: 'string' } },
+      diagnostics: [
+        {
+          level: 'error',
+          role: 'patient',
+          message: "toggle.patient expects type [selector], got 'literal'",
+          code: 'SCHEMA_VALUE_TYPE_MISMATCH',
+        },
+      ],
+    };
+    expect(fromProtocolJSON(json).diagnostics![0].role).toBe('patient');
+    expect(toProtocolJSON(fromProtocolJSON(json))).toEqual(json);
   });
 
   describe('fixture conformance: type-constraints.json', () => {

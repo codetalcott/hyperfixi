@@ -153,6 +153,9 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
   if (node.diagnostics && node.diagnostics.length > 0) {
     result.diagnostics = node.diagnostics.map(d => {
       const json: ProtocolDiagnosticJSON = { level: d.severity, message: d.message };
+      // `role` is part of the wire format's Diagnostic shape; dropping it here
+      // silently lost which role a type-constraint diagnostic was about.
+      if (d.role) json.role = d.role;
       if (d.code) json.code = d.code;
       if (d.source) json.source = d.source;
       if (d.suggestions && d.suggestions.length > 0) json.suggestions = [...d.suggestions];
@@ -290,6 +293,7 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
   const diagnostics = json.diagnostics?.map(d => ({
     severity: d.level as 'error' | 'warning' | 'info',
     message: d.message,
+    ...(d.role ? { role: d.role } : {}),
     ...(d.code ? { code: d.code } : {}),
     ...(d.source ? { source: d.source } : {}),
     ...(d.suggestions && d.suggestions.length > 0 ? { suggestions: d.suggestions } : {}),
