@@ -162,7 +162,7 @@ describe('fixi-compat', () => {
         swap: 'outerHTML',
       };
       const result = translateToHyperscript(config, button);
-      expect(result).toContain("fetch '/api/submit' via POST");
+      expect(result).toContain("fetch '/api/submit' with { method: 'POST'");
     });
 
     it('translates fixi with target', () => {
@@ -1003,7 +1003,7 @@ describe('fixi-compat', () => {
       for (const el of elements) {
         const result = processor.manualProcess(el);
         expect(result).toContain('fetch');
-        expect(result).toContain('via POST');
+        expect(result).toContain("method: 'POST'");
       }
 
       document.body.removeChild(container);

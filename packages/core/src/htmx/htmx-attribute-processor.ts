@@ -15,6 +15,7 @@
  */
 
 import { translateToHyperscript, resolveHxTarget, type HtmxConfig } from './htmx-translator.js';
+import { split as hconSplit } from './hcon.js';
 import { getParserExtensionRegistry } from '../parser/extensions.js';
 import { SSEConnection, type SSEEventSourceCtor } from './sse.js';
 import {
@@ -506,10 +507,11 @@ export class HtmxAttributeProcessor {
     this.sseConnectionsSet.add(conn);
 
     // Subscribe to each named event listed in sse-swap (comma-separated).
+    // hconSplit only breaks at top-level commas, so an event name carrying a
+    // quoted or bracketed comma survives intact.
     const swapAttr = getAttr(element, 'sse', 'swap');
     if (swapAttr) {
-      for (const name of swapAttr
-        .split(',')
+      for (const name of hconSplit(swapAttr)
         .map(s => s.trim())
         .filter(Boolean)) {
         conn.listenFor(name);
