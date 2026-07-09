@@ -164,7 +164,9 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   const action = (data['action'] as string) ?? '';
   const rawRoles = (data['roles'] as Record<string, unknown>) ?? {};
 
-  const roles: Record<string, SemanticValue> = {};
+  // Null-prototype: JSON.parse turns a `"__proto__"` member into an own enumerable
+  // key, so Object.entries surfaces it and a plain-object target would hijack.
+  const roles: Record<string, SemanticValue> = Object.create(null) as Record<string, SemanticValue>;
   for (const [roleName, rv] of Object.entries(rawRoles)) {
     if (rv && typeof rv === 'object' && !Array.isArray(rv)) {
       roles[roleName] = convertJSONValue(rv as Record<string, unknown>);
@@ -364,7 +366,9 @@ function deserializeNodeArray(arr: unknown): SemanticNode[] {
 }
 
 function marshalRoles(roles: Record<string, SemanticValue>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
+  // Null-prototype for the same reason as fromJSON: a role literally named
+  // `__proto__` must survive serialization as an ordinary key.
+  const result: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
   for (const [k, v] of Object.entries(roles)) {
     result[k] = marshalValue(v);
   }

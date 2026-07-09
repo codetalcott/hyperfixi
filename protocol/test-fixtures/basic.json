@@ -75,5 +75,41 @@
         "patient": { "type": "selector", "value": ".active" }
       }
     }
+  },
+  {
+    "id": "basic-007",
+    "description": "Role named __proto__ is an ordinary role, not a prototype write",
+    "input": "[toggle __proto__:.active]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "__proto__": { "type": "selector", "value": ".active" }
+      }
+    }
+  },
+  {
+    "id": "basic-008",
+    "description": "Flag named __proto__ is an ordinary flag role",
+    "input": "[column +__proto__]",
+    "expected": {
+      "kind": "command",
+      "action": "column",
+      "roles": {
+        "__proto__": { "type": "flag", "name": "__proto__", "enabled": true }
+      }
+    }
+  },
+  {
+    "id": "basic-009",
+    "description": "Role named constructor is an ordinary role",
+    "input": "[toggle constructor:.active]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "constructor": { "type": "selector", "value": ".active" }
+      }
+    }
   }
 ]
