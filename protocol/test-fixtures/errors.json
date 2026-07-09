@@ -60,5 +60,19 @@
     },
     "expectValidationError": true,
     "errorCode": "MISSING_FLAG_ENABLED"
+  },
+  {
+    "id": "error-009",
+    "description": "Unterminated selector literal (v2.0)",
+    "input": "[toggle patient:<ul > li]",
+    "expectError": true,
+    "errorContains": "Unterminated selector"
+  },
+  {
+    "id": "error-010",
+    "description": "Empty selector literal",
+    "input": "[toggle patient:</>]",
+    "expectError": true,
+    "errorContains": "Empty selector"
   }
 ]

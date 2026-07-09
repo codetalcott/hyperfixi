@@ -64,18 +64,19 @@ Lossless round-trip between parse and render. Used for tool-to-tool interchange.
 
 ### Value Shapes
 
-| Type               | JSON Shape                                                            | Example                                               |
-| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------- |
-| selector           | `{ "type": "selector", "value": ".active" }`                          | `#id`, `.class`, `[attr]`, `@aria`, `*wild`           |
-| selector (v1.1)    | `{ "type": "selector", "value": ".active", "selectorKind": "class" }` | Optional kind: id, class, attribute, element, complex |
-| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`       | Quoted or fallback strings                            |
-| literal (number)   | `{ "type": "literal", "value": 42, "dataType": "number" }`            | Integer or decimal                                    |
-| literal (boolean)  | `{ "type": "literal", "value": true, "dataType": "boolean" }`         | `true` / `false`                                      |
-| literal (duration) | `{ "type": "literal", "value": "500ms", "dataType": "duration" }`     | Number + suffix                                       |
-| reference          | `{ "type": "reference", "value": "me" }`                              | Built-in names                                        |
-| expression         | `{ "type": "expression", "raw": "[nested cmd]" }`                     | Nested syntax or raw expressions                      |
-| flag (enabled)     | `{ "type": "flag", "name": "primary-key", "enabled": true }`          | `+flag`                                               |
-| flag (disabled)    | `{ "type": "flag", "name": "nullable", "enabled": false }`            | `~flag`                                               |
+| Type               | JSON Shape                                                              | Example                                               |
+| ------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------- |
+| selector           | `{ "type": "selector", "value": ".active" }`                            | `#id`, `.class`, `[attr]`, `@aria`, `*wild`           |
+| selector (v1.1)    | `{ "type": "selector", "value": ".active", "selectorKind": "class" }`   | Optional kind: id, class, attribute, element, complex |
+| selector (v2.0)    | `{ "type": "selector", "value": "ul > li", "selectorKind": "complex" }` | Bracket syntax `<ul > li/>`; delimiters are stripped  |
+| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`         | Quoted or fallback strings                            |
+| literal (number)   | `{ "type": "literal", "value": 42, "dataType": "number" }`              | Integer or decimal                                    |
+| literal (boolean)  | `{ "type": "literal", "value": true, "dataType": "boolean" }`           | `true` / `false`                                      |
+| literal (duration) | `{ "type": "literal", "value": "500ms", "dataType": "duration" }`       | Number + suffix                                       |
+| reference          | `{ "type": "reference", "value": "me" }`                                | Built-in names                                        |
+| expression         | `{ "type": "expression", "raw": "[nested cmd]" }`                       | Nested syntax or raw expressions                      |
+| flag (enabled)     | `{ "type": "flag", "name": "primary-key", "enabled": true }`            | `+flag`                                               |
+| flag (disabled)    | `{ "type": "flag", "name": "nullable", "enabled": false }`              | `~flag`                                               |
 
 > **Note (v1.1):** `selectorKind` is optional on selector values and may be omitted. The `enabled` field on flag values is **required** and MUST be present in all conformant implementations.
 

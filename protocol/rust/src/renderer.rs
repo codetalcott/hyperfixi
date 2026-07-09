@@ -67,6 +67,38 @@ pub fn render_explicit(node: &SemanticNode) -> String {
     format!("[{}]", parts.join(" "))
 }
 
+/// Escape a string for emission inside a double-quoted literal.
+///
+/// A raw `format!("\"{}\"", s)` would emit an unparseable literal for any value
+/// containing `"` or `\`.
+fn escape_string(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    for ch in s.chars() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '"' => out.push_str("\\\""),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            _ => out.push(ch),
+        }
+    }
+    out
+}
+
+/// Whether a selector must be wrapped in `<.../>` to survive a re-parse.
+///
+/// A bare token re-classifies as a selector only if it starts with one of
+/// `# . @ *`. A space would split the token, and a leading `[` in a structural role
+/// would re-parse as a nested command — so both must wrap. `.a>.b` needs no
+/// wrapping: it has no space and keeps its leading `.`.
+fn needs_selector_wrap(value: &str) -> bool {
+    if value.contains(' ') {
+        return true;
+    }
+    !matches!(value.chars().next(), Some('#') | Some('.') | Some('@') | Some('*'))
+}
+
 /// Convert a semantic value to its explicit syntax string form.
 fn value_to_string(value: &SemanticValue) -> String {
     match value.value_type {
@@ -76,7 +108,7 @@ fn value_to_string(value: &SemanticValue) -> String {
                     DynValue::String(s) => {
                         let dt = value.data_type.as_deref();
                         if dt == Some("string") || s.contains(char::is_whitespace) {
-                            format!("\"{}\"", s)
+                            format!("\"{}\"", escape_string(s))
                         } else {
                             s.clone()
                         }
@@ -89,7 +121,21 @@ fn value_to_string(value: &SemanticValue) -> String {
                 String::new()
             }
         }
-        ValueType::Selector | ValueType::Reference => {
+        ValueType::Selector => {
+            if let Some(ref v) = value.value {
+                let s = v.as_str();
+                if s.is_empty() {
+                    s
+                } else if needs_selector_wrap(&s) {
+                    format!("<{}/>", s)
+                } else {
+                    s
+                }
+            } else {
+                String::new()
+            }
+        }
+        ValueType::Reference => {
             if let Some(ref v) = value.value {
                 v.as_str()
             } else {

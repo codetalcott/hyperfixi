@@ -18,7 +18,7 @@ from .types import (
 )
 from .references import DEFAULT_REFERENCES, is_valid_reference
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 __all__ = [
     "parse_explicit",

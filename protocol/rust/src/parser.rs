@@ -5,29 +5,88 @@ use std::collections::{HashMap, HashSet};
 use crate::references::default_references;
 use crate::types::*;
 
-/// Structural role names whose bracket-enclosed values may be nested commands.
+/// Structural role names whose bracket-enclosed values are nested commands.
+///
+/// In these roles a value starting with `[` is ALWAYS a nested command; write an
+/// attribute selector as a selector literal (`<[data-active]/>`). Prior to v2.0 the
+/// parser guessed from the inner content, which silently dropped zero-argument
+/// commands — `[halt]` is both a valid command and a valid attribute selector.
 fn is_structural_role(name: &str) -> bool {
-    matches!(name, "body" | "then" | "else" | "condition" | "loop-body" | "variable")
+    matches!(
+        name,
+        "body" | "then" | "else" | "condition" | "loop-body" | "variable" | "catch" | "finally"
+    )
 }
 
-/// Checks whether a bracket-enclosed value is a nested command (vs. an attribute selector).
-/// A value starting with `[` is a nested command if the inner content contains at least
-/// one ASCII space or `:` at bracket-depth 0.
-fn is_nested_command(value: &str) -> bool {
-    if value.len() < 2 {
-        return false;
-    }
-    let inner = &value[1..value.len() - 1];
-    let mut depth = 0i32;
-    for ch in inner.chars() {
-        match ch {
-            '[' => depth += 1,
-            ']' => depth -= 1,
-            ' ' | ':' if depth == 0 => return true,
-            _ => {}
+/// Whether a combinator appears outside any quoted span.
+fn has_unquoted_combinator(value: &str) -> bool {
+    let mut quote: Option<char> = None;
+    for ch in value.chars() {
+        if let Some(q) = quote {
+            if ch == q {
+                quote = None;
+            }
+            continue;
+        }
+        if ch == '"' || ch == '\'' {
+            quote = Some(ch);
+            continue;
+        }
+        if matches!(ch, ' ' | '>' | '+' | '~' | ',') {
+            return true;
         }
     }
     false
+}
+
+/// Infers a selector's kind. Combinators are tested first, so `.a > .b` is
+/// `complex` rather than `class`. A combinator inside a quoted span does not
+/// count, so `[aria-label="Close menu"]` is `attribute`.
+pub fn infer_selector_kind(value: &str) -> Option<String> {
+    if value.is_empty() {
+        return None;
+    }
+    if has_unquoted_combinator(value) {
+        return Some("complex".to_string());
+    }
+
+    match value.chars().next().unwrap() {
+        '#' => Some("id".to_string()),
+        '.' => Some("class".to_string()),
+        '[' => Some("attribute".to_string()),
+        '*' => Some("element".to_string()),
+        _ => None,
+    }
+}
+
+/// Expands the escape sequences defined by the grammar: `\\ \" \' \n \r \t`
+pub fn unescape_string(s: &str) -> String {
+    if !s.contains('\\') {
+        return s.to_string();
+    }
+
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch == '\\' {
+            let mapped = match chars.peek() {
+                Some('\\') => Some('\\'),
+                Some('"') => Some('"'),
+                Some('\'') => Some('\''),
+                Some('n') => Some('\n'),
+                Some('r') => Some('\r'),
+                Some('t') => Some('\t'),
+                _ => None,
+            };
+            if let Some(m) = mapped {
+                out.push(m);
+                chars.next();
+                continue;
+            }
+        }
+        out.push(ch);
+    }
+    out
 }
 
 /// Error type for parse failures.
@@ -139,8 +198,8 @@ pub fn parse_explicit(
         let role_name = &token[..colon_idx];
         let value_str = &token[colon_idx + 1..];
 
-        // Handle nested explicit syntax for structural roles (body, then, else, etc.)
-        if is_structural_role(role_name) && value_str.starts_with('[') && is_nested_command(value_str) {
+        // In a structural role, `[...]` is always a nested command.
+        if is_structural_role(role_name) && value_str.starts_with('[') {
             roles.insert(
                 role_name.to_string(),
                 expression_value(value_str),
@@ -148,7 +207,7 @@ pub fn parse_explicit(
             continue;
         }
 
-        let value = parse_value(value_str, &refs);
+        let value = parse_value(value_str, &refs)?;
         roles.insert(role_name.to_string(), value);
     }
 
@@ -268,12 +327,21 @@ fn count_preceding_backslashes(chars: &[char], pos: usize) -> usize {
 
 /// Tokenize explicit syntax content.
 ///
-/// Splits on spaces, but respects quoted strings and bracket nesting.
+/// Splits on spaces at bracket-depth 0, outside quoted strings, and outside
+/// selector literals (`<...selector.../>`). The branch order is normative: the
+/// string check precedes the selector check, so a `/>` inside a quoted string does
+/// not close the literal. A `<` opens a selector literal only at the start of a
+/// value — when the token buffer is empty or ends with `:` — so a stray `<` in a
+/// plain value cannot swallow the following token.
+///
+/// `[` and `]` inside a selector literal never change `bracket_depth`; the closing
+/// `/>` already delimits them.
 fn tokenize(content: &str) -> Vec<String> {
     let mut tokens: Vec<String> = Vec::new();
     let mut current = String::new();
     let mut in_string = false;
     let mut string_char = '\0';
+    let mut in_selector = false;
     let mut bracket_depth = 0;
 
     let chars: Vec<char> = content.chars().collect();
@@ -293,6 +361,20 @@ fn tokenize(content: &str) -> Vec<String> {
         if ch == '"' || ch == '\'' {
             in_string = true;
             string_char = ch;
+            current.push(ch);
+            continue;
+        }
+
+        if in_selector {
+            current.push(ch);
+            if ch == '>' && current.ends_with("/>") {
+                in_selector = false;
+            }
+            continue;
+        }
+
+        if ch == '<' && (current.is_empty() || current.ends_with(':')) {
+            in_selector = true;
             current.push(ch);
             continue;
         }
@@ -330,57 +412,88 @@ fn tokenize(content: &str) -> Vec<String> {
 /// Parse a value string into a SemanticValue.
 ///
 /// Detection priority:
-/// 1. Selector (#, ., [, @, *)
-/// 2. String literal ("..." or '...')
-/// 3. Boolean (true/false)
-/// 4. Reference (me, you, it, ...)
-/// 5. Duration (500ms, 2s, ...)
-/// 6. Number (42, 3.14, ...)
-/// 7. Plain value (fallback -> string literal)
-fn parse_value(value_str: &str, refs: &HashSet<String>) -> SemanticValue {
+/// 1. Selector literal (`<...selector.../>`)
+/// 2. Selector (#, ., [, @, *)
+/// 3. String literal ("..." or '...')
+/// 4. Boolean (true/false)
+/// 5. Reference (me, you, it, ...)
+/// 6. Duration (500ms, 2s, ...)
+/// 7. Number (42, 3.14, ...)
+/// 8. Plain value (fallback -> string literal)
+fn parse_value(value_str: &str, refs: &HashSet<String>) -> Result<SemanticValue, ParseError> {
     if value_str.is_empty() {
-        return literal_value(DynValue::String(String::new()), "string");
+        return Ok(literal_value(DynValue::String(String::new()), "string"));
     }
 
     let first_char = value_str.chars().next().unwrap();
 
-    // 1. CSS selector
-    if matches!(first_char, '#' | '.' | '[' | '@' | '*') {
-        return selector_value(value_str);
+    // 1. Selector literal — the delimiters force selector interpretation, so a
+    //    bare tag name or an attribute selector with a space both land here.
+    if first_char == '<' {
+        if !value_str.ends_with("/>") {
+            return Err(ParseError {
+                message: format!(
+                    "Unterminated selector literal: {:?}. Expected a closing \"/>\"",
+                    value_str
+                ),
+            });
+        }
+        let inner = &value_str[1..value_str.len() - 2];
+        if inner.is_empty() {
+            return Err(ParseError {
+                message: format!("Empty selector literal: {:?}", value_str),
+            });
+        }
+        return Ok(selector_value_with_kind(inner, infer_selector_kind(inner)));
     }
 
-    // 2. String literal
+    // 2. CSS selector
+    if matches!(first_char, '#' | '.' | '[' | '@' | '*') {
+        return Ok(selector_value_with_kind(
+            value_str,
+            infer_selector_kind(value_str),
+        ));
+    }
+
+    // 3. String literal — escapes are expanded here and re-applied on render, so
+    //    a value containing a quote survives parse -> render -> parse unchanged.
     if first_char == '"' || first_char == '\'' {
         let inner = &value_str[1..value_str.len() - 1];
-        return literal_value(DynValue::String(inner.to_string()), "string");
+        return Ok(literal_value(
+            DynValue::String(unescape_string(inner)),
+            "string",
+        ));
     }
 
-    // 3. Boolean
+    // 4. Boolean
     if value_str == "true" {
-        return literal_value(DynValue::Bool(true), "boolean");
+        return Ok(literal_value(DynValue::Bool(true), "boolean"));
     }
     if value_str == "false" {
-        return literal_value(DynValue::Bool(false), "boolean");
+        return Ok(literal_value(DynValue::Bool(false), "boolean"));
     }
 
-    // 4. Reference (case-insensitive)
+    // 5. Reference (case-insensitive)
     let lower = value_str.to_lowercase();
     if refs.contains(&lower) {
-        return reference_value(&lower);
+        return Ok(reference_value(&lower));
     }
 
-    // 5. Duration
+    // 6. Duration
     if let Some(cap) = parse_duration(value_str) {
-        return literal_value(DynValue::String(cap), "duration");
+        return Ok(literal_value(DynValue::String(cap), "duration"));
     }
 
-    // 6. Number
+    // 7. Number
     if let Some(num) = parse_number(value_str) {
-        return literal_value(num, "number");
+        return Ok(literal_value(num, "number"));
     }
 
-    // 7. Fallback: plain string
-    literal_value(DynValue::String(value_str.to_string()), "string")
+    // 8. Fallback: plain string
+    Ok(literal_value(
+        DynValue::String(value_str.to_string()),
+        "string",
+    ))
 }
 
 /// Try to parse a duration string (e.g., "500ms", "2s", "1.5h").

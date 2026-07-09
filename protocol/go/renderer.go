@@ -90,6 +90,24 @@ func RenderExplicit(node *SemanticNode) string {
 	return "[" + strings.Join(parts, " ") + "]"
 }
 
+// needsSelectorWrap reports whether a selector must be wrapped in "<.../>" to
+// survive a re-parse.
+//
+// A bare token re-classifies as a selector only if it starts with one of
+// '# . @ *'. A space would split the token, and a leading '[' in a structural role
+// would re-parse as a nested command -- so both must wrap. ".a>.b" needs no
+// wrapping: it has no space and keeps its leading '.'.
+func needsSelectorWrap(value string) bool {
+	if strings.Contains(value, " ") {
+		return true
+	}
+	switch value[0] {
+	case '#', '.', '@', '*':
+		return false
+	}
+	return true
+}
+
 // valueToString converts a SemanticValue to its explicit syntax string form.
 func valueToString(v SemanticValue) string {
 	switch v.Type {
@@ -121,7 +139,20 @@ func valueToString(v SemanticValue) string {
 			return fmt.Sprintf("%v", val)
 		}
 
-	case TypeSelector, TypeReference:
+	case TypeSelector:
+		if v.Value == nil {
+			return ""
+		}
+		s := fmt.Sprintf("%v", v.Value)
+		if s == "" {
+			return s
+		}
+		if needsSelectorWrap(s) {
+			return "<" + s + "/>"
+		}
+		return s
+
+	case TypeReference:
 		if v.Value == nil {
 			return ""
 		}

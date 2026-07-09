@@ -34,7 +34,14 @@ import type { Diagnostic } from '../diagnostics';
 import type { ParseExplicitOptions } from './types';
 import { isValidReference, DEFAULT_REFERENCES } from './references';
 
-/** Structural role names whose bracket-enclosed values may be nested commands. */
+/**
+ * Structural role names whose bracket-enclosed values are nested commands.
+ *
+ * In these roles a value starting with `[` is ALWAYS a nested command; write an
+ * attribute selector as a selector literal (`<[data-active]/>`). Prior to v2.0 the
+ * parser guessed from the inner content, which silently dropped zero-argument
+ * commands — `[halt]` is both a valid command and a valid attribute selector.
+ */
 export const STRUCTURAL_ROLES = new Set([
   'body',
   'then',
@@ -45,17 +52,6 @@ export const STRUCTURAL_ROLES = new Set([
   'catch',
   'finally',
 ]);
-
-function isNestedCommand(value: string): boolean {
-  const inner = value.slice(1, -1);
-  let depth = 0;
-  for (const ch of inner) {
-    if (ch === '[') depth++;
-    else if (ch === ']') depth--;
-    else if (depth === 0 && (ch === ' ' || ch === ':')) return true;
-  }
-  return false;
-}
 
 // =============================================================================
 // Explicit Syntax Parser
@@ -167,7 +163,8 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
     const role = roleName as SemanticRole;
     const valueStr = token.slice(colonIndex + 1);
 
-    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[') && isNestedCommand(valueStr)) {
+    // In a structural role, `[...]` is always a nested command.
+    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[')) {
       const nestedEnd = findMatchingBracket(token, colonIndex + 1);
       const nestedSyntax = token.slice(colonIndex + 1, nestedEnd + 1);
       roles.set(role, { type: 'expression', raw: nestedSyntax });
@@ -496,35 +493,113 @@ function extractStructuralBody(
   return [];
 }
 
+/** Whether a combinator appears outside any quoted span. */
+function hasUnquotedCombinator(value: string): boolean {
+  let quote = '';
+  for (const ch of value) {
+    if (quote) {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === ' ' || ch === '>' || ch === '+' || ch === '~' || ch === ',') return true;
+  }
+  return false;
+}
+
+/**
+ * Infers a selector's kind. Combinators are tested first, so `.a > .b` is
+ * `complex` rather than `class`. A combinator inside a quoted span does not
+ * count, so `[aria-label="Close menu"]` is `attribute`.
+ */
 function inferSelectorKind(
   value: string
 ): 'id' | 'class' | 'attribute' | 'element' | 'complex' | undefined {
   if (!value) return undefined;
+  if (hasUnquotedCombinator(value)) return 'complex';
   if (value.startsWith('#')) return 'id';
   if (value.startsWith('.')) return 'class';
   if (value.startsWith('[')) return 'attribute';
-  if (value.startsWith('<') || value.startsWith('*')) return 'element';
-  if (/[>+~ ]/.test(value) && value.length > 1) return 'complex';
+  if (value.startsWith('*')) return 'element';
   return undefined;
 }
 
+/** Expands the escape sequences defined by the grammar: \\ \" \' \n \r \t */
+function unescapeString(s: string): string {
+  if (!s.includes('\\')) return s;
+
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\\' && i + 1 < s.length) {
+      const next = s[i + 1];
+      const mapped =
+        next === '\\'
+          ? '\\'
+          : next === '"'
+            ? '"'
+            : next === "'"
+              ? "'"
+              : next === 'n'
+                ? '\n'
+                : next === 'r'
+                  ? '\r'
+                  : next === 't'
+                    ? '\t'
+                    : '';
+      if (mapped) {
+        out += mapped;
+        i++;
+        continue;
+      }
+    }
+    out += s[i];
+  }
+  return out;
+}
+
+/**
+ * Splits on spaces at bracket-depth 0, outside quoted strings, and outside
+ * selector literals (`<...selector.../>`). The branch order is normative: the
+ * string check precedes the selector check, so a `/>` inside a quoted string does
+ * not close the literal. A `<` opens a selector literal only at the start of a
+ * value — when the token buffer is empty or ends with `:`.
+ */
 function tokenizeExplicit(content: string): string[] {
   const tokens: string[] = [];
   let current = '';
   let inString = false;
   let stringChar = '';
+  let inSelector = false;
   let bracketDepth = 0;
 
   for (let i = 0; i < content.length; i++) {
     const char = content[i];
     if (inString) {
       current += char;
-      if (char === stringChar && content[i - 1] !== '\\') inString = false;
+      if (char === stringChar) {
+        // Even backslash count means the quote closes the string.
+        let backslashes = 0;
+        for (let j = i - 1; j >= 0 && content[j] === '\\'; j--) backslashes++;
+        if (backslashes % 2 === 0) inString = false;
+      }
       continue;
     }
     if (char === '"' || char === "'") {
       inString = true;
       stringChar = char;
+      current += char;
+      continue;
+    }
+    if (inSelector) {
+      current += char;
+      if (char === '>' && current.endsWith('/>')) inSelector = false;
+      continue;
+    }
+    if (char === '<' && (current === '' || current.endsWith(':'))) {
+      inSelector = true;
       current += char;
       continue;
     }
@@ -553,6 +628,15 @@ function tokenizeExplicit(content: string): string[] {
 }
 
 function parseExplicitValue(valueStr: string, referenceSet: ReadonlySet<string>): SemanticValue {
+  // Selector literal — the delimiters force selector interpretation.
+  if (valueStr.startsWith('<')) {
+    if (!valueStr.endsWith('/>')) {
+      throw new Error(`Unterminated selector literal: "${valueStr}". Expected a closing "/>"`);
+    }
+    const inner = valueStr.slice(1, -2);
+    if (!inner) throw new Error(`Empty selector literal: "${valueStr}"`);
+    return createSelector(inner, inferSelectorKind(inner));
+  }
   if (
     valueStr.startsWith('#') ||
     valueStr.startsWith('.') ||
@@ -563,7 +647,7 @@ function parseExplicitValue(valueStr: string, referenceSet: ReadonlySet<string>)
     return createSelector(valueStr, inferSelectorKind(valueStr));
   }
   if (valueStr.startsWith('"') || valueStr.startsWith("'")) {
-    return createLiteral(valueStr.slice(1, -1), 'string');
+    return createLiteral(unescapeString(valueStr.slice(1, -1)), 'string');
   }
   if (valueStr === 'true') return createLiteral(true, 'boolean');
   if (valueStr === 'false') return createLiteral(false, 'boolean');

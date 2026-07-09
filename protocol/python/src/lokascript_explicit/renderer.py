@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 import re
 
 from .types import SemanticNode, SemanticValue, FlagValue
@@ -62,6 +63,19 @@ def render_explicit(node: SemanticNode) -> str:
     return f"[{' '.join(parts)}]"
 
 
+def _needs_selector_wrap(value: str) -> bool:
+    """Whether a selector must be wrapped in '<.../>' to survive a re-parse.
+
+    A bare token re-classifies as a selector only if it starts with one of
+    '# . @ *'. A space would split the token, and a leading '[' in a structural
+    role would re-parse as a nested command -- so both must wrap. '.a>.b' needs
+    no wrapping: it has no space and keeps its leading '.'.
+    """
+    if " " in value:
+        return True
+    return value[0] not in ("#", ".", "@", "*")
+
+
 def _value_to_string(value: SemanticValue) -> str:
     """Convert a semantic value to its explicit syntax string form."""
     if value.type == "literal":
@@ -71,14 +85,19 @@ def _value_to_string(value: SemanticValue) -> str:
             return "true" if v else "false"
         if isinstance(v, str):
             dt = getattr(value, "dataType", None)
-            # Quote strings that are explicitly typed as string or contain spaces
+            # Quote strings that are explicitly typed as string or contain spaces.
+            # json.dumps escapes backslashes, quotes and control characters -- a raw
+            # f'"{v}"' would emit an unparseable literal for a value containing '"'.
             if dt == "string" or (isinstance(v, str) and re.search(r"\s", v)):
-                return f'"{v}"'
+                return _json.dumps(v)
             return v
         return str(v)
 
     if value.type == "selector":
-        return value.value  # type: ignore[union-attr]
+        s = value.value  # type: ignore[union-attr]
+        if not s:
+            return s
+        return f"<{s}/>" if _needs_selector_wrap(s) else s
 
     if value.type == "reference":
         return value.value  # type: ignore[union-attr]

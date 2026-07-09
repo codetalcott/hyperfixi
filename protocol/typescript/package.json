@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/explicit-syntax",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Reference parser for the LokaScript Explicit Syntax (LSE) protocol",
   "type": "module",
   "main": "./dist/index.js",

@@ -97,8 +97,11 @@ export interface LSEEnvelope {
 
 // Constructor helpers
 
-export function selectorValue(value: string): SemanticValue {
-  return { type: 'selector', value };
+export function selectorValue(
+  value: string,
+  selectorKind?: SemanticValue['selectorKind'],
+): SemanticValue {
+  return selectorKind ? { type: 'selector', value, selectorKind } : { type: 'selector', value };
 }
 
 export function literalValue(

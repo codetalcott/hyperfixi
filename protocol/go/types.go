@@ -41,9 +41,14 @@ type SemanticValue struct {
 	SelectorKind string    `json:"selectorKind,omitempty"`
 }
 
-// SelectorValue creates a selector SemanticValue.
-func SelectorValue(value string) SemanticValue {
-	return SemanticValue{Type: TypeSelector, Value: value}
+// SelectorValue creates a selector SemanticValue. An optional kind may be
+// supplied; when omitted the selectorKind field stays empty.
+func SelectorValue(value string, kind ...string) SemanticValue {
+	v := SemanticValue{Type: TypeSelector, Value: value}
+	if len(kind) > 0 {
+		v.SelectorKind = kind[0]
+	}
+	return v
 }
 
 // LiteralValue creates a literal SemanticValue.

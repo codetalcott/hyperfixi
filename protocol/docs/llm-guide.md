@@ -335,7 +335,7 @@ For LSE documents containing multiple top-level nodes (e.g., a file with several
 
 ```json
 {
-  "lseVersion": "1.2.0",
+  "lseVersion": "2.0.0",
   "nodes": [
     {
       "action": "toggle",

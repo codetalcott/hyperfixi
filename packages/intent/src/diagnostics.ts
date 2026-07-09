@@ -37,6 +37,12 @@ export interface Diagnostic {
   /** Machine-readable code for programmatic handling (e.g., 'parse-error', 'missing-role') */
   readonly code?: string;
 
+  /**
+   * The role this diagnostic is about (e.g. `patient`). The wire format's
+   * `Diagnostic` shape requires it, so it must survive a protocol-JSON round-trip.
+   */
+  readonly role?: string;
+
   /** 1-based line number in source */
   readonly line?: number;
 

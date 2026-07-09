@@ -33,31 +33,97 @@ var (
 	numberRE   = regexp.MustCompile(`^(-?\d+(?:\.\d+)?)$`)
 )
 
-// structuralRoles are role names whose bracket-enclosed values may be nested commands.
+// structuralRoles are role names whose bracket-enclosed values are nested commands.
+//
+// In these roles a value starting with '[' is ALWAYS a nested command; write an
+// attribute selector as a selector literal ("<[data-active]/>"). Prior to v2.0 the
+// parser guessed from the inner content, which silently dropped zero-argument
+// commands -- "[halt]" is both a valid command and a valid attribute selector.
 var structuralRoles = map[string]bool{
 	"body": true, "then": true, "else": true,
 	"condition": true, "loop-body": true, "variable": true,
+	"catch": true, "finally": true,
 }
 
-// isNestedCommand checks whether a bracket-enclosed value is a nested command
-// (vs. an attribute selector). A value starting with '[' is a nested command if
-// the inner content contains at least one ASCII space or ':' at bracket-depth 0.
-func isNestedCommand(value string) bool {
-	if len(value) < 2 {
-		return false
-	}
-	inner := value[1 : len(value)-1]
-	depth := 0
-	for _, ch := range inner {
-		if ch == '[' {
-			depth++
-		} else if ch == ']' {
-			depth--
-		} else if depth == 0 && (ch == ' ' || ch == ':') {
+// hasUnquotedCombinator reports whether a combinator appears outside a quoted span.
+func hasUnquotedCombinator(value string) bool {
+	var quote rune
+	for _, ch := range value {
+		if quote != 0 {
+			if ch == quote {
+				quote = 0
+			}
+			continue
+		}
+		if ch == '"' || ch == '\'' {
+			quote = ch
+			continue
+		}
+		if ch == ' ' || ch == '>' || ch == '+' || ch == '~' || ch == ',' {
 			return true
 		}
 	}
 	return false
+}
+
+// InferSelectorKind infers a selector's kind. Combinators are tested first, so
+// ".a > .b" is "complex" rather than "class". A combinator inside a quoted span
+// does not count, so `[aria-label="Close menu"]` is "attribute".
+func InferSelectorKind(value string) string {
+	if value == "" {
+		return ""
+	}
+	if hasUnquotedCombinator(value) {
+		return "complex"
+	}
+
+	switch value[0] {
+	case '#':
+		return "id"
+	case '.':
+		return "class"
+	case '[':
+		return "attribute"
+	case '*':
+		return "element"
+	}
+	return ""
+}
+
+// UnescapeString expands the escape sequences defined by the grammar: \\ \" \' \n \r \t
+func UnescapeString(s string) string {
+	if !strings.Contains(s, "\\") {
+		return s
+	}
+
+	var b strings.Builder
+	runes := []rune(s)
+	for i := 0; i < len(runes); i++ {
+		if runes[i] == '\\' && i+1 < len(runes) {
+			var mapped rune
+			switch runes[i+1] {
+			case '\\':
+				mapped = '\\'
+			case '"':
+				mapped = '"'
+			case '\'':
+				mapped = '\''
+			case 'n':
+				mapped = '\n'
+			case 'r':
+				mapped = '\r'
+			case 't':
+				mapped = '\t'
+			}
+			if mapped != 0 {
+				b.WriteRune(mapped)
+				i++
+				continue
+			}
+		}
+		b.WriteRune(runes[i])
+	}
+	return b.String()
 }
 
 // IsExplicitSyntax checks if the input is explicit bracket syntax.
@@ -128,13 +194,16 @@ func ParseExplicit(text string, opts *ParseOptions) (*SemanticNode, error) {
 		roleName := token[:colonIdx]
 		valueStr := token[colonIdx+1:]
 
-		// Handle nested explicit syntax for structural roles (body, then, else, etc.)
-		if structuralRoles[roleName] && strings.HasPrefix(valueStr, "[") && isNestedCommand(valueStr) {
+		// In a structural role, "[...]" is always a nested command.
+		if structuralRoles[roleName] && strings.HasPrefix(valueStr, "[") {
 			roles[roleName] = ExpressionValue(valueStr)
 			continue
 		}
 
-		value := parseValue(valueStr, refs)
+		value, err := parseValue(valueStr, refs)
+		if err != nil {
+			return nil, err
+		}
 		roles[roleName] = value
 	}
 
@@ -237,13 +306,21 @@ func countPrecedingBackslashes(runes []rune, pos int) int {
 	return count
 }
 
-// tokenize splits explicit syntax content on spaces, respecting quoted strings
-// and bracket nesting. Uses rune iteration for correct UTF-8 handling.
+// tokenize splits explicit syntax content on spaces at bracket-depth 0, outside
+// quoted strings, and outside selector literals ("<...selector.../>"). The branch
+// order is normative: the string check precedes the selector check, so a "/>"
+// inside a quoted string does not close the literal. A '<' opens a selector
+// literal only at the start of a value -- when the token buffer is empty or ends
+// with ':' -- so a stray '<' in a plain value cannot swallow the following token.
+//
+// '[' and ']' inside a selector literal never change bracketDepth; the closing
+// "/>" already delimits them. Uses rune iteration for correct UTF-8 handling.
 func tokenize(content string) []string {
 	var tokens []string
 	var current strings.Builder
 	inString := false
 	var stringChar rune
+	inSelector := false
 	bracketDepth := 0
 
 	runes := []rune(content)
@@ -261,6 +338,20 @@ func tokenize(content string) []string {
 		if ch == '"' || ch == '\'' {
 			inString = true
 			stringChar = ch
+			current.WriteRune(ch)
+			continue
+		}
+
+		if inSelector {
+			current.WriteRune(ch)
+			if ch == '>' && strings.HasSuffix(current.String(), "/>") {
+				inSelector = false
+			}
+			continue
+		}
+
+		if ch == '<' && (current.Len() == 0 || strings.HasSuffix(current.String(), ":")) {
+			inSelector = true
 			current.WriteRune(ch)
 			continue
 		}
@@ -296,56 +387,76 @@ func tokenize(content string) []string {
 }
 
 // parseValue classifies a value string into a SemanticValue.
-// Detection priority: selector > string > boolean > reference > duration > number > plain.
-func parseValue(valueStr string, refs map[string]bool) SemanticValue {
+// Detection priority: selector-literal > selector > string > boolean > reference >
+// duration > number > plain.
+func parseValue(valueStr string, refs map[string]bool) (SemanticValue, error) {
 	if len(valueStr) == 0 {
-		return LiteralValue("", "string")
+		return LiteralValue("", "string"), nil
 	}
 
-	// 1. CSS selector
 	first := valueStr[0]
-	if first == '#' || first == '.' || first == '[' || first == '@' || first == '*' {
-		return SelectorValue(valueStr)
+
+	// 1. Selector literal -- the delimiters force selector interpretation, so a
+	//    bare tag name or an attribute selector with a space both land here.
+	if first == '<' {
+		if !strings.HasSuffix(valueStr, "/>") {
+			return SemanticValue{}, &ParseError{
+				Message: fmt.Sprintf("Unterminated selector literal: %q. Expected a closing \"/>\"", valueStr),
+			}
+		}
+		inner := valueStr[1 : len(valueStr)-2]
+		if inner == "" {
+			return SemanticValue{}, &ParseError{
+				Message: fmt.Sprintf("Empty selector literal: %q", valueStr),
+			}
+		}
+		return SelectorValue(inner, InferSelectorKind(inner)), nil
 	}
 
-	// 2. String literal
+	// 2. CSS selector
+	if first == '#' || first == '.' || first == '[' || first == '@' || first == '*' {
+		return SelectorValue(valueStr, InferSelectorKind(valueStr)), nil
+	}
+
+	// 3. String literal -- escapes are expanded here and re-applied on render, so
+	//    a value containing a quote survives parse -> render -> parse unchanged.
 	if first == '"' || first == '\'' {
 		inner := valueStr[1 : len(valueStr)-1]
-		return LiteralValue(inner, "string")
+		return LiteralValue(UnescapeString(inner), "string"), nil
 	}
 
-	// 3. Boolean
+	// 4. Boolean
 	if valueStr == "true" {
-		return LiteralValue(true, "boolean")
+		return LiteralValue(true, "boolean"), nil
 	}
 	if valueStr == "false" {
-		return LiteralValue(false, "boolean")
+		return LiteralValue(false, "boolean"), nil
 	}
 
-	// 4. Reference (case-insensitive)
+	// 5. Reference (case-insensitive)
 	if IsValidReference(valueStr, refs) {
-		return ReferenceValue(strings.ToLower(valueStr))
+		return ReferenceValue(strings.ToLower(valueStr)), nil
 	}
 
-	// 5. Duration
+	// 6. Duration
 	if durationRE.MatchString(valueStr) {
-		return LiteralValue(valueStr, "duration")
+		return LiteralValue(valueStr, "duration"), nil
 	}
 
-	// 6. Number
+	// 7. Number
 	if m := numberRE.FindString(valueStr); m != "" {
 		f, err := strconv.ParseFloat(m, 64)
 		if err == nil {
 			// Use int if it's a whole number
 			if f == math.Trunc(f) && !strings.Contains(m, ".") {
-				return LiteralValue(int(f), "number")
+				return LiteralValue(int(f), "number"), nil
 			}
-			return LiteralValue(f, "number")
+			return LiteralValue(f, "number"), nil
 		}
 	}
 
-	// 7. Fallback: plain string
-	return LiteralValue(valueStr, "string")
+	// 8. Fallback: plain string
+	return LiteralValue(valueStr, "string"), nil
 }
 
 // findMatchingBracket finds the matching closing bracket starting from position start.

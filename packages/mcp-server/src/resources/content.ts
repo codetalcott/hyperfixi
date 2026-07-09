@@ -781,6 +781,7 @@ export function getLSEProtocolSpec(): string {
 | Disabled flag | \`~name\` | \`~nullable\` |
 | String literal | \`"..."\` or \`'...'\` | \`patient:"hello world"\` |
 | Selector | \`#id\` \`.class\` \`[attr]\` \`@aria\` \`*wild\` | \`destination:#button\` |
+| Selector literal | \`<...selector.../>\` | \`patient:<ul > li/>\`, \`patient:<.a, .b/>\` |
 | Boolean | \`true\` / \`false\` | \`goal:true\` |
 | Number | digits with optional decimal | \`quantity:5\` |
 | Duration | number + suffix | \`delay:500ms\`, \`timeout:2s\` |
@@ -788,15 +789,22 @@ export function getLSEProtocolSpec(): string {
 | Nested body | bracket command in value | \`body:[toggle patient:.active]\` |
 | Compound | chain operator between commands | \`[add ...] then [fetch ...]\` |
 
+A selector containing a space, a combinator (\`>\` \`+\` \`~\`), or a comma must use a
+selector literal — the tokenizer would otherwise split it. Inside a structural role
+(\`body\`, \`then\`, \`else\`, \`condition\`, \`loop-body\`, \`variable\`, \`catch\`, \`finally\`)
+a \`[...]\` value is always a nested command, so an attribute selector there must also
+use the literal form: \`condition:<[data-active]/>\`.
+
 ## Value Classification Priority (first match wins)
 
-1. **Selector** — starts with \`#\`, \`.\`, \`[\`, \`@\`, \`*\`
-2. **String** — starts with \`"\` or \`'\`
-3. **Boolean** — exact: \`true\` or \`false\`
-4. **Reference** — \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
-5. **Duration** — number + \`ms\`/\`s\`/\`m\`/\`h\`
-6. **Number** — integer or decimal
-7. **Plain** — fallback (any non-whitespace)
+1. **Selector literal** — starts with \`<\` and ends with \`/>\`; delimiters stripped
+2. **Selector** — starts with \`#\`, \`.\`, \`[\`, \`@\`, \`*\`
+3. **String** — starts with \`"\` or \`'\`
+4. **Boolean** — exact: \`true\` or \`false\`
+5. **Reference** — \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
+6. **Duration** — number + \`ms\`/\`s\`/\`m\`/\`h\`
+7. **Number** — integer or decimal
+8. **Plain** — fallback (any non-whitespace)
 
 ## Node Kinds
 

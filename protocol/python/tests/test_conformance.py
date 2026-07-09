@@ -56,6 +56,12 @@ def _assert_roles_match(actual_roles: dict, expected_roles: dict, test_id: str):
                     actual.dataType == expected_val["dataType"]
                 ), f"[{test_id}] Role '{role_name}' dataType: {actual.dataType} != {expected_val['dataType']}"
 
+            # Only asserted when the fixture supplies it, so kind-less fixtures stay green.
+            if "selectorKind" in expected_val:
+                assert (
+                    actual.selectorKind == expected_val["selectorKind"]
+                ), f"[{test_id}] Role '{role_name}' selectorKind: {actual.selectorKind} != {expected_val['selectorKind']}"
+
 
 def _collect_parse_fixtures():
     """Collect all parse test fixtures."""
@@ -203,6 +209,10 @@ def test_structural_roles_conformance(fixture):
         _assert_node_array_match(
             node.thenBranch, expected["thenBranch"], fixture["id"], "thenBranch"
         )
+
+    # Without this, a dropped zero-arg command in an event-handler body goes unnoticed.
+    if "body" in expected:
+        _assert_node_array_match(node.body, expected["body"], fixture["id"], "body")
 
 
 # ---- Conditional conformance (v1.1) ----

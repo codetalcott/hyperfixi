@@ -40,5 +40,41 @@
     "description": "Field with mixed flags",
     "input": "[field name:email +required ~nullable]",
     "roundtrip": "[field name:\"email\" +required ~nullable]"
+  },
+  {
+    "id": "rt-008",
+    "description": "Complex selector round-trips through a selector literal (v2.0)",
+    "input": "[toggle patient:<ul > li/>]",
+    "roundtrip": "[toggle patient:<ul > li/>]"
+  },
+  {
+    "id": "rt-009",
+    "description": "A bare attribute selector is re-wrapped on render so it re-parses as a selector",
+    "input": "[toggle patient:[data-active]]",
+    "roundtrip": "[toggle patient:<[data-active]/>]"
+  },
+  {
+    "id": "rt-010",
+    "description": "Selector group round-trips",
+    "input": "[toggle patient:<.a, .b/>]",
+    "roundtrip": "[toggle patient:<.a, .b/>]"
+  },
+  {
+    "id": "rt-011",
+    "description": "Bare id/class/aria/wildcard selectors stay unwrapped (roles render sorted)",
+    "input": "[add patient:.active destination:#out]",
+    "roundtrip": "[add destination:#out patient:.active]"
+  },
+  {
+    "id": "rt-012",
+    "description": "A literal containing a double quote is unescaped on parse and re-escaped on render",
+    "input": "[log patient:\"he said \\\"hi\\\"\"]",
+    "roundtrip": "[log patient:\"he said \\\"hi\\\"\"]"
+  },
+  {
+    "id": "rt-013",
+    "description": "Zero-argument nested command survives render and re-parse",
+    "input": "[on event:click body:[halt]]",
+    "roundtrip": "[on event:\"click\" body:[halt]]"
   }
 ]

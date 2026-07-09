@@ -231,6 +231,14 @@ pub fn selector_value(value: &str) -> SemanticValue {
     }
 }
 
+/// Factory: create a selector value carrying an inferred kind.
+pub fn selector_value_with_kind(value: &str, kind: Option<String>) -> SemanticValue {
+    SemanticValue {
+        selector_kind: kind,
+        ..selector_value(value)
+    }
+}
+
 /// Factory: create a literal value.
 pub fn literal_value(value: DynValue, data_type: &str) -> SemanticValue {
     SemanticValue {
