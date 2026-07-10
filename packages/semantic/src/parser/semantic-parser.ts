@@ -1843,6 +1843,18 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
         }
+
+        // Trailing DESTINATION/SOURCE reclaim — the add/put/remove sibling of
+        // the quantity/duration/responseType/wait reclaims above. The SOV
+        // reorder fronts the patient (`@disabled を 送信 で 追加 <button/> in
+        // me に`), so the [verb..boundary] re-parse's superset gate rejects
+        // the swap (the fronted patient sits outside the slice) and the
+        // postposed destination phrase is left unconsumed — the role silently
+        // defaults to `me` (form-disable-on-submit ×4 SOV). Same guarded
+        // helper as the parseClause call site: schema-declared role,
+        // absent-or-`me`-default only, destination matched by PRIMARY marker
+        // only, strict value shapes.
+        this.tryAttachTrailingRole(tokens, commandNode as CommandSemanticNode, language);
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -2718,6 +2730,32 @@ export class SemanticParserImpl implements ISemanticParser {
           if (v) roles.set(role, v);
           return;
         }
+        // Postpositional with an untranslated scope qualifier the transformer
+        // keeps inline: `<value> in <x> <marker>` (`<button/> in me に`,
+        // form-disable-on-submit ×4 SOV). en's add/put schemas have no scope
+        // role and DROP the qualifier (`add @disabled to <button/> in me` →
+        // destination="<button/>"), so attach the bare value and consume
+        // through the marker — the same en-lossiness. Strict (destination)
+        // only, single-token qualifier object, and the marker must close the
+        // phrase, so `in closest <form/>` (no adjacent marker) is untouched.
+        if (strict && isValue(tok0, strict)) {
+          const tok2 = stream.peek(2);
+          const tok3 = stream.peek(3);
+          if (
+            (tok1.normalized ?? tok1.value).toLowerCase() === 'in' &&
+            tok2 &&
+            !isMarker(tok2) &&
+            isMarker(tok3)
+          ) {
+            const v = this.tokenToSemanticValue(tok0);
+            stream.advance();
+            stream.advance();
+            stream.advance();
+            stream.advance();
+            if (v) roles.set(role, v);
+            return;
+          }
+        }
       } else {
         // Prepositional `<marker> <value>` (SVO th: จาก/ใน body).
         if (isMarker(tok0) && isValue(tok1, strict)) {
@@ -3047,8 +3085,27 @@ export class SemanticParserImpl implements ISemanticParser {
     if (tokens.length === 0) return null;
 
     // Filter out noise tokens (whitespace, etc.)
-    const meaningful = tokens.filter(t => (t.kind as string) !== 'whitespace');
+    let meaningful = tokens.filter(t => (t.kind as string) !== 'whitespace');
     if (meaningful.length === 0) return null;
+
+    // en-alignment: add/put declare NO scope role (only `set` does), so the
+    // en reference silently DROPS an `in me`/`in <x>` scope qualifier and
+    // captures the bare selector (`add @disabled to <button/> in me` →
+    // destination="<button/>"). The SOV corpus keeps the qualifier inline
+    // untranslated (`<button/> in me に`), and the whitespace-eliding join
+    // below would glue it into "<button/>inme" — same type, so only R3 sees
+    // it. A selector-led group truncates at a later `in`: en byte-alignment.
+    // Selector head required, so positional phrases (`first <li/> in me`)
+    // and non-selector runs are untouched.
+    if (
+      meaningful.length >= 2 &&
+      (meaningful[0].kind === 'selector' || /^[#.@*<]/.test(meaningful[0].value))
+    ) {
+      const inIdx = meaningful.findIndex(
+        (t, i) => i > 0 && (t.normalized ?? t.value).toLowerCase() === 'in'
+      );
+      if (inIdx > 0) meaningful = meaningful.slice(0, inIdx);
+    }
 
     // Single token — use its type directly
     if (meaningful.length === 1) {

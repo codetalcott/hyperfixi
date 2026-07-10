@@ -12683,6 +12683,49 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 
+  describe('F3: SOV `in me` qualifier glue/drop (form-disable-on-submit)', () => {
+    // The corpus keeps the literal English `in me` scope qualifier inline in
+    // every SOV render. en's add/put schemas have NO scope role, so the en
+    // reference DROPS it (destination="<button/>"). Two SOV defects, both
+    // R1-invisible (same role type):
+    //  (b) put: verb-anchoring joined `[<button/>, in, me]` whitespace-free
+    //      into destination="<button/>inme" — fixed by the selector-led
+    //      `in`-truncation in tokensToSemanticValue;
+    //  (a) add: the fused event pattern ends at the verb, the fronted patient
+    //      sits outside the [verb..boundary] re-parse slice (superset gate),
+    //      and the postposed `<button/> in me に` phrase dropped — destination
+    //      silently defaulted to `me`. Fixed by the trailing
+    //      DESTINATION/SOURCE reclaim on the fused path.
+    const FORM_DISABLE: Array<[string, string]> = [
+      ['en', 'on submit add @disabled to <button/> in me put "Submitting..." into <button/> in me'],
+      ['ja', '@disabled を 送信 で 追加 <button/> in me に それから "Submitting..." を <button/> in me に 置く'],
+      ['ko', '@disabled 를 제출 할 때 추가 <button/> in me 에 그러면 "Submitting..." 를 <button/> in me 에 넣다'],
+      ['hi', '@disabled को जमा पर जोड़ें <button/> in me में फिर "Submitting..." को <button/> in me में रखें'],
+      ['bn', '@disabled কে জমা এ যোগ <button/> in me তে তারপর "Submitting..." কে <button/> in me তে রাখুন'],
+      ['qu', '@disabled ta <button/> in me man kachay pi yapay chayqa "Submitting..." ta <button/> in me man churay'],
+    ];
+
+    it.each(FORM_DISABLE)('[%s] add AND put destination is the bare <button/> selector', (lang, line) => {
+      const nodes = collect(parse(line, lang));
+      const add = first(nodes, 'add');
+      const put = first(nodes, 'put');
+      expect(role(add, 'destination')?.value, `${lang} add destination`).toBe('<button/>');
+      expect(role(add, 'patient')?.value, `${lang} add patient`).toBe('@disabled');
+      expect(role(put, 'destination')?.value, `${lang} put destination`).toBe('<button/>');
+      expect(role(put, 'patient')?.value, `${lang} put patient`).toBe('Submitting...');
+    });
+
+    it('[en] positional phrase control: `first <li/> in me` is not truncated', () => {
+      // The truncation is gated to selector-LED groups; a positional keyword
+      // head keeps its full phrase reading.
+      const nodes = collect(parse('on click add .sel to first <li/> in me', 'en'));
+      const add = first(nodes, 'add');
+      expect(role(add, 'patient')?.value).toBe('.sel');
+      const dest = role(add, 'destination');
+      expect(String(dest?.raw ?? dest?.value ?? '')).not.toBe('me');
+    });
+  });
+
   describe('F4: pl/ru/uk fetch URL mis-role (with-preposition collision)', () => {
     // pl `z` / uk `з` are BOTH the profile's source and style markers (ru `с`
     // is style-primary and a source-alternative), so the fused generic VSO
