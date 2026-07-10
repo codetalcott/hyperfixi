@@ -334,6 +334,34 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // fetch: the Slavic with/from preposition collision (pl `z`, ru `с`, uk
+    // `з` — the profile's source AND style markers share a surface). The
+    // fused generic VSO event pattern (fetch-event-{pl,ru,uk}-vso) binds the
+    // leading URL to {patient} — fetch has NO patient role — and its
+    // source-marked group reads the with-OPTIONS head as `source`
+    // (`pobierz /api/form z method:"POST" …` → patient="/api/form",
+    // source="method"; en: source="/api/form", style="method"). The generic
+    // primary-role relabel above cannot fire because `source` is occupied.
+    // A patient + expression-typed source + empty style IS that mis-parse —
+    // no legitimate fetch form produces it — so shift source→style and
+    // patient→source (tell/transition relabel precedent).
+    if (node.action === 'fetch') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const pat = roles.get('patient');
+      const src = roles.get('source');
+      if (
+        pat &&
+        src &&
+        (pat.type === 'literal' || pat.type === 'expression') &&
+        src.type === 'expression' &&
+        !roles.has('style')
+      ) {
+        roles.delete('patient');
+        roles.set('style', src);
+        roles.set('source', pat);
+      }
+    }
+
     // transition: the SOV body-walker's verb-anchoring binds the postposed
     // goal phrase (`0 に` / `0 에`) to `destination` — に/에 is the generic
     // destination particle — as a LITERAL, which is schema-invalid (a

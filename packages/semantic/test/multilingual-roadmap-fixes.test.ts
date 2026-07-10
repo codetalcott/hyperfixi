@@ -12683,6 +12683,41 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 
+  describe('F4: pl/ru/uk fetch URL mis-role (with-preposition collision)', () => {
+    // pl `z` / uk `з` are BOTH the profile's source and style markers (ru `с`
+    // is style-primary and a source-alternative), so the fused generic VSO
+    // event pattern binds the leading URL to {patient} — fetch has no patient
+    // role — and reads the with-OPTIONS head as `source`. The fetch relabel in
+    // normalizeCommandRoles shifts the schema-impossible combo back to en's
+    // shape: source=<URL>, style=<options-head>.
+    const FETCH_LINES: Array<[string, string, string, string, string]> = [
+      // [lang, pattern, corpus line, expected source, expected style head]
+      ['pl', 'fetch-with-method', 'gdy wyślij pobierz /api/form z method:"POST" body:form', '/api/form', 'method'],
+      ['ru', 'fetch-with-method', 'при отправка загрузить /api/form с method:"POST" body:form', '/api/form', 'method'],
+      ['uk', 'fetch-with-method', 'при надсилання завантажити /api/form з method:"POST" body:form', '/api/form', 'method'],
+      ['pl', 'fetch-with-headers', 'gdy kliknięcie pobierz /api/me z headers:{Authorization:`Bearer ${$token}`} jako JSON wtedy umieść jego.name do ja', '/api/me', 'headers'],
+      ['pl', 'fetch-with-method-body', 'gdy kliknięcie pobierz /api/users z method:"POST", body:"name=Joe"', '/api/users', 'method'],
+      ['pl', 'fetch-formdata', 'gdy wyślij pobierz /api/submit z method:"POST", body:(closest <form/> jako FormData)', '/api/submit', 'method'],
+      ['ru', 'fetch-formdata', 'при отправка загрузить /api/submit с method:"POST", body:(closest <form/> как FormData)', '/api/submit', 'method'],
+      ['uk', 'fetch-formdata', 'при надсилання завантажити /api/submit з method:"POST", body:(closest <form/> як FormData)', '/api/submit', 'method'],
+    ];
+
+    it.each(FETCH_LINES)('[%s] %s: URL is source, options head is style', (lang, _pattern, line, url, styleHead) => {
+      const nodes = collect(parse(line, lang));
+      const f = first(nodes, 'fetch');
+      expect(role(f, 'source')?.value).toBe(url);
+      expect(String(role(f, 'style')?.raw ?? role(f, 'style')?.value)).toContain(styleHead);
+      expect(role(f, 'patient')).toBeUndefined();
+    });
+
+    it('[pl] fetch-basic control: the plain-source path is untouched', () => {
+      const nodes = collect(parse('gdy kliknięcie pobierz /api/data wtedy umieść to do #result', 'pl'));
+      const f = first(nodes, 'fetch');
+      expect(role(f, 'source')?.value).toBe('/api/data');
+      expect(role(f, 'style')).toBeUndefined();
+    });
+  });
+
   describe('F5: hi transition duration drop', () => {
     // hi matches the fused SOV 2-role transition pattern, which ends at {goal};
     // the duration renders as `में 500ms` — a particle BEFORE the time literal,
