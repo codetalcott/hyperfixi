@@ -130,6 +130,13 @@ export class RegressionReporter implements Reporter {
         langResult.avgRoleFidelity !== undefined && baselineLang.avgRoleFidelity !== undefined
           ? langResult.avgRoleFidelity - baselineLang.avgRoleFidelity
           : 0;
+      // R3 — same both-sides guard. Negative = a language-invariant role VALUE
+      // (selector/sigil/time/colon-event/URL) is now lost or corrupted, which
+      // every action/type-based signal scores as perfect.
+      const avgValueRecallDelta =
+        langResult.avgValueRecall !== undefined && baselineLang.avgValueRecall !== undefined
+          ? langResult.avgValueRecall - baselineLang.avgValueRecall
+          : 0;
       // R2 — same both-sides guard: an un-regenerated baseline (no execution
       // data yet) must never retro-flag.
       const avgExecutionFidelityDelta =
@@ -171,6 +178,7 @@ export class RegressionReporter implements Reporter {
         avgPrecisionDelta,
         avgMultisetRecallDelta,
         avgRoleFidelityDelta,
+        avgValueRecallDelta,
         avgExecutionFidelityDelta,
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
         newFailures,
@@ -378,6 +386,10 @@ export class RegressionReporter implements Reporter {
         // R1 — role fidelity (role name + value type vs the en reference).
         // Recorded + ratcheted; burn-down is NOT part of the parsing-track goal.
         avgRoleFidelity: langResult.avgRoleFidelity ?? undefined,
+        // R3 — invariant role-VALUE recall (verbatim value comparison over the
+        // code-shaped subset: selectors, sigil refs, time literals,
+        // colon-qualified event names, URLs). Recorded + ratcheted.
+        avgValueRecall: langResult.avgValueRecall ?? undefined,
         // R2 — execution fidelity over the curated subset (DOM effects vs the
         // en reference in jsdom). Recorded + ratcheted; burn-down deferred.
         avgExecutionFidelity: langResult.avgExecutionFidelity ?? undefined,

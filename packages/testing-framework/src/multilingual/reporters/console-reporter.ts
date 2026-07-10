@@ -158,9 +158,60 @@ export class ConsoleReporter implements Reporter {
     }
 
     this.reportDegeneratePasses(results);
+    this.reportValueRecall(results);
     this.reportExecutionFailures(results);
 
     this.log('');
+  }
+
+  /**
+   * R3 — surface parses that lost/corrupted a language-invariant role VALUE
+   * (selector, sigil ref, time literal, colon-qualified event name, URL) vs
+   * the en reference. These score 1.0 on every action/type-based signal yet
+   * behave differently at runtime, so they're reported separately. Report-only:
+   * the ratchet gate lives in the --regression path.
+   */
+  private reportValueRecall(results: TestResults): void {
+    const scored = results.languageResults.filter(l => l.avgValueRecall !== undefined);
+    if (scored.length === 0) return;
+
+    const avg = scored.reduce((sum, l) => sum + (l.avgValueRecall ?? 0), 0) / scored.length;
+    this.log('');
+    this.log(
+      this.bright(`Role values (R3): avgValueRecall ${avg.toFixed(4)} over invariant values`)
+    );
+
+    // pattern id -> "lang: missing entries" rows
+    const byPattern = new Map<string, string[]>();
+    let instances = 0;
+    for (const lang of scored) {
+      for (const r of lang.parseResults) {
+        if (r.valueRecall === undefined || r.valueRecall >= 1) continue;
+        instances++;
+        let rows = byPattern.get(r.pattern.codeExampleId);
+        if (!rows) {
+          rows = [];
+          byPattern.set(r.pattern.codeExampleId, rows);
+        }
+        rows.push(`${lang.language}: missing ${(r.valueRecallMissing ?? []).join(', ')}`);
+      }
+    }
+    if (byPattern.size === 0) return;
+
+    this.log(
+      this.yellow(
+        `⚠ Invariant value loss: ${instances} instance(s) across ${byPattern.size} pattern(s)`
+      )
+    );
+    this.log(
+      this.dim(
+        '  (an action.role=value present in the en reference is absent — not parse failures)'
+      )
+    );
+    for (const [id, rows] of [...byPattern.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      this.log(`  ${this.dim('-')} ${id}`);
+      for (const row of rows.sort()) this.log(`      ${this.dim(row)}`);
+    }
   }
 
   /**

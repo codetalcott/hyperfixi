@@ -76,20 +76,22 @@ describe('Phase 1: Verify Existing Commands', () => {
       }
     );
 
-    // Pre-existing STANDALONE parse gap, unrelated to tokenization (verified
-    // byte-identical before/after the colon-qualifier tokenizer fix): bn
-    // throws on the bare corpus trigger line — its trigger pattern does not
-    // accept the accusative কে-marked event (hi/qu had the same gap, fixed by
-    // the trigger schema's markerVariants). bn's full-body captures are
-    // unaffected (baseline multiset 1.0). `it.fails` flips visibly when the
-    // standalone form starts parsing.
-    const knownStandaloneGaps = [{ lang: 'bn', input: 'draggable:start কে ট্রিগার' }];
+    // bn marks trigger's event ACCUSATIVELY (`draggable:start কে ট্রিগার`),
+    // like hi/qu before it — fixed the same way, via the trigger schema's
+    // markerVariants (bn: কে). The standalone form parses with the full
+    // colon-qualified event name captured.
+    const accusativeStandaloneCases = [{ lang: 'bn', input: 'draggable:start কে ট্রিগার' }];
 
-    it.fails.each(knownStandaloneGaps)(
-      'standalone trigger in $lang is a known parse gap: "$input"',
+    it.each(accusativeStandaloneCases)(
+      'parses standalone accusative-marked trigger in $lang: "$input"',
       ({ lang, input }) => {
         const node = parse(input, lang) as CommandSemanticNode;
         expect(node.action).toBe('trigger');
+        const eventRole = node.roles.get('event') as { raw?: unknown; value?: unknown };
+        expect(
+          String(eventRole?.raw ?? eventRole?.value),
+          `${lang}: captured event name must keep the :qualifier`
+        ).toBe('draggable:start');
       }
     );
   });

@@ -2594,19 +2594,20 @@ colon-split (framework `BaseTokenizer.mergeColonQualifiedNames`), hi/qu trigger
 accusative markers (trigger schema `markerVariants`), and the ms `it.<command-verb>`
 phantom possessive (COMMAND_ACTION_KEYWORDS guard in `tryMatchPossessiveExpression`).
 CSS pseudo-class selectors (`#x:hover`, `.a:not(.b)`) also tokenize whole now, in all 24
-languages including en (was split everywhere). Three follow-ups remain:
+languages including en (was split everywhere). Follow-up status:
 
-1. **R3 role-VALUE audit (highest leverage).** The ms symptom — right action counts,
-   right role types, WRONG role value (`draggable` instead of `draggable:start`) — is
-   structurally invisible to every ratchet signal: R0/R1 compare actions and role
-   _types_, never values (values are legitimately translated). A corpus-wide audit
-   comparing **language-invariant** role values (selectors, `:`/`$` refs, numbers,
-   colon-qualified event names) against the en reference would close the whole bug
-   class. Net-new wiring, mirroring R1: a value-signature walker in
-   `packages/testing-framework/src/multilingual/fidelity.ts`, a field in
-   `validators/parse-validator.ts`, aggregation in `orchestrator.ts`, ratchet in
-   `cli.ts`. (`pattern_roles.role_value` in patterns.db is an alternative reference
-   source.) Needs its own baseline regen.
+1. ~~**R3 role-VALUE audit (highest leverage).**~~ **DONE** (2026-07-10, the R3 arc —
+   `docs-internal/HANDOFF_role-value-audit.md`, resolved). Landed exactly as designed:
+   `collectRoleValueSignature` walker in
+   `packages/testing-framework/src/multilingual/fidelity.ts` (invariant-shaped values
+   only — whole-surface code, no whitespace/`${` interpolation), live collection in
+   `validators/parse-validator.ts`, `avgValueRecall` aggregation + per-pattern
+   `valueRecallMissing` diagnostics in `orchestrator.ts`, console report section, and
+   the `--regression` ratchet (drop > 0.02, both-sides-guarded). Signal **proven** by
+   revert-validation: with `a7298b2e` (#633) reverted, R3 flags the ms/19-language
+   `trigger.event=draggable` corruption rows that R0/R1 score perfect (avgValueRecall
+   0.9861 → 0.9611). The first full sweep also surfaced six live value-bug families —
+   see "R3-discovered value-bug families" below.
 
 2. **qu behavior-resizable style-sets (the one remaining multiset row).** The qu
    reorder renders each inline `if X then set Y to Z end` with the inner set's
@@ -2618,11 +2619,58 @@ languages including en (was split everywhere). Three follow-ups remain:
    `it.fails` in `packages/semantic/test/multilingual-roadmap-fixes.test.ts` that flips
    when repaired.
 
-3. **bn standalone trigger.** `draggable:start কে ট্রিগার` (accusative-marked event)
-   still throws standalone — same gap hi/qu had before the trigger `markerVariants`
-   fix; adding bn's `কে` is probably the same one-line change, but bn's corpus rows are
-   already faithful (multiset 1.0), so it moved nothing and wasn't included. Locked by
-   an `it.fails` in `packages/semantic/test/draggable-patterns.test.ts`.
+3. ~~**bn standalone trigger.**~~ **DONE** (2026-07-10, same arc). The predicted
+   one-liner: `bn: ['কে']` added to the trigger schema's event `markerVariants`
+   (`packages/semantic/src/generators/command-schemas.ts`), `it.fails` flipped to a
+   full-capture assertion in `packages/semantic/test/draggable-patterns.test.ts`.
+   Better than expected: bn's corpus rows were only multiset-1.0-faithful — R3 showed
+   their behavior trigger-event VALUES were silently dropped
+   (`behavior-draggable/resizable/sortable`), and the fix healed those rows too
+   (bn avgValueRecall 0.917 → 0.958).
+
+## R3-discovered value-bug families (opened 2026-07-10)
+
+The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged
+(probe transcript in the R3 arc). Every family is **invisible to R0/R1** (right
+actions, right role types) except where noted. Baseline-recorded, so the ratchet
+only fires on _further_ regressions; burning these down is follow-up work, roughly
+in value order:
+
+1. **Connective swallowed as `increment.quantity`** (ar/it/ms/pl/ru/uk/tl/vi ×
+   `repeat-until-event`/`repeat-while`). `zwiększ #counter wtedy czekaj` parses with
+   `quantity="then"` — the normalized connective captured as increment's quantity
+   (en gets the schema default `1`). Runtime divergence: increment by `"then"` is
+   NaN-shaped. Likely one guard in the SVO two-role generation or a
+   quantity-role type constraint (`expectedTypes` number).
+2. **bn duration-glue** (`repeat-while`/`repeat-until-event`/`repeat-forever`/
+   `copy-to-clipboard`/`stagger-animation`/`tell-other-element`). bn tokenizer glues
+   the block terminator onto the preceding duration: `wait.duration="200msশেষ"`.
+   Tokenizer boundary bug (Bengali script adjacency).
+3. **SOV `in me` qualifier glue/drop** (bn/hi/ja/ko/qu × `form-disable-on-submit`).
+   en: `add.destination=<button/>` + `put.destination=<button/>` (with an `in me`
+   qualifier). SOV: add's destination falls back to default `me` (phrase lost) and
+   put's destination captures glued `<button/>inme`. Type stays `selector`, so R1
+   scores the put perfect — R3-only.
+4. **pl/ru/uk `fetch` URL mis-role** (4 fetch patterns). `pobierz /api/form z
+   method:"POST"` parses `patient=/api/form, source=method` — URL and with-clause
+   land in swapped roles (en: `source=/api/form, style=method`). Partially
+   R1-visible; runtime-relevant (fetch target wrong).
+5. **hi `transition` duration drop** (4 transition patterns). hi's rendering drops
+   `500ms` from roles entirely (`में` marker gap). R1-visible as missing role;
+   R3 pinpoints the value.
+6. **`swap` role-binding flip** (ar/bn/hi/ja/ko/qu/tl/tr × `swap-content`). en parses
+   `swap #a with #b` as `destination=#a, patient=#b`; SOV/VSO renderings mark `#a`
+   as patient — same role-type SET, so R1 is blind. Runtime-benign (swap is
+   symmetric) but flags the en swap schema's role mapping disagreeing with the
+   transformer's marking. Fix = align schema/renderer, or normalize symmetric
+   commands in the signature.
+7. **qu/tr behavior trigger-event residue** (`behavior-sortable`: qu misses
+   `sortable:move`+`sortable:start`, tr misses `sortable:move` +
+   `remove.patient=.{dragClass}`). Sibling of the fixed bn gap; likely reorder
+   placement rather than markers.
+8. **ms `repeat 3 kali` count swallowed** (`repeat-times`). ms parses
+   `loopType=3` with no `quantity` (en: `quantity=3, loopType=times`). R1-visible;
+   listed for completeness.
 
 ## Recommended sequence
 

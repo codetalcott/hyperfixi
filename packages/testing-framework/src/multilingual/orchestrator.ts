@@ -24,6 +24,7 @@ import {
   computeFidelity,
   computePrecision,
   computeMultisetRecall,
+  spuriousActions,
   FIDELITY_THRESHOLD,
 } from './fidelity';
 
@@ -263,6 +264,8 @@ export class TestOrchestrator {
     const multisetReference = new Map<string, string[]>();
     // R1: codeExampleId -> English role signature (action.role:valueType set).
     const roleReference = new Map<string, string[]>();
+    // R3: codeExampleId -> English role-VALUE signature (invariant values, multiset).
+    const roleValueReference = new Map<string, string[]>();
     for (const r of en.parseResults) {
       if (r.success && r.actionSignature && r.actionSignature.length > 0) {
         reference.set(r.pattern.codeExampleId, r.actionSignature);
@@ -272,6 +275,9 @@ export class TestOrchestrator {
       }
       if (r.success && r.roleSignature && r.roleSignature.length > 0) {
         roleReference.set(r.pattern.codeExampleId, r.roleSignature);
+      }
+      if (r.success && r.roleValueSignature && r.roleValueSignature.length > 0) {
+        roleValueReference.set(r.pattern.codeExampleId, r.roleValueSignature);
       }
     }
 
@@ -284,6 +290,7 @@ export class TestOrchestrator {
       const precisionScores: number[] = [];
       const multisetRecallScores: number[] = [];
       const roleScores: number[] = [];
+      const valueRecallScores: number[] = [];
 
       for (const result of lang.parseResults) {
         if (!result.success || !result.actionSignature) continue;
@@ -326,6 +333,23 @@ export class TestOrchestrator {
             roleScores.push(roleFidelity);
           }
         }
+
+        // R3 — invariant role-VALUE recall vs the en value signature (multiset).
+        // Values are compared verbatim: the filtered subset (selectors, sigil
+        // refs, time literals, colon-qualified events, URLs) is code, not prose.
+        const valueRef = roleValueReference.get(result.pattern.codeExampleId);
+        if (valueRef && result.roleValueSignature) {
+          const valueRecall = computeMultisetRecall(valueRef, result.roleValueSignature);
+          if (valueRecall !== undefined) {
+            result.valueRecall = valueRecall;
+            valueRecallScores.push(valueRecall);
+            if (valueRecall < 1) {
+              // Missing = reference entries not covered here (multiset diff;
+              // spuriousActions with the arguments swapped).
+              result.valueRecallMissing = spuriousActions(result.roleValueSignature, valueRef);
+            }
+          }
+        }
       }
 
       lang.avgFidelity =
@@ -341,6 +365,10 @@ export class TestOrchestrator {
       lang.avgRoleFidelity =
         roleScores.length > 0
           ? roleScores.reduce((a, b) => a + b, 0) / roleScores.length
+          : undefined;
+      lang.avgValueRecall =
+        valueRecallScores.length > 0
+          ? valueRecallScores.reduce((a, b) => a + b, 0) / valueRecallScores.length
           : undefined;
       lang.degeneratePasses = degenerate.sort();
       lang.lossyPasses = lossy.sort();

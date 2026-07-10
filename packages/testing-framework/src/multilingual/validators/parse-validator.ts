@@ -6,7 +6,12 @@ import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
 import { fillSchemaDefaults } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
-import { collectActions, collectActionsMultiset, collectRoleSignature } from '../fidelity';
+import {
+  collectActions,
+  collectActionsMultiset,
+  collectRoleSignature,
+  collectRoleValueSignature,
+} from '../fidelity';
 
 /**
  * Parse Validator
@@ -106,6 +111,9 @@ export class ParseValidator implements Validator<ParseResult[]> {
         // R1 role signature (role name + value type per command) — collected here
         // because live nodes carry roles as a ReadonlyMap that serializes to {}.
         roleSignature: collectRoleSignature(semanticNode),
+        // R3 role-VALUE signature (invariant-shaped values only, multiset) —
+        // catches right-action/right-type/wrong-VALUE corruption (the #633 class).
+        roleValueSignature: collectRoleValueSignature(semanticNode),
         duration: performance.now() - startTime,
       };
     } catch (error) {

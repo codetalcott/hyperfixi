@@ -145,6 +145,17 @@ export interface ParseResult {
   roleSignature?: string[];
 
   /**
+   * R3 — role-VALUE signature: `action.role=value` multiset, filtered to
+   * language-invariant surface forms (selectors, sigil refs, numbers/time
+   * literals, colon-qualified event names, URLs — code, not prose). The one
+   * value class that CAN be compared verbatim across languages; catches
+   * right-action/right-type/wrong-VALUE corruption (`draggable` captured for
+   * `draggable:start`) that every type-based signal misses. Set by the
+   * validator (roles are a ReadonlyMap — serialize to {} in results.json).
+   */
+  roleValueSignature?: string[];
+
+  /**
    * Structural fidelity vs the English reference parse, in [0, 1]: the fraction
    * of the English parse's distinct actions also present in this language's
    * parse (recall). `1` = same command structure; low values flag a *degenerate*
@@ -179,6 +190,23 @@ export interface ParseResult {
    * patient/destination executes wrongly while action-fidelity scores 1.0).
    */
   roleFidelity?: number;
+
+  /**
+   * R3 — invariant role-VALUE recall vs the English reference, in [0, 1]: the
+   * fraction of the English parse's `roleValueSignature` entries (multiset —
+   * duplicates counted) also present here. Falls below 1.0 when a translation
+   * loses or corrupts a language-invariant value (selector, sigil ref, time
+   * literal, colon-qualified event name, URL) while actions and role types
+   * still match. `undefined` when the en reference has no invariant values.
+   */
+  valueRecall?: number;
+
+  /**
+   * R3 — the en reference's `action.role=value` entries missing from this
+   * parse (multiset difference). Populated only when `valueRecall` < 1, for
+   * diagnostics ("which value was lost/corrupted?").
+   */
+  valueRecallMissing?: string[];
 }
 
 /**
@@ -234,6 +262,14 @@ export interface LanguageResults {
    * of the parsing-track goal (see CORRECTNESS_RELIABILITY_PLAN.md §8).
    */
   avgRoleFidelity?: number | undefined;
+
+  /**
+   * R3 — mean `valueRecall` over successful parses with an English reference.
+   * Recorded + ratcheted alongside avgRoleFidelity: a drop means a translation
+   * started losing/corrupting a language-invariant role VALUE (the #633 class),
+   * which every action/type-based signal above scores as perfect.
+   */
+  avgValueRecall?: number | undefined;
 
   /**
    * R2 — mean executionFidelity over the curated execution subset (see
@@ -325,6 +361,8 @@ export interface Baseline {
         avgMultisetRecall?: number | undefined;
         /** R1 — mean role fidelity vs the English reference (see ParseResult.roleFidelity). */
         avgRoleFidelity?: number | undefined;
+        /** R3 — mean invariant role-VALUE recall vs the English reference (see ParseResult.valueRecall). */
+        avgValueRecall?: number | undefined;
         /** R2 — mean execution fidelity over the curated execution subset (see LanguageResults.avgExecutionFidelity). */
         avgExecutionFidelity?: number | undefined;
         /** R2 — curated-subset pattern IDs whose execution diverged from the en reference. */
@@ -364,6 +402,8 @@ export interface RegressionResult {
   avgMultisetRecallDelta: number;
   /** R1 — absolute change in avgRoleFidelity (current − baseline). 0 when either side lacks data. */
   avgRoleFidelityDelta: number;
+  /** R3 — absolute change in avgValueRecall (current − baseline). 0 when either side lacks data. Negative = an invariant role VALUE is being lost/corrupted. */
+  avgValueRecallDelta: number;
   /** R2 — absolute change in avgExecutionFidelity (current − baseline). 0 when either side lacks data. */
   avgExecutionFidelityDelta: number;
   /**

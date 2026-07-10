@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collectActions,
   collectActionsMultiset,
+  collectRoleValueSignature,
   computeFidelity,
   computeMultisetRecall,
   computePrecision,
@@ -154,6 +155,161 @@ describe('computeMultisetRecall', () => {
 function collectSet(actions: readonly string[]): string[] {
   return [...new Set(actions)].sort();
 }
+
+describe('collectRoleValueSignature', () => {
+  it('emits every invariant-shaped value class, from a roles Map', () => {
+    const node = {
+      kind: 'event-handler',
+      action: 'on',
+      roles: new Map<string, unknown>([
+        ['event', { type: 'expression', raw: 'draggable:start' }], // colon-qualified (the #633 class)
+      ]),
+      body: [
+        {
+          kind: 'command',
+          action: 'toggle',
+          roles: new Map<string, unknown>([
+            ['patient', { type: 'selector', value: '.active', selectorKind: 'class' }],
+          ]),
+        },
+        {
+          kind: 'command',
+          action: 'set',
+          roles: new Map<string, unknown>([
+            ['destination', { type: 'expression', raw: ':x' }], // sigil ref
+          ]),
+        },
+        {
+          kind: 'command',
+          action: 'wait',
+          roles: new Map<string, unknown>([
+            ['duration', { type: 'literal', value: '200ms', dataType: 'duration' }],
+          ]),
+        },
+        {
+          kind: 'command',
+          action: 'fetch',
+          roles: new Map<string, unknown>([['source', { type: 'literal', value: '/api/data' }]]),
+        },
+      ],
+    };
+    expect(collectRoleValueSignature(node)).toEqual([
+      'fetch.source=/api/data',
+      'on.event=draggable:start',
+      'set.destination=:x',
+      'toggle.patient=.active',
+      'wait.duration=200ms',
+    ]);
+  });
+
+  it('excludes non-invariant values: references, prose, bare words, mixed raws, flags, property-paths', () => {
+    const node = {
+      kind: 'command',
+      action: 'put',
+      roles: new Map<string, unknown>([
+        ['destination', { type: 'reference', value: 'me' }], // fillSchemaDefaults noise
+        ['patient', { type: 'literal', value: 'Hello world', dataType: 'string' }], // legitimately translated
+        ['source', { type: 'expression', raw: 'startX' }], // bare identifier — v1 exclusion
+        ['modifier', { type: 'expression', raw: '次 .item' }], // native words + code mixed
+        ['condition', { type: 'expression', raw: '#modal exists' }], // selector-prefixed prose (if-exists class)
+        ['url', { type: 'literal', value: '/api/search?q=${my' }], // truncated template interpolation
+        ['flagRole', { type: 'flag', name: 'async', enabled: true }],
+        [
+          'pathRole',
+          { type: 'property-path', object: { type: 'reference', value: 'me' }, property: 'value' },
+        ],
+      ]),
+    };
+    expect(collectRoleValueSignature(node)).toEqual([]);
+  });
+
+  it('is a multiset — a dropped duplicate value is visible via computeMultisetRecall', () => {
+    // The bind-two-way shape: two `bind`s to two different sigil refs; a
+    // truncating parse keeps only the first. Both entries share NO key with a
+    // Set — but if both bound the SAME ref, dedup would hide the drop:
+    const twoBinds = {
+      action: 'compound',
+      statements: [
+        {
+          action: 'bind',
+          roles: new Map<string, unknown>([['source', { type: 'expression', raw: '$name' }]]),
+        },
+        {
+          action: 'bind',
+          roles: new Map<string, unknown>([['source', { type: 'expression', raw: '$name' }]]),
+        },
+      ],
+    };
+    const oneBind = {
+      action: 'bind',
+      roles: new Map<string, unknown>([['source', { type: 'expression', raw: '$name' }]]),
+    };
+    const ref = collectRoleValueSignature(twoBinds);
+    const cand = collectRoleValueSignature(oneBind);
+    expect(ref).toEqual(['bind.source=$name', 'bind.source=$name']);
+    expect(cand).toEqual(['bind.source=$name']);
+    expect(computeMultisetRecall(ref, cand)).toBe(0.5);
+  });
+
+  it('recurses into behavior-shaped nodes (eventHandlers + initBlock)', () => {
+    // No other walker test exercises these two CHILD_FIELDS; ad-hoc walkers
+    // that omit them see behavior bodies as empty.
+    const behavior = {
+      kind: 'behavior',
+      action: 'behavior',
+      roles: new Map<string, unknown>([['name', { type: 'expression', raw: 'Draggable' }]]),
+      eventHandlers: [
+        {
+          kind: 'event-handler',
+          action: 'on',
+          roles: new Map<string, unknown>([
+            ['event', { type: 'literal', value: 'draggable:start' }],
+          ]),
+          body: [
+            {
+              kind: 'command',
+              action: 'add',
+              roles: new Map<string, unknown>([
+                ['patient', { type: 'selector', value: '.dragging' }],
+              ]),
+            },
+          ],
+        },
+      ],
+      initBlock: [
+        {
+          kind: 'command',
+          action: 'set',
+          roles: new Map<string, unknown>([['destination', { type: 'expression', raw: '*width' }]]),
+        },
+      ],
+    };
+    expect(collectRoleValueSignature(behavior)).toEqual([
+      'add.patient=.dragging',
+      'on.event=draggable:start',
+      'set.destination=*width',
+    ]);
+  });
+
+  it('reads plain-object roles (synthetic/JSON-shaped nodes) too', () => {
+    const node = {
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '#count' } },
+    };
+    expect(collectRoleValueSignature(node)).toEqual(['toggle.patient=#count']);
+  });
+
+  it('skips the structural compound wrapper and handles non-object input', () => {
+    const node = {
+      action: 'compound',
+      roles: new Map<string, unknown>([['patient', { type: 'selector', value: '.x' }]]),
+      statements: [{ action: 'toggle', roles: { patient: { type: 'selector', value: '.x' } } }],
+    };
+    expect(collectRoleValueSignature(node)).toEqual(['toggle.patient=.x']);
+    expect(collectRoleValueSignature(null)).toEqual([]);
+    expect(collectRoleValueSignature(undefined)).toEqual([]);
+  });
+});
 
 describe('spuriousActions', () => {
   it('lists the hallucinated commands a render/parse introduced', () => {

@@ -291,7 +291,7 @@ the committed baseline:
 > not truth. Current plan + per-arc history:
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
-The `--regression` gate ratchets on **seven** signals (each fails CI; each guarded so
+The `--regression` gate ratchets on **eight** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
@@ -326,10 +326,29 @@ yields a 0 delta):
    blind spot for repeated roles.
 7. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
    matched the en reference and now diverges (pass→fail; tolerance 0).
+8. **value-recall ratchet (R3)** — a per-language **avgValueRecall** drop > 0.02.
+   Signals 1–7 compare actions and role _types_; values are never compared (they are
+   legitimately translated), so a parse with the right action counts and right role
+   types but a silently WRONG role value — ms capturing `trigger` events named
+   `draggable` instead of `draggable:start`, the colon-event-names class — scores
+   perfect on all of them. R3 compares the subset of values that is
+   **language-invariant by construction** (selectors, `:`/`$`/`^` sigil refs,
+   numbers/time literals, colon-qualified event names, URLs — whole-surface
+   code-shaped, no whitespace/interpolation) **verbatim** against the en reference,
+   as an `action.role=value` multiset (a dropped duplicate value is visible).
+   Blind-spot inversion: if the **en reference itself** corrupts a value, every
+   language flags at once — a 24-language R3 firestorm on one pattern means
+   "suspect the en parse first" (useful signal, unlike R0 where en corruption moves
+   nothing). Known sub-1.0 rows (all triaged, tracked in
+   `docs-internal/MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug families"):
+   symmetric `swap` role-binding flips, connective-swallowed `increment.quantity`,
+   bn duration-glue, SOV `in me` qualifier glue, pl/ru/uk `fetch` URL mis-role,
+   hi `transition` duration drop, bn/qu/tr behavior trigger events.
 
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
 identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.
+(Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.)
 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
