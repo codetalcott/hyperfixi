@@ -1,5 +1,19 @@
 # Handoff: the transformer-rendering arc (SOV reorder stranding)
 
+> **RESOLVED 2026-07-10** (branch `fix/transformer-sov-reorder-stranding`).
+> All five scoreboard rows cleared: the four `behavior-sortable` R3 rows
+> (qu ×2, tr ×2), the qu `behavior-resizable` multiset row, plus the bn
+> repeat-while cosmetic render. Outcomes + mechanism notes:
+> `docs-internal/MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug
+> families" item 7 and § "Colon-event-names follow-ups" item 2. One planning
+> note for posterity: the blanket fix this handoff gestured at (extending the
+> tr/bn `canonicalOrder` wholesale) re-renders the entire corpus into shapes
+> the semantic parser's generated patterns + reclaim tolerances weren't built
+> for (R3 went 12→39 rows) — the landed fix is per-command i18n `rules`
+> (wait/repeat-until), the trailing-`end` strip, two new semantic patterns,
+> and the curated-end role-value guard. The section below is kept as the
+> original problem statement.
+>
 > **For a fresh session.** Read this, then CLAUDE.md ("Multilingual parse rate ≠
 > fidelity" and "Running the multilingual `--regression` gate locally"), then
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug

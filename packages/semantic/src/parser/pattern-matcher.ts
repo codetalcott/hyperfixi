@@ -28,6 +28,7 @@ import { getPossessiveReference } from './utils/possessive-keywords';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
+import { isCuratedEndKeyword } from './end-keywords';
 import type { ConfidenceModel } from './confidence-model';
 import { defaultConfidenceModel } from './confidence-model';
 
@@ -563,6 +564,17 @@ export class PatternMatcher {
     if (token.kind === 'keyword') {
       const connNorm = (token.normalized ?? token.value).toLowerCase();
       if (connNorm === 'then' || (connNorm === 'end' && tokens.peek(1)?.kind !== 'selector')) {
+        return patternToken.optional || false;
+      }
+      // A CURATED end word (by VALUE — tr `son`, qu `tukuy`) is never a role
+      // value, even before a selector and even when the tokenizer normalizes
+      // it to something else (tr son→'last', the positional homonym): the
+      // curated sets are audited so those words are always the terminator
+      // (tr emits `sonuncu` for positional last). Without this, a loop's own
+      // `son` directly before the next command's selector matched
+      // tryMatchPositionalExpression and prefixed that command's role value
+      // (tr behavior-sortable remove.patient="last .{dragClass}").
+      if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) {
         return patternToken.optional || false;
       }
     }

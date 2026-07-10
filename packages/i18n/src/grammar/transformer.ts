@@ -1901,6 +1901,18 @@ export class GrammarTransformer {
       return this.transformBlock(block);
     }
 
+    // 0a. Fragment carrying a stranded trailing block terminator (`wait 200ms
+    //     end`, `set x to y end` — what the `then`-splitter leaves from
+    //     `if … then <cmd> end`). `end` is not a marker, so left in place it is
+    //     swept into the open role's VALUE and rendered inside that phrase
+    //     (bn `200ms শেষ কে অপেক্ষা`). Strip it, transform the clause alone, and
+    //     re-append the translated terminator after the verb — the same tail
+    //     position transformBlockBody emits for event-headed blocks.
+    const strippedEnd = this.transformWithTrailingEnd(input);
+    if (strippedEnd !== null) {
+      return strippedEnd;
+    }
+
     // 0b. `set @attr to V on <scope>` (S1 tabs-aria): strip the trailing
     //     `on <scope>`, transform the scope-less set normally, then re-insert
     //     `on <scope>` where the semantic set patterns expect it.
@@ -1949,6 +1961,36 @@ export class GrammarTransformer {
 
     // 7. Join without markers (still use joinTokens for consistency)
     return joinTokens(reordered.map(e => e.translated || e.value));
+  }
+
+  /**
+   * `<command …> end` fragments: transform the command without its stranded
+   * terminator, then re-append the translated terminator as a standalone
+   * trailing token. Fragments that open a block of their own (`if … end`,
+   * `repeat … end`, `js … end`) bail — their terminator belongs to them and
+   * their dedicated paths handle it.
+   */
+  private transformWithTrailingEnd(input: string): string | null {
+    const src = this.sourceProfile.code;
+    const tokens = input.trim().split(/\s+/);
+    if (tokens.length < 2) {
+      return null;
+    }
+    const sourceEnd = translateWord('end', 'en', src).toLowerCase();
+    if (tokens[tokens.length - 1].toLowerCase() !== sourceEnd) {
+      return null;
+    }
+    const openers = new Set(
+      ['if', 'repeat', 'unless', 'while', 'when', 'live', 'js'].map(k =>
+        translateWord(k, 'en', src).toLowerCase()
+      )
+    );
+    if (tokens.slice(0, -1).some(t => openers.has(t.toLowerCase()))) {
+      return null;
+    }
+    const inner = this.transformSingle(tokens.slice(0, -1).join(' '));
+    const endT = translateWord(tokens[tokens.length - 1], src, this.targetProfile.code);
+    return `${inner} ${endT}`;
   }
 
   /**

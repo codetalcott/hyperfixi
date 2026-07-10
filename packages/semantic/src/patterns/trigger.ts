@@ -129,6 +129,49 @@ function getTriggerPatternsHe(): LanguagePattern[] {
   ];
 }
 
+function getTriggerPatternsQu(): LanguagePattern[] {
+  return [
+    {
+      // The i18n corpus shape: `sortable:start ta noqa man kichay` — event
+      // (patient-marked `ta`), optional destination (`man`), verb-final. The
+      // generated qu trigger patterns (`[{destination} man] {event} pi
+      // kuyuchiy`) never match it, so in a multi-command body the line only
+      // survives via the greedy verb-anchoring fallback — which, when the
+      // NEXT statement opens with the fronted until-compound (`hayk_akama …
+      // kutipay`), eats `hayk` as the trigger's event (the behavior-sortable
+      // qu `sortable:start` R3 row). A position-0 match wins before the
+      // fallback can glue. Literals are NORMALIZED forms (kichay→trigger).
+      id: 'trigger-qu-event-first-verb-final',
+      language: 'qu',
+      command: 'trigger',
+      priority: 105,
+      template: {
+        format: '{event} ta [{destination} man] trigger',
+        tokens: [
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'literal', value: 'ta' },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              {
+                type: 'role',
+                role: 'destination',
+                expectedTypes: ['selector', 'reference', 'expression'],
+              },
+              { type: 'literal', value: 'man' },
+            ],
+          },
+          { type: 'literal', value: 'trigger' },
+        ],
+      },
+      extraction: {
+        destination: { default: { type: 'reference', value: 'me' } },
+      },
+    },
+  ];
+}
+
 export function getTriggerPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'en':
@@ -137,6 +180,8 @@ export function getTriggerPatternsForLanguage(language: string): LanguagePattern
       return getTriggerPatternsZh();
     case 'he':
       return getTriggerPatternsHe();
+    case 'qu':
+      return getTriggerPatternsQu();
     default:
       return [];
   }
