@@ -164,6 +164,15 @@ export interface ParseResult {
   precision?: number;
 
   /**
+   * R0-recall on the MULTISET vs the English reference, in [0, 1]. `fidelity`
+   * above scores the deduped Set, so a parse that drops a REPEATED command
+   * (`[bind, bind]` → `[bind]`) still scores 1.0. This counts duplicates, and is
+   * the mirror of `precision`: together they see both a dropped and an added
+   * copy of a command. `undefined` when there is no usable English reference.
+   */
+  multisetRecall?: number;
+
+  /**
    * R1 — role fidelity vs the English reference, in [0, 1]: the fraction of the
    * English parse's role-signature entries also present here. Catches a parse
    * that finds the right commands with the WRONG roles (swapped
@@ -210,6 +219,14 @@ export interface LanguageResults {
    * change started injecting phantom/spurious commands (invisible to recall).
    */
   avgPrecision?: number | undefined;
+
+  /**
+   * R0-recall-multiset — mean `multisetRecall` over successful parses with an
+   * English reference. Recorded + ratcheted alongside avgFidelity: a drop means a
+   * parser change started dropping a REPEATED command, which the Set-based
+   * avgFidelity and avgRoleFidelity cannot see.
+   */
+  avgMultisetRecall?: number | undefined;
 
   /**
    * R1 — mean `roleFidelity` over successful parses with an English reference.
@@ -304,6 +321,8 @@ export interface Baseline {
         avgFidelity?: number | undefined;
         /** R0-precision — mean precision vs the English reference (see ParseResult.precision). */
         avgPrecision?: number | undefined;
+        /** R0-recall-multiset — mean multisetRecall vs the English reference (see ParseResult.multisetRecall). */
+        avgMultisetRecall?: number | undefined;
         /** R1 — mean role fidelity vs the English reference (see ParseResult.roleFidelity). */
         avgRoleFidelity?: number | undefined;
         /** R2 — mean execution fidelity over the curated execution subset (see LanguageResults.avgExecutionFidelity). */
@@ -341,6 +360,8 @@ export interface RegressionResult {
   avgFidelityDelta: number;
   /** R0-precision — absolute change in avgPrecision (current − baseline). 0 when either side lacks data. Negative = phantom commands introduced. */
   avgPrecisionDelta: number;
+  /** R0-recall-multiset — absolute change in avgMultisetRecall (current − baseline). 0 when either side lacks data. Negative = a repeated command is being dropped. */
+  avgMultisetRecallDelta: number;
   /** R1 — absolute change in avgRoleFidelity (current − baseline). 0 when either side lacks data. */
   avgRoleFidelityDelta: number;
   /** R2 — absolute change in avgExecutionFidelity (current − baseline). 0 when either side lacks data. */

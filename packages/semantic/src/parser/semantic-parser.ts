@@ -1031,6 +1031,61 @@ export class SemanticParserImpl implements ISemanticParser {
           return withDiagnostics(result, diagnostics);
         }
       }
+      // Top-level command SEQUENCE guard: `parseInternal` has no program layer for
+      // plain commands, so a sequence is truncated to its first command at top
+      // level while parsing correctly INSIDE any block:
+      //
+      //   add .a to #x then add .b to #y   handler: [on, add, add]   top: [add]
+      //   bind $n to #a bind $n to #b      handler: [on, bind, bind] top: [bind]
+      //
+      // Stage 2 matches the first command and returns; the rest is dropped, and
+      // the `unconsumed-input` diagnostic below is the only trace. Stage 4
+      // (tryCompoundCommandParsing) can't help: it is only reached when Stage 2
+      // finds NO match, and it requires a `then`/`else` keyword — but the English
+      // form is JUXTAPOSED (only the translations insert a conjunction), so a
+      // then-only fix would pass 23 languages and fail English. tryParseProgram
+      // (Stage 0.5) bails unless every segment is an event-handler, by design.
+      //
+      // parseBodyWithClauses already handles both the then-chained and the
+      // juxtaposed form — that is precisely why the same input parses inside a
+      // handler. Route to it. Additive by the same discipline as every other
+      // guard in this stage: it returns null unless the remainder genuinely
+      // parses into a second command, so a real single command with an
+      // unparseable tail (`set x to 5 +`, `fetch /api with { … }`) is byte-
+      // identical to before and still reports `unconsumed-input`.
+      //
+      // Deliberately placed AFTER the SOV trailing-event guard above. A
+      // multi-command SOV body with a fused trailing event
+      // (`.active を 切り替え それから .b を 削除 クリック で`) parses here as a bare
+      // two-command sequence, silently dropping the `on click` wrapper; the SOV
+      // guard must claim it first. (The single-command SOV case does not
+      // distinguish the two orderings — the >1 gate below is false either way.)
+      //
+      // Excluded for BLOCK_BODY_ACTIONS. A block command's body legitimately
+      // trails its flat pattern match — `repeat 3 times toggle .x end` leaves
+      // `toggle .x end` unconsumed — and the clause parser reads that body as a
+      // SIBLING clause, yielding `compound[repeat, toggle]`: a loop with no body
+      // beside a stray toggle. That is a worse parse, not a better one. Whether
+      // the body should instead NEST into the block is a separate, pre-existing
+      // defect of the same family as the feature blocks fixed in #628/#629; it
+      // still reports `unconsumed-input` below, so it stays visible rather than
+      // being papered over by a flatten.
+      if (
+        commandMatch.consumedTokens < tokens.tokens.length &&
+        !BLOCK_BODY_ACTIONS.has(commandMatch.pattern.command)
+      ) {
+        const sequence = this.tryTopLevelCommandSequence(tokens, commandPatterns, language);
+        if (sequence) {
+          diagnostics.push(
+            parseDiagnostic(
+              `top-level command sequence: ${sequence.statements.length} commands`,
+              'info',
+              'stage-top-level-sequence'
+            )
+          );
+          return withDiagnostics(sequence, diagnostics);
+        }
+      }
       diagnostics.push(
         parseDiagnostic(
           `command pattern matched: ${commandMatch.pattern.id} (confidence: ${commandMatch.confidence.toFixed(2)})`,
@@ -2121,6 +2176,56 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     return clauses;
+  }
+
+  /**
+   * Re-parse a Stage-2 input that left a trailing remainder as a top-level
+   * command SEQUENCE (`add .a to #x then add .b to #y`, `bind $n to #a bind $n
+   * to #b`). Returns the compound node, or null to fall through to the
+   * single-command path unchanged.
+   *
+   * Returns null unless the clause parser recovers **more than one** command —
+   * that is the whole additive guarantee. A single command with an unparseable
+   * tail yields one clause and falls through, so it still builds exactly as
+   * before and still reports `unconsumed-input`.
+   *
+   * The stream is rebuilt from scratch: Stage 2's stream has already been
+   * advanced past the first command by `matchBest`. Mirrors
+   * {@link tryCompoundCommandParsing}, which does the same for its own re-parse.
+   */
+  private tryTopLevelCommandSequence(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): CompoundSemanticNode | null {
+    let body: SemanticNode[];
+    try {
+      const freshStream = new TokenStreamImpl(tokens.tokens as LanguageToken[], language);
+      body = this.parseBodyWithClauses(freshStream, commandPatterns, language);
+    } catch {
+      return null;
+    }
+
+    // parseBodyWithClauses returns `[compound]` for >1 clause, else the clauses
+    // themselves (0 or 1). Anything but the compound means there was no sequence.
+    if (body.length !== 1 || body[0].kind !== 'compound') return null;
+    const compound = body[0] as CompoundSemanticNode;
+    if (compound.statements.length < 2) return null;
+
+    // Carry a real confidence. `parseWithConfidence` reads
+    // `node.metadata?.confidence ?? 0.8`, and createCompoundNode sets none — so
+    // without this a faithful two-command sequence would report 0.8 and could
+    // fall under the bridge's 0.5 threshold once a weak clause pulls the mean
+    // down. Set it HERE rather than inside parseBodyWithClauses: that call is
+    // shared with event-handler / `def` / behavior bodies, whose own confidence
+    // is computed separately over the flattened statements.
+    const confidences = compound.statements.map(s => s.metadata?.confidence ?? 0.75);
+    const confidence = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+
+    return createCompoundNode(compound.statements, compound.chainType, {
+      sourceLanguage: language,
+      confidence,
+    });
   }
 
   /**
@@ -3241,14 +3346,10 @@ export class SemanticParserImpl implements ISemanticParser {
 
     if (body.length === 0) return null;
 
-    // Return the compound node (or single command if only one clause parsed)
-    if (body.length === 1) {
-      return body[0];
-    }
-    return createCompoundNode(body, 'then', {
-      sourceLanguage: language,
-      confidence: 0.65,
-    });
+    // Always a single element: parseBodyWithClauses wraps >1 clause into ONE
+    // compound and otherwise returns the lone clause. (A `createCompoundNode`
+    // re-wrap used to sit here for a `body.length > 1` case that cannot occur.)
+    return body[0];
   }
 
   // ==========================================================================
