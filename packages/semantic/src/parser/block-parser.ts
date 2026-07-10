@@ -18,6 +18,7 @@ import type {
   LanguageToken,
   SemanticNode,
   EventHandlerSemanticNode,
+  DefSemanticNode,
   FeatureAction,
 } from '../types';
 import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNode } from '../types';
@@ -218,6 +219,55 @@ function resolveNameTokenIndex(
   return idx < tokens.length ? idx : -1;
 }
 
+/** Identifier form of a `def` name (optionally namespaced, e.g. `utils.calc`). */
+const DEF_NAME = /^[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*$/;
+
+/**
+ * Where an SOV verb-final keyword must sit for `<name>[(params)] <patient-marker>
+ * <keyword>` to be the block's head: immediately after the name, its balanced
+ * parameter list (if any), and exactly one marker. Returns -1 on an unbalanced list.
+ */
+function sovHeadKeywordIndex(tokens: readonly LanguageToken[]): number {
+  let afterName = 1;
+  if (tokens[1]?.value === '(') {
+    let depth = 0;
+    let j = 1;
+    for (; j < tokens.length; j++) {
+      if (tokens[j].value === '(') depth++;
+      else if (tokens[j].value === ')' && --depth === 0) break;
+    }
+    if (j >= tokens.length) return -1;
+    afterName = j + 1;
+  }
+  return afterName + 1; // skip the single patient marker
+}
+
+/**
+ * Is `keywordIdx` an SOV verb-final block head — `<name>[(params)] <patient-marker>
+ * <keyword>`?
+ *
+ * The head must be CONTIGUOUS. Requiring only "a patient marker sits before the
+ * keyword" is not enough: `worker`'s own ja body is `Calculator を worker … add(a,
+ * b) を def …`, whose *body-level* `def` is also marker-preceded, so a loose guard
+ * makes `tryParseBlock` claim the whole worker block as a `def` named `Calculator`.
+ * Pinning the keyword to the position right after the name + params + one marker
+ * rejects that (expected index 2, actual 10) while still accepting the real def
+ * sub-block once `worker` hands it over as its own segment.
+ */
+function isSovVerbFinalHead(
+  tokens: readonly LanguageToken[],
+  keywordIdx: number,
+  language: string
+): boolean {
+  const profile = tryGetProfile(language);
+  if (profile?.wordOrder !== 'SOV') return false;
+  if (!DEF_NAME.test(tokens[0].value)) return false;
+  if (keywordIdx !== sovHeadKeywordIndex(tokens)) return false;
+  const patientForms = markerSurfaceForms(profile.roleMarkers?.patient);
+  if (patientForms.size === 0) return false;
+  return tokenMatches(tokens[keywordIdx - 1], patientForms);
+}
+
 /**
  * Attempt to parse `input` as a block construct (`behavior`/`def`). Returns null
  * (fast) for non-block input so the caller falls through to single-statement
@@ -255,7 +305,19 @@ export function tryParseBlock(
     return parseBehaviorBlock(input, language, tokens, parsers, sovKeywordIdx);
   }
   if (tokenMatches(tokens[0], defForms)) {
-    return parseDefBlock(input, language, tokens, parsers);
+    return parseDefBlock(input, language, tokens, parsers, 0);
+  }
+  // SOV verb-final `def`, the same reorder as `behavior` above (ja `add(a, b) を
+  // def`, ko `를`, hi `को`, bn `কে`, tr `i`, qu `ta`). It cannot reuse the
+  // PascalCase guard — function names are lowercase (`parseDefBlock` accepts any
+  // identifier) — so the head is identified structurally instead: the token
+  // immediately before the keyword must be the language's patient marker, which is
+  // exactly what the transformer emits between the name and the displaced verb.
+  // Reached via `worker`'s body segments, which route through `parsers.statement`
+  // (→ Stage 0), the only path that sees this layer.
+  const sovDefIdx = tokens.findIndex((t, i) => i > 0 && tokenMatches(t, defForms));
+  if (sovDefIdx > 0 && isSovVerbFinalHead(tokens, sovDefIdx, language)) {
+    return parseDefBlock(input, language, tokens, parsers, sovDefIdx);
   }
   return null;
 }
@@ -572,23 +634,35 @@ function parseBehaviorBlock(
   );
 }
 
-/** Parse a `def name(params) … end` block into a DefSemanticNode. */
+/**
+ * Parse a `def name(params) … end` block into a DefSemanticNode.
+ *
+ * `keywordIdx` is the token index of the `def` keyword: 0 for the keyword-led form,
+ * or > 0 for the SOV verb-final form where it is reordered after the name + its
+ * object marker (`add(a, b) を def`) — mirroring `parseBehaviorBlock`.
+ */
 function parseDefBlock(
   input: string,
   language: string,
   tokens: readonly LanguageToken[],
-  parsers: BlockParsers
+  parsers: BlockParsers,
+  keywordIdx: number
 ): SemanticNode | null {
+  const sovFinal = keywordIdx > 0;
   // Function name — any identifier (optionally namespaced, e.g. `utils.calc`).
-  // Skip a leading object marker (he `def את foo`, zh `def 把 foo`) first.
-  const nameIdx = resolveNameTokenIndex(tokens, 0, language);
+  // The SOV verb-final form leads with the name; otherwise it follows the keyword,
+  // skipping a leading object marker (he `def את foo`, zh `def 把 foo`).
+  const nameIdx = sovFinal ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return null;
   const nameToken = tokens[nameIdx];
   const name = nameToken.value;
-  if (!/^[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*$/.test(name)) return null;
+  if (!DEF_NAME.test(name)) return null;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
-  let bodyStart = tokens.findIndex(t => t.position.start >= headerEnd);
+  // Body begins after the header for the keyword-led form. For the SOV verb-final
+  // form the keyword (and its preceding object marker) sit between the header and
+  // the body, so start past the keyword token instead.
+  let bodyStart = sovFinal ? keywordIdx + 1 : tokens.findIndex(t => t.position.start >= headerEnd);
   if (bodyStart <= nameIdx) bodyStart = nameIdx + 1;
 
   const endForms = keywordForms(language, 'end');
@@ -648,23 +722,21 @@ function parseDefBlock(
  * confidence 1.0, because `scoreRoleCoverage` returns 1 when a pattern declares
  * no roles.
  *
- * `worker` is deliberately absent: its body is `def … end` sub-blocks, and SOV
- * renders those verb-final (`add(a, b) を def`), which `parseDefBlock` cannot yet
- * locate. Folding `worker` in English alone would enrich the English reference
- * action set while the other 23 languages still dropped their bodies — which is
- * precisely the fidelity-ratchet regression this layer exists to avoid. It lands
- * with SOV `def` support.
+ * Each body family is handled differently — see {@link parseFeatureBlock}.
  */
-const FEATURE_ACTIONS = ['live', 'eventsource', 'socket', 'intercept'] as const;
+const FEATURE_ACTIONS = ['live', 'eventsource', 'socket', 'worker', 'intercept'] as const;
 
 /** Features whose body is a configuration DSL rather than hyperscript commands. */
 const OPAQUE_BODY_FEATURES: ReadonlySet<string> = new Set(['intercept']);
 
 /** Features that declare a PascalCase name adjacent to the keyword. */
-const NAMED_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket']);
+const NAMED_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket', 'worker']);
 
 /** Features whose body is a sequence of `on <event> … end` handler blocks. */
 const HANDLER_BODY_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket']);
+
+/** Features whose body is a sequence of `def name(params) … end` sub-blocks. */
+const DEF_BODY_FEATURES: ReadonlySet<string> = new Set(['worker']);
 
 /**
  * How far into the token stream an SOV verb-final feature keyword can sit. The
@@ -745,6 +817,10 @@ function sourceClauseLength(tokens: readonly LanguageToken[], i: number, languag
  *   forward scan would overshoot the event by one. The head is bounded by the verb
  *   instead: everything up to the keyword, plus `eventsource`'s source clause where
  *   the transformer places it after the verb (`… eventsource /events から`).
+ *
+ * `worker` sits outside both: its head is just `<kw> <Name>` (no url, no trigger),
+ * and its body opens with `def`, so the on-marker scan would run to the block's
+ * `end` and report an empty body.
  */
 function featureBodyStart(
   action: FeatureAction,
@@ -764,6 +840,8 @@ function featureBodyStart(
 
   const nameIdx = resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return -1;
+  if (action === 'worker') return nameIdx + 1;
+
   const onForms = keywordForms(language, 'on');
   const limit = blockEnd >= 0 ? blockEnd : tokens.length;
   for (let j = nameIdx + 1; j < limit; j++) {
@@ -875,34 +953,41 @@ function parseFeatureBlock(
   const confidences: number[] = [];
   let sawClosingEnd = false;
 
-  if (HANDLER_BODY_FEATURES.has(action)) {
+  const isDefBody = DEF_BODY_FEATURES.has(action);
+  if (isDefBody || HANDLER_BODY_FEATURES.has(action)) {
     // Segment the body END-delimited, as parseBehaviorBlock does. `eventsource`
     // closes each handler with its own `end` plus a final one for the feature;
     // `socket`'s single `end` closes both. Treating any depth-0 `end` as "the body
     // was properly terminated" covers both without an off-by-one confidence penalty.
+    //
+    // A `def` sub-block owns its `end` (`parseDefBlock` looks for it and applies a
+    // ×0.8 penalty when missing), so its segment must be sliced THROUGH the
+    // terminator; a handler's `on …` pattern must not see one.
+    const expectedKind = isDefBody ? 'def' : 'event-handler';
     let depth = 0;
     let segStart = bodyStart;
     for (let j = bodyStart; j < tokens.length; j++) {
       const tok = tokens[j];
       if (isEnd(tok)) {
         if (depth > 0) {
-          depth--; // closes a nested if/repeat inside the current handler
+          depth--; // closes a nested if/repeat inside the current segment
           continue;
         }
         sawClosingEnd = true;
         if (j === segStart) break; // the feature's own closing `end`
-        const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+        const segEnd = isDefBody ? tok.position.end : tok.position.start;
+        const segText = input.slice(tokens[segStart].position.start, segEnd).trim();
         try {
-          const parsed = parsers.statement(handlerText, language);
-          if (parsed && parsed.kind === 'event-handler') {
-            const handler = parsed as EventHandlerSemanticNode;
-            children.push(handler);
-            // An empty handler body means the sub-parse silently dropped the
+          const parsed = parsers.statement(segText, language);
+          if (parsed && parsed.kind === expectedKind) {
+            const child = parsed as EventHandlerSemanticNode | DefSemanticNode;
+            children.push(child);
+            // An empty sub-block body means the sub-parse silently dropped the
             // commands — don't inherit its misleadingly high confidence.
-            const bodyEmpty = !handler.body || handler.body.length === 0;
-            confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
+            const bodyEmpty = !child.body || child.body.length === 0;
+            confidences.push(bodyEmpty ? 0.2 : (child.metadata?.confidence ?? 0.75));
           } else {
-            confidences.push(0); // parsed, but not a handler — structural miss
+            confidences.push(0); // parsed, but wrong kind — structural miss
           }
         } catch {
           confidences.push(0);

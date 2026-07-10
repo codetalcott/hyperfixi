@@ -1,11 +1,18 @@
 # Handoff: `eventsource` / `socket` / `worker` / `live` / `intercept` drop their whole body at confidence 1.0
 
-> ## STATUS (2026-07-09) — four of five fixed; `worker` remains
+> ## STATUS (2026-07-09) — RESOLVED, all five fixed
 >
-> **Landed:** `live`, `eventsource`, `socket`, `intercept` now fold into a `feature`
-> semantic node that captures the body, in all 24 languages. `--diagnose-coverage`
-> firing rate **158 (4.3%) → 56 (1.5%)**; the remaining firings are `worker` (18) and
-> `bind` (31, unrelated). Multilingual `--regression` gate exits 0.
+> **Landed in two PRs.** All five commands now fold into a `feature` semantic node
+> that captures the body, in all 24 languages. `--diagnose-coverage` firing rate
+> **158 (4.3%) → 38 (1.0%)**; every remaining firing is `bind` (unrelated — see the
+> bottom of this note). Multilingual `--regression` exits 0, with R1 role-fidelity up
+> in all 24 languages and R0-precision up for the SOV six.
+>
+> - **PR 1** — `live`, `eventsource`, `socket`, `intercept`.
+> - **PR 2** — `worker`, plus SOV verb-final `def` support and an sw lexicon fix.
+>
+> **`Multilingual Validation` is now a required status check on `main`** (the
+> branch-protection gap noted at the bottom of this doc — closed).
 >
 > **Two corrections to the analysis below — read before trusting it:**
 >
@@ -39,22 +46,26 @@
 > new parser): R1 **+0.0004** (4 more patterns scored, all at 1.000), R0-precision
 > **+0.0119** for the SOV six (ja/ko/tr/qu reach exactly 1.000000).
 >
-> **Remaining (PR 2): `worker`.** It is deliberately excluded from `FEATURE_ACTIONS`.
-> Folding it in English alone would enrich the English reference action set while the
-> other 23 languages still dropped their bodies. It needs:
+> **PR 2 (`worker`) — two things it turned up that were not predicted:**
 >
-> - SOV verb-final `def` support: `tryParseBlock` matches `def` only at token 0, but SOV
->   renders `add(a, b) を def`. Mirror the `behavior` `sovKeywordIdx` branch, validated by
->   `(params)` presence rather than PascalCase (def names are lowercase). Thread
->   `keywordIdx`/`sovFinal` into `parseDefBlock` so `bodyStart` skips the verb-final keyword.
-> - Add `'worker'` to `FEATURE_ACTIONS` + `NAMED_FEATURES` (`bodyStart = nameIdx + 1`).
-> - Reshape `worker-basic` (`init-db.ts`) multi-line, in the SAME change — multi-line seeds
->   without the fold make `worker` PARSE-FAIL in ja/ko/tr/bn/qu (a parse-rate regression).
-> - Regenerate the baseline.
+> 1. **The SOV verb-final `def` guard cannot just be "a patient marker precedes the
+>    keyword."** `worker`'s own ja body is `Calculator を worker … add(a, b) を def …`,
+>    whose *body-level* `def` is also marker-preceded — so a loose guard makes
+>    `tryParseBlock` claim the entire worker block as a `def` named `Calculator`. The
+>    head must be CONTIGUOUS: name + balanced params + exactly one marker + keyword
+>    (expected index 2, actual 10 → rejected). See `sovHeadKeywordIndex`.
+> 2. **A live sw lexicon gap, surfaced only once `return` finally had to parse.** The
+>    i18n dict emitted `rudi` ("go back") while the semantic profile reads
+>    `rudisha`/`rejea` — so sw could not parse its own `return`, and its `worker` body
+>    dropped (fidelity 1/3 → degenerate). Fixed by realigning the dict to `rudisha`
+>    (kept clear of `rudia` = `repeat`) and pruning `sw:return:rudi` from
+>    `lexicon-emit-mismatch.test.ts`'s allowlist, which self-prunes. This is the LIVE
+>    category that test documents; the corpus never exercised it before.
 >
 > `worker` body segments route to `parsers.statement` (→ `parseInternal` → Stage 0 →
 > `tryParseBlock` → `parseDefBlock`). Note `parseStatements` skips Stage 0, so
-> `parsers.body` would NOT reach the def machinery.
+> `parsers.body` would NOT reach the def machinery. Its segments are sliced THROUGH
+> their `end` (a `def` owns its terminator); handler segments are not.
 >
 > **Unrelated, still open:** `bind` accounts for 31 of the 56 remaining `unconsumed-input`
 > firings — a `then`-chain of two `bind`s where the pattern matches the first and drops
@@ -250,6 +261,11 @@ npm run typecheck --prefix packages/semantic
   precondition, because a zero-required-role schema scores 1.0 unconditionally and would swing
   hardest under a coverage penalty. If it lands, re-evaluate whether Stages 0 / 0.5 of
   `parseInternal` can be simplified — they exist only because this signal was missing.
-- **Branch protection gap**: `main` requires only `Build All Packages`, `Lint & Typecheck`,
-  `Unit Tests`, `Export Validation`. `Multilingual Validation` is **not** a required context, so
-  the fidelity ratchet can fail and the PR still merges. Worth adding.
+- ~~**Branch protection gap**~~ — **CLOSED.** `Multilingual Validation` is now a required
+  status check on `main`, alongside `Build All Packages`, `Lint & Typecheck`, `Unit Tests`,
+  and `Export Validation` (`strict: true` preserved). This is what let #627's ~0.006 R1
+  drift merge unnoticed. Safe for doc-only PRs: `ci.yml` deliberately carries no
+  workflow-level `paths-ignore`, so the workflow always runs and the job's `if:
+  needs.changes.outputs.code == 'true'` skip reports a completed check run with
+  conclusion `skipped`, which branch protection treats as passing. (A workflow-level
+  path filter would instead leave the check "Expected" forever.)

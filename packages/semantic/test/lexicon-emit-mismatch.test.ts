@@ -37,7 +37,31 @@ import { getPatternsForLanguage, tryGetProfile } from '../src/registry';
 import { commandSchemas } from '../src/generators/command-schemas';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
-const LANGS = ['ar','bn','de','es','fr','he','hi','id','it','ja','ko','ms','pl','pt','qu','ru','sw','th','tl','tr','uk','vi','zh'];
+const LANGS = [
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'he',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];
 
 const KNOWN_MISMATCHES = new Set([
   'ar:catch:التقط',
@@ -126,7 +150,10 @@ const KNOWN_MISMATCHES = new Set([
   // added as a profile alternative alongside chaguo-msingi.
   'sw:pushUrl:sukumaUrl',
   'sw:replaceUrl:badilishaUrl',
-  'sw:return:rudi',
+  // sw:return resolved (worker-block arc): the dict emitted `rudi` ("go back"),
+  // which the profile reads as nothing — sw could not parse its own `return`. The
+  // dict now emits `rudisha`, the profile's primary. Surfaced once `worker`'s body
+  // stopped being dropped and `return` finally had to parse.
   'sw:select:chagua',
   // sw:transition resolved (transition precision drill): `mpito` added as a
   // profile alternative — the rendered verb now anchors.
@@ -191,8 +218,7 @@ function readingsFor(lang: string): Map<string, Set<string>> {
     const head = (pat as any).template?.tokens?.[0];
     if (head?.type !== 'literal') continue;
     const fused = pat.command === 'on' && /^([a-z]+)-event-/.exec(pat.id);
-    const credit = (w: string) =>
-      fused && !onWords.has(w.toLowerCase()) ? fused[1] : pat.command;
+    const credit = (w: string) => (fused && !onWords.has(w.toLowerCase()) ? fused[1] : pat.command);
     add(head.value, credit(head.value));
     for (const alt of head.alternatives ?? []) add(alt, credit(alt));
   }
@@ -210,7 +236,8 @@ describe('i18n dict emissions are readable as the action they translate', () => 
         const readAs = read.get(String(word).toLowerCase()) ?? new Set();
         const ok = readAs.has(action);
         const key = `${lang}:${action}:${word}`;
-        if (!ok && !KNOWN_MISMATCHES.has(key)) fresh.push(`${key} → read as [${[...readAs].join(',')}]`);
+        if (!ok && !KNOWN_MISMATCHES.has(key))
+          fresh.push(`${key} → read as [${[...readAs].join(',')}]`);
       }
       expect(fresh, `new dict↔profile mismatches:\n${fresh.join('\n')}`).toEqual([]);
     });
@@ -259,7 +286,9 @@ describe('KNOWN_MISMATCHES stays pruned (no stale allowlist entries)', () => {
       }
       const readAs = readingsForCached(lang).get(String(word).toLowerCase()) ?? new Set<string>();
       if (readAs.has(action)) {
-        stale.push(`${key} — now reads correctly as [${[...readAs].join(',')}]; remove from allowlist`);
+        stale.push(
+          `${key} — now reads correctly as [${[...readAs].join(',')}]; remove from allowlist`
+        );
       }
     }
     expect(
