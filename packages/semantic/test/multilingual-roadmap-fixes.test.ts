@@ -12347,3 +12347,268 @@ describe('qu kanqa chusaq predicate stays inside the condition (empty-arc qu rip
     expect(JSON.stringify(cond?.thenBranch?.map(c => c.action))).not.toContain('empty');
   });
 });
+
+describe('colon-qualified event names: full behavior bodies capture every trigger by VALUE (hi/ja/ko/ms/qu)', () => {
+  // The multiset-recall ratchet flagged behavior-draggable/behavior-resizable in
+  // hi/ja/ko/ms/qu (docs-internal/HANDOFF_colon-event-names.md). Three stacked
+  // causes, all fixed together:
+  //   1. every non-en tokenizer split `draggable:start` at the local-variable
+  //      sigil (BaseTokenizer.mergeColonQualifiedNames — the framework fix);
+  //   2. hi/qu mark trigger's event ACCUSATIVELY (को / ta) while their profile
+  //      event marker is the on-handler one (पर / pi), so the trigger line fell
+  //      through to the on-handler reading (trigger schema markerVariants);
+  //   3. ms read `… ke ia` + next-line `ukur y` as the phantom possessive
+  //      `it.measure`, swallowing the measure (COMMAND_ACTION_KEYWORDS guard in
+  //      tryMatchPossessiveExpression).
+  // These lock the corpus-shaped bodies end-to-end, asserting trigger EVENT
+  // VALUES (which no ratchet signal can see cross-language), not just actions.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const triggerValues = (nodes: Record<string, any>[]): string[] =>
+    nodes
+      .filter(n => n.action === 'trigger')
+      .map(n => {
+        const ev = n.roles instanceof Map ? n.roles.get('event') : undefined;
+        return String(ev?.raw ?? ev?.value ?? '?');
+      });
+
+  const count = (nodes: Record<string, any>[], action: string): number =>
+    nodes.filter(n => n.action === action).length;
+
+  // Corpus-canonical bodies (patterns.db pattern_translations, en raw_code).
+  const DRAGGABLE_BODIES: Record<string, string> = {
+    en: [
+      'behavior Draggable(dragHandle)',
+      '  init',
+      '    if no dragHandle set dragHandle to me',
+      '  end',
+      '  on pointerdown(clientX, clientY) from dragHandle',
+      '    halt the event',
+      '    trigger draggable:start',
+      '    measure x',
+      '    set startX to it',
+      '    measure y',
+      '    set startY to it',
+      '    set xoff to clientX - startX',
+      '    set yoff to clientY - startY',
+      '    repeat until event pointerup from document',
+      '      wait for pointermove(clientX, clientY) or',
+      '               pointerup(clientX, clientY) from document',
+      '      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }',
+      '      trigger draggable:move',
+      '    end',
+      '    trigger draggable:end',
+      '  end',
+      'end',
+    ].join('\n'),
+    hi: [
+      'Draggable(dragHandle) को व्यवहार',
+      '    प्रारंभ',
+      '        अगर नहीं dragHandle फिर dragHandle को मैं में सेट',
+      '    समाप्त',
+      '    pointerdown(clientX, clientY) पर dragHandle से',
+      '        the घटना को रोकें',
+      '        draggable:start को ट्रिगर',
+      '        x को मापें',
+      '        startX को यह में सेट',
+      '        y को मापें',
+      '        startY को यह में सेट',
+      '        xoff को clientX - startX में सेट',
+      '        yoff को clientY - startY में सेट',
+      '        तक घटना pointerup को दोहराएं दस्तावेज़ से',
+      '            प्रतीक्षा pointermove(clientX, clientY) या',
+      '                                pointerup(clientX, clientY) दस्तावेज़ से',
+      '            { left: ${clientX - xoff}px; top: ${clientY - yoff}px; } को जोड़ें',
+      '            draggable:move को ट्रिगर',
+      '        समाप्त',
+      '        draggable:end को ट्रिगर',
+      '    समाप्त',
+      'समाप्त',
+    ].join('\n'),
+    ja: [
+      'Draggable(dragHandle) を behavior',
+      '    init',
+      '        もし ない dragHandle それから dragHandle を 私 に 設定',
+      '    終わり',
+      '    pointerdown(clientX, clientY) で dragHandle から',
+      '        the イベント を 停止',
+      '        draggable:start を 引き金',
+      '        x を 測定',
+      '        startX を それ に 設定',
+      '        y を 測定',
+      '        startY を それ に 設定',
+      '        xoff を clientX - startX に 設定',
+      '        yoff を clientY - startY に 設定',
+      '        まで イベント pointerup を 繰り返し ドキュメント から',
+      '            待つ pointermove(clientX, clientY) または',
+      '                                pointerup(clientX, clientY) ドキュメント から',
+      '            { left: ${clientX - xoff}px; top: ${clientY - yoff}px; } を 追加',
+      '            draggable:move を 引き金',
+      '        終わり',
+      '        draggable:end を 引き金',
+      '    終わり',
+      '終わり',
+    ].join('\n'),
+    ko: [
+      'Draggable(dragHandle) 를 behavior',
+      '    init',
+      '        만약 없음 dragHandle 그러면 dragHandle 를 나 에 설정',
+      '    끝',
+      '    pointerdown(clientX, clientY) 할 때 dragHandle 에서',
+      '        the 이벤트 를 정지',
+      '        draggable:start 를 트리거',
+      '        x 를 측정',
+      '        startX 를 그것 에 설정',
+      '        y 를 측정',
+      '        startY 를 그것 에 설정',
+      '        xoff 를 clientX - startX 에 설정',
+      '        yoff 를 clientY - startY 에 설정',
+      '        까지 이벤트 pointerup 를 반복 문서 에서',
+      '            대기 pointermove(clientX, clientY) 또는',
+      '                                pointerup(clientX, clientY) 문서 에서',
+      '            { left: ${clientX - xoff}px; top: ${clientY - yoff}px; } 를 추가',
+      '            draggable:move 를 트리거',
+      '        끝',
+      '        draggable:end 를 트리거',
+      '    끝',
+      '끝',
+    ].join('\n'),
+    ms: [
+      'kelakuan Draggable(dragHandle)',
+      '    mula',
+      '        jika tiada dragHandle kemudian tetapkan dragHandle ke saya',
+      '    tamat',
+      '    apabila pointerdown(clientX, clientY) dari dragHandle',
+      '        henti the peristiwa',
+      '        cetuskan draggable:start',
+      '        ukur x',
+      '        tetapkan startX ke ia',
+      '        ukur y',
+      '        tetapkan startY ke ia',
+      '        tetapkan xoff ke clientX - startX',
+      '        tetapkan yoff ke clientY - startY',
+      '        ulang sehingga peristiwa pointerup dari dokumen',
+      '            tunggu pointermove(clientX, clientY) atau',
+      '                                pointerup(clientX, clientY) dari dokumen',
+      '            tambah { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }',
+      '            cetuskan draggable:move',
+      '        tamat',
+      '        cetuskan draggable:end',
+      '    tamat',
+      'tamat',
+    ].join('\n'),
+    qu: [
+      'Draggable(dragHandle) ta behavior',
+      '    init',
+      '        sichus mana_kanchu dragHandle chayqa dragHandle ta noqa man churanay',
+      '    tukuy',
+      '    dragHandle manta pointerdown(clientX, clientY) pi',
+      '        the ruway ta sayay',
+      '        draggable:start ta kichay',
+      '        x ta tupuy',
+      '        startX ta chay man churanay',
+      '        y ta tupuy',
+      '        startY ta chay man churanay',
+      '        xoff ta clientX - startX man churanay',
+      '        yoff ta clientY - startY man churanay',
+      '        hayk_akama ruway pointerup ta qillqa manta kutipay',
+      '            suyay pointermove(clientX, clientY) utaq',
+      '                                qillqa manta pointerup(clientX, clientY)',
+      '            { left: ${clientX - xoff}px; top: ${clientY - yoff}px; } ta yapay',
+      '            draggable:move ta kichay',
+      '        tukuy',
+      '        draggable:end ta kichay',
+      '    tukuy',
+      'tukuy',
+    ].join('\n'),
+  };
+
+  const DRAGGABLE_TRIGGERS = ['draggable:start', 'draggable:move', 'draggable:end'];
+
+  for (const lang of ['en', 'hi', 'ja', 'ko', 'ms', 'qu']) {
+    it(`[${lang}] behavior-draggable: three triggers by VALUE, no lost measure`, () => {
+      const nodes = collect(parse(DRAGGABLE_BODIES[lang], lang));
+      expect(triggerValues(nodes).sort()).toEqual([...DRAGGABLE_TRIGGERS].sort());
+      // en reference counts: measure ×2 (x, y). A dropped duplicate here is the
+      // exact shape only the multiset signal could see.
+      expect(count(nodes, 'measure'), `[${lang}] measure count`).toBe(2);
+      expect(count(nodes, 'set'), `[${lang}] set count`).toBe(
+        count(collect(parse(DRAGGABLE_BODIES.en, 'en')), 'set')
+      );
+    });
+  }
+
+  const QU_RESIZABLE = [
+    'Resizable(minWidth, minHeight, maxWidth, maxHeight) ta behavior',
+    '    noqa manta pointerdown(clientX, clientY) pi',
+    '        the ruway ta sayay',
+    '        resizable:start ta kichay',
+    '        width ta tupuy',
+    '        startWidth ta chay man churanay',
+    '        height ta tupuy',
+    '        startHeight ta chay man churanay',
+    '        startX ta clientX man churanay',
+    '        startY ta clientY man churanay',
+    '        hayk_akama ruway pointerup ta qillqa manta kutipay',
+    '            qillqa manta suyay pointermove(clientX, clientY) utaq pointerup(clientX, clientY)',
+    '            newWidth ta startWidth + clientX - startX man churanay',
+    '            newHeight ta startHeight + clientY - startY man churanay',
+    '            sichus newWidth < minWidth chayqa newWidth ta minWidth tukuy man churanay',
+    '            sichus newWidth > maxWidth chayqa newWidth ta maxWidth tukuy man churanay',
+    '            sichus newHeight < minHeight chayqa newHeight ta minHeight tukuy man churanay',
+    '            sichus newHeight > maxHeight chayqa newHeight ta maxHeight tukuy man churanay',
+    '            noqaq *width ta newWidth + "px" man churanay',
+    '            noqaq *height ta newHeight + "px" man churanay',
+    '            resizable:resize ta kichay',
+    '        tukuy',
+    '        resizable:end ta kichay',
+    '    tukuy',
+    'tukuy',
+  ].join('\n');
+
+  it('[qu] behavior-resizable: three triggers by VALUE, no lost measure', () => {
+    const nodes = collect(parse(QU_RESIZABLE, 'qu'));
+    expect(triggerValues(nodes).sort()).toEqual(
+      ['resizable:start', 'resizable:resize', 'resizable:end'].sort()
+    );
+    expect(count(nodes, 'measure')).toBe(2);
+    // The en reference has 12 sets; qu currently recovers 10.
+    expect(count(nodes, 'set')).toBeGreaterThanOrEqual(10);
+  });
+
+  // KNOWN RESIDUE (split out — see docs-internal/MULTILINGUAL_NEXT_STEPS.md):
+  // the qu i18n reorder renders the inline-if blocks with the inner set's
+  // verb-final `man churanay` AFTER `tukuy` ("end"), so the conditional fold
+  // strands the fragment and the two style sets (`noqaq *width/*height …`)
+  // are swallowed: 10 of the en reference's 12 sets parse. Flips to a hard
+  // failure (fix the count above) when the reorder/fold is repaired.
+  it.fails('[qu] behavior-resizable: the two style sets still drop (reorder residue)', () => {
+    const nodes = collect(parse(QU_RESIZABLE, 'qu'));
+    expect(count(nodes, 'set')).toBe(12);
+  });
+});

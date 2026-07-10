@@ -2586,6 +2586,44 @@ R1. This landed safely only because no corpus row uses the braced form, so Engli
 on the corpus. Adding naked-named-arg capture therefore requires doing all 24 languages in one
 change, then regenerating the baseline.
 
+## Colon-event-names follow-ups (opened 2026-07-10)
+
+The colon-qualified event-name arc (`docs-internal/HANDOFF_colon-event-names.md`, resolved)
+fixed nine of the ten multiset-recall rows via three stacked causes: the tokenizer
+colon-split (framework `BaseTokenizer.mergeColonQualifiedNames`), hi/qu trigger
+accusative markers (trigger schema `markerVariants`), and the ms `it.<command-verb>`
+phantom possessive (COMMAND_ACTION_KEYWORDS guard in `tryMatchPossessiveExpression`).
+CSS pseudo-class selectors (`#x:hover`, `.a:not(.b)`) also tokenize whole now, in all 24
+languages including en (was split everywhere). Three follow-ups remain:
+
+1. **R3 role-VALUE audit (highest leverage).** The ms symptom — right action counts,
+   right role types, WRONG role value (`draggable` instead of `draggable:start`) — is
+   structurally invisible to every ratchet signal: R0/R1 compare actions and role
+   _types_, never values (values are legitimately translated). A corpus-wide audit
+   comparing **language-invariant** role values (selectors, `:`/`$` refs, numbers,
+   colon-qualified event names) against the en reference would close the whole bug
+   class. Net-new wiring, mirroring R1: a value-signature walker in
+   `packages/testing-framework/src/multilingual/fidelity.ts`, a field in
+   `validators/parse-validator.ts`, aggregation in `orchestrator.ts`, ratchet in
+   `cli.ts`. (`pattern_roles.role_value` in patterns.db is an alternative reference
+   source.) Needs its own baseline regen.
+
+2. **qu behavior-resizable style-sets (the one remaining multiset row).** The qu
+   reorder renders each inline `if X then set Y to Z end` with the inner set's
+   verb-final tail AFTER the block terminator (`sichus … chayqa … tukuy man churanay`),
+   so the conditional fold consumes up to `tukuy` and strands `man churanay`; the two
+   style sets (`noqaq *width/*height … man churanay`) following the if-run are
+   swallowed — 10 of en's 12 sets parse. Likely an i18n transformer/corpus rendering
+   bug (the `end` belongs after the verb), not parser tolerance. Locked by an
+   `it.fails` in `packages/semantic/test/multilingual-roadmap-fixes.test.ts` that flips
+   when repaired.
+
+3. **bn standalone trigger.** `draggable:start কে ট্রিগার` (accusative-marked event)
+   still throws standalone — same gap hi/qu had before the trigger `markerVariants`
+   fix; adding bn's `কে` is probably the same one-line change, but bn's corpus rows are
+   already faithful (multiset 1.0), so it moved nothing and wasn't included. Locked by
+   an `it.fails` in `packages/semantic/test/draggable-patterns.test.ts`.
+
 ## Recommended sequence
 
 1. ~~**Track 1a — eliminate imperative JS**~~ **DONE** (PRs #440–#442): Draggable/Sortable/Resizable

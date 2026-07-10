@@ -34,6 +34,12 @@ import {
  * Method call handling:
  * - #dialog.showModal() → stops after #dialog (method call, not compound selector)
  * - #box.active → compound selector (no parens)
+ *
+ * NOTE: intentionally diverges from the semantic package's copy
+ * (packages/semantic/src/tokenizers/extractors/css-selector.ts), which also
+ * consumes pseudo-class/pseudo-element segments (#x:hover, .a:not(.b)). This
+ * legacy version is only used by BaseTokenizer.trySelector (no semantic call
+ * sites) and stays as-is.
  */
 export function extractCssSelector(input: string, startPos: number): string | null {
   if (startPos >= input.length) return null;
