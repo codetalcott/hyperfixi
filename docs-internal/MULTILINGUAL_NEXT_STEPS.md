@@ -2697,7 +2697,7 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    The 8 rows stay visible in the R3 report; do NOT special-case the R3 walker.
    If a future arc flips it, regenerate the baseline and watch R1/R2.
 7. **qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**
-   (`behavior-sortable`). Probing shows the command-level action multiset
+   (`behavior-sortable`; handoff: `docs-internal/HANDOFF_transformer-rendering.md`). Probing shows the command-level action multiset
    matches en in both languages; only VALUES around the loop's wait line
    corrupt, each adjacent to a malformed render: tr renders the repeat header's
    from-phrase AFTER the verb (`kadar olay pointerup i tekrarla belge den`) and
