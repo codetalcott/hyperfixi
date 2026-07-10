@@ -1,7 +1,7 @@
 /**
  * Realtime / Service-Worker Block Tests
  *
- * `eventsource`, `socket`, and `intercept` introduce named, body-bearing
+ * `eventsource`, `socket`, `worker`, and `intercept` introduce named, body-bearing
  * constructs. Their command schemas declare `roles: []` + `bareKeyword: true`,
  * so the generated pattern is a lone keyword literal — which used to match at
  * Stage 2 and swallow the entire body at a *vacuous* confidence 1.0
@@ -16,6 +16,7 @@ import { describe, it, expect } from 'vitest';
 import { parse, buildAST } from '../src';
 import type {
   CommandSemanticNode,
+  DefSemanticNode,
   EventHandlerSemanticNode,
   FeatureSemanticNode,
 } from '../src/types';
@@ -39,6 +40,7 @@ const EVENTSOURCE = 'eventsource ChatStream from /events on message put it into 
 const SOCKET = 'socket ChatSocket ws://localhost:8080 on message put it into #chat end';
 const INTERCEPT =
   'intercept / precache /, /style.css, /app.js as "v1" on /api/* use network-first end';
+const WORKER = 'worker Calculator\n  def add(a, b)\n    return a + b\n  end\nend';
 
 describe('realtime / service-worker blocks', () => {
   describe('eventsource', () => {
@@ -151,7 +153,7 @@ describe('realtime / service-worker blocks', () => {
   });
 
   it('does not fire the unconsumed-input diagnostic any more', () => {
-    for (const src of [EVENTSOURCE, SOCKET, INTERCEPT]) {
+    for (const src of [EVENTSOURCE, SOCKET, INTERCEPT, WORKER]) {
       const diagnostics = parse(src, 'en').diagnostics ?? [];
       expect(diagnostics.filter(d => d.code === 'unconsumed-input')).toHaveLength(0);
     }
@@ -169,12 +171,84 @@ describe('realtime / service-worker blocks', () => {
     expect(parse('def helper(a)\n  return a\nend', 'en').kind).toBe('def');
   });
 
-  it('leaves `worker` on the old bare-keyword path (folded with SOV `def` support)', () => {
-    // Folding worker in English alone would enrich the English reference action
-    // set while the other 23 languages still dropped their bodies — a fidelity
-    // regression. It lands with verb-final `def` support.
-    const node = parse('worker Calculator def add(a, b) return a + b end end', 'en');
-    expect(node.kind).toBe('command');
-    expect(node.action).toBe('worker');
+  describe('worker', () => {
+    it('captures its `def` sub-blocks', () => {
+      const node = parse(WORKER, 'en') as FeatureSemanticNode;
+
+      expect(node.kind).toBe('feature');
+      expect(node.action).toBe('worker');
+      expect(node.name).toBe('Calculator');
+      expect(node.body).toHaveLength(1);
+
+      const def = node.body[0] as DefSemanticNode;
+      expect(def.kind).toBe('def');
+      expect(def.name).toBe('add');
+      expect(def.parameters).toEqual(['a', 'b']);
+      expect(def.body.map(c => c.action)).toEqual(['return']);
+      expect(actionsOf(node)).toEqual(['worker', 'def', 'return']);
+    });
+
+    it('carries the def body into the built AST', () => {
+      const { ast } = buildAST(parse(WORKER, 'en')) as unknown as {
+        ast: { name: string; args: Array<{ type: string; commands?: Array<{ type: string }> }> };
+      };
+      expect(ast.name).toBe('worker');
+      const block = ast.args.find(a => a.type === 'block');
+      expect(block?.commands?.[0]?.type).toBe('def');
+    });
+
+    it('parses the Japanese rendering, whose `def` is also verb-final', () => {
+      const ja = [
+        'Calculator を worker',
+        '  add(a, b) を def',
+        '    a + b を 戻る',
+        '  終わり',
+        '終わり',
+      ].join('\n');
+      const node = parse(ja, 'ja') as FeatureSemanticNode;
+      expect(node.kind).toBe('feature');
+      expect(node.name).toBe('Calculator');
+      expect(actionsOf(node)).toEqual(['worker', 'def', 'return']);
+    });
+
+    it('parses the Swahili rendering (dict emits `rudisha`, which the profile reads)', () => {
+      // Regression guard for the sw lexicon gap: the dict used to emit `rudi`,
+      // which the semantic profile reads as nothing, so sw silently dropped the
+      // def body. Kept distinct from `rudia` (= `repeat`).
+      const sw = [
+        'worker Calculator',
+        '  def add(a, b)',
+        '    rudisha a + b',
+        '  mwisho',
+        'mwisho',
+      ].join('\n');
+      expect(actionsOf(parse(sw, 'sw'))).toEqual(['worker', 'def', 'return']);
+      expect((parse('rudia 3 mara', 'sw') as CommandSemanticNode).action).toBe('repeat');
+    });
+  });
+
+  describe('SOV verb-final `def` head detection', () => {
+    it('parses a bare verb-final def sub-block', () => {
+      const node = parse('add(a, b) を def\n  a + b を 戻る\n終わり', 'ja') as DefSemanticNode;
+      expect(node.kind).toBe('def');
+      expect(node.name).toBe('add');
+      expect(node.parameters).toEqual(['a', 'b']);
+    });
+
+    it('does not claim a `worker` block as a def named after the worker', () => {
+      // `worker`'s ja body contains a marker-preceded `def` (`add(a, b) を def`), so
+      // a guard that only checks "patient marker before the keyword" would let
+      // tryParseBlock swallow the whole block as `def Calculator`. The head must be
+      // contiguous: name + params + exactly one marker + keyword.
+      const ja = 'Calculator を worker\n  add(a, b) を def\n    a + b を 戻る\n  終わり\n終わり';
+      const node = parse(ja, 'ja');
+      expect(node.kind).toBe('feature');
+      expect(node.action).toBe('worker');
+    });
+
+    it('leaves SOV verb-final `behavior` to the behavior layer', () => {
+      const ja = 'Foo(cls) を behavior\n  クリック で .x を トグル\n  終わり\n終わり';
+      expect(parse(ja, 'ja').kind).toBe('behavior');
+    });
   });
 });

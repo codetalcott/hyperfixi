@@ -36,7 +36,10 @@ export const sw: Dictionary = {
     wait: 'ngoja',
     fetch: 'leta',
     call: 'ita',
-    return: 'rudi',
+    // `rudisha` (transitive, "give back a value"), not `rudi` ("go back"): the
+    // semantic profile reads `rudisha`/`rejea`, so emitting `rudi` produced sw code
+    // the parser could not read back. Kept clear of `rudia` (= `repeat`).
+    return: 'rudisha',
     make: 'tengeneza', // auditor: dict emitted a word the profile reads differently
     log: 'andika',
     throw: 'tupa',

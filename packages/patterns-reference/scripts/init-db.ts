@@ -1319,7 +1319,10 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'worker-basic',
     title: 'Web Worker Definition',
-    raw_code: 'worker Calculator def add(a, b) return a + b end end',
+    // Multi-line for the same reason as eventsource-basic above: the i18n
+    // transformer translates a block line-by-line. Each `def` sub-block closes with
+    // its own `end`, plus a final one for the feature.
+    raw_code: 'worker Calculator\n  def add(a, b)\n    return a + b\n  end\nend',
     description: 'Define a Web Worker in hyperscript and call its methods like a normal object',
     feature: 'realtime',
     engine: 'both',
