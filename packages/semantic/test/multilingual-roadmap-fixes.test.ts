@@ -12612,3 +12612,362 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
     expect(count(nodes, 'set')).toBe(12);
   });
 });
+
+describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', () => {
+  // The R3 value-recall signal compares language-invariant role VALUES verbatim
+  // against the en reference. Its first sweep surfaced eight bug families —
+  // right actions, right role types, wrong or dropped VALUES — invisible to
+  // every recall/role-type signal. These lock the corpus-shaped inputs per
+  // family. Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('F1: connective/terminator swallowed as a role value', () => {
+    // The generated increment patterns' trailing marker-less optional
+    // {quantity} slot captured the normalized connective opening the NEXT
+    // statement (it `allora`, pl `wtedy` → quantity:literal="then" —
+    // increment by NaN at runtime), and the generated verb-first bn wait's
+    // duration slot swallowed a following তারপর/শেষ the same way. The
+    // matchRoleToken guard now rejects a keyword-kind normalized `then` (and
+    // a non-positional `end`) as a role value; the schema/extraction default
+    // fills instead (quantity=1), byte-aligned with en.
+    const INCREMENT_LINES: Array<[string, string]> = [
+      ['it', 'su clic ripetere mentre #counter.innerText < 10 allora incrementare #counter allora aspettare 200ms fine'],
+      ['ms', 'apabila click ulang selagi #counter.innerText < 10 kemudian tambah_satu #counter kemudian tunggu 200ms tamat'],
+      ['pl', 'gdy kliknięcie powtórz dopóki #counter.innerText < 10 wtedy zwiększ #counter wtedy czekaj 200ms koniec'],
+      ['ru', 'при клик повторить пока #counter.innerText < 10 затем увеличить #counter затем ждать 200ms конец'],
+      ['uk', 'при клік повторити поки #counter.innerText < 10 тоді збільшити #counter тоді чекати 200ms кінець'],
+      ['vi', 'khi nhấp lặp lại trong khi #counter.innerText < 10 rồi tăng #counter rồi chờ 200ms kết thúc'],
+      ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
+      ['tl', 'kapag mousedown ulitin hanggang pangyayari mouseup pagkatapos dagdagan #counter pagkatapos maghintay 100ms wakas'],
+    ];
+
+    it.each(INCREMENT_LINES)('[%s] repeat body: increment quantity defaults to 1, never "then"', (lang, line) => {
+      const nodes = collect(parse(line, lang));
+      const inc = first(nodes, 'increment');
+      expect(role(inc, 'patient')?.value, `${lang} increment patient`).toBe('#counter');
+      const q = role(inc, 'quantity')?.value;
+      // The generated pattern's extraction default fills 1; a hand pattern may
+      // leave it absent for fillSchemaDefaults — either way, never the connective.
+      if (q !== undefined) expect(q, `${lang} increment quantity`).toBe(1);
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value, `${lang} wait duration`).toMatch(/^\d+ms$/);
+    });
+
+    // The five bn wait rows the handoff filed under F2: same mechanism, the
+    // verb-first wait duration slot capturing তারপর (then) / শেষ (end).
+    const BN_WAIT_LINES: Array<[string, string, string]> = [
+      ['copy-to-clipboard', 'navigator.clipboard.writeText(#code.innerText) কে ক্লিক এ কল তারপর "Copied!" কে আমি তে রাখুন তারপর 2s কে অপেক্ষা তারপর "Copy" কে আমি তে রাখুন', '2s'],
+      ['repeat-forever', 'লোড এ পুনরাবৃত্তি চিরকাল .pulse কে টগল তারপর 1s কে অপেক্ষা শেষ', '1s'],
+      ['repeat-until-event', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
+      ['stagger-animation', 'লোড এ পুনরাবৃত্তি item এ .item কে জন্য সূচক দিয়ে তারপর .visible কে যোগ item তে তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
+      ['tell-other-element', '#panel কে ক্লিক এ বলুন তারপর .open কে যোগ তারপর 200ms কে অপেক্ষা তারপর .visible কে যোগ', '200ms'],
+    ];
+
+    it.each(BN_WAIT_LINES)('[bn] %s: wait duration is the real time literal', (_pattern, line, duration) => {
+      const nodes = collect(parse(line, 'bn'));
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value).toBe(duration);
+    });
+
+    it('both-ways locks: explicit quantities survive the guard', () => {
+      const en = first(collect(parse('increment #counter by 5', 'en')), 'increment');
+      expect(role(en, 'quantity')?.value).toBe(5);
+      const it_ = first(collect(parse('incrementare #counter di 5', 'it')), 'increment');
+      expect(role(it_, 'quantity')?.value).toBe(5);
+    });
+
+    it('[en] at-end control: the multi-token literal manner phrase is untouched', () => {
+      const put = first(collect(parse('on click put "x" at end of #log', 'en')), 'put');
+      expect(role(put, 'manner')?.value).toBe('at end of');
+      expect(role(put, 'destination')?.value).toBe('#log');
+    });
+  });
+
+  describe('F2: bn stray block terminator glued into role values', () => {
+    // The bn repeat-while corpus renders wait's object phrase as
+    // `200ms শেষ কে অপেক্ষা` — the i18n reorder absorbs the block terminator
+    // INTO the phrase (it belongs after the verb; transformer defect noted in
+    // MULTILINGUAL_NEXT_STEPS). The SOV verb-anchoring's group extraction
+    // joined the pair whitespace-free into duration="200msশেষ". Stray
+    // terminators are now skipped during value accumulation (positional
+    // `শেষ <selector>` = `last <x>` keeps its reading via the selector
+    // lookahead). The five sibling bn wait rows (duration="then"/"end") are
+    // the F1 connective-capture family, locked in the F1 describe below.
+    it('[bn] repeat-while: wait duration is 200ms, terminator not glued', () => {
+      const nodes = collect(
+        parse(
+          'যতক্ষণ #counter.innerText < 10 কে ক্লিক এ পুনরাবৃত্তি তারপর #counter কে বৃদ্ধি তারপর 200ms শেষ কে অপেক্ষা',
+          'bn'
+        )
+      );
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value).toBe('200ms');
+      // No role value anywhere retains the terminator.
+      for (const n of nodes) {
+        if (!(n.roles instanceof Map)) continue;
+        for (const [, v] of n.roles) {
+          expect(String((v as any)?.value ?? '')).not.toContain('শেষ');
+        }
+      }
+      const inc = first(nodes, 'increment');
+      expect(role(inc, 'patient')?.value).toBe('#counter');
+    });
+  });
+
+  describe('F3: SOV `in me` qualifier glue/drop (form-disable-on-submit)', () => {
+    // The corpus keeps the literal English `in me` scope qualifier inline in
+    // every SOV render. en's add/put schemas have NO scope role, so the en
+    // reference DROPS it (destination="<button/>"). Two SOV defects, both
+    // R1-invisible (same role type):
+    //  (b) put: verb-anchoring joined `[<button/>, in, me]` whitespace-free
+    //      into destination="<button/>inme" — fixed by the selector-led
+    //      `in`-truncation in tokensToSemanticValue;
+    //  (a) add: the fused event pattern ends at the verb, the fronted patient
+    //      sits outside the [verb..boundary] re-parse slice (superset gate),
+    //      and the postposed `<button/> in me に` phrase dropped — destination
+    //      silently defaulted to `me`. Fixed by the trailing
+    //      DESTINATION/SOURCE reclaim on the fused path.
+    const FORM_DISABLE: Array<[string, string]> = [
+      ['en', 'on submit add @disabled to <button/> in me put "Submitting..." into <button/> in me'],
+      ['ja', '@disabled を 送信 で 追加 <button/> in me に それから "Submitting..." を <button/> in me に 置く'],
+      ['ko', '@disabled 를 제출 할 때 추가 <button/> in me 에 그러면 "Submitting..." 를 <button/> in me 에 넣다'],
+      ['hi', '@disabled को जमा पर जोड़ें <button/> in me में फिर "Submitting..." को <button/> in me में रखें'],
+      ['bn', '@disabled কে জমা এ যোগ <button/> in me তে তারপর "Submitting..." কে <button/> in me তে রাখুন'],
+      ['qu', '@disabled ta <button/> in me man kachay pi yapay chayqa "Submitting..." ta <button/> in me man churay'],
+    ];
+
+    it.each(FORM_DISABLE)('[%s] add AND put destination is the bare <button/> selector', (lang, line) => {
+      const nodes = collect(parse(line, lang));
+      const add = first(nodes, 'add');
+      const put = first(nodes, 'put');
+      expect(role(add, 'destination')?.value, `${lang} add destination`).toBe('<button/>');
+      expect(role(add, 'patient')?.value, `${lang} add patient`).toBe('@disabled');
+      expect(role(put, 'destination')?.value, `${lang} put destination`).toBe('<button/>');
+      expect(role(put, 'patient')?.value, `${lang} put patient`).toBe('Submitting...');
+    });
+
+    it('[en] positional phrase control: `first <li/> in me` is not truncated', () => {
+      // The truncation is gated to selector-LED groups; a positional keyword
+      // head keeps its full phrase reading.
+      const nodes = collect(parse('on click add .sel to first <li/> in me', 'en'));
+      const add = first(nodes, 'add');
+      expect(role(add, 'patient')?.value).toBe('.sel');
+      const dest = role(add, 'destination');
+      expect(String(dest?.raw ?? dest?.value ?? '')).not.toBe('me');
+    });
+  });
+
+  describe('F4: pl/ru/uk fetch URL mis-role (with-preposition collision)', () => {
+    // pl `z` / uk `з` are BOTH the profile's source and style markers (ru `с`
+    // is style-primary and a source-alternative), so the fused generic VSO
+    // event pattern binds the leading URL to {patient} — fetch has no patient
+    // role — and reads the with-OPTIONS head as `source`. The fetch relabel in
+    // normalizeCommandRoles shifts the schema-impossible combo back to en's
+    // shape: source=<URL>, style=<options-head>.
+    const FETCH_LINES: Array<[string, string, string, string, string]> = [
+      // [lang, pattern, corpus line, expected source, expected style head]
+      ['pl', 'fetch-with-method', 'gdy wyślij pobierz /api/form z method:"POST" body:form', '/api/form', 'method'],
+      ['ru', 'fetch-with-method', 'при отправка загрузить /api/form с method:"POST" body:form', '/api/form', 'method'],
+      ['uk', 'fetch-with-method', 'при надсилання завантажити /api/form з method:"POST" body:form', '/api/form', 'method'],
+      ['pl', 'fetch-with-headers', 'gdy kliknięcie pobierz /api/me z headers:{Authorization:`Bearer ${$token}`} jako JSON wtedy umieść jego.name do ja', '/api/me', 'headers'],
+      ['pl', 'fetch-with-method-body', 'gdy kliknięcie pobierz /api/users z method:"POST", body:"name=Joe"', '/api/users', 'method'],
+      ['pl', 'fetch-formdata', 'gdy wyślij pobierz /api/submit z method:"POST", body:(closest <form/> jako FormData)', '/api/submit', 'method'],
+      ['ru', 'fetch-formdata', 'при отправка загрузить /api/submit с method:"POST", body:(closest <form/> как FormData)', '/api/submit', 'method'],
+      ['uk', 'fetch-formdata', 'при надсилання завантажити /api/submit з method:"POST", body:(closest <form/> як FormData)', '/api/submit', 'method'],
+    ];
+
+    it.each(FETCH_LINES)('[%s] %s: URL is source, options head is style', (lang, _pattern, line, url, styleHead) => {
+      const nodes = collect(parse(line, lang));
+      const f = first(nodes, 'fetch');
+      expect(role(f, 'source')?.value).toBe(url);
+      expect(String(role(f, 'style')?.raw ?? role(f, 'style')?.value)).toContain(styleHead);
+      expect(role(f, 'patient')).toBeUndefined();
+    });
+
+    it('[pl] fetch-basic control: the plain-source path is untouched', () => {
+      const nodes = collect(parse('gdy kliknięcie pobierz /api/data wtedy umieść to do #result', 'pl'));
+      const f = first(nodes, 'fetch');
+      expect(role(f, 'source')?.value).toBe('/api/data');
+      expect(role(f, 'style')).toBeUndefined();
+    });
+  });
+
+  describe('F5: hi transition duration drop', () => {
+    // hi matches the fused SOV 2-role transition pattern, which ends at {goal};
+    // the duration renders as `में 500ms` — a particle BEFORE the time literal,
+    // where the trailing-DURATION reclaim (built for ja/ko's bare adjacent
+    // literal) never looked. The reclaim now skips exactly one particle when a
+    // TIME-shaped literal directly follows it.
+    const HI_LINES: Array<[string, string, string, unknown]> = [
+      // [pattern, corpus line, expected duration, expected goal]
+      ['transition-opacity', 'opacity को क्लिक पर संक्रमण 0 में 500ms फिर मैं को हटाएं', '500ms', 0],
+      ['transition-transform', 'transform को क्लिक पर संक्रमण "scale(1.2)" में 300ms', '300ms', 'scale(1.2)'],
+      ['transition-color', '*background-color को क्लिक पर संक्रमण "blue" में 500ms', '500ms', 'blue'],
+      ['fade-out-remove', 'opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', '300ms', 0],
+    ];
+
+    it.each(HI_LINES)('[hi] %s: duration reclaimed through में', (_pattern, line, duration, goal) => {
+      const nodes = collect(parse(line, 'hi'));
+      const tr = first(nodes, 'transition');
+      expect(role(tr, 'duration')?.value).toBe(duration);
+      expect(role(tr, 'goal')?.value).toBe(goal);
+    });
+
+    it('[hi] fade-out-remove: the trailing remove survives the reclaim', () => {
+      const nodes = collect(parse('opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', 'hi'));
+      const rm = first(nodes, 'remove');
+      expect(role(rm, 'patient')?.value).toBe('me');
+    });
+
+    it('[ja] control: bare adjacent time literal path unchanged', () => {
+      const nodes = collect(parse('クリック で opacity を 遷移 0 に 300ms', 'ja'));
+      const tr = first(nodes, 'transition');
+      expect(role(tr, 'duration')?.value).toBe('300ms');
+      expect(role(tr, 'goal')?.value).toBe(0);
+    });
+  });
+
+  describe('F7: qu/tr behavior-sortable trigger residue (re-filed to the transformer arc)', () => {
+    // KNOWN RESIDUE — re-filed, not a parser gap (see MULTILINGUAL_NEXT_STEPS
+    // § R3 families, item 7). The command-level action multiset matches en in
+    // BOTH languages; only the VALUES around the loop's wait line corrupt,
+    // and every miss sits adjacent to a malformed i18n render:
+    //   tr line 15: `kadar olay pointerup i tekrarla belge den` — the
+    //     from-phrase strands AFTER the verb (en: repeat until event
+    //     pointerup from document);
+    //   tr line 16: `bekle pointermove(clientY) veya pointerup(clientY)
+    //     belge den` — verb-FIRST in an SOV language, or-run + from-phrase
+    //     stranded post-verb (the middle trigger captures the stranded
+    //     `belge` as its event);
+    //   qu line 16: `qillqa manta suyay pointermove(clientY) utaq
+    //     pointerup(clientY)` — verb-MEDIAL, or-run stranded post-verb (the
+    //     middle trigger glues the whole stranded run into its event).
+    // Same family as the qu behavior-resizable it.fails above (the reorder
+    // renders fragments outside their clause). These flip when the
+    // transformer rendering is repaired.
+    const QU_SORTABLE = [
+      'Sortable(dragClass) ta behavior',
+      '    init',
+      '        sichus dragClass kanqa mana_riqsisqa',
+      '            dragClass ta "sorting" man churanay',
+      '        tukuy',
+      '    tukuy',
+      '    noqa manta pointerdown(clientY) pi',
+      '        item ta the target.closest("li") man churanay',
+      '        sichus item kanqa chusaq',
+      '            lluqsiy',
+      '        tukuy',
+      '        the ruway ta sayay',
+      '        .{dragClass} ta item man yapay',
+      '        sortable:start ta noqa man kichay',
+      '        hayk_akama ruway pointerup ta qillqa manta kutipay',
+      '            qillqa manta suyay pointermove(clientY) utaq pointerup(clientY)',
+      '            sortable:move ta noqa man kichay',
+      '        tukuy',
+      '        .{dragClass} ta item manta qichuy',
+      '        sortable:end ta noqa man kichay',
+      '    tukuy',
+      'tukuy',
+    ].join('\n');
+
+    const TR_SORTABLE = [
+      'Sortable(dragClass) i behavior',
+      '    init',
+      '        eğer dragClass dir tanımsız',
+      '            dragClass i "sorting" e ayarla',
+      '        son',
+      '    son',
+      '    pointerdown(clientY) de ben den',
+      '        item i the target.closest("li") e ayarla',
+      '        eğer item dir boş',
+      '            çık',
+      '        son',
+      '        the olay i durdur',
+      '        .{dragClass} i ekle item e',
+      '        sortable:start i tetikle ben e',
+      '        kadar olay pointerup i tekrarla belge den',
+      '            bekle pointermove(clientY) veya pointerup(clientY) belge den',
+      '            sortable:move i tetikle ben e',
+      '        son',
+      '        .{dragClass} i kaldır item den',
+      '        sortable:end i tetikle ben e',
+      '    son',
+      'son',
+    ].join('\n');
+
+    const triggerValues = (nodes: Record<string, any>[]): string[] =>
+      nodes.filter(n => n.action === 'trigger').map(n => String(role(n, 'event')?.raw ?? role(n, 'event')?.value ?? '?'));
+
+    it.fails('[qu] behavior-sortable: all three trigger events by VALUE (reorder residue)', () => {
+      const nodes = collect(parse(QU_SORTABLE, 'qu'));
+      expect(triggerValues(nodes).sort()).toEqual(
+        ['sortable:start', 'sortable:move', 'sortable:end'].sort()
+      );
+    });
+
+    it.fails('[tr] behavior-sortable: sortable:move + bare remove patient (reorder residue)', () => {
+      const nodes = collect(parse(TR_SORTABLE, 'tr'));
+      expect(triggerValues(nodes)).toContain('sortable:move');
+      const rm = first(nodes, 'remove');
+      expect(role(rm, 'patient')?.value).toBe('.{dragClass}');
+    });
+
+    it('[qu/tr] behavior-sortable: command-level actions all survive (only values corrupt)', () => {
+      const enActions = collect(parse(TR_SORTABLE, 'tr')).map(n => n.action);
+      for (const [lang, src] of [['qu', QU_SORTABLE], ['tr', TR_SORTABLE]] as const) {
+        const acts = collect(parse(src, lang)).map(n => n.action);
+        expect(acts.filter(a => a === 'trigger').length, `${lang} trigger count`).toBe(3);
+        expect(acts, `${lang} has remove`).toContain('remove');
+      }
+      expect(enActions).toContain('repeat');
+    });
+  });
+
+  describe('F8: ms repeat-times count word', () => {
+    // `ulang 3 kali` fell through the repeat-ms-times HEAD (whose count word
+    // was left as English `times`) to the generated positional repeat, which
+    // bound the count to loopType (`loopType=3`, no quantity — en reference:
+    // quantity=3, loopType="times").
+    it('[ms] repeat-times: ulang 3 kali captures quantity=3, loopType="times"', () => {
+      const nodes = collect(
+        parse('apabila click ulang 3 kali kemudian tambah "<p>Line</p>" ke saya', 'ms')
+      );
+      const rpt = first(nodes, 'repeat');
+      expect(role(rpt, 'quantity')?.value).toBe(3);
+      expect(role(rpt, 'loopType')?.value).toBe('times');
+      // The loop body must survive the head re-parse swap.
+      expect(first(nodes, 'add')).toBeDefined();
+    });
+  });
+});

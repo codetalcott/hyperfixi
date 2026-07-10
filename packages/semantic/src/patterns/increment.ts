@@ -209,7 +209,7 @@ function getIncrementPatternsIt(): LanguagePattern[] {
         quantity: {
           marker: 'di',
           markerAlternatives: ['per'],
-          default: { type: 'literal', value: '1' },
+          default: { type: 'literal', value: 1 },
         },
       },
     },
@@ -231,7 +231,7 @@ function getIncrementPatternsIt(): LanguagePattern[] {
       },
       extraction: {
         patient: { position: 1 },
-        quantity: { default: { type: 'literal', value: '1' } },
+        quantity: { default: { type: 'literal', value: 1 } },
       },
     },
   ];
@@ -447,7 +447,7 @@ function getIncrementPatternsVi(): LanguagePattern[] {
         quantity: {
           marker: 'thêm',
           markerAlternatives: ['lên'],
-          default: { type: 'literal', value: '1' },
+          default: { type: 'literal', value: 1 },
         },
       },
     },
@@ -465,7 +465,7 @@ function getIncrementPatternsVi(): LanguagePattern[] {
       },
       extraction: {
         patient: { position: 1 },
-        quantity: { default: { type: 'literal', value: '1' } },
+        quantity: { default: { type: 'literal', value: 1 } },
       },
     },
   ];

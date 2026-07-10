@@ -2628,49 +2628,98 @@ languages including en (was split everywhere). Follow-up status:
    (`behavior-draggable/resizable/sortable`), and the fix healed those rows too
    (bn avgValueRecall 0.917 → 0.958).
 
-## R3-discovered value-bug families (opened 2026-07-10)
+## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged
-(probe transcript in the R3 arc). Every family is **invisible to R0/R1** (right
-actions, right role types) except where noted. Baseline-recorded, so the ratchet
-only fires on _further_ regressions; burning these down is follow-up work, roughly
-in value order:
+(probe transcript in the R3 arc), then burned down in the value-bug-families arc
+(`docs-internal/HANDOFF_value-bug-families.md`, resolved). Per-family outcomes —
+F1–F5 + F8 **fixed** (unit-locked in `multilingual-roadmap-fixes.test.ts` § "R3
+value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 
-1. **Connective swallowed as `increment.quantity`** (ar/it/ms/pl/ru/uk/tl/vi ×
-   `repeat-until-event`/`repeat-while`). `zwiększ #counter wtedy czekaj` parses with
-   `quantity="then"` — the normalized connective captured as increment's quantity
-   (en gets the schema default `1`). Runtime divergence: increment by `"then"` is
-   NaN-shaped. Likely one guard in the SVO two-role generation or a
-   quantity-role type constraint (`expectedTypes` number).
-2. **bn duration-glue** (`repeat-while`/`repeat-until-event`/`repeat-forever`/
-   `copy-to-clipboard`/`stagger-animation`/`tell-other-element`). bn tokenizer glues
-   the block terminator onto the preceding duration: `wait.duration="200msশেষ"`.
-   Tokenizer boundary bug (Bengali script adjacency).
-3. **SOV `in me` qualifier glue/drop** (bn/hi/ja/ko/qu × `form-disable-on-submit`).
-   en: `add.destination=<button/>` + `put.destination=<button/>` (with an `in me`
-   qualifier). SOV: add's destination falls back to default `me` (phrase lost) and
-   put's destination captures glued `<button/>inme`. Type stays `selector`, so R1
-   scores the put perfect — R3-only.
-4. **pl/ru/uk `fetch` URL mis-role** (4 fetch patterns). `pobierz /api/form z
-   method:"POST"` parses `patient=/api/form, source=method` — URL and with-clause
-   land in swapped roles (en: `source=/api/form, style=method`). Partially
-   R1-visible; runtime-relevant (fetch target wrong).
-5. **hi `transition` duration drop** (4 transition patterns). hi's rendering drops
-   `500ms` from roles entirely (`में` marker gap). R1-visible as missing role;
-   R3 pinpoints the value.
-6. **`swap` role-binding flip** (ar/bn/hi/ja/ko/qu/tl/tr × `swap-content`). en parses
-   `swap #a with #b` as `destination=#a, patient=#b`; SOV/VSO renderings mark `#a`
-   as patient — same role-type SET, so R1 is blind. Runtime-benign (swap is
-   symmetric) but flags the en swap schema's role mapping disagreeing with the
-   transformer's marking. Fix = align schema/renderer, or normalize symmetric
-   commands in the signature.
-7. **qu/tr behavior trigger-event residue** (`behavior-sortable`: qu misses
-   `sortable:move`+`sortable:start`, tr misses `sortable:move` +
-   `remove.patient=.{dragClass}`). Sibling of the fixed bn gap; likely reorder
-   placement rather than markers.
-8. **ms `repeat 3 kali` count swallowed** (`repeat-times`). ms parses
-   `loopType=3` with no `quantity` (en: `quantity=3, loopType=times`). R1-visible;
-   listed for completeness.
+1. ~~**Connective swallowed as `increment.quantity`**~~ **FIXED** (ar/it/ms/pl/ru/
+   uk/tl/vi × `repeat-until-event`/`repeat-while`). The generated patterns'
+   trailing marker-less optional `{quantity}` slot captured the normalized
+   connective (`quantity="then"` — increment by NaN at runtime). Fixed by a
+   `matchRoleToken` guard: a keyword-kind token normalized `then` (or a
+   non-positional `end`) is never a role value — optional slots skip and the
+   schema default fills (`quantity=1`), required slots fail the pattern.
+   Deliberately narrower than CLAUSE_BOUNDARY_KEYWORDS: `and` collides with the
+   untranslated English pronoun `I` (pl `i`), and `end` keeps its
+   positional-`last` reading before a selector. Also aligned the it/vi hand
+   increment patterns' string `'1'` defaults to number `1` (they now win
+   matchBest).
+2. ~~**bn duration-glue**~~ **FIXED — two mechanisms, neither the tokenizer**
+   (the handoff's hypothesis was wrong; the bn tokenizer splits fine).
+   (a) `repeat-while` only: the reorder renders wait's object phrase as
+   `200ms শেষ কে` (terminator INSIDE the phrase — see the transformer defect
+   note below) and the SOV verb-anchoring's `processGroup` joined the pair
+   whitespace-free into `duration="200msশেষ"`. Fixed by skipping stray
+   terminator-shaped tokens during value accumulation (positional `শেষ
+   <selector>` keeps its `last` reading via selector lookahead).
+   (b) The other five rows were family-1's mechanism: the generated verb-first
+   wait's duration slot captured তারপর/শেষ (`duration="then"`/`"end"`) while
+   dropping the real `2s/1s/100ms কে` prefix — fixed by the same
+   matchRoleToken guard. bn should now sit at avgValueRecall 1.0.
+3. ~~**SOV `in me` qualifier glue/drop**~~ **FIXED** (bn/hi/ja/ko/qu ×
+   `form-disable-on-submit`). en's add/put schemas have no scope role, so the en
+   reference DROPS `in me`; two SOV defects fixed to match: (a) put's
+   verb-anchoring glue (`<button/>inme`) — `tokensToSemanticValue` now truncates
+   a selector-LED group at a later `in` token; (b) add's fused-path drop
+   (destination silently defaulted to `me` — the fronted patient sits outside
+   the [verb..boundary] re-parse slice, so the superset gate rejects the swap
+   and the postposed phrase was never reclaimed) — added the missing trailing
+   DESTINATION/SOURCE reclaim on the fused path plus an `in`-qualifier skip in
+   `tryAttachTrailingRole` (destination-strict, primary-marker-gated).
+4. ~~**pl/ru/uk `fetch` URL mis-role**~~ **FIXED** (4 fetch patterns ×3 langs).
+   Root cause: pl `z` / uk `з` are BOTH the profile's source and style markers
+   (ru `с` is style-primary and a source-alternative), so the fused generic VSO
+   event pattern bound the URL to `{patient}` (fetch has no patient role) and
+   read the with-OPTIONS head as `source`. Fixed by a fetch-specific relabel in
+   `normalizeCommandRoles` (patient + expression-typed source + empty style is
+   schema-impossible except via this mis-parse → source→style, patient→source).
+   Profile markers deliberately untouched (global blast radius).
+5. ~~**hi `transition` duration drop**~~ **FIXED** (4 transition patterns). The
+   handoff's `markerVariants` one-liner could not work (hi profile has no
+   duration roleMarker; the match is the fused SOV 2-role pattern which ends at
+   `{goal}`). Fixed in the trailing-DURATION reclaim: skip exactly one particle
+   when a TIME-shaped literal directly follows it (`में 500ms` — the
+   prepositional sibling of the bn `জন্য` postposition).
+6. **`swap` role-binding flip — WONTFIX** (ar/bn/hi/ja/ko/qu/tl/tr ×
+   `swap-content`, 8 rows, permanent R3 noise). en parses `swap #a with #b` as
+   `destination=#a, patient=#b` (swapSchema: destination bare-marked svoPos 2,
+   patient with-word svoPos 3); the SOV/VSO transformer marks `#a` accusative →
+   the roles land flipped. Same role-type SET (R1-blind) and swap is
+   runtime-symmetric for the element shape, so this is signature noise, not a
+   behavior bug. Aligning would require flipping destination/patient across the
+   en hand pattern + swapSchema for ALL SVO languages together AND auditing the
+   ast-builder swap mapper / core runtime / renderer round-trip — deemed not
+   worth the regression surface for zero runtime effect (decision 2026-07-10).
+   The 8 rows stay visible in the R3 report; do NOT special-case the R3 walker.
+   If a future arc flips it, regenerate the baseline and watch R1/R2.
+7. **qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**
+   (`behavior-sortable`; handoff: `docs-internal/HANDOFF_transformer-rendering.md`). Probing shows the command-level action multiset
+   matches en in both languages; only VALUES around the loop's wait line
+   corrupt, each adjacent to a malformed render: tr renders the repeat header's
+   from-phrase AFTER the verb (`kadar olay pointerup i tekrarla belge den`) and
+   the wait line verb-FIRST (`bekle pointermove(clientY) veya … belge den` —
+   the middle trigger captures the stranded `belge` as its event; the loop's
+   `son` before `remove` gives the patient a spurious `last` prefix); qu
+   renders the wait verb-MEDIAL (`qillqa manta suyay pointermove(clientY) utaq
+   …` — the middle trigger glues the whole stranded or-run). Same
+   transformer-rendering family as the open qu `behavior-resizable` side-quest
+   (item 2 of the colon-event follow-ups above) and the bn repeat-while
+   terminator placement (family 2a). Locked by two `it.fails` in
+   `multilingual-roadmap-fixes.test.ts` § "R3 value-bug families" F7 (flip when
+   the transformer rendering is repaired). **Transformer-arc worklist:** fix the
+   SOV/agglutinative reorder stranding (a) or-run wait lines rendered
+   verb-first/verb-medial (tr/qu), (b) from-phrases postposed after the verb
+   (tr `belge den`), (c) block terminators rendered inside the following
+   clause's object phrase (bn `200ms শেষ কে অপেক্ষা`, qu resizable's `tukuy man
+   churanay`).
+8. ~~**ms `repeat 3 kali` count swallowed**~~ **FIXED**. The `repeat-ms-times`
+   HEAD's count word was left as English `times`, so `ulang 3 kali` fell through
+   to the generated positional repeat (`loopType=3`, no quantity). Localized to
+   `kali` (the th/vi/tl precedent).
 
 ## Recommended sequence
 

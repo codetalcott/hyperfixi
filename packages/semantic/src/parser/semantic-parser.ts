@@ -334,6 +334,34 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // fetch: the Slavic with/from preposition collision (pl `z`, ru `с`, uk
+    // `з` — the profile's source AND style markers share a surface). The
+    // fused generic VSO event pattern (fetch-event-{pl,ru,uk}-vso) binds the
+    // leading URL to {patient} — fetch has NO patient role — and its
+    // source-marked group reads the with-OPTIONS head as `source`
+    // (`pobierz /api/form z method:"POST" …` → patient="/api/form",
+    // source="method"; en: source="/api/form", style="method"). The generic
+    // primary-role relabel above cannot fire because `source` is occupied.
+    // A patient + expression-typed source + empty style IS that mis-parse —
+    // no legitimate fetch form produces it — so shift source→style and
+    // patient→source (tell/transition relabel precedent).
+    if (node.action === 'fetch') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const pat = roles.get('patient');
+      const src = roles.get('source');
+      if (
+        pat &&
+        src &&
+        (pat.type === 'literal' || pat.type === 'expression') &&
+        src.type === 'expression' &&
+        !roles.has('style')
+      ) {
+        roles.delete('patient');
+        roles.set('style', src);
+        roles.set('source', pat);
+      }
+    }
+
     // transition: the SOV body-walker's verb-anchoring binds the postposed
     // goal phrase (`0 に` / `0 에`) to `destination` — に/에 is the generic
     // destination particle — as a LITERAL, which is schema-invalid (a
@@ -1677,8 +1705,22 @@ export class SemanticParserImpl implements ISemanticParser {
           r => r.role === 'duration' && !r.required
         );
         if (hasOptionalDuration && !dNode.roles.has('duration')) {
-          const trailing = tokens.peek();
-          if (trailing && /^\d+(\.\d+)?(ms|s)$/i.test(trailing.value)) {
+          const timeRe = /^\d+(\.\d+)?(ms|s)$/i;
+          let trailing = tokens.peek();
+          // hi renders `over 500ms` with the marker BEFORE the time literal
+          // (`में 500ms` — the prepositional sibling of the bn trailing জন্য
+          // postposition consumed below). Skip exactly one particle when a
+          // TIME-shaped literal directly follows it; ja/ko/bn keep the bare
+          // adjacent-literal path unchanged.
+          let markerSkip = false;
+          if (trailing && trailing.kind === 'particle') {
+            const after = tokens.peek(1);
+            if (after && timeRe.test(after.value)) {
+              markerSkip = true;
+              trailing = after;
+            }
+          }
+          if (trailing && timeRe.test(trailing.value)) {
             commandNode = createCommandNode(
               actionName as ActionType,
               {
@@ -1691,6 +1733,7 @@ export class SemanticParserImpl implements ISemanticParser {
               },
               dNode.metadata
             );
+            if (markerSkip) tokens.advance();
             tokens.advance();
             // Consume a trailing rendered duration postposition (bn `500ms
             // জন্য` — the transformer renders `over` as the for-postposition
@@ -1800,6 +1843,18 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
         }
+
+        // Trailing DESTINATION/SOURCE reclaim — the add/put/remove sibling of
+        // the quantity/duration/responseType/wait reclaims above. The SOV
+        // reorder fronts the patient (`@disabled を 送信 で 追加 <button/> in
+        // me に`), so the [verb..boundary] re-parse's superset gate rejects
+        // the swap (the fronted patient sits outside the slice) and the
+        // postposed destination phrase is left unconsumed — the role silently
+        // defaults to `me` (form-disable-on-submit ×4 SOV). Same guarded
+        // helper as the parseClause call site: schema-declared role,
+        // absent-or-`me`-default only, destination matched by PRIMARY marker
+        // only, strict value shapes.
+        this.tryAttachTrailingRole(tokens, commandNode as CommandSemanticNode, language);
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -2675,6 +2730,32 @@ export class SemanticParserImpl implements ISemanticParser {
           if (v) roles.set(role, v);
           return;
         }
+        // Postpositional with an untranslated scope qualifier the transformer
+        // keeps inline: `<value> in <x> <marker>` (`<button/> in me に`,
+        // form-disable-on-submit ×4 SOV). en's add/put schemas have no scope
+        // role and DROP the qualifier (`add @disabled to <button/> in me` →
+        // destination="<button/>"), so attach the bare value and consume
+        // through the marker — the same en-lossiness. Strict (destination)
+        // only, single-token qualifier object, and the marker must close the
+        // phrase, so `in closest <form/>` (no adjacent marker) is untouched.
+        if (strict && isValue(tok0, strict)) {
+          const tok2 = stream.peek(2);
+          const tok3 = stream.peek(3);
+          if (
+            (tok1.normalized ?? tok1.value).toLowerCase() === 'in' &&
+            tok2 &&
+            !isMarker(tok2) &&
+            isMarker(tok3)
+          ) {
+            const v = this.tokenToSemanticValue(tok0);
+            stream.advance();
+            stream.advance();
+            stream.advance();
+            stream.advance();
+            if (v) roles.set(role, v);
+            return;
+          }
+        }
       } else {
         // Prepositional `<marker> <value>` (SVO th: จาก/ใน body).
         if (isMarker(tok0) && isValue(tok1, strict)) {
@@ -2884,15 +2965,32 @@ export class SemanticParserImpl implements ISemanticParser {
     postVerbTokens: LanguageToken[],
     markerToRole: Map<string, string>,
     action: string,
-    _language: string
+    language: string
   ): Record<string, SemanticValue> {
     const roles: Record<string, SemanticValue> = {};
+
+    // A block terminator the SOV reorder absorbed into a role phrase (bn
+    // repeat-while renders wait's object phrase as `200ms শেষ কে` — the
+    // terminator belongs after the verb) is structural residue, never part
+    // of a value: joined in it glues (`200msশেষ`), alone it fabricates a
+    // phantom trailing role. Recognized like isBlockEndToken (curated
+    // isEndKeyword surface OR keyword normalized `end`), but the positional
+    // lookahead applies to BOTH modes: a value group is exactly where a
+    // positional-`last` phrase lives (bn `শেষ <li/>`, tr `son .item`), so any
+    // terminator-shaped token followed by a selector keeps its positional
+    // reading.
+    const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean =>
+      (this.isEndKeyword(t.value, language) ||
+        (t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end')) &&
+      !(next && next.kind === 'selector');
 
     // Process a group of tokens: collect value tokens until a marker is found
     const processGroup = (tokens: LanguageToken[]) => {
       let valueTokens: LanguageToken[] = [];
 
-      for (const token of tokens) {
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (isStrayTerminator(token, tokens[i + 1])) continue;
         const role = markerToRole.get(token.value);
         if (role && token.kind === 'particle' && valueTokens.length > 0) {
           // This is a marker — assign the preceding value tokens to this role
@@ -2987,8 +3085,27 @@ export class SemanticParserImpl implements ISemanticParser {
     if (tokens.length === 0) return null;
 
     // Filter out noise tokens (whitespace, etc.)
-    const meaningful = tokens.filter(t => (t.kind as string) !== 'whitespace');
+    let meaningful = tokens.filter(t => (t.kind as string) !== 'whitespace');
     if (meaningful.length === 0) return null;
+
+    // en-alignment: add/put declare NO scope role (only `set` does), so the
+    // en reference silently DROPS an `in me`/`in <x>` scope qualifier and
+    // captures the bare selector (`add @disabled to <button/> in me` →
+    // destination="<button/>"). The SOV corpus keeps the qualifier inline
+    // untranslated (`<button/> in me に`), and the whitespace-eliding join
+    // below would glue it into "<button/>inme" — same type, so only R3 sees
+    // it. A selector-led group truncates at a later `in`: en byte-alignment.
+    // Selector head required, so positional phrases (`first <li/> in me`)
+    // and non-selector runs are untouched.
+    if (
+      meaningful.length >= 2 &&
+      (meaningful[0].kind === 'selector' || /^[#.@*<]/.test(meaningful[0].value))
+    ) {
+      const inIdx = meaningful.findIndex(
+        (t, i) => i > 0 && (t.normalized ?? t.value).toLowerCase() === 'in'
+      );
+      if (inIdx > 0) meaningful = meaningful.slice(0, inIdx);
+    }
 
     // Single token — use its type directly
     if (meaningful.length === 1) {
