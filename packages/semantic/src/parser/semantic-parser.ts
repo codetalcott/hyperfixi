@@ -1677,8 +1677,22 @@ export class SemanticParserImpl implements ISemanticParser {
           r => r.role === 'duration' && !r.required
         );
         if (hasOptionalDuration && !dNode.roles.has('duration')) {
-          const trailing = tokens.peek();
-          if (trailing && /^\d+(\.\d+)?(ms|s)$/i.test(trailing.value)) {
+          const timeRe = /^\d+(\.\d+)?(ms|s)$/i;
+          let trailing = tokens.peek();
+          // hi renders `over 500ms` with the marker BEFORE the time literal
+          // (`में 500ms` — the prepositional sibling of the bn trailing জন্য
+          // postposition consumed below). Skip exactly one particle when a
+          // TIME-shaped literal directly follows it; ja/ko/bn keep the bare
+          // adjacent-literal path unchanged.
+          let markerSkip = false;
+          if (trailing && trailing.kind === 'particle') {
+            const after = tokens.peek(1);
+            if (after && timeRe.test(after.value)) {
+              markerSkip = true;
+              trailing = after;
+            }
+          }
+          if (trailing && timeRe.test(trailing.value)) {
             commandNode = createCommandNode(
               actionName as ActionType,
               {
@@ -1691,6 +1705,7 @@ export class SemanticParserImpl implements ISemanticParser {
               },
               dNode.metadata
             );
+            if (markerSkip) tokens.advance();
             tokens.advance();
             // Consume a trailing rendered duration postposition (bn `500ms
             // জন্য` — the transformer renders `over` as the for-postposition

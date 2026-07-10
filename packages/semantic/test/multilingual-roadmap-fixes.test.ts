@@ -12652,6 +12652,41 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
   const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
     nodes.find(n => n.action === action);
 
+  describe('F5: hi transition duration drop', () => {
+    // hi matches the fused SOV 2-role transition pattern, which ends at {goal};
+    // the duration renders as `में 500ms` — a particle BEFORE the time literal,
+    // where the trailing-DURATION reclaim (built for ja/ko's bare adjacent
+    // literal) never looked. The reclaim now skips exactly one particle when a
+    // TIME-shaped literal directly follows it.
+    const HI_LINES: Array<[string, string, string, unknown]> = [
+      // [pattern, corpus line, expected duration, expected goal]
+      ['transition-opacity', 'opacity को क्लिक पर संक्रमण 0 में 500ms फिर मैं को हटाएं', '500ms', 0],
+      ['transition-transform', 'transform को क्लिक पर संक्रमण "scale(1.2)" में 300ms', '300ms', 'scale(1.2)'],
+      ['transition-color', '*background-color को क्लिक पर संक्रमण "blue" में 500ms', '500ms', 'blue'],
+      ['fade-out-remove', 'opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', '300ms', 0],
+    ];
+
+    it.each(HI_LINES)('[hi] %s: duration reclaimed through में', (_pattern, line, duration, goal) => {
+      const nodes = collect(parse(line, 'hi'));
+      const tr = first(nodes, 'transition');
+      expect(role(tr, 'duration')?.value).toBe(duration);
+      expect(role(tr, 'goal')?.value).toBe(goal);
+    });
+
+    it('[hi] fade-out-remove: the trailing remove survives the reclaim', () => {
+      const nodes = collect(parse('opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', 'hi'));
+      const rm = first(nodes, 'remove');
+      expect(role(rm, 'patient')?.value).toBe('me');
+    });
+
+    it('[ja] control: bare adjacent time literal path unchanged', () => {
+      const nodes = collect(parse('クリック で opacity を 遷移 0 に 300ms', 'ja'));
+      const tr = first(nodes, 'transition');
+      expect(role(tr, 'duration')?.value).toBe('300ms');
+      expect(role(tr, 'goal')?.value).toBe(0);
+    });
+  });
+
   describe('F8: ms repeat-times count word', () => {
     // `ulang 3 kali` fell through the repeat-ms-times HEAD (whose count word
     // was left as English `times`) to the generated positional repeat, which
