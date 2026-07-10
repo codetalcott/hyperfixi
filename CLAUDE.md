@@ -291,7 +291,7 @@ the committed baseline:
 > not truth. Current plan + per-arc history:
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
-The `--regression` gate ratchets on **six** signals (each fails CI; each guarded so
+The `--regression` gate ratchets on **seven** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
@@ -306,11 +306,27 @@ yields a 0 delta):
    _adds_ phantom/spurious commands the source never had (a phantom `toggle` ahead of
    a real one) — invisible to every recall-based signal above. Multiset-aware, so a
    _duplicated_ phantom (`[toggle, toggle]`) is seen too.
-5. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
+5. **multiset-recall ratchet (R0-recall-multiset)** — a per-language
+   **avgMultisetRecall** drop > 0.02. Signals 2–4 all score the **deduped** action
+   Set, so a parse that drops a _repeated_ command scores a perfect 1.0: reference
+   `[bind, bind]` collapses to `{bind}`, which `[bind]` satisfies in full. That is how
+   `bind-two-way` recorded fidelity 1.0 in all 24 languages while every one of them
+   parsed only the first of its two `bind`s (the top-level command-sequence fix that
+   added this signal). Counting duplicates makes the drop visible. Ten rows sit below 1.0 today — `behavior-draggable` / `behavior-resizable`
+   in hi/ja/ko/ms/qu (hi/ja/ko/qu lose a `trigger`, ms a `measure`, qu also two `set`s).
+   All pre-existing, all one root cause — the non-en tokenizers split a colon-qualified
+   custom event name (`draggable:start` → `draggable` + `:start`, the local-variable
+   sigil). Now frozen; see `docs-internal/HANDOFF_colon-event-names.md`.
+6. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
    (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
-   verb but drops/mistypes a role).
-6. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
+   verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
+   blind spot for repeated roles.
+7. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
    matched the en reference and now diverges (pass→fail; tolerance 0).
+
+None of the recall-based signals can see a regression in the **English reference
+itself** — en defines the reference, so a parser change that truncates every language
+identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.
 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a

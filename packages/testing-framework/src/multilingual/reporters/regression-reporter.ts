@@ -118,6 +118,12 @@ export class RegressionReporter implements Reporter {
         langResult.avgPrecision !== undefined && baselineLang.avgPrecision !== undefined
           ? langResult.avgPrecision - baselineLang.avgPrecision
           : 0;
+      // R0-recall-multiset — same both-sides guard. Negative = a repeated command
+      // is now being dropped, which avgFidelity (a Set) cannot see.
+      const avgMultisetRecallDelta =
+        langResult.avgMultisetRecall !== undefined && baselineLang.avgMultisetRecall !== undefined
+          ? langResult.avgMultisetRecall - baselineLang.avgMultisetRecall
+          : 0;
       // R1 — only meaningful when BOTH sides carry role data; an un-regenerated
       // baseline (no avgRoleFidelity yet) must never retro-flag.
       const avgRoleFidelityDelta =
@@ -163,6 +169,7 @@ export class RegressionReporter implements Reporter {
         avgConfidenceDelta,
         avgFidelityDelta,
         avgPrecisionDelta,
+        avgMultisetRecallDelta,
         avgRoleFidelityDelta,
         avgExecutionFidelityDelta,
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
@@ -364,6 +371,10 @@ export class RegressionReporter implements Reporter {
         // R0-precision — fraction of each parse's actions justified by the en
         // reference (phantom-command signal recall can't see). Recorded + ratcheted.
         avgPrecision: langResult.avgPrecision ?? undefined,
+        // R0-recall-multiset — the mirror of precision: a DROPPED repeated command
+        // (`[bind, bind]` parsed as `[bind]`) is invisible to the Set-based
+        // avgFidelity and avgRoleFidelity. Recorded + ratcheted.
+        avgMultisetRecall: langResult.avgMultisetRecall ?? undefined,
         // R1 — role fidelity (role name + value type vs the en reference).
         // Recorded + ratcheted; burn-down is NOT part of the parsing-track goal.
         avgRoleFidelity: langResult.avgRoleFidelity ?? undefined,
