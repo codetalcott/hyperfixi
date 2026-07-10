@@ -1149,6 +1149,10 @@ export class PatternMatcher {
     pl: new Set(['z']),
     uk: new Set(['з']),
     th: new Set(['ของ']),
+    // Arabic genitive connector, laam + tatweel. Distinct from the possessive
+    // pronoun لي (laam + ya) that tryMatchPostNominalPossessiveExpression reads
+    // for `set my textContent`, so listing it here cannot steal that fold.
+    ar: new Set(['لـ']),
     ja: new Set(['の']),
     ko: new Set(['의']),
     bn: new Set(['র']),
@@ -1273,9 +1277,45 @@ export class PatternMatcher {
   }
 
   /**
+   * Whether a token is a possessive pronoun in the active profile (`my`, `لي`,
+   * `yangu`) rather than a property name.
+   */
+  private isPossessorToken(token: { value: string; normalized?: string }): boolean {
+    if (!this.currentProfile) return false;
+    for (const cand of [token.value, token.normalized].filter(Boolean) as string[]) {
+      if (
+        getPossessiveReference(this.currentProfile, cand) ??
+        getPossessiveReference(this.currentProfile, cand.toLowerCase())
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether a bare identifier can head a possessive property phrase — `valor de
+   * #picker`, `textContent von #status`.
+   *
+   * Sigil-led identifiers are values, not properties: `$x`/`:x` tokenize as
+   * references and `@x`/`*x`/`.x`/`#x` as selectors, so `$total de #x` must never
+   * fold into a property-path. Structural keywords, role-marker concepts and
+   * possessive pronouns belong to other matchers and are never property names.
+   */
+  private isBareWordPropertyHead(token: LanguageToken): boolean {
+    if (token.kind !== 'identifier') return false;
+    if (/^[$:@#.*]/.test(token.value)) return false;
+    if (this.isStructuralKeyword(token.value)) return false;
+    if (token.normalized && this.isStructuralKeyword(token.normalized)) return false;
+    if (token.normalized && this.isRoleMarkerConcept(token.normalized)) return false;
+    return !this.isPossessorToken(token);
+  }
+
+  /**
    * Try to match a prepositional "of" possessive:
-   *   <property-selector> <of-marker> <owner-selector>
-   * e.g. "*--primary-color of #theme" → property-path(#theme, *--primary-color).
+   *   <property> <of-marker> <owner-selector>
+   * e.g. "*--primary-color of #theme" → property-path(#theme, *--primary-color),
+   * or "valor de #picker" → property-path(#picker, valor).
    *
    * This is the surface the i18n transformer emits for "set the X of #y to Z"
    * across languages (`set #y's X` would be the alternative, but the transformer
@@ -1283,7 +1323,14 @@ export class PatternMatcher {
    */
   private tryMatchOfPossessiveExpression(tokens: TokenStream): SemanticValue | null {
     const property = tokens.peek();
-    if (!property || property.kind !== 'selector') return null;
+    if (!property) return null;
+    // A selector head is the historical form (`*--primary-color of #theme`). A
+    // bare-word head is the property-first render the transformer emits for
+    // `#picker's value` in es/pt/fr/de/id/sw/ar (`valor de #picker`), which
+    // otherwise captured the property word alone as an expression and dropped
+    // the owner. Selector-first languages (en `#picker's value`, ja `#pickerの
+    // 値`) never reach here: their owner check below rejects the property word.
+    if (property.kind !== 'selector' && !this.isBareWordPropertyHead(property)) return null;
 
     const mark = tokens.mark();
     tokens.advance();
@@ -1477,18 +1524,6 @@ export class PatternMatcher {
     if (!this.currentProfile) return null;
     if (this.currentProfile.possessive?.markerPosition !== 'after-object') return null;
 
-    const isPossessor = (t: { value: string; normalized?: string }): boolean => {
-      for (const cand of [t.value, t.normalized].filter(Boolean) as string[]) {
-        if (
-          getPossessiveReference(this.currentProfile!, cand) ??
-          getPossessiveReference(this.currentProfile!, cand.toLowerCase())
-        ) {
-          return true;
-        }
-      }
-      return false;
-    };
-
     const propertyToken = tokens.peek();
     if (!propertyToken) return null;
 
@@ -1508,7 +1543,7 @@ export class PatternMatcher {
       (propertyToken.kind === 'selector' &&
         (propertyToken.value.startsWith('*') || propertyToken.value.startsWith('@'))) ||
       isDotSelector;
-    if (!isPropHead || isPossessor(propertyToken)) return null;
+    if (!isPropHead || this.isPossessorToken(propertyToken)) return null;
 
     const mark = tokens.mark();
 
