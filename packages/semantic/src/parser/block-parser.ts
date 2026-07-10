@@ -14,8 +14,13 @@
  * See docs-internal/MULTILINGUAL_BEHAVIORS_PLAN.md Phase 3.
  */
 
-import type { LanguageToken, SemanticNode, EventHandlerSemanticNode } from '../types';
-import { createBehaviorNode, createDefNode, createCompoundNode } from '../types';
+import type {
+  LanguageToken,
+  SemanticNode,
+  EventHandlerSemanticNode,
+  FeatureAction,
+} from '../types';
+import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 
@@ -28,6 +33,13 @@ import { tokenize } from '../tokenizers';
  * counting just them keeps the depth tracking trigger-agnostic.
  */
 const OPENER_ACTIONS = ['if', 'unless', 'repeat', 'for', 'while'] as const;
+
+/**
+ * Block NAME form. Required for `behavior` and for the named features
+ * (`eventsource`/`socket`), where it is what distinguishes a real block head
+ * from an incidental keyword token.
+ */
+const PASCAL_CASE_NAME = /^[A-Z][A-Za-z0-9_]*$/;
 
 /**
  * Parsers injected to avoid a circular import with semantic-parser.
@@ -239,7 +251,7 @@ export function tryParseBlock(
   // it. Detect a `behavior` keyword token past index 0 with a PascalCase name at
   // index 0 (the declaration head is `<Name>(params) <marker> behavior …`).
   const sovKeywordIdx = tokens.findIndex((t, i) => i > 0 && tokenMatches(t, behaviorForms));
-  if (sovKeywordIdx > 0 && /^[A-Z][A-Za-z0-9_]*$/.test(tokens[0].value)) {
+  if (sovKeywordIdx > 0 && PASCAL_CASE_NAME.test(tokens[0].value)) {
     return parseBehaviorBlock(input, language, tokens, parsers, sovKeywordIdx);
   }
   if (tokenMatches(tokens[0], defForms)) {
@@ -475,7 +487,7 @@ function parseBehaviorBlock(
   if (nameIdx < 0) return null;
   const nameToken = tokens[nameIdx];
   const name = nameToken.value;
-  if (!/^[A-Z][A-Za-z0-9_]*$/.test(name)) return null;
+  if (!PASCAL_CASE_NAME.test(name)) return null;
 
   const { parameters, headerEnd } = parseHeader(input, nameToken);
   // Body begins after the header for the keyword-led form. For the SOV verb-final
@@ -621,4 +633,329 @@ function parseDefBlock(
     confidence,
     sourceText: input,
   });
+}
+
+// =============================================================================
+// Feature blocks (`live` / `eventsource` / `socket` / `intercept`)
+// =============================================================================
+
+/**
+ * Feature actions handled by {@link tryParseFeatureBlock}.
+ *
+ * Each declares `roles: []` + `bareKeyword: true` in its command schema, so the
+ * generated pattern is a lone keyword literal. Without this layer they match
+ * that pattern at Stage 2 and their entire body is dropped — at a *vacuous*
+ * confidence 1.0, because `scoreRoleCoverage` returns 1 when a pattern declares
+ * no roles.
+ *
+ * `worker` is deliberately absent: its body is `def … end` sub-blocks, and SOV
+ * renders those verb-final (`add(a, b) を def`), which `parseDefBlock` cannot yet
+ * locate. Folding `worker` in English alone would enrich the English reference
+ * action set while the other 23 languages still dropped their bodies — which is
+ * precisely the fidelity-ratchet regression this layer exists to avoid. It lands
+ * with SOV `def` support.
+ */
+const FEATURE_ACTIONS = ['live', 'eventsource', 'socket', 'intercept'] as const;
+
+/** Features whose body is a configuration DSL rather than hyperscript commands. */
+const OPAQUE_BODY_FEATURES: ReadonlySet<string> = new Set(['intercept']);
+
+/** Features that declare a PascalCase name adjacent to the keyword. */
+const NAMED_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket']);
+
+/** Features whose body is a sequence of `on <event> … end` handler blocks. */
+const HANDLER_BODY_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket']);
+
+/**
+ * How far into the token stream an SOV verb-final feature keyword can sit. The
+ * longest real head is Quechua's `ChatStream ta /events manta eventsource`
+ * (keyword at index 4) — the source clause precedes the verb there, whereas
+ * ja/ko/hi/bn/tr place it after (`ChatStream を eventsource /events から`, index
+ * 2). Bounding the scan keeps an incidental body-level keyword from being read
+ * as a block head.
+ */
+const SOV_KEYWORD_SEARCH_LIMIT = 6;
+
+/** `intercept`'s SOV head is just `<scope> <marker>` (`/ を intercept`). */
+const INTERCEPT_SOV_KEYWORD_LIMIT = 2;
+
+/**
+ * Locate the feature keyword and identify which feature it opens, or null.
+ *
+ * Keyword-initial in SVO/VSO/V2 (`eventsource ChatStream …`, ar `مقبس …`, zh
+ * `socket 把 …`). SOV reorders the verb after its head, so the keyword lands past
+ * index 0 — gated on an SOV profile plus (for named features) a PascalCase name
+ * leading the line, mirroring the `behavior` verb-final guard.
+ */
+function locateFeatureKeyword(
+  tokens: readonly LanguageToken[],
+  language: string
+): { action: FeatureAction; keywordIdx: number } | null {
+  for (const action of FEATURE_ACTIONS) {
+    if (tokenMatches(tokens[0], keywordForms(language, action))) {
+      return { action, keywordIdx: 0 };
+    }
+  }
+
+  if (tryGetProfile(language)?.wordOrder !== 'SOV') return null;
+
+  const limit = Math.min(tokens.length, SOV_KEYWORD_SEARCH_LIMIT);
+  for (let i = 1; i < limit; i++) {
+    for (const action of FEATURE_ACTIONS) {
+      // `live` leads its block in every language (ja ライブ, ko 라이브, tr canlı):
+      // it has no head to reorder around, so it never goes verb-final.
+      if (action === 'live') continue;
+      if (!tokenMatches(tokens[i], keywordForms(language, action))) continue;
+      if (NAMED_FEATURES.has(action) && !PASCAL_CASE_NAME.test(tokens[0].value)) continue;
+      if (action === 'intercept' && i > INTERCEPT_SOV_KEYWORD_LIMIT) continue;
+      return { action, keywordIdx: i };
+    }
+  }
+  return null;
+}
+
+/**
+ * Length of an optional `from <url>` source clause at `i` — 2 tokens whether the
+ * language marks it prepositionally (en `from /events`, zh `从 /events`) or
+ * postpositionally (ja `/events から`, ko `/events 에서`), 0 when absent
+ * (`eventsource Name on message …`, or qu where the clause precedes the verb and
+ * has already been consumed by the keyword scan).
+ */
+function sourceClauseLength(tokens: readonly LanguageToken[], i: number, language: string): number {
+  const forms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.source);
+  if (forms.size === 0 || i + 1 >= tokens.length) return 0;
+  if (tokenMatches(tokens[i], forms)) return 2; // <marker> <url>
+  if (tokenMatches(tokens[i + 1], forms)) return 2; // <url> <marker>
+  return 0;
+}
+
+/**
+ * Token index where the feature's body begins, or -1 when the head is malformed.
+ * `blockEnd` bounds the head scan (-1 when the block is unterminated).
+ *
+ * The two word-order families need different rules, because the handler trigger
+ * marker sits on opposite sides of its event:
+ *
+ * - **Keyword-led** (SVO/VSO/V2) — the marker is PREPOSITIONAL, so the head ends
+ *   at the first `<on-marker> <event>` pair. Scan for it rather than counting head
+ *   tokens: a url is not one token (`ws://localhost:8080` lexes as `ws` `:`
+ *   `//localhost:8080`), so arithmetic lands mid-url. A head with no such pair is
+ *   a handler-less feature (`socket Name url end`) whose body starts at its `end`.
+ * - **SOV verb-final** — the marker is POSTPOSITIONAL (`message で`), so the same
+ *   forward scan would overshoot the event by one. The head is bounded by the verb
+ *   instead: everything up to the keyword, plus `eventsource`'s source clause where
+ *   the transformer places it after the verb (`… eventsource /events から`).
+ */
+function featureBodyStart(
+  action: FeatureAction,
+  tokens: readonly LanguageToken[],
+  keywordIdx: number,
+  language: string,
+  blockEnd: number
+): number {
+  if (action === 'live') return keywordIdx + 1;
+
+  if (keywordIdx > 0) {
+    // SOV verb-final.
+    let i = keywordIdx + 1;
+    if (action === 'eventsource') i += sourceClauseLength(tokens, i, language);
+    return i;
+  }
+
+  const nameIdx = resolveNameTokenIndex(tokens, keywordIdx, language);
+  if (nameIdx < 0) return -1;
+  const onForms = keywordForms(language, 'on');
+  const limit = blockEnd >= 0 ? blockEnd : tokens.length;
+  for (let j = nameIdx + 1; j < limit; j++) {
+    if (tokenMatches(tokens[j], onForms) && looksLikeEvent(tokens[j + 1])) return j;
+  }
+  return limit;
+}
+
+/** The feature's declared name, or undefined for the unnamed features. */
+function featureName(
+  action: FeatureAction,
+  tokens: readonly LanguageToken[],
+  keywordIdx: number,
+  language: string
+): string | undefined {
+  if (!NAMED_FEATURES.has(action)) return undefined;
+  const nameIdx = keywordIdx > 0 ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
+  if (nameIdx < 0) return undefined;
+  return tokens[nameIdx].value;
+}
+
+/**
+ * Attempt to parse `input` as a feature block (`live`/`eventsource`/`socket`/
+ * `intercept`). Returns null (fast) for anything else so the caller falls through
+ * to the ordinary parse stages unchanged.
+ *
+ * Called from Stage 0 *after* {@link tryParseBlock}, so a `behavior`/`def` block
+ * whose body happens to contain a feature keyword is still claimed by the
+ * behavior layer.
+ */
+export function tryParseFeatureBlock(
+  input: string,
+  language: string,
+  parsers: BlockParsers
+): SemanticNode | null {
+  if (!tryGetProfile(language)) return null;
+
+  // Cheap pre-guard: skip the tokenize on the overwhelming majority of parses.
+  const lower = input.toLowerCase();
+  let might = false;
+  for (const action of FEATURE_ACTIONS) {
+    for (const form of keywordForms(language, action)) {
+      if (form && lower.includes(form)) {
+        might = true;
+        break;
+      }
+    }
+    if (might) break;
+  }
+  if (!might) return null;
+
+  const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
+  if (tokens.length < 2) return null;
+
+  const located = locateFeatureKeyword(tokens, language);
+  if (!located) return null;
+
+  return parseFeatureBlock(input, language, tokens, parsers, located.action, located.keywordIdx);
+}
+
+/**
+ * Parse a located feature block into a {@link FeatureSemanticNode}.
+ *
+ * Body handling is per-family:
+ * - **opaque** (`intercept`) — consumed up to its closing `end` and left
+ *   unparsed. Its body is a config DSL (`precache …`, `on /api/* use
+ *   network-first`, `offline fallback …`), not commands: parsing it would mint a
+ *   phantom `on` event-handler and junk `use` actions in every language.
+ * - **handler bodies** (`eventsource`, `socket`) — segmented at depth-0 `end`s and
+ *   each segment parsed as an event handler, exactly as `parseBehaviorBlock` does.
+ * - **command bodies** (`live`) — the whole region parsed as a flat statement list.
+ */
+function parseFeatureBlock(
+  input: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  parsers: BlockParsers,
+  action: FeatureAction,
+  keywordIdx: number
+): SemanticNode | null {
+  const endForms = keywordForms(language, 'end');
+  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
+  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+
+  const name = featureName(action, tokens, keywordIdx, language);
+  if (NAMED_FEATURES.has(action) && (!name || !PASCAL_CASE_NAME.test(name))) return null;
+
+  const meta = (confidence: number): Parameters<typeof createFeatureNode>[3] => ({
+    sourceLanguage: language,
+    confidence,
+    sourceText: input,
+  });
+
+  const blockEnd = findBlockEnd(tokens, keywordIdx + 1, isEnd, isOpener);
+
+  if (OPAQUE_BODY_FEATURES.has(action)) {
+    // Content after the closing `end` means this is not a self-contained feature
+    // block (a mangled single-line translation strands the terminator mid-stream).
+    // Bail rather than consume it and silently drop the remainder.
+    if (blockEnd >= 0 && blockEnd !== tokens.length - 1) return null;
+    return createFeatureNode(action, [], name, meta(blockEnd >= 0 ? 1 : 0.8));
+  }
+
+  const bodyStart = featureBodyStart(action, tokens, keywordIdx, language, blockEnd);
+  if (bodyStart < 0 || bodyStart > tokens.length) return null;
+
+  const children: SemanticNode[] = [];
+  const confidences: number[] = [];
+  let sawClosingEnd = false;
+
+  if (HANDLER_BODY_FEATURES.has(action)) {
+    // Segment the body END-delimited, as parseBehaviorBlock does. `eventsource`
+    // closes each handler with its own `end` plus a final one for the feature;
+    // `socket`'s single `end` closes both. Treating any depth-0 `end` as "the body
+    // was properly terminated" covers both without an off-by-one confidence penalty.
+    let depth = 0;
+    let segStart = bodyStart;
+    for (let j = bodyStart; j < tokens.length; j++) {
+      const tok = tokens[j];
+      if (isEnd(tok)) {
+        if (depth > 0) {
+          depth--; // closes a nested if/repeat inside the current handler
+          continue;
+        }
+        sawClosingEnd = true;
+        if (j === segStart) break; // the feature's own closing `end`
+        const handlerText = input.slice(tokens[segStart].position.start, tok.position.start).trim();
+        try {
+          const parsed = parsers.statement(handlerText, language);
+          if (parsed && parsed.kind === 'event-handler') {
+            const handler = parsed as EventHandlerSemanticNode;
+            children.push(handler);
+            // An empty handler body means the sub-parse silently dropped the
+            // commands — don't inherit its misleadingly high confidence.
+            const bodyEmpty = !handler.body || handler.body.length === 0;
+            confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
+          } else {
+            confidences.push(0); // parsed, but not a handler — structural miss
+          }
+        } catch {
+          confidences.push(0);
+        }
+        segStart = j + 1;
+      } else if (isOpener(tok)) {
+        depth++;
+      }
+    }
+  } else {
+    // `live`: a flat command sequence up to the matching depth-0 `end`.
+    const endIdx = findBlockEnd(tokens, bodyStart, isEnd, isOpener);
+    sawClosingEnd = endIdx >= 0;
+    const bodyEnd = endIdx >= 0 ? tokens[endIdx].position.start : input.length;
+    const bodyText = input.slice(tokens[bodyStart].position.start, bodyEnd).trim();
+    if (!bodyText) return null;
+    try {
+      children.push(...flattenStatements(parsers.body(bodyText, language)));
+    } catch {
+      return null;
+    }
+    if (children.length === 0) return null; // a `live` block with no body is meaningless
+    confidences.push(...children.map(c => c.metadata?.confidence ?? 0.75));
+  }
+
+  // A handler-less `socket Name url end` / `eventsource Name end` is legal — an
+  // empty body is only a structural miss when nothing terminated the block either.
+  if (children.length === 0 && !sawClosingEnd) return null;
+
+  const base = sawClosingEnd ? 1 : 0.8;
+  const confidence = confidences.length > 0 ? base * meanConfidence(confidences) : base;
+  return createFeatureNode(action, children, name, meta(confidence));
+}
+
+/**
+ * Index of the depth-0 `end` that closes the block starting at `from`, or -1 when
+ * the block is unterminated. Nested `if`/`repeat`/… openers raise the depth so
+ * their own `end` never terminates the outer block.
+ */
+function findBlockEnd(
+  tokens: readonly LanguageToken[],
+  from: number,
+  isEnd: (tok: LanguageToken) => boolean,
+  isOpener: (tok: LanguageToken) => boolean
+): number {
+  let depth = 0;
+  for (let j = from; j < tokens.length; j++) {
+    if (isEnd(tokens[j])) {
+      if (depth === 0) return j;
+      depth--;
+    } else if (isOpener(tokens[j])) {
+      depth++;
+    }
+  }
+  return -1;
 }

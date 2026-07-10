@@ -20,6 +20,7 @@ import type {
   LoopSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
+  FeatureSemanticNode,
   SemanticRole,
 } from '../types';
 
@@ -160,6 +161,8 @@ export class ASTBuilder {
         return this.buildBehavior(node as BehaviorSemanticNode);
       case 'def':
         return this.buildDef(node as DefSemanticNode);
+      case 'feature':
+        return this.buildFeature(node as FeatureSemanticNode);
       default:
         throw new Error(`Unknown semantic node kind: ${(node as SemanticNode).kind}`);
     }
@@ -200,6 +203,33 @@ export class ASTBuilder {
       params: [...node.parameters],
       body: node.body.map(c => this.build(c)),
     };
+  }
+
+  /**
+   * Build a command-with-block-arg from a FeatureSemanticNode, mirroring
+   * `buildLoop`: `{ name: <action>, args: [<name?>, <body block>] }`.
+   *
+   * This deliberately does NOT emit the runtime's real `eventsourceFeature` /
+   * `socketFeature` / `liveFeature` / `interceptFeature` node types. Those carry
+   * structured fields (url, per-handler event names, intercept's route config)
+   * that the role-less feature schemas never extract, and nothing executes this
+   * output today: `buildAST` is consumed only by the multilingual R2 execution
+   * validator, whose curated subset excludes all of these. Emitting the genuine
+   * feature nodes belongs with the work that adds them to that subset. What this
+   * DOES guarantee is that the body survives into the AST rather than being
+   * silently dropped.
+   */
+  private buildFeature(node: FeatureSemanticNode): CommandNode {
+    const args: ExpressionNode[] = [];
+    if (node.name !== undefined) {
+      args.push({ type: 'literal', value: node.name } as unknown as ExpressionNode);
+    }
+    args.push({
+      type: 'block',
+      commands: node.body.map(c => this.build(c)),
+    } as unknown as ExpressionNode);
+
+    return { type: 'command', name: node.action, args };
   }
 
   /**

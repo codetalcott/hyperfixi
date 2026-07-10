@@ -657,7 +657,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'install-behavior',
     title: 'Install Behavior',
     raw_code: 'install Draggable',
-    description: 'Install a reusable behavior on an element. Replace "Draggable" with any defined behavior name (e.g., Sortable, Closeable).',
+    description:
+      'Install a reusable behavior on an element. Replace "Draggable" with any defined behavior name (e.g., Sortable, Closeable).',
     feature: 'behavior',
   },
   {
@@ -706,7 +707,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tabs-content',
     title: 'Tab With Content Panel',
-    raw_code: 'on click remove .active from .tab add .active to me hide .tab-panel show the next <div.tab-panel/>',
+    raw_code:
+      'on click remove .active from .tab add .active to me hide .tab-panel show the next <div.tab-panel/>',
     description: 'Tab that shows associated content panel',
     feature: 'ui-components',
   },
@@ -825,7 +827,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'form-submit-prevent',
     title: 'Prevent Form Submit',
-    raw_code: 'on submit halt the event call validateForm() if result is false log "Invalid form" end',
+    raw_code:
+      'on submit halt the event call validateForm() if result is false log "Invalid form" end',
     description: 'Prevent form submission and validate',
     feature: 'forms',
   },
@@ -850,7 +853,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'window-scroll',
     title: 'Scroll Handler',
-    raw_code: 'on scroll from window if window.scrollY > 100 add .sticky to #header else remove .sticky from #header end',
+    raw_code:
+      'on scroll from window if window.scrollY > 100 add .sticky to #header else remove .sticky from #header end',
     description: 'Add sticky class on scroll',
     feature: 'window-events',
   },
@@ -981,7 +985,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'event-debounce',
     title: 'Event Debounce',
-    raw_code: 'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
+    raw_code:
+      'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
     description: 'Debounce input for search',
     feature: 'events',
   },
@@ -1013,14 +1018,16 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-loading-state',
     title: 'Fetch With Loading State',
-    raw_code: 'on click add .loading to me fetch /api/data then remove .loading from me put it into #result',
+    raw_code:
+      'on click add .loading to me fetch /api/data then remove .loading from me put it into #result',
     description: 'Show loading indicator during fetch',
     feature: 'async',
   },
   {
     id: 'fetch-error-handling',
     title: 'Fetch With Error Handling',
-    raw_code: 'on click fetch /api/data as json then if it.error put it.error into #error else put it.data into #result end',
+    raw_code:
+      'on click fetch /api/data as json then if it.error put it.error into #error else put it.data into #result end',
     description: 'Handle API errors by checking response body',
     feature: 'async',
   },
@@ -1045,7 +1052,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'if-empty',
     title: 'If Value Empty',
-    raw_code: 'on blur if my value is empty add .error to me put "Required" into next .error-message end',
+    raw_code:
+      'on blur if my value is empty add .error to me put "Required" into next .error-message end',
     description: 'Validate empty input',
     feature: 'control-flow',
   },
@@ -1063,7 +1071,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'copy-to-clipboard',
     title: 'Copy To Clipboard',
-    raw_code: 'on click call navigator.clipboard.writeText(#code.innerText) put "Copied!" into me wait 2s put "Copy" into me',
+    raw_code:
+      'on click call navigator.clipboard.writeText(#code.innerText) put "Copied!" into me wait 2s put "Copy" into me',
     description: 'Copy text to clipboard with feedback',
     feature: 'clipboard',
   },
@@ -1106,7 +1115,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'computed-value',
     title: 'Computed Value',
-    raw_code: 'on input from .quantity set #total.innerText to (the value of #price as Number) * (my value as Number)',
+    raw_code:
+      'on input from .quantity set #total.innerText to (the value of #price as Number) * (my value as Number)',
     description: 'Calculate and display computed value',
     feature: 'data',
   },
@@ -1127,14 +1137,16 @@ const SEED_EXAMPLES: SeedExample[] = [
     // NOTE: same story as tabs-aria — the `set … on <target>` form is
     // semantic-surface-only (engine NULL); the dual-legal `of` rewrite
     // regressed translation execution fidelity and was reverted.
-    raw_code: 'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
+    raw_code:
+      'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
     description: 'Announce message to screen readers',
     feature: 'accessibility',
   },
   {
     id: 'focus-trap',
     title: 'Focus Trap',
-    raw_code: 'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end',
+    raw_code:
+      'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end',
     description: 'Trap focus within modal',
     feature: 'accessibility',
   },
@@ -1221,7 +1233,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'make-toast-element',
     title: 'Make Toast Element',
-    raw_code: 'on click make a <div.toast/> then put \'Saved!\' into it then put it at end of body',
+    raw_code: "on click make a <div.toast/> then put 'Saved!' into it then put it at end of body",
     description: 'Create a new element, populate its content, and append it to the document',
     feature: 'templates',
   },
@@ -1235,7 +1247,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'template-literal-list-build',
     title: 'Build HTML List From Items',
-    raw_code: 'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
+    raw_code:
+      'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
     description: 'Build an HTML list by iterating items and concatenating template literals',
     feature: 'templates',
   },
@@ -1261,7 +1274,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'morph-form-update',
     title: 'Morph Form Without Losing Focus',
     raw_code: 'on submit fetch /api/save then morph closest <form/> to it',
-    description: 'Morph a form after submit so users keep focus, scroll position, and unsaved values',
+    description:
+      'Morph a form after submit so users keep focus, scroll position, and unsaved values',
     feature: 'morphing',
   },
 
@@ -1273,7 +1287,14 @@ const SEED_EXAMPLES: SeedExample[] = [
     title: 'Server-Sent Events Source',
     // Upstream's eventsource grammar closes each `on` block AND the feature,
     // so two `end`s are required.
-    raw_code: 'eventsource ChatStream from /events on message put it into #messages end end',
+    //
+    // Written multi-line ON PURPOSE. The i18n grammar transformer translates a
+    // block line-by-line; collapsed onto one line it treats the whole construct
+    // as a single clause and reorders across the block boundary, stranding the
+    // `end`s mid-stream and untranslated (`… #messages end end に 置く`). The
+    // line-per-clause form round-trips faithfully in all 24 languages.
+    raw_code:
+      'eventsource ChatStream from /events\n  on message\n    put it into #messages\n  end\nend',
     description: 'Subscribe to a server-sent events endpoint and append messages to the DOM',
     feature: 'realtime',
     engine: 'both',
@@ -1281,7 +1302,9 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'socket-basic',
     title: 'WebSocket Listener',
-    raw_code: 'socket ChatSocket ws://localhost:8080 on message put it into #chat end',
+    // Multi-line for the same reason as eventsource-basic above. `socket`'s
+    // single `end` closes both the handler and the feature.
+    raw_code: 'socket ChatSocket ws://localhost:8080\n  on message\n    put it into #chat\n  end',
     description: 'Open a WebSocket and route incoming messages into the DOM',
     feature: 'realtime',
     engine: 'both',
@@ -1308,7 +1331,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-with-headers',
     title: 'Fetch With Auth Header',
-    raw_code: 'on click fetch /api/me with headers:{Authorization:`Bearer ${$token}`} as JSON then put it.name into me',
+    raw_code:
+      'on click fetch /api/me with headers:{Authorization:`Bearer ${$token}`} as JSON then put it.name into me',
     description: 'Fetch with custom headers and parse the response as JSON',
     feature: 'async',
   },
@@ -1354,14 +1378,14 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'on-custom-event-receive',
     title: 'Receive Custom Event',
-    raw_code: 'on hello put \'Got it!\' into me',
-    description: 'Receive a custom event and update the receiving element\'s content',
+    raw_code: "on hello put 'Got it!' into me",
+    description: "Receive a custom event and update the receiving element's content",
     feature: 'events',
   },
   {
     id: 'keydown-key-is-syntax',
     title: 'Key Filter With `is`',
-    raw_code: 'on keyup[key is \'Escape\'] clear me',
+    raw_code: "on keyup[key is 'Escape'] clear me",
     description: 'Filter keyboard events using the modern `is` comparison syntax',
     feature: 'events',
   },
@@ -1398,7 +1422,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'take-class-from-siblings',
     title: 'Take Class From Siblings (Tabs)',
     raw_code: 'on click take .active from .tab-button for me',
-    description: 'Take a class from sibling elements and apply it to the current one (canonical tabs idiom)',
+    description:
+      'Take a class from sibling elements and apply it to the current one (canonical tabs idiom)',
     feature: 'dom-manipulation',
   },
 
@@ -1426,7 +1451,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'when-value-changes',
     title: 'When Computed Value Changes',
-    raw_code: 'when (#price\'s value * #qty\'s value) changes put `$${it}` into me end',
+    raw_code: "when (#price's value * #qty's value) changes put `$${it}` into me end",
     description: 'React to changes in a computed expression; `it` is the new value',
     feature: 'reactivity',
     engine: 'both',
@@ -1434,7 +1459,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'when-multiple-changes',
     title: 'When Any Of Several Values Change',
-    raw_code: 'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
+    raw_code:
+      'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
     description: 'Watch multiple expressions; body fires when any one of them changes',
     feature: 'reactivity',
     engine: 'both',
@@ -1443,7 +1469,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'bind-auto-detect',
     title: 'Bind Variable To Form Element',
     raw_code: 'bind $greeting to #name-input',
-    description: 'Two-way bind a global variable to an input; property auto-detected (value/checked/etc.)',
+    description:
+      'Two-way bind a global variable to an input; property auto-detected (value/checked/etc.)',
     feature: 'reactivity',
     engine: 'both',
   },
@@ -1453,23 +1480,26 @@ const SEED_EXAMPLES: SeedExample[] = [
     // `then` does not join top-level features in either engine; two bind
     // features in sequence parse in both.
     raw_code: 'bind $name to #input-a bind $name to #input-b',
-    description: 'Share a global between two inputs by binding both to it; edits in either propagate to the other',
+    description:
+      'Share a global between two inputs by binding both to it; edits in either propagate to the other',
     feature: 'reactivity',
     engine: 'both',
   },
   {
     id: 'bind-explicit-property',
     title: 'Bind To Explicit Property',
-    raw_code: 'bind $color to #picker\'s value',
-    description: 'Use possessive syntax to bind to a named property explicitly (preferred — reads in any language)',
+    raw_code: "bind $color to #picker's value",
+    description:
+      'Use possessive syntax to bind to a named property explicitly (preferred — reads in any language)',
     feature: 'reactivity',
     engine: 'both',
   },
   {
     id: 'bind-non-form-display',
     title: 'Bind Variable To Display-Only Element',
-    raw_code: 'bind $message to #status\'s textContent',
-    description: 'For non-form properties, only var→DOM fires; user mutations of the property are not observed',
+    raw_code: "bind $message to #status's textContent",
+    description:
+      'For non-form properties, only var→DOM fires; user mutations of the property are not observed',
     feature: 'reactivity',
     engine: 'both',
   },
@@ -1485,7 +1515,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'caret-var-increment',
     title: 'Increment Inherited DOM-Scoped Variable',
     raw_code: 'on click increment ^count',
-    description: 'Walks up the parent chain to find ^count and writes the nearest defining ancestor',
+    description:
+      'Walks up the parent chain to find ^count and writes the nearest defining ancestor',
     feature: 'reactivity',
     engine: 'both',
   },
@@ -1493,7 +1524,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'caret-var-on-target',
     title: 'Read DOM-Scoped Variable From Another Element',
     raw_code: 'on click put ^count on #host into me',
-    description: 'Read a ^name variable scoped to a specific element instead of walking up from `me`',
+    description:
+      'Read a ^name variable scoped to a specific element instead of walking up from `me`',
     feature: 'reactivity',
     engine: 'both',
   },
@@ -1514,51 +1546,63 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'hx-live-attribute',
     title: 'hx-live Reactive Attribute',
     raw_code: '<div hx-live="put $count into me"></div>',
-    description: 'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
+    description:
+      'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
     feature: 'reactivity',
     engine: 'lokascript',
     translatable: false,
-    non_translatable_reason: 'HTML markup — hx-live attribute names are language-agnostic and resolved by vocab modules at runtime',
+    non_translatable_reason:
+      'HTML markup — hx-live attribute names are language-agnostic and resolved by vocab modules at runtime',
   },
   {
     id: 'hx-live-with-mutator',
     title: 'hx-live Plus Hyperscript Mutator',
-    raw_code: '<button _="on click set $count to ($count or 0) + 1">+1</button>\n<div hx-live="put $count into me"></div>',
-    description: 'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
+    raw_code:
+      '<button _="on click set $count to ($count or 0) + 1">+1</button>\n<div hx-live="put $count into me"></div>',
+    description:
+      'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
     feature: 'reactivity',
     engine: 'lokascript',
     translatable: false,
-    non_translatable_reason: 'HTML markup with embedded hyperscript — vocab modules handle per-language attribute resolution',
+    non_translatable_reason:
+      'HTML markup with embedded hyperscript — vocab modules handle per-language attribute resolution',
   },
   {
     id: 'sse-connect-swap',
     title: 'Server-Sent Events Stream Into Target',
-    raw_code: '<div sse-connect="/events" sse-swap="tick" hx-target="#feed" hx-swap="afterbegin"></div>',
+    raw_code:
+      '<div sse-connect="/events" sse-swap="tick" hx-target="#feed" hx-swap="afterbegin"></div>',
     description: 'Open an EventSource and route named events through hx-target/hx-swap',
     feature: 'realtime',
     engine: 'lokascript',
     translatable: false,
-    non_translatable_reason: 'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
+    non_translatable_reason:
+      'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
   {
     id: 'sse-multi-event',
     title: 'SSE With Multiple Event Names',
-    raw_code: '<div sse-connect="/feed" sse-swap="post, like, comment" hx-target="#timeline" hx-swap="afterbegin"></div>',
+    raw_code:
+      '<div sse-connect="/feed" sse-swap="post, like, comment" hx-target="#timeline" hx-swap="afterbegin"></div>',
     description: 'One SSE connection routing several named server events into the same target',
     feature: 'realtime',
     engine: 'lokascript',
     translatable: false,
-    non_translatable_reason: 'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
+    non_translatable_reason:
+      'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
   {
     id: 'ws-connect-send',
     title: 'WebSocket With Form Send',
-    raw_code: '<div ws-connect="wss://example/api">\n  <form ws-send>\n    <input name="msg" />\n    <button type="submit">Send</button>\n  </form>\n</div>',
-    description: 'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
+    raw_code:
+      '<div ws-connect="wss://example/api">\n  <form ws-send>\n    <input name="msg" />\n    <button type="submit">Send</button>\n  </form>\n</div>',
+    description:
+      'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
     feature: 'realtime',
     engine: 'lokascript',
     translatable: false,
-    non_translatable_reason: 'HTML markup — ws-/hx- attribute names are language-agnostic and resolved by vocab modules',
+    non_translatable_reason:
+      'HTML markup — ws-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
 
   // ==========================================================================
@@ -1569,7 +1613,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'component-hello-world',
     title: 'Component: Hello World',
-    raw_code: '<script type="text/hyperscript-template" component="hello-world">\n  <span>Hello World</span>\n</script>',
+    raw_code:
+      '<script type="text/hyperscript-template" component="hello-world">\n  <span>Hello World</span>\n</script>',
     description: 'Define a custom element via a hyperscript-template script tag',
     feature: 'components',
     engine: 'both',
@@ -1577,7 +1622,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'component-click-counter',
     title: 'Component: Click Counter',
-    raw_code: '<script type="text/hyperscript-template" component="click-counter" _="set ^count to 0">\n  <button _="on click increment ^count">+</button>\n  <span>Clicks: ${^count}</span>\n</script>',
+    raw_code:
+      '<script type="text/hyperscript-template" component="click-counter" _="set ^count to 0">\n  <button _="on click increment ^count">+</button>\n  <span>Clicks: ${^count}</span>\n</script>',
     description: 'Component with isolated DOM-scoped state (^count) that re-renders on change',
     feature: 'components',
     engine: 'both',
@@ -1585,7 +1631,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'component-with-conditional',
     title: 'Component: Conditional Rendering',
-    raw_code: '<script type="text/hyperscript-template" component="user-card" _="set ^user to {name: \'Demo\', admin: true}">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
+    raw_code:
+      '<script type="text/hyperscript-template" component="user-card" _="set ^user to {name: \'Demo\', admin: true}">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
     description: 'Component using ^var state and the #if directive for conditional rendering',
     feature: 'components',
     engine: 'both',
@@ -1593,7 +1640,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'component-with-attrs',
     title: 'Component: Attrs Into ^var',
-    raw_code: '<script type="text/hyperscript-template" component="user-card" _="set ^user to attrs.data as JSON">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
+    raw_code:
+      '<script type="text/hyperscript-template" component="user-card" _="set ^user to attrs.data as JSON">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
     description: 'Component reading attrs.data (JSON-encoded) into ^user via init script',
     feature: 'components',
     engine: 'both',
@@ -1601,7 +1649,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'component-with-slots',
     title: 'Component: Default And Named Slots',
-    raw_code: '<script type="text/hyperscript-template" component="my-layout">\n  <header><slot name="title"/></header>\n  <main><slot/></main>\n  <footer><slot name="footer"/></footer>\n</script>',
+    raw_code:
+      '<script type="text/hyperscript-template" component="my-layout">\n  <header><slot name="title"/></header>\n  <main><slot/></main>\n  <footer><slot name="footer"/></footer>\n</script>',
     description: 'Component with default and named slots for content projection',
     feature: 'components',
     engine: 'both',
@@ -1615,7 +1664,11 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'intercept-cache-strategies',
     title: 'Intercept: Cache Strategies',
-    raw_code: 'intercept / precache /, /style.css, /app.js as "v1" on /api/* use network-first on *.css, *.js use cache-first on * use stale-while-revalidate offline fallback /offline.html end',
+    // One config clause per line. Collapsed onto one line the i18n transformer
+    // shuffles the route rules and strands the terminator mid-stream in every
+    // language (Spanish included); line-per-clause keeps each rule intact.
+    raw_code:
+      'intercept /\n  precache /, /style.css, /app.js as "v1"\n  on /api/* use network-first\n  on *.css, *.js use cache-first\n  on * use stale-while-revalidate\n  offline fallback /offline.html\nend',
     description: 'Service worker DSL with precaching, per-route strategies, and offline fallback',
     feature: 'service-workers',
     engine: 'both',
@@ -1887,7 +1940,9 @@ function initDatabase() {
     const exampleCount = db.prepare('SELECT COUNT(*) as count FROM code_examples').get() as {
       count: number;
     };
-    const translationCount = db.prepare('SELECT COUNT(*) as count FROM pattern_translations').get() as {
+    const translationCount = db
+      .prepare('SELECT COUNT(*) as count FROM pattern_translations')
+      .get() as {
       count: number;
     };
     const llmCount = db.prepare('SELECT COUNT(*) as count FROM llm_examples').get() as {
