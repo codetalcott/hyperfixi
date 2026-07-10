@@ -228,7 +228,10 @@ describe('zh tell BA-marked target (告诉 把 #el — tellSchema markerOverride
   // tellSchema's destination markerOverride. See docs-internal/HANDOFF-lossy-tail.md.
   const cases: Array<[string, string[]]> = [
     ['当 点击 时 告诉 把 #modal 到 显示', ['tell']],
-    ['当 点击 时 告诉 把 #panel 那么 添加 把 .open 那么 等待 把 200ms 那么 添加 把 .visible', ['tell', 'add', 'wait']],
+    [
+      '当 点击 时 告诉 把 #panel 那么 添加 把 .open 那么 等待 把 200ms 那么 添加 把 .visible',
+      ['tell', 'add', 'wait'],
+    ],
   ];
 
   for (const [input, expected] of cases) {
@@ -253,8 +256,14 @@ describe('ko if-empty: command verb directly after copula in a split SOV predica
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
     if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
-      {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) c.forEach(x => actions(x, acc));
       else if (c && typeof c === 'object') actions(c, acc);
@@ -276,7 +285,10 @@ describe('ko if-empty: command verb directly after copula in a split SOV predica
 
   it('[ko] input-validation recovers add (if/else body)', () => {
     const a = actions(
-      parse('블러 할 때 만약 내 값 이다 추가 .error 를 비어있는 나 에 아니면 .error 를 제거 나 에서 끝', 'ko')
+      parse(
+        '블러 할 때 만약 내 값 이다 추가 .error 를 비어있는 나 에 아니면 .error 를 제거 나 에서 끝',
+        'ko'
+      )
     );
     expect(a.has('if')).toBe(true);
     expect(a.has('add')).toBe(true);
@@ -303,7 +315,10 @@ describe('hi hyphen-compound keyword (साफ़-करें = clear) tokeniz
   // (keydown-key-is-syntax hi: `clear` lost, fid 0.5). The reader now joins a `-`
   // run when it resolves to a registered keyword. See docs-internal/HANDOFF-lossy-tail.md.
   it('parses साफ़-करें as clear (keydown-key-is-syntax)', () => {
-    const node = parse("मैं को keyup[key is 'Escape'] पर साफ़-करें", 'hi') as Record<string, unknown>;
+    const node = parse("मैं को keyup[key is 'Escape'] पर साफ़-करें", 'hi') as Record<
+      string,
+      unknown
+    >;
     expect(node.action).toBe('on');
     const dumped = JSON.stringify((node as { body?: unknown[] }).body ?? []);
     expect(dumped).toContain('clear');
@@ -344,7 +359,10 @@ describe('vi value reference (giá trị) tokenizes as one token for possessive 
   // `của tôi giá trị`(=my value) broke the `put` match, dropping it (input-mirror vi,
   // fid 0.5). Registered `giá trị`=value; longest-first keeps `đặt giá trị`=set intact.
   it('parses put my value (input-mirror)', () => {
-    const node = parse('khi nhập đặt của tôi giá trị vào #preview', 'vi') as Record<string, unknown>;
+    const node = parse('khi nhập đặt của tôi giá trị vào #preview', 'vi') as Record<
+      string,
+      unknown
+    >;
     expect(node.action).toBe('on');
     expect(JSON.stringify((node as { body?: unknown[] }).body ?? [])).toContain('put');
   });
@@ -373,8 +391,14 @@ describe('Multi-token event names anchor the event handler (ar multi-word, sw un
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
     if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
-      {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) c.forEach(x => actions(x, acc));
       else if (c && typeof c === 'object') actions(c, acc);
@@ -429,8 +453,14 @@ describe('qu repeat loop-keyword swallow guard (verb-final wait eats the loop kw
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
     if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers'])
-      {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) c.forEach(x => actions(x, acc));
       else if (c && typeof c === 'object') actions(c, acc);
@@ -842,9 +872,18 @@ describe('fused-event trailing `if … end` folds + verb-medial set (fetch-do-no
       'hi',
       '/api/users को क्लिक पर लाएं JSON do नहीं फेंकें फिर के रूप में अगर यह $users को सेट यह में समाप्त',
     ],
-    ['ja', '/api/users を クリック で フェッチ JSON do ではない 投げる それから もし それ $users を 設定 それ に 終わり'],
-    ['ko', '/api/users 를 클릭 할 때 가져오기 JSON do 아니 던지다 그러면 로 만약 그것 $users 를 설정 그것 에 끝'],
-    ['tr', '/api/users i tıklama de getir JSON do değil fırlat sonra olarak eğer o $users i ayarla o e son'],
+    [
+      'ja',
+      '/api/users を クリック で フェッチ JSON do ではない 投げる それから もし それ $users を 設定 それ に 終わり',
+    ],
+    [
+      'ko',
+      '/api/users 를 클릭 할 때 가져오기 JSON do 아니 던지다 그러면 로 만약 그것 $users 를 설정 그것 에 끝',
+    ],
+    [
+      'tr',
+      '/api/users i tıklama de getir JSON do değil fırlat sonra olarak eğer o $users i ayarla o e son',
+    ],
   ];
 
   for (const [lang, input] of cases) {
@@ -1155,7 +1194,7 @@ describe('SOV bind: bare-event guard prefers a command over a phantom reference 
   });
 });
 
-describe('English split `\'s` possessive captures the property (bind-explicit-property R1)', () => {
+describe("English split `'s` possessive captures the property (bind-explicit-property R1)", () => {
   // The en tokenizer splits the clitic `'s` into `'` + `s` after a selector
   // (`#picker's value` → `#picker ' s value`), so the single-token `'s` check in
   // tryMatchPossessiveSelectorExpression missed it and the property was DROPPED —
@@ -1167,9 +1206,7 @@ describe('English split `\'s` possessive captures the property (bind-explicit-pr
   function source(node: unknown): { type?: string; property?: string } | undefined {
     const n = node as { roles?: unknown };
     const roles =
-      n.roles instanceof Map
-        ? n.roles
-        : new Map(Object.entries((n.roles as object) ?? {}));
+      n.roles instanceof Map ? n.roles : new Map(Object.entries((n.roles as object) ?? {}));
     return roles.get('source') as { type?: string; property?: string } | undefined;
   }
   it("[en] `#picker's value` is a property-path source, not a bare selector", () => {
@@ -1265,7 +1302,22 @@ describe('URL tokenization across space-using langs (fetch.source:literal)', () 
     }>;
     return toks[0]?.kind;
   }
-  const langs = ['es', 'de', 'pt', 'it', 'ru', 'uk', 'pl', 'vi', 'id', 'ms', 'sw', 'th', 'tl', 'he'];
+  const langs = [
+    'es',
+    'de',
+    'pt',
+    'it',
+    'ru',
+    'uk',
+    'pl',
+    'vi',
+    'id',
+    'ms',
+    'sw',
+    'th',
+    'tl',
+    'he',
+  ];
   for (const lang of langs) {
     it(`[${lang}] /api/data tokenizes as a url (not a bare identifier)`, () => {
       expect(firstKind(lang, '/api/data')).toBe('url');
@@ -5549,7 +5601,7 @@ describe("qu curated apostrophe rows — ñit'iy keyword + event-source wrapper 
     expect(first.normalized).toBe('click');
   });
 
-  it("[qu] add-class-basic curated row: event click + add patient (was event \"'iy\")", () => {
+  it('[qu] add-class-basic curated row: event click + add patient (was event "\'iy")', () => {
     const node = parse("ñit'iy pi .highlight ta yapay", 'qu');
     expect(eventOf(node)).toBe('click');
     const add = commands(node).find(c => c.action === 'add');
@@ -5738,9 +5790,7 @@ describe('en if/unless conditional fold (parsing track reopen — §2 dominant c
   });
 
   it('unless is NOT folded (keeps its flat parse / `unless` action label)', () => {
-    const c = findConditional(
-      parse('on click unless I match .disabled toggle .selected', 'en')
-    );
+    const c = findConditional(parse('on click unless I match .disabled toggle .selected', 'en'));
     expect(c).toBeNull();
   });
 });
@@ -5754,8 +5804,7 @@ describe('en positional-phrase patients — closest <sel> and the-led positional
   // expression value, which the expression parser folds to the positional
   // call shape the core runtime evaluates (see the #400 fold).
   function roles(node: unknown): Map<string, { type?: string; raw?: string; value?: string }> {
-    return (node as { roles: Map<string, { type?: string; raw?: string; value?: string }> })
-      .roles;
+    return (node as { roles: Map<string, { type?: string; raw?: string; value?: string }> }).roles;
   }
 
   it('hide closest .modal captures the patient as a positional expression', () => {
@@ -5867,7 +5916,8 @@ describe('body reference dict↔profile alignment (R2 wave 6)', () => {
   // (qu kurku/ukhu is a separate underscore-tokenization issue — the dict emits
   //  mana_chayqa/kurku which the qu tokenizer splits; tracked, not fixed here.)
   function roles(node: unknown): Map<string, { type?: string; value?: unknown; raw?: unknown }> {
-    return (node as { roles: Map<string, { type?: string; value?: unknown; raw?: unknown }> }).roles;
+    return (node as { roles: Map<string, { type?: string; value?: unknown; raw?: unknown }> })
+      .roles;
   }
   // [lang, corpus-shaped `remove .x from <body-word>`, expected source value]
   const bodyCases: Array<[string, string]> = [
@@ -5906,8 +5956,7 @@ describe('body reference dict↔profile alignment (R2 wave 6)', () => {
 
 describe('en at-end-of positional put — at end of / at start of (R2 make-toast-element)', () => {
   function roles(node: unknown): Map<string, { type?: string; raw?: string; value?: unknown }> {
-    return (node as { roles: Map<string, { type?: string; raw?: string; value?: unknown }> })
-      .roles;
+    return (node as { roles: Map<string, { type?: string; raw?: string; value?: unknown }> }).roles;
   }
 
   it("put 'x' at end of #out captures destination + the whole position phrase", () => {
@@ -5938,10 +5987,9 @@ describe('en at-end-of positional put — at end of / at start of (R2 make-toast
   });
 
   it('a real block-terminating end still terminates (guard is sandwich-gated)', () => {
-    const node = parse(
-      'on click if I match .active then add .x to me end',
-      'en'
-    ) as { body?: Array<Record<string, unknown>> };
+    const node = parse('on click if I match .active then add .x to me end', 'en') as {
+      body?: Array<Record<string, unknown>>;
+    };
     const conditional = node.body?.find(n => n.kind === 'conditional');
     expect(conditional).toBeDefined();
   });
@@ -6204,10 +6252,22 @@ describe('trailing post-verb POSITIONAL destination (R2 wave 11 — accordion-ex
   // this parse-level lock to keep the test decoupled from corpus jitter. The four
   // cases below use single-token `closest` words that never jitter.
   const cases: Array<[string, string]> = [
-    ['ja', '.open を クリック で 削除 .accordion-item から それから .open を 追加 最も近い .accordion-item に'],
-    ['ko', '.open 를 클릭 제거 .accordion-item 에서 그러면 .open 를 추가 가장가까운 .accordion-item 에'],
-    ['hi', '.open को क्लिक पर हटाएं .accordion-item से फिर .open को जोड़ें निकटतम .accordion-item में'],
-    ['bn', '.open কে ক্লিক এ সরান .accordion-item থেকে তারপর .open কে যোগ নিকটতম .accordion-item তে'],
+    [
+      'ja',
+      '.open を クリック で 削除 .accordion-item から それから .open を 追加 最も近い .accordion-item に',
+    ],
+    [
+      'ko',
+      '.open 를 클릭 제거 .accordion-item 에서 그러면 .open 를 추가 가장가까운 .accordion-item 에',
+    ],
+    [
+      'hi',
+      '.open को क्लिक पर हटाएं .accordion-item से फिर .open को जोड़ें निकटतम .accordion-item में',
+    ],
+    [
+      'bn',
+      '.open কে ক্লিক এ সরান .accordion-item থেকে তারপর .open কে যোগ নিকটতম .accordion-item তে',
+    ],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] the trailing positional destination resolves to closest .accordion-item`, () => {
@@ -6325,9 +6385,9 @@ describe('de `nächstgelegene` → closest disambiguation (R2 wave 13)', () => {
   };
 
   it('toggle destination captures `closest .card` (closest-ancestor shape)', () => {
-    const toggle = commands(parse('bei klick umschalten .expanded zu nächstgelegene .card', 'de')).find(
-      c => c.action === 'toggle'
-    );
+    const toggle = commands(
+      parse('bei klick umschalten .expanded zu nächstgelegene .card', 'de')
+    ).find(c => c.action === 'toggle');
     expect(toggle, 'toggle present').toBeTruthy();
     expect(roleRaw(toggle!, 'destination')).toBe('closest .card');
   });
@@ -6394,17 +6454,23 @@ describe('sw/qu `_`-joined positional/conditional surface words (R2 wave 14)', (
     if (rec.kind === 'conditional') return rec;
     for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
       const c = rec[f];
-      if (Array.isArray(c)) for (const x of c) { const f2 = findConditional(x); if (f2) return f2; }
+      if (Array.isArray(c))
+        for (const x of c) {
+          const f2 = findConditional(x);
+          if (f2) return f2;
+        }
     }
     return null;
   }
   const branchActions = (branch: unknown): string[] =>
-    Array.isArray(branch) ? (branch as Array<Record<string, unknown>>).map(n => String(n.action)) : [];
+    Array.isArray(branch)
+      ? (branch as Array<Record<string, unknown>>).map(n => String(n.action))
+      : [];
 
   it('[sw] toggle destination captures `closest .card` (natural `karibu`)', () => {
-    const toggle = commands(parse('kwenye bonyeza badilisha .expanded kwa karibu .card', 'sw')).find(
-      c => c.action === 'toggle'
-    );
+    const toggle = commands(
+      parse('kwenye bonyeza badilisha .expanded kwa karibu .card', 'sw')
+    ).find(c => c.action === 'toggle');
     expect(toggle, 'toggle present').toBeTruthy();
     expect(roleRaw(toggle!, 'destination')).toBe('closest .card');
   });
@@ -6433,7 +6499,11 @@ describe('hi `मेल खाता` matches operator (R2 wave 15 → natural-f
     if (rec.kind === 'conditional') return rec;
     for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
       const c = rec[f];
-      if (Array.isArray(c)) for (const x of c) { const r = findConditional(x); if (r) return r; }
+      if (Array.isArray(c))
+        for (const x of c) {
+          const r = findConditional(x);
+          if (r) return r;
+        }
     }
     return null;
   }
@@ -6561,10 +6631,16 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
       if (r.kind === 'conditional') return r;
       for (const f of ['body', 'thenBranch', 'elseBranch']) {
         const ch = r[f];
-        if (Array.isArray(ch)) for (const x of ch) { const got = find(x); if (got) return got; }
+        if (Array.isArray(ch))
+          for (const x of ch) {
+            const got = find(x);
+            if (got) return got;
+          }
       }
       return null;
-    })(parse('क्लिक पर अगर लक्ष्य मेल खाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi'));
+    })(
+      parse('क्लिक पर अगर लक्ष्य मेल खाता .modal-backdrop .modal-backdrop को छिपाएं समाप्त', 'hi')
+    );
     expect(c).not.toBeNull();
     const cond = (c!.roles as Map<string, { raw?: string }>).get('condition')?.raw;
     expect(cond).toBe('target matches .modal-backdrop');
@@ -6677,10 +6753,9 @@ describe('ms put-with-`ia` — marker keyword after a pronoun (S2 — make-eleme
   });
 
   it('[ms] make-element body is make + put (the trailing put is reclaimed)', () => {
-    const n = parse(
-      'apabila click buat a <div.card/> kemudian letak ia ke #container',
-      'ms'
-    ) as { body?: Array<{ action?: string }> };
+    const n = parse('apabila click buat a <div.card/> kemudian letak ia ke #container', 'ms') as {
+      body?: Array<{ action?: string }>;
+    };
     expect((n.body ?? []).map(c => c.action)).toEqual(['make', 'put']);
   });
 
@@ -6706,7 +6781,9 @@ describe('per-language `at end of` position noun (S2 — zh make-toast)', () => 
     const node = parse(
       "当 点击 时 制作 把 a <div.toast/> 那么 把 'Saved!' 放置 到 它 那么 放置 把 它 在 结束 的 主体",
       'zh'
-    ) as { body?: Array<{ kind?: string; action?: string; statements?: Array<{ action?: string }> }> };
+    ) as {
+      body?: Array<{ kind?: string; action?: string; statements?: Array<{ action?: string }> }>;
+    };
     // The body is a then-chained compound; flatten its statements.
     const flat = (node.body ?? []).flatMap(n =>
       n.kind === 'compound' ? (n.statements ?? []) : [n]
@@ -6749,14 +6826,25 @@ describe('hi set-family marker alignment (S6 — fronted target before event)', 
   // `set-event-hi-sov-2role-dest-first` pattern match. Cleared hi set-text,
   // set-inner-html, set-style, set-attribute (execution 25→21).
   const setBody = (code: string) => {
-    const n = parse(code, 'hi') as { body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown; object?: unknown; property?: unknown }> }> };
+    const n = parse(code, 'hi') as {
+      body?: Array<{
+        action?: string;
+        roles?: Map<
+          string,
+          { type?: string; value?: unknown; object?: unknown; property?: unknown }
+        >;
+      }>;
+    };
     return (n.body ?? [])[0];
   };
 
   it('[hi] set-text: destination=me.textContent property-path, patient="Done!"', () => {
     const cmd = setBody('मेरा.textContent को क्लिक पर सेट "Done!" में');
     expect(cmd?.action).toBe('set');
-    expect(cmd?.roles?.get('destination')).toMatchObject({ type: 'property-path', property: 'textContent' });
+    expect(cmd?.roles?.get('destination')).toMatchObject({
+      type: 'property-path',
+      property: 'textContent',
+    });
     expect(cmd?.roles?.get('patient')).toMatchObject({ type: 'literal', value: 'Done!' });
   });
 
@@ -6826,7 +6914,10 @@ describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1
   // modal-close-backdrop, put-content-basic (execution 19→15).
   const firstBody = (code: string) => {
     const n = parse(code, 'qu') as {
-      body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown; raw?: string }> }>;
+      body?: Array<{
+        action?: string;
+        roles?: Map<string, { type?: string; value?: unknown; raw?: string }>;
+      }>;
     };
     return n.body ?? [];
   };
@@ -6851,14 +6942,21 @@ describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1
   });
 
   it('[qu] modal-close-backdrop: `punta` tokenizes whole (target), not pun+ta', () => {
-    const node = parse('ñitiy pi sichus punta tupan .modal-backdrop .modal-backdrop ta pakay tukuy', 'qu');
+    const node = parse(
+      'ñitiy pi sichus punta tupan .modal-backdrop .modal-backdrop ta pakay tukuy',
+      'qu'
+    );
     const cond = (function find(n: unknown): Record<string, unknown> | null {
       if (!n || typeof n !== 'object') return null;
       const r = n as Record<string, unknown>;
       if (r.kind === 'conditional') return r;
       for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
         const c = r[f];
-        if (Array.isArray(c)) for (const x of c) { const got = find(x); if (got) return got; }
+        if (Array.isArray(c))
+          for (const x of c) {
+            const got = find(x);
+            if (got) return got;
+          }
       }
       return null;
     })(node);
@@ -6992,10 +7090,9 @@ describe('th add destination: positional phrase captured (R2 tails batch)', () =
   // route the destination through tryMatchPositionalExpression — exactly like
   // English. Clears th accordion-exclusive.
   it('[th] add `ใน ใกล้สุด .accordion-item` → destination closest expression', () => {
-    const n = parse(
-      'เมื่อ คลิก เพิ่ม .open ใน ใกล้สุด .accordion-item',
-      'th'
-    ) as { body?: Array<{ action?: string; roles?: Map<string, { type?: string; raw?: string }> }> };
+    const n = parse('เมื่อ คลิก เพิ่ม .open ใน ใกล้สุด .accordion-item', 'th') as {
+      body?: Array<{ action?: string; roles?: Map<string, { type?: string; raw?: string }> }>;
+    };
     const add = (n.body ?? []).find(c => c.action === 'add');
     expect(add?.roles?.get('destination')).toMatchObject({
       type: 'expression',
@@ -7421,7 +7518,15 @@ describe('Block depth tracking ignores marker/opener homonyms (pt `para`, sw)', 
     if (!node || typeof node !== 'object') return acc;
     const n = node as Record<string, unknown>;
     if (typeof n.action === 'string') acc.add(n.action);
-    for (const f of ['initBlock', 'eventHandlers', 'body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+    for (const f of [
+      'initBlock',
+      'eventHandlers',
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+    ]) {
       const c = n[f];
       if (Array.isArray(c)) c.forEach(x => actions(x, acc));
       else if (c && typeof c === 'object') actions(c, acc);
@@ -7642,10 +7747,10 @@ describe('Verb-medial SOV command head in a conditional body (A2a init `set` dro
   // command (matchBest already recognises it) is unchanged — the SOV path only
   // adds recognition, never removes the matchBest one.
   it('[ko] selector-patient then-branch still parses (unaffected)', () => {
-    const node = parse('클릭 할 때\n  만약 confirmRemoval\n    .y 를 토글\n  끝\n끝', 'ko') as Record<
-      string,
-      unknown
-    >;
+    const node = parse(
+      '클릭 할 때\n  만약 confirmRemoval\n    .y 를 토글\n  끝\n끝',
+      'ko'
+    ) as Record<string, unknown>;
     const acc = new Set<string>();
     const walk = (n: unknown): void => {
       if (!n || typeof n !== 'object') return;
@@ -7770,7 +7875,14 @@ describe('exit/end keyword collision does not collapse the handler body (ja/de)'
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
     if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) c.forEach(x => bodyActions(x, acc));
       else if (c && typeof c === 'object') bodyActions(c, acc);
@@ -7819,7 +7931,14 @@ describe('Arabic VSO from-first wait clause parses (behavior-sortable)', () => {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
     if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) c.forEach(x => bodyActions(x, acc));
       else if (c && typeof c === 'object') bodyActions(c, acc);
@@ -7857,15 +7976,26 @@ describe('bareKeyword block keyword is not mis-anchored as a bare event (hi live
   // rejects a token whose normalized form is a bareKeyword block action, so the
   // input falls through to the command stage where the `live` pattern wins.
   // Corpus-shaped (the i18n transformer output stored in patterns.db).
+  //
+  // The structural layer now folds `live` into a `feature` node BEFORE the event
+  // stage runs, so the mis-anchoring this guards against can no longer occur at
+  // all — and the body it used to drop is captured too. The invariant under test
+  // is unchanged: the `live` action survives and the input is not read as a bare
+  // event-handler.
   const cases: Array<[string, string]> = [
     ['hi', 'लाइव `Count: ${$count}` को रखें मैं में समाप्त'],
     ['hi', 'लाइव `${$price * $quantity}` को रखें #total में समाप्त'],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] keeps the live block action (not a bare event-handler)`, () => {
-      const node = parse(input, lang) as { kind?: string; action?: string };
-      expect(node.kind).toBe('command');
+      const node = parse(input, lang) as {
+        kind?: string;
+        action?: string;
+        body?: Array<{ action?: string }>;
+      };
+      expect(node.kind).toBe('feature');
       expect(node.action).toBe('live');
+      expect(node.body?.map(c => c.action)).toEqual(['put']);
     });
   }
 
@@ -8070,7 +8200,8 @@ describe('Verb-split reserves the fronted condition (trailing-unless body patien
       if (found !== undefined || !n || typeof n !== 'object') return;
       const rec = n as Record<string, unknown>;
       if (rec.action === action) {
-        const roles = rec.roles instanceof Map ? rec.roles : new Map(Object.entries(rec.roles ?? {}));
+        const roles =
+          rec.roles instanceof Map ? rec.roles : new Map(Object.entries(rec.roles ?? {}));
         if (roles.has(role)) {
           found = roles.get(role);
           return;
@@ -8436,7 +8567,14 @@ describe('SOV primary-role normalization (Arc 4 — fronted patient → schema p
   function findRoles(node: any, action: string): Map<string, any> | undefined {
     if (!node || typeof node !== 'object') return undefined;
     if (node.action === action && node.roles instanceof Map) return node.roles;
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
       const child = node[f];
       if (Array.isArray(child)) {
         for (const c of child) {
@@ -8532,7 +8670,14 @@ describe('Schema default-role fill (Tier 2b — SOV drops defaulted roles; R1)',
     function find(n: any): Map<string, any> | undefined {
       if (!n || typeof n !== 'object') return undefined;
       if (n.action === action && n.roles instanceof Map) return n.roles;
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+      ]) {
         const c = n[f];
         if (Array.isArray(c)) {
           for (const x of c) {
@@ -8547,17 +8692,21 @@ describe('Schema default-role fill (Tier 2b — SOV drops defaulted roles; R1)',
   }
 
   it('[ja] increment fills the quantity default (1), matching en', () => {
-    expect(rolesOf('#counter を クリック で 増加', 'ja', 'increment')?.get('quantity')?.value).toBe(1);
-  });
-
-  it('[ja] toggle fills the destination default (me) when no target is given', () => {
-    expect(rolesOf('.active を クリック で 切り替え', 'ja', 'toggle')?.get('destination')?.value).toBe(
-      'me'
+    expect(rolesOf('#counter を クリック で 増加', 'ja', 'increment')?.get('quantity')?.value).toBe(
+      1
     );
   });
 
+  it('[ja] toggle fills the destination default (me) when no target is given', () => {
+    expect(
+      rolesOf('.active を クリック で 切り替え', 'ja', 'toggle')?.get('destination')?.value
+    ).toBe('me');
+  });
+
   it('[en] increment also carries the quantity default (en/candidate symmetry)', () => {
-    expect(rolesOf('on click increment #counter', 'en', 'increment')?.get('quantity')?.value).toBe(1);
+    expect(rolesOf('on click increment #counter', 'en', 'increment')?.get('quantity')?.value).toBe(
+      1
+    );
   });
 
   // Control: an EXPLICIT role value is never clobbered by its schema default.
@@ -8577,7 +8726,11 @@ describe('Schema default-role fill (Tier 2b — SOV drops defaulted roles; R1)',
         if (x.action === 'increment' && x.roles instanceof Map) return x.roles;
         for (const f of ['body', 'statements', 'eventHandlers']) {
           const c = x[f];
-          if (Array.isArray(c)) for (const y of c) { const z = find(y); if (z) return z; }
+          if (Array.isArray(c))
+            for (const y of c) {
+              const z = find(y);
+              if (z) return z;
+            }
         }
         return undefined;
       }
@@ -8635,7 +8788,9 @@ describe('Multi-event `or` conjunction in handler heads (multiple-events, R2)', 
 
   it('[ja] `または` tokenizes as a single `or` keyword, not `また`(and) + `は`', () => {
     const tk = getTokenizer('ja')!;
-    const toks = (tk.tokenize('または keypress') as any).tokens.map((t: any) => t.normalized ?? t.value);
+    const toks = (tk.tokenize('または keypress') as any).tokens.map(
+      (t: any) => t.normalized ?? t.value
+    );
     expect(toks).toContain('or');
     expect(toks).not.toContain('and');
   });
@@ -8671,8 +8826,15 @@ describe('Positional put `before`/`after` captures manner (put-before/put-after,
     if (node.action === 'put') return node;
     for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
       const c = node[f];
-      if (Array.isArray(c)) for (const x of c) { const r = findPut(x); if (r) return r; }
-      else if (c && typeof c === 'object') { const r = findPut(c); if (r) return r; }
+      if (Array.isArray(c))
+        for (const x of c) {
+          const r = findPut(x);
+          if (r) return r;
+        }
+      else if (c && typeof c === 'object') {
+        const r = findPut(c);
+        if (r) return r;
+      }
     }
     return undefined;
   }
@@ -8751,10 +8913,25 @@ describe('`halt the event` skips the leaked article → patient:reference (halt.
   function findHalt(node: any): any {
     if (!node || typeof node !== 'object') return undefined;
     if (node.action === 'halt') return node;
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+      'initBlock',
+    ]) {
       const c = node[f];
-      if (Array.isArray(c)) for (const x of c) { const r = findHalt(x); if (r) return r; }
-      else if (c && typeof c === 'object') { const r = findHalt(c); if (r) return r; }
+      if (Array.isArray(c))
+        for (const x of c) {
+          const r = findHalt(x);
+          if (r) return r;
+        }
+      else if (c && typeof c === 'object') {
+        const r = findHalt(c);
+        if (r) return r;
+      }
     }
     return undefined;
   }
@@ -8767,7 +8944,15 @@ describe('`halt the event` skips the leaked article → patient:reference (halt.
     (function w(x: any) {
       if (!x || typeof x !== 'object') return;
       if (typeof x.action === 'string' && x.action !== 'compound') acc.add(x.action);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'branches',
+        'eventHandlers',
+        'initBlock',
+      ]) {
         const c = x[f];
         if (Array.isArray(c)) c.forEach(w);
         else if (c && typeof c === 'object') w(c);
@@ -8841,7 +9026,8 @@ describe('`halt the event` skips the leaked article → patient:reference (halt.
   it('[en] bare `halt` has no patient role', () => {
     const halt = findHalt(parse('on click halt', 'en'));
     expect(halt).toBeTruthy();
-    const hasPatient = halt.roles instanceof Map ? halt.roles.has('patient') : !!halt.roles?.patient;
+    const hasPatient =
+      halt.roles instanceof Map ? halt.roles.has('patient') : !!halt.roles?.patient;
     expect(hasPatient).toBe(false);
   });
 });
@@ -8864,7 +9050,14 @@ describe('repeat forever loop keyword recognized (repeat.loopType:literal R1)', 
       const lt = roles?.get('loopType') as { type?: string } | undefined;
       if (lt) return lt.type;
     }
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) {
         for (const x of c) {
@@ -8924,7 +9117,14 @@ describe('Fused event-handler body re-parses secondary role clauses (fetch.respo
         return `${k}:${t}`;
       });
     }
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'branches',
+      'eventHandlers',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) {
         for (const x of c) {
@@ -9242,7 +9442,8 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
   function repeatRolesUE(node: unknown): Map<string, { type?: string }> | undefined {
     if (!node || typeof node !== 'object') return undefined;
     const r = node as Record<string, unknown>;
-    if (r.action === 'repeat' && r.roles instanceof Map) return r.roles as Map<string, { type?: string }>;
+    if (r.action === 'repeat' && r.roles instanceof Map)
+      return r.roles as Map<string, { type?: string }>;
     for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
       const c = r[f];
       if (Array.isArray(c)) {
@@ -9270,16 +9471,37 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
   }
   // Real corpus repeat-until-event texts (head: `on <ev> repeat until event <ev2> increment #counter wait 100ms end`).
   for (const [lang, src] of [
-    ['ja', 'マウス押下 で 繰り返し イベント マウス解放 を まで それから #counter を 増加 それから 待つ 100ms 終わり'],
-    ['ko', '마우스다운 할 때 반복 이벤트 마우스업 를 까지 그러면 #counter 를 증가 그러면 대기 100ms 끝'],
-    ['bn', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ'],
-    ['de', 'bei mausunten wiederholen bis ereignis mausoben dann erhöhen #counter dann warten 100ms ende'],
+    [
+      'ja',
+      'マウス押下 で 繰り返し イベント マウス解放 を まで それから #counter を 増加 それから 待つ 100ms 終わり',
+    ],
+    [
+      'ko',
+      '마우스다운 할 때 반복 이벤트 마우스업 를 까지 그러면 #counter 를 증가 그러면 대기 100ms 끝',
+    ],
+    [
+      'bn',
+      'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ',
+    ],
+    [
+      'de',
+      'bei mausunten wiederholen bis ereignis mausoben dann erhöhen #counter dann warten 100ms ende',
+    ],
     ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
     // tr/hi/qu: FUSED mouse events (dict no longer emits the `_`-split compound),
     // which also routes the handler onto the fused-action path so the recovery fires.
-    ['tr', 'farebas de tekrarla olay farebırak i kadar ardından #counter i artır ardından bekle 100ms son'],
-    ['hi', 'माउसनीचे पर दोहराएं घटना माउसऊपर को तक फिर #counter को बढ़ाएं फिर प्रतीक्षा 100ms समाप्त'],
-    ['qu', 'ratñitiy pi kutipay ruway rathuqariy ta hayk_akama chayqa #counter ta yapachiy chayqa suyay 100ms tukuy'],
+    [
+      'tr',
+      'farebas de tekrarla olay farebırak i kadar ardından #counter i artır ardından bekle 100ms son',
+    ],
+    [
+      'hi',
+      'माउसनीचे पर दोहराएं घटना माउसऊपर को तक फिर #counter को बढ़ाएं फिर प्रतीक्षा 100ms समाप्त',
+    ],
+    [
+      'qu',
+      'ratñitiy pi kutipay ruway rathuqariy ta hayk_akama chayqa #counter ta yapachiy chayqa suyay 100ms tukuy',
+    ],
   ] as [string, string][]) {
     it(`[${lang}] repeat-until-event → event:literal + loopType:literal="until-event", no phantom event/until`, () => {
       const node = parse(src, lang);
@@ -9434,7 +9656,10 @@ describe('`<ref>.<prop>` → property-path reclassification (put/set patient R1)
       'keydown[key=="s"] で ウィンドウ から もし event.ctrlKey 呼び出し saveDocument() を 停止 終わり',
     ],
     ['ko', 'keydown[key=="s"] 할 때 창 에서 만약 event.ctrlKey 호출 saveDocument() 를 정지 끝'],
-    ['qu', 'k_iri manta keydown[key=="s"] pi sichus event.ctrlKey qayay saveDocument() ta sayay tukuy'],
+    [
+      'qu',
+      'k_iri manta keydown[key=="s"] pi sichus event.ctrlKey qayay saveDocument() ta sayay tukuy',
+    ],
   ] as [string, string][]) {
     it(`[${lang}] window-keydown condition stays if.condition:expression (not property-path)`, () => {
       const roles = rolesOf(parse(src, lang), 'if');
@@ -9658,11 +9883,20 @@ describe('SOV/marker-swallowed fetch responseType reclaim (R1 handoff cluster B)
   // bare word (the rest). Corpus forms from a fresh populate.
   const cases: Array<[string, string]> = [
     ['/api/user を クリック で フェッチ json それから #name.innerText を その.name に 設定', 'ja'],
-    ['/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 그것의.name 에 설정', 'ko'],
-    ['/api/user i tıklama de getir json olarak ardından #name.innerText i onun.name e ayarla', 'tr'],
+    [
+      '/api/user 를 클릭 할 때 가져오기 json 로 그러면 #name.innerText 를 그것의.name 에 설정',
+      'ko',
+    ],
+    [
+      '/api/user i tıklama de getir json olarak ardından #name.innerText i onun.name e ayarla',
+      'tr',
+    ],
     ['/api/user কে ক্লিক এ আনুন json তারপর #name.innerText কে এর.name তে সেট', 'bn'],
     ['/api/user को क्लिक पर लाएं json के रूप में फिर #name.innerText को इसका.name में सेट', 'hi'],
-    ['/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay', 'qu'],
+    [
+      '/api/user ta ñitiy pi apamuy json hina chayqa #name.innerText ta chaypaq.name man churanay',
+      'qu',
+    ],
   ];
   for (const [input, lang] of cases) {
     it(`[${lang}] fetch-json captures responseType=json (and no phantom destination)`, () => {
@@ -9875,7 +10109,14 @@ describe('en-reference noise sweep: for-body add.destination + trigger event typ
     if (!node || typeof node !== 'object') return null;
     const rec = node as Record<string, any>;
     if (rec.action === action) return rec;
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) {
         for (const child of c) {
@@ -9944,7 +10185,14 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
     if (!node || typeof node !== 'object') return null;
     const rec = node as Record<string, any>;
     if (rec.action === action) return rec;
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) {
         for (const child of c) {
@@ -10119,10 +10367,7 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
       // tr is SOV: the verb-boundary must NOT fire there. This locks the parse
       // returning a handler with a halt (the crossed roles are a known
       // deferred residue, not this fix's concern).
-      const node = parse(
-        'the olay çağır validateForm() i gönder de durdur',
-        'tr'
-      );
+      const node = parse('the olay çağır validateForm() i gönder de durdur', 'tr');
       expect(node).not.toBeNull();
       expect(firstAction(node, 'halt')).not.toBeNull();
     });
@@ -10198,7 +10443,14 @@ describe('en-reference noise: send destination dropped / event truncated (R1 res
       if (!n || typeof n !== 'object') return null;
       const rec = n as Record<string, any>;
       if (rec.action === 'transition') return rec;
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) {
           for (const x of c) {
@@ -10603,7 +10855,10 @@ describe('nested-behavior sub-parse drill', () => {
     walkNodes(n)
       .map(r => r.action)
       .filter(a => a !== 'compound');
-  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+  const role = (
+    node: Record<string, any>,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
     node.roles instanceof Map ? node.roles.get(r) : undefined;
 
   it('[en] bare `exit` parses via the generated bare-keyword pattern', () => {
@@ -10760,7 +11015,10 @@ describe('then-boundary if fold: an open mid-clause `if` block spans the then-co
     }
     return acc;
   }
-  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+  const role = (
+    node: Record<string, any>,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
     node.roles instanceof Map ? node.roles.get(r) : undefined;
 
   it('[en] a mid-clause `if x < y then … end` folds with its full condition', () => {
@@ -10854,7 +11112,10 @@ describe('event-head param phrase: parameterized SOV handler heads anchor the re
     }
     return acc;
   }
-  const role = (node: Record<string, any>, r: string): { type?: string; value?: unknown; raw?: unknown } | undefined =>
+  const role = (
+    node: Record<string, any>,
+    r: string
+  ): { type?: string; value?: unknown; raw?: unknown } | undefined =>
     node.roles instanceof Map ? node.roles.get(r) : undefined;
 
   it('[ja] `pointerdown(clientY) で 私 から` anchors pointerdown, not the `)`', () => {
@@ -10877,23 +11138,17 @@ describe('event-head param phrase: parameterized SOV handler heads anchor the re
     const handler = walkNodes(node).find(r => r.kind === 'event-handler');
     expect(handler).toBeDefined();
     expect(String(role(handler!, 'event')?.value)).toBe('pointerdown');
-    expect((handler as { parameterNames?: readonly string[] }).parameterNames).toEqual([
-      'clientY',
-    ]);
+    expect((handler as { parameterNames?: readonly string[] }).parameterNames).toEqual(['clientY']);
     // The handler set survives with en-aligned role types…
     const set = walkNodes(node).find(r => r.action === 'set');
     expect(set).toBeDefined();
     expect(role(set!, 'destination')?.type).toBe('expression');
-    expect(String(role(set!, 'destination')?.raw ?? role(set!, 'destination')?.value)).toBe(
-      'item'
-    );
+    expect(String(role(set!, 'destination')?.raw ?? role(set!, 'destination')?.value)).toBe('item');
     expect(role(set!, 'patient')?.type).toBe('expression');
     // …and with `item` bound, the add's destination is the real item, not `me`.
     const add = walkNodes(node).find(r => r.action === 'add');
     expect(add).toBeDefined();
-    expect(String(role(add!, 'destination')?.raw ?? role(add!, 'destination')?.value)).toBe(
-      'item'
-    );
+    expect(String(role(add!, 'destination')?.raw ?? role(add!, 'destination')?.value)).toBe('item');
   });
 
   it('[ko] `pointerdown(clientY) 할 때 나 에서` consumes params + marker phrase + source pair', () => {
@@ -10952,7 +11207,14 @@ describe('remove source slot: bare-identifier acceptance + genitive/from-marker 
     if (!n || typeof n !== 'object') return acc;
     const rec = n as Record<string, any>;
     if (typeof rec.action === 'string') acc.push(rec);
-    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock']) {
+    for (const f of [
+      'body',
+      'statements',
+      'thenBranch',
+      'elseBranch',
+      'eventHandlers',
+      'initBlock',
+    ]) {
       const c = rec[f];
       if (Array.isArray(c)) for (const x of c) walkNodes(x, acc);
       else if (c && typeof c === 'object') walkNodes(c, acc);
@@ -11227,7 +11489,10 @@ describe('morph role layout: patient=element / destination=content, reference ad
     // en types the spaced `closest <form/>` as expression. The
     // normalizeCommandRoles retype (transition-patient precedent) aligns the
     // type; a plain string-content patient is never touched.
-    const node = parse('/api/save を 送信 で フェッチ それから 最も近い <form/> を 変形 それ に', 'ja');
+    const node = parse(
+      '/api/save を 送信 で フェッチ それから 最も近い <form/> を 変形 それ に',
+      'ja'
+    );
     const morph = findMorph(node);
     expect(morph).toBeDefined();
     expect(role(morph!, 'patient')?.type).toBe('expression');
@@ -11255,7 +11520,15 @@ describe('brace-run style-object fold + ko locative/allative marker split (behav
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11367,7 +11640,15 @@ describe('breakpoint bare-keyword registration + hyphen-compound keyword fold (b
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec.action);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11436,7 +11717,10 @@ describe('breakpoint bare-keyword registration + hyphen-compound keyword fold (b
     // (`breakpoint-event-de-vso` captured patient=literal:"then"). Roleless
     // schemas now skip fused generation and parse via the standard event
     // pattern + bare command in the body.
-    const node = parse('bei klick haltepunkt dann festlegen $x zu 42', 'de') as unknown as Record<string, any>;
+    const node = parse('bei klick haltepunkt dann festlegen $x zu 42', 'de') as unknown as Record<
+      string,
+      any
+    >;
     const actions = actionsOf(node);
     expect(actions).toContain('breakpoint');
     expect(actions).toContain('set');
@@ -11446,7 +11730,11 @@ describe('breakpoint bare-keyword registration + hyphen-compound keyword fold (b
       if (rec.action === 'breakpoint') return rec;
       for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
         const c = rec[f];
-        if (Array.isArray(c)) for (const x of c) { const hit = walkFind(x); if (hit) return hit; }
+        if (Array.isArray(c))
+          for (const x of c) {
+            const hit = walkFind(x);
+            if (hit) return hit;
+          }
       }
       return undefined;
     };
@@ -11463,7 +11751,15 @@ describe('bn জন্য duration postposition: consumed after the duration rec
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec.action);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11477,7 +11773,10 @@ describe('bn জন্য duration postposition: consumed after the duration rec
     const walk = (n: unknown): void => {
       if (!n || typeof n !== 'object' || hit) return;
       const rec = n as Record<string, any>;
-      if (rec.action === action && rec.roles instanceof Map) { hit = rec.roles; return; }
+      if (rec.action === action && rec.roles instanceof Map) {
+        hit = rec.roles;
+        return;
+      }
       for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
@@ -11583,14 +11882,20 @@ describe('goal-less transition variant (omitRoleVariants): `transition *max-heig
   });
 
   it('[en] the goal-ful form still parses via the FULL pattern with goal captured (no variant steal)', () => {
-    const node = parse('transition opacity to 0 over 500ms', 'en') as unknown as Record<string, any>;
+    const node = parse('transition opacity to 0 over 500ms', 'en') as unknown as Record<
+      string,
+      any
+    >;
     expect(node.action).toBe('transition');
     expect(String(role(node, 'goal')?.value)).toBe('0');
     expect(String(role(node, 'duration')?.value)).toBe('500ms');
   });
 
   it('[es] corpus slide-toggle: bare-duration goal-less transition parses in a marker language', () => {
-    const node = parse('en clic alternar .collapsed a siguiente .panel entonces transición *max-height 300ms', 'es');
+    const node = parse(
+      'en clic alternar .collapsed a siguiente .panel entonces transición *max-height 300ms',
+      'es'
+    );
     const tr = findAction(node, 'transition');
     expect(tr).toBeDefined();
     expect(role(tr!, 'patient')?.type).toBe('selector');
@@ -11623,7 +11928,15 @@ describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 dri
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec.action);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11638,8 +11951,19 @@ describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 dri
     const walk = (n: unknown): void => {
       if (hit || !n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
-      if (rec.action === action) { hit = rec; return; }
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      if (rec.action === action) {
+        hit = rec;
+        return;
+      }
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11660,7 +11984,10 @@ describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 dri
   });
 
   it('[he] render-template-with-data: single handler AND the style role reclaimed from the stolen tail', () => {
-    const node = parse('ב לחיצה רנדר את #user-list עם users: $data אז שים את זה על #container', 'he');
+    const node = parse(
+      'ב לחיצה רנדר את #user-list עם users: $data אז שים את זה על #container',
+      'he'
+    );
     const actions = actionsOf(node);
     expect(actions.filter(a => a === 'on')).toHaveLength(1);
     const render = findAction(node, 'render');
@@ -11727,7 +12054,15 @@ describe('trailing optional slot never captures a command verb (halt swallows ju
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11742,23 +12077,33 @@ describe('trailing optional slot never captures a command verb (halt swallows ju
     // `call` keyword (patient=literal:"call") and saveDocument() stranded —
     // the en reference lost the call, reading the seven SOV keepers as
     // spurious call ×7 while 16 SVO languages silently dropped it too.
-    const node = parse('on keydown[key=="s"] from window if event.ctrlKey halt call saveDocument() end', 'en');
+    const node = parse(
+      'on keydown[key=="s"] from window if event.ctrlKey halt call saveDocument() end',
+      'en'
+    );
     const nodes = walkNodesL3(node);
     const halt = nodes.find(r => r.action === 'halt');
     expect(halt).toBeDefined();
     expect(role(halt!, 'patient')).toBeUndefined();
     const call = nodes.find(r => r.action === 'call');
     expect(call).toBeDefined();
-    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe('saveDocument()');
+    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe(
+      'saveDocument()'
+    );
   });
 
   it('[de] the same-path SVO language enriches together with en (no honest dip)', () => {
-    const node = parse('bei keydown[key=="s"] von fenster falls event.ctrlKey anhalten aufrufen saveDocument() ende', 'de');
+    const node = parse(
+      'bei keydown[key=="s"] von fenster falls event.ctrlKey anhalten aufrufen saveDocument() ende',
+      'de'
+    );
     const nodes = walkNodesL3(node);
     expect(nodes.find(r => r.action === 'halt')).toBeDefined();
     const call = nodes.find(r => r.action === 'call');
     expect(call).toBeDefined();
-    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe('saveDocument()');
+    expect(String(role(call!, 'patient')?.raw ?? role(call!, 'patient')?.value)).toBe(
+      'saveDocument()'
+    );
   });
 
   it('[en] halt still captures its legitimate non-verb patients (both-ways lock)', () => {
@@ -11767,7 +12112,9 @@ describe('trailing optional slot never captures a command verb (halt swallows ju
     expect(String(role(theEvent, 'patient')?.value)).toBe('event');
     const bubbling = parse('halt bubbling', 'en') as unknown as Record<string, any>;
     expect(bubbling.action).toBe('halt');
-    expect(String(role(bubbling, 'patient')?.raw ?? role(bubbling, 'patient')?.value)).toBe('bubbling');
+    expect(String(role(bubbling, 'patient')?.raw ?? role(bubbling, 'patient')?.value)).toBe(
+      'bubbling'
+    );
   });
 
   it('[ja] a mid-pattern optional group slot still captures-and-fails on a verb (goal reclaim lock)', () => {
@@ -11775,7 +12122,10 @@ describe('trailing optional slot never captures a command verb (halt swallows ju
     // undefined, threaded through groups): the ja no-goal variant's mid-pattern
     // duration/style group slots must keep capturing 遷移 and failing the
     // pattern so the verb-anchoring fallback reclaims goal+duration.
-    const node = parse('クリック で 私 から もし effect である "fade" opacity を 遷移 0 に 300ms 終わり', 'ja');
+    const node = parse(
+      'クリック で 私 から もし effect である "fade" opacity を 遷移 0 に 300ms 終わり',
+      'ja'
+    );
     const transition = walkNodesL3(node).find(r => r.action === 'transition');
     expect(transition).toBeDefined();
     expect(String(role(transition!, 'goal')?.value)).toBe('0');
@@ -11787,8 +12137,9 @@ describe('default-value full drill: possessive destination + per-language marker
   const role = (
     node: Record<string, any> | null | undefined,
     r: string
-  ): { type?: string; value?: unknown; raw?: unknown; object?: any; property?: string } | undefined =>
-    node?.roles instanceof Map ? node.roles.get(r) : undefined;
+  ):
+    | { type?: string; value?: unknown; raw?: unknown; object?: any; property?: string }
+    | undefined => (node?.roles instanceof Map ? node.roles.get(r) : undefined);
 
   const walkNodesL4 = (node: unknown): Record<string, any>[] => {
     const flat: Record<string, any>[] = [];
@@ -11796,7 +12147,15 @@ describe('default-value full drill: possessive destination + per-language marker
       if (!n || typeof n !== 'object') return;
       const rec = n as Record<string, any>;
       if (typeof rec.action === 'string') flat.push(rec);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'eventHandlers', 'initBlock', 'initCommands']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'eventHandlers',
+        'initBlock',
+        'initCommands',
+      ]) {
         const c = rec[f];
         if (Array.isArray(c)) for (const x of c) walk(x);
         else if (c && typeof c === 'object') walk(c);
@@ -11851,7 +12210,9 @@ describe('default-value full drill: possessive destination + per-language marker
   });
 
   it('[uk] same fold, uk shape (за_замовчуванням)', () => {
-    const nodes = walkNodesL4(parse('при завантаження за_замовчуванням мій @data-count в "0"', 'uk'));
+    const nodes = walkNodesL4(
+      parse('при завантаження за_замовчуванням мій @data-count в "0"', 'uk')
+    );
     expectAlignedDefault(nodes);
   });
 
@@ -11907,8 +12268,14 @@ describe('Condition-final predicate adjective never anchors a spurious empty (em
   };
 
   const RENDERS: Array<[string, string]> = [
-    ['hi', 'धुंधला पर अगर मेरा मान है खाली .error को जोड़ें मैं में वरना .error को हटाएं मैं से समाप्त'],
-    ['tr', 'bulanık de eğer benim değer dir boş .error i ekle ben e yoksa .error i kaldır ben den son'],
+    [
+      'hi',
+      'धुंधला पर अगर मेरा मान है खाली .error को जोड़ें मैं में वरना .error को हटाएं मैं से समाप्त',
+    ],
+    [
+      'tr',
+      'bulanık de eğer benim değer dir boş .error i ekle ben e yoksa .error i kaldır ben den son',
+    ],
     ['bn', 'ঝাপসা এ যদি আমার মান হয় খালি .error কে যোগ আমি তে নতুবা .error কে সরান আমি থেকে শেষ'],
   ];
   for (const [lang, render] of RENDERS) {
@@ -11928,7 +12295,12 @@ describe('Condition-final predicate adjective never anchors a spurious empty (em
     // walk to the then-branch add and check patient
     const body = (node as { body?: Array<Record<string, unknown>> }).body ?? [];
     const cond = body.find(n => n.action === 'if') as
-      | { thenBranch?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown }> }> }
+      | {
+          thenBranch?: Array<{
+            action?: string;
+            roles?: Map<string, { type?: string; value?: unknown }>;
+          }>;
+        }
       | undefined;
     const add = cond?.thenBranch?.find(c => c.action === 'add');
     expect(add?.roles?.get('patient')).toMatchObject({ type: 'selector', value: '.error' });

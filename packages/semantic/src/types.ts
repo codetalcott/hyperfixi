@@ -197,7 +197,8 @@ export interface SemanticNode {
     | 'compound'
     | 'loop'
     | 'behavior'
-    | 'def';
+    | 'def'
+    | 'feature';
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
@@ -348,6 +349,36 @@ export interface DefSemanticNode extends SemanticNode {
   /** Declared parameter names. */
   readonly parameters: readonly string[];
   /** The function body commands. */
+  readonly body: SemanticNode[];
+}
+
+/** Block-structured feature actions — see {@link FeatureSemanticNode}. */
+export type FeatureAction = 'live' | 'eventsource' | 'socket' | 'worker' | 'intercept';
+
+/**
+ * A feature semantic node — a top-level block construct whose meaning lives in
+ * its BODY rather than in head roles (`live … end`, `eventsource Name from url
+ * … end end`, `socket Name url … end`, `worker Name … end end`, `intercept …
+ * end`).
+ *
+ * These five declare `roles: []` + `bareKeyword: true` in their command schema,
+ * so the generated pattern is a lone keyword literal. Before the structural
+ * layer learned about them they matched that bare-keyword pattern at Stage 2 and
+ * their entire body was dropped — at a vacuous confidence 1.0, because
+ * `scoreRoleCoverage` returns 1 when a pattern declares no roles. This node kind
+ * is what the fold produces instead; confidence is derived from the body.
+ *
+ * `intercept` is the odd one out: its body is a configuration DSL (`precache …`,
+ * `on /api/* use network-first`, `offline fallback …`), not hyperscript commands,
+ * so the fold CONSUMES it without parsing and leaves `body` empty. Parsing it
+ * would mint a phantom `on` event-handler and junk `use` actions.
+ */
+export interface FeatureSemanticNode extends SemanticNode {
+  readonly kind: 'feature';
+  readonly action: FeatureAction;
+  /** Declared name, where the feature has one (`live`/`intercept` do not). */
+  readonly name?: string;
+  /** Parsed body statements. Always empty for `intercept` (opaque body). */
   readonly body: SemanticNode[];
 }
 
@@ -775,6 +806,32 @@ export function createDefNode(
     parameters,
     body,
   };
+  if (metadata !== undefined) {
+    (node as { metadata?: SemanticMetadata }).metadata = metadata;
+  }
+  return node;
+}
+
+/**
+ * Create a feature semantic node (a `live`/`eventsource`/`socket`/`worker`/
+ * `intercept` block). `name` is omitted for the unnamed features (`live`,
+ * `intercept`); `body` is empty for `intercept`, whose body is opaque.
+ */
+export function createFeatureNode(
+  action: FeatureAction,
+  body: SemanticNode[],
+  name?: string,
+  metadata?: SemanticMetadata
+): FeatureSemanticNode {
+  const node: FeatureSemanticNode = {
+    kind: 'feature',
+    action,
+    roles: new Map(),
+    body,
+  };
+  if (name !== undefined) {
+    (node as { name?: string }).name = name;
+  }
   if (metadata !== undefined) {
     (node as { metadata?: SemanticMetadata }).metadata = metadata;
   }

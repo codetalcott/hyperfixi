@@ -38,7 +38,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
-import { tryParseBlock, tryParseProgram } from './block-parser';
+import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { render as renderExplicitFn } from '../explicit/renderer';
@@ -570,6 +570,19 @@ export class SemanticParserImpl implements ISemanticParser {
       body: (text, lang) => this.parseStatements(text, lang),
     });
     if (blockNode) return blockNode;
+
+    // Stage 0.1: feature block layer (`live`/`eventsource`/`socket`/`intercept`).
+    // These schemas declare no roles, so their generated pattern is a lone keyword
+    // literal that matches at Stage 2 and eats the whole body — at a vacuous
+    // confidence 1.0, since `scoreRoleCoverage` returns 1 for a role-less pattern.
+    // Runs AFTER tryParseBlock so a `behavior`/`def` block whose body contains a
+    // feature keyword is still claimed by the behavior layer, and BEFORE Stages
+    // 1–2 so the bare-keyword pattern never wins. Returns null (fast) otherwise.
+    const featureNode = tryParseFeatureBlock(input, language, {
+      statement: (text, lang) => this.parse(text, lang),
+      body: (text, lang) => this.parseStatements(text, lang),
+    });
+    if (featureNode) return featureNode;
 
     // Stage 0.5: multi-handler PROGRAM layer. A top-level script with ≥2 event
     // handlers (`on click … end on keyup … end`) otherwise matches only the first

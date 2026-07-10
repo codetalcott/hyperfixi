@@ -89,6 +89,20 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'clear',
   'reset',
   'breakpoint', // Zero-arg debug command
+  // Feature blocks. Their meaning lives in the BODY, not in a head role: `live`
+  // and `intercept` have no head at all, and eventsource/socket/worker's name and
+  // url are structural, not semantic arguments. Giving them roles purely to make
+  // `scoreRoleCoverage` return a non-vacuous number would inject new
+  // `action.role:valueType` entries into the English R1 reference that all 23
+  // other languages must also capture, or the role-fidelity ratchet fires. The
+  // structural layer (`tryParseFeatureBlock`) parses them instead, and derives
+  // confidence from the body — so the `maxScore === 0 → 1` shortcut is never the
+  // thing that scores them.
+  'live',
+  'eventsource',
+  'socket',
+  'worker',
+  'intercept',
 ]);
 
 /**
