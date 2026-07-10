@@ -342,6 +342,13 @@ export interface CompileResult {
     timeMs: number;
     /** Whether the direct AST path was used (multilingual) */
     directPath?: boolean;
+    /**
+     * Non-fatal problems found while compiling. Notably, an `unconsumed-input`
+     * warning means the semantic parser matched a pattern that ignored part of
+     * the source: the parse succeeded, possibly at high confidence, but the
+     * reported span was silently dropped.
+     */
+    warnings?: string[];
   };
 }
 
@@ -949,6 +956,7 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
           language: lang,
           timeMs,
           directPath: true,
+          ...(astResult.warnings?.length ? { warnings: astResult.warnings } : {}),
         },
       };
       astCache.set(code, options, result);

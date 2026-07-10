@@ -60,8 +60,27 @@ export interface ParseToASTResult {
   lang: string;
   /** English text for fallback to core parser (if direct path failed) */
   fallbackText: string | null;
-  /** Warnings generated during AST building (e.g., type inference issues) */
+  /**
+   * Warnings generated during AST building (e.g. type inference issues), plus
+   * any `unconsumed-input` warning from the semantic parser — a parse that
+   * matched a pattern covering only part of the source and dropped the rest.
+   */
   warnings?: string[];
+}
+
+/**
+ * Pull the semantic parser's `unconsumed-input` diagnostics off a parsed node.
+ *
+ * The parser reports these as a warning-severity diagnostic rather than lowering
+ * confidence: a pattern can fill every role it declares, score 1.0, and still
+ * ignore a trailing clause. Surfacing them here is what makes that visible in
+ * `compile(...).meta.warnings`.
+ */
+function unconsumedInputWarnings(node: SemanticNode): string[] {
+  const diagnostics = (node as { diagnostics?: Array<{ code?: string; message: string }> })
+    .diagnostics;
+  if (!diagnostics?.length) return [];
+  return diagnostics.filter(d => d.code === 'unconsumed-input').map(d => d.message);
 }
 
 // Lazy-loaded semantic module
@@ -225,7 +244,7 @@ export class SemanticGrammarBridge {
           confidence: result.confidence,
           lang,
           fallbackText: null,
-          warnings: buildResult.warnings,
+          warnings: [...(buildResult.warnings ?? []), ...unconsumedInputWarnings(result.node)],
         };
       } catch {
         // Fall through to fallback

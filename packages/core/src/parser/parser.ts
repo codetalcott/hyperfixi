@@ -3355,6 +3355,15 @@ export class Parser {
     //     each carries hyperscript-specific shape that semantic doesn't capture
     //   - js: raw-body command (semantic loses the body)
     //   - tell: command block with body
+    //   - fetch: `with { ... }` request options (where hx-headers / hx-vals live),
+    //     naked named args, and `do not throw`. This path reaches modifiers via
+    //     SemanticIntegrationAdapter.parseExpressionString(), which understands
+    //     identifiers, property access and calls — but not object literals — so
+    //     `with { ... }` would arrive as a bogus identifier node even though the
+    //     semantic schema now models the options role (it does, for the buildAST
+    //     multilingual path: fetchSchema's `style`). Before this entry existed the
+    //     URL matched at confidence 1.0 and skipToCommandBoundary() ate the rest,
+    //     dropping method/body/headers off the wire in silence.
     // `call` and `get` previously lived on this list; they're now handled by
     // SemanticIntegrationAdapter.parseExpressionString() (method calls etc.).
     // Migrating any of the remaining commands is a multi-PR initiative
@@ -3385,6 +3394,7 @@ export class Parser {
       'closest',
       'js',
       'tell',
+      'fetch',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {

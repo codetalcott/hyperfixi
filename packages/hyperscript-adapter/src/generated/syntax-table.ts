@@ -26,7 +26,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   empty: [['patient', '']],
   eventsource: [],
   exit: [],
-  fetch: [['source', ''], ['responseType', 'as'], ['method', 'via'], ['destination', 'on']],
+  fetch: [['source', ''], ['style', 'with'], ['responseType', 'as'], ['method', 'via'], ['destination', 'on']],
   focus: [['patient', '']],
   for: [['patient', ''], ['source', 'in']],
   get: [['source', ''], ['destination', 'on']],

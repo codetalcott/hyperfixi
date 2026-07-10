@@ -100,6 +100,12 @@ export interface TestConfig {
 
   /** Number of patterns per language in quick mode */
   quickModeLimit?: number;
+
+  /**
+   * Report the semantic parser's `unconsumed-input` firing rate per language,
+   * then exit. Read-only: never gates, never writes a baseline.
+   */
+  diagnoseCoverage?: boolean;
 }
 
 /**

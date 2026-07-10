@@ -796,12 +796,19 @@ export class PatternMatcher {
     // literal or declare no expectedTypes (the handcrafted add-*-full patient
     // — capturing a lone `{` is never right), and only when the run closes —
     // an unbalanced `{` backtracks.
-    if (
-      token.kind === 'identifier' &&
-      token.value === '{' &&
-      (!patternToken.expectedTypes?.length || patternToken.expectedTypes.includes('literal'))
-    ) {
-      const braceRun = this.tryMatchBraceRunLiteral(tokens);
+    // An expression-ONLY slot (fetch's `with { … }` request options) takes the
+    // object-literal fold instead, preserving source text so the expression parser
+    // can build a real objectLiteral node. Slots that also accept a literal keep
+    // the literal fold — switching them would retype every generated-path
+    // `['literal','expression']` style-object capture.
+    if (token.kind === 'identifier' && token.value === '{') {
+      const types = patternToken.expectedTypes;
+      const expressionOnly = types?.length === 1 && types[0] === 'expression';
+      const braceRun = expressionOnly
+        ? this.tryMatchBraceRunExpression(tokens)
+        : !types?.length || types.includes('literal')
+          ? this.tryMatchBraceRunLiteral(tokens)
+          : null;
       if (braceRun) {
         captured.set(patternToken.role, braceRun);
         return true;
@@ -1680,6 +1687,48 @@ export class PatternMatcher {
         }
       }
       parts.push(t.value);
+    }
+
+    tokens.reset(mark);
+    return null;
+  }
+
+  /**
+   * Fold a depth-balanced `{ … }` token run into ONE **expression** value whose
+   * `raw` is the original source text — the object-literal sibling of
+   * tryMatchBraceRunLiteral, for roles that expect an expression (`fetch`'s
+   * request-options `style` role: `fetch /x with { method: 'POST' }`).
+   *
+   * Unlike the literal fold, this cannot space-join token values: `raw` is handed
+   * to the expression parser, and a template-literal option
+   * (``{ headers: {Authorization: `Bearer ${token}`} }``) shatters into many
+   * tokens whose rejoined spacing must match the source or the interpolation
+   * breaks. Tokens carry source offsets, so inter-token gaps are reproduced
+   * exactly. Returns null (stream reset) when the run never closes.
+   */
+  private tryMatchBraceRunExpression(tokens: TokenStream): SemanticValue | null {
+    const open = tokens.peek();
+    if (!open || open.kind !== 'identifier' || open.value !== '{') return null;
+
+    const mark = tokens.mark();
+    let raw = '';
+    let prevEnd = -1;
+    let depth = 0;
+    let guard = 0;
+    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_BRACE_RUN_TOKENS) {
+      const t = tokens.advance();
+      if (!t) break;
+      if (prevEnd >= 0 && t.position.start > prevEnd) {
+        raw += ' '.repeat(t.position.start - prevEnd);
+      }
+      raw += t.value;
+      prevEnd = t.position.end;
+
+      if (t.value === '{') depth++;
+      else if (t.value === '}') {
+        depth--;
+        if (depth === 0) return { type: 'expression', raw } as SemanticValue;
+      }
     }
 
     tokens.reset(mark);

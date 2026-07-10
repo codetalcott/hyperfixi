@@ -1017,12 +1017,24 @@ export const fetchSchema: CommandSchema = {
       renderOverride: { en: '' }, // "fetch /api" (rendering — no preposition)
     },
     {
+      role: 'style',
+      description: 'Request options object (method, headers, body, credentials…)',
+      required: false,
+      // expression-ONLY: the pattern matcher routes a `{ … }` run in an
+      // expression-only slot through its object-literal fold, which preserves the
+      // source text so the expression parser can build a real objectLiteral.
+      // `style` is the role whose marker is `with` in every language profile.
+      expectedTypes: ['expression'],
+      svoPosition: 2,
+      sovPosition: 2,
+    },
+    {
       role: 'responseType',
       description: 'Response format (json, text, html, blob, etc.)',
       required: false,
       expectedTypes: ['literal', 'expression'], // json/text/html are identifiers → expression type
-      svoPosition: 2,
-      sovPosition: 2,
+      svoPosition: 3,
+      sovPosition: 3,
       markerOverride: { en: 'as' }, // "fetch /api as json" — needed by schema-driven role inference
     },
     {
@@ -1030,16 +1042,16 @@ export const fetchSchema: CommandSchema = {
       description: 'HTTP method (GET, POST, etc.)',
       required: false,
       expectedTypes: ['literal'],
-      svoPosition: 3,
-      sovPosition: 3,
+      svoPosition: 4,
+      sovPosition: 4,
     },
     {
       role: 'destination',
       description: 'Where to store the result',
       required: false,
       expectedTypes: ['selector', 'reference'],
-      svoPosition: 4,
-      sovPosition: 4,
+      svoPosition: 5,
+      sovPosition: 5,
     },
   ],
 };

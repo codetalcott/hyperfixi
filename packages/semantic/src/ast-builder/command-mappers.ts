@@ -389,6 +389,7 @@ const fetchMapper: CommandMapper = {
   action: 'fetch',
   toAST(node, _builder) {
     const source = convertRoleValue(node, 'source'); // URL
+    const style = convertRoleValue(node, 'style'); // `with { method, headers, body }`
     const method = convertRoleValue(node, 'method'); // GET, POST, etc.
     const responseType = convertRoleValue(node, 'responseType'); // json, text, etc.
     const patient = convertRoleValue(node, 'patient'); // Body
@@ -396,7 +397,11 @@ const fetchMapper: CommandMapper = {
     const args: ExpressionNode[] = source ? [source] : [];
     const modifiers: Record<string, ExpressionNode> = {};
 
-    if (method) modifiers['with'] = method;
+    // FetchCommand reads its RequestInit out of `with`. The options object owns
+    // that slot; the bare `method` role only falls back into it when no options
+    // object was given.
+    if (style) modifiers['with'] = style;
+    else if (method) modifiers['with'] = method;
     if (responseType) modifiers['as'] = responseType;
     if (patient) modifiers['body'] = patient;
 
