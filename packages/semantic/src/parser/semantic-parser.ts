@@ -2899,15 +2899,32 @@ export class SemanticParserImpl implements ISemanticParser {
     postVerbTokens: LanguageToken[],
     markerToRole: Map<string, string>,
     action: string,
-    _language: string
+    language: string
   ): Record<string, SemanticValue> {
     const roles: Record<string, SemanticValue> = {};
+
+    // A block terminator the SOV reorder absorbed into a role phrase (bn
+    // repeat-while renders wait's object phrase as `200ms শেষ কে` — the
+    // terminator belongs after the verb) is structural residue, never part
+    // of a value: joined in it glues (`200msশেষ`), alone it fabricates a
+    // phantom trailing role. Recognized like isBlockEndToken (curated
+    // isEndKeyword surface OR keyword normalized `end`), but the positional
+    // lookahead applies to BOTH modes: a value group is exactly where a
+    // positional-`last` phrase lives (bn `শেষ <li/>`, tr `son .item`), so any
+    // terminator-shaped token followed by a selector keeps its positional
+    // reading.
+    const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean =>
+      (this.isEndKeyword(t.value, language) ||
+        (t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end')) &&
+      !(next && next.kind === 'selector');
 
     // Process a group of tokens: collect value tokens until a marker is found
     const processGroup = (tokens: LanguageToken[]) => {
       let valueTokens: LanguageToken[] = [];
 
-      for (const token of tokens) {
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (isStrayTerminator(token, tokens[i + 1])) continue;
         const role = markerToRole.get(token.value);
         if (role && token.kind === 'particle' && valueTokens.length > 0) {
           // This is a marker — assign the preceding value tokens to this role

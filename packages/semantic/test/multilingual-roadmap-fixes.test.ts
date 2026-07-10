@@ -12652,6 +12652,37 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
   const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
     nodes.find(n => n.action === action);
 
+  describe('F2: bn stray block terminator glued into role values', () => {
+    // The bn repeat-while corpus renders wait's object phrase as
+    // `200ms শেষ কে অপেক্ষা` — the i18n reorder absorbs the block terminator
+    // INTO the phrase (it belongs after the verb; transformer defect noted in
+    // MULTILINGUAL_NEXT_STEPS). The SOV verb-anchoring's group extraction
+    // joined the pair whitespace-free into duration="200msশেষ". Stray
+    // terminators are now skipped during value accumulation (positional
+    // `শেষ <selector>` = `last <x>` keeps its reading via the selector
+    // lookahead). The five sibling bn wait rows (duration="then"/"end") are
+    // the F1 connective-capture family, locked in the F1 describe below.
+    it('[bn] repeat-while: wait duration is 200ms, terminator not glued', () => {
+      const nodes = collect(
+        parse(
+          'যতক্ষণ #counter.innerText < 10 কে ক্লিক এ পুনরাবৃত্তি তারপর #counter কে বৃদ্ধি তারপর 200ms শেষ কে অপেক্ষা',
+          'bn'
+        )
+      );
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value).toBe('200ms');
+      // No role value anywhere retains the terminator.
+      for (const n of nodes) {
+        if (!(n.roles instanceof Map)) continue;
+        for (const [, v] of n.roles) {
+          expect(String((v as any)?.value ?? '')).not.toContain('শেষ');
+        }
+      }
+      const inc = first(nodes, 'increment');
+      expect(role(inc, 'patient')?.value).toBe('#counter');
+    });
+  });
+
   describe('F5: hi transition duration drop', () => {
     // hi matches the fused SOV 2-role transition pattern, which ends at {goal};
     // the duration renders as `में 500ms` — a particle BEFORE the time literal,
