@@ -739,7 +739,13 @@ export const bindSchema: CommandSchema = {
       role: 'source',
       description: 'The element or property to bind to',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      // 'property-path' opts this role into the "of"-possessive matcher, so the
+      // property-first render of `bind $x to #y's prop` (es `valor de #picker`,
+      // ar `قيمة لـ #picker`) keeps its owner selector instead of collapsing to
+      // the bare property word; see pattern-matcher tryMatchOfPossessiveExpression.
+      // The selector-first languages (en `#picker's value`, ja `#pickerの 値`)
+      // already reached property-path through tryMatchPossessiveSelectorExpression.
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 2,
       sovPosition: 2,
       // Element mirrors `set`/`add`/`put`'s value ("to") marking per language.
