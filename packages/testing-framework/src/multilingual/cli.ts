@@ -417,6 +417,19 @@ async function main(): Promise<void> {
           r => r.avgPrecisionDelta < -AVG_PRECISION_DROP_TOLERANCE
         );
 
+        // R0-recall-multiset ratchet: the mirror of the precision ratchet. Every
+        // signal above is computed on a deduped SET, so a parse that drops a
+        // REPEATED command scores a perfect 1.0 — reference `[bind, bind]`
+        // collapses to `{bind}`, which `[bind]` satisfies in full. That is exactly
+        // how `bind-two-way` recorded fidelity 1.0 in all 24 languages while every
+        // one of them parsed only the first of its two binds. Counting duplicates
+        // makes the drop visible. Deltas are 0 unless the baseline carries
+        // avgMultisetRecall, so an un-regenerated baseline never retro-flags.
+        const AVG_MULTISET_RECALL_DROP_TOLERANCE = 0.02;
+        const multisetRecallDrops = allResults.filter(
+          r => r.avgMultisetRecallDelta < -AVG_MULTISET_RECALL_DROP_TOLERANCE
+        );
+
         // R1 — role-fidelity ratchet (§8): same semantics as the avgFidelity
         // ratchet, on the role-recall signal (action.role:valueType vs the en
         // reference). Deltas are 0 unless the baseline carries avgRoleFidelity,
@@ -515,6 +528,21 @@ async function main(): Promise<void> {
           failed = true;
         }
 
+        if (multisetRecallDrops.length > 0) {
+          console.error(
+            `\n✗ avgMultisetRecall dropped > ${AVG_MULTISET_RECALL_DROP_TOLERANCE} in ` +
+              `${multisetRecallDrops.length} language(s) — a parse started dropping a ` +
+              `REPEATED command (invisible to the Set-based fidelity/roleFidelity):`
+          );
+          for (const r of multisetRecallDrops) {
+            console.error(
+              `   ${r.language}: ΔavgMultisetRecall ${r.avgMultisetRecallDelta.toFixed(4)}`
+            );
+          }
+          console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
         if (roleFidelityDrops.length > 0) {
           console.error(
             `\n✗ avgRoleFidelity dropped > ${AVG_ROLE_FIDELITY_DROP_TOLERANCE} in ` +
@@ -547,7 +575,8 @@ async function main(): Promise<void> {
         } else {
           console.log(
             `\n✓ No regression vs baseline ` +
-              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + execution ratchets).`
+              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + ` +
+              `precision + multiset-recall + role + execution ratchets).`
           );
           exitCode = 0;
         }

@@ -3,6 +3,7 @@ import {
   collectActions,
   collectActionsMultiset,
   computeFidelity,
+  computeMultisetRecall,
   computePrecision,
   spuriousActions,
   FIDELITY_THRESHOLD,
@@ -118,6 +119,41 @@ describe('computePrecision', () => {
     expect(computePrecision(['on'], [])).toBeUndefined();
   });
 });
+
+describe('computeMultisetRecall', () => {
+  it('catches the dropped duplicate that Set-based recall is blind to', () => {
+    // The `bind-two-way` shape. EN `bind $n to #a bind $n to #b` is [bind, bind];
+    // a parse that truncates to the first command yields [bind]. Every Set-based
+    // signal reads this as perfect — which is why the row recorded fidelity 1.0
+    // across all 24 languages while every one of them dropped half its body.
+    const en = ['bind', 'bind'];
+    const truncated = ['bind'];
+
+    expect(computeFidelity(collectSet(en), collectSet(truncated))).toBe(1); // recall is fooled
+    expect(computePrecision(en, truncated)).toBe(1); // precision is fooled too
+    expect(computeMultisetRecall(en, truncated)).toBe(0.5); // this is not
+  });
+
+  it('scores a faithful (reordered) parse 1.0', () => {
+    expect(computeMultisetRecall(['bind', 'bind'], ['bind', 'bind'])).toBe(1);
+    expect(computeMultisetRecall(['add', 'on', 'remove'], ['on', 'remove', 'add'])).toBe(1);
+  });
+
+  it('is not fooled by an added duplicate (that is precision’s job)', () => {
+    // A candidate with a phantom extra still has full recall; precision catches it.
+    expect(computeMultisetRecall(['bind'], ['bind', 'bind'])).toBe(1);
+    expect(computePrecision(['bind'], ['bind', 'bind'])).toBe(0.5);
+  });
+
+  it('returns undefined when there is no reference to score against', () => {
+    expect(computeMultisetRecall([], ['bind'])).toBeUndefined();
+  });
+});
+
+/** The deduped Set signature `collectActions` produces, from a multiset. */
+function collectSet(actions: readonly string[]): string[] {
+  return [...new Set(actions)].sort();
+}
 
 describe('spuriousActions', () => {
   it('lists the hallucinated commands a render/parse introduced', () => {

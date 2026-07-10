@@ -122,6 +122,39 @@ export function computeFidelity(
 }
 
 /**
+ * R0-recall on the **multiset** in [0, 1]: the fraction of the reference's
+ * actions — counting duplicates — also present in the candidate.
+ *
+ * {@link computeFidelity} scores the deduped Set signature, so a candidate that
+ * drops a REPEATED command scores 1.0: reference `[bind, bind]` collapses to
+ * `{bind}`, which `[bind]` satisfies in full. That is how `bind-two-way` sat at
+ * fidelity 1.0 across all 24 languages while every one of them parsed only the
+ * first of its two `bind`s. R1 (role signatures) is a Set too, and is equally
+ * blind. {@link computePrecision} catches the mirror case — a candidate that ADDS
+ * a duplicate — so before this signal existed the ratchet saw spurious commands
+ * but never dropped ones.
+ *
+ * Pass multisets (see {@link collectActionsMultiset}) on both sides.
+ * Returns `undefined` when the reference has no actions to compare against.
+ */
+export function computeMultisetRecall(
+  reference: readonly string[],
+  candidate: readonly string[]
+): number | undefined {
+  if (reference.length === 0) return undefined;
+  const cand = actionCounts(candidate);
+  let matched = 0;
+  for (const a of reference) {
+    const remaining = cand.get(a) ?? 0;
+    if (remaining > 0) {
+      matched++;
+      cand.set(a, remaining - 1);
+    }
+  }
+  return matched / reference.length;
+}
+
+/**
  * Structural **precision** in [0, 1]: the fraction of the *candidate's* actions
  * that are justified by the reference (multiset-aware). The complement of
  * {@link computeFidelity}'s recall — it falls below 1.0 when a parse/render adds

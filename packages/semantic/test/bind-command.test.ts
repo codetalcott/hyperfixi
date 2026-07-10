@@ -42,17 +42,19 @@ describe('bind command', () => {
   });
 
   it('parses a then-chain of two binds into a compound', () => {
+    // Was written to tolerate a single-command fallback, and read `.commands`
+    // (a CompoundSemanticNode exposes `.statements`) — so it passed vacuously
+    // while the parser dropped the second bind, and would have thrown the
+    // moment it stopped. Assert the sequence unconditionally.
     const node = parse('bind :name to #input-a then bind :name to #input-b', 'en') as
       | CompoundSemanticNode
       | CommandSemanticNode;
 
-    if (node.kind === 'compound') {
-      const actions = node.commands.map(c => (c as CommandSemanticNode).action);
-      expect(actions).toEqual(['bind', 'bind']);
-    } else {
-      // Single-clause fallback still yields a bind command.
-      expect((node as CommandSemanticNode).action).toBe('bind');
-    }
+    expect(node.kind).toBe('compound');
+    const actions = (node as CompoundSemanticNode).statements.map(
+      c => (c as CommandSemanticNode).action
+    );
+    expect(actions).toEqual(['bind', 'bind']);
   });
 
   it('canParse reports true for a basic bind', () => {

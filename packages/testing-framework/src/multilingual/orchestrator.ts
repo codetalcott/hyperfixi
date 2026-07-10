@@ -20,7 +20,12 @@ import type {
   Reporter,
   BundleInfo,
 } from './types';
-import { computeFidelity, computePrecision, FIDELITY_THRESHOLD } from './fidelity';
+import {
+  computeFidelity,
+  computePrecision,
+  computeMultisetRecall,
+  FIDELITY_THRESHOLD,
+} from './fidelity';
 
 const execAsync = promisify(exec);
 
@@ -277,6 +282,7 @@ export class TestOrchestrator {
       const lossy: string[] = [];
       const scores: number[] = [];
       const precisionScores: number[] = [];
+      const multisetRecallScores: number[] = [];
       const roleScores: number[] = [];
 
       for (const result of lang.parseResults) {
@@ -294,12 +300,20 @@ export class TestOrchestrator {
 
         // R0-precision — fraction of THIS parse's actions justified by the en
         // multiset reference (catches phantom/spurious commands recall misses).
+        // R0-recall-multiset — the mirror: fraction of the en reference's actions,
+        // counting duplicates, present here (catches a DROPPED repeated command,
+        // which the Set-based fidelity/roleFidelity above cannot see).
         const multisetRef = multisetReference.get(result.pattern.codeExampleId);
         if (multisetRef && result.actionMultisetSignature) {
           const precision = computePrecision(multisetRef, result.actionMultisetSignature);
           if (precision !== undefined) {
             result.precision = precision;
             precisionScores.push(precision);
+          }
+          const multisetRecall = computeMultisetRecall(multisetRef, result.actionMultisetSignature);
+          if (multisetRecall !== undefined) {
+            result.multisetRecall = multisetRecall;
+            multisetRecallScores.push(multisetRecall);
           }
         }
 
@@ -319,6 +333,10 @@ export class TestOrchestrator {
       lang.avgPrecision =
         precisionScores.length > 0
           ? precisionScores.reduce((a, b) => a + b, 0) / precisionScores.length
+          : undefined;
+      lang.avgMultisetRecall =
+        multisetRecallScores.length > 0
+          ? multisetRecallScores.reduce((a, b) => a + b, 0) / multisetRecallScores.length
           : undefined;
       lang.avgRoleFidelity =
         roleScores.length > 0
