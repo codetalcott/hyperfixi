@@ -441,6 +441,20 @@ async function main(): Promise<void> {
           r => r.avgRoleFidelityDelta < -AVG_ROLE_FIDELITY_DROP_TOLERANCE
         );
 
+        // R3 — role-VALUE ratchet: same semantics as the role-fidelity ratchet,
+        // on the invariant-value signal (`action.role=value` multiset over the
+        // code-shaped subset: selectors, sigil refs, time literals,
+        // colon-qualified event names, URLs — compared VERBATIM vs the en
+        // reference). A drop means a translation started losing/corrupting an
+        // invariant value (`draggable` captured for `draggable:start`, the #633
+        // class) — invisible to every action/type-based signal above. Deltas
+        // are 0 unless the baseline carries avgValueRecall, so an
+        // un-regenerated baseline never retro-flags.
+        const AVG_VALUE_RECALL_DROP_TOLERANCE = 0.02;
+        const valueRecallDrops = allResults.filter(
+          r => r.avgValueRecallDelta < -AVG_VALUE_RECALL_DROP_TOLERANCE
+        );
+
         // R2 — execution ratchet (§8): curated-subset patterns whose jsdom DOM
         // effects matched the en reference in the baseline but diverge now.
         // Tolerance 0: execution is binary and the harness is deterministic
@@ -557,6 +571,19 @@ async function main(): Promise<void> {
           failed = true;
         }
 
+        if (valueRecallDrops.length > 0) {
+          console.error(
+            `\n✗ avgValueRecall dropped > ${AVG_VALUE_RECALL_DROP_TOLERANCE} in ` +
+              `${valueRecallDrops.length} language(s) — a parse started losing/corrupting ` +
+              `a language-invariant role VALUE (invisible to the action/type-based signals):`
+          );
+          for (const r of valueRecallDrops) {
+            console.error(`   ${r.language}: ΔavgValueRecall ${r.avgValueRecallDelta.toFixed(4)}`);
+          }
+          console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
         if (executionRegressions.length > 0) {
           console.error(
             `\n✗ Execution regression vs baseline (R2): ${executionRegressions.length} ` +
@@ -576,7 +603,7 @@ async function main(): Promise<void> {
           console.log(
             `\n✓ No regression vs baseline ` +
               `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + ` +
-              `precision + multiset-recall + role + execution ratchets).`
+              `precision + multiset-recall + role + value + execution ratchets).`
           );
           exitCode = 0;
         }

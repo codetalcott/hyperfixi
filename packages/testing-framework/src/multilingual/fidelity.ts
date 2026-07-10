@@ -255,3 +255,123 @@ function walkRoles(node: unknown, acc: Set<string>, depth: number): void {
     }
   }
 }
+
+/**
+ * Role-value kinds never emitted by the R3 walker. `reference` values (`me`,
+ * `it`, …) are mostly `fillSchemaDefaults` injections present identically on
+ * both sides — noise. `flag` names and `property-path` properties are bare
+ * identifiers, excluded by v1 (see {@link collectRoleValueSignature}).
+ */
+const VALUE_KIND_EXCLUSIONS = new Set(['reference', 'flag', 'property-path']);
+
+/**
+ * A role value is compared cross-language only when its WHOLE surface form is
+ * code-shaped — language-invariant by construction, never legitimately
+ * translated. Conservative v1 whitelist; when a sweep firing turns out to be a
+ * legit translation difference, tighten here and document the exclusion.
+ */
+const INVARIANT_VALUE_PATTERNS: readonly RegExp[] = [
+  /^[#.[<@*]/, // selectors: #id  .class  [attr]  <tag/>  @attr  *style
+  /^[:$^][A-Za-z_]\w*$/, // sigil refs: :local  $global  ^element
+  /^\d+(\.\d+)?(ms|s|m|h)?$/, // numbers and time literals: 2  1.5  200ms
+  /^[A-Za-z_][\w-]*:[\w-]+$/, // colon-qualified event names: draggable:start
+  /^(\.{0,2}\/|https?:)/, // URLs / paths: /api/data  ./x  ../y  https://…
+];
+
+function isInvariantSurface(surface: string): boolean {
+  // Whole-surface rule, sweep-validated exclusions:
+  // - whitespace ⇒ mixed content. `if #modal exists` captures its condition as
+  //   `#modal exists` — starts selector-shaped, but `exists` is prose that every
+  //   language legitimately translates (16-language false firing without this).
+  // - `${` ⇒ template interpolation. `/api/search?q=${my value}` is an
+  //   expression, and tokenizers split it at different points per language, so
+  //   the captured surface isn't comparable verbatim.
+  if (/\s/.test(surface) || surface.includes('${')) return false;
+  return INVARIANT_VALUE_PATTERNS.some(re => re.test(surface));
+}
+
+/**
+ * The comparable surface form of a role value, or `undefined` when the value
+ * carries none: `.value` for `literal`/`selector` (string/number/boolean
+ * coerced), `.raw` for `expression`. Kinds in {@link VALUE_KIND_EXCLUSIONS}
+ * and values without a string `type` discriminator yield `undefined`.
+ */
+function roleValueSurface(value: unknown): string | undefined {
+  if (value === null || typeof value !== 'object') return undefined;
+  const rec = value as { type?: unknown; value?: unknown; raw?: unknown };
+  if (typeof rec.type !== 'string' || VALUE_KIND_EXCLUSIONS.has(rec.type)) return undefined;
+  if (rec.type === 'expression') {
+    return typeof rec.raw === 'string' ? rec.raw : undefined;
+  }
+  const v = rec.value;
+  return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+    ? String(v)
+    : undefined;
+}
+
+/**
+ * R3 — role-VALUE signature (invariant values only, multiset).
+ *
+ * R0/R1 compare actions and role *types*; values are never compared because
+ * they are legitimately translated. That leaves a live defect class with zero
+ * signal: right action counts, right role types, wrong role VALUE — the #633
+ * class, where ms captured `trigger` events named `draggable` instead of
+ * `draggable:start` (correct multiset, correct `trigger.event:literal`
+ * signature, silently wrong runtime behavior), and 18 other languages carried
+ * the same corruption with no side-effect at all.
+ *
+ * The subset of values compared here is language-invariant by construction —
+ * code, not prose (see {@link INVARIANT_VALUE_PATTERNS}). Emits a **multiset**
+ * of `` `action.role=value` `` entries (duplicates preserved, sorted); score
+ * with {@link computeMultisetRecall} so a dropped duplicate value is visible.
+ *
+ * Deliberately EXCLUDED in v1: bare-word identifiers (`startX` — usually
+ * invariant, but property/variable names occasionally get localized in seeds),
+ * string literals (message strings are legitimately translated), expression
+ * raws mixing native words + code (`次 .item`), and `reference` values
+ * (`me`/`it` — mostly `fillSchemaDefaults` injections on both sides).
+ *
+ * Blind spot: recall fires when a *translation* loses/corrupts an invariant
+ * value. If the **en reference itself** corrupts a value, every language flags
+ * at once — a 24-language R3 firestorm on one pattern means "suspect the en
+ * parse first" (unlike R0, where en corruption moves nothing).
+ *
+ * The roles container is a ReadonlyMap on live nodes (serializes to {} in
+ * results.json), so collect at validation time, never from the JSON.
+ */
+export function collectRoleValueSignature(node: unknown): string[] {
+  const acc: string[] = [];
+  walkRoleValues(node, acc, 0);
+  return acc.sort();
+}
+
+function walkRoleValues(node: unknown, acc: string[], depth: number): void {
+  if (depth > 64 || node === null || typeof node !== 'object') return;
+
+  const rec = node as Record<string, unknown>;
+  const action = rec.action;
+  if (typeof action === 'string' && !STRUCTURAL_ACTIONS.has(action)) {
+    const roles = rec.roles;
+    const entries: Array<[unknown, unknown]> =
+      roles instanceof Map
+        ? [...roles.entries()]
+        : roles && typeof roles === 'object'
+          ? Object.entries(roles)
+          : [];
+    for (const [role, value] of entries) {
+      if (value === undefined || value === null) continue;
+      const surface = roleValueSurface(value);
+      if (surface === undefined || !isInvariantSurface(surface)) continue;
+      acc.push(`${action}.${String(role)}=${surface}`);
+    }
+  }
+
+  for (const field of CHILD_FIELDS) {
+    const child = rec[field];
+    if (Array.isArray(child)) {
+      for (const c of child) walkRoleValues(c, acc, depth + 1);
+    } else if (child && typeof child === 'object') {
+      walkRoleValues(child, acc, depth + 1);
+    }
+  }
+}
