@@ -970,6 +970,14 @@ export const triggerSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'], // expression for custom/namespaced event names
       svoPosition: 1,
       sovPosition: 2,
+      // hi/qu mark trigger's event ACCUSATIVELY (`draggable:start को ट्रिगर`,
+      // `draggable:start ta kichay` — the corpus renderings), but their
+      // profile-wide event marker is the on-handler one (hi पर, qu locative
+      // pi), so the generated SOV pattern never matched and the whole line
+      // fell through to the on-handler reading (hi) or failed outright (qu).
+      // ja/ko were immune only because their event marker IS the object
+      // particle (を / 을·를). #588 markerVariants machinery.
+      markerVariants: { hi: ['को'], qu: ['ta'] },
     },
     {
       role: 'destination',

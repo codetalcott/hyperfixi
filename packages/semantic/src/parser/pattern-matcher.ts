@@ -1444,7 +1444,18 @@ export class PatternMatcher {
       (propertyToken.kind === 'keyword' &&
         !this.isStructuralKeyword(propertyToken.value) &&
         !(propertyToken.normalized && this.isStructuralKeyword(propertyToken.normalized)) &&
-        !(propertyToken.normalized && this.isRoleMarkerConcept(propertyToken.normalized))) ||
+        !(propertyToken.normalized && this.isRoleMarkerConcept(propertyToken.normalized)) &&
+        // A COMMAND VERB is never a property name either: ms `… ke ia ukur y`
+        // ("… to it" + "measure y") read `ia ukur` as the phantom possessive
+        // `it.measure`, swallowing the next clause's verb — set-ms-full then
+        // captured a null property-path patient and the measure vanished
+        // (behavior-draggable/resizable ms, the corpus's one remaining
+        // multiset deficit). Normalized-form-gated, so en (whose keywords
+        // carry no normalized) keeps its reference behavior byte-identical.
+        !(
+          propertyToken.normalized &&
+          PatternMatcher.COMMAND_ACTION_KEYWORDS.has(propertyToken.normalized.toLowerCase())
+        )) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||
       (propertyToken.kind === 'selector' &&

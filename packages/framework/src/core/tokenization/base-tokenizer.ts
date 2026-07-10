@@ -347,7 +347,61 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       }
     }
 
-    return new TokenStreamImpl(tokens, this.language);
+    return new TokenStreamImpl(this.mergeColonQualifiedNames(tokens), this.language);
+  }
+
+  /**
+   * ASCII word of the shape the English word-walker produces. Excludes `:`, so a
+   * token that already carries a qualifier never merges again — `a:b:c` yields
+   * `a:b` + `:c`, byte-matching the English extractor's single-segment merge.
+   */
+  private static readonly ASCII_WORD = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+  /** `:name` — only a variable-ref-style extractor ever emits this token shape. */
+  private static readonly COLON_QUALIFIER = /^:[A-Za-z_][A-Za-z0-9_]*$/;
+
+  /**
+   * Fuse `name` + `:qualifier` into ONE identifier (`draggable:start`).
+   *
+   * `:name` is hyperscript's local-variable sigil, but a colon IMMEDIATELY
+   * preceded by an identifier is a qualifier (custom event namespace), not a
+   * sigil. The English tokenizer already merges these inside
+   * EnglishKeywordExtractor; this post-pass gives the other 23 languages the
+   * same stream. Strict position adjacency is the discriminator: whitespace
+   * between the tokens (`trigger :start`) breaks `end === start`, so a spaced
+   * local-variable reference survives untouched.
+   *
+   * Self-gating for non-hyperscript tokenizers (domain DSLs): their extractor
+   * sets tokenize `:` as bare punctuation (length 1), which never matches
+   * COLON_QUALIFIER, so this pass is a no-op for them.
+   */
+  protected mergeColonQualifiedNames(tokens: LanguageToken[]): LanguageToken[] {
+    const out: LanguageToken[] = [];
+    for (const tok of tokens) {
+      const prev = out[out.length - 1];
+      // No kind gate: the English extractor merges before classification, so a
+      // word some language classifies as particle/keyword (es `a`, tr `i`)
+      // must fuse the same way. ASCII_WORD already excludes every non-word
+      // kind structurally (selectors, urls, numbers, strings, operators).
+      if (
+        prev &&
+        BaseTokenizer.ASCII_WORD.test(prev.value) &&
+        BaseTokenizer.COLON_QUALIFIER.test(tok.value) &&
+        prev.position.end === tok.position.start
+      ) {
+        const merged = prev.value + tok.value;
+        // Re-classify and drop normalized/stem/metadata — the merged word is no
+        // longer the keyword the pieces may have been (matches the en shape).
+        out[out.length - 1] = createToken(
+          merged,
+          this.classifyToken(merged),
+          createPosition(prev.position.start, tok.position.end)
+        );
+        continue;
+      }
+      out.push(tok);
+    }
+    return out;
   }
 
   /**

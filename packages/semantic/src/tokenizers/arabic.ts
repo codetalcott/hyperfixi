@@ -302,7 +302,9 @@ export class ArabicTokenizer extends BaseTokenizer {
       }
     }
 
-    return new TokenStreamImpl(tokens, this.language);
+    // This override skips the base loop, so apply its colon-qualifier merge
+    // explicitly — otherwise ar alone would keep splitting `draggable:start`.
+    return new TokenStreamImpl(this.mergeColonQualifiedNames(tokens), this.language);
   }
 
   classifyToken(token: string): TokenKind {

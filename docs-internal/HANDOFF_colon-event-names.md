@@ -1,5 +1,29 @@
 # Handoff: a colon-qualified custom event name is split by every non-en tokenizer
 
+> **RESOLVED 2026-07-10** (branch `fix/colon-qualified-event-names`). The tokenizer
+> split was real but was only one of THREE stacked causes behind the ten flagged rows:
+>
+> 1. **Tokenizer colon-split** (this doc's diagnosis) — fixed by a colon-qualifier
+>    merge post-pass in framework `BaseTokenizer.tokenizeWithExtractors`
+>    (`mergeColonQualifiedNames`), inherited by all 24 tokenizers (Arabic's
+>    `tokenizeWithExtractors` override routes through it explicitly). CSS
+>    pseudo-classes (`#x:hover`, `.a:not(.b)`) — split even in en — also fixed, in
+>    `CssSelectorExtractor` (user-approved scope extension).
+> 2. **hi/qu trigger marker mismatch** — the corpus marks trigger's event
+>    accusatively (`को`/`ta`) but the profiles' event marker is the on-handler one
+>    (`पर`/locative `pi`), so the fused line STILL fell to the on-handler reading (hi)
+>    or failed (qu). Fixed via trigger-schema `markerVariants` (#588 machinery).
+> 3. **ms phantom possessive** — `… ke ia` + next line `ukur y` read `ia ukur` as
+>    `it.measure`, swallowing the measure. Fixed by a COMMAND_ACTION_KEYWORDS guard on
+>    the possessive property head in `tryMatchPossessiveExpression`.
+>
+> Result: hi/ja/ko/ms `avgMultisetRecall` 0.99934 → **1.0**; qu 0.99884 → 0.99950.
+> The en reference and every per-pattern baseline entry stayed byte-identical.
+> Remaining: qu `behavior-resizable`'s two style `set`s (i18n reorder places `tukuy`
+> before the verb-final tail — NOT a tokenizer issue), the bn standalone trigger gap,
+> and the proposed R3 role-value audit — all tracked in
+> `docs-internal/MULTILINGUAL_NEXT_STEPS.md` ("Colon-event-names follow-ups").
+
 ## Context
 
 Surfaced by the **multiset-recall ratchet** (R0-recall-multiset), added alongside the

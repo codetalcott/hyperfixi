@@ -1,16 +1,13 @@
 /**
  * Draggable Behavior Pattern Tests
  *
- * Tests semantic layer support for the complex draggable behavior example.
- * Each feature is tested across all 13 supported languages.
+ * Tests semantic layer support for the complex draggable behavior example
+ * across all 24 priority languages.
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse } from '../src/parser/semantic-parser';
+import { parse, canParse } from '../src';
 import type { CommandSemanticNode, EventHandlerSemanticNode } from '../src/types';
-
-// All 13 supported languages
-const LANGUAGES = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'];
 
 // =============================================================================
 // Phase 1: Existing Commands - Verify trigger and halt
@@ -33,34 +30,66 @@ describe('Phase 1: Verify Existing Commands', () => {
       expect(eventRole.raw || eventRole.value).toBe('draggable:start');
     });
 
-    // Test multilingual trigger
+    // Multilingual trigger — corpus-canonical forms (pattern_translations for
+    // behavior-draggable), all 24 priority languages. These are HARD
+    // assertions on the captured event-name ROLE VALUE, not just the action
+    // set: the colon-split tokenizer bug produced the right trigger count
+    // with a truncated name (`draggable` instead of `draggable:start`) in ms,
+    // which no action/role-type signal could see.
     const triggerTestCases = [
       { lang: 'en', input: 'trigger draggable:start' },
-      { lang: 'ja', input: 'draggable:start を トリガー' },
       { lang: 'ar', input: 'تشغيل draggable:start' },
-      { lang: 'es', input: 'disparar draggable:start' },
-      { lang: 'ko', input: 'draggable:start 트리거' },
-      { lang: 'zh', input: '触发 draggable:start' },
-      { lang: 'tr', input: 'tetikle draggable:start' },
-      { lang: 'pt', input: 'disparar draggable:start' },
-      { lang: 'fr', input: 'déclencher draggable:start' },
       { lang: 'de', input: 'auslösen draggable:start' },
+      { lang: 'es', input: 'disparar draggable:start' },
+      { lang: 'fr', input: 'déclencher draggable:start' },
+      { lang: 'he', input: 'הפעל את draggable:start' },
+      { lang: 'hi', input: 'draggable:start को ट्रिगर' },
       { lang: 'id', input: 'picu draggable:start' },
-      { lang: 'qu', input: 'qallarichiy draggable:start' },
+      { lang: 'it', input: 'scatenare draggable:start' },
+      { lang: 'ja', input: 'draggable:start を 引き金' },
+      { lang: 'ko', input: 'draggable:start 를 트리거' },
+      { lang: 'ms', input: 'cetuskan draggable:start' },
+      { lang: 'pl', input: 'wyzwól draggable:start' },
+      { lang: 'pt', input: 'disparar draggable:start' },
+      { lang: 'qu', input: 'draggable:start ta kichay' },
+      { lang: 'ru', input: 'запустить draggable:start' },
       { lang: 'sw', input: 'chochea draggable:start' },
+      { lang: 'th', input: 'ทริกเกอร์ draggable:start' },
+      { lang: 'tl', input: 'palitawin draggable:start' },
+      { lang: 'tr', input: 'draggable:start i tetikle' },
+      { lang: 'uk', input: 'запустити draggable:start' },
+      { lang: 'vi', input: 'kích hoạt draggable:start' },
+      { lang: 'zh', input: '触发 把 draggable:start' },
     ];
 
     it.each(triggerTestCases)(
-      'parses trigger in $lang: "$input"',
+      'parses trigger in $lang with the full event name: "$input"',
       ({ lang, input }) => {
-        const canParseResult = canParse(input, lang);
-        if (canParseResult) {
-          const node = parse(input, lang) as CommandSemanticNode;
-          expect(node.action).toBe('trigger');
-        } else {
-          // Mark as skipped for now - we'll fix these
-          console.log(`  [SKIP] ${lang}: "${input}" - not yet supported`);
-        }
+        const node = parse(input, lang) as CommandSemanticNode;
+        expect(node, `${lang}: "${input}" did not parse`).not.toBeNull();
+        expect(node.action).toBe('trigger');
+        const eventRole = node.roles.get('event') as { raw?: unknown; value?: unknown };
+        expect(
+          String(eventRole?.raw ?? eventRole?.value),
+          `${lang}: captured event name must keep the :qualifier`
+        ).toBe('draggable:start');
+      }
+    );
+
+    // Pre-existing STANDALONE parse gap, unrelated to tokenization (verified
+    // byte-identical before/after the colon-qualifier tokenizer fix): bn
+    // throws on the bare corpus trigger line — its trigger pattern does not
+    // accept the accusative কে-marked event (hi/qu had the same gap, fixed by
+    // the trigger schema's markerVariants). bn's full-body captures are
+    // unaffected (baseline multiset 1.0). `it.fails` flips visibly when the
+    // standalone form starts parsing.
+    const knownStandaloneGaps = [{ lang: 'bn', input: 'draggable:start কে ট্রিগার' }];
+
+    it.fails.each(knownStandaloneGaps)(
+      'standalone trigger in $lang is a known parse gap: "$input"',
+      ({ lang, input }) => {
+        const node = parse(input, lang) as CommandSemanticNode;
+        expect(node.action).toBe('trigger');
       }
     );
   });
