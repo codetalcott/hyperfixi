@@ -540,6 +540,33 @@ export class PatternMatcher {
       }
     }
 
+    // A sequence CONNECTIVE (`then`) or stray BLOCK TERMINATOR (`end`), by
+    // normalized form, is never a role VALUE on any command. The trailing
+    // marker-less optional {quantity} slot of the generated increment
+    // patterns otherwise swallows the normalized connective that opens the
+    // next statement (it `allora`, pl `wtedy`, ar `ثم` → quantity:literal=
+    // "then" — increment by NaN at runtime; repeat-while/repeat-until-event
+    // across it/ms/pl/ru/uk/ar/tl/vi), and the generated verb-first wait
+    // duration slot swallows a following তারপর/শেষ the same way (bn
+    // duration="then"/"end" ×5 — R3 families F1/F2). Kind-gated to `keyword`
+    // so a string literal "then" (kind `literal`) is untouched; en
+    // connectives normalize identically, so the reference parse and every
+    // translation change symmetrically. Multi-token literal phrases (`at end
+    // of`) match via matchLiteralToken and never reach this. Deliberately NOT
+    // the full CLAUSE_BOUNDARY_KEYWORDS set: `and` collides with the
+    // untranslated English pronoun `I` (pl `i` = and — the unless-condition
+    // corpus), and `end` keeps its positional-`last` reading before a
+    // selector (bn `শেষ <li/>`, the isBlockEndToken lookahead). An optional
+    // slot skips (the schema default fills, e.g. quantity=1); a required slot
+    // fails the pattern — the same net effect as the load-bearing
+    // capture-and-fail (see the trailing-verb guard below).
+    if (token.kind === 'keyword') {
+      const connNorm = (token.normalized ?? token.value).toLowerCase();
+      if (connNorm === 'then' || (connNorm === 'end' && tokens.peek(1)?.kind !== 'selector')) {
+        return patternToken.optional || false;
+      }
+    }
+
     // A `duration` slot is never a positional/scope keyword. The temporal
     // `in {duration}` idiom (`in 2s`) otherwise greedily swallows a *locative*
     // `in closest <form/>` (the scope of `focus first <input/> in closest <form/>`)

@@ -12652,6 +12652,68 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
   const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
     nodes.find(n => n.action === action);
 
+  describe('F1: connective/terminator swallowed as a role value', () => {
+    // The generated increment patterns' trailing marker-less optional
+    // {quantity} slot captured the normalized connective opening the NEXT
+    // statement (it `allora`, pl `wtedy` → quantity:literal="then" —
+    // increment by NaN at runtime), and the generated verb-first bn wait's
+    // duration slot swallowed a following তারপর/শেষ the same way. The
+    // matchRoleToken guard now rejects a keyword-kind normalized `then` (and
+    // a non-positional `end`) as a role value; the schema/extraction default
+    // fills instead (quantity=1), byte-aligned with en.
+    const INCREMENT_LINES: Array<[string, string]> = [
+      ['it', 'su clic ripetere mentre #counter.innerText < 10 allora incrementare #counter allora aspettare 200ms fine'],
+      ['ms', 'apabila click ulang selagi #counter.innerText < 10 kemudian tambah_satu #counter kemudian tunggu 200ms tamat'],
+      ['pl', 'gdy kliknięcie powtórz dopóki #counter.innerText < 10 wtedy zwiększ #counter wtedy czekaj 200ms koniec'],
+      ['ru', 'при клик повторить пока #counter.innerText < 10 затем увеличить #counter затем ждать 200ms конец'],
+      ['uk', 'при клік повторити поки #counter.innerText < 10 тоді збільшити #counter тоді чекати 200ms кінець'],
+      ['vi', 'khi nhấp lặp lại trong khi #counter.innerText < 10 rồi tăng #counter rồi chờ 200ms kết thúc'],
+      ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
+      ['tl', 'kapag mousedown ulitin hanggang pangyayari mouseup pagkatapos dagdagan #counter pagkatapos maghintay 100ms wakas'],
+    ];
+
+    it.each(INCREMENT_LINES)('[%s] repeat body: increment quantity defaults to 1, never "then"', (lang, line) => {
+      const nodes = collect(parse(line, lang));
+      const inc = first(nodes, 'increment');
+      expect(role(inc, 'patient')?.value, `${lang} increment patient`).toBe('#counter');
+      const q = role(inc, 'quantity')?.value;
+      // The generated pattern's extraction default fills 1; a hand pattern may
+      // leave it absent for fillSchemaDefaults — either way, never the connective.
+      if (q !== undefined) expect(q, `${lang} increment quantity`).toBe(1);
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value, `${lang} wait duration`).toMatch(/^\d+ms$/);
+    });
+
+    // The five bn wait rows the handoff filed under F2: same mechanism, the
+    // verb-first wait duration slot capturing তারপর (then) / শেষ (end).
+    const BN_WAIT_LINES: Array<[string, string, string]> = [
+      ['copy-to-clipboard', 'navigator.clipboard.writeText(#code.innerText) কে ক্লিক এ কল তারপর "Copied!" কে আমি তে রাখুন তারপর 2s কে অপেক্ষা তারপর "Copy" কে আমি তে রাখুন', '2s'],
+      ['repeat-forever', 'লোড এ পুনরাবৃত্তি চিরকাল .pulse কে টগল তারপর 1s কে অপেক্ষা শেষ', '1s'],
+      ['repeat-until-event', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
+      ['stagger-animation', 'লোড এ পুনরাবৃত্তি item এ .item কে জন্য সূচক দিয়ে তারপর .visible কে যোগ item তে তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
+      ['tell-other-element', '#panel কে ক্লিক এ বলুন তারপর .open কে যোগ তারপর 200ms কে অপেক্ষা তারপর .visible কে যোগ', '200ms'],
+    ];
+
+    it.each(BN_WAIT_LINES)('[bn] %s: wait duration is the real time literal', (_pattern, line, duration) => {
+      const nodes = collect(parse(line, 'bn'));
+      const wait = first(nodes, 'wait');
+      expect(role(wait, 'duration')?.value).toBe(duration);
+    });
+
+    it('both-ways locks: explicit quantities survive the guard', () => {
+      const en = first(collect(parse('increment #counter by 5', 'en')), 'increment');
+      expect(role(en, 'quantity')?.value).toBe(5);
+      const it_ = first(collect(parse('incrementare #counter di 5', 'it')), 'increment');
+      expect(role(it_, 'quantity')?.value).toBe(5);
+    });
+
+    it('[en] at-end control: the multi-token literal manner phrase is untouched', () => {
+      const put = first(collect(parse('on click put "x" at end of #log', 'en')), 'put');
+      expect(role(put, 'manner')?.value).toBe('at end of');
+      expect(role(put, 'destination')?.value).toBe('#log');
+    });
+  });
+
   describe('F2: bn stray block terminator glued into role values', () => {
     // The bn repeat-while corpus renders wait's object phrase as
     // `200ms শেষ কে অপেক্ষা` — the i18n reorder absorbs the block terminator
