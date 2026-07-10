@@ -12858,6 +12858,102 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 
+  describe('F7: qu/tr behavior-sortable trigger residue (re-filed to the transformer arc)', () => {
+    // KNOWN RESIDUE — re-filed, not a parser gap (see MULTILINGUAL_NEXT_STEPS
+    // § R3 families, item 7). The command-level action multiset matches en in
+    // BOTH languages; only the VALUES around the loop's wait line corrupt,
+    // and every miss sits adjacent to a malformed i18n render:
+    //   tr line 15: `kadar olay pointerup i tekrarla belge den` — the
+    //     from-phrase strands AFTER the verb (en: repeat until event
+    //     pointerup from document);
+    //   tr line 16: `bekle pointermove(clientY) veya pointerup(clientY)
+    //     belge den` — verb-FIRST in an SOV language, or-run + from-phrase
+    //     stranded post-verb (the middle trigger captures the stranded
+    //     `belge` as its event);
+    //   qu line 16: `qillqa manta suyay pointermove(clientY) utaq
+    //     pointerup(clientY)` — verb-MEDIAL, or-run stranded post-verb (the
+    //     middle trigger glues the whole stranded run into its event).
+    // Same family as the qu behavior-resizable it.fails above (the reorder
+    // renders fragments outside their clause). These flip when the
+    // transformer rendering is repaired.
+    const QU_SORTABLE = [
+      'Sortable(dragClass) ta behavior',
+      '    init',
+      '        sichus dragClass kanqa mana_riqsisqa',
+      '            dragClass ta "sorting" man churanay',
+      '        tukuy',
+      '    tukuy',
+      '    noqa manta pointerdown(clientY) pi',
+      '        item ta the target.closest("li") man churanay',
+      '        sichus item kanqa chusaq',
+      '            lluqsiy',
+      '        tukuy',
+      '        the ruway ta sayay',
+      '        .{dragClass} ta item man yapay',
+      '        sortable:start ta noqa man kichay',
+      '        hayk_akama ruway pointerup ta qillqa manta kutipay',
+      '            qillqa manta suyay pointermove(clientY) utaq pointerup(clientY)',
+      '            sortable:move ta noqa man kichay',
+      '        tukuy',
+      '        .{dragClass} ta item manta qichuy',
+      '        sortable:end ta noqa man kichay',
+      '    tukuy',
+      'tukuy',
+    ].join('\n');
+
+    const TR_SORTABLE = [
+      'Sortable(dragClass) i behavior',
+      '    init',
+      '        eğer dragClass dir tanımsız',
+      '            dragClass i "sorting" e ayarla',
+      '        son',
+      '    son',
+      '    pointerdown(clientY) de ben den',
+      '        item i the target.closest("li") e ayarla',
+      '        eğer item dir boş',
+      '            çık',
+      '        son',
+      '        the olay i durdur',
+      '        .{dragClass} i ekle item e',
+      '        sortable:start i tetikle ben e',
+      '        kadar olay pointerup i tekrarla belge den',
+      '            bekle pointermove(clientY) veya pointerup(clientY) belge den',
+      '            sortable:move i tetikle ben e',
+      '        son',
+      '        .{dragClass} i kaldır item den',
+      '        sortable:end i tetikle ben e',
+      '    son',
+      'son',
+    ].join('\n');
+
+    const triggerValues = (nodes: Record<string, any>[]): string[] =>
+      nodes.filter(n => n.action === 'trigger').map(n => String(role(n, 'event')?.raw ?? role(n, 'event')?.value ?? '?'));
+
+    it.fails('[qu] behavior-sortable: all three trigger events by VALUE (reorder residue)', () => {
+      const nodes = collect(parse(QU_SORTABLE, 'qu'));
+      expect(triggerValues(nodes).sort()).toEqual(
+        ['sortable:start', 'sortable:move', 'sortable:end'].sort()
+      );
+    });
+
+    it.fails('[tr] behavior-sortable: sortable:move + bare remove patient (reorder residue)', () => {
+      const nodes = collect(parse(TR_SORTABLE, 'tr'));
+      expect(triggerValues(nodes)).toContain('sortable:move');
+      const rm = first(nodes, 'remove');
+      expect(role(rm, 'patient')?.value).toBe('.{dragClass}');
+    });
+
+    it('[qu/tr] behavior-sortable: command-level actions all survive (only values corrupt)', () => {
+      const enActions = collect(parse(TR_SORTABLE, 'tr')).map(n => n.action);
+      for (const [lang, src] of [['qu', QU_SORTABLE], ['tr', TR_SORTABLE]] as const) {
+        const acts = collect(parse(src, lang)).map(n => n.action);
+        expect(acts.filter(a => a === 'trigger').length, `${lang} trigger count`).toBe(3);
+        expect(acts, `${lang} has remove`).toContain('remove');
+      }
+      expect(enActions).toContain('repeat');
+    });
+  });
+
   describe('F8: ms repeat-times count word', () => {
     // `ulang 3 kali` fell through the repeat-ms-times HEAD (whose count word
     // was left as English `times`) to the generated positional repeat, which
