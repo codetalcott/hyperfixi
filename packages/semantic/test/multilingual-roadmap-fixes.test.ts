@@ -12612,3 +12612,60 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
     expect(count(nodes, 'set')).toBe(12);
   });
 });
+
+describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', () => {
+  // The R3 value-recall signal compares language-invariant role VALUES verbatim
+  // against the en reference. Its first sweep surfaced eight bug families —
+  // right actions, right role types, wrong or dropped VALUES — invisible to
+  // every recall/role-type signal. These lock the corpus-shaped inputs per
+  // family. Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('F8: ms repeat-times count word', () => {
+    // `ulang 3 kali` fell through the repeat-ms-times HEAD (whose count word
+    // was left as English `times`) to the generated positional repeat, which
+    // bound the count to loopType (`loopType=3`, no quantity — en reference:
+    // quantity=3, loopType="times").
+    it('[ms] repeat-times: ulang 3 kali captures quantity=3, loopType="times"', () => {
+      const nodes = collect(
+        parse('apabila click ulang 3 kali kemudian tambah "<p>Line</p>" ke saya', 'ms')
+      );
+      const rpt = first(nodes, 'repeat');
+      expect(role(rpt, 'quantity')?.value).toBe(3);
+      expect(role(rpt, 'loopType')?.value).toBe('times');
+      // The loop body must survive the head re-parse swap.
+      expect(first(nodes, 'add')).toBeDefined();
+    });
+  });
+});

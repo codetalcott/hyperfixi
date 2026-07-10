@@ -78,7 +78,7 @@ const VERB_FIRST_REPEAT_TIMES: Array<[string, string, string, string?]> = [
   ['ar', 'كرر', 'times'],
   ['he', 'חזור', 'times', 'את'],
   ['id', 'ulangi', 'times'],
-  ['ms', 'ulang', 'times'],
+  ['ms', 'ulang', 'kali'],
   ['sw', 'rudia', 'times'],
   ['th', 'ทำซ้ำ', 'ครั้ง'],
   ['vi', 'lặp lại', 'lần'],
