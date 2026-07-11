@@ -3184,9 +3184,21 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private mapRoleForCommand(
     markerRole: string,
-    _action: string,
+    action: string,
     existingRoles: Record<string, SemanticValue>
   ): string | null {
+    // `set`'s surface order is DESTINATION-first (`set <dest> to <value>`), so
+    // the SOV reorder marks the DESTINATION with the patient particle (`$x を
+    // beep! 私の値 に 設定`) and the VALUE with the destination particle —
+    // systematically, not just on slot collision. The collision-only swap
+    // below left every fallback-parsed set with flipped roles vs the en
+    // reference (beep-debug-expression across the SOV cohort, R1 Family D).
+    // set only: `put <value> into <dest>` is VALUE-first, so put's patient
+    // particle really does mark the patient.
+    if (action === 'set') {
+      if (markerRole === 'patient') markerRole = 'destination';
+      else if (markerRole === 'destination') markerRole = 'patient';
+    }
     // Direct mapping — if the role isn't taken yet, use it
     if (!existingRoles[markerRole]) {
       return markerRole;
@@ -3300,6 +3312,14 @@ export class SemanticParserImpl implements ISemanticParser {
     }
     if (val === 'false' || val === '偽' || val === '거짓' || val === 'yanlış') {
       return createLiteral(false);
+    }
+
+    // Variable references (`:local` / `$global`) — mirrors the pattern-path
+    // single-token classifier; without this branch a fallback-captured `$x`
+    // fell to the literal default while every pattern capture (and the en
+    // reference) types it reference (R1 Family D, beep-debug-expression).
+    if (val.length > 1 && (val.startsWith(':') || val.startsWith('$'))) {
+      return createReference(val as Parameters<typeof createReference>[0]);
     }
 
     // References: me, it, you (check normalized form)

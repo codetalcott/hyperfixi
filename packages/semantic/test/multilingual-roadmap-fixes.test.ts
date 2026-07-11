@@ -13330,3 +13330,70 @@ describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (do
     expect(countWaits(node)).toBe(1);
   });
 });
+
+describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The verb-anchoring fallback's typing (tokensToSemanticValue /
+  // tokenToSemanticValue) diverged from the pattern path the en reference
+  // uses — bare sigil refs fell to literal, multi-token runs glue+first-token
+  // type only. Each increment mirrors one pattern-path behavior, gated so
+  // untouched inputs are byte-identical. Corpus strings are canonical
+  // pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('D1: sigil reference + set marker-role swap (beep-debug-expression)', () => {
+    // The fallback typed `$x` literal (no `:local`/`$global` branch) AND
+    // mapped set's ta/を-marked DESTINATION to patient — set's surface order
+    // is dest-first, so the SOV patient particle systematically marks the
+    // destination. en: destination:reference="$x" + patient:literal.
+    const ROWS: Array<[string, string]> = [
+      ['ja', '$x を beep! 私の 値 に 設定 クリック で'],
+      ['ko', '$x 를 beep! 내 값 에 설정 클릭 할 때'],
+      ['tr', '$x i beep! benim değer e ayarla tıklama de'],
+      ['qu', '$x ta beep! noqaq chanin man ñitiy pi churanay'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] fallback set: $x lands as destination:reference, value as patient:literal`, () => {
+        const s = first(collect(parse(src, lang)), 'set');
+        expect(s).toBeDefined();
+        expect(role(s, 'destination')).toMatchObject({ type: 'reference', value: '$x' });
+        expect(role(s, 'patient')?.type).toBe('literal');
+      });
+    }
+
+    it('[ja] put keeps its natural mapping (no swap): patient stays the を-marked value', () => {
+      // put is VALUE-first — its patient particle really marks the patient.
+      const p = first(collect(parse('"hello" を #output に 置く', 'ja')), 'put');
+      expect(p).toBeDefined();
+      expect(role(p, 'patient')?.value).toBe('hello');
+      expect(role(p, 'destination')?.value).toBe('#output');
+    });
+  });
+});
