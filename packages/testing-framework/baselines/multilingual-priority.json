@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-07-11T14:20:59.958Z",
-  "commit": "a0a3abea",
+  "timestamp": "2026-07-11T14:30:15.580Z",
+  "commit": "4199a0dd",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -640,11 +640,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8611474573880582,
+      "avgConfidence": 0.8643942106348115,
       "avgFidelity": 1,
       "avgPrecision": 0.9989716846334493,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9950980392156863,
+      "avgRoleFidelity": 0.9961873638344226,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -833,6 +833,10 @@
           "confidence": 1
         },
         "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -1201,10 +1205,6 @@
           "confidence": 0.5
         },
         "async-block": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 0.5
         },
@@ -4439,7 +4439,7 @@
       "avgFidelity": 1,
       "avgPrecision": 0.9978354978354977,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9896514161220045,
+      "avgRoleFidelity": 0.9907407407407406,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -6337,11 +6337,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8532624852173719,
+      "avgConfidence": 0.8565092384641251,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9950980392156863,
+      "avgRoleFidelity": 0.9961873638344226,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -6534,6 +6534,10 @@
           "confidence": 1
         },
         "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -6889,10 +6893,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "form-submit-prevent": {
-          "success": true,
-          "confidence": 0.5
-        },
         "window-keydown": {
           "success": true,
           "confidence": 0.5
@@ -6971,11 +6971,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8482119801668667,
+      "avgConfidence": 0.8514587334136199,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9918300653594772,
+      "avgRoleFidelity": 0.9929193899782135,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -7168,6 +7168,10 @@
           "confidence": 1
         },
         "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -7512,10 +7516,6 @@
           "confidence": 0.5
         },
         "async-block": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 0.5
         },
@@ -9507,11 +9507,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7349000206143064,
+      "avgConfidence": 0.7381467738610596,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.980485527544351,
+      "avgRoleFidelity": 0.9815748521630874,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -9644,6 +9644,10 @@
           "confidence": 1
         },
         "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -9960,10 +9964,6 @@
           "confidence": 0.5
         },
         "input-clear": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 0.5
         },
@@ -12677,11 +12677,11 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8521493126756279,
+      "avgConfidence": 0.8553960659223812,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9940087145969497,
+      "avgRoleFidelity": 0.9961873638344226,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
@@ -12870,6 +12870,10 @@
           "confidence": 1
         },
         "input-validation": {
+          "success": true,
+          "confidence": 1
+        },
+        "form-submit-prevent": {
           "success": true,
           "confidence": 1
         },
@@ -13226,10 +13230,6 @@
           "confidence": 0.5
         },
         "async-block": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "form-submit-prevent": {
           "success": true,
           "confidence": 0.5
         },

@@ -13578,3 +13578,63 @@ describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-in
     expect(node?.eventModifiers?.debounce).toBe(300);
   });
 });
+
+describe('R1 deferred-tail Family H: fused halt+call renders verb-final and parses like en (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // form-submit-prevent: en `on submit halt the event call validateForm() if
+  // result is false log "Invalid form" end` → halt.patient:reference=event +
+  // call.patient:expression=validateForm(). The old SOV renders interleaved
+  // the two commands across the fused clause (halt captured ZERO roles; tr
+  // swapped the operands). Corpus strings below are the sovHaltCallFusedRule
+  // renders (canonical pattern_translations rows after re-populate).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const ROWS: Array<[string, string]> = [
+    ['ja', 'the イベント を 送信 で 停止 それから validateForm() を 呼び出し もし 結果 である 偽 "Invalid form" を 記録 終わり'],
+    ['ko', 'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출 만약 결과 이다 거짓 "Invalid form" 를 로그 끝'],
+    ['tr', 'the olay i gönder de durdur ardından validateForm() i çağır eğer sonuç dir yanlış "Invalid form" i kaydet son'],
+    ['bn', 'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল যদি ফলাফল হয় মিথ্যা "Invalid form" কে লগ শেষ'],
+    ['hi', 'the घटना को जमा पर रोकें फिर validateForm() को कॉल अगर परिणाम है झूठ "Invalid form" को लॉग समाप्त'],
+    ['qu', 'the ruway ta kachay pi sayay chayqa validateForm() ta qayay sichus lluqsiy kanqa llulla "Invalid form" ta qillqakuy tukuy'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] form-submit-prevent: halt.patient:reference + call.patient:expression, if/log intact`, () => {
+      const cmds = collect(parse(src, lang));
+      const actions = new Set(cmds.map(c => c.action));
+      for (const a of ['on', 'halt', 'call', 'if', 'log']) expect(actions.has(a)).toBe(true);
+      const halt = cmds.find(c => c.action === 'halt');
+      expect(role(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+      const call = cmds.find(c => c.action === 'call');
+      expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'validateForm()' });
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmds = collect(
+      parse(
+        'on submit halt the event call validateForm() if result is false log "Invalid form" end',
+        'en'
+      )
+    );
+    const halt = cmds.find(c => c.action === 'halt');
+    expect(role(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+    const call = cmds.find(c => c.action === 'call');
+    expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'validateForm()' });
+  });
+});
