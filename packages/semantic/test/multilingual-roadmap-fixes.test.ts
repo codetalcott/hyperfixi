@@ -13144,3 +13144,126 @@ describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render 
     expect(role(f, 'source')?.value).toBe('/api/form');
   });
 });
+
+describe('R1 Family B: qu set — oblique manta source + whole backtick templates (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // Two independent qu-only defects flattened every hard set row to the
+  // verb-anchoring fallback (destination:literal / patient:selector, vs en's
+  // destination:property-path / patient:expression):
+  //  (1) the transformer renders the handler's from-phrase INSIDE the body
+  //      clause (`<dest> ta <src> manta <value> man … churanay`) and no set
+  //      pattern had a source slot — set-qu-oblique-source adds the shape;
+  //  (2) the qu string extractor lacked the backtick branch every other
+  //      language has, so template literals shattered into ~12 fragments and
+  //      no pattern could match the clause at all.
+  // Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  it('[qu] two-way-binding: property-path destination + expression patient through the oblique source', () => {
+    const nodes = collect(
+      parse(
+        '#greeting.innerText ta #firstName manta "Hello, " + noqaq chanin man yaykuchiy pi churanay',
+        'qu'
+      )
+    );
+    const s = first(nodes, 'set');
+    expect(s).toBeDefined();
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toContain('noqaq chanin');
+    expect(role(s, 'source')?.value).toBe('#firstName');
+  });
+
+  it('[qu] computed-value: parenthesized operator-run patient stays one expression', () => {
+    const nodes = collect(
+      parse(
+        '#total.innerText ta .quantity manta (the chanin pa #price hina Number) * (noqaq chanin hina Number) man yaykuchiy pi churanay',
+        'qu'
+      )
+    );
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toContain('#price');
+  });
+
+  it('[qu] template-literal-interpolation: backtick template survives as one token', () => {
+    const nodes = collect(parse('noqaq innerHTML ta `<li>${$item.name}</li>` man ñitiy pi churanay', 'qu'));
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toBe('`<li>${$item.name}</li>`');
+  });
+
+  it('[qu] template-literal-list-build: the middle set keeps its operator-run expression patient', () => {
+    const nodes = collect(
+      parse(
+        '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay',
+        'qu'
+      )
+    );
+    const sets = nodes.filter(n => n.action === 'set');
+    expect(sets.length).toBe(3);
+    expect(role(sets[1], 'destination')?.type).toBe('reference');
+    expect(role(sets[1], 'patient')?.type).toBe('expression');
+    expect(role(sets[1], 'patient')?.raw).toContain('`<li>${item.name}</li>`');
+    // Final set: property-path destination, unchanged by the new pattern.
+    expect(role(sets[2], 'destination')?.type).toBe('property-path');
+  });
+
+  it('[qu] backtick template tokenizes as a single token (framework-extractor parity)', () => {
+    const res: any = getTokenizer('qu').tokenize('$html + `<li>${item.name}</li>` man');
+    const toks = (Array.isArray(res) ? res : (res.tokens ?? [])).filter(
+      (t: any) => t.kind !== 'whitespace'
+    );
+    expect(toks.map((t: any) => t.value)).toContain('`<li>${item.name}</li>`');
+  });
+
+  it("[qu] glottalized words still tokenize whole (ch'usaq apostrophe unaffected by the backtick branch)", () => {
+    const res: any = getTokenizer('qu').tokenize("chayqa ch'usaq man churanay");
+    const toks = (Array.isArray(res) ? res : (res.tokens ?? [])).filter(
+      (t: any) => t.kind !== 'whitespace'
+    );
+    expect(toks.map((t: any) => t.value)).toContain("ch'usaq");
+  });
+
+  it('[qu] plain set (no manta phrase) still parses via the generated pattern', () => {
+    // The oblique-source pattern's manta group is REQUIRED, so it must not
+    // shadow the simple shape.
+    const nodes = collect(parse('$html ta "" man ñitiy pi churanay', 'qu'));
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.value).toBe('$html');
+    expect(role(s, 'patient')?.value).toBe('');
+    expect(role(s, 'source')).toBeUndefined();
+  });
+});

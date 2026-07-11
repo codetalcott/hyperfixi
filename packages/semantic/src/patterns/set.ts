@@ -1057,6 +1057,65 @@ function getSetPatternsZh(): LanguagePattern[] {
  * Get set patterns for a specific language.
  */
 /**
+ * Quechua (SOV) set with an interleaved oblique source phrase.
+ *
+ * The transformer renders `on input from #firstName set <dest> to <value>`
+ * with the handler's from-phrase INSIDE the body clause, between the
+ * ta-marked destination and the man-marked patient:
+ *   `#greeting.innerText ta #firstName manta "Hello, " + noqaq chanin man
+ *    yaykuchiy pi churanay`                (two-way-binding, computed-value)
+ * The generated `set-qu-generated` has no slot for `<source> manta`, so the
+ * whole clause fell to the verb-anchoring fallback, which can type neither
+ * the property-path destination nor the operator-run patient (destination
+ * came back `literal`, patient `selector`/`literal` — the R1 Family B
+ * cluster; en: destination:property-path + patient:expression via
+ * set-en-possessive).
+ *
+ * The manta group is REQUIRED here: the plain `{destination} ta {patient}
+ * man churanay` shape already parses correctly through the generated
+ * pattern, so this one fires only on the oblique-source shape and shadows
+ * nothing. The source lands on the node exactly as the fallback used to
+ * emit it (schema-extra, invisible to every signal). `churay` is
+ * deliberately absent from the verb list — it is qu's PUT verb (the de
+ * setzen-collision precedent).
+ */
+function getSetPatternsQu(): LanguagePattern[] {
+  return [
+    {
+      id: 'set-qu-oblique-source',
+      language: 'qu',
+      command: 'set',
+      priority: 105,
+      template: {
+        format: '{destination} ta {source} manta {patient} man churanay',
+        tokens: [
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'ta' },
+          {
+            type: 'role',
+            role: 'source',
+            expectedTypes: ['selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'manta' },
+          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'literal', value: 'man' },
+          { type: 'literal', value: 'churanay', alternatives: ['kamaykuy'] },
+        ],
+      },
+      extraction: {
+        destination: { position: 0 },
+        source: { position: 2 },
+        patient: { position: 4 },
+      },
+    },
+  ];
+}
+
+/**
  * Append an optional trailing `[on {scope}]` group to each hand-crafted set
  * pattern (S1 tabs-aria). These patterns tie the generated `set-*-generated`
  * pattern on priority and win on stable-sort order, so without the scope group
@@ -1119,6 +1178,8 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return withTrailingScope(getSetPatternsPl());
     case 'pt':
       return withTrailingScope(getSetPatternsPt());
+    case 'qu':
+      return withTrailingScope(getSetPatternsQu());
     case 'ru':
       return withTrailingScope(getSetPatternsRu());
     case 'sw':

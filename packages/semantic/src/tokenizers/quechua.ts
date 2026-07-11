@@ -26,19 +26,23 @@ import type { ValueExtractor, ExtractionResult } from './value-extractor-types';
 /**
  * Custom string literal extractor for Quechua.
  *
- * Accepts both double (") and single (') quotes. Single quotes are safe here
- * even though Quechua glottalizes with an apostrophe (`ch'usaq`, `ñit'iy`):
- * those apostrophes are always MID-word, and this extractor is only consulted at
- * a token-start position (after whitespace) — no Quechua word *starts* with `'`,
- * and the word/keyword extractor (registered after this one) consumes the whole
- * glottalized word before its apostrophe is ever a token boundary. Without single
- * quotes the corpus `'Saved!'` (make-toast) tokenized as `'Saved` + `!` + `'`.
+ * Accepts double (") and single (') quotes plus backtick templates. Single
+ * quotes are safe here even though Quechua glottalizes with an apostrophe
+ * (`ch'usaq`, `ñit'iy`): those apostrophes are always MID-word, and this
+ * extractor is only consulted at a token-start position (after whitespace) —
+ * no Quechua word *starts* with `'`, and the word/keyword extractor
+ * (registered after this one) consumes the whole glottalized word before its
+ * apostrophe is ever a token boundary. Without single quotes the corpus
+ * `'Saved!'` (make-toast) tokenized as `'Saved` + `!` + `'`. Backticks mirror
+ * the framework StringLiteralExtractor every other language uses — without
+ * them a template literal shattered into ~12 fragments and no set pattern
+ * could match the clause (template-literal-interpolation, R1 Family B).
  */
 class QuechuaStringLiteralExtractor implements ValueExtractor {
   readonly name = 'quechua-string-literal';
 
   canExtract(input: string, position: number): boolean {
-    return input[position] === '"' || input[position] === "'";
+    return input[position] === '"' || input[position] === "'" || input[position] === '`';
   }
 
   extract(input: string, position: number): ExtractionResult | null {
