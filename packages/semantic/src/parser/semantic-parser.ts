@@ -1287,9 +1287,40 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     // Extract the event name
-    const eventValue = match.captured.get('event');
+    let eventValue = match.captured.get('event');
     if (!eventValue) {
       throw new Error('Event handler pattern matched but no event captured');
+    }
+
+    // Canonicalize a native-word event capture. The fused *-sov-simple patterns
+    // bind the {event} token AS TOKENIZED, so a native event word registered
+    // only in eventNameTranslations (ja サイズ変更, ko 리사이즈, bn রিসাইজ) —
+    // not as a tokenizer keyword — lands raw and expression-typed, while the
+    // SOV-extraction path resolves it to the English literal. Which path ran
+    // was decided by junk ahead of the clause (the `debounced at 300ms` head),
+    // so the typing was path-incidental (window-resize R1). Gate to an exact
+    // table hit (→ English literal, the handler convention) or a bare
+    // KNOWN_EVENTS word typed expression (→ literal, same word); a genuine
+    // reactive/expression head (`my value`, parenthesized params) matches
+    // neither and is byte-identical.
+    {
+      const word =
+        eventValue.type === 'expression'
+          ? (eventValue as { raw?: unknown }).raw
+          : eventValue.type === 'literal'
+            ? eventValue.value
+            : undefined;
+      if (typeof word === 'string' && /^[^\s()[\]{}:]+$/.test(word)) {
+        const english = eventNameTranslations[language]?.[word];
+        if (english) {
+          eventValue = { type: 'literal', value: english, dataType: 'string' };
+        } else if (
+          eventValue.type === 'expression' &&
+          SemanticParserImpl.KNOWN_EVENTS.has(word.toLowerCase())
+        ) {
+          eventValue = { type: 'literal', value: word.toLowerCase(), dataType: 'string' };
+        }
+      }
     }
 
     // Extract event modifiers (.once, .debounce(), .throttle(), etc.)
@@ -5076,8 +5107,22 @@ export class SemanticParserImpl implements ISemanticParser {
       // Skip preposition tokens (sa, عند, at, etc.)
       if (nextIdx < allTokens.length) {
         const nextToken = allTokens[nextIdx];
-        // Skip keyword/particle tokens that are prepositions (not selectors, literals, etc.)
-        if (nextToken.kind === 'keyword' || nextToken.kind === 'particle') {
+        // Skip keyword/particle tokens that are prepositions (not selectors, literals, etc.).
+        // The SOV renders keep the en preposition untranslated (`debounced at
+        // 300ms …`), where `at` tokenizes as a bare IDENTIFIER — left in place
+        // it strands `at 300ms` junk at the clause head and the fused parse
+        // loses its trailing reclaims (event-debounce responseType). Skip one
+        // identifier only when a duration-shaped literal directly follows.
+        const after = allTokens[nextIdx + 1];
+        const identifierPreposition =
+          nextToken.kind === 'identifier' &&
+          after?.kind === 'literal' &&
+          /^\d+(ms|s|m)?$/.test(after.value);
+        if (
+          nextToken.kind === 'keyword' ||
+          nextToken.kind === 'particle' ||
+          identifierPreposition
+        ) {
           nextIdx++;
           tokensToSkip++;
         }

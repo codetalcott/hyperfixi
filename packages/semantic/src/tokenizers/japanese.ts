@@ -84,6 +84,12 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: '前', normalized: 'previous' },
   { native: '最も近い', normalized: 'closest' },
   { native: '親', normalized: 'parent' },
+  // Containment (`first <button/> in .modal`): the i18n dict emits の中, which
+  // otherwise splits の(particle) + 中(identifier) — the stray identifier broke
+  // the generated focus pattern's operand run (focus-trap Family G; tr/bn/hi
+  // work because their in-word is one token). Whole-token entry mirrors en's
+  // keyword `in` mid-run geometry.
+  { native: 'の中', normalized: 'in' },
 
   // Events
   { native: 'クリック', normalized: 'click' },

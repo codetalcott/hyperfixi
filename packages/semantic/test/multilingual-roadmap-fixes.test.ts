@@ -13519,3 +13519,264 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
     });
   });
 });
+
+describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // event-debounce: the en REFERENCE itself truncated the interpolated URL at
+  // the space inside `${my value}` (source:literal="/api/search?q=${my"), so
+  // every language "missed" against a junk denominator — ja captured
+  // source:expression="}". The extractor now carries `${…}` spans whole; the
+  // en value changed, so this is the R3 all-language realignment row.
+  // Corpus strings are canonical pattern_translations rows (full bodies).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const URL = '/api/search?q=${my value}';
+  const ROWS: Array<[string, string]> = [
+    ['en', 'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results'],
+    ['ja', 'debounced at 300ms /api/search?q=${my value} を 入力 で フェッチ json それから それ を #results に 置く'],
+    ['ko', 'debounced at 300ms /api/search?q=${my value} 를 입력 할 때 가져오기 json 로 그러면 그것 를 #results 에 넣다'],
+    ['tr', 'debounced at 300ms /api/search?q=${my value} i giriş de getir json olarak ardından o i #results e koy'],
+    ['bn', 'debounced at 300ms /api/search?q=${my value} কে ইনপুট এ আনুন json তারপর এটি কে #results তে রাখুন'],
+    ['hi', 'debounced at 300ms /api/search?q=${my value} को इनपुट पर लाएं json के रूप में फिर यह को #results में रखें'],
+    ['qu', 'debounced at 300ms /api/search?q=${my value} ta yaykuchiy pi apamuy json hina chayqa chay ta #results man churay'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] event-debounce captures the WHOLE interpolated URL as source:literal`, () => {
+      const cmds = collect(parse(src, lang));
+      expect(cmds.map(c => c.action)).toContain('fetch');
+      const f = cmds.find(c => c.action === 'fetch');
+      expect(role(f, 'source')).toMatchObject({ type: 'literal', value: URL });
+      // The un-truncated en parse matches fetch-en-with-response-type, so the
+      // denominator gained responseType — the six reach it through the cluster-B
+      // reclaim, which needs the `debounced at 300ms` head consumed WHOLE (the
+      // untranslated `at` tokenizes as an identifier; extractStandaloneModifiers
+      // skips it only when a duration literal follows).
+      expect(role(f, 'responseType')).toMatchObject({ type: 'expression', raw: 'json' });
+    });
+  }
+
+  it('[ja] the standalone-modifier head consumes its duration (no `at 300ms` junk)', () => {
+    const node = parse('debounced at 300ms /api/x を クリック で フェッチ', 'ja') as {
+      eventModifiers?: { debounce?: number };
+    };
+    expect(node?.eventModifiers?.debounce).toBe(300);
+  });
+});
+
+describe('R1 deferred-tail Family H: fused halt+call renders verb-final and parses like en (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // form-submit-prevent: en `on submit halt the event call validateForm() if
+  // result is false log "Invalid form" end` → halt.patient:reference=event +
+  // call.patient:expression=validateForm(). The old SOV renders interleaved
+  // the two commands across the fused clause (halt captured ZERO roles; tr
+  // swapped the operands). Corpus strings below are the sovHaltCallFusedRule
+  // renders (canonical pattern_translations rows after re-populate).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const ROWS: Array<[string, string]> = [
+    ['ja', 'the イベント を 送信 で 停止 それから validateForm() を 呼び出し もし 結果 である 偽 "Invalid form" を 記録 終わり'],
+    ['ko', 'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출 만약 결과 이다 거짓 "Invalid form" 를 로그 끝'],
+    ['tr', 'the olay i gönder de durdur ardından validateForm() i çağır eğer sonuç dir yanlış "Invalid form" i kaydet son'],
+    ['bn', 'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল যদি ফলাফল হয় মিথ্যা "Invalid form" কে লগ শেষ'],
+    ['hi', 'the घटना को जमा पर रोकें फिर validateForm() को कॉल अगर परिणाम है झूठ "Invalid form" को लॉग समाप्त'],
+    ['qu', 'the ruway ta kachay pi sayay chayqa validateForm() ta qayay sichus lluqsiy kanqa llulla "Invalid form" ta qillqakuy tukuy'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] form-submit-prevent: halt.patient:reference + call.patient:expression, if/log intact`, () => {
+      const cmds = collect(parse(src, lang));
+      const actions = new Set(cmds.map(c => c.action));
+      for (const a of ['on', 'halt', 'call', 'if', 'log']) expect(actions.has(a)).toBe(true);
+      const halt = cmds.find(c => c.action === 'halt');
+      expect(role(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+      const call = cmds.find(c => c.action === 'call');
+      expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'validateForm()' });
+    });
+  }
+
+  it('[en] the en reference parse is unchanged', () => {
+    const cmds = collect(
+      parse(
+        'on submit halt the event call validateForm() if result is false log "Invalid form" end',
+        'en'
+      )
+    );
+    const halt = cmds.find(c => c.action === 'halt');
+    expect(role(halt, 'patient')).toMatchObject({ type: 'reference', value: 'event' });
+    const call = cmds.find(c => c.action === 'call');
+    expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'validateForm()' });
+  });
+});
+
+describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the fold (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // focus-trap: en `if target matches last <button/> in .modal focus first
+  // <button/> in .modal halt end` → focus.patient:expression. SOV renders had
+  // no boundary between the condition tail and the positional-headed branch
+  // operand, so the fold's condition scan swallowed the operand head (ja fell
+  // to the `me` default, ko/qu to the `.modal` tail). Two-sided fix: the
+  // transformer emits the then-connective at the seam (the fold's
+  // isThenKeyword boundary), and ja/ko/qu register their containment word
+  // (の中/안에/ukupi) as a whole `in` keyword — split, its fragments broke the
+  // generated focus pattern's operand run (qu's stranded `pi` even read as
+  // the event marker). Corpus strings are the re-rendered rows.
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const ROWS: Array<[string, string]> = [
+    ['ja', 'keydown[key=="Tab"] で .modal から もし 対象 一致する 最後 <button/> の中 .modal それから 最初 <button/> の中 .modal を フォーカス それから 停止 終わり'],
+    ['ko', 'keydown[key=="Tab"] 할 때 .modal 에서 만약 대상 일치 마지막 <button/> 안에 .modal 그러면 첫번째 <button/> 안에 .modal 를 포커스 그러면 정지 끝'],
+    ['qu', '.modal manta keydown[key=="Tab"] pi sichus punta tupan qhipa <button/> ukupi .modal chayqa ñawpaq <button/> ukupi .modal ta qhaway chayqa sayay tukuy'],
+    ['tr', 'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ardından ilk <button/> içinde .modal i odak ardından durdur son'],
+    ['bn', 'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ'],
+    ['hi', 'keydown[key=="Tab"] पर .modal से अगर लक्ष्य मेल खाता अंतिम <button/> में .modal फिर पहला <button/> में .modal को फोकस फिर रोकें समाप्त'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] focus-trap: focus.patient:expression captured, if/halt intact`, () => {
+      const cmds = collect(parse(src, lang));
+      const actions = new Set(cmds.map(c => c.action));
+      for (const a of ['on', 'if', 'focus', 'halt']) expect(actions.has(a)).toBe(true);
+      const focus = cmds.find(c => c.action === 'focus');
+      expect(role(focus, 'patient')?.type).toBe('expression');
+      expect(String(role(focus, 'patient')?.raw)).toContain('<button/>');
+    });
+  }
+
+  it('[ja] the branch fragment parses standalone (の中 is one `in` token)', () => {
+    const cmds = collect(parse('最初 <button/> の中 .modal を フォーカス', 'ja'));
+    const focus = cmds.find(c => c.action === 'focus');
+    expect(role(focus, 'patient')).toMatchObject({ type: 'expression' });
+  });
+});
+
+describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // Four scoped qu fixes, each locked with the full canonical
+  // pattern_translations row and the en-matching capture:
+  // - single-quoted strings classify literal (put ×2: make-toast-element,
+  //   on-custom-event-receive — was patient:expression with quotes kept);
+  // - patient-first trailing-destination toggle pattern (toggle-aria-expanded
+  //   — the fallback glued destination:literal="qhipantin.panel");
+  // - go-qu-url-dest re-types the url pair as expression via the (newly
+  //   wired) extraction transform (go-url — was destination:literal="/page");
+  // - underscore compounds k_iri/hatun_kay tokenize whole (window-resize —
+  //   call carried three junk roles and the event fragmented to `kay`).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  it('[qu] make-toast-element: both puts capture literal patients like en', () => {
+    const cmds = collect(
+      parse(
+        "a <div.toast/> ta ñitiy pi ruray chayqa 'Saved!' ta chay man churay chayqa chay pi tukuy pa kurku ta churay",
+        'qu'
+      )
+    );
+    const puts = cmds.filter(c => c.action === 'put');
+    expect(role(puts[0], 'patient')).toMatchObject({ type: 'literal', value: 'Saved!' });
+  });
+
+  it('[qu] on-custom-event-receive: put patient literal, unquoted', () => {
+    const cmds = collect(parse("'Got it!' ta noqa man hello pi churay", 'qu'));
+    const put = cmds.find(c => c.action === 'put');
+    expect(role(put, 'patient')).toMatchObject({ type: 'literal', value: 'Got it!' });
+  });
+
+  it('[qu] toggle-aria-expanded: second toggle keeps the positional destination as expression', () => {
+    const cmds = collect(
+      parse(
+        '@aria-expanded ta noqa man ñitiy pi tikray chayqa .open ta qhipantin .panel man tikray',
+        'qu'
+      )
+    );
+    const toggles = cmds.filter(c => c.action === 'toggle');
+    expect(toggles.length).toBe(2);
+    expect(role(toggles[1], 'destination')).toMatchObject({
+      type: 'expression',
+      raw: 'next .panel',
+    });
+  });
+
+  it('[qu] go-url: destination typed expression (the en reference type)', () => {
+    const cmds = collect(parse('url "/page" man ñitiy pi riy', 'qu'));
+    const go = cmds.find(c => c.action === 'go');
+    expect(role(go, 'destination')?.type).toBe('expression');
+  });
+
+  it('[qu] window-resize: event resolves to resize, call keeps ONLY its expression patient', () => {
+    const node = parse(
+      'debounced at 200ms adjustLayout() ta k_iri manta hatun_kay pi qayay',
+      'qu'
+    ) as Record<string, any>;
+    expect(node.roles?.get('event')).toMatchObject({ type: 'literal', value: 'resize' });
+    const call = collect(node).find(c => c.action === 'call');
+    expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'adjustLayout()' });
+    expect(call?.roles?.has('source')).toBe(false);
+    expect(call?.roles?.has('destination')).toBe(false);
+  });
+
+  it("[qu] glottalized words are untouched by the single-quote literal (t'ikray still the verb)", () => {
+    const cmds = collect(parse(".active ta t'ikray", 'qu'));
+    expect(cmds.find(c => c.action === 'toggle')).toBeTruthy();
+  });
+});

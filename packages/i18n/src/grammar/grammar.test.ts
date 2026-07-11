@@ -2591,3 +2591,72 @@ describe('SOV reorder stranding (transformer-rendering arc)', () => {
     expect(out.indexOf('qillqa manta')).toBeLessThan(out.indexOf('pointermove'));
   });
 });
+
+// The form-submit-prevent head fuses TWO juxtaposed commands (`halt the event
+// call validateForm()`); parseEventHandler sweeps both into one patient blob
+// and the SOV patient-first reorder fronted it whole — halt's operand stranded
+// clause-initial, call's operand riding with it (tr bound validateForm() to
+// halt and the event to call). sovHaltCallFusedRule splits the blob at the
+// language's call verb and emits both commands verb-final, joined by the
+// then-connective (R1 deferred-tail Family H,
+// docs-internal/HANDOFF_r1-deferred-tail.md).
+describe('SOV fused halt+call heads render both commands verb-final (Family H)', () => {
+  const src =
+    'on submit halt the event call validateForm() if result is false log "Invalid form" end';
+  const EXPECT: Array<[string, string]> = [
+    ['ja', 'the イベント を 送信 で 停止 それから validateForm() を 呼び出し'],
+    ['ko', 'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출'],
+    ['tr', 'the olay i gönder de durdur ardından validateForm() i çağır'],
+    ['bn', 'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল'],
+    ['hi', 'the घटना को जमा पर रोकें फिर validateForm() को कॉल'],
+    ['qu', 'the ruway ta kachay pi sayay chayqa validateForm() ta qayay'],
+  ];
+  for (const [lang, head] of EXPECT) {
+    it(`[${lang}] halt keeps its operand adjacent + verb-final; call follows the connective`, () => {
+      const out = new GrammarTransformer('en', lang).transform(src);
+      expect(out.startsWith(head)).toBe(true);
+    });
+  }
+
+  it('[ja] a plain `halt the event` handler keeps its default render (rule stands down)', () => {
+    const out = new GrammarTransformer('en', 'ja').transform('on submit halt the event');
+    expect(out.trim()).toBe('the イベント を 送信 で 停止');
+  });
+
+  it('[tr] a call-only handler keeps its default render (no halt — rule stands down)', () => {
+    const out = new GrammarTransformer('en', 'tr').transform('on click call myFunction()');
+    expect(out.trim()).toBe('myFunction() i tıklama de çağır');
+  });
+});
+
+// SOV renders emit nothing between an if-condition's tail and a POSITIONAL-
+// headed branch operand (`… .modal 最初 <button/> …`), and the semantic fold's
+// command-start detection can't see that shape — the condition swallowed the
+// focus operand's head (focus-trap, ja/ko/qu). transformBlockBody now emits
+// the target's then-connective at the clause/body seam, gated to exactly the
+// blind shape (R1 deferred-tail Family G).
+describe('SOV if-blocks get a then-connective before a positional branch head (Family G)', () => {
+  const src =
+    'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end';
+  const SEAM: Array<[string, string]> = [
+    ['ja', '.modal それから 最初'],
+    ['ko', '.modal 그러면 첫번째'],
+    ['qu', '.modal chayqa ñawpaq'],
+    ['tr', '.modal ardından ilk'],
+    ['bn', '.modal তারপর প্রথম'],
+    ['hi', '.modal फिर पहला'],
+  ];
+  for (const [lang, seam] of SEAM) {
+    it(`[${lang}] focus-trap renders the connective at the condition/branch seam`, () => {
+      const out = new GrammarTransformer('en', lang).transform(src);
+      expect(out).toContain(seam);
+    });
+  }
+
+  it('[qu] a non-positional branch head gains no connective (form-submit if unchanged)', () => {
+    const out = new GrammarTransformer('en', 'qu').transform(
+      'on submit halt the event call validateForm() if result is false log "Invalid form" end'
+    );
+    expect(out).toContain('llulla "Invalid form" ta qillqakuy');
+  });
+});

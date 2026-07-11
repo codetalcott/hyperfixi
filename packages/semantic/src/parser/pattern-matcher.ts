@@ -2487,20 +2487,31 @@ export class PatternMatcher {
   }
 
   /**
-   * Apply extraction rules to fill in static values and defaults for missing roles.
+   * Apply extraction rules to fill in static values and defaults for missing
+   * roles, and re-shape captured roles that declare a `transform` (the
+   * ExtractionRule field was documented but unwired — go-qu-url-dest is the
+   * first consumer: it re-types the marker-bound capture to the expression
+   * shape the en reference produces).
    */
   private applyExtractionRules(
     pattern: LanguagePattern,
     captured: Map<SemanticRole, SemanticValue>
   ): void {
     for (const [role, rule] of Object.entries(pattern.extraction)) {
-      if (!captured.has(role as SemanticRole)) {
-        if (rule.value !== undefined) {
-          // Static value extraction (e.g., action: { value: "toggle" })
-          captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
-        } else if (rule.default) {
-          captured.set(role as SemanticRole, rule.default);
+      const existing = captured.get(role as SemanticRole);
+      if (existing) {
+        if (rule.transform) {
+          const raw =
+            existing.type === 'literal'
+              ? String(existing.value)
+              : String((existing as { raw?: unknown }).raw ?? '');
+          captured.set(role as SemanticRole, rule.transform(raw));
         }
+      } else if (rule.value !== undefined) {
+        // Static value extraction (e.g., action: { value: "toggle" })
+        captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
+      } else if (rule.default) {
+        captured.set(role as SemanticRole, rule.default);
       }
     }
   }

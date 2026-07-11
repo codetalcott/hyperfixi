@@ -157,10 +157,15 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
       const after = input[startPos + len];
       if (after !== undefined && isQuechuaLetter(after)) continue;
 
-      // Check all chars are Quechua
+      // Check all chars are Quechua. An interior `_` is allowed so the dict's
+      // underscore compounds (k_iri, hatun_kay — exact keyword entries) can
+      // match whole; a compound with no entry fails the lookup below and falls
+      // through to the word-walk, splitting at `_` exactly as before.
       let allQuechua = true;
       for (let i = 0; i < candidate.length; i++) {
-        if (!isQuechuaLetter(candidate[i])) {
+        const ch = candidate[i];
+        if (ch === '_' && i > 0 && i < candidate.length - 1) continue;
+        if (!isQuechuaLetter(ch)) {
           allQuechua = false;
           break;
         }

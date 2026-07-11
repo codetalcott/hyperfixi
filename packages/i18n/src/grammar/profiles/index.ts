@@ -6,7 +6,7 @@
  * language-specific markers and rules.
  */
 
-import type { LanguageProfile, SemanticRole } from '../types';
+import type { GrammarRule, LanguageProfile, SemanticRole } from '../types';
 import { reorderRoles, insertMarkers } from '../types';
 
 // =============================================================================
@@ -46,6 +46,87 @@ export const englishProfile: LanguageProfile = {
     { form: 'for', role: 'duration', position: 'preposition', required: false },
   ],
 };
+
+// =============================================================================
+// Shared SOV rule factory — fused `halt the event call fn()` heads (Family H,
+// docs-internal/HANDOFF_r1-deferred-tail.md)
+// =============================================================================
+
+/**
+ * The form-submit-prevent head fuses TWO juxtaposed commands (`on submit halt
+ * the event call validateForm()`): parseEventHandler reads `halt` as the
+ * action and sweeps `the event call validateForm()` into ONE patient blob, so
+ * the SOV patient-first reorder fronts the whole blob — halt's operand lands
+ * clause-initial far from its verb, and call's operand rides inside the blob
+ * (tr bound validateForm() to halt and the event to call). No roleOrder can
+ * fix a single-blob patient; this custom render splits the blob at the
+ * language's call verb and emits both commands verb-final, joined by the
+ * then-connective (the boundary the semantic compound-splitter already
+ * respects — the event-debounce geometry):
+ *
+ *   `<halt-operand> <pm> <event> <em> <halt-verb> <conn> <call-args> <pm> <call-verb>`
+ *
+ * The trailing EVENTBLOCKPLACEHOLDER (tryTransformEventWithBlockBody's mask
+ * for an `if … end` tail) is re-emitted clause-final so the caller's
+ * strip-and-append keeps working.
+ */
+function sovHaltCallFusedRule(cfg: {
+  callVerb: string; // the dictionary's call rendering — the blob split point
+  patientMarker: string;
+  eventMarker: string;
+  connective: string;
+}): GrammarRule {
+  return {
+    name: 'halt-call-fused-verb-final',
+    description: 'Split the swept `halt <operand> call <args>` blob; both verbs clause-final',
+    priority: 95,
+    match: {
+      commands: ['halt'],
+      requiredRoles: ['action', 'event', 'patient'],
+      // Only the juxtaposed-call blob: a plain `halt`/`halt the event` handler
+      // keeps its default render. The translated call verb must be present to
+      // split on — if the dictionary emission drifts, the rule stands down
+      // rather than emitting a mangled clause.
+      predicate: parsed => {
+        const p = parsed.roles.get('patient');
+        return (
+          !!p && /\bcall\b/.test(p.value) && !!p.translated && p.translated.includes(cfg.callVerb)
+        );
+      },
+    },
+    transform: {
+      roleOrder: [], // unused — custom takes over
+      custom: parsed => {
+        const p = parsed.roles.get('patient')!;
+        const ev = parsed.roles.get('event')!;
+        const act = parsed.roles.get('action')!;
+        let blob = (p.translated ?? p.value).trim();
+        const PH = 'EVENTBLOCKPLACEHOLDER';
+        let tail = '';
+        if (blob.endsWith(PH)) {
+          blob = blob.slice(0, -PH.length).trim();
+          tail = ` ${PH}`;
+        }
+        const at = blob.indexOf(cfg.callVerb);
+        const haltOperand = blob.slice(0, at).trim();
+        const callArgs = blob.slice(at + cfg.callVerb.length).trim();
+        return (
+          [
+            haltOperand,
+            cfg.patientMarker,
+            ev.translated ?? ev.value,
+            cfg.eventMarker,
+            act.translated ?? act.value,
+            cfg.connective,
+            callArgs,
+            cfg.patientMarker,
+            cfg.callVerb,
+          ].join(' ') + tail
+        );
+      },
+    },
+  };
+}
 
 // =============================================================================
 // Japanese (SOV, Postpositions)
@@ -140,6 +221,13 @@ export const japaneseProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the イベント を 送信 で 停止 それから validateForm() を 呼び出し
+    sovHaltCallFusedRule({
+      callVerb: '呼び出し',
+      patientMarker: 'を',
+      eventMarker: 'で',
+      connective: 'それから',
+    }),
   ],
 };
 
@@ -248,6 +336,13 @@ export const koreanProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출
+    sovHaltCallFusedRule({
+      callVerb: '호출',
+      patientMarker: '를',
+      eventMarker: '할 때',
+      connective: '그러면',
+    }),
   ],
 };
 
@@ -560,6 +655,13 @@ export const turkishProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the olay i gönder de durdur ardından validateForm() i çağır
+    sovHaltCallFusedRule({
+      callVerb: 'çağır',
+      patientMarker: 'i',
+      eventMarker: 'de',
+      connective: 'ardından',
+    }),
   ],
 };
 
@@ -772,6 +874,13 @@ export const quechuaProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the ruway ta kachay pi sayay chayqa validateForm() ta qayay
+    sovHaltCallFusedRule({
+      callVerb: 'qayay',
+      patientMarker: 'ta',
+      eventMarker: 'pi',
+      connective: 'chayqa',
+    }),
   ],
 };
 
@@ -897,6 +1006,13 @@ export const bengaliProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল
+    sovHaltCallFusedRule({
+      callVerb: 'কল',
+      patientMarker: 'কে',
+      eventMarker: 'এ',
+      connective: 'তারপর',
+    }),
   ],
 };
 
@@ -1110,6 +1226,13 @@ export const hindiProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    // the घटना को जमा पर रोकें फिर validateForm() को कॉल
+    sovHaltCallFusedRule({
+      callVerb: 'कॉल',
+      patientMarker: 'को',
+      eventMarker: 'पर',
+      connective: 'फिर',
+    }),
   ],
 };
 

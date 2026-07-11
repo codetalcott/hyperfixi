@@ -148,6 +148,19 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // aswan-prefixed compound splits (the suffix extractor strips -wan from
   // 'aswan'). The i18n dict emits bare 'kaylla' (near/close).
   { native: 'kaylla', normalized: 'closest' },
+  // Containment (`first <button/> in .modal`): the i18n dict emits ukupi,
+  // which otherwise splits uku(identifier) + pi — and the stranded `pi`
+  // mis-reads as the EVENT marker (the ñawpaqpi/qhepapi class above; same
+  // longest-first cure). Whole-token entry mirrors en's keyword `in` mid-run
+  // geometry (focus-trap Family G).
+  { native: 'ukupi', normalized: 'in' },
+  // window-resize compounds: the dict emits underscore-joined k_iri (window)
+  // and hatun_kay (resize), which the `_` split shattered into junk role
+  // fragments (call.source:literal="k_iri" destination:literal="hatun_" —
+  // the qu window-resize R1 row; hatun_kay sits in eventNameTranslations but
+  // never arrived whole). The ñawpaq_kaq entry above is the precedent.
+  { native: 'k_iri', normalized: 'window' },
+  { native: 'hatun_kay', normalized: 'resize' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
@@ -274,7 +287,13 @@ export class QuechuaTokenizer extends BaseTokenizer {
       token.startsWith('<')
     )
       return 'selector';
-    if (token.startsWith('"')) return 'literal';
+    // Both ASCII quote forms: the corpus renders single-quoted strings
+    // (`'Saved!' ta chay man churay`, make-toast) and the string extractor
+    // already carries them whole — but only `"` classified as literal, so the
+    // single-quoted value fell to identifier → put.patient:expression with the
+    // quotes kept, vs en literal:"Saved!" (R1 deferred-tail qu tail). Safe for
+    // glottalized words (t'ikray): their apostrophe is never token-INITIAL.
+    if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     if (['==', '!=', '<=', '>=', '<', '>', '&&', '||', '!'].includes(token)) return 'operator';
 

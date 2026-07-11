@@ -120,13 +120,79 @@ COMPLETE.**
 **Post-launch track (ratchet-protected, not launch-blocking):** wait-payload
 spurious for ×3 (bn draggable/sortable/resizable — the unconsumed or-run
 payload), tr remove.patient block-walk leak, wait-line param leak ja,
-language-grammar.ts drift guard, and the R1-arc deferrals (event-debounce
-`${}` URL tokenization — also truncates the EN reference; pick range-role
-modeling; form-submit-prevent fused-clause scramble — render-side; focus-trap
-condition-boundary leak; see HANDOFF_r1-role-fidelity.md § Family D
-outcomes). The SOV-six role polish and the R1 long tail (fetch/render.style,
-qu set, or-run wait, beep/js/go/scroll/log/for) were cleared by the R1 arc
-(2026-07-11, below). The six-signal gate holds the bar — regressions fail CI.
+language-grammar.ts drift guard, and the two standing R1 deferrals (pick
+range-role modeling — Family F below; the reactive on.event rows). The
+R1-arc Family D deferrals (event-debounce `${}` URL truncation,
+form-submit-prevent fused-clause scramble, focus-trap condition-boundary
+leak) and the qu-only tail were cleared by the R1 deferred-tail arc
+(2026-07-11b, below); the SOV-six role polish and the R1 long tail
+(fetch/render.style, qu set, or-run wait, beep/js/go/scroll/log/for) by the
+R1 arc (2026-07-11, below). The six-signal gate holds the bar — regressions
+fail CI.
+
+> **Update 2026-07-11b (R1 deferred-tail arc, branch `fix/r1-deferred-tail`
+> — HANDOFF_r1-deferred-tail.md RESOLVED):** avgRoleFidelity ja 0.9938 →
+> **0.9978**, bn 0.9938 / tr 0.9927 → **0.9962**, ko 0.9905 → **0.9946**,
+> qu 0.9792 → **0.9936**, hi 0.9883 → **0.9907**. Four increments, sweeps
+> green after each (parse 3696/3696, R2 1.0, R3 loss only swap-content F6),
+> baseline regenerated + audited per increment:
+>
+> - **Family E (en-side, event-debounce ×6):** the URL extractor now carries
+>   `${…}` interpolation spans whole (balanced braces; unclosed `${` keeps
+>   the legacy whitespace cut), un-truncating the en reference. The en
+>   enrichment exposed two masked co-causes, fixed in-increment: the SOV
+>   `debounced at 300ms` head left `at 300ms` junk in the clause
+>   (untranslated `at` tokenizes identifier — extractStandaloneModifiers now
+>   skips one identifier preposition before a duration literal), and fused
+>   matches captured native event words registered only in
+>   eventNameTranslations as raw expressions (buildEventHandler now
+>   canonicalizes an exact table hit to the English literal; tr additionally
+>   registers boyutlandırma/kaydırma tokenizer keywords).
+> - **Family H (render-side, form-submit-prevent ×6 + tr call):**
+>   sovHaltCallFusedRule (shared factory, per-SOV-profile constants) splits
+>   the swept `halt <operand> call <args>` patient blob at the language's
+>   call verb and emits both commands verb-final joined by the
+>   then-connective. halt.patient:reference everywhere; row confidence
+>   0.5 → 1.0.
+> - **Family G (two-sided, focus-trap ja/ko/qu):** transformBlockBody emits
+>   the then-connective at the if-condition/branch seam (gated: SOV target +
+>   positional-headed branch + no existing then), and ja/ko/qu register
+>   their containment word (の中/안에/ukupi) as a whole keyword→`in` token —
+>   split, the fragments broke the generated focus pattern's operand run,
+>   and qu's stranded `pi` mis-read as the event marker. Bonus: the whole
+>   ukupi realigned qu last-in-collection (scroll.destination).
+> - **qu tail (5 rows):** single-quoted strings classify literal
+>   (put.patient ×2, byte-identical to en); toggle-qu-patient-first-dest
+>   covers the #636 verb-final render order (toggle-aria destination
+>   byte-identical to en); go-qu-url-dest re-types the fronted `url "/page"`
+>   pair as expression via ExtractionRule.transform — a documented field
+>   that was never wired, now honored in applyExtractionRules; interior `_`
+>   allowed in the qu keyword extractor's longest-first scan (gated to exact
+>   entries) so the dict's k_iri/hatun_kay compounds tokenize whole —
+>   window-resize now parses on.event:literal=resize + a clean
+>   call.patient:expression (the junk source/destination roles are gone).
+>
+> **Deferred, with reasons (the standing R1 tail):**
+>
+> - **pick-text-range (Family F, all six):** the en reference itself is
+>   degenerate (`pick.patient:expression="characters"` — the first WORD;
+>   pickSchema models no range/source roles), so chasing SOV parity buys
+>   nothing. The proper fix (pickSchema range roles + transformer render +
+>   SOV pattern variants) RAISES the en denominator for all 24 languages —
+>   the most expensive row in the tail for ×6 misses. Take it only if pick
+>   matters for a demo; budget the full 24-language realignment.
+> - **Reactive on.event rows (hi/ko when-value-changes +
+>   when-multiple-changes, hi window-resize, qu announce-screen-reader +
+>   on-custom-event-receive):** event-anchor guard machinery — the hottest
+>   parser path; unchanged out-of-scope decision. (hi window-resize is the
+>   आकार_बदलें `_`-split + बदलें→toggle homonym; the tr boyutlandırma
+>   rename precedent applies if ever taken.)
+> - **swap-content (bn/hi/qu/tr):** F6 wontfix, unchanged (§ R3 families
+>   item 6).
+>
+> Residual per-language misses: ja 1 (pick) · bn/tr 2 (pick, swap) · ko 3
+> (pick, on.event ×2) · qu 4 (pick, swap, on.event ×2) · hi 5 (pick, swap,
+> on.event ×3).
 
 > **Update 2026-07-11 (R1 role-fidelity arc, branch `fix/r1-role-fidelity-sov`
 > — HANDOFF_r1-role-fidelity.md RESOLVED):** avgRoleFidelity qu 0.9522 →

@@ -95,6 +95,11 @@ const KOREAN_EXTRAS: KeywordEntry[] = [
   { native: '이전', normalized: 'previous' },
   { native: '가장가까운', normalized: 'closest' },
   { native: '부모', normalized: 'parent' },
+  // Containment (`first <button/> in .modal`): the i18n dict emits 안에, which
+  // otherwise splits 안(identifier) + 에(particle) — the stray identifier broke
+  // the generated focus pattern's operand run (focus-trap Family G). Whole-token
+  // entry mirrors en's keyword `in` mid-run geometry.
+  { native: '안에', normalized: 'in' },
 
   // Events
   { native: '클릭', normalized: 'click' },

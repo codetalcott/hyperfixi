@@ -2369,7 +2369,28 @@ export class GrammarTransformer {
     const clauseT = clause ? translateMultiWordValue(clause, src, dst) : '';
     const bodyT = this.transformConditionalBody(bodyTokens);
 
-    return [headT, clauseT, bodyT, tailT].filter(s => s.length > 0).join(' ');
+    // SOV condition/branch boundary (R1 deferred-tail Family G): the SOV body
+    // renders its first command operand-first (`最初 <button/> の中 .modal を
+    // フォーカス`), so nothing marks where the condition ends and the branch
+    // operand begins — the semantic fold's command-start detection needs a
+    // `{value}{particle}` run followed by a verb, which a POSITIONAL-headed
+    // operand (`first <button/> …`) never forms, and the condition scan
+    // swallows the operand's head (focus-trap: ja focus.patient fell to the
+    // `me` default, ko/qu to the `.modal` tail). Emit the target's
+    // then-connective at the seam — the boundary the fold already respects
+    // (isThenKeyword) — gated to exactly the blind shape: SOV target, a
+    // positional keyword right after the branch's command verb, and no `then`
+    // already ending the condition.
+    const POSITIONAL_BRANCH_HEADS = new Set(['first', 'last', 'next', 'previous', 'closest']);
+    const thenT =
+      this.targetProfile.wordOrder === 'SOV' &&
+      clauseT &&
+      POSITIONAL_BRANCH_HEADS.has(bodyTokens[1]?.toLowerCase()) &&
+      inner[bodyStart - 1]?.toLowerCase() !== 'then'
+        ? translateWord('then', src, dst)
+        : '';
+
+    return [headT, clauseT, thenT, bodyT, tailT].filter(s => s.length > 0).join(' ');
   }
 
   /**
