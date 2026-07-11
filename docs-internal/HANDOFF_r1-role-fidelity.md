@@ -1,12 +1,22 @@
 # Handoff: the R1 role-fidelity arc (SOV six — qu first, then ja/ko/tr)
 
+> **RESOLVED 2026-07-11** (branch `fix/r1-role-fidelity-sov`). All targets
+> exceeded: qu 0.9522 → **0.9792** (target ≥ 0.97); ja 0.9738 → **0.9938**,
+> tr 0.9719 → **0.9927**, ko 0.9706 → **0.9905** (targets ≥ 0.98); stretch
+> bn 0.9738 → **0.9938**, hi 0.9706 → **0.9883**. Families A/B/C fully
+> cleared; Family D: four increments landed (D1 sigil refs + set marker
+> swap, D2 fused-simple trailing-expression reclaim, D3 optional-chaining
+> possessive fold, D4 verb-final for-binding heads), remainder deferred with
+> per-entry reasons — see "Family D outcomes" at the end of this doc.
+> Regression gate green after every family; baseline regenerated.
+>
 > **For a fresh session.** Read this, then CLAUDE.md ("Multilingual parse rate ≠
 > fidelity" and "Running the multilingual `--regression` gate locally"), then
 > `docs-internal/HANDOFF_transformer-rendering.md` (RESOLVED — its method and
 > traps carry over verbatim, especially the "scoped fixes, not blanket reorder"
 > lesson and the full-body-probe discipline). Branch from `main` **after PR
-> #636** merges (it landed the wait/repeat render fixes, the curated-end
-> guards, and the `--triage-r1` tool this handoff's data comes from).
+> #636** merges (it landed the wait/repeat render fixes and the curated-end
+> guards; the `--triage-r1` tool lands as this arc's preamble commit).
 
 ## Why this arc
 
@@ -205,3 +215,32 @@ the tail — a shared-root fix here pays ×4–×6 (all SOV languages at once).
 - New unit locks per fixed family; baseline regenerated + prettier'd +
   audited + committed (never patterns.db); this handoff marked resolved and
   NEXT_STEPS updated.
+
+## Family D outcomes (arc close-out, 2026-07-11)
+
+Probing overturned the shared-classifier hypothesis for most of the tail: the
+big entries were **fused `*-sov-simple` default-role drops** (the Family A
+geometry — argument stranded after the verb), not `tokensToSemanticValue`
+mistypes. Per-entry ledger:
+
+| entry (vs en)                   | outcome  | how / why |
+| ------------------------------- | -------- | --------- |
+| `set.destination:reference` (beep-debug) | **fixed** (D1) | sigil-ref branch in `tokenToSemanticValue` + unconditional set patient↔destination marker swap in `mapRoleForCommand` (set's surface order is dest-first; put untouched) |
+| `js.patient:expression` (js-inline) | **fixed** (D2) | `tryAttachTrailingExpressionRole` — code run to clause boundary, split verb fragments (ja `実行`) trimmed |
+| `go.destination:expression` (go-url) | **fixed** (D2) | same reclaim — run to the postpositional destination marker (primary surface only); fused default-`me` patient leak dropped |
+| `scroll.destination:expression` (last-in-collection) | **fixed** (D2) | same reclaim as go |
+| `log.patient:property-path` (optional-chaining-possessive) | **fixed** (D3) | possessive chain consumer now folds `?` + `.prop` links; en's TYPE (denominator) unchanged, its property string carries the full chain, byte-identical across all six |
+| `for.patient:expression` + `for.source:reference` (template-literal-list-build) | **fixed** (D4) | verb-final `for-<lang>-sov-basic` heads for the SOV six (action `for`, en's for-en-basic roles); the fallback had shredded the head on the in/object particles |
+| `fetch.source:literal` (event-debounce) | **deferred** | the en reference itself truncates the interpolated URL at the space inside `${my value}` (`source:literal="/api/search?q=${my"`); SOV captures junk `}`. Root is the URL extractor splitting inside `${…}` — a tokenizer fix that would also change the en value (R3-visible in all 24). Follow-up: teach the url extractor `${…}` spans, then realign |
+| `pick.patient:expression` (pick-text-range) | **deferred** | the en reference is degenerate (`patient:expression="characters"` — first word only; pick's range roles aren't modeled). Chasing SOV parity against a junk denominator buys nothing; proper fix models pick's roles in the schema + transformer render |
+| `halt.patient:reference` (form-submit-prevent) | **deferred** | transformer scrambles `halt the event` + `call validateForm()` across the fused event clause (tr binds validateForm() to halt and event to call; ja strands `the イベント` clause-initial). Render-side fix — a transformer-rendering follow-up, not a parse-side patch |
+| `call.patient:expression` (form-submit-prevent tr / window-resize qu) | **deferred** | same root as halt above (fused-clause scramble) |
+| `focus.patient:expression` (focus-trap) | **deferred** | the positional focus operand (`first <button/> in .modal`) leaks into the preceding if-CONDITION — SOV renders have no boundary marker between condition and command. Conditional-fold boundary geometry, adjacent to the event-anchor guard machinery (the "hottest path" warning) |
+| `swap.destination:selector` (swap-content) | **out of scope** | F6 wontfix (NEXT_STEPS § R3 families item 6) — unchanged decision |
+| ko/qu/hi reactive `on.event` rows (when-value-changes etc.) | **out of scope** | per this handoff's scoping — event-anchor guard machinery |
+
+Residual per-language misses after the arc: bn/ja 4, tr 5, ko 6, hi 7, qu 13
+(qu carries the qu-only put/toggle/scroll oddities plus the out-of-scope
+rows). No "extract shared classifier" refactor is warranted — the increments
+did not converge on the assembler logic (most fixes were reclaims/patterns,
+not classifier branches).
