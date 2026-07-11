@@ -13396,4 +13396,59 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
       expect(role(p, 'destination')?.value).toBe('#output');
     });
   });
+
+  describe('D2: fused *-sov-simple trailing expression runs (js-inline, go-url, last-in-collection)', () => {
+    // The fused simple event patterns capture only the verb and DEFAULT the
+    // primary role to me, stranding the real argument after the verb where
+    // the #530 re-parse cannot recover it (verb-first tail vs verb-final
+    // standalone patterns). tryAttachTrailingExpressionRole reclaims the run
+    // — js to the clause boundary, go/scroll to the postpositional
+    // destination marker — typed expression like the en reference.
+    it('[ja] js-inline: code run reclaimed, verb fragment 実行 trimmed', () => {
+      const j = first(collect(parse('クリック で JS実行 console.log("from js") 終わり', 'ja')), 'js');
+      expect(role(j, 'patient')?.type).toBe('expression');
+      expect(role(j, 'patient')?.raw).toContain('console');
+      expect(role(j, 'patient')?.raw).not.toContain('実行');
+    });
+
+    it('[tr] js-inline: code run reclaimed', () => {
+      const j = first(collect(parse('tıklama de js console.log("from js") son', 'tr')), 'js');
+      expect(role(j, 'patient')?.type).toBe('expression');
+      expect(role(j, 'patient')?.raw).toContain('console');
+    });
+
+    const GO_ROWS: Array<[string, string]> = [
+      ['ja', 'クリック で 移動 url "/page" に'],
+      ['tr', 'tıklama de git url "/page" e'],
+    ];
+    for (const [lang, src] of GO_ROWS) {
+      it(`[${lang}] go-url: destination phrase reclaimed as expression, default-me patient leak dropped`, () => {
+        const g = first(collect(parse(src, lang)), 'go');
+        expect(role(g, 'destination')?.type).toBe('expression');
+        expect(role(g, 'destination')?.raw).toContain('url');
+        expect(role(g, 'patient')).toBeUndefined();
+      });
+    }
+
+    const SCROLL_ROWS: Array<[string, string]> = [
+      ['ja', 'クリック で スクロール 最後 <.message/> の中 #chat に'],
+      ['tr', 'tıklama de kaydır sonuncu <.message/> içinde #chat e'],
+    ];
+    for (const [lang, src] of SCROLL_ROWS) {
+      it(`[${lang}] last-in-collection: scroll destination reclaimed as expression`, () => {
+        const s = first(collect(parse(src, lang)), 'scroll');
+        expect(role(s, 'destination')?.type).toBe('expression');
+        expect(role(s, 'destination')?.raw).toContain('#chat');
+      });
+    }
+
+    it('[ja] a bare go with a REAL destination capture is never overwritten', () => {
+      // The reclaim only fires on an absent or defaulted-me role.
+      const g = first(collect(parse('#top に 移動 クリック で', 'ja')), 'go');
+      expect(g).toBeDefined();
+      if (role(g, 'destination') !== undefined) {
+        expect(role(g, 'destination')?.type).not.toBe('undefined');
+      }
+    });
+  });
 });

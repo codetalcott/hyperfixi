@@ -1862,6 +1862,10 @@ export class SemanticParserImpl implements ISemanticParser {
         // marker `JSON` tail stays unconsumed exactly as before (en-symmetric
         // lossiness: the en reference drops it too).
         this.tryAttachTrailingStyle(tokens, commandNode as CommandSemanticNode, language);
+
+        // Trailing EXPRESSION-run reclaim (js code / go+scroll destination
+        // phrase) — see tryAttachTrailingExpressionRole.
+        this.tryAttachTrailingExpressionRole(tokens, commandNode as CommandSemanticNode, language);
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -2554,6 +2558,7 @@ export class SemanticParserImpl implements ISemanticParser {
         directHits++;
         this.tryAttachTrailingRole(clauseStream, cmd, language);
         this.tryAttachTrailingStyle(clauseStream, cmd, language);
+        this.tryAttachTrailingExpressionRole(clauseStream, cmd, language);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -2879,6 +2884,127 @@ export class SemanticParserImpl implements ISemanticParser {
       raw: this.joinTokenText(run),
     } as SemanticValue);
     for (let i = 0; i <= markerOffset; i++) stream.advance();
+  }
+
+  /**
+   * Reclaim a trailing post-verb EXPRESSION run for the fused `*-sov-simple`
+   * drops — the Family A geometry with per-command terminators. The fused
+   * simple event patterns capture only the verb and DEFAULT the primary role
+   * to `me`, leaving the real argument unconsumed after the verb, where the
+   * #530 [verb..boundary] re-parse can't recover it (the tail is verb-FIRST
+   * while every standalone SOV pattern is verb-final):
+   *   ja `クリック で JS実行 console.log("from js") 終わり`   → js.patient dropped
+   *   ja `クリック で 移動 url "/page" に`                    → go.destination dropped
+   *   tr `tıklama de kaydır sonuncu <.message/> içinde #chat e` → scroll.destination
+   * The en reference types each as `expression` (js-opaque-en / the en
+   * generated patterns), so the SOV default `reference=me` was an R1 miss on
+   * js-inline / go-url / last-in-collection across the cohort (Family D).
+   *
+   * Per-command terminator: js's code run ends at the clause boundary
+   * (then/end/conjunction — mirroring en's js-opaque `js … end` capture);
+   * go/scroll's destination phrase ends at the profile's postpositional
+   * destination marker, PRIMARY surface only (several profiles list
+   * destination alternatives that belong to other roles — the
+   * tryAttachTrailingRole precedent). Only fires on an absent or defaulted-
+   * `me` role, never on a genuine capture; the scan is depth-aware, aborts
+   * unconsumed at a clause boundary, and is capped.
+   */
+  private tryAttachTrailingExpressionRole(
+    stream: TokenStream,
+    command: CommandSemanticNode,
+    language: string
+  ): void {
+    const action = command.action as string;
+    const spec: { role: SemanticRole; terminator: 'boundary' | 'destination-marker' } | null =
+      action === 'js'
+        ? { role: 'patient' as SemanticRole, terminator: 'boundary' }
+        : action === 'go' || action === 'scroll'
+          ? { role: 'destination' as SemanticRole, terminator: 'destination-marker' }
+          : null;
+    if (!spec) return;
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    const existing = roles.get(spec.role);
+    if (existing && !(existing.type === 'reference' && existing.value === 'me')) return;
+
+    const profile = tryGetProfile(language);
+    if (!profile) return;
+    let markerSurface: string | null = null;
+    if (spec.terminator === 'destination-marker') {
+      const marker = profile.roleMarkers?.destination;
+      if (!marker || marker.position !== 'after') return;
+      markerSurface = marker.primary.toLowerCase();
+    }
+
+    const isBoundary = (t: LanguageToken): boolean =>
+      t.kind === 'conjunction' ||
+      (t.kind === 'keyword' &&
+        (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+
+    const SCAN_CAP = 24;
+    const run: LanguageToken[] = [];
+    let depth = 0;
+    let sawMarker = false;
+    for (let i = 0; i < SCAN_CAP; i++) {
+      const t = stream.peek(i);
+      if (!t || isBoundary(t)) break;
+      if (t.value === '(' || t.value === '{') depth++;
+      else if (t.value === ')' || t.value === '}') depth = Math.max(0, depth - 1);
+      if (
+        markerSurface !== null &&
+        depth === 0 &&
+        (t.kind === 'particle' || t.kind === 'keyword') &&
+        t.value.toLowerCase() === markerSurface
+      ) {
+        sawMarker = true;
+        break;
+      }
+      run.push(t);
+    }
+    // A marker-terminated role must SEE its marker inside the window — a
+    // boundary/EOF-terminated scan means the phrase isn't the corpus shape
+    // and is left untouched. js (boundary-terminated) just needs a run.
+    if (run.length === 0) return;
+    if (markerSurface !== null && !sawMarker) return;
+
+    const consume = run.length + (sawMarker ? 1 : 0);
+
+    // The ja tokenizer splits the compound verb `JS実行` into `JS<keyword>` +
+    // `実行<identifier>`; the fused pattern's verb matched the `JS` head, so
+    // the leftover verb FRAGMENT leads the run. Trim leading tokens that are
+    // substrings of the action's own keyword so they never pollute the code
+    // expression. Consumption still covers them — they belong to the verb.
+    let trimmed = run;
+    if (action === 'js') {
+      const kw = profile.keywords?.js;
+      const isVerbFragment = (t: LanguageToken): boolean =>
+        [kw?.primary, ...(kw?.alternatives ?? [])].some(
+          k => !!k && k.length > t.value.length && k.includes(t.value)
+        );
+      let from = 0;
+      while (from < trimmed.length && isVerbFragment(trimmed[from])) from++;
+      trimmed = trimmed.slice(from);
+      if (trimmed.length === 0) return;
+    }
+
+    roles.set(spec.role, {
+      type: 'expression',
+      raw: this.joinTokenText(trimmed),
+    } as SemanticValue);
+    // Drop the fused default-patient leak (`patient:reference=me`) for
+    // commands whose schema declares no patient (go/scroll) — the
+    // repeat/wait reclaim precedent; a REAL patient capture is never touched.
+    if (spec.role !== 'patient') {
+      const pat = roles.get('patient');
+      if (
+        pat &&
+        pat.type === 'reference' &&
+        pat.value === 'me' &&
+        !getSchema(action as ActionType)?.roles.some(r => r.role === 'patient')
+      ) {
+        roles.delete('patient');
+      }
+    }
+    for (let i = 0; i < consume; i++) stream.advance();
   }
 
   // ==========================================================================
