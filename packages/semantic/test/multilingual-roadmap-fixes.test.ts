@@ -13638,3 +13638,59 @@ describe('R1 deferred-tail Family H: fused halt+call renders verb-final and pars
     expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'validateForm()' });
   });
 });
+
+describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the fold (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // focus-trap: en `if target matches last <button/> in .modal focus first
+  // <button/> in .modal halt end` → focus.patient:expression. SOV renders had
+  // no boundary between the condition tail and the positional-headed branch
+  // operand, so the fold's condition scan swallowed the operand head (ja fell
+  // to the `me` default, ko/qu to the `.modal` tail). Two-sided fix: the
+  // transformer emits the then-connective at the seam (the fold's
+  // isThenKeyword boundary), and ja/ko/qu register their containment word
+  // (の中/안에/ukupi) as a whole `in` keyword — split, its fragments broke the
+  // generated focus pattern's operand run (qu's stranded `pi` even read as
+  // the event marker). Corpus strings are the re-rendered rows.
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const ROWS: Array<[string, string]> = [
+    ['ja', 'keydown[key=="Tab"] で .modal から もし 対象 一致する 最後 <button/> の中 .modal それから 最初 <button/> の中 .modal を フォーカス それから 停止 終わり'],
+    ['ko', 'keydown[key=="Tab"] 할 때 .modal 에서 만약 대상 일치 마지막 <button/> 안에 .modal 그러면 첫번째 <button/> 안에 .modal 를 포커스 그러면 정지 끝'],
+    ['qu', '.modal manta keydown[key=="Tab"] pi sichus punta tupan qhipa <button/> ukupi .modal chayqa ñawpaq <button/> ukupi .modal ta qhaway chayqa sayay tukuy'],
+    ['tr', 'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ardından ilk <button/> içinde .modal i odak ardından durdur son'],
+    ['bn', 'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ'],
+    ['hi', 'keydown[key=="Tab"] पर .modal से अगर लक्ष्य मेल खाता अंतिम <button/> में .modal फिर पहला <button/> में .modal को फोकस फिर रोकें समाप्त'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] focus-trap: focus.patient:expression captured, if/halt intact`, () => {
+      const cmds = collect(parse(src, lang));
+      const actions = new Set(cmds.map(c => c.action));
+      for (const a of ['on', 'if', 'focus', 'halt']) expect(actions.has(a)).toBe(true);
+      const focus = cmds.find(c => c.action === 'focus');
+      expect(role(focus, 'patient')?.type).toBe('expression');
+      expect(String(role(focus, 'patient')?.raw)).toContain('<button/>');
+    });
+  }
+
+  it('[ja] the branch fragment parses standalone (の中 is one `in` token)', () => {
+    const cmds = collect(parse('最初 <button/> の中 .modal を フォーカス', 'ja'));
+    const focus = cmds.find(c => c.action === 'focus');
+    expect(role(focus, 'patient')).toMatchObject({ type: 'expression' });
+  });
+});

@@ -207,8 +207,11 @@ const FOR_IN_HEADS: Array<[string, { forWords?: string[]; inWords: string[] }]> 
   ['he', { forWords: ['עבור', 'את'], inWords: ['in'] }],
   ['hi', { inWords: ['में'] }],
   ['bn', { inWords: ['এ'] }],
-  ['ja', { inWords: ['の', '中'] }],
-  ['ko', { inWords: ['안', '에'] }],
+  // ja/ko/qu containment words tokenize WHOLE (keyword→in entries added for
+  // the focus-trap Family G operand run) — the old split forms (の+中, 안+에,
+  // uku+pi) no longer appear in the stream.
+  ['ja', { inWords: ['の中'] }],
+  ['ko', { inWords: ['안에'] }],
   ['zh', { forWords: ['为', '把'], inWords: ['在'] }],
   ['tr', { inWords: ['içinde'] }],
   ['id', { forWords: ['untuk'], inWords: ['dalam'] }],
@@ -217,7 +220,7 @@ const FOR_IN_HEADS: Array<[string, { forWords?: string[]; inWords: string[] }]> 
   ['th', { forWords: ['สำหรับ'], inWords: ['ใน'] }],
   ['vi', { forWords: ['với mỗi'], inWords: ['trong'] }],
   ['tl', { forWords: ['para_sa'], inWords: ['sa_loob'] }],
-  ['qu', { inWords: ['uku', 'pi'] }],
+  ['qu', { inWords: ['ukupi'] }],
 ];
 
 /**
@@ -562,10 +565,12 @@ function sovForBindingHead(
 const SOV_FOR_BINDING_HEADS: Array<
   [string, { inWords: string[]; objMarker: string; forVerb: string }]
 > = [
-  ['ja', { inWords: ['の', '中'], objMarker: 'を', forVerb: 'ために' }],
-  ['ko', { inWords: ['안', '에'], objMarker: '를', forVerb: '각각' }],
+  // ja/ko/qu in-words are single whole tokens now (keyword→in entries — see
+  // the FOR_IN_HEADS note); the split forms are gone from the stream.
+  ['ja', { inWords: ['の中'], objMarker: 'を', forVerb: 'ために' }],
+  ['ko', { inWords: ['안에'], objMarker: '를', forVerb: '각각' }],
   ['tr', { inWords: ['içinde'], objMarker: 'i', forVerb: 'için' }],
-  ['qu', { inWords: ['uku', 'pi'], objMarker: 'ta', forVerb: 'sapankaq' }],
+  ['qu', { inWords: ['ukupi'], objMarker: 'ta', forVerb: 'sapankaq' }],
   ['bn', { inWords: ['এ'], objMarker: 'কে', forVerb: 'জন্য' }],
   ['hi', { inWords: ['में'], objMarker: 'को', forVerb: 'हेतु' }],
 ];

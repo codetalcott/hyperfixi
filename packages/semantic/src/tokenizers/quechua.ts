@@ -148,6 +148,12 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // aswan-prefixed compound splits (the suffix extractor strips -wan from
   // 'aswan'). The i18n dict emits bare 'kaylla' (near/close).
   { native: 'kaylla', normalized: 'closest' },
+  // Containment (`first <button/> in .modal`): the i18n dict emits ukupi,
+  // which otherwise splits uku(identifier) + pi — and the stranded `pi`
+  // mis-reads as the EVENT marker (the ñawpaqpi/qhepapi class above; same
+  // longest-first cure). Whole-token entry mirrors en's keyword `in` mid-run
+  // geometry (focus-trap Family G).
+  { native: 'ukupi', normalized: 'in' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
