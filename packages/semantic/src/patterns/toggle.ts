@@ -435,6 +435,33 @@ function getTogglePatternsQu(): LanguagePattern[] {
         patient: { position: 2 },
       },
     },
+    // Patient-first with trailing destination: .open ta qhipantin .panel man
+    // t'ikray — the i18n full verb-final order (#636 qu canonicalOrder) puts
+    // the destination AFTER the patient, but every dest-bearing variant above
+    // is destination-first, so the shape fell to the verb-anchoring fallback,
+    // which glued the positional run (destination:literal="qhipantin.panel"
+    // vs en destination:expression="next .panel") — toggle-aria-expanded,
+    // R1 deferred-tail qu tail.
+    {
+      id: 'toggle-qu-patient-first-dest',
+      language: 'qu',
+      command: 'toggle',
+      priority: 102,
+      template: {
+        format: "{patient} ta {destination} man t'ikray",
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ta' },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'man', alternatives: ['pa'] },
+          { type: 'literal', value: "t'ikray", alternatives: ['tikray', 'kutichiy'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { position: 2 },
+      },
+    },
   ];
 }
 

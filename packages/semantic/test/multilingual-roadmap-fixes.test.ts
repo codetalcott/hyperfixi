@@ -13694,3 +13694,89 @@ describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the 
     expect(role(focus, 'patient')).toMatchObject({ type: 'expression' });
   });
 });
+
+describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // Four scoped qu fixes, each locked with the full canonical
+  // pattern_translations row and the en-matching capture:
+  // - single-quoted strings classify literal (put ×2: make-toast-element,
+  //   on-custom-event-receive — was patient:expression with quotes kept);
+  // - patient-first trailing-destination toggle pattern (toggle-aria-expanded
+  //   — the fallback glued destination:literal="qhipantin.panel");
+  // - go-qu-url-dest re-types the url pair as expression via the (newly
+  //   wired) extraction transform (go-url — was destination:literal="/page");
+  // - underscore compounds k_iri/hatun_kay tokenize whole (window-resize —
+  //   call carried three junk roles and the event fragmented to `kay`).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  it('[qu] make-toast-element: both puts capture literal patients like en', () => {
+    const cmds = collect(
+      parse(
+        "a <div.toast/> ta ñitiy pi ruray chayqa 'Saved!' ta chay man churay chayqa chay pi tukuy pa kurku ta churay",
+        'qu'
+      )
+    );
+    const puts = cmds.filter(c => c.action === 'put');
+    expect(role(puts[0], 'patient')).toMatchObject({ type: 'literal', value: 'Saved!' });
+  });
+
+  it('[qu] on-custom-event-receive: put patient literal, unquoted', () => {
+    const cmds = collect(parse("'Got it!' ta noqa man hello pi churay", 'qu'));
+    const put = cmds.find(c => c.action === 'put');
+    expect(role(put, 'patient')).toMatchObject({ type: 'literal', value: 'Got it!' });
+  });
+
+  it('[qu] toggle-aria-expanded: second toggle keeps the positional destination as expression', () => {
+    const cmds = collect(
+      parse(
+        '@aria-expanded ta noqa man ñitiy pi tikray chayqa .open ta qhipantin .panel man tikray',
+        'qu'
+      )
+    );
+    const toggles = cmds.filter(c => c.action === 'toggle');
+    expect(toggles.length).toBe(2);
+    expect(role(toggles[1], 'destination')).toMatchObject({
+      type: 'expression',
+      raw: 'next .panel',
+    });
+  });
+
+  it('[qu] go-url: destination typed expression (the en reference type)', () => {
+    const cmds = collect(parse('url "/page" man ñitiy pi riy', 'qu'));
+    const go = cmds.find(c => c.action === 'go');
+    expect(role(go, 'destination')?.type).toBe('expression');
+  });
+
+  it('[qu] window-resize: event resolves to resize, call keeps ONLY its expression patient', () => {
+    const node = parse(
+      'debounced at 200ms adjustLayout() ta k_iri manta hatun_kay pi qayay',
+      'qu'
+    ) as Record<string, any>;
+    expect(node.roles?.get('event')).toMatchObject({ type: 'literal', value: 'resize' });
+    const call = collect(node).find(c => c.action === 'call');
+    expect(role(call, 'patient')).toMatchObject({ type: 'expression', raw: 'adjustLayout()' });
+    expect(call?.roles?.has('source')).toBe(false);
+    expect(call?.roles?.has('destination')).toBe(false);
+  });
+
+  it("[qu] glottalized words are untouched by the single-quote literal (t'ikray still the verb)", () => {
+    const cmds = collect(parse(".active ta t'ikray", 'qu'));
+    expect(cmds.find(c => c.action === 'toggle')).toBeTruthy();
+  });
+});
