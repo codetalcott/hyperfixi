@@ -13486,4 +13486,36 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
       expect(role(s, 'destination')?.property).toBe('innerHTML');
     });
   });
+
+  describe('D4: verb-final SOV for-binding heads (template-literal-list-build)', () => {
+    // The transformer renders the for-head clause-final-verb (`item の 中
+    // $items を ために`); only verb-FIRST repeat-for-in heads existed, so the
+    // verb-anchoring fallback shredded the head on the in/object particles.
+    // for-<lang>-sov-basic mirrors en's for-en-basic roles exactly.
+    // FULL corpus bodies — the bare head fragment parses through a different
+    // path in qu/bn/hi (the transformer-rendering arc's full-body-probe
+    // discipline); R1 scores the in-body shape, so that is what locks.
+    const ROWS: Array<[string, string]> = [
+      ['ja', '$html を "" に 設定 クリック で それから item の中 $items を ために それから $html を $html + `<li>${item.name}</li>` に 設定 終わり それから #list.innerHTML を $html に 設定'],
+      ['ko', '$html 를 "" 에 설정 클릭 할 때 그러면 item 안에 $items 를 각각 그러면 $html 를 $html + `<li>${item.name}</li>` 에 설정 끝 그러면 #list.innerHTML 를 $html 에 설정'],
+      ['tr', '$html i "" e ayarla tıklama de ardından item içinde $items i için ardından $html i $html + `<li>${item.name}</li>` e ayarla son ardından #list.innerHTML i $html e ayarla'],
+      ['qu', '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay'],
+      ['bn', '$html কে "" তে সেট ক্লিক এ তারপর item এ $items কে জন্য তারপর $html কে $html + `<li>${item.name}</li>` তে সেট শেষ তারপর #list.innerHTML কে $html তে সেট'],
+      ['hi', '$html को "" में सेट क्लिक पर फिर item में $items को हेतु फिर $html को $html + `<li>${item.name}</li>` में सेट समाप्त फिर #list.innerHTML को $html में सेट'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] for-head: patient:expression + source:reference, like en`, () => {
+        const f = first(collect(parse(src, lang)), 'for');
+        expect(f).toBeDefined();
+        expect(role(f, 'patient')).toMatchObject({ type: 'expression', raw: 'item' });
+        expect(role(f, 'source')).toMatchObject({ type: 'reference', value: '$items' });
+      });
+    }
+
+    it('[ja] marker-less hand-written head still parses (object particle optional)', () => {
+      const f = first(collect(parse('item の中 $items ために', 'ja')), 'for');
+      expect(f).toBeDefined();
+      expect(role(f, 'source')).toMatchObject({ type: 'reference', value: '$items' });
+    });
+  });
 });
