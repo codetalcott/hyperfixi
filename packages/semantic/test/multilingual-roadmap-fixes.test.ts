@@ -13451,4 +13451,39 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
       }
     });
   });
+
+  describe('D3: optional-chaining possessive folds the FULL chain (optional-chaining-possessive)', () => {
+    // The tokenizer splits `?.prop` into `?` + `.prop`; the possessive
+    // chain consumer stopped at the second `?`, leaving property-path(me,
+    // "?.dataset") with `?.customValue` stranded — the verb-final SOV
+    // patterns could never complete through to their patient particle and
+    // fell to a bare `?.customValue` expression. Folding `?` + `.prop`
+    // links consumes the whole chain; en's TYPE (and so the R1 denominator)
+    // is unchanged — only its property string now carries the full chain.
+    const ROWS: Array<[string, string]> = [
+      ['en', 'on click log my?.dataset?.customValue'],
+      ['ja', '私の?.dataset?.customValue を クリック で 記録'],
+      ['ko', '내?.dataset?.customValue 를 클릭 할 때 로그'],
+      ['tr', 'benim?.dataset?.customValue i tıklama de kaydet'],
+      ['qu', 'noqaq?.dataset?.customValue ta ñitiy pi qillqakuy'],
+      ['bn', 'আমার?.dataset?.customValue কে ক্লিক এ লগ'],
+      ['hi', 'मेरा?.dataset?.customValue को क्लिक पर लॉग'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] log patient is one property-path over the full ?. chain`, () => {
+        const l = first(collect(parse(src, lang)), 'log');
+        const p = role(l, 'patient');
+        expect(p?.type).toBe('property-path');
+        expect(p?.property).toBe('?.dataset?.customValue');
+        expect(p?.object).toMatchObject({ type: 'reference', value: 'me' });
+      });
+    }
+
+    it('[en] a ternary after a possessive value is not swallowed by the ? fold', () => {
+      // `?` folds only when a `.prop` selector immediately follows.
+      const s = first(collect(parse('on click set my innerHTML to "a"', 'en')), 'set');
+      expect(role(s, 'destination')?.type).toBe('property-path');
+      expect(role(s, 'destination')?.property).toBe('innerHTML');
+    });
+  });
 });
