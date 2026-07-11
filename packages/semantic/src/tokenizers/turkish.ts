@@ -136,6 +136,19 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'farebirak', normalized: 'mouseup' },
   { native: 'kaydır', normalized: 'scroll' },
   { native: 'kaydir', normalized: 'scroll' },
+  // resize/scroll nominal forms: listed in eventNameTranslations (which only
+  // the SOV-extraction path consults) but not registered as keywords — so a
+  // fused *-sov-simple match captured them RAW (`boyutlandırma de çağır` →
+  // event:expression:boyutlandırma, the window-resize R1 flip once the
+  // debounced-head junk no longer forced the SOV-extraction path). Keyword
+  // entries normalize them at the token, the same route the healthy natives
+  // (tıklama→click) take.
+  { native: 'boyutlandırma', normalized: 'resize' },
+  { native: 'boyutlandirma', normalized: 'resize' },
+  { native: 'boyutlandır', normalized: 'resize' },
+  { native: 'boyutlandir', normalized: 'resize' },
+  { native: 'kaydırma', normalized: 'scroll' },
+  { native: 'kaydirma', normalized: 'scroll' },
   { native: 'tuş_bas', normalized: 'keydown' },
   { native: 'tus_bas', normalized: 'keydown' },
   { native: 'tuş_bırak', normalized: 'keyup' },

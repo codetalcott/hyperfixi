@@ -7,38 +7,49 @@
 
 import type { ValueExtractor, ExtractionResult } from '../value-extractor-types';
 
+const URL_PREFIXES = ['http://', 'https://', '//', './', '../', '/'];
+
+/**
+ * Find the index just past the `}` that closes a `${` whose `{` sits at
+ * `start - 1`. Inner braces are balanced; returns -1 if it never closes.
+ */
+function findInterpolationEnd(input: string, start: number): number {
+  let depth = 1;
+  for (let i = start; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === '{') depth++;
+    else if (ch === '}' && --depth === 0) return i + 1;
+  }
+  return -1;
+}
+
 /**
  * Extract a URL from input at position.
  * Handles: /path, ./path, ../path, //domain.com, http://, https://
  */
 export function extractUrl(input: string, position: number): string | null {
   const remaining = input.slice(position);
+  const prefix = URL_PREFIXES.find(p => remaining.startsWith(p));
+  if (!prefix) return null;
 
-  // Absolute URL: http:// or https://
-  if (remaining.startsWith('http://') || remaining.startsWith('https://')) {
-    const match = remaining.match(/^https?:\/\/[^\s]*/);
-    return match ? match[0] : null;
+  // Consume to the first whitespace, except that a `${…}` interpolation span
+  // is carried whole — the space inside `/api/search?q=${my value}` is part
+  // of the URL, not a token boundary.
+  let i = prefix.length;
+  while (i < remaining.length) {
+    const ch = remaining[i];
+    if (ch === '$' && remaining[i + 1] === '{') {
+      const end = findInterpolationEnd(remaining, i + 2);
+      if (end !== -1) {
+        i = end;
+        continue;
+      }
+      // Unclosed `${` — no span to carry; the plain scan below applies.
+    }
+    if (/\s/.test(ch)) break;
+    i++;
   }
-
-  // Protocol-relative URL: //domain.com
-  if (remaining.startsWith('//')) {
-    const match = remaining.match(/^\/\/[^\s]*/);
-    return match ? match[0] : null;
-  }
-
-  // Relative paths: ./path or ../path
-  if (remaining.startsWith('./') || remaining.startsWith('../')) {
-    const match = remaining.match(/^\.\.?\/[^\s]*/);
-    return match ? match[0] : null;
-  }
-
-  // Absolute path: /path
-  if (remaining.startsWith('/')) {
-    const match = remaining.match(/^\/[^\s]*/);
-    return match ? match[0] : null;
-  }
-
-  return null;
+  return remaining.slice(0, i);
 }
 
 /**

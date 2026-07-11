@@ -13519,3 +13519,62 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
     });
   });
 });
+
+describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+  // event-debounce: the en REFERENCE itself truncated the interpolated URL at
+  // the space inside `${my value}` (source:literal="/api/search?q=${my"), so
+  // every language "missed" against a junk denominator — ja captured
+  // source:expression="}". The extractor now carries `${…}` spans whole; the
+  // en value changed, so this is the R3 all-language realignment row.
+  // Corpus strings are canonical pattern_translations rows (full bodies).
+  const CHILD_FIELDS = ['body', 'statements', 'thenBranch', 'elseBranch', 'branches'];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const URL = '/api/search?q=${my value}';
+  const ROWS: Array<[string, string]> = [
+    ['en', 'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results'],
+    ['ja', 'debounced at 300ms /api/search?q=${my value} を 入力 で フェッチ json それから それ を #results に 置く'],
+    ['ko', 'debounced at 300ms /api/search?q=${my value} 를 입력 할 때 가져오기 json 로 그러면 그것 를 #results 에 넣다'],
+    ['tr', 'debounced at 300ms /api/search?q=${my value} i giriş de getir json olarak ardından o i #results e koy'],
+    ['bn', 'debounced at 300ms /api/search?q=${my value} কে ইনপুট এ আনুন json তারপর এটি কে #results তে রাখুন'],
+    ['hi', 'debounced at 300ms /api/search?q=${my value} को इनपुट पर लाएं json के रूप में फिर यह को #results में रखें'],
+    ['qu', 'debounced at 300ms /api/search?q=${my value} ta yaykuchiy pi apamuy json hina chayqa chay ta #results man churay'],
+  ];
+  for (const [lang, src] of ROWS) {
+    it(`[${lang}] event-debounce captures the WHOLE interpolated URL as source:literal`, () => {
+      const cmds = collect(parse(src, lang));
+      expect(cmds.map(c => c.action)).toContain('fetch');
+      const f = cmds.find(c => c.action === 'fetch');
+      expect(role(f, 'source')).toMatchObject({ type: 'literal', value: URL });
+      // The un-truncated en parse matches fetch-en-with-response-type, so the
+      // denominator gained responseType — the six reach it through the cluster-B
+      // reclaim, which needs the `debounced at 300ms` head consumed WHOLE (the
+      // untranslated `at` tokenizes as an identifier; extractStandaloneModifiers
+      // skips it only when a duration literal follows).
+      expect(role(f, 'responseType')).toMatchObject({ type: 'expression', raw: 'json' });
+    });
+  }
+
+  it('[ja] the standalone-modifier head consumes its duration (no `at 300ms` junk)', () => {
+    const node = parse('debounced at 300ms /api/x を クリック で フェッチ', 'ja') as {
+      eventModifiers?: { debounce?: number };
+    };
+    expect(node?.eventModifiers?.debounce).toBe(300);
+  });
+});
