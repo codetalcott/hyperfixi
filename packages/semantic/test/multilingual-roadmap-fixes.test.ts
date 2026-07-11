@@ -13267,3 +13267,66 @@ describe('R1 Family B: qu set — oblique manta source + whole backtick template
     expect(role(s, 'source')).toBeUndefined();
   });
 });
+
+describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The behaviors' `wait for pointermove(...) or pointerup(...) from document`
+  // renders verb-final with a fronted from-phrase (post-#636); no tr/qu wait
+  // pattern matched the or-run shape, so the verb-anchoring fallback binned
+  // the run as junk duration:expression=")" and the event dropped. The
+  // verb-final mirrors of wait-ar-from-first/wait-tl-from-first capture the
+  // first event into `duration`; the known-event duration→event relabel then
+  // emits event:literal, matching the en reference (which also keeps ONLY the
+  // first event). Corpus strings are canonical pattern_translations rows.
+  const roleOf = (node: unknown, role: string): any => {
+    const walk = (n: any): any => {
+      if (!n || typeof n !== 'object') return undefined;
+      if (n.action === 'wait' && n.roles instanceof Map) return n.roles.get(role);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const c = n[f];
+        if (Array.isArray(c)) for (const x of c) { const r = walk(x); if (r !== undefined) return r; }
+        else if (c && typeof c === 'object') { const r = walk(c); if (r !== undefined) return r; }
+      }
+      return undefined;
+    };
+    return walk(node);
+  };
+  const countWaits = (node: unknown): number => {
+    let n = 0;
+    const walk = (x: any): void => {
+      if (!x || typeof x !== 'object') return;
+      if (x.action === 'wait') n++;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const c = x[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return n;
+  };
+
+  const ROWS: Array<[string, string, string]> = [
+    ['tr', 'sortable (1-arg)', 'belge den pointermove(clientY) veya pointerup(clientY) bekle'],
+    ['qu', 'sortable (1-arg)', 'qillqa manta pointermove(clientY) utaq pointerup(clientY) suyay'],
+    ['tr', 'resizable (2-arg)', 'belge den pointermove(clientX, clientY) veya pointerup(clientX, clientY) bekle'],
+    ['qu', 'resizable (2-arg)', 'qillqa manta pointermove(clientX, clientY) utaq pointerup(clientX, clientY) suyay'],
+  ];
+  for (const [lang, label, src] of ROWS) {
+    it(`[${lang}] ${label}: first event captured as event:literal, single wait`, () => {
+      const node = parse(src, lang);
+      expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+      expect(countWaits(node), `${lang} phantom command check`).toBe(1);
+    });
+  }
+
+  it('[tr] parenless hand-written or-run still parses (groups optional)', () => {
+    const node = parse('belge den pointermove veya pointerup bekle', 'tr');
+    expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+  });
+
+  it('[en] reference unchanged: first event only, via wait-en-for-event', () => {
+    const node = parse('wait for pointermove(clientY) or pointerup(clientY) from document', 'en');
+    expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+    expect(countWaits(node)).toBe(1);
+  });
+});
