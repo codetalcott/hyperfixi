@@ -106,6 +106,13 @@ export interface TestConfig {
    * then exit. Read-only: never gates, never writes a baseline.
    */
   diagnoseCoverage?: boolean;
+
+  /**
+   * Itemize R1 role-fidelity misses (missing `action.role:type` entries vs the
+   * en reference, clustered) per language, then exit. Read-only: never gates,
+   * never writes a baseline. Scope with `languages`.
+   */
+  triageR1?: boolean;
 }
 
 /**

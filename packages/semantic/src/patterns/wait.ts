@@ -183,6 +183,115 @@ function getWaitPatternsTl(): LanguagePattern[] {
   ];
 }
 
+/**
+ * Turkish / Quechua (SOV, verb-final) or-run wait — the verb-final mirror of
+ * `wait-ar-from-first` / `wait-tl-from-first`.
+ *
+ * The transformer renders the behaviors' `wait for pointermove(clientY) or
+ * pointerup(clientY) from document` verb-final with the from-phrase fronted
+ * (post-#636): tr `belge den pointermove(clientY) veya pointerup(clientY)
+ * bekle`, qu `qillqa manta pointermove(clientY) utaq pointerup(clientY)
+ * suyay`. No wait pattern matched the or-run shape, so the verb-anchoring
+ * fallback binned the run as a junk `duration:expression=")"` and the event
+ * dropped (wait.event:literal missing in tr/qu — R1 Family C).
+ *
+ * Unlike ar/tl (verb-first — the or-tail could stay harmless TRAILING
+ * tokens), the verb-final pattern must consume through to its verb anchor,
+ * so the `veya/utaq <event2>` alternative lands in a deliberately-junk
+ * `patient` slot the schema doesn't declare — the en reference drops the
+ * alternative too (`wait-en-for-event` keeps only the FIRST event), so this
+ * adds nothing en doesn't also lose. The first event lands in `duration`,
+ * and the known-event duration→event relabel in normalizeCommandRoles types
+ * it `event:literal`, matching the en reference (the tl precedent).
+ */
+/**
+ * Builds the verb-final or-run wait pattern for one language. The event
+ * tokenizes as a bare keyword with its `(args)` SPLIT off (`pointermove` `(`
+ * `clientY` `)`), and the bare-call fold rejects keyword heads (widening it
+ * would retype the EN reference's own event slot — off limits), so each
+ * paren run is consumed by an optional `( {junk} )` literal group instead
+ * (the withTrailingScope group idiom); a parenless hand-written form still
+ * matches. The junk `condition` captures are schema-extras, invisible to
+ * every signal, and both runs share one role so they collapse to a single
+ * map entry.
+ */
+function verbFinalOrRunWait(
+  id: string,
+  language: string,
+  verb: string,
+  sourceMarker: string,
+  orWord: string,
+  parenArgCount: number,
+  sourceMarkerAlternatives?: string[]
+): LanguagePattern {
+  // `( arg [, arg] )` — an optional group per event; a group must match
+  // whole-or-not, so the one-arg (behavior-sortable, `(clientY)`) and two-arg
+  // (behavior-resizable, `(clientX, clientY)`) shapes are separate pattern
+  // variants rather than one group. All junk captures share the `condition`
+  // role so they collapse to a single schema-extra map entry.
+  const parenGroup = () => ({
+    type: 'group' as const,
+    optional: true,
+    tokens: [
+      { type: 'literal' as const, value: '(' },
+      ...Array.from({ length: parenArgCount }, (_, i) => [
+        ...(i > 0 ? [{ type: 'literal' as const, value: ',' }] : []),
+        {
+          type: 'role' as const,
+          role: 'condition' as const,
+          expectedTypes: ['expression', 'literal', 'reference'] as const,
+        },
+      ]).flat(),
+      { type: 'literal' as const, value: ')' },
+    ],
+  });
+  return {
+    id,
+    language,
+    command: 'wait',
+    priority: 105,
+    template: {
+      format: `{source} ${sourceMarker} {duration} ${orWord} {patient} ${verb}`,
+      tokens: [
+        { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
+        {
+          type: 'literal',
+          value: sourceMarker,
+          ...(sourceMarkerAlternatives ? { alternatives: sourceMarkerAlternatives } : {}),
+        },
+        { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        parenGroup(),
+        { type: 'literal', value: orWord },
+        { type: 'role', role: 'patient', expectedTypes: ['expression', 'literal'] },
+        parenGroup(),
+        { type: 'literal', value: verb },
+      ],
+    },
+    extraction: {
+      source: { position: 0 },
+      duration: { position: 2 },
+    },
+  } as LanguagePattern;
+}
+
+function getWaitPatternsTr(): LanguagePattern[] {
+  return [
+    verbFinalOrRunWait('wait-tr-or-run', 'tr', 'bekle', 'den', 'veya', 1, ['dan', 'ten', 'tan']),
+    verbFinalOrRunWait('wait-tr-or-run-2arg', 'tr', 'bekle', 'den', 'veya', 2, [
+      'dan',
+      'ten',
+      'tan',
+    ]),
+  ];
+}
+
+function getWaitPatternsQu(): LanguagePattern[] {
+  return [
+    verbFinalOrRunWait('wait-qu-or-run', 'qu', 'suyay', 'manta', 'utaq', 1),
+    verbFinalOrRunWait('wait-qu-or-run-2arg', 'qu', 'suyay', 'manta', 'utaq', 2),
+  ];
+}
+
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
   switch (language) {
     case 'en':
@@ -195,6 +304,10 @@ export function getWaitPatternsForLanguage(language: string): LanguagePattern[] 
       return getWaitPatternsAr();
     case 'tl':
       return getWaitPatternsTl();
+    case 'tr':
+      return getWaitPatternsTr();
+    case 'qu':
+      return getWaitPatternsQu();
     default:
       return [];
   }

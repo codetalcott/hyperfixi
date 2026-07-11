@@ -86,7 +86,10 @@ export const turkishProfile: LanguageProfile = {
       position: 'after',
     }, // Dative/Locative + Genitive (with buffer consonants)
     source: { primary: 'den', alternatives: ['dan', 'ten', 'tan'], position: 'after' }, // Ablative
-    style: { primary: 'le', alternatives: ['la', 'yle', 'yla'], position: 'after' }, // Instrumental
+    // `ile` is the free-standing instrumental the transformer actually emits
+    // for with-phrases (`getir method:"POST" body:form ile`); the suffix
+    // forms cover hand-written agglutinated variants.
+    style: { primary: 'le', alternatives: ['la', 'yle', 'yla', 'ile'], position: 'after' }, // Instrumental
     event: { primary: 'i', alternatives: ['ı', 'u', 'ü'], position: 'after' }, // Event as accusative
   },
   keywords: {

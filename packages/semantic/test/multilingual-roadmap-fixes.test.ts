@@ -13035,3 +13035,487 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 });
+
+describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render style (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The SOV canonicalOrders carry no `style` slot, so the transformer's
+  // safety net strands the with-options blob AFTER the verb with its
+  // postposition, where the fused event patterns left it unconsumed —
+  // fetch.style/render.style:expression missing across the SOV cohort while
+  // the en reference captures it (R1 Family A, the largest miss cluster).
+  // tryAttachTrailingStyle reclaims the depth-0 marker-terminated run.
+  // Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('fetch-with-method: style:expression captured, source untouched', () => {
+    const ROWS: Array<[string, string]> = [
+      ['ja', '/api/form を 送信 で フェッチ method:"POST" body:form で'],
+      ['ko', '/api/form 를 제출 할 때 가져오기 method:"POST" body:form 로'],
+      ['tr', '/api/form i gönder de getir method:"POST" body:form ile'],
+      ['qu', '/api/form ta kachay pi apamuy method:"POST" body:form wan'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] captures style as expression and keeps source`, () => {
+        const nodes = collect(parse(src, lang));
+        const f = first(nodes, 'fetch');
+        expect(f, `${lang} fetch survives`).toBeDefined();
+        expect(role(f, 'source')?.value, `${lang} source`).toBe('/api/form');
+        expect(role(f, 'style')?.type, `${lang} style type`).toBe('expression');
+        expect(role(f, 'style')?.raw, `${lang} style content`).toContain('method');
+      });
+    }
+  });
+
+  describe('render-template-with-data: style:expression captured, then-chain survives', () => {
+    const ROWS: Array<[string, string]> = [
+      ['ja', '#user-list を クリック で 描画 users: $data で それから それ を #container に 置く'],
+      ['ko', '#user-list 를 클릭 할 때 렌더링 users: $data 로 그러면 그것 를 #container 에 넣다'],
+      ['tr', '#user-list i tıklama de render users: $data ile ardından o i #container e koy'],
+      ['qu', '#user-list ta ñitiy pi rikurichiy users: $data wan chayqa chay ta #container man churay'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] captures style as expression; patient + trailing put intact`, () => {
+        const nodes = collect(parse(src, lang));
+        const r = first(nodes, 'render');
+        expect(r, `${lang} render survives`).toBeDefined();
+        expect(role(r, 'patient')?.value, `${lang} patient`).toBe('#user-list');
+        expect(role(r, 'style')?.type, `${lang} style type`).toBe('expression');
+        expect(role(r, 'style')?.raw, `${lang} style content`).toContain('users');
+        const p = first(nodes, 'put');
+        expect(p, `${lang} then-chained put survives`).toBeDefined();
+        expect(role(p, 'destination')?.value, `${lang} put destination`).toBe('#container');
+      });
+    }
+  });
+
+  it('[ko] fetch-formdata: an as-marker 로 INSIDE the parenthesized body does not close the run (depth tracking)', () => {
+    const nodes = collect(
+      parse('/api/submit 를 제출 할 때 가져오기 method:"POST", body:(closest <form/> 로 FormData) 로', 'ko')
+    );
+    const f = first(nodes, 'fetch');
+    expect(role(f, 'style')?.type).toBe('expression');
+    expect(role(f, 'style')?.raw).toContain('FormData');
+  });
+
+  it('[ja] a fetch WITHOUT a with-phrase gains no phantom style', () => {
+    // fetch-loading-state shape: nothing between the verb and the then-chain.
+    const nodes = collect(parse('/api/data を クリック で フェッチ それから それ を 私 に 置く', 'ja'));
+    const f = first(nodes, 'fetch');
+    expect(f).toBeDefined();
+    expect(role(f, 'style')).toBeUndefined();
+  });
+
+  it('[en] reference capture unchanged: style via the en with-options pattern', () => {
+    // en never takes the reclaim path (prepositional style marker); this
+    // locks the R1 denominator the SOV cohort is scored against.
+    const nodes = collect(parse('on submit fetch /api/form with method:"POST" body:form', 'en'));
+    const f = first(nodes, 'fetch');
+    expect(role(f, 'style')?.type).toBe('expression');
+    expect(role(f, 'source')?.value).toBe('/api/form');
+  });
+});
+
+describe('R1 Family B: qu set — oblique manta source + whole backtick templates (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // Two independent qu-only defects flattened every hard set row to the
+  // verb-anchoring fallback (destination:literal / patient:selector, vs en's
+  // destination:property-path / patient:expression):
+  //  (1) the transformer renders the handler's from-phrase INSIDE the body
+  //      clause (`<dest> ta <src> manta <value> man … churanay`) and no set
+  //      pattern had a source slot — set-qu-oblique-source adds the shape;
+  //  (2) the qu string extractor lacked the backtick branch every other
+  //      language has, so template literals shattered into ~12 fragments and
+  //      no pattern could match the clause at all.
+  // Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  it('[qu] two-way-binding: property-path destination + expression patient through the oblique source', () => {
+    const nodes = collect(
+      parse(
+        '#greeting.innerText ta #firstName manta "Hello, " + noqaq chanin man yaykuchiy pi churanay',
+        'qu'
+      )
+    );
+    const s = first(nodes, 'set');
+    expect(s).toBeDefined();
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toContain('noqaq chanin');
+    expect(role(s, 'source')?.value).toBe('#firstName');
+  });
+
+  it('[qu] computed-value: parenthesized operator-run patient stays one expression', () => {
+    const nodes = collect(
+      parse(
+        '#total.innerText ta .quantity manta (the chanin pa #price hina Number) * (noqaq chanin hina Number) man yaykuchiy pi churanay',
+        'qu'
+      )
+    );
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toContain('#price');
+  });
+
+  it('[qu] template-literal-interpolation: backtick template survives as one token', () => {
+    const nodes = collect(parse('noqaq innerHTML ta `<li>${$item.name}</li>` man ñitiy pi churanay', 'qu'));
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.type).toBe('property-path');
+    expect(role(s, 'patient')?.type).toBe('expression');
+    expect(role(s, 'patient')?.raw).toBe('`<li>${$item.name}</li>`');
+  });
+
+  it('[qu] template-literal-list-build: the middle set keeps its operator-run expression patient', () => {
+    const nodes = collect(
+      parse(
+        '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay',
+        'qu'
+      )
+    );
+    const sets = nodes.filter(n => n.action === 'set');
+    expect(sets.length).toBe(3);
+    expect(role(sets[1], 'destination')?.type).toBe('reference');
+    expect(role(sets[1], 'patient')?.type).toBe('expression');
+    expect(role(sets[1], 'patient')?.raw).toContain('`<li>${item.name}</li>`');
+    // Final set: property-path destination, unchanged by the new pattern.
+    expect(role(sets[2], 'destination')?.type).toBe('property-path');
+  });
+
+  it('[qu] backtick template tokenizes as a single token (framework-extractor parity)', () => {
+    const res: any = getTokenizer('qu').tokenize('$html + `<li>${item.name}</li>` man');
+    const toks = (Array.isArray(res) ? res : (res.tokens ?? [])).filter(
+      (t: any) => t.kind !== 'whitespace'
+    );
+    expect(toks.map((t: any) => t.value)).toContain('`<li>${item.name}</li>`');
+  });
+
+  it("[qu] glottalized words still tokenize whole (ch'usaq apostrophe unaffected by the backtick branch)", () => {
+    const res: any = getTokenizer('qu').tokenize("chayqa ch'usaq man churanay");
+    const toks = (Array.isArray(res) ? res : (res.tokens ?? [])).filter(
+      (t: any) => t.kind !== 'whitespace'
+    );
+    expect(toks.map((t: any) => t.value)).toContain("ch'usaq");
+  });
+
+  it('[qu] plain set (no manta phrase) still parses via the generated pattern', () => {
+    // The oblique-source pattern's manta group is REQUIRED, so it must not
+    // shadow the simple shape.
+    const nodes = collect(parse('$html ta "" man ñitiy pi churanay', 'qu'));
+    const s = first(nodes, 'set');
+    expect(role(s, 'destination')?.value).toBe('$html');
+    expect(role(s, 'patient')?.value).toBe('');
+    expect(role(s, 'source')).toBeUndefined();
+  });
+});
+
+describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The behaviors' `wait for pointermove(...) or pointerup(...) from document`
+  // renders verb-final with a fronted from-phrase (post-#636); no tr/qu wait
+  // pattern matched the or-run shape, so the verb-anchoring fallback binned
+  // the run as junk duration:expression=")" and the event dropped. The
+  // verb-final mirrors of wait-ar-from-first/wait-tl-from-first capture the
+  // first event into `duration`; the known-event duration→event relabel then
+  // emits event:literal, matching the en reference (which also keeps ONLY the
+  // first event). Corpus strings are canonical pattern_translations rows.
+  const roleOf = (node: unknown, role: string): any => {
+    const walk = (n: any): any => {
+      if (!n || typeof n !== 'object') return undefined;
+      if (n.action === 'wait' && n.roles instanceof Map) return n.roles.get(role);
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const c = n[f];
+        if (Array.isArray(c)) for (const x of c) { const r = walk(x); if (r !== undefined) return r; }
+        else if (c && typeof c === 'object') { const r = walk(c); if (r !== undefined) return r; }
+      }
+      return undefined;
+    };
+    return walk(node);
+  };
+  const countWaits = (node: unknown): number => {
+    let n = 0;
+    const walk = (x: any): void => {
+      if (!x || typeof x !== 'object') return;
+      if (x.action === 'wait') n++;
+      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const c = x[f];
+        if (Array.isArray(c)) c.forEach(walk);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return n;
+  };
+
+  const ROWS: Array<[string, string, string]> = [
+    ['tr', 'sortable (1-arg)', 'belge den pointermove(clientY) veya pointerup(clientY) bekle'],
+    ['qu', 'sortable (1-arg)', 'qillqa manta pointermove(clientY) utaq pointerup(clientY) suyay'],
+    ['tr', 'resizable (2-arg)', 'belge den pointermove(clientX, clientY) veya pointerup(clientX, clientY) bekle'],
+    ['qu', 'resizable (2-arg)', 'qillqa manta pointermove(clientX, clientY) utaq pointerup(clientX, clientY) suyay'],
+  ];
+  for (const [lang, label, src] of ROWS) {
+    it(`[${lang}] ${label}: first event captured as event:literal, single wait`, () => {
+      const node = parse(src, lang);
+      expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+      expect(countWaits(node), `${lang} phantom command check`).toBe(1);
+    });
+  }
+
+  it('[tr] parenless hand-written or-run still parses (groups optional)', () => {
+    const node = parse('belge den pointermove veya pointerup bekle', 'tr');
+    expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+  });
+
+  it('[en] reference unchanged: first event only, via wait-en-for-event', () => {
+    const node = parse('wait for pointermove(clientY) or pointerup(clientY) from document', 'en');
+    expect(roleOf(node, 'event')).toMatchObject({ type: 'literal', value: 'pointermove' });
+    expect(countWaits(node)).toBe(1);
+  });
+});
+
+describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The verb-anchoring fallback's typing (tokensToSemanticValue /
+  // tokenToSemanticValue) diverged from the pattern path the en reference
+  // uses — bare sigil refs fell to literal, multi-token runs glue+first-token
+  // type only. Each increment mirrors one pattern-path behavior, gated so
+  // untouched inputs are byte-identical. Corpus strings are canonical
+  // pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('D1: sigil reference + set marker-role swap (beep-debug-expression)', () => {
+    // The fallback typed `$x` literal (no `:local`/`$global` branch) AND
+    // mapped set's ta/を-marked DESTINATION to patient — set's surface order
+    // is dest-first, so the SOV patient particle systematically marks the
+    // destination. en: destination:reference="$x" + patient:literal.
+    const ROWS: Array<[string, string]> = [
+      ['ja', '$x を beep! 私の 値 に 設定 クリック で'],
+      ['ko', '$x 를 beep! 내 값 에 설정 클릭 할 때'],
+      ['tr', '$x i beep! benim değer e ayarla tıklama de'],
+      ['qu', '$x ta beep! noqaq chanin man ñitiy pi churanay'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] fallback set: $x lands as destination:reference, value as patient:literal`, () => {
+        const s = first(collect(parse(src, lang)), 'set');
+        expect(s).toBeDefined();
+        expect(role(s, 'destination')).toMatchObject({ type: 'reference', value: '$x' });
+        expect(role(s, 'patient')?.type).toBe('literal');
+      });
+    }
+
+    it('[ja] put keeps its natural mapping (no swap): patient stays the を-marked value', () => {
+      // put is VALUE-first — its patient particle really marks the patient.
+      const p = first(collect(parse('"hello" を #output に 置く', 'ja')), 'put');
+      expect(p).toBeDefined();
+      expect(role(p, 'patient')?.value).toBe('hello');
+      expect(role(p, 'destination')?.value).toBe('#output');
+    });
+  });
+
+  describe('D2: fused *-sov-simple trailing expression runs (js-inline, go-url, last-in-collection)', () => {
+    // The fused simple event patterns capture only the verb and DEFAULT the
+    // primary role to me, stranding the real argument after the verb where
+    // the #530 re-parse cannot recover it (verb-first tail vs verb-final
+    // standalone patterns). tryAttachTrailingExpressionRole reclaims the run
+    // — js to the clause boundary, go/scroll to the postpositional
+    // destination marker — typed expression like the en reference.
+    it('[ja] js-inline: code run reclaimed, verb fragment 実行 trimmed', () => {
+      const j = first(collect(parse('クリック で JS実行 console.log("from js") 終わり', 'ja')), 'js');
+      expect(role(j, 'patient')?.type).toBe('expression');
+      expect(role(j, 'patient')?.raw).toContain('console');
+      expect(role(j, 'patient')?.raw).not.toContain('実行');
+    });
+
+    it('[tr] js-inline: code run reclaimed', () => {
+      const j = first(collect(parse('tıklama de js console.log("from js") son', 'tr')), 'js');
+      expect(role(j, 'patient')?.type).toBe('expression');
+      expect(role(j, 'patient')?.raw).toContain('console');
+    });
+
+    const GO_ROWS: Array<[string, string]> = [
+      ['ja', 'クリック で 移動 url "/page" に'],
+      ['tr', 'tıklama de git url "/page" e'],
+    ];
+    for (const [lang, src] of GO_ROWS) {
+      it(`[${lang}] go-url: destination phrase reclaimed as expression, default-me patient leak dropped`, () => {
+        const g = first(collect(parse(src, lang)), 'go');
+        expect(role(g, 'destination')?.type).toBe('expression');
+        expect(role(g, 'destination')?.raw).toContain('url');
+        expect(role(g, 'patient')).toBeUndefined();
+      });
+    }
+
+    const SCROLL_ROWS: Array<[string, string]> = [
+      ['ja', 'クリック で スクロール 最後 <.message/> の中 #chat に'],
+      ['tr', 'tıklama de kaydır sonuncu <.message/> içinde #chat e'],
+    ];
+    for (const [lang, src] of SCROLL_ROWS) {
+      it(`[${lang}] last-in-collection: scroll destination reclaimed as expression`, () => {
+        const s = first(collect(parse(src, lang)), 'scroll');
+        expect(role(s, 'destination')?.type).toBe('expression');
+        expect(role(s, 'destination')?.raw).toContain('#chat');
+      });
+    }
+
+    it('[ja] a bare go with a REAL destination capture is never overwritten', () => {
+      // The reclaim only fires on an absent or defaulted-me role.
+      const g = first(collect(parse('#top に 移動 クリック で', 'ja')), 'go');
+      expect(g).toBeDefined();
+      if (role(g, 'destination') !== undefined) {
+        expect(role(g, 'destination')?.type).not.toBe('undefined');
+      }
+    });
+  });
+
+  describe('D3: optional-chaining possessive folds the FULL chain (optional-chaining-possessive)', () => {
+    // The tokenizer splits `?.prop` into `?` + `.prop`; the possessive
+    // chain consumer stopped at the second `?`, leaving property-path(me,
+    // "?.dataset") with `?.customValue` stranded — the verb-final SOV
+    // patterns could never complete through to their patient particle and
+    // fell to a bare `?.customValue` expression. Folding `?` + `.prop`
+    // links consumes the whole chain; en's TYPE (and so the R1 denominator)
+    // is unchanged — only its property string now carries the full chain.
+    const ROWS: Array<[string, string]> = [
+      ['en', 'on click log my?.dataset?.customValue'],
+      ['ja', '私の?.dataset?.customValue を クリック で 記録'],
+      ['ko', '내?.dataset?.customValue 를 클릭 할 때 로그'],
+      ['tr', 'benim?.dataset?.customValue i tıklama de kaydet'],
+      ['qu', 'noqaq?.dataset?.customValue ta ñitiy pi qillqakuy'],
+      ['bn', 'আমার?.dataset?.customValue কে ক্লিক এ লগ'],
+      ['hi', 'मेरा?.dataset?.customValue को क्लिक पर लॉग'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] log patient is one property-path over the full ?. chain`, () => {
+        const l = first(collect(parse(src, lang)), 'log');
+        const p = role(l, 'patient');
+        expect(p?.type).toBe('property-path');
+        expect(p?.property).toBe('?.dataset?.customValue');
+        expect(p?.object).toMatchObject({ type: 'reference', value: 'me' });
+      });
+    }
+
+    it('[en] a ternary after a possessive value is not swallowed by the ? fold', () => {
+      // `?` folds only when a `.prop` selector immediately follows.
+      const s = first(collect(parse('on click set my innerHTML to "a"', 'en')), 'set');
+      expect(role(s, 'destination')?.type).toBe('property-path');
+      expect(role(s, 'destination')?.property).toBe('innerHTML');
+    });
+  });
+
+  describe('D4: verb-final SOV for-binding heads (template-literal-list-build)', () => {
+    // The transformer renders the for-head clause-final-verb (`item の 中
+    // $items を ために`); only verb-FIRST repeat-for-in heads existed, so the
+    // verb-anchoring fallback shredded the head on the in/object particles.
+    // for-<lang>-sov-basic mirrors en's for-en-basic roles exactly.
+    // FULL corpus bodies — the bare head fragment parses through a different
+    // path in qu/bn/hi (the transformer-rendering arc's full-body-probe
+    // discipline); R1 scores the in-body shape, so that is what locks.
+    const ROWS: Array<[string, string]> = [
+      ['ja', '$html を "" に 設定 クリック で それから item の中 $items を ために それから $html を $html + `<li>${item.name}</li>` に 設定 終わり それから #list.innerHTML を $html に 設定'],
+      ['ko', '$html 를 "" 에 설정 클릭 할 때 그러면 item 안에 $items 를 각각 그러면 $html 를 $html + `<li>${item.name}</li>` 에 설정 끝 그러면 #list.innerHTML 를 $html 에 설정'],
+      ['tr', '$html i "" e ayarla tıklama de ardından item içinde $items i için ardından $html i $html + `<li>${item.name}</li>` e ayarla son ardından #list.innerHTML i $html e ayarla'],
+      ['qu', '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay'],
+      ['bn', '$html কে "" তে সেট ক্লিক এ তারপর item এ $items কে জন্য তারপর $html কে $html + `<li>${item.name}</li>` তে সেট শেষ তারপর #list.innerHTML কে $html তে সেট'],
+      ['hi', '$html को "" में सेट क्लिक पर फिर item में $items को हेतु फिर $html को $html + `<li>${item.name}</li>` में सेट समाप्त फिर #list.innerHTML को $html में सेट'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] for-head: patient:expression + source:reference, like en`, () => {
+        const f = first(collect(parse(src, lang)), 'for');
+        expect(f).toBeDefined();
+        expect(role(f, 'patient')).toMatchObject({ type: 'expression', raw: 'item' });
+        expect(role(f, 'source')).toMatchObject({ type: 'reference', value: '$items' });
+      });
+    }
+
+    it('[ja] marker-less hand-written head still parses (object particle optional)', () => {
+      const f = first(collect(parse('item の中 $items ために', 'ja')), 'for');
+      expect(f).toBeDefined();
+      expect(role(f, 'source')).toMatchObject({ type: 'reference', value: '$items' });
+    });
+  });
+});

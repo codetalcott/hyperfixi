@@ -1513,15 +1513,41 @@ export class PatternMatcher {
         propertyName = propertyName.substring(1);
       }
 
-      // Consume chained dot-property access (.parentElement.style.display)
+      // Consume chained dot-property access (.parentElement.style.display),
+      // including optional-chaining links: the tokenizer splits `?.prop` into
+      // `?` + `.prop`, and stopping at the `?` left the chain HALF-consumed —
+      // property-path(me, "?.dataset") with `?.customValue` stranded, so the
+      // verb-final SOV patterns could never complete through to their patient
+      // particle and the row fell to a bare `?.customValue` expression
+      // (optional-chaining-possessive, R1 Family D). A `?` is only folded
+      // when a `.prop` selector immediately follows, so a ternary after a
+      // possessive value is untouched.
       let chainedProps = propertyName;
-      while (
-        tokens.peek()?.kind === 'selector' &&
-        tokens.peek()!.value.startsWith('.') &&
-        /^\.[a-zA-Z_]\w*/.test(tokens.peek()!.value)
-      ) {
-        chainedProps += tokens.peek()!.value; // keep the dots for chaining
-        tokens.advance();
+      for (;;) {
+        const nxt = tokens.peek();
+        if (
+          nxt?.kind === 'selector' &&
+          nxt.value.startsWith('.') &&
+          /^\.[a-zA-Z_]\w*/.test(nxt.value)
+        ) {
+          chainedProps += nxt.value; // keep the dots for chaining
+          tokens.advance();
+          continue;
+        }
+        if (nxt?.value === '?') {
+          const after = tokens.peek(1);
+          if (
+            after?.kind === 'selector' &&
+            after.value.startsWith('.') &&
+            /^\.[a-zA-Z_]\w*/.test(after.value)
+          ) {
+            chainedProps += `?${after.value}`;
+            tokens.advance();
+            tokens.advance();
+            continue;
+          }
+        }
+        break;
       }
 
       // Check for a trailing method call: chain + '(' [args...] ')'

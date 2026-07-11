@@ -514,6 +514,62 @@ const repeatUntilHeadQu: LanguagePattern = {
   },
 };
 
+/**
+ * Verb-FINAL for-binding head — the SOV mirror of `repeatForInHead`, emitted
+ * as action `for` to match the en reference (`for-en-basic`: `for item in
+ * $items` → for.patient:expression + for.source:reference; list-build's loop
+ * head). The transformer renders the SOV head clause-final-verb:
+ *   ja `item の 中 $items を ために`      qu `item uku pi $items ta sapankaq`
+ * No pattern covered the shape, so the verb-anchoring fallback shredded it on
+ * the in/object particles (ja destination:literal="item" patient:literal=
+ * "中$items", qu event:literal="itemuku" — R1 Family D, ×2 rows in all six).
+ * The object particle before the for-verb is optional so a hand-written
+ * marker-less head still parses. Head-only: the loop BODY follows after a
+ * then-connective and parses as sibling commands, exactly like en.
+ */
+function sovForBindingHead(
+  language: string,
+  spec: { inWords: string[]; objMarker: string; forVerb: string }
+): LanguagePattern {
+  return {
+    id: `for-${language}-sov-basic`,
+    language,
+    command: 'for',
+    priority: 105,
+    template: {
+      format: `{patient} ${spec.inWords.join(' ')} {source} [${spec.objMarker}] ${spec.forVerb}`,
+      tokens: [
+        { type: 'role', role: 'patient', expectedTypes: ['expression', 'reference'] },
+        ...spec.inWords.map(w => ({ type: 'literal' as const, value: w })),
+        { type: 'role', role: 'source', expectedTypes: ['selector', 'expression', 'reference'] },
+        {
+          type: 'group',
+          optional: true,
+          tokens: [{ type: 'literal', value: spec.objMarker }],
+        },
+        { type: 'literal', value: spec.forVerb },
+      ],
+    },
+    extraction: {
+      patient: { position: 0 },
+    },
+  };
+}
+
+// Corpus surfaces (token kinds vary — tr için is a particle, bn জন্য carries
+// no normalized 'for' — so literals match by VALUE; in-words reuse the
+// FOR_IN_HEADS table's split forms).
+const SOV_FOR_BINDING_HEADS: Array<
+  [string, { inWords: string[]; objMarker: string; forVerb: string }]
+> = [
+  ['ja', { inWords: ['の', '中'], objMarker: 'を', forVerb: 'ために' }],
+  ['ko', { inWords: ['안', '에'], objMarker: '를', forVerb: '각각' }],
+  ['tr', { inWords: ['içinde'], objMarker: 'i', forVerb: 'için' }],
+  ['qu', { inWords: ['uku', 'pi'], objMarker: 'ta', forVerb: 'sapankaq' }],
+  ['bn', { inWords: ['এ'], objMarker: 'কে', forVerb: 'জন্য' }],
+  ['hi', { inWords: ['में'], objMarker: 'को', forVerb: 'हेतु' }],
+];
+
 const BY_LANG = new Map<string, LanguagePattern[]>();
 const addPattern = (lang: string, p: LanguagePattern) => {
   const list = BY_LANG.get(lang);
@@ -528,6 +584,9 @@ for (const [lang, countWord, marker] of SOV_REPEAT_TIMES) {
 }
 for (const [lang, spec] of FOR_IN_HEADS) {
   addPattern(lang, repeatForInHead(lang, spec));
+}
+for (const [lang, spec] of SOV_FOR_BINDING_HEADS) {
+  addPattern(lang, sovForBindingHead(lang, spec));
 }
 for (const [lang, spec] of WHILE_HEADS) {
   addPattern(lang, repeatWhileHead(lang, spec));

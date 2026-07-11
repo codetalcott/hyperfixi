@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-07-10T22:47:36.999Z",
-  "commit": "4175f0b2",
+  "timestamp": "2026-07-11T04:50:11.740Z",
+  "commit": "3e86d4e1",
   "languages": {
     "ar": {
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8394563407500147,
+      "avgConfidence": 0.8385750791544675,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -16,7 +16,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -194,10 +194,6 @@
           "success": true,
           "confidence": 1
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 1
-        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -363,6 +359,10 @@
           "confidence": 0.8642857142857143
         },
         "modal-close-button": {
+          "success": true,
+          "confidence": 0.8642857142857143
+        },
+        "optional-chaining-possessive": {
           "success": true,
           "confidence": 0.8642857142857143
         },
@@ -640,17 +640,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8579007041413049,
+      "avgConfidence": 0.8611474573880582,
       "avgFidelity": 1,
       "avgPrecision": 0.9989716846334493,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9738198983297022,
+      "avgRoleFidelity": 0.9937908496732026,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -944,6 +944,10 @@
           "success": true,
           "confidence": 1
         },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -1224,10 +1228,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -1284,7 +1284,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1909,7 +1909,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2543,7 +2543,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3177,7 +3177,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3811,7 +3811,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4435,17 +4435,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9077564039970039,
+      "avgConfidence": 0.9110031572437574,
       "avgFidelity": 1,
       "avgPrecision": 0.9978354978354977,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9705519244734929,
+      "avgRoleFidelity": 0.9883442265795207,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -4767,6 +4767,10 @@
           "success": true,
           "confidence": 1
         },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -5055,10 +5059,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "intercept-cache-strategies": {
           "success": true,
           "confidence": 0.5
@@ -5079,7 +5079,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5713,7 +5713,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6337,17 +6337,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8500157319706186,
+      "avgConfidence": 0.8532624852173719,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9738198983297022,
+      "avgRoleFidelity": 0.9937908496732026,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6637,6 +6637,10 @@
           "success": true,
           "confidence": 1
         },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -6917,10 +6921,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -6971,17 +6971,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8449652269201134,
+      "avgConfidence": 0.8482119801668667,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.970551924473493,
+      "avgRoleFidelity": 0.9905228758169935,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7268,6 +7268,10 @@
           "confidence": 1
         },
         "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
@@ -7543,10 +7547,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -7615,7 +7615,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8249,7 +8249,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8883,7 +8883,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9507,17 +9507,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7316532673675531,
+      "avgConfidence": 0.7349000206143064,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9522415829076727,
+      "avgRoleFidelity": 0.9791783380018673,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9708,6 +9708,10 @@
           "confidence": 1
         },
         "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 1
+        },
+        "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
@@ -10063,10 +10067,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.5
@@ -10151,7 +10151,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10785,7 +10785,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11419,7 +11419,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12043,7 +12043,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8239183073548376,
+      "avgConfidence": 0.8220630197852643,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
@@ -12053,7 +12053,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12216,10 +12216,6 @@
           "confidence": 1
         },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 1
-        },
-        "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
@@ -12547,6 +12543,10 @@
           "success": true,
           "confidence": 0.7142857142857143
         },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 0.7142857142857143
+        },
         "render-template-with-data": {
           "success": true,
           "confidence": 0.7142857142857143
@@ -12677,17 +12677,17 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8489025594288746,
+      "avgConfidence": 0.8521493126756279,
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9719376094664444,
+      "avgRoleFidelity": 0.9927015250544662,
       "avgValueRecall": 0.9905660377358491,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12977,6 +12977,10 @@
           "success": true,
           "confidence": 1
         },
+        "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -13257,10 +13261,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -13321,7 +13321,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13955,7 +13955,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14589,7 +14589,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "bundleSize": 497541,
+      "bundleSize": 502444,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15212,7 +15212,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 497541,
+      "size": 502444,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

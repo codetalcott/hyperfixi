@@ -119,11 +119,35 @@ COMPLETE.**
 
 **Post-launch track (ratchet-protected, not launch-blocking):** wait-payload
 spurious for ×3 (bn draggable/sortable/resizable — the unconsumed or-run
-payload), SOV-six role polish (qu/hi ~0.956 R1), tr remove.patient block-walk
-leak, wait-line param leak ja, SOV halt ×6, the R1 long tail (fetch ×18 two
-sub-arcs, set.patient:literal ×16, bind ×14, render.style ×12,
-add.destination ×4, toggle.destination ×2), language-grammar.ts drift guard.
-The six-signal gate holds the bar — regressions fail CI.
+payload), tr remove.patient block-walk leak, wait-line param leak ja,
+language-grammar.ts drift guard, and the R1-arc deferrals (event-debounce
+`${}` URL tokenization — also truncates the EN reference; pick range-role
+modeling; form-submit-prevent fused-clause scramble — render-side; focus-trap
+condition-boundary leak; see HANDOFF_r1-role-fidelity.md § Family D
+outcomes). The SOV-six role polish and the R1 long tail (fetch/render.style,
+qu set, or-run wait, beep/js/go/scroll/log/for) were cleared by the R1 arc
+(2026-07-11, below). The six-signal gate holds the bar — regressions fail CI.
+
+> **Update 2026-07-11 (R1 role-fidelity arc, branch `fix/r1-role-fidelity-sov`
+> — HANDOFF_r1-role-fidelity.md RESOLVED):** avgRoleFidelity qu 0.9522 →
+> **0.9792**, ja/bn 0.9738 → **0.9938**, tr 0.9719 → **0.9927**, ko 0.9706 →
+> **0.9905**, hi 0.9706 → **0.9883** — all arc targets (qu ≥ 0.97,
+> ja/ko/tr ≥ 0.98) exceeded, stretch bn/hi included. Seven commits, gate
+> green after each: `--triage-r1` preamble; Family A (trailing SOV
+> with-options blob reclaimed as fetch/render style — the fused event
+> patterns stranded it post-verb; + tr `ile` style marker); Family B (qu
+> set oblique-`manta`-source pattern + the missing backtick branch in the qu
+> string extractor — template literals shattered to ~12 fragments); Family C
+> (tr/qu verb-final or-run wait patterns; first event → duration → the
+> known-event relabel emits `event:literal`, en-parity); Family D ×4 (sigil
+> refs + unconditional set patient↔destination marker swap in the fallback;
+> fused `*-sov-simple` trailing-expression reclaim for js/go/scroll;
+> optional-chaining `?`+`.prop` possessive fold — en type unchanged, full
+> chain byte-identical across the six; verb-final `for-<lang>-sov-basic`
+> binding heads). Key insight vs the handoff's hypothesis: most of the D
+> tail was NOT a shared fallback-classifier root but fused-simple-pattern
+> default-role drops (the Family A geometry) — fixed with reclaims/patterns,
+> so no shared-classifier extraction is warranted.
 
 Caveats: each en enrichment can mint honest-dip entries (bounded by the
 census/A-B discipline; historically <1 session total), and this scopes the

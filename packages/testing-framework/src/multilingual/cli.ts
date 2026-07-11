@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { checkDbStamp, getDefaultDbPath } from '@hyperfixi/patterns-reference';
 import { TestOrchestrator } from './orchestrator';
 import { diagnoseCoverage } from './tools/diagnose-coverage';
+import { triageR1 } from './tools/triage-r1';
 import type { TestConfig, LanguageCode } from './types';
 
 /**
@@ -178,6 +179,12 @@ function parseArgs(): TestConfig {
         config.diagnoseCoverage = true;
         break;
 
+      case '--triage-r1':
+        // Read-only measurement pass; short-circuits main() before any gate.
+        // Combine with --languages to scope (en is force-loaded as reference).
+        config.triageR1 = true;
+        break;
+
       default:
         if (arg && arg.startsWith('-')) {
           console.error(`Unknown option: ${arg}`);
@@ -233,6 +240,9 @@ OPTIONS:
       --categories <cats>      Filter by categories (comma-separated)
       --limit <n>              Patterns per language in quick mode (default: 10)
       --save-baseline          Save current results as new baseline
+      --triage-r1              Itemize R1 role-fidelity misses per language
+                               (missing action.role:type entries vs the en
+                               reference, clustered; scope with --languages)
       --diagnose-coverage      Report how often the semantic parser matched a
                                pattern that ignored part of its input, per
                                language, with sample dropped spans. Read-only:
@@ -284,6 +294,21 @@ async function main(): Promise<void> {
         );
       }
       await diagnoseCoverage(config);
+      process.exit(0);
+    }
+
+    // --triage-r1 is the same kind of measurement pass for R1 role fidelity:
+    // itemizes each language's missing `action.role:type` entries vs the en
+    // reference, clustered by entry (with the mistype pairing). Read-only.
+    if (config.triageR1) {
+      const staleDists = findStaleDists();
+      if (staleDists.length > 0) {
+        console.warn(
+          `⚠ Stale dist/ in: ${staleDists.join(', ')} — these numbers describe the built\n` +
+            '  output, not your checkout. Rebuild first: npm run test:multilingual:build-deps\n'
+        );
+      }
+      await triageR1(config);
       process.exit(0);
     }
 
