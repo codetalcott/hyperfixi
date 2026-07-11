@@ -1856,6 +1856,12 @@ export class SemanticParserImpl implements ISemanticParser {
         // absent-or-`me`-default only, destination matched by PRIMARY marker
         // only, strict value shapes.
         this.tryAttachTrailingRole(tokens, commandNode as CommandSemanticNode, language);
+
+        // Trailing STYLE (with-options) reclaim — see tryAttachTrailingStyle.
+        // Placed AFTER the responseType reclaim so fetch-with-headers' post-
+        // marker `JSON` tail stays unconsumed exactly as before (en-symmetric
+        // lossiness: the en reference drops it too).
+        this.tryAttachTrailingStyle(tokens, commandNode as CommandSemanticNode, language);
       }
 
       // Check if pattern has continuation marker (then-chains).
@@ -2547,6 +2553,7 @@ export class SemanticParserImpl implements ISemanticParser {
         commands.push(cmd);
         directHits++;
         this.tryAttachTrailingRole(clauseStream, cmd, language);
+        this.tryAttachTrailingStyle(clauseStream, cmd, language);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -2778,6 +2785,100 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
     }
+  }
+
+  /**
+   * Reclaim a trailing post-verb `with`-options run as the `style` role. The
+   * SOV canonicalOrders carry no `style` slot, so the transformer's safety net
+   * appends the with-phrase AFTER the verb with its postposition (ja `フェッチ
+   * method:"POST" body:form で`, tr `getir … ile`, qu `apamuy … wan`), where
+   * the fused event pattern (`fetch-event-<lang>-sov-patient-first`) and the
+   * standalone SOV patterns leave it unconsumed — fetch.style/render.style
+   * missing in the whole SOV cohort while en captures `style:expression` (the
+   * R1 Family A cluster). The #530 [verb..boundary] re-parse can't recover it:
+   * the tail is verb-FIRST relative to the slice while every standalone SOV
+   * pattern is verb-final.
+   *
+   * Scans ahead for the profile's postpositional `style` marker and, when a
+   * non-empty run of value tokens ends at it inside the clause, captures the
+   * run as `style:expression` and consumes through the marker. Conservative by
+   * construction: gated to fetch/render (the only commands whose corpus
+   * with-phrase strands — show/hide/transition also declare `style` and stay
+   * untouched), to an ABSENT style role, and to a postpositional marker; the
+   * scan aborts unconsumed at a clause boundary (conjunction / then / curated
+   * end — a run without its marker is never captured) and is capped, so a
+   * marker far past the clause can't pull in foreign tokens. Mid-run particles
+   * that belong to the blob (formdata's `として`/`olarak`/`hina` as-markers)
+   * don't terminate the scan — only the style marker itself does, first match
+   * wins (ko's 로 doubles as the as-marker: the first 로 closes the options
+   * run, the rest stays unconsumed exactly as before).
+   */
+  private tryAttachTrailingStyle(
+    stream: TokenStream,
+    command: CommandSemanticNode,
+    language: string
+  ): void {
+    if (command.action !== 'fetch' && command.action !== 'render') return;
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    if (roles.has('style')) return;
+    const schema = getSchema(command.action as ActionType);
+    if (!schema?.roles.some(r => r.role === 'style')) return;
+    const profile = tryGetProfile(language);
+    const marker = profile?.roleMarkers?.style;
+    if (!marker || marker.position !== 'after') return;
+
+    const surfaces = new Set(
+      [marker.primary, ...(marker.alternatives ?? [])].map(s => s.toLowerCase())
+    );
+    const isBoundary = (t: LanguageToken): boolean =>
+      t.kind === 'conjunction' ||
+      (t.kind === 'keyword' &&
+        (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+
+    // Cap comfortably above the widest corpus blob (qu fetch-with-headers
+    // splits to 13 tokens) while keeping a runaway scan impossible.
+    const SCAN_CAP = 24;
+    let markerOffset = -1;
+    let depth = 0; // (…)/{…} nesting — ko's 로 doubles as the as-marker and
+    for (let i = 0; i < SCAN_CAP; i++) {
+      // appears INSIDE formdata's parenthesized body; only a depth-0 marker
+      // closes the options run.
+      const t = stream.peek(i);
+      if (!t || isBoundary(t)) break;
+      if (t.value === '(' || t.value === '{') depth++;
+      else if (t.value === ')' || t.value === '}') depth = Math.max(0, depth - 1);
+      if (
+        depth === 0 &&
+        (t.kind === 'particle' || t.kind === 'keyword') &&
+        surfaces.has(t.value.toLowerCase())
+      ) {
+        markerOffset = i;
+        break;
+      }
+    }
+    // No marker in range, or an empty run (`<verb> で …` has no options).
+    if (markerOffset <= 0) return;
+
+    const run: LanguageToken[] = [];
+    for (let i = 0; i < markerOffset; i++) {
+      const t = stream.peek(i);
+      if (t) run.push(t);
+    }
+    // ko's style marker 로 doubles as its AS-marker, so a bare `json 로`
+    // as-phrase (event-debounce) would misread as a with-phrase. A run that is
+    // a single known response-type word is an as-phrase — leave it unconsumed
+    // exactly as before (the en reference drops it too: equal lossiness).
+    if (
+      run.length === 1 &&
+      SemanticParserImpl.RESPONSE_TYPE_WORDS.has(run[0].value.toLowerCase())
+    ) {
+      return;
+    }
+    roles.set('style', {
+      type: 'expression',
+      raw: this.joinTokenText(run),
+    } as SemanticValue);
+    for (let i = 0; i <= markerOffset; i++) stream.advance();
   }
 
   // ==========================================================================

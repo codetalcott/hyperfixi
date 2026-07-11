@@ -13035,3 +13035,112 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 });
+
+describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render style (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+  // The SOV canonicalOrders carry no `style` slot, so the transformer's
+  // safety net strands the with-options blob AFTER the verb with its
+  // postposition, where the fused event patterns left it unconsumed —
+  // fetch.style/render.style:expression missing across the SOV cohort while
+  // the en reference captures it (R1 Family A, the largest miss cluster).
+  // tryAttachTrailingStyle reclaims the depth-0 marker-terminated run.
+  // Corpus strings are canonical patterns.db pattern_translations rows.
+  const CHILD_FIELDS = [
+    'body',
+    'statements',
+    'thenBranch',
+    'elseBranch',
+    'branches',
+    'eventHandlers',
+    'initBlock',
+    'initCommands',
+  ];
+
+  const collect = (node: unknown): Record<string, any>[] => {
+    const flat: Record<string, any>[] = [];
+    const walk = (n: unknown): void => {
+      if (!n || typeof n !== 'object') return;
+      const rec = n as Record<string, any>;
+      if (typeof rec.action === 'string') flat.push(rec);
+      for (const f of CHILD_FIELDS) {
+        const c = rec[f];
+        if (Array.isArray(c)) for (const x of c) walk(x);
+        else if (c && typeof c === 'object') walk(c);
+      }
+    };
+    walk(node);
+    return flat;
+  };
+
+  const role = (n: Record<string, any> | undefined, r: string): any =>
+    n && n.roles instanceof Map ? n.roles.get(r) : undefined;
+
+  const first = (nodes: Record<string, any>[], action: string): Record<string, any> | undefined =>
+    nodes.find(n => n.action === action);
+
+  describe('fetch-with-method: style:expression captured, source untouched', () => {
+    const ROWS: Array<[string, string]> = [
+      ['ja', '/api/form を 送信 で フェッチ method:"POST" body:form で'],
+      ['ko', '/api/form 를 제출 할 때 가져오기 method:"POST" body:form 로'],
+      ['tr', '/api/form i gönder de getir method:"POST" body:form ile'],
+      ['qu', '/api/form ta kachay pi apamuy method:"POST" body:form wan'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] captures style as expression and keeps source`, () => {
+        const nodes = collect(parse(src, lang));
+        const f = first(nodes, 'fetch');
+        expect(f, `${lang} fetch survives`).toBeDefined();
+        expect(role(f, 'source')?.value, `${lang} source`).toBe('/api/form');
+        expect(role(f, 'style')?.type, `${lang} style type`).toBe('expression');
+        expect(role(f, 'style')?.raw, `${lang} style content`).toContain('method');
+      });
+    }
+  });
+
+  describe('render-template-with-data: style:expression captured, then-chain survives', () => {
+    const ROWS: Array<[string, string]> = [
+      ['ja', '#user-list を クリック で 描画 users: $data で それから それ を #container に 置く'],
+      ['ko', '#user-list 를 클릭 할 때 렌더링 users: $data 로 그러면 그것 를 #container 에 넣다'],
+      ['tr', '#user-list i tıklama de render users: $data ile ardından o i #container e koy'],
+      ['qu', '#user-list ta ñitiy pi rikurichiy users: $data wan chayqa chay ta #container man churay'],
+    ];
+    for (const [lang, src] of ROWS) {
+      it(`[${lang}] captures style as expression; patient + trailing put intact`, () => {
+        const nodes = collect(parse(src, lang));
+        const r = first(nodes, 'render');
+        expect(r, `${lang} render survives`).toBeDefined();
+        expect(role(r, 'patient')?.value, `${lang} patient`).toBe('#user-list');
+        expect(role(r, 'style')?.type, `${lang} style type`).toBe('expression');
+        expect(role(r, 'style')?.raw, `${lang} style content`).toContain('users');
+        const p = first(nodes, 'put');
+        expect(p, `${lang} then-chained put survives`).toBeDefined();
+        expect(role(p, 'destination')?.value, `${lang} put destination`).toBe('#container');
+      });
+    }
+  });
+
+  it('[ko] fetch-formdata: an as-marker 로 INSIDE the parenthesized body does not close the run (depth tracking)', () => {
+    const nodes = collect(
+      parse('/api/submit 를 제출 할 때 가져오기 method:"POST", body:(closest <form/> 로 FormData) 로', 'ko')
+    );
+    const f = first(nodes, 'fetch');
+    expect(role(f, 'style')?.type).toBe('expression');
+    expect(role(f, 'style')?.raw).toContain('FormData');
+  });
+
+  it('[ja] a fetch WITHOUT a with-phrase gains no phantom style', () => {
+    // fetch-loading-state shape: nothing between the verb and the then-chain.
+    const nodes = collect(parse('/api/data を クリック で フェッチ それから それ を 私 に 置く', 'ja'));
+    const f = first(nodes, 'fetch');
+    expect(f).toBeDefined();
+    expect(role(f, 'style')).toBeUndefined();
+  });
+
+  it('[en] reference capture unchanged: style via the en with-options pattern', () => {
+    // en never takes the reclaim path (prepositional style marker); this
+    // locks the R1 denominator the SOV cohort is scored against.
+    const nodes = collect(parse('on submit fetch /api/form with method:"POST" body:form', 'en'));
+    const f = first(nodes, 'fetch');
+    expect(role(f, 'style')?.type).toBe('expression');
+    expect(role(f, 'source')?.value).toBe('/api/form');
+  });
+});
