@@ -1,5 +1,27 @@
 # Handoff: the R1 deferred tail (en-reference defects + render geometry)
 
+> **RESOLVED 2026-07-11** (branch `fix/r1-deferred-tail`). All in-scope
+> families cleared; F deferred per this doc's own reasoning. avgRoleFidelity:
+> ja 0.9938 → **0.9978**, bn 0.9938 / tr 0.9927 → **0.9962**, ko 0.9905 →
+> **0.9946**, qu 0.9792 → **0.9936**, hi 0.9883 → **0.9907**. Sweeps green
+> after every increment (3696/3696, R2 1.0, R3 loss only swap-content F6);
+> baseline regenerated + audited per increment; `--regression` green at arc
+> end. Per-family ledger:
+>
+> | family | outcome | how |
+> | ------ | ------- | --- |
+> | E — event-debounce `${}` URL (×6) | **fixed** (4199a0dd) | extractUrl carries `${…}` spans (balanced braces; unclosed keeps legacy cut). Realignment surfaced two masked co-causes, fixed in-increment: the SOV `debounced at 300ms` head stranded `at 300ms` junk (identifier-preposition skip added), and fused matches captured native event words raw (buildEventHandler canonicalizes exact eventNameTranslations hits; tr got boyutlandırma/kaydırma tokenizer keywords). en + all six capture the full URL as source:literal AND responseType:expression |
+> | H — form-submit-prevent halt/call (×6 + tr call) | **fixed** (19020c54) | sovHaltCallFusedRule (per-SOV-profile custom render) splits the swept patient blob at the call verb; both commands verb-final, joined by the then-connective. halt.patient:reference everywhere, tr call aligned, row confidence 0.5→1.0 |
+> | G — focus-trap condition/operand boundary (ja/ko/qu) | **fixed** (c5c884cc) | option (a) + a tokenizer alignment the probe surfaced: transformBlockBody emits the then-connective at the clause/body seam (razor-gated: SOV + positional-headed branch + no existing then — the fold's isThenKeyword boundary, #636 guards untouched); ja/ko/qu containment words (の中/안에/ukupi) registered as whole `in` keywords (split fragments broke the generated focus pattern; qu's stranded `pi` read as event marker). Bonus: whole ukupi realigned qu last-in-collection scroll |
+> | qu tail — go/scroll/put ×2/toggle/window-resize call | **fixed** (299bb27a; scroll under G) | single-quoted strings classify literal (put ×2 byte-identical to en); toggle-qu-patient-first-dest covers the #636 verb-final order (destination:expression="next .panel", byte-identical); go-qu-url-dest re-types the fronted url pair expression via ExtractionRule.transform (documented-but-unwired field, now honored in applyExtractionRules); interior `_` allowed in the qu keyword extractor's longest-first scan → k_iri/hatun_kay tokenize whole (window-resize: event literal:resize, clean call.patient:expression) |
+> | F — pick-text-range (×6) | **deferred** | per this doc's reasoning: the en reference is degenerate (first word only; pickSchema models no range roles) — the fix raises the en denominator for all 24 languages, the most expensive row for ×6. Recorded in NEXT_STEPS § 2026-07-11b |
+> | qu on.event ×2 (announce, on-custom) | **out of scope** | reactive/event-anchor class, per this doc; G's probe did not explain them (en types the custom event expression, qu literal) |
+> | swap-content | **out of scope** | F6 wontfix, unchanged |
+>
+> Residual per-language misses: ja 1 (pick) · bn/tr 2 (pick, swap) · ko 3
+> (pick, on.event ×2) · qu 4 (pick, swap, on.event ×2) · hi 5 (pick, swap,
+> on.event ×3).
+
 > **For a fresh session.** Read this, then CLAUDE.md ("Multilingual parse rate ≠
 > fidelity" and "Running the multilingual `--regression` gate locally"), then
 > `docs-internal/HANDOFF_r1-role-fidelity.md` (RESOLVED — this arc picks up its
