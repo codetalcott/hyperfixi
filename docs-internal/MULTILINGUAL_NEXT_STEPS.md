@@ -2632,16 +2632,25 @@ npx tsx src/multilingual/cli.ts --full --bundle browser-priority --diagnose-cove
 ```
 
 **First measurement (2026-07-09, browser-priority, 3696 rows): 158 fire = 4.3%**, evenly spread
-(SVO ~4.5–5.8%, SOV six ~1.9%). The samples are **not** benign residue — they are the same class
+(SVO ~4.5–5.8%, SOV six ~1.9%). The samples were **not** benign residue — they were the same class
 of defect, e.g. `eventsource ChatStream from /events on message put it into #messages end end`
 matching `eventsource-en-generated` at **confidence 1.00** with the whole 11-token block body
-dropped. `socket` and `worker` do the same. (Note those three, plus `live`/`intercept`, are the
-schemas that already warn `SCHEMA_NO_REQUIRED_ROLES` — zero required roles means role coverage is
+dropped. `socket` and `worker` did the same. (Note those three, plus `live`/`intercept`, were the
+schemas that warned `SCHEMA_NO_REQUIRED_ROLES` — zero required roles means role coverage is
 hard-coded to 1.)
 
-Known limitation: the diagnostic fires only on the **Stage-2 plain-command path**. The
-event-handler, compound, and SOV/VSO stages re-tokenize sub-segments and expose no single
-consumed count, so a `fetch … with method:"POST"` inside `on submit …` is not counted yet.
+**Burn-down (complete): 158 → 0.** #628/#629 (the five body-dropping feature blocks) took it to
+38; #630 (bind's possessive source, 7 languages) to 24; #632 (top-level command sequence) to 0.
+Full attribution in `HANDOFF_top-level-command-sequences.md` (RESOLVED). Re-confirmed
+**2026-07-11** on post-#638 `main` (`0a4c043f`), fresh ordered build + populate: **0 / 3696**
+in all 24 languages.
+
+**Deferred sub-task** (known limitation, explicitly not taken in the sequence arc): the
+diagnostic fires only on the **Stage-2 plain-command path**. The event-handler, compound, and
+SOV/VSO stages re-tokenize sub-segments and expose no single consumed count, so a
+`fetch … with method:"POST"` inside `on submit …` is not counted yet. **0 firings is therefore a
+visible floor, not a total** — extending the instrumentation to the other stages would raise it
+and is the natural next probe of this section.
 
 Before turning this into a **scoring penalty** (which would move the baseline across all 24
 languages, so it needs its own PR):
@@ -2652,10 +2661,11 @@ languages, so it needs its own PR):
    toward whichever stage isn't measured.
 3. Re-run `--diagnose-coverage` and confirm the firings are genuine drops, not optional-token
    residue, per language.
-4. Fix the `SCHEMA_NO_REQUIRED_ROLES` commands first — a zero-required-role schema scores 1.0
-   unconditionally, so a coverage penalty would swing them hardest.
+4. ~~Fix the `SCHEMA_NO_REQUIRED_ROLES` commands first~~ — **precondition met** (#628/#629
+   folded the five zero-required-role feature blocks' bodies); a coverage penalty no longer
+   swings them.
 5. Regenerate the baseline on a fresh dist + freshly `populate`d patterns.db, and confirm the
-   six-signal ratchet stays green.
+   eight-signal ratchet stays green.
 
 If it lands well, re-evaluate whether Stages 0 / 0.5 can be simplified — they exist only because
 this signal was missing.
