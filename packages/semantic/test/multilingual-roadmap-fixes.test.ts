@@ -12563,33 +12563,47 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
     });
   }
 
-  const QU_RESIZABLE = [
-    'Resizable(minWidth, minHeight, maxWidth, maxHeight) ta behavior',
-    '    noqa manta pointerdown(clientX, clientY) pi',
-    '        the ruway ta sayay',
-    '        resizable:start ta kichay',
-    '        width ta tupuy',
-    '        startWidth ta chay man churanay',
-    '        height ta tupuy',
-    '        startHeight ta chay man churanay',
-    '        startX ta clientX man churanay',
-    '        startY ta clientY man churanay',
-    '        hayk_akama ruway pointerup ta qillqa manta kutipay',
-    '            qillqa manta suyay pointermove(clientX, clientY) utaq pointerup(clientX, clientY)',
-    '            newWidth ta startWidth + clientX - startX man churanay',
-    '            newHeight ta startHeight + clientY - startY man churanay',
-    '            sichus newWidth < minWidth chayqa newWidth ta minWidth tukuy man churanay',
-    '            sichus newWidth > maxWidth chayqa newWidth ta maxWidth tukuy man churanay',
-    '            sichus newHeight < minHeight chayqa newHeight ta minHeight tukuy man churanay',
-    '            sichus newHeight > maxHeight chayqa newHeight ta maxHeight tukuy man churanay',
-    '            noqaq *width ta newWidth + "px" man churanay',
-    '            noqaq *height ta newHeight + "px" man churanay',
-    '            resizable:resize ta kichay',
-    '        tukuy',
-    '        resizable:end ta kichay',
-    '    tukuy',
-    'tukuy',
-  ].join('\n');
+  // `fixedReorder` selects the current corpus render (transformer-rendering
+  // arc: wait verb-final, inline-if terminator AFTER the verb-final tail) vs
+  // the LEGACY pre-arc render (wait verb-medial, `tukuy man churanay`
+  // stranding), which stays locked as a tolerance input.
+  const quResizable = (fixedReorder: boolean): string => {
+    const clamp = (cond: string, assign: string): string =>
+      fixedReorder
+        ? `            sichus ${cond} chayqa ${assign} man churanay tukuy`
+        : `            sichus ${cond} chayqa ${assign} tukuy man churanay`;
+    return [
+      'Resizable(minWidth, minHeight, maxWidth, maxHeight) ta behavior',
+      '    noqa manta pointerdown(clientX, clientY) pi',
+      '        the ruway ta sayay',
+      '        resizable:start ta kichay',
+      '        width ta tupuy',
+      '        startWidth ta chay man churanay',
+      '        height ta tupuy',
+      '        startHeight ta chay man churanay',
+      '        startX ta clientX man churanay',
+      '        startY ta clientY man churanay',
+      '        hayk_akama ruway pointerup ta qillqa manta kutipay',
+      fixedReorder
+        ? '            qillqa manta pointermove(clientX, clientY) utaq pointerup(clientX, clientY) suyay'
+        : '            qillqa manta suyay pointermove(clientX, clientY) utaq pointerup(clientX, clientY)',
+      '            newWidth ta startWidth + clientX - startX man churanay',
+      '            newHeight ta startHeight + clientY - startY man churanay',
+      clamp('newWidth < minWidth', 'newWidth ta minWidth'),
+      clamp('newWidth > maxWidth', 'newWidth ta maxWidth'),
+      clamp('newHeight < minHeight', 'newHeight ta minHeight'),
+      clamp('newHeight > maxHeight', 'newHeight ta maxHeight'),
+      '            noqaq *width ta newWidth + "px" man churanay',
+      '            noqaq *height ta newHeight + "px" man churanay',
+      '            resizable:resize ta kichay',
+      '        tukuy',
+      '        resizable:end ta kichay',
+      '    tukuy',
+      'tukuy',
+    ].join('\n');
+  };
+  const QU_RESIZABLE = quResizable(true);
+  const QU_RESIZABLE_LEGACY = quResizable(false);
 
   it('[qu] behavior-resizable: three triggers by VALUE, no lost measure', () => {
     const nodes = collect(parse(QU_RESIZABLE, 'qu'));
@@ -12597,19 +12611,30 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
       ['resizable:start', 'resizable:resize', 'resizable:end'].sort()
     );
     expect(count(nodes, 'measure')).toBe(2);
-    // The en reference has 12 sets; qu currently recovers 10.
-    expect(count(nodes, 'set')).toBeGreaterThanOrEqual(10);
+    // All 12 of the en reference's sets parse since the transformer-rendering
+    // arc (the trailing-`end` strip renders `man churanay tukuy`, so the
+    // conditional fold no longer strands the verb-final tail).
+    expect(count(nodes, 'set')).toBe(12);
   });
 
-  // KNOWN RESIDUE (split out — see docs-internal/MULTILINGUAL_NEXT_STEPS.md):
-  // the qu i18n reorder renders the inline-if blocks with the inner set's
-  // verb-final `man churanay` AFTER `tukuy` ("end"), so the conditional fold
-  // strands the fragment and the two style sets (`noqaq *width/*height …`)
-  // are swallowed: 10 of the en reference's 12 sets parse. Flips to a hard
-  // failure (fix the count above) when the reorder/fold is repaired.
-  it.fails('[qu] behavior-resizable: the two style sets still drop (reorder residue)', () => {
+  // FIXED (transformer-rendering arc): the i18n trailing-`end` strip now
+  // renders each inline-if's inner set verb-final BEFORE `tukuy`, so the
+  // conditional fold keeps the two style sets (`noqaq *width/*height …`).
+  it('[qu] behavior-resizable: all 12 sets parse (was the reorder residue)', () => {
     const nodes = collect(parse(QU_RESIZABLE, 'qu'));
     expect(count(nodes, 'set')).toBe(12);
+  });
+
+  it('[qu] LEGACY pre-arc render: triggers by VALUE + set floor (tolerance lock)', () => {
+    // The pre-arc corpus shape (verb-medial wait, `tukuy man churanay`
+    // stranding) remains a valid input: triggers and measures stay faithful,
+    // and at least the 10 non-stranded sets parse.
+    const nodes = collect(parse(QU_RESIZABLE_LEGACY, 'qu'));
+    expect(triggerValues(nodes).sort()).toEqual(
+      ['resizable:start', 'resizable:resize', 'resizable:end'].sort()
+    );
+    expect(count(nodes, 'measure')).toBe(2);
+    expect(count(nodes, 'set')).toBeGreaterThanOrEqual(10);
   });
 });
 
@@ -12858,25 +12883,25 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     });
   });
 
-  describe('F7: qu/tr behavior-sortable trigger residue (re-filed to the transformer arc)', () => {
-    // KNOWN RESIDUE — re-filed, not a parser gap (see MULTILINGUAL_NEXT_STEPS
-    // § R3 families, item 7). The command-level action multiset matches en in
-    // BOTH languages; only the VALUES around the loop's wait line corrupt,
-    // and every miss sits adjacent to a malformed i18n render:
-    //   tr line 15: `kadar olay pointerup i tekrarla belge den` — the
-    //     from-phrase strands AFTER the verb (en: repeat until event
-    //     pointerup from document);
-    //   tr line 16: `bekle pointermove(clientY) veya pointerup(clientY)
-    //     belge den` — verb-FIRST in an SOV language, or-run + from-phrase
-    //     stranded post-verb (the middle trigger captures the stranded
-    //     `belge` as its event);
-    //   qu line 16: `qillqa manta suyay pointermove(clientY) utaq
-    //     pointerup(clientY)` — verb-MEDIAL, or-run stranded post-verb (the
-    //     middle trigger glues the whole stranded run into its event).
-    // Same family as the qu behavior-resizable it.fails above (the reorder
-    // renders fragments outside their clause). These flip when the
-    // transformer rendering is repaired.
-    const QU_SORTABLE = [
+  describe('F7: qu/tr behavior-sortable trigger events (fixed in the transformer-rendering arc)', () => {
+    // FIXED (transformer-rendering arc; formerly the re-filed residue of
+    // MULTILINGUAL_NEXT_STEPS § R3 families, item 7). Three coordinated fixes:
+    //  - i18n `wait-oblique-verb-final` rules (tr/qu) render the loop's wait
+    //    line verb-final with the from-phrase + or-run INSIDE the clause, so
+    //    the stranded run no longer leaks into the next trigger's event;
+    //  - the i18n tr `repeat-until-event-verb-final` rule renders the loop
+    //    head's from-phrase before the verb (`kadar olay pointerup i belge
+    //    den tekrarla`), matched by `repeat-tr-until-head-verb-final`;
+    //  - `trigger-qu-event-first-verb-final` matches the qu corpus trigger
+    //    shape at position 0 (previously only the greedy verb-anchoring
+    //    fallback parsed it, and it glued the next line's fronted
+    //    `hayk_akama` as the event), and the curated-end guard in
+    //    matchRoleToken stops tr's loop-closing `son` from prefixing the
+    //    following remove's patient as positional `last`.
+    // The LEGACY fixtures pin the PRE-arc corpus shapes, which remain valid
+    // inputs (tolerance locks); the primary fixtures are the current
+    // patterns.db renders.
+    const quSortable = (waitLine: string): string[] => [
       'Sortable(dragClass) ta behavior',
       '    init',
       '        sichus dragClass kanqa mana_riqsisqa',
@@ -12892,16 +12917,22 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
       '        .{dragClass} ta item man yapay',
       '        sortable:start ta noqa man kichay',
       '        hayk_akama ruway pointerup ta qillqa manta kutipay',
-      '            qillqa manta suyay pointermove(clientY) utaq pointerup(clientY)',
+      waitLine,
       '            sortable:move ta noqa man kichay',
       '        tukuy',
       '        .{dragClass} ta item manta qichuy',
       '        sortable:end ta noqa man kichay',
       '    tukuy',
       'tukuy',
-    ].join('\n');
+    ];
+    const QU_SORTABLE = quSortable(
+      '            qillqa manta pointermove(clientY) utaq pointerup(clientY) suyay'
+    ).join('\n');
+    const QU_SORTABLE_LEGACY = quSortable(
+      '            qillqa manta suyay pointermove(clientY) utaq pointerup(clientY)'
+    ).join('\n');
 
-    const TR_SORTABLE = [
+    const trSortable = (headerLine: string, waitLine: string): string[] => [
       'Sortable(dragClass) i behavior',
       '    init',
       '        eğer dragClass dir tanımsız',
@@ -12916,34 +12947,67 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
       '        the olay i durdur',
       '        .{dragClass} i ekle item e',
       '        sortable:start i tetikle ben e',
-      '        kadar olay pointerup i tekrarla belge den',
-      '            bekle pointermove(clientY) veya pointerup(clientY) belge den',
+      headerLine,
+      waitLine,
       '            sortable:move i tetikle ben e',
       '        son',
       '        .{dragClass} i kaldır item den',
       '        sortable:end i tetikle ben e',
       '    son',
       'son',
-    ].join('\n');
+    ];
+    const TR_SORTABLE = trSortable(
+      '        kadar olay pointerup i belge den tekrarla',
+      '            belge den pointermove(clientY) veya pointerup(clientY) bekle'
+    ).join('\n');
+    const TR_SORTABLE_LEGACY = trSortable(
+      '        kadar olay pointerup i tekrarla belge den',
+      '            bekle pointermove(clientY) veya pointerup(clientY) belge den'
+    ).join('\n');
 
     const triggerValues = (nodes: Record<string, any>[]): string[] =>
       nodes.filter(n => n.action === 'trigger').map(n => String(role(n, 'event')?.raw ?? role(n, 'event')?.value ?? '?'));
 
-    it.fails('[qu] behavior-sortable: all three trigger events by VALUE (reorder residue)', () => {
+    it('[qu] behavior-sortable: all three trigger events by VALUE', () => {
       const nodes = collect(parse(QU_SORTABLE, 'qu'));
       expect(triggerValues(nodes).sort()).toEqual(
         ['sortable:start', 'sortable:move', 'sortable:end'].sort()
       );
     });
 
-    it.fails('[tr] behavior-sortable: sortable:move + bare remove patient (reorder residue)', () => {
+    it('[qu] LEGACY pre-arc render: all three trigger events by VALUE (tolerance lock)', () => {
+      // The position-0 qu trigger pattern fixes the hayk-glue on the OLD
+      // corpus shape too, and the pre-verb wait strand no longer reaches the
+      // middle trigger — the legacy text now parses fully faithful.
+      const nodes = collect(parse(QU_SORTABLE_LEGACY, 'qu'));
+      expect(triggerValues(nodes).sort()).toEqual(
+        ['sortable:start', 'sortable:move', 'sortable:end'].sort()
+      );
+    });
+
+    it('[tr] behavior-sortable: all three trigger events by VALUE + bare remove patient', () => {
       const nodes = collect(parse(TR_SORTABLE, 'tr'));
-      expect(triggerValues(nodes)).toContain('sortable:move');
+      expect(triggerValues(nodes).sort()).toEqual(
+        ['sortable:start', 'sortable:move', 'sortable:end'].sort()
+      );
       const rm = first(nodes, 'remove');
       expect(role(rm, 'patient')?.value).toBe('.{dragClass}');
     });
 
-    it('[qu/tr] behavior-sortable: command-level actions all survive (only values corrupt)', () => {
+    it('[tr] LEGACY pre-arc render: bare remove patient (curated-end guard lock)', () => {
+      // On the legacy text the wait strand still corrupts the middle
+      // trigger's event (that needed the render fix), but the loop-closing
+      // `son` no longer prefixes remove's patient as positional `last` —
+      // that's the matchRoleToken curated-end guard, which applies to the
+      // old shape as well.
+      const nodes = collect(parse(TR_SORTABLE_LEGACY, 'tr'));
+      const rm = first(nodes, 'remove');
+      expect(role(rm, 'patient')?.value).toBe('.{dragClass}');
+      const acts = collect(parse(TR_SORTABLE_LEGACY, 'tr')).map(n => n.action);
+      expect(acts.filter(a => a === 'trigger').length, 'tr legacy trigger count').toBe(3);
+    });
+
+    it('[qu/tr] behavior-sortable: command-level actions all survive', () => {
       const enActions = collect(parse(TR_SORTABLE, 'tr')).map(n => n.action);
       for (const [lang, src] of [['qu', QU_SORTABLE], ['tr', TR_SORTABLE]] as const) {
         const acts = collect(parse(src, lang)).map(n => n.action);

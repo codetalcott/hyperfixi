@@ -2609,15 +2609,16 @@ languages including en (was split everywhere). Follow-up status:
    0.9861 → 0.9611). The first full sweep also surfaced six live value-bug families —
    see "R3-discovered value-bug families" below.
 
-2. **qu behavior-resizable style-sets (the one remaining multiset row).** The qu
-   reorder renders each inline `if X then set Y to Z end` with the inner set's
-   verb-final tail AFTER the block terminator (`sichus … chayqa … tukuy man churanay`),
-   so the conditional fold consumes up to `tukuy` and strands `man churanay`; the two
-   style sets (`noqaq *width/*height … man churanay`) following the if-run are
-   swallowed — 10 of en's 12 sets parse. Likely an i18n transformer/corpus rendering
-   bug (the `end` belongs after the verb), not parser tolerance. Locked by an
-   `it.fails` in `packages/semantic/test/multilingual-roadmap-fixes.test.ts` that flips
-   when repaired.
+2. ~~**qu behavior-resizable style-sets (the one remaining multiset row).**~~
+   **DONE** (2026-07-10, transformer-rendering arc —
+   `docs-internal/HANDOFF_transformer-rendering.md`, resolved). The diagnosis
+   held: rendering bug, not parser tolerance. The transformer's new
+   trailing-`end` strip (`transformSingle` step 0a) renders each inline-if's
+   inner set verb-final BEFORE the terminator (`… man churanay tukuy`), the
+   conditional fold keeps the tail, and all 12 sets parse (multiset row gone,
+   qu avgMultisetRecall back to 1.0). The `it.fails` flipped to a hard
+   `toBe(12)`; the pre-arc render stays locked as `QU_RESIZABLE_LEGACY`
+   (tolerance input, `>= 10` floor).
 
 3. ~~**bn standalone trigger.**~~ **DONE** (2026-07-10, same arc). The predicted
    one-liner: `bn: ['কে']` added to the trigger schema's event `markerVariants`
@@ -2651,11 +2652,13 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 2. ~~**bn duration-glue**~~ **FIXED — two mechanisms, neither the tokenizer**
    (the handoff's hypothesis was wrong; the bn tokenizer splits fine).
    (a) `repeat-while` only: the reorder renders wait's object phrase as
-   `200ms শেষ কে` (terminator INSIDE the phrase — see the transformer defect
-   note below) and the SOV verb-anchoring's `processGroup` joined the pair
-   whitespace-free into `duration="200msশেষ"`. Fixed by skipping stray
-   terminator-shaped tokens during value accumulation (positional `শেষ
-   <selector>` keeps its `last` reading via selector lookahead).
+   `200ms শেষ কে` (terminator INSIDE the phrase) and the SOV verb-anchoring's
+   `processGroup` joined the pair whitespace-free into `duration="200msশেষ"`.
+   Fixed by skipping stray terminator-shaped tokens during value accumulation
+   (positional `শেষ <selector>` keeps its `last` reading via selector
+   lookahead). The RENDER itself was fixed in the transformer-rendering arc
+   (family 7 below): the trailing-`end` strip now emits `200ms কে অপেক্ষা শেষ`
+   — the parser-side skip stays as the tolerance lock for the pre-arc shape.
    (b) The other five rows were family-1's mechanism: the generated verb-first
    wait's duration slot captured তারপর/শেষ (`duration="then"`/`"end"`) while
    dropping the real `2s/1s/100ms কে` prefix — fixed by the same
@@ -2696,26 +2699,36 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    worth the regression surface for zero runtime effect (decision 2026-07-10).
    The 8 rows stay visible in the R3 report; do NOT special-case the R3 walker.
    If a future arc flips it, regenerate the baseline and watch R1/R2.
-7. **qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**
-   (`behavior-sortable`; handoff: `docs-internal/HANDOFF_transformer-rendering.md`). Probing shows the command-level action multiset
-   matches en in both languages; only VALUES around the loop's wait line
-   corrupt, each adjacent to a malformed render: tr renders the repeat header's
-   from-phrase AFTER the verb (`kadar olay pointerup i tekrarla belge den`) and
-   the wait line verb-FIRST (`bekle pointermove(clientY) veya … belge den` —
-   the middle trigger captures the stranded `belge` as its event; the loop's
-   `son` before `remove` gives the patient a spurious `last` prefix); qu
-   renders the wait verb-MEDIAL (`qillqa manta suyay pointermove(clientY) utaq
-   …` — the middle trigger glues the whole stranded or-run). Same
-   transformer-rendering family as the open qu `behavior-resizable` side-quest
-   (item 2 of the colon-event follow-ups above) and the bn repeat-while
-   terminator placement (family 2a). Locked by two `it.fails` in
-   `multilingual-roadmap-fixes.test.ts` § "R3 value-bug families" F7 (flip when
-   the transformer rendering is repaired). **Transformer-arc worklist:** fix the
-   SOV/agglutinative reorder stranding (a) or-run wait lines rendered
-   verb-first/verb-medial (tr/qu), (b) from-phrases postposed after the verb
-   (tr `belge den`), (c) block terminators rendered inside the following
-   clause's object phrase (bn `200ms শেষ কে অপেক্ষা`, qu resizable's `tukuy man
-   churanay`).
+7. ~~**qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**~~
+   **DONE** (2026-07-10, transformer-rendering arc —
+   `docs-internal/HANDOFF_transformer-rendering.md`, resolved; all four
+   `behavior-sortable` R3 rows gone). Fixed as a scoped render + parser-gap
+   pair, NOT a blanket reorder (a full tr/bn canonicalOrder extension was
+   tried first and re-rendered the whole corpus into shapes the parser can't
+   bind — R3 exploded 12→39 rows; reverted):
+   - (a) or-run wait lines: new i18n `wait-oblique-verb-final` rules (tr/qu
+     profiles, gated to `duration`+`source`, no-event predicate) render
+     `belge den … veya … bekle` / `qillqa manta … utaq … suyay` — the
+     stranded run no longer leaks into the next trigger's event.
+   - (b) tr repeat header: new i18n `repeat-until-event-verb-final` rule
+     (predicate-gated to `repeat until event`) renders `kadar olay pointerup
+     i belge den tekrarla`, matched semantic-side by the new
+     `repeat-tr-until-head-verb-final` pattern (the post-verb variant stays
+     for the legacy shape).
+   - (c) terminator placement: the transformer's trailing-`end` strip
+     (`transformSingle` step 0a) — see colon-event follow-ups item 2.
+   - qu `sortable:start` needed a parser fix regardless of rendering: the qu
+     corpus trigger shape matched NO pattern (only the greedy verb-anchoring
+     fallback, which glued the next line's fronted `hayk_akama`); added
+     `trigger-qu-event-first-verb-final` (position-0 match).
+   - tr `remove.patient="last .{dragClass}"`: the loop's own `son` before a
+     selector took the positional-`last` reading. The curated end-keyword
+     sets (now shared via `parser/end-keywords.ts`) are audited to never be
+     positional (tr last=`sonuncu`, qu last=`qhipa`), so `matchRoleToken` and
+     `isStrayTerminator` now treat curated end words as structural
+     unconditionally (dual-use bn `শেষ` keeps its selector lookahead).
+   F7 locks flipped to hard asserts on the refreshed corpus fixtures; pre-arc
+   shapes stay locked as `QU/TR_SORTABLE_LEGACY` tolerance inputs.
 8. ~~**ms `repeat 3 kali` count swallowed**~~ **FIXED**. The `repeat-ms-times`
    HEAD's count word was left as English `times`, so `ulang 3 kali` fell through
    to the generated positional repeat (`loopType=3`, no quantity). Localized to

@@ -397,6 +397,47 @@ function repeatUntilHeadSOV(
 }
 
 /**
+ * Verb-final twin of {@link repeatUntilHeadSOV}: `{until-word} {event-word}
+ * {event} {obj-marker} {source} {from-marker} {repeat-verb}` — the source
+ * phrase INSIDE the clause, before the verb (tr `kadar olay pointerup i belge
+ * den tekrarla`). This is the grammatically-correct SOV order the i18n
+ * transformer emits since the transformer-rendering arc; the post-verb
+ * variant above still matches the pre-arc corpus shape (`… tekrarla belge
+ * den`), kept as a tolerance lock. The source group is REQUIRED here so this
+ * variant never outbids the post-verb one on sourceless heads.
+ */
+function repeatUntilHeadSOVVerbFinal(
+  language: string,
+  spec: { untilWord: string; eventWord: string; objMarker: string; fromWord: string }
+): LanguagePattern {
+  return {
+    id: `repeat-${language}-until-head-verb-final`,
+    language,
+    command: 'repeat',
+    priority: 111, // above the post-verb variant so the correct shape wins
+    template: {
+      format: `${spec.untilWord} ${spec.eventWord} {event} ${spec.objMarker} {source} ${spec.fromWord} repeat`,
+      tokens: [
+        { type: 'literal', value: spec.untilWord },
+        { type: 'literal', value: spec.eventWord },
+        { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+        { type: 'literal', value: spec.objMarker },
+        {
+          type: 'role',
+          role: 'source',
+          expectedTypes: ['selector', 'reference', 'expression'],
+        },
+        { type: 'literal', value: spec.fromWord },
+        { type: 'literal', value: 'repeat' },
+      ],
+    },
+    extraction: {
+      loopType: { default: { type: 'literal', value: 'until-event' } },
+    },
+  };
+}
+
+/**
  * Mid-clause twin of {@link repeatUntilHeadQu}: anchors at `kama`(→until)
  * WITHOUT the `hayk _ a` junk prefix. Inside a multi-command clause (the
  * sortable behavior body) the PRECEDING command's verb-first pattern greedily
@@ -496,6 +537,12 @@ for (const [lang, spec] of VERB_FIRST_UNTIL_HEADS) {
 }
 for (const [lang, spec] of SOV_UNTIL_HEADS) {
   addPattern(lang, repeatUntilHeadSOV(lang, spec));
+  // tr renders the source phrase pre-verb since the transformer-rendering
+  // arc (the i18n `repeat-until-event-verb-final` rule); hi/bn/ja/ko renders
+  // are unchanged (post-verb) so they don't get the verb-final variant.
+  if (lang === 'tr') {
+    addPattern(lang, repeatUntilHeadSOVVerbFinal(lang, spec));
+  }
 }
 addPattern('qu', repeatUntilHeadQu);
 addPattern('qu', repeatUntilHeadQuMidClause);

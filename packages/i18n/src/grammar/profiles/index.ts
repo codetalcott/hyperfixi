@@ -420,6 +420,12 @@ export const turkishProfile: LanguageProfile = {
   morphology: 'agglutinative',
   direction: 'ltr',
 
+  // NOTE: roles absent from this order are safety-net-appended AFTER the verb
+  // by reorderRoles. That stranding is what the semantic parser's generated
+  // patterns + reclaim tolerances were built around, so extending this order
+  // wholesale re-renders (and breaks) the whole tr corpus — fix individual
+  // defective shapes with per-command `rules` below instead (see the
+  // wait/repeat-until rules from the transformer-rendering arc).
   canonicalOrder: ['patient', 'event', 'action'],
 
   markers: [
@@ -513,6 +519,44 @@ export const turkishProfile: LanguageProfile = {
       transform: {
         // $var i #el e bağla
         roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'wait-oblique-verb-final',
+      description: "Keep wait's from-phrase and or-run inside the clause, verb-final",
+      priority: 90,
+      match: {
+        commands: ['wait', 'bekle'],
+        // Only the multi-argument form (`wait for X or Y from Z`) strands:
+        // without this rule the safety-net appends duration+source AFTER the
+        // verb (`bekle … belge den`), and the stranded from-phrase is captured
+        // by the NEXT statement as a junk trigger event (behavior-sortable R3).
+        requiredRoles: ['action', 'duration', 'source'],
+        // Never reorder a fused single-line handler — its event must stay put.
+        predicate: parsed => !parsed.roles.has('event'),
+      },
+      transform: {
+        // belge den pointermove(clientY) veya pointerup(clientY) bekle
+        roleOrder: ['patient', 'source', 'duration', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'repeat-until-event-verb-final',
+      description: "Keep repeat-until-event's from-phrase before the verb",
+      priority: 90,
+      match: {
+        commands: ['repeat', 'tekrarla'],
+        requiredRoles: ['action', 'patient', 'source'],
+        // Gate to the until-event head; `repeat for item in .items` also
+        // carries patient+source and must keep its (parseable) default order.
+        predicate: parsed => /^repeat\s+until\s+event\b/i.test((parsed.original ?? '').trim()),
+      },
+      transform: {
+        // kadar olay pointerup i belge den tekrarla — matched semantic-side by
+        // repeat-tr-until-head-verb-final.
+        roleOrder: ['patient', 'source', 'action'],
         insertMarkers: true,
       },
     },
@@ -692,6 +736,8 @@ export const quechuaProfile: LanguageProfile = {
   morphology: 'agglutinative', // Actually polysynthetic
   direction: 'ltr',
 
+  // NOTE: roles absent from this order are safety-net-appended AFTER the verb
+  // (see the Turkish profile note) — extend via per-command `rules`, not here.
   canonicalOrder: ['patient', 'source', 'destination', 'event', 'action'],
 
   markers: [
@@ -704,6 +750,28 @@ export const quechuaProfile: LanguageProfile = {
     { form: 'pi', role: 'event', position: 'postposition', required: true },
     { form: 'wan', role: 'style', position: 'postposition', required: false },
     { form: 'hina', role: 'method', position: 'postposition', required: false }, // "as/like"
+  ],
+
+  rules: [
+    {
+      name: 'wait-oblique-verb-final',
+      description: "Keep wait's from-phrase and or-run inside the clause, verb-final",
+      priority: 90,
+      match: {
+        commands: ['wait', 'suyay'],
+        // Only `wait for X or Y from Z` strands: duration is missing from
+        // canonicalOrder, so the or-run lands AFTER the verb and the next
+        // trigger glues it into its event (behavior-sortable R3). See the
+        // matching Turkish rule.
+        requiredRoles: ['action', 'duration', 'source'],
+        predicate: parsed => !parsed.roles.has('event'),
+      },
+      transform: {
+        // qillqa manta pointermove(clientY) utaq pointerup(clientY) suyay
+        roleOrder: ['patient', 'source', 'duration', 'action'],
+        insertMarkers: true,
+      },
+    },
   ],
 };
 
@@ -749,6 +817,8 @@ export const bengaliProfile: LanguageProfile = {
 
   // Bengali: Object comes before verb, postpositions follow nouns
   // "on click increment #count" → "#count কে ক্লিক এ বৃদ্ধি"
+  // NOTE: roles absent from this order are safety-net-appended AFTER the verb
+  // (see the Turkish profile note) — extend via per-command `rules`, not here.
   canonicalOrder: ['patient', 'event', 'action'],
 
   markers: [

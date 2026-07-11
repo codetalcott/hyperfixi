@@ -2510,3 +2510,84 @@ describe('qu fused (no-underscore) empty/null value word (chusaq)', () => {
     expect(out.indexOf('chusaq')).toBeLessThan(out.indexOf('.error'));
   });
 });
+
+// =============================================================================
+// SOV reorder stranding (transformer-rendering arc)
+// =============================================================================
+//
+// Three rendering defects, one family (docs-internal/HANDOFF_transformer-rendering.md):
+// (a) `wait for X or Y from Z` rendered verb-first (tr) / verb-medial (qu) —
+//     reorderRoles' safety-net appended roles missing from canonicalOrder
+//     AFTER the verb, stranding the or-run/from-phrase outside the clause;
+// (b) `repeat until event E from S` postposed the from-phrase after the verb;
+// (c) a trailing block terminator (`… wait 200ms end` fragments from the
+//     then-splitter) was swept into the open role's VALUE and rendered inside
+//     the phrase instead of after the verb.
+// Fixed by extending tr/qu/bn canonicalOrder to full verb-final role orders
+// and stripping/re-appending the stranded terminator in transformSingle.
+
+describe('SOV reorder stranding (transformer-rendering arc)', () => {
+  it('[tr] wait + or-run + from-phrase renders verb-final, from-phrase in-clause', () => {
+    const out = new GrammarTransformer('en', 'tr').transform(
+      'wait for pointermove(clientY) or pointerup(clientY) from document'
+    );
+    expect(out).toContain('veya');
+    expect(out.trim().endsWith('bekle')).toBe(true);
+    expect(out.indexOf('belge den')).toBeGreaterThanOrEqual(0);
+    expect(out.indexOf('belge den')).toBeLessThan(out.indexOf('bekle'));
+  });
+
+  it('[qu] wait + or-run + from-phrase renders verb-final, from-phrase in-clause', () => {
+    const out = new GrammarTransformer('en', 'qu').transform(
+      'wait for pointermove(clientY) or pointerup(clientY) from document'
+    );
+    expect(out).toContain('utaq');
+    expect(out.trim().endsWith('suyay')).toBe(true);
+    expect(out.indexOf('qillqa manta')).toBeGreaterThanOrEqual(0);
+    expect(out.indexOf('qillqa manta')).toBeLessThan(out.indexOf('pointermove'));
+  });
+
+  it('[tr] repeat-until-event keeps the from-phrase before the verb', () => {
+    const out = new GrammarTransformer('en', 'tr').transform(
+      'repeat until event pointerup from document'
+    );
+    expect(out.trim().endsWith('tekrarla')).toBe(true);
+    expect(out.indexOf('belge den')).toBeGreaterThanOrEqual(0);
+    expect(out.indexOf('belge den')).toBeLessThan(out.indexOf('tekrarla'));
+  });
+
+  it('[bn] trailing-end fragment renders the terminator after the verb', () => {
+    // `then`-split fragment of `… then wait 200ms end` (repeat-while body).
+    const out = new GrammarTransformer('en', 'bn').transform('wait 200ms end');
+    expect(out.trim()).toBe('200ms কে অপেক্ষা শেষ');
+    expect(out).not.toContain('শেষ কে'); // terminator no longer inside the object phrase
+  });
+
+  it('[qu] inline-if set keeps its verb-final tail before the terminator', () => {
+    const out = new GrammarTransformer('en', 'qu').transform(
+      'if newWidth < minWidth then set newWidth to minWidth end'
+    );
+    expect(out).toMatch(/man churanay tukuy\s*$/);
+  });
+
+  it('[tr] trailing-end set fragment renders verb-final with trailing terminator', () => {
+    // Previously the set-to rule's end-guard predicate skipped verb-final
+    // reorder for these fragments; with the terminator stripped first, the
+    // rule applies and the terminator follows the verb.
+    const out = new GrammarTransformer('en', 'tr').transform('set dragClass to "sorting" end');
+    expect(out.trim()).toBe('dragClass i "sorting" e ayarla son');
+  });
+
+  const draggableWait =
+    'wait for pointermove(clientX, clientY) or pointerup(clientX, clientY) from document';
+  it('[tr] draggable-shaped wait (clientX, clientY) is verb-final', () => {
+    const out = new GrammarTransformer('en', 'tr').transform(draggableWait);
+    expect(out.trim().endsWith('bekle')).toBe(true);
+    expect(out.indexOf('belge den')).toBeLessThan(out.indexOf('bekle'));
+  });
+  it('[qu] draggable-shaped wait (clientX, clientY) is verb-final', () => {
+    const out = new GrammarTransformer('en', 'qu').transform(draggableWait);
+    expect(out.trim().endsWith('suyay')).toBe(true);
+    expect(out.indexOf('qillqa manta')).toBeLessThan(out.indexOf('pointermove'));
+  });
+});

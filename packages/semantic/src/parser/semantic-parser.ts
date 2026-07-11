@@ -38,6 +38,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
+import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
@@ -2045,7 +2046,18 @@ export class SemanticParserImpl implements ISemanticParser {
       if (isEnd && pendingBlockDepth > 0) {
         pendingBlockDepth--;
         pendingOpenerKinds.pop();
-        currentClauseTokens.push(current);
+        // Annotate: THIS terminator closes a tracked open block. Downstream,
+        // the flat clause run can't tell a block-closing `son`/`শেষ` from a
+        // positional `last` — the selector lookahead in isStrayTerminator
+        // would read `son .{dragClass}` (loop-end + remove's patient) as
+        // `last .{dragClass}` and prefix the next command's role value (the
+        // tr behavior-sortable remove.patient R3 row). The annotation keeps
+        // the positional reading for every terminator-shaped token EXCEPT the
+        // ones this walker itself matched to an opener.
+        currentClauseTokens.push({
+          ...current,
+          metadata: { ...current.metadata, closesTrackedBlock: true },
+        });
         tokens.advance();
         continue;
       }
@@ -2979,10 +2991,26 @@ export class SemanticParserImpl implements ISemanticParser {
     // positional-`last` phrase lives (bn `শেষ <li/>`, tr `son .item`), so any
     // terminator-shaped token followed by a selector keeps its positional
     // reading.
-    const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean =>
-      (this.isEndKeyword(t.value, language) ||
-        (t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end')) &&
-      !(next && next.kind === 'selector');
+    const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean => {
+      const curatedEnd = this.isEndKeyword(t.value, language);
+      const normalizedEnd = t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end';
+      if (!curatedEnd && !normalizedEnd) return false;
+      // A terminator the clause walker matched to a tracked block opener is
+      // ALWAYS structural (never positional `last`), even before a selector —
+      // see the annotation in parseBodyWithClauses.
+      if (t.metadata?.closesTrackedBlock === true) return true;
+      // A CURATED end word is never the positional `last`: the curated sets
+      // are audited for exactly that collision (tr emits `sonuncu` for last,
+      // `son` stays the terminator; qu last is `qhipa`, not `tukuy`; ar آخر is
+      // deliberately absent BECAUSE it is positional). Without this, a loop's
+      // own `son` directly before the next command's selector was read as
+      // `last <sel>` and prefixed that command's role value (tr
+      // behavior-sortable remove.patient="last .{dragClass}").
+      if (curatedEnd) return true;
+      // Dual-use words reached via the normalized fallback (bn শেষ = end AND
+      // positional last) keep their positional reading before a selector.
+      return !(next && next.kind === 'selector');
+    };
 
     // Process a group of tokens: collect value tokens until a marker is found
     const processGroup = (tokens: LanguageToken[]) => {
@@ -4246,37 +4274,9 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private isEndKeyword(value: string, language: string): boolean {
     const v = value.toLowerCase();
-    const endKeywords: Record<string, Set<string>> = {
-      en: new Set(['end']),
-      // 終了 is deliberately ABSENT: it is the i18n dict's `exit` emission
-      // (`exit: 終了`, ja.ts), and listing it as an `end` alternative made the
-      // body parser count an `exit` inside an `if … exit … end` block as the
-      // block terminator — so the real 終わり closed the whole handler body,
-      // dropping every command after the block (behavior-sortable degenerate).
-      // 終わり is the dict's `end` emission; おわり is the kana variant.
-      ja: new Set(['終わり', 'おわり']),
-      // ar آخر is deliberately ABSENT: it is the positional `last` keyword;
-      // listing it here chopped clauses at every positional last (ar focus-trap
-      // lost its if-branch body). النهاية is what the i18n dict emits for end.
-      ar: new Set(['نهاية', 'انتهى', 'النهاية']),
-      es: new Set(['fin', 'final', 'terminar']),
-      // 종료 is deliberately ABSENT — same exit/end collision as ja above
-      // (`exit: 종료`, ko.ts). 끝 is the dict's `end` emission; 마침 a variant.
-      ko: new Set(['끝', '마침']),
-      zh: new Set(['结束', '终止', '完']),
-      tr: new Set(['son', 'bitiş', 'bitti']),
-      pt: new Set(['fim', 'final', 'término']),
-      fr: new Set(['fin', 'terminer', 'finir']),
-      // beenden is deliberately ABSENT — same exit/end collision as ja above
-      // (`exit: beenden`, de.ts; the de profile's `end` alternatives are only
-      // ['ende', 'fertig'], so this hardcoded set was the lone offender).
-      de: new Set(['ende', 'fertig']),
-      id: new Set(['selesai', 'akhir', 'tamat']),
-      tl: new Set(['wakas', 'tapos']),
-      bn: new Set(['সমাপ্ত']),
-      qu: new Set(['tukukuy', 'tukuy', 'puchukay']),
-      sw: new Set(['mwisho', 'maliza', 'tamati']),
-    };
+    // Curated sets live in end-keywords.ts (shared with the pattern matcher's
+    // role-value guards) — see that module for the collision-audit notes.
+    //
     // The English literal `end` is accepted in EVERY language, not just the
     // profile-fallback ones: hyperscript keywords that pass through a translation
     // untouched keep their English form, and crucially a masked `js(…) … end`
@@ -4287,7 +4287,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // over-consumes the rest of the handler body (the removable/sortable
     // command-drop: `trigger`, `remove`, … vanish after the js-bearing `if`).
     // en already works because `end` is in its curated set; this aligns the rest.
-    const curated = endKeywords[language];
+    const curated = curatedEndKeywordSet(language);
     if (curated) return v === 'end' || curated.has(v);
     return v === 'end' || this.profileKeywordMatches(language, 'end', v);
   }
