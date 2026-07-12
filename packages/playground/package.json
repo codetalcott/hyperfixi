@@ -14,6 +14,6 @@
     "@lokascript/semantic": "^2.7.2"
   },
   "devDependencies": {
-    "vite": "^6.3.5"
+    "vite": "^8.1.4"
   }
 }
