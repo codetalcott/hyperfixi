@@ -261,7 +261,7 @@ The four PR-only jobs already ran against the merged-as-PR code, so re-running t
 **Known Issues:**
 
 - Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- The SOV six (hi, qu, ko, tr, ja, bn) have lower **role fidelity** (R1 ~0.95 vs corpus ~0.98) than SVO languages — every pattern parses faithfully at the command level in all 24 priority languages, but role-level capture still lags on the hardest reorders. Tracked by the multilingual fidelity ratchet (not `continue-on-error`); remaining arcs in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (lowest are now th 0.9845 / ms / de / fr; corpus mean ≈ 0.992). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, the reactive `on.event` rows, swap F6) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -281,10 +281,12 @@ the committed baseline:
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
   history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
 - **faithful** (fid = 1.0). **3696 / 3696.** Cross-language `avgFidelity` = 1.000,
-  `avgPrecision` ≈ 0.976, `avgRoleFidelity` ≈ 0.977 (the SOV six sit ~0.95 —
-  the remaining headroom).
+  `avgPrecision` ≈ 0.9997, `avgRoleFidelity` ≈ 0.992, `avgMultisetRecall` = 1.000,
+  `avgValueRecall` ≈ 0.997 (the SOV six sit ≥ 0.991 on R1 after #637/#638; the
+  lowest R1 languages are now th/ms/de/fr ≈ 0.985 — the remaining headroom is
+  thin and flat).
 
-> **Figures snapshot:** as of the **2026-07-05** baseline. They drift as work lands
+> **Figures snapshot:** as of the **2026-07-11** baseline (`c5c884cc`). They drift as work lands
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,
@@ -312,10 +314,11 @@ yields a 0 delta):
    `[bind, bind]` collapses to `{bind}`, which `[bind]` satisfies in full. That is how
    `bind-two-way` recorded fidelity 1.0 in all 24 languages while every one of them
    parsed only the first of its two `bind`s (the top-level command-sequence fix that
-   added this signal). Counting duplicates makes the drop visible. One row sits below
-   1.0 today — qu `behavior-resizable` drops its two style `set`s (`noqaq *width/*height`):
-   the qu reorder renders the inline-if's verb-final `man churanay` after `tukuy`/end, and
-   the conditional fold strands it (tracked in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`).
+   added this signal). Counting duplicates makes the drop visible. All 24 languages
+   sit at 1.0 today — the last sub-1.0 row (qu `behavior-resizable`, whose reorder
+   rendered the inline-if's verb-final `man churanay` after `tukuy`/end and stranded
+   it at the conditional fold) was cleared by the SOV if-seam work in the R1
+   deferred-tail arc (#638).
    The nine other rows this signal originally flagged (colon-qualified event names
    `draggable:start` split at the local-variable sigil by every non-en tokenizer, plus
    two masked co-causes) were fixed in the colon-event-names arc — history in
@@ -357,8 +360,9 @@ baseline generated against a stale/transitional DB will read as drifted.
 degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
 (Mac-generated baseline vs CI Linux float/collation drift), not absorbers of local
 run-to-run jitter — don't read a green gate as "within noise." The remaining
-fidelity headroom is R1 role-fidelity (SOV six) and R0-precision spurious-action
-families, tracked in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, reactive
+`on.event` rows, swap F6) and the R3 residual rows — current queue in
+`docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 #### Running the multilingual `--regression` gate locally
 
