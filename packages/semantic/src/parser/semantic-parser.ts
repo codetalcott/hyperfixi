@@ -3825,7 +3825,7 @@ export class SemanticParserImpl implements ISemanticParser {
     'response',
   ]);
 
-  private static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
+  static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
     ja: new Set(['で']),
     ko: new Set(), // ko's marker is the two-token 할 때 phrase — see SOV_EVENT_MARKER_PHRASES
     tr: new Set(['de', 'da', 'te', 'ta']),
@@ -3852,7 +3852,7 @@ export class SemanticParserImpl implements ISemanticParser {
    * the phrase is just consumed when present so it doesn't leak into the body,
    * and it CONFIRMS a custom (identifier) event the way ja's で does.
    */
-  private static readonly SOV_EVENT_MARKER_PHRASES: Record<string, string[][]> = {
+  static readonly SOV_EVENT_MARKER_PHRASES: Record<string, string[][]> = {
     ko: [['할', '때'], ['할때']],
   };
 
@@ -5473,4 +5473,22 @@ export function parseAutoDetect(
     confidence: detection.confidence,
     detection,
   };
+}
+
+/**
+ * Surface #6 for the vocab-consistency tool (testing-framework src/vocab):
+ * the hardcoded SOV event markers — parse-side event-marker knowledge that
+ * lives in this parser rather than in profiles/schemas/grammar profiles.
+ * Single-token markers and multi-token phrases are merged (phrases joined
+ * with a space, plus their fused single-token forms as authored).
+ */
+export function getSOVEventMarkers(): Record<string, readonly string[]> {
+  const merged: Record<string, string[]> = {};
+  for (const [lang, set] of Object.entries(SemanticParserImpl.SOV_EVENT_MARKERS)) {
+    merged[lang] = [...set];
+  }
+  for (const [lang, phrases] of Object.entries(SemanticParserImpl.SOV_EVENT_MARKER_PHRASES)) {
+    merged[lang] = [...(merged[lang] ?? []), ...phrases.map(p => p.join(' '))];
+  }
+  return merged;
 }

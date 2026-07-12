@@ -189,6 +189,7 @@ export {
   canParse,
   getCommandType,
   fillSchemaDefaults,
+  getSOVEventMarkers,
   PatternMatcher,
   patternMatcher,
   matchPattern,

@@ -42,7 +42,7 @@
     "test:coverage": "bash ../../scripts/vitest-run.sh --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext ts,tsx",
-    "validate-dictionaries": "node scripts/validate-dictionaries.js"
+    "validate-dictionaries": "npx tsx ../testing-framework/src/vocab/cli.ts validate --check V1,V1b --warn-only"
   },
   "browser": "dist/lokascript-i18n.min.js",
   "sideEffects": false,

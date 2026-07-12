@@ -74,6 +74,7 @@
   "dependencies": {
     "@hyperfixi/core": "^2.7.2",
     "@hyperfixi/patterns-reference": "^2.7.2",
+    "@lokascript/i18n": "^2.7.2",
     "@lokascript/semantic": "^2.7.2",
     "diff": "^8.0.3",
     "esbuild": "^0.28.0",
