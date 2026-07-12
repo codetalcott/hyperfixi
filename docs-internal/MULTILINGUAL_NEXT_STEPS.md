@@ -2947,6 +2947,38 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 `docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
 `buildMarkerLookup` foothold).
 
+> **Arc A first ledger (2026-07-12, tool landed warn-only):** **247 errors /
+> 305 warns / 2410 infos** across 24 languages — the R5 pattern repeats. By
+> class, none safely fixable inside the tool PR (every fix touches parse or
+> render behavior → resweep discipline → its own PR):
+>
+> - **V1 ×94 (profile ↔ dictionary keyword conflicts)** — top concepts
+>   `select` ×15, `reset` ×10, `into`/`submit`/`break` ×7. Real S1↔S3 drift;
+>   this IS **Arc B's reconciliation input** (which translation wins decides
+>   what `derive.ts` generates).
+> - **V3 ×60 (dictionary events ↔ eventNameTranslations)** — the fused/split
+>   event-word class again (es dict `teclaabajo` vs profile `tecla abajo`, de
+>   `mausüber` vs `maus über`; keydown/keyup/mouseover/mouseout dominate).
+>   The #533–#535/#540 arcs fixed the semantic side; the i18n dictionary side
+>   was never reconciled. Burn-down candidate.
+> - **V4 ×79 (vocab words that don't tokenize as keyword/particle)** — three
+>   families: untranslated schema markers (`set.scope` marker `on` ×22 langs;
+>   `push/replace.patient` marker `url` ×24 — English words in every language's
+>   override table), per-language as/method render markers (`como`/`comme`/
+>   `als`/`jako`/`как`/`sebagai`…), and singletons (de `um`/`an`, fr `par`/`en`,
+>   ko `에게`, ar `بـ-`…). Needs an empirical probe first: does the pattern
+>   matcher match markers by value regardless of token kind? If yes, some are
+>   latent-only; if no, these are live parse gaps.
+> - **V2 ×14 (grammar renders a marker the parse side doesn't know)** — style
+>   role (ar/hi/ja/ko) matches the known R3 qualifier-glue families; the
+>   event-role rows (ja `で`, tr `de/da`, bn `এ`, ko `할 때`) exposed a **model
+>   limitation**: parse-side event markers also live in `SOV_EVENT_MARKERS`
+>   (hardcoded in `semantic-parser.ts`) — a sixth surface the loader does not
+>   read yet. Load it before trusting V2 event-role errors.
+>
+> Gating flip = after the V4 probe + V3/V1 burn-down or waiver triage; until
+> then the CI step is warn-only by design.
+
 **Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
 profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
 to the generated path — killing the single largest duplication (~4k entries). Hand
