@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-06 baseline · post session-14 / L7 · `browser-priority`)
+## Where we are (2026-07-11 baseline `c5c884cc` · post R1-deferred-tail #638 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
 >
@@ -17,24 +17,27 @@
 > take-class spurious `for` ×6 — fell in the L7 drill; the residual `for` ×3
 > (wait-payload behaviors) is below the ×5 bar threshold and stays on the
 > post-launch track. Fidelity work from here is post-launch polish; the
-> six-signal ratchet holds the bar in CI.
+> eight-signal ratchet holds the bar in CI.
 
 Authoritative source: `packages/testing-framework/baselines/multilingual-priority.json`
 (its `timestamp` + `commit` fields stamp each regen). 24 langs × 154 patterns = 3696.
 
-| Signal                         | Value                  | Notes                                                     |
-| ------------------------------ | ---------------------- | --------------------------------------------------------- |
-| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                  |
-| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                         |
-| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                         |
-| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                         |
-| avgFidelity (R0-recall)        | **1.000**              | saturated                                                 |
-| avgPrecision (R0 trust floor)  | **0.996**              | bar 3 reached L4 (0.9953); L6 → 0.9957; L7 → 0.9963       |
-| avgRoleFidelity (R1)           | **0.986**              | session-13 / L5: 0.9838 → 0.9862 — **bar 4 reached**      |
-| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects |
+| Signal                         | Value                  | Notes                                                                                                                          |
+| ------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| parse rate                     | **3696 / 3696 (100%)** | zero hard fails, holding                                                                                                       |
+| degenerate passes (fid < 0.5)  | **0**                  | band cleared (#492/#493), holding                                                                                              |
+| lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                                                                              |
+| faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                                                                              |
+| avgFidelity (R0-recall)        | **1.000**              | saturated                                                                                                                      |
+| avgPrecision (R0 trust floor)  | **0.9997**             | bar 3 reached L4 (0.9953); L7 → 0.9963; R3/R1 arcs → 0.9997 (min 0.9978)                                                       |
+| avgMultisetRecall (R0 dupes)   | **1.000**              | signal added #632; last sub-1.0 row (qu behavior-resizable) cleared by #638's SOV if-seam work                                 |
+| avgRoleFidelity (R1)           | **0.9919**             | bar 4 reached session 13 (0.9862); #637/#638 → 0.9919. SOV six now ≥ 0.9907 — lowest langs are th 0.9845 / ms / de / fr        |
+| avgValueRecall (R3)            | **0.9967**             | signal added #634; F1–F8 burned down #635; residual = swap F6 wontfix + triaged rows (min 0.9906)                              |
+| avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                                                                      |
 
-The six-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
-R0-precision · R1 · R2) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
+The eight-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
+R0-precision · R0-multiset-recall · R1 · R2 · R3) — see CLAUDE.md "Multilingual
+parse rate ≠ fidelity".
 **The launch bar is complete (all four items) — remaining fidelity work is the
 post-launch track below.**
 
@@ -127,7 +130,7 @@ form-submit-prevent fused-clause scramble, focus-trap condition-boundary
 leak) and the qu-only tail were cleared by the R1 deferred-tail arc
 (2026-07-11b, below); the SOV-six role polish and the R1 long tail
 (fetch/render.style, qu set, or-run wait, beep/js/go/scroll/log/for) by the
-R1 arc (2026-07-11, below). The six-signal gate holds the bar — regressions
+R1 arc (2026-07-11, below). The eight-signal gate holds the bar — regressions
 fail CI.
 
 > **Update 2026-07-11b (R1 deferred-tail arc, branch `fix/r1-deferred-tail`
@@ -2846,15 +2849,14 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    (PRs #446 ms `bind`×4 + hi keywords, #447 sw `input` event). Parse rate **3688 → 3695/3696**.
    Only `tr window-resize` remains — deferred as **structural SOV** (see Track 2 increment notes).
    The hi `live`/`intercept` bareKeyword block-shape work is the remaining genuine block-parser arc.
-5. **Track 3 — R1 role-fidelity** triaged (2026-06-17): the laggard (hi 0.683 / qu 0.770 / bn 0.780)
-   is **dominated by structural SOV mis-anchoring**, not dict-alignment (see the Track 3 triage
-   note) — `on.event:literal` + `fetch.source:literal` are the top drops and both trace to "fronted
-   literal/expression mistaken for the event / bare SOV command not matched."
-6. **The convergent next arc — SOV bare-command / event-anchor disambiguation.** `tr window-resize`,
-   the hi/qu/bn R1 laggard, and the SOV `fetch` NULLs are **one structural problem**. A focused arc
-   here is now the highest-leverage remaining parser work — but it's regression-sensitive (hottest
-   SOV path), so guard R0/precision/parse-rate carefully. Alternative if smaller wins are preferred:
-   **Track 4** lossy long-tail (94 lossy ≫ the 1 remaining hard-fail).
+5. ~~**Track 3 — R1 role-fidelity** triaged (2026-06-17)~~ **DONE** — the structural-SOV
+   triage (hi 0.683 / qu 0.770 / bn 0.780) was burned down across the increment below, the
+   launch-bar drills, and the dedicated R1 arcs (#637 + #638). The SOV six now sit at
+   **≥ 0.9907** — they no longer trail the SVO languages (lowest are th 0.9845 / ms / de / fr).
+6. ~~**The convergent next arc — SOV bare-command / event-anchor disambiguation.**~~ **DONE**
+   (increment note below, 2026-06-17). The follow-on R1 work continued through #637/#638;
+   standing R1 deferrals are pick range-role modeling (Family F) and the reactive `on.event`
+   rows (see the post-launch track at the top of this doc).
 
 > **Increment DONE (2026-06-17 — SOV event-anchor / bare-command).** The structural root cause
 > (a fronted **literal / expression / URL** mis-anchored as the handler event in SOV reorders) is
@@ -2894,7 +2896,8 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 >
 > **Still open (out of this increment):**
 >
-> - **`tr window-resize`** — the lone remaining hard-fail (still 3695/3696). Compounded: (1) the i18n
+> - **`tr window-resize`** — _(since resolved — tr parses 154/154 and the corpus holds 3696/3696
+>   in the current baseline; kept for history)_ — was the lone remaining hard-fail (3695/3696). Compounded: (1) the i18n
 >   transformer emits `boyut_değiştir` for `resize`, which the tr tokenizer splits on `_` →
 >   `değiştir`(→`toggle` collision); (2) the `debounced at 200ms` modifier is left untranslated and
 >   fronted. Deferred — it needs an i18n single-token-resize emission + tr tokenizer fused-token entry
@@ -2911,6 +2914,92 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 >   Any remaining qu/bn `fetch.source` **role-typing** slice (R1 — mis-typed `fetch.patient` via
 >   verb-anchoring) is a separate matter; the `fetch`→`source` verb-anchoring remap tried earlier
 >   proved **inert** on the corpus and was dropped.
+
+### Current queue (2026-07-12, post #639) — session plan toward v2.8
+
+The sequence above is fully resolved. Fidelity is at a high-water mark (all eight
+ratchets green). v2.7.2 was published 2026-07-08 but **not publicized**; the target
+is a solid, publicized release within ~10 days (**≈ 2026-07-22**). One arc ≈ one
+session ≈ one PR. Arcs A/C/E fit the window; Arcs B/D are explicitly post-release
+(both move the baseline or the confidence model — wrong risk profile days before a
+publicized cut).
+
+**Arc A — vocab `validate` + `dump` (new 2026-07-12; do first).** Per-language vocab
+is hand-authored in five uncoordinated surfaces (~7,000+ entries): semantic profiles
+(~2.3k), i18n dictionaries (~4k — `derive.ts::deriveFromProfile` exists but is unused),
+command-schema `markerOverride` tables (~350), i18n grammar-profile markers (~200),
+tokenizer EXTRAS + `eventNameTranslations` (~1.3k). Keywords are authored 2–5×, role
+markers 3–4×, event names 3× — and the drift between them is the single most common
+recent bug class (fused/split event keywords in PRs #533–#535, #540, #633; marker
+collisions in #558, #560, #569, #586; render/parse symmetry in #565, #636, #638). Build:
+
+- `validate` — cross-surface consistency check: profiles ↔ i18n dicts (keywords),
+  profiles ↔ command-schemas ↔ grammar profiles (role markers), `eventNameTranslations`
+  ↔ i18n `events` category, and every marker/keyword must classify as `keyword` in that
+  language's tokenizer (lint R5 generalized from the nine domains to the core stack).
+  Replace the dead `validate-dictionaries` npm script (target file missing). Wire into
+  CI warn-first, then gate. Its disagreement ledger is the required input to Arc B.
+- `dump` — one concept × language table view over the same data model (the
+  `packages/semantic/editor/` profile-editor GUI is a candidate front-end).
+
+Prior art: lint R5 caught 220 real profile↔tokenizer drift findings in the domain
+packages on day one (#615). Lexicon end-state + domain-side history:
+`docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
+`buildMarkerLookup` foothold).
+
+**Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
+profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
+to the generated path — killing the single largest duplication (~4k entries). Hand
+edits that diverged from profiles will change rendered corpus translations, so this
+moves the fidelity baseline: full resweep + old-vs-new attribution against the same
+DB, same discipline as a parser arc. Do NOT start before Arc A's validator exists.
+
+**Arc C — extend `unconsumed-input` to the remaining parse stages** — the deferred
+sub-task from the top-level command-sequences arc (§ "Input coverage" above). The
+Stage-2-only diagnostic surfaced 158 firings and every one was a real silent drop at
+confidence 1.0; the uninstrumented stages (event-handler bodies, compound, SOV/VSO)
+are where most translated rows route, so 0 is a floor. All four stages funnel through
+`parseBodyWithClauses` / `buildEventHandler`, so a per-segment coverage check there
+may cover them at once. Prerequisite for Arc D. Expect new firings → its own burn-down.
+
+**Arc D — the `unconsumed-input` → confidence-penalty scoring change** — both
+preconditions then met (`SCHEMA_NO_REQUIRED_ROLES` fixed #628/#629; all stages
+measured by Arc C). Five-step plan in § "Input coverage". Payoff: re-evaluate whether
+`parseInternal` Stages 0 / 0.5 can be simplified.
+
+**Arc E — Part 2b: `fetch … with { }` ×23 + naked named-arg capture** (§ deferral
+above). All-or-nothing across 24 languages (R1 en-reference constraint) + baseline
+regen; the user-facing feature arc of the release. Cheaper after Arc A's `dump`.
+
+**Standing deferrals (unchanged):** pick range-role modeling (Family F — only if
+`pick` matters for a demo; raises the en denominator ×24), the reactive `on.event`
+rows (event-anchor guard machinery), swap-content F6 (wontfix).
+
+### v2.8 release bar (proposed 2026-07-12 · target ≈ 2026-07-22)
+
+Modeled on the launch bar: few items, each measurable, each gate-held once reached.
+The bar is the release definition; the arcs are the route. Split for the 10-day
+window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
+
+1. **Vocab consistency green in CI** (Arc A `validate`) — 0 unwaived cross-surface
+   disagreements (or every waiver named), replacing today's state where the only
+   dictionary validator is a dead script. `dump` ships if time allows; Arc B's
+   generated dictionaries are the durable fix but are post-release by design.
+2. **Input coverage is total** (Arc C) — every `parseInternal` stage instrumented;
+   `--diagnose-coverage` reports 0 firings corpus-wide or each residual is named.
+   If new firings exceed what the window can burn down, naming them all still
+   clears the bar (the launch-bar precedent: honesty over totality).
+3. **Fidelity floors held, not raised** — the eight-signal ratchet holds the
+   2026-07-11 high-water marks (R1 ≥ 0.99, R3 ≥ 0.995, others saturated). No new
+   fidelity bar item — the remaining tail is the named deferrals. This item is
+   free unless Arcs A–C break something; it exists so the release notes can claim it.
+4. **Release hygiene** — 0 critical Dependabot alerts on **shipped** packages
+   (7 critical repo-wide today, shipped-path subset unknown → triage first; alerts
+   confined to `experiments/`/`clients/` are waivable with a note);
+   `pre-publish-check` workflow green; publish dry-run of the monorepo version bump.
+5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
+   user-visible feature claim for the release notes. Take it only after 1–4 are
+   locked; it needs a baseline regen, so it must not land in the final two days.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
