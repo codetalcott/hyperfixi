@@ -101,6 +101,25 @@ describe('V2 — role markers three-way', () => {
     expect(of(findings, 'V2', 'info')).toHaveLength(1);
   });
 
+  it('accepts an event marker known only via the hardcoded SOV table (surface #6)', () => {
+    const withoutSurface6 = runChecks(
+      model({
+        roleMarkers: { event: { primary: 'に' } },
+        grammarMarkers: [{ form: 'で', role: 'event' }], // the ja class from the first ledger
+      })
+    );
+    expect(of(withoutSurface6, 'V2', 'error')).toHaveLength(1);
+
+    const withSurface6 = runChecks(
+      model({
+        roleMarkers: { event: { primary: 'に' } },
+        grammarMarkers: [{ form: 'で', role: 'event' }],
+        sovEventMarkers: ['で'],
+      })
+    );
+    expect(of(withSurface6, 'V2', 'error')).toHaveLength(0);
+  });
+
   it('warns when the profile canonical marker never appears among the grammar forms', () => {
     const findings = runChecks(
       model({
@@ -215,6 +234,43 @@ describe('check filter + ledger/waivers', () => {
       'legit morphology divergence'
     );
     expect(ledger.staleWaivers).toEqual(['V1|zz|ghost']);
+  });
+
+  it('class waivers (wildcard segments) cover every finding in the class', () => {
+    const twoLangs: VocabModel = {
+      languages: [
+        lang({
+          language: 'es',
+          keywords: { toggle: { primary: 'a' } },
+          dictionary: { commands: { toggle: 'b' } },
+        }),
+        lang({
+          language: 'fr',
+          keywords: { toggle: { primary: 'c' } },
+          dictionary: { commands: { toggle: 'd' } },
+        }),
+      ],
+    };
+    const findings = runChecks(twoLangs);
+    expect(of(findings, 'V1', 'error')).toHaveLength(2);
+
+    const ledger = buildLedger(findings, [
+      { key: 'V1|*|*', reason: 'pending Arc B reconciliation' },
+    ]);
+    expect(ledger.unwaivedErrors).toBe(0);
+    expect(
+      ledger.findings
+        .filter(f => f.waived)
+        .map(f => f.language)
+        .sort()
+    ).toEqual(['es', 'fr']);
+    expect(ledger.staleWaivers).toHaveLength(0);
+  });
+
+  it('a wildcard waiver matching nothing is stale', () => {
+    const findings = runChecks(disagreeing());
+    const ledger = buildLedger(findings, [{ key: 'V3|*|*', reason: 'nothing here' }]);
+    expect(ledger.staleWaivers).toEqual(['V3|*|*']);
   });
 
   it('waivers never apply to warn/info tiers', () => {

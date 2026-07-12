@@ -2947,10 +2947,11 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 `docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
 `buildMarkerLookup` foothold).
 
-> **Arc A first ledger (2026-07-12, tool landed warn-only):** **247 errors /
-> 305 warns / 2410 infos** across 24 languages — the R5 pattern repeats. By
-> class, none safely fixable inside the tool PR (every fix touches parse or
-> render behavior → resweep discipline → its own PR):
+> **Arc A first ledger (2026-07-12, tool landed warn-only):** **242 errors /
+> 305 warns / 2410 infos** across 24 languages (247 on the very first sweep;
+> Batch 0 below reclaimed 5) — the R5 pattern repeats. By class, none safely
+> fixable inside the tool PR (every fix touches parse or render behavior →
+> resweep discipline → its own PR):
 >
 > - **V1 ×94 (profile ↔ dictionary keyword conflicts)** — top concepts
 >   `select` ×15, `reset` ×10, `into`/`submit`/`break` ×7. Real S1↔S3 drift;
@@ -2969,15 +2970,28 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >   ko `에게`, ar `بـ-`…). Needs an empirical probe first: does the pattern
 >   matcher match markers by value regardless of token kind? If yes, some are
 >   latent-only; if no, these are live parse gaps.
-> - **V2 ×14 (grammar renders a marker the parse side doesn't know)** — style
->   role (ar/hi/ja/ko) matches the known R3 qualifier-glue families; the
->   event-role rows (ja `で`, tr `de/da`, bn `এ`, ko `할 때`) exposed a **model
->   limitation**: parse-side event markers also live in `SOV_EVENT_MARKERS`
->   (hardcoded in `semantic-parser.ts`) — a sixth surface the loader does not
->   read yet. Load it before trusting V2 event-role errors.
+> - **V2 ×9 (grammar renders a marker the parse side doesn't know)** — the
+>   event-role rows (ja `で`, tr `de/da`, bn `এ`, ko `할 때`) turned out to be a
+>   **model limitation**, fixed in-arc (Batch 0): parse-side event markers also
+>   live in `SOV_EVENT_MARKERS` / `SOV_EVENT_MARKER_PHRASES` (hardcoded in
+>   `semantic-parser.ts`), now exported via `getSOVEventMarkers()` and loaded
+>   as **surface #6** — those 5 rows cleared. The 9 survivors are genuine:
+>   the style-role family (ar `بـ-`/`مع`, hi `साथ`, ja `と`, ko `와`/`과` — the
+>   known R3 qualifier-glue class), en `as`(method)/`for`(duration), es
+>   `hacia`(destination).
 >
-> Gating flip = after the V4 probe + V3/V1 burn-down or waiver triage; until
-> then the CI step is warn-only by design.
+> **Batch plan for the burn-down** (~4 resweeps total, not per-finding):
+> Batch 0 ✓ (in-arc: surface #6 + wildcard **class waivers** — `V1|*|*`-style
+> keys with one reason, for honest gating before Arc B); Batch 1 = V4 probe
+> (do markers match by value regardless of token kind?) + one semantic-side
+> PR (as/method tokenizer keywords per the #638 containment-words precedent;
+> translate-or-waive the untranslated `on`/`url` schema markers); Batch 2 =
+> V3 event-word alignment in the i18n dictionaries (semantic side is
+> authoritative post-#533–#540; corpus-coupled → one resweep); Batch 3 =
+> V1 via Arc B (the 94 are the review diff for the `derive.ts` flip — the
+> class dies structurally); Batch 4 = flip the CI step to gating.
+>
+> Until then the CI step is warn-only by design.
 
 **Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
 profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`

@@ -28,6 +28,7 @@ export {
   parseAutoDetect,
   createSemanticAnalyzer,
   fillSchemaDefaults,
+  getSOVEventMarkers,
 } from './semantic-parser';
 export type { AutoDetectParseResult } from './semantic-parser';
 

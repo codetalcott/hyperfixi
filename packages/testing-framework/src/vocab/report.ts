@@ -8,7 +8,6 @@
 
 import * as fs from 'node:fs';
 import type { Finding, Tier, Waiver } from './types';
-import { findingKey } from './types';
 
 export interface Ledger {
   generatedAt: string;
@@ -27,12 +26,25 @@ export function loadWaivers(path: string): Waiver[] {
   return raw;
 }
 
+/**
+ * A waiver key is `check|language|key` where any segment may be `*` — a class
+ * waiver covering every finding in that class (e.g. `V1|*|*` = "all V1s,
+ * pending Arc B"). Exact keys still work; first matching waiver wins.
+ */
+function waiverMatches(waiverKey: string, f: Finding): boolean {
+  const parts = waiverKey.split('|');
+  if (parts.length !== 3) return false;
+  const [c, l, k] = parts;
+  return (
+    (c === '*' || c === f.check) && (l === '*' || l === f.language) && (k === '*' || k === f.key)
+  );
+}
+
 export function buildLedger(findings: Finding[], waivers: Waiver[]): Ledger {
-  const byKey = new Map(waivers.map(w => [w.key, w] as const));
   const used = new Set<string>();
 
   const annotated: Array<Finding & { waived?: string | undefined }> = findings.map(f => {
-    const w = f.tier === 'error' ? byKey.get(findingKey(f)) : undefined;
+    const w = f.tier === 'error' ? waivers.find(w => waiverMatches(w.key, f)) : undefined;
     if (w) used.add(w.key);
     return w ? { ...f, waived: w.reason } : { ...f };
   });

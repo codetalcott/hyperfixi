@@ -11,6 +11,7 @@ import {
   commandSchemas,
   getTokenizer,
   eventNameTranslations,
+  getSOVEventMarkers,
 } from '@lokascript/semantic';
 import { dictionaries, profiles as grammarProfiles } from '@lokascript/i18n';
 import type { LangVocab, VocabModel } from './types';
@@ -19,6 +20,7 @@ export function loadVocabModel(languageFilter?: readonly string[]): VocabModel {
   const codes = Object.keys(KNOWN_PROFILES).filter(
     code => !languageFilter || languageFilter.includes(code)
   );
+  const sovEventMarkers = getSOVEventMarkers();
 
   const languages: LangVocab[] = [];
   for (const code of codes) {
@@ -83,6 +85,7 @@ export function loadVocabModel(languageFilter?: readonly string[]): VocabModel {
       dictionary,
       grammarMarkers,
       eventTranslations: eventNameTranslations[code],
+      sovEventMarkers: sovEventMarkers[code],
       classify: tokenizer ? (word: string) => tokenizer.classifyToken(word) : undefined,
     });
   }

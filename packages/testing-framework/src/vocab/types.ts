@@ -55,6 +55,13 @@ export interface LangVocab {
   }>;
   /** S5b — native event word → English event name. Absent for the 11 uncovered languages. */
   eventTranslations?: Record<string, string> | undefined;
+  /**
+   * Surface #6 — hardcoded SOV event markers from `semantic-parser.ts`
+   * (`getSOVEventMarkers()`): parse-side event-marker knowledge that lives in
+   * neither profiles, schemas, nor grammar profiles. Feeds V2's parse-side
+   * union for the `event` role only.
+   */
+  sovEventMarkers?: readonly string[] | undefined;
   /** S5a — word-level tokenizer classification. Absent if no tokenizer registered. */
   classify?: ((word: string) => string) | undefined;
 }

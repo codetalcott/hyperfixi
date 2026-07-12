@@ -91,6 +91,9 @@ function checkRoleMarkers(lang: LangVocab, findings: Finding[]): void {
     for (const f of formSet(entry)) add(role, f);
   }
   for (const sm of lang.schemaMarkers) add(sm.role, sm.marker);
+  // Surface #6: hardcoded SOV event markers count as parse-side knowledge for
+  // the event role (they live in semantic-parser.ts, not in any vocab file).
+  for (const marker of lang.sovEventMarkers ?? []) add('event', marker);
 
   // Render-side forms per role (S4).
   const renderSet = new Map<string, Set<string>>();
