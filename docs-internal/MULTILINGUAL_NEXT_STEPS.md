@@ -2915,28 +2915,91 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 >   verb-anchoring) is a separate matter; the `fetch`→`source` verb-anchoring remap tried earlier
 >   proved **inert** on the corpus and was dropped.
 
-### Current queue (2026-07-12, post #639)
+### Current queue (2026-07-12, post #639) — session plan toward v2.8
 
-The sequence above is fully resolved; the open work now lives in the sections above.
-Ranked by leverage:
+The sequence above is fully resolved. Fidelity is at a high-water mark (all eight
+ratchets green). v2.7.2 was published 2026-07-08 but **not publicized**; the target
+is a solid, publicized release within ~10 days (**≈ 2026-07-22**). One arc ≈ one
+session ≈ one PR. Arcs A/C/E fit the window; Arcs B/D are explicitly post-release
+(both move the baseline or the confidence model — wrong risk profile days before a
+publicized cut).
 
-1. **Extend `unconsumed-input` to the remaining parse stages** — the deferred sub-task
-   from the top-level command-sequences arc (§ "Input coverage" above). The Stage-2-only
-   diagnostic surfaced 158 firings and every one was a real silent drop at confidence 1.0;
-   the uninstrumented stages (event-handler bodies, compound, SOV/VSO) are where most
-   translated rows route, so 0 is a floor. All four stages funnel through
-   `parseBodyWithClauses` / `buildEventHandler`, so a per-segment coverage check there may
-   cover them at once. Prerequisite for item 2.
-2. **The `unconsumed-input` → confidence-penalty scoring change** — both preconditions
-   then met (`SCHEMA_NO_REQUIRED_ROLES` fixed #628/#629; all stages measured). Five-step
-   plan in § "Input coverage". Payoff: re-evaluate whether `parseInternal` Stages 0 / 0.5
-   can be simplified.
-3. **Part 2b — `fetch … with { }` ×23 + naked named-arg capture** (§ deferral above).
-   All-or-nothing across 24 languages (R1 en-reference constraint) + baseline regen; a
-   self-contained user-facing alternative to 1–2.
-4. **Standing R1/R3 deferrals** (post-launch track, top of doc): pick range-role modeling
-   (Family F — only if `pick` matters for a demo; raises the en denominator ×24), the
-   reactive `on.event` rows (event-anchor guard machinery), swap-content F6 (wontfix).
+**Arc A — vocab `validate` + `dump` (new 2026-07-12; do first).** Per-language vocab
+is hand-authored in five uncoordinated surfaces (~7,000+ entries): semantic profiles
+(~2.3k), i18n dictionaries (~4k — `derive.ts::deriveFromProfile` exists but is unused),
+command-schema `markerOverride` tables (~350), i18n grammar-profile markers (~200),
+tokenizer EXTRAS + `eventNameTranslations` (~1.3k). Keywords are authored 2–5×, role
+markers 3–4×, event names 3× — and the drift between them is the single most common
+recent bug class (fused/split event keywords in PRs #533–#535, #540, #633; marker
+collisions in #558, #560, #569, #586; render/parse symmetry in #565, #636, #638). Build:
+
+- `validate` — cross-surface consistency check: profiles ↔ i18n dicts (keywords),
+  profiles ↔ command-schemas ↔ grammar profiles (role markers), `eventNameTranslations`
+  ↔ i18n `events` category, and every marker/keyword must classify as `keyword` in that
+  language's tokenizer (lint R5 generalized from the nine domains to the core stack).
+  Replace the dead `validate-dictionaries` npm script (target file missing). Wire into
+  CI warn-first, then gate. Its disagreement ledger is the required input to Arc B.
+- `dump` — one concept × language table view over the same data model (the
+  `packages/semantic/editor/` profile-editor GUI is a candidate front-end).
+
+Prior art: lint R5 caught 220 real profile↔tokenizer drift findings in the domain
+packages on day one (#615). Lexicon end-state + domain-side history:
+`docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
+`buildMarkerLookup` foothold).
+
+**Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
+profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
+to the generated path — killing the single largest duplication (~4k entries). Hand
+edits that diverged from profiles will change rendered corpus translations, so this
+moves the fidelity baseline: full resweep + old-vs-new attribution against the same
+DB, same discipline as a parser arc. Do NOT start before Arc A's validator exists.
+
+**Arc C — extend `unconsumed-input` to the remaining parse stages** — the deferred
+sub-task from the top-level command-sequences arc (§ "Input coverage" above). The
+Stage-2-only diagnostic surfaced 158 firings and every one was a real silent drop at
+confidence 1.0; the uninstrumented stages (event-handler bodies, compound, SOV/VSO)
+are where most translated rows route, so 0 is a floor. All four stages funnel through
+`parseBodyWithClauses` / `buildEventHandler`, so a per-segment coverage check there
+may cover them at once. Prerequisite for Arc D. Expect new firings → its own burn-down.
+
+**Arc D — the `unconsumed-input` → confidence-penalty scoring change** — both
+preconditions then met (`SCHEMA_NO_REQUIRED_ROLES` fixed #628/#629; all stages
+measured by Arc C). Five-step plan in § "Input coverage". Payoff: re-evaluate whether
+`parseInternal` Stages 0 / 0.5 can be simplified.
+
+**Arc E — Part 2b: `fetch … with { }` ×23 + naked named-arg capture** (§ deferral
+above). All-or-nothing across 24 languages (R1 en-reference constraint) + baseline
+regen; the user-facing feature arc of the release. Cheaper after Arc A's `dump`.
+
+**Standing deferrals (unchanged):** pick range-role modeling (Family F — only if
+`pick` matters for a demo; raises the en denominator ×24), the reactive `on.event`
+rows (event-anchor guard machinery), swap-content F6 (wontfix).
+
+### v2.8 release bar (proposed 2026-07-12 · target ≈ 2026-07-22)
+
+Modeled on the launch bar: few items, each measurable, each gate-held once reached.
+The bar is the release definition; the arcs are the route. Split for the 10-day
+window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
+
+1. **Vocab consistency green in CI** (Arc A `validate`) — 0 unwaived cross-surface
+   disagreements (or every waiver named), replacing today's state where the only
+   dictionary validator is a dead script. `dump` ships if time allows; Arc B's
+   generated dictionaries are the durable fix but are post-release by design.
+2. **Input coverage is total** (Arc C) — every `parseInternal` stage instrumented;
+   `--diagnose-coverage` reports 0 firings corpus-wide or each residual is named.
+   If new firings exceed what the window can burn down, naming them all still
+   clears the bar (the launch-bar precedent: honesty over totality).
+3. **Fidelity floors held, not raised** — the eight-signal ratchet holds the
+   2026-07-11 high-water marks (R1 ≥ 0.99, R3 ≥ 0.995, others saturated). No new
+   fidelity bar item — the remaining tail is the named deferrals. This item is
+   free unless Arcs A–C break something; it exists so the release notes can claim it.
+4. **Release hygiene** — 0 critical Dependabot alerts on **shipped** packages
+   (7 critical repo-wide today, shipped-path subset unknown → triage first; alerts
+   confined to `experiments/`/`clients/` are waivable with a note);
+   `pre-publish-check` workflow green; publish dry-run of the monorepo version bump.
+5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
+   user-visible feature claim for the release notes. Take it only after 1–4 are
+   locked; it needs a baseline regen, so it must not land in the final two days.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
