@@ -1,5 +1,16 @@
 # Handoff: vocab Batch 1 — the V4 probe, then one semantic-side marker PR
 
+> **RESOLVED 2026-07-12** — probe verdict: Outcome A (matchLiteralToken matches
+> pattern literals by raw `token.value` before kind) for every pattern-literal
+> word; Outcome B (live) only for render-only grammar alternatives — es `hacia`
+> confirmed live (destination silently defaulted to `me`) and fixed via
+> `roleMarkers.destination.alternatives`. 78 remaining V4s class-waived with
+> per-family probe citations. V4 unwaived 79 → 0; es V2 `hacia` cleared; ledger
+> 242 → 162 unwaived. `--regression` exit 0 (no ratchet fired),
+> `--diagnose-coverage` 0/3696. Full conclusion + discoveries (go-url
+> destination drop in en, uncaptured show/hide style role, dead send.destination
+> overrides): `MULTILINGUAL_NEXT_STEPS.md` § "V4 probe conclusion (Batch 1)".
+
 ## Context
 
 Arc A (#642) landed the vocab-consistency CLI (`packages/testing-framework/src/vocab/`)

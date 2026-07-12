@@ -49,7 +49,10 @@ export const spanishProfile: LanguageProfile = {
     },
   },
   roleMarkers: {
-    destination: { primary: 'en', alternatives: ['sobre', 'a'], position: 'before' },
+    // `hacia` is the i18n grammar's optional destination render form ("towards");
+    // without it here a rendered/user `hacia` clause silently dropped the
+    // destination (add → default `me`, put → null parse). Vocab Batch 1 (V2+V4).
+    destination: { primary: 'en', alternatives: ['sobre', 'a', 'hacia'], position: 'before' },
     source: { primary: 'de', alternatives: ['desde'], position: 'before' },
     patient: { primary: '', position: 'before' },
     style: { primary: 'con', position: 'before' },

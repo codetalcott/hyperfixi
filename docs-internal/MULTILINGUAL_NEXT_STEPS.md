@@ -2993,6 +2993,68 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >
 > Until then the CI step is warn-only by design.
 
+> **V4 probe conclusion (Batch 1, 2026-07-12) — matcher marker semantics; governs
+> Batches 2–3.** The pattern matcher consumes a pattern-literal (marker) token via
+> `matchLiteralToken` → `getMatchType` (`pattern-matcher.ts`), which compares **raw
+> `token.value` first** (exact, case-sensitive), then `token.normalized`, then stem
+> (confidence ≥ 0.7); `token.kind` gates ONLY the last-resort case-insensitive branch
+> (keyword-kind) and auxiliary consumption paths (event source-clause windows
+> `pattern-matcher.ts:264/:915`, connective/curated-end guards `:564/:577`, the
+> trailing-verb guard `:614`). Generated patterns carry the **native surface word**
+> (schema `markerOverride[lang]` / `profile.roleMarkers` primary+alternatives) and
+> handcrafted patterns carry it verbatim — so a marker word that classifies as
+> `identifier` is still consumed as the marker wherever it appears as a pattern
+> literal. **V4 is therefore Outcome A (latent) for every pattern-literal word, and
+> Outcome B (live) only for render-only grammar alternatives with no parse-side
+> literal.** Empirical probes (asserting on captured roles, one per family):
+>
+> - fr `par` / de `um` → `increment.quantity=10` captured ✓ (P1); en `over` →
+>   `transition.duration=500ms` ✓ (P3); `on` → `set.scope=.tab`/`me` captured, es
+>   tabs-aria row ✓ (P4); `url` → `push.patient` captured en+es ✓ (P5); es `como` →
+>   `fetch.responseType=json`, role-identical to the en reference, via the
+>   handcrafted fetch pattern's literal ✓ (P6); zh `时` → `event=click` via the
+>   hardcoded `sovEventMarkers` path ✓ (P7); fr `en` → `repeat source=.items` ✓ (P9).
+> - **es `hacia` (render-only destination alternative) was LIVE**: `agregar
+>   .selected hacia #item` captured `destination=me` (schema default — silent drop);
+>   `poner … hacia #output` returned null. **Fixed** by registering `hacia` in the es
+>   semantic profile `roleMarkers.destination.alternatives` (the tokenizer derives
+>   keywords from roleMarkers, so V4 cleared too; V2 es error cleared; red→green
+>   test in `packages/semantic/test/multilingual-roadmap-fixes.test.ts`).
+> - The other 78 V4s waived with per-family probe citations
+>   (`packages/testing-framework/vocab-waivers.json`, 31 entries). Notables: the
+>   send.destination overrides (de `an`, ko `에게`, tr `-e`) are **dead vocab** — the
+>   transformer renders `zu`/`에` and tr `-e` shatters (live allomorphs already in
+>   `markerVariants`); ar `بـ-`/`كـ-` are attach-notation artifacts (split to the
+>   registered bare prefix); hi `साथ` is blocked on style-capture (below).
+>
+> **Discoveries logged (not fixed in Batch 1):**
+>
+> 1. **go-url destination drop, en included**: `go to url "/page"` parses to
+>    `destination=expression:"url"` and DROPS `"/page"` — identically in en and es
+>    (P5c/P5d), so fidelity 1.0 masks it corpus-wide (the en-reference-corruption
+>    class; R3 silent because the value is a quoted string, not a bare URL token).
+>    Candidate for the R3 value-bug families list: teach `go`'s patterns the `url
+>    <literal>` idiom, then resweep — en denominator moves ×24.
+> 2. **`show`/`hide` style role is uncaptured in EVERY language including en**
+>    (`on click show #modal with *opacity` captures patient only). Another
+>    en-denominator gap: hi `साथ` / ar render-style registrations are untestable
+>    until style capture exists.
+> 3. de `senden` tokenizes normalized→`submit` (last-wins keyword collision with
+>    the send verb). Harmless today ONLY because literal matching is value-based;
+>    a latent footgun if any path starts trusting `normalized` for verbs.
+> 4. `set.scope` `on` / push-replace `url` stay English by design
+>    (passthrough-alignment, CORRECTNESS §7bb). If a native-marker increment is ever
+>    wanted, it must change render + schema override together (co-evolution) — its
+>    own increment, not vocab hygiene.
+>
+> **Governance for Batches 2–3:** classification-only mismatches (word consumed as a
+> pattern literal) are latent — waive or downgrade, don't register into profiles
+> "for hygiene" (profile registration changes pattern GENERATION). Register into
+> `roleMarkers[role].alternatives` only when the render side can emit a form the
+> parse side has no literal for (the hacia class), and only as an alternative to an
+> EXISTING marker entry. Optional structural follow-up: split V4's tier —
+> marker-words-appearing-in-patterns → warn, profile keywords → error.
+
 **Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
 profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
 to the generated path — killing the single largest duplication (~4k entries). Hand
