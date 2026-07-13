@@ -29,6 +29,7 @@ import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
 import { isCuratedEndKeyword } from './end-keywords';
+import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import type { ConfidenceModel } from './confidence-model';
 import { defaultConfidenceModel } from './confidence-model';
 
@@ -850,6 +851,26 @@ export class PatternMatcher {
           : null;
       if (braceRun) {
         captured.set(patternToken.role, braceRun);
+        return true;
+      }
+    }
+
+    // Naked named-arg fold — the brace-less sibling of the object-literal fold
+    // above, for fetch's request-options slot ONLY (`fetch /x with
+    // method:"POST" body:form`). Without it the expression-only slot captures
+    // the first key (`method`) and the rest of the run drops as unconsumed
+    // input (the Arc C fetch-options family). Role-NAME scoped like the
+    // condition scoping above: `style` is the request-options role, and the
+    // pair grammar (`key : value`, key code-shaped) never matches a legitimate
+    // single-token style value.
+    if (
+      patternToken.role === 'style' &&
+      patternToken.expectedTypes?.length === 1 &&
+      patternToken.expectedTypes[0] === 'expression'
+    ) {
+      const nakedRun = foldNakedNamedArgsRaw(tokens);
+      if (nakedRun) {
+        captured.set(patternToken.role, { type: 'expression', raw: nakedRun } as SemanticValue);
         return true;
       }
     }
