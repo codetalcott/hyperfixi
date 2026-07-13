@@ -232,23 +232,27 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
 - **Two-tier job set**: full matrix on `pull_request`, slim skew-detector set on `push` to main/develop
+- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient`); `build` gates on `code` and every npm job inherits the gate through `needs: build`. Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs).
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
 
 **Jobs:**
 
-| #   | Job                       | PR  | push main/develop | Notes                                            |
-| --- | ------------------------- | --- | ----------------- | ------------------------------------------------ |
-| 1   | `build`                   | ✓   | ✓                 | Build all packages once, upload artifacts        |
-| 2   | `export-validation`       | ✓   | ✓                 | Verify package.json exports resolve to dist      |
-| 3   | `lint-typecheck`          | ✓   | ✓                 | ESLint + TypeScript checks                       |
-| 4   | `unit-tests`              | ✓   | ✓                 | Vitest tests on Node 24                          |
-| 5   | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)      |
-| 6   | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)            |
-| 7   | `multilingual-validation` | ✓   | —                 | 20-language sweep; PR-only (slim post-merge)     |
-| 8   | `bundle-size`             | ✓   | —                 | Size report; PR-only (slim post-merge)           |
-| 9   | `mcp-demos`               | ✓   | —                 | Demo capture + drift check; PR-only              |
-| 10  | `benchmarks`              | —   | main only         | Perf trend tracking (already gated to push+main) |
+| #    | Job                       | PR  | push main/develop | Notes                                             |
+| ---- | ------------------------- | --- | ----------------- | ------------------------------------------------- |
+| 0    | `changes`                 | ✓   | ✓                 | Path classifier (code / protocol / goclient)      |
+| 1    | `build`                   | ✓   | ✓                 | Build all packages once; gated on `code` paths    |
+| 2    | `export-validation`       | ✓   | ✓                 | Verify package.json exports resolve to dist       |
+| 3    | `lint-typecheck`          | ✓   | ✓                 | ESLint + TypeScript checks                        |
+| 4    | `unit-tests`              | ✓   | ✓                 | Vitest tests on Node 24                           |
+| 5    | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)       |
+| 6    | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)             |
+| 7    | `multilingual-validation` | ✓   | —                 | 20-language sweep; PR-only (slim post-merge)      |
+| 8    | `bundle-size`             | ✓   | —                 | Size report; PR-only (slim post-merge)            |
+| 9    | `mcp-demos`               | ✓   | —                 | Demo capture + drift check; PR-only               |
+| 10   | `protocol-conformance`    | ✓   | —                 | 4 reference parsers; gated on `protocol/**` paths |
+| 10.5 | `go-client`               | ✓   | —                 | `go build` + `go test`; gated on go-client paths  |
+| 11   | `benchmarks`              | —   | main only         | Perf trend tracking (already gated to push+main)  |
 
 The four PR-only jobs already ran against the merged-as-PR code, so re-running them on the post-merge push to main wastes ~60 min runner-time per merge. Merge-skew is caught by `build` + `lint-typecheck` + `unit-tests` (still run on push). For perfect skew detection without duplication, see the merge-queue note in `.github/workflows/ci.yml`.
 
