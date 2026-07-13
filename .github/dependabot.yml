@@ -1,6 +1,7 @@
 version: 2
 
 updates:
+  # Root npm workspace (packages/*, apps/*) — covered by the root package-lock.json
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -29,6 +30,54 @@ updates:
           - 'eslint'
           - 'eslint-*'
           - 'prettier'
+      # Catch-all: batch remaining minor/patch bumps into one weekly PR
+      # instead of one PR per dependency. Majors stay individual PRs.
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'codetalcott'
+
+  # Standalone npm root (own package-lock.json, not part of the workspaces)
+  - package-ecosystem: 'npm'
+    directory: '/protocol/typescript'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'codetalcott'
+
+  # Go modules (the go-client currently carries the x/crypto critical alerts)
+  - package-ecosystem: 'gomod'
+    directories:
+      - '/clients/go-client'
+      - '/protocol/go'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    groups:
+      go-deps:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
     labels:
       - 'dependencies'
     reviewers:
