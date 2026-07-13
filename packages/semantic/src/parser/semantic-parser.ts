@@ -637,9 +637,9 @@ export class SemanticParserImpl implements ISemanticParser {
         // dropped spans are visible on the top node. Each reclaim either
         // consumes its span or returns null, so the chain converges.
         if (node.kind === 'event-handler') {
-          const em = (node as EventHandlerSemanticNode).eventModifiers;
+          let cur = { node: node as EventHandlerSemanticNode, input };
+          const em = cur.node.eventModifiers;
           if (em && (em.once || em.debounce !== undefined || em.throttle !== undefined)) {
-            let cur = { node: node as EventHandlerSemanticNode, input };
             for (let round = 0; round < 4; round++) {
               const next =
                 this.reclaimDanglingFromTail(cur.node, cur.input, language) ??
@@ -649,8 +649,20 @@ export class SemanticParserImpl implements ISemanticParser {
               if (!next) break;
               cur = next;
             }
-            node = cur.node;
           }
+          // The event-compound rebind alone is NOT family-gated: any handler
+          // whose multi-word event name shattered deserves the join (the
+          // localizer round-trips resize → ar `تغيير حجم` / vi `đổi kích
+          // thước` with no modifier in sight — event-name-translation.test).
+          // It only fires on an exact compound-key hit adjacent to the very
+          // word the current event was canonicalized from. Runs AFTER the
+          // family loop so the from-tail reclaim keeps first claim on its
+          // span (vi window-resize: from-tail must excise `từ window` before
+          // the compound retires `kích thước`, or its improvement check —
+          // fewer dropped tokens after re-parse — can no longer pass).
+          const compound = this.reclaimEventCompoundTail(cur.node, cur.input, language);
+          if (compound) cur = compound;
+          node = cur.node;
         }
       }
       return node;

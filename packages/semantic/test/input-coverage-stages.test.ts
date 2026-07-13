@@ -121,4 +121,67 @@ describe('per-segment input coverage (Arc C)', () => {
       expect(unconsumedMessages(node)).toHaveLength(0);
     });
   });
+
+  describe('event-modifier phrases (Arc F) — the four en corpus rows fire zero', () => {
+    // Red side (probe log 2026-07-13): each of these fired its modifier span
+    // as unconsumed (`debounced at 300ms`, `once`, `throttled at 100ms`,
+    // `debounced at 200ms`) with eventModifiers null — en-symmetric loss the
+    // R0/R1 ratchets never saw. Green: the phrase is lifted into
+    // eventModifiers, the from-clause lands in eventModifiers.from, and the
+    // tree shape (body action list) is unchanged from the red side.
+    const expectHandler = (
+      input: string,
+      mods: Record<string, unknown>,
+      actions: string[]
+    ): EventHandlerSemanticNode => {
+      const node = parse(input, 'en');
+      expect(unconsumedMessages(node)).toHaveLength(0);
+      const handler = node as EventHandlerSemanticNode;
+      expect(handler.kind).toBe('event-handler');
+      for (const [key, value] of Object.entries(mods)) {
+        expect(
+          (handler.eventModifiers as Record<string, unknown> | undefined)?.[key],
+          `eventModifiers.${key}`
+        ).toEqual(value);
+      }
+      const flatten = (nodes: readonly SemanticNode[]): string[] =>
+        nodes.flatMap(n =>
+          n.kind === 'compound'
+            ? flatten((n as unknown as { statements: SemanticNode[] }).statements)
+            : [(n as CommandSemanticNode).action as string]
+        );
+      expect(flatten(handler.body)).toEqual(actions);
+      return handler;
+    };
+
+    it('event-debounce: `debounced at 300ms` lifted, fetch/put body intact', () => {
+      expectHandler(
+        'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
+        { debounce: 300 },
+        ['fetch', 'put']
+      );
+    });
+
+    it('event-once: `once` lifted, add/call body intact', () => {
+      expectHandler('on click once add .initialized to me call setup()', { once: true }, [
+        'add',
+        'call',
+      ]);
+    });
+
+    it('event-throttle: `throttled at 100ms` lifted, call body intact', () => {
+      expectHandler('on scroll throttled at 100ms call updateScrollPosition()', { throttle: 100 }, [
+        'call',
+      ]);
+    });
+
+    it('window-resize: modifier lifted AND `from window` captured (was silently dropped)', () => {
+      const handler = expectHandler(
+        'on resize from window debounced at 200ms call adjustLayout()',
+        { debounce: 200 },
+        ['call']
+      );
+      expect(handler.eventModifiers?.from, 'from window must not be swallowed').toBeDefined();
+    });
+  });
 });

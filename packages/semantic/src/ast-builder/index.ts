@@ -81,6 +81,14 @@ export interface EventHandlerNode extends ASTNode {
   readonly params?: string[];
   /** Handler commands */
   readonly commands: ASTNode[];
+  /** Event modifiers (once / debounce(N) / throttle(N)) — mirrors @hyperfixi/core EventHandlerNode.modifiers */
+  readonly modifiers?: {
+    once?: boolean;
+    prevent?: boolean;
+    stop?: boolean;
+    debounce?: number;
+    throttle?: number;
+  };
 }
 
 /**
@@ -391,15 +399,34 @@ export class ASTBuilder {
     const watchTarget = destinationValue ? convertValue(destinationValue) : undefined;
 
     // Extract event modifiers
-    const modifiers = node.eventModifiers;
+    const semanticModifiers = node.eventModifiers;
 
-    // Handle queue modifier (debounce, throttle, etc. are runtime concerns)
+    // eventModifiers.from → delegation selector or listener target, mirroring
+    // the `source` role branch above (the parser lands `on resize from window`
+    // and the reclaimed multilingual from-tails here, not in roles).
     let finalSelector = selector;
-    if (modifiers?.from) {
-      const fromMod = modifiers.from;
+    if (semanticModifiers?.from) {
+      const fromMod = semanticModifiers.from;
       if (fromMod.type === 'selector' && !selector) {
         finalSelector = fromMod.value;
+        target = target ?? fromMod.value;
+      } else if (!target) {
+        if (fromMod.type === 'reference') target = fromMod.value;
+        else if (fromMod.type === 'literal') target = String(fromMod.value);
+        else if (fromMod.type === 'expression') target = fromMod.raw;
       }
+    }
+
+    // once/debounce/throttle → the runtime EventHandlerNode.modifiers field
+    // (runtime-base.ts already implements all three; until now the builder
+    // dropped them even when the parser captured them).
+    const astModifiers: { once?: boolean; debounce?: number; throttle?: number } = {};
+    if (semanticModifiers?.once) astModifiers.once = true;
+    if (typeof semanticModifiers?.debounce === 'number') {
+      astModifiers.debounce = semanticModifiers.debounce;
+    }
+    if (typeof semanticModifiers?.throttle === 'number') {
+      astModifiers.throttle = semanticModifiers.throttle;
     }
 
     // Extract event parameter names for destructuring (e.g., on click(clientX, clientY))
@@ -416,6 +443,7 @@ export class ASTBuilder {
       ...(condition ? { condition: condition as ASTNode } : {}),
       ...(watchTarget ? { watchTarget } : {}),
       ...(args && args.length > 0 ? { args, params: args } : {}),
+      ...(Object.keys(astModifiers).length > 0 ? { modifiers: astModifiers } : {}),
     };
   }
 
