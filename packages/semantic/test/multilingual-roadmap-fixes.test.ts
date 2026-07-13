@@ -11992,8 +11992,13 @@ describe('he עם de-anchoring + hi bare-event command peek (spurious on ×7 dri
     expect(actions.filter(a => a === 'on')).toHaveLength(1);
     const render = findAction(node, 'render');
     expect(render).toBeDefined();
-    // Pre-fix the phantom split consumed the עם phrase — style was lost.
-    expect(String(role(render!, 'style')?.raw ?? role(render!, 'style')?.value)).toBe('users');
+    // Pre-fix the phantom split consumed the עם phrase — style was lost. The
+    // Arc E naked named-arg fold then extended the reclaim from the bare key
+    // (`users`, with `: $data` dropped — the render `: $data` residue in the
+    // Arc C misc family) to the complete pair.
+    expect(String(role(render!, 'style')?.raw ?? role(render!, 'style')?.value)).toBe(
+      '{users:$data}'
+    );
     expect(findAction(node, 'put')).toBeDefined();
   });
 
