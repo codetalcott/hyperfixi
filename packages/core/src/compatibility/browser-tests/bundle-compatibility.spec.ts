@@ -53,7 +53,7 @@ const BUNDLES = {
   },
   'hybrid-complete': {
     file: 'hyperfixi-hybrid-complete.js',
-    size: '7.3 KB',
+    size: '7.7 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -70,7 +70,7 @@ const BUNDLES = {
   },
   'hybrid-hx': {
     file: 'hyperfixi-hybrid-hx.js',
-    size: '9.5 KB',
+    size: '18 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -91,7 +91,7 @@ const BUNDLES = {
   // htmx v4 reactive/streaming surface without manual plugin wiring.
   'hybrid-hx-v4': {
     file: 'hyperfixi-hx-v4.js',
-    size: '~257 KB',
+    size: '~540 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -108,7 +108,7 @@ const BUNDLES = {
   },
   minimal: {
     file: 'hyperfixi-browser-minimal.js',
-    size: '58 KB',
+    size: '76 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -125,7 +125,7 @@ const BUNDLES = {
   },
   standard: {
     file: 'hyperfixi-browser-standard.js',
-    size: '63 KB',
+    size: '82 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -142,7 +142,7 @@ const BUNDLES = {
   },
   browser: {
     file: 'hyperfixi.js',
-    size: '203 KB',
+    size: '~534 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -273,14 +273,6 @@ const GALLERY_EXAMPLES = [
     name: 'Fetch Data',
     path: '/examples/fetch-and-async/fetch-data.html',
     requiredFeatures: ['fetch', 'blocks'],
-    // Pre-existing (verified on pre-Arc-F dist): core's per-segment semantic
-    // adapter surfaces a compound analysis result as a command literally
-    // named `compound` (semantic-integration.ts createSemanticAdapter maps
-    // `name: node.action` unconditionally), so this page's multi-line body
-    // throws "Unknown command: compound" at runtime while the rest of the
-    // handler works. Surfaced by the first real run of this suite
-    // (pre-publish-check 2026-07-13). Tracked in NEXT_STEPS § v2.8 pre-release.
-    knownIssue: 'semantic adapter emits compound command node (NEXT_STEPS v2.8 pre-release)',
     test: async (page: Page) => {
       const fetchBtn = page
         .locator('button')
