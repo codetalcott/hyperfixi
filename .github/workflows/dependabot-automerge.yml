@@ -1,0 +1,43 @@
+# Auto-merge for safe Dependabot PRs (2026-07-13, with the majors-group config).
+#
+# Enables GitHub auto-merge on Dependabot PRs whose HIGHEST bump is minor or
+# patch — with dependabot.yml's grouping, that is the minor-and-patch /
+# go-deps / actions group PRs. The majors group (and any individual major
+# fallback) never qualifies: fetch-metadata reports the group's highest
+# update-type, so one major in a group blocks the whole PR from auto-merge.
+#
+# The merge fires only once ALL required status checks pass — that set
+# includes Multilingual Validation and Browser Tests (added alongside this
+# workflow), so a dep bump cannot self-merge past the fidelity gate or a
+# Playwright regression. Branch protection is `strict` (branch must be up to
+# date); when a queued Dependabot PR goes stale behind another merge,
+# Dependabot rebases its own PRs automatically and auto-merge re-fires — no
+# merge queue needed at this volume (see the design note in ci.yml).
+#
+# Dependabot-triggered runs get a read-only GITHUB_TOKEN by default; the
+# explicit `permissions` block grants exactly what `gh pr merge` needs.
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch update metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Enable auto-merge for non-major updates
+        if: steps.meta.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
