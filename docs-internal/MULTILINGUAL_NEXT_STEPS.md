@@ -3370,6 +3370,19 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    (7 critical repo-wide today, shipped-path subset unknown → triage first; alerts
    confined to `experiments/`/`clients/` are waivable with a note);
    `pre-publish-check` workflow green; publish dry-run of the monorepo version bump.
+   **Progress (2026-07-13):** all 7 criticals cleared (#655 x/crypto + the #646
+   lockfile audit); Dependabot PROCESS overhauled (#663) — majors batched into one
+   weekly group PR, the themed groups folded into the minor-and-patch catch-all,
+   and the four named-deferred majors (inquirer #220/#658, puppeteer #216/#659,
+   chokidar #206, diff #201) moved from perpetually-open PRs to config `ignore`
+   entries (delete an entry to take that bump deliberately). Safe group PRs now
+   auto-merge once required checks pass (`.github/workflows/dependabot-automerge.yml`;
+   majors never qualify — fetch-metadata reports the group's highest update-type),
+   and **Browser Tests joined the required checks on main** so a runtime dep bump
+   can't self-merge past a Playwright regression. No merge queue — Dependabot
+   auto-rebases its own stale PRs, so ci.yml's "no merge queue" design note stands.
+   Expected steady state ~2–3 Dependabot PRs/week, mostly self-merging. Still open
+   for the ✓: a green `pre-publish-check` run + the publish dry-run.
 5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.
