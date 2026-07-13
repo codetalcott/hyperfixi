@@ -67,6 +67,12 @@ const PREPOSITIONS = new Set([
  * - Additional synonyms
  */
 const INDONESIAN_EXTRAS: KeywordEntry[] = [
+  // window-resize compound: the dict emits underscore-joined ubah_ukuran
+  // (resize), which the `_` split shattered into ubah(→change) + _ + ukuran —
+  // the event slot normalized to `change` and `_ ukuran` dropped unconsumed
+  // (Arc F). Whole-token entry mirrors qu's hatun_kay precedent (quechua.ts).
+  { native: 'ubah_ukuran', normalized: 'resize' },
+
   // Values/Literals
   { native: 'benar', normalized: 'true' },
   { native: 'salah', normalized: 'false' },
