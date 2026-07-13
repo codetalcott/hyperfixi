@@ -387,6 +387,53 @@ describe('ASTBuilder', () => {
         expect((builder.build(node) as any).event).toBe(name);
       }
     });
+
+    it('emits runtime modifiers from eventModifiers (once/debounce/throttle)', () => {
+      // Arc F: the builder used to read node.eventModifiers and then drop
+      // everything but `from` — captured modifiers never reached the runtime
+      // EventHandlerNode.modifiers field runtime-base.ts implements.
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        roles: new Map([['event', { type: 'literal', value: 'input', dataType: 'string' }]]),
+        eventModifiers: { once: true, debounce: 300 },
+        body: [
+          {
+            kind: 'command',
+            action: 'toggle',
+            roles: new Map([
+              ['patient', { type: 'selector', value: '.active', selectorKind: 'class' }],
+            ]),
+          },
+        ],
+      };
+      const result = builder.build(node) as EventHandlerNode;
+      expect(result.modifiers).toEqual({ once: true, debounce: 300 });
+    });
+
+    it('omits the modifiers key entirely when no eventModifiers are set', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        roles: new Map([['event', { type: 'literal', value: 'click', dataType: 'string' }]]),
+        body: [],
+      };
+      const result = builder.build(node) as EventHandlerNode;
+      expect('modifiers' in result).toBe(false);
+    });
+
+    it('maps a non-selector eventModifiers.from to the listener target', () => {
+      // `on resize from window …` — the parser lands the from-clause in
+      // eventModifiers.from; a bare word becomes the target (the traditional
+      // parser's `from <identifier>` shape), not a delegation selector.
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        roles: new Map([['event', { type: 'literal', value: 'resize', dataType: 'string' }]]),
+        eventModifiers: { debounce: 200, from: { type: 'expression', raw: 'window' } },
+        body: [],
+      };
+      const result = builder.build(node) as EventHandlerNode;
+      expect(result.target).toBe('window');
+      expect(result.modifiers).toEqual({ debounce: 200 });
+    });
   });
 
   describe('build conditional', () => {

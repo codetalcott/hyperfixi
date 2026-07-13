@@ -2685,7 +2685,7 @@ Most map to families this file had already named:
 | --- | --- | --- | --- |
 | fetch options tail (`with {…}` / naked named-args) | ~~78~~ **0** | fetch-with-headers ×24, fetch-with-method ×18, fetch-with-method-body ×18, fetch-formdata ×18 | **RESOLVED — Arc E** (2026-07-13, naked named-arg fold ×24; release-bar stretch item 5 ✓) |
 | def/behavior param phrases + handler-head qualifiers (`(clientX, clientY)`, `from <source>`, key-filters) | 102 | worker-basic ×24, behavior-sortable ×23, behavior-resizable ×21, modal-close-escape ×20, behavior-removable ×6, window-scroll ×3, window-keydown ×3, focus-trap ×2 | NEW — named here |
-| event-modifier phrases NOT applied (`once`, `debounced/throttled at Nms` — probe: `eventModifiers` is null, the semantics are genuinely lost, en included) | 69 | window-resize ×23, event-debounce ×16, event-throttle ×16, event-once ×14 | NEW — named here; highest-leverage single fix |
+| event-modifier phrases NOT applied (`once`, `debounced/throttled at Nms` — probe: `eventModifiers` is null, the semantics are genuinely lost, en included) | ~~69~~ **0** | window-resize ×23, event-debounce ×16, event-throttle ×16, event-once ×14 | **RESOLVED — Arc F** (2026-07-13, modifier-phrase lift ×24 + handler-tail reclaims; see the Arc F update below) |
 | positional/range qualifier tails (`0 to 5 of #note`, `in closest <form/>`, `for me`) | 70 | pick-text-range ×23, take-class-from-siblings ×23, first-in-parent ×17, last-in-collection ×6, toggle-aria-expanded ×1 | pick = named R1 deferral (Family F); rest NEW |
 | loop-head condition/keyword tails (`< 10`, `with index`, zh `forever`, id `_`-compound split) | 51 | repeat-while ×24, stagger-animation ×24, repeat-until-event ×2, repeat-forever ×1 | NEW — named here |
 | SOV/en trailing in-me destination glue | 51 | form-disable-on-submit ×19 (en-symmetric!), input-validation ×6, fetch-loading-state ×6, tabs-basic ×5, tabs-content ×5, if-empty ×5, repeat-times ×5 | = named R3 family (§ value-bug families) |
@@ -2710,6 +2710,37 @@ the sizing input for how to phase it.
 > folded by the same mechanism). Every OTHER pattern's fired-row count is bit-identical
 > to the Arc C red table — no new families, no new firings (per-pattern diff in the arc
 > transcript, `green-per-pattern.txt`).
+
+> **Arc F update (2026-07-13):** total 556 → **487 / 3696 (13.2%)**. Delta fully
+> attributed: event-modifier family −69 (the arc target — window-resize ×23,
+> event-debounce ×16, event-throttle ×16, event-once ×14 → all 0). Red/green
+> full-corpus sweeps confirm every OTHER pattern's fired-row count bit-identical
+> (p4-red/p4-green in the arc transcript). Mechanism: a position-independent
+> modifier-phrase lift (`event-modifier-lift.ts` — the phrase is a loanword in
+> 21–24 languages; translated `once` forms ru/uk/vi live in a parser-local
+> table) + four gated handler-tail reclaims at the parse() wrapper (from-tail →
+> `eventModifiers.from`; split compound event names rejoined via
+> eventNameTranslations compound keys for ar/vi and underscore-keyword recovery
+> for hi/id/sw — the qu hatun_kay precedent; stranded as-phrases → body fetch
+> responseType; a provably-false zh `到 我` drop record retired). Beyond the
+> meter, three SILENT losses fixed: en itself swallowed `on resize from window`'s
+> from-clause with no diagnostic (event-en-source captured `source` and dropped
+> it — now threaded into `eventModifiers.from`, gate learned mid-arc from an R2
+> firestorm: fused patterns default-fill/mis-bind `source`, so only
+> source-shaped pattern ids thread); it/th swallowed `once` with no firing; and
+> the ast-builder dropped every captured modifier but `from` (runtime
+> `modifiers` now emitted — runtime-base already implemented them). hi
+> window-resize was a full mis-parse (phantom `toggle` from the shattered
+> `आकार_बदलें`) — fixing it moved hi avgPrecision 0.9978 → **1.0000** and
+> avgRoleFidelity 0.9907 → 0.9929; baseline regenerated + attributed (only hi
+> metrics + bundleSize + the hi window-resize confidence 1.0 → 0.71, the honest
+> confidence of a real parse replacing a vacuous mis-parse). Locked by ~120
+> tests (`event-modifier-phrase-multilingual.test.ts` 4×24 + phantom pins; en
+> coverage pins in `input-coverage-stages.test.ts`; ast-builder modifiers).
+> Named residuals: th/zh window-resize event-slot still null (event word never
+> reaches the slot; row parses clean); qu window-resize from-tail silently
+> swallowed (no diagnostic to anchor the reclaim). Handoff:
+> `HANDOFF_arc-f-event-modifier-phrases.md`.
 
 **Diagnostic-only proof (2026-07-13):** `--regression` exit 0 on a fresh ordered build +
 populate; `--save-baseline` attribution check ran, and every delta was benign or
