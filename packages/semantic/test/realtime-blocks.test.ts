@@ -153,10 +153,21 @@ describe('realtime / service-worker blocks', () => {
   });
 
   it('does not fire the unconsumed-input diagnostic any more', () => {
-    for (const src of [EVENTSOURCE, SOCKET, INTERCEPT, WORKER]) {
+    for (const src of [EVENTSOURCE, SOCKET, INTERCEPT]) {
       const diagnostics = parse(src, 'en').diagnostics ?? [];
       expect(diagnostics.filter(d => d.code === 'unconsumed-input')).toHaveLength(0);
     }
+  });
+
+  it('worker: the per-segment coverage check surfaces the dropped def param', () => {
+    // Arc C finding (family: def parameter lists). `def add(a, b)` parses with
+    // the second parameter dropped from the signature — previously silent, now
+    // visible. Named in NEXT_STEPS § "Input coverage"; flip this to
+    // toHaveLength(0) when the def-param capture lands.
+    const diagnostics = parse(WORKER, 'en').diagnostics ?? [];
+    const unconsumed = diagnostics.filter(d => d.code === 'unconsumed-input');
+    expect(unconsumed).toHaveLength(1);
+    expect(unconsumed[0].message).toContain('"b"');
   });
 
   it('does not hijack ordinary commands', () => {
