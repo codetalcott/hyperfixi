@@ -82,6 +82,11 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     'مفتاح أسفل': 'keydown',
     'مفتاح أعلى': 'keyup',
     'فأرة فوق': 'mouseover',
+    // Arc F: the dict renders resize as the two-word تغيير حجم; the event
+    // slot captures only تغيير (→change) and حجم drops. The compound key is
+    // matched by the parser's event-compound reclaim (offset-exact join of
+    // the captured event word + the dangling fragment).
+    'تغيير حجم': 'resize',
   },
   // Spanish event names → English
   es: {
@@ -364,6 +369,14 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     panya_nje: 'mouseout',
     wasilisha: 'submit',
     'sogeza juu': 'mouseover',
+  },
+  // Vietnamese event names → English. Minimal section: the dict renders
+  // resize as the three-word đổi kích thước; the event slot captures only
+  // đổi (tokenizer-normalized → change) and `kích thước` drops. The compound
+  // key is matched by the parser's event-compound reclaim (Arc F,
+  // offset-exact join of the captured event word + the dangling fragment).
+  vi: {
+    'đổi kích thước': 'resize',
   },
 };
 

@@ -65,6 +65,13 @@ const PREPOSITIONS = new Set([
  * - Noun class possessive variants
  */
 const SWAHILI_EXTRAS: KeywordEntry[] = [
+  // window-resize compound: the dict emits underscore-joined badilisha_ukubwa
+  // (resize), which the `_` split shattered into badilisha(→toggle!) + _ +
+  // ukubwa — the event slot normalized to `toggle` and `_ ukubwa` dropped
+  // unconsumed (Arc F). Whole-token entry mirrors qu's hatun_kay precedent
+  // (quechua.ts).
+  { native: 'badilisha_ukubwa', normalized: 'resize' },
+
   // Values/Literals
   { native: 'kweli', normalized: 'true' },
   { native: 'uongo', normalized: 'false' },

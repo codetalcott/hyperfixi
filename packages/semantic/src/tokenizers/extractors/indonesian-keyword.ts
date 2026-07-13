@@ -81,6 +81,28 @@ export class IndonesianKeywordExtractor implements ContextAwareExtractor {
       word += input[pos++];
     }
 
+    // Underscore-joined keyword recovery (the swahili-keyword.ts mechanism).
+    // The i18n id dict joins multi-word names with `_` (`ubah_ukuran`=resize);
+    // the reader stops at `_`, so the compound shattered into ubah(→change) +
+    // `_ ukuran` junk (the id window-resize event mis-bind, Arc F). When `_`
+    // follows, read the full `_`-joined run and adopt it ONLY if it resolves
+    // to a REGISTERED keyword — arbitrary snake_case identifiers stay split
+    // exactly as before.
+    if (this.context && pos < input.length && input[pos] === '_') {
+      let extPos = pos;
+      let ext = word;
+      while (
+        extPos < input.length &&
+        (input[extPos] === '_' || isIndonesianIdentifierChar(input[extPos]))
+      ) {
+        ext += input[extPos++];
+      }
+      if (this.context.lookupKeyword(ext.toLowerCase())) {
+        word = ext;
+        pos = extPos;
+      }
+    }
+
     if (!word) return null;
 
     const lower = word.toLowerCase();

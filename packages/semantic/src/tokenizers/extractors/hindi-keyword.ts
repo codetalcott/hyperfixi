@@ -85,6 +85,30 @@ export class HindiKeywordExtractor implements ContextAwareExtractor {
       }
     }
 
+    // Underscore-joined keyword recovery — the `_` sibling of the hyphen
+    // block above (and the swahili-keyword.ts mechanism). The i18n hi dict
+    // joins the resize event as `आकार_बदलें`; the reader stops at `_`, so the
+    // compound shattered into आकार + `_` + बदलें(→toggle), a PHANTOM toggle
+    // command anchored on the stray verb (the hi window-resize mis-parse,
+    // Arc F). Adopt the joined run ONLY if it resolves to a REGISTERED
+    // keyword — underscore identifiers stay split exactly as before.
+    if (
+      this.context &&
+      input[pos] === '_' &&
+      pos + 1 < input.length &&
+      isDevanagari(input[pos + 1])
+    ) {
+      let extPos = pos;
+      let ext = word;
+      while (extPos < input.length && (input[extPos] === '_' || isDevanagari(input[extPos]))) {
+        ext += input[extPos++];
+      }
+      if (this.context.lookupKeyword(ext)) {
+        word = ext;
+        pos = extPos;
+      }
+    }
+
     if (!word) return null;
 
     // Look up keyword entry
