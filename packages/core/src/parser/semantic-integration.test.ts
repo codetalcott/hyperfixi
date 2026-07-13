@@ -15,6 +15,7 @@ import {
   shouldUseSemanticResult,
   languageBenefitsFromSemantic,
   createSemanticIntegration,
+  createSemanticAdapter,
 } from './semantic-integration';
 
 // =============================================================================
@@ -516,5 +517,84 @@ describe('parseExpressionString (via expression type values)', () => {
     const expr = result.node?.args?.[0] as any;
     expect(expr.type).toBe('identifier');
     expect(expr.name).toBe('');
+  });
+});
+
+// =============================================================================
+// createSemanticAdapter Tests
+// =============================================================================
+
+describe('createSemanticAdapter', () => {
+  function makeAdapter(
+    node: { action: string; kind?: string; roles: ReadonlyMap<string, unknown> } | null
+  ) {
+    return createSemanticAdapter({
+      parse: () => ({ node, confidence: 0.95 }),
+      isRegistered: (lang: string) => lang === 'en',
+      registered: () => ['en'],
+    });
+  }
+
+  it('exposes command for a kind:"command" node', () => {
+    const adapter = makeAdapter({
+      action: 'toggle',
+      kind: 'command',
+      roles: new Map([['patient', { type: 'selector', value: '.active' }]]),
+    });
+
+    const result = adapter.analyze('toggle .active', 'en');
+
+    expect(result.command?.name).toBe('toggle');
+    expect(shouldUseSemanticResult(result)).toBe(true);
+  });
+
+  it('exposes command for a kind-less node (parse fns that do not report kind)', () => {
+    const adapter = makeAdapter({ action: 'toggle', roles: new Map() });
+
+    const result = adapter.analyze('toggle .active', 'en');
+
+    expect(result.command?.name).toBe('toggle');
+    expect(shouldUseSemanticResult(result)).toBe(true);
+  });
+
+  it('omits command for a kind:"compound" node so the traditional parser takes the segment', () => {
+    const adapter = makeAdapter({ action: 'compound', kind: 'compound', roles: new Map() });
+
+    const result = adapter.analyze("log 'x', it\nremove .a from me", 'en');
+
+    expect(result.command).toBeUndefined();
+    expect(shouldUseSemanticResult(result)).toBe(false);
+  });
+
+  it('omits command for a kind:"event-handler" node', () => {
+    const adapter = makeAdapter({ action: 'toggle', kind: 'event-handler', roles: new Map() });
+
+    const result = adapter.analyze('on click toggle .active', 'en');
+
+    expect(result.command).toBeUndefined();
+    expect(shouldUseSemanticResult(result)).toBe(false);
+  });
+
+  it('returns no command for a null node', () => {
+    const adapter = makeAdapter(null);
+
+    const result = adapter.analyze('gibberish', 'en');
+
+    expect(result.command).toBeUndefined();
+  });
+
+  it('reports unsupported languages without calling parse', () => {
+    const parse = vi.fn();
+    const adapter = createSemanticAdapter({
+      parse,
+      isRegistered: () => false,
+      registered: () => [],
+    });
+
+    const result = adapter.analyze('toggle .active', 'xx');
+
+    expect(result.confidence).toBe(0);
+    expect(result.errors?.[0]).toContain('not supported');
+    expect(parse).not.toHaveBeenCalled();
   });
 });

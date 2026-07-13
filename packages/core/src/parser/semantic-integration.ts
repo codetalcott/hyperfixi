@@ -919,7 +919,7 @@ interface SemanticParseFn {
     input: string,
     language: string
   ): {
-    node: { action: string; roles: ReadonlyMap<string, unknown> } | null;
+    node: { action: string; kind?: string; roles: ReadonlyMap<string, unknown> } | null;
     confidence: number;
     error?: string;
     tokensConsumed?: number;
@@ -961,10 +961,19 @@ export function createSemanticAdapter(deps: {
         };
       }
       const result = deps.parse(input, language);
+      // Only a `kind: 'command'` node (or a kind-less node, for parse fns that
+      // don't report kind) maps to a single command. Any other kind
+      // ('compound', 'event-handler', …) spans more than one command — exposing
+      // it here would surface a CommandNode literally named after the kind
+      // (e.g. "compound" → "Unknown command: compound" at runtime). Omitting
+      // `command` fails the caller's confidence gate, so the traditional
+      // parser takes the segment instead.
+      const isSingleCommand =
+        result.node !== null && (result.node.kind === undefined || result.node.kind === 'command');
       const out: SemanticAnalysisResult = {
         confidence: result.confidence,
         ...(result.tokensConsumed !== undefined ? { tokensConsumed: result.tokensConsumed } : {}),
-        ...(result.node
+        ...(result.node && isSingleCommand
           ? {
               command: {
                 name: result.node.action,

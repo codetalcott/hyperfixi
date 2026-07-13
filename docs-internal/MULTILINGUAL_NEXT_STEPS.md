@@ -3479,6 +3479,16 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    candidate** (user-visible on the shipped full bundle); marked as a
    knownIssue in bundle-compatibility.spec.ts (printed, not asserted) until
    fixed — remove the knownIssue field with the fix.
+   _✓ FIXED (2026-07-13):_ `createSemanticAdapter` now exposes `command` only
+   when the semantic node's `kind` is `'command'` (or absent, preserving
+   behavior for parse fns that don't report kind); any other kind
+   (`compound`, `event-handler`, …) omits `command`, fails the inlined
+   confidence gate, and the traditional parser takes the segment. Core-only
+   change (the `SemanticParseFn` minimal interface gained optional `kind` —
+   structural, no packages/semantic edit → baseline untouched). Repro
+   (fetch-data multi-line body via `compileSync`) went from
+   `command:compound` in the AST to `[add, log, remove]`; knownIssue field
+   removed; 6 adapter unit tests added in semantic-integration.test.ts.
 5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.

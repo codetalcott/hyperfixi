@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@hyperfixi/core.svg)](https://www.npmjs.com/package/@hyperfixi/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readable UI behaviors from 7 KB.
+A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readable UI behaviors from 1.9 KB.
 
 ## Try It
 
@@ -71,7 +71,7 @@ The plugin scans your files for `_="..."` attributes and generates a minimal bun
 
 - **43 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
 - **\_hyperscript compatible** -- existing hyperscript code works as-is
-- **Tree-shakeable** -- ship only the commands you use (1.9 KB to 200 KB)
+- **Tree-shakeable** -- ship only the commands you use (1.9 KB lite to ~534 KB full)
 - **TypeScript types** -- full type safety with comprehensive definitions
 - **Optional multilingual** -- write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
 - **Optional htmx compat** -- htmx-like attributes via the `hyperfixi-hx.js` bundle
@@ -101,7 +101,7 @@ translation preserved meaning rather than merely "parsed". Two writeups go deep:
 
 ## Learn More
 
-- [Choosing a bundle](https://hyperfixi.org/guide/bundles/) -- 6 bundles from 1.9 KB to 200 KB
+- [Choosing a bundle](https://hyperfixi.org/guide/bundles/) -- bundles from 1.9 KB (lite) to ~534 KB (full)
 - [Examples gallery](https://hyperfixi.org/examples/) -- 35+ interactive demos
 - [Playground](https://hyperfixi.org/playground/) -- live REPL
 - [Vite plugin guide](https://hyperfixi.org/guide/vite-plugin/) -- automatic tree-shaking
