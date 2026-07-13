@@ -278,20 +278,21 @@ jobs:
           IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
           FAILED_PKGS=""
 
+          # Detection is the validator's EXIT CODE (it exits 1 on missing
+          # exports). The previous shape — `if cmd | tee log` plus a
+          # `grep -c … || echo "0"` fallback — tested tee's exit (always 0)
+          # and compared against a two-line "0\n0" string (never equal), so
+          # EVERY package was marked ❌ in the summary of every historical
+          # run; the honest-verdict validation run exposed it.
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
               echo "Validating $(node -p "require('./packages/$pkg/package.json').name") exports..."
-              if node scripts/validate-exports.mjs "$pkg" 2>&1 | tee /tmp/${pkg}-exports.log; then
-                MISSING=$(grep -c "Missing exports" /tmp/${pkg}-exports.log 2>/dev/null || echo "0")
-                if [ "$MISSING" = "0" ]; then
-                  echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - All exports valid" >> $GITHUB_STEP_SUMMARY
-                else
-                  echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Missing exports detected" >> $GITHUB_STEP_SUMMARY
-                  FAILED_PKGS="$FAILED_PKGS $pkg"
-                fi
+              if node scripts/validate-exports.mjs "$pkg" > /tmp/${pkg}-exports.log 2>&1; then
+                echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - All exports valid" >> $GITHUB_STEP_SUMMARY
               else
-                echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Export validation failed" >> $GITHUB_STEP_SUMMARY
+                cat /tmp/${pkg}-exports.log
+                echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - exports invalid" >> $GITHUB_STEP_SUMMARY
                 FAILED_PKGS="$FAILED_PKGS $pkg"
               fi
             fi
