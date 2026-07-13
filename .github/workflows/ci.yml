@@ -45,48 +45,64 @@ env:
 
 jobs:
   # ============================================
-  # Job 0: Detect whether non-doc ("code") files changed.
-  # Heavy jobs gate on this so doc-only PRs skip them. The fast required checks
-  # do NOT gate on it — they must always report so the branch-protection gate
-  # is satisfied (a doc-only PR still needs them green to merge).
+  # Job 0: Detect which surface changed: npm stack ("code"), LSE protocol, or
+  # the Go client. EVERY npm-stack job gates on `code` — `build` carries the
+  # gate and the rest inherit it through `needs: build` (a skipped need skips
+  # the dependent). Doc-only, protocol-only, and go-client-only diffs therefore
+  # skip the whole npm fan-out; protocol/** and clients/go-client/** have their
+  # own dedicated jobs below. Skipped REQUIRED checks (Build, Unit Tests, …)
+  # report "skipped" and satisfy branch protection — the same mechanism the
+  # required Multilingual Validation check has always relied on for doc-only
+  # PRs, so nothing blocks on a skipped tier.
   # ============================================
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
-    # Only consumed by the PR-only heavy jobs, so no need to run it on push.
-    if: github.event_name == 'pull_request'
+    # Runs on push too: `build` (push + PR) now gates on the `code` output.
     outputs:
       code: ${{ steps.filter.outputs.code }}
       protocol: ${{ steps.filter.outputs.protocol }}
+      goclient: ${{ steps.filter.outputs.goclient }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          # `code` is true when any changed file is OUTSIDE the doc set.
-          # `protocol` is true when the LSE spec, fixtures, or any of the four
-          # reference parsers changed — those live outside the npm workspaces and
-          # are otherwise never exercised by CI.
+          # `code` is true when any changed file is OUTSIDE the doc set and
+          # outside the non-npm surfaces (protocol/, clients/) that carry their
+          # own jobs. `protocol` is true when the LSE spec, fixtures, or any of
+          # the four reference parsers changed; `goclient` when the Go client
+          # changed — both live outside the npm workspaces and are otherwise
+          # never exercised by CI.
           filters: |
             code:
               - '**'
               - '!**/*.md'
               - '!docs/**'
+              - '!docs-internal/**'
               - '!examples/**'
               - '!.claude/**'
               - '!**/*.txt'
               - '!.gitignore'
               - '!LICENSE'
+              - '!protocol/**'
+              - '!clients/**'
             protocol:
               - 'protocol/**'
+            goclient:
+              - 'clients/go-client/**'
 
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
+  # Gated on the `code` filter: every downstream npm job `needs: build`, so a
+  # diff that never touches the npm stack skips the entire fan-out here.
   # ============================================
   build:
     name: Build All Packages
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
 
     steps:
       - name: Checkout
@@ -1087,6 +1103,39 @@ jobs:
         if: matrix.lang == 'rust'
         working-directory: protocol/rust
         run: cargo test
+
+  # ============================================
+  # Job 10.5: Go client build + test
+  #
+  # clients/go-client lives outside the npm workspaces, so no other job
+  # compiles it — its weekly gomod Dependabot PRs were "green" without a line
+  # of Go ever building. Gated on clients/go-client/**, so it costs ~0 on an
+  # ordinary PR and ~40s on the PRs it exists for.
+  # ============================================
+  go-client:
+    name: Go Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.goclient == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: clients/go-client/go.mod
+          cache-dependency-path: clients/go-client/go.sum
+
+      - name: Build
+        working-directory: clients/go-client
+        run: go build ./...
+
+      - name: Test
+        working-directory: clients/go-client
+        run: go test ./...
 
   # ============================================
   # Job 11: Performance Benchmarks (main branch only)
