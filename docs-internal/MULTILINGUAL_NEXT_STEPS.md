@@ -3453,6 +3453,17 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    export detection + verdict gate) and re-validated green in the PR that
    carries this note. The item-4 ✓ stands on the publish DRY-RUN (29270948266,
    real gates) plus the re-validated pre-publish-check.
+   _Discovery from the first honest size-gate run:_ the full bundles are far
+   larger than every written figure — published 2.7.2 `hyperfixi.js` is
+   **529 KB gz** (minified; CLAUDE.md still says 203 KB) and
+   `hyperfixi-hx-v4.js` ~545 KB gz (docs say ~257 KB raw); hybrid-hx has
+   crept to 18.5 KB gz. The old limits (290 KB / 18 KB) dated from the
+   smaller-bundle era and were never enforced (the files never existed in CI
+   runs). Limits now sit at measured reality + headroom (560 KB / 20 KB) as
+   anti-regression ceilings. **Post-release queue item: bundle-diet
+   investigation** (why did the full bundle grow ~2.6× past its documented
+   size — reactivity+realtime pre-install? multilingual growth? terser config
+   drift?) **+ size-truth pass over CLAUDE.md / docs/BROWSER_BUNDLES.md.**
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.
    **✓ MET (Arc E, 2026-07-13): braced + naked named-arg options captured ×24,

@@ -316,10 +316,22 @@ jobs:
           echo "## Bundle Size Limit Validation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Size limits (gzipped bytes)
-          MAX_LITE=4000           # 4 KB
-          MAX_HYBRID=18000        # 18 KB (hyperfixi-hybrid-hx.js currently ~16.6 KB; bumped from 15 KB to reflect Phase 8 growth)
-          MAX_BROWSER=290000      # 290 KB (actual: ~273 KB, allow headroom)
+          # Size limits (gzipped bytes), set 2026-07-13 from MEASURED reality
+          # (published 2.7.2 artifacts + fresh local builds) the first time
+          # this gate ever ran against real files — the old limits (browser
+          # 290 KB "actual ~273 KB", hybrid 18 KB "actual ~16.6 KB") dated
+          # from a much smaller bundle era and were never enforced: the
+          # bundles they named did not exist in CI runs (realtime missing
+          # from BUILD_ORDER) and the [[ -f ]] guards skipped them silently.
+          # Published 2.7.2 hyperfixi.js is 529 KB gz (minified — reactivity
+          # + realtime pre-installed + multilingual growth); hybrid-hx 16.9 KB
+          # published, 18.5 KB on the current tree. These are ceilings against
+          # regression, not aspirations — ratchet DOWN after the post-release
+          # bundle-diet investigation (see NEXT_STEPS).
+          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
+          MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
+          MAX_BROWSER=560000      # 560 KB (hyperfixi.js actual ~538 KB gz)
+          MAX_HXV4=560000         # 560 KB (hyperfixi-hx-v4.js actual ~545 KB gz)
 
           failed=0
 
@@ -348,7 +360,9 @@ jobs:
             fi
           done
 
-          # Check full browser bundle
+          # Check full browser bundle. NOT [[ -f ]]-guarded: a missing
+          # hyperfixi.js means the bundle build silently failed upstream —
+          # that must fail here, not skip (the pre-2026-07-13 vacuous-green).
           if [[ -f "packages/core/dist/hyperfixi.js" ]]; then
             size=$(gzip -c packages/core/dist/hyperfixi.js | wc -c | tr -d ' ')
             if [[ "$size" -gt "$MAX_BROWSER" ]]; then
@@ -357,6 +371,24 @@ jobs:
             else
               echo "✅ hyperfixi.js (${size} bytes gzip) within limit (${MAX_BROWSER} bytes)" >> $GITHUB_STEP_SUMMARY
             fi
+          else
+            echo "❌ hyperfixi.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
+            failed=1
+          fi
+
+          # Check the hx-v4 bundle (was covered by NO check: its filename
+          # does not match the hyperfixi-hybrid-* glob).
+          if [[ -f "packages/core/dist/hyperfixi-hx-v4.js" ]]; then
+            size=$(gzip -c packages/core/dist/hyperfixi-hx-v4.js | wc -c | tr -d ' ')
+            if [[ "$size" -gt "$MAX_HXV4" ]]; then
+              echo "❌ hyperfixi-hx-v4.js (${size} bytes gzip) exceeds limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
+              failed=1
+            else
+              echo "✅ hyperfixi-hx-v4.js (${size} bytes gzip) within limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ hyperfixi-hx-v4.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
+            failed=1
           fi
 
           if [[ $failed -eq 1 ]]; then
