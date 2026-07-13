@@ -1,1 +1,126 @@
-[]
+[
+  {
+    "key": "V4|*|url",
+    "reason": "Batch 1 probe P5/P5b: push/replace's `url` is a deliberate all-language passthrough marker (URL_MARKER_ALL_LANGS); matchLiteralToken consumes pattern literals by raw token.value before kind, so patient captures correctly (en+es probed) despite identifier classification. push/replace are not corpus-exercised. See MULTILINGUAL_NEXT_STEPS.md § 'V4 probe conclusion (Batch 1)'."
+  },
+  {
+    "key": "V4|*|on",
+    "reason": "Batch 1 probe P4: set.scope's `on` is passthrough-alignment by design (command-schemas set.scope comment; CORRECTNESS §7bb); pattern literals match by raw token.value, so scope captures (.tab / me) — tabs-aria faithful in all 24 languages. Per-language translate-via-markerOverride queued as its own increment in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V4|fr|par",
+    "reason": "Batch 1 probe P1: `incrémenter #score par 10` captures quantity=10 — the increment/decrement markerOverride word is a generated-pattern literal, matched by raw token.value (kind-independent)."
+  },
+  {
+    "key": "V4|de|um",
+    "reason": "Batch 1 probe P1b: `erhöhen #score um 10` captures quantity=10 — same schema-markerOverride literal mechanism as fr `par`."
+  },
+  {
+    "key": "V4|en|over",
+    "reason": "Batch 1 probe P3: `transition opacity to 0 over 500ms` captures duration=500ms — `over` is the en transition markerOverride literal, matched by raw token.value."
+  },
+  {
+    "key": "V4|fr|en",
+    "reason": "Batch 1 probe P9: repeat-for-each `répéter item en .items` captures source=.items — for.source markerOverride literal, matched by raw token.value."
+  },
+  {
+    "key": "V4|he|in",
+    "reason": "Batch 1 probe P9 mechanism class (for.source markerOverride literal, matched by raw token.value; fr `en` probed as the representative)."
+  },
+  {
+    "key": "V4|ms|dalam",
+    "reason": "Batch 1 probe P9 mechanism class (for.source markerOverride literal, matched by raw token.value; fr `en` probed as the representative)."
+  },
+  {
+    "key": "V4|tl|sa_loob",
+    "reason": "Batch 1 probe P9 mechanism class (for.source markerOverride literal, matched by raw token.value); aux probe: sa_loob tokenizes as a single token, so no shatter risk."
+  },
+  {
+    "key": "V4|vi|trong",
+    "reason": "Batch 1 probe P9 mechanism class (for.source markerOverride literal, matched by raw token.value; fr `en` probed as the representative)."
+  },
+  {
+    "key": "V4|de|an",
+    "reason": "Batch 1: dead vocab — the transformer renders send.destination as `zu` (corpus send-event/send-with-detail rows), never this override word; no parse path needs it. Schema-override↔render alignment queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V4|ko|에게",
+    "reason": "Batch 1: dead vocab — the transformer renders send.destination as `에` (corpus send-event row), never `에게`. Schema-override↔render alignment queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V4|tr|-e",
+    "reason": "Batch 1: dead vocab — aux probe shows `-e` shatters to `-` + `e(particle)`; the live tr dative allomorphs already parse via markerVariants (e/a/ye/ya). Schema-override↔render alignment queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V4|*|como",
+    "reason": "Batch 1 probe P6: es `buscar /api/user como json` captures responseType=json via the handcrafted fetch pattern's `como` literal, identical role shape to the en reference — pattern literals match by raw token.value. Corpus fetch rows faithful. (es + pt.)"
+  },
+  {
+    "key": "V4|*|sebagai",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method render word consumed as a handcrafted/pattern literal by raw token.value; es `como` probed as the representative). (id + ms.)"
+  },
+  {
+    "key": "V4|fr|comme",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|pl|jako",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|de|als",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|it|come",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|ru|как",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|uk|як",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|sw|kuwa",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; sw kama/kuwa keyword-collision history in #569)."
+  },
+  {
+    "key": "V4|th|เป็น",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|tl|bilang",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|tr|olarak",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|vi|như",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|he|כ",
+    "reason": "Batch 1 probe P6 mechanism class (grammar.method word consumed as a pattern literal by raw token.value; corpus fetch rows faithful)."
+  },
+  {
+    "key": "V4|ar|كـ-",
+    "reason": "Batch 1: notation artifact — the grammar lists the attached-prefix form with a trailing hyphen; the tokenizer splits it and the bare prefix is what appears in token streams. Never a standalone token, so word-level classification cannot apply."
+  },
+  {
+    "key": "V4|ar|بـ-",
+    "reason": "Batch 1: notation artifact — aux probe shows `بـ-` splits to `بـ` (already keyword→style) + `-`. The hyphen suffix is the grammar's attach-notation, never a standalone token."
+  },
+  {
+    "key": "V4|hi|साथ",
+    "reason": "Batch 1: render-only style alternative, and the style role is not captured on this path in ANY language including en (probe: `show #modal with *opacity` captures patient only) — registration is untestable until style capture lands. Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V4|zh|时",
+    "reason": "Batch 1 probe P7: `当 点击 时 切换 把 .active` captures event=click — SOV event markers are consumed by semantic-parser's hardcoded sovEventMarkers path, matched by value."
+  }
+]

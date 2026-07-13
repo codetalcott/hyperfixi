@@ -13780,3 +13780,54 @@ describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/HANDOFF_r1
     expect(cmds.find(c => c.action === 'toggle')).toBeTruthy();
   });
 });
+
+describe('Spanish hacia destination alignment (vocab Batch 1, V2+V4)', () => {
+  // The es i18n grammar declares `hacia` as a destination render alternative
+  // (i18n profiles: { form: 'hacia', role: 'destination' }), but the semantic
+  // es profile's roleMarkers.destination did not list it — so a `hacia` clause
+  // silently dropped the destination: `agregar .selected hacia #item` captured
+  // destination=me (the schema default) instead of #item. Registering it as a
+  // destination alternative fixes the capture AND its V4 classification (the
+  // tokenizer derives keywords from roleMarkers). Probe evidence:
+  // docs-internal/HANDOFF_vocab-batch1-v4-probe.md → MULTILINGUAL_NEXT_STEPS.md
+  // § "V4 probe conclusion".
+  function findAction(node: unknown, action: string): Record<string, any> | null {
+    if (!node || typeof node !== 'object') return null;
+    const n = node as Record<string, any>;
+    if (n.action === action) return n;
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = n[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const hit = findAction(x, action);
+          if (hit) return hit;
+        }
+      }
+    }
+    return null;
+  }
+
+  it('[es] `agregar .selected hacia #item` captures destination=#item (was: me)', () => {
+    const node = parse('en clic agregar .selected hacia #item', 'es');
+    const add = findAction(node, 'add');
+    expect(add).not.toBeNull();
+    const roles = add!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('destination')?.value).toBe('#item');
+  });
+
+  it('[es] control: `agregar .selected a #item` still captures destination=#item', () => {
+    const node = parse('en clic agregar .selected a #item', 'es');
+    const add = findAction(node, 'add');
+    expect(add).not.toBeNull();
+    const roles = add!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('destination')?.value).toBe('#item');
+  });
+
+  it('[es] `poner "hola" hacia #output` captures destination=#output', () => {
+    const node = parse('poner "hola" hacia #output', 'es');
+    const put = findAction(node, 'put');
+    expect(put).not.toBeNull();
+    const roles = put!.roles as Map<string, { value?: unknown }>;
+    expect(roles.get('destination')?.value).toBe('#output');
+  });
+});

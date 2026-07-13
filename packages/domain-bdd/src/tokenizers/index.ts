@@ -139,6 +139,7 @@ const ES_KEYWORDS = new Set([
   'de',
   'desde',
   'sobre',
+  'hacia', // destination alternative (vocab Batch 1 — semantic es roleMarkers)
 ]);
 
 export class SpanishBDDTokenizer extends BaseTokenizer {
