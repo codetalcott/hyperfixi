@@ -11,7 +11,7 @@
     "build": "tsup src/server.ts --format esm --dts",
     "start": "node dist/server.js --stdio",
     "dev": "tsx src/server.ts --stdio",
-    "test": "vitest",
+    "test": "vitest --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

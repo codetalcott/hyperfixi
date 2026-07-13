@@ -64,6 +64,7 @@ jobs:
               fi
             else
               echo "| $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") | N/A | ❌ Not found |" >> $GITHUB_STEP_SUMMARY
+              echo "versions: packages/$pkg not found" >> "$RUNNER_TEMP/prepublish-failures.txt"
             fi
           done
 
@@ -100,8 +101,21 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
 
-          # Build in dependency order (matches ci.yml and publish.yml)
-          BUILD_ORDER="intent framework domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn semantic behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server server-bridge types-browser vite-plugin language-server reactivity components speech intent-element"
+          # Build in dependency order (matches ci.yml and publish.yml).
+          # semantic MUST precede the domain-* packages: their vocab modules
+          # import @lokascript/semantic/languages/*, so domain-bdd's
+          # build:types fails without semantic's dist. This list used to have
+          # domain-* first, which produced four spurious "⚠ build failed"
+          # warnings on every run (the packages then built fine in the later
+          # Build check step, once semantic/dist existed).
+          # The PRIVATE packages (domain-toolkit, mcp-multilingual-intent,
+          # developer-tools) must build too — publish.yml's list says why:
+          # their dist/ must exist for tsc to resolve cross-package imports
+          # (mcp-server typechecks against @hyperfixi/developer-tools), and
+          # developer-tools' dist ships the prism-hyperscript-i18n asset the
+          # bundle-compatibility harness pages load (validation v5: every
+          # bundle "failed" on that one missing asset).
+          BUILD_ORDER="intent framework semantic domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn domain-toolkit domain-config behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server mcp-multilingual-intent developer-tools server-bridge types-browser vite-plugin language-server reactivity realtime components speech intent-element"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then
@@ -120,6 +134,7 @@ jobs:
 
       - name: TypeCheck
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## TypeScript Compilation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -133,6 +148,7 @@ jobs:
                 echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - TypeScript OK" >> $GITHUB_STEP_SUMMARY
               else
                 echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - TypeScript errors found" >> $GITHUB_STEP_SUMMARY
+                echo "typecheck: $pkg" >> "$RUNNER_TEMP/prepublish-failures.txt"
                 echo "<details><summary>Errors</summary>" >> $GITHUB_STEP_SUMMARY
                 echo "" >> $GITHUB_STEP_SUMMARY
                 echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -145,6 +161,7 @@ jobs:
 
       - name: Run tests
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -160,6 +177,7 @@ jobs:
                   echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - $TESTS" >> $GITHUB_STEP_SUMMARY
                 else
                   echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Tests failed" >> $GITHUB_STEP_SUMMARY
+                  echo "tests: $pkg" >> "$RUNNER_TEMP/prepublish-failures.txt"
                 fi
               else
                 echo "⚠️ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - No tests configured" >> $GITHUB_STEP_SUMMARY
@@ -169,6 +187,7 @@ jobs:
 
       - name: Build check
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Build Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -189,49 +208,13 @@ jobs:
                   fi
                 else
                   echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Build failed" >> $GITHUB_STEP_SUMMARY
+                  echo "build: $pkg" >> "$RUNNER_TEMP/prepublish-failures.txt"
                 fi
               else
                 echo "⚠️ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - No build script" >> $GITHUB_STEP_SUMMARY
               fi
             fi
           done
-
-      - name: Validate exports
-        run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Export Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Verifying all package.json exports resolve to actual files..." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
-          FAILED_PKGS=""
-
-          for pkg in "${PKG_ARRAY[@]}"; do
-            pkg=$(echo "$pkg" | xargs)
-            if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
-              echo "Validating $(node -p "require('./packages/$pkg/package.json').name") exports..."
-              if node scripts/validate-exports.mjs "$pkg" 2>&1 | tee /tmp/${pkg}-exports.log; then
-                MISSING=$(grep -c "Missing exports" /tmp/${pkg}-exports.log 2>/dev/null || echo "0")
-                if [ "$MISSING" = "0" ]; then
-                  echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - All exports valid" >> $GITHUB_STEP_SUMMARY
-                else
-                  echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Missing exports detected" >> $GITHUB_STEP_SUMMARY
-                  FAILED_PKGS="$FAILED_PKGS $pkg"
-                fi
-              else
-                echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - Export validation failed" >> $GITHUB_STEP_SUMMARY
-                FAILED_PKGS="$FAILED_PKGS $pkg"
-              fi
-            fi
-          done
-
-          if [ -n "$FAILED_PKGS" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Export validation issues found in:**$FAILED_PKGS" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Run \`node scripts/validate-exports.mjs --fix-suggestions\` locally for details." >> $GITHUB_STEP_SUMMARY
-          fi
 
       - name: Package.json validation
         run: |
@@ -258,6 +241,7 @@ jobs:
 
       - name: Build browser bundles
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Browser Bundle Build" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -289,16 +273,72 @@ jobs:
             fi
           fi
 
+      - name: Validate exports
+        # Runs AFTER "Build browser bundles" on purpose: core's exports map
+        # includes dist/hyperfixi.js and dist/hyperfixi-hx-v4.js, which only
+        # exist once the browser bundles are built. This step used to run
+        # before them and flagged core with a false "Missing exports" ❌ on
+        # every run (the 2026-07-13 release-bar summary-reading ritual).
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Export Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Verifying all package.json exports resolve to actual files..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          FAILED_PKGS=""
+
+          # Detection is the validator's EXIT CODE (it exits 1 on missing
+          # exports). The previous shape — `if cmd | tee log` plus a
+          # `grep -c … || echo "0"` fallback — tested tee's exit (always 0)
+          # and compared against a two-line "0\n0" string (never equal), so
+          # EVERY package was marked ❌ in the summary of every historical
+          # run; the honest-verdict validation run exposed it.
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
+              echo "Validating $(node -p "require('./packages/$pkg/package.json').name") exports..."
+              if node scripts/validate-exports.mjs "$pkg" > /tmp/${pkg}-exports.log 2>&1; then
+                echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - All exports valid" >> $GITHUB_STEP_SUMMARY
+              else
+                cat /tmp/${pkg}-exports.log
+                echo "❌ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - exports invalid" >> $GITHUB_STEP_SUMMARY
+                FAILED_PKGS="$FAILED_PKGS $pkg"
+              fi
+            fi
+          done
+
+          if [ -n "$FAILED_PKGS" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Export validation issues found in:**$FAILED_PKGS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run \`node scripts/validate-exports.mjs --fix-suggestions\` locally for details." >> $GITHUB_STEP_SUMMARY
+            echo "exports:$FAILED_PKGS" >> "$RUNNER_TEMP/prepublish-failures.txt"
+          fi
+
       - name: Bundle size limit checks
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Bundle Size Limit Validation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Size limits (gzipped bytes)
-          MAX_LITE=4000           # 4 KB
-          MAX_HYBRID=18000        # 18 KB (hyperfixi-hybrid-hx.js currently ~16.6 KB; bumped from 15 KB to reflect Phase 8 growth)
-          MAX_BROWSER=290000      # 290 KB (actual: ~273 KB, allow headroom)
+          # Size limits (gzipped bytes), set 2026-07-13 from MEASURED reality
+          # (published 2.7.2 artifacts + fresh local builds) the first time
+          # this gate ever ran against real files — the old limits (browser
+          # 290 KB "actual ~273 KB", hybrid 18 KB "actual ~16.6 KB") dated
+          # from a much smaller bundle era and were never enforced: the
+          # bundles they named did not exist in CI runs (realtime missing
+          # from BUILD_ORDER) and the [[ -f ]] guards skipped them silently.
+          # Published 2.7.2 hyperfixi.js is 529 KB gz (minified — reactivity
+          # + realtime pre-installed + multilingual growth); hybrid-hx 16.9 KB
+          # published, 18.5 KB on the current tree. These are ceilings against
+          # regression, not aspirations — ratchet DOWN after the post-release
+          # bundle-diet investigation (see NEXT_STEPS).
+          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
+          MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
+          MAX_BROWSER=560000      # 560 KB (hyperfixi.js actual ~538 KB gz)
+          MAX_HXV4=560000         # 560 KB (hyperfixi-hx-v4.js actual ~545 KB gz)
 
           failed=0
 
@@ -327,7 +367,9 @@ jobs:
             fi
           done
 
-          # Check full browser bundle
+          # Check full browser bundle. NOT [[ -f ]]-guarded: a missing
+          # hyperfixi.js means the bundle build silently failed upstream —
+          # that must fail here, not skip (the pre-2026-07-13 vacuous-green).
           if [[ -f "packages/core/dist/hyperfixi.js" ]]; then
             size=$(gzip -c packages/core/dist/hyperfixi.js | wc -c | tr -d ' ')
             if [[ "$size" -gt "$MAX_BROWSER" ]]; then
@@ -336,6 +378,24 @@ jobs:
             else
               echo "✅ hyperfixi.js (${size} bytes gzip) within limit (${MAX_BROWSER} bytes)" >> $GITHUB_STEP_SUMMARY
             fi
+          else
+            echo "❌ hyperfixi.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
+            failed=1
+          fi
+
+          # Check the hx-v4 bundle (was covered by NO check: its filename
+          # does not match the hyperfixi-hybrid-* glob).
+          if [[ -f "packages/core/dist/hyperfixi-hx-v4.js" ]]; then
+            size=$(gzip -c packages/core/dist/hyperfixi-hx-v4.js | wc -c | tr -d ' ')
+            if [[ "$size" -gt "$MAX_HXV4" ]]; then
+              echo "❌ hyperfixi-hx-v4.js (${size} bytes gzip) exceeds limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
+              failed=1
+            else
+              echo "✅ hyperfixi-hx-v4.js (${size} bytes gzip) within limit (${MAX_HXV4} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ hyperfixi-hx-v4.js MISSING from dist — bundle build failed upstream" >> $GITHUB_STEP_SUMMARY
+            failed=1
           fi
 
           if [[ $failed -eq 1 ]]; then
@@ -347,16 +407,9 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
-      - name: Start HTTP server
-        run: |
-          cd packages/core
-          npx http-server ../.. -p 3000 -c-1 &
-          echo $! > /tmp/http-server.pid
-          sleep 3
-          echo "HTTP server started on port 3000"
-
       - name: Bundle Compatibility Matrix
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Bundle Compatibility Matrix" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -378,6 +431,7 @@ jobs:
             fi
           else
             echo "❌ Bundle compatibility tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "bundle-compatibility: playwright spec failed" >> "$RUNNER_TEMP/prepublish-failures.txt"
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "<details><summary>Test Failures</summary>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -389,6 +443,7 @@ jobs:
 
       - name: htmx i18n orchestrator public API
         run: |
+          set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## htmx i18n Orchestrator Public API" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -412,13 +467,6 @@ jobs:
             exit 1
           fi
 
-      - name: Stop HTTP server
-        if: always()
-        run: |
-          if [ -f /tmp/http-server.pid ]; then
-            kill $(cat /tmp/http-server.pid) || true
-          fi
-
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
@@ -428,16 +476,34 @@ jobs:
           retention-days: 3
 
       - name: Final verdict
+        # always(): a hard-exit step (orchestrator/bundle build) must not
+        # prevent the recorded-failures report from reaching the summary.
+        if: always()
+        # A green job conclusion now MEANS the load-bearing checks passed:
+        # typecheck, tests, builds, export validation, and the bundle
+        # compatibility matrix record failures into $RUNNER_TEMP/
+        # prepublish-failures.txt, and this step fails the job if any were
+        # recorded. (Bundle sizes, the browser-bundle build, and the i18n
+        # orchestrator spec already hard-fail their own steps.) The
+        # required-files and package.json field TABLES stay advisory — many
+        # packages ship without CHANGELOG/types by long-standing convention,
+        # so those ❌ cells are review input, not gates.
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📋 Publication Readiness Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Review the checks above. All items should show ✅ for publication." >> $GITHUB_STEP_SUMMARY
+          if [ -s "$RUNNER_TEMP/prepublish-failures.txt" ]; then
+            echo "### ❌ NOT ready to publish — failures recorded:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat "$RUNNER_TEMP/prepublish-failures.txt" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Fix the items above and re-run this check." >> $GITHUB_STEP_SUMMARY
+            echo "Failures recorded:"
+            cat "$RUNNER_TEMP/prepublish-failures.txt"
+            exit 1
+          fi
+          echo "### ✅ Load-bearing checks passed (typecheck, tests, builds, exports, bundles)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "If all checks pass, proceed to the \`Publish Packages\` workflow." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review all ❌ and ⚠️ items above" >> $GITHUB_STEP_SUMMARY
-          echo "2. Fix any issues" >> $GITHUB_STEP_SUMMARY
-          echo "3. Run this check again" >> $GITHUB_STEP_SUMMARY
-          echo "4. When all green, use \`Publish Packages\` workflow" >> $GITHUB_STEP_SUMMARY
+          echo "The required-files / package.json tables above are advisory — review any ❌ cells, then proceed to the \`Publish Packages\` workflow." >> $GITHUB_STEP_SUMMARY

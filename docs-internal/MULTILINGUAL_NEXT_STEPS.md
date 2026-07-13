@@ -3414,10 +3414,7 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    auto-rebases its own stale PRs, so ci.yml's "no merge queue" design note stands.
    Expected steady state ~2–3 Dependabot PRs/week, mostly self-merging.
    **✓ MET (2026-07-13): both runs green.** `pre-publish-check` run 29270242303
-   (summary read, not just the conclusion: the export-validation ❌s are a
-   step-ORDERING artifact — that step runs before "Build browser bundles", and
-   the later bundle-size gate passed against the very files it flagged; the
-   domain-* `build:types` warnings are the known-benign DTS class). Publish
+   (summary read, not just the conclusion — but see the CORRECTION below). Publish
    dry-run run 29270948266: full build + tests + `set-version.cjs` sync to
    2.8.0 + `npm publish --dry-run` across the monorepo. The FIRST dry-run
    (29270244008) failed in i18n's DTS (`TS2307: vite`) because publish.yml
@@ -3443,6 +3440,45 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    prettier 3.9.5 introduces 8 ESLint errors. Deliberately NOT remediated in
    this pass (release focus); options: split vitest+prettier out of the group,
    or let next Monday's run supersede.
+   _CORRECTION (2026-07-13, later the same day):_ run 29270242303's green was
+   substantially **vacuous**. The export ❌s were NOT a step-ordering artifact:
+   `hyperfixi.js` and `hyperfixi-hx-v4.js` were never built in that run at all
+   (`realtime` was missing from the workflow's BUILD_ORDER, so both bundles
+   that inline it failed), and the failures were invisible because `if cmd |
+   tee log` tests TEE's exit — the ❌/exit-1 branches in TypeCheck, Run tests,
+   Build check, Build browser bundles, Bundle Compatibility, and the i18n
+   orchestrator steps were all unreachable, and the bundle-size gate's
+   `[[ -f ]]` guards silently skip missing files. The honest-verdict rework
+   exposed all of it; fixed (pipefail + realtime in BUILD_ORDER + exit-code
+   export detection + verdict gate) and re-validated green in the PR that
+   carries this note. The item-4 ✓ stands on the publish DRY-RUN (29270948266,
+   real gates) plus the re-validated pre-publish-check.
+   _Discovery from the first honest size-gate run:_ the full bundles are far
+   larger than every written figure — published 2.7.2 `hyperfixi.js` is
+   **529 KB gz** (minified; CLAUDE.md still says 203 KB) and
+   `hyperfixi-hx-v4.js` ~545 KB gz (docs say ~257 KB raw); hybrid-hx has
+   crept to 18.5 KB gz. The old limits (290 KB / 18 KB) dated from the
+   smaller-bundle era and were never enforced (the files never existed in CI
+   runs). Limits now sit at measured reality + headroom (560 KB / 20 KB) as
+   anti-regression ceilings. **Post-release queue item: bundle-diet
+   investigation** (why did the full bundle grow ~2.6× past its documented
+   size — reactivity+realtime pre-install? multilingual growth? terser config
+   drift?) **+ size-truth pass over CLAUDE.md / docs/BROWSER_BUNDLES.md.**
+   _Second discovery (first real run of the [full] compat suite — it runs
+   NOWHERE else; ci.yml browser-tests is `--project=quick` only):_ the
+   gallery fetch-data page throws **"Unknown command: compound"** on every
+   semantic-path bundle — core's per-segment semantic adapter
+   (`semantic-integration.ts` `createSemanticAdapter`) surfaces a COMPOUND
+   analysis result as a command literally named `compound`
+   (`name: node.action`, unconditional), so a multi-line body segment the
+   semantic side parses as a compound becomes an unexecutable command node
+   while the rest of the handler runs. Verified pre-existing on the
+   pre-Arc-F dist; the semantic tree itself is correct (framework's
+   `to-runtime-ast.ts` and semantic's `buildCompound` both map compound →
+   CommandSequence — only the adapter path is wrong). **PRE-RELEASE fix
+   candidate** (user-visible on the shipped full bundle); marked as a
+   knownIssue in bundle-compatibility.spec.ts (printed, not asserted) until
+   fixed — remove the knownIssue field with the fix.
 5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.

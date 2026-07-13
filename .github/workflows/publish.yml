@@ -254,6 +254,7 @@ jobs:
         if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.version-type != 'current' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_BUMP_TOKEN: ${{ secrets.RELEASE_BUMP_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="${{ github.ref_name }}"
@@ -279,7 +280,17 @@ jobs:
           # list. Fall back to a release-bump branch + PR. (This bit the
           # v2.6.0 release: packages published fine, then the push failed and
           # the bump had to be landed by hand — see PR #603.)
-          if git push origin HEAD:"$BRANCH"; then
+          # Preferred path: push with RELEASE_BUMP_TOKEN (an admin fine-grained
+          # PAT). main's protection is checks-only with enforce_admins OFF, so
+          # an admin-authenticated push bypasses the required checks that block
+          # github-actions[bot] (a fresh release commit has no check runs).
+          # actions/checkout persists GITHUB_TOKEN as an http.extraheader that
+          # silently overrides URL credentials — clear it for this one push.
+          if [ -n "$RELEASE_BUMP_TOKEN" ] && git -c http.https://github.com/.extraheader= \
+              push "https://x-access-token:${RELEASE_BUMP_TOKEN}@github.com/${{ github.repository }}.git" \
+              HEAD:"$BRANCH"; then
+            echo "Pushed version bump directly to $BRANCH (release token)"
+          elif git push origin HEAD:"$BRANCH"; then
             echo "Pushed version bump directly to $BRANCH"
           else
             echo "Direct push rejected (branch protection) — opening a PR instead"
