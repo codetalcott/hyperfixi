@@ -68,6 +68,14 @@ jobs:
       - uses: dorny/paths-filter@v4
         id: filter
         with:
+          # REQUIRED for the `code` filter's negations to work. The default
+          # quantifier is 'some' (OR over the pattern list), under which the
+          # leading '**' matches every file and the '!…' lines never subtract —
+          # `code` evaluated true on EVERY diff (observed live: go.mod-only
+          # #664 ran the full npm stack). 'every' = a file counts only when it
+          # matches ALL patterns (inside '**' AND outside each excluded set).
+          # Single-positive-pattern filters (protocol, goclient) are unaffected.
+          predicate-quantifier: 'every'
           # `code` is true when any changed file is OUTSIDE the doc set and
           # outside the non-npm surfaces (protocol/, clients/) that carry their
           # own jobs. `protocol` is true when the LSE spec, fixtures, or any of
