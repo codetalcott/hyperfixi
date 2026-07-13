@@ -3412,8 +3412,37 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    and **Browser Tests joined the required checks on main** so a runtime dep bump
    can't self-merge past a Playwright regression. No merge queue — Dependabot
    auto-rebases its own stale PRs, so ci.yml's "no merge queue" design note stands.
-   Expected steady state ~2–3 Dependabot PRs/week, mostly self-merging. Still open
-   for the ✓: a green `pre-publish-check` run + the publish dry-run.
+   Expected steady state ~2–3 Dependabot PRs/week, mostly self-merging.
+   **✓ MET (2026-07-13): both runs green.** `pre-publish-check` run 29270242303
+   (summary read, not just the conclusion: the export-validation ❌s are a
+   step-ORDERING artifact — that step runs before "Build browser bundles", and
+   the later bundle-size gate passed against the very files it flagged; the
+   domain-* `build:types` warnings are the known-benign DTS class). Publish
+   dry-run run 29270948266: full build + tests + `set-version.cjs` sync to
+   2.8.0 + `npm publish --dry-run` across the monorepo. The FIRST dry-run
+   (29270244008) failed in i18n's DTS (`TS2307: vite`) because publish.yml
+   deleted the lockfile and ran an unpinned `npm install` — fresh-resolve
+   drift the lockfile tree never had. Fixed in this PR: `npm ci` + the
+   version-bump commit now regenerates and commits the lockfile
+   (`npm install --package-lock-only`), which is what keeps `npm ci` valid.
+   _Item-4 crumbs closed:_ **#133** = stale typescript themed-group PR, closed
+   unmerged 2026-07-13 by the #663 sweep (superseded by majors group #670).
+   **js-yaml**: the only open Dependabot alert repo-wide (#350, medium,
+   merge-key quadratic DoS) — dev-only transitive of eslint 8 + lerna 9
+   (`npm ls js-yaml`), never in a shipped package; waived until the eslint 9 /
+   lerna major bumps. **python-client CI job** (mirror of #660's go-client
+   job): deferred post-release.
+   _Monday reconciliation verified (2026-07-13):_ superseded individual PRs
+   all closed (#206, #201, #216/#659, #220/#658, #657 jsdom, #133); jsdom
+   re-landed inside majors group **#670** (16 updates, auto-merge correctly
+   NOT armed, red on Build — CI-as-reviewer working as designed); Browser
+   Tests confirmed among the SIX required checks (strict). One deviation:
+   minor-and-patch group **#668** armed auto-merge but sits safely blocked on
+   two red required checks — vitest 4.1.6→4.1.10 mass-breaks the core test
+   transform (~100 files `SyntaxError: Invalid or unexpected token`) and
+   prettier 3.9.5 introduces 8 ESLint errors. Deliberately NOT remediated in
+   this pass (release focus); options: split vitest+prettier out of the group,
+   or let next Monday's run supersede.
 5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.
