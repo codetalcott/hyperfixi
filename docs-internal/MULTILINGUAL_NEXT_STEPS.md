@@ -3055,6 +3055,75 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 > EXISTING marker entry. Optional structural follow-up: split V4's tier —
 > marker-words-appearing-in-patterns → warn, profile keywords → error.
 
+> **V3 probe conclusion (Batch 2, 2026-07-12) — captured-event failure mode; the
+> broken-listener class is REAL but corpus-cold.** Batch 1's latency verdict does
+> NOT extend to V3: event names are role VALUES, normalized (or not) by the
+> **tokenizer's `{native, normalized}` keyword table** — `eventNameTranslations`
+> (S5b) is the V3 reference and the render-path localization source, but it is
+> partially **aspirational** (16 of the 60 rows' S5b-listed forms do not
+> themselves round-trip: de `taste runter`/`maus über`, id `mouse masuk`, zh
+> `鼠标进入`, sw `bonyeza chini` captures `click`, ar `تمرير الماوس` captures
+> `scroll`, tr's own `fare_bas` shatters). "Semantic side is authoritative"
+> therefore means **the tokenizer keyword table**, not the S5b list per se.
+> Probed all 60 rows (corpus-shaped `toggle-class-basic` handler per language,
+> asserting on the captured event value vs the en reference's `literal:"click"`
+> / `literal:"change"` canonical):
+>
+> - **23 rows OK-NORMALIZED** — the dict form already captures the canonical
+>   event (tokenizer knows it; e.g. sw `bonyeza`→`click` — corpus-hot in 106
+>   rows — es `cambiar`→`change`, tr `farebas`→`mousedown`). V3 here is pure
+>   reference-table misalignment → S5b alias, baseline-stable.
+> - **37 rows BROKEN**, three failure shapes: (a) event role captured as
+>   `expression:undefined` (garbage listener — de/fr/pt/ja fused forms, es
+>   `teclaabajo`…), (b) **wrong event entirely** — sw `badilisha`→`toggle`
+>   (change-event homonym with the toggle verb), sw `panya_juu`→`mouseup`
+>   (dict shares one form for mouseup+mouseover; tokenizer deliberately maps it
+>   to mouseup for the corpus row), zh `按键抬起`→`keydown` (prefix-shatter), qu
+>   `yupana_ñitiy`→`click`, (c) verbatim/tail capture — tr `tuş_bas`→`bas`,
+>   the literal broken-DOM-listener class (`addEventListener("bas")`).
+> - **Ratchet visibility — confirmed blind spot:** parse rate non-null → blind;
+>   R0 sees the action set → blind; R1 compares role TYPES (wrong-value rows
+>   still `event:literal` → blind; the `expression:undefined` shape WOULD flip
+>   the role type, but no such row is corpus-exercised in event position); R3's
+>   invariant whitelist has colon-qualified event names only → plain names
+>   blind. **R2 dispatches the EN reference's canonical event name against the
+>   translated listener, so it catches every shape in this class** — it stayed
+>   silent because its curated subset is `on click` + one `success`
+>   CustomEvent: no blur/key*/mouse*/change trigger exists in the subset.
+>   Queue candidate: admit one non-click bare-event pattern (e.g.
+>   input-validation, `on blur`) to the R2 subset per language-facing arc.
+> - **Why the live corpus never broke:** every bare-event corpus row renders
+>   through a tokenizer-known form — de blur renders `defokussieren` because
+>   `commands.blur` SHADOWS `events.blur` in the transformer's category order
+>   (the dict `events` word `unscharf` was dead vocab), sw renders `kwenye
+>   blur` (English passthrough), and the corpus's only mouseup row rides the
+>   deliberate `panya_juu`→mouseup tokenizer mapping. The 37 broken forms are
+>   all corpus-cold in event position; corpus keydown/keyup usage is
+>   exclusively the filtered English form (`keydown[key=="Escape"]`).
+> - **Resolution (zero waivers):** 23 alias-only rows (dict form works; add it
+>   to `eventNameTranslations` — additive, render untouched, appended after
+>   existing entries so first-wins localization canonicals are unchanged;
+>   includes the two prefix-shatter-but-correct rows zh `按键按下` and id
+>   `tekan_tombol`, kept in the dict because the "clean" alternatives collide —
+>   bare `按键` is zh's keypress entry) + 37 dict fixes to probe-verified
+>   round-tripping forms (S5b-listed where one round-trips: ja katakana,
+>   es/fr/pt split forms, tr fused forms, qu `llave uray/hawa`, zh
+>   `松键`/`鼠标移入`, sw `kubadilisha`/`lenga`/`blur`; tokenizer-registered
+>   where S5b's own form is aspirational: de `taste unten`/`taste oben`/`maus
+>   weg`/`maus drüber`, id `arahkan`/`tinggalkan`, sw `sogeza juu`; English
+>   passthrough where no native exists: id keyup). 31 aliases total (23 + 8
+>   companions for dict-fix forms not in S5b). Expected baseline movement:
+>   ~none (no corpus render changes among the 37).
+> - **Logged, out of scope (candidate next increments):** (1) id
+>   `tekan_mouse`/`lepas_mouse` (dict mousedown/mouseup, corpus-live in
+>   repeat-until-event) likely shatter to `tekan`→keydown — same class, not
+>   V3-visible because S5b id lacks mousedown/mouseup keys (V3 only compares
+>   covered events); an S5b-coverage check (V3c?) would surface it. (2) zh dict
+>   mouseenter `鼠标进入` captures nothing (S5b lists it under mouseover) —
+>   same gap. (3) R2 curated subset should admit one bare non-click event
+>   pattern (e.g. input-validation, `on blur`) to close the structural blind
+>   spot this probe exposed.
+
 **Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
 profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
 to the generated path — killing the single largest duplication (~4k entries). Hand

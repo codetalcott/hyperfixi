@@ -99,14 +99,19 @@ export const de: Dictionary = {
     mouseup: 'mausoben',
     mouseenter: 'mauseintreten',
     mouseleave: 'mausverlassen',
-    mouseover: 'mausüber',
-    mouseout: 'maushinaus',
+    // V3 Batch 2: fused/dead event words realigned to the de tokenizer's
+    // registered forms (S5b's `maus über`/`taste runter` are aspirational — they
+    // do not tokenize; `mausüber` etc. captured event=expression:undefined).
+    mouseover: 'maus drüber',
+    mouseout: 'maus weg',
     mousemove: 'mausbewegen',
-    keydown: 'tasteunten',
-    keyup: 'tasteoben',
+    keydown: 'taste unten',
+    keyup: 'taste oben',
     keypress: 'tastedrücken',
     focus: 'fokus',
-    blur: 'unscharf',
+    // matches commands.blur (which shadows this at render time) and the live
+    // corpus render; `unscharf` was dead vocab that captured no event
+    blur: 'defokussieren',
     change: 'ändern',
     input: 'eingabe',
     submit: 'absenden',

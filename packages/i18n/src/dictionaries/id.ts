@@ -97,11 +97,17 @@ export const id: Dictionary = {
     mouseup: 'lepas_mouse',
     mouseenter: 'mouse_masuk',
     mouseleave: 'mouse_keluar',
-    mouseover: 'mouse_atas',
-    mouseout: 'mouse_luar',
+    // V3 Batch 2: mouse_atas/mouse_luar captured no event (the S5b forms
+    // `mouse masuk`/`mouse keluar` are aspirational — they don't tokenize
+    // either) — realigned to the tokenizer-registered natives. keydown keeps
+    // tekan_tombol (captures keydown via the registered `tekan`; S5b-aliased).
+    // keyup has NO parseable native (lepas is unregistered) → English
+    // passthrough, matching the blur/reset precedent below.
+    mouseover: 'arahkan',
+    mouseout: 'tinggalkan',
     mousemove: 'gerak_mouse',
     keydown: 'tekan_tombol',
-    keyup: 'lepas_tombol',
+    keyup: 'keyup',
     keypress: 'pencet_tombol',
     focus: 'fokus',
     blur: 'blur',

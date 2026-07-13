@@ -94,11 +94,13 @@ export const fr: Dictionary = {
     mouseup: 'sourisrelâchée',
     mouseenter: 'sourisentrer',
     mouseleave: 'sourissortir',
-    mouseover: 'sourissur',
-    mouseout: 'sourisdehors',
+    // V3 Batch 2: fused forms split to the S5b/tokenizer-known forms (the fused
+    // spellings captured event=expression:undefined — broken listeners)
+    mouseover: 'souris dessus',
+    mouseout: 'souris dehors',
     mousemove: 'sourisbouger',
-    keydown: 'toucheappuyée',
-    keyup: 'toucherelâchée',
+    keydown: 'touche bas',
+    keyup: 'touche haut',
     keypress: 'touchepressée',
     focus: 'focus',
     blur: 'flou',

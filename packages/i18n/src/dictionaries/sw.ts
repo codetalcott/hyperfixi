@@ -108,15 +108,24 @@ export const sw: Dictionary = {
     mouseup: 'panya_juu',
     mouseenter: 'panya_ingia',
     mouseleave: 'panya_toka',
-    mouseover: 'panya_juu',
+    // V3 Batch 2: panya_juu is mouseup's form (shared here by mistake — the
+    // tokenizer deliberately maps it to mouseup for the corpus row, so a
+    // mouseover handler captured `mouseup`) — realigned to the
+    // tokenizer-registered `sogeza juu`.
+    mouseover: 'sogeza juu',
     mouseout: 'panya_nje',
     mousemove: 'panya_sogea',
     keydown: 'kitufe_shuka',
     keyup: 'kitufe_juu',
     keypress: 'kitufe_bonyeza',
-    focus: 'zingatia',
-    blur: 'poteza_macho',
-    change: 'badilisha',
+    // V3 Batch 2: zingatia captured no event → lenga (S5b/tokenizer form);
+    // poteza_macho was a null parse → `blur` (the S5b identity form — matches
+    // the live corpus render `kwenye blur`); badilisha is the toggle VERB
+    // homonym (a change handler captured event=`toggle` — a listener for a DOM
+    // event named "toggle") → kubadilisha (S5b/tokenizer form).
+    focus: 'lenga',
+    blur: 'blur',
+    change: 'kubadilisha',
     input: 'ingizo',
     submit: 'wasilisha',
     reset: 'weka_upya',

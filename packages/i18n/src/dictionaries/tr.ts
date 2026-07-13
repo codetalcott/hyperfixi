@@ -98,11 +98,14 @@ export const tr: Dictionary = {
     mouseup: 'farebırak',
     mouseenter: 'fare_gir',
     mouseleave: 'fare_çık',
-    mouseover: 'fare_üstü',
-    mouseout: 'fare_dışı',
+    // V3 Batch 2: same `_`-split class (tuş_bas captured verbatim `bas` — a
+    // listener for a DOM event named "bas") — realigned to the S5b/tokenizer
+    // fused forms.
+    mouseover: 'fareiçinde',
+    mouseout: 'faredışında',
     mousemove: 'fare_hareket',
-    keydown: 'tuş_bas',
-    keyup: 'tuş_bırak',
+    keydown: 'tuşbasma',
+    keyup: 'tuşbırakma',
     keypress: 'tuş_basım',
     focus: 'odak',
     blur: 'bulanık',

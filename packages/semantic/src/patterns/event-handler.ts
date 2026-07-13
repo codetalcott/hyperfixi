@@ -55,6 +55,9 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     読み込み: 'load',
     サイズ変更: 'resize',
     スクロール: 'scroll',
+    // V3 Batch 2 alias: i18n dictionary form the ja tokenizer already
+    // normalizes (probe-verified).
+    ぼかし: 'blur',
   },
   // Arabic event names → English
   ar: {
@@ -72,6 +75,13 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     التركيز: 'focus',
     تحميل: 'load',
     تمرير: 'scroll',
+    // V3 Batch 2 aliases: i18n dictionary forms the ar tokenizer already
+    // normalizes (probe-verified captured values). Appended so first-wins
+    // localization canonicals above are unchanged.
+    تركيز: 'focus',
+    'مفتاح أسفل': 'keydown',
+    'مفتاح أعلى': 'keyup',
+    'فأرة فوق': 'mouseover',
   },
   // Spanish event names → English
   es: {
@@ -89,6 +99,13 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     desenfoque: 'blur',
     carga: 'load',
     desplazamiento: 'scroll',
+    // V3 Batch 2 aliases: i18n dictionary verb forms the es tokenizer already
+    // normalizes (probe-verified). Appended — localization canonicals unchanged.
+    cambiar: 'change',
+    enfocar: 'focus',
+    desenfocar: 'blur',
+    cargar: 'load',
+    desplazar: 'scroll',
   },
   // Turkish event names → English
   tr: {
@@ -121,6 +138,13 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     boyutlandırma: 'resize',
     boyutlandır: 'resize',
     kaydırma: 'scroll',
+    // V3 Batch 2 aliases: i18n dictionary forms the tr tokenizer already
+    // normalizes (probe-verified; farebas/farebırak are the deliberately fused
+    // dict forms — the table's own fare_bas/fare_bırak `_` entries shatter).
+    bulanık: 'blur',
+    farebas: 'mousedown',
+    farebırak: 'mouseup',
+    kaydır: 'scroll',
   },
   // Portuguese event names → English
   pt: {
@@ -174,6 +198,10 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     加载: 'load',
     载入: 'load',
     滚动: 'scroll',
+    // V3 Batch 2 alias: the i18n dictionary keydown form (captures keydown via
+    // the registered 按键 prefix; probe-verified — kept over bare 按键 to avoid
+    // colliding with the dict's keypress entry).
+    按键按下: 'keydown',
   },
   // French event names → English
   fr: {
@@ -199,6 +227,9 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     charger: 'load',
     défilement: 'scroll',
     défiler: 'scroll',
+    // V3 Batch 2 alias: i18n dictionary form the fr tokenizer already
+    // normalizes (probe-verified).
+    flou: 'blur',
   },
   // German event names → English
   de: {
@@ -223,6 +254,13 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     ladung: 'load',
     scrollen: 'scroll',
     blättern: 'scroll',
+    // V3 Batch 2 aliases: the de tokenizer's registered multi-word event forms
+    // (probe-verified; the table's older `taste runter`/`taste hoch`/`maus
+    // über`/`maus raus` entries are aspirational — they do not tokenize).
+    'taste unten': 'keydown',
+    'taste oben': 'keyup',
+    'maus drüber': 'mouseover',
+    'maus weg': 'mouseout',
   },
   // Indonesian event names → English
   id: {
@@ -243,6 +281,14 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     memuat: 'load',
     gulir: 'scroll',
     menggulir: 'scroll',
+    // V3 Batch 2 aliases: tekan_tombol captures keydown via the registered
+    // `tekan`; arahkan/tinggalkan are the tokenizer's registered natives;
+    // keyup is English passthrough (no parseable id native — `lepas` is
+    // unregistered). All probe-verified.
+    tekan_tombol: 'keydown',
+    keyup: 'keyup',
+    arahkan: 'mouseover',
+    tinggalkan: 'mouseout',
   },
   // Bengali event names → English
   bn: {
@@ -301,6 +347,17 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     kupakia: 'load',
     sogeza: 'scroll',
     kusogeza: 'scroll',
+    // V3 Batch 2 aliases: i18n dictionary forms the sw tokenizer already
+    // normalizes (probe-verified; bonyeza is corpus-hot — 106 rows), plus the
+    // tokenizer's registered `sogeza juu` for mouseover (the table's `panya
+    // juu` is mouseup's dict form and maps there).
+    bonyeza: 'click',
+    ingizo: 'input',
+    kitufe_shuka: 'keydown',
+    kitufe_juu: 'keyup',
+    panya_nje: 'mouseout',
+    wasilisha: 'submit',
+    'sogeza juu': 'mouseover',
   },
 };
 
