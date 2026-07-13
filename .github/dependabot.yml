@@ -9,39 +9,41 @@ updates:
       day: 'monday'
     open-pull-requests-limit: 10
     groups:
-      typescript:
-        patterns:
-          - 'typescript'
-          - '@typescript-eslint/*'
-      testing:
-        patterns:
-          - 'vitest'
-          - '@vitest/*'
-          - 'playwright'
-          - '@playwright/*'
-      build-tools:
-        patterns:
-          - 'rollup'
-          - 'rollup-*'
-          - 'tsup'
-          - 'esbuild'
-      linting:
-        patterns:
-          - 'eslint'
-          - 'eslint-*'
-          - 'prettier'
-      # Catch-all: batch remaining minor/patch bumps into one weekly PR
-      # instead of one PR per dependency. Majors stay individual PRs.
+      # One weekly PR for everything non-major. The former themed groups
+      # (typescript/testing/build-tools/linting) were folded in here
+      # 2026-07-13: each landed as its own weekly PR and every PR runs the
+      # full CI matrix (~60 runner-min), with no per-theme review happening
+      # in practice. Re-split a theme only if it gets its own merge policy
+      # (e.g. auto-merge for linting).
       minor-and-patch:
         patterns:
           - '*'
         update-types:
           - 'minor'
           - 'patch'
+      # One weekly PR for all majors instead of one PR per dependency. CI is
+      # the reviewer: if this group PR goes red, add the offender to
+      # exclude-patterns so it falls back to an individual PR for bisection.
+      majors:
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
+    # Named-deferred majors (release-bar item-4 leftovers,
+    # docs-internal/MULTILINGUAL_NEXT_STEPS.md). Deferred via config instead
+    # of perpetually-open PRs that re-run CI on every rebase — delete an
+    # entry to take that bump deliberately.
+    ignore:
+      - dependency-name: 'chokidar'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'diff'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'inquirer'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'puppeteer'
+        update-types: ['version-update:semver-major']
     labels:
       - 'dependencies'
-    reviewers:
-      - 'codetalcott'
 
   # Standalone npm root (own package-lock.json, not part of the workspaces)
   - package-ecosystem: 'npm'
@@ -57,10 +59,13 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      majors:
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
     labels:
       - 'dependencies'
-    reviewers:
-      - 'codetalcott'
 
   # Go modules (the go-client currently carries the x/crypto critical alerts)
   - package-ecosystem: 'gomod'
@@ -78,10 +83,13 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      go-majors:
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
     labels:
       - 'dependencies'
-    reviewers:
-      - 'codetalcott'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
@@ -93,5 +101,3 @@ updates:
           - '*'
     labels:
       - 'ci'
-    reviewers:
-      - 'codetalcott'
