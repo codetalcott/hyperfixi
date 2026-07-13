@@ -71,10 +71,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Delete stale lockfile — workspace package versions may differ from lockfile
-          # after a version bump. Regenerate fresh so workspace symlinks resolve correctly.
-          rm -f package-lock.json
-          npm install
+          # npm ci reproduces the committed lockfile tree exactly — the same tree
+          # CI validates on every push. This step previously deleted the lockfile
+          # and ran an unpinned `npm install`, which resolved a fresh tree from
+          # the registry and broke whenever upstream releases shifted hoisting
+          # (the 2026-07-13 i18n vite-types DTS failure: the fresh tree stopped
+          # nesting vite 8 under packages/i18n while the lockfile tree, green on
+          # every CI push, keeps it). The lockfile stays valid here because the
+          # commit step below now regenerates and commits it alongside version
+          # bumps.
+          npm ci
 
       - name: Build all packages
         run: |
@@ -252,17 +258,15 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="${{ github.ref_name }}"
 
-          # The "Install dependencies" step earlier in this job did
-          # `rm -f package-lock.json && npm install`, which leaves an
-          # unstaged lockfile change in the worktree. We intentionally do
-          # NOT commit it (would break the next run's `npm install` because
-          # it would reference workspace-package versions that are now
-          # higher-than-published-at-the-time). Restore it from HEAD so the
-          # subsequent `git pull` doesn't refuse with "your local changes
-          # would be overwritten by merge".
-          git checkout -- package-lock.json 2>/dev/null || true
+          # Regenerate the lockfile so its workspace version stamps match the
+          # bumped package.jsons, and commit it WITH the bump — that is what
+          # keeps `npm ci` (install step above) valid for every subsequent
+          # run. --package-lock-only rewrites the lockfile from the current
+          # package.jsons without touching node_modules; registry resolutions
+          # already satisfied by the existing lockfile are kept.
+          npm install --package-lock-only
 
-          git add packages/*/package.json package.json lerna.json 2>/dev/null || true
+          git add packages/*/package.json package.json lerna.json package-lock.json 2>/dev/null || true
           git commit -m "chore: release v$VERSION" || echo "No changes to commit"
 
           # Pull from the SAME branch the workflow ran on, not hardcoded
@@ -355,7 +359,10 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        # npm ci for the same reproducibility reason as the publish job: the
+        # checkout is self-consistent (lockfile committed with version bumps),
+        # so install exactly that tree rather than re-resolving from the registry.
+        run: npm ci --no-audit --no-fund
 
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium
