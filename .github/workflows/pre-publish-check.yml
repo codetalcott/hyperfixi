@@ -400,14 +400,6 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
-      - name: Start HTTP server
-        run: |
-          cd packages/core
-          npx http-server ../.. -p 3000 -c-1 &
-          echo $! > /tmp/http-server.pid
-          sleep 3
-          echo "HTTP server started on port 3000"
-
       - name: Bundle Compatibility Matrix
         run: |
           set -o pipefail
@@ -468,13 +460,6 @@ jobs:
             exit 1
           fi
 
-      - name: Stop HTTP server
-        if: always()
-        run: |
-          if [ -f /tmp/http-server.pid ]; then
-            kill $(cat /tmp/http-server.pid) || true
-          fi
-
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
@@ -484,6 +469,9 @@ jobs:
           retention-days: 3
 
       - name: Final verdict
+        # always(): a hard-exit step (orchestrator/bundle build) must not
+        # prevent the recorded-failures report from reaching the summary.
+        if: always()
         # A green job conclusion now MEANS the load-bearing checks passed:
         # typecheck, tests, builds, export validation, and the bundle
         # compatibility matrix record failures into $RUNNER_TEMP/
