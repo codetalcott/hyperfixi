@@ -49,7 +49,7 @@ export const thaiDictionary: Dictionary = {
     init: 'เริ่มต้น',
     behavior: 'พฤติกรรม',
     install: 'ติดตั้ง',
-    clone: 'คัดลอก',
+    clone: 'โคลน', // Batch 3: คัดลอก is the copy verb — rendered clone parsed as action=copy
     swap: 'สลับที่',
     morph: 'แปลงร่าง',
     beep: 'บี๊บ',
@@ -64,7 +64,7 @@ export const thaiDictionary: Dictionary = {
     clear: 'เคลียร์',
     close: 'ปิด',
     open: 'เปิด',
-    select: 'เลือก',
+    select: 'ทำเครื่องหมาย', // Batch 3: เลือก is the pick keyword — bare select rendered with it parses null
   },
 
   modifiers: {

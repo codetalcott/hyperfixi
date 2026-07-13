@@ -62,7 +62,7 @@ export const ko: Dictionary = {
     clear: '지우기',
     close: '닫기',
     open: '열기',
-    select: '선택',
+    select: '고르기', // Batch 3: 선택 is the pick keyword — bare select rendered with it parses null
     clone: '복제',
     prepend: '앞에추가',
     socket: '소켓',
@@ -105,7 +105,7 @@ export const ko: Dictionary = {
     change: '변경',
     input: '입력',
     submit: '제출',
-    reset: '리셋',
+    reset: '재설정', // Batch 3: 리셋 captured on.event as expression (broken listener) — profile word round-trips
     load: '로드',
     unload: '언로드',
     resize: '리사이즈',

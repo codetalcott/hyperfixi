@@ -64,15 +64,17 @@ const LANGS = [
 ];
 
 const KNOWN_MISMATCHES = new Set([
+  // Batch 3 (vocab V1 reconciliation, HANDOFF_vocab-batch3-v1-reconciliation.md)
+  // pruned 24 entries — dicts realigned to the profile primaries: the select
+  // class (dict word doubled as the pick keyword; 15 languages), the wrong-verb
+  // class (bn/hi/th/tl/vi clone→copy, sw copy→clone, id close→hide,
+  // vi prepend→add), and qu open (kichay doubled as trigger).
   'ar:catch:التقط',
   'ar:pushUrl:ادفع رابط',
   'ar:replaceUrl:استبدل رابط',
-  'ar:select:اختر',
-  'bn:clone:কপি',
   'de:catch:fangen',
   'de:pushUrl:urlHinzufügen',
   'de:replaceUrl:urlErsetzen',
-  'de:select:auswählen',
   'es:catch:atrapar',
   'es:pushUrl:pushUrl',
   'es:replaceUrl:reemplazarUrl',
@@ -84,36 +86,28 @@ const KNOWN_MISMATCHES = new Set([
   'fr:while:tantque',
   'hi:break:रोकें',
   'hi:catch:पकड़ें',
-  'hi:clone:कॉपी',
   'hi:pushUrl:url_जोड़ें',
   'hi:replaceUrl:url_बदलें',
-  'hi:select:चुनें',
   'id:break:hentikan',
   'id:catch:tangkap',
-  'id:close:tutup',
   'id:pushUrl:tambahUrl',
   'id:replaceUrl:gantiUrl',
-  'id:select:pilih',
   'it:catch:catturare',
   'it:pushUrl:pushUrl',
   'it:replaceUrl:sostituireUrl',
   'ja:catch:捕まえる',
   'ja:pushUrl:URLプッシュ',
   'ja:replaceUrl:URL置換',
-  'ja:select:選択',
   'ko:catch:잡다',
   'ko:pushUrl:URL푸시',
   'ko:replaceUrl:URL교체',
-  'ko:select:선택',
   'ms:break:henti',
   'ms:catch:tangkap',
   'ms:pushUrl:tolak_url',
   'ms:replaceUrl:ganti_url',
-  'ms:select:pilih',
   'pl:catch:złap',
   'pl:pushUrl:dodajUrl',
   'pl:replaceUrl:zamieńUrl',
-  'pl:select:wybierz',
   'pt:catch:capturar',
   'pt:pushUrl:pushUrl',
   'pt:replaceUrl:substituirUrl',
@@ -125,10 +119,8 @@ const KNOWN_MISMATCHES = new Set([
   // the dict render ñawpaq_kaq + the underscore-compound fold forms it from the
   // shattered ñawpaq/_/kaq run.
   'qu:on:kaqpi',
-  'qu:open:kichay',
   'qu:pushUrl:url_tanqay',
   'qu:replaceUrl:url_tikray',
-  'qu:select:akllay',
   'qu:throw:wikchuy',
   // qu:transition resolved (transition precision drill): dict realigned to the
   // profile primary `pasay` (was `tikray`, which collided with toggle).
@@ -141,11 +133,9 @@ const KNOWN_MISMATCHES = new Set([
   'ru:catch:поймать',
   'ru:pushUrl:добавить_url',
   'ru:replaceUrl:заменить_url',
-  'ru:select:выбрать',
   'ru:until:до',
   'sw:async:sainkroni',
   'sw:catch:shika',
-  'sw:copy:nakili',
   // sw:default resolved (default-value drill, L4): `msingi` (the dict render)
   // added as a profile alternative alongside chaguo-msingi.
   'sw:pushUrl:sukumaUrl',
@@ -154,39 +144,30 @@ const KNOWN_MISMATCHES = new Set([
   // which the profile reads as nothing — sw could not parse its own `return`. The
   // dict now emits `rudisha`, the profile's primary. Surfaced once `worker`'s body
   // stopped being dropped and `return` finally had to parse.
-  'sw:select:chagua',
   // sw:transition resolved (transition precision drill): `mpito` added as a
   // profile alternative — the rendered verb now anchors.
-  'th:clone:คัดลอก',
-  'th:select:เลือก',
   // th:transition resolved (transition precision drill): dict realigned to the
   // profile primary `เปลี่ยนผ่าน` (was `เปลี่ยน`, the profile's `change` keyword).
   'tl:break:itigil',
   'tl:catch:hulihin',
-  'tl:clone:kopyahin',
   'tl:pushUrl:itulak_url',
   'tl:replaceUrl:palitan_url',
   'tr:catch:yakala',
   'tr:pushUrl:urlEkle',
   'tr:replaceUrl:urlDeğiştir',
-  'tr:select:seç',
   // tr:while resolved (HANDOFF-r1-post-cluster-residue item 2): dict realigned to
   // the profile primary `süresince` (was `iken`, the tr WHEN primary).
   'uk:catch:зловити',
   'uk:pushUrl:додати_url',
   'uk:replaceUrl:замінити_url',
-  'uk:select:вибрати',
   'uk:until:до',
   'vi:break:dừng',
   'vi:catch:bắt',
-  'vi:clone:sao chép',
-  'vi:prepend:thêm đầu',
   'vi:pushUrl:pushUrl',
   // vi:render resolved (HANDOFF-lossy-tail render cluster): dict realigned
   // `hiển thị`→`kết xuất` (the profile's render primary); `hiển thị` collided with
   // `show`, so render-template/morph-template parsed render as `show`.
   'vi:replaceUrl:thayThếUrl',
-  'vi:select:chọn',
   // vi:unless resolved (HANDOFF-lossy-tail unless-condition): vietnamese profile
   // primary realigned `trừ_khi`→`trừ khi` so the spaced dict form reads as `unless`
   // (the bare `khi` was previously mistaken for a second `on` handler).

@@ -102,7 +102,7 @@ export const es: Dictionary = {
     blur: 'desenfocar',
     change: 'cambiar',
     input: 'entrada',
-    submit: 'enviar',
+    submit: 'envío', // Batch 3: enviar is the send verb — on-submit listener captured event "send"
     reset: 'reiniciar',
     load: 'cargar',
     unload: 'descargar',

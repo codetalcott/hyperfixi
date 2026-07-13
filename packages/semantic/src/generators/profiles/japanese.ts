@@ -105,6 +105,10 @@ export const japaneseProfile: LanguageProfile = {
     focus: { primary: 'フォーカス', alternatives: ['集中'], normalized: 'focus' },
     blur: { primary: 'ぼかし', alternatives: ['フォーカス解除', 'ブラー'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
+    // Batch 3: do NOT add bare 空 here — probed: registering it as an empty
+    // keyword injects a phantom `empty` command into the corpus-hot `is empty`
+    // expression rows (である 空), an R0-precision regression. The empty-COMMAND
+    // render gap (dict renders 空, parses null) is waived instead.
     empty: { primary: '空に', alternatives: ['空にする'], normalized: 'empty' },
     open: { primary: '開く', alternatives: ['オープン'], normalized: 'open' },
     close: { primary: '閉じる', alternatives: ['クローズ'], normalized: 'close' },

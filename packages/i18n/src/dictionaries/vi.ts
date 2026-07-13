@@ -59,14 +59,14 @@ export const vi: Dictionary = {
     init: 'khởi tạo',
     behavior: 'hành vi',
     install: 'cài đặt',
-    clone: 'sao chép',
-    prepend: 'thêm đầu',
+    clone: 'nhân bản', // Batch 3: 'sao chép' is the copy verb — rendered clone parsed as action=copy
+    prepend: 'thêm vào đầu', // Batch 3: 'thêm đầu' shatters at 'thêm' (add) — parsed as action=add
     else: 'không thì',
     breakpoint: 'điểm-dừng',
     clear: 'tẩy', // xóa is the remove PRIMARY in the profile
     close: 'đóng',
     open: 'mở',
-    select: 'chọn',
+    select: 'đánh-dấu', // Batch 3: 'chọn' is the pick keyword — bare select rendered with it parses null
   },
 
   modifiers: {
@@ -94,7 +94,7 @@ export const vi: Dictionary = {
     dblclick: 'nhấp đúp',
     input: 'nhập',
     change: 'thay đổi',
-    submit: 'gửi',
+    submit: 'nộp', // Batch 3: 'gửi' is the send verb — on-submit listener captured event "send"
     keydown: 'phím xuống',
     keyup: 'phím lên',
     keypress: 'nhấn phím',

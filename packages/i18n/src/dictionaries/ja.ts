@@ -63,7 +63,7 @@ export const ja: Dictionary = {
     clear: 'クリア',
     close: '閉じる',
     open: '開く',
-    select: '選択',
+    select: '選ぶ', // Batch 3: 選択 is the pick keyword — bare select rendered with it parses null
     clone: '複製',
     prepend: '先頭追加',
     socket: 'ソケット',

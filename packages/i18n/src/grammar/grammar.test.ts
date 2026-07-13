@@ -2606,10 +2606,12 @@ describe('SOV fused halt+call heads render both commands verb-final (Family H)',
   const EXPECT: Array<[string, string]> = [
     ['ja', 'the イベント を 送信 で 停止 それから validateForm() を 呼び出し'],
     ['ko', 'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출'],
-    ['tr', 'the olay i gönder de durdur ardından validateForm() i çağır'],
+    // Batch 3: tr submit event word gönder→gönderme (gönder is the send verb — captured event "send")
+    ['tr', 'the olay i gönderme de durdur ardından validateForm() i çağır'],
     ['bn', 'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল'],
     ['hi', 'the घटना को जमा पर रोकें फिर validateForm() को कॉल'],
-    ['qu', 'the ruway ta kachay pi sayay chayqa validateForm() ta qayay'],
+    // Batch 3: qu submit event word kachay→apaykachay (kachay is the send verb — captured "send" in this slot)
+    ['qu', 'the ruway ta apaykachay pi sayay chayqa validateForm() ta qayay'],
   ];
   for (const [lang, head] of EXPECT) {
     it(`[${lang}] halt keeps its operand adjacent + verb-final; call follows the connective`, () => {

@@ -311,8 +311,14 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     yaykuy: 'input',
     tikray: 'change',
     "t'ikray": 'change',
+    // Batch 3 aliases (appended so first-wins localization canonicals are
+    // unchanged): the dict now renders kambiay/apaykachay — probe-verified to
+    // capture the canonical event via the tokenizer keyword table, unlike
+    // tikray (captures 'toggle') and kachay ('send' in one corpus slot).
+    kambiay: 'change',
     apachiy: 'submit',
     kachay: 'submit',
+    apaykachay: 'submit',
     'llave uray': 'keydown',
     'llave hawa': 'keyup',
     "q'away": 'focus',

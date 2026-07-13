@@ -102,7 +102,10 @@ export const quechuaProfile: LanguageProfile = {
     focus: { primary: 'qhawachiy', alternatives: ['qhaway'], normalized: 'focus' },
     blur: { primary: 'paqariy', alternatives: ['mana qhawachiy'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: "ch'usaq", normalized: 'empty' },
+    // Batch 3: apostrophe-less chusaq added — the i18n dict renders the empty
+    // COMMAND with it (its `is empty` expression word), which parsed null against
+    // the ch'usaq-only command patterns.
+    empty: { primary: "ch'usaq", alternatives: ['chusaq'], normalized: 'empty' },
     open: { primary: 'paskay', normalized: 'open' },
     close: { primary: 'wichqay', normalized: 'close' },
     select: { primary: 'marcay', normalized: 'select' },

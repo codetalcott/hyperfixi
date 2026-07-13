@@ -64,7 +64,7 @@ export const tagalogDictionary: Dictionary = {
     install: 'ikabit',
     behavior: 'ugali',
     init: 'simulan',
-    clone: 'kopyahin',
+    clone: 'i-clone', // Batch 3: kopyahin is the copy verb — rendered clone parsed as action=copy
     breakpoint: 'breakpoint',
     clear: 'burahin',
     close: 'isara',

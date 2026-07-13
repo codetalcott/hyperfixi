@@ -122,5 +122,141 @@
   {
     "key": "V4|zh|时",
     "reason": "Batch 1 probe P7: `当 点击 时 切换 把 .active` captures event=click — SOV event markers are consumed by semantic-parser's hardcoded sovEventMarkers path, matched by value."
+  },
+  {
+    "key": "V1|*|when",
+    "reason": "Batch 3 probe: the dict word is the corpus-hot handler-opener connective (146 rows/lang — ja 時, ms apabila, th เมื่อ, tl kapag, vi khi, zh 当), every probed row parses identical to the en reference (actions+roles; click values R2-covered). The profile `when` keyword is a secondary connective the transformer never renders here. Latent table misalignment — Arc B reconciliation input. See MULTILINGUAL_NEXT_STEPS.md § 'V1 probe conclusion (Batch 3)'."
+  },
+  {
+    "key": "V1|*|while",
+    "reason": "Batch 3 probe: corpus-hot repeat-while renders (fr tantque, sw wakati, zh 当) parse with repeat.loopType=while captured, value-identical to en (zh row value-verified). Latent — Arc B input."
+  },
+  {
+    "key": "V1|*|until",
+    "reason": "Batch 3 probe: corpus-hot repeat-until-event renders (fr jusquà, qu hayk_akama, ru/uk до) capture repeat.event + loopType identical to en (HOT-OK; qu underscore form tokenizes whole). The fr row's on.event mousedown fused-form diff is a pre-existing S5b-coverage gap, unrelated to `until` — logged in the ledger. Latent — Arc B input."
+  },
+  {
+    "key": "V1|*|into",
+    "reason": "Batch 3 probe: put-destination renders come from grammar role markers, not dict modifiers.into — the dict word either round-trips where it does appear (bn তে corpus-hot ×94 HOT-OK; de/es/pt/qu forms hot in for/containment slots) or never renders at all (id ke_dalam, tl papasok_sa — probe COLD dict-ABSENT, transformer emits ke/sa). Dead-or-latent vocabulary — Arc B input."
+  },
+  {
+    "key": "V1|*|break",
+    "reason": "Batch 3 probe: `break` has no parse representation in ANY language including en — `repeat 3 times break end` parses to the same break-less repeat in en and in every rendered translation (Arc C unconsumed-input class). The dict words double as halt verbs and are corpus-hot, faithful, as halt (hi/ms/vi HOT-OK). Word choice is moot until break parses at all."
+  },
+  {
+    "key": "V1|*|and",
+    "reason": "Batch 3 probe: en itself never consumes logical `and` — `if #a and #b log ..` captures condition=#a and silently drops the second conjunct in en (same input-coverage class as break). No parse authority exists to reconcile against; ar و is corpus-absent as a standalone token (clitic prefix). Arc C/E adjacent."
+  },
+  {
+    "key": "V1|*|then",
+    "reason": "Batch 3 probe: corpus-hot sequential connective (ko 그러면, qu chayqa — 53 rows/lang), probed rows (make-element, wait-then) parse identical to en. Latent — Arc B input."
+  },
+  {
+    "key": "V1|qu|continue",
+    "reason": "Batch 3 probe: bare `continue` parses null in en, qu dict purichiy AND qu profile qatipay — no parse path exists anywhere (break/and class). Corpus-cold."
+  },
+  {
+    "key": "V1|pl|click",
+    "reason": "Batch 3 probe: kliknięcie is corpus-hot ×106 and every probed row parses identical to en; click event VALUE is R2-covered (curated exec subset dispatches canonical `click` against the pl listener — baseline green). Profile kliknięciu is the locative variant. Latent."
+  },
+  {
+    "key": "V1|th|input",
+    "reason": "Batch 3 probe: อินพุต corpus rows capture on.event VALUE 'input' verbatim-identical to en (input-mirror probed). Latent."
+  },
+  {
+    "key": "V1|id|submit",
+    "reason": "Batch 3 probe: kirim captures on.event VALUE 'submit' in both corpus on-submit rows (unlike es/pl/tr/vi whose send-verb dict words captured 'send' and were dict-fixed). Latent."
+  },
+  {
+    "key": "V1|th|submit",
+    "reason": "Batch 3 probe: ส่ง captures on.event VALUE 'submit' in both corpus on-submit rows. Latent."
+  },
+  {
+    "key": "V1|id|change",
+    "reason": "Batch 3 probe: `pada ubah ...` captures on.event VALUE 'change' (tokenizer-known); corpus has no on-change rows so the slot is otherwise cold. Latent."
+  },
+  {
+    "key": "V1|it|scroll",
+    "reason": "Batch 3 probe: scorrimento round-trips both slots — window-scroll (event VALUE 'scroll') and scroll-command corpus rows parse value-identical to en. Latent."
+  },
+  {
+    "key": "V1|qu|throw",
+    "reason": "Batch 3 probe: wikchuy is corpus-hot in fetch-do-not-throw and the row parses identical to en (`mana wikchuy` no-throw modifier consumed). Latent."
+  },
+  {
+    "key": "V1|sw|async",
+    "reason": "Batch 3 probe: sainkroni corpus-hot in async-block, HOT-OK, and the re-rendered probe parses identical to en. Latent."
+  },
+  {
+    "key": "V1|qu|async",
+    "reason": "Batch 3 probe: dead vocab — the qu transformer keeps English `async` in the async-block render (probe COLD dict-ABSENT); mana_suyaspa never renders. Arc B input."
+  },
+  {
+    "key": "V1|qu|on",
+    "reason": "Batch 3 probe: dead vocab — qu event handlers render via the `pi` marker (`.active ta ñitiy pi tikray`), never dict commands.on=kaqpi. Arc B input."
+  },
+  {
+    "key": "V1|qu|event",
+    "reason": "Batch 3 probe: ruway is corpus-hot as the event reference (`the ruway ta kachay pi sayay` = on submit halt the event) and parses identical to en (form-submit-prevent HOT-OK). Latent."
+  },
+  {
+    "key": "V1|qu|before",
+    "reason": "Batch 3 probe: ñawpaqpi corpus-hot in put-before, HOT-OK. The profile ñawpaq is the bare stem; the rendered locative form parses. Latent."
+  },
+  {
+    "key": "V1|qu|after",
+    "reason": "Batch 3 probe: qhepapi corpus-hot in put-after, HOT-OK (same locative-form shape as before/ñawpaqpi). Latent."
+  },
+  {
+    "key": "V1|tl|from",
+    "reason": "Batch 3 probe: mula_sa corpus-hot ×24 in remove-from rows, HOT-OK — the underscore form tokenizes whole (sa_loob precedent). Latent."
+  },
+  {
+    "key": "V1|ja|empty",
+    "reason": "Batch 3 probe: BLOCKED both ways — dict-fix is unavailable (expressions.empty=空 also feeds the corpus-hot `is empty` renders and commands-category additions shadow it on render), and the profile-alternatives route was probed and REVERTED: registering bare 空 as an empty keyword injects a phantom `empty` action into the hot input-validation/if-empty rows (R0-precision regression). ko/qu took the profile-alt safely (their adjectives don't phantom); ja's empty-COMMAND render slot (corpus-cold) stays a known gap."
+  },
+  {
+    "key": "V1|ar|reset",
+    "reason": "Batch 3 probe: BLOCKED — no round-trip-safe ar reset form exists: dict 'إعادة تعيين', profile 'إعادة-ضبط'/'أعد-تعيين' AND the en passthrough all capture on.event as expression (broken listener shape). S5b has no reset key for any language; ar tokenizer event coverage gap, V3c-adjacent. Corpus-cold."
+  },
+  {
+    "key": "V1|sw|reset",
+    "reason": "Batch 3 probe: BLOCKED — every candidate captures a WRONG event: dict weka_upya→'put', profile anzisha-upya→'init', en passthrough→expression. sw handler grammar + event table gap (sw is the largest eventLocalizationDenylist set). Corpus-cold."
+  },
+  {
+    "key": "V1|tl|reset",
+    "reason": "Batch 3 probe: BLOCKED — dict 'reset' (en passthrough) and profile 'i-reset' both capture on.event as expression in the kapag handler. tl tokenizer event coverage gap, V3c-adjacent. Corpus-cold."
+  },
+  {
+    "key": "V2|ar|style:بـ-",
+    "reason": "Batch 4: style-role family — the style role is captured on NO path in any language including en (`show #modal with *opacity` captures patient only; Batch 1 discovery 2). Registration is untestable until show/hide style-capture lands (queued in MULTILINGUAL_NEXT_STEPS.md). Also attach-notation artifact (splits to bare بـ)."
+  },
+  {
+    "key": "V2|ar|style:مع",
+    "reason": "Batch 4: style-role family — blocked on show/hide style-capture (no language captures the style role, en included). Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V2|hi|style:साथ",
+    "reason": "Batch 4: style-role family — blocked on show/hide style-capture (see V4|hi|साथ, same word). Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V2|ja|style:と",
+    "reason": "Batch 4: style-role family — blocked on show/hide style-capture (no language captures the style role, en included). Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V2|ko|style:와",
+    "reason": "Batch 4: style-role family — blocked on show/hide style-capture (no language captures the style role, en included). Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V2|ko|style:과",
+    "reason": "Batch 4: style-role family — blocked on show/hide style-capture (no language captures the style role, en included). Queued in MULTILINGUAL_NEXT_STEPS.md."
+  },
+  {
+    "key": "V2|en|method:as",
+    "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — `fetch .. as json` consumes `as` as a handcrafted/generated pattern literal (matched by raw token.value, Batch 1 V4 probe mechanism), so parsing works; V2's parse-side union only sees roleMarkers/schema markers, not pattern literals."
+  },
+  {
+    "key": "V2|en|duration:for",
+    "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — duration `for` is consumed as a pattern literal (same mechanism as method:as); V2 cannot see pattern literals."
   }
 ]

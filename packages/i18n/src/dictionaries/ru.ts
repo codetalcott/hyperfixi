@@ -70,7 +70,7 @@ export const russianDictionary: Dictionary = {
     clear: 'очистить',
     close: 'закрыть',
     open: 'открыть',
-    select: 'выбрать',
+    select: 'выделить', // Batch 3: выбрать is the pick keyword — bare select rendered with it parses null
   },
 
   modifiers: {
@@ -114,7 +114,7 @@ export const russianDictionary: Dictionary = {
     change: 'изменение',
     input: 'ввод',
     submit: 'отправка',
-    reset: 'сброс',
+    reset: 'сбросить', // Batch 3: сброс captured on.event as expression (broken listener) — profile verb round-trips
     load: 'загрузка',
     unload: 'выгрузка',
     resize: 'изменениеразмера', // fused (no `_`) — see mousedown note above

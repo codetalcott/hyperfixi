@@ -67,7 +67,7 @@ export const de: Dictionary = {
     clear: 'bereinigen', // löschen is a remove alternative in the profile
     close: 'schließen',
     open: 'öffnen',
-    select: 'auswählen',
+    select: 'markieren', // Batch 3: auswählen is the pick keyword — bare select rendered with it parses null
     clone: 'klonen',
     prepend: 'voranstellen',
     focus: 'fokussieren',

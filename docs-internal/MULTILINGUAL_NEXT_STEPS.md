@@ -2987,11 +2987,12 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 > PR (as/method tokenizer keywords per the #638 containment-words precedent;
 > translate-or-waive the untranslated `on`/`url` schema markers); Batch 2 =
 > V3 event-word alignment in the i18n dictionaries (semantic side is
-> authoritative post-#533–#540; corpus-coupled → one resweep); Batch 3 =
-> V1 via Arc B (the 94 are the review diff for the `derive.ts` flip — the
-> class dies structurally); Batch 4 = flip the CI step to gating.
+> authoritative post-#533–#540; corpus-coupled → one resweep); Batch 3 ✓ =
+> V1 reconciled directly (probe-first, NOT deferred to Arc B — the per-concept
+> table below is Arc B's input); Batch 4 ✓ = CI step flipped to gating.
 >
-> Until then the CI step is warn-only by design.
+> All four batches landed — the CI step is a GATE as of Batch 4 (see § "V1
+> probe conclusion (Batch 3)" below).
 
 > **V4 probe conclusion (Batch 1, 2026-07-12) — matcher marker semantics; governs
 > Batches 2–3.** The pattern matcher consumes a pattern-literal (marker) token via
@@ -3124,6 +3125,111 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >   pattern (e.g. input-validation, `on blur`) to close the structural blind
 >   spot this probe exposed.
 
+> **V1 probe conclusion (Batch 3, 2026-07-12) — verb/connective reconciliation;
+> ledger 90 → 0 unwaived (38 dict fixes + 2 profile-alternatives + 50 waived) +
+> Batch 4 gating flip.** All 90 rows probed with captured-ACTION and
+> captured-VALUE assertions (never "it parses"): corpus-hot rows against the
+> real corpus line vs the en reference of the same pattern; corpus-cold rows by
+> rendering a concept-exercising en line through `GrammarTransformer` (the
+> populate path) and parsing the render, with the profile form swapped into the
+> same slot as the discriminator. Probe logs archived (before/after).
+>
+> - **Latent class confirmed but SMALLER than predicted (49 of 90).** The
+>   corpus-hot connectives (`when` ×146 rows/lang, `into`, `then` ×53,
+>   `until`, `while`, pl `click` ×106, tl `from` ×24 …) all parse identical to
+>   the en reference — the dict side is the parse-authoritative form and the
+>   PROFILE keyword is the misaligned copy (the exact inverse of V3's verdict).
+>   For Arc B: **in the connective/particle families the dictionary should
+>   win** the reconciliation.
+> - **Live wrong-verb class (24 rows, all corpus-cold in the broken slot) —
+>   Batch 2's wrong-verb shape, systemic:** the dict word doubled as a
+>   DIFFERENT command's keyword. select ×15 (dict word = the pick keyword —
+>   `pick-text-range` renders faithfully via the separate `pick` dict key, but
+>   a bare select render parsed **null** in all 15); clone ×5 (dict word = the
+>   copy verb → parsed action=copy); id close (tutup = hide), sw copy (nakili =
+>   clone — the inverse!), vi prepend (thêm đầu shatters at thêm=add), qu open
+>   (kichay = trigger). All dict-fixed to the profile primaries (probe-verified
+>   red→green, `packages/testing-framework/src/vocab/batch3-roundtrip.test.ts`);
+>   the pick/copy/hide/trigger keys keep their words, so no corpus render moved.
+> - **Live wrong-EVENT class — the headline: es/pl/tr/vi `on submit` corpus
+>   rows were broken in production while every ratchet stayed green.** The dict
+>   events.submit word doubled as the send VERB, and the tokenizer keyword
+>   table (the parse authority, per Batch 2) captured `on.event="send"` in the
+>   live form-disable-on-submit / form-submit-prevent rows — a listener bound
+>   to the wrong event. Invisible to R0/R1 (action set + role TYPE unchanged),
+>   R3 (plain event names are not whitelist-invariant), and R2 (curated subset
+>   has no submit trigger — third confirmation of that structural blind spot).
+>   Dict-fixed to the profile primaries (envío/wysłaniu/gönderme/nộp/apaykachay
+>   — each probe-verified to capture `"submit"` in the exact corpus slots; qu
+>   kachay was context-flaky, capturing submit in one row and send in the
+>   other). Same class corpus-cold: reset ×7 dict-fixed (it/ko/pl/pt/ru/uk/qu —
+>   dict forms captured `on.event` as expression (broken listener) or a wrong
+>   event (qu qallariy→"default"); profile verbs capture literal `"reset"`), qu
+>   change (tikray→"toggle" → kambiay). S5b has **no reset key for any
+>   language** (why V3 never saw the family); qu kambiay/apaykachay added as
+>   appended S5b aliases per Batch 2 discipline.
+> - **Ratchet-visibility verdict:** R0 WOULD flip on a corpus-exercised
+>   wrong-verb parse — and that is precisely why none existed: every
+>   corpus-exercised V1 row parsed faithfully, and every live break sat in a
+>   corpus-cold slot (bare select/clone/close/copy/prepend/open commands,
+>   reset events) or at the VALUE level (submit "send"), where no ratchet
+>   looks. Corpus-green ≠ vocabulary-correct, verdict confirmed for verbs.
+> - **Latent-by-absence class (10 rows):** `break` ×7 + qu `continue` + `and`
+>   ×2 — **en itself** silently drops these (`repeat 3 times break end` parses
+>   break-less in en and in every render; `if #a and #b …` drops the second
+>   conjunct in en). No parse authority exists to reconcile against; Arc C
+>   (unconsumed-input) territory. Dead-vocab subclass: qu on/async, id/tl into
+>   underscore forms — the transformer never emits them in any corpus slot.
+> - **Blocked rows (4):** ar/sw/tl reset — NO candidate round-trips (sw:
+>   dict weka_upya→"put", profile anzisha-upya→"init", en passthrough→
+>   expression; ar/tl: every form → expression). ja empty — dict-fix
+>   unavailable (expressions.empty=空 feeds the corpus-hot `is empty` renders;
+>   a commands-category addition would shadow it on render), and the
+>   profile-alternative was probed and **reverted**: registering bare 空
+>   injected a phantom `empty` action into the hot input-validation rows (an
+>   R0-precision regression caught by the after-probe). ko/qu took the same
+>   profile-alternative safely (비어있는/chusaq — hot rows clean, command slot
+>   now parses).
+> - **Batch 4 (same PR):** the 8 V2 survivors waived with named reasons (6
+>   style-role rows blocked on show/hide style-capture; en method:as +
+>   duration:for consumed as pattern literals, V4-probe mechanism —
+>   schema-override↔render alignment queued), and the CI step flipped
+>   **warn-only → gating** (release bar item 1 closes).
+> - **Logged, out of scope:** (1) fr repeat-until-event corpus row captures
+>   `on.event` mousedown as expression — fr dict mousedown `sourisappuyée` is
+>   the fused class Batch 2 fixed elsewhere, invisible because S5b fr lacks
+>   mousedown (the V3c coverage-gap family, more evidence). (2) The pick
+>   literal-vs-expression HOT-ROLE-DIFFs (hi/ja/ko/tr/qu) are the standing pick
+>   range-role deferral, untouched.
+>
+> **Per-concept reconciliation table (Arc B's input — which side won and why):**
+>
+> | Concept | Languages | Winner | Why |
+> | --- | --- | --- | --- |
+> | select | ar de hi id ja ko ms pl qu ru sw th tr uk vi | profile (dict-fixed) | dict word = pick keyword; bare select parsed null; profile verb parses; `pick` key separate so pick rows unmoved |
+> | clone | bn hi th tl vi | profile (dict-fixed) | dict word = copy verb → action=copy |
+> | close / copy / prepend / open | id / sw / vi / qu | profile (dict-fixed) | wrong-verb: tutup=hide, nakili=clone, thêm đầu→add, kichay=trigger |
+> | reset | it ko pl pt ru uk qu | profile (dict-fixed) | dict form broke the listener (expression / wrong event); profile verb captures `"reset"` |
+> | reset | ar sw tl | none (waived, blocked) | NO form round-trips (incl. en passthrough); tokenizer event coverage gap, V3c-adjacent |
+> | submit | es pl tr vi qu | profile (dict-fixed) | dict word = send verb → event `"send"` captured LIVE in corpus form rows |
+> | submit | id th | dict (waived) | kirim/ส่ง capture `"submit"` — profile envío-class words are the misaligned side |
+> | change | qu | profile (dict-fixed) | tikray = toggle verb → event `"toggle"` |
+> | change | id | dict (waived) | ubah captures `"change"` |
+> | blur | it | profile (dict-fixed) | noun sfuocatura dropped command patient; verb round-trips both slots |
+> | empty | ko qu | dict (profile-alternative added) | dict adjective renders the empty COMMAND; hacia-class registration; hot `is empty` rows unaffected (probed) |
+> | empty | ja | none (waived, blocked) | bare 空 phantoms the hot expression rows if registered (probed + reverted); dict-fix shadowed |
+> | when | ja ms th tl vi zh | dict (waived) | corpus-hot handler-opener ×146 rows/lang, parses identical to en |
+> | while / until / then | fr sw zh / fr qu ru uk / ko qu | dict (waived) | corpus-hot, loopType/event/sequence captured identical to en |
+> | into | bn de es id pt qu tl | dict-or-dead (waived) | put-destination renders via grammar role markers; dict word round-trips where it appears (bn তে) or never renders (id/tl underscore forms) |
+> | click / input / from / event / before / after / throw / async / scroll | pl / th / tl / qu / qu / qu / qu / sw / it | dict (waived) | corpus-hot, value-verified where applicable (click R2-covered; อินพุต→"input") |
+> | async / on | qu | dead (waived) | render keeps English `async` / uses the `pi` marker — dict word never emitted |
+> | break / continue / and | fr hi id ms tl vi qu / qu / ar qu | none (waived) | no parse path in ANY language incl. en — Arc C unconsumed-input class |
+>
+> Ledger after Batch 3+4: **0 unwaived** (was 98 = V1 ×90 · V2 ×8). Waivers:
+> 78 Batch-1 V4 class-waivers + 26 V1 + 8 V2 (all probe-cited,
+> `packages/testing-framework/vocab-waivers.json`). CI vocab step is now a
+> GATE.
+
 **Arc B — `derive.ts` dictionary flip (own arc; baseline-coupled).** Reconcile Arc A's
 profile↔dictionary disagreement ledger, then switch `i18n/src/dictionaries/index.ts`
 to the generated path — killing the single largest duplication (~4k entries). Hand
@@ -3162,6 +3268,8 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    disagreements (or every waiver named), replacing today's state where the only
    dictionary validator is a dead script. `dump` ships if time allows; Arc B's
    generated dictionaries are the durable fix but are post-release by design.
+   **✓ MET (Batch 3+4, 2026-07-12): 0 unwaived, every waiver probe-cited, CI
+   step gating.**
 2. **Input coverage is total** (Arc C) — every `parseInternal` stage instrumented;
    `--diagnose-coverage` reports 0 firings corpus-wide or each residual is named.
    If new firings exceed what the window can burn down, naming them all still
