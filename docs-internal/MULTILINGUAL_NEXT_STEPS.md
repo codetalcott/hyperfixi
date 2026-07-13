@@ -2683,7 +2683,7 @@ Most map to families this file had already named:
 
 | family (per-language rows) | rows | patterns | status |
 | --- | --- | --- | --- |
-| fetch options tail (`with {…}` / naked named-args) | 78 | fetch-with-headers ×24, fetch-with-method ×18, fetch-with-method-body ×18, fetch-formdata ×18 | **= Arc E** (release-bar stretch item 5) |
+| fetch options tail (`with {…}` / naked named-args) | ~~78~~ **0** | fetch-with-headers ×24, fetch-with-method ×18, fetch-with-method-body ×18, fetch-formdata ×18 | **RESOLVED — Arc E** (2026-07-13, naked named-arg fold ×24; release-bar stretch item 5 ✓) |
 | def/behavior param phrases + handler-head qualifiers (`(clientX, clientY)`, `from <source>`, key-filters) | 102 | worker-basic ×24, behavior-sortable ×23, behavior-resizable ×21, modal-close-escape ×20, behavior-removable ×6, window-scroll ×3, window-keydown ×3, focus-trap ×2 | NEW — named here |
 | event-modifier phrases NOT applied (`once`, `debounced/throttled at Nms` — probe: `eventModifiers` is null, the semantics are genuinely lost, en included) | 69 | window-resize ×23, event-debounce ×16, event-throttle ×16, event-once ×14 | NEW — named here; highest-leverage single fix |
 | positional/range qualifier tails (`0 to 5 of #note`, `in closest <form/>`, `for me`) | 70 | pick-text-range ×23, take-class-from-siblings ×23, first-in-parent ×17, last-in-collection ×6, toggle-aria-expanded ×1 | pick = named R1 deferral (Family F); rest NEW |
@@ -2694,7 +2694,7 @@ Most map to families this file had already named:
 | show/hide style-capture (`with *opacity`) | 38 | show-with-transition ×19, hide-with-transition ×19 | = named Batch-3 leftover |
 | go-url destination (`"/page"`) | 18 | go-url ×18 | = named Batch-3 leftover |
 | swap with-phrase | 6 | swap-content ×6 | = named F6 (wontfix) |
-| command-option tails, misc (render/morph `: $data` ×36, `beep! <expr>` ×18, unless operator tail ×18, tell to-infinitive ×16, do-not-throw leak ×3, fetch-as id ×1+2, sw async vocab gap ×1) | 95 | render-template-with-data ×18, morph-with-template ×18, beep-debug-expression ×18, unless-condition ×18, tell-command ×16, fetch-do-not-throw ×3, fetch-error-handling ×2, async-block ×1, fetch-json ×1 | NEW — named here |
+| command-option tails, misc (render/morph `: $data` ×36 — **resolved by Arc E**, the render rows' naked with-pair folds via the same mechanism as fetch — `beep! <expr>` ×18, unless operator tail ×18, tell to-infinitive ×16, do-not-throw leak ×3, fetch-as id ×1+2, sw async vocab gap ×1) | ~~95~~ **59** | ~~render-template-with-data ×18, morph-with-template ×18,~~ beep-debug-expression ×18, unless-condition ×18, tell-command ×16, fetch-do-not-throw ×3, fetch-error-handling ×2, async-block ×1, fetch-json ×1 | NEW — named here; render/morph rows RESOLVED (Arc E) |
 
 Nearly all families are **en-symmetric** (the en reference drops the same span, so R0/R1
 never saw them — exactly the blind spot this diagnostic exists to expose). Full attribution
@@ -2702,6 +2702,14 @@ JSON + probe logs archived in the arc transcript; per-pattern detail reproducibl
 sweep. **Arc D's "all stages measured" precondition is MET.** Note for Arc D: at 18% corpus
 firing rate, a naive coverage penalty would move MANY scores — the per-family table above is
 the sizing input for how to phase it.
+
+> **Arc E update (2026-07-13):** total 670 → **556 / 3696 (15.0%)**. Delta fully
+> attributed: fetch options tail −78 (the arc target) + render naked with-pair −36
+> (render-template-with-data ×18 + morph-with-template ×18 — that pattern's raw is a
+> `render … with row: $data then morph …` line, so both rows are the same render class,
+> folded by the same mechanism). Every OTHER pattern's fired-row count is bit-identical
+> to the Arc C red table — no new families, no new firings (per-pattern diff in the arc
+> transcript, `green-per-pattern.txt`).
 
 **Diagnostic-only proof (2026-07-13):** `--regression` exit 0 on a fresh ordered build +
 populate; `--save-baseline` attribution check ran, and every delta was benign or
@@ -2732,21 +2740,36 @@ languages, so it needs its own PR):
 If it lands well, re-evaluate whether Stages 0 / 0.5 can be simplified — they exist only because
 this signal was missing.
 
-### Deferred: multilingual `fetch … with { … }` (Part 2b)
+### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
-The semantic schema now models the options object (`fetchSchema`'s `style` role, marker `with`),
-the matcher folds a braced run into an exact-source `expression` value, and the AST builder emits
-a real `objectLiteral` into `modifiers.with`. **English only** — the 23 non-English handcrafted
-fetch patterns (`packages/semantic/src/patterns/fetch.ts`, priority 105) have no `with` variant,
-and the corpus's `fetch … with method:"POST" body:form` **naked named-arg** form is not captured
-in any language (no braces, so the brace fold never fires; core handles it via
-`parseFetchNakedNamedArgs`).
+**RESOLVED (2026-07-13, Arc E — `feat/arc-e-fetch-with`,
+`docs-internal/HANDOFF_arc-e-fetch-with.md`).** The naked named-arg form is now captured
+in ALL 24 languages in one change (the all-or-nothing R1 constraint below, honored):
 
-Constraint that makes this all-or-nothing: **the R1 role-fidelity ratchet scores every language
-against the English reference parse.** Teaching English a role the other 23 lack _lowers_ their
-R1. This landed safely only because no corpus row uses the braced form, so English gained no role
-on the corpus. Adding naked-named-arg capture therefore requires doing all 24 languages in one
-change, then regenerating the baseline.
+- **Shared fold** (`packages/semantic/src/parser/naked-args-fold.ts`): a run of
+  `key:value` pairs — comma- or space-separated, values single-token or depth-balanced
+  `{…}`/`(…)` runs — folds to ONE object-literal-shaped expression raw
+  (`{method:"POST", body:form}`), byte-identical across languages. Runs are rebuilt
+  with offset-exact gaps, so tokenizer-shattered words re-fuse (qu `FormDa`+`ta` →
+  `FormData`, hi `के_रूप_में`, zh `作`+`为` → `作为`).
+- **Pattern-matcher hook**: the fold fires in fetch's expression-only `style` slot
+  (en, incl. the `fetch-en-with-options-as` handcrafted pattern). The braced-run fold
+  is untouched (braced captures stay byte-identical).
+- **`tryAttachTrailingStyle` extended** (semantic-parser): prepositional `with`-markers
+  (es `con` … ar `بـ`, zh `用`, tl `nang`, he `עם`); a continuation refold for the
+  Slavic with/from collision (pl `z`/ru `с`/uk `з` — the pending key sits in `source`
+  at reclaim time, the late relabel owns the shift); the postpositional SOV path now
+  routes its run through the same fold (raw normalization; non-pair runs keep the
+  legacy space-join byte-identical); and a post-style responseType attach consumes the
+  trailing as-phrase (`as JSON` ×24, per-language as-marker surfaces from the corpus
+  renders).
+- **Meter**: fetch family 78 → 0; corpus total 670 → 556 (render naked with-pair −36,
+  same mechanism — see the Arc C table update). Locked in
+  `packages/semantic/test/fetch-with-options-multilingual.test.ts` (~100 tests ×24).
+
+Original constraint, kept for the record: **the R1 role-fidelity ratchet scores every
+language against the English reference parse.** Teaching English a role the other 23
+lack _lowers_ their R1 — hence the single 24-language change + baseline regen.
 
 ## Colon-event-names follow-ups (opened 2026-07-10)
 
@@ -3311,9 +3334,10 @@ measured by Arc C, 2026-07-13). Five-step plan in § "Input coverage". Payoff:
 re-evaluate whether `parseInternal` Stages 0 / 0.5 can be simplified. Sizing input:
 the corpus fires at 18% — see the Arc C family table before pricing the penalty.
 
-**Arc E — Part 2b: `fetch … with { }` ×23 + naked named-arg capture** (§ deferral
-above). All-or-nothing across 24 languages (R1 en-reference constraint) + baseline
-regen; the user-facing feature arc of the release. Cheaper after Arc A's `dump`.
+~~**Arc E — Part 2b: `fetch … with { }` ×23 + naked named-arg capture**~~ — **COMPLETE
+(2026-07-13, `feat/arc-e-fetch-with`).** All 24 languages in one change + baseline
+regen, per the R1 en-reference constraint. Fetch family firings 78 → 0 (render naked
+with-pair −36 as a same-mechanism bonus); details in § Part 2b (RESOLVED) above.
 
 **Standing deferrals (unchanged):** pick range-role modeling (Family F — only if
 `pick` matters for a demo; raises the en denominator ×24), the reactive `on.event`
@@ -3349,6 +3373,9 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
 5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.
+   **✓ MET (Arc E, 2026-07-13): braced + naked named-arg options captured ×24,
+   fetch-family firings 78 → 0, ~100 locked tests, baseline regenerated + attributed
+   — nine days before target.**
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).

@@ -42,6 +42,7 @@ import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
 import { eventNameTranslations } from '../patterns/event-handler';
 import { isAtEndPositionNoun } from '../patterns/put';
+import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 
@@ -3134,12 +3135,91 @@ export class SemanticParserImpl implements ISemanticParser {
   ): void {
     if (command.action !== 'fetch' && command.action !== 'render') return;
     const roles = command.roles as Map<SemanticRole, SemanticValue>;
-    if (roles.has('style')) return;
     const schema = getSchema(command.action as ActionType);
     if (!schema?.roles.some(r => r.role === 'style')) return;
+
+    // Continuation refold: a naked-args run whose HEAD token was already
+    // bound into the style slot — the Slavic with/from collision patterns
+    // (pl `z`/ru `с`/uk `з`) capture `method` as the source-marked group's
+    // expression and the relabel above shifts it to style, leaving the stream
+    // at `: "POST" body:form`. Refold the pending key with the rest of the
+    // run (Arc E — the fetch-options family). Gated to a bare code-shaped
+    // key + a colon at the stream head, so a genuine style capture (`with
+    // {…}` / a folded run) never re-fires.
+    const existing = roles.get('style') as { type?: string; raw?: string } | undefined;
+    if (existing) {
+      if (
+        existing.type === 'expression' &&
+        typeof existing.raw === 'string' &&
+        /^[A-Za-z_][\w-]*$/.test(existing.raw) &&
+        stream.peek()?.value === ':'
+      ) {
+        const refolded = foldNakedNamedArgsRaw(stream, existing.raw);
+        if (refolded) {
+          roles.set('style', { type: 'expression', raw: refolded } as SemanticValue);
+          this.tryAttachResponseTypeAfterStyle(stream, command, language);
+        }
+      }
+      return;
+    }
+
+    // The same continuation via the Slavic with/from collision shape (pl `z`,
+    // ru `с`, uk `з`): the fused event pattern binds the URL to {patient} and
+    // the with-run's HEAD key to {source} — normalizeCommandRoles shifts
+    // source→style / patient→source only ONCE at the end of the whole parse,
+    // so at reclaim time the pending key sits in `source`. Refold there and
+    // let the late relabel do the role gymnastics it already owns (its gate —
+    // patient + expression-typed source + empty style — still holds: the
+    // refolded `{…}` raw stays an expression).
+    if (command.action === 'fetch') {
+      const pat = roles.get('patient');
+      const src = roles.get('source') as { type?: string; raw?: string } | undefined;
+      if (
+        pat &&
+        src &&
+        (pat.type === 'literal' || pat.type === 'expression') &&
+        src.type === 'expression' &&
+        typeof src.raw === 'string' &&
+        /^[A-Za-z_][\w-]*$/.test(src.raw) &&
+        stream.peek()?.value === ':'
+      ) {
+        const refolded = foldNakedNamedArgsRaw(stream, src.raw);
+        if (refolded) {
+          roles.set('source', { type: 'expression', raw: refolded } as SemanticValue);
+          this.tryAttachResponseTypeAfterStyle(stream, command, language);
+        }
+        return;
+      }
+    }
+
     const profile = tryGetProfile(language);
     const marker = profile?.roleMarkers?.style;
-    if (!marker || marker.position !== 'after') return;
+    if (!marker) return;
+
+    // Prepositional `<with-marker> key:value …` (es `con`, de `mit`, zh `用`,
+    // ar `بـ`, tl `nang`, he `עם` — the corpus render surfaces). The fused
+    // event patterns and the handcrafted fetch patterns end at the source, so
+    // the whole with-run strands after the match (Arc C: 18 firings per naked
+    // row). The fold either consumes a complete pair run or resets — a
+    // marker-homonym followed by anything else leaves the stream untouched.
+    if (marker.position === 'before') {
+      const preSurfaces = new Set(
+        [marker.primary, ...(marker.alternatives ?? [])].map(s => s.toLowerCase())
+      );
+      const head = stream.peek();
+      if (!head || !preSurfaces.has(head.value.toLowerCase())) return;
+      const preMark = stream.mark();
+      stream.advance();
+      const folded = foldNakedNamedArgsRaw(stream);
+      if (!folded) {
+        stream.reset(preMark);
+        return;
+      }
+      roles.set('style', { type: 'expression', raw: folded } as SemanticValue);
+      this.tryAttachResponseTypeAfterStyle(stream, command, language);
+      return;
+    }
+    if (marker.position !== 'after') return;
 
     const surfaces = new Set(
       [marker.primary, ...(marker.alternatives ?? [])].map(s => s.toLowerCase())
@@ -3188,11 +3268,108 @@ export class SemanticParserImpl implements ISemanticParser {
     ) {
       return;
     }
+    // A run that is entirely a naked named-arg form folds to the
+    // object-literal raw the en reference now captures (`{method:"POST",
+    // body:form}` — offset-exact inside values, so qu's shattered
+    // `FormDa`+`ta` re-joins). Any other run keeps the legacy space-join
+    // byte-identical (render's paren-runs, braced blobs).
+    const runStream = new TokenStreamImpl(run, language);
+    const foldedRun = foldNakedNamedArgsRaw(runStream);
     roles.set('style', {
       type: 'expression',
-      raw: this.joinTokenText(run),
+      raw: foldedRun && runStream.isAtEnd() ? foldedRun : this.joinTokenText(run),
     } as SemanticValue);
     for (let i = 0; i <= markerOffset; i++) stream.advance();
+    this.tryAttachResponseTypeAfterStyle(stream, command, language);
+  }
+
+  /**
+   * Per-language `as`-marker surfaces for the post-style responseType attach
+   * below. The semantic profiles carry no responseType role marker outside en
+   * (the generated patterns never needed one), so these come from the corpus
+   * renders — the ground truth for marker surfaces (fetch-with-headers ×24).
+   * Prepositional: `<marker> JSON` (es `como JSON`, zh `的 JSON`, ar `كـ JSON`).
+   * Postpositional sequences: `JSON <marker…>` (ko `JSON 로`, hi `JSON के रूप
+   * में`); ja/bn render the response word bare.
+   */
+  private static readonly AS_MARKERS_BEFORE: Record<string, readonly string[]> = {
+    en: ['as'],
+    es: ['como'],
+    fr: ['comme'],
+    pt: ['como'],
+    it: ['come'],
+    de: ['als'],
+    id: ['sebagai'],
+    ms: ['sebagai', 'sbg'],
+    sw: ['kuwa', 'kama'],
+    th: ['เป็น'],
+    vi: ['như'],
+    tl: ['bilang'],
+    he: ['כ'],
+    ar: ['كـ'],
+    pl: ['jako'],
+    ru: ['как'],
+    uk: ['як'],
+    zh: ['的', '作为', '当作'],
+  };
+
+  private static readonly AS_MARKERS_AFTER: Record<string, readonly (readonly string[])[]> = {
+    ko: [['로'], ['으로']],
+    qu: [['hina']],
+    tr: [['olarak']],
+    hi: [['के', 'रूप', 'में']],
+  };
+
+  /**
+   * Consume a trailing as-phrase into `responseType` right after a style
+   * capture (`fetch /api/me with headers:{…} as JSON` — the with-run used to
+   * strand BEFORE the as-phrase, so the trailing-responseType reclaim above
+   * never saw it; once the style run is consumed the as-phrase is next).
+   * Only called on a just-captured style, so a bare as-phrase without options
+   * (ko event-debounce `json 로`) keeps its existing handling. Accepts
+   * `<as-marker> <word>` (SVO/VSO), `<word> [<as-postposition…>]` (SOV), and
+   * the bare word (ja/bn renders) — the word must be a KNOWN response-type
+   * loanword, mirroring the trailing-responseType reclaim's gate.
+   */
+  private tryAttachResponseTypeAfterStyle(
+    stream: TokenStream,
+    command: CommandSemanticNode,
+    language: string
+  ): void {
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    if (roles.has('responseType')) return;
+    const schema = getSchema(command.action as ActionType);
+    if (!schema?.roles.some(r => r.role === 'responseType' && !r.required)) return;
+    const isResponseWord = (w: string | undefined): w is string =>
+      !!w && SemanticParserImpl.RESPONSE_TYPE_WORDS.has(w.toLowerCase());
+
+    const t0 = stream.peek();
+    if (!t0) return;
+    const setResponseType = (word: string): void => {
+      roles.set('responseType', { type: 'expression', raw: word } as SemanticValue);
+    };
+
+    const before = SemanticParserImpl.AS_MARKERS_BEFORE[language];
+    if (before?.some(m => t0.value.toLowerCase() === m)) {
+      const t1 = stream.peek(1);
+      if (t1 && isResponseWord(t1.value)) {
+        stream.advance();
+        stream.advance();
+        setResponseType(t1.value);
+      }
+      return;
+    }
+
+    if (isResponseWord(t0.value)) {
+      stream.advance();
+      setResponseType(t0.value);
+      for (const seq of SemanticParserImpl.AS_MARKERS_AFTER[language] ?? []) {
+        if (seq.every((w, i) => stream.peek(i)?.value.toLowerCase() === w)) {
+          for (let i = 0; i < seq.length; i++) stream.advance();
+          break;
+        }
+      }
+    }
   }
 
   /**
