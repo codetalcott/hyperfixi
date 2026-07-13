@@ -90,11 +90,13 @@ export const es: Dictionary = {
     mouseup: 'ratónarriba',
     mouseenter: 'ratónentrar',
     mouseleave: 'ratónsalir',
-    mouseover: 'ratónencima',
-    mouseout: 'ratónfuera',
+    // V3 Batch 2: fused forms split to the S5b/tokenizer-known forms (the fused
+    // spellings captured event=expression:undefined — broken listeners)
+    mouseover: 'ratón encima',
+    mouseout: 'ratón fuera',
     mousemove: 'ratónmover',
-    keydown: 'teclaabajo',
-    keyup: 'teclaarriba',
+    keydown: 'tecla abajo',
+    keyup: 'tecla arriba',
     keypress: 'teclapresar',
     focus: 'enfocar',
     blur: 'desenfocar',

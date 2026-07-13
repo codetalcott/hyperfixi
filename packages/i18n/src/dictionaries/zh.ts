@@ -97,11 +97,17 @@ export const zh: Dictionary = {
     mouseup: '鼠标抬起',
     mouseenter: '鼠标进入',
     mouseleave: '鼠标离开',
-    mouseover: '鼠标悬停',
+    // V3 Batch 2: 鼠标悬停 captured no event (expression:undefined) — realigned
+    // to the tokenizer-registered 鼠标移入 (also S5b-listed). 按键抬起
+    // prefix-shattered to 按键 and captured `keydown` (a keyup handler firing
+    // on keydown) → 松键, the S5b/tokenizer form. keydown keeps 按键按下
+    // (captures keydown via the registered 按键 prefix; S5b-aliased) — fixing
+    // it to bare 按键 would collide with keypress below.
+    mouseover: '鼠标移入',
     mouseout: '鼠标移出',
     mousemove: '鼠标移动',
     keydown: '按键按下',
-    keyup: '按键抬起',
+    keyup: '松键',
     keypress: '按键',
     focus: '聚焦',
     blur: '失焦',

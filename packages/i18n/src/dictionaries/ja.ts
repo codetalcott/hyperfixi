@@ -95,12 +95,15 @@ export const ja: Dictionary = {
     mouseup: 'マウス解放',
     mouseenter: 'マウス入る',
     mouseleave: 'マウス離れる',
-    mouseover: 'マウス上',
-    mouseout: 'マウス外',
+    // V3 Batch 2: kanji compounds realigned to the S5b/tokenizer katakana
+    // loanwords (the standard JS event terms; the compounds captured
+    // event=expression:undefined — broken listeners)
+    mouseover: 'マウスオーバー',
+    mouseout: 'マウスアウト',
     mousemove: 'マウス移動',
-    keydown: 'キー押下',
-    keyup: 'キー解放',
-    keypress: 'キー押す',
+    keydown: 'キーダウン',
+    keyup: 'キーアップ',
+    keypress: 'キープレス',
     focus: 'フォーカス',
     blur: 'ぼかし',
     change: '変更',

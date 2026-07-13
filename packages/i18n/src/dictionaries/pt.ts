@@ -96,11 +96,13 @@ export const pt: Dictionary = {
     mouseup: 'mouseCima',
     mouseenter: 'mouseEntrar',
     mouseleave: 'mouseSair',
-    mouseover: 'mouseSobre',
-    mouseout: 'mouseFora',
+    // V3 Batch 2: camelCase forms split to the S5b/tokenizer-known forms (the
+    // fused spellings captured event=expression:undefined — broken listeners)
+    mouseover: 'mouse sobre',
+    mouseout: 'mouse fora',
     mousemove: 'mouseMover',
-    keydown: 'teclaBaixo',
-    keyup: 'teclaCima',
+    keydown: 'tecla baixo',
+    keyup: 'tecla cima',
     keypress: 'teclaPressionar',
     focus: 'foco',
     blur: 'desfoque',

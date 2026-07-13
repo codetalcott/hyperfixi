@@ -113,8 +113,12 @@ export const qu: Dictionary = {
     mouseover: 'rat_hawapi',
     mouseout: 'rat_hawamanta',
     mousemove: 'rat_kuyuy',
-    keydown: 'yupana_ñitiy',
-    keyup: 'yupana_huqariy',
+    // V3 Batch 2: `yupana_ñitiy` split at `_` and mis-captured as the `click`
+    // event (ñitiy→click, the same mechanism as the mousedown fuse above);
+    // `yupana_huqariy` captured verbatim `huqariy`. Realigned to the
+    // S5b/tokenizer forms.
+    keydown: 'llave uray',
+    keyup: 'llave hawa',
     keypress: 'yupana_ñitana',
     focus: 'qhaway',
     blur: 'paqariy',
