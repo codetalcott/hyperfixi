@@ -50,6 +50,12 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // splits on it — see hi.ts events note). repeat-until-event / handler events.
   { native: 'माउसनीचे', normalized: 'mousedown' },
   { native: 'माउसऊपर', normalized: 'mouseup' },
+  // window-resize compound: the dict emits underscore-joined आकार_बदलें
+  // (resize), which the `_` split shattered into आकार + _ + बदलें — and the
+  // stranded बदलें (toggle verb) anchored a PHANTOM toggle command while the
+  // event slot grabbed the call target (the hi window-resize mis-parse,
+  // Arc F). Whole-token entry mirrors qu's hatun_kay precedent (quechua.ts).
+  { native: 'आकार_बदलें', normalized: 'resize' },
 
   // Values
   { native: 'सच', normalized: 'true' },
