@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **203 KB** browser bundle (gzipped, 39% reduction from original)
+- **~534 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **18 KB** (hybrid-hx) — sizes re-measured 2026-07-13; bundle-diet investigation queued post-release
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -501,7 +501,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.3 KB), hybrid-hx (9.5 KB), hybrid-hx-v4 (~257 KB), minimal (58 KB), standard (63 KB), browser (203 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.7 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~540 KB), minimal (76 KB), standard (82 KB), browser (~534 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -515,7 +515,7 @@ Include the resolver bundle after core — all standard behaviors resolve on dem
 <button _="install Toggleable(cls: 'highlighted')">Toggle</button>
 ```
 
-Behaviors are hyperscript source strings compiled on first use. The resolver bundle is 3.8 KB gzipped.
+Behaviors are hyperscript source strings compiled on first use. The resolver bundle is 5.5 KB gzipped.
 
 ### Dynamic Class Selectors
 
@@ -719,16 +719,16 @@ generator, and semantic regional bundles — lives in
 
 Quick selection (sizes gzipped):
 
-| Bundle                         | Size     | Use case                                                                                   |
-| ------------------------------ | -------- | ------------------------------------------------------------------------------------------ |
-| via `@hyperfixi/vite-plugin`   | minimal  | **Default for Vite projects** — scans usage, emits the right bundle                        |
-| `hyperfixi-lite.js`            | 1.9 KB   | Tiny static page (8 commands, regex parser)                                                |
-| `hyperfixi-hybrid-complete.js` | 7.3 KB   | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
-| `hyperfixi-hx.js`              | 9.7 KB   | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
-| `hyperfixi-hx-v4.js`           | ~257 KB  | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | ~286 KB  | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
-| `hyperfixi-multilingual.js`    | 64.3 KB  | Multilingual, parser-free (pair with a semantic bundle)                                    |
-| semantic bundles               | 16–90 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
+| Bundle                         | Size      | Use case                                                                                   |
+| ------------------------------ | --------- | ------------------------------------------------------------------------------------------ |
+| via `@hyperfixi/vite-plugin`   | minimal   | **Default for Vite projects** — scans usage, emits the right bundle                        |
+| `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
+| `hyperfixi-hybrid-complete.js` | 7.7 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
+| `hyperfixi-hx.js`              | 18 KB     | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
+| `hyperfixi-hx-v4.js`           | ~540 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
+| `hyperfixi.js`                 | ~534 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
+| `hyperfixi-multilingual.js`    | 97 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
+| semantic bundles               | 56–195 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
 
 Rule of thumb: start as small as you can; upgrade when you hit a missing feature.
 The vite plugin removes this decision entirely.
