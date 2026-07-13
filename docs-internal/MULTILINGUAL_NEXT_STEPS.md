@@ -3464,6 +3464,22 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    investigation** (why did the full bundle grow ~2.6× past its documented
    size — reactivity+realtime pre-install? multilingual growth? terser config
    drift?) **+ size-truth pass over CLAUDE.md / docs/BROWSER_BUNDLES.md.**
+   _Second discovery (first real run of the [full] compat suite — it runs
+   NOWHERE else; ci.yml browser-tests is `--project=quick` only):_ the
+   gallery fetch-data page throws **"Unknown command: compound"** on every
+   semantic-path bundle — core's per-segment semantic adapter
+   (`semantic-integration.ts` `createSemanticAdapter`) surfaces a COMPOUND
+   analysis result as a command literally named `compound`
+   (`name: node.action`, unconditional), so a multi-line body segment the
+   semantic side parses as a compound becomes an unexecutable command node
+   while the rest of the handler runs. Verified pre-existing on the
+   pre-Arc-F dist; the semantic tree itself is correct (framework's
+   `to-runtime-ast.ts` and semantic's `buildCompound` both map compound →
+   CommandSequence — only the adapter path is wrong). **PRE-RELEASE fix
+   candidate** (user-visible on the shipped full bundle); marked as a
+   knownIssue in bundle-compatibility.spec.ts (printed, not asserted) until
+   fixed — remove the knownIssue field with the fix.
+5. **Stretch — `fetch … with { }` captured in all 24 languages** (Arc E) — the
    user-visible feature claim for the release notes. Take it only after 1–4 are
    locked; it needs a baseline regen, so it must not land in the final two days.
    **✓ MET (Arc E, 2026-07-13): braced + naked named-arg options captured ×24,
