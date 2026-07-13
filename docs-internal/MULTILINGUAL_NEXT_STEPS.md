@@ -2648,12 +2648,71 @@ Full attribution in `HANDOFF_top-level-command-sequences.md` (RESOLVED). Re-conf
 **2026-07-11** on post-#638 `main` (`0a4c043f`), fresh ordered build + populate: **0 / 3696**
 in all 24 languages.
 
-**Deferred sub-task** (known limitation, explicitly not taken in the sequence arc): the
-diagnostic fires only on the **Stage-2 plain-command path**. The event-handler, compound, and
-SOV/VSO stages re-tokenize sub-segments and expose no single consumed count, so a
-`fetch … with method:"POST"` inside `on submit …` is not counted yet. **0 firings is therefore a
-visible floor, not a total** — extending the instrumentation to the other stages would raise it
-and is the natural next probe of this section.
+~~**Deferred sub-task** (known limitation, explicitly not taken in the sequence arc): the
+diagnostic fires only on the **Stage-2 plain-command path**.~~ **DONE — Arc C (2026-07-13,
+`feat/arc-c-input-coverage`): floor → total.** Every `parseInternal` stage is now measured:
+the body/segment parsers (`parseClause`, `parseBodyWithClauses`, `parseBodyWithGrammarPatterns`,
+`buildEventHandler`'s fused tail) record each token run they discard into a per-parse coverage
+frame; committed frames attach to the parse's node and hoist to the top node (the only surface
+the sweep and `compile(...).meta.warnings` read), while speculative parse attempts (the `try*`
+extractions, conditional folds, re-parse swaps) roll back on discard — so only committed parses
+fire, per sub-stream (SOV/VSO segment re-tokenization accounts against its own segment), with
+no double-count against the Stage-2 emission (mutually exclusive by control flow; locked by
+tests). A residue filter keeps optional tokens silent: particles, conjunctions,
+`then`/`end`/`else` boundaries (incl. `closesTrackedBlock`-annotated closers), role-marker
+surfaces (multi-word markers split per token), and the leaked rendered as-postpositions
+(hi `के रूप में`, tr `olarak`, qu `hina`) whose values the trailing reclaims already captured.
+
+**Red→green probes** (Batch 3's three known-dropped constructs, locked in
+`packages/semantic/test/input-coverage-stages.test.ts`): handler-wrapped
+`repeat 3 times break end` / `continue` (en + qu render) parsed break-less at confidence 1.0
+with ZERO diagnostics before; each now fires with the dropped span. Top-level forms fire
+exactly ONCE (Stage-2 path — the no-double-count control). Two correct non-firings locked too:
+the in-handler `if #a and #b log "ok"` folds faithfully (the and-conjunct drop is
+top-level-only), and ja's in-handler break consumes every token (its defect is role fidelity,
+not input coverage).
+
+**Arc C sweep verdict (2026-07-13, browser-priority, fresh ordered build + populate):**
+red side 0 / 3696 (the Stage-2-only floor, re-confirmed) → instrumented **676 / 3696 (18.3%)**
+→ **670 / 3696 (18.1%)** after Batch 1 (the one pure-residue class: 6 rows firing ONLY the
+leaked as-marker after their responseType was reclaimed — hi ×4, tr ×2 — verified row-by-row
+before silencing). All 670 remaining firings are attributed; **none can be burned down inside
+this arc**, because every one is a genuine construct-family drop whose fix changes parse
+outcomes (forbidden here — diagnostic-only; the eight-signal ratchet stayed bit-stable).
+Most map to families this file had already named:
+
+| family (per-language rows) | rows | patterns | status |
+| --- | --- | --- | --- |
+| fetch options tail (`with {…}` / naked named-args) | 78 | fetch-with-headers ×24, fetch-with-method ×18, fetch-with-method-body ×18, fetch-formdata ×18 | **= Arc E** (release-bar stretch item 5) |
+| def/behavior param phrases + handler-head qualifiers (`(clientX, clientY)`, `from <source>`, key-filters) | 102 | worker-basic ×24, behavior-sortable ×23, behavior-resizable ×21, modal-close-escape ×20, behavior-removable ×6, window-scroll ×3, window-keydown ×3, focus-trap ×2 | NEW — named here |
+| event-modifier phrases NOT applied (`once`, `debounced/throttled at Nms` — probe: `eventModifiers` is null, the semantics are genuinely lost, en included) | 69 | window-resize ×23, event-debounce ×16, event-throttle ×16, event-once ×14 | NEW — named here; highest-leverage single fix |
+| positional/range qualifier tails (`0 to 5 of #note`, `in closest <form/>`, `for me`) | 70 | pick-text-range ×23, take-class-from-siblings ×23, first-in-parent ×17, last-in-collection ×6, toggle-aria-expanded ×1 | pick = named R1 deferral (Family F); rest NEW |
+| loop-head condition/keyword tails (`< 10`, `with index`, zh `forever`, id `_`-compound split) | 51 | repeat-while ×24, stagger-animation ×24, repeat-until-event ×2, repeat-forever ×1 | NEW — named here |
+| SOV/en trailing in-me destination glue | 51 | form-disable-on-submit ×19 (en-symmetric!), input-validation ×6, fetch-loading-state ×6, tabs-basic ×5, tabs-content ×5, if-empty ×5, repeat-times ×5 | = named R3 family (§ value-bug families) |
+| reactive `when … changes` heads | 48 | when-value-changes ×24, when-multiple-changes ×24 | = named reactive `on.event` deferral |
+| set source-qualifier tails (`from #firstName` on bind rows) | 44 | two-way-binding ×22, computed-value ×22 | NEW — named here |
+| show/hide style-capture (`with *opacity`) | 38 | show-with-transition ×19, hide-with-transition ×19 | = named Batch-3 leftover |
+| go-url destination (`"/page"`) | 18 | go-url ×18 | = named Batch-3 leftover |
+| swap with-phrase | 6 | swap-content ×6 | = named F6 (wontfix) |
+| command-option tails, misc (render/morph `: $data` ×36, `beep! <expr>` ×18, unless operator tail ×18, tell to-infinitive ×16, do-not-throw leak ×3, fetch-as id ×1+2, sw async vocab gap ×1) | 95 | render-template-with-data ×18, morph-with-template ×18, beep-debug-expression ×18, unless-condition ×18, tell-command ×16, fetch-do-not-throw ×3, fetch-error-handling ×2, async-block ×1, fetch-json ×1 | NEW — named here |
+
+Nearly all families are **en-symmetric** (the en reference drops the same span, so R0/R1
+never saw them — exactly the blind spot this diagnostic exists to expose). Full attribution
+JSON + probe logs archived in the arc transcript; per-pattern detail reproducible via the
+sweep. **Arc D's "all stages measured" precondition is MET.** Note for Arc D: at 18% corpus
+firing rate, a naive coverage penalty would move MANY scores — the per-family table above is
+the sizing input for how to phase it.
+
+**Diagnostic-only proof (2026-07-13):** `--regression` exit 0 on a fresh ordered build +
+populate; `--save-baseline` attribution check ran, and every delta was benign or
+pre-existing: timestamp/commit (expected), bundleSize 503726 → 508231 (the instrumentation
+code itself), JSON array reflow (writer formatting), and ONE confidence value —
+it `blur-element` 1 → 0.714 — which reproduces bit-for-bit on the COMMITTED parser with the
+instrumentation stashed, i.e. pre-existing drift from the vocab Batches 1–4 profile changes
+(confidence isn't a ratcheted signal, so those arcs never re-baselined). Zero deltas
+attributable to Arc C; committed baseline restored untouched. Semantic suite 7082 green
+(probes locked in `input-coverage-stages.test.ts`; `realtime-blocks` worker def-param firing
+locked as a named finding), testing-framework 252 green.
 
 Before turning this into a **scoring penalty** (which would move the baseline across all 24
 languages, so it needs its own PR):
@@ -3237,18 +3296,20 @@ edits that diverged from profiles will change rendered corpus translations, so t
 moves the fidelity baseline: full resweep + old-vs-new attribution against the same
 DB, same discipline as a parser arc. Do NOT start before Arc A's validator exists.
 
-**Arc C — extend `unconsumed-input` to the remaining parse stages** — the deferred
-sub-task from the top-level command-sequences arc (§ "Input coverage" above). The
-Stage-2-only diagnostic surfaced 158 firings and every one was a real silent drop at
-confidence 1.0; the uninstrumented stages (event-handler bodies, compound, SOV/VSO)
-are where most translated rows route, so 0 is a floor. All four stages funnel through
-`parseBodyWithClauses` / `buildEventHandler`, so a per-segment coverage check there
-may cover them at once. Prerequisite for Arc D. Expect new firings → its own burn-down.
+~~**Arc C — extend `unconsumed-input` to the remaining parse stages**~~ — **COMPLETE
+(2026-07-13, `feat/arc-c-input-coverage`).** Per-segment coverage landed in the shared
+body parsers (the funnel hypothesis held: one check covers event-handler, compound, and
+SOV/VSO at once, with per-sub-stream accounting and speculative-parse rollback). The
+floor rose 0 → 670/3696 (18.1%) after one residue batch; every firing attributed —
+verdict + per-family table in § "Input coverage" above. Diagnostic-only proven
+(`--regression` exit 0, committed baseline untouched, save-baseline deltas all benign
+or pre-existing).
 
-**Arc D — the `unconsumed-input` → confidence-penalty scoring change** — both
-preconditions then met (`SCHEMA_NO_REQUIRED_ROLES` fixed #628/#629; all stages
-measured by Arc C). Five-step plan in § "Input coverage". Payoff: re-evaluate whether
-`parseInternal` Stages 0 / 0.5 can be simplified.
+**Arc D — the `unconsumed-input` → confidence-penalty scoring change** — **all
+preconditions now MET** (`SCHEMA_NO_REQUIRED_ROLES` fixed #628/#629; all stages
+measured by Arc C, 2026-07-13). Five-step plan in § "Input coverage". Payoff:
+re-evaluate whether `parseInternal` Stages 0 / 0.5 can be simplified. Sizing input:
+the corpus fires at 18% — see the Arc C family table before pricing the penalty.
 
 **Arc E — Part 2b: `fetch … with { }` ×23 + naked named-arg capture** (§ deferral
 above). All-or-nothing across 24 languages (R1 en-reference constraint) + baseline
@@ -3274,6 +3335,9 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    `--diagnose-coverage` reports 0 firings corpus-wide or each residual is named.
    If new firings exceed what the window can burn down, naming them all still
    clears the bar (the launch-bar precedent: honesty over totality).
+   **✓ MET (Arc C, 2026-07-13): all stages measured, 670 firings — every one
+   attributed to a named family (table in § "Input coverage"); regression green,
+   baseline untouched.**
 3. **Fidelity floors held, not raised** — the eight-signal ratchet holds the
    2026-07-11 high-water marks (R1 ≥ 0.99, R3 ≥ 0.995, others saturated). No new
    fidelity bar item — the remaining tail is the named deferrals. This item is
