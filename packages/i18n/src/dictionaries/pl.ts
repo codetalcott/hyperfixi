@@ -66,7 +66,7 @@ export const pl: Dictionary = {
     clear: 'zeruj', // wyczyść is a remove alternative in the profile
     close: 'zamknij',
     open: 'otwórz',
-    select: 'wybierz',
+    select: 'zaznacz', // Batch 3: wybierz is the pick keyword — bare select rendered with it parses null
     clone: 'sklonuj',
     prepend: 'poprzedź',
     focus: 'skup',
@@ -108,8 +108,8 @@ export const pl: Dictionary = {
     blur: 'rozmycie',
     change: 'zmiana',
     input: 'wejście',
-    submit: 'wyślij',
-    reset: 'resetuj',
+    submit: 'wysłaniu', // Batch 3: wyślij is the send verb — on-submit listener captured event "send"
+    reset: 'zresetuj', // Batch 3: resetuj captured on.event as expression (broken listener) — profile word round-trips
     load: 'załaduj',
     unload: 'wyładuj',
     resize: 'zmieńrozmiar',

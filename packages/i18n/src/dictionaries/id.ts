@@ -64,9 +64,9 @@ export const id: Dictionary = {
     install: 'pasang',
     breakpoint: 'titik-henti',
     clear: 'bersihkan', // hapus is the remove PRIMARY in the profile
-    close: 'tutup',
+    close: 'tutupkan', // Batch 3: tutup is the hide keyword — rendered close parsed as action=hide
     open: 'buka',
-    select: 'pilih',
+    select: 'tandai', // Batch 3: pilih is the pick keyword — bare select rendered with it parses null
     clone: 'klon',
     prepend: 'awali',
   },

@@ -47,7 +47,7 @@ export const bengaliDictionary: Dictionary = {
     init: 'শুরু',
     behavior: 'আচরণ',
     install: 'ইনস্টল',
-    clone: 'কপি',
+    clone: 'ক্লোন', // Batch 3: কপি is the copy verb — rendered clone parsed as action=copy
     swap: 'বদল',
     morph: 'রূপান্তর',
     beep: 'বীপ',

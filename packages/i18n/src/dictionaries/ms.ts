@@ -66,7 +66,7 @@ export const malayDictionary: Dictionary = {
     clear: 'bersihkan', // padam is a remove alternative in the profile
     close: 'tutup',
     open: 'buka',
-    select: 'pilih',
+    select: 'tandai', // Batch 3: pilih is the pick keyword — bare select rendered with it parses null
     socket: 'soket', // derived from the ms profile (socket.primary); see generate-i18n-dictionaries
   },
 

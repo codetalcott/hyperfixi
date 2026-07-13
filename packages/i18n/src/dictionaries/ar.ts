@@ -62,7 +62,7 @@ export const ar: Dictionary = {
     clear: 'نظّف', // امسح is a remove alternative in the profile
     close: 'أغلق',
     open: 'افتح',
-    select: 'اختر',
+    select: 'ظلل', // Batch 3: اختر is the pick keyword — bare select rendered with it parses null
     clone: 'استنسخ',
     prepend: 'سبق',
     socket: 'مقبس',

@@ -52,7 +52,7 @@ export const sw: Dictionary = {
     go: 'nenda',
     pushUrl: 'sukumaUrl',
     replaceUrl: 'badilishaUrl',
-    copy: 'nakili',
+    copy: 'nakala', // Batch 3: nakili is the clone keyword — rendered copy parsed as action=clone
     pick: 'chagua',
     beep: 'lia',
     js: 'js',
@@ -68,7 +68,7 @@ export const sw: Dictionary = {
     clear: 'safisha', // futa is a remove alternative in the profile
     close: 'funga',
     open: 'fungua',
-    select: 'chagua',
+    select: 'alama', // Batch 3: chagua is the pick keyword — bare select rendered with it parses null
     clone: 'nakili',
     prepend: 'tanguliza',
     focus: 'lenga',

@@ -60,13 +60,13 @@ export const hindiDictionary: Dictionary = {
     behavior: 'व्यवहार',
     focus: 'फोकस',
     blur: 'धुंधला',
-    clone: 'कॉपी',
+    clone: 'क्लोन', // Batch 3: कॉपी is the copy verb — rendered clone parsed as action=copy
     prepend: 'जोड़ें_शुरू',
     breakpoint: 'ब्रेकप्वाइंट',
     clear: 'साफ़-करें',
     close: 'बंद-करें',
     open: 'खोलें',
-    select: 'चुनें',
+    select: 'चिह्नित-करें', // Batch 3: चुनें is the pick keyword — bare select rendered with it parses null
     socket: 'सॉकेट',
   },
 

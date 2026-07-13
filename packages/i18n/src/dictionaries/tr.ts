@@ -63,7 +63,7 @@ export const tr: Dictionary = {
     clear: 'temizle',
     close: 'kapat',
     open: 'aç',
-    select: 'seç',
+    select: 'vurgula', // Batch 3: seç is the pick keyword — bare select rendered with it parses null
     clone: 'klonla',
     prepend: 'başınaekle',
     socket: 'soket',
@@ -111,7 +111,7 @@ export const tr: Dictionary = {
     blur: 'bulanık',
     change: 'değişim',
     input: 'giriş',
-    submit: 'gönder',
+    submit: 'gönderme', // Batch 3: gönder is the send verb — on-submit listener captured event "send"
     reset: 'sıfırla',
     load: 'yükle',
     unload: 'yükle_kaldır',

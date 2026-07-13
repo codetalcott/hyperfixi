@@ -70,7 +70,7 @@ export const ukrainianDictionary: Dictionary = {
     clear: 'очистити',
     close: 'закрити',
     open: 'відкрити',
-    select: 'вибрати',
+    select: 'виділити', // Batch 3: вибрати is the pick keyword — bare select rendered with it parses null
   },
 
   modifiers: {
@@ -113,7 +113,7 @@ export const ukrainianDictionary: Dictionary = {
     change: 'зміна',
     input: 'введення',
     submit: 'надсилання',
-    reset: 'скидання',
+    reset: 'скинути', // Batch 3: скидання captured on.event as expression (broken listener) — profile verb round-trips
     load: 'завантаження',
     unload: 'вивантаження',
     resize: 'змінарозміру', // fused (no `_`) — see mousedown note above

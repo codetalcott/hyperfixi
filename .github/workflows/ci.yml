@@ -772,12 +772,13 @@ jobs:
         run: npm run populate --prefix packages/patterns-reference
 
       # Vocab cross-surface consistency (Arc A — docs-internal/HANDOFF_vocab-consistency.md).
-      # WARN-ONLY while the first ledger is burned down; the gating flip is a
-      # named follow-up (NEXT_STEPS § v2.8 release bar, item 1).
-      - name: Vocab consistency (warn-only)
+      # GATING since Batch 4 (release bar item 1): exits 1 on any unwaived
+      # error-tier finding. Waivers (probe-cited) live in
+      # packages/testing-framework/vocab-waivers.json.
+      - name: Vocab consistency (gate)
         run: |
           cd packages/testing-framework
-          npx tsx src/vocab/cli.ts validate --warn-only
+          npx tsx src/vocab/cli.ts validate
 
       # Quick mode (10 core patterns/lang) is genuinely expected at 100% — a real
       # gate, no continue-on-error. A drop here is a real regression in core

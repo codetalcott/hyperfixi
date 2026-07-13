@@ -75,8 +75,8 @@ export const qu: Dictionary = {
     breakpoint: 'sayachinay',
     clear: 'pichay',
     close: 'wichqay',
-    open: 'kichay',
-    select: 'akllay',
+    open: 'paskay', // Batch 3: kichay is the trigger keyword — rendered open parsed null
+    select: 'marcay', // Batch 3: akllay is the pick keyword — bare select rendered with it parses null
     clone: 'kikinchay',
     prepend: 'ñawpachiy',
     socket: 'tinkina',
@@ -122,10 +122,10 @@ export const qu: Dictionary = {
     keypress: 'yupana_ñitana',
     focus: 'qhaway',
     blur: 'paqariy',
-    change: 'tikray',
+    change: 'kambiay', // Batch 3: tikray is the toggle verb — on-change listener captured event "toggle"
     input: 'yaykuchiy',
-    submit: 'kachay',
-    reset: 'qallariy',
+    submit: 'apaykachay', // Batch 3: kachay is the send verb — on-submit captured "send" in one corpus slot
+    reset: 'musuqchay', // Batch 3: qallariy is the init/start word — on-reset listener captured event "default"
     load: 'apakuy',
     unload: 'urmay',
     resize: 'hatun_kay',

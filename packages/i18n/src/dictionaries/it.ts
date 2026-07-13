@@ -100,11 +100,11 @@ export const it: Dictionary = {
     keyup: 'tastosu',
     keypress: 'tastopremi',
     focus: 'fuoco',
-    blur: 'sfuocatura',
+    blur: 'sfuocare', // Batch 3: the noun form parsed the blur command with no patient; the verb round-trips both event and command slots
     change: 'cambio',
     input: 'input',
     submit: 'invio',
-    reset: 'reset',
+    reset: 'reimpostare', // Batch 3: English passthrough captured on.event as expression — profile verb round-trips
     load: 'carica',
     unload: 'scarica',
     resize: 'ridimensiona',

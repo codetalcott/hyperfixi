@@ -93,7 +93,9 @@ export const koreanProfile: LanguageProfile = {
     focus: { primary: '포커스', normalized: 'focus' },
     blur: { primary: '블러', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: '비우기', normalized: 'empty' },
+    // Batch 3: 비어있는 added — the i18n dict renders the empty COMMAND with its
+    // `is empty` adjective (category-shadowed), which parsed null.
+    empty: { primary: '비우기', alternatives: ['비어있는'], normalized: 'empty' },
     open: { primary: '열기', normalized: 'open' },
     close: { primary: '닫기', normalized: 'close' },
     select: { primary: '고르기', normalized: 'select' },

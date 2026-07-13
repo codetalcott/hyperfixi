@@ -109,7 +109,7 @@ export const pt: Dictionary = {
     change: 'mudança',
     input: 'entrada',
     submit: 'envio',
-    reset: 'reiniciar',
+    reset: 'redefinir', // Batch 3: reiniciar captured on.event as expression (broken listener) — profile word round-trips
     load: 'carregar',
     unload: 'descarregar',
     resize: 'redimensionar',
