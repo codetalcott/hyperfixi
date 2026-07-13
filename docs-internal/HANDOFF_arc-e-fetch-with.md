@@ -1,5 +1,15 @@
 # Handoff: Arc E — `fetch … with { … }` captured in all 24 languages (release-bar stretch item 5)
 
+> **EXECUTED (2026-07-13).** All DoD items met: options captured (braced + naked) ×24
+> consistent with the en reference; fetch firings 78 → 0 (corpus total 670 → 556 — the
+> extra −36 is the render naked with-pair, same mechanism, attributed); probes locked in
+> `packages/semantic/test/fetch-with-options-multilingual.test.ts`; baseline regenerated
+> against a fresh populate (diff = R1 ↑ ×14 languages, bundleSize, the inherited `it`
+> blur-element drift); eight-signal ratchet green on the new baseline. Implementation:
+> `packages/semantic/src/parser/naked-args-fold.ts` + the pattern-matcher style-slot hook
+> + the extended `tryAttachTrailingStyle`/`tryAttachResponseTypeAfterStyle` reclaims.
+> NEXT_STEPS § Part 2b marked RESOLVED, release-bar item 5 ✓.
+
 ## Context — release bar state (2026-07-13, post-Arc-C)
 
 Items 1–4 of the v2.8 bar are locked or in-flight: **1 ✓** vocab gate (#645);
