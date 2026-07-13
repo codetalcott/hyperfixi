@@ -3496,5 +3496,26 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    fetch-family firings 78 → 0, ~100 locked tests, baseline regenerated + attributed
    — nine days before target.**
 
+_Release-prep notes (2026-07-13):_ the item-4 compound-adapter fix and the
+size-truth docs pass landed together as **#675** (kind gate in
+`createSemanticAdapter`; knownIssue removed; local `[full]` Fetch Data 8/8 with
+real assertions; all doc size figures at measured reality). **v2.8.0 release
+notes are drafted** at `docs-internal/RELEASE_NOTES_v2.8.0-draft.md` — on
+release day, publish.yml auto-creates the release with `--generate-notes`;
+replace its body with the draft via `gh release edit v2.8.0 --notes-file …`.
+_R2 curated-subset expansion (event modifiers) probed and DEFERRED:_ the idea
+was to add event-once/event-debounce/event-throttle to `EXECUTION_SUBSET`
+(R2 is the only signal watching the modifier→runtime layer Arc F opened), but
+a validator probe shows all three are ineligible under the current jsdom
+harness — event-once's en reference errors (`Cannot call non-function: setup`;
+needs a PATTERN_SETUP stub), event-debounce yields an empty effect signature
+(300ms debounce + network fetch vs the 20ms settle window), event-throttle
+yields an empty signature by construction (call-only body, no DOM mutation).
+Adding the IDs would be a silent no-op (auto-excluded references). Making them
+eligible is a small harness slice (PATTERN_SETUP DOM-mutating stubs,
+PATTERN_TRIGGER input/scroll entries, settle/fake-timer handling for debounce)
+plus a baseline regen — fold into **Arc G**, which already owns the
+handler-head family.
+
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
