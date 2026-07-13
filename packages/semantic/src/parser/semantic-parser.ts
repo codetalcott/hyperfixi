@@ -244,6 +244,69 @@ function describeUnconsumedInput(
 }
 
 /**
+ * Normalized keyword forms that are legitimate skip-residue for the per-segment
+ * coverage check (Arc C): role markers the matcher deliberately leaves
+ * unconsumed (qu `hina`→as, hi `में`→in), connectives, and structural glue.
+ * A dropped run counts as a genuine drop only if a token OUTSIDE this set (and
+ * outside the particle/conjunction/boundary classes) survives — see
+ * {@link SemanticParserImpl.recordDroppedTokens}.
+ */
+const COVERAGE_RESIDUE_NORMALIZED = new Set([
+  'to',
+  'from',
+  'into',
+  'onto',
+  'with',
+  'as',
+  'at',
+  'of',
+  'in',
+  'on',
+  'by',
+  'and',
+  'or',
+  'then',
+  'end',
+  'else',
+  'the',
+  'a',
+  'an',
+  'async',
+]);
+
+/**
+ * Hoist `unconsumed-input` diagnostics from every descendant node onto the top
+ * node, deduplicated by message. The coverage sweep and `compile(...).meta`
+ * read only the TOP node's diagnostics; per-segment drops are recorded on the
+ * node whose parse produced them (so they die with a discarded speculative
+ * parse), and this lifts the survivors into view at the outermost parse exit.
+ */
+function hoistUnconsumedDiagnostics(top: SemanticNode): SemanticNode {
+  const collected: Diagnostic[] = [];
+  const seen = new Set<string>((top.diagnostics ?? []).map(d => `${d.code}|${d.message}`));
+  const visit = (node: SemanticNode | null | undefined): void => {
+    if (!node || typeof node !== 'object') return;
+    if (node !== top) {
+      for (const d of node.diagnostics ?? []) {
+        if (d.code !== 'unconsumed-input') continue;
+        const key = `${d.code}|${d.message}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        collected.push(d);
+      }
+    }
+    const rec = node as unknown as Record<string, unknown>;
+    for (const field of NORMALIZE_CHILD_FIELDS) {
+      const child = rec[field];
+      if (Array.isArray(child)) for (const c of child) visit(c as SemanticNode);
+    }
+  };
+  visit(top);
+  if (collected.length === 0) return top;
+  return withDiagnostics(top, [...(top.diagnostics ?? []), ...collected]);
+}
+
+/**
  * Strip a symmetric pair of surrounding quote characters from a string
  * literal token's raw value. Unbalanced values are returned unchanged.
  */
@@ -547,15 +610,149 @@ export class SemanticParserImpl implements ISemanticParser {
     // sub-parses (behavior handlers, block bodies) inherit the outer scope.
     if (this.parseDepth === 0) this.boundIdentifiers.clear();
     this.parseDepth++;
+    this.coverageFrames.push([]);
     try {
-      return normalizeCommandRoles(this.parseInternal(input, language), this.boundIdentifiers);
+      let node = normalizeCommandRoles(this.parseInternal(input, language), this.boundIdentifiers);
+      // Per-segment input-coverage drops recorded during THIS parse attach to
+      // its returned node — so they ride a committed node and die with a
+      // discarded one. The outermost parse then hoists descendants' firings to
+      // the top node, the only diagnostics surface the sweep and compile read.
+      const frame = this.coverageFrames[this.coverageFrames.length - 1];
+      if (frame.length > 0) {
+        node = withDiagnostics(node, [...(node.diagnostics ?? []), ...frame]);
+      }
+      if (this.parseDepth === 1) node = hoistUnconsumedDiagnostics(node);
+      return node;
     } finally {
+      this.coverageFrames.pop();
       this.parseDepth--;
     }
   }
 
   /** Re-entrancy depth of {@link parse} — see boundIdentifiers scoping. */
   private parseDepth = 0;
+
+  /**
+   * Input-coverage frames (Arc C), one per active {@link parse} /
+   * {@link parseStatements} invocation. The per-segment body parsers record a
+   * dropped token run into the CURRENT frame; the frame owner attaches the
+   * records to the node(s) it returns. Speculative parse attempts roll back to
+   * a mark when their result is discarded, so only committed parses fire.
+   */
+  private coverageFrames: Diagnostic[][] = [];
+
+  /** Current record count of the active coverage frame (for rollback). */
+  private coverageMark(): number {
+    const frame = this.coverageFrames[this.coverageFrames.length - 1];
+    return frame ? frame.length : 0;
+  }
+
+  /** Discard coverage records made after `mark` (a speculative parse was rejected). */
+  private coverageRollback(mark: number): void {
+    const frame = this.coverageFrames[this.coverageFrames.length - 1];
+    if (frame && frame.length > mark) frame.length = mark;
+  }
+
+  /** Per-language cache of role-marker surface forms (see residue filter). */
+  private static coverageMarkerSurfaces = new Map<string, Set<string>>();
+
+  /**
+   * Rendered marker words the i18n transformer emits that the semantic profile
+   * does not model as roleMarkers, left unconsumed BY DESIGN after their value
+   * is reclaimed (the trailing responseType reclaim's as-postpositions: hi
+   * `के रूप में`, tr `olarak`, qu `hina` — see the reclaim note in
+   * buildEventHandler). Pure marker residue; a dropped VALUE next to them
+   * (id `sebagai json`) still fires via the value token.
+   */
+  private static readonly LEAKED_RENDER_MARKERS: Record<string, readonly string[]> = {
+    hi: ['के', 'रूप', 'में'],
+    tr: ['olarak'],
+    qu: ['hina'],
+  };
+
+  private static getCoverageMarkerSurfaces(language: string): Set<string> {
+    let surfaces = SemanticParserImpl.coverageMarkerSurfaces.get(language);
+    if (!surfaces) {
+      surfaces = new Set<string>();
+      const markers = tryGetProfile(language)?.roleMarkers;
+      if (markers) {
+        for (const marker of Object.values(markers)) {
+          if (!marker) continue;
+          // Multi-word marker surfaces are tokenized word-by-word — admit each
+          // constituent so a phrase marker strips the same as a one-word one.
+          if (marker.primary) {
+            for (const w of marker.primary.toLowerCase().split(/\s+/)) surfaces.add(w);
+          }
+          for (const alt of marker.alternatives ?? []) {
+            for (const w of alt.toLowerCase().split(/\s+/)) surfaces.add(w);
+          }
+        }
+      }
+      for (const w of SemanticParserImpl.LEAKED_RENDER_MARKERS[language] ?? []) {
+        surfaces.add(w.toLowerCase());
+      }
+      SemanticParserImpl.coverageMarkerSurfaces.set(language, surfaces);
+    }
+    return surfaces;
+  }
+
+  /**
+   * Whether a skipped token is legitimate matcher residue rather than dropped
+   * content: particles, conjunctions, block boundaries (`end`/`fin`/`tukuy`,
+   * including the `closesTrackedBlock`-annotated closers), and role-marker
+   * words (normalized or language-surface forms). See NEXT_STEPS § "Input
+   * coverage" step 3 — residue must not fire the diagnostic.
+   */
+  private isCoverageResidueToken(t: LanguageToken, language: string): boolean {
+    if (t.kind === 'particle' || t.kind === 'conjunction') return true;
+    if ((t.metadata as { closesTrackedBlock?: boolean } | undefined)?.closesTrackedBlock) {
+      return true;
+    }
+    if (
+      this.isThenKeyword(t.value, language) ||
+      this.isEndKeyword(t.value, language) ||
+      this.isElseKeyword(t.value, language)
+    ) {
+      return true;
+    }
+    const norm = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
+    if (COVERAGE_RESIDUE_NORMALIZED.has(norm)) return true;
+    return SemanticParserImpl.getCoverageMarkerSurfaces(language).has(t.value.toLowerCase());
+  }
+
+  /**
+   * Record a token run a body/segment parser discarded without producing a
+   * command (diagnostic ONLY — never touches scores or parse outcomes; the
+   * scoring penalty is Arc D). Fires only when at least one non-residue token
+   * survives the filter, so connectives/boundary markers/role particles the
+   * matcher legitimately skips stay silent.
+   */
+  private recordDroppedTokens(
+    run: readonly LanguageToken[],
+    language: string,
+    context: string
+  ): void {
+    if (run.length === 0) return;
+    const frame = this.coverageFrames[this.coverageFrames.length - 1];
+    if (!frame) return;
+    if (!run.some(t => !this.isCoverageResidueToken(t, language))) return;
+    const text = run
+      .map(t => t.value)
+      .join(' ')
+      .trim();
+    if (!text) return;
+    const shown =
+      text.length > MAX_UNCONSUMED_SPAN_CHARS
+        ? `${text.slice(0, MAX_UNCONSUMED_SPAN_CHARS)}…`
+        : text;
+    frame.push(
+      parseDiagnostic(
+        `${context} left ${run.length} token(s) unconsumed: "${shown}"`,
+        'warning',
+        'unconsumed-input'
+      )
+    );
+  }
 
   /**
    * Identifiers BOUND earlier in the current top-level parse: a loop binding
@@ -1227,7 +1424,22 @@ export class SemanticParserImpl implements ISemanticParser {
     const commandPatterns = getPatternsForLanguage(language)
       .filter(p => p.command !== 'on')
       .sort((a, b) => b.priority - a.priority);
-    return this.parseBodyWithClauses(tokens, commandPatterns, language);
+    // Own coverage frame: drops recorded here attach to the LAST returned
+    // statement (they describe trailing/interior body content), so a caller
+    // that discards the statement list (a speculative block parse) discards
+    // the records with it — same commit-with-the-node discipline as parse().
+    this.coverageFrames.push([]);
+    try {
+      const nodes = this.parseBodyWithClauses(tokens, commandPatterns, language);
+      const frame = this.coverageFrames[this.coverageFrames.length - 1];
+      if (frame.length > 0 && nodes.length > 0) {
+        const last = nodes[nodes.length - 1];
+        nodes[nodes.length - 1] = withDiagnostics(last, [...(last.diagnostics ?? []), ...frame]);
+      }
+      return nodes;
+    } finally {
+      this.coverageFrames.pop();
+    }
   }
 
   /**
@@ -1371,6 +1583,7 @@ export class SemanticParserImpl implements ISemanticParser {
           .filter(p => p.command !== 'on')
           .sort((a, b) => b.priority - a.priority);
         const bodyStream = new TokenStreamImpl(all.slice(ifIdx), language);
+        const foldCoverageMark = this.coverageMark();
         const folded = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
         // A conditional folded if it sits at the top level (body is the single
         // `if` block) OR nested inside the single `compound` wrapper that
@@ -1395,6 +1608,9 @@ export class SemanticParserImpl implements ISemanticParser {
             confidence: match.confidence,
           });
         }
+        // Fold discarded — its coverage records describe a parse that never
+        // happened; the flat path below does its own accounting.
+        this.coverageRollback(foldCoverageMark);
       }
     }
 
@@ -1586,6 +1802,7 @@ export class SemanticParserImpl implements ISemanticParser {
             const commandPatterns = getPatternsForLanguage(language)
               .filter(p => p.command !== 'on')
               .sort((a, b) => b.priority - a.priority);
+            const reparseCoverageMark = this.coverageMark();
             const reparsed = this.parseClause(reparseTokens, commandPatterns, language);
             const first = reparsed[0];
             // Swap ONLY when the re-parse is a SUPERSET of the fused capture: every
@@ -1676,6 +1893,10 @@ export class SemanticParserImpl implements ISemanticParser {
             ) {
               commandNode = first as CommandSemanticNode;
               while (tokens.position() < clauseEnd) tokens.advance();
+            } else {
+              // Re-parse rejected — discard its speculative coverage records
+              // (the tail it re-scanned stays owned by the trailing-body walk).
+              this.coverageRollback(reparseCoverageMark);
             }
           }
         }
@@ -1959,6 +2180,16 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       } else {
         body = [commandNode];
+        // No trailing-body walk ran (next token is an `end` or the stream is
+        // exhausted) — anything left past here is dropped. The residue filter
+        // silences the bare block terminator(s), so only real content fires.
+        if (!tokens.isAtEnd()) {
+          this.recordDroppedTokens(
+            (tokens.tokens as LanguageToken[]).slice(tokens.position()),
+            language,
+            'handler body tail'
+          );
+        }
       }
     } else {
       // Traditional parsing: parse remaining tokens as body commands
@@ -2192,6 +2423,7 @@ export class SemanticParserImpl implements ISemanticParser {
         }
 
         if (trailingTokens.length > 0) {
+          const preParseMark = this.coverageMark();
           const preNodes =
             currentClauseTokens.length > 0
               ? this.parseClause(currentClauseTokens, commandPatterns, language)
@@ -2199,6 +2431,9 @@ export class SemanticParserImpl implements ISemanticParser {
           if (preNodes.length === 0 && currentClauseTokens.length > 0) {
             // Pre-`end` tokens parsed to nothing — a stranded argument (e.g. `200ms`)
             // whose verb sits after `end`. Merge so the verb reclaims its argument.
+            // The discarded first parse's coverage records are superseded by the
+            // merged parse's own accounting.
+            this.coverageRollback(preParseMark);
             clauses.push(
               ...this.parseClause(
                 [...currentClauseTokens, ...trailingTokens],
@@ -2254,6 +2489,18 @@ export class SemanticParserImpl implements ISemanticParser {
       clauses.push(...clauseNodes);
     }
 
+    // Stream remainder after the walk ended at a depth-0 `end`: tokens this
+    // body parse will never read. Per sub-stream by construction — SOV/VSO
+    // extraction passes a re-tokenized segment, so the accounting is
+    // per-segment, never against the outer stream.
+    if (!tokens.isAtEnd()) {
+      this.recordDroppedTokens(
+        (tokens.tokens as LanguageToken[]).slice(tokens.position()),
+        language,
+        'body stream tail'
+      );
+    }
+
     this.foldFrontedWhileIntoRepeat(clauses, language);
 
     // Drop phantom BARE `for` clauses: a lone for-homonym token (bn `জন্য` is
@@ -2306,19 +2553,30 @@ export class SemanticParserImpl implements ISemanticParser {
     commandPatterns: LanguagePattern[],
     language: string
   ): CompoundSemanticNode | null {
+    // Speculative: on any null return Stage 2 falls through to its own
+    // `unconsumed-input` emission — keeping this parse's records would
+    // double-count the same span.
+    const bodyCoverageMark = this.coverageMark();
     let body: SemanticNode[];
     try {
       const freshStream = new TokenStreamImpl(tokens.tokens as LanguageToken[], language);
       body = this.parseBodyWithClauses(freshStream, commandPatterns, language);
     } catch {
+      this.coverageRollback(bodyCoverageMark);
       return null;
     }
 
     // parseBodyWithClauses returns `[compound]` for >1 clause, else the clauses
     // themselves (0 or 1). Anything but the compound means there was no sequence.
-    if (body.length !== 1 || body[0].kind !== 'compound') return null;
+    if (body.length !== 1 || body[0].kind !== 'compound') {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
     const compound = body[0] as CompoundSemanticNode;
-    if (compound.statements.length < 2) return null;
+    if (compound.statements.length < 2) {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
 
     // Carry a real confidence. `parseWithConfidence` reads
     // `node.metadata?.confidence ?? 0.8`, and createCompoundNode sets none — so
@@ -2458,6 +2716,10 @@ export class SemanticParserImpl implements ISemanticParser {
     const clauseStream = new TokenStreamImpl(bodyTokens, language);
     const commands: SemanticNode[] = [];
 
+    // Coverage mark for this clause: if the whole-clause verb-anchoring
+    // fallback below supersedes the per-gap walk, its records are stale.
+    const clauseCoverageMark = this.coverageMark();
+
     // Count of commands produced by the existing paths (matchBest + the `repeat`
     // special-case). Used to decide between per-gap recovery and the legacy
     // whole-clause fallback below — see the `directHits === 0` branch.
@@ -2495,17 +2757,25 @@ export class SemanticParserImpl implements ISemanticParser {
           head.kind === 'selector' ||
           head.kind === 'literal' ||
           (head.kind as string) === 'reference');
-      if (!headIsValue) return;
+      if (!headIsValue) {
+        // Discarded without recovery — a keyword-led run is exactly where
+        // `break`/`continue` clauses vanish (Arc C). Record the drop.
+        this.recordDroppedTokens(run, language, 'body clause');
+        return;
+      }
       // Verb-anchoring on a *fragment* can still mis-fire on a stray marker/keyword
       // (`from`/`into`/`or`/`until`). Keep only well-formed recoveries: a real
       // command schema with at least one captured role.
+      let recoveredFromRun = false;
       for (const node of this.parseSOVClauseByVerbAnchoring(run, language)) {
         const action = (node as { action?: string }).action;
         const roles = (node as { roles?: unknown }).roles;
         if (action && getSchema(action as ActionType) && roles instanceof Map && roles.size > 0) {
           commands.push(node);
+          recoveredFromRun = true;
         }
       }
+      if (!recoveredFromRun) this.recordDroppedTokens(run, language, 'body clause');
     };
 
     while (!clauseStream.isAtEnd()) {
@@ -2628,6 +2898,9 @@ export class SemanticParserImpl implements ISemanticParser {
     if (directHits === 0) {
       const sovCommands = this.parseSOVClauseByVerbAnchoring(bodyTokens, language);
       if (sovCommands.length > 0) {
+        // The whole-clause re-parse consumed what the per-gap walk recorded as
+        // dropped — those records are stale.
+        this.coverageRollback(clauseCoverageMark);
         bodyCommands = sovCommands;
       }
     }
@@ -2653,6 +2926,11 @@ export class SemanticParserImpl implements ISemanticParser {
       );
       // Mirror en's flat `[unless(cond), toggle]` order: guard first, then body.
       return [guardNode, ...bodyCommands];
+    }
+    // A claimed fronted condition that never re-attached to a guard node (no
+    // body command parsed) is dropped with the trailing marker — record it.
+    if (trailingGuard && cond && cond.length > 0 && bodyCommands.length === 0) {
+      this.recordDroppedTokens(cond, language, 'body clause');
     }
 
     return bodyCommands;
@@ -3517,7 +3795,15 @@ export class SemanticParserImpl implements ISemanticParser {
     let clauseHadMatch = false;
     const flushClause = () => {
       if (!clauseHadMatch && skippedClauseTokens.length > 0) {
-        commands.push(...this.parseSOVClauseByVerbAnchoring(skippedClauseTokens, language));
+        const recovered = this.parseSOVClauseByVerbAnchoring(skippedClauseTokens, language);
+        commands.push(...recovered);
+        if (recovered.length === 0) {
+          this.recordDroppedTokens(skippedClauseTokens, language, 'fused body walk');
+        }
+      } else if (skippedClauseTokens.length > 0) {
+        // A clause that DID match a pattern also silently discards its skipped
+        // tokens (the recovery is gated on !clauseHadMatch) — record them.
+        this.recordDroppedTokens(skippedClauseTokens, language, 'fused body walk');
       }
       skippedClauseTokens = [];
       clauseHadMatch = false;
@@ -3711,6 +3997,16 @@ export class SemanticParserImpl implements ISemanticParser {
 
     flushClause();
 
+    // Stream remainder after the walk ended at a depth-0 `end` — the fused
+    // path's sibling of the parseBodyWithClauses exit check.
+    if (!tokens.isAtEnd()) {
+      this.recordDroppedTokens(
+        (tokens.tokens as LanguageToken[]).slice(tokens.position()),
+        language,
+        'fused body walk'
+      );
+    }
+
     // Drop phantom BARE `for` clauses — the parseBodyWithClauses guard,
     // mirrored on this fused-body path: a lone for-homonym token (bn `জন্য`,
     // both the for-keyword and a duration/benefactive postposition) orphaned
@@ -3765,9 +4061,13 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Reset token stream and parse using clause-based parsing
     const freshStream = new TokenStreamImpl(allTokens as LanguageToken[], language);
+    const bodyCoverageMark = this.coverageMark();
     const body = this.parseBodyWithClauses(freshStream, commandPatterns, language);
 
-    if (body.length === 0) return null;
+    if (body.length === 0) {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
 
     // Always a single element: parseBodyWithClauses wraps >1 clause into ONE
     // compound and otherwise returns the lone clause. (A `createCompoundNode`
@@ -4063,8 +4363,12 @@ export class SemanticParserImpl implements ISemanticParser {
 
     const commandPatterns = patterns.filter(p => p.command !== 'on');
     const bodyStream = new TokenStreamImpl(bodyTokens, language);
+    const bodyCoverageMark = this.coverageMark();
     const body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
-    if (body.length === 0) return null;
+    if (body.length === 0) {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
 
     return createEventHandler({ type: 'literal', value: eventName }, body, undefined, {
       sourceLanguage: language,
@@ -4129,8 +4433,12 @@ export class SemanticParserImpl implements ISemanticParser {
 
       const commandPatterns = patterns.filter(p => p.command !== 'on');
       const bodyStream = new TokenStreamImpl(bodyTokens, language);
+      const bodyCoverageMark = this.coverageMark();
       const body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
-      if (body.length === 0) return null;
+      if (body.length === 0) {
+        this.coverageRollback(bodyCoverageMark);
+        return null;
+      }
 
       return createEventHandler({ type: 'literal', value: eventName }, body, undefined, {
         sourceLanguage: language,
@@ -4432,9 +4740,13 @@ export class SemanticParserImpl implements ISemanticParser {
     const bodyStream = new TokenStreamImpl(bodyTokens, language);
 
     // Use clause-based parsing to handle then-chains
+    const bodyCoverageMark = this.coverageMark();
     const body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
 
-    if (body.length === 0) return null;
+    if (body.length === 0) {
+      this.coverageRollback(bodyCoverageMark);
+      return null;
+    }
 
     // Build event metadata including key filter and source info
     const metadata: Record<string, unknown> = {
@@ -4787,6 +5099,9 @@ export class SemanticParserImpl implements ISemanticParser {
     if (!this.isIfKeyword(headVal, language)) return null;
 
     const startMark = tokens.mark();
+    // Speculative: a failed fold rewinds the stream, so any coverage records
+    // its branch parses made describe a parse that never happened.
+    const foldCoverageMark = this.coverageMark();
     tokens.advance(); // consume if/unless
 
     // Collect the whole block from the stream: every token up to the matching
@@ -4821,6 +5136,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     if (blockTokens.length === 0) {
       tokens.reset(startMark);
+      this.coverageRollback(foldCoverageMark);
       return null;
     }
 
@@ -4898,6 +5214,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     if (condTokens.length === 0) {
       tokens.reset(startMark);
+      this.coverageRollback(foldCoverageMark);
       return null;
     }
     void sawThen;
@@ -4929,6 +5246,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // the existing per-clause path can try (e.g. a stray `if` token).
     if (thenBranch.length === 0 && (!elseBranch || elseBranch.length === 0)) {
       tokens.reset(startMark);
+      this.coverageRollback(foldCoverageMark);
       return null;
     }
 
