@@ -108,7 +108,14 @@ jobs:
           # domain-* first, which produced four spurious "⚠ build failed"
           # warnings on every run (the packages then built fine in the later
           # Build check step, once semantic/dist existed).
-          BUILD_ORDER="intent framework semantic domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server server-bridge types-browser vite-plugin language-server reactivity realtime components speech intent-element"
+          # The PRIVATE packages (domain-toolkit, mcp-multilingual-intent,
+          # developer-tools) must build too — publish.yml's list says why:
+          # their dist/ must exist for tsc to resolve cross-package imports
+          # (mcp-server typechecks against @hyperfixi/developer-tools), and
+          # developer-tools' dist ships the prism-hyperscript-i18n asset the
+          # bundle-compatibility harness pages load (validation v5: every
+          # bundle "failed" on that one missing asset).
+          BUILD_ORDER="intent framework semantic domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn domain-toolkit domain-config behaviors core patterns-reference i18n hyperscript-adapter aot-compiler compilation-service planner mcp-server mcp-multilingual-intent developer-tools server-bridge types-browser vite-plugin language-server reactivity realtime components speech intent-element"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then
