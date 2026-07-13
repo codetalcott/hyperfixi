@@ -243,13 +243,13 @@
     "ws": "^8.0.0"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
+    "@lokascript/semantic": "^2.7.2",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
-    "@lokascript/semantic": "^2.7.2",
-    "tsx": "^4.0.0"
+    "tsx": "^4.23.1",
+    "typescript": "^5.0.0"
   },
   "repository": {
     "type": "git",
