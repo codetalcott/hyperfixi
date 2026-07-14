@@ -21,6 +21,7 @@ const PLUGIN_PATTERNS = [
   ['worker', 'worker Calculator def add(a, b) return a + b end end'],
   ['bind', 'bind $name to #input-a'],
   ['live', 'live put `Count: ${$count}` into me end'],
+  ['when', 'when $count changes put $count into #out end'],
 ] as const;
 
 test.describe('Shipped bundle auto-installs plugins @quick', () => {

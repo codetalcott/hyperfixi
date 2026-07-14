@@ -1,8 +1,8 @@
 {
   "$schema": "./baseline.schema.json",
   "purpose": "Tree-shaking + bundle-size baseline for the evaluator consolidation arc (parser/runtime.ts canonical + ExpressionRegistry).",
-  "generated": "2026-05-19",
-  "commit": "9bc8f4c8",
+  "generated": "2026-07-14",
+  "commit": "ba39dce4",
   "tolerance_percent": 5,
   "notes": "Updated 2026-05-19 to add `hyperfixi-hx-v4.js` (item 15 in htmx-v4-reactive-streaming.md follow-ups). hyperfixi.js refreshed to current size — drift since 2026-05-18 is in the user-visible improvement direction (-8.4% gzip), driven by the SSE template-cache refactor (commit b7182753, item 8) replacing a nested ternary with a switch + closure form that compresses better. Run `node scripts/bundle-size-snapshot.mjs --check` after any future change; failures (±5% drift) point to tree-shaking regressions.",
   "bundles": {
@@ -10,43 +10,43 @@
       "config": "rollup.browser-minimal.config.mjs",
       "entry": "src/compatibility/browser-bundle-minimal-v2.ts",
       "evaluator_strategy": "createCoreRegistry (3 of 7 categories: references, logical, special) + parser/runtime.ts canonical evaluator",
-      "raw_bytes": 298504,
-      "gzip_bytes": 71818
+      "raw_bytes": 319676,
+      "gzip_bytes": 77671
     },
     "hyperfixi-standard.js": {
       "config": "rollup.browser-standard.config.mjs",
       "entry": "src/compatibility/browser-bundle-standard-v2.ts",
       "evaluator_strategy": "createCommonRegistry (5 of 7 categories) + parser/runtime.ts canonical evaluator",
-      "raw_bytes": 326008,
-      "gzip_bytes": 78025
+      "raw_bytes": 348032,
+      "gzip_bytes": 84308
     },
     "hyperfixi-classic.js": {
       "config": "rollup.browser-classic.config.mjs",
       "entry": "src/compatibility/browser-bundle-classic.ts",
       "evaluator_strategy": "createExpressionRegistry (6 of 7 categories: caller-selected) + parser/runtime.ts canonical evaluator",
-      "raw_bytes": 390726,
-      "gzip_bytes": 93272
+      "raw_bytes": 410111,
+      "gzip_bytes": 98945
     },
     "hyperfixi-classic-i18n.js": {
       "config": "rollup.browser-classic-i18n.config.mjs",
       "entry": "src/compatibility/browser-bundle-classic-i18n.ts",
       "evaluator_strategy": "createExpressionRegistry (6 of 7 categories) + i18n keyword mapping + parser/runtime.ts canonical evaluator",
-      "raw_bytes": 500589,
-      "gzip_bytes": 127747
+      "raw_bytes": 549289,
+      "gzip_bytes": 142988
     },
     "hyperfixi.js": {
       "config": "rollup.browser.config.mjs",
       "entry": "src/compatibility/browser-bundle.ts",
       "evaluator_strategy": "kitchen-sink Runtime → constructs full ExpressionRegistry (7 categories) + parser/runtime.ts canonical evaluator",
-      "raw_bytes": 1167489,
-      "gzip_bytes": 252336
+      "raw_bytes": 1391944,
+      "gzip_bytes": 307845
     },
     "hyperfixi-hx-v4.js": {
       "config": "rollup.browser-hybrid-hx-v4.config.mjs",
       "entry": "src/compatibility/browser-bundle-hybrid-hx-v4.ts",
       "evaluator_strategy": "full Runtime + @hyperfixi/reactivity auto-install + htmx-compat (hx-* / fx-* / hx-live / sse-* / ws-*); canonical evaluator",
-      "raw_bytes": 1210765,
-      "gzip_bytes": 265601
+      "raw_bytes": 1429409,
+      "gzip_bytes": 320035
     }
   }
 }
