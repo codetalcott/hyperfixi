@@ -187,12 +187,19 @@ export function generateVerbFirstPattern(
 
   // Verb first, then the required role(s) with NO marker (the marker is what
   // disambiguates roles in canonical SOV; verb-first input typically omits it).
-  const roleTokens: PatternToken[] = requiredRoles.map(r => ({
-    type: 'role',
-    role: r.role,
-    optional: false,
-    expectedTypes: r.expectedTypes,
-  }));
+  // A valuePrefixLiteral (rolePrefixLiteralVariants clones only) still precedes
+  // its role's value — the SOV transformer renders `移動 url "/page" に`
+  // verb-first, which is exactly this shape (trailing particle tolerated).
+  const roleTokens: PatternToken[] = requiredRoles.flatMap(r => {
+    const prefix = r.valuePrefixLiteral?.[profile.code];
+    const roleToken: PatternToken = {
+      type: 'role',
+      role: r.role,
+      optional: false,
+      expectedTypes: r.expectedTypes,
+    };
+    return prefix ? [{ type: 'literal', value: prefix } as PatternToken, roleToken] : [roleToken];
+  });
 
   return {
     id: `${schema.action}-${profile.code}-generated-verb-first`,
@@ -256,6 +263,46 @@ export function generatePatternVariants(
     const verbFirst = generateVerbFirstPattern(schema, profile, config);
     if (verbFirst) {
       patterns.push(verbFirst);
+    }
+  }
+
+  // Value-prefix-literal variants: an EXTRA pattern per entry with a REQUIRED
+  // literal keyword immediately before the named role's value (`go [to] url
+  // {destination}`). Higher priority than the counterpart pattern, but inert
+  // unless the keyword is present — base patterns above stay byte-identical,
+  // so forms riding on them (`go back`) cannot regress. The matched keyword is
+  // recorded as a fixed-value literal in the variant's methodCarrier role.
+  for (const v of schema.rolePrefixLiteralVariants ?? []) {
+    const literal = v.literal[profile.code];
+    if (!literal) continue;
+    const { rolePrefixLiteralVariants: _omitted, ...baseSchema } = schema;
+    const cloneSchema: CommandSchema = {
+      ...baseSchema,
+      roles: schema.roles.map(r =>
+        r.role === v.role ? { ...r, valuePrefixLiteral: { [profile.code]: literal } } : r
+      ),
+    };
+    const delta = v.priorityDelta ?? 5;
+    const carrier: Record<string, ExtractionRule> = v.methodCarrier
+      ? { [v.methodCarrier]: { value: literal } }
+      : {};
+    const main = generatePattern(cloneSchema, profile, config);
+    patterns.push({
+      ...main,
+      id: `${schema.action}-${profile.code}-generated-${v.idSuffix}`,
+      priority: (config.basePriority ?? 100) + delta,
+      extraction: { ...main.extraction, ...carrier },
+    });
+    if (config.generateVerbFirstVariants !== false) {
+      const verbFirstUrl = generateVerbFirstPattern(cloneSchema, profile, config);
+      if (verbFirstUrl) {
+        patterns.push({
+          ...verbFirstUrl,
+          id: `${schema.action}-${profile.code}-generated-verb-first-${v.idSuffix}`,
+          priority: (config.basePriority ?? 100) - 20 + delta,
+          extraction: { ...verbFirstUrl.extraction, ...carrier },
+        });
+      }
     }
   }
 
@@ -700,6 +747,16 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     expectedTypes: roleSpec.expectedTypes,
   };
 
+  // Required literal immediately before the role VALUE (rolePrefixLiteralVariants
+  // clones only): `[to] url {destination}`, `url {destination} に`. Deliberately
+  // NOT an optional group — the variant must only match when the keyword is
+  // present, so base patterns keep winning everywhere else.
+  const prefixLiteral = roleSpec.valuePrefixLiteral?.[profile.code];
+  const pushPrefixed = (): void => {
+    if (prefixLiteral) tokens.push({ type: 'literal', value: prefixLiteral });
+    tokens.push(roleValueToken);
+  };
+
   // Use override marker if available, otherwise use default
   if (overrideMarker !== undefined) {
     // Command-specific marker override. Multi-word markers (e.g. "partials in",
@@ -716,9 +773,9 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     };
     if (position === 'before') {
       for (const word of markerWords) pushWord(word);
-      tokens.push(roleValueToken);
+      pushPrefixed();
     } else {
-      tokens.push(roleValueToken);
+      pushPrefixed();
       for (const word of markerWords) pushWord(word);
     }
   } else if (defaultMarker) {
@@ -751,15 +808,15 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
       if (defaultMarker.primary) {
         pushMarker(asMarker());
       }
-      tokens.push(roleValueToken);
+      pushPrefixed();
     } else {
       // Postposition/particle: "#button に"
-      tokens.push(roleValueToken);
+      pushPrefixed();
       pushMarker(asMarker());
     }
   } else {
     // No marker, just the role value
-    tokens.push(roleValueToken);
+    pushPrefixed();
   }
 
   return tokens;
@@ -783,7 +840,12 @@ function buildExtractionRules(
     const overrideMarker = roleSpec.markerOverride?.[profile.code];
     const defaultMarker = profile.roleMarkers[roleSpec.role];
 
-    if (overrideMarker !== undefined) {
+    if (roleSpec.valuePrefixLiteral?.[profile.code]) {
+      // The prefix literal sits immediately before the value on every surface,
+      // so it is the extraction anchor (push/replace's proven `url` shape) —
+      // it wins over the role's own marker (`to`), which may be optional/absent.
+      rules[roleSpec.role] = { marker: roleSpec.valuePrefixLiteral[profile.code] };
+    } else if (overrideMarker !== undefined) {
       // Use the override marker
       rules[roleSpec.role] = overrideMarker ? { marker: overrideMarker } : {};
     } else if (defaultMarker && defaultMarker.primary) {
