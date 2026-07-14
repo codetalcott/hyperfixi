@@ -3237,6 +3237,26 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >   same gap. (3) R2 curated subset should admit one bare non-click event
 >   pattern (e.g. input-validation, `on blur`) to close the structural blind
 >   spot this probe exposed.
+>
+> **V3c landed (2026-07-14, warn-first) — items (1) and (2) above confirmed and
+> the corpus-live slice dict-fixed.** The coverage check fills V3's `continue`
+> branch: for a dict event S5b doesn't cover, the form must resolve to the
+> canonical event on the parse side — tokenizer keyword table first (the parse
+> authority; clears sw `panya_juu`→mouseup), then S5b under another key (the
+> wrong-event signal), `eventLocalizationDenylist` pairs skipped (exported as
+> `getEventLocalizationDenylist()`). Warn-tier: never gates, no waivers.
+> First sweep: **148 warns** across the 14 covered languages, incl. a 6-row
+> wrong-event class (id/zh mouseenter→mouseover + mouseleave→mouseout, zh
+> keypress→keydown, vi load→**fetch**). A live-row probe of repeat-until-event
+> found **six languages shipping broken listeners** (de/fr/id/it/pl/zh — junk
+> verbatim events like `mausunten`, id bound `keydown` for mousedown); no
+> native candidate round-trips in any of them (probed: split forms shatter to
+> their first word, fused forms capture verbatim, zh `松键` resolves to
+> keyup), so all six dict rows moved to **English passthrough** (the Batch-2
+> id-keyup precedent). zh's repeat `until=NONE` remains — pre-existing
+> `直到 把 事件` glue, the th/zh event-slot deferral class, baseline-neutral.
+> Remaining 130-odd V3c warns are corpus-cold burn-down material (post-release,
+> alias-or-dict-fix per the Batch-2 discipline).
 
 > **V1 probe conclusion (Batch 3, 2026-07-12) — verb/connective reconciliation;
 > ledger 90 → 0 unwaived (38 dict fixes + 2 profile-alternatives + 50 waived) +
@@ -3464,6 +3484,28 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    investigation** (why did the full bundle grow ~2.6× past its documented
    size — reactivity+realtime pre-install? multilingual growth? terser config
    drift?) **+ size-truth pass over CLAUDE.md / docs/BROWSER_BUNDLES.md.**
+   _Investigation CONCLUDED (2026-07-14, read-only — remediation stays
+   post-release):_ the growth is **one duplication event, not drift**.
+   Published-tarball curve (gzip): 2.0.0 **219 KB** → 2.2.0 273 → 2.4.0/2.5.1
+   253 → 2.6.0 **286** → 2.7.0 **529** (+243 KB in ONE release window,
+   07-07→07-08). Root cause: **#616's plugin pre-install imports
+   `@hyperfixi/reactivity`/`realtime`, whose dists import `@hyperfixi/core` —
+   nodeResolve inlines core's prebuilt `dist/index.mjs` (3.2 MB, which itself
+   embeds a full `@lokascript/semantic`) ALONGSIDE the src-compiled tree.**
+   Evidence: sourcemap sources show `index.mjs` 3,183 KB + `semantic/dist`
+   1,608 KB; distinctive strings DOUBLE 2.6.0→2.7.2 (`sov-simple` 1→2,
+   `tıklama` 2→4, `CommandSequence` 15→29); reactivity/dist imports
+   `@hyperfixi/core`. hx-v4 imports browser-bundle.js and inherits it.
+   _Remediation (post-release):_ dedupe by aliasing `@hyperfixi/core` to the
+   in-build src graph in rollup.browser.config.mjs (or externalize core in the
+   plugin builds) — est. **−240 KB gz, back to ~290**; then re-verify [full]
+   compat + plugin install, refresh `scripts/bundle-snapshots/baseline.json`
+   (still at 2026-05-19's 252 KB), and re-do the size-truth docs pass. The
+   reactivity/realtime code itself is tiny (24 + 14 KB src). Secondary,
+   only after dedupe: main-bundle terser is weaker than hx-v4's (passes:1,
+   no property mangling). Tooling note: source-map-explorer chokes on
+   @rollup/plugin-terser maps ("column Infinity") — attribute via the map's
+   sources/sourcesContent directly.
    _Second discovery (first real run of the [full] compat suite — it runs
    NOWHERE else; ci.yml browser-tests is `--project=quick` only):_ the
    gallery fetch-data page throws **"Unknown command: compound"** on every

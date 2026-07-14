@@ -12,6 +12,7 @@ import {
   getTokenizer,
   eventNameTranslations,
   getSOVEventMarkers,
+  getEventLocalizationDenylist,
 } from '@lokascript/semantic';
 import { dictionaries, profiles as grammarProfiles } from '@lokascript/i18n';
 import type { LangVocab, VocabModel } from './types';
@@ -21,6 +22,7 @@ export function loadVocabModel(languageFilter?: readonly string[]): VocabModel {
     code => !languageFilter || languageFilter.includes(code)
   );
   const sovEventMarkers = getSOVEventMarkers();
+  const eventDenylists = getEventLocalizationDenylist();
 
   const languages: LangVocab[] = [];
   for (const code of codes) {
@@ -87,6 +89,20 @@ export function loadVocabModel(languageFilter?: readonly string[]): VocabModel {
       eventTranslations: eventNameTranslations[code],
       sovEventMarkers: sovEventMarkers[code],
       classify: tokenizer ? (word: string) => tokenizer.classifyToken(word) : undefined,
+      normalizeWord: tokenizer
+        ? (word: string) => {
+            // Parse-authority resolution: what the keyword table turns this
+            // word into. Only trustworthy when the word survives as ONE token
+            // (a shattered compound resolves to its first fragment — that is
+            // the broken-listener class itself, not a resolution).
+            const stream = tokenizer.tokenize(word) as {
+              tokens?: readonly { normalized?: string }[];
+            };
+            const toks = stream.tokens ?? [];
+            return toks.length === 1 ? toks[0]?.normalized : undefined;
+          }
+        : undefined,
+      eventDenylist: eventDenylists[code],
     });
   }
 

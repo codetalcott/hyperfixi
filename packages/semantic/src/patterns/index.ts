@@ -45,7 +45,12 @@ export { getEventHandlerPatternsForLanguage } from './event-handler';
 export { getGrammarTransformedPatternsForLanguage } from './grammar-transformed';
 
 // Event handler utilities
-export { eventNameTranslations, normalizeEventName, localizeEventName } from './event-handler';
+export {
+  eventNameTranslations,
+  normalizeEventName,
+  localizeEventName,
+  getEventLocalizationDenylist,
+} from './event-handler';
 
 // =============================================================================
 // Registry Pattern Generator Setup

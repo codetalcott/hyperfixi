@@ -95,8 +95,12 @@ export const de: Dictionary = {
   events: {
     click: 'klick',
     dblclick: 'doppelklick',
-    mousedown: 'mausunten',
-    mouseup: 'mausoben',
+    // mousedown/mouseup: English passthrough — no native form round-trips on the
+    // parse side (V3c probe 2026-07-14: fused forms captured verbatim, split forms
+    // shattered to their first word — live broken listeners in repeat-until-event).
+    // The Batch-2 id-keyup precedent; revisit if S5b + tokenizer gain native entries.
+    mousedown: 'mousedown',
+    mouseup: 'mouseup',
     mouseenter: 'mauseintreten',
     mouseleave: 'mausverlassen',
     // V3 Batch 2: fused/dead event words realigned to the de tokenizer's

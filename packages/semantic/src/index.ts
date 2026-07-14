@@ -123,6 +123,7 @@ export {
   eventNameTranslations,
   normalizeEventName,
   localizeEventName,
+  getEventLocalizationDenylist,
 } from './patterns';
 
 // =============================================================================

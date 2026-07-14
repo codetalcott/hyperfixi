@@ -93,8 +93,12 @@ export const id: Dictionary = {
   events: {
     click: 'klik',
     dblclick: 'klik_ganda',
-    mousedown: 'tekan_mouse',
-    mouseup: 'lepas_mouse',
+    // mousedown/mouseup: English passthrough — no native form round-trips on the
+    // parse side (V3c probe 2026-07-14: fused forms captured verbatim, split forms
+    // shattered to their first word — live broken listeners in repeat-until-event).
+    // The Batch-2 id-keyup precedent; revisit if S5b + tokenizer gain native entries.
+    mousedown: 'mousedown',
+    mouseup: 'mouseup',
     mouseenter: 'mouse_masuk',
     mouseleave: 'mouse_keluar',
     // V3 Batch 2: mouse_atas/mouse_luar captured no event (the S5b forms

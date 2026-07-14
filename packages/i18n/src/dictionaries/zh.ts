@@ -93,8 +93,12 @@ export const zh: Dictionary = {
   events: {
     click: '点击',
     dblclick: '双击',
-    mousedown: '鼠标按下',
-    mouseup: '鼠标抬起',
+    // mousedown/mouseup: English passthrough — no native form round-trips on the
+    // parse side (V3c probe 2026-07-14: fused forms captured verbatim, split forms
+    // shattered to their first word — live broken listeners in repeat-until-event).
+    // The Batch-2 id-keyup precedent; revisit if S5b + tokenizer gain native entries.
+    mousedown: 'mousedown',
+    mouseup: 'mouseup',
     mouseenter: '鼠标进入',
     mouseleave: '鼠标离开',
     // V3 Batch 2: 鼠标悬停 captured no event (expression:undefined) — realigned

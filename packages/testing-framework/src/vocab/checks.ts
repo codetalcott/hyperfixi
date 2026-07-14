@@ -176,7 +176,15 @@ function checkEventNames(lang: LangVocab, findings: Finding[]): void {
 
   for (const [english, native] of Object.entries(events)) {
     const natives = englishToNatives.get(english);
-    if (!natives) continue; // S5b does not cover this event — parse-side coverage gap, not a conflict
+    if (!natives) {
+      // V3c — S5b has NO entry for this event, so V3 above is blind here: a
+      // broken dictionary event word hides exactly in this branch (id
+      // tekan_mouse/lepas_mouse — corpus-live, zh 鼠标进入, fr sourisappuyée).
+      // Verify the dict form still resolves to the canonical event on the
+      // parse side. Warn-tier: never gates, no waivers.
+      checkUncoveredEvent(lang, english, native, findings);
+      continue;
+    }
     if (!natives.has(norm(native))) {
       findings.push({
         check: 'V3',
@@ -188,6 +196,59 @@ function checkEventNames(lang: LangVocab, findings: Finding[]): void {
       });
     }
   }
+}
+
+/**
+ * V3c — coverage companion to V3: a dictionary event whose English key is
+ * ABSENT from eventNameTranslations. V3 compares only covered events, so a
+ * dict form here can be arbitrarily broken without any signal (the S5b
+ * coverage-gap family: V3's own `continue` branch). Resolution order follows
+ * the Batch 2 verdict — the TOKENIZER keyword table is the parse authority
+ * (clears deliberate mappings like sw panya_juu→mouseup); S5b under another
+ * key is the wrong-event signal (zh 鼠标进入→mouseover). Denylisted pairs are
+ * intentionally English — never flagged.
+ */
+function checkUncoveredEvent(
+  lang: LangVocab,
+  english: string,
+  native: string,
+  findings: Finding[]
+): void {
+  if (lang.eventDenylist?.has(english)) return;
+  const dictNorm = norm(native);
+  const englishNorm = norm(english);
+  if (dictNorm === englishNorm) return; // English passthrough always round-trips
+
+  // 1) Parse authority: single-token keyword-table normalization.
+  let resolved: string | undefined;
+  if (!/\s/.test(native) && lang.normalizeWord) {
+    const n = lang.normalizeWord(native);
+    if (n && norm(n) !== dictNorm) resolved = norm(n);
+  }
+  // 2) S5b under a DIFFERENT English key (underscore↔space tolerant).
+  if (!resolved && lang.eventTranslations) {
+    const spaced = dictNorm.replace(/_/g, ' ');
+    for (const [nat, eng] of Object.entries(lang.eventTranslations)) {
+      const natNorm = norm(nat);
+      if (natNorm === dictNorm || natNorm === spaced) {
+        resolved = norm(eng);
+        break;
+      }
+    }
+  }
+
+  if (resolved === englishNorm) return; // round-trips; S5b just lacks the row (alias candidate)
+
+  findings.push({
+    check: 'V3c',
+    tier: 'warn',
+    language: lang.language,
+    key: english,
+    message: resolved
+      ? `event "${english}": dictionary renders "${native}" but the parse side resolves it to "${resolved}" (S5b has no ${english} entry — V3-invisible) — wrong-event listener risk`
+      : `event "${english}": dictionary renders "${native}" which the parse side does not resolve to any event (S5b has no ${english} entry — V3-invisible) — broken-listener risk`,
+    source: `dictionary.events.${english}`,
+  });
 }
 
 /** V4 — every parse/render vocab word must classify as keyword/particle in that language's tokenizer. */
@@ -243,7 +304,7 @@ export function runChecks(model: VocabModel, checks?: readonly CheckId[]): Findi
   for (const lang of model.languages) {
     if (enabled('V1') || enabled('V1b')) checkKeywords(lang, findings);
     if (enabled('V2')) checkRoleMarkers(lang, findings);
-    if (enabled('V3') || enabled('V3b')) checkEventNames(lang, findings);
+    if (enabled('V3') || enabled('V3b') || enabled('V3c')) checkEventNames(lang, findings);
     if (enabled('V4')) checkTokenizerClassification(lang, findings);
   }
   return checks ? findings.filter(f => checks.includes(f.check)) : findings;
