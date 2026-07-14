@@ -163,6 +163,81 @@ describe('V3 — event names', () => {
   });
 });
 
+describe('V3c — dictionary events NOT covered by eventNameTranslations', () => {
+  // The gap this closes: V3's `continue` branch skips any dict event whose
+  // English key is absent from S5b, so a broken form there was invisible
+  // (id tekan_mouse/lepas_mouse, zh 鼠标进入, fr sourisappuyée).
+  const base = { eventTranslations: { クリック: 'click' } }; // covered lang, but no mousedown key
+
+  it('warns (broken-listener) when the uncovered form resolves to nothing', () => {
+    const findings = runChecks(
+      model({ ...base, dictionary: { events: { mousedown: 'tekan_mouse' } } })
+    );
+    const warns = of(findings, 'V3c', 'warn');
+    expect(warns).toHaveLength(1);
+    expect(warns[0].key).toBe('mousedown');
+    expect(warns[0].message).toContain('broken-listener');
+  });
+
+  it('warns (wrong-event) when S5b maps the form to a DIFFERENT event', () => {
+    const findings = runChecks(
+      model({
+        eventTranslations: { 鼠标进入: 'mouseover' },
+        dictionary: { events: { mouseenter: '鼠标进入' } },
+      })
+    );
+    const warns = of(findings, 'V3c', 'warn');
+    expect(warns).toHaveLength(1);
+    expect(warns[0].key).toBe('mouseenter');
+    expect(warns[0].message).toContain('"mouseover"');
+    expect(warns[0].message).toContain('wrong-event');
+  });
+
+  it('stays silent when the tokenizer keyword table resolves the form (parse authority)', () => {
+    // sw panya_juu: S5b says mouseover, but the tokenizer deliberately maps
+    // it to mouseup for the corpus — tokenizer wins, no warn.
+    const findings = runChecks(
+      model({
+        eventTranslations: { 'panya juu': 'mouseover' },
+        dictionary: { events: { mouseup: 'panya_juu' } },
+        normalizeWord: w => (w === 'panya_juu' ? 'mouseup' : undefined),
+      })
+    );
+    expect(of(findings, 'V3c')).toHaveLength(0);
+  });
+
+  it('stays silent for denylisted (intentionally-English) pairs', () => {
+    const findings = runChecks(
+      model({
+        ...base,
+        dictionary: { events: { mousedown: 'kaput_form' } },
+        eventDenylist: new Set(['mousedown']),
+      })
+    );
+    expect(of(findings, 'V3c')).toHaveLength(0);
+  });
+
+  it('stays silent for English passthrough forms', () => {
+    const findings = runChecks(model({ ...base, dictionary: { events: { keyup: 'keyup' } } }));
+    expect(of(findings, 'V3c')).toHaveLength(0);
+  });
+
+  it('stays silent when S5b covers the form under the SAME event via underscore↔space', () => {
+    const findings = runChecks(
+      model({
+        eventTranslations: { クリック: 'click', 'tekan tombol': 'keydown' },
+        dictionary: { events: { keydown: 'tekan_tombol' } },
+      })
+    );
+    expect(of(findings, 'V3c')).toHaveLength(0);
+  });
+
+  it('never fires for a language without an eventNameTranslations table (V3b owns that)', () => {
+    const findings = runChecks(model({ dictionary: { events: { mousedown: 'tekan_mouse' } } }));
+    expect(of(findings, 'V3c')).toHaveLength(0);
+  });
+});
+
 describe('V4 — tokenizer classification', () => {
   const classify = (word: string) => (word === 'kaydır' ? 'identifier' : 'keyword');
 

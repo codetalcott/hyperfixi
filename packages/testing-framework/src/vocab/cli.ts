@@ -65,7 +65,7 @@ interface Args {
   format: DumpFormat;
 }
 
-const VALID_CHECKS: readonly CheckId[] = ['V1', 'V1b', 'V2', 'V3', 'V3b', 'V4'];
+const VALID_CHECKS: readonly CheckId[] = ['V1', 'V1b', 'V2', 'V3', 'V3b', 'V3c', 'V4'];
 
 function parseArgs(argv: string[]): Args {
   const here = path.dirname(fileURLToPath(import.meta.url));

@@ -455,6 +455,17 @@ const eventLocalizationDenylist: Record<string, ReadonlySet<string>> = {
 };
 
 /**
+ * Read-only view of the intentional-English event set, for external
+ * consistency tooling (the vocab validator's V3c coverage check): a
+ * (language, englishEvent) pair listed here is EXPECTED not to round-trip
+ * natively — flagging it would be a false positive. Regenerate the underlying
+ * table from the event-name-translation round-trip test, never by hand.
+ */
+export function getEventLocalizationDenylist(): Record<string, ReadonlySet<string>> {
+  return eventLocalizationDenylist;
+}
+
+/**
  * Localize a single English event name to the target language, or return it
  * unchanged when there is no round-trip-safe native (non-covered language,
  * unmapped event, or a denylisted pair). Passthrough is always safe because

@@ -7,7 +7,7 @@
 
 export type Tier = 'error' | 'warn' | 'info';
 
-export type CheckId = 'V1' | 'V1b' | 'V2' | 'V3' | 'V3b' | 'V4';
+export type CheckId = 'V1' | 'V1b' | 'V2' | 'V3' | 'V3b' | 'V3c' | 'V4';
 
 export interface Finding {
   check: CheckId;
@@ -64,6 +64,20 @@ export interface LangVocab {
   sovEventMarkers?: readonly string[] | undefined;
   /** S5a — word-level tokenizer classification. Absent if no tokenizer registered. */
   classify?: ((word: string) => string) | undefined;
+  /**
+   * S5a — tokenizer keyword-table normalization for a SINGLE word: what the
+   * parse side actually resolves the word to (undefined when the word doesn't
+   * tokenize as exactly one token, or has no normalization). The parse
+   * authority for V3c — S5b can be aspirational (Batch 2).
+   */
+  normalizeWord?: ((word: string) => string | undefined) | undefined;
+  /**
+   * English events INTENTIONALLY kept English for this language (the
+   * test-locked `eventLocalizationDenylist` from `@lokascript/semantic`):
+   * a dict event word for a denylisted pair is expected not to round-trip —
+   * V3c must not flag it.
+   */
+  eventDenylist?: ReadonlySet<string> | undefined;
 }
 
 export interface VocabModel {
