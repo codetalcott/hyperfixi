@@ -3511,14 +3511,17 @@ window: items 1–4 are **must-have**, item 5 is the **stretch headline**.
    1,608 KB; distinctive strings DOUBLE 2.6.0→2.7.2 (`sov-simple` 1→2,
    `tıklama` 2→4, `CommandSequence` 15→29); reactivity/dist imports
    `@hyperfixi/core`. hx-v4 imports browser-bundle.js and inherits it.
-   _Remediation (post-release):_ dedupe by aliasing `@hyperfixi/core` to the
-   in-build src graph in rollup.browser.config.mjs (or externalize core in the
-   plugin builds) — est. **−240 KB gz, back to ~290**; then re-verify [full]
-   compat + plugin install, refresh `scripts/bundle-snapshots/baseline.json`
-   (still at 2026-05-19's 252 KB), and re-do the size-truth docs pass. The
-   reactivity/realtime code itself is tiny (24 + 14 KB src). Secondary,
-   only after dedupe: main-bundle terser is weaker than hx-v4's (passes:1,
-   no property mangling). Tooling note: source-map-explorer chokes on
+   _Remediation LANDED (2026-07-14, pulled forward pre-release):_
+   `@rollup/plugin-alias` maps `@hyperfixi/core` → the src barrel in BOTH
+   browser configs (rollup.browser.config.mjs + rollup.browser-hybrid-hx-v4);
+   hyperfixi.js **546 → 306 KB gz (~299 KB)**, hx-v4 **553 → 318 KB (~311)**.
+   Duplication proof: `sov-simple` 2→1, `tıklama` 4→2, index.mjs gone from the
+   sourcemap. Verified: bundled-plugins guard (now incl. `when`), hx-v4
+   reactive suite 12/12, bundle-compatibility 92/92, core 7205.
+   `bundle-snapshots/baseline.json` refreshed; pre-publish ceilings ratcheted
+   560→340/350 KB specifically to catch RE-duplication. Secondary lever still
+   post-release: main-bundle terser is weaker than hx-v4's (passes:1, no
+   property mangling). Tooling note: source-map-explorer chokes on
    @rollup/plugin-terser maps ("column Infinity") — attribute via the map's
    sources/sourcesContent directly.
    _Second discovery (first real run of the [full] compat suite — it runs

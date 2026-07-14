@@ -1,8 +1,16 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import alias from '@rollup/plugin-alias';
+import { fileURLToPath } from 'node:url';
 
 const noTerser = process.env.NO_TERSER === '1';
+
+// Dedupe (same as rollup.browser.config.mjs — separate rollup invocation, so
+// the alias must be repeated here): fold the plugin dists' `@hyperfixi/core`
+// imports onto the src graph instead of inlining core's prebuilt dist/index.mjs
+// (which embeds a second @lokascript/semantic) as a duplicate copy.
+const coreSrcBarrel = fileURLToPath(new URL('src/index.ts', import.meta.url));
 
 /**
  * HyperFixi Hybrid-HX v4 Bundle
@@ -39,6 +47,9 @@ export default {
     exports: 'named',
   },
   plugins: [
+    alias({
+      entries: [{ find: '@hyperfixi/core', replacement: coreSrcBarrel }],
+    }),
     nodeResolve({
       browser: true,
       preferBuiltins: false,
