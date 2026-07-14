@@ -3522,6 +3522,80 @@ export class SemanticParserImpl implements ISemanticParser {
     if (!spec) return;
     const roles = command.roles as Map<SemanticRole, SemanticValue>;
     const existing = roles.get(spec.role);
+    // go-url REBIND: a fused event pattern (go-event-*-vso and kin) can bind
+    // the invariant `url` keyword itself as the destination and leave the real
+    // URL unconsumed right behind it (`en clic ir a url "/page"` →
+    // destination=expression:"url", "/page" dropped). Mirror the command-path
+    // url variant: destination = the value, keyword carried as `method`.
+    // (The en reference captures exactly this shape via the generated
+    // go-en-generated-url pattern.)
+    if (
+      action === 'go' &&
+      existing &&
+      existing.type === 'expression' &&
+      String((existing as { raw?: unknown }).raw).toLowerCase() === 'url'
+    ) {
+      const next = stream.peek();
+      if (next && !NON_VALUE_KEYWORDS.has((next.normalized ?? next.value).toLowerCase())) {
+        const v = this.tokenToSemanticValue(next);
+        if (v.type === 'literal' || v.type === 'selector') {
+          roles.set(spec.role, v);
+          roles.set('method', { type: 'literal', value: 'url' } as SemanticValue);
+          stream.advance();
+          return;
+        }
+      }
+      // The fused pattern may have swallowed the URL into a schema-invalid
+      // `patient` slot instead of leaving it in the stream (go declares no
+      // patient) — relabel it (the responseType-relabel precedent).
+      const pat = roles.get('patient');
+      if (pat && (pat.type === 'literal' || pat.type === 'selector')) {
+        roles.set(spec.role, pat);
+        roles.set('method', { type: 'literal', value: 'url' } as SemanticValue);
+        roles.delete('patient');
+        return;
+      }
+    }
+
+    // Same idiom, already-glued shape: an upstream fold captured the whole
+    // phrase as one expression (`url /page`, qu whole-handler fold) with
+    // nothing left in the stream. Split it in place.
+    if (action === 'go' && existing && existing.type === 'expression') {
+      const m = /^url\s+(\S+)$/i.exec(String((existing as { raw?: unknown }).raw ?? ''));
+      if (m) {
+        const value = m[1].replace(/^["']|["']$/g, '');
+        roles.set(spec.role, { type: 'literal', value, dataType: 'string' } as SemanticValue);
+        roles.set('method', { type: 'literal', value: 'url' } as SemanticValue);
+        return;
+      }
+    }
+
+    // Same idiom, patient-slot shape: the fused es-vso class binds the `url`
+    // keyword under PATIENT (destination still absent here — the patient→
+    // primaryRole relabel runs later, in normalizeCommandRoles) with the URL
+    // token next in the stream. Capture it now, before the relabel turns the
+    // keyword itself into the destination and the URL drops.
+    if (action === 'go' && !existing) {
+      const pat = roles.get('patient');
+      if (
+        pat &&
+        pat.type === 'expression' &&
+        String((pat as { raw?: unknown }).raw).toLowerCase() === 'url'
+      ) {
+        const next = stream.peek();
+        if (next && !NON_VALUE_KEYWORDS.has((next.normalized ?? next.value).toLowerCase())) {
+          const v = this.tokenToSemanticValue(next);
+          if (v.type === 'literal' || v.type === 'selector') {
+            roles.set(spec.role, v);
+            roles.set('method', { type: 'literal', value: 'url' } as SemanticValue);
+            roles.delete('patient');
+            stream.advance();
+            return;
+          }
+        }
+      }
+    }
+
     if (existing && !(existing.type === 'reference' && existing.value === 'me')) return;
 
     const profile = tryGetProfile(language);
@@ -3565,6 +3639,31 @@ export class SemanticParserImpl implements ISemanticParser {
     if (markerSurface !== null && !sawMarker) return;
 
     const consume = run.length + (sawMarker ? 1 : 0);
+
+    // go-url IDIOM: a two-token run `url <value>` is the navigation idiom, not
+    // an opaque expression — capture destination = the value and carry the
+    // invariant keyword as `method`, matching the en reference (which parses
+    // this via the generated go-en-generated-url pattern). Gluing it
+    // (`expression:"url \"/page\""`) was faithful only while the en reference
+    // itself was corrupted the same way.
+    if (action === 'go' && run.length === 2 && run[0].value.toLowerCase() === 'url') {
+      const v = this.tokenToSemanticValue(run[1]);
+      if (v.type === 'literal' || v.type === 'selector') {
+        roles.set(spec.role, v);
+        roles.set('method', { type: 'literal', value: 'url' } as SemanticValue);
+        const pat = roles.get('patient');
+        if (
+          pat &&
+          pat.type === 'reference' &&
+          pat.value === 'me' &&
+          !getSchema(action as ActionType)?.roles.some(r => r.role === 'patient')
+        ) {
+          roles.delete('patient');
+        }
+        for (let i = 0; i < consume; i++) stream.advance();
+        return;
+      }
+    }
 
     // The ja tokenizer splits the compound verb `JS実行` into `JS<keyword>` +
     // `実行<identifier>`; the fused pattern's verb matched the `JS` head, so
