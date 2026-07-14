@@ -90,17 +90,19 @@ export const ja: Dictionary = {
 
   events: {
     click: 'クリック',
-    dblclick: 'ダブルクリック',
+    dblclick: 'dblclick',
     mousedown: 'マウス押下',
     mouseup: 'マウス解放',
-    mouseenter: 'マウス入る',
-    mouseleave: 'マウス離れる',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    mouseenter: 'mouseenter',
+    mouseleave: 'mouseleave',
     // V3 Batch 2: kanji compounds realigned to the S5b/tokenizer katakana
     // loanwords (the standard JS event terms; the compounds captured
     // event=expression:undefined — broken listeners)
     mouseover: 'マウスオーバー',
     mouseout: 'マウスアウト',
-    mousemove: 'マウス移動',
+    mousemove: 'mousemove',
     keydown: 'キーダウン',
     keyup: 'キーアップ',
     keypress: 'キープレス',
@@ -111,13 +113,13 @@ export const ja: Dictionary = {
     submit: '送信',
     reset: 'リセット',
     load: '読み込み',
-    unload: '読み込み解除',
+    unload: 'unload',
     resize: 'サイズ変更',
     scroll: 'スクロール',
-    touchstart: 'タッチ開始',
-    touchend: 'タッチ終了',
-    touchmove: 'タッチ移動',
-    touchcancel: 'タッチキャンセル',
+    touchstart: 'touchstart',
+    touchend: 'touchend',
+    touchmove: 'touchmove',
+    touchcancel: 'touchcancel',
   },
 
   logical: {

@@ -96,10 +96,12 @@ export const bengaliDictionary: Dictionary = {
     focus: 'ফোকাস',
     blur: 'ঝাপসা',
     reset: 'রিসেট',
-    keydown: 'কি-ডাউন',
-    keyup: 'কি-আপ',
-    mouseover: 'মাউস-ওভার',
-    mouseout: 'মাউস-আউট',
+    keydown: 'keydown',
+    keyup: 'keyup',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    mouseover: 'mouseover',
+    mouseout: 'mouseout',
     scroll: 'স্ক্রোল',
     resize: 'রিসাইজ',
     every: 'প্রতি',

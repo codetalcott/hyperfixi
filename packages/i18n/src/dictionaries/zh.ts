@@ -99,8 +99,8 @@ export const zh: Dictionary = {
     // The Batch-2 id-keyup precedent; revisit if S5b + tokenizer gain native entries.
     mousedown: 'mousedown',
     mouseup: 'mouseup',
-    mouseenter: '鼠标进入',
-    mouseleave: '鼠标离开',
+    mouseenter: 'mouseenter',
+    mouseleave: 'mouseleave',
     // V3 Batch 2: 鼠标悬停 captured no event (expression:undefined) — realigned
     // to the tokenizer-registered 鼠标移入 (also S5b-listed). 按键抬起
     // prefix-shattered to 按键 and captured `keydown` (a keyup handler firing
@@ -112,7 +112,7 @@ export const zh: Dictionary = {
     mousemove: '鼠标移动',
     keydown: '按键按下',
     keyup: '松键',
-    keypress: '按键',
+    keypress: 'keypress',
     focus: '聚焦',
     blur: '失焦',
     change: '改变',
@@ -124,9 +124,11 @@ export const zh: Dictionary = {
     resize: '调整大小',
     scroll: '滚动',
     touchstart: '触摸开始',
-    touchend: '触摸结束',
+    touchend: 'touchend',
     touchmove: '触摸移动',
-    touchcancel: '触摸取消',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    touchcancel: 'touchcancel',
   },
 
   logical: {

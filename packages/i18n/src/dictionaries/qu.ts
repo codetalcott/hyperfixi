@@ -103,23 +103,23 @@ export const qu: Dictionary = {
 
   events: {
     click: 'ñitiy',
-    dblclick: 'iskay_ñitiy',
+    dblclick: 'dblclick',
     // Fused (no `_`): the semantic tokenizer splits on `_` — and `rat_ñitiy` then
     // mis-captured as the `click` event (ñitiy→click). Mirrors the #535 ru/uk fuse.
     mousedown: 'ratñitiy',
     mouseup: 'rathuqariy',
-    mouseenter: 'rat_yaykuy',
-    mouseleave: 'rat_lluqsiy',
-    mouseover: 'rat_hawapi',
-    mouseout: 'rat_hawamanta',
-    mousemove: 'rat_kuyuy',
+    mouseenter: 'mouseenter',
+    mouseleave: 'mouseleave',
+    mouseover: 'mouseover',
+    mouseout: 'mouseout',
+    mousemove: 'mousemove',
     // V3 Batch 2: `yupana_ñitiy` split at `_` and mis-captured as the `click`
     // event (ñitiy→click, the same mechanism as the mousedown fuse above);
     // `yupana_huqariy` captured verbatim `huqariy`. Realigned to the
     // S5b/tokenizer forms.
     keydown: 'llave uray',
     keyup: 'llave hawa',
-    keypress: 'yupana_ñitana',
+    keypress: 'keypress',
     focus: 'qhaway',
     blur: 'paqariy',
     change: 'kambiay', // Batch 3: tikray is the toggle verb — on-change listener captured event "toggle"
@@ -127,13 +127,15 @@ export const qu: Dictionary = {
     submit: 'apaykachay', // Batch 3: kachay is the send verb — on-submit captured "send" in one corpus slot
     reset: 'musuqchay', // Batch 3: qallariy is the init/start word — on-reset listener captured event "default"
     load: 'apakuy',
-    unload: 'urmay',
+    unload: 'unload',
     resize: 'hatun_kay',
     scroll: 'kunray',
-    touchstart: 'llamiy_qallay',
-    touchend: 'llamiy_tukuy',
-    touchmove: 'llamiy_kuyuy',
-    touchcancel: 'llamiy_hark_ay',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    touchstart: 'touchstart',
+    touchend: 'touchend',
+    touchmove: 'touchmove',
+    touchcancel: 'touchcancel',
   },
 
   logical: {

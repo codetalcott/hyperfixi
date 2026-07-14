@@ -47,7 +47,9 @@ describe('New Language Support', () => {
 
     it('should handle events properly', () => {
       const result = translator.translate('on mouseenter add .hover', { from: 'en', to: 'tr' });
-      expect(result).toContain('fare_gir');
+      // V3c burn-down 2026-07-14: fare_gir never round-tripped on the parse
+      // side (broken listener); mouseenter is English passthrough now.
+      expect(result).toContain('mouseenter');
       expect(result).toContain('ekle');
     });
 
@@ -198,7 +200,9 @@ describe('New Language Support', () => {
 
     it('should handle double-click events', () => {
       const result = translator.translate('on dblclick focus on me', { from: 'en', to: 'sw' });
-      expect(result).toContain('bonyeza_mara_mbili'); // dblclick → bonyeza_mara_mbili
+      // V3c burn-down 2026-07-14: bonyeza_mara_mbili never round-tripped on
+      // the parse side (broken listener); dblclick is English passthrough now.
+      expect(result).toContain('dblclick');
       // V3 Batch 2: events.focus realigned zingatia → lenga (zingatia never
       // tokenized as an event — matches commands.focus and the S5b table)
       expect(result).toContain('lenga'); // focus → lenga

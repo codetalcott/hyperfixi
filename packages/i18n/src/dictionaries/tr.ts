@@ -90,23 +90,25 @@ export const tr: Dictionary = {
 
   events: {
     click: 'tıklama',
-    dblclick: 'çift_tıklama',
+    dblclick: 'dblclick',
     // Fused (no `_`): the semantic tokenizer splits on `_`, breaking event
     // recognition (mousedown → "bas" / mouseup mis-captured). Mirrors the #535
     // ru/uk fuse + #510 resize fix.
     mousedown: 'farebas',
     mouseup: 'farebırak',
-    mouseenter: 'fare_gir',
-    mouseleave: 'fare_çık',
+    mouseenter: 'mouseenter',
+    mouseleave: 'mouseleave',
     // V3 Batch 2: same `_`-split class (tuş_bas captured verbatim `bas` — a
     // listener for a DOM event named "bas") — realigned to the S5b/tokenizer
     // fused forms.
     mouseover: 'fareiçinde',
     mouseout: 'faredışında',
-    mousemove: 'fare_hareket',
+    mousemove: 'mousemove',
     keydown: 'tuşbasma',
     keyup: 'tuşbırakma',
-    keypress: 'tuş_basım',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    keypress: 'keypress',
     focus: 'odak',
     blur: 'bulanık',
     change: 'değişim',
@@ -114,13 +116,13 @@ export const tr: Dictionary = {
     submit: 'gönderme', // Batch 3: gönder is the send verb — on-submit listener captured event "send"
     reset: 'sıfırla',
     load: 'yükle',
-    unload: 'yükle_kaldır',
+    unload: 'unload',
     resize: 'boyutlandırma',
     scroll: 'kaydır',
-    touchstart: 'dokunma_başla',
-    touchend: 'dokunma_bitir',
-    touchmove: 'dokunma_hareket',
-    touchcancel: 'dokunma_iptal',
+    touchstart: 'touchstart',
+    touchend: 'touchend',
+    touchmove: 'touchmove',
+    touchcancel: 'touchcancel',
   },
 
   logical: {

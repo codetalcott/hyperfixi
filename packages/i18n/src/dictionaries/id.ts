@@ -92,15 +92,15 @@ export const id: Dictionary = {
 
   events: {
     click: 'klik',
-    dblclick: 'klik_ganda',
+    dblclick: 'dblclick',
     // mousedown/mouseup: English passthrough — no native form round-trips on the
     // parse side (V3c probe 2026-07-14: fused forms captured verbatim, split forms
     // shattered to their first word — live broken listeners in repeat-until-event).
     // The Batch-2 id-keyup precedent; revisit if S5b + tokenizer gain native entries.
     mousedown: 'mousedown',
     mouseup: 'mouseup',
-    mouseenter: 'mouse_masuk',
-    mouseleave: 'mouse_keluar',
+    mouseenter: 'mouseenter',
+    mouseleave: 'mouseleave',
     // V3 Batch 2: mouse_atas/mouse_luar captured no event (the S5b forms
     // `mouse masuk`/`mouse keluar` are aspirational — they don't tokenize
     // either) — realigned to the tokenizer-registered natives. keydown keeps
@@ -109,10 +109,10 @@ export const id: Dictionary = {
     // passthrough, matching the blur/reset precedent below.
     mouseover: 'arahkan',
     mouseout: 'tinggalkan',
-    mousemove: 'gerak_mouse',
+    mousemove: 'mousemove',
     keydown: 'tekan_tombol',
     keyup: 'keyup',
-    keypress: 'pencet_tombol',
+    keypress: 'keypress',
     focus: 'fokus',
     blur: 'blur',
     change: 'ubah',
@@ -123,10 +123,12 @@ export const id: Dictionary = {
     unload: 'bongkar',
     resize: 'ubah_ukuran',
     scroll: 'gulir',
-    touchstart: 'mulai_sentuh',
-    touchend: 'akhir_sentuh',
-    touchmove: 'gerak_sentuh',
-    touchcancel: 'batal_sentuh',
+    touchstart: 'touchstart',
+    touchend: 'touchend',
+    touchmove: 'touchmove',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    touchcancel: 'touchcancel',
   },
 
   logical: {
