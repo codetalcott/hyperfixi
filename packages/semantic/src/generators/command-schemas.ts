@@ -84,6 +84,15 @@ export interface RoleSpec {
    * Used by `put` to expose `into|before|after` as the `method` role.
    */
   readonly methodCarrier?: SemanticRole;
+  /**
+   * Literal keyword required IMMEDIATELY before this role's VALUE, independent
+   * of the role marker's side (a preposition stays before it, a postposed
+   * particle stays after the value): `a url "/page"`, `url "/page" তে`. Set
+   * only on schema clones built by the pattern generator's
+   * `rolePrefixLiteralVariants` expansion — never on a base schema, so base
+   * patterns stay byte-identical.
+   */
+  readonly valuePrefixLiteral?: Record<string, string>;
 }
 
 /**
@@ -134,6 +143,26 @@ export interface CommandSchema {
    * transition goal NOTE); a separate variant has no skippable group at all.
    */
   readonly omitRoleVariants?: ReadonlyArray<SemanticRole>;
+  /**
+   * Generate an EXTRA, higher-priority pattern variant per entry, with a
+   * REQUIRED literal keyword inserted immediately before the named role's
+   * value token (`go [to] url {destination}` beside `go [to] {destination}`).
+   * Because the literal is required, the variant is inert unless the keyword
+   * is present — the base patterns are untouched, so forms that ride on them
+   * (`go back`) cannot regress. The matched keyword is recorded as a
+   * fixed-value literal in `methodCarrier` (mirroring {@link RoleSpec.methodCarrier}).
+   */
+  readonly rolePrefixLiteralVariants?: ReadonlyArray<{
+    readonly role: SemanticRole;
+    /** Per-language keyword (e.g. URL_MARKER_ALL_LANGS). Languages absent from the map get no variant. */
+    readonly literal: Record<string, string>;
+    /** Pattern id suffix, e.g. 'url' → `<action>-<lang>-generated-url`. */
+    readonly idSuffix: string;
+    /** Priority delta over the counterpart pattern (default +5). */
+    readonly priorityDelta?: number;
+    /** Record the matched keyword as this role (fixed-value extraction). */
+    readonly methodCarrier?: SemanticRole;
+  }>;
   /** Notes about special handling */
   readonly notes?: string;
   /**
@@ -1625,6 +1654,39 @@ export const continueSchema: CommandSchema = {
 // =============================================================================
 
 /**
+ * `url` is a globally-recognized tech acronym; we use it as the marker
+ * keyword across all 24 supported languages to keep the parser surface
+ * consistent with the core hyperscript grammar (`push url <X>`).
+ * (Defined here, above its first schema reference — `goSchema` — to avoid TDZ.)
+ */
+const URL_MARKER_ALL_LANGS: Record<string, string> = {
+  en: 'url',
+  es: 'url',
+  pt: 'url',
+  fr: 'url',
+  de: 'url',
+  it: 'url',
+  ja: 'url',
+  ko: 'url',
+  zh: 'url',
+  ar: 'url',
+  he: 'url',
+  hi: 'url',
+  bn: 'url',
+  tr: 'url',
+  ru: 'url',
+  uk: 'url',
+  pl: 'url',
+  id: 'url',
+  vi: 'url',
+  th: 'url',
+  ms: 'url',
+  tl: 'url',
+  sw: 'url',
+  qu: 'url',
+};
+
+/**
  * Go command: navigates to a URL.
  */
 export const goSchema: CommandSchema = {
@@ -1649,6 +1711,19 @@ export const goSchema: CommandSchema = {
       // the patient particle as a destination-marker alternative, scoped to go.
       markerOptional: { en: true },
       markerVariants: { he: ['את'], zh: ['把'] },
+    },
+  ],
+  // `go to url "/page"` — without this variant the destination captures the
+  // bare word `url` and the actual URL is dropped as tolerated-trailing text,
+  // in en and therefore in every render (the go-url corpus row). The required
+  // `url` literal keeps the variant inert for `go back` / scroll forms.
+  rolePrefixLiteralVariants: [
+    {
+      role: 'destination',
+      literal: URL_MARKER_ALL_LANGS,
+      idSuffix: 'url',
+      priorityDelta: 5,
+      methodCarrier: 'method',
     },
   ],
 };
@@ -2591,38 +2666,6 @@ export const scrollSchema: CommandSchema = {
       markerOverride: { en: 'to' },
     },
   ],
-};
-
-/**
- * `url` is a globally-recognized tech acronym; we use it as the marker
- * keyword across all 24 supported languages to keep the parser surface
- * consistent with the core hyperscript grammar (`push url <X>`).
- */
-const URL_MARKER_ALL_LANGS: Record<string, string> = {
-  en: 'url',
-  es: 'url',
-  pt: 'url',
-  fr: 'url',
-  de: 'url',
-  it: 'url',
-  ja: 'url',
-  ko: 'url',
-  zh: 'url',
-  ar: 'url',
-  he: 'url',
-  hi: 'url',
-  bn: 'url',
-  tr: 'url',
-  ru: 'url',
-  uk: 'url',
-  pl: 'url',
-  id: 'url',
-  vi: 'url',
-  th: 'url',
-  ms: 'url',
-  tl: 'url',
-  sw: 'url',
-  qu: 'url',
 };
 
 /**

@@ -498,23 +498,38 @@ const sendMapper: CommandMapper = {
 /**
  * Go command mapper (navigation).
  *
- * Semantic: go source:/page destination:url
- * AST: { name: 'go', args: [/page], modifiers: { to: url } }
+ * The runtime's GoCommand reads ONLY positional args (never modifiers):
+ *   args[0] === 'back'          → history back
+ *   args includes 'url'         → next arg is the URL (go [to] url "/page")
+ *   arg starts with '/'/scheme  → bare-URL navigation
+ *   otherwise                   → scroll (go to top of #header)
+ *
+ * Semantic: go destination:/page [method:url]
+ * AST: { name: 'go', args: ['url', '/page'] } | { args: ['back'] } | { args: [<dest>] }
  */
 const goMapper: CommandMapper = {
   action: 'go',
   toAST(node, _builder) {
-    const source = convertRoleValue(node, 'source');
-    const destination = convertRoleValue(node, 'destination');
+    const dest = node.roles.get('destination');
+    const method = node.roles.get('method');
 
     const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
 
-    // Source is the URL/location to navigate to
-    if (source) args.push(source);
-    if (destination) modifiers['to'] = destination;
+    const rawDest =
+      dest && 'value' in dest ? dest.value : (dest as { raw?: unknown } | undefined)?.raw;
+    if (dest && String(rawDest) === 'back') {
+      // The runtime keys on the literal string 'back'; an expression-typed
+      // capture would evaluate as a variable lookup instead.
+      args.push({ type: 'literal', value: 'back' } as ExpressionNode);
+    } else if (dest) {
+      if (method && String('value' in method ? method.value : undefined) === 'url') {
+        args.push({ type: 'literal', value: 'url' } as ExpressionNode);
+      }
+      const destExpr = convertRoleValue(node, 'destination');
+      if (destExpr) args.push(destExpr);
+    }
 
-    return createCommandNode('go', args, modifiers);
+    return createCommandNode('go', args, {});
   },
 };
 

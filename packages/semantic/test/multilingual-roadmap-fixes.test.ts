@@ -11316,11 +11316,14 @@ describe('go destination marker: en bare form + he/zh patient-particle variants'
   });
 
   it('[en] `go to url "/page"` still parses with the marker (marked form locked)', () => {
+    // Originally locked destination CONTAINING 'url' — that was the go-url
+    // destination-drop bug (the URL itself was tolerated-trailing and lost).
+    // The url-keyword variant now anchors extraction on the `url` literal:
+    // destination is the actual URL, the keyword is carried as `method`.
     const node = parse('go to url "/page"', 'en') as unknown as Record<string, any>;
     expect(node.action).toBe('go');
-    expect(String(role(node, 'destination')?.raw ?? role(node, 'destination')?.value)).toContain(
-      'url'
-    );
+    expect(String(role(node, 'destination')?.value)).toBe('/page');
+    expect(String(role(node, 'method')?.value)).toBe('url');
   });
 
   for (const [lang, line] of [
@@ -11344,11 +11347,11 @@ describe('go destination marker: en bare form + he/zh patient-particle variants'
     ['zh', '前往 到 url "/page"'],
   ] as const) {
     it(`[${lang}] \`${line}\`: the primary destination marker still parses (go-url locked)`, () => {
+      // Was locked to destination CONTAINING 'url' (the destination-drop bug);
+      // now locked to the corrected capture — destination = the actual URL.
       const node = parse(line, lang) as unknown as Record<string, any>;
       expect(node.action).toBe('go');
-      expect(String(role(node, 'destination')?.raw ?? role(node, 'destination')?.value)).toContain(
-        'url'
-      );
+      expect(String(role(node, 'destination')?.value)).toBe('/page');
     });
   }
 });
@@ -13427,10 +13430,15 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
       ['tr', 'tıklama de git url "/page" e'],
     ];
     for (const [lang, src] of GO_ROWS) {
-      it(`[${lang}] go-url: destination phrase reclaimed as expression, default-me patient leak dropped`, () => {
+      it(`[${lang}] go-url: url idiom captured (destination=/page, method=url), default-me patient leak dropped`, () => {
+        // Originally locked the GLUED expression capture (`url "/page"`) —
+        // faithful only while the en reference was corrupted the same way.
+        // The reclaim now recognizes the two-token `url <value>` idiom and
+        // captures it like the en go-en-generated-url pattern does.
         const g = first(collect(parse(src, lang)), 'go');
-        expect(role(g, 'destination')?.type).toBe('expression');
-        expect(role(g, 'destination')?.raw).toContain('url');
+        expect(role(g, 'destination')?.type).toBe('literal');
+        expect(String(role(g, 'destination')?.value)).toBe('/page');
+        expect(String(role(g, 'method')?.value)).toBe('url');
         expect(role(g, 'patient')).toBeUndefined();
       });
     }
@@ -13762,10 +13770,15 @@ describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/HANDOFF_r1
     });
   });
 
-  it('[qu] go-url: destination typed expression (the en reference type)', () => {
+  it('[qu] go-url: url idiom captured (destination=/page literal, method=url)', () => {
+    // Originally locked destination typed `expression` — the en reference's
+    // type at the time, which was itself the go-url destination-drop bug.
+    // The glued `url /page` fold is now split by the go-url idiom reclaim.
     const cmds = collect(parse('url "/page" man ñitiy pi riy', 'qu'));
     const go = cmds.find(c => c.action === 'go');
-    expect(role(go, 'destination')?.type).toBe('expression');
+    expect(role(go, 'destination')?.type).toBe('literal');
+    expect(String(role(go, 'destination')?.value)).toBe('/page');
+    expect(String(role(go, 'method')?.value)).toBe('url');
   });
 
   it('[qu] window-resize: event resolves to resize, call keeps ONLY its expression patient', () => {
@@ -13835,4 +13848,90 @@ describe('Spanish hacia destination alignment (vocab Batch 1, V2+V4)', () => {
     const roles = put!.roles as Map<string, { value?: unknown }>;
     expect(roles.get('destination')?.value).toBe('#output');
   });
+});
+
+describe('go-url destination capture (docs-internal/MULTILINGUAL_NEXT_STEPS.md "go-url destination drop")', () => {
+  // `go to url "/page"` used to capture destination=expression:"url" and DROP
+  // the URL — in en and therefore in every render (the en reference itself was
+  // corrupted, so fidelity 1.0 masked it ×24). The generated url-keyword
+  // variant (rolePrefixLiteralVariants on goSchema) anchors extraction on the
+  // `url` literal that every language's render keeps immediately before the
+  // value.
+  function roleValue(node: unknown, role: string): unknown {
+    const rec = node as { roles?: Map<string, { value?: unknown; raw?: unknown }> } | null;
+    const v = rec?.roles?.get(role);
+    if (!v) return undefined;
+    return v.value !== undefined ? v.value : v.raw;
+  }
+  function findGo(node: unknown): { action?: string; roles?: Map<string, unknown> } | null {
+    if (!node || typeof node !== 'object') return null;
+    const rec = node as Record<string, unknown>;
+    if (rec.action === 'go') return rec as { action: string; roles: Map<string, unknown> };
+    for (const f of ['body', 'commands', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) {
+        for (const x of c) {
+          const hit = findGo(x);
+          if (hit) return hit;
+        }
+      } else if (c && typeof c === 'object') {
+        const hit = findGo(c);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+
+  it('[en] `go to url "/page"` captures destination=/page + method=url', () => {
+    const node = parse('go to url "/page"', 'en');
+    expect(node?.action).toBe('go');
+    expect(roleValue(node, 'destination')).toBe('/page');
+    expect(roleValue(node, 'method')).toBe('url');
+  });
+
+  it('[en] marker-less `go url "/page"` also captures destination=/page', () => {
+    const node = parse('go url "/page"', 'en');
+    expect(node?.action).toBe('go');
+    expect(roleValue(node, 'destination')).toBe('/page');
+  });
+
+  // Corpus-shaped bare go-url commands (the exact body the transformer renders).
+  const bareCases: Array<[string, string]> = [
+    ['es', 'ir a url "/page"'],
+    ['he', 'לך על url "/page"'],
+    ['zh', '前往 到 url "/page"'],
+    ['ja', '移動 url "/page" に'],
+    ['tr', 'git url "/page" e'],
+  ];
+  for (const [lang, input] of bareCases) {
+    it(`[${lang}] \`${input}\` captures destination=/page`, () => {
+      const node = parse(input, lang);
+      const go = node?.action === 'go' ? node : findGo(node);
+      expect(go).not.toBeNull();
+      expect(roleValue(go, 'destination')).toBe('/page');
+    });
+  }
+
+  it('[en] full corpus handler `on click go to url "/page"` keeps the URL in the body', () => {
+    const node = parse('on click go to url "/page"', 'en');
+    expect(node).not.toBeNull();
+    const go = findGo(node);
+    expect(go).not.toBeNull();
+    expect(roleValue(go, 'destination')).toBe('/page');
+  });
+
+  // go-back guards: the base patterns are byte-identical, so these must not move.
+  const backCases: Array<[string, string]> = [
+    ['en', 'go back'],
+    ['he', 'לך את back'],
+    ['zh', '前往 把 back'],
+  ];
+  for (const [lang, input] of backCases) {
+    it(`[${lang}] go-back guard: \`${input}\` still captures destination=back, no method`, () => {
+      const node = parse(input, lang);
+      expect(node?.action).toBe('go');
+      expect(String(roleValue(node, 'destination'))).toBe('back');
+      expect(roleValue(node, 'method')).toBeUndefined();
+    });
+  }
 });

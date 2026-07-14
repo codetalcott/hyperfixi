@@ -453,9 +453,14 @@ describe('Send Command Mapper', () => {
 // =============================================================================
 
 describe('Go Command Mapper', () => {
-  it('should map go with source (URL)', () => {
+  // The runtime's GoCommand reads ONLY positional args: 'back' → history,
+  // 'url' + next arg → URL navigation, bare value → bare-url/scroll branches.
+  // (The old mapper read a `source` role the schema never produces and emitted
+  // `modifiers.to`, which the runtime ignores — go's semantic path was dead.)
+  it('should map the url idiom to args ["url", <destination>]', () => {
     const node = createCommandNode('go', {
-      source: literal('/path/to/page', 'string'),
+      destination: literal('/page', 'string'),
+      method: literal('url', 'string'),
     });
 
     const mapper = getCommandMapper('go')!;
@@ -463,12 +468,14 @@ describe('Go Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('go');
-    expect(result.args[0]).toMatchObject({ type: 'literal', value: '/path/to/page' });
+    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'url' });
+    expect(result.args[1]).toMatchObject({ type: 'literal', value: '/page' });
+    expect(result.modifiers ?? {}).toEqual({});
   });
 
-  it('should map go with destination modifier', () => {
+  it('should map go back to args ["back"]', () => {
     const node = createCommandNode('go', {
-      destination: literal('top', 'string'),
+      destination: literal('back', 'string'),
     });
 
     const mapper = getCommandMapper('go')!;
@@ -476,7 +483,22 @@ describe('Go Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('go');
-    expect(result.modifiers!['to']).toMatchObject({ type: 'literal', value: 'top' });
+    expect(result.args).toHaveLength(1);
+    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'back' });
+  });
+
+  it('should map a plain destination to a single positional arg', () => {
+    const node = createCommandNode('go', {
+      destination: literal('/path/to/page', 'string'),
+    });
+
+    const mapper = getCommandMapper('go')!;
+    const builder = new ASTBuilder();
+    const result = mapper.toAST(node, builder);
+
+    expect(result.name).toBe('go');
+    expect(result.args).toHaveLength(1);
+    expect(result.args[0]).toMatchObject({ type: 'literal', value: '/path/to/page' });
   });
 });
 
