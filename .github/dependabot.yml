@@ -18,6 +18,14 @@ updates:
       minor-and-patch:
         patterns:
           - '*'
+        # Known group-breakers get individual PRs for deliberate handling:
+        # vitest 4.1.x mass-breaks the core test transform; prettier 3.9.5
+        # reflows enough files to add lint errors. Excluded 2026-07-14 so the
+        # rest of the group can go green + auto-merge (#668 was the red PR).
+        exclude-patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - 'prettier'
         update-types:
           - 'minor'
           - 'patch'
