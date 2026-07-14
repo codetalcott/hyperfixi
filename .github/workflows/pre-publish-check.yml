@@ -323,22 +323,19 @@ jobs:
           echo "## Bundle Size Limit Validation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Size limits (gzipped bytes), set 2026-07-13 from MEASURED reality
-          # (published 2.7.2 artifacts + fresh local builds) the first time
-          # this gate ever ran against real files — the old limits (browser
-          # 290 KB "actual ~273 KB", hybrid 18 KB "actual ~16.6 KB") dated
-          # from a much smaller bundle era and were never enforced: the
-          # bundles they named did not exist in CI runs (realtime missing
-          # from BUILD_ORDER) and the [[ -f ]] guards skipped them silently.
-          # Published 2.7.2 hyperfixi.js is 529 KB gz (minified — reactivity
-          # + realtime pre-installed + multilingual growth); hybrid-hx 16.9 KB
-          # published, 18.5 KB on the current tree. These are ceilings against
-          # regression, not aspirations — ratchet DOWN after the post-release
-          # bundle-diet investigation (see NEXT_STEPS).
+          # Size limits (gzipped bytes). Ratcheted DOWN 2026-07-14 after the
+          # bundle dedupe: 2.6.0→2.7.0 had DOUBLED the full bundles (the #616
+          # plugin pre-install inlined core's prebuilt dist/index.mjs — with an
+          # embedded second @lokascript/semantic — alongside the src graph;
+          # 286→529 KB gz overnight). The rollup alias in
+          # rollup.browser*.config.mjs folds the plugin imports onto the src
+          # graph: hyperfixi.js measured ~299 KB gz, hx-v4 ~311 KB gz. These
+          # ceilings exist specifically to catch RE-duplication (any change
+          # that re-inlines a second core/semantic blows straight past them).
           MAX_LITE=4000           # 4 KB   (actual ~2 KB)
           MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
-          MAX_BROWSER=560000      # 560 KB (hyperfixi.js actual ~538 KB gz)
-          MAX_HXV4=560000         # 560 KB (hyperfixi-hx-v4.js actual ~545 KB gz)
+          MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
+          MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
 
           failed=0
 

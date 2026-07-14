@@ -9,6 +9,21 @@
 
 ## Highlights
 
+### Full bundles cut nearly in half (~534 → ~299 KB gz)
+
+Since 2.7.0 the full bundles had been shipping **two copies of the core runtime
+and multilingual parser**: the bundled reactivity/realtime plugins resolved
+`@hyperfixi/core` to its prebuilt library dist (which embeds a second copy of
+`@lokascript/semantic`) alongside the bundle's own source graph. A rollup alias
+now folds everything onto one graph:
+
+- `hyperfixi.js`: ~534 → **~299 KB gz**
+- `hyperfixi-hx-v4.js`: ~540 → **~311 KB gz**
+
+Same features, same pre-installed plugins (verified by the plugin-install,
+reactive-features, and full bundle-compatibility suites). CI size ceilings are
+ratcheted down to catch any re-duplication.
+
 ### `fetch … with { … }` options in all 24 languages (#662)
 
 `fetch` request options — braced bodies and naked named-arg forms (`method:`,
@@ -62,22 +77,32 @@ assertions.
 
 ## Documented bundle sizes now match reality
 
-The published size figures dated from an earlier, smaller-bundle era and are
-now corrected everywhere (README, CLAUDE.md, docs/BROWSER_BUNDLES.md):
+Every size figure is re-measured on the release artifacts (README, CLAUDE.md,
+docs/BROWSER_BUNDLES.md); the full-bundle numbers reflect the dedupe above:
 
-| Bundle                         | Actual (gzip) | Previously documented |
-| ------------------------------ | ------------- | --------------------- |
-| `hyperfixi-lite.js`            | 1.9 KB        | 1.9 KB                |
-| `hyperfixi-hybrid-complete.js` | 7.7 KB        | 7.3 KB                |
-| `hyperfixi-hx.js`              | 18 KB         | 9.7–13 KB             |
-| `hyperfixi-multilingual.js`    | 97 KB         | 64 KB                 |
-| `hyperfixi-hx-v4.js`           | ~540 KB       | ~257 KB               |
-| `hyperfixi.js` (full)          | ~534 KB       | 203–286 KB            |
+| Bundle                         | Actual (gzip) | 2.7.x         |
+| ------------------------------ | ------------- | ------------- |
+| `hyperfixi-lite.js`            | 1.9 KB        | 1.9 KB        |
+| `hyperfixi-hybrid-complete.js` | 7.7 KB        | 7.7 KB        |
+| `hyperfixi-hx.js`              | 18 KB         | 18 KB         |
+| `hyperfixi-multilingual.js`    | 97 KB         | 97 KB         |
+| `hyperfixi-hx-v4.js`           | **~311 KB**   | ~540 KB       |
+| `hyperfixi.js` (full)          | **~299 KB**   | ~534 KB       |
 
 The slim bundles (lite / lite-plus / hybrid-complete / hybrid-hx) remain the
 recommended starting point, and `@hyperfixi/vite-plugin` still emits the
-minimal bundle automatically. An investigation into the full-bundle growth is
-queued.
+minimal bundle automatically.
+
+## Multilingual correctness fixes
+
+- **`go to url "/page"` no longer drops the URL** (#680) — the destination was
+  silently lost in every language (the English reference itself was affected,
+  which masked it); navigation now receives the real URL in all 24 languages.
+- **Broken event listeners fixed in six languages** (#681) — the de/fr/id/it/
+  pl/zh dictionaries rendered `mousedown`/`mouseup` as words the parser could
+  not resolve (a listener that never fires — id even bound `keydown`). A new
+  V3c vocabulary check now verifies every dictionary event word round-trips on
+  the parse side.
 
 ---
 
