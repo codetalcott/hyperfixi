@@ -103,7 +103,9 @@ export const sw: Dictionary = {
 
   events: {
     click: 'bonyeza',
-    dblclick: 'bonyeza_mara_mbili',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    dblclick: 'dblclick',
     mousedown: 'panya_shuka',
     mouseup: 'panya_juu',
     mouseenter: 'panya_ingia',
@@ -117,7 +119,7 @@ export const sw: Dictionary = {
     mousemove: 'panya_sogea',
     keydown: 'kitufe_shuka',
     keyup: 'kitufe_juu',
-    keypress: 'kitufe_bonyeza',
+    keypress: 'keypress',
     // V3 Batch 2: zingatia captured no event → lenga (S5b/tokenizer form);
     // poteza_macho was a null parse → `blur` (the S5b identity form — matches
     // the live corpus render `kwenye blur`); badilisha is the toggle VERB
@@ -128,15 +130,15 @@ export const sw: Dictionary = {
     change: 'kubadilisha',
     input: 'ingizo',
     submit: 'wasilisha',
-    reset: 'weka_upya',
+    reset: 'reset',
     load: 'pakia',
     unload: 'shuka',
     resize: 'badilisha_ukubwa',
     scroll: 'sogeza',
-    touchstart: 'gusa_anza',
-    touchend: 'gusa_mwisho',
-    touchmove: 'gusa_sogea',
-    touchcancel: 'gusa_ghairi',
+    touchstart: 'touchstart',
+    touchend: 'touchend',
+    touchmove: 'touchmove',
+    touchcancel: 'touchcancel',
   },
 
   logical: {

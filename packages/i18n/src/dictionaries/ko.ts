@@ -107,12 +107,14 @@ export const ko: Dictionary = {
     submit: '제출',
     reset: '재설정', // Batch 3: 리셋 captured on.event as expression (broken listener) — profile word round-trips
     load: '로드',
-    unload: '언로드',
+    unload: 'unload',
     resize: '리사이즈',
     scroll: '스크롤',
-    touchstart: '터치시작',
+    // V3c burn-down (2026-07-14): English passthrough — no native form round-trips
+    // on the parse side (probe: split forms shatter, fused forms capture verbatim).
+    touchstart: 'touchstart',
     touchend: '터치종료',
-    touchmove: '터치이동',
+    touchmove: 'touchmove',
     touchcancel: '터치취소',
   },
 

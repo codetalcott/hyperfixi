@@ -3257,6 +3257,21 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 > `直到 把 事件` glue, the th/zh event-slot deferral class, baseline-neutral.
 > Remaining 130-odd V3c warns are corpus-cold burn-down material (post-release,
 > alias-or-dict-fix per the Batch-2 discipline).
+>
+> **V3c BURNED DOWN (2026-07-14, pulled forward pre-release): 140 → 1.**
+> Mechanical split, adjudicated by the exhaustive round-trip test (the
+> S5b-must-not-be-aspirational rule): 108 single-word dict forms appended to
+> `eventNameTranslations` → **53 survived round-trip** (genuinely parse now);
+> the 55 failures were REVERTED from S5b and their dict rows moved to English
+> passthrough, alongside the 25 multi-word forms (ar/vi — the
+> single-word-capture gate in buildEventHandler makes S5b unreachable for
+> them) and the 6 wrong-event collisions (id/zh mouseenter/mouseleave, zh
+> keypress, vi load→fetch). Two new V1 waivers (vi reset/change — deliberate
+> events-passthrough vs native profile verb, the ar/sw/tl reset class). Named
+> residual: **bn `every`** (প্রতি — not a DOM event; a mis-filed dict key,
+> fold into the vocab dump/triage). Suites green (semantic 7302, i18n 947 —
+> two stale render locks updated, testing-framework 259); vocab gate 0
+> unwaived; --regression green; baseline regenerated, zero signal drops.
 
 > **V1 probe conclusion (Batch 3, 2026-07-12) — verb/connective reconciliation;
 > ledger 90 → 0 unwaived (38 dict fixes + 2 profile-alternatives + 50 waived) +

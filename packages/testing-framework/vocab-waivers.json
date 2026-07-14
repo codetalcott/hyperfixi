@@ -258,5 +258,13 @@
   {
     "key": "V2|en|duration:for",
     "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — duration `for` is consumed as a pattern literal (same mechanism as method:as); V2 cannot see pattern literals."
+  },
+  {
+    "key": "V1|vi|reset",
+    "reason": "V3c burn-down 2026-07-14: dictionary events.reset is deliberate English passthrough — the native đặt-lại hyphen-shatters on the parse side (round-trip probe re-parsed it as `put`), the broken-listener class. The profile verb stays native for command contexts; same profile-vs-events-passthrough class as the waived ar/sw/tl reset rows (Batch 3, blocked — no candidate round-trips)."
+  },
+  {
+    "key": "V1|vi|change",
+    "reason": "V3c burn-down 2026-07-14: dictionary events.change is deliberate English passthrough — the native form did not round-trip as an event on the parse side (multi-word; buildEventHandler canonicalization is single-word). The profile verb thay đổi stays native for command contexts."
   }
 ]

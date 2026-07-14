@@ -35,6 +35,14 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     로드: 'load',
     리사이즈: 'resize',
     스크롤: 'scroll',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    마우스엔터: 'mouseenter',
+    마우스리브: 'mouseleave',
+    마우스무브: 'mousemove',
+    키프레스: 'keypress',
+    터치종료: 'touchend',
+    터치취소: 'touchcancel',
   },
   // Japanese event names → English
   ja: {
@@ -58,6 +66,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // V3 Batch 2 alias: i18n dictionary form the ja tokenizer already
     // normalizes (probe-verified).
     ぼかし: 'blur',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
   // Arabic event names → English
   ar: {
@@ -111,6 +121,18 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     desenfocar: 'blur',
     cargar: 'load',
     desplazar: 'scroll',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    dobleclic: 'dblclick',
+    ratónentrar: 'mouseenter',
+    ratónsalir: 'mouseleave',
+    ratónmover: 'mousemove',
+    teclapresar: 'keypress',
+    descargar: 'unload',
+    toqueempezar: 'touchstart',
+    toqueterminar: 'touchend',
+    toquemover: 'touchmove',
+    toquecancelar: 'touchcancel',
   },
   // Turkish event names → English
   tr: {
@@ -150,6 +172,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     farebas: 'mousedown',
     farebırak: 'mouseup',
     kaydır: 'scroll',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
   // Portuguese event names → English
   pt: {
@@ -177,6 +201,18 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     carregamento: 'load',
     rolagem: 'scroll',
     rolar: 'scroll',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    duploClique: 'dblclick',
+    mouseEntrar: 'mouseenter',
+    mouseSair: 'mouseleave',
+    mouseMover: 'mousemove',
+    teclaPressionar: 'keypress',
+    descarregar: 'unload',
+    toqueInício: 'touchstart',
+    toqueFim: 'touchend',
+    toqueMover: 'touchmove',
+    toqueCancelar: 'touchcancel',
   },
   // Chinese event names → English
   zh: {
@@ -207,6 +243,13 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // the registered 按键 prefix; probe-verified — kept over bare 按键 to avoid
     // colliding with the dict's keypress entry).
     按键按下: 'keydown',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    鼠标移动: 'mousemove',
+    卸载: 'unload',
+    调整大小: 'resize',
+    触摸开始: 'touchstart',
+    触摸移动: 'touchmove',
   },
   // French event names → English
   fr: {
@@ -235,6 +278,18 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     // V3 Batch 2 alias: i18n dictionary form the fr tokenizer already
     // normalizes (probe-verified).
     flou: 'blur',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    doubleclic: 'dblclick',
+    sourisentrer: 'mouseenter',
+    sourissortir: 'mouseleave',
+    sourisbouger: 'mousemove',
+    touchepressée: 'keypress',
+    décharger: 'unload',
+    touchercommencer: 'touchstart',
+    toucherfin: 'touchend',
+    toucherbouger: 'touchmove',
+    toucherannuler: 'touchcancel',
   },
   // German event names → English
   de: {
@@ -266,6 +321,18 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     'taste oben': 'keyup',
     'maus drüber': 'mouseover',
     'maus weg': 'mouseout',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    doppelklick: 'dblclick',
+    mauseintreten: 'mouseenter',
+    mausverlassen: 'mouseleave',
+    mausbewegen: 'mousemove',
+    tastedrücken: 'keypress',
+    entladen: 'unload',
+    berührungstart: 'touchstart',
+    berührungend: 'touchend',
+    berührungbewegen: 'touchmove',
+    berührungabbrechen: 'touchcancel',
   },
   // Indonesian event names → English
   id: {
@@ -294,6 +361,9 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     keyup: 'keyup',
     arahkan: 'mouseover',
     tinggalkan: 'mouseout',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    bongkar: 'unload',
   },
   // Bengali event names → English
   bn: {
@@ -306,6 +376,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     ঝাপসা: 'blur',
     ফোকাস: 'focus',
     পরিবর্তন: 'change',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
   // Quechua event names → English (loanwords with native adaptations)
   qu: {
@@ -336,6 +408,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     kunray: 'scroll',
     muyuy: 'scroll',
     hatun_kay: 'resize',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
   // Swahili event names → English
   sw: {
@@ -369,6 +443,9 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     panya_nje: 'mouseout',
     wasilisha: 'submit',
     'sogeza juu': 'mouseover',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
+    shuka: 'unload',
   },
   // Vietnamese event names → English. Minimal section: the dict renders
   // resize as the three-word đổi kích thước; the event slot captures only
@@ -377,6 +454,8 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
   // offset-exact join of the captured event word + the dangling fragment).
   vi: {
     'đổi kích thước': 'resize',
+    // V3c burn-down (2026-07-14): dictionary event words S5b never covered —
+    // parse-side registration so the i18n dict forms resolve (round-trip-tested).
   },
 };
 
