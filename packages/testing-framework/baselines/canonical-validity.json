@@ -2,7 +2,7 @@
   "description": "Allowlist for the canonical-validity gate (packages/testing-framework/src/multilingual/canonical-validity.test.ts). Each id renders to English that the real hyperscript.org parser rejects. A NEW invalid render outside this list, or an allowlisted id that becomes valid, both fail the gate. Shrink this list as renderer fixes land.",
   "note": "These are the ranked worklist for the deferred full renderer sweep; the fetch `from`+quote family was fixed (renderSuppress) and is intentionally NOT here. See docs-internal/HANDOFF_semantic-roundtrip-validity.md § FINDINGS.",
   "corpusCheckedAtGeneration": 133,
-  "validAtGeneration": 130,
+  "validAtGeneration": 131,
   "allowedInvalid": [
     {
       "id": "behavior-removable",
@@ -15,12 +15,6 @@
       "command": "pick",
       "error": "Unexpected value: <<<EOF>>>",
       "reason": "pick range-roles dropped (named R1 deferral: pick range-role modeling)"
-    },
-    {
-      "id": "send-with-detail",
-      "command": "send",
-      "error": "Expected ':' but found ','",
-      "reason": "parse-side value corruption: `send update(value: 42)` captured as `update(value, :, 42)` (not a render bug)"
     }
   ]
 }

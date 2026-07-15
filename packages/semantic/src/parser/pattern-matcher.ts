@@ -1886,9 +1886,18 @@ export class PatternMatcher {
 
     const mark = tokens.mark();
     tokens.advance(); // function name
-    tokens.advance(); // (
+    const openParen = tokens.advance(); // (
 
-    const args: string[] = [];
+    // Reconstruct the parenthesized content VERBATIM by source adjacency rather
+    // than collecting tokens and re-joining with `, `. The tokenizer splits the
+    // call into separate tokens (`value` `:` `42`), and the old comma-rejoin
+    // assumed a positional arg list — so a named-argument / detail call
+    // `update(value: 42)` came out as `update(value, :, 42)` (the `:` became a
+    // phantom arg). Adjacency-joining preserves every shape: `a, b` stays `a, b`,
+    // `value: 42` stays `value: 42` (a token glues to the previous when it abuts
+    // it in the source, else a single space separates them).
+    let content = '';
+    let prevEnd = openParen.position?.end;
     let closed = false;
     let guard = 0;
     while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_METHOD_ARGS + 2) {
@@ -1899,11 +1908,9 @@ export class PatternMatcher {
         closed = true;
         break;
       }
-      if (argToken.value === ',') {
-        tokens.advance();
-        continue;
-      }
-      args.push(argToken.value);
+      const adjacent = prevEnd !== undefined && argToken.position?.start === prevEnd;
+      content += (content === '' || adjacent ? '' : ' ') + argToken.value;
+      prevEnd = argToken.position?.end;
       tokens.advance();
     }
 
@@ -1912,7 +1919,7 @@ export class PatternMatcher {
       return null;
     }
 
-    return { type: 'expression', raw: `${token.value}(${args.join(', ')})` } as SemanticValue;
+    return { type: 'expression', raw: `${token.value}(${content})` } as SemanticValue;
   }
 
   /**
