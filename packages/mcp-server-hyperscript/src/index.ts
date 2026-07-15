@@ -9,6 +9,7 @@
  * All tools use pattern-based analysis — no parser required.
  */
 
+import { createRequire } from 'node:module';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -31,10 +32,17 @@ import { listResources, readResource } from './resources/index.js';
 // Server Setup
 // =============================================================================
 
+// Version tracks package.json so MCP clients report the real server version.
+// A hardcoded string drifts on release bumps (this sat at '1.0.0' through the
+// entire 2.x line); the require resolves the same in dev/dist/installed layouts.
+const { version: pkgVersion } = createRequire(import.meta.url)('../package.json') as {
+  version: string;
+};
+
 const server = new Server(
   {
     name: 'hyperscript-mcp',
-    version: '1.0.0',
+    version: pkgVersion,
   },
   {
     capabilities: {

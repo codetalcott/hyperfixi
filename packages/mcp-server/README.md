@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **80 tools**, 5 resources, and 3 prompts across 11 categories: validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 8 domain DSLs, IR conversion, and MCP sampling.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **107 tools**, **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling, AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## Installation
 
@@ -59,7 +59,9 @@ Or if installed globally:
 
 See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examples.
 
-## Available Tools (80)
+## Available Tools
+
+The **102** tools below, plus the **5** GRAIL tools above, total **107**.
 
 ### Validation & Semantic Tools (8)
 
@@ -131,12 +133,15 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 | `get_role_markers`          | Role markers (destination, source, patient, etc.) |
 | `compare_language_profiles` | Find translation gaps between languages           |
 
-### IR Conversion (2)
+### IR Conversion (5)
 
 | Tool                | Description                                          |
 | ------------------- | ---------------------------------------------------- |
 | `convert_format`    | Convert between explicit bracket syntax and LLM JSON |
 | `validate_explicit` | Validate bracket syntax without compilation (fast)   |
+| `validate_protocol` | Validate protocol JSON against the LSE 2.0 schema    |
+| `to_envelope`       | Wrap a node/protocol in a transport envelope         |
+| `from_envelope`     | Unwrap an envelope back to a node/protocol           |
 
 ### Route Extraction (2)
 
@@ -164,20 +169,70 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 | `translate_content` | Translate text between natural languages               |
 | `execute_llm`       | Execute LLM command in natural language (8 languages)  |
 
-### Domain DSL Tools (32)
+### AI-Assisted Debugging (4)
 
-8 domains, each with `parse_`, `compile_`, `validate_`, `translate_` tools:
+| Tool                     | Description                                                           |
+| ------------------------ | --------------------------------------------------------------------- |
+| `debug_analyze_snapshot` | Explain the current paused debugger state and predict the next step   |
+| `debug_explain_handler`  | Break down an event handler step-by-step; flag issues and breakpoints |
+| `debug_suggest_fix`      | Analyze a snapshot where something went wrong; suggest causes + fixes |
+| `debug_trace_variable`   | Trace how a variable changed across an execution-history snapshot set |
 
-| Domain         | Languages                      | compile Output                    |
-| -------------- | ------------------------------ | --------------------------------- |
-| `sql`          | en, es, ja, ar, ko, zh, tr, fr | SQL query string                  |
-| `bdd`          | en, es, ja, ar                 | Playwright test (Given/When/Then) |
-| `jsx`          | en, es, ja, ar, ko, zh, tr, fr | JSX/React markup                  |
-| `todo`         | en, es, ja, ar, ko, zh, tr, fr | Structured operation object       |
-| `behaviorspec` | en, es, ja, ar, ko, zh, tr, fr | Playwright interaction test       |
-| `llm`          | en, es, ja, ar, ko, zh, tr, fr | LLMPromptSpec JSON                |
-| `flow`         | en, es, ja, ar, ko, zh, tr, fr | Reactive data flow JS             |
-| `voice`        | en, es, ja, ar, ko, zh, tr, fr | DOM interaction command           |
+### Template Inventory (2)
+
+| Tool              | Description                                                           |
+| ----------------- | --------------------------------------------------------------------- |
+| `scan_inventory`  | Scan a directory for hyperscript (`_=`), htmx (`hx-*`), fixi (`fx-*`) |
+| `query_inventory` | Search and filter within previously scanned inventory results         |
+
+### Training Data (1)
+
+| Tool                     | Description                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| `generate_training_data` | Synthesize (natural language, LSE) pairs from schemas as JSONL |
+
+### Feedback Loop (2)
+
+| Tool                        | Description                                                       |
+| --------------------------- | ----------------------------------------------------------------- |
+| `lse_validate_and_feedback` | Validate LSE and return machine-actionable correction hints       |
+| `lse_pattern_stats`         | Pattern hit-rate stats: success by command/language, top failures |
+
+### LSE Pipeline (5)
+
+| Tool                   | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `lse_from_hyperscript` | Parse hyperscript (24 languages) to LSE bracket + protocol JSON |
+| `lse_to_hyperscript`   | Validate/compile LSE or protocol JSON returned by an LLM        |
+| `execute_lse`          | Parse LSE, compile to JS, and return the execution result       |
+| `validate_lse`         | Validate LSE or protocol JSON without executing (pre-flight)    |
+| `translate_lse`        | Translate LSE bracket syntax to natural language (24 languages) |
+
+### LSE Correction (1)
+
+| Tool                           | Description                                                     |
+| ------------------------------ | --------------------------------------------------------------- |
+| `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema) |
+
+### Domain DSL Tools (36)
+
+Each of the 9 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (9 × 4 = 36). Language coverage comes in three tiers:
+
+- **Bridge (11):** en, es, ja, ar, ko, zh, tr, fr, de, pt, ru
+- **Classic (8):** en, es, ja, ar, ko, zh, tr, fr
+- **Learn (10):** Bridge minus ru
+
+| Domain         | Languages   | compile Output                    |
+| -------------- | ----------- | --------------------------------- |
+| `sql`          | Bridge (11) | SQL query string                  |
+| `bdd`          | Classic (8) | Playwright test (Given/When/Then) |
+| `jsx`          | Bridge (11) | JSX/React markup                  |
+| `todo`         | Bridge (11) | Structured operation object       |
+| `behaviorspec` | Classic (8) | Playwright interaction test       |
+| `llm`          | Bridge (11) | LLMPromptSpec JSON                |
+| `flow`         | Bridge (11) | Reactive data flow JS             |
+| `voice`        | Bridge (11) | DOM interaction command           |
+| `learn`        | Learn (10)  | Rendered sentence w/ morphology   |
 
 ## Available Resources (5)
 
@@ -209,7 +264,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ```bash
 npm run dev        # Development mode
-npm test           # Run tests (375 tests)
+npm test           # Run tests (420 tests)
 npm run typecheck  # TypeScript validation
 npm run build      # Build
 ```
