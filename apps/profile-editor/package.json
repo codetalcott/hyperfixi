@@ -19,6 +19,6 @@
   "devDependencies": {
     "@kitajs/ts-html-plugin": "^4.1.0",
     "bun-types": "*",
-    "typescript": "^5.0.0"
+    "typescript": "^7.0.2"
   }
 }
