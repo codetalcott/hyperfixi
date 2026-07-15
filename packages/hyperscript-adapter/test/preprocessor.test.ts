@@ -34,9 +34,9 @@ describe('preprocessToEnglish', () => {
       ['ja', '自分 から .hidden を 削除'],
       ['ko', '나 에서 .hidden 을 제거'],
       ['fr', 'supprimer .hidden de moi'],
-    ])('[%s] translates remove .hidden from me', (lang, input) => {
+    ])('[%s] translates remove .hidden (implicit me source suppressed)', (lang, input) => {
       const result = preprocessToEnglish(input, lang);
-      expect(result).toBe('remove .hidden from me');
+      expect(result).toBe('remove .hidden');
     });
   });
 

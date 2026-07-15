@@ -830,6 +830,16 @@ jobs:
           cd packages/testing-framework
           npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
+      # Canonical-validity gates: render every corpus EN reference (canonical-validity)
+      # AND every authored foreign translation (foreign-canonical-validity) to English,
+      # then parse the result on the real hyperscript.org engine — failing on any
+      # invalid render outside the committed allowlists. These are testing-framework
+      # vitest tests, so they run HERE (not in unit-tests, which never runs
+      # testing-framework vitest) because the foreign gate needs the populated
+      # translations table (populated above).
+      - name: Canonical-validity gates (en-render + foreign→English)
+        run: npm run test:canonical --prefix packages/testing-framework
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

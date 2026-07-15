@@ -88,8 +88,16 @@ function renderCommand(node: SemanticNode): string {
     for (const [role, prep] of syntax) {
       const value = node.roles.get(role as SemanticRole);
       if (!value) continue;
-      // Skip implicit "me" destination (default in _hyperscript)
-      if (role === 'destination' && value.type === 'reference' && value.value === 'me') continue;
+      // Skip an implicit "me" destination/source (the default in _hyperscript) —
+      // `add .active` not `add .active to me`; `remove .hidden` not `remove .hidden
+      // from me`. Mirrors the semantic renderer's implicit-me suppression so the
+      // full and slim (custom-renderer) paths agree.
+      if (
+        (role === 'destination' || role === 'source') &&
+        value.type === 'reference' &&
+        value.value === 'me'
+      )
+        continue;
       if (prep) parts.push(prep);
       parts.push(renderValue(value));
     }

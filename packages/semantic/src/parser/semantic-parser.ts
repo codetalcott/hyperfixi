@@ -5655,12 +5655,29 @@ export class SemanticParserImpl implements ISemanticParser {
    * literals) keep their surface value; for en the two are identical.
    */
   private joinTokenText(toks: readonly LanguageToken[]): string {
-    return toks
-      .map(t =>
-        t.kind === 'keyword' ? ((t as { normalized?: string }).normalized ?? t.value) : t.value
-      )
-      .join(' ')
-      .trim();
+    const textOf = (t: LanguageToken): string =>
+      t.kind === 'keyword' ? ((t as { normalized?: string }).normalized ?? t.value) : t.value;
+    let out = '';
+    for (let i = 0; i < toks.length; i++) {
+      const text = textOf(toks[i]);
+      if (i === 0) {
+        out = text;
+        continue;
+      }
+      // A member access glues to its object with no space (`event.shiftKey`,
+      // `window.scrollY`), but a class selector in a comparison keeps it (`I match
+      // .active`). Both surface as a `.`-prefixed token, so disambiguate by SOURCE
+      // adjacency: glue only when this `.`-token immediately abuts the previous
+      // token in the source (no gap). Without this the condition expression renders
+      // `event .shiftKey`, which the canonical parser reads as two tokens and rejects.
+      const prev = toks[i - 1];
+      const adjacent =
+        prev.position?.end !== undefined &&
+        toks[i].position?.start !== undefined &&
+        prev.position.end === toks[i].position.start;
+      out += (adjacent && text.startsWith('.') ? '' : ' ') + text;
+    }
+    return out.trim();
   }
 
   /** Whether a command pattern matches at the head of the given token slice. */

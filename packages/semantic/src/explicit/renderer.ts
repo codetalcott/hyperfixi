@@ -6,9 +6,12 @@
  */
 
 import type {
+  ActionType,
   SemanticNode,
+  SemanticRole,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  ConditionalSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
   SemanticValue,
@@ -17,6 +20,26 @@ import type {
   ReferenceValue,
   PropertyPathValue,
 } from '../types';
+
+/**
+ * Loop/tell block-header commands: their body follows the header directly, with no
+ * chain word between the header and its first body command. The explicit loop/tell
+ * subset of the schema `hasBody` flag — `hasBody` also covers if/on/async/js/
+ * behavior/… which render through their own node kinds/paths and keep their chain
+ * word. Shared by renderCompound and joinStatements.
+ */
+const BLOCK_HEADER_ACTIONS = new Set<ActionType>(['repeat', 'for', 'while', 'tell']);
+
+/**
+ * Commands whose captured body is an open-ended block that must be closed by an
+ * explicit `end` when a sibling command follows it. `js` captures its raw
+ * JavaScript body as an expression; without a closing `end` the following
+ * hyperscript (`js foo() then add …`) bleeds into the JS body and the canonical
+ * `js` command's `new Function(...)` throws. A `js` that ends a sequence needs no
+ * `end` (its body runs to the end of the enclosing block). Shared by renderCompound
+ * and joinStatements.
+ */
+const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
@@ -43,6 +66,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     if (node.kind === 'def') {
       return this.renderDef(node as DefSemanticNode, language);
+    }
+    // A conditional carries its branches in thenBranch/elseBranch, never in roles.
+    // Without this the pattern path renders the head only (`if <cond>`) and drops
+    // the body + `end` — the canonical parser then rejects the dangling condition.
+    if (node.kind === 'conditional') {
+      return this.renderConditional(node as ConditionalSemanticNode, language);
     }
 
     const patterns = getPatternsForLanguageAndCommand(language, node.action);
@@ -82,7 +111,78 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
     const chainWord = this.getChainWord(node.chainType, language);
-    return renderedStatements.join(` ${chainWord} `);
+    // A loop/tell HEADER takes its body directly — canonical hyperscript rejects a
+    // chain word between the header and its first body command (`repeat 3 times add
+    // …`, not `repeat 3 times then add …`; `tell #panel add …`, not `tell #panel
+    // then add …`). The parser flattens the block into this compound (no
+    // LoopSemanticNode with an attached body reaches the renderer), so suppress the
+    // chain word immediately after any block-header command (BLOCK_HEADER_ACTIONS).
+    // A `then` BETWEEN body commands stays valid, so every other join keeps the
+    // chain word.
+    let out = renderedStatements[0] ?? '';
+    for (let i = 1; i < renderedStatements.length; i++) {
+      const prev = node.statements[i - 1];
+      const cur = node.statements[i];
+      const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      // Consecutive top-level `bind` features are separate reactive features, not a
+      // then-chain — `bind $x to #a then bind $x to #b` is rejected (`Unexpected
+      // Token : then` between features). Space-join them (a bind clause is
+      // self-delimiting; canonical accepts both space and newline separation).
+      const betweenBindFeatures =
+        prev.kind === 'command' &&
+        prev.action === 'bind' &&
+        cur.kind === 'command' &&
+        cur.action === 'bind';
+      // A `js` (or other open-body) block that is FOLLOWED by a command must close
+      // with `end` first, so its body doesn't swallow the sibling.
+      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
+        out += ` ${this.keyword(language, 'end')}`;
+      }
+      const sep = afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `;
+      out += sep + renderedStatements[i];
+    }
+    return out;
+  }
+
+  /**
+   * Render a conditional (`if <cond> <then-body> [else <else-body>] end`). The
+   * branches carry the block structure, so they close with an explicit `end` (the
+   * canonical block delimiter) — mirrors renderCompound's block awareness. Branch
+   * bodies join like a statement list (a `then` between siblings, none after a
+   * loop/tell header).
+   */
+  private renderConditional(node: ConditionalSemanticNode, language: string): string {
+    const cond = node.roles.get('condition' as SemanticRole);
+    const condStr = cond ? this.valueToNaturalString(cond, language) : '';
+    const parts = [`${this.keyword(language, 'if')} ${condStr}`.trim()];
+    const thenBody = this.joinStatements(node.thenBranch, language);
+    if (thenBody) parts.push(thenBody);
+    if (node.elseBranch && node.elseBranch.length > 0) {
+      parts.push(this.keyword(language, 'else'), this.joinStatements(node.elseBranch, language));
+    }
+    parts.push(this.keyword(language, 'end'));
+    return parts.join(' ');
+  }
+
+  /**
+   * Join a statement list the way a block body reads: ` then ` between siblings,
+   * but a single space immediately after a loop/tell block header (whose body
+   * follows directly). Shared by renderConditional's branches; renderCompound
+   * keeps its own copy because it also handles the multi-handler and bind-feature
+   * cases.
+   */
+  private joinStatements(statements: readonly SemanticNode[], language: string): string {
+    const rendered = statements.map(s => this.render(s, language));
+    let out = rendered[0] ?? '';
+    for (let i = 1; i < rendered.length; i++) {
+      const prev = statements[i - 1];
+      const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
+        out += ` ${this.keyword(language, 'end')}`;
+      }
+      out += (afterBlockHeader ? ' ' : ' then ') + rendered[i];
+    }
+    return out;
   }
 
   /**
@@ -295,11 +395,42 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // Use default if available
           return null;
         }
-        // The event role of an event handler is the one literal we localize to
-        // the target language (Phase 1b) — scoped here so other role literals
-        // (selectors, string literals) are never touched.
-        if (token.role === 'event' && node.kind === 'event-handler') {
+        // An `event` role names a DOM event — always a bare identifier, never a
+        // quoted string. Render it via renderEventName (localizes for the target
+        // language; identity for en) so `wait for transitionend` / `send click`
+        // stay unquoted. A known DOM event name arrives as a string `literal`
+        // (renderEventName strips the quotes); expression/namespaced events fall
+        // through unchanged. Previously scoped to event-handler nodes only, which
+        // left `wait for {event}` rendering the quoted `wait for "transitionend"`
+        // the canonical parser rejects.
+        if (token.role === 'event') {
           return this.renderEventName(value, language);
+        }
+        // `halt` takes an idiomatic article in canonical hyperscript — `halt the
+        // event` (`halt event` is rejected). The parser strips the leaked article
+        // (skipNoiseWords) so the value is the bare `event` reference; re-add `the`
+        // at render. Scoped to en (the article is English syntax); other languages
+        // render the reference alone.
+        if (
+          language === 'en' &&
+          node.action === 'halt' &&
+          token.role === 'patient' &&
+          value.type === 'reference' &&
+          value.value === 'event'
+        ) {
+          return `the ${this.valueToNaturalString(value, language)}`;
+        }
+        // `render <tmpl> with <named-args>` takes a bare `key: value` list, not a
+        // braced object literal — `render #row with {row:$data}` is rejected but
+        // `render #row with row: $data` is valid. The parser captures the args as
+        // an object-literal expression; strip the outer braces for render's `with`
+        // (style) role. NOT applied to fetch's `with {…}`, whose braced options
+        // object IS canonical (different command, so scoped by action).
+        if (node.action === 'render' && token.role === 'style' && value.type === 'expression') {
+          const raw = value.raw.trim();
+          if (raw.startsWith('{') && raw.endsWith('}')) {
+            return raw.slice(1, -1).trim();
+          }
         }
         return this.valueToNaturalString(value, language);
       }
@@ -314,17 +445,29 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           return null;
         }
 
-        // For optional groups with destination role, skip if destination is "me" (the default)
-        // This avoids rendering "on me" / "en yo" when it's implicit
+        // Skip an optional group whose destination/source role is the implicit
+        // `me` default (the parser injects it when unspecified). This avoids the
+        // redundant `on me` / `to me` / `from me` / `of me` — `add .active`, not
+        // `add .active to me`; `remove me`, not `remove me from me`; `measure my x`,
+        // not `measure my x of me`. The `on` event-source renders via its own path,
+        // so it is untouched here.
         if (token.optional) {
-          const destToken = token.tokens.find(
-            (t: any) => t.type === 'role' && t.role === 'destination'
-          );
-          if (destToken) {
-            const destValue = node.roles.get('destination');
-            if (destValue?.type === 'reference' && destValue.value === 'me') {
-              return null; // Skip rendering default "me" destination
+          for (const roleName of ['destination', 'source'] as const) {
+            const roleToken = token.tokens.find(
+              (t: any) => t.type === 'role' && t.role === roleName
+            );
+            if (!roleToken) continue;
+            const roleValue = node.roles.get(roleName);
+            if (roleValue?.type !== 'reference' || roleValue.value !== 'me') continue;
+            // Keep an explicit destination when the patient is string content —
+            // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
+            // alone is rejected: `add` expects a class/attribute reference). A
+            // class/attribute patient defaults to `me` fine, so it stays suppressed.
+            if (roleName === 'destination') {
+              const patient = node.roles.get('patient');
+              if (patient?.type === 'literal' && patient.dataType === 'string') continue;
             }
+            return null; // Skip rendering the implicit "me" destination/source
           }
         }
 

@@ -49,7 +49,7 @@ describe('slim-preprocessor (per-language bundle path)', () => {
 
     it('translates remove command', () => {
       const result = preprocessToEnglish('quitar .hidden de yo', 'es');
-      expect(result).toBe('remove .hidden from me');
+      expect(result).toBe('remove .hidden'); // implicit "me" source suppressed
     });
 
     it('translates put command', () => {

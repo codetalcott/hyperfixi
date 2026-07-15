@@ -156,17 +156,26 @@ const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
  */
 function repeatForInHead(
   language: string,
-  spec: { forWords?: string[]; inWords: string[] }
+  spec: { forWords?: string[]; inWords: string[]; requireForWords?: boolean }
 ): LanguagePattern {
   const tokens: LanguagePattern['template']['tokens'] = [
     { type: 'literal', value: 'repeat' }, // matches the verb's normalized form
   ];
   if (spec.forWords && spec.forWords.length > 0) {
-    tokens.push({
-      type: 'group',
-      optional: true,
-      tokens: spec.forWords.map(w => ({ type: 'literal' as const, value: w })),
-    });
+    if (spec.requireForWords) {
+      // Required (not an optional group) so the binder RENDERS — render suppresses
+      // an optional literal-only group, which dropped the `for` from the en
+      // `repeat for item in …` (invalid canonical `repeat item in …`). Set only
+      // where the source always carries the binder (en); languages whose
+      // transformer drops it in transit keep the optional group below.
+      for (const w of spec.forWords) tokens.push({ type: 'literal', value: w });
+    } else {
+      tokens.push({
+        type: 'group',
+        optional: true,
+        tokens: spec.forWords.map(w => ({ type: 'literal' as const, value: w })),
+      });
+    }
   }
   tokens.push({ type: 'role', role: 'patient', expectedTypes: ['expression', 'reference'] });
   for (const w of spec.inWords) tokens.push({ type: 'literal', value: w });
@@ -192,8 +201,10 @@ function repeatForInHead(
 
 // in-word/for-word surfaces per language (corpus forms; several langs tokenize
 // the in-word as TWO tokens — ja `の 中`, ko `안 에`, qu `uku pi`).
-const FOR_IN_HEADS: Array<[string, { forWords?: string[]; inWords: string[] }]> = [
-  ['en', { forWords: ['for'], inWords: ['in'] }],
+const FOR_IN_HEADS: Array<
+  [string, { forWords?: string[]; inWords: string[]; requireForWords?: boolean }]
+> = [
+  ['en', { forWords: ['for'], inWords: ['in'], requireForWords: true }],
   ['es', { forWords: ['para'], inWords: ['en'] }],
   ['pt', { forWords: ['para'], inWords: ['dentro'] }],
   ['fr', { forWords: ['pour'], inWords: ['en'] }],
