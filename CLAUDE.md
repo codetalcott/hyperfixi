@@ -67,7 +67,6 @@ packages/
 ├── behaviors/           # Reusable hyperscript behaviors (draggable, sortable, etc.)
 ├── types-browser/       # TypeScript type definitions for browser globals
 │
-├── mcp-server-hyperscript/      # MCP server for original _hyperscript (zero HyperFixi deps)
 ├── language-server-hyperscript/ # LSP for original _hyperscript
 ├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
 ├── vscode-extension/            # VSCode extension for LokaScript

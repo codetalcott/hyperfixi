@@ -53,7 +53,6 @@ packages/
 ├── aot-compiler/       # @hyperfixi/aot-compiler — Ahead-of-time compiler
 ├── server-bridge/      # @hyperfixi/server-bridge — Server-side route extraction
 │
-├── mcp-server-hyperscript/      # @hyperscript-tools/mcp-server — MCP for original _hyperscript
 ├── language-server-hyperscript/ # @hyperscript-tools/language-server — LSP for original _hyperscript
 ├── multilingual-hyperscript/    # @hyperscript-tools/multilingual — Plugin for original _hyperscript
 ├── vscode-extension/            # VSCode extension for LokaScript
