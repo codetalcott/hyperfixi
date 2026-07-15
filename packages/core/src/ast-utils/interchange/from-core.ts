@@ -461,6 +461,99 @@ function inferRoles(
       break;
     }
 
+    // go [to] <url> [in new window] / go back / go to <pos> of <el>
+    //
+    // Three producer shapes reach here (core `string` nodes convert to
+    // interchange `literal`, so the traditional and buildAST shapes coincide):
+    //  1. traditional parser: flat args, keywords + naked URLs as literals —
+    //     [lit to, lit url, lit '/page'] / [lit to, lit '/about'] / [lit back]
+    //  2. semantic compileSync: args:[], modifiers.on = destination,
+    //     modifiers.method = literal 'url'
+    //  3. buildAST goMapper: positional literal args [lit 'url', lit '/page'] …
+    //
+    // Schema inference can't produce these: goSchema.destination is a marker
+    // role (markerOverride 'to') so it's excluded from positional binding, and
+    // `method` lives only in rolePrefixLiteralVariants, which the schema engine
+    // never reads.
+    case 'go': {
+      const kw = (n: unknown): string | undefined => {
+        if (!n || typeof n !== 'object') return undefined;
+        const v = n as { type?: string; name?: unknown; value?: unknown };
+        if (v.type === 'identifier') {
+          if (typeof v.name === 'string' && v.name !== '') return v.name;
+          return typeof v.value === 'string' ? v.value : undefined;
+        }
+        if (v.type === 'literal' && typeof v.value === 'string') return v.value;
+        return undefined;
+      };
+      const asNode = (x: unknown): InterchangeNode | undefined =>
+        x && typeof x === 'object' && 'type' in (x as object) ? (x as InterchangeNode) : undefined;
+
+      let destination: InterchangeNode | undefined;
+      let method: InterchangeNode | undefined;
+
+      const onMod = asNode(modifiers?.on);
+      if (args.length === 0 && onMod) {
+        // Shape 2 — semantic modifiers path.
+        destination = onMod;
+        if (kw(asNode(modifiers?.method)) === 'url') {
+          method = { type: 'literal', value: 'url' };
+        }
+      } else {
+        // Shapes 1 & 3 — flat positional args.
+        const words = args.map(kw);
+        const urlIdx = words.indexOf('url');
+        if (urlIdx !== -1 && args[urlIdx + 1]) {
+          destination = args[urlIdx + 1];
+          method = { type: 'literal', value: 'url' };
+        } else {
+          const SKIP = new Set(['to', 'the']);
+          const POSITION = new Set([
+            'top',
+            'middle',
+            'bottom',
+            'left',
+            'center',
+            'right',
+            'smoothly',
+            'instantly',
+            'in',
+            'new',
+            'window',
+          ]);
+          const headIdx = args.findIndex((_, i) => {
+            const w = words[i];
+            return w === undefined || !SKIP.has(w);
+          });
+          const headWord = headIdx !== -1 ? words[headIdx] : undefined;
+          const ofIdx = words.indexOf('of');
+          if (headWord === 'back' || headWord === 'forward') {
+            destination = { type: 'identifier', value: headWord, name: headWord };
+          } else if (ofIdx !== -1 && args[ofIdx + 1]) {
+            // scroll form: destination is the `of` target, skipping a `the`.
+            destination = kw(args[ofIdx + 1]) === 'the' ? args[ofIdx + 2] : args[ofIdx + 1];
+          } else if (headIdx !== -1 && !POSITION.has(headWord ?? '')) {
+            destination = args[headIdx];
+          }
+          // position-only (`go to top`) → left for the target fallback below.
+        }
+      }
+
+      // AOT GoCodegen emits history.back()/forward() only for an identifier-typed
+      // destination; a literal `back` would codegen `location.href = "back"`.
+      const destWord = kw(destination);
+      if ((destWord === 'back' || destWord === 'forward') && destination?.type !== 'identifier') {
+        destination = { type: 'identifier', value: destWord, name: destWord };
+      }
+
+      // Explicit cases bypass schema Pass-2 target binding — do it here.
+      if (!destination && target) destination = target;
+
+      if (destination) roles.destination = destination;
+      if (method) roles.method = method;
+      break;
+    }
+
     default: {
       // Fall back to schema-driven role inference (Option 4 — scroll, push,
       // replace, process and any future command without an explicit case).

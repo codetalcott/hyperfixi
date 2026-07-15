@@ -20,6 +20,7 @@ import * as controlFlowCommands from './control-flow-commands';
 import * as animationCommands from './animation-commands';
 import * as domCommands from './dom-commands';
 import * as variableCommands from './variable-commands';
+import * as navigationCommands from './navigation-commands';
 
 /**
  * Parse compound command
@@ -72,6 +73,8 @@ export function parseCompoundCommand(
       return animationCommands.parseMeasureCommand(ctx, identifierNode);
     case 'js':
       return parseJsCommand(ctx, identifierNode);
+    case 'go':
+      return navigationCommands.parseGoCommand(ctx, identifierNode);
     case 'tell':
       return parseTellCommand(ctx, identifierNode);
     case 'pick':
@@ -243,15 +246,23 @@ function isFetchURLTerminator(ctx: ParserContext): boolean {
 }
 
 /**
- * Parse a bare (unquoted) URL path starting with '/' (e.g. /api/data, /users/123).
+ * Parse a bare (unquoted) URL path (e.g. /api/data, /users/123, https://x.com).
  * Collects `/`, identifier, and other non-terminator tokens into a string literal.
  * Returns null if the path can't be reconstructed.
+ *
+ * @param isTerminator - predicate marking the token that ends the URL run.
+ *   Defaults to the fetch terminator (stops at `as`/`with`/`{`/command boundary);
+ *   the `go` parser passes its own so path segments that are command words
+ *   (`/get`) stay part of the URL.
  */
-function parseBareURLPath(ctx: ParserContext): ASTNode | null {
+export function parseBareURLPath(
+  ctx: ParserContext,
+  isTerminator: (ctx: ParserContext) => boolean = isFetchURLTerminator
+): ASTNode | null {
   const startPos = ctx.savePosition();
   let path = '';
 
-  while (!ctx.isAtEnd() && !isFetchURLTerminator(ctx)) {
+  while (!ctx.isAtEnd() && !isTerminator(ctx)) {
     path += ctx.advance().value;
   }
 

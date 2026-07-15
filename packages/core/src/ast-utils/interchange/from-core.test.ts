@@ -1008,6 +1008,188 @@ describe('fromCoreAST', () => {
       expect(result.roles.destination).toEqual({ type: 'selector', value: '#box' });
     });
 
+    // go — three real producer shapes reach inferRoles:
+    //  1. traditional parser: flat args, keywords as core `string` nodes
+    //     (→ interchange `literal`), naked URLs as core `literal` nodes
+    //  2. semantic compileSync: args:[], modifiers.on/method
+    //  3. buildAST goMapper: positional literal args
+    describe('go roles', () => {
+      // -- shape 1: traditional parser --
+      it('url keyword form → destination + method (traditional)', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [
+              coreNode('string', { value: 'to' }),
+              coreNode('string', { value: 'url' }),
+              coreNode('literal', { value: '/page' }),
+            ],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
+        expect(result.roles.method).toEqual({ type: 'literal', value: 'url' });
+      });
+
+      it('url keyword without `to` → destination + method', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [coreNode('string', { value: 'url' }), coreNode('literal', { value: '/page' })],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
+        expect(result.roles.method).toEqual({ type: 'literal', value: 'url' });
+      });
+
+      it('naked path → destination, no method', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [coreNode('string', { value: 'to' }), coreNode('literal', { value: '/about' })],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/about' });
+        expect(result.roles.method).toBeUndefined();
+      });
+
+      it('go back → destination as identifier (AOT history.back)', () => {
+        const result = fromCoreAST(
+          coreNode('command', { name: 'go', args: [coreNode('string', { value: 'back' })] })
+        ) as any;
+        expect(result.roles.destination).toEqual({
+          type: 'identifier',
+          value: 'back',
+          name: 'back',
+        });
+        expect(result.roles.method).toBeUndefined();
+      });
+
+      it('go forward → destination as identifier', () => {
+        const result = fromCoreAST(
+          coreNode('command', { name: 'go', args: [coreNode('string', { value: 'forward' })] })
+        ) as any;
+        expect(result.roles.destination).toEqual({
+          type: 'identifier',
+          value: 'forward',
+          name: 'forward',
+        });
+      });
+
+      it('scroll form → destination is the `of` target', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [
+              coreNode('string', { value: 'to' }),
+              coreNode('string', { value: 'top' }),
+              coreNode('string', { value: 'of' }),
+              coreNode('selector', { value: '#header' }),
+            ],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'selector', value: '#header' });
+      });
+
+      it('scroll form skips a `the` before the target', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [
+              coreNode('string', { value: 'to' }),
+              coreNode('string', { value: 'bottom' }),
+              coreNode('string', { value: 'of' }),
+              coreNode('string', { value: 'the' }),
+              coreNode('selector', { value: '#el' }),
+            ],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'selector', value: '#el' });
+      });
+
+      it('position-only (`go to top`) → no roles', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [coreNode('string', { value: 'to' }), coreNode('string', { value: 'top' })],
+          })
+        ) as any;
+        expect(result.roles).toBeUndefined();
+      });
+
+      // -- shape 2: semantic compileSync (modifiers.on/method) --
+      it('semantic modifiers path → destination + method', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [],
+            modifiers: {
+              on: coreNode('literal', { value: '/page' }),
+              method: coreNode('literal', { value: 'url' }),
+            },
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
+        expect(result.roles.method).toEqual({ type: 'literal', value: 'url' });
+      });
+
+      it('semantic modifiers path normalizes back → identifier', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [],
+            modifiers: { on: coreNode('literal', { value: 'back' }) },
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({
+          type: 'identifier',
+          value: 'back',
+          name: 'back',
+        });
+      });
+
+      // -- shape 3: buildAST goMapper (positional literals) --
+      it('buildAST positional url form → destination + method', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [coreNode('literal', { value: 'url' }), coreNode('literal', { value: '/page' })],
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
+        expect(result.roles.method).toEqual({ type: 'literal', value: 'url' });
+      });
+
+      it('buildAST positional back → destination identifier', () => {
+        const result = fromCoreAST(
+          coreNode('command', { name: 'go', args: [coreNode('literal', { value: 'back' })] })
+        ) as any;
+        expect(result.roles.destination).toEqual({
+          type: 'identifier',
+          value: 'back',
+          name: 'back',
+        });
+      });
+
+      it('buildAST positional bare path → destination', () => {
+        const result = fromCoreAST(
+          coreNode('command', { name: 'go', args: [coreNode('literal', { value: '/page' })] })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
+      });
+
+      // -- target fallback (explicit cases bypass schema Pass-2) --
+      it('binds a trailing target to destination', () => {
+        const result = fromCoreAST(
+          coreNode('command', {
+            name: 'go',
+            args: [],
+            target: coreNode('selector', { value: '#box' }),
+          })
+        ) as any;
+        expect(result.roles.destination).toEqual({ type: 'selector', value: '#box' });
+      });
+    });
+
     it('infers increment roles: patient + quantity', () => {
       const result = fromCoreAST(
         coreNode('command', {

@@ -2692,7 +2692,7 @@ Most map to families this file had already named:
 | reactive `when … changes` heads | 48 | when-value-changes ×24, when-multiple-changes ×24 | = named reactive `on.event` deferral |
 | set source-qualifier tails (`from #firstName` on bind rows) | 44 | two-way-binding ×22, computed-value ×22 | NEW — named here |
 | show/hide style-capture (`with *opacity`) | 38 | show-with-transition ×19, hide-with-transition ×19 | = named Batch-3 leftover |
-| go-url destination (`"/page"`) | 18 | go-url ×18 | = named Batch-3 leftover |
+| go-url destination (`"/page"`) | ~~18~~ | go-url ×18 | **RESOLVED — #680** (semantic go-url capture, x24; snapshot predates #680, resweep to zero the count). Traditional/interchange sibling resolved 2026-07-14, `HANDOFF_go-interchange-inference.md` |
 | swap with-phrase | 6 | swap-content ×6 | = named F6 (wontfix) |
 | command-option tails, misc (render/morph `: $data` ×36 — **resolved by Arc E**, the render rows' naked with-pair folds via the same mechanism as fetch — `beep! <expr>` ×18, unless operator tail ×18, tell to-infinitive ×16, do-not-throw leak ×3, fetch-as id ×1+2, sw async vocab gap ×1) | ~~95~~ **59** | ~~render-template-with-data ×18, morph-with-template ×18,~~ beep-debug-expression ×18, unless-condition ×18, tell-command ×16, fetch-do-not-throw ×3, fetch-error-handling ×2, async-block ×1, fetch-json ×1 | NEW — named here; render/morph rows RESOLVED (Arc E) |
 
@@ -3143,12 +3143,19 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >
 > **Discoveries logged (not fixed in Batch 1):**
 >
-> 1. **go-url destination drop, en included**: `go to url "/page"` parses to
->    `destination=expression:"url"` and DROPS `"/page"` — identically in en and es
->    (P5c/P5d), so fidelity 1.0 masks it corpus-wide (the en-reference-corruption
->    class; R3 silent because the value is a quoted string, not a bare URL token).
->    Candidate for the R3 value-bug families list: teach `go`'s patterns the `url
->    <literal>` idiom, then resweep — en denominator moves ×24.
+> 1. **go-url destination drop, en included** — **✅ RESOLVED (#680, 2026-07-14).**
+>    `go to url "/page"` used to parse to `destination=expression:"url"` and DROP
+>    `"/page"` — identically in en and es (P5c/P5d), so fidelity 1.0 masked it
+>    corpus-wide (the en-reference-corruption class; R3 silent because the value
+>    is a quoted string, not a bare URL token). #680 taught `go`'s patterns the
+>    `url <literal>` idiom (`rolePrefixLiteralVariants` on `goSchema`) exactly as
+>    suggested here; the semantic parse now captures it in all 24 languages —
+>    verified: `go to url "/page"` → `{destination:"/page", method:"url"}`,
+>    `go to /page` → `{destination:"/page"}`, `go back` → `{destination:"back"}`.
+>    The SIBLING traditional-parser + interchange layer (the `compileSync`
+>    `{traditional:true}` path the AOT adapter uses — NOT in this corpus) was a
+>    separate gap, resolved 2026-07-14; see
+>    `docs-internal/HANDOFF_go-interchange-inference.md`.
 > 2. **`show`/`hide` style role is uncaptured in EVERY language including en**
 >    (`on click show #modal with *opacity` captures patient only). Another
 >    en-denominator gap: hi `साथ` / ar render-style registrations are untestable
