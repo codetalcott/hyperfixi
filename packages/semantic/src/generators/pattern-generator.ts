@@ -739,6 +739,13 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
   const overrideMarker = roleSpec.markerOverride?.[profile.code];
   const defaultMarker = profile.roleMarkers[roleSpec.role];
 
+  // A role whose renderOverride is the empty string parses WITH its marker but
+  // renders WITHOUT it (e.g. fetch's `from`: `fetch from /api` must parse, yet
+  // canonical _hyperscript rejects `fetch from "/api"` while accepting
+  // `fetch "/api"`). Tag the emitted marker literal so the renderer skips it;
+  // the pattern matcher ignores the flag, so parsing is unchanged.
+  const suppressMarker = roleSpec.renderOverride?.[profile.code] === '';
+
   // Role value token
   const roleValueToken: PatternToken = {
     type: 'role',
@@ -768,7 +775,9 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     const position = defaultMarker?.position ?? 'before';
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
     const pushWord = (word: string): void => {
-      const literal: PatternToken = { type: 'literal', value: word };
+      const literal: PatternToken = suppressMarker
+        ? { type: 'literal', value: word, renderSuppress: true }
+        : { type: 'literal', value: word };
       tokens.push(optionalMarker ? { type: 'group', optional: true, tokens: [literal] } : literal);
     };
     if (position === 'before') {
@@ -792,9 +801,12 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
       const alternatives = [
         ...new Set([...(defaultMarker.alternatives ?? []), ...variantAlts]),
       ].filter(a => a !== defaultMarker.primary);
-      return alternatives.length
-        ? { type: 'literal', value: defaultMarker.primary, alternatives }
-        : { type: 'literal', value: defaultMarker.primary };
+      return {
+        type: 'literal',
+        value: defaultMarker.primary,
+        ...(alternatives.length ? { alternatives } : {}),
+        ...(suppressMarker ? { renderSuppress: true } : {}),
+      };
     };
     const pushMarker = (marker: PatternToken): void => {
       tokens.push(

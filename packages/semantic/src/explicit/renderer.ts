@@ -283,7 +283,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private renderPatternToken(token: any, node: SemanticNode, language: string): string | null {
     switch (token.type) {
       case 'literal':
-        return token.value;
+        // Parse-only markers (renderSuppress) consume input but never render —
+        // e.g. fetch's `from`, which parses `fetch from /api` yet must be absent
+        // from output (`fetch from "/api"` is invalid canonical _hyperscript).
+        return token.renderSuppress ? null : token.value;
 
       case 'role': {
         const value = node.roles.get(token.role);

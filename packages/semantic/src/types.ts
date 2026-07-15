@@ -446,6 +446,14 @@ export interface LiteralPatternToken {
   readonly value: string;
   /** Alternative spellings/forms that also match */
   readonly alternatives?: string[];
+  /**
+   * Parse-only marker: the pattern matcher still consumes this literal, but the
+   * renderer skips it. Set when a role declares `renderOverride: { <lang>: '' }`
+   * (e.g. fetch's `from`) — the marker is required to PARSE `fetch from /api`
+   * yet must be absent from RENDER output, since `fetch from "/api"` is invalid
+   * canonical _hyperscript while `fetch "/api"` is valid.
+   */
+  readonly renderSuppress?: boolean;
 }
 
 export interface RolePatternToken {
