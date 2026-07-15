@@ -29,6 +29,17 @@ import type {
  * word. Shared by renderCompound and joinStatements.
  */
 const BLOCK_HEADER_ACTIONS = new Set<ActionType>(['repeat', 'for', 'while', 'tell']);
+
+/**
+ * Commands whose captured body is an open-ended block that must be closed by an
+ * explicit `end` when a sibling command follows it. `js` captures its raw
+ * JavaScript body as an expression; without a closing `end` the following
+ * hyperscript (`js foo() then add …`) bleeds into the JS body and the canonical
+ * `js` command's `new Function(...)` throws. A `js` that ends a sequence needs no
+ * `end` (its body runs to the end of the enclosing block). Shared by renderCompound
+ * and joinStatements.
+ */
+const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
@@ -122,6 +133,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         prev.action === 'bind' &&
         cur.kind === 'command' &&
         cur.action === 'bind';
+      // A `js` (or other open-body) block that is FOLLOWED by a command must close
+      // with `end` first, so its body doesn't swallow the sibling.
+      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
+        out += ` ${this.keyword(language, 'end')}`;
+      }
       const sep = afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `;
       out += sep + renderedStatements[i];
     }
@@ -161,6 +177,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     for (let i = 1; i < rendered.length; i++) {
       const prev = statements[i - 1];
       const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
+        out += ` ${this.keyword(language, 'end')}`;
+      }
       out += (afterBlockHeader ? ' ' : ' then ') + rendered[i];
     }
     return out;
