@@ -52,7 +52,7 @@ build (runs once)
 
 #### 2. Lint & Typecheck (10 min)
 
-- ESLint for core, semantic, i18n, vite-plugin
+- oxlint (whole repo, `.oxlintrc.json`)
 - TypeScript checks for all packages
 
 #### 3. Unit Tests (15 min)

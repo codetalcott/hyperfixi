@@ -432,12 +432,8 @@ jobs:
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
 
-      - name: Run ESLint (public packages)
-        run: |
-          npm run lint --prefix packages/core --if-present
-          npm run lint --prefix packages/semantic --if-present
-          npm run lint --prefix packages/i18n --if-present
-          npm run lint --prefix packages/vite-plugin --if-present
+      - name: Lint (oxlint)
+        run: npm run lint
 
       - name: Typecheck all packages
         run: |

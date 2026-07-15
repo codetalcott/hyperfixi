@@ -148,7 +148,7 @@ Benefits:
     │Download │       │Download │      │Download │       │
     │artifacts│       │artifacts│      │artifacts│       │
     │         │       │         │      │         │       │
-    │✓ ESLint │       │✓ Node 24│      │✓ Core   │       │
+    │✓ oxlint │       │✓ Node 24│      │✓ Core   │       │
     │✓ TypeChk│       │         │      │✓ Semant │       │
     │         │       │         │      │✓ i18n   │       │
     │         │       │         │      │         │       │

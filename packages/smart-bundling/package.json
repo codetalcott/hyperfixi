@@ -35,8 +35,6 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext ts,tsx",
-    "lint:fix": "eslint src --ext ts,tsx --fix",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "keywords": [
@@ -72,7 +70,6 @@
     "@types/node": "^20.0.0",
     "@types/semver": "^7.5.0",
     "@vitest/coverage-v8": "^4.0.0",
-    "eslint": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"

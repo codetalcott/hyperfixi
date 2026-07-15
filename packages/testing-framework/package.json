@@ -54,8 +54,6 @@
     "test:multilingual:regression": "tsx src/multilingual/cli.ts --regression",
     "analyze-failures": "tsx src/multilingual/tools/analyze-failures.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext ts,tsx",
-    "lint:fix": "eslint src --ext ts,tsx --fix",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "keywords": [
@@ -90,7 +88,6 @@
     "@types/diff": "^5.0.0",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.0.0",
-    "eslint": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"

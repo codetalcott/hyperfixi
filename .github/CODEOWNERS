@@ -19,7 +19,7 @@
 /package-lock.json @codetalcott
 /lerna.json @codetalcott
 /tsconfig*.json @codetalcott
-/.eslintrc.json @codetalcott
+/.oxlintrc.json @codetalcott
 /.prettierrc @codetalcott
 
 # GitHub configuration and workflows
