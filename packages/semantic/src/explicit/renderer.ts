@@ -313,11 +313,30 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // Use default if available
           return null;
         }
-        // The event role of an event handler is the one literal we localize to
-        // the target language (Phase 1b) — scoped here so other role literals
-        // (selectors, string literals) are never touched.
-        if (token.role === 'event' && node.kind === 'event-handler') {
+        // An `event` role names a DOM event — always a bare identifier, never a
+        // quoted string. Render it via renderEventName (localizes for the target
+        // language; identity for en) so `wait for transitionend` / `send click`
+        // stay unquoted. A known DOM event name arrives as a string `literal`
+        // (renderEventName strips the quotes); expression/namespaced events fall
+        // through unchanged. Previously scoped to event-handler nodes only, which
+        // left `wait for {event}` rendering the quoted `wait for "transitionend"`
+        // the canonical parser rejects.
+        if (token.role === 'event') {
           return this.renderEventName(value, language);
+        }
+        // `halt` takes an idiomatic article in canonical hyperscript — `halt the
+        // event` (`halt event` is rejected). The parser strips the leaked article
+        // (skipNoiseWords) so the value is the bare `event` reference; re-add `the`
+        // at render. Scoped to en (the article is English syntax); other languages
+        // render the reference alone.
+        if (
+          language === 'en' &&
+          node.action === 'halt' &&
+          token.role === 'patient' &&
+          value.type === 'reference' &&
+          value.value === 'event'
+        ) {
+          return `the ${this.valueToNaturalString(value, language)}`;
         }
         return this.valueToNaturalString(value, language);
       }
@@ -340,7 +359,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           );
           if (destToken) {
             const destValue = node.roles.get('destination');
-            if (destValue?.type === 'reference' && destValue.value === 'me') {
+            // Keep an explicit destination when the patient is string content —
+            // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
+            // alone is rejected: `add` expects a class/attribute reference). A
+            // class/attribute patient defaults to `me` fine, so it stays suppressed.
+            const patient = node.roles.get('patient');
+            const patientIsStringLiteral =
+              patient?.type === 'literal' && patient.dataType === 'string';
+            if (
+              destValue?.type === 'reference' &&
+              destValue.value === 'me' &&
+              !patientIsStringLiteral
+            ) {
               return null; // Skip rendering default "me" destination
             }
           }

@@ -2,14 +2,8 @@
   "description": "Allowlist for the canonical-validity gate (packages/testing-framework/src/multilingual/canonical-validity.test.ts). Each id renders to English that the real hyperscript.org parser rejects. A NEW invalid render outside this list, or an allowlisted id that becomes valid, both fail the gate. Shrink this list as renderer fixes land.",
   "note": "These are the ranked worklist for the deferred full renderer sweep; the fetch `from`+quote family was fixed (renderSuppress) and is intentionally NOT here. See docs-internal/HANDOFF_semantic-roundtrip-validity.md § FINDINGS.",
   "corpusCheckedAtGeneration": 133,
-  "validAtGeneration": 116,
+  "validAtGeneration": 122,
   "allowedInvalid": [
-    {
-      "id": "behavior-draggable",
-      "command": "behavior",
-      "error": "Expected 'end' but found 'event'",
-      "reason": "behavior block renders handler/init structure the canonical parser rejects (block-rendering family)"
-    },
     {
       "id": "behavior-removable",
       "command": "behavior",
@@ -47,18 +41,6 @@
       "reason": "event-source handler if-body drops member access / truncates block"
     },
     {
-      "id": "form-submit-prevent",
-      "command": "halt",
-      "error": "Unexpected Token : event",
-      "reason": "`halt the event` renders as `halt event` (article dropped; `halt event` is invalid)"
-    },
-    {
-      "id": "halt-propagation",
-      "command": "halt",
-      "error": "Unexpected Token : event",
-      "reason": "`halt the event` renders as `halt event` (article dropped; `halt event` is invalid)"
-    },
-    {
       "id": "event-key-combo",
       "command": "if",
       "error": "Expected 'end' but found '.shiftKey'",
@@ -83,28 +65,10 @@
       "reason": "object-literal role rendered with braces `with {obj}` that `with` rejects"
     },
     {
-      "id": "repeat-for-each",
-      "command": "repeat",
-      "error": "Expected 'times' but found 'add'",
-      "reason": "repeat `for`-variant renders `repeat item in .items` — the `for` binder is an optional literal-only group render suppresses (patterns/repeat.ts repeatForInHead); canonical needs `repeat for item in …` / `for item in …` (block-header `then` fixed in renderCompound)"
-    },
-    {
-      "id": "repeat-times",
-      "command": "repeat",
-      "error": "Expected either a class reference or attribute expression",
-      "reason": "`add \"<p>Line</p>\" to me` renders `add \"<p>Line</p>\"` — default-`me` destination suppression (renderer.ts) drops the `to me` canonical requires for an `add` of a string literal (block-header `then` fixed in renderCompound)"
-    },
-    {
       "id": "send-with-detail",
       "command": "send",
       "error": "Expected ':' but found ','",
-      "reason": "call-style argument list mangled (`update(value, :, 42)`)"
-    },
-    {
-      "id": "wait-for-event",
-      "command": "wait",
-      "error": "Expected event name",
-      "reason": "`wait for <event>` renders the event name quoted"
+      "reason": "parse-side value corruption: `send update(value: 42)` captured as `update(value, :, 42)` (not a render bug)"
     }
   ]
 }
