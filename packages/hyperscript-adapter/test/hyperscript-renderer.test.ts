@@ -66,10 +66,16 @@ describe('renderToHyperscript', () => {
       ).toBe('add .highlight to #box');
     });
 
-    it('renders remove with source', () => {
+    it('renders remove with an explicit source', () => {
+      expect(
+        renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', sel('#panel')]])),
+      ).toBe('remove .hidden from #panel');
+    });
+
+    it('suppresses an implicit "me" source (remove .hidden, not remove .hidden from me)', () => {
       expect(
         renderToHyperscript(cmd('remove', [['patient', sel('.hidden')], ['source', ref('me')]])),
-      ).toBe('remove .hidden from me');
+      ).toBe('remove .hidden');
     });
   });
 
