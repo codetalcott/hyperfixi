@@ -130,7 +130,6 @@ jobs:
           npm run build --prefix packages/intent-element
           npm run build --prefix packages/types-browser
           npm run build --prefix packages/testing-framework
-          npm run build --prefix packages/mcp-server-hyperscript
           npm run build --prefix packages/language-server-hyperscript
           npm run build --prefix packages/multilingual-hyperscript
           npm run build --prefix packages/hyperscript-tools-i18n
@@ -204,7 +203,7 @@ jobs:
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn domain-config \
                         compilation-service planner mcp-server vite-plugin \
                         behaviors reactivity realtime components speech intent-element testing-framework language-server \
-                        mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
+                        language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n"
 
           for pkg in $ALL_PACKAGES; do
@@ -341,7 +340,7 @@ jobs:
                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                        compilation-service mcp-server vite-plugin \
                        behaviors testing-framework language-server \
-                       mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
+                       language-server-hyperscript multilingual-hyperscript \
                        hyperscript-tools-i18n; do
               [ -f "packages/$pkg/package.json" ] || continue
               IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
