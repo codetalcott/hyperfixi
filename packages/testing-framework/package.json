@@ -54,7 +54,8 @@
     "test:multilingual:regression": "tsx src/multilingual/cli.ts --regression",
     "analyze-failures": "tsx src/multilingual/tools/analyze-failures.ts",
     "typecheck": "tsc --noEmit",
-    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
+    "test:canonical": "FOREIGN_CANONICAL_VALIDITY=1 VITEST_TIMEOUT=300 bash ../../scripts/vitest-run.sh --reporter=dot src/multilingual/canonical-validity.test.ts src/multilingual/foreign-canonical-validity.test.ts"
   },
   "keywords": [
     "hyperscript",
