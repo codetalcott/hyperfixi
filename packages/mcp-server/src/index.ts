@@ -6,6 +6,7 @@
  * Consolidates capabilities from core/ast-utils and patterns-reference packages.
  */
 
+import { createRequire } from 'node:module';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -83,10 +84,19 @@ import { listResources, readResource } from './resources/index.js';
 // Server Setup
 // =============================================================================
 
+// Version tracks package.json so MCP clients report the real server version.
+// set-version.cjs bumps every package.json on release; a hardcoded string here
+// would silently drift (it sat at '1.0.0' through the entire 2.x line). The
+// require path resolves the same in dev (src/), built (dist/), and installed
+// (node_modules/@hyperfixi/mcp-server/) layouts.
+const { version: pkgVersion } = createRequire(import.meta.url)('../package.json') as {
+  version: string;
+};
+
 const server = new Server(
   {
     name: '@hyperfixi/mcp-server',
-    version: '1.0.0',
+    version: pkgVersion,
   },
   {
     capabilities: {
@@ -279,8 +289,16 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleFeedbackTool(name, args as Record<string, unknown>);
   }
 
-  // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
-  if (name === 'lse_from_hyperscript' || name === 'lse_to_hyperscript') {
+  // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE, plus the LSE 2.0
+  // LLM-native tools — all five are defined in lsePipelineTools and handled by
+  // handleLsePipelineTool; the last three were advertised but unrouted here.)
+  if (
+    name === 'lse_from_hyperscript' ||
+    name === 'lse_to_hyperscript' ||
+    name === 'execute_lse' ||
+    name === 'validate_lse' ||
+    name === 'translate_lse'
+  ) {
     return handleLsePipelineTool(name, args as Record<string, unknown>);
   }
 
