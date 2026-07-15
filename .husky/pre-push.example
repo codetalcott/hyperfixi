@@ -3,7 +3,8 @@
 # To enable: cp .husky/pre-push.example .husky/pre-push
 #
 # This runs validation before git push to catch issues early.
-# Trade-off: Adds ~30-45 seconds to push time.
+# Trade-off: Adds ~30-45 seconds to push time (more if you changed a deep
+# dependency like packages/semantic — step 2 tests every affected consumer).
 
 echo ""
 echo "🔍 Running pre-push validation..."
@@ -20,6 +21,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "   ✅ Type checks passed"
+echo ""
+
+# 2. Affected-package tests: the changed packages AND every package that depends
+#    on them. Catches the case where an engine change (e.g. the semantic renderer)
+#    breaks a downstream consumer (e.g. hyperscript-adapter's preprocessToEnglish /
+#    custom-renderer assertions) that the changed package's own suite never exercises.
+#    Fast for a leaf change; thorough for a deep one. Docs/config-only pushes skip
+#    instantly (nothing affected).
+echo "2️⃣  Testing affected packages..."
+npm run test:affected
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Affected-package tests failed"
+  echo "   Fix the failures or use: git push --no-verify"
+  echo ""
+  exit 1
+fi
+echo "   ✅ Affected-package tests passed"
 echo ""
 
 # 2. Changelog validation (only if CHANGELOG.md was modified)
