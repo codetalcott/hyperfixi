@@ -172,6 +172,10 @@ export const COMPOUND_COMMANDS = new Set([
   'halt',
   'measure',
   'js',
+  // go [to] <url> [in new window] / go back / (deprecated) go to url <u>,
+  // go to <pos> of <el> — keyword-driven; the generic arg loop drops the
+  // trailing URL and folds scroll forms into binary expressions.
+  'go',
   'tell', // tell <target> <command> [<command> ...]
   // pick: 5 variants from upstream _hyperscript (first/last/random/range/match)
   // — keyword-driven, can't be parsed by the generic identifier-plus-args path.
