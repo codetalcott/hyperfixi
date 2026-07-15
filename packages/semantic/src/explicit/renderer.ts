@@ -6,6 +6,7 @@
  */
 
 import type {
+  ActionType,
   SemanticNode,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
@@ -82,7 +83,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     const renderedStatements = node.statements.map(stmt => this.render(stmt, language));
     const chainWord = this.getChainWord(node.chainType, language);
-    return renderedStatements.join(` ${chainWord} `);
+    // A loop/tell HEADER takes its body directly — canonical hyperscript rejects a
+    // chain word between the header and its first body command (`repeat 3 times add
+    // …`, not `repeat 3 times then add …`; `tell #panel add …`, not `tell #panel
+    // then add …`). The parser flattens the block into this compound (no
+    // LoopSemanticNode with an attached body reaches the renderer), so suppress the
+    // chain word immediately after any block-header command. A `then` BETWEEN body
+    // commands stays valid, so every other join keeps the chain word. This is the
+    // explicit loop/tell subset of the schema `hasBody` flag — `hasBody` also covers
+    // if/on/async/js/behavior/… which render through other node kinds/paths and must
+    // keep their chain word.
+    const BLOCK_HEADER_ACTIONS = new Set<ActionType>(['repeat', 'for', 'while', 'tell']);
+    let out = renderedStatements[0] ?? '';
+    for (let i = 1; i < renderedStatements.length; i++) {
+      const prev = node.statements[i - 1];
+      const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+      out += (afterBlockHeader ? ' ' : ` ${chainWord} `) + renderedStatements[i];
+    }
+    return out;
   }
 
   /**

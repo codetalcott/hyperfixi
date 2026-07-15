@@ -2,7 +2,7 @@
   "description": "Allowlist for the canonical-validity gate (packages/testing-framework/src/multilingual/canonical-validity.test.ts). Each id renders to English that the real hyperscript.org parser rejects. A NEW invalid render outside this list, or an allowlisted id that becomes valid, both fail the gate. Shrink this list as renderer fixes land.",
   "note": "These are the ranked worklist for the deferred full renderer sweep; the fetch `from`+quote family was fixed (renderSuppress) and is intentionally NOT here. See docs-internal/HANDOFF_semantic-roundtrip-validity.md § FINDINGS.",
   "corpusCheckedAtGeneration": 133,
-  "validAtGeneration": 111,
+  "validAtGeneration": 116,
   "allowedInvalid": [
     {
       "id": "behavior-draggable",
@@ -85,50 +85,20 @@
     {
       "id": "repeat-for-each",
       "command": "repeat",
-      "error": "Expected 'times' but found 'then'",
-      "reason": "loop/block body rendered with a spurious `then` between header and first command"
-    },
-    {
-      "id": "repeat-forever",
-      "command": "repeat",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "loop/block body rendered with a spurious `then` between header and first command"
+      "error": "Expected 'times' but found 'add'",
+      "reason": "repeat `for`-variant renders `repeat item in .items` — the `for` binder is an optional literal-only group render suppresses (patterns/repeat.ts repeatForInHead); canonical needs `repeat for item in …` / `for item in …` (block-header `then` fixed in renderCompound)"
     },
     {
       "id": "repeat-times",
       "command": "repeat",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "loop/block body rendered with a spurious `then` between header and first command"
-    },
-    {
-      "id": "repeat-until-event",
-      "command": "repeat",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "loop/block body rendered with a spurious `then` between header and first command"
-    },
-    {
-      "id": "repeat-while",
-      "command": "repeat",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "loop/block body rendered with a spurious `then` between header and first command"
+      "error": "Expected either a class reference or attribute expression",
+      "reason": "`add \"<p>Line</p>\" to me` renders `add \"<p>Line</p>\"` — default-`me` destination suppression (renderer.ts) drops the `to me` canonical requires for an `add` of a string literal (block-header `then` fixed in renderCompound)"
     },
     {
       "id": "send-with-detail",
       "command": "send",
       "error": "Expected ':' but found ','",
       "reason": "call-style argument list mangled (`update(value, :, 42)`)"
-    },
-    {
-      "id": "template-literal-list-build",
-      "command": "set",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "compound set/for body rendered with a spurious `then`"
-    },
-    {
-      "id": "tell-other-element",
-      "command": "tell",
-      "error": "Expected 'end' but found 'then'",
-      "reason": "tell block body rendered with a spurious `then`"
     },
     {
       "id": "wait-for-event",
