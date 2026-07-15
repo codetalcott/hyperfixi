@@ -240,7 +240,7 @@
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
-    "ws": "^8.0.0"
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "@lokascript/semantic": "^2.7.2",
