@@ -18,7 +18,7 @@
 - Vitest defaults use Happy DOM; shared setup is in `packages/core/src/test-setup.ts`—import it in new spec files for DOM globals.
 - Performance-sensitive code favors preallocated arrays and LRU caches; follow existing patterns in `packages/core/src/performance`.
 - Keep TypeScript strict; every workspace extends `tsconfig.base.json` and CI expects zero compiler errors via `npm run typecheck --workspaces`.
-- Linting uses ESLint+Prettier; run `npm run lint --prefix packages/<name>` for focused fixes and respect side-effect free modules.
+- Linting uses oxlint (config: `.oxlintrc.json`); run `npm run lint` at the repo root (fast, whole-repo). Formatting is Prettier via the lint-staged pre-commit hook (`npm run format` / `format:check` to run manually). Respect side-effect-free modules.
 - Browser bundles are built with Rollup (`rollup.config.mjs`, `rollup.browser.config.mjs`); update both when changing entry names or output formats.
 - For Deno support, update `packages/core/src/deno-*.ts` and keep `deno-*.test.ts` passing.
 - AI-facing MCP server lives in `packages/mcp-server`; its handlers embed `@hyperfixi/core` so changes to analysis APIs must be reflected in `setupHandlers()`.

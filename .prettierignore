@@ -5,3 +5,12 @@
 # affects the lint-staged hook and editors. Outward-facing markdown (README,
 # docs/, CLAUDE.md) stays formatted.
 docs-internal/
+
+# Build outputs / generated / vendored — never formatted. Keeps the local
+# `format` / `format:check` scripts (prettier .) scoped to real source.
+**/dist/
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/*.min.js
+package-lock.json

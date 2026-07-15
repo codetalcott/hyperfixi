@@ -14,7 +14,7 @@ entities:
 
 conditions:
   - name: project.lint.passing
-    description: 'ESLint passes across all workspaces'
+    description: 'oxlint passes across all workspaces'
     eval:
       type: shell
       cmd: 'npm run lint'
