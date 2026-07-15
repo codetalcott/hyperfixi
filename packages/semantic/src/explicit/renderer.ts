@@ -445,28 +445,29 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           return null;
         }
 
-        // For optional groups with destination role, skip if destination is "me" (the default)
-        // This avoids rendering "on me" / "en yo" when it's implicit
+        // Skip an optional group whose destination/source role is the implicit
+        // `me` default (the parser injects it when unspecified). This avoids the
+        // redundant `on me` / `to me` / `from me` / `of me` — `add .active`, not
+        // `add .active to me`; `remove me`, not `remove me from me`; `measure my x`,
+        // not `measure my x of me`. The `on` event-source renders via its own path,
+        // so it is untouched here.
         if (token.optional) {
-          const destToken = token.tokens.find(
-            (t: any) => t.type === 'role' && t.role === 'destination'
-          );
-          if (destToken) {
-            const destValue = node.roles.get('destination');
+          for (const roleName of ['destination', 'source'] as const) {
+            const roleToken = token.tokens.find(
+              (t: any) => t.type === 'role' && t.role === roleName
+            );
+            if (!roleToken) continue;
+            const roleValue = node.roles.get(roleName);
+            if (roleValue?.type !== 'reference' || roleValue.value !== 'me') continue;
             // Keep an explicit destination when the patient is string content —
             // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
             // alone is rejected: `add` expects a class/attribute reference). A
             // class/attribute patient defaults to `me` fine, so it stays suppressed.
-            const patient = node.roles.get('patient');
-            const patientIsStringLiteral =
-              patient?.type === 'literal' && patient.dataType === 'string';
-            if (
-              destValue?.type === 'reference' &&
-              destValue.value === 'me' &&
-              !patientIsStringLiteral
-            ) {
-              return null; // Skip rendering default "me" destination
+            if (roleName === 'destination') {
+              const patient = node.roles.get('patient');
+              if (patient?.type === 'literal' && patient.dataType === 'string') continue;
             }
+            return null; // Skip rendering the implicit "me" destination/source
           }
         }
 
