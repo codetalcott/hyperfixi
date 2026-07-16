@@ -128,6 +128,11 @@ export const arabicProfile: LanguageProfile = {
     return: { primary: 'ارجع', alternatives: ['عُد'], normalized: 'return' },
     then: { primary: 'ثم', alternatives: ['بعدها', 'ثمّ'], normalized: 'then' },
     and: { primary: 'وأيضاً', alternatives: ['أيضاً'], normalized: 'and' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: 'موجود', normalized: 'exists' },
     // آخر is deliberately ABSENT: it is the positional `last` keyword
     // (آخر <button/> في .modal — see pattern-matcher's positional handling).
     // Listing it as an end-alternative made parseBodyWithClauses chop every

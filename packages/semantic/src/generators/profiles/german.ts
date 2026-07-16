@@ -128,6 +128,11 @@ export const germanProfile: LanguageProfile = {
     // focus-trap drop their then-branch). Not an ActionType and has no command
     // schema, so no pattern is generated from it.
     matches: { primary: 'passt', normalized: 'matches' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: 'existiert', normalized: 'exists' },
     end: { primary: 'ende', alternatives: ['fertig'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'asynchron', normalized: 'async' },

@@ -128,6 +128,11 @@ export const chineseProfile: LanguageProfile = {
     return: { primary: '返回', normalized: 'return' },
     then: { primary: '然后', alternatives: ['接着', '那么'], normalized: 'then' },
     and: { primary: '并且', alternatives: ['和', '而且'], normalized: 'and' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: '存在', normalized: 'exists' },
     end: { primary: '结束', alternatives: ['终止', '完'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS执行', alternatives: ['js'], normalized: 'js' },

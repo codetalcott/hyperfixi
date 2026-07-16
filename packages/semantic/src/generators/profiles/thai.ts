@@ -133,6 +133,11 @@ export const thaiProfile: LanguageProfile = {
     return: { primary: 'คืนค่า', alternatives: ['กลับ'], normalized: 'return' },
     then: { primary: 'แล้ว', alternatives: [], normalized: 'then' },
     and: { primary: 'และ', alternatives: [], normalized: 'and' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: 'มีอยู่', normalized: 'exists' },
     end: { primary: 'จบ', alternatives: [], normalized: 'end' },
     // Advanced
     js: { primary: 'เจเอส', alternatives: ['js'], normalized: 'js' },

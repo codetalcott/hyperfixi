@@ -274,6 +274,11 @@ export const russianProfile: LanguageProfile = {
     // so `target соответствует .x` must normalize to `target matches .x`; otherwise
     // `соответствует` stays an identifier and modal-close-backdrop drops its then-branch.
     matches: { primary: 'соответствует', normalized: 'matches' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: 'существует', normalized: 'exists' },
     end: { primary: 'конец', normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },
