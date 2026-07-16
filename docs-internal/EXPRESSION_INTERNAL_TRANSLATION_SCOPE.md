@@ -1,6 +1,7 @@
 # Scope: foreign→English validity — the expression-internal translation gap
 
-**Status:** scoping / not started. Companion to the foreign→English canonical-validity
+**Status:** Phase 1a shipped (foreign validity 90.7 % → 91.5 %; see Phasing below).
+Companion to the foreign→English canonical-validity
 gate (`packages/testing-framework/src/multilingual/foreign-canonical-validity.ts`,
 baseline `baselines/foreign-canonical-validity.json`). The gate makes the number below
 visible and ratcheted; this doc scopes the burndown so it can be prioritized against
@@ -118,6 +119,31 @@ same table drives command and expression translation.
    apply it to possessive property names first (`value`, `innerText`, …). Clears the
    largest family (~6 patterns × ~20 langs). Re-run the foreign gate; prune the cleared
    pairs from the allowlist.
+
+   **1a — property-path possessives — SHIPPED.** The reverse property-name lexicon
+   lives in `packages/semantic/src/parser/utils/expression-lexicon.ts` (surfaces copied
+   from the i18n dicts by `packages/i18n/scripts/extract-property-lexicon.ts`, since
+   semantic is upstream of i18n). `PatternMatcher.toEnglishProperty` normalizes the
+   property HEAD in all four possessive matchers (of-, pre-nominal, post-nominal,
+   selector-possessive), so `my valor`/`私の 値`/`#picker's قيمة` capture property
+   `value`. Cleared **24 pairs** (`input-mirror` + `bind-explicit-property`, 12 langs
+   each); foreign validity 90.7 % → **91.5 %** (2799/3059). Fidelity ratchet unmoved
+   (property names aren't scored by R0–R3), so no multilingual-priority baseline regen.
+   Note: `value` is the only property the i18n dicts translate today, so `innerHTML`/
+   `textContent`/`checked` pass through as identity; the lexicon also carries
+   `checked`/`length`/`disabled`/`hidden` for languages that translate them, ready for
+   future corpus rows.
+
+   **1b — property names inside RAW expressions — TODO.** `two-way-binding`
+   (`"Hello, " + mi valor`), `input-validation` / `if-empty` (`mi valor is empty`),
+   `computed-value` (`valor de #price como Number`) hold the property inside a captured
+   raw-expression string (`joinTokenText`), not a property-path node — so 1a doesn't
+   reach them. These need an expression-internal token pass that translates the property
+   AND the possessive pronoun-in-expression (es `mi`→`my`, not `me`), while keeping
+   string literals / operators / selectors verbatim. Couples with Phase 2 (the same raw
+   expressions also carry `is empty`, `de`/`como`). `if-empty` additionally loses its
+   `is empty` predicate and body to an i18n word-order scramble (`es entonces vacío`) —
+   a transform bug, not just vocab.
 2. **Operators + copula.** `matches`/`is`/`exists`/`is empty`, and the `is`→`it`
    ambiguity (needs per-language disambiguation, e.g. Arabic `هو`). Clears the
    conditional families.
