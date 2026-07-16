@@ -70,8 +70,16 @@ updates:
       # is not ready: tsc-free DTS needs `isolatedDeclarations` (72 violations
       # in packages/semantic alone) and the `moduleResolution: node10` /
       # `baseUrl` tsconfig deprecations must be migrated first. Allow 6.x (the
-      # migration-bridge release — probed clean, only those config deprecations)
-      # to flow as its own PR; defer the 7.x native port until that work lands.
+      # migration-bridge release) to flow as its own PR; defer the 7.x native
+      # port until that work lands.
+      #
+      # The earlier "6.x probed clean, only config deprecations" note was wrong,
+      # and the way it was wrong is worth remembering: the probe used `typecheck`
+      # (`tsc --noEmit`), but 6.x's new diagnostics are EMIT-only, so a
+      # noEmit probe cannot see them. Probing the real `build:types` found TS5011
+      # in 14 packages (fixed in #713) and, behind it, 55 node-type errors in
+      # core (TS5011 is a config error that aborts before typechecking, so it
+      # masks everything downstream). 6.x is a real migration, not a bump.
       # See docs-internal/SPIKE_vite-plus-toolchain.md.
       - dependency-name: 'typescript'
         versions: ['>=7.0.0']
