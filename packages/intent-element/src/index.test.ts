@@ -98,7 +98,7 @@ describe('intentRegistry', () => {
   });
 
   it('loadFrom() throws for non-array response', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ action: 'toggle' }), // object, not array
     } as unknown as Response);
@@ -108,7 +108,7 @@ describe('intentRegistry', () => {
   });
 
   it('loadFrom() throws for schema missing action field', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => [{ roles: [] }], // missing action
     } as unknown as Response);
@@ -118,7 +118,7 @@ describe('intentRegistry', () => {
   });
 
   it('loadFrom() throws for HTTP error', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 404,
       statusText: 'Not Found',

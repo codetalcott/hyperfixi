@@ -7,7 +7,8 @@
     "declarationMap": true,
     "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "incremental": false
+    "incremental": false,
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
