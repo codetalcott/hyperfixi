@@ -39,8 +39,17 @@ updates:
         # bisection: 6.x adds tsconfig deprecations (node10/baseUrl), 7.x is the
         # native (Go) compiler. See the ignore entry below (7.x deferred) and
         # docs-internal/SPIKE_vite-plus-toolchain.md.
+        #
+        # vscode-language{server,client} 10.x drop the `vscode-languageserver/
+        # node.js` deep export path, so the LSP packages fail to build
+        # (`TS2307: Cannot find module`, plus cascading implicit-any). Excluded
+        # 2026-07-16 per the policy above — #710 held 13 majors hostage to this
+        # one API break. They move together (shared upstream repo, matched
+        # versions), so exclude both or neither.
         exclude-patterns:
           - 'typescript'
+          - 'vscode-languageserver'
+          - 'vscode-languageclient'
         update-types:
           - 'major'
     # Named-deferred majors (release-bar item-4 leftovers,
