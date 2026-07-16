@@ -6,6 +6,7 @@
  */
 
 import type { LanguageProfile } from '../../generators/profiles/types';
+import { englishProfile } from '../../generators/profiles/english';
 
 /**
  * Get the reference for a possessive keyword from a language profile.
@@ -56,4 +57,27 @@ export function isPossessiveKeyword(profile: LanguageProfile, keyword: string): 
  */
 export function getAllPossessiveKeywords(profile: LanguageProfile): Record<string, string> {
   return profile.possessive?.keywords ?? {};
+}
+
+/**
+ * Render a reference concept as the English possessive form (`me` → `my`).
+ *
+ * The forward direction of `getPossessiveReference`: that one reads a surface to
+ * a concept (parse), this one writes a concept to English (render). They live
+ * together so the two directions cannot drift.
+ *
+ * Needed because a possessive inside an EXPRESSION is emitted from the token's
+ * `normalized` form, which is the reference CONCEPT (`mi` → `me`), while the
+ * slot grammatically requires the possessive ADJECTIVE — so es `mi valor` joined
+ * to the invalid `me value`. English's own profile already declares the mapping
+ * (`specialForms: { me: 'my', it: 'its', you: 'your' }`), so read it rather than
+ * hard-coding a fourth copy of the table (`renderer.ts` holds a third, which is
+ * missing `you`).
+ *
+ * Only `me`/`you`/`it` have adjectives; the other four references in the union
+ * (`result`/`event`/`target`/`body`) take the `'s` marker — `result's value`,
+ * never `result value`.
+ */
+export function getEnglishPossessiveAdjective(reference: string): string {
+  return englishProfile.possessive?.specialForms?.[reference] ?? `${reference}'s`;
 }
