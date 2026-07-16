@@ -11,7 +11,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src';
-import { translatePropertyName } from '../src/parser/utils/expression-lexicon';
+import {
+  translateConnective,
+  translatePropertyName,
+} from '../src/parser/utils/expression-lexicon';
+import { getEnglishPossessiveAdjective } from '../src/parser/utils/possessive-keywords';
 
 type Node = { roles?: unknown };
 function roleValue(node: Node, role: string): { type?: string; property?: string } {
@@ -83,4 +87,162 @@ describe('possessive property head normalizes to English at parse time', () => {
       "#picker's value"
     );
   });
+});
+
+/**
+ * Phase 1b/3 — the same vocabulary inside a RAW EXPRESSION. A property held in a
+ * captured expression string (`"Hello, " + mi valor`, `mi valor is empty`) is not
+ * a property-path node, so the possessive matchers above never see it. Two
+ * independent joins fed those captures — the conditional's `joinTokenText` and the
+ * operator-run join — and both leaked the source language.
+ */
+describe('getEnglishPossessiveAdjective (reference concept → English)', () => {
+  it('maps the three references that have possessive adjectives', () => {
+    expect(getEnglishPossessiveAdjective('me')).toBe('my');
+    expect(getEnglishPossessiveAdjective('it')).toBe('its');
+    expect(getEnglishPossessiveAdjective('you')).toBe('your');
+  });
+
+  it("falls through to the 's marker for references that have no adjective", () => {
+    // `result value` is not English; `result's value` is.
+    expect(getEnglishPossessiveAdjective('result')).toBe("result's");
+    expect(getEnglishPossessiveAdjective('event')).toBe("event's");
+    expect(getEnglishPossessiveAdjective('target')).toBe("target's");
+    expect(getEnglishPossessiveAdjective('body')).toBe("body's");
+  });
+});
+
+describe('translateConnective (unambiguous connectives only)', () => {
+  it('maps a foreign connective surface to English', () => {
+    expect(translateConnective('es', 'como')).toBe('as');
+    expect(translateConnective('de', 'als')).toBe('as');
+    expect(translateConnective('ja', 'として')).toBe('as');
+  });
+
+  it('passes an unlisted / already-English surface through unchanged', () => {
+    expect(translateConnective('es', 'as')).toBe('as');
+    expect(translateConnective('en', 'anything')).toBe('anything');
+  });
+
+  it('omits a surface the language reuses for another sense', () => {
+    // th `เป็น` is BOTH `as` and the copula `is` — carrying it would rewrite
+    // every Thai `is` condition into `as`.
+    expect(translateConnective('th', 'เป็น')).toBe('เป็น');
+    // es spells `of` and `from` the same `de`; `of` is emitted structurally by
+    // the of-possessive anchor instead, never by surface lookup.
+    expect(translateConnective('es', 'de')).toBe('de');
+  });
+});
+
+describe('possessives inside raw expressions render English (Phase 1b)', () => {
+  // two-way-binding — the possessive sits inside an operator run
+  // (`"Hello, " + my value`), which joined fully verbatim.
+  const twoWay: Array<[string, string]> = [
+    ['es', 'al entrada establecer #greeting de innerText a "Hello, " + mi valor'],
+    ['zh', '当 输入 时 设置 #greeting 的 innerText 为 "Hello, " + 我的 值'],
+  ];
+  for (const [lang, code] of twoWay) {
+    it(`${lang}: operator-run possessive renders "my value"`, () => {
+      expect(render(parse(code, lang), 'en')).toContain('"Hello, " + my value');
+    });
+  }
+
+  // input-validation — the possessive sits inside a folded condition. es `mi`
+  // normalizes to the reference `me`, so this rendered the invalid `me valor`:
+  // the property leaked AND the pronoun was the wrong part of speech.
+  it('es: condition possessive renders "my value", not "me valor"', () => {
+    const english = render(
+      parse('al desenfoque si mi valor es vacío agregar .error a yo sino quitar .error de yo fin', 'es'),
+      'en'
+    );
+    expect(english).toContain('if my value is empty');
+    expect(english).not.toContain('me valor');
+  });
+});
+
+describe('expression connectives and locatives render English (Phase 3)', () => {
+  it('es: computed-value renders the same English as its en reference', () => {
+    const es = render(
+      parse(
+        'al entrada establecer #total de innerText a (the valor de #price como Number) * (mi valor como Number)',
+        'es'
+      ),
+      'en'
+    );
+    expect(es).toContain('the value of #price as Number');
+    expect(es).toContain('my value as Number');
+  });
+
+  it('es: positional locative renders `in`, not the role name', () => {
+    // es `en` is registered as the `destination` role marker, so the marker's
+    // normalized form is the ROLE NAME — this rendered `... destination #chat`.
+    expect(render(parse('al clic desplazar a último <.message/> en #chat', 'es'), 'en')).toContain(
+      'last <.message/> in #chat'
+    );
+    expect(render(parse('al clic enfocar primero <button/> en .modal', 'es'), 'en')).toContain(
+      'first <button/> in .modal'
+    );
+  });
+
+  // The locative markers do not all fail the same way, so cover one of each:
+  // zh/id are not role markers at all and leaked verbatim, while pt normalizes to
+  // English `into` — which the canonical parser rejects in this slot.
+  const locatives: Array<[string, string]> = [
+    ['zh', '当 点击 时 滚动 到 最后一个 <.message/> 在 #chat'],
+    ['pt', 'em clique rolar para último <.message/> dentro #chat'],
+    ['id', 'pada klik gulir ke terakhir <.message/> dalam #chat'],
+  ];
+  for (const [lang, code] of locatives) {
+    it(`${lang}: positional locative renders \`in\``, () => {
+      expect(render(parse(code, lang), 'en')).toContain('last <.message/> in #chat');
+    });
+  }
+
+  it('en: the reference render is unchanged (en defines the target)', () => {
+    expect(render(parse('on click scroll to last <.message/> in #chat', 'en'), 'en')).toContain(
+      'last <.message/> in #chat'
+    );
+  });
+});
+
+describe('raw-expression translation is anchored, never blanket', () => {
+  it('never translates inside a string literal', () => {
+    // The literal must survive byte-identical even though it contains `valor`.
+    const english = render(
+      parse('al entrada establecer #g de innerText a "Hola, valor" + mi valor', 'es'),
+      'en'
+    );
+    expect(english).toContain('"Hola, valor"');
+    expect(english).toContain('my value');
+  });
+
+  it('leaves a bare word with no possessive in front of it alone', () => {
+    // `valor` here is a user variable, not the DOM property — nothing vouches
+    // for it as a property head, so it must pass through untouched.
+    expect(render(parse('al entrada establecer #g de innerText a valor + 1', 'es'), 'en')).toContain(
+      'valor + 1'
+    );
+  });
+
+  it('leaves selectors and sigil refs alone', () => {
+    const english = render(parse('al entrada establecer #g de innerText a $valor + 1', 'es'), 'en');
+    expect(english).toContain('$valor');
+  });
+
+  // ms `ia` and qu `chay` are BOTH the possessive (`its`) and the bare reference
+  // (`it`). Reading the surface as a possessive wherever it appeared rewrote
+  // `if it` — a truthiness check on the fetch result — into the invalid
+  // `if its`, breaking `fetch-do-not-throw` in both languages. A possessive is
+  // only a possessive when a property actually follows it.
+  const bareReference: Array<[string, string]> = [
+    ['ms', 'apabila click ambil_dari /api/users sebagai JSON do bukan lempar kemudian jika ia tetapkan $users ke ia tamat'],
+    ['qu', '/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy'],
+  ];
+  for (const [lang, code] of bareReference) {
+    it(`${lang}: a possessive surface used as a BARE reference stays \`it\``, () => {
+      const english = render(parse(code, lang), 'en');
+      expect(english).toContain('if it');
+      expect(english).not.toContain('if its');
+    });
+  }
 });
