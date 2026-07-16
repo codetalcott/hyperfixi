@@ -1,7 +1,9 @@
 # Scope: foreign→English validity — the expression-internal translation gap
 
-**Status:** Phases 1a, 1b and 3 shipped (foreign validity 90.7 % → **93.7 %**; see
-Phasing below). Phase 2 (operators + copula) is the whole remaining burndown.
+**Status:** Phases 1a, 1b, 3 and **2 shipped** (foreign validity 90.7 % → **95.9 %**;
+see Phasing below). **The vocabulary work is DONE** — the 124 remaining pairs are not
+lexicon-shaped. Current state + the four remaining families:
+`docs-internal/HANDOFF_foreign-validity-burndown.md`.
 Companion to the foreign→English canonical-validity
 gate (`packages/testing-framework/src/multilingual/foreign-canonical-validity.ts`,
 baseline `baselines/foreign-canonical-validity.json`). The gate makes the number below
@@ -161,8 +163,22 @@ same table drives command and expression translation.
    into the invalid `if its` and broke `fetch-do-not-throw` in both languages
    (caught by the gate's ADDED count, now 0).
 
-2. **Operators + copula — the whole remaining burndown.** See the corrected taxonomy
-   below; this is now ~130 of the ~194 residual pairs.
+2. **Operators + copula — SHIPPED (2026-07-16).** Worth **70 pairs**, not the ~130
+   estimated here. Three pure-DATA PRs, no new mechanism: `matches` → 13 profiles (15
+   pairs), `exists` → 13 profiles (13), `is` → 10 profiles (42, plus shrinking
+   `CONDITION_COPULAS_SURFACE` 12 → 3 dead entries).
+
+   The premise of this doc's "Approach options" was wrong in a useful way. Neither
+   option was needed: `surfaceOf` (`expression-lexicon.ts`) already emits a token's
+   normalized English form **iff it lexed as a keyword**, and `is` was already declared
+   in `profile.keywords` for es/de/sw — precisely the languages that passed. So the gap
+   was **missing profile data**, not a missing lexicon. A slot parameter would not have
+   worked regardless: `es` is Spanish `is` but German `it`, a *language* axis, not a
+   slot axis.
+
+   Exclusions, each ambiguous with another sense (all cost real pairs): ar هو=`it`
+   (also structurally impossible — `references` registers after `keywords` and
+   overwrites), hi है=`has/have`, th เป็น=`as`; bn আছে=`has`, tl `may`/tr `var`=`has/have`.
 3. **Connectives + positional-in-expression — SHIPPED** (with 1b). `of`/`as` and
    `last/first … in …`.
 
@@ -188,22 +204,34 @@ Each phase is gate-guarded (foreign-canonical-validity), fidelity-ratchet-guarde
 en-gate-guarded, exactly like the en-render burndown (#699–#704). Target: 90.7 % →
 high-90s, residual = named deferrals.
 
-## Where the burndown stands (after 1a + 1b + 3)
+## Where the burndown stands (after 1a + 1b + 3 + 2)
 
-**93.7 % (2865/3059); 194 pairs across 19 patterns.** 1b+3 cleared 66:
+**95.9 % (2935/3059); 124 pairs across 21 patterns** — *21, never the 19 this doc and
+the handoff both claimed.* Phase 2 cleared 70.
 
-| Pattern | before | after | blocked on |
-| --- | --- | --- | --- |
-| `two-way-binding` | 23 | 1 | id |
-| `computed-value` | 23 | 4 | hi/id/th/zh (see below) |
-| `last-in-collection` | 13 | 2 | bn/tr |
-| `input-validation` | 21 | 14 | **Phase 2 copula** |
-| `if-empty` | 21 | 14 | **Phase 2 copula** + the i18n scramble |
+The vocabulary work is **finished**: no remaining pair is lexicon-shaped. The residual
+is four independent families, none of which is vocabulary — see
+`docs-internal/HANDOFF_foreign-validity-burndown.md` for the worklist:
 
-`input-validation` and `if-empty` now have the SAME residual set (ar bn fr hi id ja ms
-pt qu ru th tl tr uk) — the copula-`is` set exactly. Their property/pronoun vocabulary is
-fixed; only `is` still leaks. So `if-empty`'s i18n word-order scramble is no longer the
-front blocker: **Phase 2 is.**
+| Family | pairs | kind |
+| --- | --- | --- |
+| `pick-text-range` | 23 | en-render; a whole wrong command schema (spike verdict below) |
+| `no` → `behavior-draggable` | 20 | the last operator; profile data, ~13 realistic |
+| condition locative → `focus-trap` | 19 | the ONLY code change left |
+| `references` profile/dict drift | ~2 direct | needs a type change |
+| structural / per-language parse gaps | ~40 | swap-content, beep-debug, bn scrambles |
+
+**Corrections to the record this doc previously got wrong:**
+
+- **"~130 pairs, overwhelmingly one family"** — the copula cluster was 88 pairs (45 %),
+  and Phase 2 in total was worth 70. 89 of the original 194 were structural.
+- **"Context globals have zero reverse coverage"** — false. `body` is **24/24** via
+  `profile.references`; `window` is 1 (qu); only `document` is truly 0. It is worth ~1
+  pair standalone: the LAST slice by value, not a cheap first win.
+- **`pick-text-range` is not "range-role modeling"** — see the spike verdict in the
+  handoff. The schema models a different command entirely, the vocabulary
+  (`characters`/`items`/`start`/`end`/…) exists in **no** dictionary, and the corpus rows
+  are themselves broken. The en fix clears **1** pair, not 24.
 
 Known, accepted residuals in shipped code:
 
