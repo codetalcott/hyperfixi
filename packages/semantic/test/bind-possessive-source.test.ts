@@ -35,21 +35,28 @@ function unconsumedSpans(code: string, language: string): string[] {
   return (node.diagnostics ?? []).filter(d => d.code === 'unconsumed-input').map(d => d.message);
 }
 
-/** `bind $color to #picker's value` — corpus row `bind-explicit-property`. */
+/**
+ * `bind $color to #picker's value` — corpus row `bind-explicit-property`.
+ *
+ * The property head normalizes to the English DOM property (`値`/`valor`/`قيمة` →
+ * `value`) at parse time (Phase 1 of the foreign→English validity burndown), so
+ * the captured property-path renders canonical English and reads the real DOM
+ * property. Every language therefore captures property `value`, not its surface.
+ */
 const EXPLICIT_PROPERTY: Array<[language: string, code: string, property: string]> = [
-  // Selector-first renderings — these already worked; they are regression locks.
+  // Selector-first renderings.
   ['en', "bind $color to #picker's value", 'value'],
-  ['ja', '$color を #pickerの 値 に バインド', '値'],
-  ['ko', '$color 를 #picker의 값 에 바인드', '값'],
-  ['zh', '绑定 $color 到 #picker的 值', '值'],
-  // Property-first renderings — these dropped the owner before this fix.
-  ['es', 'bind $color a valor de #picker', 'valor'],
-  ['pt', 'bind $color para valor de #picker', 'valor'],
-  ['fr', 'bind $color à valeur de #picker', 'valeur'],
-  ['de', 'bind $color zu wert von #picker', 'wert'],
-  ['id', 'bind $color ke nilai dari #picker', 'nilai'],
-  ['sw', 'bind $color kwa thamani ya #picker', 'thamani'],
-  ['ar', 'اربط $color إلى قيمة لـ #picker', 'قيمة'],
+  ['ja', '$color を #pickerの 値 に バインド', 'value'],
+  ['ko', '$color 를 #picker의 값 에 바인드', 'value'],
+  ['zh', '绑定 $color 到 #picker的 值', 'value'],
+  // Property-first ("of") renderings.
+  ['es', 'bind $color a valor de #picker', 'value'],
+  ['pt', 'bind $color para valor de #picker', 'value'],
+  ['fr', 'bind $color à valeur de #picker', 'value'],
+  ['de', 'bind $color zu wert von #picker', 'value'],
+  ['id', 'bind $color ke nilai dari #picker', 'value'],
+  ['sw', 'bind $color kwa thamani ya #picker', 'value'],
+  ['ar', 'اربط $color إلى قيمة لـ #picker', 'value'],
 ];
 
 /** `bind $message to #status's textContent` — corpus row `bind-non-form-display`. */

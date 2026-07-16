@@ -25,6 +25,7 @@ import {
 import { isTypeCompatible } from './utils/type-validation';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
+import { translatePropertyName } from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
@@ -1372,6 +1373,19 @@ export class PatternMatcher {
   }
 
   /**
+   * Normalize a captured possessive property surface to its English DOM-property
+   * name (`valor`/`値`/`قيمة` → `value`). Only the property HEAD is translated —
+   * chained member access (`.style.display`) and method calls are code and stay
+   * verbatim. An unlisted surface (an English property, a `*`/`@` selector) is
+   * returned unchanged. Keeps foreign→English renders canonical and makes the
+   * AST-execution path read the real DOM property. See
+   * `./utils/expression-lexicon.ts`.
+   */
+  private toEnglishProperty(surface: string): string {
+    return this.currentProfile ? translatePropertyName(this.currentProfile.code, surface) : surface;
+  }
+
+  /**
    * Try to match a prepositional "of" possessive:
    *   <property> <of-marker> <owner-selector>
    * e.g. "*--primary-color of #theme" → property-path(#theme, *--primary-color),
@@ -1410,7 +1424,7 @@ export class PatternMatcher {
     tokens.advance();
 
     // "X of #y" means the X property of #y → property-path(object: #y, property: X).
-    return createPropertyPath(createSelector(owner.value), property.value);
+    return createPropertyPath(createSelector(owner.value), this.toEnglishProperty(property.value));
   }
 
   /**
@@ -1534,6 +1548,11 @@ export class PatternMatcher {
         propertyName = propertyName.substring(1);
       }
 
+      // Normalize the property HEAD to English (`valor`/`値` → `value`) before any
+      // chained member access is folded on. `my valor` renders `my value`; `my
+      // valor.length` renders `my value.length` (the chained `.length` is code).
+      propertyName = this.toEnglishProperty(propertyName);
+
       // Consume chained dot-property access (.parentElement.style.display),
       // including optional-chaining links: the tokenizer splits `?.prop` into
       // `?` + `.prop`, and stopping at the `?` left the chain HALF-consumed —
@@ -1647,6 +1666,9 @@ export class PatternMatcher {
     let propertyName = propertyToken.value;
     if (isDotSelector) propertyName = propertyName.substring(1);
     tokens.advance();
+
+    // Normalize the property HEAD to English before folding chained members.
+    propertyName = this.toEnglishProperty(propertyName);
 
     // Consume chained dot-property access (`.style.display`) before the possessor.
     let chainedProps = propertyName;
@@ -2282,8 +2304,12 @@ export class PatternMatcher {
     }
     tokens.advance(); // consume property
 
-    // Create property-path: #element's *opacity
-    return createPropertyPath(createSelector(token.value), propertyToken.value);
+    // Create property-path: #element's *opacity (property normalized to English:
+    // `#picker's 値`/`giá trị` → `#picker's value`).
+    return createPropertyPath(
+      createSelector(token.value),
+      this.toEnglishProperty(propertyToken.value)
+    );
   }
 
   /**
