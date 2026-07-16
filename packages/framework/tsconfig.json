@@ -5,10 +5,10 @@
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "incremental": false,
-    "downlevelIteration": true
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": [

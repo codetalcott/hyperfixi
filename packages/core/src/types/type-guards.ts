@@ -351,7 +351,9 @@ export function getSelected(el: unknown): boolean | undefined {
  */
 export function getHidden(el: unknown): boolean | undefined {
   if (isHTMLElement(el)) {
-    return el.hidden;
+    // TS 6's DOM lib widens `hidden` to `boolean | "until-found"`; the
+    // `hidden="until-found"` state is still hidden, so coerce to a plain boolean.
+    return Boolean(el.hidden);
   }
   return undefined;
 }
