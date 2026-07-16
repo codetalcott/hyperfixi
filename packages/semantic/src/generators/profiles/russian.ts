@@ -279,6 +279,11 @@ export const russianProfile: LanguageProfile = {
     // condition's raw expression (if-exists). Neither an ActionType nor a command
     // schema, so no pattern is generated from it.
     exists: { primary: 'существует', normalized: 'exists' },
+    // Copula (`if result is false`, `if my value is empty`). Without the keyword the
+    // surface stays an identifier and leaks verbatim into the condition's raw
+    // expression, which the core expression parser reads as English. Neither an
+    // ActionType nor a command schema, so no pattern is generated from it.
+    is: { primary: 'есть', normalized: 'is' },
     end: { primary: 'конец', normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

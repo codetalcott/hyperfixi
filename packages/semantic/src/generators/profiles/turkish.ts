@@ -188,6 +188,11 @@ export const turkishProfile: LanguageProfile = {
     // focus-trap drop their then-branch). Not an ActionType and has no command
     // schema, so no pattern is generated from it.
     matches: { primary: 'eşleşir', normalized: 'matches' },
+    // Copula (`if result is false`, `if my value is empty`). Without the keyword the
+    // surface stays an identifier and leaks verbatim into the condition's raw
+    // expression, which the core expression parser reads as English. Neither an
+    // ActionType nor a command schema, so no pattern is generated from it.
+    is: { primary: 'dir', normalized: 'is' },
     end: { primary: 'son', alternatives: ['bitiş', 'bitti'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

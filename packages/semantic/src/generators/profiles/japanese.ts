@@ -157,6 +157,11 @@ export const japaneseProfile: LanguageProfile = {
     // condition's raw expression (if-exists). Neither an ActionType nor a command
     // schema, so no pattern is generated from it.
     exists: { primary: '存在する', normalized: 'exists' },
+    // Copula (`if result is false`, `if my value is empty`). Without the keyword the
+    // surface stays an identifier and leaks verbatim into the condition's raw
+    // expression, which the core expression parser reads as English. Neither an
+    // ActionType nor a command schema, so no pattern is generated from it.
+    is: { primary: 'である', normalized: 'is' },
     // 終了 removed: it is the i18n dict's `exit` emission (ja.ts), so listing it
     // as an `end` alternative made an `exit` inside `if … exit … end` read as the
     // block terminator and collapse the handler body (behavior-sortable). 終わり is

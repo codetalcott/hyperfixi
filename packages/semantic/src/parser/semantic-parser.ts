@@ -492,8 +492,7 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       if (!roles.has('event')) {
         const dur = roles.get('duration') as
-          | { type: string; raw?: unknown; value?: unknown }
-          | undefined;
+          { type: string; raw?: unknown; value?: unknown } | undefined;
         const word =
           dur?.type === 'expression' ? dur.raw : dur?.type === 'literal' ? dur.value : undefined;
         if (typeof word === 'string' && WAITABLE_EVENT_WORDS.has(word.toLowerCase())) {
@@ -1107,8 +1106,7 @@ export class SemanticParserImpl implements ISemanticParser {
       let preferCommandStage = false;
       if (/^event-[a-z]+-bare$/.test(eventMatch.pattern.id)) {
         const ev = eventMatch.captured.get('event') as
-          | { type?: string; raw?: string; value?: string }
-          | undefined;
+          { type?: string; raw?: string; value?: string } | undefined;
         const evVal = (ev?.raw ?? ev?.value ?? '').toString().toLowerCase();
         const langEvents = eventNameTranslations[language];
         const evIsKnownEvent =
@@ -2141,8 +2139,7 @@ export class SemanticParserImpl implements ISemanticParser {
             commandNode = createCommandNode(actionName as ActionType, roles, rNode.metadata);
           };
           const dest = rNode.roles.get('destination') as
-            | { type: string; raw?: unknown; value?: unknown }
-            | undefined;
+            { type: string; raw?: unknown; value?: unknown } | undefined;
           const destSpec = rSchema?.roles.find(r => r.role === 'destination');
           const destWord = dest?.raw ?? dest?.value;
           if (
@@ -5165,8 +5162,7 @@ export class SemanticParserImpl implements ISemanticParser {
   private profileKeywordMatches(language: string, key: string, value: string): boolean {
     const kw = (
       tryGetProfile(language)?.keywords as
-        | Record<string, { primary?: string; alternatives?: string[] }>
-        | undefined
+        Record<string, { primary?: string; alternatives?: string[] }> | undefined
     )?.[key];
     if (!kw) return false;
     if (kw.primary?.toLowerCase() === value) return true;
@@ -5375,35 +5371,35 @@ export class SemanticParserImpl implements ISemanticParser {
   ]);
 
   /**
-   * Rendered copulas that tokenize as bare IDENTIFIERS (no normalization), or —
-   * ar هو — normalize to an unrelated sense (`it`), so {@link CONDITION_COPULAS}
-   * can't catch them. Without these, the i18n-rendered `if my value <copula>
+   * Rendered copulas that {@link CONDITION_COPULAS} can't catch, because they do
+   * not normalize to `is`. Without these, the i18n-rendered `if my value <copula>
    * <empty-word> add …` split the condition at the predicate — the empty-word
    * doubles as the language's `empty`/`null` COMMAND keyword — and a phantom
    * `empty me` command opened the then-branch (if-empty / input-validation, the
    * spurious-`empty` ×22 R0-precision family).
    *
    * Unlike the normalized copulas above, these suppress the split ONLY when the
-   * next token is a predicate ADJECTIVE (normalizes to empty/null/undefined):
-   * several are ambiguous with other senses (ar هو is also the pronoun `it`, and
-   * `إذا هو اضبط …` = `if it set …` needs the split at the command verb). The
-   * SOV members (bn হয়, hi है, tr dir) are behavior-neutral today — their
-   * transformer scrambles the predicate away from the copula — but lock the
-   * same contract should the render heal.
+   * next token is a predicate ADJECTIVE (normalizes to empty/null/undefined),
+   * because each is ambiguous with another sense — which is exactly why the
+   * copula slice could not register them as `is` profile keywords:
+   *   - ar هو is also the pronoun `it` (and `profile.references.it` is registered
+   *     AFTER `keywords`, so an `is` entry would be silently overwritten anyway);
+   *     `إذا هو اضبط …` = `if it set …` needs the split at the command verb.
+   *   - hi है is also `has`/`have`.
+   *   - th เป็น is also `as` (the same ambiguity that keeps it out of
+   *     CONNECTIVE_LEXICON).
+   *
+   * The other nine surfaces this set used to carry (fr est, ru есть, uk є, pt é,
+   * tl ay, ms adalah, bn হয়, tr dir, qu kanqa) are now registered as `is` profile
+   * keywords, so they normalize to `is` and are caught by CONDITION_COPULAS on the
+   * line above — the surface entries were dead. Note the normalized path is
+   * strictly BROADER (it suppresses regardless of what follows, not only before a
+   * predicate), which is why dropping them is safe.
    */
   private static readonly CONDITION_COPULAS_SURFACE = new Set([
-    'est', // fr
-    'есть', // ru
-    'є', // uk
-    'é', // pt
-    'ay', // tl
     'هو', // ar (keyword norm=`it` — matched by surface VALUE)
-    'adalah', // ms
     'เป็น', // th
-    'হয়', // bn
     'है', // hi
-    'dir', // tr
-    'kanqa', // qu (bare identifier, no norm; guards `kanqa chusaq` = `is empty/null`)
   ]);
 
   /** Predicate adjectives (normalized) that follow a copula inside a condition. */
@@ -5570,8 +5566,11 @@ export class SemanticParserImpl implements ISemanticParser {
         // so a then-branch command VERB lands DIRECTLY after the copula
         // (ko `… 내 값 이다 추가 .error 를 … 비어있는 …` = my value IS add .error … empty):
         // the guard then swallows `add` into the condition and drops it
-        // (if-empty/input-validation ko, fid 0.75). ja/bn escape only because their
-        // copula isn't lexed as a single `is` token, so the split already fires there.
+        // (if-empty/input-validation ko, fid 0.75). ja/bn USED to escape only because
+        // their copula wasn't lexed as a single `is` token; since the copula slice
+        // registered ja である / bn হয় as `is` keywords that escape is gone, and they
+        // now rely on the same curIsSovCommandVerb exception ko does (verified: both
+        // still render `if my value is <predicate> add .error …`, verb not swallowed).
         // Allow the split after a copula when a real SOV command-VERB keyword opens
         // here — gated to SOV (verb lookup present) and an actual verb-lookup hit, so
         // SVO `X is empty <cmd>` (a predicate, not a verb, after the copula) is

@@ -128,6 +128,11 @@ export const bengaliProfile: LanguageProfile = {
     return: { primary: 'ফিরুন', alternatives: ['ফেরত দিন'], normalized: 'return' },
     then: { primary: 'তারপর', alternatives: ['তখন'], normalized: 'then' },
     and: { primary: 'এবং', alternatives: [], normalized: 'and' },
+    // Copula (`if result is false`, `if my value is empty`). Without the keyword the
+    // surface stays an identifier and leaks verbatim into the condition's raw
+    // expression, which the core expression parser reads as English. Neither an
+    // ActionType nor a command schema, so no pattern is generated from it.
+    is: { primary: 'হয়', normalized: 'is' },
     end: { primary: 'শেষ', alternatives: ['সমাপ্ত'], normalized: 'end' },
     // Advanced
     js: { primary: 'জেএস', alternatives: ['js'], normalized: 'js' },
