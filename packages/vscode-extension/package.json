@@ -239,12 +239,12 @@
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
+    "vscode-languageclient": "^10.1.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {
     "@lokascript/semantic": "^2.7.2",
-    "@types/node": "^20.0.0",
+    "@types/node": "^26.1.1",
     "@types/vscode": "^1.125.0",
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
