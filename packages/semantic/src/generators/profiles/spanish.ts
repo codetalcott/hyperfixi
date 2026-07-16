@@ -162,6 +162,12 @@ export const spanishProfile: LanguageProfile = {
     is: { primary: 'es', normalized: 'is' },
     exists: { primary: 'existe', normalized: 'exists' },
     empty: { primary: 'vacío', alternatives: ['vacio'], normalized: 'empty' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'coincide', normalized: 'matches' },
     end: { primary: 'fin', alternatives: ['final', 'terminar'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },
