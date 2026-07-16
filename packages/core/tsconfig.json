@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
 
     // Output configuration
@@ -28,16 +28,17 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    // Path mapping for clean imports
-    "baseUrl": "./src",
+    // Path mapping for clean imports. `paths` is resolved relative to this
+    // tsconfig (baseUrl was dropped — deprecated in TS 6.0, removed in TS 7.0),
+    // so each mapping is prefixed with ./src to preserve the previous resolution.
     "paths": {
-      "@/*": ["*"],
-      "@test/*": ["test/*"],
-      "@core/*": ["core/*"],
-      "@commands/*": ["commands/*"],
-      "@expressions/*": ["expressions/*"],
-      "@features/*": ["features/*"],
-      "@types/*": ["types/*"]
+      "@/*": ["./src/*"],
+      "@test/*": ["./src/test/*"],
+      "@core/*": ["./src/core/*"],
+      "@commands/*": ["./src/commands/*"],
+      "@expressions/*": ["./src/expressions/*"],
+      "@features/*": ["./src/features/*"],
+      "@types/*": ["./src/types/*"]
     },
 
     // Advanced options
