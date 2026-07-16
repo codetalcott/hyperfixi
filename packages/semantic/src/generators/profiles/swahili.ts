@@ -131,6 +131,12 @@ export const swahiliProfile: LanguageProfile = {
     // Swahili copula ("is"); only recognized in predicate position (after a value,
     // before an adjective like `tupu`), so it doesn't disturb command parsing.
     is: { primary: 'ni', normalized: 'is' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'inafanana', normalized: 'matches' },
     end: { primary: 'mwisho', alternatives: ['maliza', 'tamati'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'isiyo sawia', normalized: 'async' },

@@ -134,6 +134,12 @@ export const indonesianProfile: LanguageProfile = {
     return: { primary: 'kembalikan', alternatives: ['kembali'], normalized: 'return' },
     then: { primary: 'lalu', alternatives: ['kemudian', 'setelah itu'], normalized: 'then' },
     and: { primary: 'dan', alternatives: ['juga', 'serta'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'cocok', normalized: 'matches' },
     end: { primary: 'selesai', alternatives: ['akhir', 'tamat'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'asinkron', normalized: 'async' },

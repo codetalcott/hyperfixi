@@ -121,6 +121,12 @@ export const frenchProfile: LanguageProfile = {
     return: { primary: 'retourner', alternatives: ['renvoyer'], normalized: 'return' },
     then: { primary: 'puis', alternatives: ['ensuite', 'alors'], normalized: 'then' },
     and: { primary: 'et', alternatives: ['aussi', 'également'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'correspond', normalized: 'matches' },
     end: { primary: 'fin', alternatives: ['terminer', 'finir'], normalized: 'end' },
     js: { primary: 'js', normalized: 'js' },
     async: { primary: 'asynchrone', normalized: 'async' },

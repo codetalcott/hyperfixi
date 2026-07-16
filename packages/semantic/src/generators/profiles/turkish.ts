@@ -182,6 +182,12 @@ export const turkishProfile: LanguageProfile = {
     and: { primary: 've', alternatives: ['ayrıca', 'hem de'], normalized: 'and' },
     or: { primary: 'veya', normalized: 'or' },
     not: { primary: 'değil', alternatives: ['degil'], normalized: 'not' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'eşleşir', normalized: 'matches' },
     end: { primary: 'son', alternatives: ['bitiş', 'bitti'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

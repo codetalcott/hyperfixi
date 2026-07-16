@@ -258,6 +258,12 @@ export const polishProfile: LanguageProfile = {
       normalized: 'then',
     },
     and: { primary: 'i', alternatives: ['oraz'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'pasuje', normalized: 'matches' },
     end: { primary: 'koniec', normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

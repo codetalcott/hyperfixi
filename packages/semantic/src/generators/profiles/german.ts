@@ -122,6 +122,12 @@ export const germanProfile: LanguageProfile = {
     // Predicate keywords (conditionals) — mirrors the Spanish profile, the only
     // language that previously parsed `is empty`-style predicates.
     is: { primary: 'ist', normalized: 'is' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'passt', normalized: 'matches' },
     end: { primary: 'ende', alternatives: ['fertig'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'asynchron', normalized: 'async' },

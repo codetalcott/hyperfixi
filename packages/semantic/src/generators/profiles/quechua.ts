@@ -143,6 +143,12 @@ export const quechuaProfile: LanguageProfile = {
     return: { primary: 'kutichiy', alternatives: ['kutimuy'], normalized: 'return' },
     then: { primary: 'chaymantataq', alternatives: ['hinaspa', 'chaymanta'], normalized: 'then' },
     and: { primary: 'hinallataq', alternatives: ['ima', 'chaymantawan'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Without this keyword the surface
+    // stays an identifier and leaks verbatim into the condition's raw expression,
+    // which the core expression parser reads as English (modal-close-backdrop /
+    // focus-trap drop their then-branch). Not an ActionType and has no command
+    // schema, so no pattern is generated from it.
+    matches: { primary: 'tupan', normalized: 'matches' },
     end: { primary: 'tukukuy', alternatives: ['tukuy', 'puchukay'], normalized: 'end' },
     js: { primary: 'js', normalized: 'js' },
     async: { primary: 'mana waqtalla', normalized: 'async' },
