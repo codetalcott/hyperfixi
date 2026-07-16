@@ -152,6 +152,11 @@ export const japaneseProfile: LanguageProfile = {
     return: { primary: '戻る', alternatives: ['返す', 'リターン'], normalized: 'return' },
     then: { primary: 'それから', alternatives: ['次に', 'ならば', 'なら'], normalized: 'then' },
     and: { primary: 'また', alternatives: ['と', 'そして'], normalized: 'and' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: '存在する', normalized: 'exists' },
     // 終了 removed: it is the i18n dict's `exit` emission (ja.ts), so listing it
     // as an `end` alternative made an `exit` inside `if … exit … end` read as the
     // block terminator and collapse the handler body (behavior-sortable). 終わり is

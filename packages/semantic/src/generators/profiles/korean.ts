@@ -151,6 +151,11 @@ export const koreanProfile: LanguageProfile = {
     // matches .x`. Without this keyword `일치` stays an identifier and the
     // condition is unevaluable (modal-close-backdrop drops its then-branch).
     matches: { primary: '일치', normalized: 'matches' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: '존재', normalized: 'exists' },
     end: { primary: '끝', alternatives: ['마침'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS실행', alternatives: ['js'], normalized: 'js' },

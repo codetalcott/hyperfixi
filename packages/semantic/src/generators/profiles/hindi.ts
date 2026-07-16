@@ -165,6 +165,11 @@ export const hindiProfile: LanguageProfile = {
     // parser. (History: `मेल_खाता` underscore-split to मेल/_/खाता; the concatenated
     // `मेलखाता` parsed but isn't how Hindi is written.)
     matches: { primary: 'मेल खाता', normalized: 'matches' },
+    // Existence operator (`if #modal exists`). Same seam as `matches`: without the
+    // keyword the surface stays an identifier and leaks verbatim into the
+    // condition's raw expression (if-exists). Neither an ActionType nor a command
+    // schema, so no pattern is generated from it.
+    exists: { primary: 'मौजूद', normalized: 'exists' },
     end: { primary: 'समाप्त', alternatives: ['अंत'], normalized: 'end' },
     // Advanced
     js: { primary: 'जेएस', alternatives: ['js'], normalized: 'js' },
