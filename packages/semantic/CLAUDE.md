@@ -209,6 +209,11 @@ this section will be reinstated alongside a worked example.
 
 ### Marker Templates (Shared Profile Components)
 
+> **`marker-templates.ts` is DEAD CODE — do not build on it.** It has **zero importers**
+> and has already drifted from the profiles it claims to template. Every profile spells
+> its markers out inline. Extend the profile directly (`src/generators/profiles/{code}.ts`);
+> treat the section below as historical until the file is either revived or removed.
+
 Language profiles can use shared marker templates from `src/generators/profiles/marker-templates.ts`:
 
 ```typescript
@@ -239,7 +244,7 @@ Available templates:
 | `src/types.ts`                                | ActionType union (45 actions), SemanticNode types (command, event-handler, conditional, compound, loop) |
 | `src/generators/command-schemas.ts`           | Schema definitions for all commands                                                                     |
 | `src/generators/language-profiles.ts`         | Keyword translations (per language)                                                                     |
-| `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates                                                 |
+| `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates — **DEAD CODE: zero importers, drifted**        |
 | `src/patterns/builders.ts`                    | Pattern registry and `buildPatternsForLanguage()`                                                       |
 | `src/parser/semantic-parser.ts`               | Main parsing logic                                                                                      |
 | `src/parser/pattern-matcher.ts`               | Pattern matching engine                                                                                 |
