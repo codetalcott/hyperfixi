@@ -25,7 +25,12 @@ import {
 import { isTypeCompatible } from './utils/type-validation';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
-import { translatePropertyName } from './utils/expression-lexicon';
+import {
+  isOfPossessiveMarker,
+  joinExpressionTokens,
+  toEnglishLocative,
+  translatePropertyName,
+} from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective } from '../patterns/put';
@@ -1134,8 +1139,11 @@ export class PatternMatcher {
       !PatternMatcher.COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
     ) {
       // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
-      // runtime reads — normalize it; the source selector is code.
-      parts.push(marker.normalized ?? marker.value, source.value);
+      // runtime reads — normalize it; the source selector is code. Role markers
+      // normalize to the ROLE NAME rather than an English word, so es `en` has to
+      // be mapped back to the locative sense the slot carries (`in`) — otherwise
+      // this renders `last <.message/> destination #chat`.
+      parts.push(toEnglishLocative(this.currentProfile, marker), source.value);
       tokens.advance();
       tokens.advance();
     }
@@ -1183,62 +1191,13 @@ export class PatternMatcher {
   }
 
   /**
-   * The connector the i18n transformer emits for English `of` in a property-path
-   * possessive (`set the X of #y to Z`), per language, when it does NOT tokenize
-   * to a `source`/`of` normalized form. EN `of` / AR `من` (→ `source`) / TL `ng`
-   * are handled by the literal/normalized check in {@link isOfPossessiveMarker};
-   * these are possessive particles / genitive linkers that surface as bare
-   * identifiers or particles (ms `daripada`, sw `ya`, vi `của`, zh `的`). Mirrors
-   * the i18n dict `of` modifier. Without these, `set the *--primary-color of #theme
-   * to …` dropped its `set` in ms/sw/vi/zh (the patient property-path never matched).
-   */
-  private static readonly OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
-    ms: new Set(['daripada']),
-    sw: new Set(['ya']),
-    vi: new Set(['của']),
-    zh: new Set(['的']),
-    // The i18n transformer keeps the en of-form order (property first) in every
-    // language and only swaps the connector word, so the genitive particles /
-    // of-prepositions below are safe to read property-first here. Several of
-    // them normalize to OTHER senses (it `di`→tell, pl `z`/uk `з`→style,
-    // qu `pa`/tr `nin`→destination), which is why the normalized-form check in
-    // isOfPossessiveMarker can't catch them. ru `из` needs no entry (normalizes
-    // to `source`, already accepted). Without these, `set the *--primary-color
-    // of #theme to …` captured a bare selector as the destination and dropped
-    // the owner (SVO) or skipped ahead past the property entirely (SOV).
-    it: new Set(['di']),
-    pl: new Set(['z']),
-    uk: new Set(['з']),
-    th: new Set(['ของ']),
-    // Arabic genitive connector, laam + tatweel. Distinct from the possessive
-    // pronoun لي (laam + ya) that tryMatchPostNominalPossessiveExpression reads
-    // for `set my textContent`, so listing it here cannot steal that fold.
-    ar: new Set(['لـ']),
-    ja: new Set(['の']),
-    ko: new Set(['의']),
-    bn: new Set(['র']),
-    hi: new Set(['का']),
-    qu: new Set(['pa']),
-    tr: new Set(['nin']),
-  };
-
-  /**
-   * Markers that introduce the owner in a prepositional ("of") possessive:
-   * EN `of`; AR من / others that tokenize with a `source`/`of` normalized form;
-   * TL genitive linker `ng`; plus the per-language `of` connectors in
-   * {@link OF_POSSESSIVE_MARKERS}. Kept narrow and only consulted for property-path
-   * roles, so it never shadows a real source role.
+   * Whether a token introduces the owner in a prepositional ("of") possessive.
+   * Delegates to the shared expression lexicon, which owns the per-language
+   * of-marker table so the possessive matchers and the raw-expression join
+   * (`joinExpressionTokens`) cannot disagree about what an of-marker is.
    */
   private isOfPossessiveMarker(token: LanguageToken): boolean {
-    const value = token.value.toLowerCase();
-    const normalized = (token.normalized ?? '').toLowerCase();
-    if (value === 'of' || value === 'ng' || normalized === 'of' || normalized === 'source') {
-      return true;
-    }
-    const langMarkers = this.currentProfile?.code
-      ? PatternMatcher.OF_POSSESSIVE_MARKERS[this.currentProfile.code]
-      : undefined;
-    return !!langMarkers && langMarkers.has(value);
+    return isOfPossessiveMarker(this.currentProfile, token);
   }
 
   /**
@@ -1285,10 +1244,16 @@ export class PatternMatcher {
       return null;
     }
 
-    const raw = tokens.tokens
-      .slice(startIdx, tokens.position())
-      .map(t => t.value)
-      .join(' ');
+    // Join through the shared expression seam rather than a bare `.value` map:
+    // the raw is read downstream as English (rendered back out, and parsed by the
+    // core expression parser, which only knows English words), so a verbatim join
+    // leaked the source language — es `"Hola, " + mi valor` came back byte-identical
+    // instead of `"Hola, " + my value`. Also picks up the `.`-glue rule this join
+    // never had, so `event.shiftKey` no longer splits into `event .shiftKey`.
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
     return { type: 'expression', raw, value: raw } as SemanticValue;
   }
 

@@ -1,6 +1,7 @@
 # Scope: foreign→English validity — the expression-internal translation gap
 
-**Status:** Phase 1a shipped (foreign validity 90.7 % → 91.5 %; see Phasing below).
+**Status:** Phases 1a, 1b and 3 shipped (foreign validity 90.7 % → **93.7 %**; see
+Phasing below). Phase 2 (operators + copula) is the whole remaining burndown.
 Companion to the foreign→English canonical-validity
 gate (`packages/testing-framework/src/multilingual/foreign-canonical-validity.ts`,
 baseline `baselines/foreign-canonical-validity.json`). The gate makes the number below
@@ -134,21 +135,51 @@ same table drives command and expression translation.
    `checked`/`length`/`disabled`/`hidden` for languages that translate them, ready for
    future corpus rows.
 
-   **1b — property names inside RAW expressions — TODO.** `two-way-binding`
-   (`"Hello, " + mi valor`), `input-validation` / `if-empty` (`mi valor is empty`),
-   `computed-value` (`valor de #price como Number`) hold the property inside a captured
-   raw-expression string (`joinTokenText`), not a property-path node — so 1a doesn't
-   reach them. These need an expression-internal token pass that translates the property
-   AND the possessive pronoun-in-expression (es `mi`→`my`, not `me`), while keeping
-   string literals / operators / selectors verbatim. Couples with Phase 2 (the same raw
-   expressions also carry `is empty`, `de`/`como`). `if-empty` additionally loses its
-   `is empty` predicate and body to an i18n word-order scramble (`es entonces vacío`) —
-   a transform bug, not just vocab.
-2. **Operators + copula.** `matches`/`is`/`exists`/`is empty`, and the `is`→`it`
-   ambiguity (needs per-language disambiguation, e.g. Arabic `هو`). Clears the
-   conditional families.
-3. **Connectives + positional-in-expression.** `of`/`in`/`as`, `last/first … in …`.
-   Clears `computed-value`, `last-in-collection`.
+   **1b — property names inside RAW expressions — SHIPPED** (with Phase 3, below).
+   `two-way-binding` (`"Hello, " + mi valor`), `input-validation` / `if-empty`
+   (`mi valor is empty`), `computed-value` (`valor de #price como Number`) hold the
+   property inside a captured raw-expression string, not a property-path node — so 1a
+   doesn't reach them.
+
+   Two seams fed those captures, not one: the conditional's `joinTokenText`
+   (`semantic-parser.ts`, keyword → `normalized`, else verbatim) and the operator-run
+   join (`pattern-matcher.ts`, **fully** verbatim, and missing the `.`-glue rule).
+   Both now route through the shared `joinExpressionTokens` in
+   `parser/utils/expression-lexicon.ts`.
+
+   The possessive-pronoun fix reuses what already existed: **English's own profile
+   declares `specialForms: { me:'my', it:'its', you:'your' }`**, so
+   `getEnglishPossessiveAdjective` (beside `getPossessiveReference`, the inverse
+   direction) reads it rather than hard-coding a table. References without an
+   adjective (`result`/`event`/`target`/`body`) fall through to `'s`.
+
+   **Translation is anchored, never blanket** — this is the load-bearing safety
+   property, since a raw expression has none of the slot guarantees 1a relied on:
+   a possessive is only read as one when a property head actually follows it. That
+   requirement is not cosmetic — ms `ia` and qu `chay` are BOTH the possessive
+   (`its`) and the bare reference (`it`), so translating on sight rewrote `if it`
+   into the invalid `if its` and broke `fetch-do-not-throw` in both languages
+   (caught by the gate's ADDED count, now 0).
+
+2. **Operators + copula — the whole remaining burndown.** See the corrected taxonomy
+   below; this is now ~130 of the ~194 residual pairs.
+3. **Connectives + positional-in-expression — SHIPPED** (with 1b). `of`/`as` and
+   `last/first … in …`.
+
+   - `of` is emitted **structurally** by an of-possessive anchor
+     (`<property> <of-marker> <selector>` → `value of #price`), never by surface
+     lookup: es spells `of` and `from` the same `de`, so a free-token translation
+     would corrupt `from` clauses.
+   - `as` comes from a generated `CONNECTIVE_LEXICON` with an **ambiguity guard**
+     (a surface the language reuses for any other sense, in any dict bucket, is
+     dropped) — th `เป็น` is both `as` and the copula `is`, and carrying it would
+     have rewritten every Thai `is` condition.
+   - The locative needed both a role-concept map and a generated `LOCATIVE_SURFACES`
+     set, because the markers fail three different ways: es `en` normalizes to the
+     ROLE NAME (`destination`), zh `在`/tr `içinde`/id `dalam` are not role markers at
+     all and leaked verbatim, and pt `dentro` normalizes to English `into` (which the
+     canonical parser rejects in this slot). No ambiguity guard is needed there — the
+     slot fixes the sense.
 4. **Residual language-specific parse gaps** (not vocab): `swap-content` (ar `بـ#b`
    fusion), the sparse rows. Small, per-language.
 5. **Leave deferred:** `pick-text-range` (named R1 deferral).
@@ -156,6 +187,56 @@ same table drives command and expression translation.
 Each phase is gate-guarded (foreign-canonical-validity), fidelity-ratchet-guarded, and
 en-gate-guarded, exactly like the en-render burndown (#699–#704). Target: 90.7 % →
 high-90s, residual = named deferrals.
+
+## Where the burndown stands (after 1a + 1b + 3)
+
+**93.7 % (2865/3059); 194 pairs across 19 patterns.** 1b+3 cleared 66:
+
+| Pattern | before | after | blocked on |
+| --- | --- | --- | --- |
+| `two-way-binding` | 23 | 1 | id |
+| `computed-value` | 23 | 4 | hi/id/th/zh (see below) |
+| `last-in-collection` | 13 | 2 | bn/tr |
+| `input-validation` | 21 | 14 | **Phase 2 copula** |
+| `if-empty` | 21 | 14 | **Phase 2 copula** + the i18n scramble |
+
+`input-validation` and `if-empty` now have the SAME residual set (ar bn fr hi id ja ms
+pt qu ru th tl tr uk) — the copula-`is` set exactly. Their property/pronoun vocabulary is
+fixed; only `is` still leaks. So `if-empty`'s i18n word-order scramble is no longer the
+front blocker: **Phase 2 is.**
+
+Known, accepted residuals in shipped code:
+
+- **hi `के_रूप_में` never matches** — the tokenizer splits underscore-joined dictionary
+  surfaces. Same class as id `tidak_ada`, qu `mana_kanchu`, tl `hindi_pinagana`. The
+  dead entries are harmless (an unlisted surface passes through), but the class is real
+  and also affects Phase 1a's `tl` property entries.
+- **th `เป็น` is deliberately omitted** by the connective ambiguity guard (it is also
+  the copula `is`). Correct conservatism, not an oversight.
+
+## Corrected Phase 2 taxonomy (triage, 2026-07-16)
+
+The phasing above left **49 pairs unassigned to any phase**. They are all Phase 2, and
+they name three families the original list omits:
+
+- `form-submit-prevent` (13) — pure copula `is` (`if result is false`). Its pass list is
+  *exactly* the 9 languages carrying a `normalized:'is'` registration, plus `he` (whose
+  dict has no `is` entry, so it authors literal English). `CONDITION_COPULAS_SURFACE`
+  (`semantic-parser.ts`) already enumerates 12 of the 13 failing surfaces — a ready-made
+  map, currently used only to suppress a condition split.
+- `behavior-draggable` (20) — the operator **`no`** (`if no dragHandle`), which the
+  Phase 2 list above omits. 19 dicts define `no:`; the 3 passers (he/th/vi) don't. +bn
+  (a separate transformer scramble, Phase 4).
+- `behavior-sortable` (16) — copula (13) + id underscore-split + ko/zh `document`.
+
+**Three families to add to Phase 2:**
+
+1. **`no`** — an existence/negation operator, sibling of `exists`/`is empty`.
+2. **Context globals** (`document`, `window`, `body`) — **zero** reverse coverage today:
+   no `normalized:'document'` registration exists anywhere in `packages/semantic`. Benign
+   on Latin scripts (es leaks `documento` and still passes) but fatal on CJK/Arabic
+   (`Unknown token: 文`).
+3. **Underscore-joined dict surfaces** — see the hi note above.
 
 ## Why there were no "quick wins"
 

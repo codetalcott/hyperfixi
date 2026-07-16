@@ -13208,7 +13208,11 @@ describe('R1 Family B: qu set — oblique manta source + whole backtick template
     expect(s).toBeDefined();
     expect(role(s, 'destination')?.type).toBe('property-path');
     expect(role(s, 'patient')?.type).toBe('expression');
-    expect(role(s, 'patient')?.raw).toContain('noqaq chanin');
+    // The possessive is captured inside the operator run (this test's point: the
+    // oblique `manta` source does not swallow the patient) — and now joins as
+    // English, since the raw is read downstream as English. It read `noqaq chanin`
+    // verbatim until the expression seam learned to translate possessives.
+    expect(role(s, 'patient')?.raw).toContain('my value');
     expect(role(s, 'source')?.value).toBe('#firstName');
   });
 

@@ -37,6 +37,7 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
+import { joinExpressionTokens } from './utils/expression-lexicon';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
@@ -3030,7 +3031,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (trailingGuard && bodyCommands.length > 0 && cond && cond.length > 0) {
       const guardNode = createCommandNode(
         trailingGuard,
-        { condition: { type: 'expression', raw: this.joinTokenText(cond) } },
+        { condition: { type: 'expression', raw: this.joinTokenText(cond, language) } },
         {
           sourceLanguage: language,
           patternId: `${trailingGuard}-${language}-trailing-guard`,
@@ -3389,7 +3390,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const foldedRun = foldNakedNamedArgsRaw(runStream);
     roles.set('style', {
       type: 'expression',
-      raw: foldedRun && runStream.isAtEnd() ? foldedRun : this.joinTokenText(run),
+      raw: foldedRun && runStream.isAtEnd() ? foldedRun : this.joinTokenText(run, language),
     } as SemanticValue);
     for (let i = 0; i <= markerOffset; i++) stream.advance();
     this.tryAttachResponseTypeAfterStyle(stream, command, language);
@@ -3685,7 +3686,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     roles.set(spec.role, {
       type: 'expression',
-      raw: this.joinTokenText(trimmed),
+      raw: this.joinTokenText(trimmed, language),
     } as SemanticValue);
     // Drop the fused default-patient leak (`patient:reference=me`) for
     // commands whose schema declares no patient (go/scroll) — the
@@ -5624,7 +5625,10 @@ export class SemanticParserImpl implements ISemanticParser {
       (inElse ? elseTokens : thenTokens).push(t);
     }
 
-    const conditionValue = { type: 'expression' as const, raw: this.joinTokenText(condTokens) };
+    const conditionValue = {
+      type: 'expression' as const,
+      raw: this.joinTokenText(condTokens, language),
+    };
 
     const thenBranch = this.parseBranch(thenTokens, commandPatterns, language);
     const elseBranch =
@@ -5653,31 +5657,14 @@ export class SemanticParserImpl implements ISemanticParser {
    * `#modal existe`) is unevaluable as-is, while its normalized join
    * (`#modal exists`) runs. Non-keyword tokens (identifiers, selectors,
    * literals) keep their surface value; for en the two are identical.
+   *
+   * Delegates to the shared `joinExpressionTokens`, which additionally resolves
+   * possessives (`mi valor` → `my value`; normalizing a possessive to its
+   * reference concept gave the invalid `me value`). Shared with the operator-run
+   * join in `PatternMatcher` so the two expression seams cannot drift.
    */
-  private joinTokenText(toks: readonly LanguageToken[]): string {
-    const textOf = (t: LanguageToken): string =>
-      t.kind === 'keyword' ? ((t as { normalized?: string }).normalized ?? t.value) : t.value;
-    let out = '';
-    for (let i = 0; i < toks.length; i++) {
-      const text = textOf(toks[i]);
-      if (i === 0) {
-        out = text;
-        continue;
-      }
-      // A member access glues to its object with no space (`event.shiftKey`,
-      // `window.scrollY`), but a class selector in a comparison keeps it (`I match
-      // .active`). Both surface as a `.`-prefixed token, so disambiguate by SOURCE
-      // adjacency: glue only when this `.`-token immediately abuts the previous
-      // token in the source (no gap). Without this the condition expression renders
-      // `event .shiftKey`, which the canonical parser reads as two tokens and rejects.
-      const prev = toks[i - 1];
-      const adjacent =
-        prev.position?.end !== undefined &&
-        toks[i].position?.start !== undefined &&
-        prev.position.end === toks[i].position.start;
-      out += (adjacent && text.startsWith('.') ? '' : ' ') + text;
-    }
-    return out.trim();
+  private joinTokenText(toks: readonly LanguageToken[], language: string): string {
+    return joinExpressionTokens(toks, tryGetProfile(language));
   }
 
   /** Whether a command pattern matches at the head of the given token slice. */
