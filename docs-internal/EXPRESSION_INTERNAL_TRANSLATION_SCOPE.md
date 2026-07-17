@@ -204,22 +204,34 @@ Each phase is gate-guarded (foreign-canonical-validity), fidelity-ratchet-guarde
 en-gate-guarded, exactly like the en-render burndown (#699–#704). Target: 90.7 % →
 high-90s, residual = named deferrals.
 
-## Where the burndown stands (after 1a + 1b + 3 + 2)
+## Where the burndown stands (after 1a + 1b + 3 + 2 + 4)
 
-**95.9 % (2935/3059); 124 pairs across 21 patterns** — *21, never the 19 this doc and
-the handoff both claimed.* Phase 2 cleared 70.
+**96.9 % (2965/3059); 94 pairs across 20 patterns.** Phase 2 cleared 70; Phase 4 cleared
+a further 30 (`no` 11, `references` drift 3, condition locative 16).
 
-The vocabulary work is **finished**: no remaining pair is lexicon-shaped. The residual
-is four independent families, none of which is vocabulary — see
-`docs-internal/HANDOFF_foreign-validity-burndown.md` for the worklist:
+**Both the vocabulary work and the expression-seam work are now finished.** No remaining
+pair is lexicon-shaped, and the shared expression seam
+(`packages/semantic/src/parser/utils/expression-lexicon.ts`) has no known call-site gap:
+Phase 4 extracted the positional-run recognizer into it, so the condition join and the
+role capture can no longer disagree. What is left has **no shared root cause** — see
+`docs-internal/HANDOFF_foreign-validity-burndown.md`:
 
 | Family | pairs | kind |
 | --- | --- | --- |
-| `pick-text-range` | 23 | en-render; a whole wrong command schema (spike verdict below) |
-| `no` → `behavior-draggable` | 20 | the last operator; profile data, ~13 realistic |
-| condition locative → `focus-trap` | 19 | the ONLY code change left |
-| `references` profile/dict drift | ~2 direct | needs a type change |
-| structural / per-language parse gaps | ~40 | swap-content, beep-debug, bn scrambles |
+| `pick-text-range` | 23 | en-render; a whole wrong command schema (spike verdict below); ~3 arcs |
+| structural / per-language parse damage | ~71 | per-row: swap-content ar fusion, beep-debug, bn scrambles, focus-trap ar/tl/bn, sparse rows |
+
+The one plausibly-mechanical item inside the structural family: `form-submit-prevent` ar
+needs the **registration ORDER** fixed (`profile.references` registers AFTER `keywords`,
+so an ar `is` entry is silently overwritten) — not vocabulary.
+
+**Shipped in Phase 4, so do not re-plan them:**
+
+| Was | Now |
+| --- | --- |
+| `no` → `behavior-draggable` (20; "~13 realistic", ar/id/qu "dead on arrival") | DONE, 11 cleared. All three "DOA" languages worked (whole-token EXTRAS / multi-word keyword). bn was never lexical. |
+| condition locative → `focus-trap` (19; "the ONLY code change left") | DONE, 16 cleared. Correct diagnosis; it omitted that anchor ORDER is load-bearing. |
+| `references` drift ("needs a type change") | DONE, 3 cleared. **No type change** — the lookup was already case-insensitive and `*_EXTRAS` already supports alternates. Only 3 of the 16 "drifted" entries actually leaked. |
 
 **Corrections to the record this doc previously got wrong:**
 
@@ -232,6 +244,21 @@ is four independent families, none of which is vocabulary — see
   handoff. The schema models a different command entirely, the vocabulary
   (`characters`/`items`/`start`/`end`/…) exists in **no** dictionary, and the corpus rows
   are themselves broken. The en fix clears **1** pair, not 24.
+- **"The `references` lookup is case-sensitive, so this needs a type change"** — false, on
+  both halves (Phase 4). `lookupKeyword`/`isKeyword` both `.toLowerCase()`
+  (`packages/framework/src/core/tokenization/base-tokenizer.ts`; the cited case-sensitive
+  lines are a comment in `tryMultiWordKeyword`, which only handles space-containing
+  keywords). And `*_EXTRAS` already supports alternates, overriding profile entries. The
+  de sub-family (`Ziel`/`ziel`) was never broken at all.
+- **"de/fr/pt `if-exists` clear while still leaking `körper`/`ça`/`isso`"** — does not
+  reproduce (Phase 4). All three render byte-identically to en. The cautionary example was
+  fictional; the *lesson* it illustrated (a leaked operand can render as a syntactically
+  valid identifier, so only R2 sees it) is real and was demonstrated instead by
+  `modal-close-backdrop` ar/ja.
+- **"ar/id/qu are dead on arrival for `no`"** — false for all three (Phase 4). Underscore
+  compounds clear via a whole-token EXTRAS entry (longest-first beats the `_` split) and
+  spaced phrases via the multi-word keyword walk. Both mechanisms already had in-repo
+  precedent. **"The tokenizer splits it" is not a reason to give up.**
 
 Known, accepted residuals in shipped code:
 
