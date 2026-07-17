@@ -62,10 +62,19 @@ export class HindiParticleExtractor implements ContextAwareExtractor {
 
   setContext(context: TokenizerContext): void {
     this._context = context;
-    void this._context; // Satisfy noUnusedLocals
   }
 
   canExtract(input: string, position: number): boolean {
+    // Yield to an underscore-joined REGISTERED keyword whose head is a particle
+    // (के_रूप_में = `as`): otherwise `के` is peeled here and the compound shatters
+    // into `के _ रूप _ में` (computed-value hi leaked the connective). Declining
+    // lets HindiKeywordExtractor's underscore recovery claim the whole run. Only a
+    // registered keyword triggers this, so a bare `के` particle or an underscore
+    // identifier is unaffected. Mirrors the recovery guard in hindi-keyword.ts.
+    if (this.underscoreJoinedKeyword(input, position)) {
+      return false;
+    }
+
     // Check compound postpositions first (longest match)
     for (const [particle] of COMPOUND_POSTPOSITIONS) {
       if (input.startsWith(particle, position)) {
@@ -85,7 +94,29 @@ export class HindiParticleExtractor implements ContextAwareExtractor {
     return SINGLE_POSTPOSITIONS.has(word);
   }
 
+  /**
+   * True when the Devanagari run at `position` is `_`-joined into a keyword the
+   * profile/EXTRAS registered (के_रूप_में). See the note in canExtract.
+   */
+  private underscoreJoinedKeyword(input: string, position: number): boolean {
+    if (!this._context) return false;
+    let pos = position;
+    while (pos < input.length && this.isDevanagari(input[pos])) pos++;
+    if (input[pos] !== '_' || pos + 1 >= input.length || !this.isDevanagari(input[pos + 1])) {
+      return false;
+    }
+    let ext = input.slice(position, pos);
+    while (pos < input.length && (input[pos] === '_' || this.isDevanagari(input[pos]))) {
+      ext += input[pos++];
+    }
+    return Boolean(this._context.lookupKeyword(ext));
+  }
+
   extract(input: string, position: number): ExtractionResult | null {
+    if (this.underscoreJoinedKeyword(input, position)) {
+      return null;
+    }
+
     // Try compound postpositions first (longest match)
     for (const [particle, metadata] of COMPOUND_POSTPOSITIONS) {
       if (input.startsWith(particle, position)) {

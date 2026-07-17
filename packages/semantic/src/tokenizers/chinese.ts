@@ -161,6 +161,12 @@ const CHINESE_EXTRAS: KeywordEntry[] = [
   { native: '后', normalized: 'after' },
   { native: '那么', normalized: 'then' },
   { native: '完', normalized: 'end' },
+
+  // Connectives. Whole-token so the greedy longest-first walk claims the 2-char
+  // 作为 (`as`) before its 1-char tail 为 can match the `for` command primary —
+  // without it `作为 Number` shattered into `作` + `为`→`for` (`computed-value`).
+  // The reverse render (CONNECTIVE_LEXICON.zh) already maps 作为→as.
+  { native: '作为', normalized: 'as' },
 ];
 
 // Chinese time units moved to generic-extractors.ts (NumberExtractor handles them)
