@@ -1,31 +1,36 @@
-# Handoff: foreign→English validity burndown (Phase 4 Family 1 done)
+# Handoff: foreign→English validity burndown (Phase 4 done; the vocabulary + seam work is finished)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
-and **Phase 4 Family 1 (the `no` operator)** shipped. Foreign→English render validity
-**90.7 % → 96.3 % (2946/3059)**. **113 pairs across 21 patterns** remain. Companion scope
-doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
+and **4 (`no` + `references` drift + the condition locative)** shipped. Foreign→English
+render validity **90.7 % → 96.9 % (2965/3059)**. **94 pairs across 20 patterns** remain.
+Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+**What is LEFT is qualitatively different from everything above.** Phase 4 spent the last
+of the cheap levers: there is no vocabulary family and no seam gap remaining. The residual
+is `pick-text-range` (23, deferred — a ~3-arc rewrite, see the spike verdict below) and
+~71 pairs of per-language STRUCTURAL parse damage, which is per-row work with no shared
+root cause. Do not expect another 30-pair PR.
 
 ---
 
 MISSION: Continue the foreign→English validity burndown. Authored non-English
-LokaScript currently renders canonically-valid English **96.3 % (2946/3059)** of the
-time. Phase 2 and Phase 4 Family 1 are DONE. What remains is **three named families**
-— pick the one that fits your appetite. NOTE: families 2 and 3 are **NOT** independent
-(this doc previously claimed all four were): Family 2's ar/ja rows need Family 3 first.
+LokaScript currently renders canonically-valid English **96.9 % (2965/3059)** of the
+time. Phases 2 and 4 are DONE — **the profile/lexicon vocabulary work and the expression
+seam work are both finished**. What remains is the structural family (§ "What is left").
 
 READ FIRST (in order):
 
 1. `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md` — the spec, § "Where the
    burndown stands".
 2. `packages/testing-framework/baselines/foreign-canonical-validity.json` — the
-   committed allowlist (124 pairs / 21 patterns). It ratchets BOTH ways: a pair you
+   committed allowlist (94 pairs / 20 patterns). It ratchets BOTH ways: a pair you
    clear must be pruned, or the gate fails on a stale entry.
 3. `packages/semantic/src/parser/utils/expression-lexicon.ts` — the shared expression
-   seam. **You probably do NOT need to touch it** (see below).
+   seam. Phase 4 closed its last call-site gap; **it is unlikely you need to touch it.**
 
 ## What Phase 2 established (do not re-derive)
 
@@ -57,81 +62,96 @@ READ FIRST (in order):
   single-pattern hazard, probe that pattern directly. (Phase 2 did: the copula slice
   removed ja/bn's escape from the ko-class "guard swallows the then-branch verb" bug.)
 
-## The three remaining families
+## What Phase 4 shipped (three PRs, 30 pairs, 124 → 94)
 
-1. ~~**`no` — `behavior-draggable` (20).**~~ **DONE (Phase 4 Family 1).** Cleared **11**
-   pairs: de es fr id it ms pl pt qu sw tr. `behavior-draggable` 20 → 9. Corrections this
-   slice produced, all verified against the authored corpus:
-   - **The "dead on arrival" call was wrong for all three.** id `tidak_ada` and qu
-     `mana_kanchu` clear via a whole-token EXTRAS entry (the `ubah_ukuran` / `hatun_kay`
-     precedent — longest-first beats the `_` split), and ar `لا يوجد` clears via the
-     multi-word keyword walk (the hi `मेल खाता` precedent). **id and qu both cleared the
-     gate**; ar renders `if no dragHandle` but is still blocked by Family 3 (`هدف`) —
-     i.e. it is fixed here and clears when Family 3 lands.
-   - **The ja `ない` hazard is real in principle but does not fire.** `ない` has blast
-     radius 3, and the dict's `not` (`ではない`) is unregistered, so the particle extractor
-     peels `で`/`は` and lands on a bare `ない`. Probed directly: `unless-condition` and
-     `fetch-do-not-throw` both render byte-identically before and after. ja is registered.
-   - **bn is not lexical.** Its dict has no `no`, so the corpus row already carries
-     literal English `no` and renders it correctly. bn fails `behavior-draggable` for an
-     unrelated structural reason and stays on the allowlist. The ceiling was 19, not 20.
-   - The exclusions (hi नहीं, zh 没有, tl `walang`) stand, but the reason is **dict-level**,
-     not a profile collision: those profiles do not register the surface at all — the
-     dict maps two senses to one surface (`hi not:'नहीं'` AND `no:'नहीं'`), so registering
-     it as `no` would mistranslate every `not`/`without` in those corpora.
-   - Confirmed as written: es `not:'no'` is a non-issue (the map is keyed by surface).
-2. **Condition locative — `focus-trap` (19).** The **only code change** left, and the
-   one place the seam matters. `ru` has `matches` coverage yet still fails because `в`
-   leaks verbatim and `de`'s `in` emits the ROLE NAME `destination`. Cause is NOT the
-   third seam at `pattern-matcher.ts:1146` (that one is correct) — a *condition* never
-   reaches `tryMatchPositionalExpression`; `tryParseConditionalBlock` joins raw tokens
-   via `joinTokenText` → `joinExpressionTokens`, which has no locative handling. Fix:
-   extract the positional-run recognizer (`pattern-matcher.ts:1075-1152`) into a shared
-   helper and call it from `joinExpressionTokens`. Note `surfaceOf` has TWO failure
-   modes, not one: verbatim leak AND role-name leak.
-3. **`references` profile/dict DRIFT — 16 entries across 8 languages (NEW, see below).**
-4. **Structural / per-language parse gaps** (~40): `swap-content` ar `بـ#b` fusion,
-   `beep-debug-expression`, bn scrambles, the sparse rows.
+All three are DONE. Recorded here because each corrected something this doc asserted —
+**the doc's own claims were the least reliable input to the arc.** Every correction below
+was verified against the AUTHORED corpus rows, not reasoned from the code.
 
-**LEAVE DEFERRED: `pick-text-range` (23).** See the spike verdict below — it is NOT
-"one fix for 24 pairs".
+**1. `no` — `behavior-draggable` 20 → 9 (11 pairs).** Pure profile data, Phase 2's shape.
+Registered in 16 languages.
 
-## NEW: the `references` profile/dict drift family
+- **The "dead on arrival" call was wrong for all three.** id `tidak_ada` and qu
+  `mana_kanchu` clear via a whole-token tokenizer EXTRAS entry (the `ubah_ukuran` /
+  `hatun_kay` precedent — the keyword walk sorts longest-first, so the compound beats the
+  `_` split); ar `لا يوجد` clears via the base tokenizer's multi-word keyword walk (the hi
+  `मेل खाता` precedent). **id and qu cleared the gate outright.** The lesson: "the
+  tokenizer splits it" is not a reason to give up — check for a whole-token precedent.
+- **The ja `ない` hazard is real in principle but does not fire.** `ない` has blast radius 3
+  and the dict's `not` (`ではない`) is unregistered, so the particle extractor peels で/は and
+  can land on a bare `ない`. Probed: `unless-condition` (protected by `ない限り`, longest-first)
+  and `fetch-do-not-throw` both render byte-identically before and after.
+- **bn is not lexical.** Its dict has no `no`, so its row already carries literal English
+  `no` and renders it correctly; it fails structurally. The ceiling was 19, not 20.
+- The hi/zh/tl exclusions stand, but the reason is **dict-level**, not a profile
+  collision: those profiles never register the surface — the DICT maps two senses to one
+  (`hi not:'नहीं'` AND `no:'नहीं'`), so registering it as `no` would mistranslate every
+  `not`/`without` in those corpora. es `not:'no'` was a non-issue as written.
 
-`profile.references` has drifted from what the i18n dicts actually emit, in 16 entries
-across 8 languages. The corpus is authored FROM the dicts, so a drifted entry means the
-parser cannot recognize the word real translations use, and it leaks:
+**2. `references` drift — `modal-close-backdrop` 2 → 0, `focus-trap` ja (3 pairs).** Three
+tokenizer EXTRAS lines + `matches` for ar/ja. **Both reasons this doc gave for deferring it
+as a CODE change are FALSE:**
 
-| lang | drifted |
-| --- | --- |
-| ar | result النتيجة/نتيجة · event الحدث/حدث · target الهدف/هدف |
-| de | result · event · target · body — all pure capitalization (`Ziel`/`ziel`) |
-| ja | me 自分/私 · target ターゲット/対象 |
-| qu | result rurasqa/lluqsiy · event ruwakuq/ruway |
-| es | you tú/tu · fr it il/ça, you toi/tu · id you anda/kamu · pt it ele/isso |
+- **The lookup is NOT case-sensitive.** `lookupKeyword`/`isKeyword` both `.toLowerCase()`
+  (`packages/framework/src/core/tokenization/base-tokenizer.ts` — note this doc pointed at
+  a path that does not exist; `packages/semantic/src/parser/base-tokenizer.ts` is a
+  re-export). The cited `:633-634` is a COMMENT inside `tryMultiWordKeyword`, which only
+  handles space-containing keywords and which German never reaches. **The whole de
+  sub-family was a non-issue** — de renders `body`/`target` correctly today.
+- **No type change was needed.** The per-language `*_EXTRAS` array already supports
+  alternates and overrides profile entries (precedent: `japanese.ts` `私`→me).
+- **The stated cautionary example does not exist.** de/fr/pt `if-exists` do NOT "clear
+  while still leaking `körper`/`ça`/`isso`" — probed against the authored rows, all three
+  render byte-identically to en (`körper` via the case-insensitive lookup, `ça`/`isso` via
+  existing EXTRAS).
+- Of the 16 "drifted" entries only **3 actually leak** (ar `نتيجة`/`هدف`, ja `対象`); the
+  rest are absorbed by the case-insensitive lookup, EXTRAS, `possessive.keywords`, or a
+  profile keyword. 16 was right as a text-diff and ~5× too high as a defect count.
 
-This is what blocks `modal-close-backdrop` ar/ja (the last 2), and it is why the
-`matches` slice EXCLUDED ar/ja: adding `matches` there parses the condition but its
-operand still leaks (`if هدف matches …`), which turned two rows that passed R2 **only by
-accident** — the unparsed condition was dropped, so `hide` ran unconditionally and
-happened to match the reference DOM effect — into genuinely broken ones. The R2
-execution ratchet caught it. **This is the cautionary tale of the arc: fixing an
-operator without its operand can be worse than fixing neither.**
+**The operand+operator coupling was REAL, and is the arc's one durable lesson.** The
+condition is captured as a raw string; ar/ja's *unparsed* condition was silently dropped,
+so `hide` ran unconditionally and coincidentally matched the en DOM effect —
+`modal-close-backdrop` ar/ja passed R2 **by accident**. `matches` alone would parse the
+condition into a real comparison whose operand evaluates to undefined, stopping `hide` and
+flipping R2 pass→fail at tolerance 0. Both together render byte-identical to en. Only R2
+can see this class.
 
-Why it is not a trivial data fix, and why Phase 2 did not do it:
+**3. Condition locative — `focus-trap` 19 → 3 (16 pairs, incl. a `last-in-collection tr`
+bonus).** The diagnosis in this doc was RIGHT; two details were not.
 
-- `references` is a flat `Record<string,string>` (`profiles/types.ts`) with **no
-  `alternatives`**, so you cannot support both surfaces without a type change (+
-  `base-tokenizer.ts:501-514`). That is a CODE change.
-- Lookup is **case-sensitive** (`base-tokenizer.ts:633-634`), which is the whole of de's
-  drift — and German capitalizes nouns, so the profile's `Ziel` is *correct German* and
-  the **dict** is arguably the wrong side to fix.
-- Precedent exists for aligning the profile to the dict: `arabic.ts:31`
-  `body: 'جسم', // matches the i18n dict's emitted body word (corpus-canonical, parser
-  must recognize it)`.
-- Beware: a leaked operand can render as a *syntactically valid identifier*, so the
-  validity gate passes while the meaning is wrong (de/fr/pt `if-exists` do this today —
-  they cleared while still leaking `körper`/`ça`/`isso`). Only R2 sees this class.
+- **`surfaceOf` has THREE failure modes, not two:** verbatim leak, role-name leak, and
+  wrong-sense-normalized leak (bn `শেষ`→`end`, out of scope — a dict realign).
+- **The prescription omitted anchor ORDER, which is load-bearing.** The new anchor must sit
+  AFTER the of-possessive anchor so it can only claim runs the earlier anchors declined
+  (provably additive). Positional-first would flip `<positional> <sel> <of-marker> <sel>`
+  away from `<sel> of <sel>`, and for a marker absent from `LOCATIVE_SURFACES` (zh `的`,
+  ja `の`) `toEnglishLocative` falls through to the VERBATIM surface — worse than the leak.
+- No data was added: `toEnglishLocative` / `LOCATIVE_SURFACES` /
+  `ROLE_CONCEPT_TO_ENGLISH_LOCATIVE` already covered both classes. It was purely a
+  call-site gap. `matchPositionalRun` now serves both seams.
+- The run returns `{text, token}` pairs, not strings: the two callers join differently
+  (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
+  would silently render `previous <input/> .value` inside conditions.
+
+## What is left (94 pairs) — no cheap levers remain
+
+1. **`pick-text-range` (23) — LEAVE DEFERRED.** See the spike verdict below; it is NOT
+   "one fix for 24 pairs". Budget ~3 arcs.
+2. **Structural / per-language parse damage (~71).** No shared root cause — this is
+   per-row work. Known shapes, each verified by probe:
+   - `focus-trap` ar/tl — the locative now renders `in`, but a stray `من .modal` /
+     `source .modal` survives and `[key=="Tab"]` is displaced past the condition.
+   - `focus-trap` bn — positional `শেষ` normalizes to `end` (the block terminator), so the
+     run's head gate correctly declines and `এ` leaks. A dict/tokenizer realign.
+   - `form-submit-prevent` ar — `نتيجة` now renders `result`, but the copula `هو` surfaces
+     as `it`: **`profile.references` is registered AFTER `keywords`**
+     (`base-tokenizer.ts:502` vs `:482`), so an ar `is` entry is silently overwritten.
+     This is a registration-ORDER fix, not vocabulary — plausibly the last mechanical win.
+   - `swap-content` ar `بـ#b` fusion · `beep-debug-expression` · bn scrambles · sparse rows.
+3. **`document`/`window` context globals (~1).** `body` is already 24/24 via
+   `profile.references`; `window` is 1 (qu `k_iri`); only `document` is truly 0. The LAST
+   slice by value, not a cheap first win. If you do it, use `references` (values, not
+   verbs → phantom-safe).
 
 ## SPIKE VERDICT: `pick-text-range` — keep deferred, and the docs' reason was wrong
 
@@ -162,17 +182,20 @@ sole entry in `baselines/canonical-validity.json`.
 
 ## Also true (verified, corrects the record)
 
-- The residual is **21 patterns**, never 19 (the old handoff and scope doc both said 19).
+- The residual is **20 patterns / 94 pairs** after Phase 4 (`modal-close-backdrop` left
+  the allowlist entirely). It was 21 patterns before, and never the 19 the pre-Phase-2
+  handoff and the scope doc both claimed.
 - The sibling **en-render burndown is DONE** — `canonical-validity.json` holds exactly
   **1** entry (`pick-text-range`), not the 22 that `HANDOFF_render-validity-burndown.md`
   described. That doc is deleted; its two still-live follow-ups are preserved below.
-- **Context globals are NOT "zero reverse coverage".** `body` is **24/24** via
-  `profile.references`; `window` is 1 (qu `k_iri`); only `document` is truly 0. And
-  `document`/`window` is worth ~1 pair standalone — it is the LAST slice by value, not a
-  cheap first win. If you do it, use `references` (values, not verbs → phantom-safe).
 - `repeat-until-event` fr/it/zh/pl is **NOT** a real family — it was stale-dist/stale-DB
   noise. A freshly populated DB reproduces the committed baseline exactly.
 - `marker-templates.ts` is dead code (zero importers) despite `semantic/CLAUDE.md`.
+- **This doc has been the arc's least reliable input.** Phase 4 found a false premise in
+  every family it touched (a "case-sensitive" lookup that lowercases; a cautionary example
+  that does not reproduce; three "dead on arrival" languages that all work; a defect count
+  ~5× too high). All were cheap to disprove with one probe against the authored corpus.
+  **Probe the claim before you plan around it** — including the claims above.
 
 ## Preserved follow-ups (from the now-deleted render-validity handoff)
 
@@ -207,6 +230,12 @@ scratchpad outside the workspace cannot resolve `node_modules`. Delete it after.
 - `npm run test:affected` — a semantic change fans out to ~33 consumers incl.
   `hyperscript-adapter` (its own `preprocessToEnglish` + renderer). **`domain-toolkit`
   "fails" because it has 0 test files — pre-existing, ignore it.**
+  **If `testing-framework` ALSO fails, it is almost certainly an ordering artifact, not
+  your change:** `test:affected`'s `ensure-fresh` hook rebuilds a stale dep mid-run, which
+  invalidates the `patterns.db` provenance stamp under the canonical gate. Run
+  `npm run check:fresh && npm run populate --prefix packages/patterns-reference` FIRST,
+  then re-run. (Bit Phase 4 once; a direct `npm test --prefix packages/testing-framework`
+  passed while `test:affected` failed.)
 - `npm run populate --prefix packages/patterns-reference` then
   `npm run test:canonical --prefix packages/testing-framework` (both gates; sets
   `FOREIGN_CANONICAL_VALIDITY=1`). The foreign gate reads authored translations from
@@ -224,9 +253,20 @@ scratchpad outside the workspace cannot resolve `node_modules`. Delete it after.
 ## Footguns
 
 - **Never commit `packages/patterns-reference/data/patterns.db`** — `git checkout --` it.
+  **But `git checkout --` on it reverts to the STALE committed copy**, so the next gate run
+  fails for a reason that is not your change. Re-`populate` before any further gate/probe
+  work. (Bit Phase 4: a green gate went red purely from the cleanup step.)
+- **`regen-foreign-baseline.ts` reformats the JSON** (explodes single-line arrays), which
+  buries your real diff in churn. Run `npx prettier --write` on the baseline afterwards.
 - **Exit-code masking is real.** `cmd > log; echo $?; grep …` reports the GREP's status.
   Read the explicit `EXIT=` line, not the harness's summary.
 - The foreign gate throwing `Unknown token: <char>` IS the signal, not a harness bug.
 - **zsh does not word-split** `$vars` — `for p in $pkgs` iterates once. Use literal lists.
+- **The MCP server is NOT a valid probe channel mid-arc.** `.mcp.json` runs
+  `mcp-server/dist/index.js`, which does not bundle semantic — it resolves the workspace
+  symlink to `packages/semantic/dist/` **at startup** and node caches the module, so every
+  semantic rebuild leaves MCP serving pre-change code until the server restarts. Its
+  `LSP_DB_PATH` also points at the committed (lagging) `patterns.db`, and `populate`
+  replaces that file under the open handle. Use the `tsx` probe recipe above.
 - Do NOT open a docs-only PR — fold docs into the code PR.
 - Ship one root cause per small PR, each gate-guarded.
