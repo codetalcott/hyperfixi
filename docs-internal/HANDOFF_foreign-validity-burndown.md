@@ -262,11 +262,15 @@ scratchpad outside the workspace cannot resolve `node_modules`. Delete it after.
   Read the explicit `EXIT=` line, not the harness's summary.
 - The foreign gate throwing `Unknown token: <char>` IS the signal, not a harness bug.
 - **zsh does not word-split** `$vars` — `for p in $pkgs` iterates once. Use literal lists.
-- **The MCP server is NOT a valid probe channel mid-arc.** `.mcp.json` runs
-  `mcp-server/dist/index.js`, which does not bundle semantic — it resolves the workspace
-  symlink to `packages/semantic/dist/` **at startup** and node caches the module, so every
-  semantic rebuild leaves MCP serving pre-change code until the server restarts. Its
-  `LSP_DB_PATH` also points at the committed (lagging) `patterns.db`, and `populate`
-  replaces that file under the open handle. Use the `tsx` probe recipe above.
+- **The MCP server is NOT a valid probe channel mid-arc** — but it now TELLS you instead of
+  lying. `.mcp.json` runs `mcp-server/dist/index.js`, which does not bundle semantic: it
+  resolves the workspace symlink to `packages/semantic/dist/` **at startup** and node caches
+  the module graph, so every rebuild leaves it serving pre-change code. Since the freshness
+  guard (`packages/mcp-server/src/freshness.ts`) landed, a tool call after a rebuild returns
+  an `isError` refusal naming the rebuilt packages and telling you to restart the server,
+  rather than answering from stale code. **A refusal there is the guard working, not a
+  bug** — restart the server (`/mcp` → reconnect). The `patterns.db` half self-heals: the
+  connection reopens when `populate` replaces the file. Still prefer the `tsx` probe recipe
+  above mid-arc; it imports fresh each run and needs no restart.
 - Do NOT open a docs-only PR — fold docs into the code PR.
 - Ship one root cause per small PR, each gate-guarded.
