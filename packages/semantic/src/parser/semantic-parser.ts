@@ -3944,7 +3944,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const role = markerToRole.get(token.value);
         if (role && token.kind === 'particle' && valueTokens.length > 0) {
           // This is a marker — assign the preceding value tokens to this role
-          const value = this.tokensToSemanticValue(valueTokens);
+          const value = this.tokensToSemanticValue(valueTokens, language);
           if (value) {
             // Map the role name, avoiding overwrites of existing roles
             const roleKey = this.mapRoleForCommand(role, action, roles);
@@ -3979,7 +3979,7 @@ export class SemanticParserImpl implements ISemanticParser {
             dataType: 'string',
           } as SemanticValue;
         } else {
-          const value = this.tokensToSemanticValue(valueTokens);
+          const value = this.tokensToSemanticValue(valueTokens, language);
           if (value) {
             // Unmarked trailing tokens: assign based on what's missing
             if (!roles.patient) {
@@ -4043,7 +4043,7 @@ export class SemanticParserImpl implements ISemanticParser {
   /**
    * Convert a sequence of tokens into a single SemanticValue.
    */
-  private tokensToSemanticValue(tokens: LanguageToken[]): SemanticValue | null {
+  private tokensToSemanticValue(tokens: LanguageToken[], language: string): SemanticValue | null {
     if (tokens.length === 0) return null;
 
     // Filter out noise tokens (whitespace, etc.)
@@ -4094,7 +4094,15 @@ export class SemanticParserImpl implements ISemanticParser {
       return createReference(combined as 'me' | 'it' | 'you' | 'result');
     }
 
-    return createLiteral(combined);
+    // Non-selector/literal/reference multi-token run: this is where a leaked
+    // foreign EXPRESSION lands (`beep! 私の 値` → the debug-expression patient).
+    // The empty-string `combined` above both glued the tokens (`beep!私の値`) and
+    // skipped translation, because it never reached the shared expression seam.
+    // Route it through joinExpressionTokens (via joinTokenText): the possessive
+    // anchor fires (`私の 値` → `my value`) and spaces are preserved, yielding
+    // `beep! my value`. The selector/literal/reference branches keep the raw glue
+    // on purpose (`#foo.bar`, quoted strings), so only this fall-through changes.
+    return createLiteral(this.joinTokenText(meaningful, language));
   }
 
   /**

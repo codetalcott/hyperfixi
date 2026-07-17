@@ -1,10 +1,11 @@
 # Scope: foreign→English validity — the expression-internal translation gap
 
-**Status:** Phases 1a, 1b, 3, **2**, **4**, and **5 (the context globals
-`document`/`window`/`detail`)** shipped (foreign validity 90.7 % → **97.2 %**; see Phasing
-below). **The vocabulary work is DONE** — the 87 remaining pairs are per-row structural, not
-lexicon-shaped. Current state + the remaining families:
-`docs-internal/HANDOFF_foreign-validity-burndown.md`.
+**Status:** Phases 1a, 1b, 3, **2**, **4**, **5 (the context globals
+`document`/`window`/`detail`)**, and **6 (the `as` connective zh/hi + the `beep!` possessive
+glue+leak)** shipped (foreign validity 90.7 % → **97.4 %**; see Phasing below). **The
+vocabulary/expression work is DONE** — the 80 remaining pairs are per-row structural or
+deliberately-blocked ambiguous exclusions, not lexicon-shaped. Current state + the remaining
+families: `docs-internal/HANDOFF_foreign-validity-burndown.md`.
 Companion to the foreign→English canonical-validity
 gate (`packages/testing-framework/src/multilingual/foreign-canonical-validity.ts`,
 baseline `baselines/foreign-canonical-validity.json`). The gate makes the number below
@@ -205,17 +206,19 @@ Each phase is gate-guarded (foreign-canonical-validity), fidelity-ratchet-guarde
 en-gate-guarded, exactly like the en-render burndown (#699–#704). Target: 90.7 % →
 high-90s, residual = named deferrals.
 
-## Where the burndown stands (after 1a + 1b + 3 + 2 + 4 + 5)
+## Where the burndown stands (after 1a + 1b + 3 + 2 + 4 + 5 + 6)
 
-**97.2 % (2972/3059); 87 pairs across 20 patterns.** Phase 2 cleared 70; Phase 4 cleared
+**97.4 % (2979/3059); 80 pairs across 19 patterns.** Phase 2 cleared 70; Phase 4 cleared
 a further 30 (`no` 11, `references` drift 3, condition locative 16); Phase 5 cleared 7
-(the `document` context global) plus 51 gate-invisible silent corrections.
+(the `document` context global) plus 51 gate-invisible silent corrections; Phase 6 cleared 7
+(the `as` connective zh/hi 2, the `beep!` possessive glue+leak 5).
 
 **Both the vocabulary work and the expression-seam work are now finished.** No remaining
 pair is lexicon-shaped, and the shared expression seam
 (`packages/semantic/src/parser/utils/expression-lexicon.ts`) has no known call-site gap:
-Phase 4 extracted the positional-run recognizer into it, so the condition join and the
-role capture can no longer disagree. What is left has **no shared root cause** — see
+Phase 4 extracted the positional-run recognizer into it, and Phase 6 routed the SOV
+fallback's value builder through it too (`tokensToSemanticValue`), so the last untranslated
+leaf path is closed. What is left has **no shared root cause** — see
 `docs-internal/HANDOFF_foreign-validity-burndown.md`:
 
 | Family | pairs | kind |
@@ -223,11 +226,17 @@ role capture can no longer disagree. What is left has **no shared root cause** �
 | `pick-text-range` | 23 | en-render; a whole wrong command schema (spike verdict below); ~3 arcs |
 | structural / per-language parse damage | 23 | per-row: swap-content ar fusion, focus-trap ar/tl, id possessive tails, sparse rows |
 | hi `है` + th `เป็น` | 10 | blocked — the copula slice's named ambiguous exclusions |
-| `beep!` possessive glue+leak | 5 | bug: renders `beep!私の値` (unspaced AND untranslated) |
 | `window` (uk/ar/th) | 3 | structural, NOT data — role misattachment / `من` leak / no-dict mangling |
-| `as` connective (hi/th/zh) | 3 | data-ish: zh `作为` splits, hi `के_रूप_में` shatters, th `เป็น` ambiguous |
 | ja `空` (=empty) | 2 | phantom-blocked (`empty` is an ActionType AND a schema) |
-| singles | 11 | bn `এ`/`আছে`/`এর`/`অথবা`, hi `नहीं`/`बदलने`, ko `정`, ar `من`, zh `执行` |
+| `computed-value` th | 1 | blocked — th `เป็น` is both `as` and copula `is` (id is separate structural) |
+| singles | 11 | bn `এ`/`আছে`/`এর`/`অথবা`, hi `नहीं`/`बदলने`, ko `정`, ar `من`, zh `执行` |
+
+**Phase 6 (2026-07-17)** cleared the `as` connective (zh/hi) and the `beep!` glue+leak, and —
+consistent with this arc's pattern — corrected both of the handoff's fix-site claims: hi
+`के_रूप_में` needed a `HindiParticleExtractor` yield-guard (the possessive particle `के` was
+peeled before the EXTRAS entry could match), and `beep!` needed a source-adjacent `!`-glue in
+the join (the canonical parser rejects the spaced `beep !`), not just the SOV fall-through
+reroute. `joinExpressionTokens`'s possessive anchor was innocent throughout.
 
 Full triage, with the reproduce recipe: `docs-internal/HANDOFF_foreign-validity-burndown.md`
 § "What is left". It was produced by rendering all pairs and clustering by the canonical

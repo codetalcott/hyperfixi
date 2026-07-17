@@ -1,14 +1,40 @@
-# Handoff: foreign→English validity burndown (Phase 6 — post `document`/`window`/`detail`)
+# Handoff: foreign→English validity burndown (Phase 7 — post `as`/`beep!`)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
-**4 (`no` + `references` drift + the condition locative, #719)**, and **5 (the context
-globals `document`/`window`/`detail`)** shipped. Foreign→English render validity
-**90.7 % → 97.2 % (2972/3059)**. **87 pairs across 20 patterns** remain.
+**4 (`no` + `references` drift + the condition locative, #719)**, **5 (the context
+globals `document`/`window`/`detail`, #721)**, and **6 (the `as` connective zh/hi + the
+`beep!` possessive glue+leak)** shipped. Foreign→English render validity
+**90.7 % → 97.4 % (2979/3059)**. **80 pairs across 19 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 6 SHIPPED — and, true to this doc's own governing lesson, BOTH its fix-site
+> claims were incomplete; a probe caught each.**
+>
+> - **`as` connective (zh + hi), 2 pairs.** The reverse `CONNECTIVE_LEXICON` entries always
+>   existed; the tokenizer shattered the compound before lookup. zh `作为` cleared with a
+>   whole-token `CHINESE_EXTRAS` entry (longest-first beats the 1-char `为`→`for`). **hi
+>   `के_रूप_में` did NOT clear from the EXTRAS entry alone** — the handoff's "only the
+>   registration is missing" was wrong. `के` is a possessive PARTICLE, so
+>   `HindiParticleExtractor` (registered ahead of `HindiKeywordExtractor`) peeled `के` off
+>   before the underscore-recovery could see the whole run. The `आकार_बदलें` precedent works
+>   only because its head `आकार` is not a particle. Fix = teach `HindiParticleExtractor` to
+>   DECLINE when the run is an underscore-joined REGISTERED keyword
+>   (`hindi-particle.ts` `underscoreJoinedKeyword`), so the keyword extractor claims it.
+> - **`beep!` possessive glue+leak (bn/hi/ja/ko/tr), 5 pairs.** The handoff said "start from
+>   `joinExpressionTokens`'s possessive anchor" — the anchor is INNOCENT and was never
+>   called. The value took the SOV verb-anchoring fallback, whose `tokensToSemanticValue`
+>   empty-string-glued the tokens AND skipped translation. Fix = route only the multi-token
+>   fall-through through `joinExpressionTokens` (`semantic-parser.ts`). But that surfaced a
+>   SECOND defect the handoff missed entirely: `beep!` tokenizes as `beep` + `!`, and the
+>   canonical parser REJECTS the spaced `beep !` ("Unexpected Token : !"). So the join had to
+>   GAIN a rule, not just preserve spaces — a source-adjacent leading `!` now glues like the
+>   `.`-member rule (`expression-lexicon.ts`). **en is separately, pre-existingly broken**
+>   (`set $x to beep! my value` → `set $x to beep`; `matchRoleToken` single-token capture
+>   drops the tail) — DEFERRED, out of the foreign gate's scope. See § "What Phase 6 shipped".
 
 > **PHASE 5 SHIPPED — and it disproved this doc's OWN Phase-5 diagnosis, which is why the
 > two correction blocks that used to sit here are deleted, not preserved.** Every claim the
@@ -46,16 +72,22 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 
 ---
 
-MISSION: Phase 6 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **97.2 % (2972/3059)**; **87 pairs across 20
-patterns** remain. Phases 2, 4, and 5 are DONE. **The residual is fully triaged** — the table
-in § "What is left" was produced by rendering all 94 (now 87) pairs and clustering them by the
+MISSION: Phase 7 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **97.4 % (2979/3059)**; **80 pairs across 19
+patterns** remain. Phases 2, 4, 5, and 6 are DONE. **The residual is fully triaged** — the table
+in § "What is left" was produced by rendering all pairs and clustering them by the
 canonical parser's actual complaint, so it is measured, not estimated.
 
-**Next-best slices, in order:** `beep!` possessive glue+leak (5 — a real bug, § "What is
-left" § 3), then the `as` connective (3 — § 2). **Do not start with `pick-text-range` (23)**
-— the spike verdict below explains why it is ~3 arcs, not one PR. Beyond those the residual
-is per-row structural with no shared root cause.
+**The two vocabulary/expression slices are now exhausted** (`as` and `beep!` shipped in
+Phase 6). What remains has **no shared root cause** — it is per-row structural parse damage
+plus a handful of deliberately-blocked ambiguous exclusions. The single plausibly-mechanical
+item left is **`form-submit-prevent` ar registration ORDER** (`profile.references` registers
+AFTER `keywords`, so an ar `is` entry is silently overwritten — `base-tokenizer.ts:502` vs
+`:482`); it is one code change, not vocabulary. **Do not start with `pick-text-range` (23)** —
+the spike verdict below explains why it is ~3 arcs, not one PR. The realistic Phase 7 framing
+is: either take the `form-submit-prevent` registration-order fix, or accept 97.4 % as the
+practical ceiling and pivot to the two preserved infra follow-ups (fold validity in as an R4
+ratchet signal; bake the parse-check into the `@hyperscript-tools/i18n` transpiler).
 
 **Phase 5 registered `document`/`window`/`detail` in one shared Set + 20 profiles — DO NOT
 re-plan it.** It is drift reconciliation (core's `REFERENCE_KEYWORDS` and the parser's
@@ -186,11 +218,13 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (87 pairs) — MEASURED, not estimated
+## What is left (80 pairs) — MEASURED, not estimated
 
 Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
 complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5
-removed the `document` row below (7 pairs cleared); `window` proved structural, not data.
+removed the `document` row (7 pairs); `window` proved structural, not data. Phase 6 removed
+the `beep!` row (5 pairs) and the zh/hi half of the `as` row (2 pairs) — leaving only th's
+copula collision on `computed-value`.
 
 | # | Family | Kind | Where |
 | --- | --- | --- | --- |
@@ -198,12 +232,11 @@ removed the `document` row below (7 pairs cleared); `window` proved structural, 
 | 23 | structural (no leak) | per-row | see list below |
 | 5 | hi `है` (=has/have) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
 | 5 | th `เป็น` (=as/is) | blocked | same five patterns |
-| 5 | `beep!` possessive glue+leak | bug | `beep-debug-expression` bn/hi/ja/ko/tr |
 | 3 | `window` — structural, NOT data | per-row | `modal-close-escape` uk · `window-keydown` ar · `window-resize` th |
-| 3 | `as` connective leak | data-ish | `computed-value` hi/th/zh |
 | 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
 | 2 | bn `অথবা` | ? | `behavior-draggable`, `behavior-sortable` |
 | 2 | bn `এ` (locative) | dict realign | `focus-trap`, `last-in-collection` |
+| 1 | th `เป็น` (=as, copula) | blocked | `computed-value` th (id is separate structural, below) |
 | 7 | singles | various | hi `नहीं`, ko `정`, bn `এর`/`আছে`, ar `من`, zh `执行`, hi `बदलने` |
 
 ### 1. DONE (Phase 5) — `document`/`window`/`detail` context globals — 7 pairs, pure data
@@ -231,25 +264,48 @@ extended to window/document; no corpus row exercises it, `window-scroll` keeps i
 condition, verified VALID). `detail` has no bare-reference corpus row — its registration is
 preventive drift-reconciliation only.
 
-### 2. The `as` connective (3) — `computed-value` hi/th/zh
+### 2. DONE (Phase 6) — The `as` connective — zh + hi cleared (2 pairs); th deferred
 
-Each fails differently; all three are lexicon-shaped:
+**Shipped.** zh `作为` (rendered `作 for Number`) and hi `के_रूप_में` (rendered
+`के _ रूप _ में`) now render `as Number`. The reverse `CONNECTIVE_LEXICON` entries already
+existed; the tokenizer shattered the compound before lookup.
 
-- zh `作为` → renders **`作 for Number`**: the compound split, `为` matched `for`.
-- hi `के_रूप_में` → renders **`के _ रूप _ में`**: the underscore-joined dict word shattered.
-  **This is already a named residual** in the scope doc ("hi `के_रूप_में` never matches").
-  The `ubah_ukuran`/`mana_kanchu` whole-token EXTRAS precedent (Phase 4 PR1) is the fix.
-- th `เป็น` → the deliberate copula exclusion (it is BOTH `as` and `is`). Slot-ambiguous;
-  the `as` slot may be disambiguable where the copula was not — probe before assuming.
+- **zh** — whole-token `CHINESE_EXTRAS` entry `{作为→as}`; longest-first beats the 1-char
+  `为`→`for`. Pure data, as expected.
+- **hi** — the EXTRAS entry `{के_रूप_में→as}` was **necessary but NOT sufficient** (the
+  "`ubah_ukuran`/`mana_kanchu` precedent is the fix" claim was wrong). `के` is a possessive
+  PARTICLE, so `HindiParticleExtractor` (registered ahead of `HindiKeywordExtractor`) peeled
+  it off before the underscore-recovery ran. `आकार_बदलें` works only because `आकार` is not a
+  particle. Second fix: `HindiParticleExtractor.underscoreJoinedKeyword` declines when the
+  run is an underscore-joined REGISTERED keyword, ceding it to the keyword extractor.
+- **th `เป็น` — still deferred.** BOTH `as` and copula `is`; a blanket entry rewrites every
+  Thai `is`. `computed-value` th remains allowlisted (1 pair). Would need slot-sensitive
+  disambiguation (resolve to `as` only before a type name) — NOT attempted.
+- **`computed-value` id is unrelated** — it renders `as Number` fine; it fails on the
+  possessive tail `my punya nilai` (structural, § 5), so it stays allowlisted.
 
-### 3. `beep!` possessive glue+leak (5) — a real bug, not vocabulary
+### 3. DONE (Phase 6) — `beep!` possessive glue+leak — all 5 cleared
 
-`beep-debug-expression` renders **`beep!私の値`** (ja), **`beep!내값`** (ko),
-**`beep!আমারমান`** (bn), **`beep!benimdeğer`** (tr) — the possessive is neither translated
-NOR spaced. Two defects stacked: the `beep!` prefix seems to swallow the following run so
-the possessive anchor never fires, and the join loses its spaces. en renders
-`beep! my value`. Start from `joinExpressionTokens`'s possessive anchor and ask why
-`beep!` suppresses it.
+**Shipped.** `beep-debug-expression` bn/hi/ja/ko/tr now render the canonical `beep! my value`.
+The handoff's premise was doubly wrong:
+
+- **`joinExpressionTokens`'s possessive anchor is INNOCENT and was never called** for this
+  value. The `beep!`-headed run fails every generated `set` pattern, so the clause takes the
+  SOV verb-anchoring fallback, whose `tokensToSemanticValue` empty-string-glued the tokens
+  (`beep!私の値`) AND skipped translation. Fix = route only the multi-token fall-through
+  through `joinExpressionTokens` (`semantic-parser.ts`); the possessive anchor then fires.
+- **A second defect the handoff missed:** `beep!` tokenizes as `beep` + `!`, and the
+  canonical parser REJECTS the spaced `beep !` ("Unexpected Token : !"). So the join had to
+  GAIN a rule — a source-adjacent leading `!` glues like the `.`-member rule
+  (`expression-lexicon.ts`). "The join loses its spaces" was only half the story; it also had
+  to STOP adding one.
+- **en is separately, pre-existingly broken and DEFERRED.** `set $x to beep! my value` →
+  `set $x to beep` (the `matchRoleToken` single-token slot capture drops `! my value`;
+  `beep` alone is a valid canonical identifier, so en is not in the en-render allowlist).
+  Fixing it means folding `beep! <expr>` as an expression prefix in
+  `pattern-matcher.ts` value-slot capture — a different root cause on the primary parse path
+  for all languages. Named follow-up; clears **0** foreign gate pairs (the foreign gate never
+  renders en→en).
 
 ### 4. Deliberately blocked (12) — do NOT "fix" without reading why
 
