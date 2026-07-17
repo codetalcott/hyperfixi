@@ -98,6 +98,16 @@ const PREPOSITIONS = new Set([
  * - References not in profile
  */
 const ARABIC_EXTRAS: KeywordEntry[] = [
+  // References (alternative forms not in profile). The i18n dict emits the BARE
+  // nouns هدف/نتيجة while the profile carries the definite-article forms
+  // الهدف/النتيجة, so the words the authored corpus actually uses did not lex as
+  // keywords and leaked into the condition's raw expression (`if هدف يطابق …`).
+  // Additive: the profile's الهدف/النتيجة stay registered. Same direction as the
+  // profile's `body: 'جسم'` note — align to what the dict emits, never the reverse
+  // (the dict wins on regeneration, so profile→dict is the convergent direction).
+  { native: 'هدف', normalized: 'target' }, // Alternative to الهدف (the dict's word)
+  { native: 'نتيجة', normalized: 'result' }, // Alternative to النتيجة (the dict's word)
+
   // Values/Literals
   { native: 'صحيح', normalized: 'true' },
   { native: 'خطأ', normalized: 'false' },
