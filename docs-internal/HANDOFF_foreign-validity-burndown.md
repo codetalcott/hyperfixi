@@ -1,35 +1,63 @@
-# Handoff: foreign→English validity burndown (Phase 4 done; the vocabulary + seam work is finished)
+# Handoff: foreign→English validity burndown (Phase 5 — the residual is TRIAGED)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
-and **4 (`no` + `references` drift + the condition locative)** shipped. Foreign→English
+and **4 (`no` + `references` drift + the condition locative, #719)** shipped. Foreign→English
 render validity **90.7 % → 96.9 % (2965/3059)**. **94 pairs across 20 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
 
-**What is LEFT is qualitatively different from everything above.** Phase 4 spent the last
-of the cheap levers: there is no vocabulary family and no seam gap remaining. The residual
-is `pick-text-range` (23, deferred — a ~3-arc rewrite, see the spike verdict below) and
-~71 pairs of per-language STRUCTURAL parse damage, which is per-row work with no shared
-root cause. Do not expect another 30-pair PR.
+> **CORRECTION — this doc claimed, one commit ago, that "the vocabulary work is finished"
+> and that `document`/`window` was "worth ~1 pair … the LAST slice by value, not a cheap
+> first win". A post-merge triage of all 94 residual pairs proves BOTH false.**
+> `document` is registered in **zero** profiles while the i18n dicts emit it in 9+
+> languages, so it leaks in **14 pairs**; `window` adds **3** — together **17 pairs, the
+> single biggest actionable family left**. The "~1 pair" figure was inherited from an
+> earlier handoff and restated without probing by two successive sessions, the second of
+> which wrote "probe the claim before you plan around it" in this very file. The residual
+> is **not** mostly structural: only 23 of the 94 have no leak at all.
+>
+> **And the first fix I reached for was also wrong** — registering the reference is
+> necessary but changes nothing on its own (spiked and reverted; see § "What is left" § 1).
+> The real defect is that `repeat`'s `source` role captures the raw surface while `put`'s
+> `destination` captures the normalized English, in the same tree. The lesson keeps
+> reasserting itself at one level deeper than you expect: **probe the fix, not just the
+> claim.**
 
 ---
 
-MISSION: Continue the foreign→English validity burndown. Authored non-English
-LokaScript currently renders canonically-valid English **96.9 % (2965/3059)** of the
-time. Phases 2 and 4 are DONE — **the profile/lexicon vocabulary work and the expression
-seam work are both finished**. What remains is the structural family (§ "What is left").
+MISSION: Phase 5 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **96.9 % (2965/3059)**; **94 pairs across 20
+patterns** remain. Phases 2 and 4 are DONE. **The residual is fully triaged** — the table
+in § "What is left" was produced by rendering all 94 pairs and clustering them by the
+canonical parser's actual complaint, so it is measured, not estimated.
+
+**Your first slice is decided: `document` + `window` — 17 pairs.** It is the biggest
+actionable family. It needs `profile.references` entries **plus a role-capture fix**; the
+data alone is proven insufficient (spiked and reverted — § "What is left" § 1 has the
+evidence and names the fix site). Expected: 94 → ~77, 96.9 % → ~97.4 %. Then reassess
+against the table; next-best are `beep!` (5, a real bug) and the `as` connective (3).
+**Do not start with `pick-text-range` (23)** — the spike verdict below explains why it is
+~3 arcs, not one PR.
+
+**THE ARC'S GOVERNING LESSON, which this doc has itself violated three times: PROBE THE
+CLAIM BEFORE YOU PLAN AROUND IT.** Every phase found a load-bearing falsehood in its own
+handoff — a "case-sensitive" lookup that lowercases, a cautionary example that does not
+reproduce, three "dead on arrival" languages that all worked, a defect count 5× too high,
+and now a 17-pair family recorded as "~1 pair, the LAST slice by value" for four phases.
+Each was one probe away from being caught. **Including the claims in this paragraph.**
 
 READ FIRST (in order):
 
-1. `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md` — the spec, § "Where the
-   burndown stands".
+1. § "What is left" below — the triage. It supersedes every earlier prose estimate.
 2. `packages/testing-framework/baselines/foreign-canonical-validity.json` — the
    committed allowlist (94 pairs / 20 patterns). It ratchets BOTH ways: a pair you
    clear must be pruned, or the gate fails on a stale entry.
-3. `packages/semantic/src/parser/utils/expression-lexicon.ts` — the shared expression
+3. `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md` — the spec, § "Where the
+   burndown stands".
+4. `packages/semantic/src/parser/utils/expression-lexicon.ts` — the shared expression
    seam. Phase 4 closed its last call-site gap; **it is unlikely you need to touch it.**
 
 ## What Phase 2 established (do not re-derive)
@@ -133,25 +161,141 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (94 pairs) — no cheap levers remain
+## What is left (94 pairs) — MEASURED, not estimated
 
-1. **`pick-text-range` (23) — LEAVE DEFERRED.** See the spike verdict below; it is NOT
-   "one fix for 24 pairs". Budget ~3 arcs.
-2. **Structural / per-language parse damage (~71).** No shared root cause — this is
-   per-row work. Known shapes, each verified by probe:
-   - `focus-trap` ar/tl — the locative now renders `in`, but a stray `من .modal` /
-     `source .modal` survives and `[key=="Tab"]` is displaced past the condition.
-   - `focus-trap` bn — positional `শেষ` normalizes to `end` (the block terminator), so the
-     run's head gate correctly declines and `এ` leaks. A dict/tokenizer realign.
-   - `form-submit-prevent` ar — `نتيجة` now renders `result`, but the copula `هو` surfaces
-     as `it`: **`profile.references` is registered AFTER `keywords`**
-     (`base-tokenizer.ts:502` vs `:482`), so an ar `is` entry is silently overwritten.
-     This is a registration-ORDER fix, not vocabulary — plausibly the last mechanical win.
-   - `swap-content` ar `بـ#b` fusion · `beep-debug-expression` · bn scrambles · sparse rows.
-3. **`document`/`window` context globals (~1).** `body` is already 24/24 via
-   `profile.references`; `window` is 1 (qu `k_iri`); only `document` is truly 0. The LAST
-   slice by value, not a cheap first win. If you do it, use `references` (values, not
-   verbs → phantom-safe).
+Produced by rendering all 94 allowlisted pairs and clustering by the canonical parser's
+actual complaint. **Reproduce it before trusting it** (recipe at the end of this section).
+
+| # | Family | Kind | Where |
+| --- | --- | --- | --- |
+| **14** | **`document` reference leak** | **data** | `behavior-draggable` ar/ja/ko/ru/tl/uk/zh · `behavior-sortable` ar/id/ja/ko/ru/uk/zh |
+| 23 | `pick-text-range` | deferred, ~3 arcs | all but en |
+| 23 | structural (no leak) | per-row | see list below |
+| 5 | hi `है` (=has/have) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
+| 5 | th `เป็น` (=as/is) | blocked | same five patterns |
+| 5 | `beep!` possessive glue+leak | bug | `beep-debug-expression` bn/hi/ja/ko/tr |
+| **3** | **`window` reference leak** | **data** | `modal-close-escape` uk · `window-keydown` ar · `window-resize` th |
+| 3 | `as` connective leak | data-ish | `computed-value` hi/th/zh |
+| 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
+| 2 | bn `অথবা` | ? | `behavior-draggable`, `behavior-sortable` |
+| 2 | bn `এ` (locative) | dict realign | `focus-trap`, `last-in-collection` |
+| 7 | singles | various | hi `नहीं`, ko `정`, bn `এর`/`আছে`, ar `من`, zh `执行`, hi `बदलने` |
+
+### 1. START HERE — `document` + `window` (17 pairs) — data PLUS a role-capture fix
+
+The single biggest actionable family. **It is NOT "pure data" — I spiked that and it does
+not work.** Read this whole section before starting; the spike is done, the answer is below.
+
+**The leak (measured):** `document` leaks in 14 pairs, `window` in 3. In `behavior-draggable`
+/ `behavior-sortable` it is ONE line inside a 20-line behavior body —
+`repeat until event pointerup from ドキュメント` — which is why four phases of prose
+inspection missed it.
+
+**Step 1 — register the references (necessary, NOT sufficient).** `document` is registered
+in **zero** profiles (`grep -l "document:" packages/semantic/src/generators/profiles/*.ts`
+→ nothing), yet the dicts emit it: ja `ドキュメント` · ru `документ` · ko `문서` · zh `文档` ·
+ar `وثيقة` · uk `документ` · tl `dokumento` · id `dokumen` · pl `dokument`. Same for
+`window`: ja `ウィンドウ` · ru `окно` · ko `창` · zh `窗口` · ar `نافذة` · uk `вікно` ·
+pl `okno` · tl `bintana` · id `jendela`. Add them to `profile.references` beside the
+existing `body:` entry (`japanese.ts` `ボディ`, `russian.ts` `тело`). Phantom-safe:
+references are VALUES, not verbs, so no pattern is generated from them.
+
+**This alone changes NOTHING observable** — verified. After adding ja `document`, the token
+lexes correctly (`tokenize('ドキュメント')` → `{kind:'keyword', normalized:'document'}`,
+identical to `ボディ`→`body`) and the row **still** renders `from ドキュメント` and still fails.
+
+**Step 2 — the actual bug: the role captures the SURFACE, not the normalized form.** Same
+parse tree, two roles, two behaviours:
+
+| pattern | role | captured value | outcome |
+| --- | --- | --- | --- |
+| `if-exists` ja `put it into ボディ` | `roles.destination.value` | **`"body"`** ← normalized | **passes** |
+| `behavior-draggable` ja `… from ドキュメント` | `roles.source.value` | **`"ドキュメント"`** ← raw | leaks |
+
+Both tokens lex identically, so the divergence is in role capture — `put.destination`
+normalizes a reference, `repeat.source` does not. **That is the fix site.** Start at
+`matchRoleToken` (`pattern-matcher.ts:463`) and compare the two roles' `expectedTypes` in
+`command-schemas.ts`; the working case suggests a reference-typed role normalizes while a
+literal-typed one keeps the surface. `PROPERTY_ACCESS_BASES` (`pattern-matcher.ts:1011`)
+already lists `body`/`window`/`document`, so it is NOT that list.
+
+**Also verified:** the isolated line `まで イベント pointerup を 繰り返し ドキュメント から`
+parses via `repeat-ja-until-head` and reports `left 2 token(s) unconsumed: "ドキュメント から"`
+— so the ja repeat pattern may lack the `from <source>` slot entirely, and the full-body
+render attaches it through a fallback. Establish which path actually captures it before
+choosing a fix.
+
+**Guards:** th has NO `document`/`window` dict entry, so `window-resize` th is a different
+bug (renders `on ป take ขนาด` — genuinely mangled). Do not force it. qu `k_iri` already
+exists as a tokenizer EXTRA — that lone entry is the origin of the bogus "window is 1".
+
+### 2. The `as` connective (3) — `computed-value` hi/th/zh
+
+Each fails differently; all three are lexicon-shaped:
+
+- zh `作为` → renders **`作 for Number`**: the compound split, `为` matched `for`.
+- hi `के_रूप_में` → renders **`के _ रूप _ में`**: the underscore-joined dict word shattered.
+  **This is already a named residual** in the scope doc ("hi `के_रूप_में` never matches").
+  The `ubah_ukuran`/`mana_kanchu` whole-token EXTRAS precedent (Phase 4 PR1) is the fix.
+- th `เป็น` → the deliberate copula exclusion (it is BOTH `as` and `is`). Slot-ambiguous;
+  the `as` slot may be disambiguable where the copula was not — probe before assuming.
+
+### 3. `beep!` possessive glue+leak (5) — a real bug, not vocabulary
+
+`beep-debug-expression` renders **`beep!私の値`** (ja), **`beep!내값`** (ko),
+**`beep!আমারমান`** (bn), **`beep!benimdeğer`** (tr) — the possessive is neither translated
+NOR spaced. Two defects stacked: the `beep!` prefix seems to swallow the following run so
+the possessive anchor never fires, and the join loses its spaces. en renders
+`beep! my value`. Start from `joinExpressionTokens`'s possessive anchor and ask why
+`beep!` suppresses it.
+
+### 4. Deliberately blocked (12) — do NOT "fix" without reading why
+
+- hi `है` (5) and th `เป็น` (5) are the copula slice's **named ambiguous exclusions**
+  (`है`=has/have, `เป็น`=as). Registering either mistranslates every `has`/`as` in those
+  corpora. Only a slot-aware disambiguation helps, and Phase 2 established the slot axis
+  is the WRONG axis (`es` is Spanish `is` but German `it`). Treat as genuinely hard.
+- ja `空` (2) is the **phantom-injection word** (`japanese.ts:108-111`): `empty` is both an
+  ActionType and a command schema, so registering `空` injects a phantom command. This is
+  the one place the "register the surface" reflex is actively wrong.
+
+### 5. Structural, no leak (23) — per-row, no shared root cause
+
+`behavior-removable` ar/id/qu · `behavior-sortable` qu · `computed-value` id ·
+`fetch-error-handling` qu · `focus-trap` tl · `form-submit-prevent` ar · `if-empty` ar/id ·
+`if-exists` tl/tr · `input-validation` ar/id · `modal-close-escape` pl · `swap-content`
+ar/bn/hi/qu/tl/tr · `two-way-binding` id · `window-keydown` tl
+
+Known shapes: `focus-trap` ar/tl (stray `من .modal`/`source .modal`, displaced
+`[key=="Tab"]`) · `swap-content` ar `بـ#b` fusion · id `saya punya nilai` → `my punya nilai`
+(the possessive head translated, the rest left) · `form-submit-prevent` ar, blocked by the
+**registration ORDER** (`profile.references` registers AFTER `keywords`,
+`base-tokenizer.ts:502` vs `:482`, so an ar `is` entry is silently overwritten — a code
+change, plausibly the last mechanical win).
+
+### Reproduce the triage
+
+The gate hides exactly what you need: `checkForeignRenderValidity` assigns
+`rendered = '(threw)'` in its catch, so when `validate()` throws — which is 46 of the 94 —
+**the render that caused it is discarded**. Render and validate SEPARATELY:
+
+```ts
+// packages/testing-framework/triage.ts — delete after
+import Database from 'better-sqlite3';
+import { parseSemantic, render } from '@lokascript/semantic';
+import { loadCanonicalParser } from './src/multilingual/canonical-validity';
+const validate = await loadCanonicalParser();
+const db = new Database('../../packages/patterns-reference/data/patterns.db', { readonly: true });
+const src = (db.prepare(
+  'SELECT hyperscript FROM pattern_translations WHERE code_example_id=? AND language=?'
+).get('behavior-draggable', 'ja') as any).hyperscript;
+const rendered = render(parseSemantic(src, 'ja').node!, 'en');
+console.log(rendered);                       // ← keep this OUT of the try that validates
+try { console.log(validate(rendered)); } catch (e) { console.log('LEAK:', e.message); }
+```
+
+Grep the render for non-ASCII to find the leak — in a 20-line behavior body the bad token
+is one word on one line, and the parser only reports a single CHARACTER.
 
 ## SPIKE VERDICT: `pick-text-range` — keep deferred, and the docs' reason was wrong
 
