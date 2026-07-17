@@ -1,60 +1,85 @@
-# Handoff: foreign→English validity burndown (Phase 5 — the residual is TRIAGED)
+# Handoff: foreign→English validity burndown (Phase 6 — post `document`/`window`/`detail`)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
-and **4 (`no` + `references` drift + the condition locative, #719)** shipped. Foreign→English
-render validity **90.7 % → 96.9 % (2965/3059)**. **94 pairs across 20 patterns** remain.
+**4 (`no` + `references` drift + the condition locative, #719)**, and **5 (the context
+globals `document`/`window`/`detail`)** shipped. Foreign→English render validity
+**90.7 % → 97.2 % (2972/3059)**. **87 pairs across 20 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
 
-> **CORRECTION — this doc claimed, one commit ago, that "the vocabulary work is finished"
-> and that `document`/`window` was "worth ~1 pair … the LAST slice by value, not a cheap
-> first win". A post-merge triage of all 94 residual pairs proves BOTH false.**
-> `document` is registered in **zero** profiles while the i18n dicts emit it in 9+
-> languages, so it leaks in **14 pairs**; `window` adds **3** — together **17 pairs, the
-> single biggest actionable family left**. The "~1 pair" figure was inherited from an
-> earlier handoff and restated without probing by two successive sessions, the second of
-> which wrote "probe the claim before you plan around it" in this very file. The residual
-> is **not** mostly structural: only 23 of the 94 have no leak at all.
+> **PHASE 5 SHIPPED — and it disproved this doc's OWN Phase-5 diagnosis, which is why the
+> two correction blocks that used to sit here are deleted, not preserved.** Every claim the
+> deleted blocks made was measured false against the authored corpus:
 >
-> **And the first fix I reached for was also wrong** — registering the reference is
-> necessary but changes nothing on its own (spiked and reverted; see § "What is left" § 1).
-> The real defect is that `repeat`'s `source` role captures the raw surface while `put`'s
-> `destination` captures the normalized English, in the same tree. The lesson keeps
-> reasserting itself at one level deeper than you expect: **probe the fix, not just the
-> claim.**
+> - **The fix site was NOT `matchRoleToken` / "role capture."** The doc's marquee claim —
+>   "`repeat`'s `source` role captures the raw surface while `put`'s `destination` captures
+>   the normalized English, in the same tree" — is a confound. Holding the role constant,
+>   `repeat.source` renders `ボディ`→`body` perfectly. The comparison varied *registration*,
+>   not *role*. The role is innocent; `matchRoleToken` was untouched.
+> - **The real cause was one seven-name Set.** `DEFAULT_REFERENCES`
+>   (`packages/intent/src/ir/references.ts`) knew `me/you/it/result/event/target/body` and
+>   nothing else. A foreign `document` surface lexed as a keyword, failed `isValidReference`,
+>   degraded to a `literal`, was rejected by the slot's `expectedTypes`, and leaked. `body`
+>   round-trips because it is in that Set AND every profile; `document` was in neither. Fix =
+>   widen the Set + the `ReferenceValue` union + add the surface to 20 profiles. **Zero logic
+>   change.** (The "spiked and reverted, data alone insufficient" verdict was also a
+>   confound: the spike registered the profile surface but never widened the Set.)
+> - **It was 7 validity pairs, not 17; `window` was 0; `detail` was preventive.** The "17"
+>   counted rows where `document` *appears*; most had unrelated blockers. `window`'s three
+>   rows are structural (role misattachment / `من` leak / no-dict mangling), not data —
+>   identical fail-set with and without it. `detail` never occurs as a bare reference in the
+>   corpus (only `event.detail.message`), so it cleared nothing; it was registered for drift
+>   reconciliation (it is already in core's `REFERENCE_KEYWORDS`).
+> - **The real prize was invisible to the gate.** 58 corpus rows changed their render; only
+>   7 flipped validity. The other 51 were already "valid" and silently wrong — es
+>   `from documento` parses clean but listens on an undefined element. No R0–R3 signal and
+>   no gate sees a bare-identifier role value; only the new unit test
+>   (`packages/semantic/test/context-globals-references.test.ts`) does.
+>
+> **This is the arc's lesson one level deeper than the doc reached: it wrote "probe the fix,
+> not just the claim," then shipped a fix-site claim that a five-minute probe refutes. Probe
+> the fix's PREMISE too.** See the deleted-render-validity follow-ups and the § "What is
+> left" table (now 87 pairs) below.
 
 ---
 
-MISSION: Phase 5 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **96.9 % (2965/3059)**; **94 pairs across 20
-patterns** remain. Phases 2 and 4 are DONE. **The residual is fully triaged** — the table
-in § "What is left" was produced by rendering all 94 pairs and clustering them by the
+MISSION: Phase 6 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **97.2 % (2972/3059)**; **87 pairs across 20
+patterns** remain. Phases 2, 4, and 5 are DONE. **The residual is fully triaged** — the table
+in § "What is left" was produced by rendering all 94 (now 87) pairs and clustering them by the
 canonical parser's actual complaint, so it is measured, not estimated.
 
-**Your first slice is decided: `document` + `window` — 17 pairs.** It is the biggest
-actionable family. It needs `profile.references` entries **plus a role-capture fix**; the
-data alone is proven insufficient (spiked and reverted — § "What is left" § 1 has the
-evidence and names the fix site). Expected: 94 → ~77, 96.9 % → ~97.4 %. Then reassess
-against the table; next-best are `beep!` (5, a real bug) and the `as` connective (3).
-**Do not start with `pick-text-range` (23)** — the spike verdict below explains why it is
-~3 arcs, not one PR.
+**Next-best slices, in order:** `beep!` possessive glue+leak (5 — a real bug, § "What is
+left" § 3), then the `as` connective (3 — § 2). **Do not start with `pick-text-range` (23)**
+— the spike verdict below explains why it is ~3 arcs, not one PR. Beyond those the residual
+is per-row structural with no shared root cause.
 
-**THE ARC'S GOVERNING LESSON, which this doc has itself violated three times: PROBE THE
-CLAIM BEFORE YOU PLAN AROUND IT.** Every phase found a load-bearing falsehood in its own
-handoff — a "case-sensitive" lookup that lowercases, a cautionary example that does not
-reproduce, three "dead on arrival" languages that all worked, a defect count 5× too high,
-and now a 17-pair family recorded as "~1 pair, the LAST slice by value" for four phases.
-Each was one probe away from being caught. **Including the claims in this paragraph.**
+**Phase 5 registered `document`/`window`/`detail` in one shared Set + 20 profiles — DO NOT
+re-plan it.** It is drift reconciliation (core's `REFERENCE_KEYWORDS` and the parser's
+`PROPERTY_ACCESS_BASES` already listed all three; only `DEFAULT_REFERENCES` and the semantic
+`ReferenceValue` union lagged). Cleared 7 pairs and 51 gate-invisible silent corrections.
+Named follow-ups it left, all preserved below: (a) three more desynced reference lists
+(`semantic-parser.ts:4149` live; two `isBuiltInReference` copies test-only); (b) the
+`window's scrollY` lossy-possessive round-trip; (c) `detail` bare-reference has no corpus
+row yet.
+
+**THE ARC'S GOVERNING LESSON, which this doc has itself violated four times: PROBE THE
+CLAIM BEFORE YOU PLAN AROUND IT — AND PROBE THE FIX'S PREMISE.** Every phase found a
+load-bearing falsehood in its own handoff — a "case-sensitive" lookup that lowercases, a
+cautionary example that does not reproduce, three "dead on arrival" languages that all
+worked, a defect count 5× too high, a 17-pair family that was 7, and a marquee "role
+capture" fix-site that a single same-slot probe (`ボディ`→`body`) refutes. Each was one probe
+away from being caught. **Including the claims in this paragraph.**
 
 READ FIRST (in order):
 
 1. § "What is left" below — the triage. It supersedes every earlier prose estimate.
 2. `packages/testing-framework/baselines/foreign-canonical-validity.json` — the
-   committed allowlist (94 pairs / 20 patterns). It ratchets BOTH ways: a pair you
-   clear must be pruned, or the gate fails on a stale entry.
+   committed allowlist (87 pairs / 20 patterns after Phase 5). It ratchets BOTH ways: a
+   pair you clear must be pruned, or the gate fails on a stale entry.
 3. `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md` — the spec, § "Where the
    burndown stands".
 4. `packages/semantic/src/parser/utils/expression-lexicon.ts` — the shared expression
@@ -161,73 +186,50 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (94 pairs) — MEASURED, not estimated
+## What is left (87 pairs) — MEASURED, not estimated
 
-Produced by rendering all 94 allowlisted pairs and clustering by the canonical parser's
-actual complaint. **Reproduce it before trusting it** (recipe at the end of this section).
+Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
+complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5
+removed the `document` row below (7 pairs cleared); `window` proved structural, not data.
 
 | # | Family | Kind | Where |
 | --- | --- | --- | --- |
-| **14** | **`document` reference leak** | **data** | `behavior-draggable` ar/ja/ko/ru/tl/uk/zh · `behavior-sortable` ar/id/ja/ko/ru/uk/zh |
 | 23 | `pick-text-range` | deferred, ~3 arcs | all but en |
 | 23 | structural (no leak) | per-row | see list below |
 | 5 | hi `है` (=has/have) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
 | 5 | th `เป็น` (=as/is) | blocked | same five patterns |
 | 5 | `beep!` possessive glue+leak | bug | `beep-debug-expression` bn/hi/ja/ko/tr |
-| **3** | **`window` reference leak** | **data** | `modal-close-escape` uk · `window-keydown` ar · `window-resize` th |
+| 3 | `window` — structural, NOT data | per-row | `modal-close-escape` uk · `window-keydown` ar · `window-resize` th |
 | 3 | `as` connective leak | data-ish | `computed-value` hi/th/zh |
 | 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
 | 2 | bn `অথবা` | ? | `behavior-draggable`, `behavior-sortable` |
 | 2 | bn `এ` (locative) | dict realign | `focus-trap`, `last-in-collection` |
 | 7 | singles | various | hi `नहीं`, ko `정`, bn `এর`/`আছে`, ar `من`, zh `执行`, hi `बदलने` |
 
-### 1. START HERE — `document` + `window` (17 pairs) — data PLUS a role-capture fix
+### 1. DONE (Phase 5) — `document`/`window`/`detail` context globals — 7 pairs, pure data
 
-The single biggest actionable family. **It is NOT "pure data" — I spiked that and it does
-not work.** Read this whole section before starting; the spike is done, the answer is below.
+**Shipped. Left here so no future session re-spikes the wrong fix.** Cleared 7 validity pairs
+(`behavior-draggable` ar/ja/ko/ru/uk, `behavior-sortable` ja/zh) plus **51 gate-invisible
+silent corrections** (es `from documento` → `from document`, etc.). Validity 96.9 % → 97.2 %.
 
-**The leak (measured):** `document` leaks in 14 pairs, `window` in 3. In `behavior-draggable`
-/ `behavior-sortable` it is ONE line inside a 20-line behavior body —
-`repeat until event pointerup from ドキュメント` — which is why four phases of prose
-inspection missed it.
+**The fix, in full:** widen `DEFAULT_REFERENCES` (`packages/intent/src/ir/references.ts`) with
+`document`/`window`/`detail`; extend the `ReferenceValue` union (`packages/semantic/src/types.ts`);
+add the three surfaces to `references` in the 20 profiles whose dict carries them (skip
+bn/he/th/vi — no dict entry; they author literal English `document` and already round-trip).
+Update the count assertion in `packages/framework/src/ir/references.test.ts` (7 → 10). Guard:
+`packages/semantic/test/context-globals-references.test.ts`. **Zero logic change.**
 
-**Step 1 — register the references (necessary, NOT sufficient).** `document` is registered
-in **zero** profiles (`grep -l "document:" packages/semantic/src/generators/profiles/*.ts`
-→ nothing), yet the dicts emit it: ja `ドキュメント` · ru `документ` · ko `문서` · zh `文档` ·
-ar `وثيقة` · uk `документ` · tl `dokumento` · id `dokumen` · pl `dokument`. Same for
-`window`: ja `ウィンドウ` · ru `окно` · ko `창` · zh `窗口` · ar `نافذة` · uk `вікно` ·
-pl `okno` · tl `bintana` · id `jendela`. Add them to `profile.references` beside the
-existing `body:` entry (`japanese.ts` `ボディ`, `russian.ts` `тело`). Phantom-safe:
-references are VALUES, not verbs, so no pattern is generated from them.
-
-**This alone changes NOTHING observable** — verified. After adding ja `document`, the token
-lexes correctly (`tokenize('ドキュメント')` → `{kind:'keyword', normalized:'document'}`,
-identical to `ボディ`→`body`) and the row **still** renders `from ドキュメント` and still fails.
-
-**Step 2 — the actual bug: the role captures the SURFACE, not the normalized form.** Same
-parse tree, two roles, two behaviours:
-
-| pattern | role | captured value | outcome |
-| --- | --- | --- | --- |
-| `if-exists` ja `put it into ボディ` | `roles.destination.value` | **`"body"`** ← normalized | **passes** |
-| `behavior-draggable` ja `… from ドキュメント` | `roles.source.value` | **`"ドキュメント"`** ← raw | leaks |
-
-Both tokens lex identically, so the divergence is in role capture — `put.destination`
-normalizes a reference, `repeat.source` does not. **That is the fix site.** Start at
-`matchRoleToken` (`pattern-matcher.ts:463`) and compare the two roles' `expectedTypes` in
-`command-schemas.ts`; the working case suggests a reference-typed role normalizes while a
-literal-typed one keeps the surface. `PROPERTY_ACCESS_BASES` (`pattern-matcher.ts:1011`)
-already lists `body`/`window`/`document`, so it is NOT that list.
-
-**Also verified:** the isolated line `まで イベント pointerup を 繰り返し ドキュメント から`
-parses via `repeat-ja-until-head` and reports `left 2 token(s) unconsumed: "ドキュメント から"`
-— so the ja repeat pattern may lack the `from <source>` slot entirely, and the full-body
-render attaches it through a fallback. Establish which path actually captures it before
-choosing a fix.
-
-**Guards:** th has NO `document`/`window` dict entry, so `window-resize` th is a different
-bug (renders `on ป take ขนาด` — genuinely mangled). Do not force it. qu `k_iri` already
-exists as a tokenizer EXTRA — that lone entry is the origin of the bogus "window is 1".
+**Named follow-ups (do NOT fold into a `beep!`/`as` PR):** three more desynced reference
+lists — `semantic-parser.ts:4149` (LIVE if-chain), and two `isBuiltInReference` copies
+(`packages/semantic/src/parser/utils/type-validation.ts:142`,
+`packages/framework/src/core/pattern-matching/utils/type-validation.ts:132`, test-only) —
+none on the fix's path, but they should route through `isValidReference` so the next widening
+can't desync; the five parallel `protocol/` lists (ts/py/rust + ABNF, out of the workspace,
+nothing breaks but the sense now differs); and the `window's scrollY` lossy-possessive
+round-trip (`set x to body's scrollTop` → `set x to body` — pre-existing for `body`, now
+extended to window/document; no corpus row exercises it, `window-scroll` keeps it in an `if`
+condition, verified VALID). `detail` has no bare-reference corpus row — its registration is
+preventive drift-reconciliation only.
 
 ### 2. The `as` connective (3) — `computed-value` hi/th/zh
 
@@ -276,7 +278,7 @@ change, plausibly the last mechanical win).
 ### Reproduce the triage
 
 The gate hides exactly what you need: `checkForeignRenderValidity` assigns
-`rendered = '(threw)'` in its catch, so when `validate()` throws — which is 46 of the 94 —
+`rendered = '(threw)'` in its catch, so when `validate()` throws — ~46 of the residual —
 **the render that caused it is discarded**. Render and validate SEPARATELY:
 
 ```ts
@@ -326,9 +328,10 @@ sole entry in `baselines/canonical-validity.json`.
 
 ## Also true (verified, corrects the record)
 
-- The residual is **20 patterns / 94 pairs** after Phase 4 (`modal-close-backdrop` left
-  the allowlist entirely). It was 21 patterns before, and never the 19 the pre-Phase-2
-  handoff and the scope doc both claimed.
+- The residual is **20 patterns / 87 pairs** after Phase 5 (`document` cleared 7 across
+  `behavior-draggable`/`behavior-sortable`, but neither pattern left the allowlist — both
+  keep other-language failures). It was 20 patterns / 94 pairs after Phase 4, 21 before, and
+  never the 19 the pre-Phase-2 handoff and the scope doc both claimed.
 - The sibling **en-render burndown is DONE** — `canonical-validity.json` holds exactly
   **1** entry (`pick-text-range`), not the 22 that `HANDOFF_render-validity-burndown.md`
   described. That doc is deleted; its two still-live follow-ups are preserved below.

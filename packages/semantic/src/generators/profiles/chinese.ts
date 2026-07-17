@@ -29,6 +29,9 @@ export const chineseProfile: LanguageProfile = {
     event: '事件',
     target: '目标',
     body: '主体',
+    document: '文档',
+    window: '窗口',
+    detail: '详情',
   },
   possessive: {
     marker: '的', // Possessive particle (de)

@@ -33,6 +33,9 @@ export const italianProfile: LanguageProfile = {
     event: 'evento',
     target: 'obiettivo',
     body: 'corpo',
+    document: 'documento',
+    window: 'finestra',
+    detail: 'dettaglio',
   },
   possessive: {
     marker: 'di', // Italian uses "di" for general possession

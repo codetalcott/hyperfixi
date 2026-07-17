@@ -28,6 +28,9 @@ export const swahiliProfile: LanguageProfile = {
     event: 'tukio',
     target: 'lengo',
     body: 'mwili',
+    document: 'hati',
+    window: 'dirisha',
+    detail: 'maelezo',
   },
   possessive: {
     marker: '', // Swahili uses possessive pronouns

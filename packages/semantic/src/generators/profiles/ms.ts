@@ -28,6 +28,9 @@ export const malayProfile: LanguageProfile = {
     event: 'peristiwa',
     target: 'sasaran',
     body: 'badan',
+    document: 'dokumen',
+    window: 'tetingkap',
+    detail: 'perincian',
   },
   possessive: {
     marker: '', // Malay often uses suffix or juxtaposition

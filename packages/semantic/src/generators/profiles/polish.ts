@@ -33,6 +33,9 @@ export const polishProfile: LanguageProfile = {
     event: 'zdarzenie',
     target: 'cel',
     body: 'body',
+    document: 'dokument',
+    window: 'okno',
+    detail: 'szczegół',
   },
   possessive: {
     marker: '', // Polish uses genitive case, not a marker

@@ -30,6 +30,9 @@ export const koreanProfile: LanguageProfile = {
     event: '이벤트',
     target: '대상',
     body: '바디', // matches the i18n dict's emitted body word (본문 = "main text", wrong for the DOM body element)
+    document: '문서',
+    window: '창',
+    detail: '세부',
   },
   possessive: {
     marker: '의', // Possessive particle

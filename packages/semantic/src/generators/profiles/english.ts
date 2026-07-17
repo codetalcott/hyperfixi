@@ -30,6 +30,9 @@ export const englishProfile: LanguageProfile = {
     event: 'event',
     target: 'target',
     body: 'body',
+    document: 'document',
+    window: 'window',
+    detail: 'detail',
   },
   possessive: {
     marker: "'s",
