@@ -33,6 +33,7 @@
 
 import type { LanguageToken } from '../../types';
 import type { LanguageProfile } from '../../generators/profiles/types';
+import { commandSchemas } from '../../generators/command-schemas';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 
 // prettier-ignore
@@ -238,6 +239,146 @@ export function toEnglishLocative(
 }
 
 /**
+ * Positional query keywords (English + the normalized forms the tokenizers
+ * produce for every language, e.g. ar آخر→last, tl huli→last).
+ *
+ * `closest` is included: `closest <sel>` is the ancestor-scope query form
+ * (`hide closest .modal`) and folds to the same call-expression shape the
+ * runtime's positional expressions evaluate.
+ *
+ * Lives here rather than on PatternMatcher because BOTH expression seams need it
+ * — the role capture and the raw-expression join (see {@link matchPositionalRun}).
+ */
+export const POSITIONAL_KEYWORDS: ReadonlySet<string> = new Set([
+  'first',
+  'last',
+  'next',
+  'previous',
+  'random',
+  'closest',
+]);
+
+/**
+ * Normalized command-action keywords (the schema registry's action names).
+ * Tokenizers normalize every language's command verbs to these forms, so the set
+ * is language-independent. Used to keep a positional source clause from consuming
+ * a following command's verb as a locative marker.
+ */
+export const COMMAND_ACTION_KEYWORDS: ReadonlySet<string> = new Set(
+  Object.keys(commandSchemas).map(a => a.toLowerCase())
+);
+
+/**
+ * One emitted piece of a positional run: the English text, and the token it came
+ * from.
+ *
+ * The TOKEN is carried rather than a bare string because the two callers join
+ * differently and only one of them can use a plain space. The positional ROLE
+ * capture joins with `' '`; {@link joinExpressionTokens} needs the SOURCE POSITION
+ * to decide whether a `.`-prefixed member glues to its object (`<input/>.value`)
+ * or stays separated (`I match .active`). A string-only return would silently
+ * un-glue every member chain in a condition.
+ */
+export interface PositionalRunPart {
+  readonly text: string;
+  readonly token: LanguageToken;
+}
+
+export interface PositionalRun {
+  readonly parts: readonly PositionalRunPart[];
+  /** Tokens consumed, counting from `start`. */
+  readonly consumed: number;
+}
+
+/**
+ * Recognize a positional query run at `tokens[start]`:
+ *   `<positional> <selector> [.member]* [<locative-marker> <source-selector>]`
+ * e.g. `last <button/> in .modal`, `آخر <.message/> في #chat`.
+ *
+ * Index-based and NON-CONSUMING so both expression seams can share it: the role
+ * capture (`PatternMatcher.tryMatchPositionalExpression`) counts `consumed` off a
+ * TokenStream, and the raw-expression join walks an array. Returns null — touching
+ * nothing — unless the run's shape is present in full.
+ *
+ * This run is the ANCHOR that vouches for the locative surface. {@link
+ * LOCATIVE_SURFACES} deliberately carries genuinely ambiguous free tokens (tr `de`,
+ * pl `do`, es `en`), which are safe ONLY because they are read here, in a slot whose
+ * sense is fixed. Never read that table outside this run.
+ */
+export function matchPositionalRun(
+  tokens: readonly LanguageToken[],
+  start: number,
+  profile: LanguageProfile | undefined
+): PositionalRun | null {
+  const head = tokens[start];
+  if (!head) return null;
+
+  const norm = (head.normalized ?? head.value).toLowerCase();
+  if (!POSITIONAL_KEYWORDS.has(norm) && !POSITIONAL_KEYWORDS.has(head.value.toLowerCase())) {
+    return null;
+  }
+
+  // The captured text is evaluated by the core's English positional expression
+  // parser (`next(...)`, `closest(...)`), so the positional KEYWORD must be its
+  // normalized English form — a source-language keyword (`cercano`, `次`,
+  // `التالي`) is unevaluable as-is and the runtime either errors, drops to `me`,
+  // or matches every element.
+  const parts: PositionalRunPart[] = [{ text: head.normalized ?? head.value, token: head }];
+  let i = start + 1;
+
+  // Required: the queried selector (e.g. <.message/>, .message, <button/>).
+  const sel = tokens[i];
+  if (!sel || sel.kind !== 'selector') return null;
+  parts.push({ text: sel.value, token: sel });
+  i++;
+
+  // Optional member access on the queried element: `.value`, `.textContent`
+  // (`previous <input/>.value`). The tokenizer emits these as `.`-prefixed
+  // selector tokens; fold them into the expression so the whole lvalue is one
+  // value.
+  let memberGuard = 0;
+  while (memberGuard++ < 8) {
+    const member = tokens[i];
+    if (member && member.kind === 'selector' && member.value.startsWith('.')) {
+      parts.push({ text: member.value, token: member });
+      i++;
+    } else {
+      break;
+    }
+  }
+
+  // Optional source clause: <marker> <source-selector> (in #chat / في #chat /
+  // sa_loob #chat). The marker may be a keyword, particle, or (TL) identifier;
+  // only consumed when a selector follows, so a trailing command keyword is never
+  // swallowed.
+  const marker = tokens[i];
+  const source = tokens[i + 1];
+  if (
+    marker &&
+    source &&
+    source.kind === 'selector' &&
+    (marker.kind === 'keyword' || marker.kind === 'particle' || marker.kind === 'identifier') &&
+    !POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
+    // A command verb is never a locative marker: in a juxtaposed body
+    // (`hide closest .modal remove .modal-open from body`) the next clause's verb
+    // (`remove`) would otherwise be swallowed as the source marker and the
+    // following command lost.
+    !COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
+  ) {
+    // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
+    // runtime reads — normalize it; the source selector is code. Role markers
+    // normalize to the ROLE NAME rather than an English word, so es `en` has to be
+    // mapped back to the locative sense the slot carries (`in`) — otherwise this
+    // renders `last <.message/> destination #chat`.
+    parts.push({ text: toEnglishLocative(profile, marker), token: marker });
+    parts.push({ text: source.value, token: source });
+    i += 2;
+  }
+
+  return { parts, consumed: i - start };
+}
+
+/**
  * Map an expression connective surface to its English keyword (`como` → `as`).
  * An unlisted surface — already English, or a word the lexicon does not carry —
  * is returned unchanged.
@@ -335,7 +476,10 @@ function isPropertyHeadCandidate(token: LanguageToken, languageCode: string): bo
  *   3. a `<property> <of-marker> <selector>` run → `value of #price` (the
  *      of-marker is emitted structurally, because es spells `of` and `from` the
  *      same `de` — translating that surface freely would corrupt `from` clauses);
- *   4. a connective the lexicon vouches for as unambiguous (`como` → `as`).
+ *   4. a positional run → `last <button/> in .modal` ({@link matchPositionalRun},
+ *      shared with the role capture in PatternMatcher so the two seams cannot
+ *      disagree; the run is what vouches for the ambiguous locative surfaces);
+ *   5. a connective the lexicon vouches for as unambiguous (`como` → `as`).
  * Everything else keeps the pre-existing rule. The anchors are what make this
  * safe: a bare `valor` elsewhere may be a user variable, and a string literal may
  * contain any word at all, so nothing is translated without a slot vouching for
@@ -398,6 +542,29 @@ export function joinExpressionTokens(
       append('of', next);
       append(owner.value, owner);
       i += 2;
+      continue;
+    }
+
+    // `<positional> <selector> [.member]* [<locative> <selector>]` →
+    // `last <button/> in .modal`. The SAME recognizer the positional ROLE capture
+    // uses, so the two seams cannot disagree: focus-trap authors that run TWICE —
+    // once in the condition, once in the then-branch — and the then-branch (which
+    // reaches the recognizer via the pattern matcher) rendered `in` in all 24
+    // languages while the condition, joined here, leaked. Two ways, not one:
+    // verbatim (ru `в`, zh `在`, tr `içinde` — not role markers at all) and as the
+    // ROLE NAME (de/th `in`/`ใน` → `destination`), since role markers are
+    // registered with `normalized: <role>`.
+    //
+    // Deliberately placed AFTER the of-possessive anchor: this way the run can only
+    // claim tokens the earlier anchors declined, so no existing rewrite changes. The
+    // reverse order would flip `<positional> <sel> <of-marker> <sel>` away from
+    // `<sel> of <sel>`, and for a marker absent from LOCATIVE_SURFACES (zh `的`,
+    // ja `の`) toEnglishLocative falls through to the verbatim surface — worse than
+    // the leak it replaces.
+    const run = matchPositionalRun(tokens, i, profile);
+    if (run) {
+      for (const part of run.parts) append(part.text, part.token);
+      i += run.consumed - 1;
       continue;
     }
 
