@@ -173,6 +173,38 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
     expect(es).toContain('my value as Number');
   });
 
+  // The `as` connective's reverse-render entries (CONNECTIVE_LEXICON zh/hi) always
+  // existed, but the tokenizer shattered the multi-char/underscore surface before
+  // lookup: zh `作为` split into `作` + `为`→`for`, and hi `के_रूप_में` split on its
+  // underscores. Whole-token EXTRAS entries (chinese.ts/hindi.ts) let the greedy
+  // longest-first walk / underscore-recovery claim the whole surface. Sources are
+  // the verbatim authored corpus rows (computed-value).
+  it('zh: computed-value `作为` renders `as Number`, not `作 for Number`', () => {
+    const zh = render(
+      parse(
+        '当 输入 时 设置 把 #total.innerText 到 (the 值 的 #price 作为 Number) * (我的 值 作为 Number) 从 .quantity',
+        'zh'
+      ),
+      'en'
+    );
+    expect(zh).toContain('the value of #price as Number');
+    expect(zh).toContain('my value as Number');
+    expect(zh).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
+  });
+
+  it('hi: computed-value `के_रूप_में` renders `as Number`, not shattered underscores', () => {
+    const hi = render(
+      parse(
+        '#total.innerText को (the मान का #price के_रूप_में Number) * (मेरा मान के_रूप_में Number) में सेट इनपुट पर .quantity से',
+        'hi'
+      ),
+      'en'
+    );
+    expect(hi).toContain('the value of #price as Number');
+    expect(hi).toContain('my value as Number');
+    expect(hi).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
+  });
+
   it('es: positional locative renders `in`, not the role name', () => {
     // es `en` is registered as the `destination` role marker, so the marker's
     // normalized form is the ROLE NAME — this rendered `... destination #chat`.

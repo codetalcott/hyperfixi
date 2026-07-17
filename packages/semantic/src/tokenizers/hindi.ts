@@ -84,6 +84,13 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // Additional modifiers not in profile
   { native: 'को', normalized: 'to' },
   { native: 'के साथ', normalized: 'with' },
+
+  // Connectives. Whole-token underscore-joined surface, mirroring आकार_बदलें
+  // above: the `_` split shattered के_रूप_में (`as`) into के + _ + रूप + _ + में
+  // (`computed-value`). Registering it lets the tokenizer's underscore-recovery
+  // block adopt the whole run. The reverse render (CONNECTIVE_LEXICON.hi) already
+  // maps के_रूप_में→as; it was a documented dead entry awaiting exactly this.
+  { native: 'के_रूप_में', normalized: 'as' },
 ];
 
 // =============================================================================
