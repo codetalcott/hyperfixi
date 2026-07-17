@@ -1,21 +1,21 @@
-# Handoff: foreign→English validity burndown (Phase 2 done; Phase 4 onward)
+# Handoff: foreign→English validity burndown (Phase 4 Family 1 done)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
-**Arc state:** Phases 1a (#707), 1b + 3 (#711), and **2 (the operator/copula slice)**
-shipped. Foreign→English render validity **90.7 % → 95.9 % (2935/3059)**. **124 pairs
-across 21 patterns** remain, and **none of them are lexicon-shaped** — the
-profile-keyword vocabulary work is finished. Companion scope doc:
-`docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
+**Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
+and **Phase 4 Family 1 (the `no` operator)** shipped. Foreign→English render validity
+**90.7 % → 96.3 % (2946/3059)**. **113 pairs across 21 patterns** remain. Companion scope
+doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
 
 ---
 
 MISSION: Continue the foreign→English validity burndown. Authored non-English
-LokaScript currently renders canonically-valid English **95.9 % (2935/3059)** of the
-time. Phase 2 is DONE. What remains is **four named, independent families** — pick the
-one that fits your appetite; they do not depend on each other.
+LokaScript currently renders canonically-valid English **96.3 % (2946/3059)** of the
+time. Phase 2 and Phase 4 Family 1 are DONE. What remains is **three named families**
+— pick the one that fits your appetite. NOTE: families 2 and 3 are **NOT** independent
+(this doc previously claimed all four were): Family 2's ar/ja rows need Family 3 first.
 
 READ FIRST (in order):
 
@@ -57,13 +57,29 @@ READ FIRST (in order):
   single-pattern hazard, probe that pattern directly. (Phase 2 did: the copula slice
   removed ja/bn's escape from the ko-class "guard swallows the then-branch verb" bug.)
 
-## The four remaining families (none is lexicon-shaped)
+## The three remaining families
 
-1. **`no` — `behavior-draggable` (20).** The last operator. Same profile-data mechanism
-   as Phase 2. Guard: exclude hi नहीं (=`not`), zh 没有 / tl `walang` (=`without`).
-   es `not:'no'` is a NON-issue (the map is `ningún→no`; es `no` is never a key). Dead
-   on arrival for id `tidak_ada`, qu `mana_kanchu` (tokenizer splits `_`) and ar `لا يوجد`
-   (two tokens). Realistic yield ~13.
+1. ~~**`no` — `behavior-draggable` (20).**~~ **DONE (Phase 4 Family 1).** Cleared **11**
+   pairs: de es fr id it ms pl pt qu sw tr. `behavior-draggable` 20 → 9. Corrections this
+   slice produced, all verified against the authored corpus:
+   - **The "dead on arrival" call was wrong for all three.** id `tidak_ada` and qu
+     `mana_kanchu` clear via a whole-token EXTRAS entry (the `ubah_ukuran` / `hatun_kay`
+     precedent — longest-first beats the `_` split), and ar `لا يوجد` clears via the
+     multi-word keyword walk (the hi `मेल खाता` precedent). **id and qu both cleared the
+     gate**; ar renders `if no dragHandle` but is still blocked by Family 3 (`هدف`) —
+     i.e. it is fixed here and clears when Family 3 lands.
+   - **The ja `ない` hazard is real in principle but does not fire.** `ない` has blast
+     radius 3, and the dict's `not` (`ではない`) is unregistered, so the particle extractor
+     peels `で`/`は` and lands on a bare `ない`. Probed directly: `unless-condition` and
+     `fetch-do-not-throw` both render byte-identically before and after. ja is registered.
+   - **bn is not lexical.** Its dict has no `no`, so the corpus row already carries
+     literal English `no` and renders it correctly. bn fails `behavior-draggable` for an
+     unrelated structural reason and stays on the allowlist. The ceiling was 19, not 20.
+   - The exclusions (hi नहीं, zh 没有, tl `walang`) stand, but the reason is **dict-level**,
+     not a profile collision: those profiles do not register the surface at all — the
+     dict maps two senses to one surface (`hi not:'नहीं'` AND `no:'नहीं'`), so registering
+     it as `no` would mistranslate every `not`/`without` in those corpora.
+   - Confirmed as written: es `not:'no'` is a non-issue (the map is keyed by surface).
 2. **Condition locative — `focus-trap` (19).** The **only code change** left, and the
    one place the seam matters. `ru` has `matches` coverage yet still fails because `в`
    leaks verbatim and `de`'s `in` emits the ROLE NAME `destination`. Cause is NOT the

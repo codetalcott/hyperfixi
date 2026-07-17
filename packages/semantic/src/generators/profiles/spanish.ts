@@ -168,6 +168,13 @@ export const spanishProfile: LanguageProfile = {
     // focus-trap drop their then-branch). Not an ActionType and has no command
     // schema, so no pattern is generated from it.
     matches: { primary: 'coincide', normalized: 'matches' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    // Does NOT collide with `not: { primary: 'no' }`: the keyword map is keyed by
+    // SURFACE, so this registers `ningún` and leaves the `no` surface untouched.
+    no: { primary: 'ningún', normalized: 'no' },
     end: { primary: 'fin', alternatives: ['final', 'terminar'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

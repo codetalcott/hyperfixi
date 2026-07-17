@@ -72,6 +72,11 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   // the event slot normalized to `change` and `_ ukuran` dropped unconsumed
   // (Arc F). Whole-token entry mirrors qu's hatun_kay precedent (quechua.ts).
   { native: 'ubah_ukuran', normalized: 'resize' },
+  // behavior-draggable's `no` operator: the dict emits underscore-joined
+  // tidak_ada, which the `_` split shattered into tidak(→not) + _ + ada(→exists).
+  // Whole-token entry mirrors ubah_ukuran above; the keyword walk sorts
+  // longest-first, so `tidak_ada` (9) beats `tidak` (5).
+  { native: 'tidak_ada', normalized: 'no' },
 
   // Values/Literals
   { native: 'benar', normalized: 'true' },
