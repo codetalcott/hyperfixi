@@ -504,11 +504,17 @@ export function joinExpressionTokens(
     // class selector in a comparison keeps it (`I match .active`). Both surface as
     // a `.`-prefixed token, so disambiguate by SOURCE adjacency. Without this the
     // expression renders `event .shiftKey`, which the canonical parser rejects.
+    // A trailing `!` follows the same rule: `beep!` tokenizes as `beep` + `!`, and
+    // the canonical parser rejects the spaced `beep !` — glue it only when the two
+    // were source-adjacent (a spaced `a != b` keeps its space). Both are gated on
+    // adjacency, so the possessive run `my value` (neither `.`- nor `!`-prefixed)
+    // still spaces normally.
     const adjacent =
       previous.position?.end !== undefined &&
       token.position?.start !== undefined &&
       previous.position.end === token.position.start;
-    out += (adjacent && text.startsWith('.') ? '' : ' ') + text;
+    const glue = adjacent && (text.startsWith('.') || text.startsWith('!'));
+    out += (glue ? '' : ' ') + text;
     previous = token;
   };
 
