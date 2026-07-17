@@ -205,6 +205,101 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
   });
 });
 
+describe('condition locative renders English (Phase 4)', () => {
+  // focus-trap authors the SAME positional run TWICE: `last <button/> in .modal` in
+  // the CONDITION and `first <button/> in .modal` in the then-branch. The then-branch
+  // reaches PatternMatcher.tryMatchPositionalExpression and rendered `in` in all 24
+  // languages; the condition goes through tryParseConditionalBlock → joinTokenText →
+  // joinExpressionTokens, which had no locative anchor, so `surfaceOf` leaked it TWO
+  // different ways:
+  //   verbatim  — ru `в`, zh `在`, tr `içinde`: not role markers at all;
+  //   ROLE NAME — de `in`, th `ใน` → `destination`, because role markers are
+  //               registered with `normalized: <role>` (base-tokenizer).
+  // Both seams now share matchPositionalRun, so they cannot disagree again.
+  // Sources are the AUTHORED corpus rows (patterns.db), not hand-written.
+  const focusTrap: Array<[string, string]> = [
+    [
+      'ru',
+      'при keydown[key=="Tab"] из .modal если цель соответствует последний <button/> в .modal сфокусировать первый <button/> в .modal затем остановить конец',
+    ],
+    [
+      'de',
+      'bei keydown[key=="Tab"] von .modal falls ziel passt letzte <button/> in .modal fokussieren erste <button/> in .modal dann anhalten ende',
+    ],
+    [
+      'es',
+      'en keydown[key=="Tab"] de .modal si objetivo coincide último <button/> en .modal enfocar primero <button/> en .modal entonces detener fin',
+    ],
+    [
+      'tr',
+      'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ardından ilk <button/> içinde .modal i odak ardından durdur son',
+    ],
+    [
+      'zh',
+      '当 keydown[key=="Tab"] 从 .modal 如果 目标 匹配 最后一个 <button/> 在 .modal 聚焦 把 第一个 <button/> 在 .modal 那么 停止 结束',
+    ],
+    [
+      'th',
+      'เมื่อ keydown[key=="Tab"] จาก .modal ถ้า เป้าหมาย matches สุดท้าย <button/> ใน .modal โฟกัส แรก <button/> ใน .modal แล้ว หยุด จบ',
+    ],
+  ];
+  for (const [lang, code] of focusTrap) {
+    it(`${lang}: condition locative renders \`in\`, like the then-branch`, () => {
+      const english = render(parse(code, lang), 'en');
+      // The point is that BOTH seams agree — the then-branch already rendered `in`.
+      expect(english).toContain('last <button/> in .modal');
+      expect(english).toContain('first <button/> in .modal');
+    });
+  }
+
+  it('ru: the condition no longer leaks the marker surface verbatim', () => {
+    expect(render(parse(focusTrap[0][1], 'ru'), 'en')).not.toContain('в .modal');
+  });
+
+  it('de: the condition no longer leaks the ROLE NAME', () => {
+    // `destination` is the normalized form of de's `in` role marker — a role name,
+    // not an English word. This rendered `last <button/> destination .modal`.
+    expect(render(parse(focusTrap[1][1], 'de'), 'en')).not.toContain('destination');
+  });
+
+  it('en: the reference render is unchanged (en defines the target)', () => {
+    expect(
+      render(
+        parse(
+          'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end',
+          'en'
+        ),
+        'en'
+      )
+    ).toContain('if target matches last <button/> in .modal');
+  });
+
+  it('a member chain inside a condition keeps its glue', () => {
+    // matchPositionalRun returns {text, token} pairs precisely so this join can still
+    // compute SOURCE adjacency. Bare strings would render `previous <input/> .value`
+    // here (the role seam's join rule) — silently, and only in conditions.
+    expect(
+      render(parse('on blur if previous <input/>.value is empty add .error to me end', 'en'), 'en')
+    ).toContain('previous <input/>.value');
+  });
+
+  it('a juxtaposed command verb is never eaten as a locative marker', () => {
+    // The run consumes `<marker> <selector>` only when a SELECTOR follows, so
+    // `remove` cannot be read as the source marker of `closest .modal`.
+    const english = render(
+      parse('on click hide closest .modal remove .modal-open from body', 'en'),
+      'en'
+    );
+    expect(english).toContain('hide closest .modal');
+    expect(english).toContain('remove .modal-open from body');
+  });
+
+  // bn is deliberately absent: its positional `শেষ` normalizes to `end` (the block
+  // terminator), so the run's head gate correctly declines and `এ` still leaks —
+  // `if target matches end <button/> এ .modal`. That is a dict/tokenizer realign, not
+  // a seam fix, and bn stays on the foreign-validity allowlist.
+});
+
 describe('raw-expression translation is anchored, never blanket', () => {
   it('never translates inside a string literal', () => {
     // The literal must survive byte-identical even though it contains `valor`.

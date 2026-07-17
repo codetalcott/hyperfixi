@@ -26,9 +26,10 @@ import { isTypeCompatible } from './utils/type-validation';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import {
+  COMMAND_ACTION_KEYWORDS,
   isOfPossessiveMarker,
   joinExpressionTokens,
-  toEnglishLocative,
+  matchPositionalRun,
   translatePropertyName,
 } from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
@@ -974,23 +975,8 @@ export class PatternMatcher {
     return false;
   }
 
-  /**
-   * Positional query keywords (English + normalized forms produced by the
-   * tokenizers for every language, e.g. AR آخر→last, TL huli→last).
-   * `closest` is included: `closest <sel>` is the ancestor-scope query form
-   * (`hide closest .modal`, `toggle .x on closest .card`) and folds to the
-   * same call-expression shape the runtime's positional expressions evaluate
-   * (the expression-parser positional fold). Without it the patient/destination
-   * role rejected the keyword and the whole command dropped from event bodies.
-   */
-  private static readonly POSITIONAL_KEYWORDS = new Set([
-    'first',
-    'last',
-    'next',
-    'previous',
-    'random',
-    'closest',
-  ]);
+  // POSITIONAL_KEYWORDS moved to utils/expression-lexicon (exported): the
+  // raw-expression join needs the same set, and a second copy would drift.
 
   /**
    * Positional + DOM-scope keywords that must never fill a `duration` slot (see the
@@ -1040,15 +1026,11 @@ export class PatternMatcher {
     'this',
   ]);
 
-  /**
-   * Normalized command-action keywords (the schema registry's action names).
-   * Tokenizers normalize every language's command verbs to these forms, so the
-   * set is language-independent. Used to keep the positional source clause
-   * from consuming a following command's verb as a locative marker.
-   */
-  private static readonly COMMAND_ACTION_KEYWORDS = new Set(
-    Object.keys(commandSchemas).map(a => a.toLowerCase())
-  );
+  // COMMAND_ACTION_KEYWORDS moved to utils/expression-lexicon (exported) alongside
+  // the positional-run recognizer that was its main reader. Aliased here so the two
+  // remaining readers below (the fused-dot property guard and the ref-noun guard)
+  // keep their existing call shape.
+  private static readonly COMMAND_ACTION_KEYWORDS = COMMAND_ACTION_KEYWORDS;
 
   /**
    * Normalized clause-boundary keywords — sequence/conjunction tokens that close
@@ -1073,82 +1055,14 @@ export class PatternMatcher {
    * terminal in their role (e.g. scroll's only role is the destination).
    */
   private tryMatchPositionalExpression(tokens: TokenStream): SemanticValue | null {
-    const token = tokens.peek();
-    if (!token) return null;
-
-    const norm = (token.normalized ?? token.value).toLowerCase();
-    if (
-      !PatternMatcher.POSITIONAL_KEYWORDS.has(norm) &&
-      !PatternMatcher.POSITIONAL_KEYWORDS.has(token.value.toLowerCase())
-    ) {
-      return null;
-    }
-
-    const mark = tokens.mark();
-    // The captured `raw` is evaluated by the core's English positional
-    // expression parser (`next(...)`, `closest(...)`), so the positional KEYWORD
-    // must be its normalized English form — a source-language keyword
-    // (`cercano`, `次`, `التالي`) is unevaluable as-is and the runtime either
-    // errors, drops to `me`, or matches every element. Same idiom as the
-    // conditional fold's joinTokenText (semantic-parser): keyword/marker tokens
-    // contribute their normalized form; selectors/identifiers are code and keep
-    // their surface value (for en the two are identical).
-    const parts: string[] = [token.normalized ?? token.value];
-    tokens.advance();
-
-    // Required: the queried selector (e.g. <.message/>, .message, <button/>).
-    const sel = tokens.peek();
-    if (!sel || sel.kind !== 'selector') {
-      tokens.reset(mark);
-      return null;
-    }
-    parts.push(sel.value);
-    tokens.advance();
-
-    // Optional member access on the queried element: `.value`, `.textContent`
-    // (`previous <input/>.value`). The tokenizer emits these as `.`-prefixed
-    // selector tokens; fold them into the expression so the whole lvalue is one
-    // value.
-    let memberGuard = 0;
-    while (memberGuard++ < 8) {
-      const member = tokens.peek();
-      if (member && member.kind === 'selector' && member.value.startsWith('.')) {
-        parts.push(member.value);
-        tokens.advance();
-      } else {
-        break;
-      }
-    }
-
-    // Optional source clause: <marker> <source-selector> (in #chat / في #chat /
-    // sa_loob #chat). The marker may be a keyword, particle, or (TL) identifier;
-    // we only consume it when a selector follows, so a trailing command keyword
-    // is never swallowed.
-    const marker = tokens.peek();
-    const source = tokens.peek(1);
-    if (
-      marker &&
-      source &&
-      source.kind === 'selector' &&
-      (marker.kind === 'keyword' || marker.kind === 'particle' || marker.kind === 'identifier') &&
-      !PatternMatcher.POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
-      // A command verb is never a locative marker: in a juxtaposed body
-      // (`hide closest .modal remove .modal-open from body`) the next clause's
-      // verb (`remove`) would otherwise be swallowed as the source marker and
-      // the following command lost.
-      !PatternMatcher.COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
-    ) {
-      // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
-      // runtime reads — normalize it; the source selector is code. Role markers
-      // normalize to the ROLE NAME rather than an English word, so es `en` has to
-      // be mapped back to the locative sense the slot carries (`in`) — otherwise
-      // this renders `last <.message/> destination #chat`.
-      parts.push(toEnglishLocative(this.currentProfile, marker), source.value);
-      tokens.advance();
-      tokens.advance();
-    }
-
-    return { type: 'expression', raw: parts.join(' ') } as SemanticValue;
+    // Recognizer lives in expression-lexicon so the raw-expression join shares it
+    // — a condition and a then-branch carrying the SAME run (focus-trap authors
+    // `last <button/> in .modal` in both) can no longer disagree about `in`.
+    // Joins with a plain space here, which is this seam's pre-existing rule.
+    const run = matchPositionalRun(tokens.tokens, tokens.position(), this.currentProfile);
+    if (!run) return null;
+    for (let n = 0; n < run.consumed; n++) tokens.advance();
+    return { type: 'expression', raw: run.parts.map(p => p.text).join(' ') } as SemanticValue;
   }
 
   /**
@@ -2721,8 +2635,7 @@ export class PatternMatcher {
       }
 
       const metadata = token.metadata as
-        | { modifierName: string; value?: number | string }
-        | undefined;
+        { modifierName: string; value?: number | string } | undefined;
       if (!metadata) {
         break;
       }
