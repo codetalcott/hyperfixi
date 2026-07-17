@@ -120,6 +120,13 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
 
   // References (alternative forms not in profile)
   { native: '私', normalized: 'me' }, // Alternative to 自分 (jibun)
+  // The i18n dict emits 対象 for `target` while the profile carries ターゲット, so the
+  // word the authored corpus actually uses did not lex as a keyword and leaked into
+  // the condition's raw expression (`if 対象 一致する .modal-backdrop`). Additive: the
+  // profile's ターゲット stays registered. Must land WITH the `matches` keyword —
+  // fixing the operand alone leaves the operator leaking and vice versa (see the
+  // R2 note in japanese.ts's profile `matches` entry).
+  { native: '対象', normalized: 'target' }, // Alternative to ターゲット (the dict's word)
 
   // Note: Attached particle forms (を切り替え, を追加, etc.) are intentionally NOT included
   // because they would cause ambiguous parsing. The separate particle + verb pattern

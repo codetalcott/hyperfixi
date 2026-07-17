@@ -152,6 +152,17 @@ export const japaneseProfile: LanguageProfile = {
     return: { primary: '戻る', alternatives: ['返す', 'リターン'], normalized: 'return' },
     then: { primary: 'それから', alternatives: ['次に', 'ならば', 'なら'], normalized: 'then' },
     and: { primary: 'また', alternatives: ['と', 'そして'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Deferred by the Phase 2 `matches`
+    // slice because ja's operand ALSO leaked (`references.target` carried ターゲット
+    // while the dict emits 対象), and registering the operator without its operand is
+    // worse than neither: modal-close-backdrop ja passed R2 only BY ACCIDENT — the
+    // unparsed condition was dropped, so `hide` ran unconditionally and coincidentally
+    // matched the en DOM effect. `matches` alone would parse the condition into a real
+    // comparison whose operand 対象 evaluates to undefined, stopping `hide` and
+    // flipping R2 pass→fail at tolerance 0. Landing WITH the 対象 EXTRAS entry
+    // (japanese.ts tokenizer) renders `target matches .modal-backdrop`, byte-identical
+    // to en. Not an ActionType and has no command schema, so no pattern is generated.
+    matches: { primary: '一致する', normalized: 'matches' },
     // Existence operator (`if #modal exists`). Same seam as `matches`: without the
     // keyword the surface stays an identifier and leaks verbatim into the
     // condition's raw expression (if-exists). Neither an ActionType nor a command

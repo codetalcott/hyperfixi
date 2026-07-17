@@ -128,6 +128,17 @@ export const arabicProfile: LanguageProfile = {
     return: { primary: 'ارجع', alternatives: ['عُد'], normalized: 'return' },
     then: { primary: 'ثم', alternatives: ['بعدها', 'ثمّ'], normalized: 'then' },
     and: { primary: 'وأيضاً', alternatives: ['أيضاً'], normalized: 'and' },
+    // Comparison operator (`target matches .x`). Deferred by the Phase 2 `matches`
+    // slice because ar's operand ALSO leaked (`references.target` carried الهدف while
+    // the dict emits هدف), and registering the operator without its operand is worse
+    // than neither: modal-close-backdrop ar passed R2 only BY ACCIDENT — the unparsed
+    // condition was dropped, so `hide` ran unconditionally and coincidentally matched
+    // the en DOM effect. `matches` alone would parse the condition into a real
+    // comparison whose operand هدف evaluates to undefined, stopping `hide` and
+    // flipping R2 pass→fail at tolerance 0. Landing WITH the هدف EXTRAS entry
+    // (arabic.ts tokenizer) renders `target matches .modal-backdrop`, byte-identical
+    // to en. Not an ActionType and has no command schema, so no pattern is generated.
+    matches: { primary: 'يطابق', normalized: 'matches' },
     // Existence operator (`if #modal exists`). Same seam as `matches`: without the
     // keyword the surface stays an identifier and leaks verbatim into the
     // condition's raw expression (if-exists). Neither an ActionType nor a command
