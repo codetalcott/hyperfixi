@@ -3,6 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import Database from 'better-sqlite3';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   getDatabase,
   closeDatabase,
@@ -134,6 +138,60 @@ describe('Database Connection', () => {
     it('returns the path after connection', () => {
       getDatabase({ dbPath: ':memory:' });
       expect(getCurrentDbPath()).toBe(':memory:');
+    });
+  });
+
+  // `npm run populate` REPLACES patterns.db rather than mutating it. A long-lived consumer
+  // (the MCP server, most notably) kept reading the old inode and answered every query from
+  // the pre-populate database — indistinguishable from a parser bug, and silent. Path
+  // equality cannot see it: the path is identical, only the file moved.
+  describe('file-replacement detection (the populate footgun)', () => {
+    let dir: string;
+    let dbPath: string;
+
+    const seed = (path: string, id: string): void => {
+      const db = new Database(path);
+      db.exec('CREATE TABLE t (id TEXT)');
+      db.prepare('INSERT INTO t (id) VALUES (?)').run(id);
+      db.close();
+    };
+    const readId = (db: InstanceType<typeof Database>): string =>
+      (db.prepare('SELECT id FROM t LIMIT 1').get() as { id: string }).id;
+
+    beforeEach(() => {
+      dir = mkdtempSync(join(tmpdir(), 'conn-'));
+      dbPath = join(dir, 'patterns.db');
+    });
+    afterEach(() => {
+      closeDatabase();
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    it('reopens when the file is replaced under the open handle', async () => {
+      seed(dbPath, 'before-populate');
+      expect(readId(getDatabase({ dbPath }))).toBe('before-populate');
+
+      // What populate does: write a brand-new file over the same path.
+      rmSync(dbPath);
+      seed(dbPath, 'after-populate');
+
+      // Past the identity-check TTL, the next getDatabase must notice and reopen.
+      await new Promise(r => setTimeout(r, 1100));
+      expect(readId(getDatabase({ dbPath }))).toBe('after-populate');
+    });
+
+    it('still returns the singleton when the file has not changed', () => {
+      seed(dbPath, 'x');
+      const a = getDatabase({ dbPath });
+      const b = getDatabase({ dbPath });
+      expect(b).toBe(a);
+    });
+
+    it('does not thrash the handle for :memory: (no file to stat)', () => {
+      const a = getDatabase({ dbPath: ':memory:' });
+      const b = getDatabase({ dbPath: ':memory:' });
+      expect(b).toBe(a);
+      expect(isConnected()).toBe(true);
     });
   });
 });

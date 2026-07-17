@@ -208,6 +208,37 @@ When you add a new internal-dep relationship between workspace packages, add the
 > package, rebuild it first (`npm run check:fresh` or `npm run build --prefix
 packages/<dep>`); a green suite against a stale dist is vacuously green.
 
+##### The three freshness guards
+
+Same bug class — _executing code that differs from the checkout_ — asked at three
+different moments. They are not redundant; each sees what the others cannot:
+
+| Guard                                                                           | Question                                   | On stale                                |
+| ------------------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| [`scripts/ensure-fresh.sh`](scripts/ensure-fresh.sh) (`pretest`, `check:fresh`) | is `dist/` behind `src/`?                  | **rebuilds**                            |
+| `findStaleDists()` in the multilingual CLI                                      | same, for a gate about to run              | **refuses** (never mutates build state) |
+| [`packages/mcp-server/src/freshness.ts`](packages/mcp-server/src/freshness.ts)  | has `dist/` changed **since I loaded it**? | **refuses** the tool call               |
+
+The third exists because the MCP server is the only long-running process here.
+`.mcp.json` launches `mcp-server/dist/index.js`; tsup marks every
+`dependencies`/`peerDependencies` entry external, so `@lokascript/semantic` & co. are
+bare specifiers Node resolves through the workspace symlink **at startup** — and Node's
+ESM cache cannot be invalidated. So a rebuild leaves the server serving pre-change code
+**silently**, which no `src`-vs-`dist` check can detect (a freshly-rebuilt dist looks
+perfectly fresh while the process still holds the previous one).
+
+It detects rather than self-heals, deliberately: re-importing is impossible, and bundling
+the deps would be _worse_ — it would move the staleness from "the process is behind the
+file" to "the file is behind the source too". (`@hyperfixi/developer-tools` is already
+bundled and its dist carries four orphaned generations of the same chunk, because the
+build has no `--clean`.) The MCP protocol has no "restart me" primitive, so the refusal
+text is the only channel to a human. **An MCP tool refusing with "serving STALE code" is
+the guard working — restart the server (`/mcp` → reconnect), don't debug the tool.**
+
+The `patterns.db` half _does_ self-heal: `populate` replaces the file rather than mutating
+it, so a long-lived handle keeps reading the old inode; `getDatabase()` now compares file
+identity (dev+inode+size+mtime, behind a 1s TTL) and reopens.
+
 ### Live Testing
 
 ```bash

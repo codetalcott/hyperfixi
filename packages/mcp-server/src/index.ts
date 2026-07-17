@@ -10,6 +10,13 @@ import { createRequire } from 'node:module';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
+  captureFreshnessBaseline,
+  freshnessSummary,
+  staleAtStartup,
+  staleSinceStartup,
+  staleToolError,
+} from './freshness.js';
+import {
   CallToolRequestSchema,
   GetPromptRequestSchema,
   ListPromptsRequestSchema,
@@ -139,6 +146,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
+
+  // Freshness guard. This process resolved its workspace deps' dist/ at startup and Node
+  // cannot un-cache them, so a rebuild leaves every answer below reflecting the PRE-rebuild
+  // code — silently, which is this server's worst failure mode. Refuse instead, at the one
+  // choke point every tool call passes through. See ./freshness.ts for why detect-and-refuse
+  // rather than reload or bundle.
+  const stale = staleSinceStartup();
+  if (stale.length > 0) {
+    return staleToolError(stale);
+  }
 
   // Analysis tools (from core/ast-utils)
   if (name.startsWith('analyze_') || name === 'explain_code' || name === 'recognize_intent') {
@@ -368,9 +385,28 @@ server.setRequestHandler(ReadResourceRequestSchema, async request => {
 // =============================================================================
 
 async function main() {
+  // Snapshot the dist/ we actually loaded, BEFORE serving. Everything above has already
+  // been imported by now, so this records the true "code I am running" — the per-tool-call
+  // guard compares against it.
+  captureFreshnessBaseline();
+
+  // The snapshot cannot see a dist that was ALREADY behind its src at launch: nothing
+  // changes while we run, so we would serve stale code forever and look healthy. Warn
+  // rather than exit — the operator may simply be mid-edit, and a server that refuses to
+  // start is worse than one that says why its answers may be wrong.
+  const bornStale = staleAtStartup();
+  if (bornStale.length > 0) {
+    console.error(
+      `⚠ MCP server started against a STALE dist/ in: ${bornStale.map(s => s.pkg).join(', ')} —\n` +
+        `  src/ is newer than the built output, so answers will reflect the last build, not the\n` +
+        `  checkout. Rebuild, then restart this server:\n` +
+        bornStale.map(s => `    npm run build --prefix ${s.dir}`).join('\n')
+    );
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('HyperFixi MCP server started');
+  console.error(`HyperFixi MCP server started (${freshnessSummary()})`);
 }
 
 main().catch(error => {
