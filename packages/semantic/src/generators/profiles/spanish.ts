@@ -32,6 +32,9 @@ export const spanishProfile: LanguageProfile = {
     event: 'evento',
     target: 'objetivo', // destino is a synonym
     body: 'cuerpo',
+    document: 'documento',
+    window: 'ventana',
+    detail: 'detalle',
   },
   possessive: {
     marker: 'de', // Spanish uses "de" for general possession

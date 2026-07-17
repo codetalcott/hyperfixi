@@ -29,6 +29,9 @@ export const indonesianProfile: LanguageProfile = {
     event: 'peristiwa',
     target: 'target',
     body: 'badan', // matches the i18n dict's emitted body word (corpus-canonical; tubuh = anatomical body)
+    document: 'dokumen',
+    window: 'jendela',
+    detail: 'detail',
   },
   possessive: {
     marker: '', // Indonesian: "X saya" (X of mine), possessor follows noun

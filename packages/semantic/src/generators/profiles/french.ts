@@ -31,6 +31,9 @@ export const frenchProfile: LanguageProfile = {
     event: 'événement',
     target: 'cible',
     body: 'corps',
+    document: 'document',
+    window: 'fenêtre',
+    detail: 'détail',
   },
   possessive: {
     marker: 'de', // Uses "de" for general possession

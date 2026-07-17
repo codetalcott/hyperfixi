@@ -34,6 +34,9 @@ export const turkishProfile: LanguageProfile = {
     event: 'olay',
     target: 'hedef',
     body: 'gövde',
+    document: 'belge',
+    window: 'pencere',
+    detail: 'detay',
   },
   possessive: {
     // Genitive suffix, spaced for tokenization like Turkish's other case

@@ -31,6 +31,9 @@ export const russianProfile: LanguageProfile = {
     event: 'событие',
     target: 'цель',
     body: 'тело', // was an English placeholder; the i18n dict emits the Russian word
+    document: 'документ',
+    window: 'окно',
+    detail: 'детали',
   },
   possessive: {
     marker: '',

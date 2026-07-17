@@ -14,6 +14,13 @@ export const DEFAULT_REFERENCES: ReadonlySet<string> = new Set([
   'event',
   'target',
   'body',
+  // DOM context globals — as reference-typed as `body`, and already advertised as
+  // references by core's REFERENCE_KEYWORDS and the parser's PROPERTY_ACCESS_BASES.
+  // Without them here, a foreign surface (ja ドキュメント, es documento) lexes as a
+  // keyword but fails isValidReference, degrades to a literal, and leaks verbatim.
+  'document',
+  'window',
+  'detail',
 ]);
 
 /**

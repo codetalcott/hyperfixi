@@ -10,6 +10,9 @@ describe('isValidReference', () => {
     expect(isValidReference('event')).toBe(true);
     expect(isValidReference('target')).toBe(true);
     expect(isValidReference('body')).toBe(true);
+    expect(isValidReference('document')).toBe(true);
+    expect(isValidReference('window')).toBe(true);
+    expect(isValidReference('detail')).toBe(true);
   });
 
   it('rejects non-references', () => {
@@ -32,7 +35,7 @@ describe('isValidReference', () => {
     expect(isValidReference('it', custom)).toBe(false);
   });
 
-  it('DEFAULT_REFERENCES contains exactly 7 entries', () => {
-    expect(DEFAULT_REFERENCES.size).toBe(7);
+  it('DEFAULT_REFERENCES contains exactly 10 entries', () => {
+    expect(DEFAULT_REFERENCES.size).toBe(10);
   });
 });

@@ -129,12 +129,7 @@ export type ActionType =
  * Values are language-neutral - they capture what something IS, not how it's written.
  */
 export type SemanticValue =
-  | LiteralValue
-  | SelectorValue
-  | ReferenceValue
-  | PropertyPathValue
-  | ExpressionValue
-  | FlagValue;
+  LiteralValue | SelectorValue | ReferenceValue | PropertyPathValue | ExpressionValue | FlagValue;
 
 /**
  * Expected value types for role tokens.
@@ -156,7 +151,8 @@ export interface SelectorValue {
 
 export interface ReferenceValue {
   readonly type: 'reference';
-  readonly value: 'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body';
+  readonly value:
+    'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body' | 'document' | 'window' | 'detail';
 }
 
 export interface PropertyPathValue {

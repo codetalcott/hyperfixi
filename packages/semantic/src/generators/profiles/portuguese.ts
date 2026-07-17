@@ -29,6 +29,9 @@ export const portugueseProfile: LanguageProfile = {
     event: 'evento',
     target: 'alvo',
     body: 'corpo',
+    document: 'documento',
+    window: 'janela',
+    detail: 'detalhe',
   },
   possessive: {
     marker: 'de', // Uses "de" for general possession

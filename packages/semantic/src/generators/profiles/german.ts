@@ -32,6 +32,9 @@ export const germanProfile: LanguageProfile = {
     event: 'Ereignis',
     target: 'Ziel',
     body: 'Körper',
+    document: 'dokument',
+    window: 'fenster',
+    detail: 'detail',
   },
   possessive: {
     marker: '', // German uses possessive pronouns directly

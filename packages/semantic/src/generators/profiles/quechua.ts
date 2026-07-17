@@ -34,6 +34,9 @@ export const quechuaProfile: LanguageProfile = {
     event: 'ruwakuq',
     target: 'punta',
     body: 'kurku',
+    document: 'qillqa',
+    window: 'k_iri',
+    detail: 'sut_iy',
   },
   possessive: {
     marker: '-pa', // Genitive suffix

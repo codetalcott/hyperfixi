@@ -31,6 +31,9 @@ export const hindiProfile: LanguageProfile = {
     event: 'घटना',
     target: 'लक्ष्य',
     body: 'बॉडी',
+    document: 'दस्तावेज़',
+    window: 'विंडो',
+    detail: 'विवरण',
   },
   possessive: {
     marker: 'का',

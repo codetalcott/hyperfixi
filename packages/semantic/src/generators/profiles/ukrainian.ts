@@ -31,6 +31,9 @@ export const ukrainianProfile: LanguageProfile = {
     event: 'подія',
     target: 'ціль',
     body: 'тіло', // was an English placeholder; the i18n dict emits the Ukrainian word
+    document: 'документ',
+    window: 'вікно',
+    detail: 'деталі',
   },
   possessive: {
     marker: '',

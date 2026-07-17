@@ -33,6 +33,9 @@ export const japaneseProfile: LanguageProfile = {
     event: 'イベント',
     target: 'ターゲット',
     body: 'ボディ',
+    document: 'ドキュメント',
+    window: 'ウィンドウ',
+    detail: '詳細',
   },
   possessive: {
     marker: 'の',
