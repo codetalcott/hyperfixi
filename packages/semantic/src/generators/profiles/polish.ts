@@ -264,6 +264,11 @@ export const polishProfile: LanguageProfile = {
     // focus-trap drop their then-branch). Not an ActionType and has no command
     // schema, so no pattern is generated from it.
     matches: { primary: 'pasuje', normalized: 'matches' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    no: { primary: 'brak', normalized: 'no' },
     end: { primary: 'koniec', normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },

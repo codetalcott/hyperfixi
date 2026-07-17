@@ -161,6 +161,11 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // never arrived whole). The ñawpaq_kaq entry above is the precedent.
   { native: 'k_iri', normalized: 'window' },
   { native: 'hatun_kay', normalized: 'resize' },
+  // behavior-draggable's `no` operator: the dict emits underscore-joined
+  // mana_kanchu, which the `_` split shattered into mana(→not/without) + _ +
+  // kanchu. Same whole-token shape as hatun_kay; longest-first makes
+  // `mana_kanchu` (11) beat `mana` (4).
+  { native: 'mana_kanchu', normalized: 'no' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 

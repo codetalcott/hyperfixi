@@ -156,6 +156,11 @@ export const koreanProfile: LanguageProfile = {
     // condition's raw expression (if-exists). Neither an ActionType nor a command
     // schema, so no pattern is generated from it.
     exists: { primary: '존재', normalized: 'exists' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    no: { primary: '없음', normalized: 'no' },
     end: { primary: '끝', alternatives: ['마침'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS실행', alternatives: ['js'], normalized: 'js' },

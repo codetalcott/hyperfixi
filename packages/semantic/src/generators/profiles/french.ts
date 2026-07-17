@@ -137,6 +137,11 @@ export const frenchProfile: LanguageProfile = {
     // expression, which the core expression parser reads as English. Neither an
     // ActionType nor a command schema, so no pattern is generated from it.
     is: { primary: 'est', normalized: 'is' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    no: { primary: 'aucun', normalized: 'no' },
     end: { primary: 'fin', alternatives: ['terminer', 'finir'], normalized: 'end' },
     js: { primary: 'js', normalized: 'js' },
     async: { primary: 'asynchrone', normalized: 'async' },

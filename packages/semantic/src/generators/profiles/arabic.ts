@@ -133,6 +133,14 @@ export const arabicProfile: LanguageProfile = {
     // condition's raw expression (if-exists). Neither an ActionType nor a command
     // schema, so no pattern is generated from it.
     exists: { primary: 'موجود', normalized: 'exists' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    // Uses the dict's NATURAL spaced phrase `لا يوجد`, matched by the base
+    // tokenizer's multi-word keyword walk (longest-phrase at a word boundary) —
+    // the same mechanism hi `मेل खाता` uses. Does not collide with `not: 'ليس'`.
+    no: { primary: 'لا يوجد', normalized: 'no' },
     // آخر is deliberately ABSENT: it is the positional `last` keyword
     // (آخر <button/> في .modal — see pattern-matcher's positional handling).
     // Listing it as an end-alternative made parseBodyWithClauses chop every

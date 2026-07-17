@@ -193,6 +193,13 @@ export const turkishProfile: LanguageProfile = {
     // expression, which the core expression parser reads as English. Neither an
     // ActionType nor a command schema, so no pattern is generated from it.
     is: { primary: 'dir', normalized: 'is' },
+    // Negative-existence operator (`if no dragHandle set dragHandle to me`). Same
+    // seam as `exists`: without the keyword the surface stays an identifier and
+    // leaks verbatim into the condition's raw expression (behavior-draggable).
+    // Neither an ActionType nor a command schema, so no pattern is generated from it.
+    // `yok` is a prefix of `else: 'yoksa'`; the keyword walk sorts longest-first, so
+    // `yoksa` still wins where it appears.
+    no: { primary: 'yok', normalized: 'no' },
     end: { primary: 'son', alternatives: ['bitiş', 'bitti'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },
