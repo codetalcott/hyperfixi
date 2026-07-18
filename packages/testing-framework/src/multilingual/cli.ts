@@ -490,6 +490,55 @@ async function main(): Promise<void> {
           r.newExecutionFailures.map(id => `${r.language}/${id}`)
         );
 
+        // R4 — canonical-validity ratchet: render every authored foreign
+        // translation to English and parse the result on the real
+        // hyperscript.org engine, diffing the invalid (pattern, language)
+        // pairs against the committed allowlist
+        // (baselines/foreign-canonical-validity.json). Both directions fail:
+        // a NEW invalid pair is a validity regression; a stale entry (an
+        // allowlisted pair that now renders valid) must be pruned in the same
+        // change that cleared it (tools/regen-foreign-baseline.ts). Tolerance
+        // 0 — the render+parse is deterministic against a fresh DB, and the
+        // DB/dist freshness guards above already refused stale inputs. Reuses
+        // checkForeignRenderValidity + the allowlist VERBATIM, so this and the
+        // vitest gate (foreign-canonical-validity.test.ts) cannot disagree.
+        // Full-mode only (quick mode keeps its speed contract) and skipped
+        // with a warning when the allowlist is absent, so a checkout without
+        // the baseline never retro-flags.
+        let validityNewInvalid: string[] = [];
+        let validityStale: string[] = [];
+        let validityChecked = false;
+        if (config.mode !== 'quick') {
+          const validityBaselinePath = path.resolve(
+            path.dirname(fileURLToPath(import.meta.url)),
+            '../../baselines/foreign-canonical-validity.json'
+          );
+          if (!fs.existsSync(validityBaselinePath)) {
+            console.warn(`⚠ R4 validity ratchet skipped: no allowlist at ${validityBaselinePath}.`);
+          } else {
+            const { checkForeignRenderValidity, groupFailuresByPattern } =
+              await import('./foreign-canonical-validity');
+            const allowlist = JSON.parse(fs.readFileSync(validityBaselinePath, 'utf8')) as {
+              allowedInvalid: Record<string, string[]>;
+            };
+            const pairKey = (id: string, lang: string) => `${id}/${lang}`;
+            const allowed = new Set(
+              Object.entries(allowlist.allowedInvalid).flatMap(([id, langs]) =>
+                langs.map(l => pairKey(id, l))
+              )
+            );
+            const validity = await checkForeignRenderValidity();
+            const current = new Set(
+              Object.entries(groupFailuresByPattern(validity.failures)).flatMap(([id, langs]) =>
+                langs.map(l => pairKey(id, l))
+              )
+            );
+            validityNewInvalid = [...current].filter(p => !allowed.has(p)).sort();
+            validityStale = [...allowed].filter(p => !current.has(p)).sort();
+            validityChecked = true;
+          }
+        }
+
         let failed = false;
 
         if (regressed.length > 0) {
@@ -622,13 +671,37 @@ async function main(): Promise<void> {
           failed = true;
         }
 
+        if (validityNewInvalid.length > 0) {
+          console.error(
+            `\n✗ Canonical-validity regression (R4): ${validityNewInvalid.length} foreign ` +
+              `translation(s) now render English the hyperscript.org parser rejects:`
+          );
+          for (const p of validityNewInvalid) console.error(`   ${p}`);
+          console.error(
+            `   (triage with tools/triage-foreign-residual.ts; if the invalidity is ` +
+              `expected, allowlist it via tools/regen-foreign-baseline.ts)`
+          );
+          failed = true;
+        }
+
+        if (validityStale.length > 0) {
+          console.error(
+            `\n✗ Stale validity allowlist (R4): ${validityStale.length} allowlisted ` +
+              `pair(s) now render VALID — prune with tools/regen-foreign-baseline.ts:`
+          );
+          for (const p of validityStale) console.error(`   ${p}`);
+          failed = true;
+        }
+
         if (failed) {
           exitCode = 1;
         } else {
           console.log(
             `\n✓ No regression vs baseline ` +
               `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + ` +
-              `precision + multiset-recall + role + value + execution ratchets).`
+              `precision + multiset-recall + role + value + execution ratchets` +
+              (validityChecked ? ` + canonical validity (R4)` : '') +
+              `).`
           );
           exitCode = 0;
         }

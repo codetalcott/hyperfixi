@@ -111,6 +111,9 @@ export async function checkForeignRenderValidity(opts?: {
         rendered = node ? render(node, 'en') : '(no node)';
         errors = validate(rendered);
       } catch (e) {
+        // parseSemantic/render only — validate never throws (its tokenizer-level
+        // throws fold into the returned array), so an invalid render is reported
+        // WITH the render that caused it, not discarded as '(threw)'.
         rendered = '(threw)';
         errors = ['threw: ' + (e as Error).message.split('\n')[0]];
       }

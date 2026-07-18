@@ -45,10 +45,14 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 > All three: exact-2/exact-1 corpus occurrence verified, phantom-safe. Gates: foreign
 > (CLEARED=5, ADDED=0) + en green; fidelity ratchet clean on all 8 signals; semantic
 > suite 7366; test:affected green (domain-toolkit 0-test artifact only).
-> **HARNESS FOOTGUN the recipe below does not state: `loadCanonicalParser`'s validate
-> RETURNS an error array (empty = valid) — it also throws on tokenizer-level unknown
-> tokens, so a try/catch alone misclassifies the error-array failures as VALID (38 of
-> 64 on first run). Check `validate(rendered).length === 0`, and keep the catch.**
+> **HARNESS FOOTGUN (fixed post-Phase-10 by the validity-infra PR): `loadCanonicalParser`'s
+> validate used to have TWO failure channels — it RETURNED an error array (empty = valid)
+> AND threw on tokenizer-level unknown tokens — so a try/catch-only harness misclassified
+> 38/64 pairs as VALID. The contract is now single-channel: validate NEVER throws; the
+> tokenizer throw folds into the returned array as a `threw: …` entry. Check
+> `.length === 0`. The triage harness is also now COMMITTED
+> (`packages/testing-framework/tools/triage-foreign-residual.ts`) — do not rebuild it
+> from a recipe.**
 
 > **PHASE 9 SHIPPED (1 commit `fix/foreign-validity-phase9`, 4 pairs, 2991→2995). It took
 > a path THIS DOC DID NOT LIST — 4 clean value-literal data wins the doc mis-filed as
@@ -528,24 +532,19 @@ change, plausibly the last mechanical win).
 
 ### Reproduce the triage
 
-The gate hides exactly what you need: `checkForeignRenderValidity` assigns
-`rendered = '(threw)'` in its catch, so when `validate()` throws — ~46 of the residual —
-**the render that caused it is discarded**. Render and validate SEPARATELY:
+**The harness is now COMMITTED — do not rebuild it from a recipe:**
 
-```ts
-// packages/testing-framework/triage.ts — delete after
-import Database from 'better-sqlite3';
-import { parseSemantic, render } from '@lokascript/semantic';
-import { loadCanonicalParser } from './src/multilingual/canonical-validity';
-const validate = await loadCanonicalParser();
-const db = new Database('../../packages/patterns-reference/data/patterns.db', { readonly: true });
-const src = (db.prepare(
-  'SELECT hyperscript FROM pattern_translations WHERE code_example_id=? AND language=?'
-).get('behavior-draggable', 'ja') as any).hyperscript;
-const rendered = render(parseSemantic(src, 'ja').node!, 'en');
-console.log(rendered);                       // ← keep this OUT of the try that validates
-try { console.log(validate(rendered)); } catch (e) { console.log('LEAK:', e.message); }
+```bash
+npm run populate --prefix packages/patterns-reference   # fresh DB first
+npx tsx packages/testing-framework/tools/triage-foreign-residual.ts [--detail out.json]
 ```
+
+It renders and validates every allowlisted pair SEPARATELY and clusters by the
+canonical parser's actual complaint (~2 s, no gate). `--detail` dumps
+source/rendered/errors per pair. Since the validity-infra PR, `validate` never
+throws (tokenizer-level `Unknown token` throws fold into the returned error array
+as `threw: …` entries) and the gate reports the render WITH the failure instead
+of discarding it as `(threw)`.
 
 Grep the render for non-ASCII to find the leak — in a 20-line behavior body the bad token
 is one word on one line, and the parser only reports a single CHARACTER.
@@ -597,8 +596,11 @@ sole entry in `baselines/canonical-validity.json`.
 
 ## Preserved follow-ups (from the now-deleted render-validity handoff)
 
-- **Fold validity in as an R4 signal** on the ratchet CLI (`--regression`), so validity
-  is first-class alongside R0–R3.
+- ~~**Fold validity in as an R4 signal** on the ratchet CLI (`--regression`)~~ — **DONE**
+  (validity-infra PR): the CLI's `--regression` now runs the foreign validity check
+  against the committed allowlist as the R4 ratchet (new invalid pair OR stale
+  allowlist entry both fail; full mode only). The en-side check remains vitest-only
+  (its allowlist holds exactly 1 entry, pick-text-range).
 - **Bake the parse-check into the build-time `@hyperscript-tools/i18n` transpiler**
   (roadmap §5).
 
@@ -654,8 +656,8 @@ scratchpad outside the workspace cannot resolve `node_modules`. Delete it after.
   **But `git checkout --` on it reverts to the STALE committed copy**, so the next gate run
   fails for a reason that is not your change. Re-`populate` before any further gate/probe
   work. (Bit Phase 4: a green gate went red purely from the cleanup step.)
-- **`regen-foreign-baseline.ts` reformats the JSON** (explodes single-line arrays), which
-  buries your real diff in churn. Run `npx prettier --write` on the baseline afterwards.
+- ~~**`regen-foreign-baseline.ts` reformats the JSON**~~ — fixed (validity-infra PR): the
+  tool now writes through prettier itself, so a no-change regen produces a zero diff.
 - **Exit-code masking is real.** `cmd > log; echo $?; grep …` reports the GREP's status.
   Read the explicit `EXIT=` line, not the harness's summary.
 - The foreign gate throwing `Unknown token: <char>` IS the signal, not a harness bug.

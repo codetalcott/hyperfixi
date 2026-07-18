@@ -272,9 +272,9 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | ---- | ------------------------- | --- | ----------------- | ------------------------------------------------- |
 | 0    | `changes`                 | ✓   | ✓                 | Path classifier (code / protocol / goclient)      |
 | 1    | `build`                   | ✓   | ✓                 | Build all packages once; gated on `code` paths    |
-| 2    | `export-validation`       | ✓   | ✓                 | Verify package.json exports resolve to dist       |
-| 3    | `lint-typecheck`          | ✓   | ✓                 | ESLint + TypeScript checks                        |
-| 4    | `unit-tests`              | ✓   | ✓                 | Vitest tests on Node 24                           |
+| 2    | `export-validation`       | ✓   | —                 | Verify package.json exports resolve to dist       |
+| 3    | `lint-typecheck`          | ✓   | —                 | ESLint + TypeScript checks                        |
+| 4    | `unit-tests`              | ✓   | —                 | Vitest tests on Node 24                           |
 | 5    | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)       |
 | 6    | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)             |
 | 7    | `multilingual-validation` | ✓   | —                 | 20-language sweep; PR-only (slim post-merge)      |
@@ -284,7 +284,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 10.5 | `go-client`               | ✓   | —                 | `go build` + `go test`; gated on go-client paths  |
 | 11   | `benchmarks`              | —   | main only         | Perf trend tracking (already gated to push+main)  |
 
-The four PR-only jobs already ran against the merged-as-PR code, so re-running them on the post-merge push to main wastes ~60 min runner-time per merge. Merge-skew is caught by `build` + `lint-typecheck` + `unit-tests` (still run on push). For perfect skew detection without duplication, see the merge-queue note in `.github/workflows/ci.yml`.
+The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only `build` + `coverage` + `benchmarks`. For the reasoning see the job comments in `.github/workflows/ci.yml`.
 
 **Triggers:**
 
@@ -327,7 +327,7 @@ the committed baseline:
 > not truth. Current plan + per-arc history:
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
-The `--regression` gate ratchets on **eight** signals (each fails CI; each guarded so
+The `--regression` gate ratchets on **nine** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
@@ -382,10 +382,28 @@ yields a 0 delta):
    bn duration-glue, SOV `in me` qualifier glue, pl/ru/uk `fetch` URL mis-role,
    hi `transition` duration drop, bn/qu/tr behavior trigger events.
 
+9. **canonical-validity ratchet (R4)** — every authored foreign translation is rendered
+   to English and parsed on the real `hyperscript.org` engine; the invalid
+   (pattern, language) pairs are diffed against the committed allowlist
+   (`packages/testing-framework/baselines/foreign-canonical-validity.json`). Both
+   directions fail at tolerance 0: a NEW invalid pair is a validity regression, and a
+   stale entry (an allowlisted pair that now renders valid) must be pruned via
+   `tools/regen-foreign-baseline.ts` in the same change that cleared it. Catches the
+   class R0–R3 cannot: a parse that is role-faithful yet renders English the canonical
+   parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
+   triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
+   standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
+   disagree; the en-side twin (`canonical-validity.test.ts`, allowlist of exactly 1:
+   `pick-text-range`) remains vitest-only.
+
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
 identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.
-(Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.)
+(Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.
+R4 has a related inversion for the RENDERER: a renderer change that corrupts the emitted
+English across languages floods R4 with new invalid pairs at once. A corrupted en
+_reference_ is different — R4's fair denominator silently EXCLUDES pairs whose en raw
+code the canonical parser rejects, so that class still needs the en-side vitest gate.)
 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
