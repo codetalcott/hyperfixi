@@ -84,6 +84,11 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   { native: 'null', normalized: 'null' },
   { native: 'kosong', normalized: 'null' },
   { native: 'tidakdidefinisikan', normalized: 'undefined' },
+  // The corpus authors `tidak_terdefinisi` for undefined (behavior-removable/
+  // sortable `jika X adalah tidak_terdefinisi`); without a whole-token entry the
+  // `_` split shatters it into tidak(→not) + `_ terdefinisi`, leaking the
+  // invalid `is not _ terdefinisi`. Same shape as tidak_ada above.
+  { native: 'tidak_terdefinisi', normalized: 'undefined' },
 
   // Positional
   { native: 'pertama', normalized: 'first' },
