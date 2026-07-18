@@ -191,7 +191,14 @@ function getHidePatternsPl(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
-              { type: 'role', role: 'style' },
+              // Polish `z` is both "with" (instrumental style) AND "from" (ablative
+              // source). Constrain the style slot to the schema's literal-only type
+              // so a reference (`z okno` = "from window", an event source en drops
+              // by design) is REJECTED here — the optional group then backtracks and
+              // the source clause is left unconsumed/dropped, matching es/de/en.
+              // Without this, `window` (a reference since Phase 5) rendered the
+              // invalid `hide .modal with window`.
+              { type: 'role', role: 'style', expectedTypes: ['literal'] },
             ],
           },
         ],
@@ -305,7 +312,12 @@ function getHidePatternsUk(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'з', alternatives: ['із', 'як'] },
-              { type: 'role', role: 'style' },
+              // Ukrainian `з` is both "with" (instrumental style) AND "from"
+              // (ablative source) — same collision as Polish `z` above. Constrain
+              // the style slot to literal-only so `з вікно` = "from window" (a
+              // reference source) is rejected and dropped rather than rendering the
+              // invalid `hide .modal with window`.
+              { type: 'role', role: 'style', expectedTypes: ['literal'] },
             ],
           },
         ],
