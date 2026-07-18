@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 8 — post Phase 7 structural)
+# Handoff: foreign→English validity burndown (Phase 9 — post Phase 8 structural)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -6,12 +6,48 @@ Paste the block below into a fresh session to continue the arc. Everything above
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
 **4 (`no` + `references` drift + the condition locative, #719)**, **5 (the context
 globals `document`/`window`/`detail`, #721)**, **6 (the `as` connective zh/hi + the
-`beep!` possessive glue+leak, #723)**, and **7 (three structural fixes: id `punya`
+`beep!` possessive glue+leak, #723)**, **7 (three structural fixes: id `punya`
 possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-first
-with-word binding)** shipped. Foreign→English render validity
-**90.7 % → 98.0 % (2989/3059)**. **70 pairs across ~18 patterns** remain.
+with-word binding, #724)**, and **8 (modal-close-escape pl/uk — hide's literal-only
+`style` slot rejecting a reference)** shipped. Foreign→English render validity
+**90.7 % → 2991/3059 (≈97.8 %)**. **68 pairs across ~17 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 8 SHIPPED (1 commit on `fix/foreign-validity-phase8`, 2 pairs). It took the
+> first of Phase 7's three deferred sub-bugs (modal-close-escape pl/uk) and, true to the
+> arc, the handoff's own premise was wrong on the load-bearing detail.**
+>
+> - **modal-close-escape pl/uk (2 pairs).** Source `... ukryj .modal z okno ...` /
+>   `... сховати .modal з вікно ...` = "hide .modal **from window**" rendered the invalid
+>   `hide .modal with window`. Root cause: the handcrafted `hide-pl-full` / `hide-uk-full`
+>   patterns (`packages/semantic/src/patterns/hide.ts`) carry an optional `z {style}` /
+>   `з {style}` group whose `style` role token **omits the schema's `expectedTypes:
+>   ['literal']`**. Polish `z` and Ukrainian `з` mean BOTH "with" (instrumental style) AND
+>   "from" (ablative source), so `z okno` matched the style marker; with no type guard the
+>   reference `window` (a reference since Phase 5) bound the literal-only style slot. Adding
+>   `expectedTypes: ['literal']` to the two style tokens makes the reference fail the type
+>   check → the optional group backtracks → `z okno` is left unconsumed and **dropped**,
+>   which is exactly what es/de/en already do (en's `from window` is an event source the
+>   parser discards by design; es/de leave `de ventana`/`von fenster` unconsumed because
+>   their "from" word ≠ their "with" marker). Render becomes `hide .modal` — valid.
+> - **The handoff's caveat was FALSE.** It said "`isTypeCompatible('reference',['literal'])`
+>   is already false, so `okno` binds as a literal/identifier, not a reference — check the
+>   captured type." Measured: `okno` binds as a **reference** (`{type:'reference',
+>   value:'window'}`), and the type check never fired **because the handcrafted style token
+>   had no `expectedTypes` at all** — the guard is present in the matcher (pattern-matcher.ts
+>   line ~892) but skipped when the token declares no types. So the fix was not "override the
+>   schema guard" but "give the token the constraint the schema already declares."
+> - **PROBE FOOTGUN that hid this for a while: `node.roles` is a `Map`, and
+>   `JSON.stringify(node)` renders a Map as `{}`.** A naive node dump shows every command with
+>   `"roles": {}` and looks like the values live elsewhere; they don't. Deserialize Maps
+>   (walk with `x instanceof Map`) before trusting a role dump — otherwise you cannot see the
+>   captured `style: reference window` that IS the bug.
+> - **it/ru/vi have the SAME latent gap** (their `hide-*-full` style tokens also omit
+>   `expectedTypes`) but do not manifest: Italian `con`, Russian `с`, Vietnamese `với` are
+>   "with" only; their corpora say "from window" with a different word (ru `из`), so the
+>   style group never matches. Left untouched (no failing pair, no collision). If a future
+>   corpus row collides there, apply the same one-line constraint.
 
 > **PHASE 7 SHIPPED (3 commits on `fix/foreign-validity-phase7`, 10 pairs).** It
 > refuted this doc's own "no shared root cause / accept 97.4 % as the practical
@@ -47,29 +83,26 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 > swap "one renderer role-binding bug" was actually a pattern-GENERATION marker gap,
 > split by pattern type (patient-first vs vso-verb-first). Probe the fix's PREMISE.
 
-## What Phase 7 left — 3 named structural sub-bugs (6 pairs), each measured
+## What Phase 8 left — 2 named structural sub-bugs (4 pairs), each measured
 
-These are NOT one root cause. Each is a distinct deeper bug, diagnosed but deferred:
+These are NOT one root cause. Each is a distinct deeper bug, diagnosed but deferred.
+(Phase 8 took the third — modal-close-escape pl/uk — see the PHASE 8 block above.)
 
 - **swap ar/tl (2) — vso-verb-first pattern.** Unlike the SOV patient-first langs, the
   `swap-event-{ar,tl}-vso-verb-first` pattern puts the destination group BEFORE the
   event, but the corpus's with-element comes AFTER it (`استبدل #a عند نقر بـ#b`,
   `palitan_pwesto #a kapag click nang #b`). ar additionally glues `بـ#b` (bi-prefix).
   So the Phase 7 patient-first fix does not reach them. Needs the vso-verb-first swap
-  pattern to admit a post-event with-element (+ ar `بـ`-glue tokenization).
+  pattern to admit a post-event with-element (+ ar `بـ`-glue tokenization). **Probed in
+  Phase 8:** the pattern binds `#a`→`patient` and drops `بـ#b`/`nang #b` as unconsumed,
+  rendering `swap with #a`; en binds `#a`→`destination`, `#b`→`patient` (`swap #a with
+  #b`). Highest fidelity risk of the three (touches pattern GENERATION), so deferred.
 - **window-keydown tl/ar (2) — event-DUPLICATION.** Phase 7 drops their source leak,
   but exposes a pre-existing bug: a condition-led VSO handler `if <cond> on <event>`
   emits the event twice — `on keydown[key=="s"] if event.ctrlKey on keydown [key=="s"]
   halt`. The event trigger is fronted AND left in the body. (focus-trap escapes this
   because its condition is a `matches` expr, parsed differently.) Reproduce with the
   bare reduced input `kung event.ctrlKey kapag keydown[key=="s"] pagkatapos huminto …`.
-- **modal-close-escape pl/uk (2) — hide `style` binding.** pl/uk register `z`/`з` as
-  BOTH `source` and `style` role markers (`polish.ts:65,67`), so `z okno` (from window)
-  binds `hide`'s `style` role → the invalid `hide .modal with window`. es/de drop the
-  clause (valid); the fix is to stop the reference `window` binding hide's literal-only
-  style role, or drop `z` from the pl/uk `style` marker. `isTypeCompatible('reference',
-  ['literal'])` is already false, so `okno` is binding as a literal/identifier, not a
-  reference — check the actual captured type before assuming the schema guard applies.
 
 > **PHASE 6 SHIPPED — and, true to this doc's own governing lesson, BOTH its fix-site
 > claims were incomplete; a probe caught each.**
@@ -132,14 +165,17 @@ These are NOT one root cause. Each is a distinct deeper bug, diagnosed but defer
 
 ---
 
-MISSION: Phase 8 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **98.0 % (2989/3059)**; **70 pairs across ~18
-patterns** remain. Phases 2, 4, 5, 6, and 7 are DONE. **The residual is fully triaged** — the
+MISSION: Phase 9 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **2991/3059 (≈97.8 %)**; **68 pairs across ~17
+patterns** remain. Phases 2, 4, 5, 6, 7, and 8 are DONE. **The residual is fully triaged** — the
 table in § "What is left" was produced by rendering all pairs and clustering them by the
-canonical parser's actual complaint, so it is measured, not estimated.
+canonical parser's actual complaint, so it is measured, not estimated. (The prior "98.0 %"
+headline was a loose rounding of 2989/3059, which is actually 97.7 %; the ground-truth counts
+in `baselines/foreign-canonical-validity.json` — `validAtGeneration`/`checkedAtGeneration` —
+are authoritative, not the prose percentage.)
 
-> **EFFICIENT ITERATION — the Phase 7 engine, reuse it.** The fast inner loop is a batch
-> triage harness (`packages/testing-framework/triage.ts`, deleted after Phase 7 — recreate
+> **EFFICIENT ITERATION — the Phase 7/8 engine, reuse it.** The fast inner loop is a batch
+> triage harness (`packages/testing-framework/triage.ts`, deleted after each phase — recreate
 > from the § "Reproduce the triage" recipe) that renders AND validates every residual pair
 > SEPARATELY (the gate discards the render on a validate-throw), then auto-clusters by the
 > true leaked token / parser complaint. Run it (~2 s, no gate) → attack the largest true
@@ -147,17 +183,19 @@ canonical parser's actual complaint, so it is measured, not estimated.
 > regressions) → only when a cluster fully clears, run the slow outer loop (populate →
 > `test:canonical` → fidelity ratchet → prune baseline → commit). This beats the per-row
 > manual probing the earlier phases used, and it is what refuted the "no shared root cause"
-> claim.
+> claim. **Phase 8 footgun to bake in: dump roles with a Map-aware serializer** — `node.roles`
+> is a `Map`, so `JSON.stringify` shows `{}` and hides the very binding you are hunting.
 
-**The vocabulary/expression slices are exhausted** and Phase 7 cleared the shared structural
-clusters it found (id `punya`, focus-trap event-source-leak, swap patient-first). What remains
-is: the **3 named structural sub-bugs above** (swap ar/tl vso-verb-first, window-keydown
-event-duplication, modal-close-escape hide-style-binding — 6 pairs, each a distinct deeper
-fix), the **~24 deliberately-blocked ambiguous-vocab exclusions** (th `เป็น`, hi `है`, ar `هو`,
+**The vocabulary/expression slices are exhausted** and Phases 7–8 cleared the shared structural
+clusters they found (id `punya`, focus-trap event-source-leak, swap patient-first, modal-close
+hide-style-binding). What remains is: the **2 named structural sub-bugs above** (swap ar/tl
+vso-verb-first, window-keydown event-duplication — 4 pairs, each a distinct deeper fix), the
+**~24 deliberately-blocked ambiguous-vocab exclusions** (th `เป็น`, hi `है`, ar `هو`,
 ja `空`, tl/tr/bn/hi/zh singles — genuinely hard, honest calls), the **23-pair
 `pick-text-range`** family (spike verdict below: ~3 arcs, not one PR), and a scatter of
-one-off per-row rows (bn `অথবা`/`এ` locative, qu/zh/hi singles). The realistic Phase 8 framing:
-either take one of the 3 named structural sub-bugs, or judge 98.0 % the practical ceiling and
+one-off per-row rows (bn `অথবা`/`এ` locative, qu/zh/hi singles). The realistic Phase 9 framing:
+either take one of the 2 named structural sub-bugs (window-keydown is lower-risk than swap —
+swap touches pattern GENERATION and its fidelity), or judge ≈97.8 % the practical ceiling and
 pivot to the two preserved infra follow-ups (fold validity in as an R4 ratchet signal; bake
 the parse-check into the `@hyperscript-tools/i18n` transpiler). **`form-submit-prevent` ar
 was mis-diagnosed by earlier handoffs as mechanical — it is the ar `هو`→`it` copula exclusion
@@ -184,7 +222,7 @@ READ FIRST (in order):
 
 1. § "What is left" below — the triage. It supersedes every earlier prose estimate.
 2. `packages/testing-framework/baselines/foreign-canonical-validity.json` — the
-   committed allowlist (87 pairs / 20 patterns after Phase 5). It ratchets BOTH ways: a
+   committed allowlist (68 pairs / ~17 patterns after Phase 8). It ratchets BOTH ways: a
    pair you clear must be pruned, or the gate fails on a stale entry.
 3. `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md` — the spec, § "Where the
    burndown stands".
@@ -292,24 +330,26 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (70 pairs after Phase 7) — MEASURED, not estimated
+## What is left (68 pairs after Phase 8) — MEASURED, not estimated
 
 Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
 complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5
 removed the `document` row (7 pairs); `window` proved structural, not data. Phase 6 removed
 the `beep!` row (5) and the zh/hi half of the `as` row (2). **Phase 7 removed id `punya`
 (4: computed-value/if-empty/input-validation/two-way-binding), focus-trap ar/tl (2), and swap
-bn/hi/tr/qu (4)** — 10 pairs. The table below is the PRE-Phase-7 snapshot; net-out the 10
-Phase-7 clears and the three deferred sub-bugs (swap ar/tl, window-keydown tl/ar,
-modal-close-escape pl/uk) documented at the top when reading it.
+bn/hi/tr/qu (4)** — 10 pairs. **Phase 8 removed modal-close-escape pl/uk (2).** The table below
+is the PRE-Phase-7 snapshot; net-out the 12 Phase-7/8 clears and the two remaining deferred
+sub-bugs (swap ar/tl, window-keydown tl/ar) documented at the top when reading it. A FRESH
+Phase-8 triage of the current 68 confirmed the clustering: pick-text-range 23 (`pick
+characters` 17 + `pick 0` 5 + qu 1), th `เป็น` 6, hi `है` 5, then 2s and singles.
 
 | # | Family | Kind | Where |
 | --- | --- | --- | --- |
 | 23 | `pick-text-range` | deferred, ~3 arcs | all but en |
-| 23 | structural (no leak) | per-row | see list below |
+| 21 | structural (no leak) | per-row | see list below (modal-close-escape pl/uk cleared in Phase 8) |
 | 5 | hi `है` (=has/have) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
 | 5 | th `เป็น` (=as/is) | blocked | same five patterns |
-| 3 | `window` — structural, NOT data | per-row | `modal-close-escape` uk · `window-keydown` ar · `window-resize` th |
+| 2 | `window` — structural, NOT data | per-row | `window-keydown` ar · `window-resize` th (modal-close-escape uk cleared Phase 8) |
 | 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
 | 2 | bn `অথবা` | ? | `behavior-draggable`, `behavior-sortable` |
 | 2 | bn `এ` (locative) | dict realign | `focus-trap`, `last-in-collection` |
@@ -396,10 +436,15 @@ The handoff's premise was doubly wrong:
 
 ### 5. Structural, no leak (23) — per-row, no shared root cause
 
+**PRE-Phase-7 snapshot — net out the Phase 7/8 clears:** Phase 7 cleared focus-trap ar/tl,
+swap bn/hi/tr/qu, id `punya` (computed-value/two-way-binding); Phase 8 cleared
+modal-close-escape pl/uk. Phase 7 also refuted the "no shared root cause" header — several of
+these DID cluster by symptom (leaked token / parser complaint) once triaged that way.
+
 `behavior-removable` ar/id/qu · `behavior-sortable` qu · `computed-value` id ·
 `fetch-error-handling` qu · `focus-trap` tl · `form-submit-prevent` ar · `if-empty` ar/id ·
-`if-exists` tl/tr · `input-validation` ar/id · `modal-close-escape` pl · `swap-content`
-ar/bn/hi/qu/tl/tr · `two-way-binding` id · `window-keydown` tl
+`if-exists` tl/tr · `input-validation` ar/id · ~~`modal-close-escape` pl~~ (cleared Phase 8) ·
+`swap-content` ar/bn/hi/qu/tl/tr · `two-way-binding` id · `window-keydown` tl
 
 Known shapes: `focus-trap` ar/tl (stray `من .modal`/`source .modal`, displaced
 `[key=="Tab"]`) · `swap-content` ar `بـ#b` fusion · id `saya punya nilai` → `my punya nilai`
