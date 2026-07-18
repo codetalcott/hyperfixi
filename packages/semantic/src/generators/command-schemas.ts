@@ -2468,6 +2468,18 @@ export const swapSchema: CommandSchema = {
         vi: 'với',
         he: 'עם',
         zh: '用',
+        // SOV/postpositional with-words. These follow the patient (`#b से`,
+        // `#b দিয়ে`), matching the i18n `with` emission. Without them the SOV
+        // patient-first swap pattern's trailing group (which binds the second
+        // element to `destination`) had only the locative dest-marker (hi में,
+        // bn তে) as its alternatives, so `#b <with-word>` never bound and #b
+        // dropped — hi/bn/tr/qu rendered the invalid `swap with #a`. ja/ko
+        // escaped only because their dest-marker alternatives already carry the
+        // instrumental (で / 로). See generateSOVPatientFirstEventHandlerPattern.
+        hi: 'से',
+        bn: 'দিয়ে',
+        tr: 'ile',
+        qu: 'wan',
       },
     },
   ],

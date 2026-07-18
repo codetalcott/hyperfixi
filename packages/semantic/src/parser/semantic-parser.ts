@@ -969,6 +969,65 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // Displaced event-SOURCE clause drop. A handler's `from <source>` phrase is
+    // dropped by the parser BY DESIGN — en `on keydown[..] from .modal if …`
+    // itself renders `on keydown[..] if …`; the source never round-trips in any
+    // language. But when a reordered non-English source floats that clause into
+    // the body ahead of its own `on <event>` head — tl
+    // `… mula_sa .modal kapag keydown[..]`, ar `… من نافذة عند keydown[..]` — no
+    // event pattern consumes the `<source-marker> <value>` pair, so it LEAKS
+    // (`source .modal` / `من window`) into the rendered condition and the
+    // canonical parser rejects it. Excise the pair when it sits immediately
+    // before the `<on-marker> <event>` head and re-parse: the remainder is the
+    // same handler minus a clause en drops anyway, so this can only ever REMOVE
+    // a leak — it never changes a faithful render. Gated on the exact
+    // `source · value · on · <known-event>` token shape and on the re-parse
+    // yielding an event-handler, so it can only add parses. The leading-position
+    // VSO form is the from-first block above (which MOVES the clause); this
+    // covers the mid-input position, where moving still leaks (the parser has no
+    // faithful `from <selector>` event-source render to move it into).
+    //
+    // CONDITION-LED heads only (`arr[0]` normalizes to `if`). A `from <source>`
+    // clause is the EVENT source only when nothing governs it: a condition has no
+    // `from`-source role, so a floating source between the condition and the
+    // event head can only be the handler's. A COMMAND-led head owns its source —
+    // tl `alisin .active mula_sa .items kapag click` (remove .active from .items
+    // on click) and `tawagin adjustLayout() mula_sa bintana … kapag resize`
+    // (call … from window … on resize) both put a real command source right
+    // before the event marker, and excising it would drop the command's role.
+    {
+      const arr = tokens.tokens as LanguageToken[];
+      const conditionLed = arr[0]?.normalized === 'if';
+      for (let s = 0; conditionLed && s + 3 < arr.length; s++) {
+        const evNorm = (arr[s + 3]?.normalized ?? arr[s + 3]?.value ?? '').toLowerCase();
+        if (
+          arr[s]?.normalized === 'source' &&
+          arr[s + 2]?.normalized === 'on' &&
+          SemanticParserImpl.KNOWN_EVENTS.has(evNorm)
+        ) {
+          const reduced = (
+            parseInput.slice(0, arr[s].position.start).trimEnd() +
+            ' ' +
+            parseInput.slice(arr[s + 1].position.end).trimStart()
+          ).trim();
+          if (reduced && reduced !== parseInput) {
+            try {
+              const reparsed = this.parse(reduced, language);
+              if (reparsed && reparsed.kind === 'event-handler') {
+                const result = modifiers
+                  ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                  : reparsed;
+                return withDiagnostics(result, diagnostics);
+              }
+            } catch {
+              // fall through to the normal stages unchanged
+            }
+          }
+          break; // only the first source-before-event clause
+        }
+      }
+    }
+
     // Multi-event `or` conjunction normalization. A handler head can list several
     // events: `on click or keypress[key=="Enter"] toggle .active`. English handles
     // this in buildEventHandler (extractOrConjunctionEvents runs right after the

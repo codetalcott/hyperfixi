@@ -1,15 +1,75 @@
-# Handoff: foreign→English validity burndown (Phase 7 — post `as`/`beep!`)
+# Handoff: foreign→English validity burndown (Phase 8 — post Phase 7 structural)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
 
 **Arc state:** Phases 1a (#707), 1b + 3 (#711), **2 (the operator/copula slice, #718)**,
 **4 (`no` + `references` drift + the condition locative, #719)**, **5 (the context
-globals `document`/`window`/`detail`, #721)**, and **6 (the `as` connective zh/hi + the
-`beep!` possessive glue+leak)** shipped. Foreign→English render validity
-**90.7 % → 97.4 % (2979/3059)**. **80 pairs across 19 patterns** remain.
+globals `document`/`window`/`detail`, #721)**, **6 (the `as` connective zh/hi + the
+`beep!` possessive glue+leak, #723)**, and **7 (three structural fixes: id `punya`
+possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-first
+with-word binding)** shipped. Foreign→English render validity
+**90.7 % → 98.0 % (2989/3059)**. **70 pairs across ~18 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 7 SHIPPED (3 commits on `fix/foreign-validity-phase7`, 10 pairs).** It
+> refuted this doc's own "no shared root cause / accept 97.4 % as the practical
+> ceiling" verdict — a batch triage harness (render+validate SEPARATELY, then cluster
+> by the true leaked token/complaint) surfaced shared clusters the per-row prose triage
+> hid. The efficient loop that found them: build the harness once, cluster, fix the
+> largest true cluster, re-run the harness for an instant all-pairs delta, then gate.
+>
+> - **id `punya` possessive (4 pairs: computed-value/if-empty/input-validation/
+>   two-way-binding).** `saya punya nilai` = "my value" rendered `my punya nilai` in
+>   every `if`/`+`/paren expression: the value-slot matcher skips the
+>   `possessive.connectors` word, but `joinExpressionTokens` (the raw-expression seam)
+>   did not. Taught it to skip the connector. No-connector path byte-identical.
+> - **focus-trap ar/tl (2 pairs).** KEY REFRAME: the parser drops a handler's
+>   `from <source>` phrase BY DESIGN — en `on keydown[..] from .modal if …` itself
+>   renders `on keydown[..] if …`. The foreign rows only differed by LEAKING the
+>   untranslated source token (`source .modal` / `من window`). Excise the
+>   `<source-marker> <value>` clause when it sits before the `<on-marker> <event>` head
+>   and re-parse. Gated to CONDITION-LED heads (`arr[0]` → `if`) so a COMMAND source
+>   (tl `alisin .active mula_sa .items kapag click`) is never touched — the looser
+>   first cut regressed exactly those 4 tests.
+> - **swap bn/hi/tr/qu (4 pairs).** `swap #a with #b`: the SOV patient-first pattern
+>   binds the trailing element (#b) to `destination`, but its group only carried the
+>   locative dest-marker — the corpus marks #b with the WITH-word (`#b से`/`#b দিয়ে`),
+>   which never matched, so #b dropped (`swap with #a`). Added the 4 missing SOV
+>   with-words to the swap `patient` markerOverride + merged that word into the
+>   trailing group's alternatives for swap. ja/ko were unaffected (no override; already
+>   valid via the coincidental instrumental で/로).
+>
+> **The arc's governing lesson held a 7th and 8th time.** Phase 7's own chosen target
+> ("event-source fix, B+C = 6 pairs, one root cause") fragmented on probing into THREE
+> separate bugs; only the leak-drop (focus-trap) shared the true root cause. And the
+> swap "one renderer role-binding bug" was actually a pattern-GENERATION marker gap,
+> split by pattern type (patient-first vs vso-verb-first). Probe the fix's PREMISE.
+
+## What Phase 7 left — 3 named structural sub-bugs (6 pairs), each measured
+
+These are NOT one root cause. Each is a distinct deeper bug, diagnosed but deferred:
+
+- **swap ar/tl (2) — vso-verb-first pattern.** Unlike the SOV patient-first langs, the
+  `swap-event-{ar,tl}-vso-verb-first` pattern puts the destination group BEFORE the
+  event, but the corpus's with-element comes AFTER it (`استبدل #a عند نقر بـ#b`,
+  `palitan_pwesto #a kapag click nang #b`). ar additionally glues `بـ#b` (bi-prefix).
+  So the Phase 7 patient-first fix does not reach them. Needs the vso-verb-first swap
+  pattern to admit a post-event with-element (+ ar `بـ`-glue tokenization).
+- **window-keydown tl/ar (2) — event-DUPLICATION.** Phase 7 drops their source leak,
+  but exposes a pre-existing bug: a condition-led VSO handler `if <cond> on <event>`
+  emits the event twice — `on keydown[key=="s"] if event.ctrlKey on keydown [key=="s"]
+  halt`. The event trigger is fronted AND left in the body. (focus-trap escapes this
+  because its condition is a `matches` expr, parsed differently.) Reproduce with the
+  bare reduced input `kung event.ctrlKey kapag keydown[key=="s"] pagkatapos huminto …`.
+- **modal-close-escape pl/uk (2) — hide `style` binding.** pl/uk register `z`/`з` as
+  BOTH `source` and `style` role markers (`polish.ts:65,67`), so `z okno` (from window)
+  binds `hide`'s `style` role → the invalid `hide .modal with window`. es/de drop the
+  clause (valid); the fix is to stop the reference `window` binding hide's literal-only
+  style role, or drop `z` from the pl/uk `style` marker. `isTypeCompatible('reference',
+  ['literal'])` is already false, so `okno` is binding as a literal/identifier, not a
+  reference — check the actual captured type before assuming the schema guard applies.
 
 > **PHASE 6 SHIPPED — and, true to this doc's own governing lesson, BOTH its fix-site
 > claims were incomplete; a probe caught each.**
@@ -72,22 +132,36 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 
 ---
 
-MISSION: Phase 7 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **97.4 % (2979/3059)**; **80 pairs across 19
-patterns** remain. Phases 2, 4, 5, and 6 are DONE. **The residual is fully triaged** — the table
-in § "What is left" was produced by rendering all pairs and clustering them by the
+MISSION: Phase 8 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **98.0 % (2989/3059)**; **70 pairs across ~18
+patterns** remain. Phases 2, 4, 5, 6, and 7 are DONE. **The residual is fully triaged** — the
+table in § "What is left" was produced by rendering all pairs and clustering them by the
 canonical parser's actual complaint, so it is measured, not estimated.
 
-**The two vocabulary/expression slices are now exhausted** (`as` and `beep!` shipped in
-Phase 6). What remains has **no shared root cause** — it is per-row structural parse damage
-plus a handful of deliberately-blocked ambiguous exclusions. The single plausibly-mechanical
-item left is **`form-submit-prevent` ar registration ORDER** (`profile.references` registers
-AFTER `keywords`, so an ar `is` entry is silently overwritten — `base-tokenizer.ts:502` vs
-`:482`); it is one code change, not vocabulary. **Do not start with `pick-text-range` (23)** —
-the spike verdict below explains why it is ~3 arcs, not one PR. The realistic Phase 7 framing
-is: either take the `form-submit-prevent` registration-order fix, or accept 97.4 % as the
-practical ceiling and pivot to the two preserved infra follow-ups (fold validity in as an R4
-ratchet signal; bake the parse-check into the `@hyperscript-tools/i18n` transpiler).
+> **EFFICIENT ITERATION — the Phase 7 engine, reuse it.** The fast inner loop is a batch
+> triage harness (`packages/testing-framework/triage.ts`, deleted after Phase 7 — recreate
+> from the § "Reproduce the triage" recipe) that renders AND validates every residual pair
+> SEPARATELY (the gate discards the render on a validate-throw), then auto-clusters by the
+> true leaked token / parser complaint. Run it (~2 s, no gate) → attack the largest true
+> cluster → re-run for an instant all-pairs delta (catches collateral clears AND
+> regressions) → only when a cluster fully clears, run the slow outer loop (populate →
+> `test:canonical` → fidelity ratchet → prune baseline → commit). This beats the per-row
+> manual probing the earlier phases used, and it is what refuted the "no shared root cause"
+> claim.
+
+**The vocabulary/expression slices are exhausted** and Phase 7 cleared the shared structural
+clusters it found (id `punya`, focus-trap event-source-leak, swap patient-first). What remains
+is: the **3 named structural sub-bugs above** (swap ar/tl vso-verb-first, window-keydown
+event-duplication, modal-close-escape hide-style-binding — 6 pairs, each a distinct deeper
+fix), the **~24 deliberately-blocked ambiguous-vocab exclusions** (th `เป็น`, hi `है`, ar `هو`,
+ja `空`, tl/tr/bn/hi/zh singles — genuinely hard, honest calls), the **23-pair
+`pick-text-range`** family (spike verdict below: ~3 arcs, not one PR), and a scatter of
+one-off per-row rows (bn `অথবা`/`এ` locative, qu/zh/hi singles). The realistic Phase 8 framing:
+either take one of the 3 named structural sub-bugs, or judge 98.0 % the practical ceiling and
+pivot to the two preserved infra follow-ups (fold validity in as an R4 ratchet signal; bake
+the parse-check into the `@hyperscript-tools/i18n` transpiler). **`form-submit-prevent` ar
+was mis-diagnosed by earlier handoffs as mechanical — it is the ar `هو`→`it` copula exclusion
+(renders `if result it false`), a genuinely-blocked ambiguity, not a registration-order win.**
 
 **Phase 5 registered `document`/`window`/`detail` in one shared Set + 20 profiles — DO NOT
 re-plan it.** It is drift reconciliation (core's `REFERENCE_KEYWORDS` and the parser's
@@ -218,13 +292,16 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (80 pairs) — MEASURED, not estimated
+## What is left (70 pairs after Phase 7) — MEASURED, not estimated
 
 Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
 complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5
 removed the `document` row (7 pairs); `window` proved structural, not data. Phase 6 removed
-the `beep!` row (5 pairs) and the zh/hi half of the `as` row (2 pairs) — leaving only th's
-copula collision on `computed-value`.
+the `beep!` row (5) and the zh/hi half of the `as` row (2). **Phase 7 removed id `punya`
+(4: computed-value/if-empty/input-validation/two-way-binding), focus-trap ar/tl (2), and swap
+bn/hi/tr/qu (4)** — 10 pairs. The table below is the PRE-Phase-7 snapshot; net-out the 10
+Phase-7 clears and the three deferred sub-bugs (swap ar/tl, window-keydown tl/ar,
+modal-close-escape pl/uk) documented at the top when reading it.
 
 | # | Family | Kind | Where |
 | --- | --- | --- | --- |

@@ -234,7 +234,28 @@ export function generateSOVPatientFirstEventHandlerPattern(
   // Optional trailing source phrase (post-verb, where the transformer
   // emits `remove X from Y`'s from-phrase in SOV output)
   tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
-  tokens.push(...eventHandlerDestinationGroup(commandSchema, profile.roleMarkers.destination));
+  // Trailing destination phrase. `swap` is the two-object exception: its second
+  // element is the WITH-marked patient content (`#b से` / `#b দিয়ে`), but the
+  // patient-first flip binds the first element to `patient`, so the trailing
+  // element must bind to `destination` — and the group therefore has to accept
+  // the language's with-word, not only the locative dest-marker. Merge the
+  // patient's with-word (schema markerOverride) into the dest-marker's
+  // alternatives for swap; otherwise `#b <with>` never matches and #b drops
+  // (hi/bn/tr/qu rendered the invalid `swap with #a`). Non-swap commands and
+  // languages without a with-override are byte-identical to before.
+  let trailingDestMarker = profile.roleMarkers.destination;
+  if (commandSchema.action === 'swap' && trailingDestMarker) {
+    const withWord = commandSchema.roles.find(r => r.role === 'patient')?.markerOverride?.[
+      profile.code
+    ];
+    if (withWord && withWord !== trailingDestMarker.primary) {
+      const existing = trailingDestMarker.alternatives ?? [];
+      if (!existing.includes(withWord)) {
+        trailingDestMarker = { ...trailingDestMarker, alternatives: [...existing, withWord] };
+      }
+    }
+  }
+  tokens.push(...eventHandlerDestinationGroup(commandSchema, trailingDestMarker));
 
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
