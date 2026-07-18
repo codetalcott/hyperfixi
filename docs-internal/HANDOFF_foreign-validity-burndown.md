@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 9 — post Phase 8 structural)
+# Handoff: foreign→English validity burndown (Phase 11 — post Phase 10)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -8,11 +8,78 @@ Paste the block below into a fresh session to continue the arc. Everything above
 globals `document`/`window`/`detail`, #721)**, **6 (the `as` connective zh/hi + the
 `beep!` possessive glue+leak, #723)**, **7 (three structural fixes: id `punya`
 possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-first
-with-word binding, #724)**, and **8 (modal-close-escape pl/uk — hide's literal-only
-`style` slot rejecting a reference)** shipped. Foreign→English render validity
-**90.7 % → 2991/3059 (≈97.8 %)**. **68 pairs across ~17 patterns** remain.
+with-word binding, #724)**, **8 (modal-close-escape pl/uk — hide's literal-only
+`style` slot rejecting a reference, #725)**, **9 (qu/ru/uk null/undefined value-literals
+the tokenizer never bound)**, and **10 (id/ko undefined value-literals + the qu
+connector-joined dot-member possessive)** shipped. Foreign→English render validity
+**90.7 % → 3000/3059 (≈98.1 %)**. **59 pairs across ~16 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 10 SHIPPED (2 commits on `fix/foreign-validity-phase9`, 5 pairs, 2995→3000).
+> The residual's own triage was wrong AGAIN — a 10th consecutive mis-filing.** Rebuilding
+> the batch harness on the current 64 surfaced two clusters this doc filed as opaque:
+>
+> - **id `tidak_terdefinisi`→`undefined` (2: behavior-removable/sortable).** Filed under
+>   "structural (no leak)"; actually the Phase-9 value-literal shape verbatim — the
+>   underscore compound shattered into tidak(→not) + `_ terdefinisi` and rendered the
+>   invalid `is not _ terdefinisi`. Whole-token EXTRAS entry; the id extractor's
+>   underscore-recovery has NO length cap (unlike qu's), so the entry alone sufficed.
+>   The registered sibling `tidakdidefinisikan` never fires — corpus authors the `_` form.
+> - **ko `정의안됨`→`undefined` (2: behavior-removable/sortable).** Filed as an opaque
+>   "ko 정" single; actually the same shape — 널→null was already registered and renders
+>   in the SAME row, only the undefined half was absent. Whole-token EXTRAS entry;
+>   4 chars fits the ko longest-first cap (6).
+> - **qu `chaypaq.error` condition-seam possessive (1: fetch-error-handling).** The
+>   Phase-7 `punya` connector-skip in `joinExpressionTokens` declines a DOT-MEMBER
+>   property (`.error` fails `isBareWordHead`), so the connector leaked glued to the
+>   member: `if it paq.error` ("Pseudo-commands must be function calls"). The value-slot
+>   matcher (`tryMatchPossessiveExpression`) accepts the `.`-selector shape and strips
+>   the dot — the put path in the SAME row already rendered `put its error into #error`.
+>   Fix: the seam now fires the possessive anchor when a skipped connector is
+>   source-adjacent to a dot-member (`its error`), gated on BOTH the connector and
+>   adjacency so the no-connector glue path (`it.prop`, valid) and spaced class
+>   selectors stay byte-identical. Guard tests in
+>   `packages/semantic/test/expression-lexicon.test.ts` (Phase 10 block).
+>
+> All three: exact-2/exact-1 corpus occurrence verified, phantom-safe. Gates: foreign
+> (CLEARED=5, ADDED=0) + en green; fidelity ratchet clean on all 8 signals; semantic
+> suite 7366; test:affected green (domain-toolkit 0-test artifact only).
+> **HARNESS FOOTGUN the recipe below does not state: `loadCanonicalParser`'s validate
+> RETURNS an error array (empty = valid) — it also throws on tokenizer-level unknown
+> tokens, so a try/catch alone misclassifies the error-array failures as VALID (38 of
+> 64 on first run). Check `validate(rendered).length === 0`, and keep the catch.**
+
+> **PHASE 9 SHIPPED (1 commit `fix/foreign-validity-phase9`, 4 pairs, 2991→2995). It took
+> a path THIS DOC DID NOT LIST — 4 clean value-literal data wins the doc mis-filed as
+> "genuinely-blocked ambiguous-vocab" / dismissed as "scatter" (ru/uk `nothing` weren't
+> even in the singles table).** The governing lesson, again: the doc's own triage of what
+> is "blocked" vs "tractable" was wrong. Register the null/undefined value-literal the
+> corpus author used in an `is null`/`is undefined` comparison — it leaked verbatim because
+> the tokenizer never bound it:
+>
+> - ru `ничего`→`null` (behavior-sortable/ru), uk `нічого`→`null` (behavior-sortable/uk) —
+>   plain-missing tokenizer EXTRAS entries; sibling `неопределено`/`невизначено`→undefined
+>   was already registered, only the null half was absent.
+> - qu `mana_riqsisqa`→`undefined` (behavior-removable/qu + behavior-sortable/qu) — the
+>   underscore compound, `mana_kanchu`/`hatun_kay` precedent. **The EXTRAS entry alone did
+>   NOTHING** (necessary-but-insufficient, like Phase 6): `quechua-keyword.ts`'s longest-first
+>   scan caps at `maxKeywordLen = 12`, but `mana_riqsisqa` is 13 chars, so its whole-token
+>   entry was never reached and it still shattered at `_` into `mana`(→false)+`_`+`riqsisqa`.
+>   Second fix: bump the cap to 13. (`mana_kanchu`=11 fit the cap, which masked the bug.)
+>
+> Each of the three words occurs in exactly ONE corpus row (verified) and `null`/`undefined`
+> are value literals not ActionTypes → phantom-safe.
+>
+> **CORRECTION to this doc's Phase-9 framing: window-keydown is NOT "lower-risk than swap."**
+> Probed its AST: the ar/tl `if-event-<lang>-vso-verb-first` fused pattern has no event-SOURCE
+> slot, and when `actionValue==='if'` the parser (`semantic-parser.ts` ~L1741) rewinds to the
+> `if` keyword and re-parses `all.slice(ifIdx)` to END — in verb-first order (`if COND
+> from-window on EVENT then BODY`) that re-swallows the already-captured `on keydown[..]` event
+> head into the condition, emitting the DUPLICATE. That rewind-fold is SHARED by
+> behavior-removable/sortable (the fused-if-event fidelity story); a fix risks the fold. Real
+> regression risk for 2 pairs. **Both remaining named structural sub-bugs (window-keydown,
+> swap) touch fidelity-critical shared paths — neither is a low-risk pick.**
 
 > **PHASE 8 SHIPPED (1 commit on `fix/foreign-validity-phase8`, 2 pairs). It took the
 > first of Phase 7's three deferred sub-bugs (modal-close-escape pl/uk) and, true to the
@@ -165,14 +232,20 @@ These are NOT one root cause. Each is a distinct deeper bug, diagnosed but defer
 
 ---
 
-MISSION: Phase 9 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **2991/3059 (≈97.8 %)**; **68 pairs across ~17
-patterns** remain. Phases 2, 4, 5, 6, 7, and 8 are DONE. **The residual is fully triaged** — the
-table in § "What is left" was produced by rendering all pairs and clustering them by the
-canonical parser's actual complaint, so it is measured, not estimated. (The prior "98.0 %"
-headline was a loose rounding of 2989/3059, which is actually 97.7 %; the ground-truth counts
-in `baselines/foreign-canonical-validity.json` — `validAtGeneration`/`checkedAtGeneration` —
-are authoritative, not the prose percentage.)
+MISSION: Phase 11 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **3000/3059 (≈98.1 %)**; **59 pairs across ~16
+patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, and 10 are DONE. **The residual is fully
+triaged** — the table in § "What is left" was produced by rendering all pairs and clustering
+them by the canonical parser's actual complaint, so it is measured, not estimated. (The
+ground-truth counts in `baselines/foreign-canonical-validity.json` —
+`validAtGeneration`/`checkedAtGeneration` — are authoritative, not the prose percentage.)
+After Phase 10 the residual is, per the fresh harness clustering: pick-text-range 23; the
+blocked-vocab throw families (th `เป็น` 6, hi `है` 5, ja `空` 2, bn 6, plus singles hi
+`नहीं`/`बदलने`, zh `没`/`执`, th `ป` — 24 total); ar `هو` copula 5; swap ar/tl 2;
+window-keydown ar/tl 2; behavior-draggable tl 1 (`walang`, also structurally degraded);
+if-exists tl/tr 2 (`may`/`var` exists-exclusions). Every named-tractable row is now shipped —
+what remains is blocked vocab, the pick family (~3 arcs), and the two risky structural
+sub-bugs.
 
 > **EFFICIENT ITERATION — the Phase 7/8 engine, reuse it.** The fast inner loop is a batch
 > triage harness (`packages/testing-framework/triage.ts`, deleted after each phase — recreate
@@ -330,7 +403,7 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (68 pairs after Phase 8) — MEASURED, not estimated
+## What is left (68 pairs after Phase 8; **59 after Phase 10** — net out behavior-removable id/ko, behavior-sortable id/ko, fetch-error-handling qu, and note the "ko `정`" single was really `정의안됨`) — MEASURED, not estimated
 
 Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
 complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5

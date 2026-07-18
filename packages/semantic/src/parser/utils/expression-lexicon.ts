@@ -549,6 +549,28 @@ export function joinExpressionTokens(
         i = propIdx;
         continue;
       }
+      // A dot-member can also carry the property when a connector intervenes:
+      // qu `chaypaq.error` = chay(→it) + paq(connector) + `.error`. The
+      // value-slot matcher accepts the `.`-selector shape (dot stripped →
+      // `its error`), but the bare-word guard above declines it, so the
+      // connector leaked glued to the member (`if it paq.error`). Source
+      // adjacency to the connector is what vouches for member access — the same
+      // rule the appender's `.`-glue uses; a spaced `.cls` stays a class
+      // selector. Gated on the connector: without one the plain `.`-glue
+      // already renders the valid `it.prop`, and this branch must not rewrite it.
+      if (
+        skipsConnector &&
+        prop &&
+        /^\.[a-zA-Z_]\w*$/.test(prop.value) &&
+        next.position?.end !== undefined &&
+        prop.position?.start !== undefined &&
+        next.position.end === prop.position.start
+      ) {
+        append(getEnglishPossessiveAdjective(reference), token);
+        append(translatePropertyName(languageCode, prop.value.slice(1)), prop);
+        i = propIdx;
+        continue;
+      }
     }
 
     // `<property> <of-marker> <selector>` → `value of #price`. Requires the

@@ -95,6 +95,12 @@ const RUSSIAN_EXTRAS: KeywordEntry[] = [
   { native: 'ложь', normalized: 'false' },
   { native: 'null', normalized: 'null' },
   { native: 'неопределено', normalized: 'undefined' },
+  // `ничего` ("nothing") is the word the corpus author uses for a null
+  // comparison (`если item есть ничего` → `if item is null`). Without it the
+  // literal leaked verbatim and the canonical parser rejected the render
+  // (behavior-sortable/ru). Its sibling `неопределено`→undefined was already
+  // registered; this closes the null half.
+  { native: 'ничего', normalized: 'null' },
 
   // Time units (not in profile - handled by number parser)
   { native: 'секунда', normalized: 's' },

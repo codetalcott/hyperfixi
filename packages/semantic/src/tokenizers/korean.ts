@@ -87,6 +87,11 @@ const KOREAN_EXTRAS: KeywordEntry[] = [
   { native: '거짓', normalized: 'false' },
   { native: '널', normalized: 'null' },
   { native: '미정의', normalized: 'undefined' },
+  // The corpus authors 정의안됨 ("not defined") for undefined (behavior-removable/
+  // sortable `만약 X 이다 정의안됨`); without a whole-token entry it shatters into
+  // 정 + 의안됨, leaking the invalid `is 정 의안됨`. Longest-first scan (cap 6)
+  // matches the 4-char compound whole, like 마우스다운 above.
+  { native: '정의안됨', normalized: 'undefined' },
 
   // Positional
   { native: '첫번째', normalized: 'first' },

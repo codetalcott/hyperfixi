@@ -91,6 +91,11 @@ const UKRAINIAN_EXTRAS: KeywordEntry[] = [
   { native: 'хибність', normalized: 'false' },
   { native: 'null', normalized: 'null' },
   { native: 'невизначено', normalized: 'undefined' },
+  // `нічого` ("nothing") is the corpus author's word for a null comparison
+  // (`якщо item є нічого` → `if item is null`); without it the literal leaked
+  // verbatim and the canonical parser rejected the render (behavior-sortable/uk).
+  // Sibling of the already-registered `невизначено`→undefined.
+  { native: 'нічого', normalized: 'null' },
 
   // Time units (not in profile - handled by number parser)
   { native: 'секунда', normalized: 's' },

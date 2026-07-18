@@ -373,3 +373,35 @@ describe('raw-expression translation is anchored, never blanket', () => {
     });
   }
 });
+
+describe('connector-joined dot-member possessive in raw expressions (Phase 10)', () => {
+  // fetch-error-handling qu: `chaypaq.error` = chay(→it) + paq(connector) +
+  // `.error`. The value-slot matcher accepts the `.`-selector as the property
+  // (put path rendered `put its error into #error`), but the raw-expression
+  // seam's bare-word guard declined it, so the connector leaked glued to the
+  // member: the condition rendered the invalid `if it paq.error`. The seam now
+  // fires the possessive anchor when a skipped connector is source-adjacent to
+  // a dot-member, matching the value-slot seam.
+  it('qu: condition `chaypaq.error` renders `if its error`, not `it paq.error`', () => {
+    const english = render(
+      parse(
+        '/api/data ta ñitiy pi apamuy json chayqa hina sichus chaypaq.error chaypaq.error ta #error man churay manachus chaypaq.data ta #result man churay tukuy',
+        'qu'
+      ),
+      'en'
+    );
+    expect(english).toContain('if its error');
+    expect(english).not.toContain('paq');
+  });
+
+  // The guard must stay adjacency-gated: a SPACED `.cls` after the same
+  // surface is a class selector in a comparison, not a member access.
+  it('qu: spaced dot token after `chay` is not rewritten into a possessive', () => {
+    const english = render(
+      parse('/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy', 'qu'),
+      'en'
+    );
+    expect(english).toContain('if it');
+    expect(english).not.toContain('if its');
+  });
+});
