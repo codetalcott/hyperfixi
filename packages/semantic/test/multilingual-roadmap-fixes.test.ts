@@ -13998,3 +13998,64 @@ describe('Foreign-validity Phase 11: th ปรับขนาด→resize (windo
     expect(/[฀-๿]/.test(out)).toBe(false);
   });
 });
+
+describe('Foreign-validity Phase 11: hi या→or + बदलने पर→changes + event-hi-when (when-multiple-changes)', () => {
+  // `जब $firstName या $lastName बदलने पर …` used to render `on बदलने put …` —
+  // event-hi-bare captured the जब token as the event name and the canonical
+  // tokenizer threw on the leaked बदलने. Three coordinated pieces: register
+  // या→or and the SPACED `बदलने पर`→changes (never bare बदलने — the stem बदल
+  // is a registered toggle-verb alternative), and add the hi member of the
+  // ja/tr/ar/he prefix-when family so the first subject becomes the event,
+  // exactly like en's event-en-when.
+  it('hi when-multiple-changes row renders byte-identical to the en reference render', () => {
+    const enOut = render(
+      parse(
+        'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
+        'en'
+      ),
+      'en'
+    );
+    const hiOut = render(
+      parse(
+        'जब $firstName या $lastName बदलने पर `${$firstName} ${$lastName}` को #full-name में रखें समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(hiOut).toBe(enOut);
+    expect(hiOut).toBe('on $firstName put `${$firstName} ${$lastName}` into #full-name');
+  });
+
+  it('hi जब-तक while/until compound never matches the when-head (repeat-while guard)', () => {
+    // event-hi-when's event role is type-constrained (reference/expression/
+    // selector), so तक declines and the repeat patterns keep the row.
+    const out = render(
+      parse(
+        'जब तक #counter.innerText < 10 को क्लिक पर दोहराएं फिर #counter को बढ़ाएं फिर प्रतीक्षा 200ms समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(out).toContain('repeat while');
+    expect(out).not.toContain('on when');
+  });
+
+  it('hi when-value-changes row shares the en reference degradation (paren-expr event)', () => {
+    // Both en and hi capture `(` as the event on this en-invalid row; hi used
+    // to diverge (`on when …`). Byte-equality with en is the fidelity target.
+    const enOut = render(
+      parse("when (#price's value * #qty's value) changes put `$${it}` into me end", 'en'),
+      'en'
+    );
+    const hiOut = render(
+      parse("जब (#price's मान * #qty's मान) बदलने पर `$${it}` को मैं में रखें समाप्त", 'hi'),
+      'en'
+    );
+    expect(hiOut).toBe(enOut);
+  });
+
+  it('hi event-adjacent or path stays byte-identical (multiple-events row)', () => {
+    const out = render(parse('.active को क्लिक या keypress[key=="Enter"] पर टॉगल', 'hi'), 'en');
+    expect(out).toBe('on click toggle .active');
+  });
+});

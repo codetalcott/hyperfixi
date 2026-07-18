@@ -1112,6 +1112,28 @@ function getEventHandlerPatternsHi(): LanguagePattern[] {
         event: { marker: 'से', position: 2 },
       },
     },
+    // Prefix reactive `when` — the hi member of the ja/tr/ar/he when-family
+    // below (`जब $firstName या $lastName बदलने पर …`). Without it,
+    // `event-hi-bare` captured the जब token itself as the event (render
+    // `on when put …`) and dropped the subject list; en's `event-en-when`
+    // captures the first subject as the event. The event role is
+    // type-constrained so the `जब तक` while/until compound (repeat-while,
+    // unless-condition) never matches — तक lexes as a keyword/literal and
+    // declines, falling through to the repeat patterns unchanged.
+    {
+      id: 'event-hi-when',
+      language: 'hi',
+      command: 'on',
+      priority: 95,
+      template: {
+        format: 'जब {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'जब' },
+          { type: 'role', role: 'event', expectedTypes: ['reference', 'expression', 'selector'] },
+        ],
+      },
+      extraction: { event: { position: 1 } },
+    },
     // Bare event name: क्लिक
     {
       id: 'event-hi-bare',
