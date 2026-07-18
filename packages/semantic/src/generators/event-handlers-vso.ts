@@ -146,6 +146,33 @@ export function generateVSOVerbFirstEventHandlerPattern(
   // Event role at end
   tokens.push({ type: 'role', role: 'event', optional: false });
 
+  // `swap` two-object exception — the VSO twin of the SOV patient-first merge
+  // in generateSOVPatientFirstEventHandlerPattern: the corpus puts the
+  // WITH-marked second element AFTER the event (`استبدل #a عند نقر بـ#b`,
+  // `palitan_pwesto #a kapag click nang #b`), where verb-first patterns had no
+  // slot, so `بـ#b`/`nang #b` dropped as unconsumed and the render collapsed
+  // to the invalid `swap with #a`. Admit an optional trailing
+  // `<with-word> {destination}` group (with-word from swap's patient
+  // markerOverride; binding the trailing element to `destination` mirrors the
+  // SOV fix — the operand flip vs en is the documented F6 wontfix, swap being
+  // runtime-symmetric). Non-swap commands and languages without an override
+  // are byte-identical.
+  if (commandSchema.action === 'swap') {
+    const withWord = commandSchema.roles.find(r => r.role === 'patient')?.markerOverride?.[
+      profile.code
+    ];
+    if (withWord) {
+      tokens.push({
+        type: 'group',
+        optional: true,
+        tokens: [
+          { type: 'literal', value: withWord },
+          { type: 'role', role: 'destination', optional: false },
+        ],
+      });
+    }
+  }
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-verb-first`,
     language: profile.code,

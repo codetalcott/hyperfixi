@@ -2957,6 +2957,23 @@ describe('append/swap dict keyword alignment (B2a)', () => {
       expect(a.has('toggle')).toBe(false);
     });
   }
+
+  // Phase 11b: the vso-verb-first swap trailing group binds BOTH elements —
+  // #a→patient (pre-event) and the post-event with-element #b→destination
+  // (the F6-tolerated operand flip, matching the SOV languages). Before the
+  // fix, `بـ#b`/`nang #b` dropped as unconsumed and rendered `swap with #a`.
+  const swapBothCases: Array<[string, string]> = [
+    ['ar', 'استبدل #a عند نقر بـ#b'],
+    ['tl', 'palitan_pwesto #a kapag click nang #b'],
+  ];
+  for (const [lang, input] of swapBothCases) {
+    it(`[${lang}] swap-content binds both elements and renders both selectors`, () => {
+      const out = render(parse(input, lang as 'ar'), 'en');
+      expect(out).toContain('#a');
+      expect(out).toContain('#b');
+      expect(out).toContain('swap');
+    });
+  }
 });
 
 describe('ru/uk scroll command verb + positional query (last-in-collection)', () => {
