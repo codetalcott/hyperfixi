@@ -458,3 +458,41 @@ describe('Phase 11: possessive + source-adjacent dot-member, no connector (bn �
     expect(out).toContain('its error');
   });
 });
+
+describe('Phase 11: bn শেষ positional-head dual (focus-trap, last-in-collection)', () => {
+  // bn `শেষ` is registered as `end` (block terminator), so positional runs it
+  // heads (`শেষ <button/> এ .modal` = "last <button/> in .modal") failed the
+  // recognizer and leaked the locative particle. The dual maps the surface to
+  // `last` ONLY inside matchPositionalRun and only before an angle-bracket
+  // element query — behavior-sortable's block-end শেষ adjacent to the next
+  // clause's bare `.{dragClass}` must never mint a phantom `last`.
+  it('bn last-in-collection row renders byte-identical to en', () => {
+    const out = render(parse('ক্লিক এ স্ক্রোল শেষ <.message/> এ #chat তে', 'bn'), 'en');
+    expect(out).toBe('on click scroll to last <.message/> in #chat');
+  });
+
+  it('bn focus-trap condition folds both positional runs', () => {
+    const out = render(
+      parse(
+        'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toContain('matches last <button/> in .modal');
+    expect(out).toContain('focus first <button/> in .modal');
+    expect(/[ঀ-৿]/.test(out)).toBe(false);
+  });
+
+  it('bn block-end শেষ before a bare class selector never becomes `last`', () => {
+    const out = render(
+      parse(
+        'Sortable(dragClass) কে আচরণ\n    pointerdown(clientY) এ আমি থেকে\n        পর্যন্ত ঘটনা pointerup কে পুনরাবৃত্তি document থেকে\n            sortable:move কে ট্রিগার আমি তে\n        শেষ\n        .{dragClass} কে সরান item থেকে\n    শেষ\nশেষ',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toContain('remove .{dragClass} from item');
+    expect(out).not.toContain('last .{dragClass}');
+  });
+});

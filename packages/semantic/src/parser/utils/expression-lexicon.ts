@@ -259,6 +259,24 @@ export const POSITIONAL_KEYWORDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Positional heads whose SURFACE doubles as another sense in the profile, so
+ * the tokenizer normalizes them away from the positional: bn `শেষ` is
+ * registered as `end` (every block terminator) but heads positional runs as
+ * `last` — `শেষ <button/> এ .modal` = "last <button/> in .modal" (focus-trap,
+ * last-in-collection). Consulted by surface and ONLY inside
+ * {@link matchPositionalRun}, and only when the following selector is an
+ * ANGLE-BRACKET element query (`<button/>`, `<.message/>`): a bare `.`-class
+ * after the head is not enough — behavior-sortable's repeat body captures the
+ * block-end `শেষ` adjacent to the next clause's `.{dragClass}` patient, and an
+ * unrestricted dual minted a phantom `last` there (`remove last .{dragClass}`,
+ * valid but silently wrong). The corpus's positional collection queries all
+ * author the element-query form, so the gate costs nothing.
+ */
+const POSITIONAL_HEAD_DUALS: Record<string, Record<string, string>> = {
+  bn: { শেষ: 'last' },
+};
+
+/**
  * Normalized command-action keywords (the schema registry's action names).
  * Tokenizers normalize every language's command verbs to these forms, so the set
  * is language-independent. Used to keep a positional source clause from consuming
@@ -314,7 +332,16 @@ export function matchPositionalRun(
   if (!head) return null;
 
   const norm = (head.normalized ?? head.value).toLowerCase();
-  if (!POSITIONAL_KEYWORDS.has(norm) && !POSITIONAL_KEYWORDS.has(head.value.toLowerCase())) {
+  const dualNext = tokens[start + 1];
+  const dualHead =
+    profile?.code && dualNext?.kind === 'selector' && dualNext.value.startsWith('<')
+      ? POSITIONAL_HEAD_DUALS[profile.code]?.[head.value.toLowerCase()]
+      : undefined;
+  if (
+    !POSITIONAL_KEYWORDS.has(norm) &&
+    !POSITIONAL_KEYWORDS.has(head.value.toLowerCase()) &&
+    dualHead === undefined
+  ) {
     return null;
   }
 
@@ -323,7 +350,9 @@ export function matchPositionalRun(
   // normalized English form — a source-language keyword (`cercano`, `次`,
   // `التالي`) is unevaluable as-is and the runtime either errors, drops to `me`,
   // or matches every element.
-  const parts: PositionalRunPart[] = [{ text: head.normalized ?? head.value, token: head }];
+  const parts: PositionalRunPart[] = [
+    { text: dualHead ?? head.normalized ?? head.value, token: head },
+  ];
   let i = start + 1;
 
   // Required: the queried selector (e.g. <.message/>, .message, <button/>).
