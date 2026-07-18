@@ -14059,3 +14059,38 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
     expect(out).toBe('on click toggle .active');
   });
 });
+
+describe('Foreign-validity Phase 11: window-keydown fused-if event excision (ar/tl vso-verb-first)', () => {
+  // The condition-led VSO handler `if <cond> on <event> then <body>` matches the
+  // fused if-event-{ar,tl}-vso-verb-first pattern (event captured), then the
+  // actionValue==='if' rewind-fold re-parses all.slice(ifIdx) — which for
+  // verb-first still CONTAINS the on-marker + event — re-swallowing it into the
+  // conditional and rendering the event TWICE. The excision drops marker +
+  // event + `[filter]` from the fold slice; event-first shapes put the event
+  // before ifIdx, so they are byte-identical.
+  const cases: Array<[string, string]> = [
+    [
+      'tl',
+      'kung event.ctrlKey kapag keydown[key=="s"] pagkatapos huminto tawagin saveDocument() wakas',
+    ],
+    ['ar', 'إذا event.ctrlKey عند keydown[key=="s"] ثم أوقف استدع saveDocument() النهاية'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] condition-led handler renders exactly ONE on-keydown head`, () => {
+      const out = render(parse(input, lang), 'en');
+      expect(out.match(/on keydown/g)).toHaveLength(1);
+      expect(out).toContain('if event.ctrlKey');
+      expect(out).toContain('halt');
+      expect(out).toContain('call saveDocument()');
+    });
+  }
+
+  it('en window-keydown reference shape is the convergence target', () => {
+    const en = render(
+      parse('on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument()', 'en'),
+      'en'
+    );
+    const tl = render(parse(cases[0][1], 'tl'), 'en');
+    expect(tl).toBe(en);
+  });
+});

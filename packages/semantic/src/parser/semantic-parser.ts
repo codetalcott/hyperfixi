@@ -1753,7 +1753,43 @@ export class SemanticParserImpl implements ISemanticParser {
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')
           .sort((a, b) => b.priority - a.priority);
-        const bodyStream = new TokenStreamImpl(all.slice(ifIdx), language);
+        // Verb-first fused patterns put the event AFTER the `if` keyword, so the
+        // fold slice still contains the already-captured event head — the
+        // re-parse swallows it into the conditional and the handler's event
+        // renders TWICE (`on keydown[..] if event.ctrlKey on keydown [..] halt`,
+        // window-keydown ar/tl). Excise the on-marker + event token (+ the
+        // following `[filter]` selector — the captured event value carries the
+        // filter, the stream splits it off) before folding. The marker is
+        // REQUIRED so a body-text occurrence of the event word is never excised;
+        // event-first shapes (behavior-removable/sortable) put the event BEFORE
+        // ifIdx, so the search misses and the slice is byte-identical.
+        let foldTokens = all.slice(ifIdx);
+        if (match.pattern.id.endsWith('vso-verb-first') && resolvedEventValue.type === 'literal') {
+          const eventHead = String(resolvedEventValue.value ?? '')
+            .split('[')[0]
+            .trim()
+            .toLowerCase();
+          const evIdx = foldTokens.findIndex((t, k) => {
+            if (k === 0 || eventHead === '') return false;
+            const tv = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
+            const prev = foldTokens[k - 1] as { kind?: string; normalized?: string };
+            return (
+              tv === eventHead &&
+              prev.kind === 'keyword' &&
+              (prev.normalized ?? '').toLowerCase() === 'on'
+            );
+          });
+          if (evIdx > 0) {
+            const filter = foldTokens[evIdx + 1];
+            const filterLen =
+              filter && filter.kind === 'selector' && filter.value.startsWith('[') ? 1 : 0;
+            foldTokens = [
+              ...foldTokens.slice(0, evIdx - 1),
+              ...foldTokens.slice(evIdx + 1 + filterLen),
+            ];
+          }
+        }
+        const bodyStream = new TokenStreamImpl(foldTokens, language);
         const foldCoverageMark = this.coverageMark();
         const folded = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
         // A conditional folded if it sits at the top level (body is the single
