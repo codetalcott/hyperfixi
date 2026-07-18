@@ -57,8 +57,14 @@ async function main() {
   doc.checkedAtGeneration = result.checked;
   doc.validAtGeneration = result.valid;
   doc.allowedInvalid = grouped;
-  writeFileSync(baselinePath, JSON.stringify(doc, null, 2) + '\n', 'utf8');
-  console.log(`\nWrote ${baselinePath}`);
+  // Write through prettier so the diff shows only the real pair changes —
+  // raw JSON.stringify explodes the single-line language arrays, burying them.
+  const prettier = await import('prettier');
+  const raw = JSON.stringify(doc, null, 2) + '\n';
+  const config = await prettier.resolveConfig(baselinePath);
+  const formatted = await prettier.format(raw, { ...config, filepath: baselinePath });
+  writeFileSync(baselinePath, formatted, 'utf8');
+  console.log(`\nWrote ${baselinePath} (prettier-formatted)`);
 }
 
 main().catch(e => {

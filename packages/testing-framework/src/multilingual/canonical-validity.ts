@@ -13,10 +13,12 @@
  * renderer. Denominator = inputs the canonical parser already accepts, so a few
  * inherently non-canonical corpus rows never distort the signal.
  *
- * Follow-up (see HANDOFF_semantic-roundtrip-validity.md § Recommendation):
- * fold this as an R4 canonical-validity signal into `multilingual/cli.ts`'s
- * `--regression` gate, and bake the same parse-check into the build-time
- * `@hyperscript-tools/i18n` transpiler so every emitted output is parser-gated.
+ * The FOREIGN-side sibling (foreign-canonical-validity.ts) is folded into
+ * `multilingual/cli.ts`'s `--regression` gate as the R4 canonical-validity
+ * ratchet. This en-side check remains vitest-only (its allowlist holds exactly
+ * one entry, pick-text-range). Remaining follow-up: bake the same parse-check
+ * into the build-time `@hyperscript-tools/i18n` transpiler so every emitted
+ * output is parser-gated.
  */
 
 import { createRequire } from 'node:module';
@@ -25,7 +27,16 @@ import path from 'node:path';
 import { getAllPatterns } from '@hyperfixi/patterns-reference';
 import { parseSemantic, render } from '@lokascript/semantic';
 
-/** Parse `src` on the canonical engine; returns the list of error messages (empty = valid). */
+/**
+ * Parse `src` on the canonical engine; returns the list of error messages
+ * (empty = valid). NEVER throws — this is the whole contract. The canonical
+ * engine has two failure channels (`parse().errors` collects grammar errors,
+ * but the TOKENIZER throws on an unknown character, e.g. a leaked Thai
+ * surface → `Unknown token: เ`), and the split channel misclassified 38/64
+ * residual pairs as valid in a try/catch-only harness before it was folded
+ * into this single array here. Check `.length === 0`; do not wrap in try/catch
+ * expecting invalidity to throw.
+ */
 export type CanonicalValidate = (src: string) => string[];
 
 export interface CanonicalValidityFailure {
@@ -47,15 +58,24 @@ export interface CanonicalValidityResult {
 /**
  * Load the real `hyperscript.org` parser headlessly — resolve the package, then
  * import the sibling prebuilt `_hyperscript.esm.js` by file URL (no DOM shim
- * needed for parsing). `hs.parse(src).errors` COLLECTS errors, it does not throw
- * (except the `js` command's `new Function`, which we don't exercise here).
+ * needed for parsing). `hs.parse(src).errors` collects GRAMMAR errors without
+ * throwing, but the engine still THROWS from the tokenizer on an unknown
+ * character (`Unknown token: <char>` — how a leaked non-ASCII surface presents)
+ * and from the `js` command's `new Function`. Both channels are folded into the
+ * one returned array so callers have a single contract (see CanonicalValidate).
  */
 export async function loadCanonicalParser(): Promise<CanonicalValidate> {
   const require = createRequire(import.meta.url);
   const dir = path.dirname(require.resolve('hyperscript.org')); // …/hyperscript.org/dist
   const esm = path.join(dir, '_hyperscript.esm.js');
   const hs = (await import(pathToFileURL(esm).href)).default;
-  return (src: string) => (hs.parse(src)?.errors ?? []).map((e: { message: string }) => e.message);
+  return (src: string) => {
+    try {
+      return (hs.parse(src)?.errors ?? []).map((e: { message: string }) => e.message);
+    } catch (e) {
+      return ['threw: ' + (e as Error).message.split('\n')[0]];
+    }
+  };
 }
 
 function firstCommand(src: string): string {
