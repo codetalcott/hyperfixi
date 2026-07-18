@@ -526,11 +526,29 @@ export function joinExpressionTokens(
     const reference = profile ? possessiveReferenceOf(profile, token) : undefined;
 
     const next = tokens[i + 1];
-    if (reference !== undefined && next && isPropertyHeadCandidate(next, languageCode)) {
-      append(getEnglishPossessiveAdjective(reference), token);
-      append(translatePropertyName(languageCode, next.value), next);
-      i++;
-      continue;
+    if (reference !== undefined && next) {
+      // A possessor may be separated from its property by a CONNECTOR: id
+      // `saya punya nilai` = "I have value" = "my value" (`punya` = "have/own").
+      // The value-slot matcher (`tryMatchPossessiveExpression`) already skips the
+      // connector via `profile.possessive.connectors`; this seam must too, or the
+      // connector is read as the property head and the real property leaks
+      // (`saya punya nilai` → `my punya nilai` in every id `if`/`+`/paren
+      // expression). No connector → `propIdx` is `i + 1`, byte-identical to before.
+      const connectors = profile?.possessive?.connectors;
+      const skipsConnector =
+        !!connectors?.length &&
+        connectors.some(c => {
+          const cl = c.toLowerCase();
+          return cl === next.value.toLowerCase() || cl === (next.normalized ?? '').toLowerCase();
+        });
+      const propIdx = skipsConnector ? i + 2 : i + 1;
+      const prop = tokens[propIdx];
+      if (prop && isPropertyHeadCandidate(prop, languageCode)) {
+        append(getEnglishPossessiveAdjective(reference), token);
+        append(translatePropertyName(languageCode, prop.value), prop);
+        i = propIdx;
+        continue;
+      }
     }
 
     // `<property> <of-marker> <selector>` → `value of #price`. Requires the
