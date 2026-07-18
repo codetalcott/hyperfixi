@@ -13,7 +13,9 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { dirname, join, basename, extname, resolve } from 'node:path';
-import { translateHtml } from './html.js';
+import { translateHtml, checkHtmlInput } from './html.js';
+import { loadValidator, formatParseCheckReport } from './validate.js';
+import type { CanonicalValidate, ParseCheckReport } from './validate.js';
 
 interface Args {
   command: 'translate' | 'help';
@@ -22,6 +24,7 @@ interface Args {
   from: string;
   out: string;
   strict: boolean;
+  check: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -32,6 +35,7 @@ function parseArgs(argv: string[]): Args {
     from: 'en',
     out: '.',
     strict: false,
+    check: false,
   };
 
   if (argv.length === 0 || argv[0] === '--help' || argv[0] === '-h') return args;
@@ -52,6 +56,8 @@ function parseArgs(argv: string[]): Args {
       args.from = argv[++i] ?? 'en';
     } else if (a === '--strict') {
       args.strict = true;
+    } else if (a === '--check') {
+      args.check = true;
     } else if (a.startsWith('-')) {
       throw new Error(`Unknown flag: ${a}`);
     } else {
@@ -85,7 +91,7 @@ function printHelp(): void {
   console.log(`hyperscript-i18n — translate _="..." attributes in HTML
 
 Usage:
-  hyperscript-i18n translate <input> [<input> ...] --langs <codes> --out <dir> [--from <code>] [--strict]
+  hyperscript-i18n translate <input> [<input> ...] --langs <codes> --out <dir> [--from <code>] [--strict] [--check]
 
 Options:
   --langs, -l   Comma-separated target language codes (e.g. ja,es,ko).
@@ -93,9 +99,19 @@ Options:
   --from, -f    Source locale of the input. Defaults to 'en'.
   --strict      Fail the run if any single attribute fails to translate.
                 Default is lenient: untranslatable snippets are left in place.
+  --check       Validate the ENGLISH hyperscript on the real hyperscript.org
+                parser (input when --from en; output when a target is en) and
+                exit 3 if any attribute is invalid. Without --check, invalid
+                attributes only print a warning.
 
 Output:
   For each input file foo.html and each lang, writes <out>/foo.<lang>.html.
+
+Exit codes:
+  0  success
+  1  no HTML inputs matched, or --check requested but the parser failed to load
+  2  usage error (bad flags / missing --langs / no inputs)
+  3  --check found invalid hyperscript
 
 Example:
   hyperscript-i18n translate src/patterns.html --langs ja,es,ko --out dist/
@@ -133,14 +149,51 @@ export async function run(argv: string[]): Promise<number> {
 
   mkdirSync(args.out, { recursive: true });
 
+  // Warn is the default, so the validator is always needed unless it fails to
+  // load. A load failure is fatal only under --check; otherwise checks quietly
+  // disable and the run proceeds.
+  let validate: CanonicalValidate | undefined;
+  try {
+    validate = await loadValidator();
+  } catch (err) {
+    const msg = (err as Error).message;
+    if (args.check) {
+      console.error(`--check requested but the canonical parser failed to load: ${msg}`);
+      return 1;
+    }
+    console.warn(`parse-check disabled (could not load hyperscript.org): ${msg}`);
+  }
+
+  const failures: Array<ParseCheckReport & { file: string }> = [];
+  const printedCodes = new Set<string>(); // suppress identical-code warn spam across files/langs
+  const recorderFor =
+    (file: string) =>
+    (report: ParseCheckReport): void => {
+      failures.push({ file, ...report });
+      if (!printedCodes.has(report.code)) {
+        printedCodes.add(report.code);
+        console.warn(`${file}: ${formatParseCheckReport(report)}`);
+      }
+    };
+
   let written = 0;
   for (const file of files) {
     const html = readFileSync(file, 'utf8');
     const stem = basename(file, extname(file));
+    const onInvalid = recorderFor(file);
+
+    // Input check runs ONCE per file (not per lang).
+    if (validate && args.from === 'en') {
+      for (const report of checkHtmlInput(html, validate)) onInvalid(report);
+    }
+
     for (const lang of args.langs) {
       const translated = translateHtml(html, lang, {
         from: args.from,
         lenient: !args.strict,
+        validate, // still drives the OUTPUT check when lang === 'en'
+        checkInput: false, // input already checked once above
+        onInvalid,
       });
       const outPath = join(args.out, `${stem}.${lang}.html`);
       mkdirSync(dirname(outPath), { recursive: true });
@@ -152,6 +205,19 @@ export async function run(argv: string[]): Promise<number> {
   console.log(
     `Wrote ${written} files (${files.length} input × ${args.langs.length} langs) to ${args.out}`
   );
+
+  if (args.check && failures.length > 0) {
+    const fileCount = new Set(failures.map(f => f.file)).size;
+    console.error(
+      `\nParse-check failed: ${failures.length} invalid hyperscript attribute(s) in ${fileCount} file(s):`
+    );
+    for (const f of failures) {
+      console.error(
+        `  ${f.file} [${f.stage}]: ${formatParseCheckReport(f).split('\n').join('\n  ')}`
+      );
+    }
+    return 3;
+  }
   return 0;
 }
 

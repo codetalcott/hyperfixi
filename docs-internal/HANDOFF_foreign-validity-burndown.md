@@ -337,8 +337,10 @@ For the first time in the arc there is NO mis-filed-tractable tail left to probe
 Phase 11 drained it (its four re-filings — th resize "structural", bn `এ` "dict realign",
 zh `执行` "opaque", bn `অথবা` "?" — were the 11th–14th consecutive mis-filings). The
 realistic Phase 12 menu: (a) swap ar/tl in its own PR (design in § "What Phase 11 left"),
-(b) the pick-text-range family (~3 arcs, spike verdict below), (c) the remaining infra
-follow-up (bake the parse-check into the `@hyperscript-tools/i18n` transpiler), or
+(b) the pick-text-range family (~3 arcs, spike verdict below), ~~(c) the remaining infra
+follow-up (bake the parse-check into the `@hyperscript-tools/i18n` transpiler)~~ —
+**DONE for the English side** (`src/validate.ts`, CLI `--check`, Eleventy `parseCheck`;
+foreign-output gating still awaits the v2 semantic transpiler), or
 (d) slot-aware disambiguation research for the blocked copula/exists families — the only
 thing that would move the 24 blocked pairs, and genuinely hard.
 
@@ -370,8 +372,12 @@ probe also REFUTED the "registration ORDER makes ar `is` structurally impossible
 claim: EXTRAS run LAST and override profile entries (`base-tokenizer.ts` ~L553), so
 order is no barrier — but the pair stays blocked on the genuine it/is ambiguity
 (`إذا هو هو "cancel"` = "if it is cancel" — both senses adjacent on one line).**
-Of the two infra follow-ups, R4 is DONE (#727); the remaining one is baking the
-parse-check into the `@hyperscript-tools/i18n` transpiler (roadmap §5).
+Of the two infra follow-ups, R4 is DONE (#727); the second — baking the parse-check
+into the `@hyperscript-tools/i18n` transpiler (roadmap §5) — is DONE for the ENGLISH
+side (`packages/hyperscript-tools-i18n/src/validate.ts` reuses the `loadCanonicalParser`
+recipe; CLI `--check` exits 3, Eleventy `parseCheck: 'off'|'warn'|'error'`, `./validate`
+API). Faithful foreign-OUTPUT gating there still awaits the v2 semantic transpiler (the
+i18n GrammarTransformer's `toEnglish` is the known-weak 8/30 round-trip path).
 
 **Phase 5 registered `document`/`window`/`detail` in one shared Set + 20 profiles — DO NOT
 re-plan it.** It is drift reconciliation (core's `REFERENCE_KEYWORDS` and the parser's
@@ -692,8 +698,13 @@ sole entry in `baselines/canonical-validity.json`.
   against the committed allowlist as the R4 ratchet (new invalid pair OR stale
   allowlist entry both fail; full mode only). The en-side check remains vitest-only
   (its allowlist holds exactly 1 entry, pick-text-range).
-- **Bake the parse-check into the build-time `@hyperscript-tools/i18n` transpiler**
-  (roadmap §5).
+- ~~**Bake the parse-check into the build-time `@hyperscript-tools/i18n` transpiler**
+  (roadmap §5)~~ — **DONE for the English side**: `packages/hyperscript-tools-i18n/src/validate.ts`
+  reuses the `loadCanonicalParser` recipe (self-contained: node builtins + `hyperscript.org`,
+  extraction-ready) to gate the ENGLISH input (`from === 'en'`) and foreign→English output
+  (`to === 'en'`). Surfaces: CLI `--check` (exit 3), Eleventy `parseCheck: 'off'|'warn'|'error'`
+  (default warn), `@hyperscript-tools/i18n/validate` API. Faithful foreign-OUTPUT gating still
+  awaits the v2 semantic-engine transpiler (the i18n GrammarTransformer is lossy in reverse).
 
 ## Probe recipe
 

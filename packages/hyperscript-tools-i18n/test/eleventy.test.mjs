@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import hyperscriptI18nPlugin from '../dist/eleventy.js';
+import { __resetParseCheckWarnings } from '../dist/validate.js';
 
 function fakeConfig() {
   const filters = new Map();
@@ -92,4 +93,60 @@ test('plugin honors defaultFrom override', () => {
   // With defaultFrom='es', translating to 'es' is a no-op
   const out = fn('alternar .active', 'es');
   assert.equal(out, 'alternar .active');
+});
+
+// --- parse-check integration (await the plugin so the validator is loaded) ---
+
+const INVALID = 'on click qqqq zzzz';
+
+test('parseCheck warn: invalid English input warns but still returns a result', async () => {
+  __resetParseCheckWarnings();
+  const cfg = fakeConfig();
+  await hyperscriptI18nPlugin(cfg); // default parseCheck: 'warn'
+  const fn = cfg._filters.get('translateHs');
+  const original = console.warn;
+  let warned = 0;
+  console.warn = () => {
+    warned++;
+  };
+  let out;
+  try {
+    out = fn(INVALID, 'es');
+  } finally {
+    console.warn = original;
+  }
+  assert.equal(warned, 1);
+  assert.notEqual(out, undefined);
+});
+
+test('parseCheck error: filter throws on invalid, not on valid', async () => {
+  const cfg = fakeConfig();
+  await hyperscriptI18nPlugin(cfg, { parseCheck: 'error' });
+  const fn = cfg._filters.get('translateHs');
+  assert.throws(() => fn(INVALID, 'es'), /invalid hyperscript/);
+  assert.doesNotThrow(() => fn('toggle .active', 'es'));
+});
+
+test('parseCheck off: no warning on invalid input', async () => {
+  const cfg = fakeConfig();
+  await hyperscriptI18nPlugin(cfg, { parseCheck: 'off' });
+  const fn = cfg._filters.get('translateHs');
+  const original = console.warn;
+  let warned = 0;
+  console.warn = () => {
+    warned++;
+  };
+  try {
+    fn(INVALID, 'es');
+  } finally {
+    console.warn = original;
+  }
+  assert.equal(warned, 0);
+});
+
+test('translateHsAll with parseCheck error throws on invalid English input', async () => {
+  const cfg = fakeConfig();
+  await hyperscriptI18nPlugin(cfg, { parseCheck: 'error' });
+  const fn = cfg._filters.get('translateHsAll');
+  assert.throws(() => fn(INVALID, ['es', 'ja']), /invalid hyperscript/);
 });

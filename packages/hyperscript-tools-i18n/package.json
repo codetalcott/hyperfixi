@@ -19,11 +19,15 @@
     },
     "./cli": {
       "default": "./dist/cli.js"
+    },
+    "./validate": {
+      "types": "./dist/validate.d.ts",
+      "import": "./dist/validate.js"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/cli.ts src/eleventy.ts --format esm --dts --clean",
-    "dev": "tsup src/index.ts src/cli.ts src/eleventy.ts --format esm --dts --watch",
+    "build": "tsup src/index.ts src/cli.ts src/eleventy.ts src/validate.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts src/cli.ts src/eleventy.ts src/validate.ts --format esm --dts --watch",
     "typecheck": "tsc --noEmit",
     "pretest": "../../scripts/ensure-fresh.sh ../i18n . && npm run build --silent",
     "test": "node --test test/*.test.mjs",
@@ -44,7 +48,8 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/i18n": "^2.7.2"
+    "@lokascript/i18n": "^2.7.2",
+    "hyperscript.org": "^0.9.93"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

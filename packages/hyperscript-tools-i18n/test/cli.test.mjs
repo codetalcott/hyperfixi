@@ -16,6 +16,7 @@ async function withTempDir(fn) {
 }
 
 const SAMPLE_HTML = '<button _="on click toggle .active on me">go</button>';
+const INVALID_HTML = '<button _="on click qqqq zzzz">go</button>';
 
 test('translate command writes one file per lang', async () => {
   await withTempDir(async dir => {
@@ -107,5 +108,57 @@ test('--from changes source locale', async () => {
     const out = readFileSync(join(dir, 'es.en.html'), 'utf8');
     // English keywords expected somewhere in the translated body.
     assert.match(out, /toggle|click|active/i);
+  });
+});
+
+test('invalid English without --check still exits 0 and writes files', async () => {
+  await withTempDir(async dir => {
+    const input = join(dir, 'bad.html');
+    const out = join(dir, 'out');
+    writeFileSync(input, INVALID_HTML);
+    const code = await run(['translate', input, '--langs', 'es,ja', '--out', out]);
+    assert.equal(code, 0);
+    assert.deepEqual(readdirSync(out).sort(), ['bad.es.html', 'bad.ja.html']);
+  });
+});
+
+test('invalid English with --check exits 3 but still writes files', async () => {
+  await withTempDir(async dir => {
+    const input = join(dir, 'bad.html');
+    const out = join(dir, 'out');
+    writeFileSync(input, INVALID_HTML);
+    const code = await run(['translate', input, '--langs', 'es', '--out', out, '--check']);
+    assert.equal(code, 3);
+    assert.deepEqual(readdirSync(out).sort(), ['bad.es.html']);
+  });
+});
+
+test('valid English with --check exits 0', async () => {
+  await withTempDir(async dir => {
+    const input = join(dir, 'good.html');
+    const out = join(dir, 'out');
+    writeFileSync(input, SAMPLE_HTML);
+    const code = await run(['translate', input, '--langs', 'es', '--out', out, '--check']);
+    assert.equal(code, 0);
+  });
+});
+
+test('--check processes all files before failing', async () => {
+  await withTempDir(async dir => {
+    const out = join(dir, 'out');
+    writeFileSync(join(dir, 'a.html'), INVALID_HTML);
+    writeFileSync(join(dir, 'b.html'), INVALID_HTML);
+    const code = await run([
+      'translate',
+      join(dir, 'a.html'),
+      join(dir, 'b.html'),
+      '--langs',
+      'es',
+      '--out',
+      out,
+      '--check',
+    ]);
+    assert.equal(code, 3);
+    assert.deepEqual(readdirSync(out).sort(), ['a.es.html', 'b.es.html']);
   });
 });

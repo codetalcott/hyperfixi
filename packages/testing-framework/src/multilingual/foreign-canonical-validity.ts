@@ -4,9 +4,11 @@
  * The sibling en-render gate (canonical-validity.ts) renders every corpus English
  * reference and parses it on the real `hyperscript.org` engine. But the PRODUCTION
  * path is foreign→English: an authored non-English source is parsed and rendered to
- * English (`preprocessToEnglish` → `render`, and the roadmap's build-time
- * `@hyperscript-tools/i18n` transpiler). A parse can be role-faithful (the fidelity
- * ratchet scores ~1.0) yet still render English the canonical parser rejects.
+ * English (`preprocessToEnglish` → `render`). A parse can be role-faithful (the
+ * fidelity ratchet scores ~1.0) yet still render English the canonical parser rejects.
+ * (The build-time `@hyperscript-tools/i18n` transpiler now parse-gates its ENGLISH
+ * side with the same loader recipe; faithful foreign-output gating there still awaits
+ * the v2 semantic-engine transpiler, since its GrammarTransformer is lossy in reverse.)
  *
  * This gate closes that blind spot for the multilingual path: for every language, it
  * renders each authored `pattern_translation` to English and parses the result on

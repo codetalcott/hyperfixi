@@ -8,5 +8,13 @@
 
 export { translate, toLocale, toEnglish, GrammarTransformer } from '@lokascript/i18n';
 
-export { translateHtml, translateHtmlToManyLangs } from './html.js';
-export type { LangCode, TranslateHtmlOptions } from './html.js';
+export {
+  translateHtml,
+  translateHtmlToManyLangs,
+  extractHyperscriptAttributes,
+  checkHtmlInput,
+} from './html.js';
+export type { LangCode, TranslateHtmlOptions, OnInvalid } from './html.js';
+
+export { loadValidator, validateHyperscript, formatParseCheckReport } from './validate.js';
+export type { CanonicalValidate, ParseCheckReport } from './validate.js';
