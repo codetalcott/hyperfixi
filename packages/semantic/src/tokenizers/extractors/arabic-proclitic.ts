@@ -190,6 +190,36 @@ export class ArabicProcliticExtractor implements ContextAwareExtractor {
     // Require at least 2 characters after proclitic to avoid false positives
     // (e.g., وو could be a typo, and short roots need protection)
     if (remainingLength < 2) {
+      // EXCEPTION: preposition proclitic + tatweel glued to a `#`/`.` selector —
+      // the corpus authors `بـ#b` ("with #b", swap-content ar). The Arabic run
+      // after the proclitic is the tatweel connector ONLY (it counts toward
+      // remainingLength but is no word), and the attached word is the selector
+      // that follows. Consume proclitic + tatweel(s) so the selector tokenizes
+      // cleanly and the with-marker reaches the swap pattern. ASCII attachments
+      // (`بـmethod:"POST"`) and `*`-sigil style refs (`بـ*opacity`,
+      // show/hide-with-transition — valid today) keep this decline path
+      // byte-identical.
+      const runIsTatweelOnly =
+        remainingLength >= 1 &&
+        input
+          .slice(nextPos, checkPos)
+          .split('')
+          .every(c => c === 'ـ');
+      const followChar = input[checkPos];
+      if (
+        entry.type === 'preposition' &&
+        runIsTatweelOnly &&
+        (followChar === '#' || followChar === '.')
+      ) {
+        return {
+          value: input.slice(position, checkPos),
+          length: checkPos - position,
+          metadata: {
+            procliticType: entry.type,
+            normalized: entry.normalized,
+          },
+        };
+      }
       return null;
     }
 

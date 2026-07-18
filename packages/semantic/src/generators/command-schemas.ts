@@ -2480,6 +2480,14 @@ export const swapSchema: CommandSchema = {
         bn: 'দিয়ে',
         tr: 'ile',
         qu: 'wan',
+        // VSO with-words. The corpus puts the with-element AFTER the event
+        // (`استبدل #a عند نقر بـ#b`, `palitan_pwesto #a kapag click nang #b`);
+        // the vso-verb-first generator's swap-gated trailing group binds it to
+        // `destination` via these words. ar's `بـ` is the bi-proclitic + tatweel
+        // exactly as the ArabicProcliticExtractor emits it (glued to a selector
+        // sigil). See generateVSOVerbFirstEventHandlerPattern.
+        ar: 'بـ',
+        tl: 'nang',
       },
     },
   ],
