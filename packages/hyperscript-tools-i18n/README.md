@@ -21,15 +21,67 @@ HTML structure is preserved.
 
 ### Flags
 
-| Flag            | Description                                                                        |
-| --------------- | ---------------------------------------------------------------------------------- |
-| `--langs`, `-l` | Comma-separated target language codes (`ja,es,ko`).                                |
-| `--out`, `-o`   | Output directory. Defaults to `.`.                                                 |
-| `--from`, `-f`  | Source locale of the input. Defaults to `en`.                                      |
-| `--strict`      | Fail the run on any single attribute that can't be translated. Default is lenient. |
+| Flag            | Description                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `--langs`, `-l` | Comma-separated target language codes (`ja,es,ko`).                                              |
+| `--out`, `-o`   | Output directory. Defaults to `.`.                                                               |
+| `--from`, `-f`  | Source locale of the input. Defaults to `en`.                                                    |
+| `--strict`      | Fail the run on any single attribute that can't be translated. Default is lenient.               |
+| `--check`       | Parse-check the English hyperscript on the real engine and exit 3 if any is invalid (see below). |
 
 Inputs may be individual files or directories — every `.html` in a directory
 is processed.
+
+## Canonical parse-check
+
+Every `_="..."` attribute this tool touches on the **English side** can be
+validated against the real [`hyperscript.org`](https://hyperscript.org) parser —
+the same engine the browser runs. This is checked for:
+
+- **input** when translating _from_ English (`--from en`, the default) — catches
+  an invalid canonical source before it ships in all 24 languages, and
+- **output** when a target language is `en` (foreign → English).
+
+Foreign-language _output_ is deliberately **not** round-trip-checked here: this
+package's grammar transformer is lossy in reverse, so a round-trip gate would be
+noise. Faithful foreign-output gating belongs to the semantic-engine transpiler
+(roadmap §5, "later").
+
+By default, invalid English prints a deduped warning and the run continues:
+
+```text
+sample.html: invalid hyperscript (English input -> ja): _="on click qqqq zzzz"
+  - Unexpected Token : qqqq
+```
+
+Pass `--check` to escalate to a build failure (exit code **3**) after all files
+are processed and written:
+
+```bash
+npx @hyperscript-tools/i18n translate src/page.html --langs ja,es --out dist/ --check
+```
+
+**Exit codes:** `0` success · `1` no inputs matched (or `--check` but the parser
+failed to load) · `2` usage error · `3` `--check` found invalid hyperscript.
+
+In the Eleventy plugin, use the `parseCheck` option (`'off' | 'warn' | 'error'`,
+default `'warn'`):
+
+```js
+eleventyConfig.addPlugin(hyperscriptI18n, { parseCheck: 'error' });
+```
+
+Programmatically:
+
+```ts
+import { validateHyperscript } from '@hyperscript-tools/i18n/validate';
+
+const errors = await validateHyperscript('on click toggle .active'); // [] = valid
+```
+
+> **Caveat:** the attribute scanner is a regex over `_="..."`, so hyperscript
+> inside HTML comments or `<script>` bodies is checked too. Warn-by-default keeps
+> that from breaking builds.
 
 ## Eleventy plugin
 
