@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 12 — post Phase 11)
+# Handoff: foreign→English validity burndown (Phase 12 — post Phase 11b)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -11,12 +11,12 @@ possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-fi
 with-word binding, #724)**, **8 (modal-close-escape pl/uk — hide's literal-only
 `style` slot rejecting a reference, #725)**, **9 (qu/ru/uk null/undefined value-literals
 the tokenizer never bound)**, **10 (id/ko undefined value-literals + the qu
-connector-joined dot-member possessive, #726)**, and **11 (10 pairs across seven root
-causes — see the PHASE 11 block below)** shipped. Foreign→English render validity
-**90.7 % → 3010/3059 (≈98.4 %)**. **49 pairs across 12 patterns** remain — and for the
+connector-joined dot-member possessive, #726)**, **11 (10 pairs across seven root
+causes — see the PHASE 11 block below)**, and **11b (swap ar/tl, the last structural
+sub-bug — see § "What Phase 11 left")** shipped. Foreign→English render validity
+**90.7 % → 3012/3059 (≈98.5 %)**. **47 pairs across 11 patterns** remain — and for the
 first time, **every named-tractable row is genuinely gone**: the residual is exactly
-pick-text-range (23), the deliberately-blocked ambiguous vocab (24), and swap ar/tl (2,
-the last structural sub-bug, deferred to its own PR).
+pick-text-range (23) and the deliberately-blocked ambiguous vocab (24).
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
 
@@ -233,33 +233,34 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 > swap "one renderer role-binding bug" was actually a pattern-GENERATION marker gap,
 > split by pattern type (patient-first vs vso-verb-first). Probe the fix's PREMISE.
 
-## What Phase 11 left — 1 named structural sub-bug (2 pairs), Phase-12's whole scope
+## What Phase 11 left — NOTHING structural: Phase 11b shipped swap ar/tl (2 pairs, 3010→3012)
 
-Window-keydown was the OTHER Phase-8 deferral; Phase 11 landed it clean (see the
-PHASE 11 block above — the fold excision, gated on `vso-verb-first` + a required
-on-marker, left the fidelity-critical removable/sortable fold sharers byte-identical).
-What remains structural is exactly one item, planned as its OWN PR
-(`fix/foreign-validity-phase11b-swap`) because it regenerates the fidelity baseline:
+Window-keydown was one Phase-8 deferral; Phase 11 landed it clean (see the PHASE 11
+block above). **Phase 11b (branch `fix/foreign-validity-phase11b-swap`) landed the
+other — swap ar/tl — as its own PR because it regenerates the fidelity baseline.**
+Three coordinated changes, two probe-found corrections to the plan:
 
-- **swap ar/tl (2) — vso-verb-first pattern.** Unlike the SOV patient-first langs, the
-  `swap-event-{ar,tl}-vso-verb-first` pattern puts the destination group BEFORE the
-  event, but the corpus's with-element comes AFTER it (`استبدل #a عند نقر بـ#b`,
-  `palitan_pwesto #a kapag click nang #b`). ar additionally glues `بـ#b` (bi-prefix).
-  So the Phase 7 patient-first fix does not reach them. **Probed in Phase 8:** the
-  pattern binds `#a`→`patient` and drops `بـ#b`/`nang #b` as unconsumed, rendering
-  `swap with #a`; en binds `#a`→`destination`, `#b`→`patient` (`swap #a with #b`).
-  Three coordinated changes, planned in Phase 11's design: (1) ar proclitic glue —
-  `arabic-proclitic.ts` `remainingLength < 2` guard rejects `بـ#b` (the tatweel counts
-  1); relax ONLY when the remaining Arabic run is tatweel-only and the next char is a
-  selector sigil; (2) a `commandSchema.action === 'swap'`-gated branch in
-  `generateVSOVerbFirstEventHandlerPattern` (`event-handlers-vso.ts`) admitting an
-  optional post-event `[with-marker] {patient}` group + rebinding the pre-event
-  element patient→destination (mirror of Phase 7's SOV fix at
-  `event-handlers-sov.ts:237-258`); (3) ar/tl entries in swap's patient/destination
-  markerOverrides (`command-schemas.ts` ~:2426-2483 — currently absent). The
-  fidelity baseline WILL move (swap-content ar/tl role bindings change) — regenerate
-  `multilingual-priority.json` deliberately and strengthen the weak test at
-  `multilingual-roadmap-fixes.test.ts` ~:2949 to assert role bindings (Map-aware).
+- **ar proclitic glue** (`arabic-proclitic.ts`): the single-char path's
+  `remainingLength < 2` guard rejected `بـ#b` (the tatweel counts 1, and it IS
+  `isArabic` — U+0640 sits in the base block). New exception: preposition proclitic +
+  tatweel-ONLY run + next char `#`/`.` → emit `بـ`→with consuming proclitic+tatweel.
+  ASCII attachments (`بـmethod:"POST"`) and `*`-sigil style refs (`بـ*opacity`,
+  show/hide-with-transition — valid today) keep the decline path byte-identical
+  (all 10 `بـ` corpus rows probed; the one other INVALID, fetch-formdata ar `كـ`,
+  is pre-existing and outside the gate denominator).
+- **swap-gated trailing group** in `generateVSOVerbFirstEventHandlerPattern`
+  (`event-handlers-vso.ts`): optional post-event `<with-word> {destination}` group.
+  **Plan correction: do NOT rebind patient→destination** — the Phase 7 SOV precedent
+  binds the trailing element to `destination` (operand flip vs en = the documented
+  F6 wontfix, swap being runtime-symmetric), and mirroring it exactly is what keeps
+  the render consistent with the SOV languages (`swap #b with #a`, valid).
+- **schema data**: ar `بـ` (exactly as the extractor now emits it) + tl `nang` in
+  swap's patient markerOverride (`command-schemas.ts`).
+
+**The `--save-baseline` regen locked in swap-content 0.714→1.0 confidence for SIX
+languages** — ar/tl from this fix plus bn/hi/qu/tr, whose Phase-7 SOV improvements
+were never baselined (the ratchet only flags drops, so improvements silently
+accumulate until the next deliberate regen; per-language avgRoleFidelity rose too).
 
 > **PHASE 6 SHIPPED — and, true to this doc's own governing lesson, BOTH its fix-site
 > claims were incomplete; a probe caught each.**
@@ -323,13 +324,13 @@ What remains structural is exactly one item, planned as its OWN PR
 ---
 
 MISSION: Phase 12 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **3010/3059 (≈98.4 %)**; **49 pairs across 12
-patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, 10, and 11 are DONE. **The residual is fully
+currently renders canonically-valid English **3012/3059 (≈98.5 %)**; **47 pairs across 11
+patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, 10, 11, and 11b are DONE. **The residual is fully
 triaged AND fully classified** — the post-Phase-11 harness clustering is exactly:
 pick-text-range 23 (17 SVO `Unexpected value: <<<EOF>>>` + 5 SOV `Unexpected Token : 0` +
 qu 1); the blocked-vocab throw families (th `เป็น` 6, ar `هو` copula 5, hi `है` 5,
 ja `空` 2, hi `नहीं` 1, tl `walang` 1, zh `没` 1, bn `আছে` 1, tl `may` 1, tr `var` 1 —
-24 total); and swap ar/tl 2 (the last structural sub-bug, § "What Phase 11 left"). (The
+24 total). Swap ar/tl shipped as Phase 11b (§ "What Phase 11 left"). (The
 ground-truth counts in `baselines/foreign-canonical-validity.json` —
 `validAtGeneration`/`checkedAtGeneration` — are authoritative, not the prose percentage.)
 For the first time in the arc there is NO mis-filed-tractable tail left to probe out:
@@ -356,9 +357,8 @@ thing that would move the 24 blocked pairs, and genuinely hard.
 > undefined); and dump roles with a Map-aware serializer — `node.roles` is a `Map`, so
 > `JSON.stringify` shows `{}` and hides the very binding you are hunting.
 
-**The vocabulary, expression, and per-row structural slices are ALL exhausted as of
-Phase 11.** What remains is exactly three classes: the **swap ar/tl sub-bug** (2 pairs,
-design ready in § "What Phase 11 left", own PR), the **24 deliberately-blocked
+**The vocabulary, expression, and structural slices are ALL exhausted as of Phase 11b.**
+What remains is exactly two classes: the **24 deliberately-blocked
 ambiguous-vocab exclusions** (th `เป็น`=is/as, ar `هو`=it/is, hi `है`=is/has,
 ja `空` phantom, hi `नहीं`/zh `没`/tl `walang` no-not-without, bn `আছে`/tl `may`/
 tr `var` exists-has — genuinely hard, honest calls; only slot-aware disambiguation
@@ -502,7 +502,7 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (**49 pairs after Phase 11**) — MEASURED, not estimated
+## What is left (**47 pairs after Phase 11b**) — MEASURED, not estimated
 
 Produced by the committed triage harness against the post-Phase-11 tree (fresh populate).
 **Reproduce it before trusting it** (recipe at the end of this section). Phase 11 removed
@@ -520,7 +520,6 @@ unexplained singles.
 | 5 | ar `هو` (=it/is copula) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
 | 5 | hi `है` (=is/has) | blocked | same five patterns |
 | 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
-| 2 | swap ar/tl | structural, own PR | `swap-content` (§ "What Phase 11 left") |
 | 1 | hi `नहीं` (=no/not) | blocked | `behavior-draggable` |
 | 1 | tl `walang` (=no/without) | blocked (+degraded) | `behavior-draggable` |
 | 1 | zh `没` (=no/without) | blocked | `behavior-draggable` |
@@ -620,7 +619,7 @@ The handoff's premise was doubly wrong:
 The old per-row bucket is empty. Phase 7 cleared focus-trap ar/tl, swap bn/hi/tr/qu, and
 id `punya`; Phase 8 cleared modal-close-escape pl/uk; Phases 9–10 cleared the qu/ru/uk/id/ko
 value-literals and the qu dot-member; Phase 11 cleared everything else (see its block at the
-top). The ONLY structural row left is swap ar/tl (2) — § "What Phase 11 left".
+top). Phase 11b drained the last structural row (swap ar/tl) — § "What Phase 11 left".
 
 ### Reproduce the triage
 
