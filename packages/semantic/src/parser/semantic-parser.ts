@@ -1753,7 +1753,43 @@ export class SemanticParserImpl implements ISemanticParser {
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')
           .sort((a, b) => b.priority - a.priority);
-        const bodyStream = new TokenStreamImpl(all.slice(ifIdx), language);
+        // Verb-first fused patterns put the event AFTER the `if` keyword, so the
+        // fold slice still contains the already-captured event head — the
+        // re-parse swallows it into the conditional and the handler's event
+        // renders TWICE (`on keydown[..] if event.ctrlKey on keydown [..] halt`,
+        // window-keydown ar/tl). Excise the on-marker + event token (+ the
+        // following `[filter]` selector — the captured event value carries the
+        // filter, the stream splits it off) before folding. The marker is
+        // REQUIRED so a body-text occurrence of the event word is never excised;
+        // event-first shapes (behavior-removable/sortable) put the event BEFORE
+        // ifIdx, so the search misses and the slice is byte-identical.
+        let foldTokens = all.slice(ifIdx);
+        if (match.pattern.id.endsWith('vso-verb-first') && resolvedEventValue.type === 'literal') {
+          const eventHead = String(resolvedEventValue.value ?? '')
+            .split('[')[0]
+            .trim()
+            .toLowerCase();
+          const evIdx = foldTokens.findIndex((t, k) => {
+            if (k === 0 || eventHead === '') return false;
+            const tv = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
+            const prev = foldTokens[k - 1] as { kind?: string; normalized?: string };
+            return (
+              tv === eventHead &&
+              prev.kind === 'keyword' &&
+              (prev.normalized ?? '').toLowerCase() === 'on'
+            );
+          });
+          if (evIdx > 0) {
+            const filter = foldTokens[evIdx + 1];
+            const filterLen =
+              filter && filter.kind === 'selector' && filter.value.startsWith('[') ? 1 : 0;
+            foldTokens = [
+              ...foldTokens.slice(0, evIdx - 1),
+              ...foldTokens.slice(evIdx + 1 + filterLen),
+            ];
+          }
+        }
+        const bodyStream = new TokenStreamImpl(foldTokens, language);
         const foldCoverageMark = this.coverageMark();
         const folded = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
         // A conditional folded if it sits at the top level (body is the single
@@ -5372,6 +5408,23 @@ export class SemanticParserImpl implements ISemanticParser {
     const bodyTokens: LanguageToken[] = [];
     tokens.advance(); // consume `js`
 
+    // The authored verb may be an ASCII+CJK compound the tokenizer split: the
+    // zh dict writes `JS执行`, the ASCII extractor claims `JS` (which is what
+    // isJsKeyword matched), and the stranded `执行` lands at the head of the raw
+    // body, leaking into the rendered JS (`js 执行 console.log(...)` —
+    // canonically invalid). When the head and the next token are
+    // source-adjacent and their concatenation is the profile's own js-command
+    // surface, the second half is part of the VERB — consume it too.
+    const verbTail = tokens.peek();
+    if (
+      verbTail &&
+      head.position?.end !== undefined &&
+      head.position.end === verbTail.position?.start &&
+      this.profileKeywordMatches(language, 'js', `${head.value}${verbTail.value}`.toLowerCase())
+    ) {
+      tokens.advance();
+    }
+
     let sawEnd = false;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
@@ -5655,8 +5708,21 @@ export class SemanticParserImpl implements ISemanticParser {
           sovVerbLookup !== null &&
           sovVerbLookup.has(t.value.toLowerCase()) &&
           !SemanticParserImpl.CONDITION_PREDICATES.has(cur);
+        // A `.member` selector glued to the previous token (no source gap) is a
+        // member-access continuation of the condition (bn `এর.error`), never a
+        // command head — the SOV verb-final checker would otherwise fire here
+        // and strand the member (`if এর` + unconsumed `.error`). An SOV
+        // then-branch patient (`.error কে যোগ …`) is authored with a space, so
+        // adjacency is the exact discriminator — the same rule the expression
+        // joiner's `.`-glue uses.
+        const gluedDotMember =
+          /^\.[a-zA-Z_]\w*$/.test(t.value) &&
+          blockTokens[i - 1].position?.end !== undefined &&
+          t.position?.start !== undefined &&
+          blockTokens[i - 1].position.end === t.position.start;
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
+          !gluedDotMember &&
           (!prevIsCopula || curIsSovCommandVerb) &&
           (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
             this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))

@@ -91,6 +91,18 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // block adopt the whole run. The reverse render (CONNECTIVE_LEXICON.hi) already
   // maps के_रूप_में→as; it was a documented dead entry awaiting exactly this.
   { native: 'के_रूप_में', normalized: 'as' },
+
+  // `या` (or) — dict hi.ts `or`; already matched by surface in the parser's
+  // OR_KEYWORDS (event-adjacent `or` was absorbed), but every raw-expression
+  // occurrence leaked verbatim (when-multiple-changes). Phantom-safe: `or` is
+  // neither an ActionType nor a command schema.
+  { native: 'या', normalized: 'or' },
+  // `बदलने पर` (changes / "on changing") — dict hi.ts `changes`, SPACED whole
+  // phrase via the multi-word keyword walk (`के साथ` precedent above). NEVER
+  // register bare `बदलने`: the stem `बदल` is a registered toggle-verb
+  // alternative (patterns/toggle.ts) and the morphological normalizer strips
+  // conjugations — a bare entry re-opens the आकार_बदलें phantom-toggle class.
+  { native: 'बदलने पर', normalized: 'changes' },
 ];
 
 // =============================================================================

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, getTokenizer, fillSchemaDefaults } from '../src';
+import { parse, canParse, getTokenizer, fillSchemaDefaults, render } from '../src';
 
 describe('Korean fetch keyword alignment (가져오기)', () => {
   // Corpus-shaped event handlers from the multilingual baseline.
@@ -13938,4 +13938,181 @@ describe('go-url destination capture (docs-internal/MULTILINGUAL_NEXT_STEPS.md "
       expect(roleValue(node, 'method')).toBeUndefined();
     });
   }
+});
+
+describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wait (docs-internal/HANDOFF_foreign-validity-burndown.md)', () => {
+  // The behaviors' `wait for <e1> or <e2> from document` line: bn authors it
+  // verb-first with the "for" half of "wait for" as a floating `জন্য`
+  // postposition, in two different positions (draggable vs sortable/resizable).
+  // Before the fix the run anchored a junk `for` command at the top-level
+  // sequence (`wait for pointermove then for ( clientY ) or …`) — canonically
+  // invalid. The or-run pattern consumes the whole run; the render keeps only
+  // the first event, exactly like the en reference (`wait-en-for-event`).
+  it('bn sortable-shaped run (জন্য after E2) renders the en wait head, no junk clause', () => {
+    const out = render(
+      parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
+      'en'
+    );
+    expect(out).toBe('wait for pointermove');
+  });
+
+  it('bn draggable-shaped run (জন্য after or-word, 2-arg, multiline) renders the en wait head', () => {
+    const out = render(
+      parse(
+        'অপেক্ষা pointermove(clientX, clientY) অথবা জন্য\n    pointerup(clientX, clientY) document থেকে',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toBe('wait for pointermove');
+  });
+
+  it('bn or-in-event-list path stays byte-identical (multiple-events row)', () => {
+    // The event-adjacent or-excision absorbed অথবা BEFORE it was a keyword;
+    // registering it must not change this row.
+    const out = render(parse('.active কে ক্লিক অথবা keypress[key=="Enter"] এ টগল', 'bn'), 'en');
+    expect(out).toBe('on click toggle .active');
+  });
+
+  it('bn অথবা renders as `or`, never leaks Bengali script into a wait render', () => {
+    const out = render(
+      parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
+      'en'
+    );
+    expect(/[ঀ-৿]/.test(out)).toBe(false);
+  });
+});
+
+describe('Foreign-validity Phase 11: th ปรับขนาด→resize (window-resize)', () => {
+  // Without the whole-token entry the greedy Thai scan shattered ปรับขนาด into
+  // ป + รับ(→take) + ขนาด, rendering `on ป take ขนาด call adjustLayout()` —
+  // canonically invalid. The handoff filed this row "structural, NOT data";
+  // measured, it was a plain missing EXTRAS entry (12th mis-filing). The
+  // from/debounced tail is dropped exactly like the en reference's own render.
+  it('th window-resize row renders the en-identical head', () => {
+    const out = render(
+      parse('เมื่อ ปรับขนาด เรียก adjustLayout() จาก window debounced ที่ 200ms', 'th'),
+      'en'
+    );
+    expect(out).toBe('on resize call adjustLayout()');
+    expect(/[฀-๿]/.test(out)).toBe(false);
+  });
+});
+
+describe('Foreign-validity Phase 11: hi या→or + बदलने पर→changes + event-hi-when (when-multiple-changes)', () => {
+  // `जब $firstName या $lastName बदलने पर …` used to render `on बदलने put …` —
+  // event-hi-bare captured the जब token as the event name and the canonical
+  // tokenizer threw on the leaked बदलने. Three coordinated pieces: register
+  // या→or and the SPACED `बदलने पर`→changes (never bare बदलने — the stem बदल
+  // is a registered toggle-verb alternative), and add the hi member of the
+  // ja/tr/ar/he prefix-when family so the first subject becomes the event,
+  // exactly like en's event-en-when.
+  it('hi when-multiple-changes row renders byte-identical to the en reference render', () => {
+    const enOut = render(
+      parse(
+        'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
+        'en'
+      ),
+      'en'
+    );
+    const hiOut = render(
+      parse(
+        'जब $firstName या $lastName बदलने पर `${$firstName} ${$lastName}` को #full-name में रखें समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(hiOut).toBe(enOut);
+    expect(hiOut).toBe('on $firstName put `${$firstName} ${$lastName}` into #full-name');
+  });
+
+  it('hi जब-तक while/until compound never matches the when-head (repeat-while guard)', () => {
+    // event-hi-when's event role is type-constrained (reference/expression/
+    // selector), so तक declines and the repeat patterns keep the row.
+    const out = render(
+      parse(
+        'जब तक #counter.innerText < 10 को क्लिक पर दोहराएं फिर #counter को बढ़ाएं फिर प्रतीक्षा 200ms समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(out).toContain('repeat while');
+    expect(out).not.toContain('on when');
+  });
+
+  it('hi when-value-changes row shares the en reference degradation (paren-expr event)', () => {
+    // Both en and hi capture `(` as the event on this en-invalid row; hi used
+    // to diverge (`on when …`). Byte-equality with en is the fidelity target.
+    const enOut = render(
+      parse("when (#price's value * #qty's value) changes put `$${it}` into me end", 'en'),
+      'en'
+    );
+    const hiOut = render(
+      parse("जब (#price's मान * #qty's मान) बदलने पर `$${it}` को मैं में रखें समाप्त", 'hi'),
+      'en'
+    );
+    expect(hiOut).toBe(enOut);
+  });
+
+  it('hi event-adjacent or path stays byte-identical (multiple-events row)', () => {
+    const out = render(parse('.active को क्लिक या keypress[key=="Enter"] पर टॉगल', 'hi'), 'en');
+    expect(out).toBe('on click toggle .active');
+  });
+});
+
+describe('Foreign-validity Phase 11: window-keydown fused-if event excision (ar/tl vso-verb-first)', () => {
+  // The condition-led VSO handler `if <cond> on <event> then <body>` matches the
+  // fused if-event-{ar,tl}-vso-verb-first pattern (event captured), then the
+  // actionValue==='if' rewind-fold re-parses all.slice(ifIdx) — which for
+  // verb-first still CONTAINS the on-marker + event — re-swallowing it into the
+  // conditional and rendering the event TWICE. The excision drops marker +
+  // event + `[filter]` from the fold slice; event-first shapes put the event
+  // before ifIdx, so they are byte-identical.
+  const cases: Array<[string, string]> = [
+    [
+      'tl',
+      'kung event.ctrlKey kapag keydown[key=="s"] pagkatapos huminto tawagin saveDocument() wakas',
+    ],
+    ['ar', 'إذا event.ctrlKey عند keydown[key=="s"] ثم أوقف استدع saveDocument() النهاية'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] condition-led handler renders exactly ONE on-keydown head`, () => {
+      const out = render(parse(input, lang), 'en');
+      expect(out.match(/on keydown/g)).toHaveLength(1);
+      expect(out).toContain('if event.ctrlKey');
+      expect(out).toContain('halt');
+      expect(out).toContain('call saveDocument()');
+    });
+  }
+
+  it('en window-keydown reference shape is the convergence target', () => {
+    const en = render(
+      parse('on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument()', 'en'),
+      'en'
+    );
+    const tl = render(parse(cases[0][1], 'tl'), 'en');
+    expect(tl).toBe(en);
+  });
+});
+
+describe('Foreign-validity Phase 11: zh JS执行 split-verb reassembly (js-inline)', () => {
+  // The zh dict authors the js command as the ASCII+CJK compound `JS执行`; the
+  // ASCII extractor claims `JS` (matching the js keyword) and strands `执行` at
+  // the head of the opaque body, where it leaked into the rendered JS. The
+  // js-block consumer now folds a source-adjacent tail into the verb when the
+  // concatenation is the profile's own js-command surface.
+  it('zh js-inline row renders byte-identical to en (no 执行 leak)', () => {
+    const zh = render(parse('当 点击 时 JS执行 console.log("from js") 结束', 'zh'), 'en');
+    const en = render(parse('on click js console.log("from js") end', 'en'), 'en');
+    expect(zh).toBe(en);
+    expect(zh).not.toContain('执行');
+  });
+
+  it('a spaced 执行 is NOT folded into the verb (adjacency-gated)', () => {
+    // `JS 执行` with a space is not the authored compound; the tail must stay
+    // in the body untouched (pre-existing leak shape, but never silently
+    // widened by this fix).
+    const out = render(parse('当 点击 时 JS 执行 console.log("x") 结束', 'zh'), 'en');
+    expect(out).toContain('执行');
+  });
 });

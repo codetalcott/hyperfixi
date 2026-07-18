@@ -405,3 +405,94 @@ describe('connector-joined dot-member possessive in raw expressions (Phase 10)',
     expect(english).not.toContain('if its');
   });
 });
+
+describe('Phase 11: possessive + source-adjacent dot-member, no connector (bn এর.error)', () => {
+  // bn fetch-error-handling authors `যদি এর.error …`: the condition-boundary
+  // used to break AT the glued `.error` (the SOV verb-final checker saw a
+  // command head there), stranding the member — render `if এর` — and the seam
+  // then leaked the particle. Two coordinated fixes: the boundary skips a
+  // source-adjacent `.member` token, and the join seam renders
+  // possessive+adjacent-dot-member as `its <prop>` (the connectorless sibling
+  // of the Phase-10 qu branch).
+  it('bn: যদি এর.error condition renders `if its error` (full corpus row shape)', () => {
+    const out = render(
+      parse(
+        '/api/data কে ক্লিক এ আনুন json তারপর যদি এর.error এর.error কে #error তে রাখুন নতুবা এর.data কে #result তে রাখুন শেষ',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toContain('if its error');
+    expect(out).toContain('put its error into #error');
+    expect(out).toContain('put its data into #result');
+    expect(/[ঀ-৿]/.test(out)).toBe(false);
+  });
+
+  it('collision guard: surfaces doubling as bare references keep their it.prop glue (ms/qu shape)', () => {
+    // ms `ia` / qu `chay` are both `it` and `its` — the new branch must decline
+    // them (isAlsoBareReference) so their glued member access renders unchanged.
+    const ms = render(parse('bila klik ambil /api/data letak ia.name ke #result', 'ms'), 'en');
+    expect(ms).toContain('its name');
+    expect(ms).not.toContain('its its');
+    // en `it` is not a possessive keyword, so the CONDITION seam keeps the
+    // glued member access verbatim (put slots assemble property-paths via the
+    // value-slot matcher — that is pre-existing and separate).
+    const en = render(
+      parse(
+        'on click fetch "/api/data" as json then if it.error put it.error into #error end',
+        'en'
+      ),
+      'en'
+    );
+    expect(en).toContain('if it.error');
+  });
+
+  it('qu Phase-10 connector branch unchanged: chaypaq.error still renders its error', () => {
+    const out = render(
+      parse(
+        'yaykuchiy /api/data kanan click json hina chaymanta sichus chaypaq.error chaypaq.error churay #error man mana chayqa chaypaq.data churay #result man tukuy',
+        'qu'
+      ),
+      'en'
+    );
+    expect(out).toContain('its error');
+  });
+});
+
+describe('Phase 11: bn শেষ positional-head dual (focus-trap, last-in-collection)', () => {
+  // bn `শেষ` is registered as `end` (block terminator), so positional runs it
+  // heads (`শেষ <button/> এ .modal` = "last <button/> in .modal") failed the
+  // recognizer and leaked the locative particle. The dual maps the surface to
+  // `last` ONLY inside matchPositionalRun and only before an angle-bracket
+  // element query — behavior-sortable's block-end শেষ adjacent to the next
+  // clause's bare `.{dragClass}` must never mint a phantom `last`.
+  it('bn last-in-collection row renders byte-identical to en', () => {
+    const out = render(parse('ক্লিক এ স্ক্রোল শেষ <.message/> এ #chat তে', 'bn'), 'en');
+    expect(out).toBe('on click scroll to last <.message/> in #chat');
+  });
+
+  it('bn focus-trap condition folds both positional runs', () => {
+    const out = render(
+      parse(
+        'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toContain('matches last <button/> in .modal');
+    expect(out).toContain('focus first <button/> in .modal');
+    expect(/[ঀ-৿]/.test(out)).toBe(false);
+  });
+
+  it('bn block-end শেষ before a bare class selector never becomes `last`', () => {
+    const out = render(
+      parse(
+        'Sortable(dragClass) কে আচরণ\n    pointerdown(clientY) এ আমি থেকে\n        পর্যন্ত ঘটনা pointerup কে পুনরাবৃত্তি document থেকে\n            sortable:move কে ট্রিগার আমি তে\n        শেষ\n        .{dragClass} কে সরান item থেকে\n    শেষ\nশেষ',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toContain('remove .{dragClass} from item');
+    expect(out).not.toContain('last .{dragClass}');
+  });
+});
