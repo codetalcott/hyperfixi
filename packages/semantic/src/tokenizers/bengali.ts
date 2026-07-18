@@ -81,6 +81,13 @@ const BENGALI_EXTRAS: KeywordEntry[] = [
   // Additional modifiers not in profile
   { native: 'কে', normalized: 'to' },
   { native: 'সাথে', normalized: 'with' },
+
+  // Conjunctions. `অথবা` (or) — dict bn.ts `or`. Already matched by surface in the
+  // parser's OR_KEYWORDS (event-adjacent `or` was absorbed); registering it lets
+  // surfaceOf emit `or` inside raw expressions (the wait-for event list in
+  // behavior-draggable/sortable). Phantom-safe: `or` is neither an ActionType nor
+  // a command schema.
+  { native: 'অথবা', normalized: 'or' },
 ];
 
 // =============================================================================

@@ -274,6 +274,86 @@ function verbFinalOrRunWait(
   } as LanguagePattern;
 }
 
+/**
+ * Bengali (verb-FIRST) or-run wait — the verb-first twin of the tr/qu
+ * `verbFinalOrRunWait` above, for the same behaviors' line.
+ *
+ * bn authors the `wait for <e1> or <e2> from <source>` clause verb-first with
+ * the "for" half of "wait for" as a floating postposition (`অপেক্ষা E1(args)
+ * অথবা [জন্য] E2(args) [জন্য] document থেকে` — draggable puts `জন্য` after the
+ * or-word, sortable/resizable after the second event). The generated
+ * `wait-bn-generated-verb-first` captured only E1, and the remainder anchored a
+ * junk `for` command at the top-level sequence (`জন্য`→for as a verb), rendering
+ * `wait for pointermove then for ( clientY ) or …` — canonically invalid. This
+ * consumes the whole run; E1 lands in `duration` (the known-event
+ * duration→event relabel types it like the en reference), the `অথবা E2` tail is
+ * a junk `patient` schema-extra exactly as in tr/qu, and both `জন্য` placements
+ * are optional single-literal groups.
+ */
+function verbFirstOrRunWait(
+  id: string,
+  language: string,
+  verb: string,
+  orWord: string,
+  forWord: string,
+  sourceMarker: string,
+  parenArgCount: number
+): LanguagePattern {
+  const parenGroup = () => ({
+    type: 'group' as const,
+    optional: true,
+    tokens: [
+      { type: 'literal' as const, value: '(' },
+      ...Array.from({ length: parenArgCount }, (_, i) => [
+        ...(i > 0 ? [{ type: 'literal' as const, value: ',' }] : []),
+        {
+          type: 'role' as const,
+          role: 'condition' as const,
+          expectedTypes: ['expression', 'literal', 'reference'] as const,
+        },
+      ]).flat(),
+      { type: 'literal' as const, value: ')' },
+    ],
+  });
+  const forGroup = () => ({
+    type: 'group' as const,
+    optional: true,
+    tokens: [{ type: 'literal' as const, value: forWord }],
+  });
+  return {
+    id,
+    language,
+    command: 'wait',
+    priority: 105,
+    template: {
+      format: `${verb} {duration} ${orWord} [${forWord}] {patient} [${forWord}] {source} ${sourceMarker}`,
+      tokens: [
+        { type: 'literal', value: verb },
+        { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        parenGroup(),
+        { type: 'literal', value: orWord },
+        forGroup(),
+        { type: 'role', role: 'patient', expectedTypes: ['expression', 'literal'] },
+        parenGroup(),
+        forGroup(),
+        { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
+        { type: 'literal', value: sourceMarker },
+      ],
+    },
+    extraction: {
+      duration: { position: 1 },
+      source: { position: 8 },
+    },
+  } as LanguagePattern;
+}
+
+function getWaitPatternsBn(): LanguagePattern[] {
+  return [
+    verbFirstOrRunWait('wait-bn-or-run', 'bn', 'অপেক্ষা', 'অথবা', 'জন্য', 'থেকে', 1),
+    verbFirstOrRunWait('wait-bn-or-run-2arg', 'bn', 'অপেক্ষা', 'অথবা', 'জন্য', 'থেকে', 2),
+  ];
+}
+
 function getWaitPatternsTr(): LanguagePattern[] {
   return [
     verbFinalOrRunWait('wait-tr-or-run', 'tr', 'bekle', 'den', 'veya', 1, ['dan', 'ten', 'tan']),
@@ -302,6 +382,8 @@ export function getWaitPatternsForLanguage(language: string): LanguagePattern[] 
       return getWaitPatternsHe();
     case 'ar':
       return getWaitPatternsAr();
+    case 'bn':
+      return getWaitPatternsBn();
     case 'tl':
       return getWaitPatternsTl();
     case 'tr':

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, getTokenizer, fillSchemaDefaults } from '../src';
+import { parse, canParse, getTokenizer, fillSchemaDefaults, render } from '../src';
 
 describe('Korean fetch keyword alignment (가져오기)', () => {
   // Corpus-shaped event handlers from the multilingual baseline.
@@ -13938,4 +13938,47 @@ describe('go-url destination capture (docs-internal/MULTILINGUAL_NEXT_STEPS.md "
       expect(roleValue(node, 'method')).toBeUndefined();
     });
   }
+});
+
+describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wait (docs-internal/HANDOFF_foreign-validity-burndown.md)', () => {
+  // The behaviors' `wait for <e1> or <e2> from document` line: bn authors it
+  // verb-first with the "for" half of "wait for" as a floating `জন্য`
+  // postposition, in two different positions (draggable vs sortable/resizable).
+  // Before the fix the run anchored a junk `for` command at the top-level
+  // sequence (`wait for pointermove then for ( clientY ) or …`) — canonically
+  // invalid. The or-run pattern consumes the whole run; the render keeps only
+  // the first event, exactly like the en reference (`wait-en-for-event`).
+  it('bn sortable-shaped run (জন্য after E2) renders the en wait head, no junk clause', () => {
+    const out = render(
+      parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
+      'en'
+    );
+    expect(out).toBe('wait for pointermove');
+  });
+
+  it('bn draggable-shaped run (জন্য after or-word, 2-arg, multiline) renders the en wait head', () => {
+    const out = render(
+      parse(
+        'অপেক্ষা pointermove(clientX, clientY) অথবা জন্য\n    pointerup(clientX, clientY) document থেকে',
+        'bn'
+      ),
+      'en'
+    );
+    expect(out).toBe('wait for pointermove');
+  });
+
+  it('bn or-in-event-list path stays byte-identical (multiple-events row)', () => {
+    // The event-adjacent or-excision absorbed অথবা BEFORE it was a keyword;
+    // registering it must not change this row.
+    const out = render(parse('.active কে ক্লিক অথবা keypress[key=="Enter"] এ টগল', 'bn'), 'en');
+    expect(out).toBe('on click toggle .active');
+  });
+
+  it('bn অথবা renders as `or`, never leaks Bengali script into a wait render', () => {
+    const out = render(
+      parse('অপেক্ষা pointermove(clientY) অথবা pointerup(clientY) জন্য document থেকে', 'bn'),
+      'en'
+    );
+    expect(/[ঀ-৿]/.test(out)).toBe(false);
+  });
 });
