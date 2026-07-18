@@ -435,6 +435,22 @@ function isBareWordHead(token: LanguageToken): boolean {
 }
 
 /**
+ * Whether a possessive surface ALSO serves as one of the profile's bare
+ * references (ms `ia`, qu `chay` are both `it` and `its`). Such a token glued
+ * to a `.member` is already the valid `it.prop`; the possessive dot-member
+ * branch must decline it so those renders stay byte-identical.
+ */
+function isAlsoBareReference(profile: LanguageProfile | undefined, token: LanguageToken): boolean {
+  const refs = profile?.references;
+  if (!refs) return false;
+  const surfaces = Object.values(refs)
+    .filter((v): v is string => typeof v === 'string')
+    .map(v => v.toLowerCase());
+  const candidates = [token.value, token.normalized].filter(Boolean) as string[];
+  return candidates.some(c => surfaces.includes(c.toLowerCase()));
+}
+
+/**
  * Whether a token can be the PROPERTY of a possessive that precedes it.
  *
  * This is what makes the possessive anchor safe, and it is not optional: in
@@ -569,6 +585,28 @@ export function joinExpressionTokens(
         append(getEnglishPossessiveAdjective(reference), token);
         append(translatePropertyName(languageCode, prop.value.slice(1)), prop);
         i = propIdx;
+        continue;
+      }
+      // A dot-member can also follow the possessive DIRECTLY (no connector):
+      // bn `এর.error` = এর(→its) + source-adjacent `.error` — the plain `.`-glue
+      // would leak the untranslatable particle (`if এর.error`). Source adjacency
+      // is the same member-access voucher the connector branch above uses (a
+      // spaced `.cls` stays a class selector). Additionally gated on the surface
+      // NOT doubling as the profile's bare reference: ms `ia` / qu `chay` are
+      // both `it` and `its`, and their glued `it.prop` already renders valid —
+      // rewriting it would move byte-identical renders for no validity gain.
+      // bn's bare `it` is এটি, so এর is unambiguously possessive.
+      if (
+        !skipsConnector &&
+        /^\.[a-zA-Z_]\w*$/.test(next.value) &&
+        token.position?.end !== undefined &&
+        next.position?.start !== undefined &&
+        token.position.end === next.position.start &&
+        !isAlsoBareReference(profile, token)
+      ) {
+        append(getEnglishPossessiveAdjective(reference), token);
+        append(translatePropertyName(languageCode, next.value.slice(1)), next);
+        i += 1;
         continue;
       }
     }

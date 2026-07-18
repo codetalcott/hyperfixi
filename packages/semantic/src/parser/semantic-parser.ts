@@ -5655,8 +5655,21 @@ export class SemanticParserImpl implements ISemanticParser {
           sovVerbLookup !== null &&
           sovVerbLookup.has(t.value.toLowerCase()) &&
           !SemanticParserImpl.CONDITION_PREDICATES.has(cur);
+        // A `.member` selector glued to the previous token (no source gap) is a
+        // member-access continuation of the condition (bn `এর.error`), never a
+        // command head — the SOV verb-final checker would otherwise fire here
+        // and strand the member (`if এর` + unconsumed `.error`). An SOV
+        // then-branch patient (`.error কে যোগ …`) is authored with a space, so
+        // adjacency is the exact discriminator — the same rule the expression
+        // joiner's `.`-glue uses.
+        const gluedDotMember =
+          /^\.[a-zA-Z_]\w*$/.test(t.value) &&
+          blockTokens[i - 1].position?.end !== undefined &&
+          t.position?.start !== undefined &&
+          blockTokens[i - 1].position.end === t.position.start;
         if (
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
+          !gluedDotMember &&
           (!prevIsCopula || curIsSovCommandVerb) &&
           (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
             this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
