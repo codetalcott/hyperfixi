@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 9 — post Phase 8 structural)
+# Handoff: foreign→English validity burndown (Phase 10 — post Phase 9 value-literals)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -9,10 +9,42 @@ globals `document`/`window`/`detail`, #721)**, **6 (the `as` connective zh/hi + 
 `beep!` possessive glue+leak, #723)**, **7 (three structural fixes: id `punya`
 possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-first
 with-word binding, #724)**, and **8 (modal-close-escape pl/uk — hide's literal-only
-`style` slot rejecting a reference)** shipped. Foreign→English render validity
-**90.7 % → 2991/3059 (≈97.8 %)**. **68 pairs across ~17 patterns** remain.
+`style` slot rejecting a reference)**, and **9 (qu/ru/uk null/undefined value-literals
+the tokenizer never bound, commit 631a362c)** shipped. Foreign→English render validity
+**90.7 % → 2995/3059 (≈97.9 %)**. **64 pairs across ~16 patterns** remain.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 9 SHIPPED (1 commit `fix/foreign-validity-phase9`, 4 pairs, 2991→2995). It took
+> a path THIS DOC DID NOT LIST — 4 clean value-literal data wins the doc mis-filed as
+> "genuinely-blocked ambiguous-vocab" / dismissed as "scatter" (ru/uk `nothing` weren't
+> even in the singles table).** The governing lesson, again: the doc's own triage of what
+> is "blocked" vs "tractable" was wrong. Register the null/undefined value-literal the
+> corpus author used in an `is null`/`is undefined` comparison — it leaked verbatim because
+> the tokenizer never bound it:
+>
+> - ru `ничего`→`null` (behavior-sortable/ru), uk `нічого`→`null` (behavior-sortable/uk) —
+>   plain-missing tokenizer EXTRAS entries; sibling `неопределено`/`невизначено`→undefined
+>   was already registered, only the null half was absent.
+> - qu `mana_riqsisqa`→`undefined` (behavior-removable/qu + behavior-sortable/qu) — the
+>   underscore compound, `mana_kanchu`/`hatun_kay` precedent. **The EXTRAS entry alone did
+>   NOTHING** (necessary-but-insufficient, like Phase 6): `quechua-keyword.ts`'s longest-first
+>   scan caps at `maxKeywordLen = 12`, but `mana_riqsisqa` is 13 chars, so its whole-token
+>   entry was never reached and it still shattered at `_` into `mana`(→false)+`_`+`riqsisqa`.
+>   Second fix: bump the cap to 13. (`mana_kanchu`=11 fit the cap, which masked the bug.)
+>
+> Each of the three words occurs in exactly ONE corpus row (verified) and `null`/`undefined`
+> are value literals not ActionTypes → phantom-safe.
+>
+> **CORRECTION to this doc's Phase-9 framing: window-keydown is NOT "lower-risk than swap."**
+> Probed its AST: the ar/tl `if-event-<lang>-vso-verb-first` fused pattern has no event-SOURCE
+> slot, and when `actionValue==='if'` the parser (`semantic-parser.ts` ~L1741) rewinds to the
+> `if` keyword and re-parses `all.slice(ifIdx)` to END — in verb-first order (`if COND
+> from-window on EVENT then BODY`) that re-swallows the already-captured `on keydown[..]` event
+> head into the condition, emitting the DUPLICATE. That rewind-fold is SHARED by
+> behavior-removable/sortable (the fused-if-event fidelity story); a fix risks the fold. Real
+> regression risk for 2 pairs. **Both remaining named structural sub-bugs (window-keydown,
+> swap) touch fidelity-critical shared paths — neither is a low-risk pick.**
 
 > **PHASE 8 SHIPPED (1 commit on `fix/foreign-validity-phase8`, 2 pairs). It took the
 > first of Phase 7's three deferred sub-bugs (modal-close-escape pl/uk) and, true to the

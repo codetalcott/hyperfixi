@@ -145,8 +145,14 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     }
 
     // First, try to find the longest matching keyword starting at this position
-    // This ensures compound words are recognized whole
-    const maxKeywordLen = 12; // Longest Quechua keyword
+    // This ensures compound words are recognized whole. The cap must cover the
+    // longest single-token keyword — currently the underscore compound
+    // `mana_riqsisqa` (undefined, 13). Set it too low and a whole-token entry
+    // silently never matches: a 12-cap left `mana_riqsisqa` shattering at `_`
+    // into mana(→false) + _ + riqsisqa despite its EXTRAS entry (the
+    // behavior-removable/sortable qu `is undefined` renders). Over-scanning is
+    // harmless — the boundary check + keyword-set lookup reject non-keywords.
+    const maxKeywordLen = 13; // Longest Quechua keyword (mana_riqsisqa)
     for (let len = Math.min(maxKeywordLen, input.length - startPos); len >= 2; len--) {
       const candidate = input.slice(startPos, startPos + len);
 

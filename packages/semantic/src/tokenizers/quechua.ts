@@ -166,6 +166,13 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // kanchu. Same whole-token shape as hatun_kay; longest-first makes
   // `mana_kanchu` (11) beat `mana` (4).
   { native: 'mana_kanchu', normalized: 'no' },
+  // `undefined`: the dict emits underscore-joined `mana_riqsisqa` ("not known"),
+  // which the `_` split shattered into mana(→false) + _ + riqsisqa — rendering
+  // `is false _ riqsisqa` and breaking the canonical parse (behavior-removable/qu,
+  // behavior-sortable/qu `if triggerEl is undefined`). The bare `mana riqsisqa`
+  // (space) entry above never fires — the corpus authors the underscore form.
+  // Same whole-token shape as mana_kanchu; longest-first makes it beat `mana`.
+  { native: 'mana_riqsisqa', normalized: 'undefined' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
