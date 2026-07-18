@@ -13982,3 +13982,19 @@ describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wa
     expect(/[ঀ-৿]/.test(out)).toBe(false);
   });
 });
+
+describe('Foreign-validity Phase 11: th ปรับขนาด→resize (window-resize)', () => {
+  // Without the whole-token entry the greedy Thai scan shattered ปรับขนาด into
+  // ป + รับ(→take) + ขนาด, rendering `on ป take ขนาด call adjustLayout()` —
+  // canonically invalid. The handoff filed this row "structural, NOT data";
+  // measured, it was a plain missing EXTRAS entry (12th mis-filing). The
+  // from/debounced tail is dropped exactly like the en reference's own render.
+  it('th window-resize row renders the en-identical head', () => {
+    const out = render(
+      parse('เมื่อ ปรับขนาด เรียก adjustLayout() จาก window debounced ที่ 200ms', 'th'),
+      'en'
+    );
+    expect(out).toBe('on resize call adjustLayout()');
+    expect(/[฀-๿]/.test(out)).toBe(false);
+  });
+});

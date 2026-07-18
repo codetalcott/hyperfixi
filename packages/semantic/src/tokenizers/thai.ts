@@ -58,6 +58,10 @@ const THAI_EXTRAS: KeywordEntry[] = [
   { native: 'อินพุต', normalized: 'input' },
   { native: 'โหลด', normalized: 'load' },
   { native: 'เลื่อน', normalized: 'scroll' },
+  // `ปรับขนาด` (resize) — dict th.ts `resize`; without it the greedy scan
+  // shattered it into ป + รับ(→take) + ขนาด (window-resize/th rendered
+  // `on ป take ขนาด …`). Precedent: hi आकार_बदलें, tr boyutlandırma.
+  { native: 'ปรับขนาด', normalized: 'resize' },
 
   // Additional modifiers
   { native: 'เวลา', normalized: 'when' },
