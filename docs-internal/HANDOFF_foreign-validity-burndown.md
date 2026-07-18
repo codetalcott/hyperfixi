@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 11 — post Phase 10)
+# Handoff: foreign→English validity burndown (Phase 12 — post Phase 11)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -10,11 +10,90 @@ globals `document`/`window`/`detail`, #721)**, **6 (the `as` connective zh/hi + 
 possessive-in-expression, focus-trap event-source-leak drop, swap SOV patient-first
 with-word binding, #724)**, **8 (modal-close-escape pl/uk — hide's literal-only
 `style` slot rejecting a reference, #725)**, **9 (qu/ru/uk null/undefined value-literals
-the tokenizer never bound)**, and **10 (id/ko undefined value-literals + the qu
-connector-joined dot-member possessive)** shipped. Foreign→English render validity
-**90.7 % → 3000/3059 (≈98.1 %)**. **59 pairs across ~16 patterns** remain.
+the tokenizer never bound)**, **10 (id/ko undefined value-literals + the qu
+connector-joined dot-member possessive, #726)**, and **11 (10 pairs across seven root
+causes — see the PHASE 11 block below)** shipped. Foreign→English render validity
+**90.7 % → 3010/3059 (≈98.4 %)**. **49 pairs across 12 patterns** remain — and for the
+first time, **every named-tractable row is genuinely gone**: the residual is exactly
+pick-text-range (23), the deliberately-blocked ambiguous vocab (24), and swap ar/tl (2,
+the last structural sub-bug, deferred to its own PR).
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 11 SHIPPED (7 commits on `fix/foreign-validity-phase11`, 10 pairs,
+> 3000→3010).** It cleared EVERY workable pair the Phase-11 triage identified —
+> including all four rows this doc filed as blocked/opaque/structural that probing
+> re-filed as tractable (the arc's 11th–14th consecutive mis-filings) — plus both
+> "unclear, defer by default" probes. What each root cause was, with the corrected
+> premise:
+>
+> - **bn `অথবা`→or + verb-first or-run wait (2: behavior-draggable/sortable bn).**
+>   The EXTRAS entry was necessary but NOT sufficient (the arc's recurring shape):
+>   `অথবা`/`या` were ALREADY in the parser's OR_KEYWORDS by surface — only the
+>   raw-expression seam leaked. Clearing the token exposed blocker #2: bn splits
+>   "wait for" as `অপেক্ষা … জন্য` with the floating জন্য in TWO different positions,
+>   and the tail anchored a junk `for` command (জন্য→for as a verb). Fix = the
+>   verb-FIRST twin of the tr/qu `verbFinalOrRunWait` (`wait-bn-or-run/-2arg`,
+>   `patterns/wait.ts`); render keeps only the first event, byte-identical to en.
+> - **th `ปรับขนาด`→resize (1: window-resize th).** Filed under "`window` —
+>   structural, NOT data"; measured, a plain missing whole-token EXTRAS entry (the
+>   greedy Thai scan shattered it into ป + รับ(→take) + ขนาด; NOTE: the Thai
+>   tokenizer has NO length cap — the qu cap-bump precedent does not apply). The row
+>   now renders byte-identical to en's own render (which also drops the
+>   from/debounced tail).
+> - **hi when-multiple-changes (1).** TWO leaks (`या`, `बदलने पर`) and a missing
+>   pattern. Vocab alone converged to the WRONG render (`on when put …`, valid but
+>   divergent): `event-hi-bare` captured the जब token itself as the event. Fix
+>   also added `event-hi-when` — the hi member of the ja/tr/ar/he prefix-when
+>   family — with the event role TYPE-CONSTRAINED (reference/expression/selector)
+>   so the `जब तक` while/until compound (repeat-while, unless-condition) declines
+>   at तक. **Register the SPACED `बदलने पर`, never bare `बदलने`** — the stem `बदल`
+>   is a registered toggle-verb alternative and the normalizer strips conjugations
+>   (the आकार_बदलें phantom-toggle class). en's own render drops `or $lastName
+>   changes` (`on $firstName put …`) — that is the convergence target, and hi now
+>   matches it byte-identically. Bonus: when-value-changes/hi (en-invalid,
+>   gate-excluded) converges to en's own degradation instead of diverging.
+> - **bn `এর.error` (1: fetch-error-handling bn).** TWO defects, not the one filed:
+>   (a) the conditional's condition-boundary broke AT the glued `.error` (the SOV
+>   verb-final command checker saw `.error … রাখুন` as a command head one token
+>   early, stranding the member) — new guard: a source-adjacent `.member` never
+>   starts a then-branch; (b) the Phase-10 qu branch is connector-gated and bn has
+>   no connectors — new connectorless sibling branch in `joinExpressionTokens`,
+>   gated on `isAlsoBareReference` (ms `ia`/qu `chay` double as `it` and must keep
+>   their valid `it.prop` glue; bn's bare `it` is `এটি`, so `এর` is unambiguous).
+> - **window-keydown ar/tl event-duplication (2) — the "risky" structural sub-bug,
+>   landed clean.** The fused `if-event-{ar,tl}-vso-verb-first` pattern captures
+>   the event, then the `actionValue==='if'` rewind-fold re-parses `all.slice(ifIdx)`
+>   which (verb-first only) still contains the on-marker + event → re-swallowed →
+>   rendered twice. Fix = excise marker + event + `[filter]` from the fold slice,
+>   gated on the pattern id ending `vso-verb-first` and REQUIRING the preceding
+>   `on`-marker. **Two probe-found corrections to the plan:** the captured event
+>   value carries the `[filter]` while the stream splits it off (compare against
+>   the head, `split('[')[0]`), and behavior-removable/sortable (the
+>   fidelity-critical fold sharers) are event-FIRST so their slices are
+>   byte-identical — probed directly, unchanged.
+> - **bn `এ` locative (2: focus-trap/last-in-collection bn) — the "dict realign"
+>   filing was wrong; NO dict movement needed.** The failing spans' heads were
+>   `শেষ` (registered `end`, but heading positional runs as `last`); the runs
+>   failed `matchPositionalRun`'s head check and the locative leaked. Fix =
+>   `POSITIONAL_HEAD_DUALS` (bn `শেষ`→last), consulted ONLY inside the run and
+>   ONLY before an ANGLE-BRACKET element query. **The narrower gate is
+>   load-bearing and was found by probe refuting the fix's own first cut:**
+>   behavior-sortable's block-end `শেষ` adjacent to the next clause's bare
+>   `.{dragClass}` minted a phantom `last` (`remove last .{dragClass}`, valid but
+>   silently wrong) until the element-query gate excluded it.
+> - **zh `执行` (1: js-inline zh).** The dict authors the js command as the
+>   ASCII+CJK compound `JS执行`; the ASCII extractor claims `JS` (matches the js
+>   keyword case-insensitively), stranding `执行` at the head of the opaque js
+>   body. Fix = one adjacency-gated check in `consumeJsBlock`: head + next token
+>   source-adjacent AND concatenating to the profile's own js-command surface →
+>   the tail is part of the VERB. (Do NOT register `执行`→js in EXTRAS — `js` is
+>   an ActionType; that mints a phantom `js js`.)
+>
+> Every commit ran the full loop (semantic suite → populate → both canonical gates →
+> allowlist prune with ADDED=0 → fidelity ratchet, all 9 signals green each time).
+> Probe scripts were deleted; the committed triage harness
+> (`tools/triage-foreign-residual.ts`) was the only scaffolding needed.
 
 > **PHASE 10 SHIPPED (2 commits on `fix/foreign-validity-phase9`, 5 pairs, 2995→3000).
 > The residual's own triage was wrong AGAIN — a 10th consecutive mis-filing.** Rebuilding
@@ -154,26 +233,33 @@ Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. M
 > swap "one renderer role-binding bug" was actually a pattern-GENERATION marker gap,
 > split by pattern type (patient-first vs vso-verb-first). Probe the fix's PREMISE.
 
-## What Phase 8 left — 2 named structural sub-bugs (4 pairs), each measured
+## What Phase 11 left — 1 named structural sub-bug (2 pairs), Phase-12's whole scope
 
-These are NOT one root cause. Each is a distinct deeper bug, diagnosed but deferred.
-(Phase 8 took the third — modal-close-escape pl/uk — see the PHASE 8 block above.)
+Window-keydown was the OTHER Phase-8 deferral; Phase 11 landed it clean (see the
+PHASE 11 block above — the fold excision, gated on `vso-verb-first` + a required
+on-marker, left the fidelity-critical removable/sortable fold sharers byte-identical).
+What remains structural is exactly one item, planned as its OWN PR
+(`fix/foreign-validity-phase11b-swap`) because it regenerates the fidelity baseline:
 
 - **swap ar/tl (2) — vso-verb-first pattern.** Unlike the SOV patient-first langs, the
   `swap-event-{ar,tl}-vso-verb-first` pattern puts the destination group BEFORE the
   event, but the corpus's with-element comes AFTER it (`استبدل #a عند نقر بـ#b`,
   `palitan_pwesto #a kapag click nang #b`). ar additionally glues `بـ#b` (bi-prefix).
-  So the Phase 7 patient-first fix does not reach them. Needs the vso-verb-first swap
-  pattern to admit a post-event with-element (+ ar `بـ`-glue tokenization). **Probed in
-  Phase 8:** the pattern binds `#a`→`patient` and drops `بـ#b`/`nang #b` as unconsumed,
-  rendering `swap with #a`; en binds `#a`→`destination`, `#b`→`patient` (`swap #a with
-  #b`). Highest fidelity risk of the three (touches pattern GENERATION), so deferred.
-- **window-keydown tl/ar (2) — event-DUPLICATION.** Phase 7 drops their source leak,
-  but exposes a pre-existing bug: a condition-led VSO handler `if <cond> on <event>`
-  emits the event twice — `on keydown[key=="s"] if event.ctrlKey on keydown [key=="s"]
-  halt`. The event trigger is fronted AND left in the body. (focus-trap escapes this
-  because its condition is a `matches` expr, parsed differently.) Reproduce with the
-  bare reduced input `kung event.ctrlKey kapag keydown[key=="s"] pagkatapos huminto …`.
+  So the Phase 7 patient-first fix does not reach them. **Probed in Phase 8:** the
+  pattern binds `#a`→`patient` and drops `بـ#b`/`nang #b` as unconsumed, rendering
+  `swap with #a`; en binds `#a`→`destination`, `#b`→`patient` (`swap #a with #b`).
+  Three coordinated changes, planned in Phase 11's design: (1) ar proclitic glue —
+  `arabic-proclitic.ts` `remainingLength < 2` guard rejects `بـ#b` (the tatweel counts
+  1); relax ONLY when the remaining Arabic run is tatweel-only and the next char is a
+  selector sigil; (2) a `commandSchema.action === 'swap'`-gated branch in
+  `generateVSOVerbFirstEventHandlerPattern` (`event-handlers-vso.ts`) admitting an
+  optional post-event `[with-marker] {patient}` group + rebinding the pre-event
+  element patient→destination (mirror of Phase 7's SOV fix at
+  `event-handlers-sov.ts:237-258`); (3) ar/tl entries in swap's patient/destination
+  markerOverrides (`command-schemas.ts` ~:2426-2483 — currently absent). The
+  fidelity baseline WILL move (swap-content ar/tl role bindings change) — regenerate
+  `multilingual-priority.json` deliberately and strengthen the weak test at
+  `multilingual-roadmap-fixes.test.ts` ~:2949 to assert role bindings (Map-aware).
 
 > **PHASE 6 SHIPPED — and, true to this doc's own governing lesson, BOTH its fix-site
 > claims were incomplete; a probe caught each.**
@@ -236,47 +322,56 @@ These are NOT one root cause. Each is a distinct deeper bug, diagnosed but defer
 
 ---
 
-MISSION: Phase 11 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **3000/3059 (≈98.1 %)**; **59 pairs across ~16
-patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, and 10 are DONE. **The residual is fully
-triaged** — the table in § "What is left" was produced by rendering all pairs and clustering
-them by the canonical parser's actual complaint, so it is measured, not estimated. (The
+MISSION: Phase 12 of the foreign→English validity burndown. Authored non-English LokaScript
+currently renders canonically-valid English **3010/3059 (≈98.4 %)**; **49 pairs across 12
+patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, 10, and 11 are DONE. **The residual is fully
+triaged AND fully classified** — the post-Phase-11 harness clustering is exactly:
+pick-text-range 23 (17 SVO `Unexpected value: <<<EOF>>>` + 5 SOV `Unexpected Token : 0` +
+qu 1); the blocked-vocab throw families (th `เป็น` 6, ar `هو` copula 5, hi `है` 5,
+ja `空` 2, hi `नहीं` 1, tl `walang` 1, zh `没` 1, bn `আছে` 1, tl `may` 1, tr `var` 1 —
+24 total); and swap ar/tl 2 (the last structural sub-bug, § "What Phase 11 left"). (The
 ground-truth counts in `baselines/foreign-canonical-validity.json` —
 `validAtGeneration`/`checkedAtGeneration` — are authoritative, not the prose percentage.)
-After Phase 10 the residual is, per the fresh harness clustering: pick-text-range 23; the
-blocked-vocab throw families (th `เป็น` 6, hi `है` 5, ja `空` 2, bn 6, plus singles hi
-`नहीं`/`बदलने`, zh `没`/`执`, th `ป` — 24 total); ar `هو` copula 5; swap ar/tl 2;
-window-keydown ar/tl 2; behavior-draggable tl 1 (`walang`, also structurally degraded);
-if-exists tl/tr 2 (`may`/`var` exists-exclusions). Every named-tractable row is now shipped —
-what remains is blocked vocab, the pick family (~3 arcs), and the two risky structural
-sub-bugs.
+For the first time in the arc there is NO mis-filed-tractable tail left to probe out:
+Phase 11 drained it (its four re-filings — th resize "structural", bn `এ` "dict realign",
+zh `执行` "opaque", bn `অথবা` "?" — were the 11th–14th consecutive mis-filings). The
+realistic Phase 12 menu: (a) swap ar/tl in its own PR (design in § "What Phase 11 left"),
+(b) the pick-text-range family (~3 arcs, spike verdict below), (c) the remaining infra
+follow-up (bake the parse-check into the `@hyperscript-tools/i18n` transpiler), or
+(d) slot-aware disambiguation research for the blocked copula/exists families — the only
+thing that would move the 24 blocked pairs, and genuinely hard.
 
-> **EFFICIENT ITERATION — the Phase 7/8 engine, reuse it.** The fast inner loop is a batch
-> triage harness (`packages/testing-framework/triage.ts`, deleted after each phase — recreate
-> from the § "Reproduce the triage" recipe) that renders AND validates every residual pair
-> SEPARATELY (the gate discards the render on a validate-throw), then auto-clusters by the
-> true leaked token / parser complaint. Run it (~2 s, no gate) → attack the largest true
-> cluster → re-run for an instant all-pairs delta (catches collateral clears AND
-> regressions) → only when a cluster fully clears, run the slow outer loop (populate →
-> `test:canonical` → fidelity ratchet → prune baseline → commit). This beats the per-row
-> manual probing the earlier phases used, and it is what refuted the "no shared root cause"
-> claim. **Phase 8 footgun to bake in: dump roles with a Map-aware serializer** — `node.roles`
-> is a `Map`, so `JSON.stringify` shows `{}` and hides the very binding you are hunting.
+> **EFFICIENT ITERATION — the Phase 7–11 engine, reuse it.** The fast inner loop is the
+> COMMITTED batch triage harness
+> (`npx tsx packages/testing-framework/tools/triage-foreign-residual.ts [--detail out.json]`,
+> populate first) that renders AND validates every residual pair SEPARATELY, then
+> auto-clusters by the true leaked token / parser complaint. Run it (~2 s, no gate) →
+> attack the largest true cluster → re-run for an instant all-pairs delta (catches
+> collateral clears AND regressions) → only when a cluster fully clears, run the slow
+> outer loop (populate → `test:canonical` → fidelity ratchet → prune baseline → commit).
+> Phase 11 additions to the recipe: per-row probe scripts must live inside
+> `packages/testing-framework/` (scratchpad can't resolve node_modules) and be deleted
+> before commit; `loadCanonicalParser()` resolves DIRECTLY to the validate function
+> (`const validate = await loadCanonicalParser()` — destructuring it silently yields
+> undefined); and dump roles with a Map-aware serializer — `node.roles` is a `Map`, so
+> `JSON.stringify` shows `{}` and hides the very binding you are hunting.
 
-**The vocabulary/expression slices are exhausted** and Phases 7–8 cleared the shared structural
-clusters they found (id `punya`, focus-trap event-source-leak, swap patient-first, modal-close
-hide-style-binding). What remains is: the **2 named structural sub-bugs above** (swap ar/tl
-vso-verb-first, window-keydown event-duplication — 4 pairs, each a distinct deeper fix), the
-**~24 deliberately-blocked ambiguous-vocab exclusions** (th `เป็น`, hi `है`, ar `هو`,
-ja `空`, tl/tr/bn/hi/zh singles — genuinely hard, honest calls), the **23-pair
-`pick-text-range`** family (spike verdict below: ~3 arcs, not one PR), and a scatter of
-one-off per-row rows (bn `অথবা`/`এ` locative, qu/zh/hi singles). The realistic Phase 9 framing:
-either take one of the 2 named structural sub-bugs (window-keydown is lower-risk than swap —
-swap touches pattern GENERATION and its fidelity), or judge ≈97.8 % the practical ceiling and
-pivot to the two preserved infra follow-ups (fold validity in as an R4 ratchet signal; bake
-the parse-check into the `@hyperscript-tools/i18n` transpiler). **`form-submit-prevent` ar
-was mis-diagnosed by earlier handoffs as mechanical — it is the ar `هو`→`it` copula exclusion
-(renders `if result it false`), a genuinely-blocked ambiguity, not a registration-order win.**
+**The vocabulary, expression, and per-row structural slices are ALL exhausted as of
+Phase 11.** What remains is exactly three classes: the **swap ar/tl sub-bug** (2 pairs,
+design ready in § "What Phase 11 left", own PR), the **24 deliberately-blocked
+ambiguous-vocab exclusions** (th `เป็น`=is/as, ar `هو`=it/is, hi `है`=is/has,
+ja `空` phantom, hi `नहीं`/zh `没`/tl `walang` no-not-without, bn `আছে`/tl `may`/
+tr `var` exists-has — genuinely hard, honest calls; only slot-aware disambiguation
+would move them, and Phase 2 established the slot axis is the wrong axis), and the
+**23-pair `pick-text-range`** family (spike verdict below: ~3 arcs, not one PR).
+**`form-submit-prevent` ar was mis-diagnosed by earlier handoffs as mechanical — it is
+the ar `هو`→`it` copula exclusion (renders `if result it false`). Phase 11's planning
+probe also REFUTED the "registration ORDER makes ar `is` structurally impossible"
+claim: EXTRAS run LAST and override profile entries (`base-tokenizer.ts` ~L553), so
+order is no barrier — but the pair stays blocked on the genuine it/is ambiguity
+(`إذا هو هو "cancel"` = "if it is cancel" — both senses adjacent on one line).**
+Of the two infra follow-ups, R4 is DONE (#727); the remaining one is baking the
+parse-check into the `@hyperscript-tools/i18n` transpiler (roadmap §5).
 
 **Phase 5 registered `document`/`window`/`detail` in one shared Set + 20 profiles — DO NOT
 re-plan it.** It is drift reconciliation (core's `REFERENCE_KEYWORDS` and the parser's
@@ -407,31 +502,31 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (68 pairs after Phase 8; **59 after Phase 10** — net out behavior-removable id/ko, behavior-sortable id/ko, fetch-error-handling qu, and note the "ko `정`" single was really `정의안됨`) — MEASURED, not estimated
+## What is left (**49 pairs after Phase 11**) — MEASURED, not estimated
 
-Produced by rendering all allowlisted pairs and clustering by the canonical parser's actual
-complaint. **Reproduce it before trusting it** (recipe at the end of this section). Phase 5
-removed the `document` row (7 pairs); `window` proved structural, not data. Phase 6 removed
-the `beep!` row (5) and the zh/hi half of the `as` row (2). **Phase 7 removed id `punya`
-(4: computed-value/if-empty/input-validation/two-way-binding), focus-trap ar/tl (2), and swap
-bn/hi/tr/qu (4)** — 10 pairs. **Phase 8 removed modal-close-escape pl/uk (2).** The table below
-is the PRE-Phase-7 snapshot; net-out the 12 Phase-7/8 clears and the two remaining deferred
-sub-bugs (swap ar/tl, window-keydown tl/ar) documented at the top when reading it. A FRESH
-Phase-8 triage of the current 68 confirmed the clustering: pick-text-range 23 (`pick
-characters` 17 + `pick 0` 5 + qu 1), th `เป็น` 6, hi `है` 5, then 2s and singles.
+Produced by the committed triage harness against the post-Phase-11 tree (fresh populate).
+**Reproduce it before trusting it** (recipe at the end of this section). Phase 11 removed
+every row of the old table that was not pick-text-range or genuinely-blocked vocab:
+bn `অথবা` (2 — plus the wait or-run structural half), bn `এ` locative (2 — via the শেষ
+positional-head dual, NO dict realign), th `ป`/window-resize (1), hi `बदलने`+`या` (1),
+bn `এর` (1), zh `执行` (1), window-keydown ar/tl (2). The table below is the CURRENT
+snapshot, complete and classified — there is no "structural (no leak)" bucket left and no
+unexplained singles.
 
 | # | Family | Kind | Where |
 | --- | --- | --- | --- |
-| 23 | `pick-text-range` | deferred, ~3 arcs | all but en |
-| 21 | structural (no leak) | per-row | see list below (modal-close-escape pl/uk cleared in Phase 8) |
-| 5 | hi `है` (=has/have) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
-| 5 | th `เป็น` (=as/is) | blocked | same five patterns |
-| 2 | `window` — structural, NOT data | per-row | `window-keydown` ar · `window-resize` th (modal-close-escape uk cleared Phase 8) |
+| 23 | `pick-text-range` | deferred, ~3 arcs | all but en (17 SVO EOF + 5 SOV `0` + qu) |
+| 6 | th `เป็น` (=is/as) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation`, `computed-value` |
+| 5 | ar `هو` (=it/is copula) | blocked | `behavior-removable`, `behavior-sortable`, `form-submit-prevent`, `if-empty`, `input-validation` |
+| 5 | hi `है` (=is/has) | blocked | same five patterns |
 | 2 | ja `空` (=empty) | phantom-blocked | `if-empty`, `input-validation` |
-| 2 | bn `অথবা` | ? | `behavior-draggable`, `behavior-sortable` |
-| 2 | bn `এ` (locative) | dict realign | `focus-trap`, `last-in-collection` |
-| 1 | th `เป็น` (=as, copula) | blocked | `computed-value` th (id is separate structural, below) |
-| 7 | singles | various | hi `नहीं`, ko `정`, bn `এর`/`আছে`, ar `من`, zh `执行`, hi `बदलने` |
+| 2 | swap ar/tl | structural, own PR | `swap-content` (§ "What Phase 11 left") |
+| 1 | hi `नहीं` (=no/not) | blocked | `behavior-draggable` |
+| 1 | tl `walang` (=no/without) | blocked (+degraded) | `behavior-draggable` |
+| 1 | zh `没` (=no/without) | blocked | `behavior-draggable` |
+| 1 | bn `আছে` (=exists/has) | blocked | `if-exists` |
+| 1 | tl `may` (=exists/has) | blocked | `if-exists` |
+| 1 | tr `var` (=exists/has) | blocked | `if-exists` |
 
 ### 1. DONE (Phase 5) — `document`/`window`/`detail` context globals — 7 pairs, pure data
 
@@ -501,34 +596,31 @@ The handoff's premise was doubly wrong:
   for all languages. Named follow-up; clears **0** foreign gate pairs (the foreign gate never
   renders en→en).
 
-### 4. Deliberately blocked (12) — do NOT "fix" without reading why
+### 4. Deliberately blocked (24 after Phase 11) — do NOT "fix" without reading why
 
-- hi `है` (5) and th `เป็น` (5) are the copula slice's **named ambiguous exclusions**
-  (`है`=has/have, `เป็น`=as). Registering either mistranslates every `has`/`as` in those
-  corpora. Only a slot-aware disambiguation helps, and Phase 2 established the slot axis
-  is the WRONG axis (`es` is Spanish `is` but German `it`). Treat as genuinely hard.
-- ja `空` (2) is the **phantom-injection word** (`japanese.ts:108-111`): `empty` is both an
+- hi `है` (5), th `เป็น` (6), and ar `هو` (5) are the copula slice's **named ambiguous
+  exclusions** (`है`=is/has, `เป็น`=is/as, `هو`=it/is). Registering any of them
+  mistranslates every other-sense occurrence in those corpora (ar's
+  `إذا هو هو "cancel"` has both senses ADJACENT). Only a slot-aware disambiguation
+  helps, and Phase 2 established the slot axis is the WRONG axis (`es` is Spanish `is`
+  but German `it`). **Phase 11 refuted the ar registration-order framing** (EXTRAS
+  override everything, `base-tokenizer.ts` ~L553) — the block is pure ambiguity.
+- The no/not/without family — hi `नहीं`, zh `没(有)`, tl `walang` (1 each,
+  behavior-draggable) — and the exists/has family — bn `আছে`, tl `may`, tr `var`
+  (1 each, if-exists) — are the Phase-4/2 dict-level dual-sense exclusions. Same
+  verdict: registering one sense mistranslates the other.
+- ja `空` (2) is the **phantom-injection word** (`japanese.ts`): `empty` is both an
   ActionType and a command schema, so registering `空` injects a phantom command. This is
-  the one place the "register the surface" reflex is actively wrong.
+  the one place the "register the surface" reflex is actively wrong. (Same trap, other
+  shape: zh `执行`→`js` would phantom a `js js` — Phase 11 fixed that row in the
+  js-block consumer instead.)
 
-### 5. Structural, no leak (23) — per-row, no shared root cause
+### 5. ~~Structural, no leak~~ — DRAINED (Phases 7–11)
 
-**PRE-Phase-7 snapshot — net out the Phase 7/8 clears:** Phase 7 cleared focus-trap ar/tl,
-swap bn/hi/tr/qu, id `punya` (computed-value/two-way-binding); Phase 8 cleared
-modal-close-escape pl/uk. Phase 7 also refuted the "no shared root cause" header — several of
-these DID cluster by symptom (leaked token / parser complaint) once triaged that way.
-
-`behavior-removable` ar/id/qu · `behavior-sortable` qu · `computed-value` id ·
-`fetch-error-handling` qu · `focus-trap` tl · `form-submit-prevent` ar · `if-empty` ar/id ·
-`if-exists` tl/tr · `input-validation` ar/id · ~~`modal-close-escape` pl~~ (cleared Phase 8) ·
-`swap-content` ar/bn/hi/qu/tl/tr · `two-way-binding` id · `window-keydown` tl
-
-Known shapes: `focus-trap` ar/tl (stray `من .modal`/`source .modal`, displaced
-`[key=="Tab"]`) · `swap-content` ar `بـ#b` fusion · id `saya punya nilai` → `my punya nilai`
-(the possessive head translated, the rest left) · `form-submit-prevent` ar, blocked by the
-**registration ORDER** (`profile.references` registers AFTER `keywords`,
-`base-tokenizer.ts:502` vs `:482`, so an ar `is` entry is silently overwritten — a code
-change, plausibly the last mechanical win).
+The old per-row bucket is empty. Phase 7 cleared focus-trap ar/tl, swap bn/hi/tr/qu, and
+id `punya`; Phase 8 cleared modal-close-escape pl/uk; Phases 9–10 cleared the qu/ru/uk/id/ko
+value-literals and the qu dot-member; Phase 11 cleared everything else (see its block at the
+top). The ONLY structural row left is swap ar/tl (2) — § "What Phase 11 left".
 
 ### Reproduce the triage
 
