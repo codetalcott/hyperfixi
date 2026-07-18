@@ -5408,6 +5408,23 @@ export class SemanticParserImpl implements ISemanticParser {
     const bodyTokens: LanguageToken[] = [];
     tokens.advance(); // consume `js`
 
+    // The authored verb may be an ASCII+CJK compound the tokenizer split: the
+    // zh dict writes `JS执行`, the ASCII extractor claims `JS` (which is what
+    // isJsKeyword matched), and the stranded `执行` lands at the head of the raw
+    // body, leaking into the rendered JS (`js 执行 console.log(...)` —
+    // canonically invalid). When the head and the next token are
+    // source-adjacent and their concatenation is the profile's own js-command
+    // surface, the second half is part of the VERB — consume it too.
+    const verbTail = tokens.peek();
+    if (
+      verbTail &&
+      head.position?.end !== undefined &&
+      head.position.end === verbTail.position?.start &&
+      this.profileKeywordMatches(language, 'js', `${head.value}${verbTail.value}`.toLowerCase())
+    ) {
+      tokens.advance();
+    }
+
     let sawEnd = false;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();

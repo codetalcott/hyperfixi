@@ -14094,3 +14094,25 @@ describe('Foreign-validity Phase 11: window-keydown fused-if event excision (ar/
     expect(tl).toBe(en);
   });
 });
+
+describe('Foreign-validity Phase 11: zh JS执行 split-verb reassembly (js-inline)', () => {
+  // The zh dict authors the js command as the ASCII+CJK compound `JS执行`; the
+  // ASCII extractor claims `JS` (matching the js keyword) and strands `执行` at
+  // the head of the opaque body, where it leaked into the rendered JS. The
+  // js-block consumer now folds a source-adjacent tail into the verb when the
+  // concatenation is the profile's own js-command surface.
+  it('zh js-inline row renders byte-identical to en (no 执行 leak)', () => {
+    const zh = render(parse('当 点击 时 JS执行 console.log("from js") 结束', 'zh'), 'en');
+    const en = render(parse('on click js console.log("from js") end', 'en'), 'en');
+    expect(zh).toBe(en);
+    expect(zh).not.toContain('执行');
+  });
+
+  it('a spaced 执行 is NOT folded into the verb (adjacency-gated)', () => {
+    // `JS 执行` with a space is not the authored compound; the tail must stay
+    // in the body untouched (pre-existing leak shape, but never silently
+    // widened by this fix).
+    const out = render(parse('当 点击 时 JS 执行 console.log("x") 结束', 'zh'), 'en');
+    expect(out).toContain('执行');
+  });
+});
