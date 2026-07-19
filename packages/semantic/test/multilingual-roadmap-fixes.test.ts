@@ -13401,7 +13401,11 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
     // The fallback typed `$x` literal (no `:local`/`$global` branch) AND
     // mapped set's ta/を-marked DESTINATION to patient — set's surface order
     // is dest-first, so the SOV patient particle systematically marks the
-    // destination. en: destination:reference="$x" + patient:literal.
+    // destination. en: destination:reference="$x" + patient:expression.
+    // (patient was `literal` until the beep!-prefix value fold landed — the en
+    // reference itself truncated to `beep`; both sides now capture the full
+    // `beep! my value` as ONE expression, so the mirror holds at the better
+    // type. See tryMatchBeepPrefixExpression in pattern-matcher.ts.)
     const ROWS: Array<[string, string]> = [
       ['ja', '$x を beep! 私の 値 に 設定 クリック で'],
       ['ko', '$x 를 beep! 내 값 에 설정 클릭 할 때'],
@@ -13409,11 +13413,12 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
       ['qu', '$x ta beep! noqaq chanin man ñitiy pi churanay'],
     ];
     for (const [lang, src] of ROWS) {
-      it(`[${lang}] fallback set: $x lands as destination:reference, value as patient:literal`, () => {
+      it(`[${lang}] fallback set: $x lands as destination:reference, value as patient:expression (beep! fold)`, () => {
         const s = first(collect(parse(src, lang)), 'set');
         expect(s).toBeDefined();
         expect(role(s, 'destination')).toMatchObject({ type: 'reference', value: '$x' });
-        expect(role(s, 'patient')?.type).toBe('literal');
+        expect(role(s, 'patient')?.type).toBe('expression');
+        expect(role(s, 'patient')?.value).toContain('beep! my value');
       });
     }
 

@@ -673,6 +673,15 @@ export class PatternMatcher {
       patternToken.role !== 'event' &&
       (!patternToken.expectedTypes || patternToken.expectedTypes.includes('expression'))
     ) {
+      // `beep! <expr>` first: its head (`beep`) is a plain value token, so the
+      // single-token capture below would otherwise take it and strand the
+      // `! <expr>` tail as unconsumed — the same silent truncation the operator
+      // run fixes for `"Hello, " + my value`, in prefix form.
+      const beepValue = this.tryMatchBeepPrefixExpression(tokens);
+      if (beepValue) {
+        captured.set(patternToken.role, beepValue);
+        return true;
+      }
       const runValue = this.tryMatchOperatorRunExpression(tokens);
       if (runValue) {
         captured.set(patternToken.role, runValue);
@@ -1130,6 +1139,58 @@ export class PatternMatcher {
    * Returns null — leaving the stream untouched — unless an operator DIRECTLY
    * follows the first operand, so ordinary single-token captures never change.
    */
+  /**
+   * Try to match canonical hyperscript's `beep! <expr>` debug prefix as ONE
+   * expression value (`set $x to beep! my value`). Without this fold the value
+   * slot captures the bare `beep` (a valid identifier on its own) and the
+   * `! <expr>` tail drops as unconsumed — silently WRONG, and invisible to
+   * every recall signal because the en REFERENCE truncates identically (the
+   * probe measured 18 of 24 languages truncating; only the SOV six, which take
+   * the verb-anchoring fall-through into `joinExpressionTokens`, rendered the
+   * full value). See HANDOFF_foreign-validity-burndown § "beep!".
+   *
+   * Gates: the literal `beep` head, a SOURCE-ADJACENT `!` (the same adjacency
+   * voucher the join seam's `!`-glue uses — canonical rejects the spaced
+   * `beep !`, so adjacency is definitive), and a real operand following (a
+   * dangling `beep!` stays a plain single-token capture). A following operator
+   * run composes (`beep! my value + 1`) via the same operand consumer.
+   */
+  private tryMatchBeepPrefixExpression(tokens: TokenStream): SemanticValue | null {
+    const head = tokens.peek();
+    const bang = tokens.peek(1);
+    if (!head || !bang || bang.value !== '!') return null;
+    if ((head.normalized ?? head.value).toLowerCase() !== 'beep') return null;
+    const adjacent =
+      head.position?.end !== undefined &&
+      bang.position?.start !== undefined &&
+      head.position.end === bang.position.start;
+    if (!adjacent) return null;
+
+    const mark = tokens.mark();
+    const startIdx = tokens.position();
+    tokens.advance(); // beep
+    tokens.advance(); // !
+    if (!this.tryConsumeRunOperand(tokens)) {
+      tokens.reset(mark);
+      return null;
+    }
+    for (;;) {
+      const op = tokens.peek();
+      if (!op || !PatternMatcher.RUN_OPERATORS.has(op.value)) break;
+      const beforeOp = tokens.mark();
+      tokens.advance();
+      if (!this.tryConsumeRunOperand(tokens)) {
+        tokens.reset(beforeOp);
+        break;
+      }
+    }
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    return { type: 'expression', raw, value: raw } as SemanticValue;
+  }
+
   private tryMatchOperatorRunExpression(tokens: TokenStream): SemanticValue | null {
     const mark = tokens.mark();
     const startIdx = tokens.position();
