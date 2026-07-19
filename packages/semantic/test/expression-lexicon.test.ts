@@ -496,3 +496,181 @@ describe('Phase 11: bn শেষ positional-head dual (focus-trap, last-in-colle
     expect(out).not.toContain('last .{dragClass}');
   });
 });
+
+// Full authored corpus rows for the Phase 12 ambiguous-sense guards: standalone
+// single-line probes parse via DIFFERENT paths (a bare `if` line truncates its
+// condition before the seam sees the full run), so the guards must parse the
+// whole behavior exactly as the gate does.
+const AR_REMOVABLE = `behavior Removable(triggerEl, confirmRemoval, effect)
+    init
+        إذا triggerEl هو غير معرف
+            اضبط triggerEl إلى أنا
+        النهاية
+    النهاية
+    من triggerEl عند نقر
+        إذا confirmRemoval
+            js(me)
+        if (!window.confirm("Are you sure?")) return "cancel";
+      end
+            إذا هو هو "cancel"
+                أوقف
+            النهاية
+        النهاية
+        تشغيل removable:before
+        إذا effect هو "fade"
+            انتقال opacity إلى 0 300ms
+        النهاية
+        تشغيل removable:removed
+        احذف أنا
+    النهاية
+النهاية`;
+
+const TL_DRAGGABLE = `ugali Draggable(dragHandle)
+    simulan
+        kung walang dragHandle pagkatapos itakda dragHandle sa ako
+    wakas
+    mula_sa dragHandle kapag pointerdown(clientX, clientY)
+        huminto the pangyayari
+        palitawin draggable:start
+        sukatin x
+        itakda startX sa ito
+        sukatin y
+        itakda startY sa ito
+        itakda xoff sa clientX - startX
+        itakda yoff sa clientY - startY
+        ulitin hanggang pangyayari pointerup mula_sa dokumento
+            maghintay pointermove(clientX, clientY) o
+                                pointerup(clientX, clientY) mula_sa dokumento
+            idagdag { left: \${clientX - xoff}px; top: \${clientY - yoff}px; }
+            palitawin draggable:move
+        wakas
+        palitawin draggable:end
+    wakas
+wakas`;
+
+
+describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-context gates)', () => {
+  // Each word here was a deliberately-blocked ambiguous exclusion (copula
+  // it/is, is/as, is/has; no/not/without; exists/has; the ja ç©º phantom). The
+  // render seam resolves them by neighbor shape ONLY â a failed gate leaves the
+  // pre-existing render byte-identical. Sources are authored corpus rows
+  // (never hand-written foreign text). Census + gates: probe 2026-07-19.
+
+  it('ar: ÙÙ before a predicate renders `is` (copula sense)', () => {
+    const out = render(
+      parse(
+        'عند ضبابية إذا لي قيمة هو فارغ أضف .error إلى أنا وإلا احذف .error من أنا النهاية',
+        'ar'
+      ),
+      'en'
+    );
+    expect(out).toContain('if my value is null');
+    expect(out).not.toContain(' it null');
+  });
+
+  it('ar: doubled هو هو resolves to `it is` (reference then copula)', () => {
+    const out = render(parse(AR_REMOVABLE, 'ar'), 'en');
+    expect(out).toContain('if it is "cancel"');
+    expect(out).toContain('if triggerEl is undefined');
+    expect(out).toContain('if effect is "fade"');
+  });
+
+  it('ar: it-sense هو before a verb/marker stays `it`', () => {
+    const out = render(
+      parse(
+        'احضر /api/users عند نقر كـJSON do ليس ارم ثم إذا هو اضبط $users إلى هو النهاية',
+        'ar'
+      ),
+      'en'
+    );
+    expect(out).toContain('if it set $users to it');
+    expect(out).not.toContain('if is');
+  });
+
+  it('hi: है before a predicate renders `is`', () => {
+    const out = render(
+      parse(
+        'धुंधला पर अगर मेरा मान है खाली .error को जोड़ें मैं में वरना .error को हटाएं मैं से समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(out).toContain('if my value is null');
+    expect(/[ऀ-ॿ]/.test(out)).toBe(false);
+  });
+
+  it('hi: not-sense नहीं before a verb keyword never becomes `no`', () => {
+    const out = render(
+      parse(
+        '/api/users को क्लिक पर लाएं JSON do नहीं फेंकें फिर के रूप में अगर यह $users को यह में सेट समाप्त',
+        'hi'
+      ),
+      'en'
+    );
+    expect(out).not.toContain('no throw');
+    expect(out).toContain('if it set $users to it');
+  });
+
+  it('th: เป็น before a predicate renders `is`', () => {
+    const out = render(
+      parse(
+        'เมื่อ เบลอ ถ้า ของฉัน ค่า เป็น ว่าง เพิ่ม .error ใน ฉัน ไม่งั้น ลบ .error จาก ฉัน จบ',
+        'th'
+      ),
+      'en'
+    );
+    expect(out).toContain('if my value is null');
+  });
+
+  it('th: เป็น before a type name renders `as`', () => {
+    const out = render(
+      parse(
+        'เมื่อ อินพุต ตั้ง #total.innerText ใน (the ค่า ของ #price เป็น Number) * (ของฉัน ค่า เป็น Number) จาก .quantity',
+        'th'
+      ),
+      'en'
+    );
+    expect(out).toContain('as Number');
+    expect(out).not.toContain('เป็น');
+  });
+
+  it('th: the fetch as-clause is untouched (different seam)', () => {
+    const out = render(
+      parse(
+        'เมื่อ คลิก ดึงข้อมูล /api/user เป็น json แล้ว ตั้ง #name.innerText ใน ของมัน.name',
+        'th'
+      ),
+      'en'
+    );
+    expect(out).toContain('as json');
+  });
+
+  it('ja: 空 directly after the copula renders `empty` (no phantom command)', () => {
+    const out = render(
+      parse(
+        'ぼかし で もし 私の 値 である 空 .error を 追加 私 に それから "Required" を 次 .error-message に 置く 終わり',
+        'ja'
+      ),
+      'en'
+    );
+    expect(out).toContain('if my value is empty');
+    expect(out).not.toContain('空');
+  });
+
+  const existsRows: Array<[string, string]> = [
+    ['bn', 'ক্লিক এ যদি #modal আছে #modal কে দেখান নতুবা a <div#modal/> কে তৈরি করুন তারপর এটি কে বডি তে রাখুন শেষ'],
+    ['tl', 'kapag click kung #modal may ipakita #modal kung_hindi gumawa a <div#modal/> pagkatapos ilagay ito sa katawan wakas'],
+    ['tr', 'tıklama de eğer #modal var #modal i göster yoksa a <div#modal/> i yap ardından o i gövde e koy son'],
+  ];
+  for (const [lang, code] of existsRows) {
+    it(`${lang}: exists-word after a selector subject renders \`exists\``, () => {
+      const out = render(parse(code, lang), 'en');
+      expect(out).toContain('if #modal exists');
+    });
+  }
+
+  it('tl: walang before a bare identifier renders `no` (compound walang_laman untouched)', () => {
+    const out = render(parse(TL_DRAGGABLE, 'tl'), 'en');
+    expect(out).toContain('if no dragHandle');
+  });
+});
