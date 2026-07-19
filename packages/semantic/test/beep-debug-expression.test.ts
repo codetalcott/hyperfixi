@@ -38,3 +38,41 @@ describe('beep! debug-expression renders canonical English (no glue, no leak)', 
     expect(hasNonAscii(rendered)).toBe(false);
   });
 });
+
+/**
+ * The value-slot prefix fold (tryMatchBeepPrefixExpression) — the en/SVO/VSO
+ * half of the story. Before the fold, the value slot captured the bare `beep`
+ * (a valid identifier) and dropped `! <expr>` as unconsumed — silently WRONG
+ * in en and 17 more languages, invisible to every recall signal because the en
+ * REFERENCE truncated identically (probe 2026-07-19: 18/24 truncated; only
+ * the SOV five above rendered the full value, via the fall-through join).
+ */
+describe('beep! value-slot prefix fold (en + SVO/VSO)', () => {
+  it('en: the set value captures the whole `beep! my value`, not the bare `beep`', () => {
+    const rendered = render(parse('on click set $x to beep! my value', 'en'), 'en');
+    expect(rendered).toBe('on click set $x to beep! my value');
+  });
+
+  it('en: composes with the operator run (`beep! my value + 1`)', () => {
+    const rendered = render(parse('on click set $x to beep! my value + 1', 'en'), 'en');
+    expect(rendered).toContain('beep! my value + 1');
+  });
+
+  it('en: the fold is bounded — a following role marker stays with its own role', () => {
+    const rendered = render(parse('on click put beep! my value into #log', 'en'), 'en');
+    expect(rendered).toContain('put beep! my value into #log');
+  });
+
+  it('en: a SPACED `beep !` never folds (adjacency is the voucher)', () => {
+    // Canonical rejects the spaced form, so folding it would invent validity;
+    // the pre-existing single-token capture (and its truncation) is preserved.
+    const rendered = render(parse('on click set $x to beep ! my value', 'en'), 'en');
+    expect(rendered).toContain('set $x to beep');
+    expect(rendered).not.toContain('beep!');
+  });
+
+  it('en: a dangling `beep!` with no operand declines the fold', () => {
+    const rendered = render(parse('on click set $x to beep!', 'en'), 'en');
+    expect(rendered).toContain('set $x to beep');
+  });
+});

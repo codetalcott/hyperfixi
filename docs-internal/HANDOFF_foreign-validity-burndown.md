@@ -642,13 +642,18 @@ The handoff's premise was doubly wrong:
   GAIN a rule — a source-adjacent leading `!` glues like the `.`-member rule
   (`expression-lexicon.ts`). "The join loses its spaces" was only half the story; it also had
   to STOP adding one.
-- **en is separately, pre-existingly broken and DEFERRED.** `set $x to beep! my value` →
-  `set $x to beep` (the `matchRoleToken` single-token slot capture drops `! my value`;
-  `beep` alone is a valid canonical identifier, so en is not in the en-render allowlist).
-  Fixing it means folding `beep! <expr>` as an expression prefix in
-  `pattern-matcher.ts` value-slot capture — a different root cause on the primary parse path
-  for all languages. Named follow-up; clears **0** foreign gate pairs (the foreign gate never
-  renders en→en).
+- ~~**en is separately, pre-existingly broken and DEFERRED.**~~ **DONE (2026-07-19,
+  the beep!-prefix value fold).** The probe showed the deferral note undersold it:
+  **18 of 24 languages truncated** (`set $x to beep`), not just en — every SVO/VSO
+  language shared en's single-token capture, gate-invisibly (the truncated render is
+  valid English, and the en REFERENCE truncated identically so no recall signal
+  moved). Fix = `tryMatchBeepPrefixExpression` in `pattern-matcher.ts`, the prefix
+  sibling of the operator-run fold: `beep` + SOURCE-ADJACENT `!` + operand →
+  one expression value joined through `joinExpressionTokens` (which supplies the
+  Phase-6 `!`-glue). All 24 languages now render the full `beep! my value`;
+  R1 rose in 15 languages (7 to 1.0000) — the truncating reference had been
+  masking a role-fidelity gap. Guards in `beep-debug-expression.test.ts`; the R1
+  Family-D locks updated to the better type (patient:expression, mirror intact).
 
 ### 4. ~~Deliberately blocked (24 after Phase 11)~~ — CLEARED (Phase 12, ambiguous-sense anchor)
 
