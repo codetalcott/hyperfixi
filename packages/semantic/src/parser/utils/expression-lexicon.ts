@@ -502,6 +502,120 @@ function isPropertyHeadCandidate(token: LanguageToken, languageCode: string): bo
 }
 
 /**
+ * Deliberately-ambiguous surfaces resolved by LOCAL CONTEXT at the render seam.
+ *
+ * Each word here was excluded from profile/tokenizer registration because it
+ * carries TWO senses and a blanket binding rewrites the other one (the copula
+ * slice's named exclusions: ar هو=it/is, hi है=is/has, th เป็น=is/as; the
+ * no/without and exists/has dict duals; ja 空, where registering `empty` mints a
+ * phantom COMMAND because `empty` is also an ActionType). This seam is the one
+ * place where the word and its neighbors are visible together and no pattern
+ * generation is involved — a context-gated translation here cannot mint a
+ * phantom command and cannot touch the other sense, because nothing is emitted
+ * unless the neighbor shape vouches for exactly one reading.
+ *
+ * Every gate was measured against the full corpus census (every occurrence of
+ * every word, probe 2026-07-19): the other-sense occurrences all fail these
+ * gates (ar it-sense هو precedes markers/verbs/`هو`, never a predicate; hi
+ * not-sense नहीं precedes the keyword फेंकें→throw, never a bare identifier;
+ * tl `walang_laman` is a different whole token). A miss leaves the pre-existing
+ * behavior byte-identical (keyword-normalized or verbatim fallthrough).
+ */
+interface AmbiguousSenseRule {
+  /** Emitted when the NEXT token is predicate-shaped: a literal (quoted string
+      or number) or a keyword normalizing to empty/null/undefined/true/false. */
+  beforePredicate?: string;
+  /** Emitted when the NEXT token is a conversion type name (`Number`, `json`). */
+  beforeTypeName?: string;
+  /** Emitted when the NEXT token is a bare ASCII identifier (`dragHandle`) —
+      the word shape is required because some tokenizers lex `(`/`)` as
+      identifier-kind too. */
+  beforeBareIdentifier?: string;
+  /** Emitted when the PREVIOUS token is a selector or reference
+      (`#modal আছে` → `#modal exists`). */
+  afterSubject?: string;
+  /** Emitted when the PREVIOUS token is a keyword normalizing to `is`
+      (ja `である 空` → `is empty`). */
+  afterCopula?: string;
+}
+
+const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, AmbiguousSenseRule>>>> = {
+  ar: { هو: { beforePredicate: 'is' } },
+  hi: { है: { beforePredicate: 'is' }, नहीं: { beforeBareIdentifier: 'no' } },
+  th: { เป็น: { beforeTypeName: 'as', beforePredicate: 'is' } },
+  ja: { 空: { afterCopula: 'empty' } },
+  zh: { 没有: { beforeBareIdentifier: 'no' } },
+  tl: { walang: { beforeBareIdentifier: 'no' }, may: { afterSubject: 'exists' } },
+  bn: { আছে: { afterSubject: 'exists' } },
+  tr: { var: { afterSubject: 'exists' } },
+};
+
+/** Predicate values a copula can precede (mirrors the parser's
+    CONDITION_PREDICATES plus the boolean literals). */
+const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
+
+/** Canonical `as` conversion targets (both `json` casings occur: `fetch … as
+    json` and `… as JSON`). */
+const CONVERSION_TYPE_NAMES = new Set([
+  'Number',
+  'Int',
+  'Float',
+  'String',
+  'Date',
+  'Array',
+  'Object',
+  'JSON',
+  'json',
+  'FormData',
+  'HTML',
+  'Fragment',
+  'Values',
+]);
+
+function resolveAmbiguousSense(
+  languageCode: string,
+  token: LanguageToken,
+  prev: LanguageToken | undefined,
+  next: LanguageToken | undefined
+): string | undefined {
+  const table = AMBIGUOUS_SENSES[languageCode];
+  const rule = table?.[token.value] ?? table?.[token.value.toLowerCase()];
+  if (!rule) return undefined;
+  // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
+  // though `Number` could look identifier-bare; the sets are disjoint anyway.
+  if (rule.beforeTypeName && next?.kind === 'identifier' && CONVERSION_TYPE_NAMES.has(next.value)) {
+    return rule.beforeTypeName;
+  }
+  if (
+    rule.beforePredicate &&
+    next &&
+    (next.kind === 'literal' ||
+      (next.kind === 'keyword' &&
+        SENSE_PREDICATE_NORMALIZED.has((next.normalized ?? '').toLowerCase())))
+  ) {
+    return rule.beforePredicate;
+  }
+  if (
+    rule.beforeBareIdentifier &&
+    next?.kind === 'identifier' &&
+    /^[A-Za-z_]\w*$/.test(next.value)
+  ) {
+    return rule.beforeBareIdentifier;
+  }
+  if (rule.afterSubject && (prev?.kind === 'selector' || (prev?.kind as string) === 'reference')) {
+    return rule.afterSubject;
+  }
+  if (
+    rule.afterCopula &&
+    prev?.kind === 'keyword' &&
+    (prev.normalized ?? '').toLowerCase() === 'is'
+  ) {
+    return rule.afterCopula;
+  }
+  return undefined;
+}
+
+/**
  * Join a token slice into the English expression text stored on an `expression`
  * value — the shared seam for every raw-expression capture.
  *
@@ -678,6 +792,17 @@ export function joinExpressionTokens(
     if (run) {
       for (const part of run.parts) append(part.text, part.token);
       i += run.consumed - 1;
+      continue;
+    }
+
+    // Ambiguous-sense anchor — AFTER the possessive/of/positional anchors (so
+    // it can only claim tokens they declined) and before the connective table
+    // (these surfaces are deliberately NOT connectives; the sense table is
+    // authoritative for them). See AMBIGUOUS_SENSES above for why this seam is
+    // the one safe place to translate these words.
+    const sense = resolveAmbiguousSense(languageCode, token, tokens[i - 1], next);
+    if (sense !== undefined) {
+      append(sense, token);
       continue;
     }
 

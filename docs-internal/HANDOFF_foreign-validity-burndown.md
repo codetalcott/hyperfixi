@@ -1,4 +1,4 @@
-# Handoff: foreign→English validity burndown (Phase 12 — post Phase 11b)
+# Handoff: foreign→English validity burndown (post Phase 12 — blocked-vocab class CLEARED)
 
 Paste the block below into a fresh session to continue the arc. Everything above the
 `---` is orientation for a human; the prompt itself starts after it.
@@ -12,13 +12,53 @@ with-word binding, #724)**, **8 (modal-close-escape pl/uk — hide's literal-onl
 `style` slot rejecting a reference, #725)**, **9 (qu/ru/uk null/undefined value-literals
 the tokenizer never bound)**, **10 (id/ko undefined value-literals + the qu
 connector-joined dot-member possessive, #726)**, **11 (10 pairs across seven root
-causes — see the PHASE 11 block below)**, and **11b (swap ar/tl, the last structural
-sub-bug — see § "What Phase 11 left")** shipped. Foreign→English render validity
-**90.7 % → 3012/3059 (≈98.5 %)**. **47 pairs across 11 patterns** remain — and for the
-first time, **every named-tractable row is genuinely gone**: the residual is exactly
-pick-text-range (23) and the deliberately-blocked ambiguous vocab (24).
+causes — see the PHASE 11 block below)**, **11b (swap ar/tl, the last structural
+sub-bug — see § "What Phase 11 left")**, and **12 (the ambiguous-sense anchor — the
+ENTIRE deliberately-blocked vocab class, 24 pairs, one mechanism)** shipped.
+Foreign→English render validity **90.7 % → 3036/3059 (≈99.2 %)**. **23 pairs across 1
+pattern** remain: the residual is exactly pick-text-range (the ~3-arc deferral). The
+"deliberately blocked" class no longer exists.
 Companion scope doc: `docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md`. Memory:
 `foreign-validity-burndown-phase1.md`.
+
+> **PHASE 12 SHIPPED (branch `fix/foreign-validity-phase12-ambiguous-sense`, 24 pairs,
+> 3012→3036 — the whole blocked-vocab class in ONE mechanism).** The "only slot-aware
+> disambiguation would move them, and Phase 2 established the slot axis is the wrong
+> axis" verdict was HALF-right: the slot axis IS wrong, but the un-probed axis —
+> LOCAL TOKEN CONTEXT at the render seam — cleanly separates every one of the 10
+> dual-sense words. A full-corpus census (every occurrence of every word, not just
+> the failing rows) showed the two senses NEVER share a neighbor shape:
+>
+> - **Mechanism:** `AMBIGUOUS_SENSES` + `resolveAmbiguousSense` in
+>   `expression-lexicon.ts`, consulted by `joinExpressionTokens` AFTER the
+>   possessive/of/positional anchors and before the connective table. Five gates:
+>   `beforePredicate` (next is a literal or a keyword normalizing to
+>   empty/null/undefined/true/false → ar هو / hi है / th เป็น emit `is`),
+>   `beforeTypeName` (th เป็น before `Number`/`json`/… emits `as`),
+>   `beforeBareIdentifier` (hi नहीं / zh 没有 / tl walang before an ASCII
+>   identifier emit `no`; ASCII-word shape required — th lexes `(` as
+>   identifier-kind), `afterSubject` (bn আছে / tl may / tr var after a
+>   selector/reference emit `exists`), `afterCopula` (ja 空 after a keyword
+>   normalizing `is` emits `empty`).
+> - **Why the seam and not the tokenizer:** the seam renders TEXT — it can never
+>   mint a phantom command (the ja 空 ActionType trap) and never rebinds the word
+>   globally (the "mistranslates every other-sense occurrence" blocker). A failed
+>   gate leaves the pre-existing render byte-identical.
+> - **Measured safety:** before/after render of all 52 corpus rows containing any
+>   of the 10 words — exactly the 24 target rows changed, all 28 other-sense rows
+>   byte-identical (ar it-sense هو, hi do-not-throw नहीं, th fetch-family เป็น,
+>   tl walang_laman compound, the doubled `هو هو "cancel"` resolving `it is`).
+> - **Fidelity-neutral by construction:** baseline regen moved only
+>   timestamp/commit/bundleSize — R0–R3 never saw this class (expression-value
+>   content), which is why only the R4 validity gate ever caught it.
+> - Guard tests: `expression-lexicon.test.ts` § "Phase 12" (15 tests; the
+>   behavior-body rows are embedded whole — standalone `if` lines parse via a
+>   DIFFERENT path that truncates the condition before the seam sees it, a probe
+>   footgun to remember).
+> - Note for user-authored code: the corpus census is the safety evidence; a
+>   user writing hi `है` clause-FINAL (the natural has/is order) or नहीं before an
+>   unregistered verb still gets the verbatim leak, not a mistranslation — the
+>   gates fail closed.
 
 > **PHASE 11 SHIPPED (7 commits on `fix/foreign-validity-phase11`, 10 pairs,
 > 3000→3010).** It cleared EVERY workable pair the Phase-11 triage identified —
@@ -323,9 +363,12 @@ accumulate until the next deliberate regen; per-language avgRoleFidelity rose to
 
 ---
 
-MISSION: Phase 12 of the foreign→English validity burndown. Authored non-English LokaScript
-currently renders canonically-valid English **3012/3059 (≈98.5 %)**; **47 pairs across 11
-patterns** remain. Phases 2, 4, 5, 6, 7, 8, 9, 10, 11, and 11b are DONE. **The residual is fully
+MISSION: post-Phase-12 state of the foreign→English validity burndown. Authored
+non-English LokaScript renders canonically-valid English **3036/3059 (≈99.2 %)**;
+**23 pairs across 1 pattern** (pick-text-range) remain. Phases 2, 4, 5, 6, 7, 8, 9,
+10, 11, 11b, and 12 are DONE. **The blocked-vocab class was cleared by Phase 12's
+ambiguous-sense anchor (see the PHASE 12 block above)** — the arc is at its
+practical ceiling short of the pick-text-range ~3-arc effort. **The residual is fully
 triaged AND fully classified** — the post-Phase-11 harness clustering is exactly:
 pick-text-range 23 (17 SVO `Unexpected value: <<<EOF>>>` + 5 SOV `Unexpected Token : 0` +
 qu 1); the blocked-vocab throw families (th `เป็น` 6, ar `هو` copula 5, hi `है` 5,
@@ -508,7 +551,13 @@ bonus).** The diagnosis in this doc was RIGHT; two details were not.
   (role seam = plain space; the raw join needs SOURCE POSITION for `.`-glue). Bare strings
   would silently render `previous <input/> .value` inside conditions.
 
-## What is left (**47 pairs after Phase 11b**) — MEASURED, not estimated
+## What is left (**23 pairs after Phase 12**) — MEASURED, not estimated
+
+> **Phase 12 cleared every non-pick row below.** The table is preserved as the
+> pre-Phase-12 record; the current residual is exactly `pick-text-range` × 23
+> (all languages but en). Reproduce with the committed triage harness.
+
+### Pre-Phase-12 snapshot (historical)
 
 Produced by the committed triage harness against the post-Phase-11 tree (fresh populate).
 **Reproduce it before trusting it** (recipe at the end of this section). Phase 11 removed
@@ -601,7 +650,12 @@ The handoff's premise was doubly wrong:
   for all languages. Named follow-up; clears **0** foreign gate pairs (the foreign gate never
   renders en→en).
 
-### 4. Deliberately blocked (24 after Phase 11) — do NOT "fix" without reading why
+### 4. ~~Deliberately blocked (24 after Phase 11)~~ — CLEARED (Phase 12, ambiguous-sense anchor)
+
+**The class no longer exists.** Every rationale below was correct about REGISTRATION
+(a blanket tokenizer/profile binding does mistranslate the other sense / phantom a
+command) — the render-seam anchor avoids registration entirely. Preserved for the
+record:
 
 - hi `है` (5), th `เป็น` (6), and ar `هو` (5) are the copula slice's **named ambiguous
   exclusions** (`है`=is/has, `เป็น`=is/as, `هو`=it/is). Registering any of them
