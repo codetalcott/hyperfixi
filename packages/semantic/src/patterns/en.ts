@@ -16,6 +16,10 @@ import { generatePatternsForLanguage } from '../generators/pattern-generator';
 // the patterns/index barrel) keeps this module's tree-shaking property and leaves
 // exactly one definition.
 import { fetchPatternsEn } from './languages/en/fetch';
+// Pick variant/range patterns (canonical `pick first|last|random|item(s)|
+// character(s)|match(es) … of <root>`). Same leaf-not-barrel rationale as
+// fetch above: the patterns/languages/en/index.ts barrel has no runtime reader.
+import { pickPatternsEn } from './languages/en/pick';
 
 // Import from consolidated pattern files (Phase 3.2)
 import { getTogglePatternsForLanguage } from './toggle';
@@ -359,6 +363,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   // 2. English-only hand-crafted patterns
   patterns.push(
     ...fetchPatternsEn,
+    ...pickPatternsEn,
     swapElementEnglish,
     swapSimpleEnglish,
     repeatUntilEventFromEnglish,

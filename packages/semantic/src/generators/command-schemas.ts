@@ -2612,18 +2612,39 @@ export const exitSchema: CommandSchema = {
 };
 
 /**
- * Pick command: selects a random element from a collection.
- * Syntax: pick <item1>, <item2>, ... / pick from <array>
+ * Pick command. Canonical hyperscript (hyperscript.org@0.9.93 PickCommand) is a
+ * 6-variant selector, NOT the "random element from a collection" this schema
+ * originally described:
+ *
+ *   pick [the]
+ *     first  <count>            (of|from) <root>
+ *     last   <count>            (of|from) <root>
+ *     random [<count>]          (of|from) <root>
+ *     (item|items|character|characters) <range> (of|from) <root>
+ *         range: [at|from] (start|<expr>) [(to|..) (end|<expr>)] [inclusive|exclusive]
+ *     match   [of] <re> [| flags] (of|from) <root>
+ *     matches [of] <re> [| flags] (of|from) <root>
+ *
+ * The canonical variant/range model lives in the handcrafted English patterns
+ * (`patterns/languages/en/pick.ts`) + the pick-range assembler
+ * (`pattern-matcher.tryMatchPickRangeExpression`) + the pick AST mapper, NOT in
+ * this schema. The `roles` below are deliberately FROZEN at
+ * patient (the range/count/regex arg) + optional source (the `of`/`from` root):
+ * they still drive the generated fallback pattern for all 24 languages, and
+ * changing them would rewrite every language's generated pick pattern before the
+ * per-language vocabulary exists (arc 2). Keep them byte-identical; extend `pick`
+ * via patterns, not this schema.
  */
 export const pickSchema: CommandSchema = {
   action: 'pick',
-  description: 'Select a random element from a collection',
+  description:
+    'Select item(s), character(s), a range, first/last/random N, or regex matches from a root',
   category: 'variable',
   primaryRole: 'patient',
   roles: [
     {
       role: 'patient',
-      description: 'The items to pick from',
+      description: 'The range/count/index/regex argument to pick',
       required: true,
       expectedTypes: ['literal', 'expression', 'reference'],
       svoPosition: 1,
@@ -2631,7 +2652,7 @@ export const pickSchema: CommandSchema = {
     },
     {
       role: 'source',
-      description: 'The array to pick from (with "from" keyword)',
+      description: 'The root to pick from (with "of"/"from" keyword)',
       required: false,
       expectedTypes: ['reference', 'expression'],
       svoPosition: 2,
