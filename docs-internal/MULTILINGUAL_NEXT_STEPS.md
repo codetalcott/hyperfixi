@@ -9,7 +9,7 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
-## Where we are (2026-07-11 baseline `c5c884cc` · post R1-deferred-tail #638 · `browser-priority`)
+## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
 >
@@ -29,15 +29,16 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | lossy passes (0.5 ≤ fid < 1.0) | **0**                  | band cleared (#495–#506), holding                                                                                              |
 | faithful (fid = 1.0)           | **3696**               | every parsing pattern is faithful                                                                                              |
 | avgFidelity (R0-recall)        | **1.000**              | saturated                                                                                                                      |
-| avgPrecision (R0 trust floor)  | **0.9997**             | bar 3 reached L4 (0.9953); L7 → 0.9963; R3/R1 arcs → 0.9997 (min 0.9978)                                                       |
+| avgPrecision (R0 trust floor)  | **0.9998**             | bar 3 reached L4 (0.9953); L7 → 0.9963; R3/R1 arcs → 0.9997; pick arc 3 → 0.9998 (min bn 0.9978)                               |
 | avgMultisetRecall (R0 dupes)   | **1.000**              | signal added #632; last sub-1.0 row (qu behavior-resizable) cleared by #638's SOV if-seam work                                 |
-| avgRoleFidelity (R1)           | **0.9919**             | bar 4 reached session 13 (0.9862); #637/#638 → 0.9919. SOV six now ≥ 0.9907 — lowest langs are th 0.9845 / ms / de / fr        |
-| avgValueRecall (R3)            | **0.9967**             | signal added #634; F1–F8 burned down #635; residual = swap F6 wontfix + triaged rows (min 0.9906)                              |
+| avgRoleFidelity (R1)           | **0.9974**             | bar 4 reached session 13 (0.9862); #637/#638 → 0.9919; pick arc 3 cleared Family F in all 23 langs → 0.9974 (lowest ms 0.9943 / th / ko / id) |
+| avgValueRecall (R3)            | **0.9968**             | signal added #634; F1–F8 burned down #635; pick arc 3 recovered the pick value rows (14 langs at 1.0); residual = swap F6 wontfix + triaged rows (min 0.9907) |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                                                                      |
+| canonical validity (R4)        | **3059 / 3059**        | BOTH allowlists EMPTY as of pick arc 3 (#736) — any new invalid pair fails at tolerance 0                                      |
 
-The eight-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
-R0-precision · R0-multiset-recall · R1 · R2 · R3) — see CLAUDE.md "Multilingual
-parse rate ≠ fidelity".
+The nine-signal ratchet gate is fully wired (parse-rate · degenerate · R0-recall ·
+R0-precision · R0-multiset-recall · R1 · R2 · R3 · R4-canonical-validity, the
+ninth added #727) — see CLAUDE.md "Multilingual parse rate ≠ fidelity".
 **The launch bar is complete (all four items) — remaining fidelity work is the
 post-launch track below.**
 
@@ -123,14 +124,15 @@ COMPLETE.**
 **Post-launch track (ratchet-protected, not launch-blocking):** wait-payload
 spurious for ×3 (bn draggable/sortable/resizable — the unconsumed or-run
 payload), tr remove.patient block-walk leak, wait-line param leak ja,
-language-grammar.ts drift guard, and the two standing R1 deferrals (pick
-range-role modeling — Family F below; the reactive on.event rows). The
-R1-arc Family D deferrals (event-debounce `${}` URL truncation,
+language-grammar.ts drift guard, and the one remaining standing R1 deferral
+(the reactive on.event rows — event-anchor guard machinery). Pick range-role
+modeling (Family F) was CLEARED by pick-text-range arc 3 (2026-07-20, below).
+The R1-arc Family D deferrals (event-debounce `${}` URL truncation,
 form-submit-prevent fused-clause scramble, focus-trap condition-boundary
 leak) and the qu-only tail were cleared by the R1 deferred-tail arc
 (2026-07-11b, below); the SOV-six role polish and the R1 long tail
 (fetch/render.style, qu set, or-run wait, beep/js/go/scroll/log/for) by the
-R1 arc (2026-07-11, below). The eight-signal gate holds the bar — regressions
+R1 arc (2026-07-11, below). The nine-signal gate holds the bar — regressions
 fail CI.
 
 > **Update 2026-07-20 (pick-text-range arc 3, branch `feat/pick-text-range-arc3`
@@ -2995,8 +2997,9 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    **≥ 0.9907** — they no longer trail the SVO languages (lowest are th 0.9845 / ms / de / fr).
 6. ~~**The convergent next arc — SOV bare-command / event-anchor disambiguation.**~~ **DONE**
    (increment note below, 2026-06-17). The follow-on R1 work continued through #637/#638;
-   standing R1 deferrals are pick range-role modeling (Family F) and the reactive `on.event`
-   rows (see the post-launch track at the top of this doc).
+   the last standing R1 deferral is the reactive `on.event` rows — pick range-role modeling
+   (Family F) was cleared by pick-text-range arc 3, 2026-07-20 (see the post-launch track
+   at the top of this doc).
 
 > **Increment DONE (2026-06-17 — SOV event-anchor / bare-command).** The structural root cause
 > (a fronted **literal / expression / URL** mis-anchored as the handler event in SOV reorders) is
@@ -3439,11 +3442,18 @@ the corpus fires at 18% — see the Arc C family table before pricing the penalt
 regen, per the R1 en-reference constraint. Fetch family firings 78 → 0 (render naked
 with-pair −36 as a same-mechanism bonus); details in § Part 2b (RESOLVED) above.
 
-**Standing deferrals (unchanged):** pick range-role modeling (Family F — only if
-`pick` matters for a demo; raises the en denominator ×24), the reactive `on.event`
-rows (event-anchor guard machinery), swap-content F6 (wontfix).
+**Standing deferrals:** the reactive `on.event` rows (event-anchor guard
+machinery), swap-content F6 (wontfix). Pick range-role modeling (Family F) was
+CLEARED by pick-text-range arc 3 (2026-07-20 — the "raises the en denominator
+×24" cost was paid across arcs 1–3, and the R1/R3 recovery landed with it).
 
 ### v2.8 release bar (proposed 2026-07-12 · target ≈ 2026-07-22)
+
+> **Status 2026-07-20:** the release was retargeted to 07-25, then deferred
+> until the pick-text-range arcs completed (user decision 2026-07-20). All
+> three arcs are done (#733/#734/#736) — the release is UNBLOCKED once #736
+> merges; execution follows the approved publish runbook in a dedicated
+> session.
 
 Modeled on the launch bar: few items, each measurable, each gate-held once reached.
 The bar is the release definition; the arcs are the route. Split for the 10-day
