@@ -2,9 +2,10 @@
 
 > **Thesis.** Parse-success and text-diff both miss _silent meaning-drops_ in
 > DSL/i18n translation. A structural-signature ratchet — recall + precision +
-> role-typing + execution, multiset-aware, guarded by a provenance stamp — turns
-> "did this transform preserve meaning?" into a CI gate that fails on backsliding
-> while still letting an imperfect system ship incrementally.
+> role-typing + value fidelity + execution + canonical validity, multiset-aware,
+> guarded by a provenance stamp — turns "did this transform preserve meaning?"
+> into a CI gate that fails on backsliding while still letting an imperfect
+> system ship incrementally.
 
 This is the measurement layer behind LokaScript's multilingual pipeline (write
 hyperscript in 24 languages with real SOV/VSO/V2 word-order transformation, parse
@@ -56,22 +57,25 @@ Three signatures, increasingly strict (all in `fidelity.ts`):
 | **action multiset** | same, but duplicates preserved (`[toggle, toggle, put]`)                                                                                                                                                    | `collectActionsMultiset` |
 | **role signature**  | per command, which roles were filled and with what _value type_ — `add.patient:selector`, `put.destination:reference` — compared by role + type, never by value string (values are legitimately translated) | `collectRoleSignature`   |
 
-## The six signals: defense in depth
+## The nine signals: defense in depth
 
 Each signal catches a failure mode the previous ones are structurally blind to.
 That layering is the whole point — no single number is sufficient.
 
-| #   | Signal                                          | Catches                                             | Blind to                                          |
-| --- | ----------------------------------------------- | --------------------------------------------------- | ------------------------------------------------- |
-| 0   | **parse-rate** (non-null)                       | total parse failures                                | everything about _correctness_                    |
-| 1   | **R0-recall** (`computeFidelity`)               | **dropped** commands                                | added commands, wrong roles, wrong values         |
-| 2   | **R0-precision** (`computePrecision`, multiset) | **added/phantom** commands                          | wrong roles, wrong values                         |
-| 3   | **R1 role-fidelity**                            | dropped / **mistyped roles** (verb kept, role lost) | wrong values, wrong effect                        |
-| 4   | **R2 execution**                                | wrong **values / DOM effect** (the ground truth)    | nothing — but only affordable on a curated subset |
+| #   | Signal                                          | Catches                                                              | Blind to                                          |
+| --- | ----------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
+| 0   | **parse-rate** (non-null)                       | total parse failures                                                 | everything about _correctness_                    |
+| 1   | **R0-recall** (`computeFidelity`)               | **dropped** commands                                                 | added commands, dropped duplicates, wrong roles   |
+| 2   | **R0-precision** (`computePrecision`, multiset) | **added/phantom** commands                                           | wrong roles, wrong values                         |
+| 3   | **R0-multiset-recall**                          | dropped **repeated** commands (set-dedupe blindness)                 | wrong roles, wrong values                         |
+| 4   | **R1 role-fidelity**                            | dropped / **mistyped roles** (verb kept, role lost)                  | wrong values, wrong effect                        |
+| 5   | **R3 value-recall**                             | wrong **language-invariant values** (selectors, event names, counts) | translated values (by design), wrong effect       |
+| 6   | **R4 canonical validity**                       | renders the **real hyperscript.org parser rejects**                  | semantic drift that still renders valid English   |
+| 7   | **R2 execution**                                | wrong **values / DOM effect** (the ground truth)                     | nothing — but only affordable on a curated subset |
 
 Read top-to-bottom: each row sees what every row above it cannot. Read as cost:
-the cheap structural signals (1–3) run over the **entire** corpus; the expensive
-ground-truth signal (4) runs jsdom over a **curated subset**. The structural
+the cheap structural signals (1–6) run over the **entire** corpus; the expensive
+ground-truth signal (7) runs jsdom over a **curated subset**. The structural
 signals are a cheap, full-coverage _proxy_ for the execution truth you can't
 afford to run everywhere.
 
@@ -117,6 +121,40 @@ _rendering_ injected a spurious `toggle` ahead of the real one. Reference
 The multiset is load-bearing: a _duplicated_ phantom is exactly the case a Set
 erases. (`spuriousActions` returns the unjustified extras for diagnostics.)
 
+### Multiset-recall (R0): the dropped-duplicate detector
+
+Recall has the mirror-image blind spot: it scores the **deduped** action set, so
+a parse that drops a _repeated_ command still scores `1.0` — reference
+`[bind, bind]` collapses to `{bind}`, which a candidate `[bind]` satisfies in
+full. That is how `bind-two-way` recorded perfect fidelity in all 24 languages
+while every one of them parsed only the first of its two `bind`s. Counting
+duplicates on the recall side too makes the drop visible.
+
+### Value-recall (R3): the right-shape-wrong-value detector
+
+Signals 1–4 compare actions and role _types_; values are never compared — they
+are legitimately translated. So a parse with the right actions and right role
+types but a silently **wrong value** — a `trigger` capturing events named
+`draggable` instead of `draggable:start` — scores perfect on all of them. R3
+compares the subset of values that is **language-invariant by construction**
+(CSS selectors, `:`/`$`/`^` sigil refs, numbers and durations, colon-qualified
+event names, URLs) **verbatim** against the English reference, as an
+`action.role=value` multiset. Useful inversion: if the _English reference
+itself_ corrupts a value, every language flags at once — a 24-language R3
+firestorm on one pattern means "suspect the en parse first."
+
+### Canonical validity (R4): the does-the-real-engine-accept-it detector
+
+A parse can be role-faithful and value-faithful yet render English the
+**canonical hyperscript.org parser rejects** — none of the signals above ever
+parse the rendered surface. R4 renders every authored foreign translation back
+to English, runs it through the real engine, and diffs the invalid
+(pattern, language) pairs against a committed allowlist. Both directions fail
+at tolerance 0: a new invalid pair is a regression, and an allowlisted pair
+that now renders valid must be pruned in the same change that cleared it (the
+list can only shrink). As of 2026-07-20 (pick-text-range arc 3) **both
+allowlists are empty — 3059/3059 rendered programs parse on the real engine.**
+
 ### Role-fidelity (R1): the verb's-right-but-wrong detector
 
 A parse can find every command with the **wrong roles** — a swapped or dropped
@@ -139,23 +177,30 @@ expensive (and often not well-defined) to run over all 3,696 cases.
 
 ## The ratchet: monotonic, not absolute
 
-The gate does **not** demand `fidelity = 1.0`. It can't yet — faithful SOV/VSO
-reordering is genuinely hard, and the system is honestly imperfect (cross-language
-`avgFidelity ≈ 0.98`, `avgPrecision ≈ 0.96`, `avgRoleFidelity ≈ 0.83`). Demanding
-perfection would block all progress.
+The gate does **not** demand `fidelity = 1.0`. It didn't start anywhere near it —
+faithful SOV/VSO reordering is genuinely hard, and early cross-language numbers
+were honestly imperfect (`avgRoleFidelity ≈ 0.83` in mid-2026). Demanding
+perfection would have blocked all progress; ratcheting instead carried the same
+signals to `avgFidelity 1.000 / avgPrecision 0.9998 / avgRoleFidelity 0.9974 /
+avgValueRecall 0.9968` (2026-07-20 baseline — the committed scoreboard is always
+the authoritative copy), one held increment at a time. The residual tail is
+named, not hidden.
 
 Instead it ratchets: **fidelity may never go down.** Each signal compares the
 current run against the committed baseline and fails CI on a _backslide_, with a
 small tolerance to absorb non-determinism in the corpus build:
 
-| Signal          | Constant (`cli.ts`)                                                     | Fails when                                                        |
-| --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| parse-rate      | `REGRESSION_TOLERANCE_PTS = 2`                                          | drops > 2 pts                                                     |
-| degenerate (R0) | `FIDELITY_REGRESSION_TOLERANCE = 3`                                     | > 3 faithful→degenerate flips                                     |
-| recall (R0)     | `LOSSY_REGRESSION_TOLERANCE = 3` + `AVG_FIDELITY_DROP_TOLERANCE = 0.02` | > 3 faithful→lossy flips, or per-language avgFidelity drop > 0.02 |
-| precision (R0)  | `AVG_PRECISION_DROP_TOLERANCE = 0.02`                                   | per-language avgPrecision drop > 0.02                             |
-| role (R1)       | `AVG_ROLE_FIDELITY_DROP_TOLERANCE = 0.02`                               | per-language avgRoleFidelity drop > 0.02                          |
-| execution (R2)  | tolerance `0`                                                           | any curated pass→fail                                             |
+| Signal                  | Constant (`cli.ts`)                                                     | Fails when                                                        |
+| ----------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| parse-rate              | `REGRESSION_TOLERANCE_PTS = 2`                                          | drops > 2 pts                                                     |
+| degenerate (R0)         | `FIDELITY_REGRESSION_TOLERANCE = 3`                                     | > 3 faithful→degenerate flips                                     |
+| recall (R0)             | `LOSSY_REGRESSION_TOLERANCE = 3` + `AVG_FIDELITY_DROP_TOLERANCE = 0.02` | > 3 faithful→lossy flips, or per-language avgFidelity drop > 0.02 |
+| precision (R0)          | `AVG_PRECISION_DROP_TOLERANCE = 0.02`                                   | per-language avgPrecision drop > 0.02                             |
+| multiset-recall (R0)    | `AVG_MULTISET_RECALL_DROP_TOLERANCE = 0.02`                             | per-language avgMultisetRecall drop > 0.02                        |
+| role (R1)               | `AVG_ROLE_FIDELITY_DROP_TOLERANCE = 0.02`                               | per-language avgRoleFidelity drop > 0.02                          |
+| value (R3)              | `AVG_VALUE_RECALL_DROP_TOLERANCE = 0.02`                                | per-language avgValueRecall drop > 0.02                           |
+| execution (R2)          | tolerance `0`                                                           | any curated pass→fail                                             |
+| canonical validity (R4) | tolerance `0` (allowlist diff, both directions)                         | any NEW invalid pair, or a stale allowlist entry left unpruned    |
 
 Each signal is **guarded by the baseline carrying its field** — a baseline written
 before a signal existed yields a `0` delta for it, so adding a signal never
@@ -209,11 +254,12 @@ transform from a plausible-but-lossy one. That distinction is the contribution.
 
 ## Map to the code
 
-| Concept                            | Location                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------- |
-| signatures + recall/precision/role | `packages/testing-framework/src/multilingual/fidelity.ts`                 |
-| `--regression` gate + tolerances   | `packages/testing-framework/src/multilingual/cli.ts`                      |
-| committed scoreboard / floor       | `packages/testing-framework/baselines/multilingual-priority.json`         |
-| provenance stamp                   | `packages/patterns-reference/src/sync/db-stamp.ts`                        |
-| running the gate locally           | root `CLAUDE.md` → "Running the multilingual `--regression` gate locally" |
-| worked phenomena the gate guards   | `packages/semantic/test/multilingual-roadmap-fixes.test.ts`               |
+| Concept                            | Location                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| signatures + recall/precision/role | `packages/testing-framework/src/multilingual/fidelity.ts`                                                                 |
+| `--regression` gate + tolerances   | `packages/testing-framework/src/multilingual/cli.ts`                                                                      |
+| committed scoreboard / floor       | `packages/testing-framework/baselines/multilingual-priority.json`                                                         |
+| R4 check + committed allowlist     | `packages/testing-framework/src/multilingual/foreign-canonical-validity.ts` + `baselines/foreign-canonical-validity.json` |
+| provenance stamp                   | `packages/patterns-reference/src/sync/db-stamp.ts`                                                                        |
+| running the gate locally           | root `CLAUDE.md` → "Running the multilingual `--regression` gate locally"                                                 |
+| worked phenomena the gate guards   | `packages/semantic/test/multilingual-roadmap-fixes.test.ts`                                                               |

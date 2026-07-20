@@ -1,5 +1,17 @@
 # LokaScript Rebranding Assessment
 
+> **SUPERSEDED (2026-07-13).** Decision: LokaScript becomes the master brand at the
+> marketing/positioning layer only — lokascript.org is the front door, hyperfixi.org
+> and `@hyperfixi/*` are repositioned as "the LokaScript engine" via copy edits.
+> **The code-level rename described below is cancelled** (not deferred): packages
+> have since shipped under `@hyperfixi/*` through v2.7.2, a stranded
+> `@lokascript/core@1.3.0` already marks one public scope rename, and the
+> hyperscript-org offer depends on `@hyperfixi/*` link stability. A second rename
+> would trade install-base continuity and credibility for no positioning gain the
+> brand pass doesn't already deliver. Rationale and the full brand architecture:
+> `~/projects/ideas/lokascript-business-plan-2026-07.md` §1. Revisit only at a
+> v3-scale break or a funding event that pays for it.
+
 **Date**: January 19, 2026
 **Domains Reserved**: lokascript.org, lokascript.com
 **Current Name**: HyperFixi
