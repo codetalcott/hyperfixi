@@ -129,6 +129,7 @@ const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'exclusivo', normalized: 'exclusive' },
   { native: 'caracteres', normalized: 'characters' },
+  { native: 'aleatório', normalized: 'random' },
 ];
 
 // =============================================================================

@@ -145,6 +145,7 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: '含む', normalized: 'inclusive' },
   { native: '除く', normalized: 'exclusive' },
   { native: '文字', normalized: 'characters' },
+  { native: 'ランダム', normalized: 'random' },
 ];
 
 // Japanese time units moved to generic-extractors.ts (NumberExtractor handles them)

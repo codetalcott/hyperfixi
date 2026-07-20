@@ -148,6 +148,7 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'ipo', normalized: 'exists' },
   { native: 'tupu', normalized: 'empty' },
   { native: 'herufi', normalized: 'characters' },
+  { native: 'nasibu', normalized: 'random' },
 ];
 
 // =============================================================================

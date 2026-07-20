@@ -71,6 +71,7 @@ const THAI_EXTRAS: KeywordEntry[] = [
   { native: 'รวม', normalized: 'inclusive' },
   { native: 'ยกเว้น', normalized: 'exclusive' },
   { native: 'อักขระ', normalized: 'characters' },
+  { native: 'สุ่ม', normalized: 'random' },
 ];
 
 // =============================================================================

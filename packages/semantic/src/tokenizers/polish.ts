@@ -152,6 +152,7 @@ const POLISH_EXTRAS: KeywordEntry[] = [
   { native: 'włącznie', normalized: 'inclusive' },
   { native: 'wyłącznie', normalized: 'exclusive' },
   { native: 'znaki', normalized: 'characters' },
+  { native: 'losowy', normalized: 'random' },
 ];
 
 // =============================================================================

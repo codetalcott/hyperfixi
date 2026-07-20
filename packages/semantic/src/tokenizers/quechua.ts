@@ -242,6 +242,7 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
 
   // Suffix modifiers
   { native: '-manta', normalized: 'from' },
+  { native: 'imaymanata', normalized: 'random' },
 ];
 
 // =============================================================================

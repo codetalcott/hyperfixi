@@ -91,6 +91,7 @@ const BENGALI_EXTRAS: KeywordEntry[] = [
   { native: 'অন্তর্ভুক্ত', normalized: 'inclusive' },
   { native: 'বাদ', normalized: 'exclusive' },
   { native: 'অক্ষর', normalized: 'characters' },
+  { native: 'এলোমেলো', normalized: 'random' },
 ];
 
 // =============================================================================

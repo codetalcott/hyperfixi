@@ -117,6 +117,7 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'inklusiv', normalized: 'inclusive' },
   { native: 'exklusiv', normalized: 'exclusive' },
   { native: 'Zeichen', normalized: 'characters' },
+  { native: 'zufällig', normalized: 'random' },
 ];
 
 // =============================================================================

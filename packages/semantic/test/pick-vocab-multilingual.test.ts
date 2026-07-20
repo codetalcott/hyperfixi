@@ -41,10 +41,27 @@ const VOCAB: Record<string, Record<string, string>> = {
     ms: 'eksklusif', pl: 'wyłącznie', pt: 'exclusivo', ru: 'исключительно',
     th: 'ยกเว้น', tl: 'bukod', tr: 'hariç', uk: 'виключно', vi: 'loại trừ', zh: '排除',
   },
+  // `random` (the pick-count variant, also a general positional head): arc 2
+  // promotes it into the EXTRAS for the 21 langs that lacked it; ru/uk already
+  // carried it. en rides its identifier. This block guards all 23 foreign forms.
+  random: {
+    ar: 'عشوائي', bn: 'এলোমেলো', de: 'zufällig', es: 'aleatorio', fr: 'aléatoire',
+    he: 'אקראי', hi: 'यादृच्छिक', id: 'acak', it: 'casuale', ja: 'ランダム',
+    ko: '무작위', ms: 'rawak', pl: 'losowy', pt: 'aleatório', qu: 'imaymanata',
+    ru: 'случайный', sw: 'nasibu', th: 'สุ่ม', tl: 'random', tr: 'rastgele',
+    uk: 'випадковий', vi: 'ngẫu nhiên', zh: '随机',
+  },
 };
 
 function tokensOf(input: string, language: string) {
   return tokenize(input, language).tokens;
+}
+
+// A keyword's canonical form is `normalized ?? value` — the tokenizer leaves
+// `normalized` unset when the native surface already IS the English form (e.g.
+// the tl loanword `random`). This mirrors pattern-matcher's own lookup.
+function lexesTo(input: string, language: string, normalized: string): boolean {
+  return tokensOf(input, language).some(t => (t.normalized ?? t.value) === normalized);
 }
 
 describe('pick vocab — foreign natives lex to the canonical normalized form (arc 2)', () => {
@@ -52,8 +69,7 @@ describe('pick vocab — foreign natives lex to the canonical normalized form (a
     describe(normalized, () => {
       for (const [lang, native] of Object.entries(langs)) {
         it(`${lang}: "${native}" → ${normalized}`, () => {
-          const toks = tokensOf(native, lang);
-          expect(toks.some(t => t.normalized === normalized)).toBe(true);
+          expect(lexesTo(native, lang, normalized)).toBe(true);
         });
       }
     });

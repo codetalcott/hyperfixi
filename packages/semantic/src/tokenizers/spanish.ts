@@ -85,6 +85,7 @@ const SPANISH_EXTRAS: KeywordEntry[] = [
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'exclusivo', normalized: 'exclusive' },
   { native: 'caracteres', normalized: 'characters' },
+  { native: 'aleatorio', normalized: 'random' },
 ];
 
 // =============================================================================

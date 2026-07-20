@@ -207,6 +207,7 @@ const ITALIAN_EXTRAS: KeywordEntry[] = [
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'esclusivo', normalized: 'exclusive' },
   { native: 'caratteri', normalized: 'characters' },
+  { native: 'casuale', normalized: 'random' },
 ];
 
 // =============================================================================

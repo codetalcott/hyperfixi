@@ -104,6 +104,7 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // conjugations — a bare entry re-opens the आकार_बदलें phantom-toggle class.
   { native: 'बदलने पर', normalized: 'changes' },
   { native: 'अक्षर', normalized: 'characters' },
+  { native: 'यादृच्छिक', normalized: 'random' },
 ];
 
 // =============================================================================

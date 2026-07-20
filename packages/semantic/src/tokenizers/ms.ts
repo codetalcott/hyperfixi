@@ -61,6 +61,7 @@ const MALAY_EXTRAS: KeywordEntry[] = [
   { native: 'inklusif', normalized: 'inclusive' },
   { native: 'eksklusif', normalized: 'exclusive' },
   { native: 'aksara', normalized: 'characters' },
+  { native: 'rawak', normalized: 'random' },
 ];
 
 // =============================================================================
