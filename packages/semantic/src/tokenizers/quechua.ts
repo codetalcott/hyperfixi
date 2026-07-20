@@ -113,6 +113,8 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // (set-attribute `@disabled ta cheqaq man …`); without it the value tokenized
   // as a bare identifier and `set @disabled to <undefined>` ran. arí/ari ("yes")
   // are the colloquial alternates, kept for input tolerance.
+  // Pick unit word (arc 3) — mirrors the i18n dict's `characters: 'sanampa'`.
+  { native: 'sanampa', normalized: 'characters' },
   { native: 'cheqaq', normalized: 'true' },
   { native: 'arí', normalized: 'true' },
   { native: 'ari', normalized: 'true' },

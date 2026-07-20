@@ -215,6 +215,11 @@ export const qu: Dictionary = {
   },
 
   expressions: {
+    // Pick unit word (arc 3): native-first per qu convention — `sanampa`
+    // ("sign/letter", the standard term for alphabet characters) over a
+    // loanword. Paired with the QUECHUA_EXTRAS entry in the semantic
+    // tokenizer; both surfaces must match verbatim.
+    characters: 'sanampa',
     first: 'ñawpaq',
     last: 'qhipa',
     next: 'qhipantin',

@@ -48,11 +48,13 @@
  *  - regex `| flags`, and a leading `at`/`from` range prefix.
  *
  * Arc 2 (24-language vocabulary) dispositions — probe-driven, 2026-07-20:
- *  - `character`/`characters` and `start` are registered per language in the
- *    tokenizer EXTRAS + i18n dicts (the corpus pick row uses `characters`).
- *    `inclusive`/`exclusive` likewise, for the 20 languages with a confident
- *    technical term; hi/qu/sw are DEFERRED (uncertain vocab, left for arc-3
- *    native-speaker review) — see docs-internal/HANDOFF_pick-text-range-arc2.md.
+ *  - `character`/`characters` is registered per language in the tokenizer
+ *    EXTRAS + i18n dicts (the corpus pick row uses `characters`; `start` is
+ *    NOT registered anywhere — see the endpoint bullet below).
+ *    Arc 3 closed the qu gap with native-first `sanampa`. `inclusive`/
+ *    `exclusive` likewise, for the 20 languages with a confident technical
+ *    term; hi/qu/sw remain DEFERRED (uncertain vocab, not corpus-exercised)
+ *    — see docs-internal/HANDOFF_pick-text-range-arc2.md.
  *  - `item`/`items` are DEFERRED entirely. Probe: adding `item` to a dict's
  *    `expressions` renames the loop variable in the corpus rows
  *    `repeat for item in .items …` (item → its translation), a non-pick-row
@@ -62,20 +64,21 @@
  *    words ride as identifiers through this pattern and the range assembler
  *    already matches `inclusive`/`exclusive`/`start`/`end` by value. Turning
  *    them into en keywords would only risk this pattern's identifier path.
- *  - The foreign range separator (es `a`, ja `に`…) is DEFERRED to arc 3 —
- *    probed dormant in arc 2: every foreign corpus pick row binds `patient` to
- *    the unit word and drops the range (no foreign pattern has a unit slot
- *    before `patient` until arc 3's variant patterns), so the range fold never
- *    reaches the separator. The per-profile separator lookup + fold-time English
- *    normalization co-evolve with those patterns; the assembler is untouched here.
- *  - The range-endpoint keywords `start`/`end` are DEFERRED to arc 3 with the
- *    separator (one mechanism — the range fold). `start` is not corpus-exercised
- *    (the pick row uses numeric endpoints 0/5), dormant in arc 2, and 6 native
- *    start words already mean `init` (hi/bn/id/ms/sw) or `default` (qu) — a dual
- *    that only slot-aware context (the arc-3 pick pattern) can disambiguate.
- *    `end` needs no registration (block-end already normalizes; the assembler
- *    accepts a mid-fold keyword `end`). Arc 1's en `start to end` support is
- *    tested in pick-command.test.ts.
+ *  - The foreign range separator LANDED in arc 3 (was deferred here):
+ *    per-language separator words live in PICK_RANGE_SEPARATORS_BY_LANG
+ *    (pattern-matcher.ts), value-matched because they normalize to
+ *    `destination`; the fold now synthesizes canonical English (`0 a 5` →
+ *    `0 to 5`) so this pattern, the mapper's `to`-split, and the en render
+ *    are language-agnostic. The foreign variant patterns (the analogues of
+ *    this one) live in patterns/pick.ts — verb-initial and verb-final
+ *    factories, co-evolved with the i18n sovPickRangeRule renders.
+ *  - The range-endpoint keywords `start`/`end` stay en-only: `start` is not
+ *    corpus-exercised (the pick rows use numeric endpoints 0/5) and 6 native
+ *    start words already mean `init` (hi/bn/id/ms/sw) or `default` (qu) — a
+ *    dual even the arc-3 patterns don't need to take on. `end` needs no
+ *    registration (block-end already normalizes; the assembler accepts a
+ *    mid-fold keyword `end`). Arc 1's en `start to end` support is tested in
+ *    pick-command.test.ts.
  */
 
 import type { LanguagePattern } from '../../../types';

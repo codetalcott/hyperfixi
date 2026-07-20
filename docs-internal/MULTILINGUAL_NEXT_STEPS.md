@@ -133,6 +133,33 @@ leak) and the qu-only tail were cleared by the R1 deferred-tail arc
 R1 arc (2026-07-11, below). The eight-signal gate holds the bar — regressions
 fail CI.
 
+> **Update 2026-07-20 (pick-text-range arc 3, branch `feat/pick-text-range-arc3`
+> — HANDOFF_pick-text-range-arc3.md RESOLVED · the Family-F standing R1 deferral
+> is CLEARED):** BOTH canonical-validity allowlists are now EMPTY — foreign
+> 3036→**3059/3059** (the last 23 pairs were all pick-text-range) and en stays
+> 0. Three coupled mechanisms, exactly as the arc-2 probes designed: (1) the
+> pick-range fold armed per-language separators
+> (`PICK_RANGE_SEPARATORS_BY_LANG`, value-matched — the separator IS each
+> language's destination marker, so normalized-matching would collide) and now
+> synthesizes canonical ENGLISH (`0 a 5` → `0 to 5`) at fold time, one
+> normalization site for all 24 languages; (2) per-language pick variant
+> patterns (patterns/pick.ts — verb-initial factory for the SVO/VSO 17,
+> verb-final for the SOV six) put the unit word on `method` and the folded
+> range on `patient`, plus a pick-specific preservation clause in the fused
+> re-parse swap (the unit word migrating patient→method IS preservation, not
+> loss); (3) an i18n `sovPickRangeRule` custom render unscrambles the SOV six's
+> generated rows (`#note の 文字 0 から 5 を クリック で 選択` — patient-first
+> verb-final, co-evolved with the verb-final patterns). qu got its native unit
+> word `sanampa` (dict + tokenizer EXTRAS, both surfaces verbatim) and `kama`
+> as its range separator. Baseline regenerated: R1 rose in all 23 non-en
+> languages (~+0.0026 each; ja/ko/tr/hi/bn/qu pick rows now role-faithful) and
+> R3 rose everywhere (14 languages now at 1.0; the rest 0.9814→0.9907).
+> Corpus-movement isolation: exactly 6 rows moved, all pick SOV, zero
+> collateral. Still deferred (named, unchanged): `item`/`items` (loop-var
+> rename collision), `start` endpoints (6-language init/default dual),
+> `match`/`matches` (needs a match-only role), `..` separator (tokenizes as
+> two `.`), reactive on.event rows, swap F6.
+
 > **Update 2026-07-11b (R1 deferred-tail arc, branch `fix/r1-deferred-tail`
 > — HANDOFF_r1-deferred-tail.md RESOLVED):** avgRoleFidelity ja 0.9938 →
 > **0.9978**, bn 0.9938 / tr 0.9927 → **0.9962**, ko 0.9905 → **0.9946**,
