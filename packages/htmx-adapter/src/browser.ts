@@ -23,6 +23,7 @@ import { register } from './registry.js';
 import { registerWith, installAutoSweep, EXTENSION_NAME, type HtmxLike } from './extension.js';
 import { canonicalizeTree, canonicalizeElement, translateTriggerValue } from './canonicalize.js';
 import { langOf, normLang } from './lang-resolver.js';
+import { autoDetectBodyHooks, setBodyExecutor, setBodyTranslator } from './hx-on.js';
 
 // Bracket-with-string-constant access, NOT dot access: Terser's
 // `properties.regex: /^_/` pass mangles `w.__hyperfixi_i18n` but leaves
@@ -55,6 +56,15 @@ function installPublicAPI(): void {
 function autoRegister(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const w = window as unknown as { htmx?: HtmxLike };
+
+  // Opt-in hyperscript-body executor mode: picked up from page globals
+  // (_hyperscript / HyperscriptI18n) now, and re-checked at
+  // DOMContentLoaded for scripts that load after this one. Explicit
+  // setBodyExecutor/setBodyTranslator calls always win.
+  autoDetectBodyHooks(window);
+  document.addEventListener('DOMContentLoaded', () => autoDetectBodyHooks(window), {
+    once: true,
+  });
 
   if (!registerWith(w.htmx)) {
     // Adapter loaded before htmx (the recommended order) — htmx isn't on
@@ -91,4 +101,6 @@ export {
   langOf,
   normLang,
   EXTENSION_NAME,
+  setBodyExecutor,
+  setBodyTranslator,
 };

@@ -5,7 +5,7 @@ attributes in 24 languages against the stock htmx library.
 
 ```html
 <script src="htmx-i18n.global.js"></script>
-<!-- this adapter (1.9 KB gz) -->
+<!-- this adapter (2.3 KB gz) -->
 <script src="vocab/htmx/es.js"></script>
 <!-- vocab module(s) -->
 <script src="htmx.js"></script>
@@ -55,10 +55,12 @@ sibling `hx-get="/x"`). Two coverage paths:
 Guarantees, mirroring loka-js where the mechanism allows:
 
 - **Authored attributes are never removed or rewritten** — devtools shows what
-  the author wrote. One documented exception: an author-written canonical
+  the author wrote. Two documented exceptions: an author-written canonical
   `hx-trigger` whose _value_ uses localized event names (`hx-trigger="clic"`)
   is translated in place (idempotently), since there is no separate canonical
-  target.
+  target; and canonical-named `hx-on:*` attrs are removed in opt-in executor
+  mode (see below), since htmx would otherwise JS-eval their hyperscript
+  bodies.
 - **An existing canonical attribute always wins** — `hx-get` is never
   overwritten by `hx-obtener`.
 - **No vocab loaded → no-op.** Stock htmx pages pay nothing.
@@ -92,18 +94,79 @@ The browser IIFE does all the wiring automatically and installs
 self-register. If the page also runs hyperfixi's embedded layer, registrations
 fan out to both registries.
 
+## Hyperscript `hx-on:` bodies (executor mode, opt-in)
+
+By default, `hx-on:*` bodies keep upstream semantics: they are **JavaScript**,
+htmx executes them, and the adapter translates only the attribute _name_ and
+event suffix. JS is language-neutral — there is nothing to translate.
+
+To author **hyperscript** bodies instead — including localized ones — opt in
+by configuring an executor. The easiest way is auto-detection: load
+`_hyperscript` (and, for non-English bodies, a
+`@lokascript/hyperscript-adapter` language bundle) on the page and the adapter
+wires itself:
+
+```html
+<script src="_hyperscript.js"></script>
+<script src="hyperscript-i18n-es.global.js"></script>
+<!-- translator: HyperscriptI18n.preprocess -->
+<script src="htmx-i18n.global.js"></script>
+<script src="vocab/htmx/es.js"></script>
+<script src="htmx.js"></script>
+
+<section lang="es">
+  <button hx-obtener="/api" hx-objetivo="#out" hx-en:clic="alternar .cargando">…</button>
+</section>
+```
+
+Or wire it manually:
+
+```js
+import { setBodyExecutor, setBodyTranslator } from '@lokascript/htmx-adapter';
+setBodyExecutor((code, elt, evt) => _hyperscript.evaluate(code, { me: elt, event: evt }));
+setBodyTranslator((body, lang) => HyperscriptI18n.preprocess(body, lang)); // optional
+```
+
+With an executor set, the adapter **claims the entire `hx-on` family** (all
+bodies are treated as hyperscript — mixed JS/hyperscript pages have no
+reliable detection):
+
+- It installs a real event listener per `hx-on`-family attribute and runs the
+  body through the executor. Translation (localized → English hyperscript) is
+  lazy — first fire, memoized — and confidence-gated by the
+  hyperscript-adapter preprocessor, so untranslatable bodies pass through
+  unchanged.
+- **Localized-named attrs** (`hx-en:clic`) stay verbatim in the DOM and get
+  no canonical sibling — htmx never recognized them anyway.
+- **Canonical-named attrs** (`hx-on:click`) are **removed** after claiming —
+  the second (and last) documented exception to the never-mutate rule: left
+  in place, htmx would eval the hyperscript body as JS, giving a console
+  error plus a double-execution attempt on every fire.
+- The `hx-on::after-swap` shorthand maps to the `htmx:` event namespace and
+  works unchanged (the listener hears htmx's real CustomEvents).
+- Re-sweeps never stack duplicate listeners (claims are keyed per element by
+  resolved event name), and an executor configured _after_ the initial sweep
+  triggers a healing re-sweep.
+
+A side benefit: executor mode never uses `eval`, so hyperscript bodies work on
+CSP-restricted pages where htmx's native `hx-on` JS eval cannot.
+
+`hx-live` bodies stay out of scope: upstream v4's re-execution semantics are
+internal to htmx's reactivity — name translation only.
+
 ## Scope (v1)
 
 Attribute **names** (`hx-obtener` → `hx-get`, including the `hx-on:` colon
 family) and **event values** in `hx-trigger` / `hx-on:` suffixes
-(`clic` → `click`). The `hx-`/`sse-`/`ws-` prefixes are preserved across
-languages — only the suffix is localized. Translating hyperscript/JS attribute
-_bodies_ is out of scope here (use `@lokascript/hyperscript-adapter` for `_=`).
+(`clic` → `click`), plus opt-in hyperscript `hx-on:` **bodies** via executor
+mode (above). The `hx-`/`sse-`/`ws-` prefixes are preserved across languages —
+only the suffix is localized. The `_=` attribute is
+`@lokascript/hyperscript-adapter`'s job, not this package's.
 
 ## Tests
 
 ```bash
-npm test --prefix packages/htmx-adapter    # vitest, jsdom (43 tests)
+npm test --prefix packages/htmx-adapter    # vitest, jsdom (59 tests)
 ```
 
 Includes a reuse guard that loads every generated

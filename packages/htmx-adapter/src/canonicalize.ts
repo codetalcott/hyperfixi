@@ -31,6 +31,7 @@
 
 import { langOf } from './lang-resolver.js';
 import { hasAnyVocab, vocabFor, warnMissingLangOnce } from './registry.js';
+import { claimHxOnAttribute, hasBodyExecutor } from './hx-on.js';
 
 /** Attribute namespaces the adapter touches. */
 const NS_RE = /^(?:hx|sse|ws)-/;
@@ -80,17 +81,20 @@ export function canonicalizeElement(elt: Element): boolean {
   }
   if (!hasNsAttr) return false;
 
+  const executorMode = hasBodyExecutor();
   const lang = langOf(elt);
-  if (lang === 'en') return false;
+  if (lang === 'en' && !executorMode) return false;
 
   const vocab = vocabFor(lang);
-  if (!vocab) {
+  if (lang !== 'en' && !vocab) {
     warnMissingLangOnce(lang);
-    return false;
+    // Executor mode still claims canonical-named hx-on:* attrs below —
+    // body semantics don't depend on vocab being loaded.
+    if (!executorMode) return false;
   }
 
-  const attrs = vocab.attrs ?? {};
-  const events = vocab.events ?? {};
+  const attrs = vocab?.attrs ?? {};
+  const events = vocab?.events ?? {};
   let changed = false;
 
   // Snapshot — we mutate the attribute list while iterating.
@@ -98,23 +102,42 @@ export function canonicalizeElement(elt: Element): boolean {
     const name = attr.name;
     if (!NS_RE.test(name)) continue;
 
+    // Executor mode owns the hx-on family outright: canonical-named
+    // attrs are claimed (listener installed, attr removed so htmx never
+    // JS-evals the hyperscript body)…
+    if (executorMode && name.startsWith('hx-on:')) {
+      if (claimHxOnAttribute(elt, name, lang, events)) changed = true;
+      continue;
+    }
+
     // Exact match: hx-obtener → hx-get.
     let canonical = attrs[name];
 
     // Colon family (hx-on:*): hx-en:clic → hx-on:click. The base is
     // looked up in attrs, the event suffix in events.
+    let colonBase: string | undefined;
     if (!canonical) {
       const colon = name.indexOf(':');
       if (colon > 0) {
-        const canonicalBase = attrs[name.slice(0, colon)];
-        if (canonicalBase) {
+        colonBase = attrs[name.slice(0, colon)];
+        if (colonBase) {
           const suffix = name.slice(colon + 1);
-          canonical = `${canonicalBase}:${events[suffix] ?? suffix}`;
+          canonical = `${colonBase}:${events[suffix] ?? suffix}`;
         }
       }
     }
 
-    if (!canonical || canonical === name || elt.hasAttribute(canonical)) continue;
+    if (!canonical) continue;
+
+    // …and localized-named hx-on attrs are claimed in place: no
+    // canonical sibling is created, the authored attr stays verbatim
+    // (htmx never recognized it).
+    if (executorMode && colonBase === 'hx-on') {
+      if (claimHxOnAttribute(elt, name, lang, events)) changed = true;
+      continue;
+    }
+
+    if (canonical === name || elt.hasAttribute(canonical)) continue;
 
     let value = attr.value;
     if (canonical === 'hx-trigger') value = translateTriggerValue(value, events);
@@ -144,7 +167,10 @@ export function canonicalizeElement(elt: Element): boolean {
  * that granularity.
  */
 export function canonicalizeTree(root: Element | Document | DocumentFragment | null): number {
-  if (!root || !hasAnyVocab()) return 0;
+  if (!root) return 0;
+  // Executor mode must sweep even with no vocab loaded (English
+  // hyperscript bodies need claiming too).
+  if (!hasAnyVocab() && !hasBodyExecutor()) return 0;
   let count = 0;
   if (root instanceof Element && canonicalizeElement(root)) count++;
   if (typeof (root as Element).querySelectorAll === 'function') {

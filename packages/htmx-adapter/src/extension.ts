@@ -21,6 +21,7 @@
 
 import { canonicalizeTree } from './canonicalize.js';
 import { onVocabUpdate } from './registry.js';
+import { onBodyHooksChanged } from './hx-on.js';
 
 export const EXTENSION_NAME = 'lokascript-i18n';
 
@@ -95,8 +96,16 @@ export function installAutoSweep(doc: Document = document): () => void {
     if (doc.readyState !== 'loading') sweep();
   });
 
+  // A body executor configured after the initial sweep flips the hx-on
+  // family into executor mode — re-sweep so already-canonicalized
+  // hx-on:* attrs get claimed (listener installed, attr removed).
+  const unsubscribeBodyHooks = onBodyHooksChanged(() => {
+    if (doc.readyState !== 'loading') sweep();
+  });
+
   return () => {
     removeDomListener?.();
     unsubscribeVocab();
+    unsubscribeBodyHooks();
   };
 }

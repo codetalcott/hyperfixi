@@ -36,3 +36,15 @@ export {
   installAutoSweep,
   type HtmxLike,
 } from './extension.js';
+export {
+  setBodyExecutor,
+  setBodyTranslator,
+  hasBodyExecutor,
+  hasBodyTranslator,
+  onBodyHooksChanged,
+  claimHxOnAttribute,
+  autoDetectBodyHooks,
+  resetBodyHooks,
+  type BodyExecutor,
+  type BodyTranslator,
+} from './hx-on.js';

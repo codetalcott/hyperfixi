@@ -17,10 +17,12 @@ src/
 ├── browser.ts        # IIFE entry — installs window.__hyperfixi_i18n, auto-registers, sweeps
 ├── registry.ts       # Vocab store; same payload shape as core's i18n-orchestrator
 ├── canonicalize.ts   # localized → canonical attribute copy + hx-trigger value translation
+├── hx-on.ts          # executor mode: hyperscript hx-on: bodies (claim/translate/execute hooks)
 ├── extension.ts      # htmx v4 extension (+ v2 fallback) + installAutoSweep
 └── lang-resolver.ts  # langOf()/normLang() — byte-mirror of core's htmx/lang-resolver.ts
 test/
 ├── canonicalize.test.ts   # Core semantics: add-canonical, keep-authored, idempotency, mixed-lang
+├── hx-on.test.ts          # Executor mode: claim/suppress/removal, lazy translation, dedup, auto-detect
 ├── extension.test.ts      # v4/v2 registration + hooks + auto-sweep lifecycle
 ├── vocab-modules.test.ts  # REUSE GUARD: loads every real core vocab module against this registry
 ├── registry.test.ts
@@ -33,8 +35,8 @@ docs/
 
 ```bash
 npm run typecheck          # TypeScript validation
-npm run test:run           # Vitest (43 tests, jsdom environment)
-npm run build              # ESM + CJS + browser IIFE (1.9 KB gz)
+npm run test:run           # Vitest (59 tests, jsdom environment)
+npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
 ```
 
 ## Key Design Decisions
@@ -52,9 +54,19 @@ npm run build              # ESM + CJS + browser IIFE (1.9 KB gz)
 - **Same `window.__hyperfixi_i18n` public API as core** so the generated vocab
   modules work verbatim; if core's registry already exists on the page, the
   browser entry fans registrations out to both.
-- **`hx-trigger` in-place translation** is the single authored-attribute
-  mutation (localized event values in a canonical attr have no separate
-  canonical target). Idempotent by construction (maps are localized→canonical).
+- **`hx-on:` bodies are JS by default (upstream semantics), hyperscript by
+  opt-in**: `setBodyExecutor()` (auto-detected from `window._hyperscript`)
+  flips the hx-on family into executor mode — the adapter claims every
+  hx-on attr (listener install; claims deduped per element by resolved
+  event name), suppresses canonical-sibling creation for localized names,
+  and REMOVES canonical-named `hx-on:*` attrs so htmx never JS-evals a
+  hyperscript body. Bodies translate lazily (first fire, memoized) via
+  `setBodyTranslator()` (auto-detected from `HyperscriptI18n.preprocess`).
+- **Two authored-attribute mutations, both documented**: `hx-trigger`
+  in-place value translation (localized event values in a canonical attr
+  have no separate canonical target; idempotent by construction), and
+  executor-mode removal of canonical-named `hx-on:*` (double-execution
+  guard).
 - **Zero workspace deps** — builds standalone anywhere in CI's build order.
 
 ## Load order (matters)
