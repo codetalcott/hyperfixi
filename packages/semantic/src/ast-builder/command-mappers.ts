@@ -8,7 +8,7 @@
 import type { CommandSemanticNode, ActionType, SemanticValue, SemanticRole } from '../types';
 import { convertValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
-import type { ExpressionNode } from './expression-parser';
+import type { ExpressionNode, LiteralNode } from './expression-parser';
 
 // =============================================================================
 // Command Mapper Interface
@@ -768,6 +768,108 @@ const swapMapper: CommandMapper = {
 };
 
 /**
+ * Pick command mapper.
+ *
+ * Bridges the semantic `pick` node (roles method/patient/source, produced by the
+ * handcrafted `pick-en-variant` pattern) to the core PickCommand contract
+ * (`packages/core/src/commands/utility/pick.ts` parseInput), which reads
+ * `modifiers.variant` + `count`/`rangeStart`/`rangeEnd`/`rangeMode`/`regex` and
+ * `args[0]` as the source root:
+ *
+ *   method 'first'|'last'          → variant same,   count = patient
+ *   method 'random'               → variant random, count = patient (optional)
+ *   method 'item(s)'|'character(s)'→ variant 'range', patient split into
+ *                                    rangeStart/rangeEnd/rangeMode
+ *   method 'match'|'matches'       → variant same,   regex = patient (defensive;
+ *                                    the match pattern is deferred at parse time)
+ *   no/unknown method             → legacy generic shape (patient/source as args)
+ *
+ * The range patient is ONE expression value whose raw is the canonical surface
+ * (`0 to 5`, `0 to 5 inclusive`). It must be split HERE into plain literal nodes:
+ * feeding the joint raw to convertValue would route it through the expression
+ * parser (`convertExpression` → parseExpression), which cannot parse `0 to 5`.
+ */
+const RANGE_METHODS = new Set(['item', 'items', 'character', 'characters']);
+const COUNT_METHODS = new Set(['first', 'last', 'random']);
+const REGEX_METHODS = new Set(['match', 'matches']);
+
+/** Read a role's surface text (literal value or expression raw). */
+function roleText(value: SemanticValue | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.type === 'literal') return String(value.value);
+  if (value.type === 'expression') return value.raw;
+  if ('value' in value && typeof value.value === 'string') return value.value;
+  return undefined;
+}
+
+/** Build a plain literal endpoint node: `start`/`end` stay strings, else numeric. */
+function endpointNode(raw: string): LiteralNode {
+  const trimmed = raw.trim();
+  if (trimmed === 'start' || trimmed === 'end') {
+    return { type: 'literal', value: trimmed };
+  }
+  const n = Number(trimmed);
+  return { type: 'literal', value: Number.isNaN(n) ? trimmed : n };
+}
+
+const pickMapper: CommandMapper = {
+  action: 'pick',
+  toAST(node, _builder) {
+    const methodText = roleText(getRole(node, 'method'))?.trim().toLowerCase();
+    const patientValue = getRole(node, 'patient');
+    const source = convertRoleValue(node, 'source');
+
+    // Legacy / unrecognized: reproduce the generic arg/modifier shape so the
+    // pre-existing `pick colors` / `pick from …` forms are unaffected.
+    if (
+      !methodText ||
+      !(
+        RANGE_METHODS.has(methodText) ||
+        COUNT_METHODS.has(methodText) ||
+        REGEX_METHODS.has(methodText)
+      )
+    ) {
+      const patient = patientValue ? convertValue(patientValue) : undefined;
+      const args: ExpressionNode[] = [];
+      if (patient) args.push(patient);
+      if (source) args.push(source);
+      return createCommandNode('pick', args);
+    }
+
+    const args: ExpressionNode[] = source ? [source] : [];
+    const modifiers: Record<string, ExpressionNode> = {};
+
+    if (COUNT_METHODS.has(methodText)) {
+      modifiers['variant'] = { type: 'literal', value: methodText } as LiteralNode;
+      // `random` count is optional; first/last require one.
+      if (patientValue) modifiers['count'] = convertValue(patientValue);
+    } else if (REGEX_METHODS.has(methodText)) {
+      modifiers['variant'] = { type: 'literal', value: methodText } as LiteralNode;
+      if (patientValue) modifiers['regex'] = convertValue(patientValue);
+    } else {
+      // Range variant (`item(s)`/`character(s)`). Split the canonical surface.
+      modifiers['variant'] = { type: 'literal', value: 'range' } as LiteralNode;
+      const rangeRaw = roleText(patientValue) ?? '';
+      let mode = 'default';
+      let body = rangeRaw.trim();
+      const modeMatch = body.match(/\s+(inclusive|exclusive)\s*$/i);
+      if (modeMatch) {
+        mode = modeMatch[1].toLowerCase();
+        body = body.slice(0, body.length - modeMatch[0].length).trim();
+      }
+      const parts = body.split(/\s+to\s+/i);
+      const startText = parts[0]?.trim();
+      const endText = parts[1]?.trim();
+      if (startText) modifiers['rangeStart'] = endpointNode(startText);
+      if (endText) modifiers['rangeEnd'] = endpointNode(endText);
+      modifiers['rangeMode'] = { type: 'literal', value: mode } as LiteralNode;
+    }
+
+    return createCommandNode('pick', args, modifiers);
+  },
+};
+
+/**
  * Morph command mapper.
  *
  * Semantic: morph patient:#element destination:"<div>new</div>"
@@ -1147,6 +1249,7 @@ const mappers: Map<ActionType, CommandMapper> = new Map([
   ['settle', settleMapper],
   // Tier 3: Advanced DOM
   ['swap', swapMapper],
+  ['pick', pickMapper],
   ['morph', morphMapper],
   ['clone', cloneMapper],
   ['measure', measureMapper],

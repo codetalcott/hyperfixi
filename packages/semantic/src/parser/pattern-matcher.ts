@@ -689,6 +689,38 @@ export class PatternMatcher {
       }
     }
 
+    // Multi-token PICK RANGE expression: `0 to 5`, `start to end`,
+    // `0 to 5 inclusive`. The canonical `pick (item|character)s <range> of <root>`
+    // range sub-grammar is `[at|from] (start|<expr>) [(to|..) (end|<expr>)]
+    // [inclusive|exclusive]`, but a single-token {patient} slot captures only the
+    // first endpoint (`0`) and the pattern then dies on the ` to 5 …` tail — which
+    // is exactly why the en reference of `pick characters 0 to 5 of #note`
+    // truncated to `pick characters` (dropped `0 to 5 of #note`) and failed the
+    // canonical parser (the lone pick-text-range canonical-validity allowlist
+    // entry). Folding the whole range into one expression value (raw `0 to 5`)
+    // lets the surrounding pick pattern's trailing `of {source}` still match, and
+    // the value renders verbatim (renderer `valueToNaturalString` case
+    // 'expression' → value.raw). The pick mapper splits the raw back into
+    // rangeStart/rangeEnd/rangeMode for the core AST.
+    //
+    // Gated to the pick command's {patient} role: the range separator is a bare
+    // `to` between two operands, which no other command's patient carries,
+    // and — critically — no FOREIGN pick translation uses a literal English `to`
+    // (es `a`, ru `в`, ja `を`), so the generated foreign `pick {patient} …`
+    // patterns decline this fold and parse byte-identically. Arcs 2/3 widen the
+    // separator to per-profile range markers.
+    if (
+      this.currentPatternCommand === 'pick' &&
+      patternToken.role === 'patient' &&
+      (!patternToken.expectedTypes || patternToken.expectedTypes.includes('expression'))
+    ) {
+      const rangeValue = this.tryMatchPickRangeExpression(tokens);
+      if (rangeValue) {
+        captured.set(patternToken.role, rangeValue);
+        return true;
+      }
+    }
+
     // Check for an "of"-possessive expression (e.g. "*--primary-color of #theme",
     // AR "*--primary-color من #theme", TL "*--primary-color ng #theme"). Gated to
     // roles that opt into property-path (currently `set`'s destination), so the
@@ -1230,6 +1262,88 @@ export class PatternMatcher {
       this.currentProfile
     );
     return { type: 'expression', raw, value: raw } as SemanticValue;
+  }
+
+  /**
+   * Separator that joins the two endpoints of a pick range (`0 to 5`). Matched
+   * by normalized form (it tokenizes as a keyword). The canonical grammar also
+   * allows `..`, but every tokenizer splits it into two bare `.` tokens, so it
+   * would need a two-token separator path — deferred (not corpus-exercised; the
+   * corpus and the gate row use `to`).
+   */
+  private static readonly PICK_RANGE_SEPARATORS = new Set(['to']);
+  /** Trailing range-mode keywords: `pick characters 0 to 5 inclusive of #note`. */
+  private static readonly PICK_RANGE_MODES = new Set(['inclusive', 'exclusive']);
+
+  /**
+   * Try to match a pick-range expression: `<start> to <end> [inclusive
+   * |exclusive]`, where each endpoint is a numeric/identifier value or the range
+   * keyword `start`/`end`. Returns one expression value carrying the canonical
+   * surface (`0 to 5`, `0 to 5 inclusive`) so the pick pattern's trailing
+   * `of {source}` still matches and the value renders verbatim. Stream is left
+   * untouched (reset) on any non-match — including a lone endpoint with no
+   * separator, so a foreign `pick {patient}` slot that captures a single value
+   * (es `characters`) is unaffected. See the call site in matchRoleToken.
+   */
+  private tryMatchPickRangeExpression(tokens: TokenStream): SemanticValue | null {
+    const mark = tokens.mark();
+    const startIdx = tokens.position();
+
+    if (!this.tryConsumePickRangeOperand(tokens)) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    const sep = tokens.peek();
+    const sepNorm = sep ? (sep.normalized ?? sep.value).toLowerCase() : '';
+    if (!sep || !PatternMatcher.PICK_RANGE_SEPARATORS.has(sepNorm)) {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.advance();
+
+    if (!this.tryConsumePickRangeOperand(tokens)) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    // Optional trailing range mode (`inclusive`/`exclusive`).
+    const mode = tokens.peek();
+    if (
+      mode &&
+      PatternMatcher.PICK_RANGE_MODES.has((mode.normalized ?? mode.value).toLowerCase())
+    ) {
+      tokens.advance();
+    }
+
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    return { type: 'expression', raw, value: raw } as SemanticValue;
+  }
+
+  /**
+   * Consume one endpoint of a pick range: a single literal/identifier value, or
+   * the range keyword `start`/`end` (by value). Returns false (stream untouched)
+   * if the upcoming token is not an endpoint — notably a bare separator or the
+   * `of`/`from` source marker, which belong to the surrounding pattern.
+   */
+  private tryConsumePickRangeOperand(tokens: TokenStream): boolean {
+    const token = tokens.peek();
+    if (!token) return false;
+    const norm = (token.normalized ?? token.value).toLowerCase();
+    if (PatternMatcher.PICK_RANGE_SEPARATORS.has(norm)) return false;
+    const isEndpointKeyword = norm === 'start' || norm === 'end';
+    if (
+      token.kind === 'literal' ||
+      token.kind === 'identifier' ||
+      (token.kind === 'keyword' && isEndpointKeyword)
+    ) {
+      tokens.advance();
+      return true;
+    }
+    return false;
   }
 
   /**

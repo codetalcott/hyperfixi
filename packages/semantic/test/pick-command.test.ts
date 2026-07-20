@@ -1,0 +1,117 @@
+/**
+ * pick-command.test.ts — arc 1 of the pick-text-range burndown.
+ *
+ * The schema-generated `pick {patient} [from {source}]` pattern modeled the wrong
+ * command and silently truncated everything after the first word: the en
+ * reference of the corpus row `on click pick characters 0 to 5 of #note` parsed
+ * to `{patient:"characters"}` and rendered `pick characters`, which the canonical
+ * hyperscript.org parser rejects (EOF) — the lone entry in
+ * baselines/canonical-validity.json.
+ *
+ * Arc 1 adds the handcrafted `pick-en-variant` pattern + the pick-range
+ * assembler + the pick AST mapper so the canonical `first|last|random|
+ * item(s)|character(s) … of <root>` variants parse, round-trip, and build the
+ * core PickCommand modifiers. Parsing non-null is NOT the assertion here — the
+ * captured roles, the rendered surface, and the built AST are.
+ *
+ * (`match`/`matches` is deferred — see the leaf's header for the render-selection
+ * collision reason. The `..` range separator is likewise deferred: it tokenizes
+ * as two bare `.` tokens.)
+ */
+import { describe, it, expect } from 'vitest';
+import { parse, render } from '../src';
+import { buildAST } from '../src/ast-builder';
+import type { CommandSemanticNode } from '../src/types';
+
+function roleText(node: CommandSemanticNode, role: string): string | undefined {
+  const v = node.roles.get(role as never) as { type: string; value?: unknown; raw?: string } | undefined;
+  if (!v) return undefined;
+  if (v.type === 'expression') return v.raw;
+  return v.value !== undefined ? String(v.value) : undefined;
+}
+
+describe('pick — canonical variant/range parsing (arc 1)', () => {
+  it('captures method/patient/source for the corpus range row', () => {
+    const node = parse('pick characters 0 to 5 of #note', 'en') as CommandSemanticNode;
+    expect(node.action).toBe('pick');
+    expect(roleText(node, 'method')).toBe('characters');
+    expect(roleText(node, 'patient')).toBe('0 to 5');
+    expect(node.roles.get('source' as never)?.value).toBe('#note');
+    expect(node.roles.get('source' as never)?.type).toBe('selector');
+  });
+
+  it('folds the trailing range mode into the patient value', () => {
+    const node = parse('pick characters 0 to 5 inclusive of #note', 'en') as CommandSemanticNode;
+    expect(roleText(node, 'patient')).toBe('0 to 5 inclusive');
+  });
+});
+
+describe('pick — English round-trip render', () => {
+  const rows = [
+    'on click pick characters 0 to 5 of #note', // the gate row
+    'pick characters 0 to 5 of #note',
+    'pick characters 0 to 5 inclusive of #note',
+    'pick items 1 to 3 of arr',
+    'pick first 3 of arr',
+    'pick last 2 of arr',
+    'pick random 2 of arr',
+  ];
+  for (const row of rows) {
+    it(`round-trips: ${row}`, () => {
+      const node = parse(row, 'en');
+      expect(render(node, 'en')).toBe(row);
+    });
+  }
+});
+
+describe('pick — AST mapper bridges to the core PickCommand contract', () => {
+  it('range row → variant/rangeStart/rangeEnd/rangeMode + source arg', () => {
+    const { ast } = buildAST(parse('pick characters 0 to 5 of #note', 'en'));
+    expect(ast.name).toBe('pick');
+    expect(ast.args?.[0]).toMatchObject({ type: 'selector', value: '#note' });
+    expect(ast.modifiers?.variant).toMatchObject({ value: 'range' });
+    expect(ast.modifiers?.rangeStart).toMatchObject({ value: 0 });
+    expect(ast.modifiers?.rangeEnd).toMatchObject({ value: 5 });
+    expect(ast.modifiers?.rangeMode).toMatchObject({ value: 'default' });
+  });
+
+  it('inclusive range → rangeMode inclusive', () => {
+    const { ast } = buildAST(parse('pick characters 0 to 5 inclusive of #note', 'en'));
+    expect(ast.modifiers?.rangeMode).toMatchObject({ value: 'inclusive' });
+  });
+
+  it('first N → variant first + count', () => {
+    const { ast } = buildAST(parse('pick first 3 of arr', 'en'));
+    expect(ast.modifiers?.variant).toMatchObject({ value: 'first' });
+    expect(ast.modifiers?.count).toMatchObject({ value: 3 });
+    expect(ast.args?.[0]).toMatchObject({ name: 'arr' });
+  });
+
+  it('random N → variant random + count', () => {
+    const { ast } = buildAST(parse('pick random 2 of arr', 'en'));
+    expect(ast.modifiers?.variant).toMatchObject({ value: 'random' });
+    expect(ast.modifiers?.count).toMatchObject({ value: 2 });
+  });
+});
+
+describe('pick — legacy forms unaffected (regression guard)', () => {
+  it('bare `pick colors` still builds a single-arg command with no variant', () => {
+    const node = parse('pick colors', 'en') as CommandSemanticNode;
+    expect(node.action).toBe('pick');
+    const { ast } = buildAST(node);
+    expect(ast.name).toBe('pick');
+    expect(ast.args?.[0]).toMatchObject({ name: 'colors' });
+    // No canonical-variant modifiers were fabricated for the legacy form.
+    expect(ast.modifiers?.variant).toBeUndefined();
+  });
+
+  it('does not fold a range when the source is a foreign (non-`to`) separator', () => {
+    // The Spanish generated pick pattern carries a patient role too; its range
+    // uses `a`, not `to`, so the pick-range assembler must decline and the
+    // Spanish row must parse byte-identically to today (non-null, method-less).
+    const node = parse('escoger characters 0 a 5 de #note', 'es') as CommandSemanticNode;
+    expect(node.action).toBe('pick');
+    // The assembler did NOT fire: patient is a single token, not `0 a 5`.
+    expect(roleText(node, 'patient')).not.toContain(' to ');
+  });
+});
