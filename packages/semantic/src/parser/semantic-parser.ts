@@ -2071,7 +2071,27 @@ export class SemanticParserImpl implements ISemanticParser {
               Object.entries(roles).every(([role, val]) => {
                 if (isIgnorableFusedRole(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
-                return rv !== undefined && valType(rv) === valType(val);
+                if (rv !== undefined && valType(rv) === valType(val)) return true;
+                // Pick's fused patterns bind the unit/variant word under the
+                // generic `patient` (`pick-event-es-vso` → patient:literal=
+                // "characters"), while the canonical pick variant pattern
+                // re-roles that word to `method` and captures the RANGE under
+                // `patient` (`0 to 5`). The unit word reappearing under
+                // `method` with the SAME literal value IS preservation — the
+                // role moved, nothing was lost. Without this the type check
+                // above (literal vs expression) vetoes the swap and the
+                // handler body truncates to `pick characters` (the arc-3
+                // foreign canonical-validity cluster).
+                if (role === 'patient' && actionName === 'pick' && valType(val) === 'literal') {
+                  const mv = (first as CommandSemanticNode).roles.get('method');
+                  return (
+                    mv !== undefined &&
+                    valType(mv) === 'literal' &&
+                    String((mv as { value?: unknown }).value) ===
+                      String((val as { value?: unknown }).value)
+                  );
+                }
+                return false;
               });
             // For a block-body action (only `repeat` reaches here) the swap is
             // additionally gated on the re-parse matching a HEAD-ONLY counted-loop

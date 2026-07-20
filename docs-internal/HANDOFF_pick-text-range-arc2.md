@@ -1,5 +1,9 @@
 # HANDOFF: pick-text-range arc 2 — vocabulary, 24 languages
 
+> **Arc 3 EXECUTED 2026-07-20 (`feat/pick-text-range-arc3`) — the burndown is
+> COMPLETE: both allowlists empty, 3059/3059.** See the OUTCOME banner atop
+> `HANDOFF_pick-text-range-arc3.md`; the arc-3 worklist below is historical.
+
 > ## ✅ ARC 2 COMPLETE — 2026-07-20 (branch `feat/pick-text-range-arc2`)
 >
 > Five commits (Batches A–E). **Registered** (tokenizer EXTRAS + i18n dicts, en

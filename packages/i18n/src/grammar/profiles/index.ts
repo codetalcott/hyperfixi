@@ -129,6 +129,86 @@ function sovHaltCallFusedRule(cfg: {
 }
 
 // =============================================================================
+// Shared SOV rule factory — pick range rows (`pick characters 0 to 5 of #note`,
+// docs-internal/HANDOFF_pick-text-range-arc3.md)
+// =============================================================================
+
+/**
+ * The canonical pick range row decomposes in parseStatement/parseEventHandler as
+ * patient=`characters 0` + destination=`5 of #note` (the range's `to` reads as a
+ * destination marker), so the default SOV reorder scatters the range across the
+ * clause — ja emitted `文字 0 を クリック で 選択 5 の #note に` with the `5`
+ * stranded after the verb, unparseable in every SOV language. No roleOrder can
+ * reunite a range split across two roles; this custom render reassembles the
+ * canonical surface and emits the SOV convention shape (big patient phrase
+ * first, verb final):
+ *
+ *   `<root> <gen> <unit> <a> <sep> <b> <pm> [<event> <em>] <verb>`
+ *
+ * e.g. ja `#note の 文字 0 から 5 を クリック で 選択`. The paired semantic
+ * pick pattern (patterns/pick.ts VERB_FINAL_SPECS) parses exactly this shape
+ * back, with the range fold normalizing `<a> <sep> <b>` to English `a to b` —
+ * the two sides co-evolve per the i18n-renders-semantic-patterns-coevolve
+ * lesson; change one and you must re-probe the other.
+ *
+ * Gated tight to the numeric-endpoint corpus shape (`<unit> <int>` patient +
+ * `<int> of <root>` destination); word endpoints (`start`/`end`), modes
+ * (`inclusive`) and anything else fall through to the default render unchanged.
+ */
+function sovPickRangeRule(cfg: {
+  /** Genitive joiner between the root and the unit word (ja `の`, hi `का`). */
+  genitive: string;
+  /** Range separator between the two endpoints (ja `から`, hi `से`). */
+  rangeSep: string;
+  /** Patient/object marker after the range (ja `を`, hi `को`). */
+  patientMarker: string;
+  /** Event marker after the event word (ja `で`, hi `पर`). */
+  eventMarker: string;
+}): GrammarRule {
+  return {
+    name: 'pick-range-verb-final',
+    description: 'Reassemble the pick range (unit + endpoints + root) adjacent, verb-final',
+    priority: 95,
+    match: {
+      commands: ['pick'],
+      requiredRoles: ['action', 'patient', 'destination'],
+      predicate: parsed => {
+        const p = parsed.roles.get('patient');
+        const d = parsed.roles.get('destination');
+        return (
+          !!p &&
+          !!d &&
+          /^\S+\s+\d+$/.test(p.value.trim()) &&
+          /^\d+\s+of\s+\S+$/.test(d.value.trim())
+        );
+      },
+    },
+    transform: {
+      roleOrder: [], // unused — custom takes over
+      custom: parsed => {
+        const p = parsed.roles.get('patient')!;
+        const d = parsed.roles.get('destination')!;
+        const act = parsed.roles.get('action')!;
+        const ev = parsed.roles.get('event');
+        // Unit word from the TRANSLATED patient (`文字 0` → `文字`); endpoints
+        // and root from the UNTRANSLATED values — integers and selectors are
+        // language-invariant by construction (the R3 rule).
+        const pParts = (p.translated ?? p.value).trim().split(/\s+/);
+        const a = pParts[pParts.length - 1]!;
+        const unit = pParts.slice(0, -1).join(' ');
+        const dMatch = d.value.trim().match(/^(\d+)\s+of\s+(\S+)$/)!;
+        const b = dMatch[1]!;
+        const root = dMatch[2]!;
+        const verb = act.translated ?? act.value;
+        const head = [root, cfg.genitive, unit, a, cfg.rangeSep, b, cfg.patientMarker];
+        const eventPart = ev ? [ev.translated ?? ev.value, cfg.eventMarker] : [];
+        return [...head, ...eventPart, verb].join(' ');
+      },
+    },
+  };
+}
+
+// =============================================================================
 // Japanese (SOV, Postpositions)
 // =============================================================================
 
@@ -227,6 +307,13 @@ export const japaneseProfile: LanguageProfile = {
       patientMarker: 'を',
       eventMarker: 'で',
       connective: 'それから',
+    }),
+    // #note の 文字 0 から 5 を クリック で 選択
+    sovPickRangeRule({
+      genitive: 'の',
+      rangeSep: 'から',
+      patientMarker: 'を',
+      eventMarker: 'で',
     }),
   ],
 };
@@ -342,6 +429,13 @@ export const koreanProfile: LanguageProfile = {
       patientMarker: '를',
       eventMarker: '할 때',
       connective: '그러면',
+    }),
+    // #note 의 문자 0 부터 5 를 클릭 할 때 선택
+    sovPickRangeRule({
+      genitive: '의',
+      rangeSep: '부터',
+      patientMarker: '를',
+      eventMarker: '할 때',
     }),
   ],
 };
@@ -662,6 +756,13 @@ export const turkishProfile: LanguageProfile = {
       eventMarker: 'de',
       connective: 'ardından',
     }),
+    // #note nin karakterler 0 ile 5 i tıklama de seç
+    sovPickRangeRule({
+      genitive: 'nin',
+      rangeSep: 'ile',
+      patientMarker: 'i',
+      eventMarker: 'de',
+    }),
   ],
 };
 
@@ -881,6 +982,13 @@ export const quechuaProfile: LanguageProfile = {
       eventMarker: 'pi',
       connective: 'chayqa',
     }),
+    // #note pa sanampa 0 kama 5 ta ñitiy pi akllay
+    sovPickRangeRule({
+      genitive: 'pa',
+      rangeSep: 'kama',
+      patientMarker: 'ta',
+      eventMarker: 'pi',
+    }),
   ],
 };
 
@@ -1012,6 +1120,13 @@ export const bengaliProfile: LanguageProfile = {
       patientMarker: 'কে',
       eventMarker: 'এ',
       connective: 'তারপর',
+    }),
+    // #note র অক্ষর 0 থেকে 5 কে ক্লিক এ বাছুন
+    sovPickRangeRule({
+      genitive: 'র',
+      rangeSep: 'থেকে',
+      patientMarker: 'কে',
+      eventMarker: 'এ',
     }),
   ],
 };
@@ -1232,6 +1347,13 @@ export const hindiProfile: LanguageProfile = {
       patientMarker: 'को',
       eventMarker: 'पर',
       connective: 'फिर',
+    }),
+    // #note का अक्षर 0 से 5 को क्लिक पर चुनें
+    sovPickRangeRule({
+      genitive: 'का',
+      rangeSep: 'से',
+      patientMarker: 'को',
+      eventMarker: 'पर',
     }),
   ],
 };
