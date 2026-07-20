@@ -24,6 +24,7 @@ import { registerWith, installAutoSweep, EXTENSION_NAME, type HtmxLike } from '.
 import { canonicalizeTree, canonicalizeElement, translateTriggerValue } from './canonicalize.js';
 import { langOf, normLang } from './lang-resolver.js';
 import { autoDetectBodyHooks, setBodyExecutor, setBodyTranslator } from './hx-on.js';
+import { installResolverMode } from './resolver.js';
 
 // Bracket-with-string-constant access, NOT dot access: Terser's
 // `properties.regex: /^_/` pass mangles `w.__hyperfixi_i18n` but leaves
@@ -103,4 +104,5 @@ export {
   EXTENSION_NAME,
   setBodyExecutor,
   setBodyTranslator,
+  installResolverMode,
 };

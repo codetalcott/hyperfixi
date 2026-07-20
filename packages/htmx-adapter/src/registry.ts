@@ -70,6 +70,11 @@ export function hasAnyVocab(): boolean {
   return REG.size > 0;
 }
 
+/** All language codes with registered vocab. */
+export function vocabLangs(): string[] {
+  return [...REG.keys()];
+}
+
 /** Subscribe to vocab-registration notifications. Returns an unsubscribe fn. */
 export function onVocabUpdate(listener: () => void): () => void {
   vocabUpdateListeners.add(listener);

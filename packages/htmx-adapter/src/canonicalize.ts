@@ -32,6 +32,7 @@
 import { langOf } from './lang-resolver.js';
 import { hasAnyVocab, vocabFor, warnMissingLangOnce } from './registry.js';
 import { claimHxOnAttribute, hasBodyExecutor } from './hx-on.js';
+import { isResolverMode } from './resolver.js';
 
 /** Attribute namespaces the adapter touches. */
 const NS_RE = /^(?:hx|sse|ws)-/;
@@ -168,6 +169,9 @@ export function canonicalizeElement(elt: Element): boolean {
  */
 export function canonicalizeTree(root: Element | Document | DocumentFragment | null): number {
   if (!root) return 0;
+  // Resolver mode (patched htmx answers reads directly) stands the
+  // canonicalization shim down entirely — zero DOM mutation.
+  if (isResolverMode()) return 0;
   // Executor mode must sweep even with no vocab loaded (English
   // hyperscript bodies need claiming too).
   if (!hasAnyVocab() && !hasBodyExecutor()) return 0;

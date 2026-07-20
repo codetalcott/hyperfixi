@@ -105,6 +105,32 @@ test.describe('htmx v4 (4.0.0-beta5)', () => {
   });
 });
 
+test.describe('reference-patched htmx v4 (upstream proposal proof)', () => {
+  test('resolver mode: localized button works with ZERO DOM mutation', async ({ page }) => {
+    await routeGreeting(page);
+    await page.goto(`${FIXTURES}/v4-resolver-patched.html`);
+    await page.click('#btn');
+    await expect(page.locator('#out #hola')).toHaveText('¡Hola!');
+
+    // The whole point of the upstream seam: no canonical attribute was
+    // ever written — the DOM is exactly what the author typed.
+    const btn = page.locator('#btn');
+    await expect(btn).toHaveAttribute('hx-obtener', '/api/saludo');
+    await expect(btn).not.toHaveAttribute('hx-get', /./);
+    await expect(btn).not.toHaveAttribute('hx-target', /./);
+    // htmx v4 stamps its own data-htmx-powered marker on initialized
+    // elements (its bookkeeping, listed in its morphIgnore default) —
+    // everything else must be exactly what the author typed.
+    const attrNames = await btn.evaluate(el =>
+      el
+        .getAttributeNames()
+        .filter(n => n !== 'data-htmx-powered')
+        .sort()
+    );
+    expect(attrNames).toEqual(['hx-objetivo', 'hx-obtener', 'id'].sort());
+  });
+});
+
 test.describe('htmx v2 fallback (2.0.10)', () => {
   test('localized button drives a real GET + swap via defineExtension/onEvent', async ({
     page,

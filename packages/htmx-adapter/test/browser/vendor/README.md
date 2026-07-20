@@ -5,11 +5,12 @@ against. These are TEST FIXTURES, not shipped code — they exist so the
 suite exercises the real libraries instead of mocks, and so a v4 beta
 API change fails here first.
 
-| File                         | Package           | Version     | Source                                  |
-| ---------------------------- | ----------------- | ----------- | --------------------------------------- |
-| `htmx-4.0.0-beta5.js`        | `htmx.org`        | 4.0.0-beta5 | npm tarball, `dist/htmx.js`             |
-| `htmx-2.0.10.js`             | `htmx.org`        | 2.0.10      | npm tarball, `dist/htmx.js`             |
-| `_hyperscript-0.9.93.min.js` | `hyperscript.org` | 0.9.93      | npm tarball, `dist/_hyperscript.min.js` |
+| File                                   | Package           | Version             | Source                                                                     |
+| -------------------------------------- | ----------------- | ------------------- | -------------------------------------------------------------------------- |
+| `htmx-4.0.0-beta5.js`                  | `htmx.org`        | 4.0.0-beta5         | npm tarball, `dist/htmx.js`                                                |
+| `htmx-4.0.0-beta5-resolver-patched.js` | `htmx.org`        | 4.0.0-beta5 + patch | above + `docs/reference-patches/htmx-4.0.0-beta5-attribute-resolver.patch` |
+| `htmx-2.0.10.js`                       | `htmx.org`        | 2.0.10              | npm tarball, `dist/htmx.js`                                                |
+| `_hyperscript-0.9.93.min.js`           | `hyperscript.org` | 0.9.93              | npm tarball, `dist/_hyperscript.min.js`                                    |
 
 To bump a version: `npm pack <pkg>@<version>`, copy the dist file in
 under the new versioned name, update the fixture pages and this table.

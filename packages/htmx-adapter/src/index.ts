@@ -37,6 +37,13 @@ export {
   type HtmxLike,
 } from './extension.js';
 export {
+  attributeResolver,
+  additionalAttributeSelectors,
+  installResolverMode,
+  isResolverMode,
+  setResolverMode,
+} from './resolver.js';
+export {
   setBodyExecutor,
   setBodyTranslator,
   hasBodyExecutor,

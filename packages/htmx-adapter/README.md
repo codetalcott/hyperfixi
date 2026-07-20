@@ -38,11 +38,14 @@ All three consumers share one vocabulary source: the generated modules under
 ## Mechanism
 
 htmx v4 has no hook to override attribute-name resolution — core reads `hx-get`
-literally (see [docs/UPSTREAM_HOOK_PROPOSAL.md](docs/UPSTREAM_HOOK_PROPOSAL.md)
-for the seam we're proposing upstream). Until that exists, the adapter
-**canonicalizes**: before htmx processes a node, each localized attribute is
-copied to its canonical name on the same element (`hx-obtener="/x"` gains a
-sibling `hx-get="/x"`). Two coverage paths:
+literally. We maintain a proposed upstream seam plus a working ~30-line
+reference patch against beta5 and a ready-to-file Discussion draft
+([docs/UPSTREAM_HOOK_PROPOSAL.md](docs/UPSTREAM_HOOK_PROPOSAL.md)); against a
+patched build, `installResolverMode(htmx)` localizes with **zero DOM
+mutation** (proven in the e2e suite). Until the seam exists upstream, the
+adapter **canonicalizes**: before htmx processes a node, each localized
+attribute is copied to its canonical name on the same element
+(`hx-obtener="/x"` gains a sibling `hx-get="/x"`). Two coverage paths:
 
 1. **Initial page** — a document sweep at `DOMContentLoaded`. Load the adapter
    _before_ the htmx `<script>` so the sweep listener registers first

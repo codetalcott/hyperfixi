@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reference-patched htmx v4 — resolver mode, ZERO DOM mutation</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0-beta5-resolver-patched.js"></script>
+    <script>
+      // The patched build reads config.attributeResolver live and rebuilds
+      // discovery selectors at process() time, so wiring after the htmx
+      // script (before its deferred init) is sufficient.
+      HtmxI18n.installResolverMode(window.htmx);
+    </script>
+  </head>
+  <body>
+    <!-- Default trigger (click). Trigger VALUES are name-level out of scope
+         for the resolver seam — see src/resolver.ts. -->
+    <button id="btn" hx-obtener="/api/saludo" hx-objetivo="#out">Cargar</button>
+    <div id="out"></div>
+  </body>
+</html>

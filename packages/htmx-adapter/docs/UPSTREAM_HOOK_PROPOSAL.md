@@ -111,11 +111,19 @@ and load-order guidance are unchanged.
    chokepoints are `#attr`/`#attributeValue`; discovery selectors are
    compiled but already union-built via `#prefixes()`; extension hooks are
    event-name-derived (`htmx_before_process`). Re-check against `src/htmx.js`
-   at HEAD when writing the patch — betas move.
-2. Produce the reference patch (resolver + discovery-selector companion,
-   both extending the existing `config.prefix` code paths) and run htmx's
-   own test suite against it.
+   at HEAD when filing — betas move.
+2. ~~Produce the reference patch.~~ Done:
+   [`reference-patches/htmx-4.0.0-beta5-attribute-resolver.patch`](./reference-patches/htmx-4.0.0-beta5-attribute-resolver.patch)
+   (~30 added lines; resolver as last-fallback in `#attr`/`#attrName`, plus
+   `additionalAttributeSelectors` folded into a `process()`-time
+   `#rebuildDiscoverySelectors()`). The patched build is vendored and driven
+   by the e2e suite: `src/resolver.ts` (`installResolverMode`) answers reads
+   with ZERO DOM mutation — the element's attribute list stays exactly what
+   the author typed (plus htmx's own `data-htmx-powered` marker). Still
+   outstanding before filing: run htmx's OWN test suite against the patch
+   (needs an htmx checkout; out of scope here).
 3. Open a Discussion (not a PR) framing the generic use cases first — lead
-   with "generalizes the shipped `config.prefix` indirection" — with the
-   patch attached; link loka-js and this adapter as working prior art of both
-   the seam and the fallback (this package's e2e suite drives real beta5).
+   with "generalizes the shipped `config.prefix` indirection". Ready-to-file
+   text: [`UPSTREAM_DISCUSSION_DRAFT.md`](./UPSTREAM_DISCUSSION_DRAFT.md).
+   Link loka-js and this adapter as working prior art of both the seam and
+   the fallback.
