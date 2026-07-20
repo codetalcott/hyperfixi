@@ -18,10 +18,24 @@ updates:
       minor-and-patch:
         patterns:
           - '*'
-        # Known group-breakers get individual PRs for deliberate handling:
-        # vitest 4.1.x mass-breaks the core test transform; prettier 3.9.5
-        # reflows enough files to add lint errors. Excluded 2026-07-14 so the
-        # rest of the group can go green + auto-merge (#668 was the red PR).
+        # Known group-breakers get individual PRs for deliberate handling.
+        # Excluded 2026-07-14 so the rest of the group can go green + auto-merge
+        # (#668 was the red PR).
+        #
+        # vitest: the old note here ("vitest 4.1.x mass-breaks the core test
+        # transform") was WRONG and cost real debugging time. 4.1.x transforms
+        # nothing differently — 4.1.6 and 4.1.10 declare an identical
+        # `vite: ^6||^7||^8`. What changes is RESOLUTION: @vitest/ui@4.1.10
+        # exact-pins peer vitest@4.1.10, so npm must nest vitest inside
+        # packages/core, where it re-resolves vite to the highest match (8.1.4)
+        # instead of the root's 7.3.6. Vite 8 dropped esbuild for Oxc, and Oxc
+        # does not lower TC39 decorators — which core uses in 51 files — so
+        # every decorated module dies with a locationless
+        # `SyntaxError: Invalid or unexpected token`.
+        # Diagnosis + the three DISPROVED fixes:
+        # docs-internal/HANDOFF_vitest-oxc-decorators.md
+        #
+        # prettier: 3.9.5 reflows enough files to add lint errors.
         exclude-patterns:
           - 'vitest'
           - '@vitest/*'
