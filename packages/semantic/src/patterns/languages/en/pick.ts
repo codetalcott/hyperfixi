@@ -68,6 +68,14 @@
  *    before `patient` until arc 3's variant patterns), so the range fold never
  *    reaches the separator. The per-profile separator lookup + fold-time English
  *    normalization co-evolve with those patterns; the assembler is untouched here.
+ *  - The range-endpoint keywords `start`/`end` are DEFERRED to arc 3 with the
+ *    separator (one mechanism — the range fold). `start` is not corpus-exercised
+ *    (the pick row uses numeric endpoints 0/5), dormant in arc 2, and 6 native
+ *    start words already mean `init` (hi/bn/id/ms/sw) or `default` (qu) — a dual
+ *    that only slot-aware context (the arc-3 pick pattern) can disambiguate.
+ *    `end` needs no registration (block-end already normalizes; the assembler
+ *    accepts a mid-fold keyword `end`). Arc 1's en `start to end` support is
+ *    tested in pick-command.test.ts.
  */
 
 import type { LanguagePattern } from '../../../types';
