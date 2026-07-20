@@ -198,6 +198,8 @@ export const tr: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'dahil',
+    exclusive: 'hariç',
     first: 'ilk',
     // 'son' is also the END keyword emission (block terminator), and the
     // parser's end-recognizers match it by value — so a positional `last`

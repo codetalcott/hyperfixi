@@ -125,6 +125,8 @@ const INDONESIAN_EXTRAS: KeywordEntry[] = [
   { native: 'tidak', normalized: 'not' },
   { native: 'adalah', normalized: 'is' },
   { native: 'ada', normalized: 'exists' },
+  { native: 'inklusif', normalized: 'inclusive' },
+  { native: 'eksklusif', normalized: 'exclusive' },
 ];
 
 // =============================================================================

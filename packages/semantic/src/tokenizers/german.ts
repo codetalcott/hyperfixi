@@ -114,6 +114,8 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'erhöhe', normalized: 'increment' },
   { native: 'erhohe', normalized: 'increment' },
   { native: 'verringere', normalized: 'decrement' },
+  { native: 'inklusiv', normalized: 'inclusive' },
+  { native: 'exklusiv', normalized: 'exclusive' },
 ];
 
 // =============================================================================

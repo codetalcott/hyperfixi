@@ -218,6 +218,8 @@ export const russianDictionary: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'включительно',
+    exclusive: 'исключительно',
     first: 'первый',
     last: 'последний',
     next: 'следующий',

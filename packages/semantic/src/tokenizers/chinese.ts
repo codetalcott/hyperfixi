@@ -167,6 +167,8 @@ const CHINESE_EXTRAS: KeywordEntry[] = [
   // without it `作为 Number` shattered into `作` + `为`→`for` (`computed-value`).
   // The reverse render (CONNECTIVE_LEXICON.zh) already maps 作为→as.
   { native: '作为', normalized: 'as' },
+  { native: '包含', normalized: 'inclusive' },
+  { native: '排除', normalized: 'exclusive' },
 ];
 
 // Chinese time units moved to generic-extractors.ts (NumberExtractor handles them)

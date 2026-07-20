@@ -192,6 +192,8 @@ export const ar: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'شامل',
+    exclusive: 'حصري',
     first: 'أول',
     last: 'آخر',
     next: 'التالي',

@@ -168,6 +168,8 @@ export const bengaliDictionary: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'অন্তর্ভুক্ত',
+    exclusive: 'বাদ',
     first: 'প্রথম',
     last: 'শেষ',
     next: 'পরবর্তী',

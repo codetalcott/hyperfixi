@@ -204,6 +204,8 @@ export const id: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'inklusif',
+    exclusive: 'eksklusif',
     first: 'pertama',
     last: 'terakhir',
     next: 'berikutnya',

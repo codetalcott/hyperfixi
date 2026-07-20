@@ -104,6 +104,8 @@ export const he: Dictionary = {
   attributes: {},
 
   expressions: {
+    inclusive: 'כולל',
+    exclusive: 'בלעדי',
     last: 'אחרון',
   },
 };

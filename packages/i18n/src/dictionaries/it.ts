@@ -192,6 +192,8 @@ export const it: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'inclusivo',
+    exclusive: 'esclusivo',
     first: 'primo',
     last: 'ultimo',
     next: 'prossimo',

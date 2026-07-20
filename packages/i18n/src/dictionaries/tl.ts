@@ -218,6 +218,8 @@ export const tagalogDictionary: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'kasama',
+    exclusive: 'bukod',
     first: 'una',
     last: 'huli',
     next: 'susunod',

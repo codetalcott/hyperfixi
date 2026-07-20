@@ -119,6 +119,8 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'דקות', normalized: 'm' },
   { native: 'שעה', normalized: 'h' },
   { native: 'שעות', normalized: 'h' },
+  { native: 'כולל', normalized: 'inclusive' },
+  { native: 'בלעדי', normalized: 'exclusive' },
 ];
 
 // =============================================================================

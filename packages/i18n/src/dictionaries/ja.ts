@@ -196,6 +196,8 @@ export const ja: Dictionary = {
   },
 
   expressions: {
+    inclusive: '含む',
+    exclusive: '除く',
     first: '最初',
     last: '最後',
     next: '次',

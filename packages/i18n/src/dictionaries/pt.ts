@@ -193,6 +193,8 @@ export const pt: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'inclusivo',
+    exclusive: 'exclusivo',
     first: 'primeiro',
     last: 'último',
     next: 'próximo',

@@ -46,6 +46,22 @@
  *    (findBestPattern has no penalty for node roles a pattern LACKS) and emit a
  *    spurious `pick random of Y`.
  *  - regex `| flags`, and a leading `at`/`from` range prefix.
+ *
+ * Arc 2 (24-language vocabulary) dispositions — probe-driven, 2026-07-20:
+ *  - `character`/`characters` and `start` are registered per language in the
+ *    tokenizer EXTRAS + i18n dicts (the corpus pick row uses `characters`).
+ *    `inclusive`/`exclusive` likewise, for the 20 languages with a confident
+ *    technical term; hi/qu/sw are DEFERRED (uncertain vocab, left for arc-3
+ *    native-speaker review) — see docs-internal/HANDOFF_pick-text-range-arc2.md.
+ *  - `item`/`items` are DEFERRED entirely. Probe: adding `item` to a dict's
+ *    `expressions` renames the loop variable in the corpus rows
+ *    `repeat for item in .items …` (item → its translation), a non-pick-row
+ *    movement. No corpus pick row uses `item(s)` (all use `characters`), so the
+ *    collision buys nothing in arc 2; revisit in arc 3 if a pick row needs it.
+ *  - En itself gets NO new EXTRAS/dict entries: `characters`/`item(s)`/mode
+ *    words ride as identifiers through this pattern and the range assembler
+ *    already matches `inclusive`/`exclusive`/`start`/`end` by value. Turning
+ *    them into en keywords would only risk this pattern's identifier path.
  */
 
 import type { LanguagePattern } from '../../../types';

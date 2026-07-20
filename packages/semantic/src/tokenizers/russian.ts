@@ -140,6 +140,8 @@ const RUSSIAN_EXTRAS: KeywordEntry[] = [
   { native: 'моя', normalized: 'my' }, // feminine
   { native: 'моё', normalized: 'my' }, // neuter
   { native: 'мои', normalized: 'my' }, // plural
+  { native: 'включительно', normalized: 'inclusive' },
+  { native: 'исключительно', normalized: 'exclusive' },
 ];
 
 // =============================================================================

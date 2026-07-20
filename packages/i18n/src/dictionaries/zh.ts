@@ -205,6 +205,8 @@ export const zh: Dictionary = {
   },
 
   expressions: {
+    inclusive: '包含',
+    exclusive: '排除',
     first: '第一个',
     last: '最后一个',
     next: '下一个',

@@ -68,6 +68,8 @@ const THAI_EXTRAS: KeywordEntry[] = [
   { native: 'ไปยัง', normalized: 'to' },
   { native: 'ด้วย', normalized: 'with' },
   { native: 'และ', normalized: 'and' },
+  { native: 'รวม', normalized: 'inclusive' },
+  { native: 'ยกเว้น', normalized: 'exclusive' },
 ];
 
 // =============================================================================

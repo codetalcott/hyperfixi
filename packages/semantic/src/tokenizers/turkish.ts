@@ -159,6 +159,8 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'milisaniye', normalized: 'ms' },
   { native: 'dakika', normalized: 'm' },
   { native: 'saat', normalized: 'h' },
+  { native: 'dahil', normalized: 'inclusive' },
+  { native: 'hariç', normalized: 'exclusive' },
 ];
 
 // =============================================================================

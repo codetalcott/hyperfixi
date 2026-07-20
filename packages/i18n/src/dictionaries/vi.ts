@@ -188,6 +188,8 @@ export const vi: Dictionary = {
   },
 
   expressions: {
+    inclusive: 'bao gồm',
+    exclusive: 'loại trừ',
     me: 'tôi',
     my: 'của tôi',
     it: 'nó',
