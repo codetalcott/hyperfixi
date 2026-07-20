@@ -169,6 +169,7 @@ const CHINESE_EXTRAS: KeywordEntry[] = [
   { native: '作为', normalized: 'as' },
   { native: '包含', normalized: 'inclusive' },
   { native: '排除', normalized: 'exclusive' },
+  { native: '字符', normalized: 'characters' },
 ];
 
 // Chinese time units moved to generic-extractors.ts (NumberExtractor handles them)

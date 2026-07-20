@@ -166,6 +166,7 @@ export const thaiDictionary: Dictionary = {
   },
 
   expressions: {
+    characters: 'อักขระ',
     inclusive: 'รวม',
     exclusive: 'ยกเว้น',
     first: 'แรก',

@@ -218,6 +218,7 @@ export const russianDictionary: Dictionary = {
   },
 
   expressions: {
+    characters: 'символы',
     inclusive: 'включительно',
     exclusive: 'исключительно',
     first: 'первый',

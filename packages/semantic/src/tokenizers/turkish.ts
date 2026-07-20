@@ -161,6 +161,7 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'saat', normalized: 'h' },
   { native: 'dahil', normalized: 'inclusive' },
   { native: 'hariç', normalized: 'exclusive' },
+  { native: 'karakterler', normalized: 'characters' },
 ];
 
 // =============================================================================

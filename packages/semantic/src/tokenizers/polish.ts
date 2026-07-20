@@ -151,6 +151,7 @@ const POLISH_EXTRAS: KeywordEntry[] = [
   { native: 'puste', normalized: 'empty' },
   { native: 'włącznie', normalized: 'inclusive' },
   { native: 'wyłącznie', normalized: 'exclusive' },
+  { native: 'znaki', normalized: 'characters' },
 ];
 
 // =============================================================================

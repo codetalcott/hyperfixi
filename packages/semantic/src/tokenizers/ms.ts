@@ -60,6 +60,7 @@ const MALAY_EXTRAS: KeywordEntry[] = [
   { native: 'hover', normalized: 'hover' }, // English loanword commonly used
   { native: 'inklusif', normalized: 'inclusive' },
   { native: 'eksklusif', normalized: 'exclusive' },
+  { native: 'aksara', normalized: 'characters' },
 ];
 
 // =============================================================================

@@ -84,6 +84,7 @@ const SPANISH_EXTRAS: KeywordEntry[] = [
   { native: 'destino', normalized: 'target' }, // Synonym for objetivo
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'exclusivo', normalized: 'exclusive' },
+  { native: 'caracteres', normalized: 'characters' },
 ];
 
 // =============================================================================

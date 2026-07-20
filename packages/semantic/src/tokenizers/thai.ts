@@ -70,6 +70,7 @@ const THAI_EXTRAS: KeywordEntry[] = [
   { native: 'และ', normalized: 'and' },
   { native: 'รวม', normalized: 'inclusive' },
   { native: 'ยกเว้น', normalized: 'exclusive' },
+  { native: 'อักขระ', normalized: 'characters' },
 ];
 
 // =============================================================================

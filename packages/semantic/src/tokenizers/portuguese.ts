@@ -128,6 +128,7 @@ const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   { native: 'dentro de', normalized: 'into' },
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'exclusivo', normalized: 'exclusive' },
+  { native: 'caracteres', normalized: 'characters' },
 ];
 
 // =============================================================================

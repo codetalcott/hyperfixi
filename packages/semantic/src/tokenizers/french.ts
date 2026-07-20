@@ -120,6 +120,7 @@ const FRENCH_EXTRAS: KeywordEntry[] = [
   { native: 'tant que', normalized: 'while' },
   { native: 'inclusif', normalized: 'inclusive' },
   { native: 'exclusif', normalized: 'exclusive' },
+  { native: 'caractères', normalized: 'characters' },
 ];
 
 // =============================================================================

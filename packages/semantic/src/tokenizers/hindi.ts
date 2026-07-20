@@ -103,6 +103,7 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // alternative (patterns/toggle.ts) and the morphological normalizer strips
   // conjugations — a bare entry re-opens the आकार_बदलें phantom-toggle class.
   { native: 'बदलने पर', normalized: 'changes' },
+  { native: 'अक्षर', normalized: 'characters' },
 ];
 
 // =============================================================================

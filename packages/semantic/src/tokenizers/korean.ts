@@ -145,6 +145,7 @@ const KOREAN_EXTRAS: KeywordEntry[] = [
   { native: '시간', normalized: 'h' },
   { native: '포함', normalized: 'inclusive' },
   { native: '제외', normalized: 'exclusive' },
+  { native: '문자', normalized: 'characters' },
 ];
 
 // Korean time units moved to generic-extractors.ts (NumberExtractor handles them)

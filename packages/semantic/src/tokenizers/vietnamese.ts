@@ -106,6 +106,7 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'javascript', normalized: 'js' },
   { native: 'bao gồm', normalized: 'inclusive' },
   { native: 'loại trừ', normalized: 'exclusive' },
+  { native: 'ký tự', normalized: 'characters' },
 ];
 
 // =============================================================================

@@ -58,6 +58,7 @@ const TAGALOG_EXTRAS: KeywordEntry[] = [
   { native: 'mag_scroll', normalized: 'scroll' },
   { native: 'kasama', normalized: 'inclusive' },
   { native: 'bukod', normalized: 'exclusive' },
+  { native: 'karakter', normalized: 'characters' },
 ];
 
 // =============================================================================

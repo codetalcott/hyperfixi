@@ -186,6 +186,7 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   // - etc.
   { native: 'شامل', normalized: 'inclusive' },
   { native: 'حصري', normalized: 'exclusive' },
+  { native: 'حروف', normalized: 'characters' },
 ];
 
 // Arabic time units moved to generic-extractors.ts (NumberExtractor handles them)

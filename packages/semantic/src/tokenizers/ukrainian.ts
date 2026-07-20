@@ -137,6 +137,7 @@ const UKRAINIAN_EXTRAS: KeywordEntry[] = [
   { native: 'мої', normalized: 'my' }, // plural
   { native: 'включно', normalized: 'inclusive' },
   { native: 'виключно', normalized: 'exclusive' },
+  { native: 'символи', normalized: 'characters' },
 ];
 
 // =============================================================================

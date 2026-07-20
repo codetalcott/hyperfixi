@@ -204,6 +204,7 @@ export const id: Dictionary = {
   },
 
   expressions: {
+    characters: 'karakter',
     inclusive: 'inklusif',
     exclusive: 'eksklusif',
     first: 'pertama',

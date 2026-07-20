@@ -198,6 +198,7 @@ export const tr: Dictionary = {
   },
 
   expressions: {
+    characters: 'karakterler',
     inclusive: 'dahil',
     exclusive: 'hariç',
     first: 'ilk',

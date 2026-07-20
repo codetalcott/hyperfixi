@@ -116,6 +116,7 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'verringere', normalized: 'decrement' },
   { native: 'inklusiv', normalized: 'inclusive' },
   { native: 'exklusiv', normalized: 'exclusive' },
+  { native: 'Zeichen', normalized: 'characters' },
 ];
 
 // =============================================================================

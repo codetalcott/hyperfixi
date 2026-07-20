@@ -142,6 +142,7 @@ const RUSSIAN_EXTRAS: KeywordEntry[] = [
   { native: 'мои', normalized: 'my' }, // plural
   { native: 'включительно', normalized: 'inclusive' },
   { native: 'исключительно', normalized: 'exclusive' },
+  { native: 'символы', normalized: 'characters' },
 ];
 
 // =============================================================================
