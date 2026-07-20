@@ -39,7 +39,8 @@ const POSITIONAL_CONCEPTS = [
 
 /**
  * Burn-down list (lang:concept). State as of introduction:
- * - `random` is unrecognized by most tokenizers (no extras entry).
+ * - `random` was unrecognized by most tokenizers (no extras entry) — BURNED DOWN
+ *   in pick-text-range arc 2 (Batch D added the missing EXTRAS entries).
  * - The `closest` superlatives/compounds (es máscercano, fr plusproche,
  *   it piùvicino, pt mais_próximo, tr en_yakın, qu aswan_kaylla) split or
  *   missed entirely — the tokenizer never matches multi-word/underscore
@@ -62,28 +63,14 @@ const POSITIONAL_CONCEPTS = [
  */
 const KNOWN_DRIFT = new Set<string>([
   'ar:parent',
-  'ar:random',
   'bn:last',
-  'bn:random',
   'de:parent',
-  'de:random',
-  'es:random',
-  'fr:random',
-  'hi:random',
-  'id:random',
   'it:parent',
-  'it:random',
-  'ja:random',
-  'ko:random',
-  'ms:random',
-  'pl:random',
-  'pt:random',
   'qu:parent',
-  'qu:random',
-  'sw:random',
-  'th:random',
-  'tr:random',
-  'zh:random',
+  // The `random` drift (18 languages) was BURNED DOWN in pick-text-range arc 2
+  // (Batch D): `random` lived in the dicts' `expressions` but was recognized by
+  // the tokenizer only in ru/uk; arc 2 added the missing EXTRAS entries, so every
+  // dict `random` emission now normalizes back to `random`.
 ]);
 
 function normalizeEmission(lang: string, emission: string): string | null {

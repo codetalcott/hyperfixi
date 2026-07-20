@@ -1,5 +1,40 @@
 # HANDOFF: pick-text-range arc 2 — vocabulary, 24 languages
 
+> ## ✅ ARC 2 COMPLETE — 2026-07-20 (branch `feat/pick-text-range-arc2`)
+>
+> Five commits (Batches A–E). **Registered** (tokenizer EXTRAS + i18n dicts, en
+> excluded — it rides identifiers): `characters` (22 langs — the only
+> corpus-critical word; qu deferred, uncertain Quechua term), `inclusive`/
+> `exclusive` (20 langs; hi/qu/sw deferred), `random` promoted (21 EXTRAS +
+> he/vi dicts — this burned down the 18-language `random` drift in
+> `i18n/src/positional-keyword-drift.test.ts`).
+>
+> **Deferred to arc 3 (each probe-justified, in-code comments in
+> `packages/semantic/src/patterns/languages/en/pick.ts`):**
+> - `item`/`items` — adding `item` to a dict renames the loop variable in the
+>   `repeat for item in .items` corpus rows (probed non-pick corruption); no
+>   corpus pick row uses item(s).
+> - range separator `to` + endpoints `start`/`end` — ONE mechanism (the range
+>   fold), probed DORMANT in arc 2: every foreign corpus pick row binds `patient`
+>   to the unit word and DROPS the range, so the fold never reaches the separator
+>   (no foreign pattern has a unit slot before patient until arc 3). `start` also
+>   collides: 6 native start words already mean `init`/`default`. Co-evolves with
+>   arc-3's foreign pick patterns.
+> - `match`/`matches` — render collision (unchanged from arc 1).
+>
+> **Corpus movement:** exactly the 22 pick-text-range rows changed (native
+> `characters`), zero non-pick movement (stash-isolated diff). Foreign allowlist
+> UNCHANGED at 23 (CLEARED=0/ADDED=0) — clearing it is arc 3. en allowlist stays
+> empty. Baseline regenerated (`multilingual-priority.json`): bundleSize
+> +1863 B (EXTRAS), avgRoleFidelity −~0.0013 in ~10 langs (native keyword vs the
+> old English identifier — the arc-1 coupling), all within the 0.02 tolerance,
+> no band flips. Verified: semantic 7514, i18n 949, both canonical gates,
+> 9-signal `--regression` all green.
+>
+> **Arc 3 remains** (corpus re-authoring + foreign pick patterns + the deferred
+> range mechanism → prune allowlist 23→0 → 3059/3059). The corrections below are
+> as-landed; the deferrals above are the arc-3 worklist.
+
 > **Paste-ready continuation prompt.** Written 2026-07-19 at the close of the arc-1
 > session. Parent plan: `docs-internal/PLAN_pick-text-range.md` (3 arcs; landing
 > all three empties BOTH canonical-validity allowlists → **3059/3059**).
