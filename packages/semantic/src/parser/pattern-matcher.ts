@@ -1272,6 +1272,68 @@ export class PatternMatcher {
    * corpus and the gate row use `to`).
    */
   private static readonly PICK_RANGE_SEPARATORS = new Set(['to']);
+  /**
+   * Per-language pick-range separator words, matched by NATIVE VALUE (not
+   * normalized form): in nearly every language the natural "0 to 5" joiner IS
+   * the destination marker (es `a`, ru `в`, ja `から…` aside), so the tokenizer
+   * normalizes it to `destination` — a normalized-form match would turn EVERY
+   * destination marker into a range separator. Matching the value keeps the
+   * table to the audited words, and the fold's gate (pick command + patient
+   * role + two-operand shape, see the matchRoleToken call site) is what makes
+   * even that collision safe. NEVER route this through the roleMarkers table
+   * (same reason). Words are lowercased. The FIRST word of each set is
+   * probe-measured from that language's corpus row (or, for the SOV six,
+   * chosen in lockstep with its sovPickRangeRule render) and is exercised by
+   * the 24-language table in test/pick-command.test.ts; any SECOND word is an
+   * untested input-tolerance alternate (the natural "up to/until" a native
+   * writer might use — de `bis`, ru/uk `до`, th `ถึง`…). Don't build on the
+   * alternates without probing them first.
+   * (docs-internal/HANDOFF_pick-text-range-arc3.md).
+   */
+  private static readonly PICK_RANGE_SEPARATORS_BY_LANG: Readonly<
+    Record<string, ReadonlySet<string>>
+  > = {
+    ar: new Set(['إلى']),
+    bn: new Set(['থেকে']),
+    de: new Set(['zu', 'bis']),
+    es: new Set(['a']),
+    fr: new Set(['à']),
+    he: new Set(['על', 'עד']),
+    hi: new Set(['से']),
+    id: new Set(['ke']),
+    it: new Set(['in', 'a']),
+    ja: new Set(['から']),
+    ko: new Set(['부터']),
+    ms: new Set(['ke']),
+    pl: new Set(['do']),
+    pt: new Set(['para', 'a']),
+    qu: new Set(['kama']),
+    ru: new Set(['в', 'до']),
+    sw: new Set(['kwa', 'hadi']),
+    th: new Set(['ใน', 'ถึง']),
+    tl: new Set(['sa']),
+    tr: new Set(['ile']),
+    uk: new Set(['в', 'до']),
+    vi: new Set(['vào', 'đến']),
+    zh: new Set(['到']),
+  };
+
+  /**
+   * Is this token the range separator between two pick-range endpoints?
+   * English `to` matches by normalized form (it tokenizes as a keyword in
+   * every language and en normalizes it to itself); the per-language native
+   * words match by value — see PICK_RANGE_SEPARATORS_BY_LANG for why the two
+   * lookups differ.
+   */
+  private isPickRangeSeparator(token: LanguageToken): boolean {
+    const norm = (token.normalized ?? token.value).toLowerCase();
+    if (PatternMatcher.PICK_RANGE_SEPARATORS.has(norm)) return true;
+    const lang = this.currentProfile?.code;
+    if (!lang) return false;
+    return (
+      PatternMatcher.PICK_RANGE_SEPARATORS_BY_LANG[lang]?.has(token.value.toLowerCase()) ?? false
+    );
+  }
   /** Trailing range-mode keywords: `pick characters 0 to 5 inclusive of #note`. */
   private static readonly PICK_RANGE_MODES = new Set(['inclusive', 'exclusive']);
 
@@ -1295,8 +1357,7 @@ export class PatternMatcher {
     }
 
     const sep = tokens.peek();
-    const sepNorm = sep ? (sep.normalized ?? sep.value).toLowerCase() : '';
-    if (!sep || !PatternMatcher.PICK_RANGE_SEPARATORS.has(sepNorm)) {
+    if (!sep || !this.isPickRangeSeparator(sep)) {
       tokens.reset(mark);
       return null;
     }
@@ -1316,10 +1377,21 @@ export class PatternMatcher {
       tokens.advance();
     }
 
-    const raw = joinExpressionTokens(
-      tokens.tokens.slice(startIdx, tokens.position()),
-      this.currentProfile
-    );
+    // Fold-time ENGLISH normalization: synthesize `<a> to <b> [inclusive|
+    // exclusive]` rather than joining the surface tokens. The folded value is
+    // then canonical English for every language (es `0 a 5` → `0 to 5`), so
+    // the pick mapper's hard-coded `/\s+to\s+/` split and the en render work
+    // unchanged — one normalization site instead of two per-language ones.
+    // Keyword endpoints/modes emit their normalized form (native `start`/`end`
+    // /mode words → English); literals and identifiers emit their value, which
+    // for en makes the output byte-identical to the old token join (the
+    // round-trip suite in test/pick-command.test.ts holds this invariant).
+    const folded = tokens.tokens.slice(startIdx, tokens.position());
+    const [a, , b, m] = folded;
+    const endpointText = (t: LanguageToken): string =>
+      t.kind === 'keyword' ? (t.normalized ?? t.value) : t.value;
+    let raw = `${endpointText(a!)} to ${endpointText(b!)}`;
+    if (m) raw += ` ${(m.normalized ?? m.value).toLowerCase()}`;
     return { type: 'expression', raw, value: raw } as SemanticValue;
   }
 
@@ -1333,7 +1405,7 @@ export class PatternMatcher {
     const token = tokens.peek();
     if (!token) return false;
     const norm = (token.normalized ?? token.value).toLowerCase();
-    if (PatternMatcher.PICK_RANGE_SEPARATORS.has(norm)) return false;
+    if (this.isPickRangeSeparator(token)) return false;
     const isEndpointKeyword = norm === 'start' || norm === 'end';
     if (
       token.kind === 'literal' ||

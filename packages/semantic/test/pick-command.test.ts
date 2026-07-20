@@ -129,13 +129,56 @@ describe('pick — legacy forms unaffected (regression guard)', () => {
     expect(ast.modifiers?.variant).toBeUndefined();
   });
 
-  it('does not fold a range when the source is a foreign (non-`to`) separator', () => {
-    // The Spanish generated pick pattern carries a patient role too; its range
-    // uses `a`, not `to`, so the pick-range assembler must decline and the
-    // Spanish row must parse byte-identically to today (non-null, method-less).
+  it('folds a foreign range separator to canonical English (arc 3: es `a`)', () => {
+    // Arc 2 kept the foreign separators dormant (this test asserted the fold
+    // declined); arc 3 armed them: the per-language separator table
+    // (PICK_RANGE_SEPARATORS_BY_LANG) recognizes es `a` inside the es pick
+    // variant pattern's patient slot, and the fold synthesizes canonical
+    // ENGLISH — so the pick mapper's `to`-split and the en render work
+    // unchanged for every language.
     const node = parse('escoger characters 0 a 5 de #note', 'es') as CommandSemanticNode;
     expect(node.action).toBe('pick');
-    // The assembler did NOT fire: patient is a single token, not `0 a 5`.
-    expect(roleText(node, 'patient')).not.toContain(' to ');
+    expect(roleText(node, 'patient')).toBe('0 to 5');
+    expect(roleText(node, 'method')).toBe('characters');
+  });
+});
+
+describe('pick — 24-language corpus row round-trip (arc 3)', () => {
+  // The exact corpus surface per language (generated rows read from a fresh
+  // patterns.db; the SOV six + qu are the sovPickRangeRule renders, co-evolved
+  // with the verb-final patterns — change either side only in lockstep).
+  // Every one must parse faithfully and render the canonical English row the
+  // hyperscript.org parser accepts: this is the surface the R4 canonical-
+  // validity gate consumes, the last 23 entries of the foreign allowlist.
+  const ROWS: Array<[string, string]> = [
+    ['ar', 'اختر حروف 0 إلى 5 من #note عند نقر'],
+    ['bn', '#note র অক্ষর 0 থেকে 5 কে ক্লিক এ বাছুন'],
+    ['de', 'bei klick auswählen Zeichen 0 zu 5 von #note'],
+    ['es', 'en clic escoger caracteres 0 a 5 de #note'],
+    ['fr', 'sur clic choisir caractères 0 à 5 de #note'],
+    ['he', 'ב לחיצה בחר את תווים 0 על 5 of #note'],
+    ['hi', '#note का अक्षर 0 से 5 को क्लिक पर चुनें'],
+    ['id', 'pada klik pilih karakter 0 ke 5 dari #note'],
+    ['it', 'su clic scegliere caratteri 0 in 5 di #note'],
+    ['ja', '#note の 文字 0 から 5 を クリック で 選択'],
+    ['ko', '#note 의 문자 0 부터 5 를 클릭 할 때 선택'],
+    ['ms', 'apabila click pilih aksara 0 ke 5 daripada #note'],
+    ['pl', 'gdy kliknięcie wybierz znaki 0 do 5 z #note'],
+    ['pt', 'em clique escolher caracteres 0 para 5 de #note'],
+    ['qu', '#note pa sanampa 0 kama 5 ta ñitiy pi akllay'],
+    ['ru', 'при клик выбрать символы 0 в 5 из #note'],
+    ['sw', 'kwenye bonyeza chagua herufi 0 kwa 5 ya #note'],
+    ['th', 'เมื่อ คลิก เลือก อักขระ 0 ใน 5 ของ #note'],
+    ['tl', 'pumili karakter 0 sa 5 ng #note kapag click'],
+    ['tr', '#note nin karakterler 0 ile 5 i tıklama de seç'],
+    ['uk', 'при клік вибрати символи 0 в 5 з #note'],
+    ['vi', 'khi nhấp chọn ký tự 0 vào 5 của #note'],
+    ['zh', '当 点击 时 选取 把 字符 0 到 5 的 #note'],
+  ];
+
+  it.each(ROWS)('%s row renders the canonical English pick range', (lang, src) => {
+    const node = parse(src, lang);
+    expect(node).not.toBeNull();
+    expect(render(node!, 'en')).toBe('on click pick characters 0 to 5 of #note');
   });
 });
