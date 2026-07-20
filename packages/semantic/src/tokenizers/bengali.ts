@@ -88,6 +88,10 @@ const BENGALI_EXTRAS: KeywordEntry[] = [
   // behavior-draggable/sortable). Phantom-safe: `or` is neither an ActionType nor
   // a command schema.
   { native: 'অথবা', normalized: 'or' },
+  { native: 'অন্তর্ভুক্ত', normalized: 'inclusive' },
+  { native: 'বাদ', normalized: 'exclusive' },
+  { native: 'অক্ষর', normalized: 'characters' },
+  { native: 'এলোমেলো', normalized: 'random' },
 ];
 
 // =============================================================================

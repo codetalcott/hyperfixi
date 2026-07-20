@@ -218,6 +218,7 @@ export const hindiDictionary: Dictionary = {
   },
 
   expressions: {
+    characters: 'अक्षर',
     first: 'पहला',
     last: 'अंतिम',
     next: 'अगला',

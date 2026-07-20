@@ -195,6 +195,9 @@ export const fr: Dictionary = {
   },
 
   expressions: {
+    characters: 'caractères',
+    inclusive: 'inclusif',
+    exclusive: 'exclusif',
     first: 'premier',
     last: 'dernier',
     next: 'suivant',

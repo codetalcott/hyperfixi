@@ -192,6 +192,9 @@ export const ar: Dictionary = {
   },
 
   expressions: {
+    characters: 'حروف',
+    inclusive: 'شامل',
+    exclusive: 'حصري',
     first: 'أول',
     last: 'آخر',
     next: 'التالي',

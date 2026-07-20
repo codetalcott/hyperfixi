@@ -214,6 +214,7 @@ export const sw: Dictionary = {
   },
 
   expressions: {
+    characters: 'herufi',
     first: 'kwanza',
     // 'mwisho' is the END keyword (block terminator) — the tokenizer's keyword
     // map is last-wins, so a positional `last` emission of 'mwisho' reads as

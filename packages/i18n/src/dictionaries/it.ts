@@ -192,6 +192,9 @@ export const it: Dictionary = {
   },
 
   expressions: {
+    characters: 'caratteri',
+    inclusive: 'inclusivo',
+    exclusive: 'esclusivo',
     first: 'primo',
     last: 'ultimo',
     next: 'prossimo',

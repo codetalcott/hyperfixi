@@ -197,6 +197,9 @@ export const pl: Dictionary = {
   },
 
   expressions: {
+    characters: 'znaki',
+    inclusive: 'włącznie',
+    exclusive: 'wyłącznie',
     first: 'pierwszy',
     last: 'ostatni',
     next: 'następny',

@@ -203,6 +203,9 @@ export const de: Dictionary = {
   },
 
   expressions: {
+    characters: 'Zeichen',
+    inclusive: 'inklusiv',
+    exclusive: 'exklusiv',
     first: 'erste',
     last: 'letzte',
     next: 'nächste',

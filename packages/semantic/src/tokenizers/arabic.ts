@@ -184,6 +184,10 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   // - add: اضف, زِد (in profile)
   // - remove: أزل, امسح (in profile)
   // - etc.
+  { native: 'شامل', normalized: 'inclusive' },
+  { native: 'حصري', normalized: 'exclusive' },
+  { native: 'حروف', normalized: 'characters' },
+  { native: 'عشوائي', normalized: 'random' },
 ];
 
 // Arabic time units moved to generic-extractors.ts (NumberExtractor handles them)

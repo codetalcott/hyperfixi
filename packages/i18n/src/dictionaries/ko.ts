@@ -192,6 +192,9 @@ export const ko: Dictionary = {
   },
 
   expressions: {
+    characters: '문자',
+    inclusive: '포함',
+    exclusive: '제외',
     first: '첫번째',
     last: '마지막',
     next: '다음',

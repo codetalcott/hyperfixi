@@ -94,6 +94,30 @@ describe('pick — AST mapper bridges to the core PickCommand contract', () => {
   });
 });
 
+describe('pick — range endpoint keywords start/end (arc 2 probe)', () => {
+  // Arc 1's assembler accepts the `start`/`end` range keywords as endpoints
+  // (tryConsumePickRangeOperand, by normalized form) but never had a test.
+  // Probed 2026-07-20: all three fold and round-trip byte-identically in en.
+  const rows = [
+    'pick characters start to end of #note',
+    'pick characters start to 5 of #note',
+    'pick characters 0 to end of #note',
+  ];
+  for (const row of rows) {
+    it(`round-trips: ${row}`, () => {
+      const node = parse(row, 'en');
+      expect(render(node, 'en')).toBe(row);
+    });
+  }
+
+  it('start/end endpoints reach the AST as rangeStart/rangeEnd literals', () => {
+    const { ast } = buildAST(parse('pick characters start to end of #note', 'en'));
+    expect(ast.modifiers?.variant).toMatchObject({ value: 'range' });
+    expect(ast.modifiers?.rangeStart).toMatchObject({ value: 'start' });
+    expect(ast.modifiers?.rangeEnd).toMatchObject({ value: 'end' });
+  });
+});
+
 describe('pick — legacy forms unaffected (regression guard)', () => {
   it('bare `pick colors` still builds a single-arg command with no variant', () => {
     const node = parse('pick colors', 'en') as CommandSemanticNode;

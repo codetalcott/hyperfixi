@@ -149,6 +149,10 @@ const POLISH_EXTRAS: KeywordEntry[] = [
   { native: 'istnieje', normalized: 'exists' },
   { native: 'pusty', normalized: 'empty' },
   { native: 'puste', normalized: 'empty' },
+  { native: 'włącznie', normalized: 'inclusive' },
+  { native: 'wyłącznie', normalized: 'exclusive' },
+  { native: 'znaki', normalized: 'characters' },
+  { native: 'losowy', normalized: 'random' },
 ];
 
 // =============================================================================

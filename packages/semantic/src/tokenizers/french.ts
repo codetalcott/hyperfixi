@@ -118,6 +118,10 @@ const FRENCH_EXTRAS: KeywordEntry[] = [
 
   // Multi-word phrases
   { native: 'tant que', normalized: 'while' },
+  { native: 'inclusif', normalized: 'inclusive' },
+  { native: 'exclusif', normalized: 'exclusive' },
+  { native: 'caractères', normalized: 'characters' },
+  { native: 'aléatoire', normalized: 'random' },
 ];
 
 // =============================================================================

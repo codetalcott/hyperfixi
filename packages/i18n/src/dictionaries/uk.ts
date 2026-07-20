@@ -217,6 +217,9 @@ export const ukrainianDictionary: Dictionary = {
   },
 
   expressions: {
+    characters: 'символи',
+    inclusive: 'включно',
+    exclusive: 'виключно',
     first: 'перший',
     last: 'останній',
     next: 'наступний',

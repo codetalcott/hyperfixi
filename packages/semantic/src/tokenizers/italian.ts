@@ -204,6 +204,10 @@ const ITALIAN_EXTRAS: KeywordEntry[] = [
   // Synonyms not in profile
   { native: 'toggle', normalized: 'toggle' },
   { native: 'di', normalized: 'tell' },
+  { native: 'inclusivo', normalized: 'inclusive' },
+  { native: 'esclusivo', normalized: 'exclusive' },
+  { native: 'caratteri', normalized: 'characters' },
+  { native: 'casuale', normalized: 'random' },
 ];
 
 // =============================================================================

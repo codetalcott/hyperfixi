@@ -193,6 +193,9 @@ export const pt: Dictionary = {
   },
 
   expressions: {
+    characters: 'caracteres',
+    inclusive: 'inclusivo',
+    exclusive: 'exclusivo',
     first: 'primeiro',
     last: 'último',
     next: 'próximo',

@@ -104,6 +104,10 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
 
   // English synonyms
   { native: 'javascript', normalized: 'js' },
+  { native: 'bao gồm', normalized: 'inclusive' },
+  { native: 'loại trừ', normalized: 'exclusive' },
+  { native: 'ký tự', normalized: 'characters' },
+  { native: 'ngẫu nhiên', normalized: 'random' },
 ];
 
 // =============================================================================

@@ -143,6 +143,10 @@ const KOREAN_EXTRAS: KeywordEntry[] = [
   { native: '밀리초', normalized: 'ms' },
   { native: '분', normalized: 'm' },
   { native: '시간', normalized: 'h' },
+  { native: '포함', normalized: 'inclusive' },
+  { native: '제외', normalized: 'exclusive' },
+  { native: '문자', normalized: 'characters' },
+  { native: '무작위', normalized: 'random' },
 ];
 
 // Korean time units moved to generic-extractors.ts (NumberExtractor handles them)

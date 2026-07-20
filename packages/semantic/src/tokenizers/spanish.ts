@@ -82,6 +82,10 @@ const SPANISH_EXTRAS: KeywordEntry[] = [
   // Reference alternatives (accent variation, synonym)
   { native: 'mí', normalized: 'me' }, // Accented form of mi
   { native: 'destino', normalized: 'target' }, // Synonym for objetivo
+  { native: 'inclusivo', normalized: 'inclusive' },
+  { native: 'exclusivo', normalized: 'exclusive' },
+  { native: 'caracteres', normalized: 'characters' },
+  { native: 'aleatorio', normalized: 'random' },
 ];
 
 // =============================================================================
