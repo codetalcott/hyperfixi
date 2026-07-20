@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + adapter — localized attributes (recommended script order)</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0-beta5.js"></script>
+  </head>
+  <body>
+    <button id="btn" hx-obtener="/api/saludo" hx-objetivo="#out" hx-disparar="clic">Cargar</button>
+    <div id="out"></div>
+  </body>
+</html>

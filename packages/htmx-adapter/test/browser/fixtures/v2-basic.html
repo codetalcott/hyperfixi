@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx 2.x fallback — localized attributes via defineExtension/onEvent</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-2.0.10.js"></script>
+  </head>
+  <body>
+    <button id="btn" hx-obtener="/api/saludo" hx-objetivo="#out" hx-disparar="clic">Cargar</button>
+    <div id="out"></div>
+  </body>
+</html>

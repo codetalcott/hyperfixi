@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 — localized attributes inside swapped-in content</title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0-beta5.js"></script>
+  </head>
+  <body>
+    <!-- First request swaps in HTML that itself contains a localized
+         button; the second button must work via the extension hook that
+         fires when htmx processes the swapped subtree. -->
+    <button id="btn1" hx-obtener="/api/paso1" hx-objetivo="#zona" hx-disparar="clic">Paso 1</button>
+    <div id="zona"></div>
+    <div id="out"></div>
+  </body>
+</html>

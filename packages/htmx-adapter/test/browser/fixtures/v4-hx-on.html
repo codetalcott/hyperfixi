@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + _hyperscript — executor-mode hx-on bodies</title>
+    <script src="/packages/htmx-adapter/test/browser/vendor/_hyperscript-0.9.93.min.js"></script>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+    <script>
+      // Stand-in for HyperscriptI18n.preprocess (the real hyperscript-adapter
+      // bundle drags the semantic stack; the wiring is what's under test).
+      // Records calls so the spec can assert lazy translation.
+      window.__translations = [];
+      HtmxI18n.setBodyTranslator((body, lang) => {
+        window.__translations.push({ body, lang });
+        return { 'alternar .activo': 'toggle .activo on me' }[body] ?? body;
+      });
+    </script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0-beta5.js"></script>
+  </head>
+  <body>
+    <!-- English hyperscript body under a canonical name, in an explicit
+         en scope (the page is lang="es"): executor mode must claim it
+         (attribute removed) or htmx v4 evals it as JS — and must NOT
+         route an en-scope body through the translator. -->
+    <div data-hyperfixi-lang="en">
+      <button id="canonical" hx-on:click="toggle .marcado on me">canonical</button>
+    </div>
+    <!-- Localized name + localized hyperscript body: listener + translator. -->
+    <button id="localizado" hx-en:clic="alternar .activo">localizado</button>
+  </body>
+</html>

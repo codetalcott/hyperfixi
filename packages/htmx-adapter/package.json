@@ -1,0 +1,52 @@
+{
+  "name": "@lokascript/htmx-adapter",
+  "version": "2.7.2",
+  "description": "Multilingual adapter for upstream htmx v4 — author hx-* attributes in 24 languages",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./browser": {
+      "default": "./dist/htmx-i18n.global.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "bash ../../scripts/vitest-run.sh",
+    "test:run": "vitest run",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
+    "test:browser": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "htmx",
+    "htmx4",
+    "i18n",
+    "multilingual",
+    "localization",
+    "attributes",
+    "lokascript"
+  ],
+  "license": "MIT",
+  "sideEffects": false,
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^20.0.0",
+    "jsdom": "^29.0.2",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.5"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ]
+}

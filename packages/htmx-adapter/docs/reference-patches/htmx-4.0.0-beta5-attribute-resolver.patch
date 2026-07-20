@@ -1,0 +1,82 @@
+--- htmx-4.0.0-beta5.js	2026-07-20 20:55:23.176200844 +0000
++++ htmx-4.0.0-beta5-resolver-patched.js	2026-07-20 21:06:49.522118333 +0000
+@@ -156,6 +156,7 @@
+         #boostSelector = "a,form";
+         #verbs = ["get", "post", "put", "patch", "delete"];
+         #hxOnQuery
++        #extraSelectorKey
+         #transitionQueue
+         #historyAbort
+         #processingTransition
+@@ -163,8 +164,7 @@
+         constructor() {
+             this.#initHtmxConfig();
+             this.#initRequestIndicatorCss();
+-            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete]');
+-            this.#hxOnQuery = new XPathEvaluator().createExpression(`.//*[@*[${this.#prefixes("hx-on").map(p => `starts-with(name(), "${p}")`).join(' or ')}]]`);
++            this.#rebuildDiscoverySelectors();
+             this.#internalAPI = {
+                 attributeValue: this.#attributeValue.bind(this),
+                 parseTriggerSpecs: this.#parseTriggerSpecs.bind(this),
+@@ -218,7 +218,9 @@
+                 morphScanLimit: 10,
+                 noSwap: [204, 304],
+                 implicitInheritance: false,
+-                defaultSettleDelay: 1
++                defaultSettleDelay: 1,
++                attributeResolver: null,
++                additionalAttributeSelectors: []
+             }
+             let metaConfig = document.querySelector('meta[name="htmx-config"]');
+             if (metaConfig) {
+@@ -250,6 +252,19 @@
+             });
+         }
+ 
++        // Discovery selectors are rebuilt whenever config.additionalAttributeSelectors
++        // changes (cheap string-key check), so alternate attribute spellings served
++        // by config.attributeResolver are also DISCOVERED — a per-element resolver
++        // cannot drive the document-level scan on its own.
++        #rebuildDiscoverySelectors() {
++            let extra = this.config.additionalAttributeSelectors || [];
++            let key = extra.join(',');
++            if (key === this.#extraSelectorKey) return;
++            this.#extraSelectorKey = key;
++            this.#actionSelector = this.#prefixSelector('[hx-action],[hx-get],[hx-post],[hx-put],[hx-patch],[hx-delete]') + (key ? ',' + key : '');
++            this.#hxOnQuery = new XPathEvaluator().createExpression(`.//*[@*[${this.#prefixes("hx-on").map(p => `starts-with(name(), "${p}")`).join(' or ')}]]`);
++        }
++
+         #ignore(elt) {
+             let p = this.config.prefix;
+             return !elt.closest || elt.closest('[hx-ignore]') != null || (p && elt.closest(`[${p}ignore]`) != null);
+@@ -257,12 +272,20 @@
+ 
+         #attr(elt, name) {
+             let p = this.config.prefix;
+-            return elt.getAttribute(name) ?? (p ? elt.getAttribute(name.replace('hx-', p)) : null);
++            let val = elt.getAttribute(name) ?? (p ? elt.getAttribute(name.replace('hx-', p)) : null);
++            if (val == null && this.config.attributeResolver) {
++                let resolved = this.config.attributeResolver(elt, name);
++                if (resolved) val = elt.getAttribute(resolved);
++            }
++            return val;
+         }
+ 
+         #attrName(elt, name) {
+             let p = this.config.prefix && name.replace('hx-', this.config.prefix);
+-            return elt.hasAttribute(name) ? name : (p && elt.hasAttribute(p) ? p : null);
++            if (elt.hasAttribute(name)) return name;
++            if (p && elt.hasAttribute(p)) return p;
++            let resolved = this.config.attributeResolver?.(elt, name);
++            return resolved && elt.hasAttribute(resolved) ? resolved : null;
+         }
+ 
+         #prefixSelector(s) {
+@@ -941,6 +964,7 @@
+          */
+         process(root, force) {
+             if (!root?.isConnected) return;
++            this.#rebuildDiscoverySelectors();
+             if (!(root instanceof Element)) { // ShadowRoot
+                 for (let elt of root.children || []) this.process(elt, force);
+                 return;
