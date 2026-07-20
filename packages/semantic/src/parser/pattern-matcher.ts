@@ -1281,7 +1281,13 @@ export class PatternMatcher {
    * table to the audited words, and the fold's gate (pick command + patient
    * role + two-operand shape, see the matchRoleToken call site) is what makes
    * even that collision safe. NEVER route this through the roleMarkers table
-   * (same reason). Words are lowercased; probe-measured from the corpus rows
+   * (same reason). Words are lowercased. The FIRST word of each set is
+   * probe-measured from that language's corpus row (or, for the SOV six,
+   * chosen in lockstep with its sovPickRangeRule render) and is exercised by
+   * the 24-language table in test/pick-command.test.ts; any SECOND word is an
+   * untested input-tolerance alternate (the natural "up to/until" a native
+   * writer might use — de `bis`, ru/uk `до`, th `ถึง`…). Don't build on the
+   * alternates without probing them first.
    * (docs-internal/HANDOFF_pick-text-range-arc3.md).
    */
   private static readonly PICK_RANGE_SEPARATORS_BY_LANG: Readonly<

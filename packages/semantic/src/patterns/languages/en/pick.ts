@@ -48,8 +48,9 @@
  *  - regex `| flags`, and a leading `at`/`from` range prefix.
  *
  * Arc 2 (24-language vocabulary) dispositions — probe-driven, 2026-07-20:
- *  - `character`/`characters` and `start` are registered per language in the
- *    tokenizer EXTRAS + i18n dicts (the corpus pick row uses `characters`).
+ *  - `character`/`characters` is registered per language in the tokenizer
+ *    EXTRAS + i18n dicts (the corpus pick row uses `characters`; `start` is
+ *    NOT registered anywhere — see the endpoint bullet below).
  *    Arc 3 closed the qu gap with native-first `sanampa`. `inclusive`/
  *    `exclusive` likewise, for the 20 languages with a confident technical
  *    term; hi/qu/sw remain DEFERRED (uncertain vocab, not corpus-exercised)
