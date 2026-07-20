@@ -239,7 +239,7 @@
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
+    "vscode-languageclient": "^10.1.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {

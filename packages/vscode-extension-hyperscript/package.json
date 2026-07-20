@@ -208,7 +208,7 @@
     "dev:install": "npm run generate:grammar && npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
+    "vscode-languageclient": "^10.1.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {
