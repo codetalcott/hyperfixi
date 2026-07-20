@@ -41,20 +41,28 @@ describe('registerWith', () => {
   });
 });
 
-describe('v4 hook: htmx_before_process_node', () => {
+describe('v4 hook: htmx_before_process (verified name on 4.0.0-beta5)', () => {
   it('canonicalizes the processed subtree', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es"><button hx-obtener="/a"></button></section>`;
+    const ext = createExtension() as { htmx_before_process(elt: Element): void };
+    ext.htmx_before_process(document.querySelector('section')!);
+    expect(document.querySelector('button')!.getAttribute('hx-get')).toBe('/a');
+  });
+
+  it('does not cancel processing (returns undefined — false would abort process())', () => {
+    register('es', ES);
+    document.body.innerHTML = `<section lang="es"><button hx-obtener="/a"></button></section>`;
+    const ext = createExtension() as { htmx_before_process(elt: Element): unknown };
+    expect(ext.htmx_before_process(document.querySelector('section')!)).toBeUndefined();
+  });
+
+  it('keeps the per-node defensive alias for other v4 prereleases', () => {
     register('es', ES);
     document.body.innerHTML = `<section lang="es"><button hx-obtener="/a"></button></section>`;
     const ext = createExtension() as { htmx_before_process_node(elt: Element): void };
     ext.htmx_before_process_node(document.querySelector('section')!);
     expect(document.querySelector('button')!.getAttribute('hx-get')).toBe('/a');
-  });
-
-  it('does not cancel processing (returns undefined)', () => {
-    register('es', ES);
-    document.body.innerHTML = `<section lang="es"><button hx-obtener="/a"></button></section>`;
-    const ext = createExtension() as { htmx_before_process_node(elt: Element): unknown };
-    expect(ext.htmx_before_process_node(document.querySelector('section')!)).toBeUndefined();
   });
 });
 

@@ -739,6 +739,10 @@ jobs:
         run: npx playwright test --project=quick
         working-directory: packages/core
 
+      - name: Run htmx-adapter e2e (real htmx v4/v2 + _hyperscript)
+        run: npx playwright test
+        working-directory: packages/htmx-adapter
+
       # NOTE: paths are relative to the repo root, NOT this job's
       # working-directory. The report/traces are written under
       # packages/core/ (the Playwright cwd), so the path must be

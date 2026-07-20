@@ -1,9 +1,9 @@
 # Proposal: an attribute-name resolver seam for htmx v4
 
-Status: **draft** — to be filed against `bigskysoftware/htmx` once validated
-against the current v4 source. This document is the design rationale; the
-persuasive form for upstream is a small reference patch against `src/htmx.js`
-plus this text.
+Status: **draft, validated against htmx 4.0.0-beta5** (`dist/htmx.js`, vendored
+at `../test/browser/vendor/` — see its README for the extracted ground truth).
+This document is the design rationale; the persuasive form for upstream is a
+small reference patch against `src/htmx.js` plus this text.
 
 ## Summary
 
@@ -19,11 +19,19 @@ htmx.config.attributeResolver = (elt, name) => string | null;
 
 ## Why
 
-htmx v4 funnels essentially all attribute reads through a small number of
-internal helpers (`attributeValue`, `getAttributeValueWithDisinheritance`).
-That is a rare property: **one chokepoint covers every attribute** — current
-and future — without per-attribute wiring. A resolver consulted there enables,
-with zero cost when unset:
+htmx v4 funnels essentially all attribute reads through two private helpers —
+verified in 4.0.0-beta5: `#attr(elt, name)` (raw read) and
+`#attributeValue(elt, name, …)` (adds `:inherited`/`:append` handling). That
+is a rare property: **one chokepoint covers every attribute** — current and
+future — without per-attribute wiring.
+
+Better still, **v4 already ships attribute-name indirection at exactly this
+seam**: `config.prefix` (default `data-hx-`) makes `#attr` retry every read
+with a prefixed spelling, and `#prefixes()` unions the prefixed forms into the
+compiled discovery selectors (`#actionSelector`, `#boostSelector`, the
+`#hxOnQuery` XPath). The resolver proposed here is a per-element
+generalization of that existing, shipped mechanism — not a new concept for
+core. A resolver consulted there enables, with zero cost when unset:
 
 - **Localized authoring** (our use case): `hx-obtener` read as `hx-get` for
   elements under `lang="es"`, resolved per element, with the DOM left exactly
@@ -65,13 +73,16 @@ Design properties worth preserving in review:
   (nearest `lang` ancestor) work; a global rename table is the degenerate case.
 - **Name-level, not value-level** — values are not touched; anything
   value-shaped (trigger specs, vals) stays core's business.
-- **Selector caveat** (learned from loka-js): a per-element resolver cannot
-  drive core's _document-level discovery selectors_. If v4's initial scan uses
-  a compiled `[hx-get],[hx-post],…` selector, discovery needs a companion
-  seam (e.g. `htmx.config.additionalAttributeSelectors: string[]`) or the scan
-  must remain attribute-agnostic. The fixi patch solves this with a separate
-  union-selector hook (`fixi.sel`); any upstream proposal must address the
-  same split or scanning will silently miss resolved-only elements.
+- **Selector caveat** (learned from loka-js, confirmed in beta5): a
+  per-element resolver cannot drive core's _document-level discovery
+  selectors_. v4's scan IS compiled — `#actionSelector`, `#boostSelector`,
+  and the `#hxOnQuery` XPath — so discovery needs a companion seam (e.g.
+  `htmx.config.additionalAttributeSelectors: string[]`). The good news:
+  `#prefixes()` already implements precisely this union for `config.prefix`,
+  so the companion seam extends an existing code path rather than adding a
+  new one. The fixi patch solves the same split with a separate
+  union-selector hook (`fixi.sel`); any upstream proposal must address it or
+  scanning will silently miss resolved-only elements.
 
 ## Relationship to this package
 
@@ -95,9 +106,16 @@ and load-order guidance are unchanged.
 
 ## Filing plan
 
-1. Re-validate hook names/internals against htmx v4 HEAD (`src/htmx.js`).
-2. Produce the reference patch (resolver + discovery-selector companion) and
-   run htmx's own test suite against it.
-3. Open a Discussion (not a PR) framing the generic use cases first, with the
+1. ~~Re-validate hook names/internals against the current v4 source.~~ Done
+   against the 4.0.0-beta5 dist (see `../test/browser/vendor/README.md`):
+   chokepoints are `#attr`/`#attributeValue`; discovery selectors are
+   compiled but already union-built via `#prefixes()`; extension hooks are
+   event-name-derived (`htmx_before_process`). Re-check against `src/htmx.js`
+   at HEAD when writing the patch — betas move.
+2. Produce the reference patch (resolver + discovery-selector companion,
+   both extending the existing `config.prefix` code paths) and run htmx's
+   own test suite against it.
+3. Open a Discussion (not a PR) framing the generic use cases first — lead
+   with "generalizes the shipped `config.prefix` indirection" — with the
    patch attached; link loka-js and this adapter as working prior art of both
-   the seam and the fallback.
+   the seam and the fallback (this package's e2e suite drives real beta5).

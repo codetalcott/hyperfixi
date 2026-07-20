@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 loaded BEFORE the adapter — extension-hook-only coverage</title>
+    <!-- Wrong order on purpose: htmx first. The initial-document coverage
+         must then come from the htmx_before_process extension hook (htmx
+         v4 defers init a tick / to DOMContentLoaded so extensions can
+         register), not from the adapter's own sweep ordering. -->
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0-beta5.js"></script>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/core/vocab/htmx/es.js"></script>
+  </head>
+  <body>
+    <button id="btn" hx-obtener="/api/saludo" hx-objetivo="#out" hx-disparar="clic">Cargar</button>
+    <div id="out"></div>
+  </body>
+</html>

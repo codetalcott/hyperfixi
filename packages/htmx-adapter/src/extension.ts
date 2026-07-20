@@ -3,9 +3,15 @@
  *
  * Primary target is **htmx v4**, whose extensions register via
  * `htmx.registerExtension(name, ext)` and hook lifecycle events through
- * underscore-named methods (`htmx_before_process_node`), each receiving
- * `(elt, detail)`. We canonicalize the node's subtree in that hook so
- * content swapped in later is covered the moment htmx processes it.
+ * underscore-named methods (event name with `:` → `_`), each receiving
+ * `(elt, detail)`. Verified against htmx 4.0.0-beta5 (see
+ * test/browser/vendor/README.md): `process(root)` fires
+ * `htmx:before:process` on the processed root — `document.body`
+ * initially, each swapped-in subtree afterwards — BEFORE any element
+ * init or hx-on binding, so canonicalizing in `htmx_before_process`
+ * covers everything htmx will read. `htmx_before_process_node` is kept
+ * as a defensive alias for other v4 prereleases that used per-node
+ * naming; an unmatched key is inert.
  *
  * A v2 fallback (`htmx.defineExtension` + `onEvent('htmx:beforeProcessNode')`)
  * is included because the localized attribute names are version-agnostic
@@ -39,7 +45,12 @@ export interface HtmxLike {
  */
 export function createExtension(): object {
   return {
-    // htmx v4: fires before htmx wires an element (and its subtree).
+    // htmx v4 (verified on 4.0.0-beta5): fires on each process() root
+    // before element init and hx-on binding.
+    htmx_before_process(elt: Element): void {
+      canonicalizeTree(elt);
+    },
+    // Defensive alias for v4 prereleases with per-node hook naming.
     htmx_before_process_node(elt: Element): void {
       canonicalizeTree(elt);
     },

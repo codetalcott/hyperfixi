@@ -166,9 +166,19 @@ only the suffix is localized. The `_=` attribute is
 ## Tests
 
 ```bash
-npm test --prefix packages/htmx-adapter    # vitest, jsdom (59 tests)
+npm test --prefix packages/htmx-adapter                  # vitest, jsdom (60 tests)
+npm run test:browser --prefix packages/htmx-adapter      # Playwright e2e (build dist first)
 ```
 
-Includes a reuse guard that loads every generated
+The unit suite includes a reuse guard that loads every generated
 `packages/core/vocab/htmx/{lang}.js` module against this adapter's registry, so
 generator drift fails here rather than in a browser.
+
+The Playwright suite drives **real vendored libraries** — htmx `4.0.0-beta5`,
+htmx `2.0.10`, `_hyperscript` `0.9.93` (`test/browser/vendor/`) — verifying the
+end-to-end truths mocks can't: the v4 extension hook name and firing
+granularity (`htmx_before_process`, per processed root — validated against the
+beta5 source), request/swap from a localized button, both script orders,
+localized attributes inside swapped-in content, executor-mode `hx-on` bodies
+running through real `_hyperscript` with `me` bound, and the htmx 2.x
+`defineExtension` fallback.

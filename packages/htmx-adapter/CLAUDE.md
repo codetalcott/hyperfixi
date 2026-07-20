@@ -26,7 +26,11 @@ test/
 ├── extension.test.ts      # v4/v2 registration + hooks + auto-sweep lifecycle
 ├── vocab-modules.test.ts  # REUSE GUARD: loads every real core vocab module against this registry
 ├── registry.test.ts
-└── lang-resolver.test.ts
+├── lang-resolver.test.ts
+└── browser/               # Playwright e2e against REAL vendored libraries
+    ├── adapter.spec.ts    # v4 request/swap/order/re-process, executor mode w/ real _hyperscript, v2 fallback
+    ├── fixtures/*.html
+    └── vendor/            # htmx 4.0.0-beta5, htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README
 docs/
 └── UPSTREAM_HOOK_PROPOSAL.md  # Mechanism (c): the attribute-name resolver seam for htmx core
 ```
@@ -35,7 +39,8 @@ docs/
 
 ```bash
 npm run typecheck          # TypeScript validation
-npm run test:run           # Vitest (59 tests, jsdom environment)
+npm run test:run           # Vitest (60 tests, jsdom environment)
+npm run test:browser       # Playwright e2e vs real htmx v4/v2 + _hyperscript (build dist first)
 npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
 ```
 
