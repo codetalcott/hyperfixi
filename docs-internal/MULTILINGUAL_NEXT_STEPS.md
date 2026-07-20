@@ -3623,3 +3623,16 @@ handler-head family.
 
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
+
+## Community review system (designed 2026-07-20, not yet built)
+
+The machine gates prove structure; naturalness/idiom needs native-speaker + LLM-agent
+review. The full design — tier model (anonymous flags → OAuth proposers → trusted
+per-language reviewers whose edits skip triage → founder merge), hash-pinned
+"verified by native speakers" badges that auto-invalidate on regeneration,
+git-committed ledgers under `packages/patterns-reference/data/review/`, agent
+sweep/triage harness, changeset fan-out across the five vocab surfaces, glossary =
+`vocab dump`, and a 3-stage rollout on the lokascript-docs site — lives in
+**[proposals/community-review-system.md](proposals/community-review-system.md)**.
+Targets the business plan's Days 46–90 `/community` window; builds on
+`apps/profile-editor` (apply path) and the vocab CLI (glossary/browser data).
