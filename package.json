@@ -93,7 +93,8 @@
     "tmp": "^0.2.7",
     "qs": "^6.15.2",
     "yaml": "^2.9.0",
-    "brace-expansion": "^5.0.6"
+    "brace-expansion": "^5.0.7",
+    "js-yaml": "^4.3.0"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
