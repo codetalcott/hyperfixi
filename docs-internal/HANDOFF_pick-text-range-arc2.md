@@ -113,6 +113,18 @@ re-populates a fresh DB for the gate. Therefore:
 >   registered for 20 confident languages; hi/qu/sw deferred (uncertain vocab).
 > - **En gets no new vocab** — it rides identifiers through the arc-1 pattern +
 >   assembler; new en keywords would only risk that path.
+> - **Range separator `to` DEFERRED to arc 3 (probed DORMANT in arc 2).** The
+>   plan's "seed es `a` for a live proof" premise is false: every foreign corpus
+>   pick row binds `patient` to the UNIT word (`characters`) and DROPS the range
+>   (`es escoger characters 0 a 5 …` → `patient:'characters'`, renders
+>   `pick characters`; even synthetic `escoger 0 a 5 de #note` → `patient:'0'`,
+>   renders `pick 0`). The range fold (`tryMatchPickRangeExpression`) never reaches
+>   the separator because no arc-2 foreign pattern has a unit slot BEFORE patient —
+>   that slot arrives with arc 3's foreign pick variant patterns. So a per-profile
+>   separator + fold-normalization has zero arc-2 effect and only risks the working
+>   en fold path. It co-evolves with the arc-3 patterns (the
+>   `i18n-renders-semantic-patterns-coevolve` lesson). pattern-matcher.ts is
+>   UNTOUCHED in arc 2.
 > - File notes: ja `空` lesson comment is at `generators/profiles/japanese.ts:111-115`
 >   (profile); `isCuratedEndKeyword` is in `parser/end-keywords.ts:63`.
 
@@ -123,7 +135,7 @@ re-populates a fresh DB for the gate. Therefore:
 | `inclusive` / `exclusive` | absent everywhere | new entries, 20 langs (hi/qu/sw deferred) | PROBED clean (Batch A canary: zero corpus movement, gates green) |
 | range-`start` | absent as vocabulary (only `verb.position: 'start'` config) | new entries | colon-events (`draggable:start`) are tokenizer-level and were fixed in the colon-event-names arc — verify a new `start` keyword doesn't re-split them (probe the behavior-draggable/sortable rows in every language you touch) |
 | range-`end` | **registered as block-end in EVERY language** | **context gate, NOT re-registration** | the bn `শেষ` dual class. Precedent: `POSITIONAL_HEAD_DUALS` + angle-bracket gate (`expression-lexicon.ts:261-277`, gate :336-339). Also note the matcher's connective guard (`pattern-matcher.ts:~572-587`) rejects a keyword-`end` as a role's FIRST token — a range endpoint `end` consumed MID-fold by `tryConsumePickRangeOperand` (:1332, accepts keyword `end` by normalized form) is already safe. en `start to end` endpoints are accepted by the arc-1 assembler but were never probed — probe en first, then per-language |
-| range-`to` | destination marker in every language (es `a`, ja `に`, ru `в`…) | **positional binding only**: extend `PICK_RANGE_SEPARATORS` per-profile (or a per-profile lookup keyed off `currentProfile`) inside the assembler | NEVER via roleMarkers. Each language's separator word likely doubles as its destination marker — the gate (pick+patient+two-operand shape) is what makes it safe; keep it |
+| range-`to` | destination marker in every language (es `a`, ja `に`, ru `в`…) | **DEFERRED to arc 3** (probed dormant — see below) | NEVER via roleMarkers. When arc 3 lands it: per-profile lookup keyed off `this.currentProfile?.code` beside `PICK_RANGE_SEPARATORS` + fold-time English normalization of the folded `raw` (the `pickMapper` `/\s+to\s+/i` split and en render then work unchanged); the gate (pick+patient+two-operand shape) keeps it safe |
 | `first` / `last` | registered everywhere (profile for Latin, tokenizer EXTRAS for non-Latin; also `POSITIONAL_KEYWORDS`, `expression-lexicon.ts:252-259`) | reuse | tr `son` / curated-end words: `isCuratedEndKeyword` guard exists — probe tr/qu pick rows specifically |
 | `random` | in 22/24 dicts' `expressions` (MISSING he, vi); in EXTRAS for ru (`russian.ts:129`) AND uk (`ukrainian.ts:124`); es/ja/ar do not | promotion: EXTRAS for the ~21 missing langs + dict for he/vi | ru precedent incl. gender/case variants where the lang inflects — nominative forms had to be added or positional queries never formed |
 | `match` (singular) / `matches` | `match` absent everywhere; `matches` = comparison operator everywhere | **DEFER** | the en match variant is deferred at RENDER (arc-1 finding: identical role set → `findBestPattern` can't distinguish; needs a match-only role = renderer change). Registering foreign match-vocab before that is solved buys nothing and risks the operator dual. Leave a comment, skip |

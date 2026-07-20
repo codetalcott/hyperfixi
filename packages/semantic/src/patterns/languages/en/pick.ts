@@ -62,6 +62,12 @@
  *    words ride as identifiers through this pattern and the range assembler
  *    already matches `inclusive`/`exclusive`/`start`/`end` by value. Turning
  *    them into en keywords would only risk this pattern's identifier path.
+ *  - The foreign range separator (es `a`, ja `に`…) is DEFERRED to arc 3 —
+ *    probed dormant in arc 2: every foreign corpus pick row binds `patient` to
+ *    the unit word and drops the range (no foreign pattern has a unit slot
+ *    before `patient` until arc 3's variant patterns), so the range fold never
+ *    reaches the separator. The per-profile separator lookup + fold-time English
+ *    normalization co-evolve with those patterns; the assembler is untouched here.
  */
 
 import type { LanguagePattern } from '../../../types';
