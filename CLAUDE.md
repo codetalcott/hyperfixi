@@ -46,6 +46,9 @@ packages/
 ├── hyperscript-adapter/  # Multilingual plugin for original _hyperscript (preprocessor)
 │   └── src/              # See packages/hyperscript-adapter/CLAUDE.md
 │
+├── htmx-adapter/    # Multilingual adapter for upstream htmx v4 (canonicalizing extension)
+│   └── src/         # See packages/htmx-adapter/CLAUDE.md
+│
 ├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 ├── compilation-service/  # Multi-target codegen (React, Vue, Svelte components; Playwright tests)
 ├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs)
