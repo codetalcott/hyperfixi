@@ -438,7 +438,11 @@ describe('CoreTestRunner', () => {
 
       const result = await runner.runTest(test, context);
 
-      expect(result.duration).toBeGreaterThanOrEqual(50);
+      // Tolerance below the 50ms sleep: setTimeout clamping can fire the
+      // timer ~1-2ms early on CI runners (observed: 49ms in pre-publish run
+      // 29800757714), and the assertion is about duration RECORDING, not
+      // timer precision.
+      expect(result.duration).toBeGreaterThanOrEqual(45);
     });
   });
 });
@@ -686,7 +690,8 @@ describe('measurePerformance', () => {
 
     const metrics = await measurePerformance(mockPage, testFn);
 
-    expect(metrics.loadTime).toBeGreaterThanOrEqual(50);
+    // Same timer-clamping tolerance as the duration test above.
+    expect(metrics.loadTime).toBeGreaterThanOrEqual(45);
   });
 });
 
