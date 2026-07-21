@@ -289,17 +289,20 @@ jobs:
           IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
           FAILED_PKGS=""
 
-          # Detection is the validator's EXIT CODE (it exits 1 on missing
-          # exports). The previous shape — `if cmd | tee log` plus a
-          # `grep -c … || echo "0"` fallback — tested tee's exit (always 0)
-          # and compared against a two-line "0\n0" string (never equal), so
-          # EVERY package was marked ❌ in the summary of every historical
-          # run; the honest-verdict validation run exposed it.
+          # Detection is the validator's EXIT CODE — which it only raises
+          # under --strict (without the flag the script prints ❌ but still
+          # exits 0, so this loop was vacuously green until --strict was
+          # added in the 2026-07-20 pre-release audit). The previous shape —
+          # `if cmd | tee log` plus a `grep -c … || echo "0"` fallback —
+          # tested tee's exit (always 0) and compared against a two-line
+          # "0\n0" string (never equal), so EVERY package was marked ❌ in
+          # the summary of every historical run; the honest-verdict
+          # validation run exposed it.
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
               echo "Validating $(node -p "require('./packages/$pkg/package.json').name") exports..."
-              if node scripts/validate-exports.mjs "$pkg" > /tmp/${pkg}-exports.log 2>&1; then
+              if node scripts/validate-exports.mjs "$pkg" --strict > /tmp/${pkg}-exports.log 2>&1; then
                 echo "✅ $(node -p "require('./packages/$pkg/package.json').name" 2>/dev/null || echo "$pkg") - All exports valid" >> $GITHUB_STEP_SUMMARY
               else
                 cat /tmp/${pkg}-exports.log
@@ -350,8 +353,10 @@ jobs:
             fi
           fi
 
-          # Check hybrid bundles
-          for bundle in packages/core/dist/hyperfixi-hybrid-*.js; do
+          # Check hybrid bundles. hyperfixi-hx.js is listed explicitly: it
+          # shares the hybrid ceiling but matches no hyperfixi-hybrid-* glob
+          # (the same naming gap that once left hx-v4 unchecked below).
+          for bundle in packages/core/dist/hyperfixi-hybrid-*.js packages/core/dist/hyperfixi-hx.js; do
             if [[ -f "$bundle" ]]; then
               size=$(gzip -c "$bundle" | wc -c | tr -d ' ')
               filename=$(basename "$bundle")
