@@ -96,6 +96,36 @@ const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
 const IMPORT_ALIASES = ['hyperfixi', '@hyperfixi/core', 'virtual:hyperfixi'];
 
 /**
+ * Compute a hash of the current usage for dev-server cache invalidation.
+ *
+ * Every input that influences bundle SELECTION must be part of this hash.
+ * The htmx/reactivity flags route to the hybrid-hx / hx-v4 tiers; before they
+ * were hashed, adding or removing an hx-live/sse-connect/ws-send attribute —
+ * without touching any command/block/language — left the cached dev bundle at
+ * the wrong tier. Exported for tests.
+ */
+export function computeUsageHash(usage: AggregatedUsage): string {
+  const commands = [...usage.commands].sort().join(',');
+  const blocks = [...usage.blocks].sort().join(',');
+  const languages = [...usage.detectedLanguages].sort().join(',');
+  const htmx = usage.htmx
+    ? [
+        usage.htmx.hasHtmxAttributes,
+        usage.htmx.hasFixiAttributes,
+        usage.htmx.needsHxLive,
+        usage.htmx.needsSSE,
+        usage.htmx.needsWS,
+        usage.htmx.needsBindToProperty,
+        usage.htmx.needsReactivity,
+      ]
+        .map(f => (f ? '1' : '0'))
+        .join('')
+    : 'none';
+  const reactivity = `${usage.needsReactivity ? 1 : 0}${usage.needsBindToProperty ? 1 : 0}`;
+  return `${commands}|${blocks}|${usage.positional}|${languages}|${htmx}|${reactivity}`;
+}
+
+/**
  * Create the HyperFixi Vite plugin
  *
  * @param options Plugin options
@@ -123,16 +153,6 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   const fallbackScripts = new Set<string>(); // Scripts that couldn't be compiled
   let needsLocals = false;
   let needsGlobals = false;
-
-  /**
-   * Compute a hash of the current usage for cache invalidation
-   */
-  function computeUsageHash(usage: AggregatedUsage): string {
-    const commands = [...usage.commands].sort().join(',');
-    const blocks = [...usage.blocks].sort().join(',');
-    const languages = [...usage.detectedLanguages].sort().join(',');
-    return `${commands}|${blocks}|${usage.positional}|${languages}`;
-  }
 
   /**
    * Invalidate the virtual module in dev server

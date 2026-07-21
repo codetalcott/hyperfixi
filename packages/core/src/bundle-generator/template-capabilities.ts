@@ -92,6 +92,27 @@ export const FULL_RUNTIME_ONLY_COMMANDS = [
   'install',
 ] as const;
 
+/**
+ * Advertised command names that are implemented under a different template key.
+ * `push-url`/`replace-url` have no key of their own in COMMAND_IMPLEMENTATIONS —
+ * the `push`/`replace` templates carry `case 'push-url':`/`case 'replace-url':`
+ * labels internally. Without this map, `isAvailableCommand('push-url')` was true
+ * while `generateBundle({ commands: ['push-url'] })` rejected it as
+ * unknown-command (the two public surfaces disagreed).
+ */
+export const COMMAND_ALIASES: Record<string, string> = {
+  'push-url': 'push',
+  'replace-url': 'replace',
+};
+
+/**
+ * Resolve an advertised command name to its template key in
+ * COMMAND_IMPLEMENTATIONS. Identity for non-aliased names.
+ */
+export function resolveCommandKey(command: string): string {
+  return COMMAND_ALIASES[command] ?? command;
+}
+
 /** Type for available command names */
 export type AvailableCommand = (typeof AVAILABLE_COMMANDS)[number];
 
