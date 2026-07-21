@@ -3,7 +3,6 @@
   "version": "2.7.2",
   "description": "TypeScript type definitions for LokaScript browser globals",
   "type": "module",
-  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
