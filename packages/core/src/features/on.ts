@@ -1167,6 +1167,7 @@ export async function createOn(
       capture: false,
       preventDefault: false,
       stopPropagation: false,
+      every: false, // required by the input schema (validator does not apply .default())
       ...event,
     },
     commands,
