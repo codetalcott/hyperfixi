@@ -203,7 +203,22 @@ export class Aggregator {
       this.setsEqual(a.triggerModifiers, b.triggerModifiers) &&
       this.setsEqual(a.urlManagement, b.urlManagement) &&
       a.usesConfirm === b.usesConfirm &&
-      !!a.needsSwapTiming === !!b.needsSwapTiming
+      !!a.needsSwapTiming === !!b.needsSwapTiming &&
+      // htmx v4 / reactivity flags: these drive selection of the hx-v4 tier,
+      // so a change must count as "usage changed" or HMR serves a stale
+      // bundle. They were omitted when the v4 surface landed (#623).
+      !!a.needsHxLive === !!b.needsHxLive &&
+      !!a.needsSSE === !!b.needsSSE &&
+      !!a.needsWS === !!b.needsWS &&
+      !!a.needsBindToProperty === !!b.needsBindToProperty &&
+      !!a.needsReactivity === !!b.needsReactivity &&
+      this.arraysEqual(a.onHandlers, b.onHandlers)
     );
+  }
+
+  private arraysEqual(a?: string[], b?: string[]): boolean {
+    const aa = a ?? [];
+    const bb = b ?? [];
+    return aa.length === bb.length && aa.every((v, i) => v === bb[i]);
   }
 }

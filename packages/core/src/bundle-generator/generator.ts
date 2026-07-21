@@ -15,6 +15,7 @@ import {
   getBlockImplementations,
   type CodeFormat,
 } from './templates';
+import { resolveCommandKey } from './template-capabilities';
 
 /**
  * Generate bundle code from configuration
@@ -46,7 +47,11 @@ export function generateBundleCode(config: GeneratorOptions): string {
   const commandImpls = getCommandImplementations(format);
   const blockImpls = getBlockImplementations(format);
 
-  const commandCases = commands
+  // Resolve advertised aliases (push-url → push) to their template key, and
+  // dedupe: each template already carries the case labels for its aliases, so
+  // requesting both 'push' and 'push-url' must include the template once
+  // (duplicate case labels would shadow silently).
+  const commandCases = [...new Set(commands.map(resolveCommandKey))]
     .filter(cmd => commandImpls[cmd])
     .map(cmd => commandImpls[cmd])
     .join('\n');
@@ -537,8 +542,11 @@ export function generateBundle(config: BundleConfig & Partial<GeneratorOptions>)
   const errors: ValidationError[] = [];
   const strict = (config as GeneratorOptions).validation?.strict ?? false;
 
-  // Check for unknown commands
-  const unknownCommands = config.commands.filter(cmd => !COMMAND_IMPLEMENTATIONS[cmd]);
+  // Check for unknown commands (aliases like push-url resolve to their
+  // implementing template key before the lookup)
+  const unknownCommands = config.commands.filter(
+    cmd => !COMMAND_IMPLEMENTATIONS[resolveCommandKey(cmd)]
+  );
   for (const cmd of unknownCommands) {
     const error: ValidationError = {
       type: 'unknown-command',
@@ -571,7 +579,7 @@ export function generateBundle(config: BundleConfig & Partial<GeneratorOptions>)
 
   return {
     code,
-    commands: config.commands.filter(cmd => COMMAND_IMPLEMENTATIONS[cmd]),
+    commands: config.commands.filter(cmd => COMMAND_IMPLEMENTATIONS[resolveCommandKey(cmd)]),
     blocks: (config.blocks || []).filter(block => BLOCK_IMPLEMENTATIONS[block]),
     positional: config.positionalExpressions || false,
     warnings,
