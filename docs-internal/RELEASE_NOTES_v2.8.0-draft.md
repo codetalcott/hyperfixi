@@ -9,7 +9,7 @@
 
 ## Highlights
 
-### Full bundles cut nearly in half (~534 → ~299 KB gz)
+### Full bundles cut nearly in half (~534 → ~309 KB gz)
 
 Since 2.7.0 the full bundles had been shipping **two copies of the core runtime
 and multilingual parser**: the bundled reactivity/realtime plugins resolved
@@ -17,8 +17,12 @@ and multilingual parser**: the bundled reactivity/realtime plugins resolved
 `@lokascript/semantic`) alongside the bundle's own source graph. A rollup alias
 now folds everything onto one graph:
 
-- `hyperfixi.js`: ~534 → **~299 KB gz**
-- `hyperfixi-hx-v4.js`: ~540 → **~311 KB gz**
+- `hyperfixi.js`: ~534 → **~309 KB gz**
+- `hyperfixi-hx-v4.js`: ~540 → **~321 KB gz**
+
+(Re-measured 2026-07-20 on the release tree: the ~10 KB over the July-14 dedupe
+figures is semantic-content growth from the pick-text-range/vocab arcs, single-copy
+verified.)
 
 Same features, same pre-installed plugins (verified by the plugin-install,
 reactive-features, and full bundle-compatibility suites). CI size ceilings are
@@ -86,8 +90,8 @@ docs/BROWSER_BUNDLES.md); the full-bundle numbers reflect the dedupe above:
 | `hyperfixi-hybrid-complete.js` | 7.7 KB        | 7.7 KB        |
 | `hyperfixi-hx.js`              | 18 KB         | 18 KB         |
 | `hyperfixi-multilingual.js`    | 97 KB         | 97 KB         |
-| `hyperfixi-hx-v4.js`           | **~311 KB**   | ~540 KB       |
-| `hyperfixi.js` (full)          | **~299 KB**   | ~534 KB       |
+| `hyperfixi-hx-v4.js`           | **~321 KB**   | ~540 KB       |
+| `hyperfixi.js` (full)          | **~309 KB**   | ~534 KB       |
 
 The slim bundles (lite / lite-plus / hybrid-complete / hybrid-hx) remain the
 recommended starting point, and `@hyperfixi/vite-plugin` still emits the

@@ -10,7 +10,7 @@ npm install @lokascript/i18n
 
 ## Features
 
-- **🌍 Multi-language Support**: Built-in dictionaries for 13 languages (English, Spanish, French, German, Japanese, Korean, Chinese, Arabic, Turkish, Portuguese, Indonesian, Quechua, Swahili)
+- **🌍 Multi-language Support**: Built-in dictionaries for 24 languages (Arabic, Bengali, Chinese, English, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Portuguese, Quechua, Russian, Spanish, Swahili, Tagalog, Thai, Turkish, Ukrainian, Vietnamese)
 - **🔄 Runtime Locale Switching**: Dynamic language switching in browser environments with automatic detection
 - **⚡ SSR Integration**: Server-side rendering with locale detection, SEO optimization, and hydration support
 - **📊 Pluralization**: CLDR-compliant pluralization rules for complex languages (Russian, Arabic, etc.)

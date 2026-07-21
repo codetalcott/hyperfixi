@@ -1,10 +1,10 @@
 # CLAUDE.md - Core Package
 
-This file provides guidance for working with the `@lokascript/core` package.
+This file provides guidance for working with the `@hyperfixi/core` package.
 
 ## Package Purpose
 
-Main hyperscript runtime, parser, and 43 command implementations. This is the primary package for LokaScript development.
+Main hyperscript runtime, parser, and 58 command implementations. This is the primary package for HyperFixi development.
 
 ## Essential Commands
 
@@ -14,7 +14,7 @@ npm run test:quick --prefix packages/core           # Build + test (<10 sec)
 npm run test:comprehensive --prefix packages/core   # Full browser suite
 
 # Unit tests
-npm test --prefix packages/core                     # Run vitest (2700+ tests)
+npm test --prefix packages/core                     # Run vitest (7000+ tests)
 npm test --prefix packages/core -- --run src/expressions/  # Test specific module
 
 # Build
@@ -101,7 +101,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 ## API v2 (Recommended)
 
 ```javascript
-import { hyperscript } from 'lokascript';
+import { hyperscript } from 'hyperfixi';
 
 // Compile (sync)
 const result = hyperscript.compileSync('toggle .active');
@@ -134,8 +134,8 @@ See [docs/API.md](docs/API.md) for complete documentation.
 | `hyperfixi-lite.js`            | 1.9 KB      | Minimal (8 commands, regex parser)                |
 | `hyperfixi-hybrid-complete.js` | 7.7 KB      | Recommended (~85% coverage)                       |
 | `hyperfixi-hx.js`              | 18 KB       | hybrid-complete + htmx/fixi v1/v2 attributes      |
-| `hyperfixi-hx-v4.js`           | ~311 KB     | Full runtime + htmx-compat + reactivity (hx-live) |
-| `hyperfixi.js`                 | ~299 KB     | Everything + bundled reactivity/realtime plugins  |
+| `hyperfixi-hx-v4.js`           | ~321 KB     | Full runtime + htmx-compat + reactivity (hx-live) |
+| `hyperfixi.js`                 | ~309 KB     | Everything + bundled reactivity/realtime plugins  |
 
 ## Custom Bundle Generation
 

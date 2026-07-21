@@ -121,7 +121,7 @@ The following commands require the full runtime and are not available in generat
 - **Animation (advanced)**: `settle`, `measure`
 - **Behaviors**: `install`
 
-If you need these commands, use the full `lokascript-browser.js` bundle instead.
+If you need these commands, use the full `hyperfixi.js` bundle instead.
 
 ## CLI Options
 
@@ -258,5 +258,5 @@ Generated bundles always include the HybridParser (~500 lines). This is intentio
 
 For even smaller bundles, consider:
 
-- Pre-built lite bundles (hybrid-complete at 6.7KB gzip)
+- Pre-built lite bundles (hybrid-complete at 7.7 KB gzip)
 - Vite plugin with automatic command detection (`@hyperfixi/vite-plugin`)
