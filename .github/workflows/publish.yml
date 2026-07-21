@@ -147,6 +147,20 @@ jobs:
           npm test --prefix packages/compilation-service -- --run
           npm test --prefix packages/mcp-server -- --run
 
+      # Publish-time gates (added 2026-07-20 pre-release audit). Both checks
+      # previously ran only on PRs (ci.yml export-validation job) and in the
+      # manual pre-publish-check dispatch — nothing in THIS workflow's path
+      # stopped a dispatch from shipping a broken exports map or a
+      # Node-unsafe core (dom-globals-shim ordering ahead of morphlex's
+      # module-scope Element.prototype access). Runs after build:browser on
+      # purpose: core's exports map includes dist/hyperfixi*.js bundles that
+      # only exist once the browser bundles are built. Both commands are
+      # unpiped so their exit codes gate directly.
+      - name: Validate exports + bare-Node import
+        run: |
+          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict
+          node scripts/check-node-import.mjs
+
       - name: Calculate new version
         id: version
         run: |
