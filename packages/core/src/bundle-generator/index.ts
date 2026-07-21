@@ -76,6 +76,8 @@ export {
   AVAILABLE_COMMANDS,
   AVAILABLE_BLOCKS,
   FULL_RUNTIME_ONLY_COMMANDS,
+  COMMAND_ALIASES,
+  resolveCommandKey,
   isAvailableCommand,
   isAvailableBlock,
   requiresFullRuntime,

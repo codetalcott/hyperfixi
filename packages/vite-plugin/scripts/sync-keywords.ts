@@ -50,6 +50,39 @@ const DETECTION_KEYWORDS = [
 // Languages that use non-Latin scripts (use simple includes for detection)
 const NON_LATIN_LANGUAGES = ['ja', 'ko', 'zh', 'ar', 'he', 'ru', 'uk', 'hi', 'bn', 'th'];
 
+// The semantic profiles dir mixes full-name filenames (arabic.ts, spanish.ts)
+// with ISO-code filenames (he.ts, ms.ts, tl.ts). The keyword Set constants in
+// language-keywords.ts track the FILENAME (SPANISH_KEYWORDS, HE_KEYWORDS), but
+// the --language= filter and the NON_LATIN_LANGUAGES check expect ISO codes —
+// without this map, `--language=ru` silently never matched russian.ts and
+// isNonLatin was wrong for 9 of the 10 non-Latin languages.
+const FILENAME_TO_ISO: Record<string, string> = {
+  arabic: 'ar',
+  bengali: 'bn',
+  chinese: 'zh',
+  english: 'en',
+  french: 'fr',
+  german: 'de',
+  he: 'he',
+  hindi: 'hi',
+  indonesian: 'id',
+  italian: 'it',
+  japanese: 'ja',
+  korean: 'ko',
+  ms: 'ms',
+  polish: 'pl',
+  portuguese: 'pt',
+  quechua: 'qu',
+  russian: 'ru',
+  spanish: 'es',
+  swahili: 'sw',
+  thai: 'th',
+  tl: 'tl',
+  turkish: 'tr',
+  ukrainian: 'uk',
+  vietnamese: 'vi',
+};
+
 // =============================================================================
 // Parse Arguments
 // =============================================================================
@@ -215,17 +248,23 @@ the primary and alternative keywords for detection.
 
   console.log('Syncing keywords from semantic profiles...\n');
 
-  // Find all profile files
+  // Find all profile files (marker-templates.ts is shared tooling, not a language)
   const profileFiles = fs.readdirSync(SEMANTIC_PROFILES_DIR)
-    .filter(f => f.endsWith('.ts') && f !== 'types.ts' && f !== 'index.ts');
+    .filter(
+      f => f.endsWith('.ts') && f !== 'types.ts' && f !== 'index.ts' && f !== 'marker-templates.ts'
+    );
 
   const languageUpdates = new Map<string, { name: string; keywords: Set<string>; isNonLatin: boolean }>();
 
   for (const file of profileFiles) {
+    // `code` (the filename base) names the Set constant in language-keywords.ts;
+    // `isoCode` is what --language= filtering and script classification use.
     const code = file.replace('.ts', '');
+    const isoCode = FILENAME_TO_ISO[code] ?? code;
 
-    // Skip if specific language requested and this isn't it
-    if (args.language && code !== args.language) {
+    // Skip if specific language requested and this isn't it (accept either
+    // the ISO code or the profile filename)
+    if (args.language && isoCode !== args.language && code !== args.language) {
       continue;
     }
 
@@ -242,8 +281,8 @@ the primary and alternative keywords for detection.
     const nameMatch = content.match(/name:\s*['"]([^'"]+)['"]/);
     const name = nameMatch ? nameMatch[1] : code.toUpperCase();
 
-    // Check if non-Latin
-    const isNonLatin = NON_LATIN_LANGUAGES.includes(code);
+    // Check if non-Latin (by ISO code, not filename)
+    const isNonLatin = NON_LATIN_LANGUAGES.includes(isoCode);
 
     languageUpdates.set(code, { name, keywords, isNonLatin });
   }

@@ -5,9 +5,37 @@
  * Also detects non-English language keywords for multilingual semantic support.
  */
 
+import { AVAILABLE_COMMANDS, FULL_RUNTIME_ONLY_COMMANDS } from '@hyperfixi/core/bundle-generator';
 import type { FileUsage, HyperfixiPluginOptions, HtmxUsage } from './types';
 import { detectLanguages } from './language-keywords';
 import { buildLocalizedHxLivePattern, SSE_NS_PATTERN, WS_NS_PATTERN } from './htmx-localized-attrs';
+
+/**
+ * Command-detection pattern, derived from core's bundle-generator capability
+ * lists instead of a hand-maintained duplicate (which had silently drifted:
+ * `empty` was added to core without ever reaching the old hardcoded regex, so
+ * projects using it got bundles without it). Hyphenated names (push-url,
+ * replace-url, process-partials) are excluded: their hyperscript surface forms
+ * are the space-separated `push url …` / `replace url …`, whose heads `push` /
+ * `replace` are already in the list. Full-runtime-only names are included so
+ * their use routes bundle selection to a tier that actually supports them; a
+ * false positive only costs bundle size, never correctness.
+ */
+const SCANNABLE_COMMANDS = [
+  ...new Set<string>([...AVAILABLE_COMMANDS, ...FULL_RUNTIME_ONLY_COMMANDS]),
+].filter(
+  cmd =>
+    /^[A-Za-z]+$/.test(cmd) &&
+    // `unless` is handled by the block detection below (it compiles to the
+    // lite-capable `if` block — flagging it as a full-runtime-only COMMAND
+    // would needlessly bump every unless-user to a full-runtime bundle).
+    // `bind` is handled by the dedicated reactivity detection below, which
+    // routes to the hx-v4 bundle (the tier that actually ships reactivity).
+    cmd !== 'unless' &&
+    cmd !== 'bind'
+);
+
+const COMMAND_PATTERN_SOURCE = `\\b(${SCANNABLE_COMMANDS.join('|')})\\b`;
 
 // htmx/fixi attribute patterns
 const HTMX_REQUEST_PATTERN =
@@ -184,9 +212,8 @@ export class Scanner {
    * Analyze a hyperscript snippet for commands, blocks, and expressions
    */
   private analyzeScript(script: string, usage: FileUsage): void {
-    // Detect commands
-    const commandPattern =
-      /\b(toggle|add|remove|removeClass|show|hide|set|get|put|append|take|increment|decrement|log|send|trigger|wait|transition|go|call|focus|blur|return)\b/g;
+    // Detect commands (list derived from core — see SCANNABLE_COMMANDS above)
+    const commandPattern = new RegExp(COMMAND_PATTERN_SOURCE, 'g');
     let match;
     while ((match = commandPattern.exec(script))) {
       usage.commands.add(match[1]);

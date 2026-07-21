@@ -742,3 +742,32 @@ describe('Scanner', () => {
     });
   });
 });
+
+describe('Scanner command list derived from core (2026-07-20 audit regressions)', () => {
+  const scanner = new Scanner({});
+
+  it('detects empty (was missing from the old hardcoded regex)', () => {
+    const usage = scanner.scan('<button _="on click empty #list">', 'test.html');
+    expect(usage.commands.has('empty')).toBe(true);
+  });
+
+  it('detects full-runtime-only commands so tier routing sees them', () => {
+    const usage = scanner.scan('<button _="on click tell <p/> in me add .x">', 'test.html');
+    expect(usage.commands.has('tell')).toBe(true);
+
+    const usage2 = scanner.scan('<button _="on click pick items 1 to 3 from :list">', 'test.html');
+    expect(usage2.commands.has('pick')).toBe(true);
+  });
+
+  it('does NOT surface unless as a command (block detection owns it)', () => {
+    const usage = scanner.scan('<button _="on click unless me has .off add .on">', 'test.html');
+    expect(usage.commands.has('unless')).toBe(false);
+    expect(usage.blocks.has('if')).toBe(true);
+  });
+
+  it('does NOT surface bind as a command (reactivity detection owns it)', () => {
+    const usage = scanner.scan('<input _="on input bind $val to me.value">', 'test.html');
+    expect(usage.commands.has('bind')).toBe(false);
+    expect(usage.needsReactivity).toBe(true);
+  });
+});

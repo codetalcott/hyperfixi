@@ -433,6 +433,7 @@ export const INDONESIAN_KEYWORDS = new Set([
   'kalau',
   'bila',
   'selainnya',
+  'lainnya',
   'ulangi',
   'tunggu',
   'selama',
@@ -594,6 +595,7 @@ export const VIETNAMESE_KEYWORDS = new Set([
   'lặp lại',
   'chờ',
   'đợi',
+  'chờ đợi',
   'trong khi',
 ]);
 

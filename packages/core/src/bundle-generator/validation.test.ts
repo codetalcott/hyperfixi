@@ -197,3 +197,36 @@ describe('Bundle Generator Validation', () => {
     });
   });
 });
+
+describe('capability list ↔ generator consistency (2026-07-20 audit regressions)', () => {
+  it('every advertised command is accepted by generateBundle', () => {
+    // isAvailableCommand() and generateBundle() are the two public surfaces;
+    // before alias resolution they disagreed: isAvailableCommand('push-url')
+    // was true while generateBundle rejected it as unknown-command (its
+    // template lives under the 'push' key with an internal 'push-url' case).
+    for (const cmd of AVAILABLE_COMMANDS) {
+      const result = generateBundle({ name: 'ConsistencyProbe', commands: [cmd] });
+      expect(
+        result.errors.filter((e: { type: string }) => e.type === 'unknown-command'),
+        `advertised command '${cmd}' must not be rejected`
+      ).toHaveLength(0);
+      expect(result.commands).toContain(cmd);
+    }
+  });
+
+  it('aliased names include the implementing template', () => {
+    const result = generateBundle({ name: 'AliasProbe', commands: ['push-url', 'replace-url'] });
+    expect(result.errors).toHaveLength(0);
+    expect(result.code).toContain("case 'push-url':");
+    expect(result.code).toContain("case 'replace-url':");
+  });
+
+  it('requesting a command and its alias includes the template exactly once', () => {
+    const result = generateBundle({ name: 'DedupeProbe', commands: ['push', 'push-url'] });
+    expect(result.errors).toHaveLength(0);
+    // Duplicate case labels would be silently dead code in the generated
+    // switch — assert the template body appears once.
+    const occurrences = result.code.split("case 'push-url':").length - 1;
+    expect(occurrences).toBe(1);
+  });
+});
