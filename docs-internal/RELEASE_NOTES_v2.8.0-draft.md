@@ -54,6 +54,29 @@ parser. Surfaced by the first honest run of the bundle-compatibility suite;
 the gallery fetch-data example now passes on all 8 bundles with real
 assertions.
 
+### Foreign→English canonical validity: 3059/3059 (#697–#736)
+
+Every authored foreign translation now renders English that the canonical
+hyperscript.org parser accepts — both canonical-validity allowlists are empty.
+The burndown (90.7% → 100%) closed dozens of per-language rendering bugs
+(possessive glue, event-source leaks, value-literal bindings, ambiguous-sense
+vocabulary) and finished with full `pick <text-range>` support in all 24
+languages (#733/#734/#736). A new R4 canonical-validity ratchet (#727) makes
+this a ninth `--regression` gate signal so it cannot silently regress.
+
+### New package: `@lokascript/htmx-adapter` (#735)
+
+Multilingual adapter for upstream htmx v4 — a canonicalizing extension that
+lets localized attribute vocabularies drive an unmodified htmx build.
+
+### `trigger` / `fire` fixed in the hybrid bundles (#748)
+
+`trigger` (and its alias `fire`) silently did nothing in the shipped
+`hyperfixi-hybrid-complete.js` and `hyperfixi-hx.js` bundles — advertised in
+the bundle manifest but missing from the inline runtime. Both now dispatch
+exactly like `send`, and a manifest↔runtime consistency test pins every
+advertised command to a real implementation.
+
 ## Correctness & validation
 
 - **Vocab consistency gate in CI** — cross-surface dictionary/profile/renderer
@@ -62,11 +85,12 @@ assertions.
   instrumented (`--diagnose-coverage`); all residual firings are attributed to
   named families. A pattern can no longer score confidence 1.0 while silently
   dropping a trailing clause without that being measured.
-- **Fidelity floors held** — the eight-signal multilingual ratchet
+- **Fidelity floors held** — the nine-signal multilingual ratchet
   (parse-rate, degenerate, R0-recall, R0-precision, multiset-recall, R1 roles,
-  R2 execution, R3 values) holds the 2026-07-11 high-water marks: fidelity
-  1.000 on all 3,696 corpus rows across 24 languages, avgRoleFidelity ≈ 0.992,
-  avgValueRecall ≈ 0.997.
+  R2 execution, R3 values, R4 canonical validity) holds the high-water marks:
+  fidelity 1.000 on all 3,696 corpus rows across 24 languages,
+  avgRoleFidelity ≈ 0.992, avgValueRecall ≈ 0.997, canonical validity
+  3059/3059.
 
 ## Publish-pipeline hardening
 
@@ -78,6 +102,11 @@ assertions.
   step that always runs. Size limits reset to measured reality as
   anti-regression ceilings.
 - Version bumps land on `main` via a release token with PR fallback (#674).
+- Pre-release audit (#745–#750): export validation is strict end-to-end and
+  runs inside the publish workflow itself alongside a bare-Node core import
+  check; CI size limits actually fail (with hx-v4 and hybrid-hx covered);
+  three export maps that claimed never-built files (types-browser, behaviors,
+  testing-framework) were fixed the first time the honest gate ran.
 
 ## Documented bundle sizes now match reality
 
