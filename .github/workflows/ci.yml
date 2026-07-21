@@ -629,7 +629,14 @@ jobs:
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
 
+      # NOTE: the four "Generate coverage" steps use `continue-on-error: true` and
+      # the four "Upload" steps use `if: ${{ !cancelled() }}`. Rationale: a single
+      # flaky suite (e.g. a timing-based perf test) must NOT skip every Codecov
+      # upload. Without this, one flake + `carryforward: true` (codecov.yml) makes
+      # Codecov silently serve a STALE report for all flags, depressing the number.
+      # `fail_ci_if_error: false` stays so a Codecov-side hiccup never fails the job.
       - name: Generate coverage - core
+        continue-on-error: true
         # test:coverage uses scripts/vitest-run.sh, which judges pass/fail from
         # the reporter summary (benign post-run 124 = PASS; mid-run hang or any
         # failure = FAIL). Trust its exit code; give it a longer timeout since
@@ -637,12 +644,15 @@ jobs:
         run: VITEST_TIMEOUT=300 npm run test:coverage --prefix packages/core
 
       - name: Generate coverage - semantic
+        continue-on-error: true
         run: npm test --prefix packages/semantic -- --coverage
 
       - name: Generate coverage - i18n
+        continue-on-error: true
         run: npm run test:coverage --prefix packages/i18n
 
       - name: Upload core coverage to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v7
         with:
           files: packages/core/coverage/lcov.info
@@ -652,6 +662,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload semantic coverage to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v7
         with:
           files: packages/semantic/coverage/lcov.info
@@ -661,6 +672,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload i18n coverage to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v7
         with:
           files: packages/i18n/coverage/lcov.info
@@ -670,9 +682,11 @@ jobs:
           fail_ci_if_error: false
 
       - name: Generate coverage - language-server
+        continue-on-error: true
         run: npm test --prefix packages/language-server -- --coverage
 
       - name: Upload language-server coverage to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v7
         with:
           files: packages/language-server/coverage/lcov.info

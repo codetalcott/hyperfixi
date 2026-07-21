@@ -29,10 +29,13 @@ export default defineConfig({
       // Playwright browser tests - require real browser
       'src/compatibility/browser-tests/**/*.spec.ts',
       'src/multilingual/browser-e2e.spec.ts',
-      // Performance benchmarks - flaky/slow
+      // Performance benchmarks - flaky/slow (timing-based, verified flaky 2026-07-20)
       'src/parser/tokenizer-comparison.test.ts',
       'src/parser/performance.test.ts',
-      'src/utils/performance.test.ts',
+      // NOTE: src/utils/performance.test.ts was previously excluded here as a
+      // "flaky benchmark", but it is a *correctness* suite for the perf-utility
+      // classes (ObjectPool/StyleBatcher/EventQueue) — 66 tests, stable across
+      // repeated runs, recovers 100% coverage of src/utils/performance.ts. Re-enabled.
       'src/commands-v1-archive/**/*.test.ts', // Archived V1 tests
       // Legacy integration tests - removed APIs (Phase 7 consolidation)
       'src/runtime/simple-integration.test.ts',
@@ -50,15 +53,33 @@ export default defineConfig({
         'src/**/*.{test,spec}.ts',
         'src/**/*.d.ts',
         'src/benchmark/**',
+        // --- Non-unit-testable / non-executable surface (excluded so the coverage
+        // number reflects unit-tested runtime, not integration glue or data). ---
+        // Browser bundle entry points: assembled + exercised by the Playwright
+        // bundle-compatibility suite (src/compatibility/browser-tests/), never by
+        // vitest. Keeping them counted dragged core ~8pts on ~2,900 lines at ~2%.
+        'src/compatibility/browser-bundle-*.ts',
+        'src/compatibility/browser-modular.ts',
+        'src/compatibility/browser-tests/**', // Playwright specs + helpers
+        // Test-only infrastructure (not shipped runtime):
+        'src/__test-utils__/**',
+        'src/test-helpers/**',
+        // Static data / examples / doc-generation (not behavioral runtime):
+        'src/registry/examples/**',
+        'src/reference/**', // command-reference data
+        'src/i18n/error-catalog.ts', // error-string catalog
+        'src/ast-utils/documentation.ts', // doc generator, not shipped runtime
       ],
-      // Coverage thresholds enabled at 60% (starting point)
-      // Will incrementally increase to 70% then 80% as coverage improves
+      // Thresholds ratcheted 2026-07-20 after the coverage-hygiene excludes lifted
+      // core to ~72% lines. Set ~2-3pts below current actuals (S71.4/B63.5/F70.9/
+      // L72.3) as cross-machine headroom (Mac dev vs CI Linux drift). Raise further
+      // as Phase 2 tests land (target: features/, performance/, context/).
       thresholds: {
         global: {
           branches: 60,
-          functions: 60,
-          lines: 60,
-          statements: 60,
+          functions: 68,
+          lines: 70,
+          statements: 68,
         },
       },
     },
