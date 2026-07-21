@@ -1,6 +1,6 @@
 # CLAUDE.md - Vite Plugin Package
 
-This file provides guidance for working with the `@lokascript/vite-plugin` package.
+This file provides guidance for working with the `@hyperfixi/vite-plugin` package.
 
 ## Package Purpose
 
@@ -53,7 +53,7 @@ src/
 
 ### Multilingual Detection
 
-The scanner detects keywords in 23 languages via `language-keywords.ts`.
+The scanner detects keywords in 24 languages via `language-keywords.ts`.
 
 ```bash
 # Regenerate language keywords from semantic package
@@ -86,7 +86,7 @@ npm test --prefix packages/vite-plugin -- --run src/aggregator.test.ts
 ## Plugin Options
 
 ```javascript
-lokascript({
+hyperfixi({
   mode: 'interpret', // 'interpret' | 'compile'
   extraCommands: [], // Always include these commands
   extraBlocks: [], // Always include these blocks

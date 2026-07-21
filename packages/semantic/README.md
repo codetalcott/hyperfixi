@@ -1,6 +1,6 @@
 # @lokascript/semantic
 
-Semantic-first multilingual parser for LokaScript. Parses hyperscript-like syntax from 23 languages into a language-agnostic semantic representation.
+Semantic-first multilingual parser for LokaScript. Parses hyperscript-like syntax from 24 languages into a language-agnostic semantic representation.
 
 ## Features
 
@@ -118,7 +118,7 @@ node scripts/generate-bundle.mjs --group western
   const { parse, canParse } = LokaScriptSemanticPriority;
 </script>
 
-<!-- Full bundle (all 23 languages) -->
+<!-- Full bundle (all 24 languages) -->
 <script src="node_modules/@lokascript/semantic/dist/browser.global.js"></script>
 <script>
   const { parse, canParse } = LokaScriptSemantic;

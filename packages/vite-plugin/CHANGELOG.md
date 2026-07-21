@@ -1,9 +1,14 @@
 # Changelog
 
-All notable changes to @lokascript/vite-plugin will be documented in this file.
+All notable changes to @hyperfixi/vite-plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+> **Note:** since the 1.0.0 entry below, this package versions in lockstep with the
+> hyperfixi monorepo (2.x). Per-release details live in the repository's
+> [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases); this file is
+> not updated per release.
 
 ## [1.0.0] - 2025-01-19
 

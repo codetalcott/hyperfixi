@@ -1,5 +1,14 @@
 # Release Checklist - v1.0.0
 
+> **⚠️ HISTORICAL — DO NOT FOLLOW.** This is the v1.0.0-era manual-publish flow:
+> it predates the automated OIDC publish workflow, names packages that no longer
+> exist as publishable (`@lokascript/ast-toolkit`), and points at the old
+> `codetalcott/lokascript` repo. The live process is
+> `.github/workflows/publish.yml` (workflow_dispatch) preceded by a green
+> `pre-publish-check.yml` dispatch — see the current release runbook / NEXT_STEPS
+> "v2.8 release bar" section. (Banner added 2026-07-20 during the pre-release
+> audit; kept for history rather than deleted.)
+
 Quick reference checklist for releasing LokaScript packages to npm.
 
 See [RELEASE_GUIDE.md](RELEASE_GUIDE.md) for detailed instructions.
