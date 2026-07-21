@@ -463,6 +463,13 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return values[0];
     }
 
+    // `trigger` is a distinct parser keyword (not an alias — the alias map
+    // canonicalizes `fire`→trigger, `dispatch`→send), so it needs its own
+    // case label here. It was advertised in this bundle's `commands` manifest
+    // but had no case, making `trigger`/`fire` a silent no-op in the
+    // hybrid-complete and hybrid-hx bundles (2026-07-20 audit; pinned by
+    // bundle-manifest-consistency.test.ts).
+    case 'trigger':
     case 'send': {
       const eventName = await evaluate(cmd.args[0], ctx);
       const targets = await getTarget();
