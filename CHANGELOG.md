@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-07-25
+
+> **Gap note:** 2.6.0 through 2.7.2 shipped without entries in this file; their
+> details live in [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+> Full notes for this release: `docs-internal/RELEASE_NOTES_v2.8.0-draft.md` (swapped
+> into the GitHub release on publish day).
+
+A size and correctness release: the full bundles shed a duplicated core+semantic copy (~534 → ~299 KB gz), the semantic parser closes out several multilingual correctness arcs, and the publish pipeline's gates are now honest end-to-end.
+
+### Highlights
+
+- **Full bundles nearly halved** (`@hyperfixi/core`): since 2.7.0 the full bundles shipped two copies of the core runtime and multilingual parser (the bundled reactivity/realtime plugins resolved `@hyperfixi/core` to its prebuilt dist alongside the bundle's own source graph). A rollup alias folds everything onto one graph: `hyperfixi.js` ~534 → **~299 KB gz**, `hyperfixi-hx-v4.js` ~540 → **~311 KB gz**. Same features and pre-installed plugins; CI size ceilings ratcheted down to catch re-duplication.
+- **`fetch … with { … }` options in all 24 languages** (#662): request options (braced bodies, `method:` / `headers:` / `body:` named args) are captured by the semantic parser in every supported language — previously most non-English languages silently dropped the clause and issued a bare GET.
+- **Event modifiers in all 24 languages** (#673): `once`, `debounce(N)`, `throttle(N)` and their translated forms flow from every language's event-handler head to the runtime.
+- **Foreign→English canonical validity: 3059/3059** (#724–#732, pick text-range #733/#734/#736): every authored foreign translation now renders English that the canonical hyperscript.org parser accepts — both canonical-validity allowlists are empty — and a new R4 canonical-validity ratchet (#727) plus a ninth `--regression` signal keep it that way.
+- **New package: `@lokascript/htmx-adapter`** (#735): multilingual adapter for upstream htmx v4 (canonicalizing extension).
+
+### Fixed
+
+- **`go to url "/page"` no longer drops the URL** (#680) — the destination was silently lost in every language (the English reference itself was affected, which masked it).
+- **Broken event listeners in six languages** (#681) — de/fr/id/it/pl/zh dictionaries rendered `mousedown`/`mouseup` as words the parser could not resolve; a V3c vocabulary check now verifies every dictionary event word round-trips on the parse side.
+- **"Unknown command: compound" on semantic-path bundles** (#675) — multi-command handler bodies could throw at runtime on the full bundles; the per-segment semantic adapter now defers non-command parses to the traditional parser.
+
+### Infrastructure
+
+- Publish pipeline hardening (#672, #674): reproducible `npm ci` installs, `pre-publish-check` with real exit codes end-to-end, export validation after bundle builds, complete BUILD_ORDER, and a final verdict step that always runs.
+- Vocab consistency gate and total input-coverage instrumentation in CI; the multilingual fidelity ratchet holds the 2026-07-11 high-water marks (fidelity 1.000 on all 3,696 corpus rows across 24 languages).
+
 ## [2.5.1] - 2026-05-24
 
 A single-bug patch for a v2.5.0 publishing regression that broke every localized htmx attribute.

@@ -1,4 +1,4 @@
-# @lokascript/vite-plugin
+# @hyperfixi/vite-plugin
 
 Zero-config Vite plugin that automatically generates minimal LokaScript bundles based on detected hyperscript usage.
 
@@ -13,23 +13,23 @@ Zero-config Vite plugin that automatically generates minimal LokaScript bundles 
 ## Installation
 
 ```bash
-npm install @lokascript/vite-plugin @lokascript/core
+npm install @hyperfixi/vite-plugin @hyperfixi/core
 ```
 
 ## Quick Start
 
 ```javascript
 // vite.config.js
-import { lokascript } from '@lokascript/vite-plugin';
+import { hyperfixi } from '@hyperfixi/vite-plugin';
 
 export default {
-  plugins: [lokascript()],
+  plugins: [hyperfixi()],
 };
 ```
 
 ```javascript
 // main.js
-import 'lokascript'; // Auto-generated minimal bundle
+import 'hyperfixi'; // Auto-generated minimal bundle
 ```
 
 ```html
@@ -49,7 +49,7 @@ import 'lokascript'; // Auto-generated minimal bundle
 When bundle size is the priority, use **compile mode** to pre-compile hyperscript to JavaScript at build time:
 
 ```javascript
-lokascript({
+hyperfixi({
   mode: 'compile', // ~500 bytes gzip vs ~8KB for interpret mode
 });
 ```
@@ -84,7 +84,7 @@ toggle, add, remove, show, hide, focus, blur, set, get, put, increment, decremen
 
 ## Multilingual & Semantic Parsing
 
-Enable semantic parsing for natural language hyperscript and multilingual support across 13 languages.
+Enable semantic parsing for natural language hyperscript and multilingual support across 24 languages.
 
 ### Multilingual Options
 
@@ -96,29 +96,34 @@ Enable semantic parsing for natural language hyperscript and multilingual suppor
 | `grammar`        | `boolean`                                          | `false` | Enable grammar transformation (SOV/VSO) |
 | `extraLanguages` | `string[]`                                         | `[]`    | Languages to always include             |
 
-### Supported Languages (13)
+### Supported Languages (24)
 
-- **Western:** en, es, pt, fr, de
+- **Western (Latin script):** en, es, pt, fr, de, it, vi
+- **Slavic:** pl, ru, uk
 - **East Asian:** ja, zh, ko
-- **Other:** ar, tr, id, sw, qu
+- **RTL:** ar, he
+- **South Asian:** hi, bn
+- **Southeast Asian:** th
+- **Agglutinative Latin:** tr
+- **Other:** id, ms, sw, qu, tl
 
 ### Usage Examples
 
 ```javascript
 // Auto-detect languages from source files
-lokascript({ semantic: 'auto' });
+hyperfixi({ semantic: 'auto' });
 
 // English synonyms only (smallest semantic bundle)
-lokascript({ semantic: 'en' });
+hyperfixi({ semantic: 'en' });
 
 // Explicit languages (selects optimal regional bundle)
-lokascript({ languages: ['en', 'es', 'ja'] });
+hyperfixi({ languages: ['en', 'es', 'ja'] });
 
 // Force a specific regional bundle
-lokascript({ region: 'western' });
+hyperfixi({ region: 'western' });
 
 // Full multilingual with grammar transformation
-lokascript({ semantic: true, grammar: true });
+hyperfixi({ semantic: true, grammar: true });
 ```
 
 ### Language Auto-Detection
@@ -137,27 +142,34 @@ The plugin automatically selects the smallest bundle that covers all detected la
 
 ### Semantic Bundle Sizes
 
-| Bundle                 | Gzip Size | Languages             |
-| ---------------------- | --------- | --------------------- |
-| `semantic: 'en'`       | ~20 KB    | English only          |
-| `semantic: 'es'`       | ~16 KB    | Spanish only          |
-| `region: 'es-en'`      | ~25 KB    | English + Spanish     |
-| `region: 'western'`    | ~30 KB    | en, es, pt, fr, de    |
-| `region: 'east-asian'` | ~24 KB    | ja, zh, ko            |
-| `region: 'priority'`   | ~48 KB    | 11 priority languages |
-| `region: 'all'`        | ~61 KB    | All 13 languages      |
+| Bundle                 | Languages             |
+| ---------------------- | --------------------- |
+| `semantic: 'en'`       | English only          |
+| `semantic: 'es'`       | Spanish only          |
+| `region: 'es-en'`      | English + Spanish     |
+| `region: 'western'`    | en, es, pt, fr, de    |
+| `region: 'east-asian'` | ja, zh, ko            |
+| `region: 'priority'`   | 11 priority languages |
+| `region: 'all'`        | All 24 languages      |
+
+Final size depends on Vite's tree-shaking of the selected languages; for reference,
+the prebuilt standalone semantic bundles range from ~62 KB (core) to ~203 KB
+(all 24 languages) gzipped — see `docs/BROWSER_BUNDLES.md` in the repo.
 
 ### Tiered Bundle Architecture
 
-```
-Level 0: Base HybridParser (default)     4-9 KB gzip
+```text
+Level 0: Base HybridParser (default)
          ↓ semantic: true
-Level 1: + Semantic English              +20 KB
+Level 1: + Semantic English
          ↓ languages detected/specified
-Level 2: + Regional Semantic Bundle      +16-61 KB
+Level 2: + Regional Semantic Bundle
          ↓ grammar: true
-Level 3: + Grammar Transformation        +68 KB
+Level 3: + Grammar Transformation
 ```
+
+Each level adds bundle weight; the plugin picks the lowest level that covers the
+features and languages it detects in your source.
 
 ## htmx v4 reactive / streaming surface
 
@@ -176,7 +188,7 @@ The slim minimal-bundle generator can't satisfy these features (its parser/runti
 ## Options
 
 ```javascript
-lokascript({
+hyperfixi({
   // Bundle mode: 'interpret' (default) or 'compile'
   mode: 'interpret',
 
@@ -200,8 +212,8 @@ lokascript({
   // Custom bundle name (shown in generated code comments)
   bundleName: 'MyApp',
 
-  // Global variable name (default: 'lokascript')
-  globalName: 'lokascript',
+  // Global variable name (default: 'hyperfixi')
+  globalName: 'hyperfixi',
 
   // Multilingual options (see "Multilingual & Semantic Parsing" section)
   semantic: false, // boolean | 'en' | 'auto'
@@ -214,7 +226,7 @@ lokascript({
 
 ## Detected Features
 
-### Commands (21)
+### Commands
 
 toggle, add, remove, removeClass, show, hide, set, get, put, append, take,
 increment, decrement, log, send, trigger, wait, transition, go, call, focus, blur, return
@@ -233,9 +245,9 @@ The plugin creates a virtual module that you can import:
 
 ```javascript
 // All of these work:
-import 'lokascript';
-import 'virtual:lokascript';
-import '@lokascript/core'; // Redirects to virtual module
+import 'hyperfixi';
+import 'virtual:hyperfixi';
+import '@hyperfixi/core'; // Redirects to virtual module
 ```
 
 ## HMR Support
@@ -267,7 +279,7 @@ element.setAttribute('_', `on click ${dynamicCommand} .active`);
 Use `extraCommands` to include those:
 
 ```javascript
-lokascript({
+hyperfixi({
   extraCommands: ['toggle', 'add', 'remove'],
 });
 ```
@@ -283,18 +295,18 @@ lokascript({
 
 ## Monorepo Development
 
-When developing in the lokascript monorepo:
+When developing in the hyperfixi monorepo:
 
 ```javascript
 // vite.config.js
-import { lokascript } from '../../packages/vite-plugin/src/index.ts';
+import { hyperfixi } from '../../packages/vite-plugin/src/index.ts';
 import path from 'path';
 
 export default {
-  plugins: [lokascript({ debug: true })],
+  plugins: [hyperfixi({ debug: true })],
   resolve: {
     alias: {
-      '@lokascript/core/parser/hybrid': path.resolve(
+      '@hyperfixi/core/parser/hybrid': path.resolve(
         __dirname,
         '../../packages/core/src/parser/hybrid'
       ),
@@ -341,7 +353,7 @@ This example demonstrates language auto-detection with Japanese, Spanish, and Ko
 | `positional`     | `boolean`                   | `false`               | Always include positional expressions |
 | `htmx`           | `boolean`                   | `false`               | Enable htmx integration               |
 | `bundleName`     | `string`                    | `'ViteAutoGenerated'` | Bundle name in comments               |
-| `globalName`     | `string`                    | `'lokascript'`        | Window global name                    |
+| `globalName`     | `string`                    | `'hyperfixi'`         | Window global name                    |
 | `semantic`       | `boolean \| 'en' \| 'auto'` | `false`               | Enable semantic parser                |
 | `languages`      | `string[]`                  | `[]`                  | Explicit language codes               |
 | `region`         | `string`                    | auto                  | Force regional bundle                 |

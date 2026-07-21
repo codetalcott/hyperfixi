@@ -733,7 +733,7 @@ Include the resolver bundle after the core — all standard behaviors resolve on
 <div _="install Draggable" style="position: absolute">Drag me</div>
 ```
 
-The resolver compiles behavior source strings on first use. Bundle size: ~3.8 KB gzipped.
+The resolver compiles behavior source strings on first use. Bundle size: ~5.7 KB gzipped.
 
 ### Available Behaviors
 
