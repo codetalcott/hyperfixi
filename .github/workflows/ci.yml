@@ -352,8 +352,17 @@ jobs:
           echo "Verifying package.json exports match actual dist files..." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Run export validation for published packages
-          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log
+          # Run export validation for published packages. The default job
+          # shell is `bash -e` WITHOUT pipefail, so a bare `cmd | tee` here
+          # reported tee's exit code and the --strict failure never gated
+          # (fixed in the 2026-07-20 pre-release audit). pipefail makes the
+          # pipeline carry the validator's exit; the if-guard keeps the
+          # summary parsing below reachable on failure.
+          set -o pipefail
+          status=0
+          if ! node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log; then
+            status=1
+          fi
 
           # Parse results for summary
           if grep -q "✅" /tmp/export-validation.log; then
@@ -368,6 +377,8 @@ jobs:
             grep -A 10 "Missing exports" /tmp/export-validation.log >> $GITHUB_STEP_SUMMARY || true
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
+
+          exit $status
 
       # Bare-Node import of @hyperfixi/core (+ /commands, /behaviors): guards
       # the dom-globals shim ordering ahead of morphlex's module-scope
@@ -956,33 +967,72 @@ jobs:
 
       - name: Check size limits
         run: |
-          # Size limits (gzipped bytes)
-          MAX_LITE=4000           # 4 KB
-          MAX_HYBRID=15000        # 15 KB
-          MAX_BROWSER=230000      # 230 KB (actual: ~203-208 KB, allow headroom)
+          # Size limits (gzipped bytes), aligned with pre-publish-check.yml.
+          # Until the 2026-07-20 pre-release audit this step initialized
+          # failed=0, emitted ::warning:: on breach, and never set failed=1 —
+          # `exit $failed` could not fail, and the stale 230 KB browser cap
+          # (pre-dedupe "~203-208 KB" era) was being silently exceeded by the
+          # real ~299 KB gz bundle. The browser/hx-v4 ceilings exist to catch
+          # RE-duplication (the #616 double core+semantic class).
+          MAX_LITE=4000           # 4 KB   (actual ~2 KB)
+          MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
+          MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
+          MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
 
           failed=0
 
           if [[ -f "packages/core/dist/hyperfixi-lite.js" ]]; then
             size=$(gzip -c packages/core/dist/hyperfixi-lite.js | wc -c | tr -d ' ')
             if [[ "$size" -gt "$MAX_LITE" ]]; then
-              echo "::warning::hyperfixi-lite.js ($size bytes gzip) exceeds limit ($MAX_LITE bytes)"
+              echo "::error::hyperfixi-lite.js ($size bytes gzip) exceeds limit ($MAX_LITE bytes)"
+              failed=1
+            else
+              echo "hyperfixi-lite.js: $size bytes gzip (limit $MAX_LITE)"
             fi
           fi
 
-          if [[ -f "packages/core/dist/hyperfixi-hybrid-complete.js" ]]; then
-            size=$(gzip -c packages/core/dist/hyperfixi-hybrid-complete.js | wc -c | tr -d ' ')
-            if [[ "$size" -gt "$MAX_HYBRID" ]]; then
-              echo "::warning::hyperfixi-hybrid-complete.js ($size bytes gzip) exceeds limit ($MAX_HYBRID bytes)"
+          # hyperfixi-hx.js shares the hybrid ceiling; it is listed explicitly
+          # because its filename matches no hyperfixi-hybrid-* glob (the same
+          # naming gap that once left hx-v4 unchecked in pre-publish-check).
+          for bundle in hyperfixi-hybrid-complete.js hyperfixi-hx.js; do
+            if [[ -f "packages/core/dist/$bundle" ]]; then
+              size=$(gzip -c "packages/core/dist/$bundle" | wc -c | tr -d ' ')
+              if [[ "$size" -gt "$MAX_HYBRID" ]]; then
+                echo "::error::$bundle ($size bytes gzip) exceeds limit ($MAX_HYBRID bytes)"
+                failed=1
+              else
+                echo "$bundle: $size bytes gzip (limit $MAX_HYBRID)"
+              fi
             fi
-          fi
+          done
 
+          # Full bundles are NOT [[ -f ]]-skipped: the build job runs
+          # build:browser, so a missing file means the bundle build silently
+          # failed upstream — that must fail here, not skip.
           if [[ -f "packages/core/dist/hyperfixi.js" ]]; then
             size=$(gzip -c packages/core/dist/hyperfixi.js | wc -c | tr -d ' ')
-            echo "hyperfixi.js gzipped: $size bytes (limit: $MAX_BROWSER bytes)"
             if [[ "$size" -gt "$MAX_BROWSER" ]]; then
-              echo "::warning::hyperfixi.js ($size bytes gzip) exceeds limit ($MAX_BROWSER bytes)"
+              echo "::error::hyperfixi.js ($size bytes gzip) exceeds limit ($MAX_BROWSER bytes)"
+              failed=1
+            else
+              echo "hyperfixi.js: $size bytes gzip (limit $MAX_BROWSER)"
             fi
+          else
+            echo "::error::hyperfixi.js MISSING from dist — bundle build failed upstream"
+            failed=1
+          fi
+
+          if [[ -f "packages/core/dist/hyperfixi-hx-v4.js" ]]; then
+            size=$(gzip -c packages/core/dist/hyperfixi-hx-v4.js | wc -c | tr -d ' ')
+            if [[ "$size" -gt "$MAX_HXV4" ]]; then
+              echo "::error::hyperfixi-hx-v4.js ($size bytes gzip) exceeds limit ($MAX_HXV4 bytes)"
+              failed=1
+            else
+              echo "hyperfixi-hx-v4.js: $size bytes gzip (limit $MAX_HXV4)"
+            fi
+          else
+            echo "::error::hyperfixi-hx-v4.js MISSING from dist — bundle build failed upstream"
+            failed=1
           fi
 
           exit $failed
