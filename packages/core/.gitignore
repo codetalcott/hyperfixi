@@ -186,3 +186,9 @@ size-analysis.json
 .git/
 *.patch
 *.diff
+# Custom-bundle-generator outputs (npm run generate:bundle). Examples in
+# bundle-configs/*.config.json write here; generated entries are built via
+# rollup.browser-custom configs locally and are never part of the shipped
+# build — three stale ones were committed for months before the 2026-07-20
+# audit removed them.
+src/compatibility/*-generated.ts

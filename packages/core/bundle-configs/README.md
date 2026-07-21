@@ -62,6 +62,11 @@ npx rollup -c rollup.browser-custom.config.mjs
 
 ## Available Commands
 
+> Source of truth: `AVAILABLE_COMMANDS` in
+> `src/bundle-generator/template-capabilities.ts` (this catalog was hand-drifted
+> for months — 10 available commands missing, 8 wrongly listed as unavailable —
+> until the 2026-07-20 audit reconciled it; keep them in sync).
+
 ### DOM Commands
 
 - `toggle` - Toggle CSS classes
@@ -72,6 +77,9 @@ npx rollup -c rollup.browser-custom.config.mjs
 - `hide` - Hide elements (display: none)
 - `put` - Insert content (into, before, after)
 - `append` - Append content
+- `empty` - Remove all children
+- `take` - Take class from siblings
+- `morph` - Morph DOM (via morphlex import)
 
 ### Data Commands
 
@@ -84,7 +92,6 @@ npx rollup -c rollup.browser-custom.config.mjs
 
 - `transition` - CSS transitions
 - `wait` - Delay execution
-- `take` - Take class from siblings
 
 ### Event Commands
 
@@ -95,6 +102,8 @@ npx rollup -c rollup.browser-custom.config.mjs
 ### Navigation Commands
 
 - `go` - Navigate (back, forward, URL, scroll)
+- `push` / `push-url` - history.pushState
+- `replace` / `replace-url` - history.replaceState
 
 ### Execution Commands
 
@@ -102,26 +111,39 @@ npx rollup -c rollup.browser-custom.config.mjs
 - `return` - Return from handlers
 - `focus` - Focus elements
 - `blur` - Blur elements
+- `js` - Inline JavaScript blocks
+
+### Utility Commands
+
+- `copy` - Copy to clipboard
+- `beep` - Debug beep
 
 ### Control Flow Commands
 
 - `break` - Exit from a loop
 - `continue` - Skip to next loop iteration
+- `halt` - Halt event propagation/handler
+- `exit` - Exit the handler
+- `throw` - Throw an error
 
 ## Commands NOT Available in Lite Bundles
 
-The following commands require the full runtime and are not available in generated lite bundles:
+The following commands require the full runtime and are not available in generated lite bundles
+(source of truth: `FULL_RUNTIME_ONLY_COMMANDS` in `src/bundle-generator/template-capabilities.ts`):
 
-- **Advanced execution**: `async`, `js`
-- **DOM operations (complex)**: `make`, `swap`, `morph`, `process-partials`
-- **Data binding**: `default`
-- **Utility (complex)**: `beep`, `tell`, `copy`, `pick`
-- **Navigation (complex)**: `push-url`, `replace-url`
-- **Control flow (advanced)**: `halt`, `exit`, `throw`, `unless`
+- **Advanced execution**: `async`
+- **DOM operations (complex)**: `make`, `swap`, `process-partials`
+- **Data binding**: `bind`, `persist`, `default`
+- **Utility (complex)**: `tell`, `pick`
+- **Conditional**: `unless` (the `if` block covers it)
 - **Animation (advanced)**: `settle`, `measure`
 - **Behaviors**: `install`
 
 If you need these commands, use the full `hyperfixi.js` bundle instead.
+
+> Note: generated `*-generated.ts` outputs are local build inputs (built via a
+> `rollup.browser-custom` config as shown below) — they are gitignored and never
+> part of the shipped bundles.
 
 ## CLI Options
 

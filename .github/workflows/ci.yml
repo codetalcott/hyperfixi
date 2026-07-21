@@ -903,7 +903,7 @@ jobs:
     needs: [build, changes]
     # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
     if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -929,6 +929,24 @@ jobs:
           # Remove stale workspace symlinks and reinstall
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
+
+      # Both gates below were local-only tools before the 2026-07-20 audit —
+      # metadata.ts sizes drifted ~110 KB stale and the headline slim bundles
+      # had zero size-regression coverage because nothing in CI ran them.
+
+      # metadata.ts (public export @hyperfixi/core/metadata) must match the
+      # built dist. Exits 1 on mismatch.
+      - name: Metadata size check (update:sizes)
+        run: npm run update:sizes --prefix packages/core
+
+      # ±5% regression gate against scripts/bundle-snapshots/baseline.json.
+      # --skip-build measures the build-artifact bundles; hyperfixi-classic.js
+      # is the one baseline bundle the default build:browser set omits, so
+      # build it here first.
+      - name: Bundle-size snapshot gate
+        run: |
+          npm run build:browser:classic --prefix packages/core
+          node packages/core/scripts/bundle-size-snapshot.mjs --check --skip-build
 
       - name: Analyze bundle sizes
         run: |
