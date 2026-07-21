@@ -24,21 +24,6 @@
       "import": "./dist/assertions.mjs",
       "require": "./dist/assertions.js",
       "types": "./dist/assertions.d.ts"
-    },
-    "./browser": {
-      "import": "./dist/browser.mjs",
-      "require": "./dist/browser.js",
-      "types": "./dist/browser.d.ts"
-    },
-    "./e2e": {
-      "import": "./dist/e2e.mjs",
-      "require": "./dist/e2e.js",
-      "types": "./dist/e2e.d.ts"
-    },
-    "./multilingual": {
-      "import": "./dist/multilingual/index.mjs",
-      "require": "./dist/multilingual/index.js",
-      "types": "./dist/multilingual/index.d.ts"
     }
   },
   "scripts": {
