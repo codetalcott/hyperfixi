@@ -2,7 +2,7 @@
   "name": "lokascript-vscode",
   "displayName": "Hyperscript Language Support",
   "description": "Language support for _hyperscript and LokaScript — syntax highlighting, completions, hover docs, diagnostics, 21 language i18n, and interactive debugging",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "publisher": "lokascript",
   "engines": {
     "vscode": "^1.85.0"
@@ -243,7 +243,7 @@
     "ws": "^8.21.1"
   },
   "devDependencies": {
-    "@lokascript/semantic": "^2.7.2",
+    "@lokascript/semantic": "^2.8.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.125.0",
     "@types/ws": "^8.0.0",
