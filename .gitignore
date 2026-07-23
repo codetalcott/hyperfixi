@@ -198,8 +198,6 @@ packages/*/html/
 !**/test-multilingual-e2e.html
 
 # MCP server files
-mcp-server-hyperscript/dist/
-mcp-server-hyperscript/node_modules/
 packages/mcp-server/com.lokascript.mcp-server.plist
 
 # Lock files (keep package-lock.json)

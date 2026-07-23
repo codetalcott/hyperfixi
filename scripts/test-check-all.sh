@@ -60,7 +60,6 @@ PACKAGES=(
 
   # MCP & Language Servers
   "mcp-server:MCP Server"
-  "mcp-server-hyperscript:MCP Server (HS)"
   "language-server:Language Server"
 
   # Plugin & bundling
