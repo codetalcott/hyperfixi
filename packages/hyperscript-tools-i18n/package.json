@@ -31,7 +31,7 @@
     "typecheck": "tsc --noEmit",
     "pretest": "../../scripts/ensure-fresh.sh ../i18n . && npm run build --silent",
     "test": "node --test test/*.test.mjs",
-    "test:check": "node --test --test-reporter=spec test/*.test.mjs 2>&1 | tail -10"
+    "test:check": "bash -c 'set -o pipefail; node --test --test-reporter=spec test/*.test.mjs 2>&1 | tail -10'"
   },
   "keywords": [
     "hyperscript",

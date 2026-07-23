@@ -10,12 +10,16 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Order is dep-before-dependent: ensure-fresh rebuilds in argument order, so a
+# dep listed after its consumer gets rebuilt too late to help.
 # `core` before `reactivity` — reactivity's build consumes core's dist.
 "$REPO_ROOT/scripts/ensure-fresh.sh" \
   "$REPO_ROOT/packages/core" \
   "$REPO_ROOT/packages/reactivity" \
   "$REPO_ROOT/packages/framework" \
   "$REPO_ROOT/packages/semantic" \
+  "$REPO_ROOT/packages/i18n" \
+  "$REPO_ROOT/packages/patterns-reference" \
   "$REPO_ROOT/packages/aot-compiler" \
   "$REPO_ROOT/packages/compilation-service" \
   "$REPO_ROOT/packages/mcp-server" \
@@ -31,7 +35,13 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/domain-voice" \
   "$REPO_ROOT/packages/domain-learn" \
   "$REPO_ROOT/packages/domain-config" \
-  "$REPO_ROOT/packages/planner"
+  "$REPO_ROOT/packages/planner" \
+  "$REPO_ROOT/packages/intercept" \
+  "$REPO_ROOT/packages/realtime" \
+  "$REPO_ROOT/packages/intent-element" \
+  "$REPO_ROOT/packages/mcp-multilingual-intent" \
+  "$REPO_ROOT/packages/hyperscript-tools-i18n" \
+  "$REPO_ROOT/packages/htmx-adapter"
 
 PACKAGES=(
   # Core runtime & parsing
@@ -39,6 +49,7 @@ PACKAGES=(
   "semantic:Semantic"
   "i18n:i18n"
   "framework:Framework"
+  "intent:Intent"
 
   # Compilation & tooling
   "aot-compiler:AOT Compiler"
@@ -57,25 +68,33 @@ PACKAGES=(
   "domain-todo:Todo"
   "domain-voice:Voice"
   "domain-config:Domain Config"
+  "domain-toolkit:Domain Toolkit"
 
   # MCP & Language Servers
   "mcp-server:MCP Server"
+  "mcp-multilingual-intent:MCP Multilingual Intent"
   "language-server:Language Server"
 
   # Plugin & bundling
   "vite-plugin:Vite Plugin"
   "smart-bundling:Smart Bundling"
+  "htmx-adapter:htmx Adapter"
 
   # Runtime plugins (HyperfixiPlugin) — reactivity before components (dep order)
   "reactivity:Reactivity"
   "components:Components"
   "speech:Speech"
+  "intercept:Intercept"
+  "realtime:Realtime"
+  "intent-element:Intent Element"
 
   # Other
   "developer-tools:Developer Tools"
   "behaviors:Behaviors"
   "patterns-reference:Patterns Reference"
   "testing-framework:Testing Framework"
+  "planner:Planner"
+  "hyperscript-tools-i18n:Hyperscript Tools i18n"
 )
 
 failed=0
