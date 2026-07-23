@@ -413,6 +413,13 @@ jobs:
       - name: Verify CI build order
         run: node scripts/check-ci-build-order.cjs
 
+      # Cheap guard: zero-dep node script that keeps scripts/test-check-all.sh
+      # in sync with the workspace — both a listed-but-deleted package (which
+      # makes the gate exit 1 on a green tree) and a package with tests that
+      # the gate silently skips.
+      - name: Verify test:check package list
+        run: node scripts/check-test-check-list.cjs
+
       # Cheap guard: zero-dep node script that fails if package versions have
       # drifted apart (the monorepo publishes uniformly).
       - name: Validate package versions

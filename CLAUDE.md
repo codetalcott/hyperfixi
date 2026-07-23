@@ -201,6 +201,12 @@ Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any 
 
 When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests.
 
+##### Keeping the gate's package list honest
+
+`npm run test:check` walks a hand-maintained list in [scripts/test-check-all.sh](scripts/test-check-all.sh), so **a new package with a `test:check` script is not in the gate until you add it there** (plus the `ensure-fresh` args, if its tests read a workspace dep's `dist/`). Both directions of drift used to go unnoticed: a package deleted from disk but left in the list made the gate exit 1 on a green tree, and nine packages with real suites were never added, so ~390 tests never ran in the gate that claims to run everything.
+
+[`npm run check:test-list`](scripts/check-test-check-list.cjs) now fails on either. It's a zero-dep node script, run in CI's `lint-typecheck` job and from the pre-commit hook when a workspace `package.json` or the gate script is staged. Deliberate exclusions go in its `INTENTIONALLY_UNGATED` map, with a reason.
+
 > **Neither hook fires for direct `npx vitest` / `npx tsx` invocations.** That's
 > how the qu "unreproducible baseline" incident happened (roadmap §7g): a sweep
 > executed a stale `dist/` and scored code that differed from the checkout. The
