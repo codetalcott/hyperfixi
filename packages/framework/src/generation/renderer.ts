@@ -191,59 +191,165 @@ export function createSchemaRenderer(
   schemas: readonly CommandSchema[],
   profiles: readonly PatternGenLanguageProfile[]
 ): NaturalLanguageRenderer {
+  const tables = buildRenderTables(schemas, profiles);
+
+  return {
+    render(node: SemanticNode, language: string): string {
+      // An action with no schema still has a name — render that rather than
+      // nothing. `createDomainRenderer` returns null for this case instead.
+      return renderFromSchema(node, language, tables) ?? node.action;
+    },
+  };
+}
+
+// =============================================================================
+// Domain renderer (hand-written cases + schema fallthrough)
+// =============================================================================
+
+/**
+ * Renders a SemanticNode, or returns `null` when the action cannot be rendered.
+ *
+ * The nullable counterpart to {@link NaturalLanguageRenderer}: `null` means "I
+ * do not know this action", which callers can act on. A domain that signals the
+ * same condition with a sentinel string forces consumers into string matching.
+ */
+export type DomainRenderFn = (node: SemanticNode, language: string) => string | null;
+
+/**
+ * Configuration for {@link createDomainRenderer}.
+ */
+export interface DomainRendererConfig {
+  /** Schemas for this domain's commands, including any extensions. */
+  readonly schemas: readonly CommandSchema[];
+
+  /** Language profiles supplying keywords and role markers. */
+  readonly profiles: readonly PatternGenLanguageProfile[];
+
+  /**
+   * Hand-written renderers per action. These take absolute precedence over the
+   * schema-driven path, so a domain's existing output is preserved byte for byte.
+   */
+  readonly overrides?: Readonly<Record<string, (node: SemanticNode, language: string) => string>>;
+}
+
+/**
+ * Create a renderer that composes a domain's hand-written per-action renderers
+ * with the schema-driven fallback.
+ *
+ * Resolution order:
+ *   1. `overrides[node.action]` — the domain's own rendering, unchanged
+ *   2. schema-driven rendering — any action with a schema but no hand-written case
+ *   3. `null` — no override and no schema
+ *
+ * Step 2 is what makes a domain extensible: a consumer that adds a command
+ * schema (with per-language keywords in the profiles) gets correct word order,
+ * markers and keywords for free, without the domain package having to know
+ * about that command.
+ *
+ * @example
+ * ```typescript
+ * const render = createDomainRenderer({
+ *   schemas: allSchemas,
+ *   profiles: allProfiles,
+ *   overrides: { select: renderSelect, insert: renderInsert },
+ * });
+ * render(node, 'ja');       // hand-written for `select`, schema-driven otherwise
+ * render(bogusNode, 'en');  // → null
+ * ```
+ */
+export function createDomainRenderer(config: DomainRendererConfig): DomainRenderFn {
+  const { schemas, profiles, overrides } = config;
+
+  // Built on first render — a domain module can construct its renderer at import
+  // time without paying for table construction it may never use.
+  let tables: RenderTables | undefined;
+
+  return (node: SemanticNode, language: string): string | null => {
+    const override = overrides?.[node.action];
+    if (override) return override(node, language);
+
+    tables ??= buildRenderTables(schemas, profiles);
+    return renderFromSchema(node, language, tables);
+  };
+}
+
+// =============================================================================
+// Shared schema-driven rendering
+// =============================================================================
+
+interface RenderTables {
+  readonly keywords: KeywordTable;
+  readonly markers: MarkerTable;
+  readonly sovLanguages: ReadonlySet<string>;
+  readonly schemaMap: ReadonlyMap<string, CommandSchema>;
+}
+
+function buildRenderTables(
+  schemas: readonly CommandSchema[],
+  profiles: readonly PatternGenLanguageProfile[]
+): RenderTables {
   const { keywords, markers } = buildTablesFromProfiles(schemas, profiles);
   const { sovLanguages } = detectWordOrders(profiles);
   const schemaMap = new Map<string, CommandSchema>();
   for (const s of schemas) schemaMap.set(s.action, s);
+  return { keywords, markers, sovLanguages, schemaMap };
+}
 
-  return {
-    render(node: SemanticNode, language: string): string {
-      const schema = schemaMap.get(node.action);
-      if (!schema) return node.action;
+/**
+ * The one schema-driven rendering algorithm, shared by `createSchemaRenderer`
+ * and `createDomainRenderer` so the two can never drift.
+ *
+ * Returns `null` when the action has no schema.
+ */
+function renderFromSchema(
+  node: SemanticNode,
+  language: string,
+  tables: RenderTables
+): string | null {
+  const schema = tables.schemaMap.get(node.action);
+  if (!schema) return null;
 
-      const keyword = lookupKeyword(keywords, node.action, language);
-      const isSOV = sovLanguages.has(language);
+  const keyword = lookupKeyword(tables.keywords, node.action, language);
+  const isSOV = tables.sovLanguages.has(language);
 
-      // Collect role parts in schema order.
-      // A role with no value is skipped entirely — including its marker. Emitting
-      // the marker of an absent role produces dangling text ("analyze #content as",
-      // "#content として 分析"), which is never valid surface syntax. This applies to
-      // required roles too: a required role with no value is a malformed node, and a
-      // dangling marker is a worse rendering of it than simply leaving it out.
-      const roleParts: Array<{ marker?: string; value: string; role: RoleSpec }> = [];
-      for (const role of schema.roles) {
-        const value = extractRoleValue(node, role.role);
-        if (!value) continue;
+  // Collect role parts in schema order.
+  // A role with no value is skipped entirely — including its marker. Emitting
+  // the marker of an absent role produces dangling text ("analyze #content as",
+  // "#content として 分析"), which is never valid surface syntax. This applies to
+  // required roles too: a required role with no value is a malformed node, and a
+  // dangling marker is a worse rendering of it than simply leaving it out.
+  const roleParts: Array<{ marker?: string; value: string; role: RoleSpec }> = [];
+  for (const role of schema.roles) {
+    const value = extractRoleValue(node, role.role);
+    if (!value) continue;
 
-        const markerText =
-          role.markerOverride?.[language] ?? markers[role.role]?.[language] ?? undefined;
+    const markerText =
+      role.markerOverride?.[language] ?? tables.markers[role.role]?.[language] ?? undefined;
 
-        roleParts.push({
-          ...(markerText != null && { marker: markerText }),
-          value,
-          role,
-        });
-      }
+    roleParts.push({
+      ...(markerText != null && { marker: markerText }),
+      value,
+      role,
+    });
+  }
 
-      const parts: string[] = [];
+  const parts: string[] = [];
 
-      if (isSOV) {
-        // SOV: roles (with markers after values) then keyword
-        for (const rp of roleParts) {
-          if (rp.value) parts.push(rp.value);
-          if (rp.marker) parts.push(rp.marker);
-        }
-        parts.push(keyword);
-      } else {
-        // SVO/VSO: keyword then roles (with markers before values)
-        parts.push(keyword);
-        for (const rp of roleParts) {
-          if (rp.marker) parts.push(rp.marker);
-          if (rp.value) parts.push(rp.value);
-        }
-      }
+  if (isSOV) {
+    // SOV: roles (with markers after values) then keyword
+    for (const rp of roleParts) {
+      parts.push(rp.value);
+      if (rp.marker) parts.push(rp.marker);
+    }
+    parts.push(keyword);
+  } else {
+    // SVO/VSO: keyword then roles (with markers before values)
+    parts.push(keyword);
+    for (const rp of roleParts) {
+      if (rp.marker) parts.push(rp.marker);
+      parts.push(rp.value);
+    }
+  }
 
-      return buildPhrase(...parts);
-    },
-  };
+  return buildPhrase(...parts);
 }

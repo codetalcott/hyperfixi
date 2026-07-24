@@ -107,6 +107,8 @@ export type {
   KeywordTable,
   MarkerTable,
   RendererConfig,
+  DomainRenderFn,
+  DomainRendererConfig,
 } from './generation/renderer';
 export {
   lookupKeyword,
@@ -115,6 +117,7 @@ export {
   buildTablesFromProfiles,
   detectWordOrders,
   createSchemaRenderer,
+  createDomainRenderer,
 } from './generation/renderer';
 
 // Diagnostics
@@ -133,6 +136,8 @@ export type {
   DSLConfig,
   MultilingualDSL,
   CodeGenerator,
+  DomainExtension,
+  ExtensionVocabulary,
   ValidationResult,
   CompileResult,
   DomainDescriptor,
@@ -145,7 +150,10 @@ export type {
   DispatcherOptions,
 } from './api';
 
-export { DomainRegistry, CrossDomainDispatcher } from './api';
+// `createMultilingualDSL` is the package's primary entry point, so it is
+// exported by name rather than reaching consumers only through `export * from
+// './api'` above.
+export { createMultilingualDSL, DomainRegistry, CrossDomainDispatcher } from './api';
 
 // Re-export helper functions
 export {
