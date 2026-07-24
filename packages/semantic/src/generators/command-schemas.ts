@@ -1803,9 +1803,7 @@ export const goSchema: CommandSchema = {
       //   ru/uk — `на`: `перейти на сторінку` is the navigation idiom; `в`
       //        ("into") is right for `add`/`put` but not for opening a page.
       //   sw — `kwa`, as `add`.
-      //   th — `ยัง`: the th `go` keyword is `ไป`, and `ไป` + `ยัง` composes to
-      //        `ไปยัง`, the canonical Thai "go to". The old default rendered
-      //        `ไป ใน url` — "go IN url".
+      // th is NOT here — it renders bare, with zh and vi; see below.
       markerOverride: {
         en: 'to',
         es: 'a',
@@ -1819,29 +1817,40 @@ export const goSchema: CommandSchema = {
         it: 'a',
         ru: 'на',
         sw: 'kwa',
-        th: 'ยัง',
         uk: 'на',
       },
       // "go /page" (rendering — no preposition).
       //
-      // zh and vi render BARE because their `go` keyword already encodes the
-      // direction, so any destination marker is a second one: zh `前往` is
-      // "proceed-to" (`前往 到 url` = "proceed-to to url") and vi `đi đến` is
-      // literally "go to" (`đi đến vào url` = "go-to into url"). Both are
-      // corrected in the i18n corpus in the same change
-      // (`patterns-reference/scripts/fix-translations.sql`), so corpus and
-      // schema agree. Parsing is unaffected — the old markers stay accepted
-      // via the profile default and `markerLegacy` below.
-      renderOverride: { en: '', zh: '', vi: '' },
+      // zh, vi and th render BARE.
+      //
+      // zh and vi because their `go` keyword already encodes the direction, so
+      // any destination marker is a second one: zh `前往` is "proceed-to"
+      // (`前往 到 url` = "proceed-to to url") and vi `đi đến` is literally
+      // "go to" (`đi đến vào url` = "go-to into url"). Both are corrected in
+      // the i18n corpus in the same change
+      // (`patterns-reference/scripts/fix-translations.sql`).
+      //
+      // th because Thai motion verbs take a BARE destination — `ไปบ้าน`
+      // ("go home"), `ไปโรงเรียน` ("go school") — so `ไป url` is the idiomatic
+      // form. The profile default rendered `ไป ใน url` ("go IN url"), which is
+      // what needed fixing; the obvious replacement `ยัง` (giving the formal
+      // `ไปยัง`) is rejected because `ยัง` is also the very common adverb
+      // "still/yet", and the V4 vocab gate correctly refuses to classify it as
+      // a particle — promoting it would mis-tokenize ordinary Thai.
+      //
+      // Parsing is unaffected for all three: none has a `markerOverride`, so
+      // each stays on the profile-default branch and keeps accepting its old
+      // markers (th `ใน` / `ไปยัง`) from the profile itself.
+      renderOverride: { en: '', zh: '', vi: '', th: '' },
       // `go back` renders the destination bare in en (history nav has no `to`),
       // and he/zh render it with their PATIENT marker (לך את back / 前往 把 back)
       // while go-url keeps the destination marker (לך על url / 前往 到 url) —
       // the corpus is ground truth, so en's `to` is optional and he/zh accept
       // the patient particle as a destination-marker alternative, scoped to go.
-      // The render side drops the preposition for these three, so the parse
-      // side cannot require it: `go /page`, `前往 url`, `đi đến url` must parse
-      // alongside the marked forms the profile still accepts.
-      markerOptional: { en: true, zh: true, vi: true },
+      // The render side drops the preposition for these four, so the parse
+      // side cannot require it: `go /page`, `前往 url`, `đi đến url`, `ไป url`
+      // must parse alongside the marked forms the profile still accepts.
+      markerOptional: { en: true, zh: true, vi: true, th: true },
       // Only zh is left here. `markerVariants` is merged as alternatives by the
       // PROFILE-DEFAULT branch of marker resolution; `markerLegacy` by the
       // OVERRIDE branch (see `resolveMarkerForRole` and `pattern-generator`'s
@@ -1865,11 +1874,12 @@ export const goSchema: CommandSchema = {
         it: ['in', 'su'],
         ru: ['в', 'к'],
         sw: ['kwenye'],
-        th: ['ใน', 'ไปยัง'],
         uk: ['в', 'до'],
-        // zh and vi are NOT listed: neither has a markerOverride, so both stay
-        // on the profile-default branch and keep accepting their old markers
-        // from the profile itself. Only their RENDERING changed.
+        // zh, vi and th are NOT listed: none has a markerOverride, so all three
+        // stay on the profile-default branch and keep accepting their old
+        // markers from the profile itself. Only their RENDERING changed.
+        // Listing them here would be dead config — markerLegacy is read ONLY by
+        // the override branch.
       },
     },
   ],
