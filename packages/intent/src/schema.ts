@@ -78,6 +78,28 @@ export interface RoleSpec {
   readonly markerVariants?: Record<string, readonly string[]>;
   readonly renderOverride?: Record<string, string>;
   readonly markerPosition?: 'before' | 'after';
+  /**
+   * Per-language override of {@link markerPosition}, for languages whose marker
+   * sits on the other side of its value than their word order implies.
+   *
+   * Resolution when rendering: this → {@link markerPosition} → the profile's
+   * marker position for the role → the word-order default (SOV: after, else before).
+   */
+  readonly markerPositionOverride?: Record<string, 'before' | 'after'>;
+  /**
+   * Which side of the verb this role renders on in SOV languages.
+   *
+   * SOV puts roles before the verb by default (`preVerb`). `postVerb` moves this
+   * role after it — e.g. summarize's format renders `content 要約 として format`,
+   * not `content として format 要約`. Ignored for non-SOV languages.
+   */
+  readonly sovSlot?: 'preVerb' | 'postVerb';
+  /**
+   * Wrap this role's value in double quotes when rendering, if it contains
+   * whitespace and is not already quoted. For free-text roles (a question, a
+   * prompt) whose value would otherwise be re-parsed as several tokens.
+   */
+  readonly quoteMultiword?: boolean;
   readonly greedy?: boolean;
   readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
   /**

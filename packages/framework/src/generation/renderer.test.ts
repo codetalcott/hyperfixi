@@ -168,6 +168,8 @@ describe('detectWordOrders', () => {
 // =============================================================================
 
 describe('createSchemaRenderer', () => {
+  // Positions sort DESCENDING (higher = earlier), matching pattern generation:
+  // columns (2) precedes source (1) → "select name from users".
   const schemas: CommandSchema[] = [
     defineCommand({
       action: 'select',
@@ -179,13 +181,13 @@ describe('createSchemaRenderer', () => {
           role: 'columns',
           required: true,
           expectedTypes: ['expression'],
-          svoPosition: 1,
+          svoPosition: 2,
         }),
         defineRole({
           role: 'source',
           required: true,
           expectedTypes: ['expression'],
-          svoPosition: 2,
+          svoPosition: 1,
           markerOverride: { en: 'from', ja: 'から' },
         }),
       ],
@@ -239,7 +241,7 @@ describe('createSchemaRenderer', () => {
             role: 'columns',
             required: true,
             expectedTypes: ['expression'],
-            svoPosition: 1,
+            svoPosition: 3,
           }),
           defineRole({
             role: 'source',
@@ -252,7 +254,7 @@ describe('createSchemaRenderer', () => {
             role: 'condition',
             required: false,
             expectedTypes: ['expression'],
-            svoPosition: 3,
+            svoPosition: 1,
             markerOverride: { en: 'where' },
           }),
         ],
@@ -317,6 +319,187 @@ describe('createSchemaRenderer', () => {
       const renderer = createSchemaRenderer(analyzeSchemas, analyzeProfiles);
       const node = makeNode('analyze', { patient: '#content', manner: 'sentiment' });
       expect(renderer.render(node, 'en')).toBe('analyze #content as sentiment');
+    });
+  });
+
+  describe('role positions', () => {
+    // Declaration order deliberately disagrees with the declared positions.
+    const outOfOrder: CommandSchema[] = [
+      defineCommand({
+        action: 'select',
+        description: 'Select data',
+        category: 'query',
+        primaryRole: 'columns',
+        roles: [
+          defineRole({
+            role: 'source',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            sovPosition: 1,
+            markerOverride: { en: 'from', ja: 'から' },
+          }),
+          defineRole({
+            role: 'columns',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 2,
+            sovPosition: 2,
+          }),
+        ],
+      }),
+    ];
+
+    it('orders roles by svoPosition, not declaration order', () => {
+      const renderer = createSchemaRenderer(outOfOrder, profiles);
+      const node = makeNode('select', { columns: 'name', source: 'users' });
+      expect(renderer.render(node, 'en')).toBe('select name from users');
+    });
+
+    it('orders roles by sovPosition for SOV languages', () => {
+      const renderer = createSchemaRenderer(outOfOrder, profiles);
+      const node = makeNode('select', { columns: 'name', source: 'users' });
+      expect(renderer.render(node, 'ja')).toBe('name users から 選択');
+    });
+  });
+
+  describe('role defaults', () => {
+    const withDefault: CommandSchema[] = [
+      defineCommand({
+        action: 'select',
+        description: 'Select data',
+        category: 'query',
+        primaryRole: 'columns',
+        roles: [
+          defineRole({
+            role: 'columns',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 2,
+            default: { type: 'literal', value: '*' },
+          }),
+          defineRole({
+            role: 'source',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            markerOverride: { en: 'from' },
+          }),
+        ],
+      }),
+    ];
+
+    it("renders a schema default in an absent role's place", () => {
+      const renderer = createSchemaRenderer(withDefault, profiles);
+      const node = makeNode('select', { source: 'users' });
+      expect(renderer.render(node, 'en')).toBe('select * from users');
+    });
+
+    it('prefers the node value over the default', () => {
+      const renderer = createSchemaRenderer(withDefault, profiles);
+      const node = makeNode('select', { columns: 'name', source: 'users' });
+      expect(renderer.render(node, 'en')).toBe('select name from users');
+    });
+  });
+
+  describe('marker placement and formatting', () => {
+    const capabilities: CommandSchema[] = [
+      defineCommand({
+        action: 'summarize',
+        description: 'Summarize content',
+        category: 'llm',
+        primaryRole: 'patient',
+        roles: [
+          defineRole({
+            role: 'patient',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 3,
+            sovPosition: 3,
+            quoteMultiword: true,
+          }),
+          defineRole({
+            role: 'quantity',
+            required: false,
+            expectedTypes: ['expression'],
+            svoPosition: 2,
+            sovPosition: 2,
+            markerOverride: { en: 'in', ja: 'で' },
+            // Japanese renders this marker BEFORE its value despite SOV default
+            markerPositionOverride: { ja: 'before' },
+          }),
+          defineRole({
+            role: 'manner',
+            required: false,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            sovPosition: 1,
+            markerOverride: { en: 'as', ja: 'として' },
+            sovSlot: 'postVerb',
+          }),
+          defineRole({
+            role: 'source',
+            required: false,
+            expectedTypes: ['expression'],
+            svoPosition: 0,
+            markerOverride: { en: '' }, // parser-only marker; renders bare
+          }),
+        ],
+      }),
+    ];
+
+    const capProfiles: PatternGenLanguageProfile[] = [
+      {
+        code: 'en',
+        wordOrder: 'SVO',
+        keywords: { summarize: { primary: 'summarize' } },
+        roleMarkers: {},
+      },
+      {
+        code: 'ja',
+        wordOrder: 'SOV',
+        keywords: { summarize: { primary: '要約' } },
+        roleMarkers: {},
+      },
+    ];
+
+    it('quotes a multi-word value for quoteMultiword roles', () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: 'the annual report' });
+      expect(renderer.render(node, 'en')).toBe('summarize "the annual report"');
+    });
+
+    it('leaves a single-word value unquoted', () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: '#document' });
+      expect(renderer.render(node, 'en')).toBe('summarize #document');
+    });
+
+    it('does not double-quote an already-quoted value', () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: '"the annual report"' });
+      expect(renderer.render(node, 'en')).toBe('summarize "the annual report"');
+    });
+
+    it('honors markerPositionOverride against the word-order default', () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: '#doc', quantity: '3' });
+      // ja default would be "3 で"; the override puts the marker first
+      expect(renderer.render(node, 'ja')).toBe('#doc で 3 要約');
+    });
+
+    it('renders a sovSlot:postVerb role after the verb', () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: '#doc', manner: 'bullets' });
+      expect(renderer.render(node, 'ja')).toBe('#doc 要約 bullets として');
+      // SVO is unaffected — sovSlot applies only to SOV languages
+      expect(renderer.render(node, 'en')).toBe('summarize #doc as bullets');
+    });
+
+    it("treats renderOverride '' as no marker", () => {
+      const renderer = createSchemaRenderer(capabilities, capProfiles);
+      const node = makeNode('summarize', { patient: '#doc', source: '#feed' });
+      expect(renderer.render(node, 'en')).toBe('summarize #doc #feed');
     });
   });
 });

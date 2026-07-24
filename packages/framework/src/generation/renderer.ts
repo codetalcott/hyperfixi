@@ -9,9 +9,9 @@
  */
 
 import type { SemanticNode } from '../core/types';
-import { extractRoleValue } from '../core/types';
-import type { CommandSchema, RoleSpec } from '../schema';
-import type { PatternGenLanguageProfile } from './pattern-generator';
+import { extractRoleValue, extractValue } from '../core/types';
+import type { CommandSchema } from '../schema';
+import { sortRolesByWordOrder, type PatternGenLanguageProfile } from './pattern-generator';
 
 // =============================================================================
 // Renderer Interface
@@ -284,6 +284,8 @@ export function createDomainRenderer(config: DomainRendererConfig): DomainRender
 interface RenderTables {
   readonly keywords: KeywordTable;
   readonly markers: MarkerTable;
+  /** Marker side per role per language, from each profile's roleMarkers. */
+  readonly markerPositions: Record<string, Record<string, 'before' | 'after'>>;
   readonly sovLanguages: ReadonlySet<string>;
   readonly schemaMap: ReadonlyMap<string, CommandSchema>;
 }
@@ -294,9 +296,19 @@ function buildRenderTables(
 ): RenderTables {
   const { keywords, markers } = buildTablesFromProfiles(schemas, profiles);
   const { sovLanguages } = detectWordOrders(profiles);
+
+  const markerPositions: Record<string, Record<string, 'before' | 'after'>> = {};
+  for (const profile of profiles) {
+    for (const [role, markerDef] of Object.entries(profile.roleMarkers ?? {})) {
+      if (!markerDef.position) continue;
+      markerPositions[role] ??= {};
+      markerPositions[role][profile.code] = markerDef.position;
+    }
+  }
+
   const schemaMap = new Map<string, CommandSchema>();
   for (const s of schemas) schemaMap.set(s.action, s);
-  return { keywords, markers, sovLanguages, schemaMap };
+  return { keywords, markers, markerPositions, sovLanguages, schemaMap };
 }
 
 /**
@@ -316,44 +328,55 @@ function renderFromSchema(
   const keyword = lookupKeyword(tables.keywords, node.action, language);
   const isSOV = tables.sovLanguages.has(language);
 
-  // Collect role parts in schema order.
-  // A role with no value is skipped entirely — including its marker. Emitting
-  // the marker of an absent role produces dangling text ("analyze #content as",
-  // "#content として 分析"), which is never valid surface syntax. This applies to
-  // required roles too: a required role with no value is a malformed node, and a
-  // dangling marker is a worse rendering of it than simply leaving it out.
-  const roleParts: Array<{ marker?: string; value: string; role: RoleSpec }> = [];
-  for (const role of schema.roles) {
-    const value = extractRoleValue(node, role.role);
+  // Order roles by their declared positions, using the SAME comparator pattern
+  // generation uses. Rendering in declaration order instead would produce a
+  // surface the generated pattern cannot re-parse whenever the two disagree.
+  const ordered = sortRolesByWordOrder([...schema.roles], isSOV ? 'SOV' : 'SVO');
+
+  // Roles rendered before the verb, and (SOV only) after it.
+  const preVerb: string[] = [];
+  const postVerb: string[] = [];
+
+  for (const role of ordered) {
+    let value = extractRoleValue(node, role.role);
+    if (!value && role.default !== undefined) {
+      value = String(extractValue(role.default));
+    }
+    // A role with no value is skipped entirely — including its marker. Emitting
+    // the marker of an absent role produces dangling text ("analyze #content as",
+    // "#content として 分析"), which is never valid surface syntax. This applies to
+    // required roles too: a required role with no value is a malformed node, and
+    // a dangling marker is a worse rendering of it than simply leaving it out.
     if (!value) continue;
 
+    if (role.quoteMultiword && /\s/.test(value) && !/^(["']).*\1$/.test(value)) {
+      value = `"${value}"`;
+    }
+
+    // renderOverride wins over markerOverride, and '' means "render no marker"
+    // (a role whose marker is only there to help the parser).
     const markerText =
-      role.markerOverride?.[language] ?? tables.markers[role.role]?.[language] ?? undefined;
+      role.renderOverride?.[language] ??
+      role.markerOverride?.[language] ??
+      tables.markers[role.role]?.[language];
 
-    roleParts.push({
-      ...(markerText != null && { marker: markerText }),
-      value,
-      role,
-    });
-  }
+    const markerPosition =
+      role.markerPositionOverride?.[language] ??
+      role.markerPosition ??
+      tables.markerPositions[role.role]?.[language] ??
+      (isSOV ? 'after' : 'before');
 
-  const parts: string[] = [];
-
-  if (isSOV) {
-    // SOV: roles (with markers after values) then keyword
-    for (const rp of roleParts) {
-      parts.push(rp.value);
-      if (rp.marker) parts.push(rp.marker);
-    }
-    parts.push(keyword);
-  } else {
-    // SVO/VSO: keyword then roles (with markers before values)
-    parts.push(keyword);
-    for (const rp of roleParts) {
-      if (rp.marker) parts.push(rp.marker);
-      parts.push(rp.value);
+    const bucket = isSOV && role.sovSlot === 'postVerb' ? postVerb : preVerb;
+    if (markerText && markerPosition === 'before') {
+      bucket.push(markerText, value);
+    } else if (markerText) {
+      bucket.push(value, markerText);
+    } else {
+      bucket.push(value);
     }
   }
 
-  return buildPhrase(...parts);
+  return isSOV
+    ? buildPhrase(...preVerb, keyword, ...postVerb)
+    : buildPhrase(keyword, ...preVerb, ...postVerb);
 }
