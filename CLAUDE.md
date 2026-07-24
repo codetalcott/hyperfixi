@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~309 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **18 KB** (hybrid-hx) — sizes re-measured 2026-07-20 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs, single-copy verified)
+- **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **18 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles and will report a spurious CHANGED.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -558,7 +558,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.7 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~321 KB), minimal (76 KB), standard (83 KB), browser (~309 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.7 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~322 KB), minimal (76 KB), standard (83 KB), browser (~310 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -782,8 +782,8 @@ Quick selection (sizes gzipped):
 | `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
 | `hyperfixi-hybrid-complete.js` | 7.7 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
 | `hyperfixi-hx.js`              | 18 KB     | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
-| `hyperfixi-hx-v4.js`           | ~321 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | ~309 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
+| `hyperfixi-hx-v4.js`           | ~322 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
+| `hyperfixi.js`                 | ~310 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
 | `hyperfixi-multilingual.js`    | 97 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
 | semantic bundles               | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
 
