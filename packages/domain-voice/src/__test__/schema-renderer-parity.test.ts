@@ -12,7 +12,11 @@
  * schema that disagrees with the renderer means extensions render an
  * unidiomatic surface.
  *
- * One command is exempt, and deliberately so — see `scroll` at the bottom.
+ * The one exception ran the other way: parity showed `renderScroll` dropping a
+ * `quantity` the parser had filled, so `scroll down by 500` rendered as
+ * `scroll down`. Nothing in the schema could teach that, because the schema was
+ * the correct one — the renderer was fixed instead. The round-trip case below
+ * keeps it fixed.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -47,17 +51,6 @@ const EXAMPLES: Record<string, string> = {
 };
 
 /**
- * `renderVoice` drops `scroll`'s optional `quantity` — `scroll down by 500`
- * renders as `scroll down`, losing the amount. That is a renderer bug, not a
- * schema one: the schema is right that the role exists (the parser fills it),
- * so "teach the schema what the renderer does" has nothing to teach, and no
- * `RoleSpec` field says "never render this role". Locked below as an explicit
- * divergence instead of silently skipped, so a fix to `renderScroll` fails
- * this test and gets the entry removed.
- */
-const RENDERER_DROPS_ROLE: Record<string, string> = { scroll: 'quantity' };
-
-/**
  * Roles no English voice surface can express, so the example cannot populate
  * them. `show`/`hide` reuse the semantic package's schemas, whose optional
  * `style` literal (`show #panel with fade`) has no voice pattern.
@@ -90,18 +83,14 @@ describe('createSchemaRenderer agrees with renderVoice', () => {
       continue;
     }
 
-    const parsed = voice.parse(example, 'en');
-    // For the one command whose renderer drops a role, compare on a node
-    // without it. Everything else about that command still has to agree.
-    const dropped = RENDERER_DROPS_ROLE[schema.action];
-    const full = dropped ? withoutRole(parsed, dropped) : parsed;
-    const minimal = stripOptionalRoles(parsed);
+    const full = voice.parse(example, 'en');
+    const minimal = stripOptionalRoles(full);
 
     it(`${schema.action}'s example populates every role`, () => {
       const unreachable = new Set(UNREACHABLE_ROLES[schema.action] ?? []);
       const missing = schema.roles
         .map(r => r.role)
-        .filter(role => !parsed.roles.has(role) && !unreachable.has(role));
+        .filter(role => !full.roles.has(role) && !unreachable.has(role));
       expect(missing).toEqual([]);
     });
 
@@ -117,19 +106,66 @@ describe('createSchemaRenderer agrees with renderVoice', () => {
   }
 });
 
-describe('known divergence: renderVoice drops scroll’s quantity', () => {
+describe('renderVoice keeps scroll’s quantity', () => {
+  // `renderScroll` used to drop the role outright: `scroll down by 500`
+  // rendered as `scroll down`, so translating a scroll step silently lost the
+  // amount. The parity comparison above would catch a relapse as a string
+  // diff; this states the property directly so the failure names the bug.
   const withQuantity = voice.parse('scroll down by 500', 'en');
 
-  it('the parser does populate the role', () => {
+  it('the parser populates the role', () => {
     expect(withQuantity.roles.has('quantity')).toBe(true);
   });
 
   for (const language of LANGUAGES) {
-    it(`scroll × ${language} — renderVoice omits it, the schema renderer keeps it`, () => {
+    it(`scroll × ${language} — the amount survives rendering`, () => {
       const rendered = renderVoice(withQuantity, language) as string;
-      expect(rendered).toBe(renderVoice(withoutRole(withQuantity, 'quantity'), language));
-      expect(schemaRenderer.render(withQuantity, language)).not.toBe(rendered);
+      expect(rendered).toContain('500');
+      expect(rendered).not.toBe(renderVoice(withoutRole(withQuantity, 'quantity'), language));
     });
+  }
+});
+
+describe('renderVoice round-trips through the parser', () => {
+  // A rendered surface its own parser cannot read back is a broken
+  // translation. Checked on the SOV three, where marker position and the
+  // pre/post-verb split make it easiest to get wrong.
+  for (const action of ['scroll', 'search', 'click', 'type']) {
+    const node = voice.parse(EXAMPLES[action], 'en');
+
+    for (const language of ['ja', 'ko', 'tr']) {
+      it(`${action} × ${language} — rendered text parses back to the same roles`, () => {
+        const surface = renderVoice(node, language) as string;
+        const reparsed = voice.parse(surface, language);
+        expect(reparsed.action).toBe(action);
+        expect([...reparsed.roles.keys()].sort()).toEqual([...node.roles.keys()].sort());
+      });
+    }
+  }
+});
+
+describe('known gap: back/forward/help do not round-trip in SOV', () => {
+  // These three render their argument AFTER the verb in every language
+  // (`戻る 2`, `ヘルプ 移動`) — which is what `renderVoice` has always written,
+  // and what the schemas now declare via `sovSlot: 'postVerb'`. Pattern
+  // generation does not read `sovSlot`, so the generated SOV pattern still
+  // expects the argument BEFORE the verb and drops it on re-parse. The command
+  // survives; its argument does not.
+  //
+  // Closing it means either moving the argument pre-verb in `renderVoice`
+  // (an output change beyond this arc) or teaching pattern generation about
+  // `sovSlot`. Pinned here so whichever lands is visible.
+  for (const action of ['back', 'forward', 'help']) {
+    const node = voice.parse(EXAMPLES[action], 'en');
+
+    for (const language of ['ja', 'ko', 'tr']) {
+      it(`${action} × ${language} — re-parses as the right command, minus its argument`, () => {
+        const surface = renderVoice(node, language) as string;
+        const reparsed = voice.parse(surface, language);
+        expect(reparsed.action).toBe(action);
+        expect([...reparsed.roles.keys()]).toEqual([]);
+      });
+    }
   }
 });
 

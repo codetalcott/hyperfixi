@@ -315,15 +315,26 @@ function renderType(node: SemanticNode, lang: string): string {
 
 function renderScroll(node: SemanticNode, lang: string): string {
   const manner = extractRoleValue(node, 'manner') || '';
+  const quantity = extractRoleValue(node, 'quantity');
   const keyword = kw('scroll', lang);
 
   if (!manner) return keyword;
 
+  // The amount used to be dropped, so `scroll down by 500` rendered as
+  // `scroll down` and translation silently lost the 500. The marker comes from
+  // the schema, the same source the parser reads, so the output round-trips.
+  const marker = quantity ? getMarker('scroll', 'quantity', lang) : '';
+
   if (SOV_LANGUAGES.has(lang)) {
-    return `${manner} ${keyword}`;
+    const parts = [manner];
+    if (quantity) parts.push(quantity, marker);
+    parts.push(keyword);
+    return parts.filter(Boolean).join(' ');
   }
 
-  return `${keyword} ${manner}`;
+  const parts = [keyword, manner];
+  if (quantity) parts.push(marker, quantity);
+  return parts.filter(Boolean).join(' ');
 }
 
 function renderRead(node: SemanticNode, lang: string): string {

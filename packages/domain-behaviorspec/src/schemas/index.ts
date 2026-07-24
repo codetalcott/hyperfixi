@@ -9,6 +9,20 @@
 
 import { defineCommand, defineRole } from '@lokascript/framework';
 
+/** The languages this domain ships, in profile order. */
+const LANGUAGES = ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'fr', 'tr'] as const;
+
+/**
+ * Render this role with no marker in every language.
+ *
+ * `renderOverride: { '*': '' }` would be shorter, but `'*'` deliberately ranks
+ * BELOW a per-language `markerOverride` — so it cannot suppress a marker the
+ * role itself declares. Naming each language is the only way to say "the
+ * parser accepts this marker; the renderer never writes it".
+ */
+const bareInEveryLanguage = (): Record<string, string> =>
+  Object.fromEntries(LANGUAGES.map(code => [code, '']));
+
 // =============================================================================
 // TEST — Named test scenario
 // =============================================================================
@@ -26,6 +40,10 @@ export const testSchema = defineCommand({
       expectedTypes: ['literal', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
+      // `renderTest` names the scenario after the verb in every language,
+      // SOV included: `テスト "ログイン"`, not `"ログイン" テスト`. A test
+      // header reads as a label, and the label follows the word `test`.
+      sovSlot: 'postVerb',
     }),
   ],
 });
@@ -56,6 +74,9 @@ export const givenSchema = defineCommand({
       greedy: true,
       svoPosition: 1,
       sovPosition: 1,
+      // `given #email is empty` — the value trails its subject bare. The
+      // profile's `saying`/`と` marker stays parseable, never written.
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -84,7 +105,10 @@ export const whenSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      // SOV puts the verb of the interaction last of the roles, after both its
+      // target and its destination: `user #email を #form に types 操作`.
+      // (Higher position = earlier, so this is the lowest.)
+      sovPosition: 0,
     }),
     defineRole({
       role: 'target',
@@ -110,7 +134,7 @@ export const whenSchema = defineCommand({
       required: false,
       expectedTypes: ['selector', 'expression'],
       svoPosition: 0,
-      sovPosition: 0,
+      sovPosition: 1,
       markerOverride: {
         en: 'into',
         es: 'dentro',
@@ -142,6 +166,9 @@ export const expectSchema = defineCommand({
       expectedTypes: ['selector', 'expression'],
       svoPosition: 3,
       sovPosition: 3,
+      // `expect #result …`, `#result … 期待` — the subject of the assertion
+      // leads, with no marker. The profile's `on`/`を` stays parseable.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'assertion',
@@ -150,7 +177,9 @@ export const expectSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      // `#result appears "welcome" 期待` — the assertion precedes the value it
+      // is about, in SOV as in SVO. (Higher position = earlier.)
+      sovPosition: 2,
     }),
     defineRole({
       role: 'value',
@@ -159,7 +188,7 @@ export const expectSchema = defineCommand({
       expectedTypes: ['literal', 'expression'],
       greedy: true,
       svoPosition: 1,
-      sovPosition: 2,
+      sovPosition: 1,
       markerOverride: {
         en: 'saying',
         es: 'diciendo',
@@ -170,6 +199,9 @@ export const expectSchema = defineCommand({
         fr: 'disant',
         tr: 'diyen',
       },
+      // `expect #result shows "welcome"` — `saying` is an input convenience,
+      // never written back.
+      renderOverride: bareInEveryLanguage(),
     }),
   ],
 });
@@ -213,6 +245,9 @@ export const notSchema = defineCommand({
       greedy: true,
       svoPosition: 1,
       sovPosition: 1,
+      // `not` is a prefix modifier, not a verb: it precedes what it negates in
+      // every language (`否定 visible`), so SOV does not move it to the end.
+      sovSlot: 'postVerb',
     }),
   ],
 });

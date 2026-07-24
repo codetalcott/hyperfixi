@@ -1,5 +1,15 @@
 # Handoff: schema↔renderer parity tail + remaining marker work
 
+> **STATUS 2026-07-24 — tranches 1 and 2 are DONE.** Parity is 100% for todo, jsx,
+> flow and voice; behaviorspec is 83% with one declared exception; bdd is locked
+> modulo two declared exceptions. What remains is the **Tier B marker review +
+> zh `go`** and **domain-learn parity** sections below, both still untouched and
+> still deliberate. Everything above them is history — kept because the traps and
+> the gate procedure still apply to the remaining work.
+>
+> What changed versus the plan below, and why, is recorded in
+> "§ What tranches 1–2 actually found" at the end.
+
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
 Everything here is the deliberately-deferred tail of the downstream-improvements arc
@@ -34,7 +44,28 @@ they do not need to be one session.
 
 ---
 
-## Where parity stands (probe results, 2026-07-24)
+## Where parity stands (probe results, 2026-07-24 — BEFORE tranches 1–2)
+
+**Superseded.** Current state, after the work landed:
+
+| Domain       | Agreement | Remaining                                                             |
+| ------------ | --------- | --------------------------------------------------------------------- |
+| llm          | **100%**  | —                                                                     |
+| sql          | **100%**  | —                                                                     |
+| todo         | **100%**  | —                                                                     |
+| jsx          | **100%**  | —                                                                     |
+| flow         | **100%**  | —                                                                     |
+| voice        | **100%**  | —                                                                     |
+| behaviorspec | 83%       | `test` always-quotes its name (declared + verified as quoting-only)   |
+| bdd          | 33%\*     | keyword capitalization + role-value lexicalization (both declared)    |
+
+\* bdd's percentage is not the right measure of its state — see
+"§ What tranches 1–2 actually found". Its parity test asserts that every divergent
+cell diverges in EXACTLY one of two declared ways, which is a stronger lock than the
+number suggests.
+
+The original table follows, unchanged, because the "nature of gap" column is what the
+work turned out to disagree with.
 
 `createSchemaRenderer(allSchemas, allProfiles)` vs `renderX`, every command × language,
 full-roles node and required-only node:
@@ -110,6 +141,10 @@ Two coherent designs; the owner picks (this is the stop-point in the prompt):
   is full delegation (renderX becoming a one-line wrapper over the schema renderer —
   the parent arc's stretch goal, explicitly gated on "parity green in CI for one
   release first"). More surface on `RoleSpec`, which every schema author reads.
+
+**Decision taken (2026-07-24): the hybrid.** Apply the existing-field fixes that do
+exist (which the analysis above missed — see below), then exception-list the residue
+per (a). No new `RoleSpec` fields were added.
 
 ## Left deferred, deliberately (do not pick up casually)
 
@@ -221,3 +256,87 @@ for (const d of DOMAINS) {
 Caveat on the probe: it feeds `<role>` placeholder values, so it measures marker/order/
 casing/quoting divergence, not value formatting. The committed parity tests (which use
 real parses) are the authority; the probe is for cheap progress tracking.
+
+---
+
+## What tranches 1–2 actually found (2026-07-24)
+
+Four things the plan above got wrong, each caught by measuring rather than by
+following the brief.
+
+### 1. The probe's caveat was load-bearing, not a footnote
+
+Re-measured with REAL parses, bdd's gap is not "capitalization + markers". Its
+dominant divergence is **role-value lexicalization**: `renderBDD` translates role
+VALUES through its own tables (`exists` → `es existe` / `が 存在` / `mevcut dir`,
+`click` → `clic en` / `を クリック`), while the schema renderer writes values
+verbatim. No `RoleSpec` field declares a per-language value vocabulary, so option
+(b) as scoped above would not have closed bdd — it would have added three fields
+and left the largest category untouched.
+
+Conversely, behaviorspec was **half tranche-1-shaped**: `given`, `expect` and `not`
+needed only `renderOverride`/`sovSlot`/`sovPosition`, which is how it went 41% → 83%
+with zero new capabilities.
+
+**Lesson for the remaining work:** run the probe for triage, but classify with real
+parses before deciding what a gap IS.
+
+### 2. Three renderX bugs, where the SCHEMA was the correct one
+
+Parity's stated direction ("teach the schema what the renderer does") assumes the
+renderer is right. Three times it was not, and the owner approved fixing renderX:
+
+- `renderScroll` (voice) **dropped a parsed role**: `scroll down by 500` rendered as
+  `scroll down`. Translation silently lost the amount.
+- `renderThen` (bdd) hardcoded English `has` in its CSS-class branch, so Spanish
+  rendered `Entonces #button has .active`. The per-language word was already in the
+  schema (`then.assertion` markerOverride) — the renderer now reads it from there.
+- `renderWhen` (bdd AND behaviorspec) emitted a marker for an **absent** role:
+  `When click on`, `を clicks 操作`. `target` is optional, so a plain parse reached
+  it. The framework renderer refuses to emit dangling markers by design; the
+  hand-written ones did not.
+
+All three changes were verified cell by cell against a 1715-cell before/after
+snapshot of every renderX output: 246 cells changed, every one of them an instance
+of exactly these three fixes.
+
+### 3. `sovPosition` disagreements are round-trip bugs, not cosmetics
+
+flow's `submit`/`transform` and behaviorspec's `when`/`expect` declared their goal
+or instrument BEFORE the object in `sovPosition`, while the renderer wrote the
+object first. Because `sovPosition` orders **generated patterns as well as rendered
+surfaces**, each domain's own ja/ko/tr output did not parse in its own parser —
+verified failing before, passing after. Parity surfaced it; nothing else would have.
+
+Whenever a parity gap is an ORDER gap, check the round trip before assuming it is
+cosmetic. Both domains' golden pattern files moved as a result (6 entries each,
+verified semantically; the rest of the diff is the generator's formatting, which
+`prettier` restores — same trap as domain-voice's golden, §5 above).
+
+### 4. A pinned gap `sovSlot` cannot close
+
+voice's `back`/`forward`/`help` render their argument after the verb in every
+language (`戻る 2`, `ヘルプ 移動`) — which `sovSlot: 'postVerb'` now declares, closing
+parity. But **pattern generation does not read `sovSlot`**, so the generated SOV
+pattern still expects the argument pre-verb and drops it on re-parse. The command
+survives, its argument does not.
+
+Pinned as an explicit expectation in
+`packages/domain-voice/src/__test__/schema-renderer-parity.test.ts`. Closing it means
+either moving the argument pre-verb in `renderVoice` (an output change beyond that
+arc's remit) or teaching pattern generation about `sovSlot` — the latter is the real
+fix and would benefit flow and behaviorspec too.
+
+### Gates run
+
+- Every domain suite green: todo 196, jsx 359, flow 534, voice 915, bdd 259,
+  behaviorspec 320 — including the golden pattern snapshots and the domain-toolkit
+  keyword-classification lint.
+- Full `npm run test:check` green.
+- Downstream (trap #6 procedure, node_modules overlay + restore): lokascript-learn
+  **1781 pass / 0 fail** and `bunx tsc --noEmit` clean. Note the overlay must include
+  `framework` — published 2.8.0 predates `createDomainRenderer`, and overlaying only
+  the domain packages fails with 19 import errors that are environmental, not real.
+- The multilingual `--regression` gate was NOT re-run: nothing in `semantic`,
+  `intent`, `core` or `patterns-reference` changed, and domain DSL patterns are not
+  in the browser-priority bundle.

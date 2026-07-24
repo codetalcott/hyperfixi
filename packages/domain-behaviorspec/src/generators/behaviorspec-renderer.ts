@@ -51,7 +51,10 @@ function renderWhen(node: SemanticNode, lang: string): string {
   const actionStr = action ? extractValue(action) : '';
   const targetStr = target ? extractValue(target) : '';
   const destStr = destination ? extractValue(destination) : '';
-  const onMarker = MARKER_WORDS.on[lang] ?? 'on';
+  // A marker belongs to its role: emitting `on` with no target left dangling
+  // text (`when clicks on`, `を clicks 操作`) that is not valid input in any
+  // language. `target` is optional, so this was reachable from a plain parse.
+  const onMarker = targetStr ? (MARKER_WORDS.on[lang] ?? 'on') : '';
   const intoMarker = MARKER_WORDS.into[lang] ?? 'into';
 
   if (SOV_LANGUAGES.has(lang)) {
