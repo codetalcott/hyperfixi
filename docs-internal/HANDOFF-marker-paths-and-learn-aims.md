@@ -281,6 +281,28 @@ content). Resolve item 2 first.
 
 ## Gates you will need
 
+**Vocab consistency (V1–V4)** — run this FIRST for any marker change, before the
+expensive gates:
+
+```bash
+cd packages/testing-framework && npx tsx src/vocab/cli.ts validate
+```
+
+**It is NOT part of `npm run test:check`**, which is exactly how a broken marker
+reached CI in #763: the th `go` marker `ยัง` classifies as `identifier` rather
+than keyword/particle, so it cannot tokenize as vocabulary — trap #5 of
+`HANDOFF-parity-and-marker-tail.md`, in a language nobody thought to check. V4
+validates every schema marker, profile keyword and grammar form against that
+language's tokenizer, and it is fast (~1s). The gate carries 138 waived errors;
+what matters is the **unwaived** count.
+
+The fix that mattered there is worth generalising: when V4 rejects a marker,
+consider whether the word is genuinely wrong for the language before adding it to
+the tokenizer's keyword list. `ยัง` is also the very common Thai adverb
+"still/yet", so promoting it would have mis-tokenized ordinary Thai — the right
+answer was to render bare, which Thai motion verbs take anyway. **A V4 failure is
+sometimes telling you the marker is wrong, not that the tokenizer is incomplete.**
+
 **Multilingual `--regression`** (any semantic marker or pattern-gen change):
 
 ```bash
@@ -322,8 +344,25 @@ Everything in `HANDOFF-parity-and-marker-tail.md` § Traps still applies. Added 
   longer require its marker.
 - **Bundle-size gzip is platform-dependent.** `packages/core/src/metadata.ts`
   carries the sizes CI measures (Linux zlib); a local macOS `npm run update:sizes`
-  reads ~2 KB lower and reports a spurious `CHANGED`. Read failing sizes from the
-  CI log, not from a local measurement.
+  reads lower and reports a spurious `CHANGED`. Read failing sizes from the CI
+  log, not from a local measurement. Measured offset in #763:
+
+  | bundle       | local (macOS) | CI (Linux) |
+  | ------------ | ------------- | ---------- |
+  | hybrid-hx-v4 | 320.5 KB      | 322.2 KB   |
+  | browser      | 308.7 KB      | 310.7 KB   |
+  | minimal      | 76.1 KB       | 76.2 KB    |
+  | standard     | 82.6 KB       | 82.7 KB    |
+
+  Note `minimal`/`standard` show as CHANGED locally while CI reports them
+  unchanged — so a local run over-reports which bundles moved, not just by how
+  much. `metadata.ts` stores gzip as a 1-decimal KB **string**, so the value in
+  the CI log is directly committable. Only the two full bundles ever actually
+  move on a schema-text change; the small ones are pure platform noise.
+
+- **The vocab gate is not in `test:check`.** See the Gates section — run
+  `npx tsx src/vocab/cli.ts validate` from `packages/testing-framework` for any
+  marker change.
 - **Generated patterns' `format` string disagrees with their own `tokens`** about
   which side of its value an SOV marker sits on — `format` resolves position from
   the profile alone. Pre-existing, documentation-only (nothing reads `format`),
