@@ -31,7 +31,12 @@ export interface LanguageConfig {
   readonly tokenizer: LanguageTokenizer;
   /** Language profile for pattern generation */
   readonly patternProfile: PatternGenLanguageProfile;
-  /** Language profile for grammar transformation (optional) */
+  /**
+   * Language profile for grammar transformation.
+   *
+   * Optional for `parse()`, `validate()` and `compile()`, but **required for
+   * `translate()`** — omitting it makes `translate()` throw for this language.
+   */
   readonly grammarProfile?: GrammarProfile;
 }
 
@@ -173,13 +178,20 @@ class MultilingualDSLImpl implements MultilingualDSL {
   private registry: DSLRegistry;
   private matcher: PatternMatcher;
   private transformer: GrammarTransformer;
+  private profileProvider: ProfileProvider;
   private codeGenerator?: CodeGenerator;
   private schemaLookup: SchemaLookup;
 
-  constructor(config: DSLConfig, registry: DSLRegistry, transformer: GrammarTransformer) {
+  constructor(
+    config: DSLConfig,
+    registry: DSLRegistry,
+    transformer: GrammarTransformer,
+    profileProvider: ProfileProvider
+  ) {
     this.registry = registry;
     this.matcher = new PatternMatcher();
     this.transformer = transformer;
+    this.profileProvider = profileProvider;
     if (config.codeGenerator) {
       this.codeGenerator = config.codeGenerator;
     }
@@ -266,6 +278,22 @@ class MultilingualDSLImpl implements MultilingualDSL {
   translate(input: string, fromLanguage: string, toLanguage: string): string {
     // Explicit syntax is language-agnostic — return unchanged
     if (isExplicitSyntax(input)) return input;
+
+    // translate() is the only path that needs grammar profiles; parse/validate/
+    // compile work without them. `grammarProfile` is optional on LanguageConfig,
+    // so omitting it fails here rather than at construction — name the missing
+    // field instead of leaving the transformer's bare "No profile found".
+    for (const language of [fromLanguage, toLanguage]) {
+      if (!this.profileProvider.getProfile(language)) {
+        throw new Error(
+          `translate() requires a grammar profile for language "${language}", but none is ` +
+            `configured. Set 'grammarProfile' on the LanguageConfig for "${language}" in ` +
+            `createMultilingualDSL() (parse/validate/compile do not need it), or inject a ` +
+            `custom 'profileProvider'.`
+        );
+      }
+    }
+
     // Use injected grammar transformer
     return this.transformer.transform(input, fromLanguage, toLanguage);
   }
@@ -384,5 +412,5 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
 
   // Create registry and implementation
   const registry = new DSLRegistry(config);
-  return new MultilingualDSLImpl(config, registry, transformer);
+  return new MultilingualDSLImpl(config, registry, transformer, profileProvider);
 }

@@ -90,10 +90,39 @@ export interface RoleSpec {
 
 /**
  * Helper to create a command schema with sensible defaults.
+ *
+ * @throws TypeError when `schema` is missing `action` or `roles`, or when they
+ *   have the wrong shape. The types catch this for TypeScript callers; the
+ *   runtime check exists so JavaScript callers and hand-built objects fail with
+ *   a message naming the field instead of a `roles[0] of undefined` crash from
+ *   deep inside the package.
  */
 export function defineCommand(
   schema: Partial<CommandSchema> & Pick<CommandSchema, 'action' | 'roles'>
 ): CommandSchema {
+  if (typeof schema !== 'object' || schema === null) {
+    throw new TypeError(`defineCommand: expected a schema object, got ${describeValue(schema)}.`);
+  }
+  if (typeof schema.action !== 'string' || schema.action.length === 0) {
+    throw new TypeError(
+      `defineCommand: 'action' must be a non-empty string (got ${describeValue(schema.action)}).`
+    );
+  }
+  if (!Array.isArray(schema.roles)) {
+    throw new TypeError(
+      `defineCommand("${schema.action}"): 'roles' must be an array of RoleSpec ` +
+        `(got ${describeValue(schema.roles)}). Build entries with defineRole().`
+    );
+  }
+  for (const [index, role] of schema.roles.entries()) {
+    if (typeof role !== 'object' || role === null || typeof role.role !== 'string') {
+      throw new TypeError(
+        `defineCommand("${schema.action}"): roles[${index}] must be a RoleSpec with a string ` +
+          `'role' field (got ${describeValue(role)}). Build it with defineRole().`
+      );
+    }
+  }
+
   return {
     description: schema.description || `${schema.action} command`,
     category: schema.category || 'general',
@@ -128,5 +157,17 @@ export function defineRole(
  * if (spec?.required) { ... }
  */
 export function getRoleSpec(schema: CommandSchema, role: string): RoleSpec | undefined {
+  // Contract is already "undefined when not found", so a malformed schema
+  // answers the same question rather than throwing.
+  if (!schema || !Array.isArray(schema.roles)) return undefined;
   return schema.roles.find(r => r.role === role);
+}
+
+/** Render a value for an error message without dumping large objects. */
+function describeValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return `an array of length ${value.length}`;
+  if (typeof value === 'string') return `the string ${JSON.stringify(value)}`;
+  if (typeof value === 'object') return 'an object';
+  return typeof value === 'undefined' ? 'undefined' : String(value);
 }

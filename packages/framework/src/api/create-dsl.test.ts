@@ -279,6 +279,17 @@ describe('MultilingualDSL: Explicit Syntax Support', () => {
       const result = dsl.translate('[select columns:name source:users]', 'en', 'ja');
       expect(result).toBe('[select columns:name source:users]');
     });
+
+    // The test DSL configures no `grammarProfile`, which is legal for
+    // parse/validate/compile but not for translate. The error must name the
+    // field to set rather than leaving the caller with "No profile found".
+    it('throws an error naming grammarProfile when the profile is missing', () => {
+      const dsl = createTestDSL();
+      expect(() => dsl.translate('select name from users', 'en', 'ja')).toThrow(/grammarProfile/);
+      expect(() => dsl.translate('select name from users', 'en', 'ja')).toThrow(
+        /parse\/validate\/compile do not need it/
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------

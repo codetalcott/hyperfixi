@@ -204,18 +204,23 @@ export function createSchemaRenderer(
       const keyword = lookupKeyword(keywords, node.action, language);
       const isSOV = sovLanguages.has(language);
 
-      // Collect role parts in schema order
+      // Collect role parts in schema order.
+      // A role with no value is skipped entirely — including its marker. Emitting
+      // the marker of an absent role produces dangling text ("analyze #content as",
+      // "#content として 分析"), which is never valid surface syntax. This applies to
+      // required roles too: a required role with no value is a malformed node, and a
+      // dangling marker is a worse rendering of it than simply leaving it out.
       const roleParts: Array<{ marker?: string; value: string; role: RoleSpec }> = [];
       for (const role of schema.roles) {
         const value = extractRoleValue(node, role.role);
-        if (!value && !role.required) continue;
+        if (!value) continue;
 
         const markerText =
           role.markerOverride?.[language] ?? markers[role.role]?.[language] ?? undefined;
 
         roleParts.push({
           ...(markerText != null && { marker: markerText }),
-          value: value || '',
+          value,
           role,
         });
       }

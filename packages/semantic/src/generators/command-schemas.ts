@@ -2974,9 +2974,14 @@ export function getDefinedSchemas(): CommandSchema[] {
 // Schema Validation (Development Only)
 // =============================================================================
 
-// Run schema validation at module load time in development builds
-// This is tree-shaken out in production builds
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+// Run schema validation at module load time when explicitly requested.
+//
+// These diagnostics are for people editing the schemas in this package, but they
+// used to fire for every consumer merely importing it (~44 lines of stderr on a
+// bare `import '@lokascript/domain-llm'`, in every downstream test run and CI log).
+// They are opt-in via LOKASCRIPT_SCHEMA_VALIDATION=1; the standing check that
+// keeps schemas honest is `schema-validation.test.ts` in this package.
+if (typeof process !== 'undefined' && process.env.LOKASCRIPT_SCHEMA_VALIDATION === '1') {
   // Dynamic import to avoid bundling in production
   import('./schema-validator')
     .then(({ validateAllSchemas, formatValidationResults }) => {

@@ -139,8 +139,9 @@ export function getAllTranslations(input: string, sourceLang: string): Record<st
   if (sourceLang !== 'en' && sourceLang !== 'es') {
     throw new Error(`Language not supported in this bundle: ${sourceLang}. Supported: en, es`);
   }
-  const result = getAllTranslationsInternal(input, sourceLang);
-  // Filter to only include ES + EN
+  // Ask for only this bundle's languages — the default is every registered
+  // language, which for a regional bundle is wasted work.
+  const result = getAllTranslationsInternal(input, sourceLang, ['en', 'es']);
   return {
     en: result.en,
     es: result.es,

@@ -145,6 +145,38 @@ describe('defineCommand / defineRole', () => {
     expect(schema.roles[0].role).toBe('patient');
     expect(schema.roles[0].required).toBe(true);
   });
+
+  // Malformed input used to crash with "undefined is not an object (evaluating
+  // 'schema.roles[0]')" from inside the package. Each message must name the field.
+  describe('input validation', () => {
+    const callWith =
+      (value: unknown) =>
+      // Deliberately bypassing the compile-time types: these are the JS-caller
+      // and hand-built-object cases the runtime check exists for.
+      () =>
+        defineCommand(value as Parameters<typeof defineCommand>[0]);
+
+    it('rejects a missing roles array, naming the field', () => {
+      expect(callWith({ action: 'toggle' })).toThrow(TypeError);
+      expect(callWith({ action: 'toggle' })).toThrow(/'roles' must be an array/);
+      expect(callWith({ action: 'toggle' })).toThrow(/toggle/);
+    });
+
+    it('rejects a missing or empty action, naming the field', () => {
+      expect(callWith({ roles: [] })).toThrow(/'action' must be a non-empty string/);
+      expect(callWith({ action: '', roles: [] })).toThrow(/'action' must be a non-empty string/);
+    });
+
+    it('rejects a non-object schema', () => {
+      expect(callWith(undefined)).toThrow(TypeError);
+      expect(callWith(null)).toThrow(/expected a schema object/);
+    });
+
+    it('rejects a role entry that is not a RoleSpec, naming its index', () => {
+      expect(callWith({ action: 'toggle', roles: ['patient'] })).toThrow(/roles\[0\]/);
+      expect(callWith({ action: 'toggle', roles: ['patient'] })).toThrow(/defineRole/);
+    });
+  });
 });
 
 describe('getRoleSpec', () => {
@@ -173,6 +205,11 @@ describe('getRoleSpec', () => {
     const schema = defineCommand({ action: 'move', roles: [r1, r2] });
     expect(getRoleSpec(schema, 'destination')?.required).toBe(false);
     expect(getRoleSpec(schema, 'patient')?.required).toBe(true);
+  });
+
+  it('returns undefined for a malformed schema instead of throwing', () => {
+    const malformed = { action: 'toggle' } as Parameters<typeof getRoleSpec>[0];
+    expect(getRoleSpec(malformed, 'patient')).toBeUndefined();
   });
 });
 

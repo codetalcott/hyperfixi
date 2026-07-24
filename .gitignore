@@ -286,3 +286,9 @@ clients/js-client/.vitest/
 # Private/release artifacts
 dist-release/
 PUBLISHING_PLAN.md
+
+# Per-package CHANGELOG copies staged by scripts/sync-changelogs.cjs before
+# packing. The six packages that maintain their own changelog are already
+# tracked, and .gitignore does not affect tracked files — this only keeps the
+# build-time copies out of `git status`.
+packages/*/CHANGELOG.md

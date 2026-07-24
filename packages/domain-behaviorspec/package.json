@@ -37,7 +37,8 @@
   "files": [
     "dist",
     "src",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "behaviorspec",

@@ -263,4 +263,60 @@ describe('createSchemaRenderer', () => {
     const node = makeNode('select', { columns: 'name', source: 'users' });
     expect(renderer.render(node, 'en')).toBe('select name from users');
   });
+
+  describe('absent roles never leave a dangling marker', () => {
+    // An "analyze"-shaped schema: `manner` is REQUIRED and marked, so a node
+    // missing it used to render "analyze #content as" / "#content として 分析".
+    const analyzeSchemas: CommandSchema[] = [
+      defineCommand({
+        action: 'analyze',
+        description: 'Analyze content',
+        category: 'llm',
+        primaryRole: 'patient',
+        roles: [
+          defineRole({
+            role: 'patient',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 2,
+          }),
+          defineRole({
+            role: 'manner',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            markerOverride: { en: 'as', ja: 'として' },
+          }),
+        ],
+      }),
+    ];
+
+    const analyzeProfiles: PatternGenLanguageProfile[] = [
+      {
+        code: 'en',
+        wordOrder: 'SVO',
+        keywords: { analyze: { primary: 'analyze' } },
+        roleMarkers: {},
+      },
+      { code: 'ja', wordOrder: 'SOV', keywords: { analyze: { primary: '分析' } }, roleMarkers: {} },
+    ];
+
+    it('omits a required-but-absent role and its marker (SVO)', () => {
+      const renderer = createSchemaRenderer(analyzeSchemas, analyzeProfiles);
+      const node = makeNode('analyze', { patient: '#content' });
+      expect(renderer.render(node, 'en')).toBe('analyze #content');
+    });
+
+    it('omits a required-but-absent role and its marker (SOV)', () => {
+      const renderer = createSchemaRenderer(analyzeSchemas, analyzeProfiles);
+      const node = makeNode('analyze', { patient: '#content' });
+      expect(renderer.render(node, 'ja')).toBe('#content 分析');
+    });
+
+    it('still renders the marker when the role has a value', () => {
+      const renderer = createSchemaRenderer(analyzeSchemas, analyzeProfiles);
+      const node = makeNode('analyze', { patient: '#content', manner: 'sentiment' });
+      expect(renderer.render(node, 'en')).toBe('analyze #content as sentiment');
+    });
+  });
 });
