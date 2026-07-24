@@ -15,6 +15,7 @@ import type { LanguageProfile, RoleMarker } from '../../generators/language-prof
 export interface RoleSpecWithMarker {
   role: SemanticRole;
   markerOverride?: Record<string, string | undefined>;
+  markerLegacy?: Record<string, readonly string[]>;
 }
 
 /**
@@ -50,9 +51,13 @@ export function resolveMarkerForRole(
   const defaultMarker = profile.roleMarkers[roleSpec.role];
 
   if (overrideMarker !== undefined) {
-    // Use override marker (can be empty string to suppress default marker)
+    // Use override marker (can be empty string to suppress default marker).
+    // markerLegacy entries stay accepted, so correcting an override does not
+    // stop the marker a previous release rendered from parsing.
+    const alternatives = legacyMarkerAlternatives(roleSpec, profile.code, overrideMarker);
     return {
       primary: overrideMarker,
+      ...(alternatives && { alternatives }),
       position: defaultMarker?.position ?? 'before',
       isOverride: true,
     };
@@ -71,6 +76,30 @@ export function resolveMarkerForRole(
   }
 
   return null;
+}
+
+/**
+ * Alternatives an OVERRIDE marker accepts: the role's {@link RoleSpecWithMarker.markerLegacy}
+ * entries for this language, minus the override itself.
+ *
+ * Every generator that resolves a marker has its own override branch, and each
+ * one used to drop alternatives entirely — so correcting a marker silently
+ * stopped the previous one parsing. This is the single definition of what an
+ * override still accepts; call it from each of those branches.
+ *
+ * Deliberately NOT `markerVariants`: those carry meaning of their own (`put`'s
+ * `before`/`after` populate the `method` role), so accepting them as synonyms
+ * would swallow a distinct command shape.
+ */
+export function legacyMarkerAlternatives(
+  roleSpec: RoleSpecWithMarker,
+  languageCode: string,
+  overrideMarker: string
+): string[] | undefined {
+  const legacy = roleSpec.markerLegacy?.[languageCode];
+  if (!legacy?.length) return undefined;
+  const alternatives = [...new Set(legacy)].filter(a => a && a !== overrideMarker);
+  return alternatives.length ? alternatives : undefined;
 }
 
 /**

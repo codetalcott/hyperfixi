@@ -17,6 +17,7 @@ import {
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 import { appendOptionalScope } from './event-handlers-sov';
+import { legacyMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
  * Generate VSO event handler pattern (Arabic).
@@ -230,6 +231,11 @@ export function generateVSOVerbFirstTwoRoleEventHandlerPattern(
     // Check for override — use !== undefined to allow empty string overrides
     if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
       marker = roleSpec.markerOverride[profile.code];
+      // An override replaces the profile's alternatives, so the markers a
+      // previous release rendered would stop parsing without markerLegacy.
+      markerAlternatives = marker
+        ? legacyMarkerAlternatives(roleSpec, profile.code, marker)
+        : undefined;
     } else {
       const roleMarker = profile.roleMarkers[roleSpec.role];
       if (roleMarker) {
@@ -333,8 +339,11 @@ export function generateVSOTwoRoleEventHandlerPattern(
     let markerAlternatives: string[] | undefined;
 
     if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
-      // Use the override marker
+      // Use the override marker; markerLegacy keeps the previous marker parsing.
       marker = roleSpec.markerOverride[profile.code];
+      markerAlternatives = marker
+        ? legacyMarkerAlternatives(roleSpec, profile.code, marker)
+        : undefined;
     } else {
       // Use default role marker from profile
       const roleMarker = profile.roleMarkers[roleSpec.role];

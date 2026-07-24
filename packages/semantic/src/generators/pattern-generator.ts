@@ -774,10 +774,22 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
     const position = defaultMarker?.position ?? 'before';
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
+    // Single-word overrides also accept the role's markerLegacy entries, so
+    // correcting an override's marker does not stop the previous one parsing.
+    // Deliberately NOT markerVariants: on `put` those are `before`/`after`,
+    // which carry a distinct `method` role rather than being synonyms for
+    // `into` — accepting them here would swallow put-before/put-after into the
+    // base pattern and drop the method.
+    const legacyAlts =
+      markerWords.length === 1 ? (roleSpec.markerLegacy?.[profile.code] ?? []) : [];
     const pushWord = (word: string): void => {
-      const literal: PatternToken = suppressMarker
-        ? { type: 'literal', value: word, renderSuppress: true }
-        : { type: 'literal', value: word };
+      const alternatives = [...new Set(legacyAlts)].filter(a => a !== word);
+      const literal: PatternToken = {
+        type: 'literal',
+        value: word,
+        ...(alternatives.length ? { alternatives } : {}),
+        ...(suppressMarker ? { renderSuppress: true } : {}),
+      };
       tokens.push(optionalMarker ? { type: 'group', optional: true, tokens: [literal] } : literal);
     };
     if (position === 'before') {
@@ -858,8 +870,20 @@ function buildExtractionRules(
       // it wins over the role's own marker (`to`), which may be optional/absent.
       rules[roleSpec.role] = { marker: roleSpec.valuePrefixLiteral[profile.code] };
     } else if (overrideMarker !== undefined) {
-      // Use the override marker
-      rules[roleSpec.role] = overrideMarker ? { marker: overrideMarker } : {};
+      // Use the override marker, accepting markerLegacy entries as alternatives
+      // so a corrected marker does not stop the previous one parsing (mirrors
+      // buildRoleToken; single-word overrides only, as a multi-word marker has
+      // no single token to swap).
+      if (!overrideMarker) {
+        rules[roleSpec.role] = {};
+      } else {
+        const isSingleWord = !/\s/.test(overrideMarker.trim());
+        const legacyAlts = isSingleWord ? (roleSpec.markerLegacy?.[profile.code] ?? []) : [];
+        const markerAlternatives = [...new Set(legacyAlts)].filter(a => a !== overrideMarker);
+        rules[roleSpec.role] = markerAlternatives.length
+          ? { marker: overrideMarker, markerAlternatives }
+          : { marker: overrideMarker };
+      }
     } else if (defaultMarker && defaultMarker.primary) {
       // Merge per-command markerVariants as alternatives (mirrors buildRoleToken)
       const variantAlts = roleSpec.markerVariants?.[profile.code] ?? [];

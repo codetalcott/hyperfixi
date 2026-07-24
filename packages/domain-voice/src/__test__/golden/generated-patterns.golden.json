@@ -1167,7 +1167,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "agregar {patient} en {destination}",
+          "format": "agregar {patient} a {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -1185,7 +1185,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "en"
+                  "value": "a"
                 },
                 {
                   "type": "role",
@@ -1204,7 +1204,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "en"
+            "marker": "a"
           }
         }
       }
@@ -2591,7 +2591,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "أضف {patient} على {destination}",
+          "format": "أضف {patient} إلى {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -2609,7 +2609,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "على"
+                  "value": "إلى"
                 },
                 {
                   "type": "role",
@@ -2628,7 +2628,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "على"
+            "marker": "إلى"
           }
         }
       }
@@ -3997,7 +3997,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "添加 {patient} 在 {destination}",
+          "format": "添加 {patient} 到 {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -4015,7 +4015,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "在"
+                  "value": "到"
                 },
                 {
                   "type": "role",
@@ -4034,7 +4034,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "在"
+            "marker": "到"
           }
         }
       }
@@ -5364,7 +5364,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "ajouter {patient} sur {destination}",
+          "format": "ajouter {patient} à {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -5382,7 +5382,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "sur"
+                  "value": "à"
                 },
                 {
                   "type": "role",
@@ -5401,7 +5401,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "sur"
+            "marker": "à"
           }
         }
       }
@@ -6040,7 +6040,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "hinzufügen {patient} auf {destination}",
+          "format": "hinzufügen {patient} zu {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -6058,7 +6058,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "auf"
+                  "value": "zu"
                 },
                 {
                   "type": "role",
@@ -6077,7 +6077,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "auf"
+            "marker": "zu"
           }
         }
       }
@@ -6716,7 +6716,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "adicionar {patient} em {destination}",
+          "format": "adicionar {patient} a {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -6734,7 +6734,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "em"
+                  "value": "a"
                 },
                 {
                   "type": "role",
@@ -6753,7 +6753,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "em"
+            "marker": "a"
           }
         }
       }
