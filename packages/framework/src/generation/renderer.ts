@@ -353,11 +353,16 @@ function renderFromSchema(
       value = `"${value}"`;
     }
 
-    // renderOverride wins over markerOverride, and '' means "render no marker"
-    // (a role whose marker is only there to help the parser).
+    // Marker resolution, most specific first. `renderOverride` for this exact
+    // language is the most specific statement; `''` means "render this role
+    // bare" (a marker that exists only to help the parser). The `'*'` key is a
+    // blanket statement about the PROFILE default, so it ranks below a
+    // per-language markerOverride — which is how SQL's `get` renders bare in
+    // SVO languages while keeping its SOV source particles.
     const markerText =
       role.renderOverride?.[language] ??
       role.markerOverride?.[language] ??
+      role.renderOverride?.['*'] ??
       tables.markers[role.role]?.[language];
 
     const markerPosition =

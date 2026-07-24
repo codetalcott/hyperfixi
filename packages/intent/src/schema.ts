@@ -76,6 +76,19 @@ export interface RoleSpec {
    * specifically for bridge-side inference (see `inferRolesFromSchema`).
    */
   readonly markerVariants?: Record<string, readonly string[]>;
+  /**
+   * Per-language marker to use when RENDERING, overriding {@link markerOverride}
+   * and the profile default. Empty string `''` means "render this role bare" —
+   * for a marker that exists to help the parser but is not written by hand
+   * (SQL's `insert` takes its values with no `set` before them, though the
+   * profile gives the `values` role that marker).
+   *
+   * The key `'*'` is a blanket statement about the PROFILE default marker, so
+   * it ranks below a per-language {@link markerOverride}: `{ '*': '' }` renders
+   * the role bare in every language except those with an explicit override.
+   * Full precedence: `renderOverride[lang]` → `markerOverride[lang]` →
+   * `renderOverride['*']` → profile default.
+   */
   readonly renderOverride?: Record<string, string>;
   readonly markerPosition?: 'before' | 'after';
   /**

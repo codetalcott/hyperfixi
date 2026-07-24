@@ -32,6 +32,8 @@ export const askSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 2,
       sovPosition: 1,
+      // A question is free text; unquoted it would re-tokenize as several tokens
+      quoteMultiword: true,
     }),
     defineRole({
       role: 'source',
