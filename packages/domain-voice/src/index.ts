@@ -33,7 +33,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderVoice } from './generators/voice-renderer.js';
 import { allSchemas } from './schemas/index';
 import {
   enProfile,
@@ -64,9 +69,21 @@ import {
 import { voiceCodeGenerator } from './generators/voice-generator';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual voice/accessibility DSL instance with all 8 supported languages.
  */
-export function createVoiceDSL(): MultilingualDSL {
+export function createVoiceDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'Voice',
     schemas: allSchemas,
@@ -150,6 +167,8 @@ export function createVoiceDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: voiceCodeGenerator,
+    renderer: renderVoice,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 

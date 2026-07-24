@@ -86,6 +86,7 @@
     "dist",
     "data",
     "src",
+    "CHANGELOG.md",
     "!src/**/*.test.ts",
     "!src/**/*.spec.ts"
   ],

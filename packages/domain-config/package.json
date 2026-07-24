@@ -43,7 +43,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "license": "MIT",
   "repository": {

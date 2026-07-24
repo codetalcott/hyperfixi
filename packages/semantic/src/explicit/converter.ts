@@ -7,6 +7,7 @@
 
 import type { SemanticNode } from '../types';
 import { parse } from '../parser';
+import { getRegisteredLanguages } from '../registry';
 import { render, renderExplicit } from './renderer';
 import { parseExplicit, isExplicitSyntax } from './parser';
 
@@ -152,44 +153,59 @@ export function roundTrip(
 /**
  * Get all translations of a hyperscript statement.
  *
+ * **Best-effort:** a language whose render fails is omitted from the result
+ * rather than throwing, so the count of keys can be lower than the number of
+ * languages asked for. Use {@link getAllTranslationsWithStatus} when you need to
+ * know which ones were dropped and why.
+ *
  * @param input Hyperscript input
  * @param sourceLanguage Source language (or 'explicit')
- * @param targetLanguages List of target language codes (defaults to all 13 supported languages)
- * @returns Object mapping language codes to translations
+ * @param targetLanguages Target language codes. Defaults to every **registered**
+ *   language (all 24 as of writing) — derived from the tokenizer registry, so a
+ *   newly added language is included automatically.
+ * @returns Object mapping language codes to translations, plus an `explicit` key
  */
 export function getAllTranslations(
   input: string,
   sourceLanguage: string,
-  targetLanguages: string[] = [
-    'en',
-    'ja',
-    'ar',
-    'es',
-    'ko',
-    'zh',
-    'tr',
-    'pt',
-    'fr',
-    'de',
-    'id',
-    'qu',
-    'sw',
-  ]
+  targetLanguages: string[] = getRegisteredLanguages()
 ): Record<string, string> {
-  const result: Record<string, string> = {};
+  return getAllTranslationsWithStatus(input, sourceLanguage, targetLanguages).translations;
+}
+
+/**
+ * {@link getAllTranslations} with the omissions made visible.
+ *
+ * @returns `translations` (including the `explicit` key, matching
+ *   {@link getAllTranslations}) and `failed`, mapping each dropped language code
+ *   to the error message that caused it to be dropped.
+ */
+export function getAllTranslationsWithStatus(
+  input: string,
+  sourceLanguage: string,
+  targetLanguages: string[] = getRegisteredLanguages()
+): { translations: Record<string, string>; failed: Record<string, string> } {
+  const translations: Record<string, string> = {};
+  const failed: Record<string, string> = {};
 
   // Parse once
   const node = parseAny(input, sourceLanguage);
 
-  // Render for each target language
+  // Render for each target language. A language that cannot render this
+  // particular node is skipped — one unsupported command must not deny the
+  // caller the 23 languages that did render.
   for (const lang of targetLanguages) {
-    result[lang] = render(node, lang);
+    try {
+      translations[lang] = render(node, lang);
+    } catch (error) {
+      failed[lang] = error instanceof Error ? error.message : String(error);
+    }
   }
 
   // Also include explicit
-  result['explicit'] = renderExplicit(node);
+  translations['explicit'] = renderExplicit(node);
 
-  return result;
+  return { translations, failed };
 }
 
 /**

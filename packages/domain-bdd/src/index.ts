@@ -27,7 +27,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderBDD } from './generators/bdd-renderer.js';
 import { allSchemas, givenSchema, whenSchema, thenSchema, andSchema } from './schemas/index.js';
 import {
   englishProfile,
@@ -58,9 +63,21 @@ import {
 } from './parser/scenario-parser.js';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual BDD DSL instance with all 8 supported languages.
  */
-export function createBDDDSL(): MultilingualDSL {
+export function createBDDDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'BDD',
     schemas: allSchemas,
@@ -123,6 +140,8 @@ export function createBDDDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: bddCodeGenerator,
+    renderer: renderBDD,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 
@@ -154,6 +173,7 @@ export {
   chineseProfile,
   turkishProfile,
   frenchProfile,
+  allProfiles,
 } from './profiles/index.js';
 export { bddCodeGenerator, generateFeature } from './generators/playwright-generator.js';
 export { renderBDD } from './generators/bdd-renderer.js';

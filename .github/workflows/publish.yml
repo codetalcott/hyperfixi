@@ -196,6 +196,15 @@ jobs:
           # carry accurate constraints (npm has no workspace: protocol).
           node scripts/set-version.cjs "$VERSION"
 
+      - name: Stage CHANGELOG into each package
+        run: |
+          # Every publishable package lists CHANGELOG.md in `files`; this puts the
+          # root changelog there for the packages that don't maintain their own,
+          # so consumers can read what changed without probing installed code.
+          # The copies are gitignored and the release commit below adds explicit
+          # paths only, so they never enter the repo.
+          node scripts/sync-changelogs.cjs
+
       - name: Publish packages
         env:
           # NPM_TOKEN required for initial publish of new packages

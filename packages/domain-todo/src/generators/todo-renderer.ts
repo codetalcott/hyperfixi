@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -159,17 +161,27 @@ function renderList(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a todo SemanticNode to natural-language todo DSL text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderTodo(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'add':
-      return renderAdd(node, language);
-    case 'complete':
-      return renderComplete(node, language);
-    case 'list':
-      return renderList(node, language);
-    default:
-      return `-- Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    add: renderAdd,
+    complete: renderComplete,
+    list: renderList,
+  },
+});
+
+/**
+ * Render a todo SemanticNode to natural-language todo DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderTodo(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

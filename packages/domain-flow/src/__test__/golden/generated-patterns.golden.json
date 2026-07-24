@@ -1130,8 +1130,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "に {destination} {patient} で {style} 送信",
+          "format": "{patient} に {destination} で {style} 送信",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -1141,12 +1147,6 @@
             {
               "type": "literal",
               "value": "に"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -1188,8 +1188,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "で {instrument} {patient} 変換",
+          "format": "{patient} で {instrument} 変換",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -1199,12 +1205,6 @@
             {
               "type": "literal",
               "value": "で"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -2048,8 +2048,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "로 {destination} {patient} 로 {style} 제출",
+          "format": "{patient} 로 {destination} 로 {style} 제출",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -2059,12 +2065,6 @@
             {
               "type": "literal",
               "value": "로"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -2106,8 +2106,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "로 {instrument} {patient} 변환",
+          "format": "{patient} 로 {instrument} 변환",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -2117,12 +2123,6 @@
             {
               "type": "literal",
               "value": "로"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -2966,8 +2966,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "e {destination} {patient} olarak {style} gönder",
+          "format": "{patient} e {destination} olarak {style} gönder",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -2977,12 +2983,6 @@
             {
               "type": "literal",
               "value": "e"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -3024,8 +3024,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "ile {instrument} {patient} dönüştür",
+          "format": "{patient} ile {instrument} dönüştür",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -3035,12 +3041,6 @@
             {
               "type": "literal",
               "value": "ile"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",

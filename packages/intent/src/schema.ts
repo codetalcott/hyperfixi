@@ -76,8 +76,43 @@ export interface RoleSpec {
    * specifically for bridge-side inference (see `inferRolesFromSchema`).
    */
   readonly markerVariants?: Record<string, readonly string[]>;
+  /**
+   * Per-language marker to use when RENDERING, overriding {@link markerOverride}
+   * and the profile default. Empty string `''` means "render this role bare" —
+   * for a marker that exists to help the parser but is not written by hand
+   * (SQL's `insert` takes its values with no `set` before them, though the
+   * profile gives the `values` role that marker).
+   *
+   * The key `'*'` is a blanket statement about the PROFILE default marker, so
+   * it ranks below a per-language {@link markerOverride}: `{ '*': '' }` renders
+   * the role bare in every language except those with an explicit override.
+   * Full precedence: `renderOverride[lang]` → `markerOverride[lang]` →
+   * `renderOverride['*']` → profile default.
+   */
   readonly renderOverride?: Record<string, string>;
   readonly markerPosition?: 'before' | 'after';
+  /**
+   * Per-language override of {@link markerPosition}, for languages whose marker
+   * sits on the other side of its value than their word order implies.
+   *
+   * Resolution when rendering: this → {@link markerPosition} → the profile's
+   * marker position for the role → the word-order default (SOV: after, else before).
+   */
+  readonly markerPositionOverride?: Record<string, 'before' | 'after'>;
+  /**
+   * Which side of the verb this role renders on in SOV languages.
+   *
+   * SOV puts roles before the verb by default (`preVerb`). `postVerb` moves this
+   * role after it — e.g. summarize's format renders `content 要約 として format`,
+   * not `content として format 要約`. Ignored for non-SOV languages.
+   */
+  readonly sovSlot?: 'preVerb' | 'postVerb';
+  /**
+   * Wrap this role's value in double quotes when rendering, if it contains
+   * whitespace and is not already quoted. For free-text roles (a question, a
+   * prompt) whose value would otherwise be re-parsed as several tokens.
+   */
+  readonly quoteMultiword?: boolean;
   readonly greedy?: boolean;
   readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
   /**
@@ -90,10 +125,39 @@ export interface RoleSpec {
 
 /**
  * Helper to create a command schema with sensible defaults.
+ *
+ * @throws TypeError when `schema` is missing `action` or `roles`, or when they
+ *   have the wrong shape. The types catch this for TypeScript callers; the
+ *   runtime check exists so JavaScript callers and hand-built objects fail with
+ *   a message naming the field instead of a `roles[0] of undefined` crash from
+ *   deep inside the package.
  */
 export function defineCommand(
   schema: Partial<CommandSchema> & Pick<CommandSchema, 'action' | 'roles'>
 ): CommandSchema {
+  if (typeof schema !== 'object' || schema === null) {
+    throw new TypeError(`defineCommand: expected a schema object, got ${describeValue(schema)}.`);
+  }
+  if (typeof schema.action !== 'string' || schema.action.length === 0) {
+    throw new TypeError(
+      `defineCommand: 'action' must be a non-empty string (got ${describeValue(schema.action)}).`
+    );
+  }
+  if (!Array.isArray(schema.roles)) {
+    throw new TypeError(
+      `defineCommand("${schema.action}"): 'roles' must be an array of RoleSpec ` +
+        `(got ${describeValue(schema.roles)}). Build entries with defineRole().`
+    );
+  }
+  for (const [index, role] of schema.roles.entries()) {
+    if (typeof role !== 'object' || role === null || typeof role.role !== 'string') {
+      throw new TypeError(
+        `defineCommand("${schema.action}"): roles[${index}] must be a RoleSpec with a string ` +
+          `'role' field (got ${describeValue(role)}). Build it with defineRole().`
+      );
+    }
+  }
+
   return {
     description: schema.description || `${schema.action} command`,
     category: schema.category || 'general',
@@ -128,5 +192,17 @@ export function defineRole(
  * if (spec?.required) { ... }
  */
 export function getRoleSpec(schema: CommandSchema, role: string): RoleSpec | undefined {
+  // Contract is already "undefined when not found", so a malformed schema
+  // answers the same question rather than throwing.
+  if (!schema || !Array.isArray(schema.roles)) return undefined;
   return schema.roles.find(r => r.role === role);
+}
+
+/** Render a value for an error message without dumping large objects. */
+function describeValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return `an array of length ${value.length}`;
+  if (typeof value === 'string') return `the string ${JSON.stringify(value)}`;
+  if (typeof value === 'object') return 'an object';
+  return typeof value === 'undefined' ? 'undefined' : String(value);
 }

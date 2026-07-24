@@ -14,5 +14,6 @@ export {
   parseAny,
   roundTrip,
   getAllTranslations,
+  getAllTranslationsWithStatus,
   validateTranslation,
 } from './converter';

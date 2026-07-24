@@ -17,6 +17,7 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
+import { legacyMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
  * Resolve the surface marker (and any allomorph alternatives) for a role in a
@@ -41,6 +42,9 @@ function resolveRoleMarker(
 
   if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
     marker = roleSpec.markerOverride[profile.code];
+    // An override replaces the profile's alternatives, so the markers a previous
+    // release rendered would stop parsing without markerLegacy.
+    alternatives = marker ? legacyMarkerAlternatives(roleSpec, profile.code, marker) : undefined;
   } else {
     const roleMarker = profile.roleMarkers[roleSpec.role];
     if (roleMarker) {

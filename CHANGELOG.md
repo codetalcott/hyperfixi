@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ⚠ BREAKING (types)
+
+- **Domain renderers return `string | null`.** `renderSQL`, `renderJSX`, `renderTodo`,
+  `renderLLM`, `renderFlow`, `renderBDD`, `renderVoice` and `renderBehaviorSpec`
+  previously signalled "I don't know this action" with a successful-looking
+  sentinel string — `` `-- Unknown: ${node.action}` `` (or `// Unknown:` in three
+  domains). Consumers were forced into string matching, and any legitimately
+  rendered sentence starting with `--` was silently dropped. They now return
+  `null`.
+
+  **Rendered output for every previously-known action is byte-identical** — all
+  1,939 existing domain tests pass unchanged.
+
+  _Migration:_ replace sentinel sniffing with a null check. A guard of the shape
+  `if (!sentence || sentence.startsWith('--')) return null;` already handles it.
+
+### Added
+
+- **Domains are open for extension** (`@lokascript/framework` + all 8 domain packages).
+  A consumer can add a command to a domain **without editing that package**, by
+  passing a `DomainExtension` to `createXDSL({ extensions })`. A schema plus one
+  vocabulary entry per language is enough to parse, render and compile it in all
+  of them — word order, marker placement and keyword position derive from the
+  schema and the language profiles. Vocabulary may cover a subset of the DSL's
+  languages, so it can be filled in over time. See
+  [Extending an Existing Domain](packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md#extending-an-existing-domain).
+- **`createDomainRenderer`** (`@lokascript/framework`) composes a domain's
+  hand-written per-action renderers with a schema-driven fallback, returning
+  `null` for actions it has neither for. It is what each domain's `renderX` now
+  runs, and what makes an extension command render without the domain knowing it
+  exists.
+- **`MultilingualDSL.render(node, language)`** — render a parsed node back to
+  natural language. Chains extension renderer → domain renderer → schema
+  fallback → `null`. `parse()` + `render()` is the language-to-language path that
+  does not need a `grammarProfile`.
+- **`getAllTranslationsWithStatus()`** (`@lokascript/semantic`) — the same result
+  as `getAllTranslations()`, plus a `failed` map naming each language that could
+  not render and why.
+- **`createMultilingualDSL` is now a named export** of `@lokascript/framework`
+  rather than reaching consumers only through a wildcard re-export. Domains also
+  export `allProfiles`, which extension authors need.
+- **A CHANGELOG now ships in every published package.** Determining what changed
+  between two releases previously meant probing the installed code.
+
+### Changed
+
+- **Directional markers for `add` / `put` / `go` in es, ar, zh, fr, de, pt**
+  (`@lokascript/semantic`). Every language profile's `destination` marker is
+  locative (`on` / `على` / `在` / `sur` / `auf`) because it also serves
+  `toggle`/`show`; only English overrode it for the directional commands, so the
+  rest rendered "add .active ON #box". Now: add → es `a`, ar `إلى`, zh `到`,
+  fr `à`, de `zu`, pt `a`; put → ar `في`, zh `到`, fr `dans`, de `in`; go → es `a`,
+  ar `إلى`, fr `à`, de `zu`, pt `para`. ja `に` / ko `에` / tr `e` were already
+  directional and are unchanged.
+
+  **Parsing accepts a strict superset**: a new `RoleSpec.markerLegacy` keeps every
+  previously-rendered marker parsing, so source written against ≤2.8 keeps working.
+  Downstream consumers maintaining correction tables for these markers (as
+  `lokascript-learn` does) can now delete those entries.
+
+- **`createSchemaRenderer` honors `svoPosition` / `sovPosition`.** It previously
+  iterated roles in declaration order and never read the positions, so a schema
+  whose declared order differed from its declaration order rendered a surface its
+  own generated pattern could not re-parse. It now sorts with the same comparator
+  pattern generation uses (**descending — higher values render earlier**). Affects
+  only custom schemas; no in-repo consumer relied on the old behavior.
+- **Absent roles no longer leave a dangling marker.** `createSchemaRenderer` emitted
+  a role's marker even with no value, producing `analyze #content as` /
+  `#content として 分析`.
+- **`getAllTranslations()` covers every registered language** (24) instead of a
+  frozen 13-language list, and a language that fails to render is skipped rather
+  than throwing. The full browser bundle now registers Hebrew, which was
+  registered everywhere except there.
+- **Schema-validation diagnostics are opt-in.** `import '@lokascript/domain-llm'`
+  printed ~44 lines of `[SCHEMA VALIDATION]` stderr into every downstream test run
+  and CI log. Set `LOKASCRIPT_SCHEMA_VALIDATION=1` to see them; a standing test in
+  `@lokascript/semantic` keeps them honest.
+- **`dsl.translate()` names the missing config field** when a language has no
+  `grammarProfile`, instead of failing deep in the transformer with
+  "No profile found for language: en". Anyone matching that exact message must update.
+- **`defineCommand` / `getRoleSpec` validate their input.** A malformed schema now
+  fails with a message naming the field, instead of
+  `TypeError: undefined is not an object (evaluating 'schema.roles[0]')` from
+  inside the package.
+
+### Fixed
+
+- **A corrected marker stopped parsing in nested contexts.** Three separate
+  override branches — the SOV and VSO event-handler generators and the shared
+  marker resolver — each dropped marker alternatives, so Arabic
+  `ضع هو إلى #chat` parsed standalone but not inside a `socket` block. They now
+  share one definition of what an override still accepts.
+
 ## [2.8.0] - 2026-07-25
 
 > **Gap note:** 2.6.0 through 2.7.2 shipped without entries in this file; their

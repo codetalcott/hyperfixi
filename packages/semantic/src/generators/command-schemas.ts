@@ -64,6 +64,18 @@ export interface RoleSpec {
    */
   readonly markerVariants?: Record<string, readonly string[]>;
   /**
+   * Markers a previous release rendered for this role: still ACCEPTED when
+   * parsing, never rendered. Correcting a {@link markerOverride} would otherwise
+   * stop the old marker parsing at all, making every marker fix a breaking
+   * change for source already written.
+   *
+   * Distinct from {@link markerVariants}, whose entries are alternates that
+   * carry meaning of their own (`put`'s `before`/`after` populate the `method`
+   * role via {@link methodCarrier}). A legacy marker means the same thing as the
+   * current one — it is only spelled the way an older release spelled it.
+   */
+  readonly markerLegacy?: Record<string, readonly string[]>;
+  /**
    * Override the rendering preposition for this role, separate from the parsing marker.
    * Used when the parsing grammar differs from the rendered output
    * (e.g., "go to /home" parses with 'to' but renders as "go /home").
@@ -400,7 +412,32 @@ export const addSchema: CommandSchema = {
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
-      markerOverride: { en: 'to' }, // "add .class to #element"
+      // `add` is directional, but every profile's `destination` marker is
+      // LOCATIVE (en on, es en, ar على, zh 在, fr sur, de auf, pt em) because
+      // it also serves `toggle`/`show`. Without a per-language override the
+      // rendered text said "add .class ON #element" in every language but
+      // English — the gap lokascript-learn corrects with 6 of its 16 override
+      // entries. ja に / ko 에 / tr e are already directional, so they keep
+      // the profile default.
+      markerOverride: {
+        en: 'to',
+        es: 'a',
+        ar: 'إلى',
+        zh: '到',
+        fr: 'à',
+        de: 'zu',
+        pt: 'a',
+      },
+      // Each language's previous primary marker (and its alternates) still
+      // parses, so source written against ≤2.8 keeps working.
+      markerLegacy: {
+        es: ['en', 'sobre', 'hacia'],
+        ar: ['على', 'في', 'ب'],
+        zh: ['在', '于'],
+        fr: ['sur', 'dans'],
+        de: ['auf', 'in'],
+        pt: ['em', 'para'],
+      },
     },
   ],
   // Runtime error documentation
@@ -501,11 +538,26 @@ export const putSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference'],
       svoPosition: 2,
       sovPosition: 2, // SOV: destination comes second (に/에/a marker)
-      markerOverride: { en: 'into' }, // "put 'hello' into #output"
+      // "put 'hello' into #output" — directional, so the same locative-default
+      // correction as `add`. es `en` and pt `em` are already right for "into",
+      // as are ja に / ko 에 / tr e; only ar/zh/fr/de need an override.
+      markerOverride: {
+        en: 'into',
+        ar: 'في',
+        zh: '到',
+        fr: 'dans',
+        de: 'in',
+      },
       // `before` / `after` are alternate position markers; the matched marker
       // is recorded as a literal in the `method` role (a derived role with no
       // surface form of its own — populated by schema-driven role inference).
       markerVariants: { en: ['before', 'after'] },
+      markerLegacy: {
+        ar: ['على', 'إلى', 'ب'],
+        zh: ['在', '于'],
+        fr: ['sur', 'à'],
+        de: ['auf', 'zu'],
+      },
       methodCarrier: 'method',
     },
   ],
@@ -1702,7 +1754,18 @@ export const goSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
-      markerOverride: { en: 'to' }, // "go to /page" (parsing)
+      // "go to /page" (parsing). Directional, so the same locative-default
+      // correction as `add`/`put`. zh is deliberately left alone: the corpus
+      // renders `前往 到 url`, and 前往 already encodes direction, so changing
+      // it is a corpus question rather than a marker one.
+      markerOverride: {
+        en: 'to',
+        es: 'a',
+        ar: 'إلى',
+        fr: 'à',
+        de: 'zu',
+        pt: 'para',
+      },
       renderOverride: { en: '' }, // "go /page" (rendering — no preposition)
       // `go back` renders the destination bare in en (history nav has no `to`),
       // and he/zh render it with their PATIENT marker (לך את back / 前往 把 back)
@@ -1711,6 +1774,13 @@ export const goSchema: CommandSchema = {
       // the patient particle as a destination-marker alternative, scoped to go.
       markerOptional: { en: true },
       markerVariants: { he: ['את'], zh: ['把'] },
+      markerLegacy: {
+        es: ['en', 'sobre', 'hacia'],
+        ar: ['على', 'في', 'ب'],
+        fr: ['sur', 'dans'],
+        de: ['auf', 'in'],
+        pt: ['em', 'a'],
+      },
     },
   ],
   // `go to url "/page"` — without this variant the destination captures the
@@ -2974,9 +3044,14 @@ export function getDefinedSchemas(): CommandSchema[] {
 // Schema Validation (Development Only)
 // =============================================================================
 
-// Run schema validation at module load time in development builds
-// This is tree-shaken out in production builds
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+// Run schema validation at module load time when explicitly requested.
+//
+// These diagnostics are for people editing the schemas in this package, but they
+// used to fire for every consumer merely importing it (~44 lines of stderr on a
+// bare `import '@lokascript/domain-llm'`, in every downstream test run and CI log).
+// They are opt-in via LOKASCRIPT_SCHEMA_VALIDATION=1; the standing check that
+// keeps schemas honest is `schema-validation.test.ts` in this package.
+if (typeof process !== 'undefined' && process.env.LOKASCRIPT_SCHEMA_VALIDATION === '1') {
   // Dynamic import to avoid bundling in production
   import('./schema-validator')
     .then(({ validateAllSchemas, formatValidationResults }) => {

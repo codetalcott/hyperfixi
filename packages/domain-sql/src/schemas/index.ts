@@ -120,6 +120,9 @@ export const insertSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 2,
       sovPosition: 1,
+      // The profile marks `values` with a `set` word (for UPDATE's SET clause),
+      // but INSERT takes its values bare: `insert data into users`.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'destination',
@@ -162,6 +165,9 @@ export const updateSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 2,
       sovPosition: 2,
+      // UPDATE names its table directly — `update users set active`, never
+      // `update from users` — so the profile's `source` marker is not rendered.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'values',
@@ -299,6 +305,9 @@ export const getSchema = defineCommand({
         ko: '에서',
         tr: 'den',
       },
+      // Suppress the profile's `source` marker for the languages above that
+      // have no explicit particle — a per-language markerOverride still wins.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'condition',

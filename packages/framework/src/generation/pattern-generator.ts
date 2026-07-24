@@ -218,8 +218,11 @@ function getMarkerForRole(
 
 /**
  * Sort roles by word order for pattern building.
+ *
+ * Exported so the renderer sorts with exactly this comparator — a rendered
+ * surface whose role order differs from the generated pattern would not re-parse.
  */
-function sortRolesByWordOrder(roles: RoleSpec[], wordOrder: string): RoleSpec[] {
+export function sortRolesByWordOrder(roles: RoleSpec[], wordOrder: string): RoleSpec[] {
   const sorted = [...roles];
 
   if (wordOrder === 'SVO') {

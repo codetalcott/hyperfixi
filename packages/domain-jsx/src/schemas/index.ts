@@ -319,6 +319,12 @@ export const fragmentSchema = defineCommand({
       greedy: true,
       svoPosition: 1,
       sovPosition: 1,
+      // `children` carries a `returning` marker from the profile because
+      // `component` writes one ("component Card returning header footer").
+      // A fragment IS its children — "fragment header footer", never
+      // "fragment returning header footer" — so render bare in every language
+      // while the marker stays parseable.
+      renderOverride: { '*': '' },
     }),
   ],
 });
