@@ -25,6 +25,10 @@ export const fetchSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 2,
       sovPosition: 2,
+      // The URL follows the verb bare — "fetch /api", never "fetch with /api".
+      // The profile's `source` marker stays accepted when parsing; it is just
+      // never written. Same for `poll` and `stream` below.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'style',
@@ -54,6 +58,10 @@ export const fetchSchema = defineCommand({
       expectedTypes: ['selector', 'expression'],
       svoPosition: 0,
       sovPosition: 0,
+      // SOV languages put the delivery target AFTER the verb here:
+      // `/api json で 取得 #out に`, not `/api json で #out に 取得`. The data
+      // has to be fetched before it can land anywhere, and the surface follows.
+      sovSlot: 'postVerb',
       markerOverride: {
         en: 'into',
         es: 'en',
@@ -88,6 +96,7 @@ export const pollSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 4,
       sovPosition: 4,
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'duration',
@@ -138,6 +147,7 @@ export const pollSchema = defineCommand({
       expectedTypes: ['selector', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
+      sovSlot: 'postVerb',
       markerOverride: {
         en: 'into',
         es: 'en',
@@ -172,6 +182,7 @@ export const streamSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 2,
       sovPosition: 2,
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'style',
@@ -201,6 +212,7 @@ export const streamSchema = defineCommand({
       expectedTypes: ['selector', 'expression'],
       svoPosition: 0,
       sovPosition: 0,
+      sovSlot: 'postVerb',
       markerOverride: {
         en: 'into',
         es: 'en',
@@ -234,7 +246,9 @@ export const submitSchema = defineCommand({
       required: true,
       expectedTypes: ['selector', 'expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      // The form comes before its target in SOV too — `#form /api に 送信`,
+      // the neutral object-then-goal order. (Higher position = earlier.)
+      sovPosition: 2,
     }),
     defineRole({
       role: 'destination',
@@ -242,7 +256,7 @@ export const submitSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 1,
-      sovPosition: 2,
+      sovPosition: 1,
       markerOverride: {
         en: 'to',
         es: 'a',
@@ -297,7 +311,9 @@ export const transformSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      // Object before instrument in SOV as well — `data uppercase で 変換`.
+      // (Higher position = earlier.)
+      sovPosition: 2,
     }),
     defineRole({
       role: 'instrument',
@@ -305,7 +321,7 @@ export const transformSchema = defineCommand({
       required: true,
       expectedTypes: ['expression', 'literal'],
       svoPosition: 1,
-      sovPosition: 2,
+      sovPosition: 1,
       markerOverride: {
         en: 'with',
         es: 'con',

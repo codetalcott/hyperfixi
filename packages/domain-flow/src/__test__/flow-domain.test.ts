@@ -352,8 +352,11 @@ describe('FlowScript Domain', () => {
     });
 
     it('should parse transform in Korean', () => {
-      // SOV: instrument(sovPos:2) before patient(sovPos:1), marker after value
-      const node = flow.parse('uppercase 로 data 변환', 'ko');
+      // SOV: patient(sovPos:2) before instrument(sovPos:1), marker after value.
+      // This is the order `renderFlow` writes — the two used to disagree, so
+      // the Korean the renderer produced did not parse. See the round-trip
+      // assertions in schema-renderer-parity.test.ts.
+      const node = flow.parse('data uppercase 로 변환', 'ko');
       expect(node.action).toBe('transform');
       expect(extractRoleValue(node, 'patient')).toBe('data');
       expect(extractRoleValue(node, 'instrument')).toBe('uppercase');
@@ -441,8 +444,9 @@ describe('FlowScript Domain', () => {
     });
 
     it('should parse transform in Turkish', () => {
-      // SOV: instrument(sovPos:2) before patient(sovPos:1), marker after value
-      const node = flow.parse('uppercase ile data dönüştür', 'tr');
+      // SOV: patient(sovPos:2) before instrument(sovPos:1), marker after value.
+      // Matches what `renderFlow` writes — see the Korean case above.
+      const node = flow.parse('data uppercase ile dönüştür', 'tr');
       expect(node.action).toBe('transform');
       expect(extractRoleValue(node, 'patient')).toBe('data');
       expect(extractRoleValue(node, 'instrument')).toBe('uppercase');

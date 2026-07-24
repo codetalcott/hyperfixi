@@ -109,6 +109,13 @@ export const listSchema = defineCommand({
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { ja: 'を', ko: '를' },
+      // The `list` role carries a destination marker (`to`/`à`/`e`…) from the
+      // profile, because `add` writes one. `list` does not: it is "list
+      // groceries", never "list to groceries". Rendering bare everywhere the
+      // role has no explicit marker keeps the marker parseable while matching
+      // what `renderList` writes; ja/ko keep を/를 via markerOverride, which
+      // outranks the `'*'` key.
+      renderOverride: { '*': '' },
     }),
   ],
 });
