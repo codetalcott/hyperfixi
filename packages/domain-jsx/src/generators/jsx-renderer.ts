@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -359,23 +361,30 @@ function renderFragment(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a JSX SemanticNode to natural-language JSX DSL text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderJSX(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'element':
-      return renderElement(node, language);
-    case 'component':
-      return renderComponent(node, language);
-    case 'render':
-      return renderRender(node, language);
-    case 'state':
-      return renderState(node, language);
-    case 'effect':
-      return renderEffect(node, language);
-    case 'fragment':
-      return renderFragment(node, language);
-    default:
-      return `// Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    element: renderElement,
+    component: renderComponent,
+    render: renderRender,
+    state: renderState,
+    effect: renderEffect,
+    fragment: renderFragment,
+  },
+});
+
+/**
+ * Render a JSX SemanticNode to natural-language JSX DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderJSX(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

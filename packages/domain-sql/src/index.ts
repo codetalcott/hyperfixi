@@ -53,7 +53,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderSQL } from './generators/sql-renderer.js';
 import { allSchemas, selectSchema, insertSchema, updateSchema, deleteSchema } from './schemas';
 import {
   englishProfile,
@@ -84,9 +89,21 @@ import {
 import { sqlCodeGenerator } from './generators/sql-generator';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual SQL DSL instance with all 11 supported languages.
  */
-export function createSQLDSL(): MultilingualDSL {
+export function createSQLDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'SQL',
     schemas: allSchemas,
@@ -170,6 +187,8 @@ export function createSQLDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: sqlCodeGenerator,
+    renderer: renderSQL,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 
@@ -187,6 +206,7 @@ export {
   germanProfile,
   portugueseProfile,
   russianProfile,
+  allProfiles,
 } from './profiles';
 export { sqlCodeGenerator } from './generators/sql-generator';
 export { renderSQL } from './generators/sql-renderer';

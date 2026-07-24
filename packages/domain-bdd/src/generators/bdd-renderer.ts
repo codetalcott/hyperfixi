@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractValue } from '@lokascript/framework';
+import { extractValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -472,37 +474,60 @@ function renderThen(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a BDD SemanticNode to natural-language BDD text in the target language.
+ * A scenario renders its statements recursively. A statement that cannot be
+ * rendered fails the whole scenario rather than silently dropping a step —
+ * a scenario missing a step reads as valid and is worse than no output.
  */
-export function renderBDD(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'given':
-      return renderGiven(node, language);
-    case 'when':
-      return renderWhen(node, language);
-    case 'then':
-      return renderThen(node, language);
-    case 'scenario': {
-      const compound = node as SemanticNode & { statements?: SemanticNode[]; name?: string };
-      const statements = compound.statements ?? [];
-      const lines = statements.map(s => renderBDD(s, language));
-      if (compound.name) {
-        const scenarioKw: Record<string, string> = {
-          en: 'Scenario:',
-          es: 'Escenario:',
-          ja: 'シナリオ:',
-          ar: 'سيناريو:',
-          ko: '시나리오:',
-          zh: '场景:',
-          tr: 'Senaryo:',
-          fr: 'Scénario:',
-        };
-        const header = `${scenarioKw[language] ?? 'Scenario:'} ${compound.name}`;
-        return [header, ...lines.map(l => `  ${l}`)].join('\n');
-      }
-      return lines.join('\n');
-    }
-    default:
-      return `// Unknown: ${node.action}`;
+function renderScenario(node: SemanticNode, language: string): string | null {
+  const compound = node as SemanticNode & { statements?: SemanticNode[]; name?: string };
+  const statements = compound.statements ?? [];
+
+  const lines: string[] = [];
+  for (const statement of statements) {
+    const line = renderBDD(statement, language);
+    if (line === null) return null;
+    lines.push(line);
   }
+
+  if (compound.name) {
+    const scenarioKw: Record<string, string> = {
+      en: 'Scenario:',
+      es: 'Escenario:',
+      ja: 'シナリオ:',
+      ar: 'سيناريو:',
+      ko: '시나리오:',
+      zh: '场景:',
+      tr: 'Senaryo:',
+      fr: 'Scénario:',
+    };
+    const header = `${scenarioKw[language] ?? 'Scenario:'} ${compound.name}`;
+    return [header, ...lines.map(l => `  ${l}`)].join('\n');
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
+ */
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    given: renderGiven,
+    when: renderWhen,
+    then: renderThen,
+    scenario: renderScenario,
+  },
+});
+
+/**
+ * Render a BDD SemanticNode to natural-language BDD text in the target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema (or a scenario contains such a statement).
+ */
+export function renderBDD(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

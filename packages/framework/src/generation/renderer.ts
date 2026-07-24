@@ -228,8 +228,12 @@ export interface DomainRendererConfig {
   /**
    * Hand-written renderers per action. These take absolute precedence over the
    * schema-driven path, so a domain's existing output is preserved byte for byte.
+   *
+   * An override returning `null` means "this action cannot be rendered" and is
+   * passed straight through — it does not fall through to the schema path,
+   * since a hand-written renderer knows more about its action than the schema does.
    */
-  readonly overrides?: Readonly<Record<string, (node: SemanticNode, language: string) => string>>;
+  readonly overrides?: Readonly<Record<string, DomainRenderFn>>;
 }
 
 /**

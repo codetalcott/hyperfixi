@@ -109,8 +109,13 @@ export async function handleBDDMultiStep(
       const result = parseScenario(scenario, from);
       let rendered: string | null = null;
       if (renderer) {
+        // renderBDD returns null for a step it cannot render. Joining that in
+        // would put the literal "null" into the scenario, so a single
+        // unrenderable step makes the whole translation unavailable.
         const renderedSteps = result.steps.map((step: any) => renderer(step, to));
-        rendered = renderedSteps.join('\n');
+        rendered = renderedSteps.every((step: string | null) => step != null)
+          ? renderedSteps.join('\n')
+          : null;
       }
       return jsonResponse({
         input: { scenario, language: from },

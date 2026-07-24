@@ -32,7 +32,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderBehaviorSpec } from './generators/behaviorspec-renderer.js';
 import {
   allSchemas,
   testSchema,
@@ -81,9 +86,21 @@ import {
 } from './parser/spec-parser.js';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual BehaviorSpec DSL instance with all 8 supported languages.
  */
-export function createBehaviorSpecDSL(): MultilingualDSL {
+export function createBehaviorSpecDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'BehaviorSpec',
     schemas: allSchemas,
@@ -146,6 +163,8 @@ export function createBehaviorSpecDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: behaviorspecCodeGenerator,
+    renderer: renderBehaviorSpec,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 

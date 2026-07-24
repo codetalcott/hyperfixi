@@ -38,7 +38,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderFlow } from './generators/flow-renderer.js';
 import {
   allSchemas,
   fetchSchema,
@@ -76,9 +81,21 @@ import {
 import { flowCodeGenerator } from './generators/flow-generator.js';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual FlowScript DSL instance with all 11 supported languages.
  */
-export function createFlowDSL(): MultilingualDSL {
+export function createFlowDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'FlowScript',
     schemas: allSchemas,
@@ -162,6 +179,8 @@ export function createFlowDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: flowCodeGenerator,
+    renderer: renderFlow,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 

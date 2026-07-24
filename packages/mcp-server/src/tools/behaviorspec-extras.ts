@@ -109,16 +109,29 @@ export async function handleBehaviorSpecMultiLine(
 
       const result = parseSpec(scenario, from);
       const renderedTests: string[] = [];
+      // renderBehaviorSpec returns null for a node it cannot render. Interpolating
+      // that would write the literal "null" into the spec, so one unrenderable
+      // line makes the whole translation unavailable.
+      let complete = true;
+      const renderLine = (node: unknown, indent: string): void => {
+        const line = render(node, to);
+        if (line == null) {
+          complete = false;
+          return;
+        }
+        lines.push(`${indent}${line}`);
+      };
+      let lines: string[] = [];
+
       for (const test of result.tests) {
-        const lines: string[] = [];
-        lines.push(`test "${test.name}"`);
+        lines = [`test "${test.name}"`];
         for (const given of test.givens) {
-          lines.push(`  ${render(given, to)}`);
+          renderLine(given, '  ');
         }
         for (const interaction of test.interactions) {
-          lines.push(`  ${render(interaction.when, to)}`);
+          renderLine(interaction.when, '  ');
           for (const exp of interaction.expectations) {
-            lines.push(`    ${render(exp.node, to)}`);
+            renderLine(exp.node, '    ');
           }
         }
         renderedTests.push(lines.join('\n'));
@@ -126,7 +139,7 @@ export async function handleBehaviorSpecMultiLine(
 
       return jsonResponse({
         input: { scenario, language: from },
-        translated: renderedTests.join('\n\n'),
+        translated: complete ? renderedTests.join('\n\n') : null,
         playwright: compile(scenario, from),
         errors: result.errors,
       });

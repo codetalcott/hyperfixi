@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -250,19 +252,28 @@ function renderTranslate(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render an LLM SemanticNode to natural-language LLM DSL text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderLLM(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'ask':
-      return renderAsk(node, language);
-    case 'summarize':
-      return renderSummarize(node, language);
-    case 'analyze':
-      return renderAnalyze(node, language);
-    case 'translate':
-      return renderTranslate(node, language);
-    default:
-      return `-- Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    ask: renderAsk,
+    summarize: renderSummarize,
+    analyze: renderAnalyze,
+    translate: renderTranslate,
+  },
+});
+
+/**
+ * Render a LLM SemanticNode to natural-language LLM DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderLLM(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

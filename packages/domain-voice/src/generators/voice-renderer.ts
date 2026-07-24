@@ -9,7 +9,8 @@
  */
 
 import type { SemanticNode, CommandSchema } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allProfiles } from '../profiles/index.js';
 import { allSchemas } from '../schemas/index';
 
 // =============================================================================
@@ -424,39 +425,38 @@ function renderHelp(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a voice SemanticNode to natural-language voice command text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderVoice(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'navigate':
-      return renderNavigate(node, language);
-    case 'click':
-      return renderClick(node, language);
-    case 'type':
-      return renderType(node, language);
-    case 'scroll':
-      return renderScroll(node, language);
-    case 'read':
-      return renderRead(node, language);
-    case 'zoom':
-      return renderZoom(node, language);
-    case 'select':
-      return renderSelect(node, language);
-    case 'back':
-      return renderBack(node, language);
-    case 'forward':
-      return renderForward(node, language);
-    case 'focus':
-      return renderFocus(node, language);
-    case 'close':
-      return renderClose(node, language);
-    case 'open':
-      return renderOpen(node, language);
-    case 'search':
-      return renderSearch(node, language);
-    case 'help':
-      return renderHelp(node, language);
-    default:
-      return `-- Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    navigate: renderNavigate,
+    click: renderClick,
+    type: renderType,
+    scroll: renderScroll,
+    read: renderRead,
+    zoom: renderZoom,
+    select: renderSelect,
+    back: renderBack,
+    forward: renderForward,
+    focus: renderFocus,
+    close: renderClose,
+    open: renderOpen,
+    search: renderSearch,
+    help: renderHelp,
+  },
+});
+
+/**
+ * Render a voice SemanticNode to natural-language voice DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderVoice(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

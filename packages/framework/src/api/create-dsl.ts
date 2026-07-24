@@ -104,8 +104,11 @@ export interface DomainExtension {
 
   /**
    * Vocabulary per language code. Codes must be configured on the DSL; an
-   * unknown code is a configuration error, not a silent no-op. A configured
-   * language with no entry here simply cannot parse or render the command.
+   * unknown code is a configuration error, not a silent no-op.
+   *
+   * A subset is allowed — a command can be added in six of a DSL's eleven
+   * languages. The languages left out simply do not parse it, so vocabulary
+   * can be filled in over time rather than all at once.
    */
   readonly vocabulary: Readonly<Record<string, ExtensionVocabulary>>;
 
@@ -226,9 +229,17 @@ class DSLRegistry {
   private patterns = new Map<string, LanguagePattern[]>();
   private tokenizers = new Map<string, LanguageTokenizer>();
   private schemas: readonly CommandSchema[];
+  private partiallyTranslatedActions: ReadonlySet<string>;
 
-  constructor(config: DSLConfig) {
+  /**
+   * @param partiallyTranslatedActions Actions permitted to lack a keyword in
+   *   some configured languages — extension commands, which may be added for a
+   *   subset of the DSL's languages. A built-in command missing a keyword stays
+   *   an error, since that is a domain-authoring mistake.
+   */
+  constructor(config: DSLConfig, partiallyTranslatedActions: ReadonlySet<string> = new Set()) {
     this.schemas = config.schemas;
+    this.partiallyTranslatedActions = partiallyTranslatedActions;
 
     // Register each language
     for (const lang of config.languages) {
@@ -243,6 +254,12 @@ class DSLRegistry {
     // Generate patterns for this language
     const patterns: LanguagePattern[] = [];
     for (const schema of this.schemas) {
+      if (
+        this.partiallyTranslatedActions.has(schema.action) &&
+        !lang.patternProfile.keywords[schema.action]
+      ) {
+        continue; // this extension command was not translated into this language
+      }
       const pattern = generatePattern(schema, lang.patternProfile);
       patterns.push(pattern);
     }
@@ -619,6 +636,7 @@ function applyExtensions(config: DSLConfig): DSLConfig {
 export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
   // Extensions must be folded in before anything reads the config
   const effectiveConfig = applyExtensions(config);
+  const extensionActions = new Set((config.extensions ?? []).map(e => e.schema.action));
 
   // Create or use provided dictionary
   const dictionary = effectiveConfig.dictionary ?? createDefaultDictionary(effectiveConfig);
@@ -634,6 +652,6 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
   });
 
   // Create registry and implementation
-  const registry = new DSLRegistry(effectiveConfig);
+  const registry = new DSLRegistry(effectiveConfig, extensionActions);
   return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider);
 }
