@@ -485,17 +485,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} テスト",
+          "format": "テスト {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "テスト"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "テスト"
             }
           ]
         },
@@ -695,18 +695,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} 否定",
+          "format": "否定 {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "否定"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "否定"
             }
           ]
         },
@@ -963,17 +963,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} 테스트",
+          "format": "테스트 {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "테스트"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "테스트"
             }
           ]
         },
@@ -1173,18 +1173,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} 아님",
+          "format": "아님 {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "아님"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "아님"
             }
           ]
         },
@@ -1680,17 +1680,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} test",
+          "format": "test {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "test"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "test"
             }
           ]
         },
@@ -1890,18 +1890,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} degil",
+          "format": "degil {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "degil"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "degil"
             }
           ]
         },

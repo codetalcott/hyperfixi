@@ -1617,17 +1617,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} 戻る",
+          "format": "戻る {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "戻る"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "戻る"
             }
           ]
         },
@@ -1643,17 +1643,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} 進む",
+          "format": "進む {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "進む"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "進む"
             }
           ]
         },
@@ -1822,17 +1822,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} ヘルプ",
+          "format": "ヘルプ {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "ヘルプ"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "ヘルプ"
             }
           ]
         },
@@ -3041,17 +3041,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} 뒤로",
+          "format": "뒤로 {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "뒤로"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "뒤로"
             }
           ]
         },
@@ -3067,17 +3067,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} 앞으로",
+          "format": "앞으로 {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "앞으로"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "앞으로"
             }
           ]
         },
@@ -3246,17 +3246,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} 도움말",
+          "format": "도움말 {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "도움말"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "도움말"
             }
           ]
         },
@@ -4423,17 +4423,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} geri",
+          "format": "geri {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "geri"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "geri"
             }
           ]
         },
@@ -4449,17 +4449,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} ileri",
+          "format": "ileri {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "ileri"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "ileri"
             }
           ]
         },
@@ -4604,17 +4604,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} yardım",
+          "format": "yardım {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "yardım"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "yardım"
             }
           ]
         },

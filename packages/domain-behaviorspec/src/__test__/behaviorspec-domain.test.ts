@@ -238,11 +238,22 @@ describe('Japanese parsing (SOV)', () => {
     expect(roleValue(node, 'duration')).toBe('300ms');
   });
 
-  it('parses test command (SOV: name keyword)', () => {
-    // In SOV, keyword comes at the end: "name" テスト
-    const node = dsl.parse('"テスト名" テスト', 'ja');
+  it('parses test command (SOV: name follows the verb)', () => {
+    // `test` is the SOV exception: its name role declares `sovSlot: 'postVerb'`,
+    // because a test header reads as a label and the label follows the word
+    // `test` — which is what `renderTest` has always written (`テスト "ログイン"`).
+    // This used to assert the verb-last form `"テスト名" テスト`, which parsed
+    // only because pattern generation ignored `sovSlot`; no renderer ever
+    // produced it, so the surface the tool emits did not read back.
+    const node = dsl.parse('テスト "テスト名"', 'ja');
     expect(node.action).toBe('test');
     expect(roleValue(node, 'name')).toBe('テスト名');
+  });
+
+  it('round-trips the rendered test header', () => {
+    const en = dsl.parse('test "login flow"', 'en');
+    const surface = renderBehaviorSpec(en, 'ja') as string;
+    expect(roleValue(dsl.parse(surface, 'ja'), 'name')).toBe('login flow');
   });
 });
 
