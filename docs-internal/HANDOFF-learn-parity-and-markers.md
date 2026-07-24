@@ -1,5 +1,19 @@
 # Handoff: domain-learn parity, the Tier B / zh-`go` marker review, and the `sovSlot` pattern-gen gap
 
+> **STATUS 2026-07-24 — all three items are DONE**, on branch
+> `fix/sovslot-pattern-generation` (3 commits). Kept because the gate procedure
+> and the Traps still apply, and because two of the three items found something
+> the brief below got wrong — recorded in "§ What the three items actually
+> found" at the end. Read that before trusting the item descriptions.
+>
+> - **Item 1** — pattern generation now reads `sovSlot`; the voice `known gap`
+>   block is a real round-trip assertion.
+> - **Item 2** — Tier B markers landed for all nine languages (owner chose the
+>   full-judgment scope); zh AND vi `go` now render bare (owner chose both).
+> - **Item 3** — the lock landed (option (a)). The brief's premise about the
+>   glued particle was wrong; see
+>   `docs-internal/DOMAIN-LEARN-PARITY-FINDINGS.md`.
+
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
 This is what remained after the schema↔renderer parity arc merged (#760, 2026-07-24 —
@@ -185,3 +199,97 @@ gzip sizes **CI measures** (Linux zlib). A local macOS `npm run update:sizes` re
 lower on the full bundles and reports a spurious `CHANGED`. If the CI bundle-size job
 fails on a metadata mismatch, read the sizes from the **failed CI log** and commit those,
 not your local measurement. Raw sizes are platform-stable and can be trusted locally.
+
+---
+
+## What the three items actually found (2026-07-24)
+
+Three things the brief above got wrong, each caught by measuring rather than by
+following it. Same pattern as the parent arc's own postscript — which is now
+twice in a row, and probably the most transferable lesson in this file.
+
+### 1. Item 3's stated blocker was 2% of the problem
+
+The brief says domain-learn is blocked by the glued SOV particle (`#buttonに`)
+and needs a new `RoleSpec` field (`glueMarker: true`). Measured over all 300
+cells, the glue is **14 of 231 divergences**. The dominant one — 126 cells — is
+the **verb form**: `renderLearn` writes the commanding form from its own
+conjugation tables while the schema renderer writes the profile's dictionary
+form. `glueMarker` would have moved parity 23% → 25% and closed nothing.
+
+Underneath that sat a finding that outranks parity entirely: **`renderLearn`'s
+output re-parses in only 75 of 150 cases, with de/ja/ko/tr at 0/15.** de is
+verb-form ALONE (German separable-verb imperatives are absent from the profile's
+keyword alternatives — `hinzufügen .x zu #a` parses, `füge hinzu .x zu #a` does
+not), so de is fixable with profile data and nothing else. Full write-up,
+including the suggested cheapest-first order, in
+`docs-internal/DOMAIN-LEARN-PARITY-FINDINGS.md`.
+
+### 2. The corpus is coarser than "corpus is ground truth" implies
+
+Item 2 says to check what the corpus renders. It is worth knowing exactly what
+that phrase buys: the non-en corpus rows are `grammar-transform` output from
+**@lokascript/i18n**'s own dictionaries and grammar profiles, NOT from
+`command-schemas.ts` — so it is genuinely independent evidence, not circular.
+
+But i18n applies **one destination marker per language to every command** (es
+renders `toggle .open a #menu` with the same `a` as `add`). It has no per-command
+knowledge at all. So the corpus can validate a language's directional choice and
+can never settle a per-command one — those remain judgment calls, and the
+schema already diverges from the corpus per-command in the shipped state (pt
+`add` is `a` while the corpus destination is `para`).
+
+The corollary for zh/vi `go`: correcting the corpus row is not a marker-table
+edit. It goes through `patterns-reference/scripts/fix-translations.sql`, the
+existing hand-authored corrections path.
+
+Corpus corrections were applied ONLY where the rendering was ungrammatical
+(zh `前往 到`, vi `đi đến vào` — a doubled preposition). Where the corpus is
+merely less idiomatic than the new schema marker (he/it/th/hi/ru/uk `go`), it was
+left alone, matching what #760 did for es/pt.
+
+### 3. `markerLegacy` and `markerVariants` live on different code paths
+
+Not documented anywhere before this arc, and it bites the moment you follow the
+brief's "add `markerLegacy` for every language whose marker changes" instruction:
+
+- `markerLegacy` is read ONLY by the marker resolver's **override** branch.
+- `markerVariants` is read ONLY by its **profile-default** branch.
+
+So giving a language a `markerOverride` silently moves it off the branch that
+supplied its `markerVariants`. Adding `markerOverride.he` to `go` stopped
+`לך את back` parsing — caught by two roadmap tests, not by the ratchet. The fix
+was to move he's `את` into `markerLegacy` (it is a parse-only synonym, which is
+what `markerLegacy` is for) while zh keeps `markerVariants` because it has no
+override. Both sites now carry a comment saying so.
+
+Related: rendering a role bare via `renderOverride` without also setting
+`markerOptional` produces a surface the generated pattern cannot read back —
+`前往 url` failed to re-parse until zh/vi joined en in `markerOptional`.
+
+### Gates run
+
+- Framework 841, semantic 7544, voice 924, flow 534, behaviorspec 321,
+  learn 896 — full `npm run test:check` green, typecheck clean.
+- Multilingual `--regression` green after item 2, and the regenerated baseline
+  moves ONLY `bundleSize`: no parse-rate, fidelity, precision, multiset-recall,
+  role-fidelity, value-recall, execution or R4 metric shifted, because every
+  changed language keeps its old marker parseable via `markerLegacy`.
+- Downstream lokascript-learn (node_modules overlay incl. `framework`, per the
+  parent brief's trap #6): **1781 pass / 0 fail**, `bunx tsc --noEmit` clean.
+- Item 1 needed no baseline regeneration: `@lokascript/semantic` has its own
+  pattern generator and no `sovSlot`, so nothing the gate scores moved.
+
+### Left open, deliberately
+
+- The `format` string in generated patterns resolves marker position from the
+  profile alone, missing `markerPosition` and the SOV default that the token
+  builder applies — so `format` and `tokens` disagree on which side of its value
+  an SOV marker sits. Pre-existing and documentation-only (nothing reads
+  `format`). Pinned with a comment and a test expectation in
+  `pattern-generator.test.ts`; fixing it would move every SOV golden entry with a
+  marker and bury the `sovSlot` diff.
+- The seven Tier B languages whose corpus and schema agreed on a locative were
+  changed on judgment (owner's call), but their CORPUS rows still render the old
+  marker — see § 2 above for why that is the shipped norm rather than a gap.
+- domain-learn's five queued fixes, in `DOMAIN-LEARN-PARITY-FINDINGS.md`.
