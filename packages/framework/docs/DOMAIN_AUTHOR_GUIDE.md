@@ -493,7 +493,37 @@ export const listSchema = defineCommand({
 
 For translation support, implement a renderer that converts `SemanticNode` → human-readable text.
 
-**Option 1: Auto-generate from schemas** (simplest — handles word order automatically):
+**Option 1: `createDomainRenderer`** (recommended — hand-written cases plus a
+schema-driven fallback):
+
+```typescript
+import { createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
+
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: { select: renderSelect, insert: renderInsert },
+});
+
+/** Returns null when the action has neither a hand-written case nor a schema. */
+export function renderMyDomain(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
+}
+```
+
+Resolution order is `overrides[node.action]` → schema-driven → `null`. The
+fallback is what makes the domain extensible: a command a consumer adds through
+[`DomainExtension`](#extending-an-existing-domain) renders with correct word
+order, markers and keywords without this package knowing it exists.
+
+**Return `null`, not a sentinel string.** Every domain here used to signal
+"unknown action" with `` `-- Unknown: ${node.action}` `` — a successful-looking
+string that forced consumers into `sentence.startsWith('--')` checks, and
+silently dropped any legitimate output beginning with `--`.
+
+**Option 2: `createSchemaRenderer`** (purely schema-driven, no hand-written cases):
 
 ```typescript
 import { createSchemaRenderer } from '@lokascript/framework';
@@ -502,7 +532,21 @@ const renderer = createSchemaRenderer(schemas, profiles);
 renderer.render(node, 'ja'); // → "users から name 選択"
 ```
 
-**Option 2: Use renderer helpers** (more control):
+It renders the action name for an unknown action rather than returning null.
+Role order follows `svoPosition` / `sovPosition` (**descending — higher values
+render earlier**), using the same comparator as pattern generation, so a rendered
+surface always re-parses. Roles express rendering details on their `RoleSpec`:
+
+| Field                    | Effect                                                             |
+| ------------------------ | ------------------------------------------------------------------ |
+| `default`                | rendered in an absent role's place                                 |
+| `renderOverride[lang]`   | marker for rendering only; `''` renders the role bare              |
+| `renderOverride['*']`    | same, for every language without its own `markerOverride`          |
+| `markerPositionOverride` | per-language marker side, against the word-order default           |
+| `sovSlot: 'postVerb'`    | role renders after the verb in SOV (`content 要約 として bullets`) |
+| `quoteMultiword`         | quote a multi-word value that would re-tokenize as several         |
+
+**Option 3: Use renderer helpers** (more control):
 
 ```typescript
 import { lookupKeyword, lookupMarker, buildPhrase } from '@lokascript/framework';
@@ -544,6 +588,91 @@ export const myRenderer: NaturalLanguageRenderer = {
 ```
 
 Wire it into translation: parse in source language, render in target language.
+
+### Extending an Existing Domain
+
+A consumer can add a command to a domain **without editing that package**, by
+passing a `DomainExtension` to its `createXDSL()`. A schema plus one vocabulary
+entry per language is enough to parse, render and compile the command in all of
+them — word order, marker placement and keyword position follow from the schema
+and the language profiles.
+
+```typescript
+import { defineCommand, defineRole, type DomainExtension } from '@lokascript/framework';
+import { createLLMDSL } from '@lokascript/domain-llm';
+
+const research: DomainExtension = {
+  schema: defineCommand({
+    action: 'research',
+    description: 'Research a topic against a source',
+    category: 'llm',
+    primaryRole: 'patient',
+    roles: [
+      defineRole({
+        role: 'patient',
+        required: true,
+        expectedTypes: ['expression'],
+        svoPosition: 2,
+        sovPosition: 2,
+      }),
+      defineRole({
+        role: 'source',
+        required: true,
+        expectedTypes: ['expression'],
+        svoPosition: 1,
+        sovPosition: 1,
+        markerOverride: { en: 'from', es: 'de', ja: 'から', ko: '에서', ar: 'من', tr: 'dan' },
+      }),
+    ],
+  }),
+  vocabulary: {
+    en: { keyword: { primary: 'research' } },
+    es: { keyword: { primary: 'investigar' } },
+    ja: { keyword: { primary: '調査' } },
+    ko: { keyword: { primary: '조사' } },
+    ar: { keyword: { primary: 'ابحث' } },
+    tr: { keyword: { primary: 'araştır' } },
+  },
+};
+
+const llm = createLLMDSL({ extensions: [research] });
+
+llm.parse('research climate from #wiki', 'en');
+llm.render(node, 'ja'); // → 'climate #wiki から 調査'   (verb-final)
+llm.render(node, 'ar'); // → 'ابحث climate من #wiki'     (verb-initial)
+llm.compile('research climate from #wiki', 'en');
+```
+
+`render` and `generate` on the extension are optional — supply them only when
+the command's surface form or output cannot be derived from the schema.
+
+**Vocabulary may cover a subset of the DSL's languages.** The example above adds
+six of domain-llm's eleven; the other five simply do not parse the command, so
+vocabulary can be filled in over time. Two things are configuration errors
+rather than silent no-ops: an action that collides with an existing command, and
+vocabulary for a language the DSL does not configure.
+
+**Extensions are applied at construction, not registered afterwards.** A DSL
+generates every language's patterns when it is built, so a command registered
+into mutable state later would compile and render but silently fail to parse.
+
+#### The vocabulary shape
+
+Each language profile is a small, flat object — this is the whole contract that
+makes extension cheap:
+
+```typescript
+{
+  code: 'ja',
+  wordOrder: 'SOV',                              // 'SVO' | 'SOV' | 'VSO' | 'V2'
+  keywords: { research: { primary: '調査', alternatives: ['調べる'] } },
+  roleMarkers: { source: { primary: 'から', position: 'after' } },
+}
+```
+
+An extension's `vocabulary[lang]` supplies the `keywords` entry for its action,
+and optionally `roleMarkers` for a role the profile does not already cover
+(usually unnecessary — markers are shared across a domain's commands).
 
 ### Structured Diagnostics
 
