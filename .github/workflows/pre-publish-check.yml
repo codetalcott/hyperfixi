@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       packages:
-        description: 'Packages to check (comma-separated, e.g., core,semantic,i18n or "all")'
+        description: 'Packages: "all", or a comma-separated subset by DIRECTORY name (e.g. core,semantic,i18n). Note publish.yml accepts either directory or npm names; this one takes directory names only.'
         required: true
         type: string
         default: 'all'
