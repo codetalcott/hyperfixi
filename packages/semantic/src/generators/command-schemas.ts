@@ -419,6 +419,19 @@ export const addSchema: CommandSchema = {
       // English — the gap lokascript-learn corrects with 6 of its 16 override
       // entries. ja に / ko 에 / tr e are already directional, so they keep
       // the profile default.
+      //
+      // Tier B (2.9): he/id/it/sw were the remaining locatives that this
+      // language actually distinguishes.
+      //   he — `על` is "ON"; Hebrew adds with the allative `אל` (`ל` is a bound
+      //        prefix, so it cannot stand as a separate marker token).
+      //   id — `pada` is "at/on"; `ke` is the directional, and it is what the
+      //        i18n corpus already renders for every id destination.
+      //   it — `in` is locative; Italian adds with `a` (`aggiungere a`).
+      //   sw — `kwenye` is not merely locative, it is sw's EVENT keyword
+      //        (`on: 'kwenye'` in the dictionary), so reusing it as a
+      //        destination marker collides. `kwa` is the corpus rendering.
+      // hi `में` / ru+uk `в` / th `ใน` / vi `vào` are already the right
+      // container-directional for "add to", and keep the profile default.
       markerOverride: {
         en: 'to',
         es: 'a',
@@ -427,6 +440,10 @@ export const addSchema: CommandSchema = {
         fr: 'à',
         de: 'zu',
         pt: 'a',
+        he: 'אל',
+        id: 'ke',
+        it: 'a',
+        sw: 'kwa',
       },
       // Each language's previous primary marker (and its alternates) still
       // parses, so source written against ≤2.8 keeps working.
@@ -437,6 +454,10 @@ export const addSchema: CommandSchema = {
         fr: ['sur', 'dans'],
         de: ['auf', 'in'],
         pt: ['em', 'para'],
+        he: ['על', 'ב', 'ל'],
+        id: ['pada', 'di'],
+        it: ['in', 'su'],
+        sw: ['kwenye'],
       },
     },
   ],
@@ -541,12 +562,22 @@ export const putSchema: CommandSchema = {
       // "put 'hello' into #output" — directional, so the same locative-default
       // correction as `add`. es `en` and pt `em` are already right for "into",
       // as are ja に / ko 에 / tr e; only ar/zh/fr/de need an override.
+      //
+      // Tier B (2.9): `put` is ILLATIVE, so it diverges from `add` where the
+      // two senses differ. he takes `ב` ("in/into" — `שים ב`), NOT the allative
+      // `אל` that `add`/`go` take. it keeps its locative `in` (`mettere in`) —
+      // it is `add`/`go` that needed `a`. id/sw change for the same reason as
+      // `add` (directional / event-keyword collision). hi `में`, ru+uk `в`,
+      // th `ใน` and vi `vào` are all already the illative.
       markerOverride: {
         en: 'into',
         ar: 'في',
         zh: '到',
         fr: 'dans',
         de: 'in',
+        he: 'ב',
+        id: 'ke',
+        sw: 'kwa',
       },
       // `before` / `after` are alternate position markers; the matched marker
       // is recorded as a literal in the `method` role (a derived role with no
@@ -557,6 +588,9 @@ export const putSchema: CommandSchema = {
         zh: ['在', '于'],
         fr: ['sur', 'à'],
         de: ['auf', 'zu'],
+        he: ['על', 'אל', 'ל'],
+        id: ['pada', 'di'],
+        sw: ['kwenye'],
       },
       methodCarrier: 'method',
     },
@@ -1755,9 +1789,21 @@ export const goSchema: CommandSchema = {
       svoPosition: 1,
       sovPosition: 1,
       // "go to /page" (parsing). Directional, so the same locative-default
-      // correction as `add`/`put`. zh is deliberately left alone: the corpus
-      // renders `前往 到 url`, and 前往 already encodes direction, so changing
-      // it is a corpus question rather than a marker one.
+      // correction as `add`/`put`.
+      //
+      // Tier B (2.9): `go` is pure ALLATIVE — motion toward a target — so it
+      // needs the directional in more languages than `add`/`put` do, including
+      // ones where a container-locative was fine for those two.
+      //   he — `אל` ("toward"), as `add`; `לך על url` read "go ON url".
+      //   hi — `पर`: Hindi navigates to a page with `पर जाएं`; `में` is
+      //        "go INTO", which is entering a place, not opening a URL.
+      //   id — `ke`, as `add`.
+      //   it — `a`: `andare a` for a specific target (`andare in` is for
+      //        regions — `andare in Italia`).
+      //   ru/uk — `на`: `перейти на сторінку` is the navigation idiom; `в`
+      //        ("into") is right for `add`/`put` but not for opening a page.
+      //   sw — `kwa`, as `add`.
+      // th is NOT here — it renders bare, with zh and vi; see below.
       markerOverride: {
         en: 'to',
         es: 'a',
@@ -1765,21 +1811,75 @@ export const goSchema: CommandSchema = {
         fr: 'à',
         de: 'zu',
         pt: 'para',
+        he: 'אל',
+        hi: 'पर',
+        id: 'ke',
+        it: 'a',
+        ru: 'на',
+        sw: 'kwa',
+        uk: 'на',
       },
-      renderOverride: { en: '' }, // "go /page" (rendering — no preposition)
+      // "go /page" (rendering — no preposition).
+      //
+      // zh, vi and th render BARE.
+      //
+      // zh and vi because their `go` keyword already encodes the direction, so
+      // any destination marker is a second one: zh `前往` is "proceed-to"
+      // (`前往 到 url` = "proceed-to to url") and vi `đi đến` is literally
+      // "go to" (`đi đến vào url` = "go-to into url"). Both are corrected in
+      // the i18n corpus in the same change
+      // (`patterns-reference/scripts/fix-translations.sql`).
+      //
+      // th because Thai motion verbs take a BARE destination — `ไปบ้าน`
+      // ("go home"), `ไปโรงเรียน` ("go school") — so `ไป url` is the idiomatic
+      // form. The profile default rendered `ไป ใน url` ("go IN url"), which is
+      // what needed fixing; the obvious replacement `ยัง` (giving the formal
+      // `ไปยัง`) is rejected because `ยัง` is also the very common adverb
+      // "still/yet", and the V4 vocab gate correctly refuses to classify it as
+      // a particle — promoting it would mis-tokenize ordinary Thai.
+      //
+      // Parsing is unaffected for all three: none has a `markerOverride`, so
+      // each stays on the profile-default branch and keeps accepting its old
+      // markers (th `ใน` / `ไปยัง`) from the profile itself.
+      renderOverride: { en: '', zh: '', vi: '', th: '' },
       // `go back` renders the destination bare in en (history nav has no `to`),
       // and he/zh render it with their PATIENT marker (לך את back / 前往 把 back)
       // while go-url keeps the destination marker (לך על url / 前往 到 url) —
       // the corpus is ground truth, so en's `to` is optional and he/zh accept
       // the patient particle as a destination-marker alternative, scoped to go.
-      markerOptional: { en: true },
-      markerVariants: { he: ['את'], zh: ['把'] },
+      // The render side drops the preposition for these four, so the parse
+      // side cannot require it: `go /page`, `前往 url`, `đi đến url`, `ไป url`
+      // must parse alongside the marked forms the profile still accepts.
+      markerOptional: { en: true, zh: true, vi: true, th: true },
+      // Only zh is left here. `markerVariants` is merged as alternatives by the
+      // PROFILE-DEFAULT branch of marker resolution; `markerLegacy` by the
+      // OVERRIDE branch (see `resolveMarkerForRole` and `pattern-generator`'s
+      // `pushWord`/`asMarker`). he moved to the override branch when it gained
+      // a `markerOverride` above, so its `את` moved to `markerLegacy` with it —
+      // leaving it here would have silently stopped `לך את back` parsing. zh has
+      // no markerOverride (it changes only how it RENDERS), so it stays.
+      markerVariants: { zh: ['把'] },
       markerLegacy: {
         es: ['en', 'sobre', 'hacia'],
         ar: ['على', 'في', 'ب'],
         fr: ['sur', 'dans'],
         de: ['auf', 'in'],
         pt: ['em', 'a'],
+        // `את` is he's PATIENT particle, which the transformer renders before
+        // go's destination in `go back` (`לך את back`) — a parse-only synonym
+        // here, never rendered, which is exactly what markerLegacy is for.
+        he: ['על', 'ב', 'ל', 'את'],
+        hi: ['में'],
+        id: ['pada', 'di'],
+        it: ['in', 'su'],
+        ru: ['в', 'к'],
+        sw: ['kwenye'],
+        uk: ['в', 'до'],
+        // zh, vi and th are NOT listed: none has a markerOverride, so all three
+        // stay on the profile-default branch and keep accepting their old
+        // markers from the profile itself. Only their RENDERING changed.
+        // Listing them here would be dead config — markerLegacy is read ONLY by
+        // the override branch.
       },
     },
   ],

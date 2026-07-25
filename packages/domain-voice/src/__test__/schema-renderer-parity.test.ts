@@ -130,7 +130,14 @@ describe('renderVoice round-trips through the parser', () => {
   // A rendered surface its own parser cannot read back is a broken
   // translation. Checked on the SOV three, where marker position and the
   // pre/post-verb split make it easiest to get wrong.
-  for (const action of ['scroll', 'search', 'click', 'type']) {
+  //
+  // `back`/`forward`/`help` are here because they used to be the counter-example:
+  // all three write their argument AFTER the verb (`戻る 2`, `ヘルプ 移動`), which
+  // `sovSlot: 'postVerb'` declares, but pattern generation did not read that
+  // field — so the generated SOV pattern expected the argument pre-verb and
+  // dropped it on re-parse. The command survived; its argument did not. Pattern
+  // generation now buckets by `sovSlot` exactly as the renderer does.
+  for (const action of ['scroll', 'search', 'click', 'type', 'back', 'forward', 'help']) {
     const node = voice.parse(EXAMPLES[action], 'en');
 
     for (const language of ['ja', 'ko', 'tr']) {
@@ -144,26 +151,26 @@ describe('renderVoice round-trips through the parser', () => {
   }
 });
 
-describe('known gap: back/forward/help do not round-trip in SOV', () => {
-  // These three render their argument AFTER the verb in every language
-  // (`戻る 2`, `ヘルプ 移動`) — which is what `renderVoice` has always written,
-  // and what the schemas now declare via `sovSlot: 'postVerb'`. Pattern
-  // generation does not read `sovSlot`, so the generated SOV pattern still
-  // expects the argument BEFORE the verb and drops it on re-parse. The command
-  // survives; its argument does not.
-  //
-  // Closing it means either moving the argument pre-verb in `renderVoice`
-  // (an output change beyond this arc) or teaching pattern generation about
-  // `sovSlot`. Pinned here so whichever lands is visible.
-  for (const action of ['back', 'forward', 'help']) {
+describe('post-verb SOV arguments keep their VALUE, not just their role', () => {
+  // The role-key comparison above would still pass if the argument re-parsed
+  // into the right role with the wrong text. State the value directly, since
+  // the whole point of the `sovSlot` fix is that `戻る 2` reads back as 2.
+  for (const [action, value] of [
+    ['back', '2'],
+    ['forward', '2'],
+    ['help', 'navigate'],
+  ] as const) {
     const node = voice.parse(EXAMPLES[action], 'en');
+    const role = action === 'help' ? 'patient' : 'quantity';
 
     for (const language of ['ja', 'ko', 'tr']) {
-      it(`${action} × ${language} — re-parses as the right command, minus its argument`, () => {
+      it(`${action} × ${language} — the argument survives the round trip`, () => {
         const surface = renderVoice(node, language) as string;
         const reparsed = voice.parse(surface, language);
-        expect(reparsed.action).toBe(action);
-        expect([...reparsed.roles.keys()]).toEqual([]);
+        // A numeric page count re-parses as a `literal` (carrying `value`), a
+        // help topic as an `expression` (carrying `raw`) — read whichever.
+        const parsed = reparsed.roles.get(role) as { value?: unknown; raw?: unknown } | undefined;
+        expect(String(parsed?.value ?? parsed?.raw ?? '')).toBe(value);
       });
     }
   }
