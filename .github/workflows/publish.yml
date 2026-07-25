@@ -25,7 +25,7 @@ on:
         type: boolean
         default: false
       packages:
-        description: 'Packages to publish (comma-separated subset, or "all")'
+        description: 'Packages: "all", or a comma-separated subset by directory name (domain-learn) or npm name (@lokascript/domain-learn). A filter matching nothing fails the run.'
         required: false
         type: string
         default: 'all'
@@ -206,6 +206,7 @@ jobs:
           node scripts/sync-changelogs.cjs
 
       - name: Publish packages
+        id: publish
         env:
           # NPM_TOKEN required for initial publish of new packages
           # (OIDC trusted publishing only works for packages already on npm)
@@ -235,14 +236,28 @@ jobs:
                         language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n htmx-adapter"
 
+          # A filter entry may be either the DIRECTORY name (`domain-learn`) or the
+          # npm name (`@lokascript/domain-learn`). It used to match the npm name
+          # only, while the sibling pre-publish-check workflow takes directory
+          # names for an identically-described input — so passing directory names
+          # here silently matched NOTHING, published zero packages, and still
+          # reported success. That happened for real on the 2.9.0 release and cost
+          # a full cycle. MATCHED counts what survives the filter; the guard after
+          # the loop turns "matched nothing" into a hard failure.
+          MATCHED=0
+
           for pkg in $ALL_PACKAGES; do
             [ ! -f "packages/$pkg/package.json" ] && continue
 
             # Skip if not in filter (unless filter is "all")
             if [ "$FILTER" != "all" ]; then
               PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
-              echo "$FILTER" | grep -qF "$PKG_NAME" || continue
+              # Exact match on either form, comma-delimited so `domain-learn`
+              # cannot also match `domain-learn-extras`.
+              echo ",$FILTER," | grep -qF ",$pkg," || \
+                echo ",$FILTER," | grep -qF ",$PKG_NAME," || continue
             fi
+            MATCHED=$((MATCHED + 1))
 
             PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
             PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
@@ -273,6 +288,16 @@ jobs:
             echo "::error::Failed:$FAILED"
             exit 1
           fi
+
+          # A filter that matches nothing is always a mistake — a typo, or the
+          # wrong naming convention — and used to pass as a green no-op that
+          # still cut a tag and a GitHub Release. Fail loudly instead.
+          if [ "$MATCHED" -eq 0 ]; then
+            echo "::error::packages filter '$FILTER' matched none of ALL_PACKAGES — nothing was published. Use directory names (domain-learn) or npm names (@lokascript/domain-learn), comma-separated."
+            exit 1
+          fi
+          echo "published=$MATCHED" >> $GITHUB_OUTPUT
+          echo "✓ $MATCHED package(s) processed"
 
       - name: Commit version changes
         # When version-type=current, the bump was already committed by hand
@@ -338,14 +363,22 @@ jobs:
           fi
 
       - name: Create Git tags
-        if: ${{ github.event.inputs.dry-run == 'false' }}
+        # Only a FULL run cuts release artifacts. A subset dispatch is a repair
+        # (finishing a partial publish, re-pushing one package), and tagging from
+        # one would overwrite the real release's tag with a partial one. On the
+        # 2.9.0 release a subset run that published ZERO packages still cut the
+        # tag and a Release marked Latest — a tag is not evidence a release
+        # happened, and this is half of why. The other half is the zero-match
+        # guard in the publish step.
+        if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.packages == 'all' }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           git tag -f "v$VERSION"
           git push origin "v$VERSION" --force
 
       - name: Create GitHub Release
-        if: ${{ github.event.inputs.dry-run == 'false' }}
+        # Same gate as the tag above — a repair run must not re-cut the Release.
+        if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.packages == 'all' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
