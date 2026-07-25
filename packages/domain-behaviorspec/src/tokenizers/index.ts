@@ -10,6 +10,7 @@
 
 import {
   BaseTokenizer,
+  CssSelectorExtractor,
   getDefaultExtractors,
   LatinExtendedIdentifierExtractor,
 } from '@lokascript/framework';
@@ -27,26 +28,6 @@ import type {
 /**
  * Extracts CSS selectors (#id, .class) from input.
  */
-class CSSSelectorExtractor implements ValueExtractor {
-  readonly name = 'css-selector';
-
-  canExtract(input: string, position: number): boolean {
-    const char = input[position];
-    if (char !== '#' && char !== '.') return false;
-    const next = input[position + 1];
-    return next !== undefined && /[a-zA-Z_-]/.test(next);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position + 1;
-    while (end < input.length && /[a-zA-Z0-9_-]/.test(input[end])) {
-      end++;
-    }
-    if (end === position + 1) return null;
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
-
 /**
  * Extracts URL paths (/path/to/page) from input.
  */
@@ -117,7 +98,7 @@ class DimensionExtractor implements ValueExtractor {
  */
 function getBehaviorSpecExtractors(): ValueExtractor[] {
   return [
-    new CSSSelectorExtractor(),
+    new CssSelectorExtractor(),
     new URLExtractor(),
     new DurationExtractor(),
     new DimensionExtractor(),
@@ -136,7 +117,7 @@ function getLatinExtendedBehaviorSpecExtractors(): ValueExtractor[] {
     e => e.name !== 'identifier' && e.name !== 'unicode-identifier'
   );
   return [
-    new CSSSelectorExtractor(),
+    new CssSelectorExtractor(),
     new URLExtractor(),
     new DurationExtractor(),
     new DimensionExtractor(),

@@ -13,13 +13,16 @@
  * settings.
  */
 
-import { buildDomainTokenizer } from '@lokascript/framework';
+import { buildDomainTokenizer, CssSelectorExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer } from '@lokascript/framework';
 import { TODO_LANGUAGES } from '../vocab';
 
 function tokenizerFor(code: string): LanguageTokenizer {
   const { slice, vocab } = TODO_LANGUAGES[code];
-  return buildDomainTokenizer(slice, vocab, { includeOperators: false });
+  return buildDomainTokenizer(slice, vocab, {
+    includeOperators: false,
+    customExtractors: [new CssSelectorExtractor()],
+  });
 }
 
 export const EnglishTodoTokenizer: LanguageTokenizer = tokenizerFor('en');

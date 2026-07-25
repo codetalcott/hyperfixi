@@ -16,7 +16,7 @@
  * per-language tokenizers.
  */
 
-import { buildDomainTokenizer } from '@lokascript/framework';
+import { buildDomainTokenizer, CssSelectorExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
 import { VOICE_LANGUAGES } from '../vocab';
 
@@ -25,31 +25,8 @@ import { VOICE_LANGUAGES } from '../vocab';
 // Handles #id and .class references in voice commands
 // =============================================================================
 
-class CSSSelectorExtractor implements ValueExtractor {
-  readonly name = 'css-selector';
-
-  canExtract(input: string, position: number): boolean {
-    const ch = input[position];
-    return ch === '#' || ch === '.';
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    const prefix = input[position];
-    if (prefix !== '#' && prefix !== '.') return null;
-
-    let end = position + 1;
-    // CSS identifiers: Unicode letters, digits, hyphens, underscores
-    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
-      end++;
-    }
-
-    if (end === position + 1) return null; // just # or . alone
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
-
 // Shared CSS selector extractor instance
-const cssSelectorExtractor = new CSSSelectorExtractor();
+const cssSelectorExtractor = new CssSelectorExtractor();
 
 function tokenizerFor(code: string): LanguageTokenizer {
   const { slice, vocab } = VOICE_LANGUAGES[code];

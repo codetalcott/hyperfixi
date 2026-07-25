@@ -77,6 +77,39 @@ describe('Learn Domain Schemas', () => {
     });
   });
 
+  // Every value-asserting test below this point uses the EXPLICIT syntax, and
+  // every natural-language test above it asserts `node.action` alone. That shape
+  // is why nobody noticed that natural-language parse dropped everything after a
+  // selector sigil — `.active` captured as `.`, `#button` as `#`, silently, in
+  // all ten languages — until a `CssSelectorExtractor` was registered on these
+  // tokenizers. Assert VALUES on the natural-language path, not just actions.
+  describe('Natural-language parse captures whole selector values', () => {
+    it.each([
+      ['en', 'add .active to #button'],
+      ['es', 'agrega .active a #button'],
+      ['de', 'hinzufügen .active zu #button'],
+      // No ja/ko row: their natural-language parse fails on ANY input of this
+      // shape, before and after this fix — measured, not assumed. That is the
+      // separate 0/15 round-trip defect in DOMAIN-LEARN-PARITY-FINDINGS.md, and
+      // it is not a selector problem.
+    ])('[%s] keeps the class and id intact', (language, sentence) => {
+      const node = learn.parse(sentence, language);
+      expect(node.action).toBe('add');
+      expect(extractRoleValue(node, 'patient')).toBe('.active');
+      expect(extractRoleValue(node, 'destination')).toBe('#button');
+    });
+
+    // The selector body is Unicode so diacritics survive, but it must STOP at
+    // kana/Hangul/Han: those abut a selector with no space in the SOV languages,
+    // so a Unicode-wide body turns `#buttonに` into one token and swallows the
+    // role marker into the value.
+    it('keeps diacritics in class names', () => {
+      const node = learn.parse('agrega .año a #botón', 'es');
+      expect(extractRoleValue(node, 'patient')).toBe('.año');
+      expect(extractRoleValue(node, 'destination')).toBe('#botón');
+    });
+  });
+
   describe('Explicit Syntax', () => {
     it('should parse explicit syntax for add', () => {
       const node = learn.parse('[add patient:.active destination:#button]', 'explicit');

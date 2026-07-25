@@ -8,6 +8,7 @@
 
 import {
   BaseTokenizer,
+  CssSelectorExtractor,
   getDefaultExtractors,
   LatinExtendedIdentifierExtractor,
 } from '@lokascript/framework';
@@ -28,7 +29,7 @@ function getExtendedLatinBDDExtractors(): ValueExtractor[] {
   // Remove the default IdentifierExtractor and UnicodeIdentifierExtractor
   // and add our combined one instead
   const filtered = defaults.filter(e => e.name !== 'identifier' && e.name !== 'unicode-identifier');
-  return [new CSSSelectorExtractor(), new LatinExtendedIdentifierExtractor(), ...filtered];
+  return [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor(), ...filtered];
 }
 
 // =============================================================================
@@ -39,34 +40,13 @@ function getExtendedLatinBDDExtractors(): ValueExtractor[] {
  * Extracts CSS selectors (#id, .class) from input.
  * BDD specs reference DOM elements by selector.
  */
-class CSSSelectorExtractor implements ValueExtractor {
-  readonly name = 'css-selector';
-
-  canExtract(input: string, position: number): boolean {
-    const char = input[position];
-    if (char !== '#' && char !== '.') return false;
-    // Must be followed by a letter or hyphen (not just punctuation)
-    const next = input[position + 1];
-    return next !== undefined && /[a-zA-Z_-]/.test(next);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position + 1;
-    while (end < input.length && /[a-zA-Z0-9_-]/.test(input[end])) {
-      end++;
-    }
-    if (end === position + 1) return null;
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
-
 /**
  * Get BDD-specific extractors: default + CSS selectors.
  * CSS selector extractor must come before the default identifier extractor
  * so that #button and .active are captured as single tokens.
  */
 function getBDDExtractors(): ValueExtractor[] {
-  return [new CSSSelectorExtractor(), ...getDefaultExtractors()];
+  return [new CssSelectorExtractor(), ...getDefaultExtractors()];
 }
 
 // =============================================================================
