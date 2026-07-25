@@ -1,5 +1,44 @@
 # Handoff: imperative verb forms — the efficient shape of the work
 
+> **STATUS 2026-07-25 — DONE for es/pt/fr/ko, and the Arabic defect is fixed.**
+> `25e2c3cc` (Arabic diacritic lookup) and `1fe571f3` (imperatives). Coverage went
+> from es 1/15 · pt 0/15 · fr 0/15 · ko 0/15 to **15/15 in all four**.
+>
+> **This brief's central recommendation was wrong, and the correction is the
+> useful part.** It said to promote normalizer-resolved words to `kind: 'keyword'`.
+> Measured against that: **the token kind is not what blocks the match.** Forcing
+> `kind='keyword'` alone still fails to parse; adding `stem`/`stemConfidence`
+> alone succeeds. `PatternMatcher.getMatchType` compares a token against the
+> pattern's NATIVE literal (`agregar`), so `normalized` — the English concept
+> `add` — can never equal it, and the stem is the only field that can. The es/pt/fr
+> extractors computed the stem and discarded it; turkish-keyword and korean-keyword
+> already forward it. **Six lines across three files**, not a tokenizer rewrite.
+>
+> Promotion would also have been actively harmful: ~20 sites branch on
+> `kind === 'identifier'`, including `tokenToSemanticValue` (a role value `agrega`
+> would become the literal `"add"`) and the trailing-optional-slot skip (which
+> drops any keyword whose concept is a command).
+>
+> Two more of this brief's claims did not survive:
+> - **Korean needed nothing** — it already forwarded the stem and already parsed.
+> - **Turkish's 10/15 is its PROFILE, not the normalizer** — `turkish.ts` lists
+>   imperatives as `primary` (`ekle`, `kaldır`), which is the same declarative
+>   mechanism the irregulars now use elsewhere.
+>
+> Arabic turned out to be unrelated to imperatives: the keyword map was indexed
+> diacritic-insensitively but QUERIED exactly, so `بَدِّل` failed `isKeyword`, and
+> the proclitic guard that exists to prevent exactly that handed it to the `ب` bi-
+> preposition — `kind=particle normalized=with`, a wrong concept rather than a
+> failed parse. Fixed at the lookup AND in `getMatchType`, which compares surfaces
+> one layer later. 12 of 13 diacritized imperatives now parse; `أحضِر` differs by
+> hamza (a letter, not an optional diacritic) and is correctly out of scope.
+>
+> **Still open:** **de** (multi-word separable imperatives + `senden` shadowed by
+> `submit`), **tr** (the ASCII-folded forms are a bug in domain-learn's
+> morphologyTable, and fixing it changes frozen `renderLearn` output — owner's
+> call), and lokascript-learn's `parseAndCompare`, which should now work in more
+> languages but has not been re-measured.
+
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
 Successor to items 2 and 3 of `HANDOFF-marker-paths-and-learn-aims.md`. Items 1
