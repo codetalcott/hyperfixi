@@ -66,6 +66,64 @@ normalizers exist, are `setNormalizer`'d onto their tokenizers, and 17 of the 23
 per-script keyword extractors already consult `this.context.normalizer` — they
 just don't promote the result to a keyword.
 
+## Measured 2026-07-25 — read this before designing anything
+
+Two probes, both against a freshly populated DB.
+
+**Blast radius on the corpus is nil.** Tokens across all 24 languages that are
+`identifier` today AND already carry a `normalized` concept — i.e. exactly what
+promotion would change — number **7, in 4 languages, out of ~24,000 tokens**
+(de `ändert`, he `ש`, tl `nagbabago`, fr `cache`). The corpus is written in the
+dictionary forms the parser already accepts, so promoting imperatives cannot move
+it. Whatever the risk of this change is, it is not corpus churn.
+
+**The win from promotion alone is large.** Of ~105 imperatives (15 verbs × 7
+languages with morphology tables):
+
+| lang | already | unlocked by promotion | needs rules | after step 1 |
+| ---- | ------- | --------------------- | ----------- | ------------ |
+| es   | 1       | **9**                 | 5           | 10/15        |
+| ko   | 0       | **9**                 | 6           | 9/15         |
+| fr   | 0       | **8**                 | 7           | 8/15         |
+| pt   | 0       | **7**                 | 8           | 7/15         |
+| de   | 2       | 3                     | 10 (5 multi-word) | 5/15   |
+| ar   | 2       | 1                     | 12          | 3/15         |
+| tr   | **10**  | 0                     | 5 (all ASCII-folded) | 10/15 |
+
+Totals: **15 already · 37 unlocked by promotion alone · 53 still needing rules.**
+
+**But the normalizer's output is NOT trustworthy enough to promote blindly.**
+Two of the 37 "wins" are wrong, and chasing them found three defects that have
+nothing to do with imperatives:
+
+1. **Arabic diacritics misclassify, not merely fail to normalize.** `بدّل`
+   tokenizes `kind=keyword normalized=toggle`; the diacritized `بَدِّل` tokenizes
+   **`kind=particle normalized=with`** — a different token kind AND an unrelated
+   concept. `arabic-normalizer.ts:55` strips harakat, but something claims the
+   diacritized form before that runs. This kills the earlier guess in this brief
+   that Arabic would "fall out for free": it has 12 residual, the worst of any
+   language. **Fix this bug first and separately; it corrupts diacritized Arabic
+   input generally, not just imperatives.**
+2. **German `send` is already unreachable.** `de.send.primary = senden` and
+   `de.submit.alternatives = Senden`, and submit wins — `senden` itself tokenizes
+   `normalized=submit`. A pre-existing profile collision, surfaced here.
+3. **French `cache` is a genuine imperative/identifier collision.** It is the
+   correct imperative of `cacher`, and also a name real code uses for a variable.
+
+So the mechanism must be **generate → review → pin**, not wire-and-trust: let the
+normalizer DISCOVER the candidates (so nobody hand-writes 93 entries), have a
+human review the ~37, and freeze the result in a pinning test in the style of
+`schema-consistency.test.ts`'s markerVariants block. Review is bounded and
+one-time; the pin forces the same review on anything added later. Blind promotion
+would have shipped `بَدِّل → with`.
+
+**Recommended scope: es, pt, fr, ko only** — 33 of the 37 wins, regular
+morphology, no structural blockers. Skip **de** (5 of its residual are multi-word
+separables a single keyword token cannot express, plus the send/submit collision),
+**ar** (fix the diacritic misclassification first), and **tr** (needs no semantic
+change at all — 10 of 15 already work and the other 5 are the downstream folding
+bug).
+
 ## The two steps, in this order
 
 ### Step 1 — classify a normalizer-resolved word as a keyword
