@@ -238,6 +238,24 @@ export function isDigit(char: string): boolean {
 }
 
 /**
+ * Strip diacritical marks that are OPTIONAL in their script — currently Arabic
+ * harakat (U+064B–U+0652: fatha, kasra, damma, sukun, shadda…) and the
+ * superscript alif (U+0670).
+ *
+ * `بدّل` and `بَدِّل` are the same word; Arabic prose writes either. So any place
+ * that compares an Arabic surface form against a declared keyword has to compare
+ * stripped, or the same word fails to match itself.
+ *
+ * Deliberately Arabic-only. Latin diacritics are NOT optional — `obtén`, `récupère`
+ * and `vá` differ from their unaccented spellings in meaning or validity — and
+ * Hebrew niqqud (U+05B0–U+05BC) is out of range too, so this is inert for every
+ * other script.
+ */
+export function stripOptionalDiacritics(word: string): string {
+  return word.replace(/[ً-ْٰ]/g, '');
+}
+
+/**
  * Check if a character is an ASCII letter.
  */
 export function isAsciiLetter(char: string): boolean {

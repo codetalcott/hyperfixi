@@ -328,13 +328,16 @@ export const getSchema = defineCommand({
       expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 1,
+      // Ablative, not the patient particle: the source is where the value comes
+      // FROM. renderLearn had `から`/`에서` right and the schema had `を`/`를`
+      // wrong — the mirror of this arc's usual direction, so the schema moved.
       markerOverride: {
         en: '',
-        ja: 'を',
+        ja: 'から',
         es: '',
         ar: '',
         zh: '',
-        ko: '를',
+        ko: '에서',
         fr: '',
         tr: '',
         de: '',
@@ -385,13 +388,16 @@ export const fetchSchema = defineCommand({
       svoPosition: 2,
       sovPosition: 1,
       // renderOverride in semantic has en: '' — no preposition in rendered output
+      // Ablative, not the patient particle: the source is where the value comes
+      // FROM. renderLearn had `から`/`에서` right and the schema had `を`/`를`
+      // wrong — the mirror of this arc's usual direction, so the schema moved.
       markerOverride: {
         en: '',
-        ja: 'を',
+        ja: 'から',
         es: '',
         ar: '',
         zh: '',
-        ko: '를',
+        ko: '에서',
         fr: '',
         tr: '',
         de: '',

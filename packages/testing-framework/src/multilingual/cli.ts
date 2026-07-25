@@ -376,12 +376,11 @@ async function main(): Promise<void> {
     //    gap (newer feature patterns lack complete non-English coverage), so a
     //    100%-or-fail gate would never go green. A language fails the gate when
     //    its parse rate drops more than REGRESSION_TOLERANCE_PTS below baseline.
-    //    We deliberately gate on the RATE, not on per-pattern flips: a handful of
-    //    borderline-confidence patterns can flip pass/fail between builds without
-    //    a real regression (the per-pattern `newFailures` is kept for reporting
-    //    only). The baseline must be generated against a freshly `populate`d
-    //    patterns.db (CI re-populates), or every language reads as shifted.
-    //    Missing baseline → fail.
+    //    The rate is a COARSE signal by design; the per-pattern R5 ratchet below
+    //    is what catches a small number of patterns breaking (the rate alone
+    //    cannot — see its comment). The baseline must be generated against a
+    //    freshly `populate`d patterns.db (CI re-populates), or every language
+    //    reads as shifted. Missing baseline → fail.
     //  - otherwise: the normal absolute pass/fail (used by the quick-mode gate,
     //    which is genuinely expected at 100%).
     const REGRESSION_TOLERANCE_PTS = 2;
@@ -418,7 +417,20 @@ async function main(): Promise<void> {
         // un-regenerated baseline never retro-flags. avgFidelity is deterministic
         // (parse-derived, independent of the patterns.db confidence column), so the
         // tolerance can be tight.
-        const LOSSY_REGRESSION_TOLERANCE = 3;
+        // Tolerance 0 since 2026-07-25. It was 3, and that cushion was measured
+        // to be the gate's real blind spot: removing `את` from go.destination's
+        // markerLegacy.he — the literal #763 regression, which two vitest cases
+        // caught and the gate did not — produces exactly ONE faithful→lossy flip
+        // and nothing else. Even a nonsense he marker override produced only two.
+        // The parser degrades rather than returning null, so the parse-based
+        // signals (rate, R5) never fire for this class; the lossy flip is the
+        // only place it shows, and a cushion of 3 swallowed it.
+        // A faithful→lossy flip is binary and structural — the same argument that
+        // already puts R2/R4 at 0 — so unlike the avg* deltas it has no float or
+        // collation noise to absorb. The degenerate ratchet keeps its 3: it is a
+        // strictly coarser view of the same event, and a >50% structure loss
+        // never occurs without the lossy flip firing first.
+        const LOSSY_REGRESSION_TOLERANCE = 0;
         // 0.02 ≈ six single-pattern drops in a ~154-pattern language — absorbs any
         // rare populate jitter while still catching real per-language cluster
         // regressions (typically ≥0.03). The per-pattern lossy ratchet above is the
@@ -490,6 +502,31 @@ async function main(): Promise<void> {
           r.newExecutionFailures.map(id => `${r.language}/${id}`)
         );
 
+        // R5 — per-pattern parse ratchet: a pattern that parsed in the baseline
+        // no longer parses at all. Tolerance 0, and it is NOT redundant with the
+        // parse-rate signal above — every other signal is structurally incapable
+        // of seeing a small number of patterns break:
+        //   * parse rate is per-language, so at ~154 patterns one flip is a
+        //     0.65pt drop against a 2pt tolerance — you need ≥4 in ONE language.
+        //   * the five avg* ratchets never see it at all: orchestrator.ts skips
+        //     failed parses BEFORE scoring, so a failure leaves both numerator
+        //     and denominator. The delta is exactly 0.0000, not merely small.
+        //     (Perversely, a *lossy* pattern that degrades to not-parsing raises
+        //     avgFidelity, because its sub-1.0 score leaves the denominator.)
+        //   * the degenerate/lossy ratchets iterate patterns that DID parse.
+        //   * R2 covers 47 curated ids; R4's denominator excludes ~14% of the
+        //     corpus and is full-mode only.
+        // That gap is not hypothetical: #763's `markerOverride.he` change stopped
+        // `לך את back` (go-back, he) parsing, and the gate would have gone green.
+        // The tolerances elsewhere are cross-machine float/collation headroom for
+        // AVERAGES; a binary pass→fail flip has no such noise to absorb, so this
+        // one is 0. Guarded by the baseline carrying per-pattern `patterns` data
+        // (findNewFailures returns [] without it), so an un-regenerated baseline
+        // never retro-flags.
+        const parseRegressions = allResults.flatMap(r =>
+          r.newFailures.map(id => `${r.language}/${id}`)
+        );
+
         // R4 — canonical-validity ratchet: render every authored foreign
         // translation to English and parse the result on the real
         // hyperscript.org engine, diffing the invalid (pattern, language)
@@ -548,10 +585,26 @@ async function main(): Promise<void> {
           );
           for (const r of regressed) {
             const fails = r.newFailures.length
-              ? ` — newly failing: ${r.newFailures.join(', ')}`
+              ? ` — newly failing: ${r.newFailures.slice(0, 20).join(', ')}`
               : '';
             console.error(`   ${r.language}: ΔparseRate ${r.parseRateDelta.toFixed(1)}pts${fails}`);
           }
+          failed = true;
+        }
+
+        if (parseRegressions.length > 0) {
+          console.error(
+            `\n✗ Parse regression vs baseline (R5): ${parseRegressions.length} pattern(s) ` +
+              `parsed in the baseline and no longer parse at all:`
+          );
+          for (const p of parseRegressions.slice(0, 20)) console.error(`   ${p}`);
+          if (parseRegressions.length > 20) {
+            console.error(`   … and ${parseRegressions.length - 20} more`);
+          }
+          console.error(
+            `   (tolerance 0 — the percentage-based signals cannot see a handful of ` +
+              `broken patterns; if intentional, regenerate the baseline with --save-baseline)`
+          );
           failed = true;
         }
 
@@ -584,11 +637,6 @@ async function main(): Promise<void> {
               `if intentional, regenerate the baseline with --save-baseline)`
           );
           failed = true;
-        } else if (lossyRegressions.length > 0) {
-          console.warn(
-            `\n⚠ ${lossyRegressions.length} correctness regression(s) within tolerance ` +
-              `(${LOSSY_REGRESSION_TOLERANCE}): ${lossyRegressions.join(', ')}`
-          );
         }
 
         if (fidelityDrops.length > 0) {
@@ -698,7 +746,8 @@ async function main(): Promise<void> {
         } else {
           console.log(
             `\n✓ No regression vs baseline ` +
-              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness + ` +
+              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, per-pattern parse (R5) + ` +
+              `fidelity + correctness + ` +
               `precision + multiset-recall + role + value + execution ratchets` +
               (validityChecked ? ` + canonical validity (R4)` : '') +
               `).`

@@ -226,7 +226,11 @@ export class RegressionReporter implements Reporter {
       }
     }
 
-    return newFailures.slice(0, 10); // Limit to 10 for reporting
+    // Returned UNCAPPED: this list is the R5 parse ratchet's evidence (cli.ts),
+    // not just a reporting nicety, and a gate that silently truncated itself
+    // would under-report how much broke. Display sites do their own capping
+    // (console-reporter shows 5; the CLI shows 20).
+    return newFailures;
   }
 
   /**

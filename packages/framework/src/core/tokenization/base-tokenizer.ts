@@ -20,6 +20,7 @@ import {
   isWhitespace,
   isDigit,
   isAsciiIdentifierChar,
+  stripOptionalDiacritics,
   TokenStreamImpl,
   type TimeUnitMapping,
   type CreateTokenOptions,
@@ -598,9 +599,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
    * @returns Word without diacritics
    */
   protected removeDiacritics(word: string): string {
-    // Arabic diacritics: U+064B-U+0652 (fatha, kasra, damma, sukun, shadda, etc.)
-    // U+0670 (superscript alif)
-    return word.replace(/[\u064B-\u0652\u0670]/g, '');
+    return stripOptionalDiacritics(word);
   }
 
   /**
@@ -704,25 +703,41 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   }
 
   /**
-   * Look up a keyword by native word (case-insensitive).
+   * Look up a keyword by native word (case-insensitive, diacritic-insensitive).
    * O(1) lookup using the keyword map.
+   *
+   * The map is INDEXED both with and without diacritics (see
+   * `initializeKeywordsFromProfile`), so a stripped QUERY is the other half of
+   * that: it lets a surface form carrying harakat the profile does not happen to
+   * spell still find its entry. Only consulted after the exact lookup misses, so
+   * every previously-matching word resolves byte-identically.
+   *
+   * Half-implementing this — indexing stripped but querying exact — is what made
+   * diacritized `بَدِّل` (toggle) tokenize as `kind=particle normalized=with`:
+   * `isKeyword` returned false, so the guard in `ArabicProcliticExtractor` that
+   * exists to prevent exactly that handed the word on, and the single-char `ب`
+   * bi- proclitic claimed it. A wrong CONCEPT, not a failed parse.
    *
    * @param native - Native word to look up
    * @returns KeywordEntry if found, undefined otherwise
    */
   protected lookupKeyword(native: string): KeywordEntry | undefined {
-    return this.profileKeywordMap.get(native.toLowerCase());
+    const exact = this.profileKeywordMap.get(native.toLowerCase());
+    if (exact) return exact;
+    const stripped = this.removeDiacritics(native);
+    if (stripped === native) return undefined;
+    return this.profileKeywordMap.get(stripped.toLowerCase());
   }
 
   /**
-   * Check if a word is a known keyword (case-insensitive).
-   * O(1) lookup using the keyword map.
+   * Check if a word is a known keyword (case-insensitive, diacritic-insensitive).
+   * O(1) lookup using the keyword map. See {@link lookupKeyword}.
    *
    * @param native - Native word to check
    * @returns true if the word is a keyword
    */
   protected isKeyword(native: string): boolean {
-    return this.profileKeywordMap.has(native.toLowerCase());
+    return this.lookupKeyword(native) !== undefined;
   }
 
   /**

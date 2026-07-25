@@ -57,25 +57,38 @@ export const portugueseProfile: LanguageProfile = {
     patient: { primary: '', position: 'before' },
     style: { primary: 'com', position: 'before' },
   },
+  // Imperative command forms are accepted on INPUT only — `primary` stays the
+  // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
+  // infinitive is the industry standard for UI localization). Hyperscript is a
+  // command language, though, and a native speaker giving a command writes the
+  // imperative, so the parser should read it.
+  //
+  // Only the IRREGULARS are listed. The regular ones reach their keyword through
+  // the morphological normalizer's stem (see spanish-keyword.ts and siblings),
+  // which also covers conjugations nobody enumerated here.
   keywords: {
     toggle: { primary: 'alternar', alternatives: [], normalized: 'toggle' },
     add: { primary: 'adicionar', alternatives: ['acrescentar'], normalized: 'add' },
-    remove: { primary: 'remover', alternatives: ['eliminar', 'apagar'], normalized: 'remove' },
-    put: { primary: 'colocar', alternatives: ['pôr', 'por'], normalized: 'put' },
+    remove: {
+      primary: 'remover',
+      alternatives: ['eliminar', 'apagar', 'remova'],
+      normalized: 'remove',
+    },
+    put: { primary: 'colocar', alternatives: ['pôr', 'por', 'coloque'], normalized: 'put' },
     append: { primary: 'anexar', normalized: 'append' },
     prepend: { primary: 'preceder', normalized: 'prepend' },
-    take: { primary: 'pegar', normalized: 'take' },
+    take: { primary: 'pegar', alternatives: ['pegue'], normalized: 'take' },
     make: { primary: 'fazer', alternatives: ['criar'], normalized: 'make' },
     clone: { primary: 'clonar', alternatives: [], normalized: 'clone' },
     swap: { primary: 'trocar', alternatives: ['substituir'], normalized: 'swap' },
     morph: { primary: 'transformar', alternatives: ['converter'], normalized: 'morph' },
-    set: { primary: 'definir', alternatives: ['configurar'], normalized: 'set' },
-    get: { primary: 'obter', normalized: 'get' },
+    set: { primary: 'definir', alternatives: ['configurar', 'defina'], normalized: 'set' },
+    get: { primary: 'obter', alternatives: ['obtenha'], normalized: 'get' },
     increment: { primary: 'incrementar', alternatives: ['aumentar'], normalized: 'increment' },
     decrement: { primary: 'decrementar', alternatives: ['diminuir'], normalized: 'decrement' },
     log: { primary: 'registrar', alternatives: ['imprimir'], normalized: 'log' },
     show: { primary: 'mostrar', alternatives: ['exibir'], normalized: 'show' },
-    hide: { primary: 'ocultar', alternatives: ['esconder'], normalized: 'hide' },
+    hide: { primary: 'ocultar', alternatives: ['esconder', 'esconda'], normalized: 'hide' },
     transition: { primary: 'transição', alternatives: ['animar'], normalized: 'transition' },
     on: { primary: 'em', alternatives: ['ao'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['ativar'], normalized: 'trigger' },
@@ -94,13 +107,13 @@ export const portugueseProfile: LanguageProfile = {
       alternatives: ['ponto-interrupcao'],
       normalized: 'breakpoint',
     },
-    go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
+    go: { primary: 'ir', alternatives: ['navegar', 'vá'], normalized: 'go' },
     scroll: { primary: 'rolar', alternatives: ['scroll'], normalized: 'scroll' },
     push: { primary: 'empurrar', alternatives: ['push'], normalized: 'push' },
     replace: { primary: 'repor', alternatives: ['recolocar'], normalized: 'replace' },
     process: { primary: 'processar', normalized: 'process' },
     wait: { primary: 'esperar', alternatives: ['aguardar'], normalized: 'wait' },
-    fetch: { primary: 'buscar', normalized: 'fetch' },
+    fetch: { primary: 'buscar', alternatives: ['busque'], normalized: 'fetch' },
     settle: { primary: 'estabilizar', normalized: 'settle' },
     if: { primary: 'se', normalized: 'if' },
     // salvo — single token ('salvo se' = unless). a_menos kept as an

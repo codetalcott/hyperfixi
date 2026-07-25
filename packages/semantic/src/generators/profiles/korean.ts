@@ -61,29 +61,38 @@ export const koreanProfile: LanguageProfile = {
     style: { primary: '로', alternatives: ['으로'], position: 'after' },
     event: { primary: '을', alternatives: ['를'], position: 'after' }, // Event as object marker
   },
+  // Imperative command forms are accepted on INPUT only — `primary` stays the
+  // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
+  // infinitive is the industry standard for UI localization). Hyperscript is a
+  // command language, though, and a native speaker giving a command writes the
+  // imperative, so the parser should read it.
+  //
+  // Only the IRREGULARS are listed. The regular ones reach their keyword through
+  // the morphological normalizer's stem (see spanish-keyword.ts and siblings),
+  // which also covers conjugations nobody enumerated here.
   keywords: {
     // Class/Attribute operations
     toggle: { primary: '토글', normalized: 'toggle' },
     add: { primary: '추가', normalized: 'add' },
     remove: { primary: '제거', alternatives: ['삭제'], normalized: 'remove' },
     // Content operations
-    put: { primary: '넣다', alternatives: ['넣기', '놓기'], normalized: 'put' },
+    put: { primary: '넣다', alternatives: ['넣기', '놓기', '넣으세요'], normalized: 'put' },
     append: { primary: '덧붙이다', alternatives: ['끝에추가'], normalized: 'append' },
     prepend: { primary: '앞에추가', alternatives: ['선두추가'], normalized: 'prepend' },
-    take: { primary: '가져오다', normalized: 'take' },
+    take: { primary: '가져오다', alternatives: ['가져오세요'], normalized: 'take' },
     make: { primary: '만들다', normalized: 'make' },
     clone: { primary: '복제', normalized: 'clone' }, // 복제=duplicate/clone, 복사=copy
     swap: { primary: '교환', alternatives: ['바꾸다'], normalized: 'swap' },
     morph: { primary: '변형', alternatives: ['변환'], normalized: 'morph' },
     // Variable operations
     set: { primary: '설정', normalized: 'set' },
-    get: { primary: '얻다', normalized: 'get' },
+    get: { primary: '얻다', alternatives: ['얻으세요'], normalized: 'get' },
     increment: { primary: '증가', normalized: 'increment' },
     decrement: { primary: '감소', normalized: 'decrement' },
     log: { primary: '로그', normalized: 'log' },
     // Visibility
-    show: { primary: '보이다', alternatives: ['표시', '보이기'], normalized: 'show' },
-    hide: { primary: '숨기다', alternatives: ['숨기기'], normalized: 'hide' },
+    show: { primary: '보이다', alternatives: ['표시', '보이기', '보이세요'], normalized: 'show' },
+    hide: { primary: '숨기다', alternatives: ['숨기기', '숨기세요'], normalized: 'hide' },
     // primary is the loanword 트랜지션; 전환 ("switch/transition") is the form the
     // i18n transformer emits — registered as an alternative (passthrough-alignment).
     // toggle uses 토글, so 전환 carries no collision.
@@ -91,7 +100,7 @@ export const koreanProfile: LanguageProfile = {
     // Events
     on: { primary: '에', alternatives: ['시', '할 때'], normalized: 'on' },
     trigger: { primary: '트리거', normalized: 'trigger' },
-    send: { primary: '보내다', normalized: 'send' },
+    send: { primary: '보내다', alternatives: ['보내세요'], normalized: 'send' },
     // DOM focus
     focus: { primary: '포커스', normalized: 'focus' },
     blur: { primary: '블러', normalized: 'blur' },

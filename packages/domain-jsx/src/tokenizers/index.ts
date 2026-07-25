@@ -14,13 +14,15 @@
  * matching the old per-language tokenizers.
  */
 
-import { buildDomainTokenizer } from '@lokascript/framework';
+import { buildDomainTokenizer, CssSelectorExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer } from '@lokascript/framework';
 import { JSX_LANGUAGES } from '../vocab';
 
 function tokenizerFor(code: string): LanguageTokenizer {
   const { slice, vocab } = JSX_LANGUAGES[code];
-  return buildDomainTokenizer(slice, vocab);
+  return buildDomainTokenizer(slice, vocab, {
+    customExtractors: [new CssSelectorExtractor()],
+  });
 }
 
 export const EnglishJSXTokenizer: LanguageTokenizer = tokenizerFor('en');

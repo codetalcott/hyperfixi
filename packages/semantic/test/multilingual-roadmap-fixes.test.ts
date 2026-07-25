@@ -7179,6 +7179,20 @@ describe('tr set-attribute — doğru-as-particle + dative allomorph (R2 batch 2
     expect(roles.destination).toMatchObject({ type: 'attributeAccess', attributeName: 'disabled' });
     expect(roles.event).toBeUndefined(); // not the role-scrambling SOV fallback
   });
+
+  // The allomorph fix above lived only in the SOV event-handler generator, which
+  // was the one site merging `markerVariants` on BOTH marker branches. The bare
+  // command took the override branch, which read `markerLegacy` alone — so `e`
+  // parsed and `ya` did not, and only the wrapped form above was ever tested.
+  // Both branches now merge (`schemaMarkerAlternatives`).
+  it.each(['e', 'a', 'ye', 'ya'])('[tr] bare set accepts the %s dative allomorph', allomorph => {
+    const node = parse(`@disabled i doğru ${allomorph} ayarla`, 'tr');
+    expect(node).not.toBeNull();
+    const set = findAstCommand(buildAST(node).ast, 'set');
+    expect(set).not.toBeNull();
+    const roles = set!.semanticRoles as Record<string, { type?: string; attributeName?: string }>;
+    expect(roles.destination).toMatchObject({ type: 'attributeAccess', attributeName: 'disabled' });
+  });
 });
 
 describe('ja put-content-basic — event-last SOV two-role wrapper (R2 batch 2)', () => {

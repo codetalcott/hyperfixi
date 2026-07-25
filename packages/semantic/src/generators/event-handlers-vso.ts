@@ -17,7 +17,27 @@ import {
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
 import { appendOptionalScope } from './event-handlers-sov';
-import { legacyMarkerAlternatives } from '../parser/utils/marker-resolution';
+import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
+
+/**
+ * Profile alternatives ∪ the schema's declared ones, for the profile-default
+ * branch. This file used to read the profile's alternatives alone in that
+ * branch — the only generator that read neither `markerLegacy` nor
+ * `markerVariants` there — so a schema-declared allomorph never reached a
+ * VSO-generated pattern. No VSO language declares variants today, so this
+ * changes no generated pattern; it removes the asymmetry rather than a bug.
+ */
+function mergeSchemaAlternatives(
+  roleSpec: CommandSchema['roles'][number],
+  profile: LanguageProfile,
+  roleMarker: RoleMarker
+): string[] | undefined {
+  const schemaAlts = schemaMarkerAlternatives(roleSpec, profile.code, roleMarker.primary) ?? [];
+  const merged = [...new Set([...(roleMarker.alternatives ?? []), ...schemaAlts])].filter(
+    a => a !== roleMarker.primary
+  );
+  return merged.length ? merged : undefined;
+}
 
 /**
  * Generate VSO event handler pattern (Arabic).
@@ -234,13 +254,13 @@ export function generateVSOVerbFirstTwoRoleEventHandlerPattern(
       // An override replaces the profile's alternatives, so the markers a
       // previous release rendered would stop parsing without markerLegacy.
       markerAlternatives = marker
-        ? legacyMarkerAlternatives(roleSpec, profile.code, marker)
+        ? schemaMarkerAlternatives(roleSpec, profile.code, marker)
         : undefined;
     } else {
       const roleMarker = profile.roleMarkers[roleSpec.role];
       if (roleMarker) {
         marker = roleMarker.primary;
-        markerAlternatives = roleMarker.alternatives;
+        markerAlternatives = mergeSchemaAlternatives(roleSpec, profile, roleMarker);
       }
     }
 
@@ -342,14 +362,14 @@ export function generateVSOTwoRoleEventHandlerPattern(
       // Use the override marker; markerLegacy keeps the previous marker parsing.
       marker = roleSpec.markerOverride[profile.code];
       markerAlternatives = marker
-        ? legacyMarkerAlternatives(roleSpec, profile.code, marker)
+        ? schemaMarkerAlternatives(roleSpec, profile.code, marker)
         : undefined;
     } else {
       // Use default role marker from profile
       const roleMarker = profile.roleMarkers[roleSpec.role];
       if (roleMarker) {
         marker = roleMarker.primary;
-        markerAlternatives = roleMarker.alternatives;
+        markerAlternatives = mergeSchemaAlternatives(roleSpec, profile, roleMarker);
       }
     }
 

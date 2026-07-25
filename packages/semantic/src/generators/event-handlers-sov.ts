@@ -17,14 +17,15 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
-import { legacyMarkerAlternatives } from '../parser/utils/marker-resolution';
+import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
  * Resolve the surface marker (and any allomorph alternatives) for a role in a
  * given language. Prefers the schema's per-command `markerOverride`, else the
- * profile's default roleMarker. In BOTH cases, `markerVariants[code]` is merged
- * in as alternatives so the generated pattern matches every surface form the
- * i18n transformer can produce.
+ * profile's default roleMarker; in BOTH cases the schema's declared alternatives
+ * (`markerLegacy` ∪ `markerVariants`) merge in via `schemaMarkerAlternatives`,
+ * so the generated pattern matches every surface form the i18n transformer can
+ * produce.
  *
  * Why: `markerOverride` is a single string, so it silently dropped the allomorph
  * alternatives the profile roleMarker would otherwise have supplied. The Turkish
@@ -32,6 +33,9 @@ import { legacyMarkerAlternatives } from '../parser/utils/marker-resolution';
  * case: tr set-attribute's `… doğru ya ayarla` (value=true marked with the -ya
  * dative) failed to match the `e`-only patient marker, so the whole set fell to
  * the role-scrambling generic SOV extraction. See STRUCTURAL_ARCS_ROADMAP.md.
+ *
+ * This used to be the only generator that merged variants in both branches,
+ * which is why tr `set` worked here and nowhere else.
  */
 function resolveRoleMarker(
   roleSpec: RoleSpec,
@@ -44,22 +48,17 @@ function resolveRoleMarker(
     marker = roleSpec.markerOverride[profile.code];
     // An override replaces the profile's alternatives, so the markers a previous
     // release rendered would stop parsing without markerLegacy.
-    alternatives = marker ? legacyMarkerAlternatives(roleSpec, profile.code, marker) : undefined;
+    alternatives = marker ? schemaMarkerAlternatives(roleSpec, profile.code, marker) : undefined;
   } else {
     const roleMarker = profile.roleMarkers[roleSpec.role];
     if (roleMarker) {
       marker = roleMarker.primary;
-      alternatives = roleMarker.alternatives ? [...roleMarker.alternatives] : undefined;
+      const schemaAlts = schemaMarkerAlternatives(roleSpec, profile.code, marker) ?? [];
+      const merged = [...new Set([...(roleMarker.alternatives ?? []), ...schemaAlts])].filter(
+        a => a !== marker
+      );
+      alternatives = merged.length ? merged : undefined;
     }
-  }
-
-  const variants = roleSpec.markerVariants?.[profile.code];
-  if (variants && variants.length > 0) {
-    const merged = alternatives ? [...alternatives] : [];
-    for (const v of variants) {
-      if (v !== marker && !merged.includes(v)) merged.push(v);
-    }
-    alternatives = merged;
   }
 
   return { marker, alternatives };

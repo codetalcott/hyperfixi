@@ -11,7 +11,11 @@
  * - Non-Latin script handling (Japanese, Arabic, Korean, Chinese)
  */
 
-import { createSimpleTokenizer, LatinExtendedIdentifierExtractor } from '@lokascript/framework';
+import {
+  createSimpleTokenizer,
+  CssSelectorExtractor,
+  LatinExtendedIdentifierExtractor,
+} from '@lokascript/framework';
 import type { LanguageTokenizer } from '@lokascript/framework';
 
 // ─── English ────────────────────────────────────────────────────
@@ -49,6 +53,7 @@ export const EnglishLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
   ],
   includeOperators: true,
   caseInsensitive: true,
+  customExtractors: [new CssSelectorExtractor()],
 });
 
 // ─── Japanese ───────────────────────────────────────────────────
@@ -96,6 +101,7 @@ export const JapaneseLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
   ],
   includeOperators: true,
   caseInsensitive: false,
+  customExtractors: [new CssSelectorExtractor()],
 });
 
 // ─── Spanish ────────────────────────────────────────────────────
@@ -141,7 +147,7 @@ export const SpanishLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
     'toma',
     've',
   ],
-  customExtractors: [new LatinExtendedIdentifierExtractor()],
+  customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,
   caseInsensitive: true,
 });
@@ -194,6 +200,7 @@ export const ArabicLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
   ],
   includeOperators: true,
   caseInsensitive: false,
+  customExtractors: [new CssSelectorExtractor()],
 });
 
 // ─── Chinese ────────────────────────────────────────────────────
@@ -243,6 +250,7 @@ export const ChineseLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
   ],
   includeOperators: true,
   caseInsensitive: false,
+  customExtractors: [new CssSelectorExtractor()],
 });
 
 // ─── Korean ─────────────────────────────────────────────────────
@@ -300,6 +308,7 @@ export const KoreanLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
   ],
   includeOperators: true,
   caseInsensitive: false,
+  customExtractors: [new CssSelectorExtractor()],
 });
 
 // ─── French ─────────────────────────────────────────────────────
@@ -347,7 +356,7 @@ export const FrenchLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
     'récupère',
     'va',
   ],
-  customExtractors: [new LatinExtendedIdentifierExtractor()],
+  customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,
   caseInsensitive: true,
 });
@@ -402,8 +411,17 @@ export const TurkishLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
     'u',
     'ü',
     'ı',
+    // Correct-Turkish infinitives. The ASCII-folded spellings above are kept as
+    // vocab alternatives so older content still parses, but the vocabulary's
+    // canonical forms are these — and every profile keyword has to classify as a
+    // keyword here or the domain-toolkit keyword-classification lint fails.
+    'kaldırmak',
+    'değiştirmek',
+    'göstermek',
+    'göndermek',
+    'artırmak',
   ],
-  customExtractors: [new LatinExtendedIdentifierExtractor()],
+  customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,
   caseInsensitive: true,
 });
@@ -436,7 +454,7 @@ export const GermanLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
     // Profile keywords/markers (R5: keyword-classification)
     'festlegen',
   ],
-  customExtractors: [new LatinExtendedIdentifierExtractor()],
+  customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,
   caseInsensitive: true,
 });
@@ -483,7 +501,7 @@ export const PortugueseLearnTokenizer: LanguageTokenizer = createSimpleTokenizer
     'remova',
     'vá',
   ],
-  customExtractors: [new LatinExtendedIdentifierExtractor()],
+  customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,
   caseInsensitive: true,
 });

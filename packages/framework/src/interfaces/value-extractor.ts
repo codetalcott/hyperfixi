@@ -349,6 +349,56 @@ export class LatinExtendedIdentifierExtractor implements ValueExtractor {
 }
 
 /**
+ * CSS selector extractor — keeps `#id` and `.class` a SINGLE token.
+ *
+ * Without it the sigil is split off as its own token and the role capture keeps
+ * only that sigil: `add .active to #button` parses with patient `"."` and
+ * destination `"#"`, silently, in every language. Five domain DSLs each carried
+ * a private copy of this class and four (learn, todo, sql, jsx) had none — this
+ * is the shared one; register it via `customExtractors`.
+ *
+ * The character after the sigil must be a letter, `_` or `-`: a CSS identifier
+ * cannot start with a digit, and refusing to claim a bare `.`/`#` leaves
+ * property access and other uses of those characters to the extractors that own
+ * them.
+ *
+ * The body is Unicode so diacritics survive (`.año`, not `.a`) but STOPS at Han,
+ * kana and Hangul. Those scripts are where the SOV languages write their
+ * particles, and a selector is written adjacent to them with no space:
+ * `#buttonに .activeを 追加` must yield `#button` + `に`, not a `#buttonに` that
+ * swallows the particle and takes the role marker with it.
+ */
+const SELECTOR_BODY_CHAR = /[\p{L}\p{N}_-]/u;
+const PARTICLE_SCRIPT_CHAR = /[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}\p{sc=Hangul}]/u;
+
+function isSelectorBodyChar(char: string): boolean {
+  return SELECTOR_BODY_CHAR.test(char) && !PARTICLE_SCRIPT_CHAR.test(char);
+}
+
+export class CssSelectorExtractor implements ValueExtractor {
+  readonly name = 'css-selector';
+
+  canExtract(input: string, position: number): boolean {
+    const char = input[position];
+    if (char !== '#' && char !== '.') return false;
+    const next = input[position + 1];
+    if (next === undefined) return false;
+    return (
+      next === '_' || next === '-' || (/\p{L}/u.test(next) && !PARTICLE_SCRIPT_CHAR.test(next))
+    );
+  }
+
+  extract(input: string, position: number): ExtractionResult | null {
+    let end = position + 1;
+    while (end < input.length && isSelectorBodyChar(input[end])) {
+      end++;
+    }
+    if (end === position + 1) return null;
+    return { value: input.slice(position, end), length: end - position };
+  }
+}
+
+/**
  * Whitespace extractor - handles spaces, tabs, newlines.
  */
 export class WhitespaceExtractor implements ValueExtractor {

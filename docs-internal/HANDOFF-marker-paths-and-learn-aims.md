@@ -1,5 +1,41 @@
 # Handoff: the marker-resolution code-path split, domain-learn's aims, and priority languages
 
+> **STATUS 2026-07-25 — items 1 and 2 are CLOSED; item 3 is deferred, deliberately.**
+> Four commits on `fix/per-pattern-parse-ratchet`: `d8d71105` (R5 ratchet + lossy
+> tolerance 0), `76e0c3b0` (`schemaMarkerAlternatives`), `1c868ee5` (shared
+> `CssSelectorExtractor`), `442f5e4d` (ja/ko ablative).
+>
+> **Three of this brief's own premises did not survive measurement** — read these
+> before trusting anything below:
+>
+> 1. **The ratchet blind spot is real but not where this brief says.** One parse
+>    flip is invisible to every signal (exactly 0.0000 on the five avg* ratchets,
+>    since a failed parse leaves numerator AND denominator). But reverting the
+>    #763 fix does not produce a parse failure at all — the parser degrades to a
+>    LOSSY parse, and the lossy cushion of 3 swallowed it. The fix was the new R5
+>    ratchet **plus** dropping lossy to 0. Verified: green before, red after.
+> 2. **`resolveMarkerForRole` never read `markerVariants` in either branch.** The
+>    asymmetry was in `pattern-generator.ts`, and `event-handlers-vso.ts` was worse
+>    still — it read neither field in its default branch. One live victim: tr
+>    `set`'s dative allomorphs. The recommended schema-validator error was NOT
+>    added: with both fields merged by one helper, declaring both is no longer
+>    silent loss, so the error would have fired on `put` and needed an allowlist
+>    to say "correct". A pinning test in `schema-consistency.test.ts` does the job.
+> 3. **`DOMAIN-LEARN-PARITY-FINDINGS.md` measured a function the product does not
+>    ship.** lokascript-learn never imports `renderLearn` and explicitly declines
+>    to use domain-learn's parser. Both pieces of evidence this brief cites for
+>    reading (B) dissolve on inspection: `parse_learn` is auto-generated for every
+>    registered domain, and the playground parses with `@lokascript/semantic`.
+>    **Owner decided (A): domain-learn is a generator.** So the queue in item 2
+>    below was NOT worked — it targets `renderLearn`.
+>
+> Also found, not in this brief: `parse_learn`/`parse_todo` silently truncated CSS
+> selectors to their sigil in four domain DSLs. Fixed in `1c868ee5`.
+>
+> The remaining work is the imperative forms —
+> `docs-internal/HANDOFF-imperative-forms.md`, which is a much smaller job than it
+> looks. Item 3 (priority languages) is gated on it.
+
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
 Successor to `docs-internal/HANDOFF-learn-parity-and-markers.md` (all three of its

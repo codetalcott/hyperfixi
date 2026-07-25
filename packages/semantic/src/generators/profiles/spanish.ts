@@ -60,6 +60,15 @@ export const spanishProfile: LanguageProfile = {
     patient: { primary: '', position: 'before' },
     style: { primary: 'con', position: 'before' },
   },
+  // Imperative command forms are accepted on INPUT only — `primary` stays the
+  // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
+  // infinitive is the industry standard for UI localization). Hyperscript is a
+  // command language, though, and a native speaker giving a command writes the
+  // imperative, so the parser should read it.
+  //
+  // Only the IRREGULARS are listed. The regular ones reach their keyword through
+  // the morphological normalizer's stem (see spanish-keyword.ts and siblings),
+  // which also covers conjugations nobody enumerated here.
   keywords: {
     // Class/Attribute operations
     toggle: { primary: 'alternar', alternatives: ['conmutar', 'toggle'], normalized: 'toggle' },
@@ -79,19 +88,23 @@ export const spanishProfile: LanguageProfile = {
     swap: { primary: 'intercambiar', alternatives: ['permutar'], normalized: 'swap' },
     morph: { primary: 'transformar', alternatives: ['convertir'], normalized: 'morph' },
     // Variable operations
-    set: { primary: 'establecer', alternatives: ['fijar', 'definir'], normalized: 'set' },
-    get: { primary: 'obtener', alternatives: ['conseguir'], normalized: 'get' },
+    set: {
+      primary: 'establecer',
+      alternatives: ['fijar', 'definir', 'establece'],
+      normalized: 'set',
+    },
+    get: { primary: 'obtener', alternatives: ['conseguir', 'obtén'], normalized: 'get' },
     increment: { primary: 'incrementar', alternatives: ['aumentar'], normalized: 'increment' },
     decrement: { primary: 'decrementar', alternatives: ['disminuir'], normalized: 'decrement' },
     log: { primary: 'registrar', alternatives: ['imprimir'], normalized: 'log' },
     // Visibility
-    show: { primary: 'mostrar', alternatives: ['enseñar'], normalized: 'show' },
+    show: { primary: 'mostrar', alternatives: ['enseñar', 'muestra'], normalized: 'show' },
     hide: { primary: 'ocultar', alternatives: ['esconder'], normalized: 'hide' },
     transition: { primary: 'transición', alternatives: ['animar'], normalized: 'transition' },
     // Events
     on: { primary: 'en', alternatives: ['al'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['activar'], normalized: 'trigger' },
-    send: { primary: 'enviar', normalized: 'send' },
+    send: { primary: 'enviar', alternatives: ['envía'], normalized: 'send' },
     // DOM focus
     focus: { primary: 'enfocar', alternatives: ['enfoque'], normalized: 'focus' },
     blur: { primary: 'desenfocar', alternatives: ['desenfoque'], normalized: 'blur' },
@@ -128,7 +141,7 @@ export const spanishProfile: LanguageProfile = {
     mousedown: { primary: 'ratónabajo', normalized: 'mousedown' },
     mouseup: { primary: 'ratónarriba', normalized: 'mouseup' },
     // Navigation
-    go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
+    go: { primary: 'ir', alternatives: ['navegar', 've'], normalized: 'go' },
     push: { primary: 'empujar', alternatives: ['push'], normalized: 'push' },
     replace: { primary: 'reemplazar', alternatives: ['sustituir'], normalized: 'replace' },
     process: { primary: 'procesar', normalized: 'process' },

@@ -62,11 +62,24 @@ export const frenchProfile: LanguageProfile = {
     patient: { primary: '', position: 'before' },
     style: { primary: 'avec', position: 'before' },
   },
+  // Imperative command forms are accepted on INPUT only — `primary` stays the
+  // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
+  // infinitive is the industry standard for UI localization). Hyperscript is a
+  // command language, though, and a native speaker giving a command writes the
+  // imperative, so the parser should read it.
+  //
+  // Only the IRREGULARS are listed. The regular ones reach their keyword through
+  // the morphological normalizer's stem (see spanish-keyword.ts and siblings),
+  // which also covers conjugations nobody enumerated here.
   keywords: {
     toggle: { primary: 'basculer', alternatives: ['alterner'], normalized: 'toggle' },
     add: { primary: 'ajouter', normalized: 'add' },
-    remove: { primary: 'supprimer', alternatives: ['enlever', 'retirer'], normalized: 'remove' },
-    put: { primary: 'mettre', alternatives: ['placer'], normalized: 'put' },
+    remove: {
+      primary: 'supprimer',
+      alternatives: ['enlever', 'retirer', 'retire'],
+      normalized: 'remove',
+    },
+    put: { primary: 'mettre', alternatives: ['placer', 'mets'], normalized: 'put' },
     append: { primary: 'annexer', normalized: 'append' },
     prepend: { primary: 'préfixer', normalized: 'prepend' },
     take: { primary: 'prendre', normalized: 'take' },
@@ -75,16 +88,16 @@ export const frenchProfile: LanguageProfile = {
     swap: { primary: 'échanger', alternatives: ['permuter'], normalized: 'swap' },
     morph: { primary: 'transformer', alternatives: ['métamorphoser'], normalized: 'morph' },
     set: { primary: 'définir', alternatives: ['établir'], normalized: 'set' },
-    get: { primary: 'obtenir', normalized: 'get' },
+    get: { primary: 'obtenir', alternatives: ['obtiens'], normalized: 'get' },
     increment: { primary: 'incrémenter', alternatives: ['augmenter'], normalized: 'increment' },
     decrement: { primary: 'décrémenter', alternatives: ['diminuer'], normalized: 'decrement' },
     log: { primary: 'enregistrer', alternatives: ['journaliser'], normalized: 'log' },
-    show: { primary: 'montrer', alternatives: ['afficher'], normalized: 'show' },
+    show: { primary: 'montrer', alternatives: ['afficher', 'montre'], normalized: 'show' },
     hide: { primary: 'cacher', alternatives: ['masquer'], normalized: 'hide' },
     transition: { primary: 'transition', alternatives: ['animer'], normalized: 'transition' },
     on: { primary: 'sur', alternatives: ['lors'], normalized: 'on' },
     trigger: { primary: 'déclencher', normalized: 'trigger' },
-    send: { primary: 'envoyer', normalized: 'send' },
+    send: { primary: 'envoyer', alternatives: ['envoie'], normalized: 'send' },
     focus: { primary: 'focaliser', alternatives: ['concentrer'], normalized: 'focus' },
     blur: { primary: 'défocaliser', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
@@ -98,13 +111,13 @@ export const frenchProfile: LanguageProfile = {
     clear: { primary: 'effacer', normalized: 'clear' },
     reset: { primary: 'réinitialiser', alternatives: ['reinitialiser'], normalized: 'reset' },
     breakpoint: { primary: 'point-arrêt', alternatives: ['point-arret'], normalized: 'breakpoint' },
-    go: { primary: 'aller', alternatives: ['naviguer'], normalized: 'go' },
+    go: { primary: 'aller', alternatives: ['naviguer', 'va'], normalized: 'go' },
     scroll: { primary: 'défiler', alternatives: ['faire-défiler'], normalized: 'scroll' },
     push: { primary: 'pousser', normalized: 'push' },
     replace: { primary: 'remplacer', normalized: 'replace' },
     process: { primary: 'traiter', normalized: 'process' },
     wait: { primary: 'attendre', normalized: 'wait' },
-    fetch: { primary: 'chercher', alternatives: ['récupérer'], normalized: 'fetch' },
+    fetch: { primary: 'chercher', alternatives: ['récupérer', 'récupère'], normalized: 'fetch' },
     settle: { primary: 'stabiliser', normalized: 'settle' },
     if: { primary: 'si', normalized: 'if' },
     unless: { primary: 'saufsi', normalized: 'unless' },

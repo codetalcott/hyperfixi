@@ -755,7 +755,7 @@
         "command": "get",
         "priority": 100,
         "template": {
-          "format": "を {source} 取得",
+          "format": "から {source} 取得",
           "tokens": [
             {
               "type": "role",
@@ -765,7 +765,7 @@
             },
             {
               "type": "literal",
-              "value": "を"
+              "value": "から"
             },
             {
               "type": "literal",
@@ -775,7 +775,7 @@
         },
         "extraction": {
           "source": {
-            "marker": "を"
+            "marker": "から"
           }
         }
       }
@@ -813,7 +813,7 @@
         "command": "fetch",
         "priority": 100,
         "template": {
-          "format": "を {source} 取得",
+          "format": "から {source} 取得",
           "tokens": [
             {
               "type": "role",
@@ -823,7 +823,7 @@
             },
             {
               "type": "literal",
-              "value": "を"
+              "value": "から"
             },
             {
               "type": "literal",
@@ -833,7 +833,7 @@
         },
         "extraction": {
           "source": {
-            "marker": "を"
+            "marker": "から"
           }
         }
       }
@@ -2864,7 +2864,7 @@
         "command": "get",
         "priority": 100,
         "template": {
-          "format": "를 {source} 얻",
+          "format": "에서 {source} 얻",
           "tokens": [
             {
               "type": "role",
@@ -2874,7 +2874,7 @@
             },
             {
               "type": "literal",
-              "value": "를"
+              "value": "에서"
             },
             {
               "type": "literal",
@@ -2884,7 +2884,7 @@
         },
         "extraction": {
           "source": {
-            "marker": "를"
+            "marker": "에서"
           }
         }
       }
@@ -2922,7 +2922,7 @@
         "command": "fetch",
         "priority": 100,
         "template": {
-          "format": "를 {source} 패치",
+          "format": "에서 {source} 패치",
           "tokens": [
             {
               "type": "role",
@@ -2932,7 +2932,7 @@
             },
             {
               "type": "literal",
-              "value": "를"
+              "value": "에서"
             },
             {
               "type": "literal",
@@ -2942,7 +2942,7 @@
         },
         "extraction": {
           "source": {
-            "marker": "를"
+            "marker": "에서"
           }
         }
       }
@@ -3716,7 +3716,7 @@
         "command": "remove",
         "priority": 100,
         "template": {
-          "format": "dan {source} {patient} kaldir",
+          "format": "dan {source} {patient} kaldır",
           "tokens": [
             {
               "type": "group",
@@ -3742,8 +3742,8 @@
             },
             {
               "type": "literal",
-              "value": "kaldir",
-              "alternatives": ["kaldirmak"]
+              "value": "kaldır",
+              "alternatives": ["kaldırmak", "kaldir", "kaldirmak"]
             }
           ]
         },
@@ -3762,7 +3762,7 @@
         "command": "toggle",
         "priority": 100,
         "template": {
-          "format": "da {destination} {patient} degistir",
+          "format": "da {destination} {patient} değiştir",
           "tokens": [
             {
               "type": "group",
@@ -3788,8 +3788,8 @@
             },
             {
               "type": "literal",
-              "value": "degistir",
-              "alternatives": ["degistirmek"]
+              "value": "değiştir",
+              "alternatives": ["değiştirmek", "degistir", "degistirmek"]
             }
           ]
         },
@@ -3894,7 +3894,7 @@
         "command": "show",
         "priority": 100,
         "template": {
-          "format": "{patient} goster",
+          "format": "{patient} göster",
           "tokens": [
             {
               "type": "role",
@@ -3904,8 +3904,8 @@
             },
             {
               "type": "literal",
-              "value": "goster",
-              "alternatives": ["gostermek"]
+              "value": "göster",
+              "alternatives": ["göstermek", "goster", "gostermek"]
             }
           ]
         },
@@ -4029,7 +4029,7 @@
         "command": "send",
         "priority": 100,
         "template": {
-          "format": "-e {destination} {patient} gonder",
+          "format": "-e {destination} {patient} gönder",
           "tokens": [
             {
               "type": "group",
@@ -4055,8 +4055,8 @@
             },
             {
               "type": "literal",
-              "value": "gonder",
-              "alternatives": ["gondermek"]
+              "value": "gönder",
+              "alternatives": ["göndermek", "gonder", "gondermek"]
             }
           ]
         },
@@ -4108,7 +4108,7 @@
         "command": "increment",
         "priority": 100,
         "template": {
-          "format": "{patient} artir",
+          "format": "{patient} artır",
           "tokens": [
             {
               "type": "role",
@@ -4118,8 +4118,8 @@
             },
             {
               "type": "literal",
-              "value": "artir",
-              "alternatives": ["artirmak"]
+              "value": "artır",
+              "alternatives": ["artırmak", "artir", "artirmak"]
             }
           ]
         },

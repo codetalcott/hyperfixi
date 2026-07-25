@@ -20,33 +20,13 @@
  * per-language tokenizers.
  */
 
-import { buildDomainTokenizer } from '@lokascript/framework';
+import { buildDomainTokenizer, CssSelectorExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
 import { FLOW_LANGUAGES } from '../vocab';
 
 // =============================================================================
 // CSS Selector Extractor (#id, .class)
 // =============================================================================
-
-class CSSSelectorExtractor implements ValueExtractor {
-  readonly name = 'css-selector';
-
-  canExtract(input: string, position: number): boolean {
-    const char = input[position];
-    if (char !== '#' && char !== '.') return false;
-    const next = input[position + 1];
-    return next !== undefined && /[a-zA-Z_-]/.test(next);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position + 1;
-    while (end < input.length && /[a-zA-Z0-9_-]/.test(input[end])) {
-      end++;
-    }
-    if (end === position + 1) return null;
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
 
 // =============================================================================
 // URL Path Extractor (/api/users, /api/user/{id})
@@ -112,7 +92,7 @@ class DurationExtractor implements ValueExtractor {
 // =============================================================================
 
 const sharedExtractors = [
-  new CSSSelectorExtractor(),
+  new CssSelectorExtractor(),
   new URLPathExtractor(),
   new DurationExtractor(),
 ];

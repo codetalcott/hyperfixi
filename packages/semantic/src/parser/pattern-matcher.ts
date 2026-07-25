@@ -22,6 +22,7 @@ import {
   createPropertyPath,
   isValidReference,
 } from '../types';
+import { stripOptionalDiacritics } from '@lokascript/framework';
 import { isTypeCompatible } from './utils/type-validation';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
@@ -2545,6 +2546,21 @@ export class PatternMatcher {
     // Case-insensitive match for keywords (medium confidence)
     if (token.kind === 'keyword' && token.value.toLowerCase() === value.toLowerCase()) {
       return 'case-insensitive';
+    }
+
+    // Diacritic-insensitive match for keywords (medium confidence). Arabic
+    // harakat are OPTIONAL in the script — `بدّل` and `بَدِّل` are the same word,
+    // and a pattern literal carries whichever spelling the profile declared. The
+    // keyword map is queried diacritic-insensitively, so the token is correctly
+    // recognized; without this the surface still fails to match its own literal
+    // here, one layer later. Restricted to keywords, and `stripOptionalDiacritics`
+    // touches only Arabic-exclusive codepoints, so it is inert for every other
+    // script (Latin accents are meaning-bearing and must never be stripped).
+    if (token.kind === 'keyword') {
+      const strippedToken = stripOptionalDiacritics(token.value).toLowerCase();
+      if (strippedToken && strippedToken === stripOptionalDiacritics(value).toLowerCase()) {
+        return 'case-insensitive';
+      }
     }
 
     return 'none';

@@ -126,6 +126,20 @@ describe('Todo Domain', () => {
   // English Alternative Keywords
   // ===========================================================================
 
+  // A CSS selector used to lose everything after its sigil — `add .active to
+  // #button` parsed with item `"."` and list `"#"` — because this tokenizer
+  // registered no CssSelectorExtractor. Nothing caught it: the value-asserting
+  // tests all used plain words. Assert a sigil-bearing value here so it stays
+  // caught.
+  describe('CSS selector values survive tokenization', () => {
+    it('keeps the class and id whole', () => {
+      const node = todo.parse('add .active to #button', 'en');
+      expect(node.action).toBe('add');
+      expect(extractRoleValue(node, 'item')).toBe('.active');
+      expect(extractRoleValue(node, 'list')).toBe('#button');
+    });
+  });
+
   describe('English alternative keywords', () => {
     it('parses "done" as complete', () => {
       const result = todo.parse('done milk', 'en');

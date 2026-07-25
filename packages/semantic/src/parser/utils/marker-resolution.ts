@@ -16,6 +16,8 @@ export interface RoleSpecWithMarker {
   role: SemanticRole;
   markerOverride?: Record<string, string | undefined>;
   markerLegacy?: Record<string, readonly string[]>;
+  markerVariants?: Record<string, readonly string[]>;
+  methodCarrier?: SemanticRole;
 }
 
 /**
@@ -87,9 +89,8 @@ export function resolveMarkerForRole(
  * stopped the previous one parsing. This is the single definition of what an
  * override still accepts; call it from each of those branches.
  *
- * Deliberately NOT `markerVariants`: those carry meaning of their own (`put`'s
- * `before`/`after` populate the `method` role), so accepting them as synonyms
- * would swallow a distinct command shape.
+ * Prefer {@link schemaMarkerAlternatives}, which also merges `markerVariants`.
+ * This narrower entry point remains for callers that must exclude variants.
  */
 export function legacyMarkerAlternatives(
   roleSpec: RoleSpecWithMarker,
@@ -99,6 +100,38 @@ export function legacyMarkerAlternatives(
   const legacy = roleSpec.markerLegacy?.[languageCode];
   if (!legacy?.length) return undefined;
   const alternatives = [...new Set(legacy)].filter(a => a && a !== overrideMarker);
+  return alternatives.length ? alternatives : undefined;
+}
+
+/**
+ * Every schema-declared alternative a role's marker accepts in this language:
+ * `markerLegacy` ∪ `markerVariants`, minus the marker itself.
+ *
+ * **The single definition — call it from every branch of every generator.** The
+ * two fields used to sit on DIFFERENT branches: the override branch read only
+ * `markerLegacy`, the profile-default branch only `markerVariants`. So giving a
+ * language a `markerOverride` silently deleted its `markerVariants`, and giving
+ * it `markerVariants` did nothing at all wherever an override existed. Both
+ * halves were live: tr `set`'s dative allomorphs (`e|a|ye|ya`) were declared as
+ * variants but dropped by the tr override, so `… doğru ya ayarla` parsed only
+ * inside an event handler — the one generator that happened to merge both.
+ *
+ * `markerVariants` are held out for a role with a {@link RoleSpecWithMarker.methodCarrier}:
+ * there they are not synonyms but distinct command shapes recorded into another
+ * role (`put`'s `into|before|after` → `method`), and merging them as synonyms is
+ * what broke `put-before`/`put-after` in 23 languages at once. That flag is the
+ * discriminator because it is set on exactly the role whose variants carry
+ * meaning — pinned by `schema-consistency.test.ts`, which fails if a new
+ * `markerVariants` appears without that decision being made.
+ */
+export function schemaMarkerAlternatives(
+  roleSpec: RoleSpecWithMarker,
+  languageCode: string,
+  marker: string
+): string[] | undefined {
+  const legacy = roleSpec.markerLegacy?.[languageCode] ?? [];
+  const variants = roleSpec.methodCarrier ? [] : (roleSpec.markerVariants?.[languageCode] ?? []);
+  const alternatives = [...new Set([...legacy, ...variants])].filter(a => a && a !== marker);
   return alternatives.length ? alternatives : undefined;
 }
 
