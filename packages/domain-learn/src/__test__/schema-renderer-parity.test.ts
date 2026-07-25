@@ -38,8 +38,9 @@
  * pinned separately at the bottom of this file:
  *   - `role-order` on `set` (all 10 languages) — the two sides disagree on
  *     which role comes first, which is a round-trip bug, not a cosmetic one.
- *   - `marker-vocabulary` on `get`/`fetch` in ja/ko — the schema marks the
- *     source with the PATIENT particle.
+ *   - `marker-vocabulary` on `get`/`fetch` in ja/ko — the schema marked the
+ *     source with the PATIENT particle. FIXED: the schema now uses the ablative
+ *     (から / 에서), and the block at the bottom locks the agreement.
  * Both, plus the finding that `renderLearn`'s output re-parses in only 75 of
  * 150 cases, are written up in
  * `docs-internal/DOMAIN-LEARN-PARITY-FINDINGS.md`.
@@ -165,11 +166,14 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
   },
   get: {
     en: 'marker-presence',
-    ja: 'marker-vocabulary',
+    // was 'marker-vocabulary' — the schema marked the source with the patient
+    // particle. Now that it uses the ablative, only the verb form and the glue
+    // are left, which is what every other SOV cell in this table looks like.
+    ja: 'verb-and-glue',
     es: 'marker-presence',
     ar: 'marker-presence',
     zh: 'marker-presence',
-    ko: 'marker-vocabulary',
+    ko: 'verb-and-glue',
     fr: 'marker-presence',
     tr: 'marker-presence',
     de: 'marker-presence',
@@ -185,11 +189,14 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
   },
   fetch: {
     en: 'marker-presence',
-    ja: 'marker-vocabulary',
+    // was 'marker-vocabulary' — the schema marked the source with the patient
+    // particle. Now that it uses the ablative, only the verb form and the glue
+    // are left, which is what every other SOV cell in this table looks like.
+    ja: 'verb-and-glue',
     es: 'marker-presence',
     ar: 'marker-presence',
     zh: 'marker-presence',
-    ko: 'marker-vocabulary',
+    ko: 'verb-and-glue',
     fr: 'marker-presence',
     tr: 'marker-presence',
     de: 'marker-presence',
@@ -433,19 +440,22 @@ describe('known defect: `set` renders its two roles in opposite orders', () => {
   }
 });
 
-describe('known defect: ja/ko `get`/`fetch` mark their source with the patient particle', () => {
-  // The schema gives `source` the patient particle (ja を, ko 를) while
-  // `renderLearn` writes the ablative (から / 에서), which is the correct one.
-  // Here the RENDERER is right and the schema is wrong — the mirror of this
-  // arc's usual direction — so it is a schema fix, not a renderer one.
+describe('ja/ko `get`/`fetch` mark their source with the ablative', () => {
+  // FIXED. The schema used to give `source` the patient particle (ja を, ko 를)
+  // while `renderLearn` wrote the ablative (から / 에서) — the source is where a
+  // value comes FROM, so the RENDERER was right and the schema was wrong, the
+  // mirror of this arc's usual direction. The schema moved; this now locks the
+  // agreement rather than pinning the defect.
   const ABLATIVE: Record<string, string> = { ja: 'から', ko: '에서' };
+  const PATIENT: Record<string, string> = { ja: 'を', ko: '를' };
 
   for (const action of ['get', 'fetch']) {
     for (const [language, ablative] of Object.entries(ABLATIVE)) {
-      it(`${action} × ${language} — renderLearn uses ${ablative}, the schema does not`, () => {
+      it(`${action} × ${language} — both renderings use ${ablative}`, () => {
         const node = nodeFor(action, rolesFor(action, false));
         expect(renderLearn(node, language)).toContain(ablative);
-        expect(schemaRenderer.render(node, language)).not.toContain(ablative);
+        expect(schemaRenderer.render(node, language)).toContain(ablative);
+        expect(schemaRenderer.render(node, language)).not.toContain(PATIENT[language]);
       });
     }
   }
