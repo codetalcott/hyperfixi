@@ -404,3 +404,81 @@ describe('RegressionReporter precision ratchet — R0-precision (trust floor)', 
     expect(saved.languages.ja!.avgPrecision).toBeCloseTo(0.95, 5);
   });
 });
+
+describe('RegressionReporter per-pattern parse ratchet — R5', () => {
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'parse-ratchet-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  /** Minimal ParseResult for a pattern that no longer parses. */
+  function fail(id: string): ParseResult {
+    return { ...pass(id), success: false };
+  }
+
+  function baselineOf(ids: string[], failing: string[] = []): Baseline {
+    const patterns: Record<string, { success: boolean; confidence: number | undefined }> = {};
+    for (const id of ids) {
+      patterns[id] = { success: !failing.includes(id), confidence: 1 };
+    }
+    return {
+      timestamp: '',
+      commit: 'base',
+      languages: {
+        ja: {
+          parseSuccess: ids.length - failing.length,
+          parseFailure: failing.length,
+          parseRate: (ids.length - failing.length) / ids.length,
+          avgConfidence: 1,
+          avgFidelity: 1,
+          degeneratePasses: [],
+          lossyPasses: [],
+          bundleSize: undefined,
+          patterns,
+        },
+      },
+      bundles: {},
+    };
+  }
+
+  it('flags a baseline pass that no longer parses', () => {
+    const reporter = reporterWith(baselineOf(['a', 'b', 'c']));
+    reporter.reportComplete(results(lang([pass('a'), fail('b'), pass('c')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newFailures).toEqual(['b']);
+  });
+
+  it('does not flag a pattern that was already failing in the baseline', () => {
+    const reporter = reporterWith(baselineOf(['a', 'b'], ['b']));
+    reporter.reportComplete(results(lang([pass('a'), fail('b')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newFailures).toEqual([]);
+  });
+
+  it('never retro-flags when the baseline has no per-pattern data', () => {
+    const noPatterns = baselineOf(['a', 'b']);
+    delete (noPatterns.languages.ja as { patterns?: unknown }).patterns;
+    const reporter = reporterWith(noPatterns);
+    reporter.reportComplete(results(lang([fail('a'), fail('b')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newFailures).toEqual([]);
+  });
+
+  // The list is the R5 gate's evidence, not just a reporting nicety: it used to
+  // be `.slice(0, 10)`, which would have under-reported how much broke — and, if
+  // the gate ever counted it, capped the count at 10.
+  it('returns every new failure, uncapped', () => {
+    const ids = Array.from({ length: 25 }, (_, i) => `p${i}`);
+    const reporter = reporterWith(baselineOf(ids));
+    reporter.reportComplete(results(lang(ids.map(fail), [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newFailures).toHaveLength(25);
+  });
+});

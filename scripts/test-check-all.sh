@@ -99,6 +99,17 @@ PACKAGES=(
 
 failed=0
 
+# Vocab cross-surface consistency (V1–V4). CI gates on this in the
+# multilingual-validation job, but that job is PR-only — so before this it was
+# possible to run the whole local gate green and still push a marker that cannot
+# tokenize in its own language (how the th `go` marker `ยัง` reached CI in #763).
+# It needs no patterns.db, only the dists ensure-fresh just refreshed, and takes
+# ~1s. What matters is the UNWAIVED count; waivers live in vocab-waivers.json.
+echo "=== Vocab consistency (V1–V4) ==="
+if ! (cd "$REPO_ROOT/packages/testing-framework" && npx tsx src/vocab/cli.ts validate); then
+  failed=1
+fi
+
 for entry in "${PACKAGES[@]}"; do
   pkg="${entry%%:*}"
   label="${entry#*:}"

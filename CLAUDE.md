@@ -336,16 +336,24 @@ the committed baseline:
 > not truth. Current plan + per-arc history:
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
-The `--regression` gate ratchets on **nine** signals (each fails CI; each guarded so
+The `--regression` gate ratchets on **ten** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
-1. **parse-rate** drop > 2pts.
+1. **parse-rate** drop > 2pts. Deliberately coarse — signal 10 is what catches a
+   small number of patterns breaking.
 2. **degenerate ratchet** — a faithful baseline pass that became _degenerate_
    (tolerance 3).
 3. **correctness ratchet (R0-recall)** — a faithful baseline pass that became _lossy_
-   (tolerance 3), **plus** a per-language **avgFidelity** drop > 0.02. Catches the
-   silent command-drops the degenerate ratchet misses (a 1.0 → 0.8 pass).
+   (**tolerance 0** since 2026-07-25), **plus** a per-language **avgFidelity** drop
+   > 0.02. Catches the silent command-drops the degenerate ratchet misses (a
+   > 1.0 → 0.8 pass). The tolerance was 3, and that cushion was **measured to be the
+   > gate's real blind spot**: reverting #763's `markerLegacy.he` fix — the exact
+   > regression two vitest cases caught and the gate did not — produces exactly ONE
+   > faithful→lossy flip and moves nothing else (even a nonsense he marker override
+   > produced only two). The parser degrades rather than returning null, so signals
+   > 1 and 10 never fire for this class. A faithful→lossy flip is binary and
+   > structural, like R2/R4, so it has no float/collation noise to absorb.
 4. **precision ratchet (R0-precision, the "trust floor")** — a per-language
    **avgPrecision** drop > 0.02. The mirror of recall: catches a parse/render that
    _adds_ phantom/spurious commands the source never had (a phantom `toggle` ahead of
@@ -405,6 +413,23 @@ yields a 0 delta):
    disagree; the en-side twin (`canonical-validity.test.ts`, allowlist of exactly 1:
    `pick-text-range`) remains vitest-only.
 
+10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
+    longer parses at all, at **tolerance 0**. Not redundant with signal 1: every
+    other signal is structurally incapable of seeing a handful of patterns break.
+    Parse rate is per-language, so at ~154 patterns one flip is a **0.65pt** drop
+    against a 2pt tolerance — it takes ≥4 in ONE language. The five `avg*` signals
+    see **exactly 0.0000**, not merely a small delta, because the orchestrator
+    skips a failed parse _before_ scoring, removing it from numerator and
+    denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
+    **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
+    that did parse. R2 covers 47 curated ids; R4's denominator excludes ~14% of
+    the corpus and is full-mode only. This is not hypothetical — #763's
+    `markerOverride.he` change stopped `לך את back` parsing and the gate would
+    have gone green; two vitest cases caught it instead. The other tolerances are
+    cross-machine headroom for **averages**; a binary pass→fail flip has no such
+    noise to absorb. Reads the per-pattern `patterns` map the baseline already
+    records, so no format change and no retro-flagging.
+
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
 identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.
@@ -417,10 +442,12 @@ code the canonical parser rejects, so that class still needs the en-side vitest 
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
 baseline generated against a stale/transitional DB will read as drifted.
-`populate` is **deterministic run-to-run**, so the ratchet tolerances (3 lossy / 3
+`populate` is **deterministic run-to-run**, so the remaining ratchet tolerances (3
 degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
 (Mac-generated baseline vs CI Linux float/collation drift), not absorbers of local
-run-to-run jitter — don't read a green gate as "within noise." The remaining
+run-to-run jitter — don't read a green gate as "within noise." The per-pattern
+signals (lossy, R2, R4, R5) are all at 0: a binary flip has no such noise to
+absorb, and the lossy cushion was measured swallowing a real regression. The remaining
 fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, reactive
 `on.event` rows, swap F6) and the R3 residual rows — current queue in
 `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
