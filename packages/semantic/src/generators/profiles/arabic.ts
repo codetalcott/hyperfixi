@@ -170,9 +170,12 @@ export const arabicProfile: LanguageProfile = {
     behavior: { primary: 'سلوك', normalized: 'behavior' },
     install: { primary: 'تثبيت', alternatives: ['ثبّت'], normalized: 'install' },
     // `قِس` is the imperative with the kasra diacritic; the i18n dict (and real
-    // Arabic prose) emits it undiacritized as `قس`, so list both — otherwise the
-    // generated `قس width`/`قس x` (behavior-draggable/resizable) parse to null and
-    // the whole `measure` command drops from the event-handler body (lossy).
+    // Arabic prose) emits it undiacritized as `قس`. BOTH stay listed, and not
+    // for the tokenizer's sake — keyword lookup is diacritic-insensitive now, so
+    // either spelling resolves. It is the vocab gate's V1 check, which compares
+    // the profile against the i18n DICTIONARY as strings: the dictionary says
+    // `قس`, so dropping it here fails V1 (verified). Diacritic-insensitivity
+    // would have to reach that comparison too before this pair can collapse.
     measure: { primary: 'قياس', alternatives: ['قِس', 'قس'], normalized: 'measure' },
     beep: { primary: 'صفّر', normalized: 'beep' },
     break: { primary: 'توقف', normalized: 'break' },
