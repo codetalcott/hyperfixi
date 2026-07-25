@@ -151,7 +151,15 @@ export class SpanishKeywordExtractor implements ContextAwareExtractor {
         : undefined;
 
     // Try morphological normalization if available and not already a keyword
+    // The stem is the NATIVE dictionary form (`agregar`), and the pattern
+    // matcher's verb literal is that same native form — so `stem` is what makes a
+    // conjugated surface match. `normalized` is the ENGLISH concept (`add`) and
+    // never equals the literal, which is why capturing it alone left `agrega`
+    // unparseable. Same shape as turkish-keyword.ts / korean-keyword.ts, which
+    // already do this; these three were the omission.
     let morphNormalized: string | undefined;
+    let morphStem: string | undefined;
+    let morphConfidence: number | undefined;
     if (!keywordEntry && this.context.normalizer) {
       const morphResult = this.context.normalizer.normalize(word);
       if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
@@ -159,6 +167,8 @@ export class SpanishKeywordExtractor implements ContextAwareExtractor {
         const stemEntry = this.context.lookupKeyword(morphResult.stem);
         if (stemEntry) {
           morphNormalized = stemEntry.normalized;
+          morphStem = morphResult.stem;
+          morphConfidence = morphResult.confidence;
         }
       }
     }
@@ -168,6 +178,8 @@ export class SpanishKeywordExtractor implements ContextAwareExtractor {
       length: pos - position,
       metadata: {
         normalized: normalized || morphNormalized,
+        stem: morphStem,
+        stemConfidence: morphConfidence,
         isPreposition,
       },
     };
