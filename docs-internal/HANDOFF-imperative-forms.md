@@ -33,11 +33,19 @@
 > one layer later. 12 of 13 diacritized imperatives now parse; `أحضِر` differs by
 > hamza (a letter, not an optional diacritic) and is correctly out of scope.
 >
+> **Turkish is DONE** (`d3927557` here, `6bac34c` on lokascript-learn's
+> `fix/turkish-ascii-folding`). The folding was a bug, not a constraint: this
+> package's own tr tokenizer already listed correct Turkish, and only the
+> MISSPELLING parsed, so a Turkish learner typing their own language correctly got
+> nothing. Corrected per-stem — vowel harmony means `kaldır`/`artır` take dotless
+> `ı` through every inflection while `değiştir`/`göster`/`gönder` only need ğ/ş/ö
+> — with the folded spellings kept as alternatives. **The downstream commit cannot
+> merge until domain-learn publishes**: lokascript-learn keeps its own copy of the
+> table and `dsl-bridge.test.ts` asserts the two agree.
+>
 > **Still open:** **de** (multi-word separable imperatives + `senden` shadowed by
-> `submit`), **tr** (the ASCII-folded forms are a bug in domain-learn's
-> morphologyTable, and fixing it changes frozen `renderLearn` output — owner's
-> call), and lokascript-learn's `parseAndCompare`, which should now work in more
-> languages but has not been re-measured.
+> `submit`), and lokascript-learn's `parseAndCompare`, which should now work in
+> more languages but has not been re-measured.
 
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
