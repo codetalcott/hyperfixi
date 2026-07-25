@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/speech",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "Speech Synthesis and prompt() plugin for hyperfixi — adds `speak`, `ask`, and `answer` commands (upstream _hyperscript 0.9.90).",
   "type": "module",
   "sideEffects": false,
@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.7.2"
+    "@hyperfixi/core": "^2.8.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

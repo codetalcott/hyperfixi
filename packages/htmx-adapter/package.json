@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/htmx-adapter",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "Multilingual adapter for upstream htmx v4 — author hx-* attributes in 24 languages",
   "type": "module",
   "main": "dist/index.cjs",
