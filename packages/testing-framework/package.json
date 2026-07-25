@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/testing-framework",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "Cross-platform behavior testing suite for LokaScript applications",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -56,10 +56,10 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^2.7.2",
-    "@hyperfixi/patterns-reference": "^2.7.2",
-    "@lokascript/i18n": "^2.7.2",
-    "@lokascript/semantic": "^2.7.2",
+    "@hyperfixi/core": "^2.8.0",
+    "@hyperfixi/patterns-reference": "^2.8.0",
+    "@lokascript/i18n": "^2.8.0",
+    "@lokascript/semantic": "^2.8.0",
     "diff": "^8.0.3",
     "esbuild": "^0.28.0",
     "happy-dom": "^20.10.6",

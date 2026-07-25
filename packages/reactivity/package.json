@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/reactivity",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "Reactive features for hyperfixi — adds `live`, `bind`, `when X changes`, and `^name` DOM-scoped vars (upstream _hyperscript 0.9.90).",
   "type": "module",
   "sideEffects": false,
@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.7.2"
+    "@hyperfixi/core": "^2.8.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

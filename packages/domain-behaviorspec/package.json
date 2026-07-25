@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-behaviorspec",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "Multilingual interaction testing domain built on @lokascript/framework — write Playwright tests in natural language across 4 languages",
   "type": "module",
   "sideEffects": false,
@@ -24,11 +24,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.7.2",
-    "@lokascript/semantic": "^2.7.2"
+    "@lokascript/framework": "^2.8.0",
+    "@lokascript/semantic": "^2.8.0"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.7.2",
+    "@lokascript/domain-toolkit": "^2.8.0",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
