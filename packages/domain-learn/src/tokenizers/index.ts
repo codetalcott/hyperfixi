@@ -411,6 +411,15 @@ export const TurkishLearnTokenizer: LanguageTokenizer = createSimpleTokenizer({
     'u',
     'ü',
     'ı',
+    // Correct-Turkish infinitives. The ASCII-folded spellings above are kept as
+    // vocab alternatives so older content still parses, but the vocabulary's
+    // canonical forms are these — and every profile keyword has to classify as a
+    // keyword here or the domain-toolkit keyword-classification lint fails.
+    'kaldırmak',
+    'değiştirmek',
+    'göstermek',
+    'göndermek',
+    'artırmak',
   ],
   customExtractors: [new CssSelectorExtractor(), new LatinExtendedIdentifierExtractor()],
   includeOperators: true,

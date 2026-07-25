@@ -108,7 +108,10 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
     ar: 'verb-form',
     ko: ['verb-and-glue', 'verb-form'],
     fr: 'verb-form',
-    tr: ['verb-and-glue', 'verb-form'],
+    // tr: the verb-form divergence disappeared when the ASCII-folded spellings
+    // were corrected — both renderers now write real Turkish. Only the marker
+    // shape is left, and only with all roles populated.
+    tr: ['glued-marker', 'identical'],
     de: 'verb-form',
     pt: 'verb-form',
   },
@@ -120,7 +123,10 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
     zh: ['marker-vocabulary', 'identical'],
     ko: ['verb-and-glue', 'verb-form'],
     fr: ['marker-vocabulary', 'verb-form'],
-    tr: ['marker-absence', 'verb-form'],
+    // tr: the verb-form divergence disappeared when the ASCII-folded spellings
+    // were corrected — both renderers now write real Turkish. Only the marker
+    // shape is left, and only with all roles populated.
+    tr: ['marker-absence', 'identical'],
     de: ['marker-vocabulary', 'verb-form'],
     pt: ['marker-vocabulary', 'verb-form'],
   },
@@ -152,7 +158,6 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
     es: 'verb-form',
     ko: 'verb-form',
     fr: 'verb-form',
-    tr: 'verb-form',
     de: 'verb-form',
     pt: 'verb-form',
   },
@@ -207,7 +212,10 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
     es: 'verb-form',
     ko: ['marker-absence', 'identical'],
     fr: 'verb-form',
-    tr: ['marker-vocabulary', 'verb-form'],
+    // tr: the verb-form divergence disappeared when the ASCII-folded spellings
+    // were corrected — both renderers now write real Turkish. Only the marker
+    // shape is left, and only with all roles populated.
+    tr: ['marker-vocabulary', 'identical'],
     de: ['marker-vocabulary', 'verb-form'],
     pt: ['marker-absence', 'verb-form'],
   },
@@ -227,7 +235,6 @@ const EXPECTED: Record<string, Record<string, Divergence | [Divergence, Divergen
     es: 'verb-form',
     ko: 'verb-form',
     fr: 'verb-form',
-    tr: 'verb-form',
     de: 'verb-form',
     pt: 'verb-form',
   },
