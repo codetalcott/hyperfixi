@@ -68,4 +68,40 @@ describe('Schema Consistency', () => {
       }
     });
   });
+
+  // `markerVariants` entries reach generated patterns as marker ALTERNATIVES on
+  // every branch (`schemaMarkerAlternatives`), unless the role sets
+  // `methodCarrier` — where they are not synonyms but distinct command shapes
+  // recorded into another role, and merging them swallowed `put-before`/
+  // `put-after` in 23 languages at once.
+  //
+  // `methodCarrier` is therefore the ONLY discriminator between "extra spelling
+  // of the same marker" and "different command", and it cannot be inferred. This
+  // pins the whole set so adding `markerVariants` to a role fails here until that
+  // call is made deliberately.
+  describe('markerVariants ↔ methodCarrier is pinned', () => {
+    const EXPECTED: Record<string, { languages: string[]; methodCarrier: string | null }> = {
+      // synonyms — merged as alternatives
+      'toggle.destination': { languages: ['ko'], methodCarrier: null },
+      'set.patient': { languages: ['tr'], methodCarrier: null },
+      'trigger.event': { languages: ['bn', 'hi', 'qu'], methodCarrier: null },
+      'go.destination': { languages: ['zh'], methodCarrier: null },
+      // meaning-bearing — held OUT of the merge; `into|before|after` → `method`
+      'put.destination': { languages: ['en'], methodCarrier: 'method' },
+    };
+
+    it('no role declares markerVariants without an explicit entry here', () => {
+      const actual: Record<string, { languages: string[]; methodCarrier: string | null }> = {};
+      for (const schema of Object.values(commandSchemas)) {
+        for (const role of schema.roles) {
+          if (!role.markerVariants) continue;
+          actual[`${schema.action}.${role.role}`] = {
+            languages: Object.keys(role.markerVariants).sort(),
+            methodCarrier: role.methodCarrier ?? null,
+          };
+        }
+      }
+      expect(actual).toEqual(EXPECTED);
+    });
+  });
 });

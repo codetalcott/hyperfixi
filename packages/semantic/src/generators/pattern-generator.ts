@@ -13,7 +13,7 @@ import { getDefinedSchemas } from './command-schemas';
 
 // Import shared utilities
 import { sortRolesByWordOrder } from '../parser/utils/role-positioning';
-import { resolveMarkerForRole } from '../parser/utils/marker-resolution';
+import { resolveMarkerForRole, schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 // Import word-order-specific event handler generators
 import {
@@ -774,16 +774,16 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
     const position = defaultMarker?.position ?? 'before';
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
-    // Single-word overrides also accept the role's markerLegacy entries, so
-    // correcting an override's marker does not stop the previous one parsing.
-    // Deliberately NOT markerVariants: on `put` those are `before`/`after`,
-    // which carry a distinct `method` role rather than being synonyms for
-    // `into` — accepting them here would swallow put-before/put-after into the
-    // base pattern and drop the method.
-    const legacyAlts =
-      markerWords.length === 1 ? (roleSpec.markerLegacy?.[profile.code] ?? []) : [];
+    // Single-word overrides also accept every schema-declared alternative
+    // (markerLegacy ∪ markerVariants), so correcting an override's marker does
+    // not stop the previous one parsing, and declaring an override does not
+    // silently delete that language's variants. schemaMarkerAlternatives holds
+    // variants out for a methodCarrier role (`put`'s before/after) — see its doc.
     const pushWord = (word: string): void => {
-      const alternatives = [...new Set(legacyAlts)].filter(a => a !== word);
+      const alternatives =
+        markerWords.length === 1
+          ? (schemaMarkerAlternatives(roleSpec, profile.code, word) ?? [])
+          : [];
       const literal: PatternToken = {
         type: 'literal',
         value: word,
@@ -804,14 +804,15 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     // optional group so `.active değiştir` parses as well as `.active i değiştir`.
     // The marked form still matches the marker literal directly (higher
     // confidence); the unmarked form falls back through the optional group.
-    // Per-command markerVariants merge in as extra alternatives (the SOV
-    // two-role generators already do this — see event-handlers-sov.ts): the
-    // transformer can render a role with a particle the profile default
-    // doesn't cover (he את / zh 把 before go's destination in `go back`).
-    const variantAlts = roleSpec.markerVariants?.[profile.code] ?? [];
+    // The schema's markerVariants/markerLegacy merge in as extra alternatives:
+    // the transformer can render a role with a particle the profile default
+    // doesn't cover (zh 把 before go's destination in `go back`).
     const asMarker = (): PatternToken => {
       const alternatives = [
-        ...new Set([...(defaultMarker.alternatives ?? []), ...variantAlts]),
+        ...new Set([
+          ...(defaultMarker.alternatives ?? []),
+          ...(schemaMarkerAlternatives(roleSpec, profile.code, defaultMarker.primary) ?? []),
+        ]),
       ].filter(a => a !== defaultMarker.primary);
       return {
         type: 'literal',
@@ -870,25 +871,29 @@ function buildExtractionRules(
       // it wins over the role's own marker (`to`), which may be optional/absent.
       rules[roleSpec.role] = { marker: roleSpec.valuePrefixLiteral[profile.code] };
     } else if (overrideMarker !== undefined) {
-      // Use the override marker, accepting markerLegacy entries as alternatives
-      // so a corrected marker does not stop the previous one parsing (mirrors
+      // Use the override marker, accepting the schema's declared alternatives
+      // so a corrected marker does not stop the previous one parsing and an
+      // override does not delete that language's variants (mirrors
       // buildRoleToken; single-word overrides only, as a multi-word marker has
       // no single token to swap).
       if (!overrideMarker) {
         rules[roleSpec.role] = {};
       } else {
         const isSingleWord = !/\s/.test(overrideMarker.trim());
-        const legacyAlts = isSingleWord ? (roleSpec.markerLegacy?.[profile.code] ?? []) : [];
-        const markerAlternatives = [...new Set(legacyAlts)].filter(a => a !== overrideMarker);
+        const markerAlternatives = isSingleWord
+          ? (schemaMarkerAlternatives(roleSpec, profile.code, overrideMarker) ?? [])
+          : [];
         rules[roleSpec.role] = markerAlternatives.length
           ? { marker: overrideMarker, markerAlternatives }
           : { marker: overrideMarker };
       }
     } else if (defaultMarker && defaultMarker.primary) {
-      // Merge per-command markerVariants as alternatives (mirrors buildRoleToken)
-      const variantAlts = roleSpec.markerVariants?.[profile.code] ?? [];
+      // Merge the schema's declared alternatives (mirrors buildRoleToken)
       const markerAlternatives = [
-        ...new Set([...(defaultMarker.alternatives ?? []), ...variantAlts]),
+        ...new Set([
+          ...(defaultMarker.alternatives ?? []),
+          ...(schemaMarkerAlternatives(roleSpec, profile.code, defaultMarker.primary) ?? []),
+        ]),
       ].filter(a => a !== defaultMarker.primary);
       rules[roleSpec.role] = markerAlternatives.length
         ? { marker: defaultMarker.primary, markerAlternatives }

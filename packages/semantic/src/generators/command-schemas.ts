@@ -58,9 +58,17 @@ export interface RoleSpec {
   /**
    * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
    * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
-   * recognize any of the listed markers as signaling this role.
-   * The pattern generator and other semantic consumers read only `markerOverride`;
-   * this field is specifically for bridge-side inference (`inferRolesFromSchema`).
+   * recognize any of the listed markers as signaling this role, AND — since the
+   * marker code paths were unified — merged into every generated pattern as
+   * marker alternatives, on both the override and profile-default branches
+   * (`schemaMarkerAlternatives` in `parser/utils/marker-resolution.ts`).
+   *
+   * **Unless the role sets {@link methodCarrier}.** There the variants are not
+   * synonyms but distinct command shapes recorded into another role (`put`'s
+   * `into|before|after` → `method`), and merging them as synonyms swallowed
+   * `put-before`/`put-after` in 23 languages at once. That flag is the only
+   * discriminator, so setting it is a decision, not a detail —
+   * `schema-consistency.test.ts` pins every role that declares this field.
    */
   readonly markerVariants?: Record<string, readonly string[]>;
   /**
@@ -69,10 +77,12 @@ export interface RoleSpec {
    * stop the old marker parsing at all, making every marker fix a breaking
    * change for source already written.
    *
-   * Distinct from {@link markerVariants}, whose entries are alternates that
-   * carry meaning of their own (`put`'s `before`/`after` populate the `method`
-   * role via {@link methodCarrier}). A legacy marker means the same thing as the
-   * current one — it is only spelled the way an older release spelled it.
+   * Distinct from {@link markerVariants} only in intent: a legacy marker means
+   * the same thing as the current one and is merely spelled the way an older
+   * release spelled it, whereas a variant may carry meaning of its own (see
+   * that field). Both are merged as alternatives by the same helper, so the
+   * choice between them is documentation for the next reader, not behaviour —
+   * except when {@link methodCarrier} is set, which holds variants out.
    */
   readonly markerLegacy?: Record<string, readonly string[]>;
   /**
@@ -715,8 +725,11 @@ export const setSchema: CommandSchema = {
       // ending in a vowel (`doğru ya` = "true" in set-attribute). markerOverride
       // is a single string, so the generated tr set patterns carried only `e`
       // and set-attribute fell to the role-scrambling generic SOV extraction.
-      // markerVariants supplies the allomorphs the SOV two-role generators merge
-      // in as marker alternatives. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
+      // markerVariants supplies the allomorphs, merged in as marker alternatives.
+      // Until 2026-07-25 only the SOV two-role generators merged them, so this
+      // worked ONLY inside an event handler: `@disabled i doğru ya ayarla` did
+      // not parse as a bare command while `tıklama da @disabled i doğru ya
+      // ayarla` did. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
       markerVariants: {
         tr: ['e', 'a', 'ye', 'ya'],
       },
@@ -1851,13 +1864,14 @@ export const goSchema: CommandSchema = {
       // side cannot require it: `go /page`, `前往 url`, `đi đến url`, `ไป url`
       // must parse alongside the marked forms the profile still accepts.
       markerOptional: { en: true, zh: true, vi: true, th: true },
-      // Only zh is left here. `markerVariants` is merged as alternatives by the
-      // PROFILE-DEFAULT branch of marker resolution; `markerLegacy` by the
-      // OVERRIDE branch (see `resolveMarkerForRole` and `pattern-generator`'s
-      // `pushWord`/`asMarker`). he moved to the override branch when it gained
-      // a `markerOverride` above, so its `את` moved to `markerLegacy` with it —
-      // leaving it here would have silently stopped `לך את back` parsing. zh has
-      // no markerOverride (it changes only how it RENDERS), so it stays.
+      // zh renders `前往 把 back` with its PATIENT particle before go's
+      // destination — a synonym here, not a distinct shape, so it is accepted as
+      // a marker alternative scoped to go. he's `את` is the same thing and sits
+      // in `markerLegacy` below: it moved there in #763 because the two fields
+      // were then read by DIFFERENT branches, so leaving it here silently
+      // stopped `לך את back` parsing the moment he gained a `markerOverride`.
+      // Both fields now merge on both branches (`schemaMarkerAlternatives`), so
+      // that trap is gone and the split is historical.
       markerVariants: { zh: ['把'] },
       markerLegacy: {
         es: ['en', 'sobre', 'hacia'],
