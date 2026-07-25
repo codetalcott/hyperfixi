@@ -485,17 +485,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} テスト",
+          "format": "テスト {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "テスト"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "テスト"
             }
           ]
         },
@@ -545,7 +545,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} を {target} {action} に {destination} 操作",
+          "format": "{actor} を {target} に {destination} {action} 操作",
           "tokens": [
             {
               "type": "role",
@@ -570,12 +570,6 @@
               ]
             },
             {
-              "type": "role",
-              "role": "action",
-              "optional": false,
-              "expectedTypes": ["expression"]
-            },
-            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -590,6 +584,12 @@
                   "value": "に"
                 }
               ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -616,13 +616,19 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} と {value} {assertion} 期待",
+          "format": "{target} {assertion} と {value} 期待",
           "tokens": [
             {
               "type": "role",
               "role": "target",
               "optional": false,
               "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "group",
@@ -640,12 +646,6 @@
                   "value": "と"
                 }
               ]
-            },
-            {
-              "type": "role",
-              "role": "assertion",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -695,18 +695,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} 否定",
+          "format": "否定 {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "否定"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "否定"
             }
           ]
         },
@@ -963,17 +963,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} 테스트",
+          "format": "테스트 {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "테스트"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "테스트"
             }
           ]
         },
@@ -1023,7 +1023,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} 을 {target} {action} 에 {destination} 동작",
+          "format": "{actor} 을 {target} 에 {destination} {action} 동작",
           "tokens": [
             {
               "type": "role",
@@ -1048,12 +1048,6 @@
               ]
             },
             {
-              "type": "role",
-              "role": "action",
-              "optional": false,
-              "expectedTypes": ["expression"]
-            },
-            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1068,6 +1062,12 @@
                   "value": "에"
                 }
               ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -1094,13 +1094,19 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} 으로 {value} {assertion} 기대",
+          "format": "{target} {assertion} 으로 {value} 기대",
           "tokens": [
             {
               "type": "role",
               "role": "target",
               "optional": false,
               "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "group",
@@ -1118,12 +1124,6 @@
                   "value": "으로"
                 }
               ]
-            },
-            {
-              "type": "role",
-              "role": "assertion",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -1173,18 +1173,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} 아님",
+          "format": "아님 {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "아님"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "아님"
             }
           ]
         },
@@ -1680,17 +1680,17 @@
         "command": "test",
         "priority": 100,
         "template": {
-          "format": "{name} test",
+          "format": "test {name}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "test"
+            },
             {
               "type": "role",
               "role": "name",
               "optional": false,
               "expectedTypes": ["literal", "expression"]
-            },
-            {
-              "type": "literal",
-              "value": "test"
             }
           ]
         },
@@ -1740,7 +1740,7 @@
         "command": "when",
         "priority": 100,
         "template": {
-          "format": "{actor} üzerinde {target} {action} içine {destination} eylem",
+          "format": "{actor} üzerinde {target} içine {destination} {action} eylem",
           "tokens": [
             {
               "type": "role",
@@ -1765,12 +1765,6 @@
               ]
             },
             {
-              "type": "role",
-              "role": "action",
-              "optional": false,
-              "expectedTypes": ["expression"]
-            },
-            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1785,6 +1779,12 @@
                   "value": "içine"
                 }
               ]
+            },
+            {
+              "type": "role",
+              "role": "action",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -1811,13 +1811,19 @@
         "command": "expect",
         "priority": 100,
         "template": {
-          "format": "{target} diyen {value} {assertion} bekle",
+          "format": "{target} {assertion} diyen {value} bekle",
           "tokens": [
             {
               "type": "role",
               "role": "target",
               "optional": false,
               "expectedTypes": ["selector", "expression"]
+            },
+            {
+              "type": "role",
+              "role": "assertion",
+              "optional": false,
+              "expectedTypes": ["expression"]
             },
             {
               "type": "group",
@@ -1835,12 +1841,6 @@
                   "value": "diyen"
                 }
               ]
-            },
-            {
-              "type": "role",
-              "role": "assertion",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -1890,18 +1890,18 @@
         "command": "not",
         "priority": 100,
         "template": {
-          "format": "{content} degil",
+          "format": "degil {content}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "degil"
+            },
             {
               "type": "role",
               "role": "content",
               "optional": false,
               "expectedTypes": ["expression"],
               "greedy": true
-            },
-            {
-              "type": "literal",
-              "value": "degil"
             }
           ]
         },

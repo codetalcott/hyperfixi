@@ -6,13 +6,15 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractValue } from '@lokascript/framework';
+import { extractValue, createDomainRenderer } from '@lokascript/framework';
 import {
   COMMAND_KEYWORDS,
   MARKER_WORDS,
   SOV_LANGUAGES,
   VSO_LANGUAGES,
 } from '../constants/keywords.js';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Renderers
@@ -49,7 +51,10 @@ function renderWhen(node: SemanticNode, lang: string): string {
   const actionStr = action ? extractValue(action) : '';
   const targetStr = target ? extractValue(target) : '';
   const destStr = destination ? extractValue(destination) : '';
-  const onMarker = MARKER_WORDS.on[lang] ?? 'on';
+  // A marker belongs to its role: emitting `on` with no target left dangling
+  // text (`when clicks on`, `を clicks 操作`) that is not valid input in any
+  // language. `target` is optional, so this was reachable from a plain parse.
+  const onMarker = targetStr ? (MARKER_WORDS.on[lang] ?? 'on') : '';
   const intoMarker = MARKER_WORDS.into[lang] ?? 'into';
 
   if (SOV_LANGUAGES.has(lang)) {
@@ -99,27 +104,36 @@ function renderAfter(node: SemanticNode, lang: string): string {
 // Public API
 // =============================================================================
 
+function renderNot(node: SemanticNode, language: string): string {
+  const keyword = COMMAND_KEYWORDS.not[language] ?? 'not';
+  const content = node.roles.get('content');
+  return `${keyword} ${content ? extractValue(content) : ''}`.trim();
+}
+
+/**
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
+ */
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    test: renderTest,
+    given: renderGiven,
+    when: renderWhen,
+    expect: renderExpect,
+    after: renderAfter,
+    not: renderNot,
+  },
+});
+
 /**
  * Render a BehaviorSpec SemanticNode to natural-language text in the target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
  */
-export function renderBehaviorSpec(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'test':
-      return renderTest(node, language);
-    case 'given':
-      return renderGiven(node, language);
-    case 'when':
-      return renderWhen(node, language);
-    case 'expect':
-      return renderExpect(node, language);
-    case 'after':
-      return renderAfter(node, language);
-    case 'not': {
-      const keyword = COMMAND_KEYWORDS.not[language] ?? 'not';
-      const content = node.roles.get('content');
-      return `${keyword} ${content ? extractValue(content) : ''}`.trim();
-    }
-    default:
-      return `// Unknown: ${node.action}`;
-  }
+export function renderBehaviorSpec(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

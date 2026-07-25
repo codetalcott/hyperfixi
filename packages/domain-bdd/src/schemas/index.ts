@@ -8,6 +8,20 @@
 
 import { defineCommand, defineRole } from '@lokascript/framework';
 
+/** The languages this domain ships, in profile order. */
+const LANGUAGES = ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'] as const;
+
+/**
+ * Render this role with no marker in every language.
+ *
+ * `renderOverride: { '*': '' }` would be shorter, but `'*'` deliberately ranks
+ * BELOW a per-language `markerOverride` — so it cannot suppress a marker the
+ * role itself declares. Naming each language is the only way to say "the
+ * parser accepts this marker; the renderer never writes it".
+ */
+const bareInEveryLanguage = (): Record<string, string> =>
+  Object.fromEntries(LANGUAGES.map(code => [code, '']));
+
 // =============================================================================
 // GIVEN — Precondition
 // =============================================================================
@@ -26,6 +40,11 @@ export const givenSchema = defineCommand({
       svoPosition: 2,
       sovPosition: 2,
       markerOverride: { ja: 'が', ko: '이' },
+      // `renderGiven` writes the subject bare and lets the state phrase carry
+      // the relation (`Given #button is exists`). Japanese and Korean are the
+      // exception — their state phrase embeds が/이 in this same slot — and
+      // markerOverride outranks `'*'`, so they keep it.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'state',
@@ -74,6 +93,11 @@ export const whenSchema = defineCommand({
         tr: 'üzerinde',
         fr: 'sur',
       },
+      // Every action phrase but Chinese embeds this marker (`click on`,
+      // `を クリック`, `üzerinde tıkla`), so the schema marker lands in the
+      // same slot the renderer writes. Chinese `点击` embeds none, and the
+      // profile's 在 would be written where the renderer writes nothing.
+      renderOverride: { zh: '' },
     }),
     defineRole({
       role: 'value',
@@ -92,6 +116,9 @@ export const whenSchema = defineCommand({
         tr: 'ile',
         fr: 'avec',
       },
+      // `When type #email hello` — the typed value trails bare. Named per
+      // language because a `markerOverride` outranks the `'*'` key.
+      renderOverride: bareInEveryLanguage(),
     }),
   ],
 });
@@ -114,6 +141,10 @@ export const thenSchema = defineCommand({
       svoPosition: 2,
       sovPosition: 2,
       markerOverride: { ja: 'に', ko: '에', tr: 'de' },
+      // `Then #button has .active` — bare, with the assertion word carrying
+      // the relation. The SOV three keep their particle via markerOverride,
+      // which outranks `'*'`.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'assertion',
@@ -141,6 +172,9 @@ export const thenSchema = defineCommand({
         tr: 'nin',
         fr: 'de',
       },
+      // `Then #count has count 3` — the expected value trails the assertion
+      // phrase bare. Named per language, as `'*'` cannot outrank the above.
+      renderOverride: bareInEveryLanguage(),
     }),
   ],
 });

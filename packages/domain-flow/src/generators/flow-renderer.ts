@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -308,21 +310,29 @@ function renderTransform(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a FlowScript SemanticNode to natural-language text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderFlow(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'fetch':
-      return renderFetch(node, language);
-    case 'poll':
-      return renderPoll(node, language);
-    case 'stream':
-      return renderStream(node, language);
-    case 'submit':
-      return renderSubmit(node, language);
-    case 'transform':
-      return renderTransform(node, language);
-    default:
-      return `-- Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    fetch: renderFetch,
+    poll: renderPoll,
+    stream: renderStream,
+    submit: renderSubmit,
+    transform: renderTransform,
+  },
+});
+
+/**
+ * Render a FlowScript SemanticNode to natural-language FlowScript DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderFlow(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

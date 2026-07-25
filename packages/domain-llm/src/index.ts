@@ -32,7 +32,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderLLM } from './generators/llm-renderer.js';
 import {
   allSchemas,
   askSchema,
@@ -69,9 +74,21 @@ import {
 import { llmCodeGenerator } from './generators/llm-generator.js';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual LLM DSL instance with all 8 supported languages.
  */
-export function createLLMDSL(): MultilingualDSL {
+export function createLLMDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'LLM',
     schemas: allSchemas,
@@ -155,6 +172,8 @@ export function createLLMDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: llmCodeGenerator,
+    renderer: renderLLM,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 
@@ -178,6 +197,7 @@ export {
   germanProfile,
   portugueseProfile,
   russianProfile,
+  allProfiles,
 } from './profiles/index.js';
 export { llmCodeGenerator } from './generators/llm-generator.js';
 export { renderLLM } from './generators/llm-renderer.js';

@@ -38,7 +38,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderTodo } from './generators/todo-renderer.js';
 import { allSchemas } from './schemas/index';
 import {
   enProfile,
@@ -69,9 +74,21 @@ import {
 import { todoCodeGenerator } from './generators/todo-generator';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual todo DSL instance with all 8 supported languages.
  */
-export function createTodoDSL(): MultilingualDSL {
+export function createTodoDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'Todo',
     schemas: allSchemas,
@@ -155,6 +172,8 @@ export function createTodoDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: todoCodeGenerator,
+    renderer: renderTodo,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 

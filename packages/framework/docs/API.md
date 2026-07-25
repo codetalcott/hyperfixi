@@ -9,6 +9,7 @@ Complete reference for `@lokascript/framework` API.
   - [MultilingualDSL Interface](#multilingualdsl-interface)
 - [Configuration Types](#configuration-types)
   - [DSLConfig](#dslconfig)
+  - [DomainExtension](#domainextension)
   - [LanguageConfig](#languageconfig)
   - [CommandSchema](#commandschema)
   - [RoleSpec](#rolespec)
@@ -117,10 +118,17 @@ interface MultilingualDSL {
   // Translation
   translate(input: string, fromLanguage: string, toLanguage: string): string;
 
+  // Rendering (null when the action cannot be rendered)
+  render?(node: SemanticNode, language: string): string | null;
+
   // Language support
   getSupportedLanguages(): string[];
 }
 ```
+
+> `translate()` needs a `grammarProfile` on each `LanguageConfig` involved and
+> throws without one, naming the field. `parse()` + `render()` is the
+> profile-free path between languages.
 
 #### parse()
 
@@ -298,6 +306,10 @@ interface DSLConfig {
   readonly profileProvider?: ProfileProvider;
   readonly valueExtractors?: ValueExtractor[];
   readonly codeGenerator?: CodeGenerator;
+  readonly renderer?: DomainRenderFn;
+
+  // Extension
+  readonly extensions?: readonly DomainExtension[];
 
   // Options
   readonly generatePatterns?: boolean;
@@ -313,9 +325,47 @@ interface DSLConfig {
 - **dictionary** (optional) - Keyword translation provider (default: auto-generated from language configs)
 - **profileProvider** (optional) - Grammar transformation profiles (default: auto-generated)
 - **valueExtractors** (optional) - Custom token extractors (default: generic extractors)
+- **renderer** (optional) - The domain's natural-language renderer, consulted by `render()`. Actions it returns `null` for fall through to the schema-driven renderer
+- **extensions** (optional) - Commands added from outside the defining package; see [DomainExtension](#domainextension)
 - **codeGenerator** (optional) - Target code generator (default: none)
 - **generatePatterns** (optional) - Auto-generate patterns from schemas (default: true)
 - **customPatterns** (optional) - Additional hand-written patterns
+
+---
+
+### DomainExtension
+
+A command added to a DSL from **outside the package that defines it**. A schema
+plus one vocabulary entry per language is enough to parse, render and compile it
+in all of them.
+
+```typescript
+interface DomainExtension {
+  readonly schema: CommandSchema;
+  readonly vocabulary: Readonly<Record<string, ExtensionVocabulary>>;
+  readonly render?: DomainRenderFn;
+  readonly generate?: (node: SemanticNode) => string;
+}
+
+interface ExtensionVocabulary {
+  readonly keyword: { primary: string; alternatives?: string[] };
+  readonly roleMarkers?: PatternGenLanguageProfile['roleMarkers'];
+}
+```
+
+**Properties:**
+
+- **schema** (required) - Schema for the new command; its action must not collide with an existing one
+- **vocabulary** (required) - Per-language vocabulary. A **subset** of the DSL's languages is allowed — those left out simply do not parse the command. An unconfigured language code is a configuration error
+- **render** (optional) - Custom rendering; the schema-driven path is used when omitted
+- **generate** (optional) - Custom code generation; the DSL's own generator is used when omitted
+
+Extensions are folded in when the DSL is constructed, because pattern generation
+happens there — a command registered afterwards would compile and render but
+silently fail to parse.
+
+See the [Domain Author Guide](./DOMAIN_AUTHOR_GUIDE.md#extending-an-existing-domain)
+for a worked example.
 
 ---
 
@@ -553,11 +603,7 @@ Language-neutral typed values.
 
 ```typescript
 type SemanticValue =
-  | LiteralValue
-  | SelectorValue
-  | ReferenceValue
-  | PropertyPathValue
-  | ExpressionValue;
+  LiteralValue | SelectorValue | ReferenceValue | PropertyPathValue | ExpressionValue;
 
 interface LiteralValue {
   readonly type: 'literal';
@@ -863,9 +909,7 @@ const conditional = createConditionalNode(
   'if',
   { condition: createExpression('x > 5') },
   [toggleCmd],
-  [
-    /* else branch */
-  ],
+  [/* else branch */],
   { sourceLanguage: 'en' }
 );
 

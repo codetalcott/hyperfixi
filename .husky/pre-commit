@@ -6,3 +6,10 @@ npx lint-staged
 if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|\.github/workflows/ci\.yml)$'; then
   node scripts/check-ci-build-order.cjs || exit 1
 fi
+
+# Verify the test:check gate still matches the workspace. Same cheap-and-rare
+# shape: only when a workspace package.json or the gate script itself is staged
+# (adding/removing a package, or editing the list).
+if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|scripts/test-check-all\.sh)$'; then
+  node scripts/check-test-check-list.cjs || exit 1
+fi

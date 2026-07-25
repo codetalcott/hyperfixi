@@ -30,9 +30,8 @@
  * ```
  */
 
-import type { SemanticNode } from '../core/types';
 import type { MultilingualDSL, CompileResult, ValidationResult } from './create-dsl';
-import type { NaturalLanguageRenderer } from '../generation/renderer';
+import type { NaturalLanguageRenderer, DomainRenderFn } from '../generation/renderer';
 import type { CommandSchema } from '../schema/command-schema';
 import type { SchemaLookup } from '../ir/types';
 import type { Diagnostic } from '../generation/diagnostics';
@@ -82,11 +81,12 @@ export interface DomainDescriptor {
   /**
    * Factory to lazily create the renderer.
    * Required for translate_{name} tool. Called once on first use.
+   *
+   * The function form may return `null` for an action it cannot render; the
+   * translate tool reports that as an unsuccessful translation.
    */
   readonly getRenderer?: () =>
-    | NaturalLanguageRenderer
-    | ((node: SemanticNode, language: string) => string)
-    | Promise<NaturalLanguageRenderer | ((node: SemanticNode, language: string) => string)>;
+    NaturalLanguageRenderer | DomainRenderFn | Promise<NaturalLanguageRenderer | DomainRenderFn>;
 
   /**
    * Which standard tools to generate. Default: all four.
@@ -154,10 +154,7 @@ export interface MCPToolResponse {
 export class DomainRegistry {
   private descriptors = new Map<string, DomainDescriptor>();
   private dslCache = new Map<string, MultilingualDSL>();
-  private rendererCache = new Map<
-    string,
-    NaturalLanguageRenderer | ((node: SemanticNode, language: string) => string)
-  >();
+  private rendererCache = new Map<string, NaturalLanguageRenderer | DomainRenderFn>();
 
   /**
    * Register a domain.
@@ -361,7 +358,7 @@ export class DomainRegistry {
 
   private async getRenderer(
     descriptor: DomainDescriptor
-  ): Promise<NaturalLanguageRenderer | ((node: SemanticNode, language: string) => string) | null> {
+  ): Promise<NaturalLanguageRenderer | DomainRenderFn | null> {
     if (!descriptor.getRenderer) return null;
 
     const cached = this.rendererCache.get(descriptor.name);
@@ -463,6 +460,14 @@ export class DomainRegistry {
     if (renderer) {
       try {
         rendered = typeof renderer === 'function' ? renderer(node, to) : renderer.render(node, to);
+      } catch {
+        // Fall through with rendered = null
+      }
+    } else if (dsl.render) {
+      // A descriptor without an explicit renderer can still render: the DSL
+      // knows its own domain renderer and its schema fallback.
+      try {
+        rendered = dsl.render(node, to);
       } catch {
         // Fall through with rendered = null
       }

@@ -26,7 +26,12 @@
  * ```
  */
 
-import { createMultilingualDSL, type MultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  type DomainExtension,
+  type MultilingualDSL,
+} from '@lokascript/framework';
+import { renderJSX } from './generators/jsx-renderer.js';
 import {
   allSchemas,
   elementSchema,
@@ -65,9 +70,21 @@ import {
 import { jsxCodeGenerator, createJSXCodeGenerator } from './generators/jsx-generator';
 
 /**
+ * Options for creating this DSL.
+ */
+export interface DomainDSLOptions {
+  /**
+   * Commands to add from outside this package. Each needs a schema and one
+   * vocabulary entry per language; parsing, rendering and compilation follow
+   * from the schema and the language profiles.
+   */
+  readonly extensions?: readonly DomainExtension[];
+}
+
+/**
  * Create a multilingual JSX DSL instance with all 8 supported languages.
  */
-export function createJSXDSL(): MultilingualDSL {
+export function createJSXDSL(options: DomainDSLOptions = {}): MultilingualDSL {
   return /*#__PURE__*/ createMultilingualDSL({
     name: 'JSX',
     schemas: allSchemas,
@@ -151,6 +168,8 @@ export function createJSXDSL(): MultilingualDSL {
       },
     ],
     codeGenerator: jsxCodeGenerator,
+    renderer: renderJSX,
+    ...(options.extensions && { extensions: options.extensions }),
   });
 }
 
@@ -176,6 +195,7 @@ export {
   germanProfile,
   portugueseProfile,
   russianProfile,
+  allProfiles,
 } from './profiles';
 export { jsxCodeGenerator, createJSXCodeGenerator } from './generators/jsx-generator';
 export { renderJSX } from './generators/jsx-renderer';

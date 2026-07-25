@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractValue } from '@lokascript/framework';
+import { extractValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -345,21 +347,49 @@ const ASSERTION_WORDS: Record<string, Record<string, string>> = {
 };
 
 /**
- * SOV particle placed before a CSS-class assertion (`then #x has .active`).
- * Per-language — must not leak across languages (e.g. Japanese `に` into Korean).
+ * The role marker each action phrase embeds, per language.
+ *
+ * `ACTION_WORDS` bundles the verb with the preposition or particle that
+ * introduces the target (`click on`, `を クリック`, `üzerinde tıkla`). When a
+ * `when` step has no target — which the schema allows — that marker has
+ * nothing to introduce, and emitting the phrase whole produced dangling text
+ * (`When click on`, `を クリック したら`). This table names the marker so it
+ * can be stripped in exactly that case; the phrase is used verbatim, as
+ * before, whenever a target IS present.
+ *
+ * An empty entry means the phrase embeds no marker.
  */
-const CLASS_ASSERTION_PARTICLE: Record<string, string> = {
-  ja: 'に',
-  ko: '에',
-  tr: 'de',
-};
-
-/**
- * SOV "has" word that follows the class in a class assertion, where the
- * language requires one. Japanese/Korean need none; Turkish needs `sahip`.
- */
-const CLASS_ASSERTION_HAS: Record<string, string> = {
-  tr: 'sahip',
+const ACTION_TARGET_MARKER: Record<string, Record<string, string>> = {
+  click: { en: 'on', es: 'en', ja: 'を', ar: 'على', ko: '를', zh: '', tr: 'üzerinde', fr: 'sur' },
+  type: { en: '', es: '', ja: 'に', ar: '', ko: '에', zh: '', tr: '', fr: '' },
+  hover: { en: 'on', es: 'en', ja: 'を', ar: 'على', ko: '를', zh: '', tr: 'üzerinde', fr: 'sur' },
+  navigate: { en: 'to', es: 'a', ja: 'に', ar: 'إلى', ko: '로', zh: '到', tr: '', fr: 'vers' },
+  submit: { en: '', es: '', ja: 'を', ar: '', ko: '를', zh: '', tr: '', fr: '' },
+  'double-click': {
+    en: 'on',
+    es: 'en',
+    ja: 'を',
+    ar: 'على',
+    ko: '를',
+    zh: '',
+    tr: 'üzerinde',
+    fr: 'sur',
+  },
+  'right-click': {
+    en: 'on',
+    es: 'en',
+    ja: 'を',
+    ar: 'على',
+    ko: '를',
+    zh: '',
+    tr: 'üzerinde',
+    fr: 'sur',
+  },
+  press: { en: '', es: '', ja: '', ar: '', ko: '', zh: '', tr: '', fr: '' },
+  check: { en: '', es: '', ja: 'を', ar: '', ko: '를', zh: '', tr: '', fr: '' },
+  uncheck: { en: '', es: '', ja: 'を', ar: '', ko: '를', zh: '', tr: '', fr: '' },
+  select: { en: '', es: '', ja: 'を', ar: '', ko: '를', zh: '', tr: '', fr: '' },
+  wait: { en: 'for', es: '', ja: 'を', ar: '', ko: '를', zh: '', tr: '', fr: '' },
 };
 
 // =============================================================================
@@ -368,6 +398,29 @@ const CLASS_ASSERTION_HAS: Record<string, string> = {
 
 function lookup(table: Record<string, Record<string, string>>, key: string, lang: string): string {
   return table[key.toLowerCase()]?.[lang] ?? key;
+}
+
+/**
+ * Per-language marker for a role, read from the schemas — the same source the
+ * parser reads, so the renderer cannot drift from what it accepts. Empty when
+ * the schema declares none for that language.
+ */
+function schemaMarker(action: string, role: string, lang: string): string {
+  const roles = allSchemas.find(s => s.action === action)?.roles;
+  return roles?.find(r => r.role === role)?.markerOverride?.[lang] ?? '';
+}
+
+/**
+ * Drop the target marker the action phrase embeds. SOV languages carry it
+ * ahead of the verb, everything else behind it, so try both ends; a phrase
+ * that does not actually contain it is returned untouched.
+ */
+function stripActionTargetMarker(phrase: string, action: string, lang: string): string {
+  const marker = ACTION_TARGET_MARKER[action.toLowerCase()]?.[lang];
+  if (!marker) return phrase;
+  if (phrase.startsWith(marker)) return phrase.slice(marker.length).trim();
+  if (phrase.endsWith(marker)) return phrase.slice(0, -marker.length).trim();
+  return phrase;
 }
 
 // =============================================================================
@@ -417,7 +470,10 @@ function renderWhen(node: SemanticNode, lang: string): string {
   const actionStr = actionType ? extractValue(actionType) : 'click';
   const targetStr = target ? extractValue(target) : '';
   const valueStr = value ? extractValue(value) : '';
-  const actionPhrase = lookup(ACTION_WORDS, actionStr, lang);
+  // With no target, the marker the phrase embeds has nothing to introduce.
+  const actionPhrase = targetStr
+    ? lookup(ACTION_WORDS, actionStr, lang)
+    : stripActionTargetMarker(lookup(ACTION_WORDS, actionStr, lang), actionStr, lang);
 
   const parts = [actionPhrase, targetStr];
   if (valueStr) parts.push(valueStr);
@@ -431,7 +487,7 @@ function renderWhen(node: SemanticNode, lang: string): string {
     return `${keyword} ${actionPhrase} ${targetStr}`.trim();
   }
   // SVO: keyword action target [value]
-  return `${keyword} ${parts.join(' ')}`.trim();
+  return `${keyword} ${parts.filter(Boolean).join(' ')}`.trim();
 }
 
 function renderThen(node: SemanticNode, lang: string): string {
@@ -445,16 +501,20 @@ function renderThen(node: SemanticNode, lang: string): string {
 
   // CSS class assertion
   if (assertionStr.startsWith('.')) {
+    // Both words come from the `then` schema, which already carries them:
+    // the target particle (ja に, ko 에, tr de) and the "has" word (en has,
+    // es tiene, ar يحتوي, zh 有, tr sahip, fr a — none for ja/ko, whose
+    // particle carries the relation). This branch used to hardcode English
+    // `has`, so Spanish rendered `Entonces #button has .active`.
+    const particle = schemaMarker('then', 'target', lang);
+    const hasWord = schemaMarker('then', 'assertion', lang);
+
     if (isSOV(lang)) {
-      // SOV: target <particle> .class [has-word] keyword — particle is
-      // per-language (ja に, ko 에, tr de); Turkish also needs a trailing
-      // `sahip`. Falls back to Japanese `に` only for unknown SOV languages.
-      const particle = CLASS_ASSERTION_PARTICLE[lang] ?? 'に';
-      const hasWord = CLASS_ASSERTION_HAS[lang];
+      // SOV: target <particle> .class [has-word] keyword
       const middle = hasWord ? `${assertionStr} ${hasWord}` : assertionStr;
       return `${targetStr} ${particle} ${middle} ${keyword}`;
     }
-    return `${keyword} ${targetStr} has ${assertionStr}`;
+    return [keyword, targetStr, hasWord, assertionStr].filter(Boolean).join(' ');
   }
 
   const assertPhrase = lookup(ASSERTION_WORDS, assertionStr, lang);
@@ -472,37 +532,60 @@ function renderThen(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a BDD SemanticNode to natural-language BDD text in the target language.
+ * A scenario renders its statements recursively. A statement that cannot be
+ * rendered fails the whole scenario rather than silently dropping a step —
+ * a scenario missing a step reads as valid and is worse than no output.
  */
-export function renderBDD(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'given':
-      return renderGiven(node, language);
-    case 'when':
-      return renderWhen(node, language);
-    case 'then':
-      return renderThen(node, language);
-    case 'scenario': {
-      const compound = node as SemanticNode & { statements?: SemanticNode[]; name?: string };
-      const statements = compound.statements ?? [];
-      const lines = statements.map(s => renderBDD(s, language));
-      if (compound.name) {
-        const scenarioKw: Record<string, string> = {
-          en: 'Scenario:',
-          es: 'Escenario:',
-          ja: 'シナリオ:',
-          ar: 'سيناريو:',
-          ko: '시나리오:',
-          zh: '场景:',
-          tr: 'Senaryo:',
-          fr: 'Scénario:',
-        };
-        const header = `${scenarioKw[language] ?? 'Scenario:'} ${compound.name}`;
-        return [header, ...lines.map(l => `  ${l}`)].join('\n');
-      }
-      return lines.join('\n');
-    }
-    default:
-      return `// Unknown: ${node.action}`;
+function renderScenario(node: SemanticNode, language: string): string | null {
+  const compound = node as SemanticNode & { statements?: SemanticNode[]; name?: string };
+  const statements = compound.statements ?? [];
+
+  const lines: string[] = [];
+  for (const statement of statements) {
+    const line = renderBDD(statement, language);
+    if (line === null) return null;
+    lines.push(line);
   }
+
+  if (compound.name) {
+    const scenarioKw: Record<string, string> = {
+      en: 'Scenario:',
+      es: 'Escenario:',
+      ja: 'シナリオ:',
+      ar: 'سيناريو:',
+      ko: '시나리오:',
+      zh: '场景:',
+      tr: 'Senaryo:',
+      fr: 'Scénario:',
+    };
+    const header = `${scenarioKw[language] ?? 'Scenario:'} ${compound.name}`;
+    return [header, ...lines.map(l => `  ${l}`)].join('\n');
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
+ */
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    given: renderGiven,
+    when: renderWhen,
+    then: renderThen,
+    scenario: renderScenario,
+  },
+});
+
+/**
+ * Render a BDD SemanticNode to natural-language BDD text in the target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema (or a scenario contains such a statement).
+ */
+export function renderBDD(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

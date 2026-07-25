@@ -46,8 +46,9 @@ import { indonesianProfile as _id } from './languages/id';
 import { quechuaProfile as _qu } from './languages/qu';
 import { swahiliProfile as _sw } from './languages/sw';
 
-// Additional languages (10 more for full bundle)
+// Additional languages (11 more for full bundle)
 import { bengaliProfile as _bn } from './languages/bn';
+import { hebrewProfile as _he } from './languages/he';
 import { hindiProfile as _hi } from './languages/hi';
 import { italianProfile as _it } from './languages/it';
 import { malayProfile as _ms } from './languages/ms';
@@ -59,7 +60,7 @@ import { ukrainianProfile as _uk } from './languages/uk';
 import { vietnameseProfile as _vi } from './languages/vi';
 
 // Export the profiles to force bundler to keep them (prevents tree-shaking)
-// Full bundle: 23 languages
+// Full bundle: all 24 registered languages
 export const registeredLanguageProfiles = {
   // Priority languages
   en: _en,
@@ -77,6 +78,7 @@ export const registeredLanguageProfiles = {
   sw: _sw,
   // Additional languages
   bn: _bn,
+  he: _he,
   hi: _hi,
   it: _it,
   ms: _ms,

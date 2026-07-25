@@ -125,8 +125,11 @@ export function compilePipeline(
   const compileErrors: string[] = [];
   const codes: string[] = [];
   for (const step of steps) {
-    const result = dsl.compile(renderStepBack(step.node, language), language);
-    if (result.ok && result.code) {
+    const surface = renderStepBack(step.node, language);
+    // An unrenderable step cannot be re-parsed, so it fails the same way a step
+    // that fails to compile does.
+    const result = surface === null ? null : dsl.compile(surface, language);
+    if (result?.ok && result.code) {
       codes.push(result.code);
     } else {
       compileErrors.push(`Failed to compile step: ${step.node.action}`);
@@ -145,7 +148,9 @@ export function compilePipeline(
 /**
  * Reconstruct a parse-able string from a SemanticNode for re-compilation.
  * Uses the natural language renderer to produce correct output with markers.
+ *
+ * Returns `null` when the node's action cannot be rendered.
  */
-function renderStepBack(node: SemanticNode, language: string): string {
+function renderStepBack(node: SemanticNode, language: string): string | null {
   return renderFlow(node, language);
 }

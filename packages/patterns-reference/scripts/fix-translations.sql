@@ -93,3 +93,32 @@ SET hyperscript = 'ñit''iy pi .items manta .active ta qichuy', verified_parses 
 WHERE code_example_id = 'remove-class-from-all' AND language = 'qu';
 
 
+
+
+-- =============================================================================
+-- Redundant directional markers after a `go` keyword that already encodes
+-- direction (2.9).
+--
+-- The grammar transformer applies ONE destination marker per language to every
+-- command — it has no per-command knowledge — so it appends zh `到` / vi `vào`
+-- after a verb that already means "go TO". The result reads as a doubled
+-- preposition:
+--   zh  前往 到 url     "proceed-to  to  url"   (前往 = proceed toward)
+--   vi  đi đến vào url  "go-to  into  url"      (đi đến = go to)
+-- No other language in the corpus has this shape: every other `go` keyword is a
+-- bare motion verb (es ir, it andare, th ไป, he לך) that needs its preposition.
+--
+-- `goSchema.renderOverride` in @lokascript/semantic renders these two bare to
+-- match. Parsing still accepts the old marker (goSchema.markerLegacy), so
+-- pre-2.9 source is unaffected.
+-- =============================================================================
+
+-- go-url zh: 前往 到 url "/page" -> 前往 url "/page"
+UPDATE pattern_translations
+SET hyperscript = '当 点击 时 前往 url "/page"', verified_parses = 0, updated_at = datetime('now')
+WHERE code_example_id = 'go-url' AND language = 'zh';
+
+-- go-url vi: đi đến vào url "/page" -> đi đến url "/page"
+UPDATE pattern_translations
+SET hyperscript = 'khi nhấp đi đến url "/page"', verified_parses = 0, updated_at = datetime('now')
+WHERE code_example_id = 'go-url' AND language = 'vi';

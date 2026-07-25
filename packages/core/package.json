@@ -162,7 +162,8 @@
     "dist/**/*.d.mts",
     "vocab/**/*.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "rollup -c && rollup -c rollup.parser-modules.config.mjs && tsc -p tsconfig.build.json",

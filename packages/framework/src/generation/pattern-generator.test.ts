@@ -71,6 +71,108 @@ describe('PatternGenerator', () => {
       expect(pattern.template.tokens[1]).toEqual({ type: 'literal', value: 'トグル' });
     });
 
+    it('should place a sovSlot:postVerb role after the verb in SOV', () => {
+      // The renderer buckets by this field (`renderer.ts`), writing voice's
+      // page count after the verb: `戻る 2`. Generation has to agree, or the
+      // rendered surface re-parses as a bare verb with its argument dropped.
+      const schema = defineCommand({
+        action: 'back',
+        roles: [
+          defineRole({
+            role: 'quantity',
+            required: true,
+            expectedTypes: ['expression'],
+            sovPosition: 1,
+            sovSlot: 'postVerb',
+          }),
+        ],
+      });
+
+      const profile: PatternGenLanguageProfile = {
+        code: 'ja',
+        wordOrder: 'SOV',
+        keywords: { back: { primary: '戻る' } },
+      };
+
+      const pattern = generatePattern(schema, profile);
+
+      expect(pattern.template.tokens).toHaveLength(2);
+      expect(pattern.template.tokens[0]).toEqual({ type: 'literal', value: '戻る' });
+      expect(pattern.template.tokens[1]).toMatchObject({ type: 'role', role: 'quantity' });
+      expect(pattern.template.format).toBe('戻る {quantity}');
+    });
+
+    it('should split pre-verb and post-verb roles around the verb in SOV', () => {
+      const schema = defineCommand({
+        action: 'fetch',
+        roles: [
+          defineRole({
+            role: 'source',
+            required: true,
+            expectedTypes: ['expression'],
+            sovPosition: 2,
+          }),
+          defineRole({
+            role: 'destination',
+            required: true,
+            expectedTypes: ['selector'],
+            sovPosition: 1,
+            sovSlot: 'postVerb',
+            markerOverride: { ja: 'に' },
+          }),
+        ],
+      });
+
+      const profile: PatternGenLanguageProfile = {
+        code: 'ja',
+        wordOrder: 'SOV',
+        keywords: { fetch: { primary: '取得' } },
+      };
+
+      const pattern = generatePattern(schema, profile);
+
+      expect(pattern.template.tokens).toEqual([
+        expect.objectContaining({ type: 'role', role: 'source' }),
+        { type: 'literal', value: '取得' },
+        expect.objectContaining({ type: 'role', role: 'destination' }),
+        // SOV markers default to following their value
+        { type: 'literal', value: 'に' },
+      ]);
+      // The role PHRASE moves as a unit. Note the marker sits before its role
+      // here while the tokens put it after: `format` resolves marker position
+      // from the profile alone, missing `markerPosition` and the SOV default
+      // that `addRoleWithMarker` applies. Pre-existing and documentation-only
+      // (nothing reads `format`), left alone deliberately — fixing it would
+      // move every SOV golden entry with a marker and bury this change's diff.
+      expect(pattern.template.format).toBe('{source} 取得 に {destination}');
+    });
+
+    it('should ignore sovSlot outside SOV languages', () => {
+      const schema = defineCommand({
+        action: 'back',
+        roles: [
+          defineRole({
+            role: 'quantity',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            sovSlot: 'postVerb',
+          }),
+        ],
+      });
+
+      for (const wordOrder of ['SVO', 'VSO'] as const) {
+        const pattern = generatePattern(schema, {
+          code: 'en',
+          wordOrder,
+          keywords: { back: { primary: 'back' } },
+        });
+
+        expect(pattern.template.tokens[0]).toEqual({ type: 'literal', value: 'back' });
+        expect(pattern.template.tokens[1]).toMatchObject({ type: 'role', role: 'quantity' });
+      }
+    });
+
     it('should generate a VSO pattern with verb first', () => {
       const schema = defineCommand({
         action: 'toggle',

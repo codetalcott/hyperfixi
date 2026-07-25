@@ -47,7 +47,7 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 | `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~30 KB | en, es, pt, fr, de |
 | `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~24 KB | ja, zh, ko         |
 | `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~48 KB | 11 languages       |
-| `browser.global.js`                       | `LokaScriptSemantic`          | ~61 KB | All 13             |
+| `browser.global.js`                       | `LokaScriptSemantic`          | ~61 KB | All 24             |
 | `browser-lazy.lazy.global.js`             | `LokaScriptSemanticLazy`      | ~15 KB | On-demand          |
 
 ### Lazy Loading (Smallest Initial Bundle)

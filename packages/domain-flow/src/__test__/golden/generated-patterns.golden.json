@@ -925,7 +925,7 @@
         "command": "fetch",
         "priority": 100,
         "template": {
-          "format": "{source} で {style} に {destination} 取得",
+          "format": "{source} で {style} 取得 に {destination}",
           "tokens": [
             {
               "type": "role",
@@ -950,6 +950,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "取得"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -964,10 +968,6 @@
                   "value": "に"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "取得"
             }
           ]
         },
@@ -989,7 +989,7 @@
         "command": "poll",
         "priority": 100,
         "template": {
-          "format": "{source} ごとに {duration} で {style} に {destination} ポーリング",
+          "format": "{source} ごとに {duration} で {style} ポーリング に {destination}",
           "tokens": [
             {
               "type": "role",
@@ -1024,6 +1024,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "ポーリング"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1038,10 +1042,6 @@
                   "value": "に"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "ポーリング"
             }
           ]
         },
@@ -1066,7 +1066,7 @@
         "command": "stream",
         "priority": 100,
         "template": {
-          "format": "{source} で {style} に {destination} ストリーム",
+          "format": "{source} で {style} ストリーム に {destination}",
           "tokens": [
             {
               "type": "role",
@@ -1091,6 +1091,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "ストリーム"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1105,10 +1109,6 @@
                   "value": "に"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "ストリーム"
             }
           ]
         },
@@ -1130,8 +1130,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "に {destination} {patient} で {style} 送信",
+          "format": "{patient} に {destination} で {style} 送信",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -1141,12 +1147,6 @@
             {
               "type": "literal",
               "value": "に"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -1188,8 +1188,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "で {instrument} {patient} 変換",
+          "format": "{patient} で {instrument} 変換",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -1199,12 +1205,6 @@
             {
               "type": "literal",
               "value": "で"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -1843,7 +1843,7 @@
         "command": "fetch",
         "priority": 100,
         "template": {
-          "format": "{source} 로 {style} 에 {destination} 가져오기",
+          "format": "{source} 로 {style} 가져오기 에 {destination}",
           "tokens": [
             {
               "type": "role",
@@ -1868,6 +1868,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "가져오기"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1882,10 +1886,6 @@
                   "value": "에"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "가져오기"
             }
           ]
         },
@@ -1907,7 +1907,7 @@
         "command": "poll",
         "priority": 100,
         "template": {
-          "format": "{source} 마다 {duration} 로 {style} 에 {destination} 폴링",
+          "format": "{source} 마다 {duration} 로 {style} 폴링 에 {destination}",
           "tokens": [
             {
               "type": "role",
@@ -1942,6 +1942,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "폴링"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -1956,10 +1960,6 @@
                   "value": "에"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "폴링"
             }
           ]
         },
@@ -1984,7 +1984,7 @@
         "command": "stream",
         "priority": 100,
         "template": {
-          "format": "{source} 로 {style} 에 {destination} 스트리밍",
+          "format": "{source} 로 {style} 스트리밍 에 {destination}",
           "tokens": [
             {
               "type": "role",
@@ -2009,6 +2009,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "스트리밍"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -2023,10 +2027,6 @@
                   "value": "에"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "스트리밍"
             }
           ]
         },
@@ -2048,8 +2048,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "로 {destination} {patient} 로 {style} 제출",
+          "format": "{patient} 로 {destination} 로 {style} 제출",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -2059,12 +2065,6 @@
             {
               "type": "literal",
               "value": "로"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -2106,8 +2106,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "로 {instrument} {patient} 변환",
+          "format": "{patient} 로 {instrument} 변환",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -2117,12 +2123,6 @@
             {
               "type": "literal",
               "value": "로"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",
@@ -2761,7 +2761,7 @@
         "command": "fetch",
         "priority": 100,
         "template": {
-          "format": "{source} olarak {style} e {destination} getir",
+          "format": "{source} olarak {style} getir e {destination}",
           "tokens": [
             {
               "type": "role",
@@ -2786,6 +2786,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "getir"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -2800,10 +2804,6 @@
                   "value": "e"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "getir"
             }
           ]
         },
@@ -2825,7 +2825,7 @@
         "command": "poll",
         "priority": 100,
         "template": {
-          "format": "{source} her {duration} olarak {style} e {destination} yokla",
+          "format": "{source} her {duration} olarak {style} yokla e {destination}",
           "tokens": [
             {
               "type": "role",
@@ -2860,6 +2860,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "yokla"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -2874,10 +2878,6 @@
                   "value": "e"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "yokla"
             }
           ]
         },
@@ -2902,7 +2902,7 @@
         "command": "stream",
         "priority": 100,
         "template": {
-          "format": "{source} olarak {style} e {destination} aktar",
+          "format": "{source} olarak {style} aktar e {destination}",
           "tokens": [
             {
               "type": "role",
@@ -2927,6 +2927,10 @@
               ]
             },
             {
+              "type": "literal",
+              "value": "aktar"
+            },
+            {
               "type": "group",
               "optional": true,
               "tokens": [
@@ -2941,10 +2945,6 @@
                   "value": "e"
                 }
               ]
-            },
-            {
-              "type": "literal",
-              "value": "aktar"
             }
           ]
         },
@@ -2966,8 +2966,14 @@
         "command": "submit",
         "priority": 100,
         "template": {
-          "format": "e {destination} {patient} olarak {style} gönder",
+          "format": "{patient} e {destination} olarak {style} gönder",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["selector", "expression"]
+            },
             {
               "type": "role",
               "role": "destination",
@@ -2977,12 +2983,6 @@
             {
               "type": "literal",
               "value": "e"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["selector", "expression"]
             },
             {
               "type": "group",
@@ -3024,8 +3024,14 @@
         "command": "transform",
         "priority": 100,
         "template": {
-          "format": "ile {instrument} {patient} dönüştür",
+          "format": "{patient} ile {instrument} dönüştür",
           "tokens": [
+            {
+              "type": "role",
+              "role": "patient",
+              "optional": false,
+              "expectedTypes": ["expression"]
+            },
             {
               "type": "role",
               "role": "instrument",
@@ -3035,12 +3041,6 @@
             {
               "type": "literal",
               "value": "ile"
-            },
-            {
-              "type": "role",
-              "role": "patient",
-              "optional": false,
-              "expectedTypes": ["expression"]
             },
             {
               "type": "literal",

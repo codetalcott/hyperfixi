@@ -91,7 +91,7 @@ const BUNDLES = {
   // htmx v4 reactive/streaming surface without manual plugin wiring.
   'hybrid-hx-v4': {
     file: 'hyperfixi-hx-v4.js',
-    size: '~321 KB',
+    size: '~322 KB',
     features: {
       toggle: true,
       addClass: true,
@@ -142,7 +142,7 @@ const BUNDLES = {
   },
   browser: {
     file: 'hyperfixi.js',
-    size: '~309 KB',
+    size: '~310 KB',
     features: {
       toggle: true,
       addClass: true,

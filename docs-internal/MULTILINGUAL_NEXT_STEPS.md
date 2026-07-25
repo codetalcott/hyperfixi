@@ -3449,6 +3449,20 @@ CLEARED by pick-text-range arc 3 (2026-07-20 — the "raises the en denominator
 
 ### v2.8 release bar (proposed 2026-07-12 · target ≈ 2026-07-22)
 
+> **PUBLISHED 2026-07-21** (pulled forward from 07-25 by user decision): all
+> **35** packages live on npm at **2.8.0**, `latest` → 2.8.0, GitHub release
+> v2.8.0 carries the full notes (draft swapped). Sequence: pre-release audit
+> #745–#750 (gates made honest, size truth reset to ~309/~321 KB gz,
+> trigger/fire no-op fix) → fresh pre-publish GREEN (29802943716) → dry run
+> caught `@lokascript/htmx-adapter` missing from every publish list (#751) →
+> publish attempt 1 = 34/35 (htmx-adapter E422: missing `repository` field —
+> provenance validation; invisible to dry runs, fixed in #752) → re-dispatch
+> GREEN incl. release-smoke (29837993806). Version bump landed via the
+> `release-bump/v2.8.0` PR fallback (#754 — token push rejected by branch
+> protection as designed). htmx-adapter verified separately pre-publish: 67
+> unit + 7/7 e2e vs real htmx v4/v2, plus a live docs-site demo (es+ja,
+> nested swaps, 8/8 probes).
+
 > **Status 2026-07-20:** the release was retargeted to 07-25, then deferred
 > until the pick-text-range arcs completed (user decision 2026-07-20). All
 > three arcs are done (#733/#734/#736) — the release is UNBLOCKED once #736

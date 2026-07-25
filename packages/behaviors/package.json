@@ -98,7 +98,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "generate": "tsx scripts/generate.ts",

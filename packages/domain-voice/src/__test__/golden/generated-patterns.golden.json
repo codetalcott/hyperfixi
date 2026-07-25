@@ -1167,7 +1167,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "agregar {patient} en {destination}",
+          "format": "agregar {patient} a {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -1185,7 +1185,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "en"
+                  "value": "a"
                 },
                 {
                   "type": "role",
@@ -1204,7 +1204,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "en"
+            "marker": "a"
           }
         }
       }
@@ -1617,17 +1617,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} 戻る",
+          "format": "戻る {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "戻る"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "戻る"
             }
           ]
         },
@@ -1643,17 +1643,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} 進む",
+          "format": "進む {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "進む"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "進む"
             }
           ]
         },
@@ -1822,17 +1822,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} ヘルプ",
+          "format": "ヘルプ {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "ヘルプ"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "ヘルプ"
             }
           ]
         },
@@ -2591,7 +2591,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "أضف {patient} على {destination}",
+          "format": "أضف {patient} إلى {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -2609,7 +2609,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "على"
+                  "value": "إلى"
                 },
                 {
                   "type": "role",
@@ -2628,7 +2628,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "على"
+            "marker": "إلى"
           }
         }
       }
@@ -3041,17 +3041,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} 뒤로",
+          "format": "뒤로 {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "뒤로"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "뒤로"
             }
           ]
         },
@@ -3067,17 +3067,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} 앞으로",
+          "format": "앞으로 {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "앞으로"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "앞으로"
             }
           ]
         },
@@ -3246,17 +3246,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} 도움말",
+          "format": "도움말 {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "도움말"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "도움말"
             }
           ]
         },
@@ -3997,7 +3997,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "添加 {patient} 在 {destination}",
+          "format": "添加 {patient} 到 {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -4015,7 +4015,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "在"
+                  "value": "到"
                 },
                 {
                   "type": "role",
@@ -4034,7 +4034,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "在"
+            "marker": "到"
           }
         }
       }
@@ -4423,17 +4423,17 @@
         "command": "back",
         "priority": 100,
         "template": {
-          "format": "{quantity} geri",
+          "format": "geri {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "geri"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "geri"
             }
           ]
         },
@@ -4449,17 +4449,17 @@
         "command": "forward",
         "priority": 100,
         "template": {
-          "format": "{quantity} ileri",
+          "format": "ileri {quantity}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "ileri"
+            },
             {
               "type": "role",
               "role": "quantity",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "ileri"
             }
           ]
         },
@@ -4604,17 +4604,17 @@
         "command": "help",
         "priority": 100,
         "template": {
-          "format": "{patient} yardım",
+          "format": "yardım {patient}",
           "tokens": [
+            {
+              "type": "literal",
+              "value": "yardım"
+            },
             {
               "type": "role",
               "role": "patient",
               "optional": true,
               "expectedTypes": ["expression"]
-            },
-            {
-              "type": "literal",
-              "value": "yardım"
             }
           ]
         },
@@ -5364,7 +5364,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "ajouter {patient} sur {destination}",
+          "format": "ajouter {patient} à {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -5382,7 +5382,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "sur"
+                  "value": "à"
                 },
                 {
                   "type": "role",
@@ -5401,7 +5401,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "sur"
+            "marker": "à"
           }
         }
       }
@@ -6040,7 +6040,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "hinzufügen {patient} auf {destination}",
+          "format": "hinzufügen {patient} zu {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -6058,7 +6058,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "auf"
+                  "value": "zu"
                 },
                 {
                   "type": "role",
@@ -6077,7 +6077,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "auf"
+            "marker": "zu"
           }
         }
       }
@@ -6716,7 +6716,7 @@
         "command": "add",
         "priority": 100,
         "template": {
-          "format": "adicionar {patient} em {destination}",
+          "format": "adicionar {patient} a {destination}",
           "tokens": [
             {
               "type": "literal",
@@ -6734,7 +6734,7 @@
               "tokens": [
                 {
                   "type": "literal",
-                  "value": "em"
+                  "value": "a"
                 },
                 {
                   "type": "role",
@@ -6753,7 +6753,7 @@
               "type": "reference",
               "value": "me"
             },
-            "marker": "em"
+            "marker": "a"
           }
         }
       }

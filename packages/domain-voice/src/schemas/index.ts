@@ -75,6 +75,10 @@ export const clickSchema = defineCommand({
         ar: 'على',
         fr: 'sur',
       },
+      // Turkish takes the object bare here — `gönder tıkla`. The profile's
+      // dative `ya` stays accepted when parsing, it is just not written.
+      // Per-language, not `'*'`: ar/fr above DO render their marker.
+      renderOverride: { tr: '' },
     }),
   ],
 });
@@ -105,6 +109,11 @@ export const typeSchema = defineCommand({
       svoPosition: 2,
       sovPosition: 2,
       markerOverride: { ja: 'を', ko: '을' },
+      // The typed text is a bare argument in every language that does not
+      // name a particle above: `taper bonjour dans recherche`, not
+      // `taper sur bonjour ...`. `'*'` ranks below markerOverride, so ja/ko
+      // keep を/을.
+      renderOverride: { '*': '' },
     }),
     defineRole({
       role: 'destination',
@@ -206,6 +215,7 @@ export const readSchema = defineCommand({
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { ja: 'を', ko: '을' },
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -265,6 +275,7 @@ export const selectSchema = defineCommand({
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { ja: 'を', ko: '를' },
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -294,6 +305,11 @@ export const backSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 1,
+      // A page count follows the verb bare in every language, SOV included:
+      // `戻る 2`, not `2 だけ 戻る`. The count is an afterthought to a
+      // one-word command, so it does not take the pre-verb slot.
+      sovSlot: 'postVerb',
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -323,6 +339,9 @@ export const forwardSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 1,
+      // Same shape as `back` above.
+      sovSlot: 'postVerb',
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -358,6 +377,10 @@ export const focusSchema = defineCommand({
         ar: 'على',
         tr: 'ya',
       },
+      // The particles above are pre-verb postpositions; only the SOV three
+      // write one. Arabic is verb-initial here (`ركز البحث`), so its marker
+      // needs suppressing by name — `'*'` alone would not outrank it.
+      renderOverride: { '*': '', ar: '' },
     }),
   ],
 });
@@ -388,6 +411,7 @@ export const closeSchema = defineCommand({
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { ja: 'を', ko: '를' },
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -418,6 +442,7 @@ export const openSchema = defineCommand({
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { ja: 'を', ko: '을' },
+      renderOverride: { '*': '' },
     }),
   ],
 });
@@ -452,6 +477,10 @@ export const searchSchema = defineCommand({
         ja: 'を',
         ko: '을',
       },
+      // `ابحث عن …` is the idiom Arabic speakers TYPE, so the marker stays
+      // parseable, but the renderer writes the query bare after the verb.
+      // Named explicitly because `'*'` ranks below markerOverride.
+      renderOverride: { '*': '', ar: '' },
     }),
     defineRole({
       role: 'destination',
@@ -502,6 +531,12 @@ export const helpSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 1,
       sovPosition: 1,
+      // `help` names a command, and the command name follows the verb bare in
+      // every language — `ヘルプ 移動`, `yardım git`. The topic is a lookup
+      // key, not a grammatical object, so it takes no particle and no
+      // pre-verb slot.
+      sovSlot: 'postVerb',
+      renderOverride: { '*': '' },
     }),
   ],
 });

@@ -110,15 +110,21 @@ function buildTokens(
       addRoleWithMarker(tokens, role, profile);
     }
   }
-  // For SOV: [patient, destination, source, ..., action]
+  // For SOV: [patient, destination, source, ..., action, postVerb roles...]
   else if (profile.wordOrder === 'SOV') {
-    // Add roles with markers first
+    // `sovSlot: 'postVerb'` moves a role AFTER the verb, which is what the
+    // renderer does (`renderer.ts` buckets by the same field). Generation has
+    // to mirror it: a role the renderer writes post-verb but the pattern
+    // expects pre-verb produces a faithful surface its own parser drops the
+    // argument from — voice's `戻る 2` re-parsing as a bare `back`.
+    const preVerb: PatternToken[] = [];
+    const postVerb: PatternToken[] = [];
+
     for (const role of sortedRoles) {
-      addRoleWithMarker(tokens, role, profile);
+      addRoleWithMarker(role.sovSlot === 'postVerb' ? postVerb : preVerb, role, profile);
     }
 
-    // Add keyword last
-    tokens.push(keywordToken);
+    tokens.push(...preVerb, keywordToken, ...postVerb);
   }
   // For VSO: [action, destination, patient, source, ...]
   else if (profile.wordOrder === 'VSO') {
@@ -218,8 +224,11 @@ function getMarkerForRole(
 
 /**
  * Sort roles by word order for pattern building.
+ *
+ * Exported so the renderer sorts with exactly this comparator — a rendered
+ * surface whose role order differs from the generated pattern would not re-parse.
  */
-function sortRolesByWordOrder(roles: RoleSpec[], wordOrder: string): RoleSpec[] {
+export function sortRolesByWordOrder(roles: RoleSpec[], wordOrder: string): RoleSpec[] {
   const sorted = [...roles];
 
   if (wordOrder === 'SVO') {
@@ -266,11 +275,9 @@ function buildFormatString(
   profile: PatternGenLanguageProfile,
   keyword: string
 ): string {
-  const parts: string[] = [];
-
-  if (profile.wordOrder === 'SVO' || profile.wordOrder === 'VSO') {
-    parts.push(keyword);
-  }
+  const isSOV = profile.wordOrder === 'SOV';
+  const preVerb: string[] = [];
+  const postVerb: string[] = [];
 
   // Order roles the same way buildTokens does (descending position). Iterating
   // declaration order here would disagree with the token order whenever a
@@ -279,24 +286,25 @@ function buildFormatString(
   for (const role of sortedRoles) {
     const marker = getMarkerForRole(role, profile);
     const roleName = `{${role.role}}`;
+    // Same pre/post-verb split buildTokens applies, so the documented format
+    // string keeps describing the tokens it is generated alongside.
+    const bucket = isSOV && role.sovSlot === 'postVerb' ? postVerb : preVerb;
 
     if (marker) {
       const markerInfo = profile.roleMarkers?.[role.role];
       if (markerInfo?.position === 'after') {
-        parts.push(`${roleName} ${marker}`);
+        bucket.push(`${roleName} ${marker}`);
       } else {
-        parts.push(`${marker} ${roleName}`);
+        bucket.push(`${marker} ${roleName}`);
       }
     } else {
-      parts.push(roleName);
+      bucket.push(roleName);
     }
   }
 
-  if (profile.wordOrder === 'SOV') {
-    parts.push(keyword);
-  }
-
-  return parts.join(' ');
+  return (isSOV ? [...preVerb, keyword, ...postVerb] : [keyword, ...preVerb, ...postVerb]).join(
+    ' '
+  );
 }
 
 /**

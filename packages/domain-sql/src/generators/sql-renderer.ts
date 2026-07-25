@@ -6,7 +6,9 @@
  */
 
 import type { SemanticNode } from '@lokascript/framework';
-import { extractRoleValue } from '@lokascript/framework';
+import { extractRoleValue, createDomainRenderer } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index.js';
+import { allProfiles } from '../profiles/index.js';
 
 // =============================================================================
 // Keyword Tables
@@ -296,21 +298,29 @@ function renderDelete(node: SemanticNode, lang: string): string {
 // =============================================================================
 
 /**
- * Render a SQL SemanticNode to natural-language SQL DSL text in the target language.
+ * Hand-written renderers per action, plus the schema-driven fallthrough for any
+ * action they do not cover — which is how a command added via `DomainExtension`
+ * renders without this package knowing about it.
  */
-export function renderSQL(node: SemanticNode, language: string): string {
-  switch (node.action) {
-    case 'select':
-      return renderSelect(node, language);
-    case 'insert':
-      return renderInsert(node, language);
-    case 'update':
-      return renderUpdate(node, language);
-    case 'delete':
-      return renderDelete(node, language);
-    case 'get':
-      return renderGet(node, language);
-    default:
-      return `-- Unknown: ${node.action}`;
-  }
+const renderer = createDomainRenderer({
+  schemas: allSchemas,
+  profiles: allProfiles,
+  overrides: {
+    select: renderSelect,
+    insert: renderInsert,
+    update: renderUpdate,
+    delete: renderDelete,
+    get: renderGet,
+  },
+});
+
+/**
+ * Render a SQL SemanticNode to natural-language SQL DSL text in the
+ * target language.
+ *
+ * @returns the rendered text, or `null` when the action has neither a
+ *   hand-written renderer nor a schema.
+ */
+export function renderSQL(node: SemanticNode, language: string): string | null {
+  return renderer(node, language);
 }

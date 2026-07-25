@@ -28,6 +28,10 @@ export const frVocabulary: DomainVocabulary = {
     'dans',
     'de',
     'sur',
+    // Directional destination marker for add/go. A single accented character,
+    // so the Latin identifier extractor claims it before keyword lookup unless
+    // it is listed here explicitly.
+    'à',
     'le',
     'la',
     'les',
