@@ -345,6 +345,15 @@ jobs:
               push "https://x-access-token:${RELEASE_BUMP_TOKEN}@github.com/${{ github.repository }}.git" \
               "FETCH_HEAD:${BRANCH}" 2>&1 | tee /tmp/token-check.log; then
             echo "✓ RELEASE_BUMP_TOKEN can push to $BRANCH — a real release will land its bump directly."
+            # A green result here is only as strong as the branch it pushed to.
+            # An unprotected branch needs Contents: write and nothing else;
+            # main additionally needs the token's identity to bypass the six
+            # required checks (possible only because enforce_admins is off).
+            # Passing on a feature branch therefore does NOT prove a release
+            # dispatched on main will land — say so, rather than let a ✓ imply it.
+            if [ "$BRANCH" != "main" ]; then
+              echo "::notice::That check ran against '$BRANCH', which is not branch-protected. It proves the token has Contents: write, but NOT that it can push to main past its required checks. Re-run this dry run with the workflow dispatched on main for the definitive answer."
+            fi
           else
             echo "::warning::RELEASE_BUMP_TOKEN cannot push to $BRANCH. For a fine-grained PAT, check that Repository access includes ${{ github.repository }} AND Permissions -> Repository -> Contents is 'Read and write'; for a classic PAT, the 'repo' scope. A real release would fall back to a release-bump PR, which stalls on required checks that never start."
           fi
