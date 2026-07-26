@@ -29,7 +29,7 @@ import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, CommandNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { isCommandBoundary } from '../helpers/parsing-helpers';
-import { parseBareURLPath } from './utility-commands';
+import { parseBareURLPath, isNakedURLStart } from './utility-commands';
 
 /**
  * Keywords that structure a `go` command. Matched value-first (via
@@ -87,17 +87,6 @@ function stringNode(value: string, tok: Pick<Token, 'start' | 'end' | 'line' | '
     line: tok.line,
     column: tok.column,
   } as ASTNode;
-}
-
-/** A naked URL begins with `/`, or a scheme (identifier immediately followed by `:`). */
-function isNakedURLStart(ctx: ParserContext): boolean {
-  const tok = ctx.peek();
-  if (tok.value === '/') return true;
-  if (ctx.checkIdentifierLike()) {
-    const next = ctx.peekAt(1);
-    return !!next && next.value === ':' && next.start === tok.end;
-  }
-  return false;
 }
 
 /**

@@ -878,6 +878,18 @@ Load data from API:
 
 **See also:** [Live Demo](../../examples/fetch-and-async/fetch-data.html)
 
+Absolute URLs work unquoted too, matching hyperscript.org's own examples:
+
+```html
+<button _="on click fetch https://example.com/todos/1 as json then put it into #output">
+  Load Todo
+</button>
+```
+
+Quoting always works and is worth preferring when the URL is built from a variable
+or contains characters the tokenizer would otherwise split — a path segment that
+happens to be a command word (`fetch /api/put/1`) ends the unquoted URL early.
+
 ### Fetch with Loading State
 
 Show loading indicator:

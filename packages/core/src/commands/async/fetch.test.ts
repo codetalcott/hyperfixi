@@ -180,6 +180,24 @@ describe('FetchCommand', () => {
       ).rejects.toThrow('URL must be a non-empty string');
     });
 
+    it('should name the expression when an identifier URL is unbound', async () => {
+      // "URL must be a non-empty string" describes an internal postcondition and
+      // reads as nonsense to an author who did pass a URL — the unbound-identifier
+      // case (a bare `fetch someVar`, or historically `fetch https://…` before the
+      // parser reassembled naked absolute URLs) gets an actionable message instead.
+      // Not createMockEvaluator: it returns `node.name` for any named node (to
+      // serve response-type nodes), which is the opposite of an unbound variable.
+      const evaluator = {
+        evaluate: vi.fn(() => Promise.resolve(undefined)),
+      } as unknown as ExpressionEvaluator;
+      const urlNode = { type: 'identifier', name: 'someVar' } as unknown as ASTNode;
+      const context = createMockContext();
+
+      await expect(
+        command.parseInput({ args: [urlNode], modifiers: {} }, evaluator, context)
+      ).rejects.toThrow(/URL expression "someVar" evaluated to undefined/);
+    });
+
     it('should throw error if no URL provided', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext();
