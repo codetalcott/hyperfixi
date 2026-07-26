@@ -57,4 +57,24 @@ describe('parseCSSObjectLiteral — value whitespace preservation', () => {
     const v = firstStyleValue('add { opacity: 0.5 } to me');
     expect(String(v.value)).toBe('0.5');
   });
+
+  /**
+   * Every case above has a suffix after the interpolation (`${a - b}px`), which
+   * is exactly what hid the tokenizer's brace off-by-one: `}` reported a span one
+   * character to the left, so `originalInput.slice(...)` dropped the LAST
+   * character of the value — invisible unless the value ends at the brace.
+   * See token-offsets.test.ts.
+   */
+  it('keeps the closing brace when the value ENDS with an interpolation', () => {
+    const v = firstStyleValue('add { left: ${x} } to me');
+    expect(v?.type).toBe('templateLiteral');
+    // Was '${x}' minus its brace — which /\$(?:\{([^}]+)\})/g never matches, so
+    // it rendered as the literal text "${x" instead of interpolating.
+    expect(v.value).toBe('${x}');
+  });
+
+  it('keeps the closing brace for a multi-token trailing interpolation', () => {
+    const v = firstStyleValue('add { left: ${clientX - xoff} } to me');
+    expect(v.value).toBe('${clientX - xoff}');
+  });
 });

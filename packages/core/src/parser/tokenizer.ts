@@ -260,15 +260,22 @@ export function tokenize(input: string): Token[] {
 
     // Handle object literals - emit individual tokens for proper parsing
     if (char === '{') {
-      addToken(tokenizer, TokenKind.OPERATOR, '{');
+      // advance() FIRST. addToken()'s no-explicit-start contract is
+      // `start = position - value.length` / `end = position`, i.e. it assumes
+      // `position` is already PAST the token — the convention tokenizeIdentifier
+      // and tokenizeNumberOrTime honour. Emitting before advancing put every
+      // `{ } [ ]` one character to the left, so `input.slice(t.start, t.end)`
+      // did not round-trip. Parens were never affected because tokenizeOperator
+      // passes an explicit start.
       advance(tokenizer);
+      addToken(tokenizer, TokenKind.OPERATOR, '{');
       continue;
     }
 
     // Handle closing brace for objects
     if (char === '}') {
-      addToken(tokenizer, TokenKind.OPERATOR, '}');
       advance(tokenizer);
+      addToken(tokenizer, TokenKind.OPERATOR, '}');
       continue;
     }
 
@@ -291,21 +298,22 @@ export function tokenize(input: string): Token[] {
           prevToken.value === ']') &&
         !isEventCondition; // Don't treat as member access if it's an event condition
 
+      // advance() before addToken() in every branch — see the `{` comment above.
       if (isMemberAccess) {
         // Treat as member access operator
-        addToken(tokenizer, TokenKind.OPERATOR, '[');
         advance(tokenizer);
+        addToken(tokenizer, TokenKind.OPERATOR, '[');
       } else {
         // Treat as array literal or event condition bracket
         if (isEventCondition) {
           // For event conditions, just add the bracket as a simple token
-          addToken(tokenizer, TokenKind.SYMBOL, '[');
           advance(tokenizer);
+          addToken(tokenizer, TokenKind.SYMBOL, '[');
         } else {
           // For array literals, tokenize individual brackets instead of whole array
           // This allows the parser to handle array structure properly
-          addToken(tokenizer, TokenKind.OPERATOR, '[');
           advance(tokenizer);
+          addToken(tokenizer, TokenKind.OPERATOR, '[');
         }
       }
       continue;
@@ -313,8 +321,8 @@ export function tokenize(input: string): Token[] {
 
     // Handle closing bracket for arrays
     if (char === ']') {
-      addToken(tokenizer, TokenKind.OPERATOR, ']');
       advance(tokenizer);
+      addToken(tokenizer, TokenKind.OPERATOR, ']');
       continue;
     }
 
