@@ -24,10 +24,10 @@
  * drift. See runtime/on-handler-catch.test.ts for the sibling suite.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
-import { createContext } from '../core/context';
+import { createContext, getSharedGlobals } from '../core/context';
 import type { ExecutionContext } from '../types/core';
 import type { DefNode } from '../types/base-types';
 
@@ -250,5 +250,83 @@ end`)
       expect(context.globals.has('greet')).toBe(true);
       expect(added).toHaveLength(1);
     });
+  });
+});
+
+/**
+ * The property the whole install-target decision rests on: a `def` must be
+ * visible page-wide, not just to the element that declared it.
+ *
+ * Every test above passes an explicit `new Map()` to createContext to isolate
+ * itself — which means none of them can see this. They would all pass just as
+ * happily if `def` were per-element, i.e. if it were far more broken than the
+ * design claims.
+ *
+ * So this block deliberately does NOT pass a globals map, reproducing what
+ * `dom/attribute-processor.ts` actually does (`createContext(element)` with no
+ * second argument, for every element on the page). That falls back to the
+ * module-level `sharedGlobals`, so all contexts share one map by reference.
+ *
+ * This is also the evidence that `context.globals` is the right home rather
+ * than a compromise: it is where `$globalVar` already lives, so `def` is
+ * consistent with the global-variable mechanism sitting next to it instead of
+ * being the one construct that writes somewhere else. (Upstream _hyperscript
+ * puts both in the same place too — `#globalScope`, which is `window`; we
+ * changed the container, not the namespace semantics.)
+ */
+describe('def visibility across elements (production context shape)', () => {
+  const runtime = new Runtime();
+  const declared: string[] = [];
+
+  afterEach(() => {
+    // These tests write to the module-level sharedGlobals on purpose, so clean
+    // up after themselves rather than leaking into any other suite.
+    const globals = getSharedGlobals();
+    for (const name of declared) globals.delete(name);
+    declared.length = 0;
+  });
+
+  const execOn = async (element: Element, src: string): Promise<void> => {
+    const result = parse(src);
+    expect(result.success).toBe(true);
+    await runtime.execute(result.node!, createContext(element));
+  };
+
+  it('shares one globals map across separately-created contexts', () => {
+    const a = createContext(document.createElement('div'));
+    const b = createContext(document.createElement('div'));
+    // Same object, not merely equal contents — createEventHandler spreads the
+    // context, so a def installed later is only visible to a handler
+    // registered earlier if globals is shared BY REFERENCE.
+    expect(a.globals).toBe(b.globals);
+  });
+
+  it('makes a def declared on one element callable from another', async () => {
+    declared.push('crossElementProbe');
+    const probe = document.createElement('div');
+    probe.id = 'def-cross';
+    document.body.appendChild(probe);
+
+    await execOn(
+      document.createElement('div'),
+      'def crossElementProbe(n)\n  put n into #def-cross\nend'
+    );
+    // A different element entirely, with its own context.
+    await execOn(document.createElement('div'), "call crossElementProbe('from-elsewhere')");
+
+    expect(probe.textContent).toBe('from-elsewhere');
+    probe.remove();
+  });
+
+  it('puts defs in the same scope $globalVar already uses', async () => {
+    declared.push('crossElementVar');
+    const a = document.createElement('div');
+    const b = createContext(document.createElement('div'));
+
+    await execOn(a, "set $crossElementVar to 'hello'");
+
+    // If this holds, `def` living in globals is consistent with the language's
+    // existing page-wide scope rather than a container invented for it.
+    expect(b.globals.get('crossElementVar')).toBe('hello');
   });
 });
