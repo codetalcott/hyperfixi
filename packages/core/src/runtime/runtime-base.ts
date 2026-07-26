@@ -4,7 +4,13 @@
  * Designed for tree-shaking: strict dependency injection pattern.
  */
 
-import type { ASTNode, ExecutionContext, CommandNode, EventHandlerNode } from '../types/base-types';
+import type {
+  ASTNode,
+  ExecutionContext,
+  CommandNode,
+  EventHandlerNode,
+  DefNode,
+} from '../types/base-types';
 
 import type { ExecutionResult, ExecutionSignal, ControlFlowError } from '../types/result';
 
@@ -582,6 +588,10 @@ export class RuntimeBase {
           );
         }
 
+        case 'def': {
+          return this.installFunction(node as DefNode, context);
+        }
+
         case 'Program': {
           return await this.executeProgram(node as ASTNode & { features?: ASTNode[] }, context);
         }
@@ -935,6 +945,76 @@ export class RuntimeBase {
   // Structure Executors (Program, Block, Sequence)
   // --------------------------------------------------------------------------
 
+  /**
+   * Install a `def` function into scope.
+   *
+   * `def … end` parsed cleanly long before anything executed it: the switch above
+   * had no `def` case, so a DefNode fell through to `evaluateAST` and threw
+   * `Unknown AST node type: def` — the syntax looked supported and did nothing.
+   *
+   * The function goes into `context.globals`, which `evaluateIdentifier` already
+   * resolves (locals -> globals -> context props -> globalThis) and which
+   * `createEventHandler` passes by reference, so a handler registered earlier
+   * still sees a def installed later. Upstream _hyperscript instead assigns
+   * body-level defs onto the real `window` and element-level defs into
+   * per-element storage inherited down the DOM; we deliberately diverge, to
+   * avoid polluting the global namespace with no teardown. A namespaced
+   * `def utils.foo()` therefore installs under the flat key `"utils.foo"` rather
+   * than creating a nested object.
+   *
+   * Error handling is the shape #768 gave `on` handlers, and for the same
+   * reason — upstream shares one `parseErrorAndFinally` between the two
+   * features, so they must not drift: the error binds as a local under the
+   * author's symbol, a handled error does NOT propagate, `finally` runs on both
+   * paths, and control-flow signals never route to `catch`.
+   */
+  protected installFunction(node: DefNode, context: ExecutionContext): void {
+    const runtime = this;
+    const params = node.params ?? [];
+    const body = (node.body ?? []) as ASTNode[];
+    const errorHandler = node.errorHandler as ASTNode[] | undefined;
+    const finallyHandler = node.finallyHandler as ASTNode[] | undefined;
+    const errorSymbol = node.errorSymbol;
+
+    const fn = async (...args: unknown[]): Promise<unknown> => {
+      // Fresh locals per call, seeded from the declaring scope. Globals stay by
+      // reference so a def can see (and set) globals like any other code.
+      const fnContext: ExecutionContext = {
+        ...context,
+        locals: new Map(context.locals),
+      };
+      params.forEach((name, i) => {
+        if (name) fnContext.locals.set(name, args[i]);
+      });
+
+      const run = async (commands: ASTNode[]): Promise<unknown> => {
+        // executeCommandSequenceWithResult already turns the `return` signal
+        // into ok(returnValue), so this is the whole of return handling.
+        const result = await runtime.executeCommandSequenceWithResult(commands, fnContext);
+        if (!isOk(result)) throw asControlFlowError(result.error);
+        return result.value;
+      };
+
+      if (!errorHandler && !finallyHandler) {
+        return await run(body);
+      }
+
+      try {
+        return await run(body);
+      } catch (e) {
+        if (!errorHandler || isControlFlowError(e)) throw e;
+        if (errorSymbol) fnContext.locals.set(errorSymbol, e);
+        return await run(errorHandler);
+      } finally {
+        if (finallyHandler) {
+          await run(finallyHandler);
+        }
+      }
+    };
+
+    context.globals.set(node.name, fn);
+  }
+
   protected async executeProgram(
     node: ASTNode & { statements?: ASTNode[] },
     context: ExecutionContext
@@ -947,17 +1027,28 @@ export class RuntimeBase {
     // Event handlers MUST be registered before init blocks run
     // This ensures that events sent during init are properly received
     const eventHandlers: ASTNode[] = [];
+    const defs: ASTNode[] = [];
     const initBlocks: ASTNode[] = [];
     const otherStatements: ASTNode[] = [];
 
     for (const statement of node.statements) {
       if (statement.type === 'eventHandler') {
         eventHandlers.push(statement);
+      } else if (statement.type === 'def') {
+        defs.push(statement);
       } else if (statement.type === 'initBlock') {
         initBlocks.push(statement);
       } else {
         otherStatements.push(statement);
       }
+    }
+
+    // Phase 0: Install function declarations. `def` is a declaration, not
+    // executable code, and an `init` block is the reverse — so a def has to be
+    // callable before init runs, exactly as a handler has to be registered
+    // before init can send to it.
+    for (const def of defs) {
+      this.execute(def, context);
     }
 
     // Phase 1: Register all event handlers first

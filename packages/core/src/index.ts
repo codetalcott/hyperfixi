@@ -54,9 +54,9 @@ export { Lexer, Tokens } from './tokenizer';
 /**
  * @deprecated These four are dead scaffolding with no production callers, and
  * they cannot execute a `DefNode` from the parser (see the module docblock in
- * `./features/def`). Top-level `def` does not execute at all today. Slated for
- * removal in the next breaking-change batch; they remain only because dropping
- * a public export is semver-visible.
+ * `./features/def`). Real `def` execution lives in
+ * `RuntimeBase.installFunction`. Slated for removal in the next breaking-change
+ * batch; they remain only because dropping a public export is semver-visible.
  */
 export {
   TypedDefFeatureImplementation,

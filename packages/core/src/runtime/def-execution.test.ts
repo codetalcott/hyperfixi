@@ -1,36 +1,27 @@
 /**
- * SPIKE — characterizing, not aspirational. These assert what `def` does TODAY.
+ * `def` execution.
  *
- * `def … end` parses fine: parser.ts:parseDefFeature produces a DefNode carrying
- * `errorSymbol` / `errorHandler` / `finallyHandler`, and hyperscript-parser.test.ts
- * has passing tests for that shape. So the syntax LOOKS supported.
+ * These started life (PR #779) as characterizing tests asserting that `def` did
+ * NOT work: it parsed into a DefNode carrying params, body and
+ * errorSymbol/errorHandler/finallyHandler, then fell through
+ * RuntimeBase.execute()'s switch to evaluateAST and threw
+ * `Unknown AST node type: def`. The syntax looked supported and executed
+ * nothing — so the downstream report's "parsed and silently dropped" was too
+ * generous; it threw, into a console.error naming an internal node type.
  *
- * Nothing executes it. RuntimeBase.execute()'s switch dispatches command,
- * eventHandler, event, behavior, Program, initBlock, block, sequence,
- * CommandSequence, objectLiteral, templateLiteral and memberExpression — there
- * is no `def` case, and `Runtime` does not override execute(). A DefNode falls
- * to `default:` -> evaluateExpression -> evaluateAST, which throws
- * `Unknown AST node type: def`.
+ * They are now inverted: each one asserts the behavior it previously denied.
  *
- * So the downstream report's framing ("parsed and silently dropped") is too
- * generous: it is parsed and then THROWS. On a page the attribute processor
- * catches that into a console.error naming an internal node type, which tells
- * an author nothing about `def` being unimplemented.
+ * Scope decisions, deliberately narrower than upstream:
+ *   - the function installs into `context.globals`, NOT the real `window`.
+ *     Upstream assigns body-level defs to globalThis and element-level defs to
+ *     per-element storage inherited down the DOM; we trade that compatibility
+ *     for not polluting the global namespace with no teardown.
+ *   - a namespaced `def utils.foo()` installs under the FLAT key "utils.foo"
+ *     rather than creating a nested `utils` object.
  *
- * A separate implementation sits in src/features/def.ts (TypedDefFeatureImplementation
- * and DefFeature, ~1574 lines) with ZERO production callers — only src/index.ts
- * re-exports and its own tests. It cannot execute a real DefNode.body: its
- * mini-interpreter branches on string args (`args.indexOf('to')`) rather than
- * the CommandNodes the parser emits, its executeCatchBlock returns the string
- * 'handled', and its executeFinallyBlock is a bare `return`. Its catch shape is
- * `{parameter, body}`, not the parser's `{errorSymbol, errorHandler, finallyHandler}`.
- *
- * One place `def` DOES work: inside a `worker` feature, which hand-rolls its own
- * def parsing (packages/realtime/src/worker.ts) into a `workerFeature` node and
- * never touches DefNode. That confirms the gap is specifically top-level `def`
- * reaching RuntimeBase.execute.
- *
- * INVERT these when a `case 'def'` lands.
+ * Error handling mirrors what #768 did for `on` handlers, because upstream
+ * shares one `parseErrorAndFinally` between the two features and they must not
+ * drift. See runtime/on-handler-catch.test.ts for the sibling suite.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -40,9 +31,23 @@ import { createContext } from '../core/context';
 import type { ExecutionContext } from '../types/core';
 import type { DefNode } from '../types/base-types';
 
-describe('def — current runtime behavior (spike)', () => {
+describe('def execution', () => {
   let runtime: Runtime;
   let context: ExecutionContext;
+
+  /** Parse and execute a source, returning nothing — installs happen as a side effect. */
+  const run = async (src: string): Promise<unknown> => {
+    const result = parse(src);
+    expect(result.success).toBe(true);
+    return runtime.execute(result.node!, context);
+  };
+
+  /** The installed callable for `name`. */
+  const fnFor = (name: string): ((...args: unknown[]) => Promise<unknown>) => {
+    const fn = context.globals.get(name);
+    expect(typeof fn).toBe('function');
+    return fn as (...args: unknown[]) => Promise<unknown>;
+  };
 
   beforeEach(() => {
     runtime = new Runtime();
@@ -68,80 +73,182 @@ describe('def — current runtime behavior (spike)', () => {
     expect(def.finallyHandler?.length).toBeGreaterThan(0);
   });
 
-  it('CURRENT: executing a def throws "Unknown AST node type: def"', async () => {
-    const result = parse('def greet(n)\n  return n\nend');
-    await expect(runtime.execute(result.node!, context)).rejects.toThrow(
-      'Unknown AST node type: def'
-    );
+  it('installs a callable instead of throwing Unknown AST node type', async () => {
+    await expect(run('def greet(n)\n  return n\nend')).resolves.not.toThrow();
+    expect(context.globals.has('greet')).toBe(true);
+    expect(typeof context.globals.get('greet')).toBe('function');
   });
 
-  it('CURRENT: installs the function nowhere', async () => {
-    const result = parse('def greet(n)\n  return n\nend');
-    await runtime.execute(result.node!, context).catch(() => {});
-
-    expect(context.globals.has('greet')).toBe(false);
-    expect(context.locals.has('greet')).toBe(false);
-    expect((globalThis as Record<string, unknown>).greet).toBeUndefined();
+  it('binds parameters and returns a value', async () => {
+    await run('def identity(n)\n  return n\nend');
+    await expect(fnFor('identity')(42)).resolves.toBe(42);
   });
 
-  it('CURRENT: the def BODY never runs', async () => {
+  it('binds multiple parameters positionally', async () => {
+    await run('def pick2(a, b)\n  return b\nend');
+    await expect(fnFor('pick2')('first', 'second')).resolves.toBe('second');
+  });
+
+  it('leaves an unpassed parameter undefined rather than erroring', async () => {
+    await run('def maybe(a)\n  return a\nend');
+    await expect(fnFor('maybe')()).resolves.toBeUndefined();
+  });
+
+  it('runs the body for its side effects', async () => {
     const probe = document.createElement('div');
     probe.id = 'def-probe';
     document.body.appendChild(probe);
 
-    const result = parse("def sideEffect()\n  put 'ran' into #def-probe\nend");
-    await runtime.execute(result.node!, context).catch(() => {});
+    await run("def sideEffect()\n  put 'ran' into #def-probe\nend");
+    await fnFor('sideEffect')();
 
-    expect(probe.textContent).toBe('');
+    expect(probe.textContent).toBe('ran');
     probe.remove();
   });
 
-  it('CURRENT: in a Program the handler binds, then the def aborts the rest', async () => {
-    // executeProgram buckets eventHandlers first and runs them before
-    // otherStatements, so the handler DOES register — and then the def throws,
-    // taking every statement after it with it.
-    const result = parse(`def greet(n)
+  it('gives each call its own locals, seeded from the declaring scope', async () => {
+    context.locals.set('outer', 'visible');
+    await run('def readsOuter(n)\n  return outer\nend');
+
+    await expect(fnFor('readsOuter')(1)).resolves.toBe('visible');
+    // The parameter binding must not leak back out to the declaring scope.
+    expect(context.locals.has('n')).toBe(false);
+  });
+
+  it('installs a namespaced def under its flat dotted name', async () => {
+    await run('def utils.calc(a)\n  return a\nend');
+    expect(context.globals.has('utils.calc')).toBe(true);
+    await expect(fnFor('utils.calc')(7)).resolves.toBe(7);
+  });
+
+  describe('catch / finally', () => {
+    it('routes a thrown error to catch and does not re-propagate', async () => {
+      await run("def risky()\n  throw 'boom'\ncatch e\n  return 'caught'\nend");
+      await expect(fnFor('risky')()).resolves.toBe('caught');
+    });
+
+    it('binds the error under the author symbol', async () => {
+      const probe = document.createElement('div');
+      probe.id = 'def-err';
+      document.body.appendChild(probe);
+
+      await run("def risky()\n  throw 'boom'\ncatch e\n  put e into #def-err\nend");
+      await fnFor('risky')();
+
+      // Upstream binds the Error object itself, not its message.
+      expect(probe.textContent).toContain('boom');
+      probe.remove();
+    });
+
+    it('does not enter catch when the body succeeds', async () => {
+      await run("def fine()\n  return 'ok'\ncatch e\n  return 'caught'\nend");
+      await expect(fnFor('fine')()).resolves.toBe('ok');
+    });
+
+    it('runs finally on the success path', async () => {
+      await run("def fin()\n  return 'ok'\nfinally\n  set $ran to 'yes'\nend");
+      await expect(fnFor('fin')()).resolves.toBe('ok');
+      expect(context.globals.get('ran')).toBe('yes');
+    });
+
+    it('runs finally on the failure path and still reports the error', async () => {
+      await run("def boom()\n  throw 'boom'\nfinally\n  set $ran to 'yes'\nend");
+      // `finally` alone must not swallow — only `catch` handles.
+      await expect(fnFor('boom')()).rejects.toThrow('boom');
+      expect(context.globals.get('ran')).toBe('yes');
+    });
+
+    it('runs catch then finally, in that order', async () => {
+      await run(
+        "def both()\n  throw 'boom'\ncatch e\n  set $order to 'caught'\nfinally\n  set $order to ($order + '-finally')\nend"
+      );
+      await fnFor('both')();
+      expect(context.globals.get('order')).toBe('caught-finally');
+    });
+
+    it('lets an error escape a def with no error blocks', async () => {
+      await run("def bare()\n  throw 'boom'\nend");
+      await expect(fnFor('bare')()).rejects.toThrow('boom');
+    });
+  });
+
+  describe('called from hyperscript', () => {
+    // The assertion that actually matters: `call` resolves the name through
+    // evaluateIdentifier (locals -> globals -> context props -> globalThis) and
+    // invokes the installed closure. Everything above tests the callable in
+    // isolation; this tests that authors can reach it.
+    it('call reaches the def and runs its body', async () => {
+      const probe = document.createElement('div');
+      probe.id = 'def-e2e';
+      document.body.appendChild(probe);
+
+      await run('def shout(n)\n  put n into #def-e2e\nend');
+      await run("call shout('hi')");
+
+      expect(probe.textContent).toBe('hi');
+      probe.remove();
+    });
+
+    it('call surfaces the return value as it/result', async () => {
+      await run('def answer()\n  return 42\nend');
+      await run('call answer()');
+      expect(context.result).toBe(42);
+    });
+
+    it('a def can call another def', async () => {
+      const probe = document.createElement('div');
+      probe.id = 'def-nested';
+      document.body.appendChild(probe);
+
+      await run('def inner(n)\n  put n into #def-nested\nend');
+      await run("def outer()\n  call inner('nested')\nend");
+      await run('call outer()');
+
+      expect(probe.textContent).toBe('nested');
+      probe.remove();
+    });
+  });
+
+  describe('program integration', () => {
+    it('installs before init blocks run, so init can call a def', async () => {
+      const probe = document.createElement('div');
+      probe.id = 'def-init';
+      document.body.appendChild(probe);
+
+      // `def` is a declaration; `init` is executable code that may use it. The
+      // def therefore installs in its own phase ahead of init, exactly as
+      // handlers register before init can send to them.
+      await run(`def label()
+  return 'from-def'
+end
+init
+  put 'ready' into #def-init
+end`);
+
+      expect(context.globals.has('label')).toBe(true);
+      expect(probe.textContent).toBe('ready');
+      probe.remove();
+    });
+
+    it('no longer aborts the statements that follow it', async () => {
+      // Previously the def threw here, taking every later statement with it.
+      const added: Array<(e: Event) => unknown> = [];
+      const el = context.me as HTMLElement;
+      el.addEventListener = ((_type: string, fn: unknown) => {
+        added.push(fn as (e: Event) => unknown);
+      }) as unknown as typeof el.addEventListener;
+
+      await expect(
+        run(`def greet(n)
   return n
 end
 on click
   call greet('x')
-end`);
-    expect(result.success).toBe(true);
+end`)
+      ).resolves.not.toThrow();
 
-    const added: Array<(e: Event) => unknown> = [];
-    const el = context.me as HTMLElement;
-    el.addEventListener = ((_type: string, fn: unknown) => {
-      added.push(fn as (e: Event) => unknown);
-    }) as unknown as typeof el.addEventListener;
-
-    await expect(runtime.execute(result.node!, context)).rejects.toThrow(
-      'Unknown AST node type: def'
-    );
-    expect(added).toHaveLength(1);
-  });
-
-  it('CURRENT: calling the never-installed name fails at call time', async () => {
-    const result = parse("call greet('x')");
-    await expect(runtime.execute(result.node!, context)).rejects.toThrow(
-      /Cannot call non-function|greet/
-    );
-  });
-
-  it('CURRENT: catch never runs, because the body never runs', async () => {
-    // The whole point of the reported defect: `def … catch … end` looks
-    // supported and does nothing. Not even the error path.
-    const probe = document.createElement('div');
-    probe.id = 'def-catch-probe';
-    document.body.appendChild(probe);
-
-    const result = parse(`def risky()
-  throw 'boom'
-catch e
-  put 'caught' into #def-catch-probe
-end`);
-    await runtime.execute(result.node!, context).catch(() => {});
-
-    expect(probe.textContent).toBe('');
-    probe.remove();
+      expect(context.globals.has('greet')).toBe(true);
+      expect(added).toHaveLength(1);
+    });
   });
 });

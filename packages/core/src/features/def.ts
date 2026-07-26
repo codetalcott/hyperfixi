@@ -15,12 +15,9 @@
  *   - Its catch shape is `{parameter, body}`, not the parser's
  *     `{errorSymbol, errorHandler, finallyHandler}`.
  *
- * Top-level `def` does not execute at all today — `RuntimeBase.execute()` has no
- * `def` case, so a `DefNode` reaches `evaluateAST` and throws
- * `Unknown AST node type: def`. Do NOT reach for this module when implementing
- * that; bypass it. The analysis, the options and the four open design questions
- * are in `docs-internal/HANDOFF-def-execution.md`, and
- * `src/runtime/def-execution.test.ts` pins the current behavior.
+ * `def` execution lives in `RuntimeBase.installFunction` (see
+ * `src/runtime/def-execution.test.ts`), which was written deliberately WITHOUT
+ * this module — see `docs-internal/HANDOFF-def-execution.md` for why.
  *
  * Slated for removal together with its `src/index.ts` exports in the next
  * breaking-change batch — deleting it is semver-visible, which is the only
