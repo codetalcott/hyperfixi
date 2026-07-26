@@ -1,6 +1,30 @@
 /**
  * Enhanced Def Feature Implementation
  * Type-safe function definition feature with enhanced validation and LLM integration
+ *
+ * @deprecated This module is dead scaffolding. It has ZERO production callers —
+ * only `src/index.ts` re-exports and this module's own tests reference it — and
+ * it cannot execute a real `DefNode` produced by the parser:
+ *
+ *   - `DefFeature.executeFunction` is a hand-rolled mini-interpreter branching
+ *     on STRING args (`args.indexOf('to')`, `args[0] === 'global'`), not the
+ *     `CommandNode`s `parseDefFeature` emits.
+ *   - `TypedDefFeatureImplementation.executeCatchBlock` builds a context, marks
+ *     it unused, and returns the literal string `'handled'`.
+ *     `executeFinallyBlock` is a bare `return`.
+ *   - Its catch shape is `{parameter, body}`, not the parser's
+ *     `{errorSymbol, errorHandler, finallyHandler}`.
+ *
+ * Top-level `def` does not execute at all today — `RuntimeBase.execute()` has no
+ * `def` case, so a `DefNode` reaches `evaluateAST` and throws
+ * `Unknown AST node type: def`. Do NOT reach for this module when implementing
+ * that; bypass it. The analysis, the options and the four open design questions
+ * are in `docs-internal/HANDOFF-def-execution.md`, and
+ * `src/runtime/def-execution.test.ts` pins the current behavior.
+ *
+ * Slated for removal together with its `src/index.ts` exports in the next
+ * breaking-change batch — deleting it is semver-visible, which is the only
+ * reason it is still here.
  */
 
 import { v, z } from '../validation/lightweight-validators';
