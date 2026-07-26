@@ -28,6 +28,12 @@ export default withAsciiOnly({
     dir: 'dist',
     format: 'es',
     entryFileNames: 'hyperfixi.mjs',
+    // Content-hashed, so every source change emits a NEW filename and rollup
+    // never removes the old one (output.dir does not clean). This is the only
+    // config in the repo that emits chunks; its npm script
+    // (`build:browser:modular`) does `rm -rf dist/chunks` first. Not `rm -rf
+    // dist` — build-browser-bundles.mjs writes the sibling bundles into dist/
+    // concurrently.
     chunkFileNames: 'chunks/[name]-[hash].js',
     sourcemap: true,
     // Enable code splitting (don't inline dynamic imports)
