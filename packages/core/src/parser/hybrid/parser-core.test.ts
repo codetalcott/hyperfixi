@@ -793,4 +793,67 @@ describe('HybridParser', () => {
       expect(value.property).toBe('values');
     });
   });
+
+  /**
+   * `catch`/`finally` are full-parser-only. This parser used to swallow them in
+   * parseCommand's skip fallback, one token at a time, which put the CATCH BODY
+   * on the success path:
+   *
+   *   on click put 'a' into #r catch e put 'b' into #r end
+   *     -> body: [put 'a' into #r, put 'b' into #r]   // both run on success
+   *
+   * so a failure message overwrote a successful render. It now throws, which the
+   * bundle entry points already catch and console.error with the offending code.
+   */
+  describe('catch/finally rejection', () => {
+    const attempt = (code: string) => (): unknown => parse(code);
+
+    it('rejects a catch block on an event handler', () => {
+      expect(
+        attempt(`on click
+          put 'a' into #r
+        catch e
+          put 'b' into #r
+        end`)
+      ).toThrow(/'catch' needs the full parser/);
+    });
+
+    it('rejects finally with no catch', () => {
+      expect(
+        attempt(`on click
+          log 'a'
+        finally
+          log 'b'
+        end`)
+      ).toThrow(/'finally' needs the full parser/);
+    });
+
+    it('rejects catch nested inside an if body', () => {
+      // Every block routes through parseCommandSequence -> parseCommand, so the
+      // one guard covers if/repeat/for/while/fetch as well as the top level.
+      expect(attempt("on click if true log 'a' catch e log e end end")).toThrow(
+        /'catch' needs the full parser/
+      );
+    });
+
+    it('no longer appends the catch body to the success path', () => {
+      // Pre-fix this returned a body of length 2, both puts on the success path.
+      expect(attempt("on click put 'a' into #r catch e put 'b' into #r end")).toThrow();
+    });
+
+    it('names the remedy, not just the problem', () => {
+      expect(attempt("on click log 'a' catch e log e end")).toThrow(/hyperfixi\.js/);
+    });
+
+    it('leaves a .catch class selector alone', () => {
+      // `.catch` lexes as a selector token, so it never reaches the guard.
+      expect(attempt('on click toggle .catch')).not.toThrow();
+      expect(parse('on click toggle .catch').body[0].name).toBe('toggle');
+    });
+
+    it('leaves catch as a variable name alone', () => {
+      // `set` consumes its own operands before the fallback is reached.
+      expect(attempt('set catch to 1')).not.toThrow();
+    });
+  });
 });

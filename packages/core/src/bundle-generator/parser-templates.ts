@@ -561,6 +561,12 @@ class HybridParser {
     const normalized = normalizeCommand(this.peek().value);
     if (cmdMap[normalized]) return cmdMap[normalized]();
 
+    // Mirrors parser/hybrid/parser-core.ts: absorbing catch/finally into the
+    // body ran the error path on every success. Reject loudly instead.
+    if (this.match('catch', 'finally')) {
+      throw new Error("'" + this.peek().value + "' needs the full parser (use hyperfixi.js)");
+    }
+
     if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) this.advance();
     return null;
   }
