@@ -944,8 +944,22 @@ jobs:
       # metadata.ts sizes drifted ~110 KB stale and the headline slim bundles
       # had zero size-regression coverage because nothing in CI ran them.
 
-      # metadata.ts (public export @hyperfixi/core/metadata) must match the
-      # built dist. Exits 1 on mismatch.
+      # metadata.ts (public export @hyperfixi/core/metadata) is a published DOC
+      # STRING, not a regression gate. It fails only when it has drifted more
+      # than ±2% from the built dist — enough to catch the ~110 KB rot the audit
+      # found, loose enough that ordinary code changes pass. (It used to compare
+      # formatted strings for EXACT equality, i.e. it fired on ~102 gzip bytes,
+      # so every code PR needed an extra round-trip for it alone.)
+      #
+      # WHICH GATE BLOCKED YOU:
+      #   this step        -> metadata.ts is stale. Copy the "actual" columns
+      #                       FROM THIS LOG into packages/core/src/metadata.ts.
+      #                       Do NOT run `update:sizes:auto` locally: dist/ is
+      #                       untracked and gzip is platform-dependent.
+      #   next step (±5%)  -> a real size regression. Investigate tree-shaking
+      #                       or duplication; do not re-baseline reflexively.
+      #   "Check size limits" -> an absolute ceiling; a bundle got big enough to
+      #                       matter to users.
       - name: Metadata size check (update:sizes)
         run: npm run update:sizes --prefix packages/core
 
