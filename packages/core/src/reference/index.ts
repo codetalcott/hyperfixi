@@ -236,6 +236,7 @@ export const commands: Record<string, CommandRef> = {
     availability: 'hybrid',
     examples: [
       'fetch /api/data as json',
+      'fetch https://example.com/api as json',
       'fetch /api/users as html',
       'fetch /api/submit with method:"POST"',
     ],
