@@ -246,6 +246,26 @@ function isFetchURLTerminator(ctx: ParserContext): boolean {
 }
 
 /**
+ * A naked URL begins with `/`, or with a scheme — an identifier immediately
+ * followed by `:` (`https:`, `http:`, `mailto:`). Adjacency matters: the tokens
+ * must touch, so `foo : bar` and a `key: value` pair are not mistaken for one.
+ *
+ * Shared by the `fetch` and `go` parsers. `fetch` recognised only the leading-`/`
+ * form, so `fetch https://host/path` fell through to `parsePrimary()`, which
+ * consumed just the identifier `https` — the URL evaluated to `undefined` at
+ * runtime and any trailing `as <type>` modifier was silently dropped.
+ */
+export function isNakedURLStart(ctx: ParserContext): boolean {
+  const tok = ctx.peek();
+  if (tok.value === '/') return true;
+  if (ctx.checkIdentifierLike()) {
+    const next = ctx.peekAt(1);
+    return !!next && next.value === ':' && next.start === tok.end;
+  }
+  return false;
+}
+
+/**
  * Parse a bare (unquoted) URL path (e.g. /api/data, /users/123, https://x.com).
  * Collects `/`, identifier, and other non-terminator tokens into a string literal.
  * Returns null if the path can't be reconstructed.
@@ -302,9 +322,11 @@ export function parseBareURLPath(
 export function parseFetchCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const modifiers: Record<string, ExpressionNode> = {};
 
-  // Step 1: Parse URL — check for bare path starting with '/' first, then fall back to parsePrimary
+  // Step 1: Parse URL — reassemble a naked URL (`/api/data`, `https://host/path`)
+  // into one string literal first, then fall back to parsePrimary for quoted
+  // strings and expressions.
   let url: ASTNode | null = null;
-  if (!ctx.isAtEnd() && ctx.check('/')) {
+  if (!ctx.isAtEnd() && isNakedURLStart(ctx)) {
     url = parseBareURLPath(ctx);
   }
   if (!url) {
