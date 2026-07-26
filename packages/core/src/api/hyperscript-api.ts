@@ -324,7 +324,18 @@ export interface CompileResult {
   /** Compiled AST (present if ok=true) */
   ast?: ASTNode;
 
-  /** Compilation errors (present if ok=false) */
+  /**
+   * Compilation errors.
+   *
+   * Usually accompanies `ok: false`, but NOT always: the parser is resilient and
+   * recovers from some malformed input, producing a usable (if degraded) AST
+   * alongside diagnostics. Those cases are `ok: true` WITH a non-empty `errors`
+   * — the AST still executes, and the diagnostics say what was lost.
+   *
+   * They used to be dropped here entirely, so `validate()` called genuinely
+   * malformed code valid while the language server — which reads the parser's
+   * accumulated errors directly — flagged the very same source.
+   */
   errors?: CompileError[];
 
   /** LSE SemanticNode representation (when available) */
@@ -848,9 +859,15 @@ function compileSync(code: string, options?: NewCompileOptions): CompileResult {
     const timeMs = performance.now() - startTime;
 
     if (parseResult.success && parseResult.node) {
+      // A resilient parse can recover and still accumulate diagnostics. Carry
+      // them through rather than dropping them: `ok` stays true so execution is
+      // unaffected (the degraded AST is still what the runtime has always run),
+      // but the information is no longer lost between here and validate().
+      const recovered = parseResult.errors ?? [];
       const result: CompileResult = {
         ok: true,
         ast: parseResult.node,
+        ...(recovered.length > 0 ? { errors: recovered.map(toCompileError) } : {}),
         meta: {
           parser: usesSemanticParser ? 'semantic' : 'traditional',
           language: lang,
@@ -1096,9 +1113,15 @@ async function evalCode(
  */
 async function validate(code: string, options?: NewCompileOptions): Promise<ValidateResult> {
   const result = await compileAsync(code, options);
+  // `valid` is not the same question as `ok`. A resilient parse can succeed
+  // (ok: true — the degraded AST runs) while still reporting what it could not
+  // make sense of. validate()'s entire contract is "is this code correct?", so
+  // recovered diagnostics make it invalid; this is what the language server has
+  // always reported for the same source.
+  const errors = result.errors ?? [];
   return {
-    valid: result.ok,
-    errors: result.errors,
+    valid: result.ok && errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
   };
 }
 

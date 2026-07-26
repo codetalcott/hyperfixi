@@ -37,7 +37,15 @@ export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
     keywords: ['a', 'an', 'from', 'called'],
     syntax: 'make (a|an) <type> [from <args>] [called <name>]',
   },
-  { command: 'send', keywords: ['to'], syntax: 'send <event> to <target>' },
+  // NOTE: `send` deliberately has NO entry. It is trigger's alias, and
+  // COMPOUND_COMMANDS routes both to parseTriggerCommand — which already
+  // understands `to <target>`, colon-qualified event names (`draggable:start`)
+  // and named event detail. But parseMultiWordCommand runs BEFORE the compound
+  // dispatch, so an entry here shadowed that: `send` reached the generic
+  // arg loop, whose parsePrimary() choked on the `:` in `send evt(id: 1)` with
+  // "Expected closing parenthesis" — on syntax upstream accepts, and which the
+  // identical `trigger evt(id: 1)` parsed correctly because `trigger` was never
+  // listed here.
   { command: 'throw', keywords: [], syntax: 'throw <error>' },
 ];
 
