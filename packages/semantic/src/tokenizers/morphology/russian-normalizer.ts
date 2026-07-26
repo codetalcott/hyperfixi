@@ -26,7 +26,7 @@ import { noChange, normalized } from './types';
  * Check if a character is Cyrillic.
  */
 function isCyrillic(char: string): boolean {
-  return /[а-яА-ЯёЁ]/.test(char);
+  return /[\u0430-\u044f\u0410-\u042f\u0451\u0401]/.test(char);
 }
 
 /**

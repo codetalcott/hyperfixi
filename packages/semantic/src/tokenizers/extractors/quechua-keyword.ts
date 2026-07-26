@@ -121,7 +121,11 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
    */
   private isHyphenatedSuffix(input: string, position: number): string | null {
     if (input[position] !== '-') return null;
-    const match = input.slice(position).match(/^-([a-zñ'’]+)/i);
+    // The class holds \u00f1 (n-tilde) and \u2019 (typographic apostrophe),
+    // written escaped rather than literal so the shipped bundle stays ASCII: a
+    // browser decoding the file as windows-1252 would otherwise silently change
+    // the class, and Quechua suffix matching would stop working with no error.
+    const match = input.slice(position).match(/^-([a-z\u00f1'\u2019]+)/i);
     if (match && SUFFIXES.has(`-${match[1].toLowerCase()}`)) return match[1];
     return null;
   }

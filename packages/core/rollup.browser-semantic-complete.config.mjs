@@ -2,6 +2,7 @@ import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * Rollup config for semantic-complete bundle
@@ -13,7 +14,7 @@ import terser from '@rollup/plugin-terser';
  *
  * Use case: Single-script deployments where loading multiple files is impractical.
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-semantic-complete.ts',
   output: {
     file: 'dist/hyperfixi-semantic-complete.js',
@@ -66,4 +67,4 @@ export default {
       },
     }),
   ],
-};
+});

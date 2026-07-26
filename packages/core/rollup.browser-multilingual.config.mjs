@@ -2,6 +2,7 @@ import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * Rollup config for multilingual bundle
@@ -11,7 +12,7 @@ import terser from '@rollup/plugin-terser';
  *
  * Expected size: ~200-280 KB (vs 663 KB full bundle)
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-multilingual.ts',
   output: {
     file: 'dist/hyperfixi-multilingual.js',
@@ -70,4 +71,4 @@ export default {
       },
     }),
   ],
-};
+});

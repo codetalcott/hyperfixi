@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LokaScript Hybrid Complete Bundle
@@ -44,7 +45,7 @@ import terser from '@rollup/plugin-terser';
  * - Modifiers: .once, .prevent, .stop, .debounce(N), .throttle(N)
  * - Sources: from element, from window, from document
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-hybrid-complete.ts',
   output: {
     file: 'dist/hyperfixi-hybrid-complete.js',
@@ -90,4 +91,4 @@ export default {
       }
     })
   ]
-};
+});

@@ -19,7 +19,9 @@ function createLatinCharClassifiers(pattern: RegExp) {
 }
 
 const { isLetter: isSpanishLetter, isIdentifierChar: isSpanishIdentifierChar } =
-  createLatinCharClassifiers(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/);
+  createLatinCharClassifiers(
+    /[a-zA-Z\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1\u00c1\u00c9\u00cd\u00d3\u00da\u00dc\u00d1]/
+  );
 
 /**
  * Spanish prepositions that mark grammatical roles.

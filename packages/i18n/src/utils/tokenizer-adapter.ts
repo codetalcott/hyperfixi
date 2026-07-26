@@ -426,11 +426,15 @@ function isDigit(char: string): boolean {
 }
 
 function isIdentifierStart(char: string): boolean {
-  return /[a-zA-Z_$áéíóúñÑàèìòùÀÈÌÒÙ一-龯ㄱ-ㅎㅏ-ㅣ가-힣]/.test(char);
+  return /[a-zA-Z_$\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00d1\u00e0\u00e8\u00ec\u00f2\u00f9\u00c0\u00c8\u00cc\u00d2\u00d9\u4e00-\u9faf\u3131-\u314e\u314f-\u3163\uac00-\ud7a3]/.test(
+    char
+  );
 }
 
 function isIdentifierPart(char: string): boolean {
-  return /[a-zA-Z0-9_$áéíóúñÑàèìòùÀÈÌÒÙ一-龯ㄱ-ㅎㅏ-ㅣ가-힣-]/.test(char);
+  return /[a-zA-Z0-9_$\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00d1\u00e0\u00e8\u00ec\u00f2\u00f9\u00c0\u00c8\u00cc\u00d2\u00d9\u4e00-\u9faf\u3131-\u314e\u314f-\u3163\uac00-\ud7a3-]/.test(
+    char
+  );
 }
 
 function consumeWhitespace(text: string, start: number): string {

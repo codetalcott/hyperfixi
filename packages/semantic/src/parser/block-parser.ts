@@ -188,7 +188,7 @@ function parseHeader(
   const paren = input.slice(nameToken.position.end).match(/^\s*\(([^)]*)\)/);
   if (paren) {
     headerEnd = nameToken.position.end + paren[0].length;
-    for (const raw of paren[1].split(/[,،、]/)) {
+    for (const raw of paren[1].split(/[,\u060c\u3001]/)) {
       const p = raw.trim();
       if (p) parameters.push(p);
     }

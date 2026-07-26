@@ -3,6 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LLM-Enhanced Browser Bundle Configuration
@@ -14,7 +15,7 @@ import terser from '@rollup/plugin-terser';
  * Use this bundle when providing context to LLM agents or for IDE tooling.
  * For production web apps, use hyperfixi.prod.js instead.
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle.ts',
   output: {
     file: 'dist/hyperfixi.llm.js',
@@ -62,4 +63,4 @@ export default {
       },
     }),
   ],
-};
+});

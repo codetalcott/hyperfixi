@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 const noTerser = process.env.NO_TERSER === '1';
 
@@ -25,7 +26,7 @@ const noTerser = process.env.NO_TERSER === '1';
  *
  * All hybrid-complete features are also included.
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-hybrid-hx.ts',
   output: {
     file: 'dist/hyperfixi-hx.js',
@@ -77,4 +78,4 @@ export default {
       })
     ])
   ]
-};
+});

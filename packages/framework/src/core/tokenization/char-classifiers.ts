@@ -67,10 +67,10 @@ export interface LatinCharClassifiers {
  *
  * @example
  * // Spanish letters
- * const { isLetter, isIdentifierChar } = createLatinCharClassifiers(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/);
+ * const { isLetter, isIdentifierChar } = createLatinCharClassifiers(/[a-zA-Z\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1\u00c1\u00c9\u00cd\u00d3\u00da\u00dc\u00d1]/);
  *
  * // German letters
- * const { isLetter, isIdentifierChar } = createLatinCharClassifiers(/[a-zA-ZäöüÄÖÜß]/);
+ * const { isLetter, isIdentifierChar } = createLatinCharClassifiers(/[a-zA-Z\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df]/);
  */
 export function createLatinCharClassifiers(letterPattern: RegExp): LatinCharClassifiers {
   const isLetter = (char: string): boolean => letterPattern.test(char);

@@ -9,8 +9,9 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
-export default {
+export default withAsciiOnly({
   input: 'src/browser.ts',
   output: [
     {
@@ -41,4 +42,4 @@ export default {
   ],
   // Don't bundle @hyperfixi/core - it's loaded separately
   external: ['@hyperfixi/core'],
-};
+});

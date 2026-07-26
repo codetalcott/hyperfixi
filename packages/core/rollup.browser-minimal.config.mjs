@@ -3,13 +3,14 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * Minimal Browser Bundle - Production Optimized
  * Includes only 8 core commands with aggressive size optimization
  * Target: <35KB gzipped (vs ~18KB hyperscript original)
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-minimal-v2.ts',
   output: {
     file: 'dist/hyperfixi-minimal.js',
@@ -73,4 +74,4 @@ export default {
       }
     })
   ]
-};
+});

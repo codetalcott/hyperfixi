@@ -33,7 +33,12 @@ function looksLikeFrenchVerb(word: string): boolean {
   if (lower.endsWith('ant')) return true; // present participle
   if (lower.endsWith('é') || lower.endsWith('i') || lower.endsWith('u')) return true; // past participles
   // Check for French-specific characters
-  if (/[àâäéèêëïîôùûüÿçœæ]/i.test(word)) return true;
+  if (
+    /[\u00e0\u00e2\u00e4\u00e9\u00e8\u00ea\u00eb\u00ef\u00ee\u00f4\u00f9\u00fb\u00fc\u00ff\u00e7\u0153\u00e6]/i.test(
+      word
+    )
+  )
+    return true;
   return false;
 }
 

@@ -3,6 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * Development Browser Bundle Configuration
@@ -10,7 +11,7 @@ import terser from '@rollup/plugin-terser';
  * - Light minification for readability
  * - Includes sourcemaps for debugging
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle.ts',
   output: {
     file: 'dist/hyperfixi.dev.js',
@@ -54,4 +55,4 @@ export default {
       },
     }),
   ],
-};
+});

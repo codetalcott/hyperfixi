@@ -1,8 +1,9 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle.ts',
   output: {
     file: 'dist/hyperfixi.js',
@@ -23,4 +24,4 @@ export default {
       sourceMap: true
     })
   ]
-};
+});

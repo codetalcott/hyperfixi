@@ -53,7 +53,8 @@ const PREPOSITIONS = new Set([
  * Character classifiers for Polish.
  */
 function createPolishCharClassifiers() {
-  const polishPattern = /[a-zA-ZąęćńóśźżłĄĘĆŃÓŚŹŻŁ]/;
+  const polishPattern =
+    /[a-zA-Z\u0105\u0119\u0107\u0144\u00f3\u015b\u017a\u017c\u0142\u0104\u0118\u0106\u0143\u00d3\u015a\u0179\u017b\u0141]/;
   const isLetter = (char: string) => polishPattern.test(char);
   const isIdentifierChar = (char: string) => /[0-9]/.test(char) || polishPattern.test(char);
   return { isLetter, isIdentifierChar };

@@ -47,7 +47,12 @@ export class NumberFormatter {
     try {
       const result = new Intl.NumberFormat(this.locale, mergedOptions).format(value);
       // Validate result - if style is currency but no currency symbol, use fallback
-      if (mergedOptions.style === 'currency' && !/[$€£¥₹₩₽฿₪₴₱₫₵₦]/.test(result)) {
+      if (
+        mergedOptions.style === 'currency' &&
+        !/[$\u20ac\u00a3\u00a5\u20b9\u20a9\u20bd\u0e3f\u20aa\u20b4\u20b1\u20ab\u20b5\u20a6]/.test(
+          result
+        )
+      ) {
         return this.fallbackFormat(value, mergedOptions);
       }
       // Validate result - if style is percent but no % symbol, use fallback

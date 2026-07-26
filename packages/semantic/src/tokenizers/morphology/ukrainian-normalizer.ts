@@ -31,7 +31,9 @@ import { noChange, normalized } from './types';
  * Check if a word contains Ukrainian/Cyrillic characters.
  */
 function hasUkrainianChars(word: string): boolean {
-  return /[а-яА-ЯіІїЇєЄґҐьЬ']/.test(word);
+  return /[\u0430-\u044f\u0410-\u042f\u0456\u0406\u0457\u0407\u0454\u0404\u0491\u0490\u044c\u042c']/.test(
+    word
+  );
 }
 
 /**

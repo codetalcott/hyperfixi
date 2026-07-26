@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LokaScript Lite Bundle
@@ -13,7 +14,7 @@ import terser from '@rollup/plugin-terser';
  * - Simple event handlers (on click, on submit, etc.)
  * - No expression parser, no AST, no TypeScript runtime overhead
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-lite.ts',
   output: {
     file: 'dist/hyperfixi-lite.js',
@@ -59,4 +60,4 @@ export default {
       }
     })
   ]
-};
+});
