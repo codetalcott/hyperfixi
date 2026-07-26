@@ -112,6 +112,18 @@ export function tokenize(input: string): Token[] {
       const isPossessive =
         nextChar === 's' &&
         prevToken &&
+        // The apostrophe must TOUCH what precedes it. Without this, any
+        // single-quoted string whose first character is a lowercase `s` was
+        // lexed as the possessive operator — `log 'saved'` became
+        // log · 's · aved · "'", so `'saved'`, `'success'`, `'sent'`, `'stop'`
+        // silently mis-parsed while `'ok'` and `"saved"` were fine. A real
+        // possessive is always adjacent (`me's`, `#el's`, `[1,2]'s`).
+        //
+        // Tested against the source character, not `prevToken.end`: bracket and
+        // operator tokens do not track their offsets reliably (the `]` in
+        // `[1, 2, 3]'s length` reports end=8 for an apostrophe at 9), so an
+        // offset comparison would reject valid possessives.
+        !/\s/.test(tokenizer.input[tokenizer.position - 1] ?? ' ') &&
         (prevToken.kind === TokenKind.IDENTIFIER ||
           prevToken.kind === TokenKind.SELECTOR ||
           // Support possessive after array/object literals and parenthesized expressions
