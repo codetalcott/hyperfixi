@@ -51,6 +51,13 @@ For projects prioritizing bundle size over features:
 - HTML selectors: `<button.class#id/>`
 - i18n keyword aliases
 
+> **`catch` / `finally` on event handlers need the full AST parser.** `on click … catch e … end`
+> is supported by `hyperfixi.js`, `hyperfixi-hx-v4.js`, `hyperfixi-minimal.js` and
+> `hyperfixi-standard.js`. The lite and hybrid bundles use a different parser that does not
+> recognise the keywords — it absorbs them into the handler body, so the catch commands run in
+> sequence on the success path instead of on error. Use one of the full bundles if you rely on
+> handler-level error handling.
+
 ```html
 <!-- Example: Hybrid Complete with expressions and blocks -->
 <button

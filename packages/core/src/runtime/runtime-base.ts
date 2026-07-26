@@ -1250,6 +1250,9 @@ export class RuntimeBase {
       attributeName,
       watchTarget,
       modifiers,
+      errorSymbol,
+      errorHandler,
+      finallyHandler,
     } = node;
     const eventNames = events && events.length > 0 ? events : [event];
     debug.runtime(`BEHAVIOR: executeEventHandler: event='${event}', target='${target}'`);
@@ -1380,7 +1383,8 @@ export class RuntimeBase {
       commands,
       context,
       selector,
-      args
+      args,
+      { errorSymbol, errorHandler, finallyHandler }
     );
 
     // Apply event modifiers
@@ -1529,7 +1533,12 @@ export class RuntimeBase {
     commands: ASTNode[],
     context: ExecutionContext,
     selector: string | undefined,
-    args: string[] | undefined
+    args: string[] | undefined,
+    errorBlocks?: {
+      errorSymbol?: string;
+      errorHandler?: ASTNode[];
+      finallyHandler?: ASTNode[];
+    }
   ): (domEvent: Event) => Promise<void> {
     return async (domEvent: Event) => {
       // Recursion Guard (uses WeakMap instead of expando property on Event)
@@ -1578,25 +1587,56 @@ export class RuntimeBase {
       }
 
       // Execution
-      for (const command of commands) {
-        try {
-          const result = await runtime.execute(command, eventContext);
-          const val = unwrapCommandResult(result);
-          if (val !== undefined) {
-            Object.assign(eventContext, { it: val, result: val });
-          }
-        } catch (e) {
-          if (isControlFlowError(e)) {
-            if (e.isHalt || e.isExit) break;
-            if (e.isReturn) {
-              if (e.returnValue !== undefined) {
-                Object.assign(eventContext, { it: e.returnValue, result: e.returnValue });
-              }
-              break;
+      const runCommands = async (toRun: ASTNode[]): Promise<void> => {
+        for (const command of toRun) {
+          try {
+            const result = await runtime.execute(command, eventContext);
+            const val = unwrapCommandResult(result);
+            if (val !== undefined) {
+              Object.assign(eventContext, { it: val, result: val });
             }
+          } catch (e) {
+            if (isControlFlowError(e)) {
+              if (e.isHalt || e.isExit) break;
+              if (e.isReturn) {
+                if (e.returnValue !== undefined) {
+                  Object.assign(eventContext, { it: e.returnValue, result: e.returnValue });
+                }
+                break;
+              }
+            }
+            runtime.logError(`COMMAND FAILED:`, e);
+            throw e;
           }
-          runtime.logError(`COMMAND FAILED:`, e);
-          throw e;
+        }
+      };
+
+      const errorHandler = errorBlocks?.errorHandler;
+      const finallyHandler = errorBlocks?.finallyHandler;
+
+      // No `catch`/`finally` on this handler — behave exactly as before, including
+      // letting the error escape to the page after the COMMAND FAILED log.
+      if (!errorHandler && !finallyHandler) {
+        await runCommands(commands);
+        return;
+      }
+
+      // `on <event> … catch <sym> … finally … end` (upstream _hyperscript semantics:
+      // the error is bound as a local under the author's symbol, a handled error
+      // does NOT propagate, and `finally` runs on both paths).
+      try {
+        await runCommands(commands);
+      } catch (e) {
+        // Control-flow signals (a stray break/continue) are not author-visible
+        // errors and must not be routed to `catch`; `finally` alone never swallows.
+        if (!errorHandler || isControlFlowError(e)) throw e;
+        if (errorBlocks?.errorSymbol) {
+          eventContext.locals.set(errorBlocks.errorSymbol, e);
+        }
+        await runCommands(errorHandler);
+      } finally {
+        if (finallyHandler) {
+          await runCommands(finallyHandler);
         }
       }
     };

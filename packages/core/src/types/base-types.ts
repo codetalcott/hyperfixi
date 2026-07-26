@@ -622,6 +622,16 @@ export interface EventHandlerNode extends ASTNode {
   readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
   readonly commands: ASTNode[];
   readonly customEventSource?: string; // Name of registered custom event source (e.g., 'request', 'websocket')
+  /**
+   * Error symbol name bound in the catch block (`on click … catch e … end`).
+   * Same shape as {@link DefNode} — upstream _hyperscript shares one
+   * `parseErrorAndFinally` between its `on` and `def` features.
+   */
+  readonly errorSymbol?: string;
+  /** Error handler commands (catch block) */
+  readonly errorHandler?: ASTNode[];
+  /** Finally handler commands — run after the body whether or not it threw */
+  readonly finallyHandler?: ASTNode[];
   readonly modifiers?: {
     // Event modifiers for controlling event behavior
     once?: boolean; // Fire event handler only once (.once)
