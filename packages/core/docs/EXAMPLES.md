@@ -886,9 +886,22 @@ Absolute URLs work unquoted too, matching hyperscript.org's own examples:
 </button>
 ```
 
-Quoting always works and is worth preferring when the URL is built from a variable
-or contains characters the tokenizer would otherwise split — a path segment that
-happens to be a command word (`fetch /api/put/1`) ends the unquoted URL early.
+An unquoted URL runs to the next whitespace, matching hyperscript.org. A path
+segment that happens to be a command word is therefore just part of the path:
+
+```html
+<button _="on click fetch /api/put/1 as json then put it into #output">Load</button>
+```
+
+`${…}` is carried whole — including any spaces inside it — and interpolated:
+
+```html
+<button _="on click fetch /api/${id} as json then put it into #output">Load</button>
+<input _="on input fetch /search?q=${my value} as json then put it into #results" />
+```
+
+Quoting still works and is worth preferring when the URL is built from a variable
+or contains a space outside an interpolation.
 
 ### Fetch with Loading State
 

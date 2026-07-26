@@ -233,19 +233,6 @@ export function parseMultiWordCommand(
 }
 
 /**
- * Check if the current token terminates a bare URL path in a fetch command.
- * URL paths end before modifiers (as, with), braces, command boundaries, etc.
- */
-function isFetchURLTerminator(ctx: ParserContext): boolean {
-  if (ctx.isAtEnd()) return true;
-  const val = ctx.peek().value;
-  return (
-    ['as', 'with', '{', 'then', 'end', 'else', 'otherwise', ')'].includes(val) ||
-    isCommandBoundary(ctx)
-  );
-}
-
-/**
  * A naked URL begins with `/`, or with a scheme — an identifier immediately
  * followed by `:` (`https:`, `http:`, `mailto:`). Adjacency matters: the tokens
  * must touch, so `foo : bar` and a `key: value` pair are not mistaken for one.
@@ -266,24 +253,82 @@ export function isNakedURLStart(ctx: ParserContext): boolean {
 }
 
 /**
- * Parse a bare (unquoted) URL path (e.g. /api/data, /users/123, https://x.com).
- * Collects `/`, identifier, and other non-terminator tokens into a string literal.
- * Returns null if the path can't be reconstructed.
+ * Punctuation that ends a naked URL even with no whitespace before it.
  *
- * @param isTerminator - predicate marking the token that ends the URL run.
- *   Defaults to the fetch terminator (stops at `as`/`with`/`{`/command boundary);
- *   the `go` parser passes its own so path segments that are command words
- *   (`/get`) stay part of the URL.
+ * Upstream _hyperscript ends a naked URL at whitespace and nothing else
+ * (`parseURLOrExpression` → `consumeUntilWhitespace` → `NakedString`). We keep
+ * two of the old terminator set's entries:
+ *   `{` — load-bearing: the brace-without-`with` options form,
+ *         `fetch /api/data{method:"POST"}`, which upstream does not have
+ *   `)` — carried over from the old set as a no-regression measure. Nothing
+ *         reaches it today, because a run can only START at `/` or a scheme
+ *         (`isNakedURLStart`), so `fetch (/a/b)` goes to `parsePrimary` and
+ *         fails there exactly as it did before this change.
+ *
+ * `[` and `]` are deliberately NOT stops (`?ids[]=1` and `http://[::1]/x` are
+ * real URLs), and neither is `,` (`?ids=1,2,3` is a real query string).
  */
-export function parseBareURLPath(
-  ctx: ParserContext,
-  isTerminator: (ctx: ParserContext) => boolean = isFetchURLTerminator
-): ASTNode | null {
-  const startPos = ctx.savePosition();
-  let path = '';
+const URL_HARD_STOPS = new Set(['{', ')']);
 
-  while (!ctx.isAtEnd() && !isTerminator(ctx)) {
-    path += ctx.advance().value;
+/**
+ * Parse a naked (unquoted) URL — `/api/data`, `https://host/path`.
+ *
+ * Termination is by ADJACENCY, which is upstream's whitespace rule expressed in
+ * the only terms available here: the tokenizer discards whitespace, but every
+ * token carries character offsets, so `tok.start === prev.end` means "nothing
+ * came between them". That covers spaces and newlines alike.
+ *
+ * The old rule stopped at `isCommandBoundary`, i.e. at any of ~60 command words,
+ * so a URL whose path contained one was truncated:
+ *
+ *     fetch /api/put/1 as json   ->  url "/api/", a bogus `partial` `put`
+ *                                    command in the sequence, `as json` dropped
+ *
+ * and `parse()` still reported success. `go` never had the bug precisely because
+ * it did not use the command-word stop; both now share this one routine, as they
+ * do upstream.
+ *
+ * A `${…}` interpolation span is carried whole — its own `{` is not an options
+ * brace, and the space in `${my value}` is part of the URL — and is reproduced
+ * verbatim from source, because joining token values would collapse it to
+ * `${myvalue}`. When the result contains `${`, the node is a `templateLiteral`
+ * so the evaluator actually interpolates it; adjacency swallows `${id}` into the
+ * URL either way, so emitting a plain literal would guarantee a 404. A bare `$`
+ * (`/api/$filter`) is not interpolation and stays a literal.
+ */
+export function parseBareURLPath(ctx: ParserContext): ASTNode | null {
+  const startPos = ctx.savePosition();
+  const firstTok = ctx.peek();
+  let path = '';
+  let prev: Token | null = null;
+
+  while (!ctx.isAtEnd()) {
+    const tok = ctx.peek();
+
+    // Whitespace (or a newline) ended the URL.
+    if (prev && tok.start !== prev.end) break;
+
+    // `${…}` span — checked before URL_HARD_STOPS so the span's own braces are
+    // not mistaken for the options-brace form.
+    if (tok.value === '$' && ctx.peekAt(1)?.value === '{') {
+      ctx.advance(); // $
+      let last = ctx.advance(); // {
+      let depth = 1;
+      while (!ctx.isAtEnd() && depth > 0) {
+        last = ctx.advance();
+        if (last.value === '{') depth++;
+        else if (last.value === '}') depth--;
+      }
+      // Verbatim from source: token values alone would drop the whitespace.
+      path += ctx.getInputSlice(tok.start, last.end);
+      prev = last;
+      continue;
+    }
+
+    if (URL_HARD_STOPS.has(tok.value)) break;
+
+    prev = ctx.advance();
+    path += prev.value;
   }
 
   if (!path || path === '/') {
@@ -291,13 +336,21 @@ export function parseBareURLPath(
     return null;
   }
 
-  return {
-    type: 'literal',
-    value: path,
-    raw: path,
-    start: startPos,
-    end: ctx.savePosition(),
-  } as ASTNode;
+  // Character offsets, like every other node. This used to write
+  // ctx.savePosition() — a TOKEN INDEX — into start/end, which
+  // ast-utils/interchange/from-core.ts copies straight through and
+  // ctx.getInputSlice() would have sliced garbage from.
+  const span = {
+    start: firstTok.start,
+    end: prev ? prev.end : firstTok.end,
+    line: firstTok.line,
+    column: firstTok.column,
+  };
+
+  if (path.includes('${')) {
+    return { type: 'templateLiteral', value: path, ...span } as ASTNode;
+  }
+  return { type: 'literal', value: path, raw: path, ...span } as ASTNode;
 }
 
 /**

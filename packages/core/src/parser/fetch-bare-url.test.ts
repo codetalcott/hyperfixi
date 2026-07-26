@@ -106,3 +106,159 @@ describe('fetch with a naked URL', () => {
     expect(values).toContain('https://example.com/page');
   });
 });
+
+/**
+ * Where the naked URL ENDS.
+ *
+ * The run used to stop at `isCommandBoundary`, i.e. at any of ~60 command words,
+ * so a path segment that happened to be one truncated the URL:
+ *
+ *     fetch /api/put/1 as json
+ *       -> url "/api/", a bogus `partial` `put` command spliced into the
+ *          sequence, `as json` dropped — and result.success still true.
+ *
+ * Termination is now by ADJACENCY, which is upstream's whitespace rule expressed
+ * in the terms available here (the tokenizer discards whitespace, but tokens
+ * carry character offsets). `go` shares the routine, as it does upstream.
+ */
+describe('naked URL termination (adjacency)', () => {
+  const nodeOf = (
+    cmd: CommandNode
+  ): { type?: string; value?: unknown; start?: number; end?: number } =>
+    cmd.args?.[0] as { type?: string; value?: unknown; start?: number; end?: number };
+
+  const commandsOf = (src: string): CommandNode[] => {
+    const result = parse(src);
+    expect(result.success).toBe(true);
+    const node = result.node as { type?: string; commands?: CommandNode[] };
+    return (node.commands ?? [node as CommandNode]) as CommandNode[];
+  };
+
+  describe('the bug', () => {
+    it('keeps a path segment that is a command word', () => {
+      const cmd = fetchCommand('fetch /api/put/1 as json');
+      expect(urlOf(cmd)).toBe('/api/put/1');
+      expect(asOf(cmd)).toBe('json');
+      // The truncation also spliced a second, `partial` command into the parse.
+      expect(parse('fetch /api/put/1 as json').errors ?? []).toEqual([]);
+    });
+
+    it('keeps a command word in an absolute URL too', () => {
+      const cmd = fetchCommand('fetch https://x.com/put/1 as json');
+      expect(urlOf(cmd)).toBe('https://x.com/put/1');
+      expect(asOf(cmd)).toBe('json');
+    });
+
+    it('keeps six consecutive command words', () => {
+      expect(urlOf(fetchCommand('fetch /api/remove/add/toggle/log/wait/1'))).toBe(
+        '/api/remove/add/toggle/log/wait/1'
+      );
+    });
+  });
+
+  describe('regression guards (all real usages in this repo)', () => {
+    it('still ends the URL before a whitespace-separated command', () => {
+      // packages/mcp-server/src/tools/patterns.ts, resources/content.ts, and
+      // .github/skills/.../patterns.md all ship exactly this.
+      const commands = commandsOf('on click add .loading to me fetch /api remove .loading from me');
+      expect(commands.map(c => c.name)).toEqual(['add', 'fetch', 'remove']);
+      expect(urlOf(commands[1])).toBe('/api');
+    });
+
+    it('still ends the URL at then / and', () => {
+      const withThen = commandsOf('fetch /api/data then put it into #out');
+      expect(withThen.map(c => c.name)).toEqual(['fetch', 'put']);
+      expect(urlOf(withThen[0])).toBe('/api/data');
+
+      const withAnd = commandsOf('fetch /content and put it into #target');
+      expect(urlOf(withAnd[0])).toBe('/content');
+    });
+
+    it('still ends the URL at a newline', () => {
+      const commands = commandsOf('on click\n  fetch /api/put/1 as json\n  put it into #out\nend');
+      expect(commands.map(c => c.name)).toEqual(['fetch', 'put']);
+      expect(urlOf(commands[0])).toBe('/api/put/1');
+      expect(asOf(commands[0])).toBe('json');
+    });
+
+    it('still takes the with-options form, spaced or not', () => {
+      const spaced = fetchCommand('fetch /api/data {method:"POST"}');
+      expect(urlOf(spaced)).toBe('/api/data');
+      expect(modifiersOf(spaced)['with']).toBeDefined();
+
+      // No space: `{` is a hard stop, because adjacency alone would swallow it.
+      const tight = fetchCommand('fetch /api/data{method:"POST"}');
+      expect(urlOf(tight)).toBe('/api/data');
+      expect(modifiersOf(tight)['with']).toBeDefined();
+    });
+
+    it('still parses as JSON do not throw', () => {
+      const commands = commandsOf('fetch /api/users as JSON do not throw then log it');
+      expect(urlOf(commands[0])).toBe('/api/users');
+      expect(asOf(commands[0])).toBe('JSON');
+    });
+
+    it('keeps commas — a query string is not a token boundary', () => {
+      const cmd = fetchCommand('fetch /search?q=hello&ids=1,2,3 as json');
+      expect(urlOf(cmd)).toBe('/search?q=hello&ids=1,2,3');
+      expect(asOf(cmd)).toBe('json');
+    });
+  });
+
+  describe('${…} interpolation', () => {
+    it('emits a templateLiteral so the URL actually interpolates', () => {
+      // Adjacency swallows `${id}` into the URL either way, so a plain literal
+      // here would guarantee a 404.
+      const cmd = fetchCommand('fetch /api/${id} as json');
+      expect(nodeOf(cmd).type).toBe('templateLiteral');
+      expect(nodeOf(cmd).value).toBe('/api/${id}');
+      expect(asOf(cmd)).toBe('json');
+    });
+
+    it('carries a span containing whitespace whole', () => {
+      // Joining token values would collapse this to `${myvalue}`; the span is
+      // reproduced verbatim from source instead.
+      const cmd = fetchCommand('fetch /search?q=${my value} as json');
+      expect(nodeOf(cmd).value).toBe('/search?q=${my value}');
+      expect(asOf(cmd)).toBe('json');
+    });
+
+    it('resumes the URL after the span', () => {
+      const cmd = fetchCommand('fetch /api/${id}/more as json');
+      expect(nodeOf(cmd).value).toBe('/api/${id}/more');
+      expect(asOf(cmd)).toBe('json');
+    });
+
+    it('leaves a bare $ alone', () => {
+      // `/api/$filter` is OData, not interpolation — a templateLiteral here
+      // would let evaluateTemplateLiteralNode's $var pass eat it.
+      const cmd = fetchCommand('fetch /api/$filter as json');
+      expect(nodeOf(cmd).type).toBe('literal');
+      expect(nodeOf(cmd).value).toBe('/api/$filter');
+    });
+
+    it('terminates on an unclosed span', { timeout: 1000 }, () => {
+      expect(() => parse('fetch /api/${a as json')).not.toThrow();
+    });
+  });
+
+  it('reports character offsets, not token indices', () => {
+    // These used to be ctx.savePosition() — token indices — inside a command
+    // node measured in characters. ast-utils/interchange/from-core.ts copies
+    // them through verbatim.
+    const cmd = fetchCommand('fetch /api/put/1');
+    expect(nodeOf(cmd).start).toBe(6);
+    expect(nodeOf(cmd).end).toBe(16);
+  });
+
+  it('lets go keep a command-word path while `in` still ends the URL', () => {
+    // Adjacency subsumes the whole GO_URL_STOP set: `1` ends at 15, `in` starts
+    // at 16, so the URL stops on its own.
+    const result = parse('go to /api/put/1 in new window');
+    expect(result.success).toBe(true);
+    const values = ((result.node as CommandNode).args ?? []).map(
+      (a: unknown) => (a as { value?: unknown }).value
+    );
+    expect(values).toEqual(['to', '/api/put/1', 'in', 'new', 'window']);
+  });
+});
