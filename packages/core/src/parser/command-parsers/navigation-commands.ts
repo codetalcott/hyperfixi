@@ -55,29 +55,6 @@ const GO_KEYWORDS = new Set([
   'forward',
 ]);
 
-/**
- * Tokens that terminate a naked-URL run. Unlike the fetch terminator this does
- * NOT stop on arbitrary command tokens, so path segments that happen to be
- * command words (`/get`, `/add`) stay part of the URL; it stops at `in`
- * (→ `in new window`) and the command-sequence boundaries.
- */
-const GO_URL_STOP = new Set([
-  'in',
-  'then',
-  'and',
-  'else',
-  'end',
-  'otherwise',
-  'when',
-  'where',
-  'catch',
-  'finally',
-]);
-
-function isGoURLTerminator(ctx: ParserContext): boolean {
-  return ctx.isAtEnd() || GO_URL_STOP.has(ctx.peek().value);
-}
-
 function stringNode(value: string, tok: Pick<Token, 'start' | 'end' | 'line' | 'column'>): ASTNode {
   return {
     type: 'string',
@@ -114,8 +91,13 @@ export function parseGoCommand(
     }
 
     // 2. Naked URL (/path or scheme://…) → one reassembled string literal.
+    //
+    // The same routine `fetch` uses. `go` used to pass its own GO_URL_STOP set
+    // (`in`, `then`, `and`, …), but every word in it is whitespace-separated in
+    // the grammar, so adjacency subsumes the whole set: in `go to /x in new
+    // window`, `x` ends at 8 and `in` starts at 9, so the URL stops on its own.
     if (isNakedURLStart(ctx)) {
-      const url = parseBareURLPath(ctx, isGoURLTerminator);
+      const url = parseBareURLPath(ctx);
       if (url) {
         args.push(url);
         continue;

@@ -237,6 +237,7 @@ export const commands: Record<string, CommandRef> = {
     examples: [
       'fetch /api/data as json',
       'fetch https://example.com/api as json',
+      'fetch /api/${id} as json',
       'fetch /api/users as html',
       'fetch /api/submit with method:"POST"',
     ],
