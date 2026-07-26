@@ -133,14 +133,7 @@ export interface FetchCommandInput {
  *   - custom        → whatever the plugin-registered handler returns
  */
 export type FetchResponseData =
-  | string
-  | Response
-  | Blob
-  | ArrayBuffer
-  | DocumentFragment
-  | HTMLElement
-  | null
-  | unknown;
+  string | Response | Blob | ArrayBuffer | DocumentFragment | HTMLElement | null | unknown;
 
 export interface FetchCommandOutput {
   status: number;
@@ -306,7 +299,21 @@ export class FetchCommand implements DecoratedCommand {
     context: ExecutionContext
   ): Promise<string> {
     const v = await evaluator.evaluate(arg, context);
-    if (typeof v !== 'string' || !v) throw new Error('fetch: URL must be a non-empty string');
+    if (typeof v !== 'string' || !v) {
+      // An unbound identifier evaluates to undefined, and "URL must be a
+      // non-empty string" describes an internal postcondition rather than the
+      // author's mistake — it reads as nonsense to someone who did pass a URL.
+      // Name the expression and the likely fix instead.
+      const node = arg as { type?: string; name?: string };
+      if ((v === undefined || v === null) && node?.type === 'identifier' && node.name) {
+        throw new Error(
+          `fetch: URL expression "${node.name}" evaluated to ${String(v)} — ` +
+            `check the variable is set, or quote it if you meant a literal URL ` +
+            `(fetch 'https://example.com/path')`
+        );
+      }
+      throw new Error('fetch: URL must be a non-empty string');
+    }
     return v;
   }
 
