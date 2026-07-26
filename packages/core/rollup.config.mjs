@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { asciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 const commonPlugins = [
   nodeResolve(),
@@ -10,6 +11,11 @@ const commonPlugins = [
     declaration: false,
     declarationMap: false,
   }),
+  // Last: escape non-ASCII so the emitted files decode identically under any
+  // charset. @rollup/plugin-typescript re-prints regex literals from the TS AST,
+  // which de-escapes `ً`-style source into raw characters — that is how the
+  // npm entry points ended up unparseable when served without charset=utf-8.
+  asciiOnly(),
 ];
 
 /**
@@ -62,7 +68,10 @@ export default [
         file: 'dist/index.min.js', // Minified UMD for browser
         format: 'umd',
         name: 'LokaScriptCore',
-        plugins: [terser()],
+        // asciiOnly must follow terser here: output-level plugins run after the
+        // input-level ones, so terser would otherwise decode the escapes the
+        // input-level asciiOnly just produced.
+        plugins: [terser(), asciiOnly()],
         sourcemap: true,
         inlineDynamicImports: true,
       },

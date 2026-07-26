@@ -142,7 +142,11 @@ const RUSSIAN_PREPOSITIONS = new Set([
 
 export function createRussianExtractors(): ContextAwareExtractor[] {
   return [
-    new CyrillicKeywordExtractor('russian-keyword', /[a-zA-Zа-яА-ЯёЁ]/, RUSSIAN_PREPOSITIONS),
+    new CyrillicKeywordExtractor(
+      'russian-keyword',
+      /[a-zA-Z\u0430-\u044f\u0410-\u042f\u0451\u0401]/,
+      RUSSIAN_PREPOSITIONS
+    ),
   ];
 }
 
@@ -189,7 +193,7 @@ export function createUkrainianExtractors(): ContextAwareExtractor[] {
   return [
     new CyrillicKeywordExtractor(
       'ukrainian-keyword',
-      /[a-zA-Zа-яА-ЯіІїЇєЄґҐьЬ']/,
+      /[a-zA-Z\u0430-\u044f\u0410-\u042f\u0456\u0406\u0457\u0407\u0454\u0404\u0491\u0490\u044c\u042c']/,
       UKRAINIAN_PREPOSITIONS
     ),
   ];

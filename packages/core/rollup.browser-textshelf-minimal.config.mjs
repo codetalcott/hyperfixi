@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LokaScript TextShelf Minimal Bundle
@@ -10,7 +11,7 @@ import terser from '@rollup/plugin-terser';
  *
  * Target: ~5 KB gzipped (vs 7 KB hybrid-complete, vs 39 KB tree-shakable)
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-textshelf-minimal.ts',
   output: {
     file: 'dist/hyperfixi-textshelf-minimal.js',
@@ -61,4 +62,4 @@ export default {
     propertyReadSideEffects: false,
     tryCatchDeoptimization: false
   }
-};
+});

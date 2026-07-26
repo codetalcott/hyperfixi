@@ -4,6 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import alias from '@rollup/plugin-alias';
 import { fileURLToPath } from 'node:url';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 const useTerser = process.env.NO_TERSER !== '1';
 
@@ -18,7 +19,7 @@ const useTerser = process.env.NO_TERSER !== '1';
 // so the dist-built plugin objects work against src-built core unchanged.
 const coreSrcBarrel = fileURLToPath(new URL('src/index.ts', import.meta.url));
 
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle.ts',
   output: {
     file: 'dist/hyperfixi.js',
@@ -69,4 +70,4 @@ export default {
         },
       }),
   ].filter(Boolean),
-};
+});

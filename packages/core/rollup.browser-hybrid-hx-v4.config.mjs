@@ -3,6 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import alias from '@rollup/plugin-alias';
 import { fileURLToPath } from 'node:url';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 const noTerser = process.env.NO_TERSER === '1';
 
@@ -31,7 +32,7 @@ const coreSrcBarrel = fileURLToPath(new URL('src/index.ts', import.meta.url));
  * For size-tuned production builds, use `@hyperfixi/vite-plugin` to ship
  * only the surface the project actually uses.
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-hybrid-hx-v4.ts',
   output: {
     file: 'dist/hyperfixi-hx-v4.js',
@@ -91,4 +92,4 @@ export default {
           }),
         ]),
   ],
-};
+});

@@ -15,10 +15,11 @@ import terser from '@rollup/plugin-terser';
 import alias from '@rollup/plugin-alias';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-classic-i18n.ts',
   output: {
     file: 'dist/hyperfixi-classic-i18n.js',
@@ -76,4 +77,4 @@ export default {
   ],
   // Don't externalize i18n - we want it bundled
   external: [],
-};
+});

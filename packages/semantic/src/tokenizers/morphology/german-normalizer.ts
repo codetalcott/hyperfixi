@@ -53,7 +53,7 @@ function looksLikeGermanVerb(word: string): boolean {
   if (lower.startsWith('ge') && lower.endsWith('t')) return true;
   if (lower.startsWith('ge') && lower.endsWith('en')) return true;
   // Check for German-specific characters
-  if (/[äöüß]/i.test(word)) return true;
+  if (/[\u00e4\u00f6\u00fc\u00df]/i.test(word)) return true;
   return false;
 }
 

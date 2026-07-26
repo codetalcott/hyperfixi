@@ -17,7 +17,9 @@ function createLatinCharClassifiers(pattern: RegExp) {
 }
 
 const { isLetter: isFrenchLetter, isIdentifierChar: isFrenchIdentifierChar } =
-  createLatinCharClassifiers(/[a-zA-ZàâæçéèêëïîôùûüÿœÀÂÆÇÉÈÊËÏÎÔÙÛÜŸŒ]/);
+  createLatinCharClassifiers(
+    /[a-zA-Z\u00e0\u00e2\u00e6\u00e7\u00e9\u00e8\u00ea\u00eb\u00ef\u00ee\u00f4\u00f9\u00fb\u00fc\u00ff\u0153\u00c0\u00c2\u00c6\u00c7\u00c9\u00c8\u00ca\u00cb\u00cf\u00ce\u00d4\u00d9\u00db\u00dc\u0178\u0152]/
+  );
 
 /**
  * French prepositions that mark grammatical roles.

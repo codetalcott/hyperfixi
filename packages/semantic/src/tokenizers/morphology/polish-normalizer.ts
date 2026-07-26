@@ -99,7 +99,9 @@ export class PolishMorphologicalNormalizer implements MorphologicalNormalizer {
   isNormalizable(word: string): boolean {
     if (word.length < 3) return false;
     // Check for Polish-specific characters or Latin letters
-    return /[a-zA-ZąęćńóśźżłĄĘĆŃÓŚŹŻŁ]/.test(word);
+    return /[a-zA-Z\u0105\u0119\u0107\u0144\u00f3\u015b\u017a\u017c\u0142\u0104\u0118\u0106\u0143\u00d3\u015a\u0179\u017b\u0141]/.test(
+      word
+    );
   }
 
   /**

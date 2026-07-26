@@ -2,8 +2,9 @@ import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-standard-v2.ts',
   output: {
     file: 'dist/hyperfixi-standard.js',
@@ -43,4 +44,4 @@ export default {
       },
     }),
   ],
-};
+});

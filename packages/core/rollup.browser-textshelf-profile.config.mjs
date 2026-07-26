@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LokaScript TextShelf Profile Bundle
@@ -29,7 +30,7 @@ import terser from '@rollup/plugin-terser';
  * - HTMX integration (htmx:afterSettle re-processing)
  * - Drop-in _hyperscript compatibility
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-textshelf-profile.ts',
   output: {
     file: 'dist/hyperfixi-textshelf.js',
@@ -81,4 +82,4 @@ export default {
     propertyReadSideEffects: false,
     tryCatchDeoptimization: false
   }
-};
+});

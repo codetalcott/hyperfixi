@@ -26,7 +26,9 @@ import { BaseMorphologicalNormalizer } from './types';
  * Check if a character is a Spanish-specific letter (accented characters and ñ).
  */
 function isSpanishSpecificLetter(char: string): boolean {
-  return /[áéíóúüñÁÉÍÓÚÜÑ]/.test(char);
+  return /[\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1\u00c1\u00c9\u00cd\u00d3\u00da\u00dc\u00d1]/.test(
+    char
+  );
 }
 
 /**

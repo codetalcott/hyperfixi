@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { withAsciiOnly } from '../../scripts/rollup-ascii-only.mjs';
 
 /**
  * LokaScript Lite Plus Bundle
@@ -14,7 +15,7 @@ import terser from '@rollup/plugin-terser';
  * - show, hide, focus, blur
  * - log, send, trigger, wait, go
  */
-export default {
+export default withAsciiOnly({
   input: 'src/compatibility/browser-bundle-lite-plus.ts',
   output: {
     file: 'dist/hyperfixi-lite-plus.js',
@@ -60,4 +61,4 @@ export default {
       }
     })
   ]
-};
+});

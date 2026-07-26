@@ -252,7 +252,7 @@ export function isDigit(char: string): boolean {
  * other script.
  */
 export function stripOptionalDiacritics(word: string): string {
-  return word.replace(/[ً-ْٰ]/g, '');
+  return word.replace(/[\u064b-\u0652\u0670]/g, '');
 }
 
 /**

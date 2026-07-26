@@ -26,7 +26,9 @@ import { noChange, normalized } from './types';
  * Check if a character is a Portuguese-specific letter (accented characters and ç).
  */
 function isPortugueseSpecificLetter(char: string): boolean {
-  return /[áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]/.test(char);
+  return /[\u00e1\u00e0\u00e2\u00e3\u00e9\u00ea\u00ed\u00f3\u00f4\u00f5\u00fa\u00fc\u00e7\u00c1\u00c0\u00c2\u00c3\u00c9\u00ca\u00cd\u00d3\u00d4\u00d5\u00da\u00dc\u00c7]/.test(
+    char
+  );
 }
 
 /**
