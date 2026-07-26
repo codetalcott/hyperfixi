@@ -2196,23 +2196,7 @@ export class Parser {
     // Parse command list (body)
     const bodyCommands = this.parseCommandBlock(['end', 'catch', 'finally']);
 
-    // Parse optional catch block
-    let errorSymbol: string | undefined;
-    let errorHandler: CommandNode[] | undefined;
-    if (this.check('catch')) {
-      this.advance(); // consume 'catch'
-      if (this.checkIdentifier()) {
-        errorSymbol = this.advance().value;
-      }
-      errorHandler = this.parseCommandBlock(['end', 'finally']);
-    }
-
-    // Parse optional finally block
-    let finallyHandler: CommandNode[] | undefined;
-    if (this.check('finally')) {
-      this.advance(); // consume 'finally'
-      finallyHandler = this.parseCommandBlock(['end']);
-    }
+    const { errorSymbol, errorHandler, finallyHandler } = this.parseErrorAndFinallyBlocks();
 
     // Consume the 'end' keyword
     this.consume('end', "Expected 'end' after function definition");
@@ -2230,6 +2214,41 @@ export class Parser {
       end: this.getPosition().end,
       line: pos.line,
       column: pos.column,
+    };
+  }
+
+  /**
+   * Parse the optional `catch <symbol> … [finally …]` blocks that may follow a
+   * command body, without consuming the trailing `end` (the caller owns that).
+   *
+   * Shared by `def` and `on` — upstream _hyperscript uses one
+   * `Feature.parseErrorAndFinally` for both features, so the two must not drift.
+   */
+  private parseErrorAndFinallyBlocks(): {
+    errorSymbol?: string;
+    errorHandler?: CommandNode[];
+    finallyHandler?: CommandNode[];
+  } {
+    let errorSymbol: string | undefined;
+    let errorHandler: CommandNode[] | undefined;
+    if (this.check('catch')) {
+      this.advance(); // consume 'catch'
+      if (this.checkIdentifier()) {
+        errorSymbol = this.advance().value;
+      }
+      errorHandler = this.parseCommandBlock(['end', 'finally']);
+    }
+
+    let finallyHandler: CommandNode[] | undefined;
+    if (this.check('finally')) {
+      this.advance(); // consume 'finally'
+      finallyHandler = this.parseCommandBlock(['end']);
+    }
+
+    return {
+      ...(errorSymbol !== undefined && { errorSymbol }),
+      ...(errorHandler !== undefined && { errorHandler }),
+      ...(finallyHandler !== undefined && { finallyHandler }),
     };
   }
 
@@ -2703,6 +2722,13 @@ export class Parser {
         break;
       }
 
+      // Stop at `catch`/`finally` — they open the handler's error blocks and are
+      // NOT body commands. Leave them unconsumed for parseErrorAndFinallyBlocks().
+      if (this.check('catch') || this.check('finally')) {
+        debug.parse(`✅ parseEventHandler: Stopping command parsing, found '${this.peek().value}'`);
+        break;
+      }
+
       if (this.checkIsCommand()) {
         // Check if this is actually a pseudo-command (command token used as function call)
         const nextIsOpenParen = this.tokens[this.current + 1]?.value === '(';
@@ -2812,6 +2838,9 @@ export class Parser {
       // Skip any unexpected tokens until we find a command or separator
       // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
       // But don't skip 'on' tokens (they start new event handlers)
+      // Nor 'catch'/'finally' tokens — skipping those silently absorbed the whole
+      // `catch <sym>` clause and appended the catch body to the try body, so the
+      // error path ran on success and real failures escaped the handler.
       while (
         !this.isAtEnd() &&
         !this.checkIsCommand() &&
@@ -2819,7 +2848,9 @@ export class Parser {
         !this.check('then') &&
         !this.check('and') &&
         !this.check(',') &&
-        !this.check('on')
+        !this.check('on') &&
+        !this.check('catch') &&
+        !this.check('finally')
       ) {
         this.advance(); // skip the unexpected token
       }
@@ -2836,6 +2867,21 @@ export class Parser {
       }
     }
 
+    // Optional `catch <sym>` / `finally` blocks. The body loop above breaks at
+    // those keywords without consuming them, so if we are sitting on one now it
+    // belongs to this handler. Only this branch consumes the trailing `end` —
+    // the loop already consumed it on the no-catch path, and eating another one
+    // here would swallow an enclosing `behavior`/`def` terminator.
+    let errorSymbol: string | undefined;
+    let errorHandler: CommandNode[] | undefined;
+    let finallyHandler: CommandNode[] | undefined;
+    if (!this.isAtEnd() && (this.check('catch') || this.check('finally'))) {
+      ({ errorSymbol, errorHandler, finallyHandler } = this.parseErrorAndFinallyBlocks());
+      if (this.check('end')) {
+        this.advance(); // consume the handler's 'end'
+      }
+    }
+
     const pos = this.getPosition();
 
     // Use first event name for compatibility (if single event) or all events
@@ -2844,6 +2890,9 @@ export class Parser {
       event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
       events: eventNames, // Store all event names for runtime
       commands,
+      ...(errorSymbol !== undefined && { errorSymbol }),
+      ...(errorHandler !== undefined && { errorHandler }),
+      ...(finallyHandler !== undefined && { finallyHandler }),
       // Event-argument destructure names (`on click(button)`). Emit as `args` —
       // the `EventHandlerNode.args` field the runtime binds from (and the field the
       // behavior-handler parser already uses). Previously emitted as the untyped,
@@ -2976,15 +3025,39 @@ export class Parser {
           }
         }
 
-        // Parse commands using the same method as repeat/for blocks,
-        // which properly handles nested end tokens from if...end, repeat...end, etc.
-        const handlerCommands = this.parseCommandListUntilEnd();
+        // Parse commands using the same machinery as repeat/for blocks, which
+        // properly handles nested end tokens from if...end, repeat...end, etc.
+        // Stopping on catch/finally too gives behavior handlers the same error
+        // blocks as top-level ones — they share one runtime seam, so a behavior
+        // whose `catch` parsed into the body would misbehave identically.
+        const { commands: handlerCommands, terminator } = this.parseCommandListUntilTerminator([
+          'catch',
+          'finally',
+        ]);
+        let handlerErrorSymbol: string | undefined;
+        let handlerErrorHandler: CommandNode[] | undefined;
+        let handlerFinallyHandler: CommandNode[] | undefined;
+        if (terminator === 'catch' || terminator === 'finally') {
+          ({
+            errorSymbol: handlerErrorSymbol,
+            errorHandler: handlerErrorHandler,
+            finallyHandler: handlerFinallyHandler,
+          } = this.parseErrorAndFinallyBlocks());
+        }
+        if (this.check('end')) {
+          this.advance();
+        } else {
+          throw new Error('Expected "end" to close behavior event handler');
+        }
 
         // Create event handler node with captured target and args
         const handlerNode: EventHandlerNode = {
           type: 'eventHandler',
           event: eventName,
           commands: handlerCommands,
+          ...(handlerErrorSymbol !== undefined && { errorSymbol: handlerErrorSymbol }),
+          ...(handlerErrorHandler !== undefined && { errorHandler: handlerErrorHandler }),
+          ...(handlerFinallyHandler !== undefined && { finallyHandler: handlerFinallyHandler }),
           ...(eventSource !== undefined && { target: eventSource }), // Add the captured target from 'from' clause
           ...(eventArgs.length > 0 && { args: eventArgs }), // Add captured event parameters
           start: handlerPos.start,
