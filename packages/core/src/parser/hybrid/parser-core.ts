@@ -157,6 +157,24 @@ export class HybridParser {
       return cmdMap[normalized]();
     }
 
+    // `catch`/`finally` open error blocks only the full AST parser understands.
+    // The skip fallback below used to swallow them one token at a time, so the
+    // CATCH BODY joined the success-path sequence and ran on every success —
+    // `put 'Request failed' into #out` overwriting a successful render. Silent
+    // and destructive.
+    //
+    // Reject loudly instead. Every consumer of this parser has an error boundary
+    // that logs the offending code (browser-bundle-hybrid-complete.ts and the
+    // other bundle entries console.error it), so the cost is an inert element
+    // and an actionable message — a strictly better failure than running the
+    // error path on success.
+    // The message is deliberately terse — it costs bundle bytes in the smallest
+    // bundles we ship, and the error boundary already logs the offending code,
+    // so it only needs the keyword and the remedy.
+    if (this.match('catch', 'finally')) {
+      throw new Error(`'${this.peek().value}' needs the full parser (use hyperfixi.js)`);
+    }
+
     if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
       this.advance();
     }

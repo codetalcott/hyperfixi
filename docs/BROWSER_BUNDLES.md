@@ -53,10 +53,17 @@ For projects prioritizing bundle size over features:
 
 > **`catch` / `finally` on event handlers need the full AST parser.** `on click … catch e … end`
 > is supported by `hyperfixi.js`, `hyperfixi-hx-v4.js`, `hyperfixi-minimal.js` and
-> `hyperfixi-standard.js`. The lite and hybrid bundles use a different parser that does not
-> recognise the keywords — it absorbs them into the handler body, so the catch commands run in
-> sequence on the success path instead of on error. Use one of the full bundles if you rely on
-> handler-level error handling.
+> `hyperfixi-standard.js`.
+>
+> The **hybrid** bundles (`hyperfixi-hybrid-complete.js`, `hyperfixi-hx.js`) **reject** them:
+> the attribute fails to parse and the error is logged to the console naming the keyword and
+> the remedy. They used to absorb the keywords into the handler body, which put the catch
+> commands on the **success** path — a failure message overwriting a successful render.
+>
+> The **lite** bundles' regex parser does not recognise the keywords at all and silently
+> ignores the attribute.
+>
+> Use one of the full bundles if you rely on handler-level error handling.
 
 ```html
 <!-- Example: Hybrid Complete with expressions and blocks -->
