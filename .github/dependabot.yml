@@ -43,6 +43,19 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      # vitest + @vitest/* excluded above move as one unit: @vitest/ui
+      # exact-pins its peer `vitest` version, so they are coupled by design
+      # and the fix (docs-internal/HANDOFF_vitest-oxc-decorators.md) has to
+      # touch all three together anyway. Bundled 2026-07-20 so the three
+      # individual PRs (#694/695/696, identical failure) collapse into one
+      # PR/one CI run per rebase instead of three.
+      vitest-family:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+        update-types:
+          - 'minor'
+          - 'patch'
       # One weekly PR for all majors instead of one PR per dependency. CI is
       # the reviewer: if this group PR goes red, add the offender to
       # exclude-patterns so it falls back to an individual PR for bisection.
@@ -62,6 +75,17 @@ updates:
         # versions), so exclude both or neither.
         exclude-patterns:
           - 'typescript'
+          - 'vscode-languageserver'
+          - 'vscode-languageclient'
+        update-types:
+          - 'major'
+      # vscode-languageserver + vscode-languageclient excluded above move as
+      # one unit (shared upstream, matched versions — see the comment on the
+      # exclusion). Bundled 2026-07-20 so the two individual PRs (#716/#717)
+      # collapse into one PR/one CI run per rebase instead of two. typescript
+      # stays solo — it needs individual bisection, not a partner.
+      vscode-lsp:
+        patterns:
           - 'vscode-languageserver'
           - 'vscode-languageclient'
         update-types:
