@@ -299,7 +299,15 @@ jobs:
           echo "published=$MATCHED" >> $GITHUB_OUTPUT
           echo "✓ $MATCHED package(s) processed"
 
+          # Export the canonical list so the Summary step cannot drift from it.
+          # It had: the Summary loop carried its own hardcoded copy that was
+          # seven packages behind (intent, domain-config, planner, realtime,
+          # components, speech, intent-element were all published and none of
+          # them appeared in the summary).
+          echo "all_packages=$(echo $ALL_PACKAGES | tr -s '[:space:]' ' ')" >> $GITHUB_OUTPUT
+
       - name: Commit version changes
+        id: bump
         # When version-type=current, the bump was already committed by hand
         # before this workflow was dispatched — there is nothing to commit
         # here, and running the step risks corrupting state (see lockfile
@@ -309,6 +317,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_BUMP_TOKEN: ${{ secrets.RELEASE_BUMP_TOKEN }}
         run: |
+          # pipefail so a `cmd | tee` below reports cmd's status, not tee's.
+          # The publish step above already sets this.
+          set -o pipefail
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="${{ github.ref_name }}"
 
@@ -321,12 +332,24 @@ jobs:
           npm install --package-lock-only
 
           git add packages/*/package.json package.json lerna.json package-lock.json 2>/dev/null || true
-          git commit -m "chore: release v$VERSION" || echo "No changes to commit"
+
+          # `git commit || echo "No changes to commit"` masked two very different
+          # things: a legitimately empty diff, and a commit that actually failed.
+          # Decide which case we are in up front.
+          if git diff --cached --quiet; then
+            echo "::warning::Nothing staged for v$VERSION — the bump appears to be committed already."
+          else
+            git commit -m "chore: release v$VERSION"
+          fi
 
           # Pull from the SAME branch the workflow ran on, not hardcoded
           # `main` — release branches (release/x.y.z) need to stay on the
           # release branch, not pull main into themselves.
           git pull --rebase origin "$BRANCH" || git pull --no-rebase origin "$BRANCH"
+
+          # Which route actually landed the bump. Empty means none did, which is
+          # what happened in v2.9.1 — and the step still exited 0.
+          LANDED=""
 
           # main is a protected branch, so the direct push is expected to be
           # rejected unless github-actions[bot] is on the protection bypass
@@ -343,8 +366,10 @@ jobs:
               push "https://x-access-token:${RELEASE_BUMP_TOKEN}@github.com/${{ github.repository }}.git" \
               HEAD:"$BRANCH"; then
             echo "Pushed version bump directly to $BRANCH (release token)"
+            LANDED="direct"
           elif git push origin HEAD:"$BRANCH"; then
             echo "Pushed version bump directly to $BRANCH"
+            LANDED="direct"
           else
             echo "Direct push rejected (branch protection) — opening a PR instead"
             BUMP_BRANCH="release-bump/v$VERSION"
@@ -352,15 +377,45 @@ jobs:
             PR_BODY=$(printf '%s\n\n%s' \
               "Version-bump bookkeeping for v$VERSION (packages are already on npm). Opened automatically by publish.yml because $BRANCH is push-protected." \
               "NOTE: PRs created with GITHUB_TOKEN do not trigger CI. If required checks stay pending, close and reopen this PR (or push an empty commit) to start them, then merge.")
-            gh pr create --base "$BRANCH" --head "$BUMP_BRANCH" \
-              --title "chore: release v$VERSION" \
-              --body "$PR_BODY" \
-              || echo "PR already exists for $BUMP_BRANCH"
+
+            # `gh pr create || echo "PR already exists"` masked the real v2.9.1
+            # failure: "GitHub Actions is not permitted to create or approve pull
+            # requests" (a repo SETTING, not a token scope) was reported as a
+            # benign duplicate, and the job went green while main stayed on the
+            # previous version. Tolerate ONLY a genuine duplicate.
+            if PR_OUT=$(gh pr create --base "$BRANCH" --head "$BUMP_BRANCH" \
+                  --title "chore: release v$VERSION" --body "$PR_BODY" 2>&1); then
+              echo "$PR_OUT"
+              LANDED="pr"
+            elif printf '%s' "$PR_OUT" | grep -qi 'already exists'; then
+              echo "PR already exists for $BUMP_BRANCH"
+              LANDED="pr"
+            else
+              printf '%s\n' "$PR_OUT"
+              echo "::error::gh pr create failed for $BUMP_BRANCH. If this says 'GitHub Actions is not permitted to create or approve pull requests', enable Settings → Actions → General → Workflow permissions → 'Allow GitHub Actions to create and approve pull requests'. Packages for v$VERSION are ALREADY ON NPM — land $BUMP_BRANCH by hand."
+              exit 1
+            fi
+
             # Auto-merge fires once required checks pass (needs repo
-            # auto-merge enabled + checks started per the note above).
+            # auto-merge enabled + checks started per the note above). This one
+            # stays non-fatal: a human merging the PR is an acceptable outcome,
+            # and the PR itself is the durable record.
             gh pr merge "$BUMP_BRANCH" --auto --squash \
               || echo "::warning::Auto-merge unavailable — merge the release-bump PR manually"
           fi
+
+          # Post-condition. Neither route is allowed to end in "nothing
+          # happened": the v2.9.1 run reached this point with both paths failed
+          # and still exited 0, leaving npm on 2.9.1 and main on 2.9.0.
+          if [ -z "$LANDED" ]; then
+            echo "::error::v$VERSION was published to npm but the version bump did not land on $BRANCH and no PR was opened."
+            exit 1
+          fi
+
+          # Only a direct push means $BRANCH carries the bump NOW; a PR is
+          # pending and will squash to a different commit. The tag step reads this.
+          echo "landed=$LANDED" >> $GITHUB_OUTPUT
+          echo "release_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Create Git tags
         # Only a FULL run cuts release artifacts. A subset dispatch is a repair
@@ -372,9 +427,26 @@ jobs:
         # guard in the publish step.
         if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.packages == 'all' }}
         run: |
+          set -o pipefail
           VERSION="${{ steps.version.outputs.version }}"
-          git tag -f "v$VERSION"
-          git push origin "v$VERSION" --force
+          BRANCH="${{ github.ref_name }}"
+          LANDED="${{ steps.bump.outputs.landed }}"
+          RELEASE_SHA="${{ steps.bump.outputs.release_sha }}"
+
+          # `git tag -f "v$VERSION"` tagged local HEAD unconditionally. On the
+          # PR-fallback path local HEAD only exists on release-bump/vX.Y.Z — it
+          # is NOT on $BRANCH, and because that PR is squash-merged it never
+          # becomes an ancestor of $BRANCH either. The tag would dangle forever.
+          #
+          # An empty LANDED means the bump step was skipped entirely
+          # (version-type=current, where the bump was committed by hand before
+          # dispatch); HEAD is the right thing to tag there.
+          if [ "$LANDED" = "direct" ] || [ -z "$LANDED" ]; then
+            git tag -f "v$VERSION" "${RELEASE_SHA:-HEAD}"
+            git push origin "v$VERSION" --force
+          else
+            echo "::warning::Skipping tag v$VERSION — the bump is still an open PR (release-bump/v$VERSION) and its squash-merge will produce a different commit. After merging: git tag v$VERSION <merge-sha> && git push origin v$VERSION"
+          fi
 
       - name: Create GitHub Release
         # Same gate as the tag above — a repair run must not re-cut the Release.
@@ -397,13 +469,13 @@ jobs:
             echo "**Version**: $VERSION | **Tag**: ${{ github.event.inputs.npm-tag }} | **Dry run**: ${{ github.event.inputs.dry-run }}"
             echo ""
             echo "### Packages published"
-            for pkg in semantic core i18n hyperscript-adapter patterns-reference \
-                       framework server-bridge types-browser aot-compiler \
-                       domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
-                       compilation-service mcp-server vite-plugin \
-                       behaviors testing-framework language-server \
-                       language-server-hyperscript multilingual-hyperscript \
-                       hyperscript-tools-i18n htmx-adapter; do
+            # Derived from ALL_PACKAGES in the publish step rather than copied.
+            # The copy that used to live here had drifted seven packages behind
+            # (intent, domain-config, planner, realtime, components, speech,
+            # intent-element were published and none of them were reported) —
+            # the same "second hardcoded list" class the htmx-adapter comment
+            # above records from v2.8.0.
+            for pkg in ${{ steps.publish.outputs.all_packages }}; do
               [ -f "packages/$pkg/package.json" ] || continue
               IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
               [ "$IS_PRIVATE" = "true" ] && continue

@@ -485,6 +485,15 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 - `.github/workflows/publish.yml` - Manual npm publishing (workflow_dispatch)
 - `.github/workflows/pre-publish-check.yml` - Pre-publish validation (workflow_dispatch)
 
+> **Release prerequisite.** The version bump has to land on `main` after publishing, and
+> `main` is push-protected. The workflow tries `RELEASE_BUMP_TOKEN` (admin PAT, direct push),
+> then a plain push, then a `release-bump/vX.Y.Z` branch + PR. On v2.6.0 and again on v2.9.1
+> **all** paths failed and the bump was landed by hand (#603, #772). The workflow now fails
+> loudly instead of going green, but for the fallback to actually work the repo needs
+> _Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and
+> approve pull requests"_ enabled, or a valid `RELEASE_BUMP_TOKEN` (which removes the need for
+> a PR at all). After any release, confirm `main`'s version matches npm.
+
 **Archived Workflows:**
 
 - See `.github/workflows/archive/README.md` for previously consolidated workflows
