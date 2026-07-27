@@ -339,8 +339,10 @@ describe('R2 execution validator (lock)', () => {
     // The three wave-9 additions. Each en reference must produce a non-empty,
     // deterministic signature against the existing fixture. The `*opacity`
     // hide/show STRATEGIES are synchronous (no timer): hide writes display:none
-    // + a data-original-display marker on #btn; show adds the visibility class
-    // on #modal. chained-access-possessive-dot writes the parent (.card) display.
+    // on #btn (its data-original-display memo is engine bookkeeping, excluded
+    // from signatures since the shared effect-signature module — see
+    // ENGINE_ATTRS there); show adds the visibility class on #modal.
+    // chained-access-possessive-dot writes the parent (.card) display.
     const cases: ReadonlyArray<[string, string, string[]]> = [
       [
         'chained-access-possessive-dot',
@@ -350,7 +352,7 @@ describe('R2 execution validator (lock)', () => {
       [
         'hide-with-transition',
         'on click hide me with *opacity',
-        ['Δ#btn cls[] attr[data-original-display=,id=btn] style[display: none;] text[Click]'],
+        ['Δ#btn cls[] attr[id=btn] style[display: none;] text[Click]'],
       ],
       [
         'show-with-transition',

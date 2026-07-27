@@ -1,0 +1,518 @@
+{
+  "//": [
+    "Allowlist for the shipped-examples execution gate (shipped-examples-execution.test.ts).",
+    "Each entry is a shipped handler whose DOM effect DIVERGES between hyperfixi and the",
+    "real hyperscript.org engine when its trigger event is dispatched in jsdom.",
+    "Keys embed a hash of the source: editing the handler changes the key, so entries go",
+    "stale and the stale-entry assertion forces their removal — the list only ratchets down.",
+    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md."
+  ],
+  "allowedDivergences": [
+    {
+      "key": "examples/behaviors/recipes.html::4e3f86c536::keyup",
+      "file": "examples/behaviors/recipes.html",
+      "event": "keyup",
+      "excerpt": "on keyup show <blockquote/> in the next <div/> when its textContent contains my value",
+      "hyperfixi": [
+        "Δinput:45 cls[show] attr[placeholder=Search quotes…,type=text] style[] text[]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/dialogs/modal.html::37ad17f250::click",
+      "file": "examples/dialogs/modal.html",
+      "event": "click",
+      "excerpt": "on click show #info-modal",
+      "hyperfixi": [
+        "Δdiv:16#info-modal cls[modal-overlay show] attr[id=info-modal] style[] text[]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/dialogs/modal.html::8dbe740dd3::click",
+      "file": "examples/dialogs/modal.html",
+      "event": "click",
+      "excerpt": "on click show #confirm-modal",
+      "hyperfixi": [
+        "Δdiv:31#confirm-modal cls[modal-overlay show] attr[id=confirm-modal] style[] text[]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/dialogs/modal.html::c9f964d2a2::click",
+      "file": "examples/dialogs/modal.html",
+      "event": "click",
+      "excerpt": "on click show #form-modal",
+      "hyperfixi": [
+        "Δdiv:46#form-modal cls[modal-overlay show] attr[id=form-modal] style[] text[]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/dialogs/modal.html::27fb619873::keydown",
+      "file": "examples/dialogs/modal.html",
+      "event": "keydown",
+      "excerpt": "on keydown[key=='Escape'] from window hide .modal-overlay",
+      "hyperfixi": [
+        "Δdiv:16#info-modal cls[modal-overlay] attr[id=info-modal] style[display: none;] text[]",
+        "Δdiv:31#confirm-modal cls[modal-overlay] attr[id=confirm-modal] style[display: none;] text[]",
+        "Δdiv:46#form-modal cls[modal-overlay] attr[id=form-modal] style[display: none;] text[]",
+        "Δdiv:68#behavior-modal cls[modal-overlay] attr[id=behavior-modal] style[display: none;] text[]"
+      ],
+      "upstream": [],
+      "reason": "hyperfixi runs the handler although the event filter [key=='Escape'] is unmet (dispatched Event has no .key; undefined=='Escape' is false) — REAL BUG CANDIDATE, queued in PARSER_NEXT_STEPS.md"
+    },
+    {
+      "key": "examples/events-and-dom/counter.html::6f9009e740::click",
+      "file": "examples/events-and-dom/counter.html",
+      "event": "click",
+      "excerpt": "on click decrement #count",
+      "hyperfixi": [
+        "Δdiv:14#count cls[counter-display] attr[id=count] style[] text[-1]",
+        "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[-1]"
+      ],
+      "upstream": ["-div:14#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/events-and-dom/counter.html::7f5ebb38b0::click",
+      "file": "examples/events-and-dom/counter.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": [
+        "Δdiv:14#count cls[counter-display] attr[id=count] style[] text[1]",
+        "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[1]"
+      ],
+      "upstream": ["-div:14#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/events-and-dom/show-hide.html::8aeb3a46f9::click",
+      "file": "examples/events-and-dom/show-hide.html",
+      "event": "click",
+      "excerpt": "on click show #content1",
+      "hyperfixi": ["Δdiv:26#content1 cls[content-box show] attr[id=content1] style[] text[]"],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/01-polyglot-playground.html::6f9009e740::click",
+      "file": "examples/experiments/01-polyglot-playground.html",
+      "event": "click",
+      "excerpt": "on click decrement #count",
+      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
+      "upstream": ["-div:29#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/01-polyglot-playground.html::7f5ebb38b0::click",
+      "file": "examples/experiments/01-polyglot-playground.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
+      "upstream": ["-div:29#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/02-multilingual-sync.html::227e004ae8::click",
+      "file": "examples/experiments/02-multilingual-sync.html",
+      "event": "click",
+      "excerpt": "on click decrement #shared-count then call window.logAction('decrement')",
+      "hyperfixi": [
+        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
+      ],
+      "upstream": ["-div:11#shared-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/02-multilingual-sync.html::aeeb82b882::click",
+      "file": "examples/experiments/02-multilingual-sync.html",
+      "event": "click",
+      "excerpt": "on click increment #shared-count then call window.logAction('increment')",
+      "hyperfixi": [
+        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
+      ],
+      "upstream": ["-div:11#shared-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/03-adaptive-rtl-ltr.html::f701a8b242::click",
+      "file": "examples/experiments/03-adaptive-rtl-ltr.html",
+      "event": "click",
+      "excerpt": "on click decrement #counter",
+      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
+      "upstream": ["-div:35#counter"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/experiments/03-adaptive-rtl-ltr.html::0d0a6b9a18::click",
+      "file": "examples/experiments/03-adaptive-rtl-ltr.html",
+      "event": "click",
+      "excerpt": "on click increment #counter",
+      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
+      "upstream": ["-div:35#counter"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/forms/form-validation.html::e85adbe538::input",
+      "file": "examples/forms/form-validation.html",
+      "event": "input",
+      "excerpt": "on input if my value contains '@' add .valid to me remove .error from me hide #email-error else add ",
+      "hyperfixi": [
+        "Δdiv:25#email-error cls[error-message show] attr[id=email-error] style[] text[\n                        ❌ Email must contain @ symbol\n                    ]",
+        "Δinput:24#email cls[error] attr[id=email,placeholder=you@example.com,type=email] style[] text[]"
+      ],
+      "upstream": [
+        "Δinput:24#email cls[error] attr[id=email,placeholder=you@example.com,type=email] style[] text[]"
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/forms/form-validation.html::6b07d036d3::input",
+      "file": "examples/forms/form-validation.html",
+      "event": "input",
+      "excerpt": "on input if my value's length >= 8 add .valid to me remove .error from me hide #password-error else ",
+      "hyperfixi": [
+        "Δdiv:29#password-error cls[error-message show] attr[id=password-error] style[] text[\n                        ❌ Password must be at least 8 characters\n          ",
+        "Δinput:28#password cls[error] attr[id=password,placeholder=Enter password (min 8 characters),type=password] style[] text[]"
+      ],
+      "upstream": [
+        "Δinput:28#password cls[error] attr[id=password,placeholder=Enter password (min 8 characters),type=password] style[] text[]"
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/forms/form-validation.html::467bb365ef::input",
+      "file": "examples/forms/form-validation.html",
+      "event": "input",
+      "excerpt": "on input if my value == #password's value add .valid to me remove .error from me hide #confirm-error",
+      "hyperfixi": [
+        "Δdiv:33#confirm-error cls[error-message show] attr[id=confirm-error] style[] text[\n                        ❌ Passwords do not match\n                    ]",
+        "Δinput:32#confirm cls[error] attr[id=confirm,placeholder=Re-enter password,type=password] style[] text[]"
+      ],
+      "upstream": [
+        "Δinput:32#confirm cls[error] attr[id=confirm,placeholder=Re-enter password,type=password] style[] text[]"
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/adaptive-rtl-ltr.html::f701a8b242::click",
+      "file": "examples/multilingual/adaptive-rtl-ltr.html",
+      "event": "click",
+      "excerpt": "on click decrement #counter",
+      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
+      "upstream": ["-div:35#counter"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/adaptive-rtl-ltr.html::0d0a6b9a18::click",
+      "file": "examples/multilingual/adaptive-rtl-ltr.html",
+      "event": "click",
+      "excerpt": "on click increment #counter",
+      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
+      "upstream": ["-div:35#counter"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/index.html::6f9009e740::click",
+      "file": "examples/multilingual/index.html",
+      "event": "click",
+      "excerpt": "on click decrement #count",
+      "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[-1]"],
+      "upstream": ["-div:51#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/index.html::7f5ebb38b0::click",
+      "file": "examples/multilingual/index.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[1]"],
+      "upstream": ["-div:51#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/multilingual-sync.html::227e004ae8::click",
+      "file": "examples/multilingual/multilingual-sync.html",
+      "event": "click",
+      "excerpt": "on click decrement #shared-count then call window.logAction('decrement')",
+      "hyperfixi": [
+        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
+      ],
+      "upstream": ["-div:11#shared-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/multilingual-sync.html::aeeb82b882::click",
+      "file": "examples/multilingual/multilingual-sync.html",
+      "event": "click",
+      "excerpt": "on click increment #shared-count then call window.logAction('increment')",
+      "hyperfixi": [
+        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
+      ],
+      "upstream": ["-div:11#shared-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/polyglot-playground.html::6f9009e740::click",
+      "file": "examples/multilingual/polyglot-playground.html",
+      "event": "click",
+      "excerpt": "on click decrement #count",
+      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
+      "upstream": ["-div:29#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/polyglot-playground.html::7f5ebb38b0::click",
+      "file": "examples/multilingual/polyglot-playground.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
+      "upstream": ["-div:29#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/showcase.html::406e02080b::click",
+      "file": "examples/multilingual/showcase.html",
+      "event": "click",
+      "excerpt": "on click decrement #counter-value",
+      "hyperfixi": [
+        "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[-1]"
+      ],
+      "upstream": ["-div:36#counter-value"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/showcase.html::3d4a481500::click",
+      "file": "examples/multilingual/showcase.html",
+      "event": "click",
+      "excerpt": "on click increment #counter-value",
+      "hyperfixi": [
+        "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[1]"
+      ],
+      "upstream": ["-div:36#counter-value"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/showcase.html::1db01d96f1::click",
+      "file": "examples/multilingual/showcase.html",
+      "event": "click",
+      "excerpt": "on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel1",
+      "hyperfixi": [
+        "Δdiv:96#panel1 cls[active show tab-panel] attr[id=panel1] style[display: block;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
+        "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked ",
+        "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
+      ],
+      "upstream": [
+        "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked ",
+        "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/showcase.html::38866ac528::click",
+      "file": "examples/multilingual/showcase.html",
+      "event": "click",
+      "excerpt": "on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel2",
+      "hyperfixi": [
+        "Δbutton:92#tabs-demo-tab1 cls[tab-btn] attr[id=tabs-demo-tab1] style[] text[Tab 1]",
+        "Δbutton:93#tabs-demo-tab2 cls[active tab-btn] attr[id=tabs-demo-tab2] style[] text[Tab 2]",
+        "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
+        "Δdiv:97#panel2 cls[show tab-panel] attr[id=panel2] style[display: block;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the cl",
+        "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
+      ],
+      "upstream": [
+        "Δbutton:92#tabs-demo-tab1 cls[tab-btn] attr[id=tabs-demo-tab1] style[] text[Tab 1]",
+        "Δbutton:93#tabs-demo-tab2 cls[active tab-btn] attr[id=tabs-demo-tab2] style[] text[Tab 2]",
+        "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
+        "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/showcase.html::118be448a2::click",
+      "file": "examples/multilingual/showcase.html",
+      "event": "click",
+      "excerpt": "on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel3",
+      "hyperfixi": [
+        "Δbutton:92#tabs-demo-tab1 cls[tab-btn] attr[id=tabs-demo-tab1] style[] text[Tab 1]",
+        "Δbutton:94#tabs-demo-tab3 cls[active tab-btn] attr[id=tabs-demo-tab3] style[] text[Tab 3]",
+        "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
+        "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked ",
+        "Δdiv:98#panel3 cls[show tab-panel] attr[id=panel3] style[display: block;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
+      ],
+      "upstream": [
+        "Δbutton:92#tabs-demo-tab1 cls[tab-btn] attr[id=tabs-demo-tab1] style[] text[Tab 1]",
+        "Δbutton:94#tabs-demo-tab3 cls[active tab-btn] attr[id=tabs-demo-tab3] style[] text[Tab 3]",
+        "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
+        "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked "
+      ],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/test-classic-i18n.html::7f5ebb38b0::click",
+      "file": "examples/multilingual/test-classic-i18n.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": ["Δspan:17#count cls[counter] attr[id=count] style[] text[1]"],
+      "upstream": ["-span:17#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/multilingual/test-classic-i18n.html::ffd8337a94::click",
+      "file": "examples/multilingual/test-classic-i18n.html",
+      "event": "click",
+      "excerpt": "on click set #count to 0",
+      "hyperfixi": [],
+      "upstream": ["-span:17#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/swap-and-morph/swap-morph.html::f3c10ab34d::click",
+      "file": "examples/swap-and-morph/swap-morph.html",
+      "event": "click",
+      "excerpt": "on click set newCard to '<div class=card>Card added at start</div>' swap afterBegin of #strategies-l",
+      "hyperfixi": ["+div[31] cls[card] attr[] style[] text[Card added at start]"],
+      "upstream": [],
+      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
+    },
+    {
+      "key": "examples/swap-and-morph/swap-morph.html::6e8c21c053::click",
+      "file": "examples/swap-and-morph/swap-morph.html",
+      "event": "click",
+      "excerpt": "on click set newCard to '<div class=card>Card added at end</div>' swap beforeEnd of #strategies-list",
+      "hyperfixi": ["+div[31] cls[card] attr[] style[] text[Card added at end]"],
+      "upstream": [],
+      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
+    },
+    {
+      "key": "examples/swap-and-morph/swap-morph.html::6a5ba2e70d::click",
+      "file": "examples/swap-and-morph/swap-morph.html",
+      "event": "click",
+      "excerpt": "on click set newItem to '<div class=item>New Item (afterBegin)</div>' swap afterBegin of #item-list ",
+      "hyperfixi": ["+div[48] cls[item] attr[] style[] text[New Item (afterBegin)]"],
+      "upstream": [],
+      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
+    },
+    {
+      "key": "examples/swap-and-morph/swap-morph.html::d66ad4c5eb::click",
+      "file": "examples/swap-and-morph/swap-morph.html",
+      "event": "click",
+      "excerpt": "on click set newItem to '<div class=item>New Item (beforeEnd)</div>' swap beforeEnd of #item-list wi",
+      "hyperfixi": ["+div[51] cls[item] attr[] style[] text[New Item (beforeEnd)]"],
+      "upstream": [],
+      "reason": "hyperfixi `swap` command extension: upstream parses the source but has no swap command, so it no-ops"
+    },
+    {
+      "key": "examples/swap-and-morph/test-property-access.html::e264f605a5::click",
+      "file": "examples/swap-and-morph/test-property-access.html",
+      "event": "click",
+      "excerpt": "on click put document.getElementById('test-input').value into #result4",
+      "hyperfixi": [],
+      "upstream": ["Δdiv:24#result4 cls[result] attr[id=result4] style[] text[null]"],
+      "reason": "js property-path argument (`document.getElementById(...).value`): hyperfixi produces no effect — REAL BUG CANDIDATE"
+    },
+    {
+      "key": "examples/toggle-and-state/toggle-attributes.html::34237b9d73::click",
+      "file": "examples/toggle-and-state/toggle-attributes.html",
+      "event": "click",
+      "excerpt": "on click toggle @disabled on #target-btn",
+      "hyperfixi": [
+        "Δbutton:52#target-btn cls[demo-target] attr[disabled=,id=target-btn] style[] text[\n                    Target Button\n                ]"
+      ],
+      "upstream": [
+        "Δbutton:52#target-btn cls[demo-target] attr[disabled=undefined,id=target-btn] style[] text[\n                    Target Button\n                ]",
+        "Δspan:55#disabled-status cls[] attr[id=disabled-status] style[] text[disabled]"
+      ],
+      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+    },
+    {
+      "key": "examples/toggle-and-state/toggle-attributes.html::6812ec8c63::click",
+      "file": "examples/toggle-and-state/toggle-attributes.html",
+      "event": "click",
+      "excerpt": "on click toggle @required on #email-input",
+      "hyperfixi": [
+        "Δinput:66#email-input cls[demo-target] attr[id=email-input,placeholder=Enter email...,required=,type=email] style[] text[]"
+      ],
+      "upstream": [
+        "Δinput:66#email-input cls[demo-target] attr[id=email-input,placeholder=Enter email...,required=undefined,type=email] style[] text[]"
+      ],
+      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+    },
+    {
+      "key": "examples/toggle-and-state/toggle-attributes.html::1d1cf3bb14::click",
+      "file": "examples/toggle-and-state/toggle-attributes.html",
+      "event": "click",
+      "excerpt": "on click toggle @disabled on #prop-btn",
+      "hyperfixi": [
+        "Δbutton:131#prop-btn cls[demo-target] attr[disabled=,id=prop-btn] style[] text[\n                    Another Target\n                ]"
+      ],
+      "upstream": [
+        "Δbutton:131#prop-btn cls[demo-target] attr[disabled=undefined,id=prop-btn] style[] text[\n                    Another Target\n                ]"
+      ],
+      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-multilingual/index.html::3fed702e4e::click",
+      "file": "examples/vite-plugin-multilingual/index.html",
+      "event": "click",
+      "excerpt": "on click show #en-content",
+      "hyperfixi": [
+        "Δdiv:40#en-content cls[show] attr[id=en-content] style[] text[English content that can be shown/hidden.]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-multilingual/index.html::b0b708a0c6::click",
+      "file": "examples/vite-plugin-multilingual/index.html",
+      "event": "click",
+      "excerpt": "on click decrement #en-count",
+      "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[-1]"],
+      "upstream": ["-span:43#en-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-multilingual/index.html::712d7ec0b1::click",
+      "file": "examples/vite-plugin-multilingual/index.html",
+      "event": "click",
+      "excerpt": "on click increment #en-count",
+      "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[1]"],
+      "upstream": ["-span:43#en-count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-test/index.html::cbac0b8e43::click",
+      "file": "examples/vite-plugin-test/index.html",
+      "event": "click",
+      "excerpt": "on click show #content",
+      "hyperfixi": [
+        "Δdiv:7#content cls[show] attr[id=content] style[] text[This content can be shown/hidden.]"
+      ],
+      "upstream": [],
+      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-test/index.html::6f9009e740::click",
+      "file": "examples/vite-plugin-test/index.html",
+      "event": "click",
+      "excerpt": "on click decrement #count",
+      "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[-1]"],
+      "upstream": ["-span:14#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    },
+    {
+      "key": "examples/vite-plugin-test/index.html::7f5ebb38b0::click",
+      "file": "examples/vite-plugin-test/index.html",
+      "event": "click",
+      "excerpt": "on click increment #count",
+      "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[1]"],
+      "upstream": ["-span:14#count"],
+      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+    }
+  ]
+}

@@ -24,12 +24,13 @@ ones, because the gate *is* the tracking mechanism.
 
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
+| **Unmet event filter still fires** | **high** — `on keydown[key=='Escape']` runs with no `.key`; upstream correctly does not | ✅ execution-gate allowlist entry | found by the execution gate; family 5 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
-| **Nothing executes a shipped example** | medium — `examples/**` is parsed but never run | **none** | "Wider question" in [HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md) |
+| **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 
-### Why the gated two need no doc to survive
+### Why the gated entries need no doc to survive
 
 - **`and`** — the two `KNOWN GAP` tests assert the *current, wrong* shape. Anyone
   who fixes the pratt parser breaks them immediately and is forced to decide
@@ -37,10 +38,25 @@ ones, because the gate *is* the tracking mechanism.
 - **`sortable-list.html`** — the allowlist key embeds `sha1(source)`, and
   assertion 3 of the shipped-sources gate **fails** when an allowlisted source
   goes clean. The list can only ratchet down. It cannot be silently forgotten.
+- **The execution-gate entries** (event filter; `set <idref>` / js-path no-ops) —
+  same mechanism as `sortable-list.html`: their allowlist keys in
+  `packages/testing-framework/baselines/shipped-examples-execution.json` embed a
+  source hash, and the gate's stale-entry assertion fails when a divergence
+  converges, forcing the entry's removal in the fixing change.
 
-The ungated two have no such mechanism. **They are what this document is for.**
+The ungated one (`tell`) has no such mechanism. **It is what this document is
+for.**
 
-## Notes on the ungated two
+## Notes
+
+**The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
+execution gate runs every eligible `_=` handler on both hyperfixi and the real
+`hyperscript.org` engine in jsdom and ratchets on DOM-effect divergence —
+upstream as the behavioral oracle, the R4 pattern applied to behavior. It is
+what would have caught the #785 defect on *behaviour* rather than on a
+diagnostic. Design, current numbers, the six divergence families, and the
+harness lessons: [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
+Its first sweep produced the two bug-candidate rows in the table above.
 
 **Expression-first condition parsing** is the deferred follow-on from the `if`
 family (see History). #786 replaced the raw "is this token spelled like a
@@ -56,17 +72,13 @@ work rather than extending `OPERAND_INTRODUCERS` piecemeal. Detail + the
 regression episode that motivates it:
 [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
 
-**No execution test for `examples/**`** is the systemic one. #785 added
-`packages/core/src/api/if-body-then-execution.test.ts`, which is the right shape
-(compile, run in jsdom, assert the DOM) but only covers hand-written sources. The
-R2 execution ratchet does this for 47 curated corpus patterns
-(`avgExecutionFidelity`); extending something like it to `examples/**` is the
-natural follow-on. It is what would have caught the #785 defect on *behaviour*
-rather than on a diagnostic — `native-dialog.html` shipped with its conditional
-body running unconditionally and every parse-level gate was green.
-
 ## History
 
+- **2026-07-27** — shipped-examples execution gate landed: `examples/**`
+  handlers executed on both engines in jsdom, DOM-effect divergence ratcheted
+  against `hyperscript.org` as the behavioral oracle. 46 divergences baselined
+  in six families; two promoted to bug-candidate rows above. Brief:
+  [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
 - **2026-07-27 (#786, repair commit)** — command-name words in `if`/`unless`
   conditions (`if log is 3 add .a` died with "Expected condition"; in a handler
   the `if` vanished and its body ran unconditionally, `ok: true`). Fixed by
