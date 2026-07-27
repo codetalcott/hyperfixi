@@ -501,7 +501,12 @@ const api = {
       return {
         success: result.success,
         ast: result.node,
-        errors: result.error ? [result.error] : [],
+        // Prefer the accumulated `errors` over the singular `error`: a
+        // resilient parse that recovered leaves `error` restored to undefined
+        // while `errors` holds the diagnostics, so reading only `error` here
+        // reported `{ success: true, errors: [] }` for genuinely malformed
+        // input. Same defect #780 fixed in compileSync.
+        errors: result.errors ?? (result.error ? [result.error] : []),
         tokens: result.tokens || [],
         compilationTime: performance.now() - startTime,
       };
