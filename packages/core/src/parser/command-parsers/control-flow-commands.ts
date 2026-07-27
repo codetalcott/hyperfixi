@@ -417,23 +417,19 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   // multi-line either way, while the header-`then` consumption below now checks
   // the token instead of trusting this flag.
   //
-  // Bounding the scan to `commandToken.line` remains WRONG: it would reclassify
-  // the legitimate `then`-on-the-next-line header form
+  // The scan IS bounded, but at the first COMMAND (below) — not at
+  // `commandToken.line`. #785 considered the line bound and rejected it; that
+  // remains the right call, because a header `then` is allowed to sit on the line
+  // AFTER the condition, so a line bound reclassifies that legitimate form
   // (parser-integration.test.ts:381, and the guard in then-as-separator.test.ts).
   //
-  // #785 gave a second reason for leaving this unbounded — that the single-line
-  // shapes a bound would newly reach were broken anyway by the implicit
-  // multi-line scan below. That defect is now FIXED (see the line-bound in that
-  // scan, and docs-internal/HANDOFF-implicit-multiline-if.md), so only the
-  // next-line-header reason still stands.
-  //
-  // Residual, deliberately NOT fixed here: a single-line `if` whose FOLLOWING
-  // line contains a body `then` (`if 1 is 1 log 'a'` + `set x to 1 then log 'b'`)
-  // is still misread as multi-line and swallows that line. Bounding this scan at
-  // the FIRST COMMAND — not at the line — fixes it while preserving the
-  // next-line header form, since a header `then` always precedes the body. That
-  // change measured green on the core suite and the multilingual ratchet; it is
-  // queued in docs-internal/PARSER_NEXT_STEPS.md to land with its own coverage.
+  // #785's other reason for leaving this unbounded entirely — that the
+  // single-line shapes a bound would newly reach were broken anyway by the
+  // implicit multi-line scan below — no longer applies; that defect is fixed
+  // (see the line-bound there, and docs-internal/HANDOFF-implicit-multiline-if.md).
+  // Unbounded, this scan crossed newlines into a BODY `then` on a later line and
+  // made a single-line `if` multi-line, swallowing that whole line — the same
+  // silent failure by a third route.
   let hasThen = false;
   const savedPosForThen = ctx.savePosition();
   const maxThenLookahead = 500; // Increased to handle large conditional expressions
@@ -450,6 +446,14 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       token.value === KEYWORDS.DEF ||
       token.value === KEYWORDS.ON
     ) {
+      break;
+    }
+    // Bound at the FIRST COMMAND: a header `then` always precedes the body, so
+    // any `then` beyond this point belongs to a BODY command and must not make
+    // the `if` multi-line. This is what separates the two directly — a bound on
+    // `commandToken.line` cannot, because the header `then` is allowed to sit on
+    // the line AFTER the condition.
+    if (ctx.checkIsCommand() || ctx.isCommand(token.value?.toLowerCase())) {
       break;
     }
     ctx.advance();

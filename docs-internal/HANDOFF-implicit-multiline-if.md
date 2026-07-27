@@ -15,12 +15,17 @@
 > against the unfixed parser; the other 6 are guards that must pass in both
 > states.
 >
-> **One residual left open**, tracked in
-> [PARSER_NEXT_STEPS.md](PARSER_NEXT_STEPS.md): a single-line `if` whose
-> *following* line contains a body `then` is still swallowed, via the separate
-> `hasThen` lookahead. See "Why the `then` fix did not touch it" below — the
-> re-evaluation it calls for was done, and the answer is a **first-command**
-> bound, not the line bound #785 rejected.
+> **The `hasThen` residual is also fixed** (same branch, follow-up commit): a
+> single-line `if` whose *following* line contained a body `then` was still
+> swallowed, because that lookahead crosses newlines. See "Why the `then` fix did
+> not touch it" below — the re-evaluation it calls for was done, and the answer is
+> a **first-command** bound (a header `then` always precedes the body), not the
+> `commandToken.line` bound #785 rejected, which would break the legitimate
+> `then`-on-the-next-line header form.
+>
+> A separate, unrelated defect in the same function was found during this work and
+> is now the top of the queue:
+> [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
 
 Found while fixing the `then`-as-command-separator defect
 (`HANDOFF-if-block-then-separator.md`). **Independent of it** — this reproduces

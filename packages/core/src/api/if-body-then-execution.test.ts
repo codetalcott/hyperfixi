@@ -172,3 +172,44 @@ describe('a command after a single-line if runs regardless of the condition', ()
       });
   });
 });
+
+/**
+ * The behavioural half of the residual where the two defects above meet
+ * (parse-shape half: the `a body `then` on a later line does not make a
+ * single-line if multi-line` block in
+ * `src/parser/__tests__/then-as-separator.test.ts`).
+ *
+ * The `hasThen` lookahead crosses newlines, so a `then` used as a command
+ * separator on a LATER line classified the `if` as multi-line and pulled that
+ * whole line into the block — reaching the same silent failure as the defects
+ * above by a third route. Bounding that scan at the first command fixed it.
+ */
+describe('a `then`-joined line after a single-line if runs regardless of the condition', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('runs BOTH commands of the following `then`-joined line when the condition is FALSE', () => {
+    const host = setupTarget();
+
+    return hyperscript
+      .eval('if 1 is 2 add .a to #target\nadd .b to #target then add .c to #target', host)
+      .then(() => {
+        expect(target().classList.contains('a')).toBe(false);
+        expect(target().classList.contains('b')).toBe(true);
+        expect(target().classList.contains('c')).toBe(true);
+      });
+  });
+
+  it('runs all three when the condition is TRUE', () => {
+    const host = setupTarget();
+
+    return hyperscript
+      .eval('if 1 is 1 add .a to #target\nadd .b to #target then add .c to #target', host)
+      .then(() => {
+        expect(target().classList.contains('a')).toBe(true);
+        expect(target().classList.contains('b')).toBe(true);
+        expect(target().classList.contains('c')).toBe(true);
+      });
+  });
+});
