@@ -15,7 +15,7 @@ import { createBlock, createStringLiteral } from '../helpers/ast-helpers';
 import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
-import { isIdentifierLike, isEvent } from '../token-predicates';
+import { isIdentifierLike, isEvent, isComment } from '../token-predicates';
 
 /**
  * Parse halt command
@@ -319,6 +319,64 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
 }
 
 /**
+ * Parse the command list of one `if`/`unless` branch.
+ *
+ * `then`, `and` and `,` are command SEPARATORS, not block terminators — the same
+ * rule the enclosing sequence loops use (parser.ts:3181, :2867) and the canonical
+ * body loop uses (parser.ts:1130), and the same rule upstream applies uniformly
+ * via its single recursive `parseCommandList`. Only `end` — and `else`, for the
+ * then-branch — closes the block.
+ *
+ * Leaving a separator in the stream is what made a conditional body run
+ * UNCONDITIONALLY: the loop broke at the body's `then`, `consume('end')` failed
+ * (non-throwing, so `ok` stayed true), and the enclosing sequence loop — which
+ * does consume `then` — picked up the rest of the body as SIBLINGS of the `if`.
+ *
+ * Deliberately NOT `ctx.parseCommandListUntilTerminator`: that helper swallows
+ * errors raised while parsing body commands (parser.ts:1084-1105), including the
+ * unclosed-paren errors `parseCommandSequence` explicitly preserves, and its
+ * junk-skipping does not guard `on`/`catch`/`finally`.
+ *
+ * Uses check()+advance() rather than ctx.match(): the control-flow unit-test
+ * mocks override check/advance/peek against their own cursor but inherit a
+ * `match` bound to a different position counter
+ * (__test-utils__/parser-context-mock.ts:40).
+ */
+function parseIfBranchCommands(ctx: ParserContext, stopAtElse: boolean): ASTNode[] {
+  const commands: ASTNode[] = [];
+  const atTerminator = (): boolean =>
+    ctx.check(KEYWORDS.END) || (stopAtElse && ctx.check(KEYWORDS.ELSE));
+
+  while (!ctx.isAtEnd() && !atTerminator()) {
+    // Skip `--` comments, as every sibling body loop does (parser.ts:3277 for
+    // def/init/catch/finally, and the junk-skip at :1117 for repeat/for). This
+    // loop was the only one that did not, so a comment between two commands
+    // broke the block and produced the same bogus "Expected 'end' after if
+    // block" as the missing-separator defect — which is what was left of
+    // examples/fetch-and-async/infinite-scroll.html once `then` was fixed.
+    if (isComment(ctx.peek())) {
+      ctx.advance();
+      continue;
+    }
+    if (!ctx.checkIsCommand() && !ctx.isCommand(ctx.peek().value)) break;
+    ctx.advance(); // parseCommand() reads the command token via previous()
+    const cmd = ctx.parseCommand();
+    if (cmd) {
+      commands.push(cmd);
+    }
+    // Separator between two body commands. `and` and `,` are matched for parity
+    // with the sibling loops; in practice neither reaches here today (the pratt
+    // parser absorbs `and` as a binary operator, and `,` is taken by the
+    // argument loop), so only `then` changes behaviour.
+    if (ctx.check(KEYWORDS.THEN) || ctx.check(KEYWORDS.AND) || ctx.check(',')) {
+      ctx.advance();
+    }
+  }
+
+  return commands;
+}
+
+/**
  * Parse if command
  *
  * Syntax:
@@ -351,7 +409,19 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   // 2. Implicit multi-line (no 'then' but multiple commands on separate lines): if <condition>\n  <cmd>\n  <cmd>\n end
   // 3. Single-line (no 'then', single command on same line): if <condition> <command>
 
-  // Look ahead to find 'then' keyword (not just check current token)
+  // Look ahead to find 'then' keyword (not just check current token).
+  //
+  // NOTE: this scan crosses newlines, so it can be set by a `then` that belongs
+  // to a BODY command rather than to the `if` header. That is tolerated on
+  // purpose: `hasThen` only feeds `isMultiLine`, and a body spanning lines is
+  // multi-line either way, while the header-`then` consumption below now checks
+  // the token instead of trusting this flag. Bounding the scan to
+  // `commandToken.line` was tried and rejected — it is a near-no-op given that
+  // check, it would reclassify the legitimate `then`-on-the-next-line form
+  // (parser-integration.test.ts:381), and the single-line shapes it would newly
+  // reach are broken by an INDEPENDENT pre-existing defect in the implicit
+  // multi-line scan below: `if 1 is 1 log 'a'\nlog 'b'` already swallows
+  // `log 'b'` into the block with a bogus "Expected 'end'", no `then` involved.
   let hasThen = false;
   const savedPosForThen = ctx.savePosition();
   const maxThenLookahead = 500; // Increased to handle large conditional expressions
@@ -487,23 +557,18 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
 
   if (isMultiLine) {
     // Multi-line form: if condition then ... end (or if condition ... end)
-    if (hasThen) {
-      ctx.advance(); // consume 'then' if present
-    }
+    //
+    // Consume the header `then` only if it is ACTUALLY the next token. `hasThen`
+    // is a lookahead flag that can be set by a `then` belonging to a body command
+    // (the scan above crosses newlines), and advancing on the flag alone deleted
+    // the body's first token — that is why the reported repro produced an EMPTY
+    // if-block with `get #username` missing from the AST entirely. Checking the
+    // token also routes through the multilingual keyword resolver, which the raw
+    // `token.value === KEYWORDS.THEN` comparison in the lookahead does not.
+    consumeOptionalKeyword(ctx, KEYWORDS.THEN);
 
     // Parse command block until 'else' or 'end'
-    const thenCommands: ASTNode[] = [];
-    while (!ctx.isAtEnd() && !ctx.check(KEYWORDS.ELSE) && !ctx.check(KEYWORDS.END)) {
-      if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
-        ctx.advance(); // consume command token
-        const cmd = ctx.parseCommand();
-        if (cmd) {
-          thenCommands.push(cmd);
-        }
-      } else {
-        break;
-      }
-    }
+    const thenCommands: ASTNode[] = parseIfBranchCommands(ctx, true);
 
     // Validate: error if then block is empty and we're at end of input (incomplete statement)
     if (thenCommands.length === 0 && ctx.isAtEnd()) {
@@ -548,18 +613,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         consumedElseIf = true;
       } else {
         // Regular else block
-        const elseCommands: ASTNode[] = [];
-        while (!ctx.isAtEnd() && !ctx.check(KEYWORDS.END)) {
-          if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
-            ctx.advance(); // consume command token
-            const cmd = ctx.parseCommand();
-            if (cmd) {
-              elseCommands.push(cmd);
-            }
-          } else {
-            break;
-          }
-        }
+        const elseCommands: ASTNode[] = parseIfBranchCommands(ctx, false);
 
         // Add else block
         args.push(

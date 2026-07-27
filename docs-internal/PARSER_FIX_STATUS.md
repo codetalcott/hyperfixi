@@ -1,5 +1,21 @@
 # Parser Fix Status Report
 
+> **RESOLVED — archived 2026-07-27. Do not read this as current status.**
+>
+> This is a **single-defect** report from 2026-01-30, not a parser index. Its name
+> has misled readers for six months; the standing parser queue is
+> [PARSER_NEXT_STEPS.md](PARSER_NEXT_STEPS.md).
+>
+> The defect below is fixed. Verified 2026-07-27:
+> `npx vitest run src/parser/behavior-parser.test.ts` → **24 passed (24)**, none
+> skipped. Both named tests still exist and still assert
+> (`behavior-parser.test.ts:471` and `:498`), so this is a real pass, not the
+> "mark them `.skip()`" outcome floated under Option 3 below.
+>
+> Which of the three options was taken, and in which commit, was never recorded —
+> the "Next Steps" section at the bottom was never answered in writing. Kept for
+> the debugging archaeology only.
+
 ## Problem Summary
 
 The core parser cannot parse behavior definitions when parameter names match command names (e.g., `trigger`).

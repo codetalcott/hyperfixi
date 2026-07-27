@@ -737,13 +737,27 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
         break;
       }
 
-      // Handle 'and' between commands (tell x add .a and add .b)
-      if (ctx.match(KEYWORDS.AND)) {
+      // Separator between two commands in the tell body (tell x add .a and add .b,
+      // tell x add .a then add .b). Upstream's TellCommand.parse takes a
+      // `commandList` for its body, and every commandList consumes a joining
+      // `then` — so a `then`-joined command belongs INSIDE the tell (running once
+      // per target), not after it. Breaking here let it escape the body.
+      if (ctx.match(KEYWORDS.AND) || ctx.match(KEYWORDS.THEN)) {
         continue;
       }
 
-      // Check for control flow boundaries after parsing a command
-      if (ctx.check(KEYWORDS.THEN) || ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
+      // Check for control flow boundaries after parsing a command.
+      //
+      // KNOWN GAP: breaking on `end` is all we do with it — `tell` never CONSUMES
+      // its terminator, so `tell #x add .a end` leaves the `end` in the stream for
+      // whatever encloses us (inside a handler it is taken as the handler's own
+      // `end`). Upstream REQUIRES the terminator: TellCommand.parse calls
+      // `requireToken("end")` unless it is already at a feature start, which means
+      // hyperfixi has no real `tell … end` block form, only this inline one.
+      // Closing that is a termination-semantics change, not a separator fix, so it
+      // was deliberately left out of the `then`-separator work above.
+      // Tracked in docs-internal/PARSER_NEXT_STEPS.md.
+      if (ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
         break;
       }
 

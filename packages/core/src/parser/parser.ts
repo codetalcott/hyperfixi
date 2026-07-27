@@ -3282,6 +3282,13 @@ export class Parser {
         this.advance();
         const cmd = this.parseCommand();
         commands.push(cmd);
+        // `then`/`and`/`,` separate two commands in a body — same rule as the
+        // sequence loops (:3181, :2867) and the canonical body loop (:1130).
+        // Without this, `def f() get #u then log 'a' end` broke the block here
+        // and then failed hard on the missing `end` ("Unexpected token: then").
+        if (this.match('then', 'and', ',')) {
+          continue;
+        }
       } else {
         break;
       }

@@ -515,6 +515,15 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 ## Architecture
 
+> **Known core-parser defects and their queue live in
+> `docs-internal/PARSER_NEXT_STEPS.md`** — the counterpart to
+> `MULTILINGUAL_NEXT_STEPS.md`, for the `packages/core/src/parser/` track. Check it
+> before triaging a parse bug; several are already diagnosed with a written brief.
+> Two entries there are held by a gate that fails on its own (the `and` KNOWN GAP
+> tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
+> the doc exists. `docs-internal/PARSER_FIX_STATUS.md` is an **archived**
+> single-defect report, not an index, despite its name.
+
 ### Command Pattern
 
 All 58 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
