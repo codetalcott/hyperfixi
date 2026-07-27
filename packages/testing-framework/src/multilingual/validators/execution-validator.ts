@@ -31,6 +31,7 @@ import { JSDOM } from 'jsdom';
 import { parseSemantic, buildAST } from '@lokascript/semantic';
 import { getAllPatterns, getTranslationsByLanguage } from '@hyperfixi/patterns-reference';
 import type { LanguageCode } from '../types';
+import { snapshot, diffSnapshots } from '../effect-signature';
 
 /**
  * The curated execution subset: simple, deterministic, fixture-friendly
@@ -287,53 +288,12 @@ export interface ExecutionResult {
   executionFidelity?: number;
 }
 
-/**
- * Serialize the identity-relevant state of every element under <body>.
- * Keyed by #id when present, else tag[document-order-index]; the fixture is
- * identical across languages, so keys are comparable.
- */
-function serializeElement(el: Element): string {
-  const attrs = Array.from(el.attributes)
-    .filter(a => a.name !== 'class' && a.name !== 'style')
-    .map(a => `${a.name}=${a.value}`)
-    .sort()
-    .join(',');
-  const classes = Array.from(el.classList).sort().join(' ');
-  const style = (el as HTMLElement).getAttribute('style') ?? '';
-  // Leaf text only — container text would duplicate every child mutation.
-  const text =
-    el.childNodes.length === 0 || (el.childNodes.length === 1 && el.firstChild?.nodeType === 3)
-      ? (el.textContent ?? '')
-      : '';
-  return `cls[${classes}] attr[${attrs}] style[${style}] text[${text}]`;
-}
-
-function snapshot(document: Document): Map<string, string> {
-  const out = new Map<string, string>();
-  // body participates under its own stable key: body-targeted effects
-  // (`add .modal-open to body`, modal-open/modal-close-button) must be
-  // visible in the signature now that the runtime resolves `body`. Before
-  // wave 3b these writes fell back to `me` (visible by accident); a correct
-  // body write was invisible and a dropped one unscoreable.
-  out.set('body', serializeElement(document.body));
-  document.body.querySelectorAll('*').forEach((el, i) => {
-    const key = el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}[${i}]`;
-    out.set(key, serializeElement(el));
-  });
-  return out;
-}
-
-/** Sorted, stable list of per-element changes between two snapshots. */
-function diffSnapshots(before: Map<string, string>, after: Map<string, string>): string[] {
-  const effects: string[] = [];
-  for (const [k, v] of after) {
-    const b = before.get(k);
-    if (b === undefined) effects.push(`+${k} ${v}`);
-    else if (b !== v) effects.push(`Δ${k} ${v}`);
-  }
-  for (const k of before.keys()) if (!after.has(k)) effects.push(`-${k}`);
-  return effects.sort();
-}
+// Effect-signature machinery (serializeElement/snapshot/diffSnapshots) moved to
+// ../effect-signature.ts (imported at the top), shared with the
+// shipped-examples execution gate so the two can never disagree about what a
+// DOM effect is. Notes that used to live on the local copies (leaf-text-only
+// rationale; body's own stable key, added in wave 3b when the runtime learned
+// to resolve `body`) moved with them.
 
 /** How long to let the dispatched handler settle (ms). The subset contains no
  * waits/transitions/fetches, so this only needs to drain micro/macrotasks. */
