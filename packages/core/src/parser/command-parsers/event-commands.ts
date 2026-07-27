@@ -142,7 +142,21 @@ export function parseTriggerCommand(
       finalArgs.push(ctx.createIdentifier(keyword));
       continue;
     }
-    finalArgs.push(ctx.parsePrimary());
+
+    const before = ctx.savePosition();
+    const expr = ctx.parsePrimary();
+    if (expr) finalArgs.push(expr);
+
+    // parsePrimary() can return WITHOUT consuming a token when it cannot start
+    // an expression there — e.g. the `&` in an HTML-escaped `&lt;form /&gt;`,
+    // which is what a `<form/>` selector becomes when a doc example is copied
+    // through markdown. With no progress check this loop spun forever appending
+    // nodes until the process died of heap exhaustion. A hang is strictly worse
+    // than a bad parse: it takes the page (or the build) with it, and no
+    // `success:false` ever gets returned to say why.
+    if (ctx.savePosition() === before) {
+      ctx.advance();
+    }
   }
 
   // Use CommandNodeBuilder for consistent node construction
