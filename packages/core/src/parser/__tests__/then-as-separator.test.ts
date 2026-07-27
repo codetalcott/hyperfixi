@@ -231,6 +231,320 @@ describe('`then` as a command separator in if/unless bodies', () => {
   });
 });
 
+/**
+ * The MIRROR IMAGE of the defect above, found while fixing it and independent of
+ * it — no `then` appears anywhere in these sources.
+ *
+ * `parseIfCommand`'s implicit-multi-line lookahead is supposed to decide the form
+ * from the FIRST command's line only: same line as the `if` → single-line,
+ * different line → multi-line. It answered that correctly and then kept walking,
+ * because the branch has no `break` (deliberately — it is still hunting a
+ * same-line `else`/`end`, which the guards at the bottom pin). It reached the
+ * NEXT line's command, set the multi-line flag, and the "FIRST command" rule was
+ * defeated by the second command.
+ *
+ * The result: `if 1 is 1 log 'a'` followed by `log 'b'` swallowed `log 'b'` into
+ * the if-block, so a command that must always run stopped running whenever the
+ * condition was false. Where the `then` defect hoisted a conditional body OUT so
+ * it ran unconditionally, this pulls an unconditional command IN.
+ *
+ * Same `ok: true` + recovered-"Expected 'end'" shape, so these assertions are
+ * structural for the same reason: `success` proves nothing, it was already true.
+ * The behavioural half is in `src/api/if-body-then-execution.test.ts`.
+ *
+ * Every source below is accepted by upstream `hyperscript.org`.
+ * See docs-internal/HANDOFF-implicit-multiline-if.md.
+ */
+describe('a single-line if does not swallow the following line', () => {
+  it('leaves the next line a SIBLING of the if (minimal repro)', () => {
+    const node = parseClean("if 1 is 1 log 'a'\nlog 'b'");
+
+    expect(names(node.commands)).toEqual(['if', 'log']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['log']);
+    expect(node.commands[0].args[1].commands[0].args[0].value).toBe('a');
+    expect(node.commands[1].args[0].value).toBe('b');
+  });
+
+  it('keeps the sibling out of the block when the condition is FALSE', () => {
+    // The severity case at parse level: `add .b` swallowed into a false branch
+    // silently stops running. The DOM proof is in if-body-then-execution.test.ts.
+    const node = parseClean('if 1 is 2 add .a to #t\nadd .b to #t');
+
+    expect(names(node.commands)).toEqual(['if', 'add']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+    expect(node.commands[1].args[0].value).toBe('.b');
+  });
+
+  it('scales — three trailing lines all stay siblings', () => {
+    // It was not one line: the scan swallowed everything up to the next boundary.
+    const node = parseClean("if 1 is 1 log 'a'\nlog 'b'\nlog 'c'");
+
+    expect(names(node.commands)).toEqual(['if', 'log', 'log']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['log']);
+  });
+
+  it('leaves the next line a sibling inside an event handler', () => {
+    const node = parseClean('on click\n  if 1 is 2 add .a to #t\n  add .b to #t');
+
+    expect(names(node.commands)).toEqual(['if', 'add']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+  });
+
+  it('keeps consecutive single-line ifs independent', () => {
+    // The second `if` was swallowed into the first one's block, which nested two
+    // independent conditions.
+    const node = parseClean(
+      'on click\n  if 1 is 2 add .a to #t\n  if 1 is 1 add .b to #t\n  add .c to #t'
+    );
+
+    expect(names(node.commands)).toEqual(['if', 'if', 'add']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+    expect(names(thenBranch(node.commands[1]))).toEqual(['add']);
+  });
+
+  it('applies to `unless`, which shares parseIfCommand', () => {
+    const node = parseClean("unless 1 is 1 log 'a'\nlog 'b'");
+
+    expect(names(node.commands)).toEqual(['unless', 'log']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['log']);
+  });
+
+  it('keeps a single-line if nested in a multi-line body from eating its sibling', () => {
+    // `log 'outer'` belongs to the OUTER body, not to the inner single-line if.
+    const node = parseClean("if 1 is 1\n  if 2 is 2 log 'inner'\n  log 'outer'\nend");
+
+    const outer = thenBranch(node);
+    expect(names(outer)).toEqual(['if', 'log']);
+    expect(names(thenBranch(outer[0]))).toEqual(['log']);
+    expect(outer[1].args[0].value).toBe('outer');
+  });
+
+  // ─── Guards: the missing `break` is deliberate, and must stay missing ──────
+
+  it('still treats a SAME-LINE `else`/`end` as multi-line', () => {
+    // This is why the branch has no `break`: the scan must run past the same-line
+    // first command to find this `else`. A fix that simply added the `break`
+    // would collapse this into a single-line `if` and drop the else entirely.
+    const node = parseClean('if x > 3 set y to 1 else set y to 2 end');
+
+    expect(names(thenBranch(node))).toEqual(['set']);
+    expect(names(elseBranch(node))).toEqual(['set']);
+  });
+
+  it('still finds the same-line `else`/`end` when another line follows', () => {
+    // The two rules meeting: same-line else/end wins, and the next line is still
+    // a sibling. Both halves have to hold at once.
+    const node = parseClean("on click if x > 3 set y to 1 else set y to 2 end\n  log 'after'");
+
+    expect(names(node.commands)).toEqual(['if', 'log']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['set']);
+    expect(names(elseBranch(node.commands[0]))).toEqual(['set']);
+    expect(node.commands[1].args[0].value).toBe('after');
+  });
+
+  it('leaves the genuine implicit multi-line form alone', () => {
+    // The other side of the FIRST-command rule: first command on a DIFFERENT
+    // line is multi-line, and both commands belong to the block.
+    const node = parseClean("if 1 is 1\n  log 'a'\n  log 'b'\nend");
+
+    expect(names(thenBranch(node))).toEqual(['log', 'log']);
+  });
+
+  it('lets an OUTER block claim the `end` on the next line', () => {
+    // The case the scan's different-line rule exists for, cited at that site: in
+    // a behavior, `if no x set x to 1` is single-line and the following `end`
+    // closes the enclosing `init`, not the `if`.
+    const node = parseClean('behavior B\n  init\n    if no x set x to 1\n  end\nend');
+
+    expect(names(node.initBlock.commands)).toEqual(['if']);
+    expect(names(thenBranch(node.initBlock.commands[0]))).toEqual(['set']);
+  });
+});
+
+/**
+ * The residual of the two defects above, where they meet.
+ *
+ * Fixing the implicit-multi-line scan left one way for a single-line `if` to
+ * still swallow its following line: the SEPARATE `hasThen` lookahead. That scan
+ * crosses newlines, so a `then` used as a command separator on a LATER line set
+ * `hasThen`, the `if` was classified multi-line, and the whole following line was
+ * pulled into the block — the same silent "unconditional command stops running"
+ * failure, reached by a different route.
+ *
+ * #785 considered bounding that scan to `commandToken.line` and rejected it,
+ * partly because the implicit-multi-line scan was broken anyway. It is now fixed,
+ * but the LINE bound is still wrong on its own terms: a header `then` is allowed
+ * to sit on the line after the condition (`leaves the `then`-on-the-next-line
+ * header form working`, above), so a line bound would misclassify that form.
+ *
+ * The bound that works is the COMMAND-CHAIN rule: a `then` binds the `if` only
+ * while the scan has not crossed onto a line that STARTS a new command. Commands
+ * on the `if`'s own line are the single-line body — their joining `then`s bind
+ * (upstream keeps then-joined commands in the body). A command starting a LATER
+ * line begins a sibling, so a `then` beyond it is that sibling's separator.
+ *
+ * A plain FIRST-command bound was tried first and over-corrected: it also broke
+ * at command-WORDS inside the condition (`if log is 3 then …`,
+ * `if x is set then …`) and evicted same-line then-joined bodies (`if c add .a
+ * then add .b` — upstream: BOTH conditional), regressing five upstream-valid
+ * shapes that the guards below now pin. See
+ * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ */
+describe('a body `then` on a later line does not make a single-line if multi-line', () => {
+  it('leaves the following `then`-joined line a SIBLING of the if', () => {
+    const node = parseClean("if 1 is 1 log 'a'\nset x to 1 then log 'b'");
+
+    expect(names(node.commands)).toEqual(['if', 'set', 'log']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['log']);
+  });
+
+  it('keeps the `then`-joined line out of a FALSE branch', () => {
+    // The severity shape: both `add`s were swallowed into a false branch, so
+    // neither ran. The DOM proof is in if-body-then-execution.test.ts.
+    const node = parseClean('if 1 is 2 add .a to #t\nadd .b to #t then add .c to #t');
+
+    expect(names(node.commands)).toEqual(['if', 'add', 'add']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+    expect(node.commands[1].args[0].value).toBe('.b');
+    expect(node.commands[2].args[0].value).toBe('.c');
+  });
+
+  // ─── Guards: the chain rule, not a first-command break ────────────────────
+
+  it('still treats a same-line header `then` as multi-line', () => {
+    // The bound must not fire before the header `then` is seen.
+    const node = parseClean("if 1 is 1 then log 'a' end");
+
+    expect(names(thenBranch(node))).toEqual(['log']);
+  });
+
+  it('still finds a header `then` past a command-like word in the condition', () => {
+    // `set` is a command name, so a first-command bound could stop the scan
+    // inside the CONDITION and lose the header `then` that follows it. The
+    // condition is consumed as an expression before the body begins, so it must
+    // not — pinned because this is the bound's sharpest edge.
+    const node = parseClean("if x is set then log 'a' end");
+
+    expect(names(thenBranch(node))).toEqual(['log']);
+  });
+
+  it('keeps a SAME-LINE then-joined body inside the if', () => {
+    // Upstream keeps then-joined commands in the body: BOTH adds are
+    // conditional here. The first-command bound broke the scan at `add .a` and
+    // evicted `add .b` as an unconditional sibling — the exact silent class this
+    // file exists to kill, on a same-line shape. The recovered "Expected 'end'"
+    // is deliberate strictness (`still requires end`, above), not part of the
+    // defect.
+    const result = parse('on click if 1 is 2 add .a to #t then add .b to #t');
+
+    expect(names((result.node as any).commands)).toEqual(['if']);
+    expect(names(thenBranch((result.node as any).commands[0]))).toEqual(['add', 'add']);
+    expect(recoveredErrors(result)).toContain("Expected 'end' after if block");
+  });
+
+  it('still finds a header `then` on the next line past a command-word operand', () => {
+    // C2 of the regression set: `set` is an operand of `is`, and the header
+    // `then` sits on the following line. The chain rule must not count an
+    // operand as a command, or the scan stops at the newline and the header
+    // `then` is lost.
+    const node = parseClean("if x is set\n  then log 'a'\nend");
+
+    expect(names(thenBranch(node))).toEqual(['log']);
+  });
+
+  it('still finds a header `then` when the body is on the next line', () => {
+    // C of the regression set: nothing after the header `then` on the if line.
+    const node = parseClean("if x is set then\n  log 'a'\nend");
+
+    expect(names(thenBranch(node))).toEqual(['log']);
+  });
+});
+
+/**
+ * A command-NAME word in an `if`/`unless` condition.
+ *
+ * `parseIfCommand` used to decide structure by asking "is this token spelled
+ * like a command?" at three sites (the two form-detection scans and the
+ * single-line condition loop). That question cannot tell a command from an
+ * identifier that shares its spelling, so a condition STARTING with `log`,
+ * `set`, `add`, … broke: the condition loop's guard was false at token zero,
+ * zero condition tokens were parsed, and the parse died with "Expected
+ * condition after if/unless" — loudly at top level, SILENTLY inside a handler,
+ * where recovery dropped the `if` node and promoted the body to an
+ * unconditional sibling.
+ *
+ * Two structural facts replace the name test:
+ *   1. the condition is never empty, so the first token after `if` is never the
+ *      body (the condition loop's first parse is unguarded);
+ *   2. a token right after an operator is an operand (`if x is set …`).
+ *
+ * Every source here is accepted by upstream `hyperscript.org`. See
+ * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ */
+describe('a command-name word in the condition does not break the if', () => {
+  it('parses a condition that STARTS with a command word (single-line)', () => {
+    // The headline case: was a FATAL "Expected condition after if/unless".
+    const node = parseClean('if log is 3 add .a to #t');
+
+    expect(node.name).toBe('if');
+    expect(node.args[0].type).toBe('binaryExpression');
+    expect(names(thenBranch(node))).toEqual(['add']);
+  });
+
+  it('keeps the if ALIVE inside an event handler', () => {
+    // The silent case: recovery used to drop the `if` entirely — the handler
+    // became [log, add], with the body promoted to an unconditional sibling and
+    // ok still true. The DOM proof is in if-body-then-execution.test.ts.
+    const node = parseClean('on click if log is 3 add .a to #t');
+
+    expect(names(node.commands)).toEqual(['if']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+  });
+
+  it('applies to `unless`, which shares parseIfCommand', () => {
+    const node = parseClean('unless log is 3 add .a to #t');
+
+    expect(node.name).toBe('unless');
+    expect(names(thenBranch(node))).toEqual(['add']);
+  });
+
+  it('parses the implicit multi-line form (A of the regression set)', () => {
+    const node = parseClean('if log is 3\n  add .a to #t\nend');
+
+    expect(names(thenBranch(node))).toEqual(['add']);
+  });
+
+  it('parses the `then` + next-line body form (B of the regression set)', () => {
+    const node = parseClean('if log is 3 then\n  add .a to #t\nend');
+
+    expect(names(thenBranch(node))).toEqual(['add']);
+  });
+
+  it('parses a command-word OPERAND with an implicit next-line body', () => {
+    // No `then` anywhere: only the operand rule keeps `set` out of the
+    // form-detection here.
+    const node = parseClean("if x is set\n  log 'a'\nend");
+
+    expect(names(thenBranch(node))).toEqual(['log']);
+  });
+
+  it('handles the same command word as condition AND body', () => {
+    const node = parseClean('if add is 3 add .a to #t');
+
+    expect(node.args[0].type).toBe('binaryExpression');
+    expect(names(thenBranch(node))).toEqual(['add']);
+  });
+
+  it('keeps the following line a sibling when the condition starts with a command word', () => {
+    // Composition with the swallow fix above: both rules must hold at once.
+    const node = parseClean('if log is 3 add .a to #t\nadd .b to #t');
+
+    expect(names(node.commands)).toEqual(['if', 'add']);
+    expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
+    expect(node.commands[1].args[0].value).toBe('.b');
+  });
+});
+
 describe('`then` as a command separator in def/init/catch/finally bodies', () => {
   // These were a HARD failure before the fix ("Unexpected token: then"), not a
   // silent hoist: parseCommandBlock broke at the `then` and the caller then

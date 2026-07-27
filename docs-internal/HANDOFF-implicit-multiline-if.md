@@ -1,5 +1,32 @@
 # Handoff: a single-line `if` swallows the following line into its block
 
+> **RESOLVED 2026-07-27.** Fixed in `parseIfCommand`'s implicit-multi-line scan:
+> once the FIRST command is found on the `if`'s own line, the scan now stops the
+> moment it leaves that line, so a later-line command can no longer set
+> `hasImplicitMultiLineEnd`. The deliberate missing `break` is preserved — the
+> scan still runs past the same-line first command to find a same-line
+> `else`/`end`.
+>
+> Coverage: 11 parse-shape cases in
+> `packages/core/src/parser/__tests__/then-as-separator.test.ts` (describe: *a
+> single-line if does not swallow the following line*) and 5 DOM-effect cases in
+> `packages/core/src/api/if-body-then-execution.test.ts` (describe: *a command
+> after a single-line if runs regardless of the condition*). 10 of the 16 fail
+> against the unfixed parser; the other 6 are guards that must pass in both
+> states.
+>
+> **The `hasThen` residual is also fixed** (same branch, follow-up commits): a
+> single-line `if` whose *following* line contained a body `then` was still
+> swallowed, because that lookahead crosses newlines. See "Why the `then` fix did
+> not touch it" below — the re-evaluation it calls for was done, and the answer is
+> the **command-chain rule** (a `then` binds only while the scan has not crossed
+> onto a line that starts a new command; same-line then-joined bodies bind, per
+> upstream), not the `commandToken.line` bound #785 rejected, which would break
+> the legitimate `then`-on-the-next-line header form. A plain first-command bound
+> was tried in between and over-corrected — that episode, and the wider defect it
+> exposed in the same function (both fixed on this branch), are in
+> [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
+
 Found while fixing the `then`-as-command-separator defect
 (`HANDOFF-if-block-then-separator.md`). **Independent of it** — this reproduces
 with no `then` anywhere — and it survived that fix untouched. Everything below is

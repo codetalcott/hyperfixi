@@ -24,7 +24,6 @@ ones, because the gate *is* the tracking mechanism.
 
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
-| **Implicit-multiline `if` swallows the next line** | **high** — an unconditional command silently stops running | **none** | [HANDOFF-implicit-multiline-if.md](HANDOFF-implicit-multiline-if.md) |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
 | **Nothing executes a shipped example** | medium — `examples/**` is parsed but never run | **none** | "Wider question" in [HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
@@ -39,18 +38,23 @@ ones, because the gate *is* the tracking mechanism.
   assertion 3 of the shipped-sources gate **fails** when an allowlisted source
   goes clean. The list can only ratchet down. It cannot be silently forgotten.
 
-The ungated three have no such mechanism. **They are what this document is for.**
+The ungated two have no such mechanism. **They are what this document is for.**
 
-## Notes on the ungated three
+## Notes on the ungated two
 
-**Implicit-multiline `if`** is the one to do first. It is the mirror image of the
-`then` defect fixed in #785 (that one pushed a conditional body *out* so it ran
-unconditionally; this one pulls an unconditional command *in* so it stops
-running), and it is the reason #785 left the `hasThen` lookahead unbounded —
-bounding it routes more inputs down this already-broken path. Fix this, then
-re-evaluate that bound. **The shipped-sources gate is not the regression test
-here** — no shipped example trips it, so the gate would pass a broken fix. Write
-the coverage first.
+**Expression-first condition parsing** is the deferred follow-on from the `if`
+family (see History). #786 replaced the raw "is this token spelled like a
+command?" test with a positional approximation (`isBodyCommandStart`: first-token
+exemption, operand rule, chain rule), which fixed every measured shape — but it is
+still a heuristic. The residual it leaves is LOW and known: a command-word in a
+mid-condition position that is neither first nor operator-preceded (e.g. after a
+possessive, `if x's set is 3` + newline body) can still mislead the form scans.
+The real fix parses the condition via `parseExpression()` from token zero and
+classifies the form from what follows — viable, since the pratt parser accepts
+command-word operands (`add is 3` parses cleanly). Fold the residual into that
+work rather than extending `OPERAND_INTRODUCERS` piecemeal. Detail + the
+regression episode that motivates it:
+[HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
 
 **No execution test for `examples/**`** is the systemic one. #785 added
 `packages/core/src/api/if-body-then-execution.test.ts`, which is the right shape
@@ -63,6 +67,30 @@ body running unconditionally and every parse-level gate was green.
 
 ## History
 
+- **2026-07-27 (#786, repair commit)** — command-name words in `if`/`unless`
+  conditions (`if log is 3 add .a` died with "Expected condition"; in a handler
+  the `if` vanished and its body ran unconditionally, `ok: true`). Fixed by
+  replacing the spelling test with command **position** (`isBodyCommandStart` +
+  an unguarded first condition parse). The same commit repaired **five
+  upstream-valid shapes the two entries below had regressed vs main** — their
+  bounds were built on the same broken classifier, and every gate stayed green
+  through it because no in-repo source uses command-word conditions. The
+  `hasThen` bound became the command-CHAIN rule (same-line then-joined bodies
+  bind; a command starting a later line breaks the chain). Full episode:
+  [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
+- **2026-07-27** — the `hasThen` residual of the entry below: a single-line `if`
+  whose FOLLOWING line carried a body `then` was still swallowed, because that
+  lookahead crosses newlines. First bounded at the first command — over-corrected,
+  see the entry above — and settled as the chain rule; the `commandToken.line`
+  bound #785 considered stays rejected, since a header `then` may sit on the line
+  after the condition.
+- **2026-07-27** — implicit-multiline `if` swallowing the following line into its
+  block. The lookahead answered the "FIRST command's line" question correctly and
+  then kept walking, so the second command overrode the answer; it is now bounded
+  to the `if`'s own line once that first command is found, which preserves the
+  same-line `else`/`end` hunt the missing `break` exists for. Brief:
+  [HANDOFF-implicit-multiline-if.md](HANDOFF-implicit-multiline-if.md) (read its
+  RESOLVED header — one residual stays open, at the top of the table above).
 - **#785** (2026-07-27) — `then` as a command separator in `if`/`unless`, `def` /
   `init` / `catch` / `finally`, and `tell` bodies; `--` comments in `if` bodies;
   shipped-sources allowlist 4 → 1. Brief:

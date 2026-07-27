@@ -401,6 +401,61 @@ function parseIfBranchCommands(ctx: ParserContext, stopAtElse: boolean): ASTNode
  * @param commandToken - The 'if' command token
  * @returns CommandNode representing the if command
  */
+/**
+ * Operators/connectives whose FOLLOWING token is an expression operand, never a
+ * command start. The token-level approximation of "command position": a command
+ * name is only a command in command position, and after `is`/`not`/… it is an
+ * identifier operand (`if x is set …` — `set` is a value, not the body).
+ */
+const OPERAND_INTRODUCERS = new Set([
+  'is',
+  'am',
+  'are',
+  'not',
+  'no',
+  'and',
+  'or',
+  '==',
+  '===',
+  '!=',
+  '!==',
+  '<',
+  '>',
+  '<=',
+  '>=',
+  '+',
+  '-',
+  '*',
+  '/',
+  'mod',
+]);
+
+/**
+ * Would this token START a body command, given the token before it?
+ *
+ * `checkIsCommand()`/`isCommand()` alone answer "is this spelled like a
+ * command?", which misclassifies two condition positions:
+ *
+ * 1. The FIRST token after `if`/`unless` — the condition is never empty, so the
+ *    first token is always condition, even spelled like a command
+ *    (`if log is 3 …`).
+ * 2. A token right after an operator — it is an operand (`if x is set …`).
+ *
+ * Both misclassifications previously made the form-detection scans (and the
+ * single-line condition loop) treat the condition's first word as the body,
+ * failing shapes upstream accepts. See
+ * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ */
+function isBodyCommandStart(ctx: ParserContext, prevToken: Token | null, token: Token): boolean {
+  if (prevToken === null) {
+    return false; // first token after if/unless — always condition
+  }
+  if (OPERAND_INTRODUCERS.has(prevToken.value?.toLowerCase?.() ?? '')) {
+    return false; // operand position
+  }
+  return ctx.checkIsCommand() || ctx.isCommand(token.value?.toLowerCase());
+}
+
 export function parseIfCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
 
@@ -415,16 +470,30 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   // to a BODY command rather than to the `if` header. That is tolerated on
   // purpose: `hasThen` only feeds `isMultiLine`, and a body spanning lines is
   // multi-line either way, while the header-`then` consumption below now checks
-  // the token instead of trusting this flag. Bounding the scan to
-  // `commandToken.line` was tried and rejected — it is a near-no-op given that
-  // check, it would reclassify the legitimate `then`-on-the-next-line form
-  // (parser-integration.test.ts:381), and the single-line shapes it would newly
-  // reach are broken by an INDEPENDENT pre-existing defect in the implicit
-  // multi-line scan below: `if 1 is 1 log 'a'\nlog 'b'` already swallows
-  // `log 'b'` into the block with a bogus "Expected 'end'", no `then` involved.
+  // the token instead of trusting this flag.
+  //
+  // The scan IS bounded, but by the COMMAND-CHAIN rule, not by
+  // `commandToken.line`. #785 considered the plain line bound and rejected it;
+  // that remains the right call, because a header `then` is allowed to sit on
+  // the line AFTER the condition, so a line bound reclassifies that legitimate
+  // form (parser-integration.test.ts:381, and the guard in
+  // then-as-separator.test.ts).
+  //
+  // The rule: a `then` binds this `if` only while the scan has not crossed onto
+  // a line that STARTS a new command. Commands on the `if`'s own line are the
+  // single-line body — their joining `then`s bind (upstream keeps then-joined
+  // commands in the body: `if c add .a then add .b` is BOTH conditional). A
+  // command starting a LATER line begins a SIBLING, so a `then` beyond it is
+  // that sibling's separator and must not make this `if` multi-line
+  // (`if 1 is 1 log 'a'` newline `set x to 1 then log 'b'` — the second line
+  // must stay outside the block). A pure first-command bound was tried and
+  // over-corrected: it also broke at command-WORDS inside the condition
+  // (`if log is 3 then …`, `if x is set then …`), failing shapes upstream
+  // accepts — see docs-internal/HANDOFF-command-word-in-if-condition.md.
   let hasThen = false;
   const savedPosForThen = ctx.savePosition();
   const maxThenLookahead = 500; // Increased to handle large conditional expressions
+  let prevForThen: Token | null = null;
   for (let i = 0; i < maxThenLookahead && !ctx.isAtEnd(); i++) {
     const token = ctx.peek();
     if (token.value === KEYWORDS.THEN) {
@@ -439,6 +508,17 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       token.value === KEYWORDS.ON
     ) {
       break;
+    }
+    // Chain-break bound: a command starting a LATER line begins a sibling.
+    if (
+      token.line !== undefined &&
+      token.line !== commandToken.line &&
+      isBodyCommandStart(ctx, prevForThen, token)
+    ) {
+      break;
+    }
+    if (!isComment(token)) {
+      prevForThen = token;
     }
     ctx.advance();
   }
@@ -456,11 +536,36 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     const savedPosition = ctx.savePosition();
     const ifStatementLine = commandToken.line; // Line where 'if' keyword appears
     const maxLookahead = 100;
+    // Set once the FIRST command is found on the `if`'s own line — i.e. the form
+    // question is already answered as single-line. See the line-bound below.
+    let firstCommandOnIfLine = false;
+    // Previous non-comment token, for isBodyCommandStart: the first token after
+    // `if` is always condition, and a token after an operator is an operand —
+    // without those two exemptions a command-WORD in the condition
+    // (`if log is 3 …`, `if x is set …`) was read as the body's first command
+    // and the form detection collapsed. See
+    // docs-internal/HANDOFF-command-word-in-if-condition.md.
+    let prevToken: Token | null = null;
 
     // Scan forward to find the FIRST command after the condition
     while (!ctx.isAtEnd() && ctx.current - savedPosition < maxLookahead) {
       const token = ctx.peek();
       const tokenValue = token.value?.toLowerCase();
+
+      // Once the first command has been seen on the `if`'s own line, the only
+      // reason to keep scanning is a same-line `else`/`end` (see below), so the
+      // moment the scan leaves that line there is nothing left for it to find.
+      //
+      // Without this bound the scan ran on into the NEXT line, found the
+      // following sibling command, and set `hasImplicitMultiLineEnd` — defeating
+      // the "FIRST command" rule by the second command. `if 1 is 1 log 'a'` +
+      // `log 'b'` on the next line swallowed `log 'b'` into the if-block, so it
+      // stopped running whenever the condition was false, with only a recovered
+      // "Expected 'end' after if block" (ok/success both stayed true) to show for
+      // it. See docs-internal/HANDOFF-implicit-multiline-if.md.
+      if (firstCommandOnIfLine && token.line !== undefined && token.line !== ifStatementLine) {
+        break;
+      }
 
       // Stop at structural boundaries
       if (
@@ -484,7 +589,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       }
 
       // When we find the FIRST command, check its line position
-      if (ctx.checkIsCommand() || ctx.isCommand(tokenValue)) {
+      if (isBodyCommandStart(ctx, prevToken, token)) {
         // If first command is on a DIFFERENT line than if, it's multi-line
         // If first command is on the SAME line as if, it's single-line
         if (token.line !== undefined && token.line !== ifStatementLine) {
@@ -492,8 +597,12 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
           break;
         }
         // Don't break - continue scanning to find 'else' or 'end' on same line
+        firstCommandOnIfLine = true;
       }
 
+      if (!isComment(token)) {
+        prevToken = token;
+      }
       ctx.advance();
     }
 
@@ -515,13 +624,24 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     const maxIterations = 20; // Safety limit to prevent infinite loops
     let iterations = 0;
 
+    // The FIRST expression parse is unguarded: the condition is never empty, so
+    // the first token after `if` can never be the body command — even when it is
+    // spelled like one (`if log is 3 add .a to #t` — the condition is
+    // `log is 3`). With the guard applied from token 0, that shape parsed ZERO
+    // condition tokens and died with "Expected condition after if/unless"
+    // (silently, when inside a handler — see
+    // docs-internal/HANDOFF-command-word-in-if-condition.md). The command guard
+    // applies from the second parse on, where a command token really does start
+    // the body.
+    let firstConditionParse = true;
+
     while (
       !ctx.isAtEnd() &&
-      !ctx.checkIsCommand() &&
-      !ctx.isCommand(ctx.peek().value) &&
       !ctx.check(KEYWORDS.THEN) &&
+      (firstConditionParse || (!ctx.checkIsCommand() && !ctx.isCommand(ctx.peek().value))) &&
       iterations < maxIterations
     ) {
+      firstConditionParse = false;
       const beforePos = ctx.savePosition();
       // Use parseLogicalAnd() to handle binary operators like 'is a' and unary operators like 'not'
       // This is one level below parseLogicalOr() to avoid consuming 'or' which might be part of pattern syntax
