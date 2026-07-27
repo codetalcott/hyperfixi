@@ -26,7 +26,8 @@ ones, because the gate *is* the tracking mechanism.
 | ---- | -------- | ---- | ------ |
 | **Or-join filters have no per-event representation** | low — `on click or keypress[key=='Enter']` runs keypress unfiltered (upstream filters that leg); single-event filters ARE enforced | ✅ KNOWN GAP test | `packages/core/src/api/event-filter-execution.test.ts`; the runtime-side note at the `applicableCondition` site in `runtime-base.ts` |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
-| **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
+| **Filtered scoped `show` (`show <sel/> in <expr> when <cond>`) does nothing** | medium — shipped recipes.html quote search is dead; upstream filters correctly (real-Chrome-verified, and the two hyperfixi paths fail differently: bundle no-ops, gate's Runtime path mis-targets `me`) | ✅ execution-gate allowlist entry | family 2 exception in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
+| **js property-path argument no-op** — `put document.getElementById(...).value into #x` | medium — silent no-effect on a shipped page | ✅ execution-gate allowlist entry | family 6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 
@@ -38,8 +39,8 @@ ones, because the gate *is* the tracking mechanism.
 - **`sortable-list.html`** — the allowlist key embeds `sha1(source)`, and
   assertion 3 of the shipped-sources gate **fails** when an allowlisted source
   goes clean. The list can only ratchet down. It cannot be silently forgotten.
-- **The execution-gate entries** (`set <idref>` / js-path no-ops) — same
-  mechanism as `sortable-list.html`: their allowlist keys in
+- **The execution-gate entries** (the filtered-`show` defect, the js-path
+  no-op) — same mechanism as `sortable-list.html`: their allowlist keys in
   `packages/testing-framework/baselines/shipped-examples-execution.json` embed a
   source hash, and the gate's stale-entry assertion fails when a divergence
   converges, forcing the entry's removal in the fixing change. This is not
@@ -62,7 +63,11 @@ what would have caught the #785 defect on *behaviour* rather than on a
 diagnostic. Design, current numbers, the divergence families, and the
 harness lessons: [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
 Its first sweep produced two bug candidates: the unmet-event-filter defect
-(**fixed** — see History) and the `set <idref>` / js-path no-ops row above.
+(**fixed** — see History) and a `set <idref>` / js-path no-op row. The
+2026-07-27 real-browser arbitration (see History) **cleared the `set <idref>`
+half** (a same-value write invisible to the signature diff, not a no-op) and
+**added the filtered-`show` defect** — the two current execution-gate rows
+above.
 
 **Expression-first condition parsing** is the deferred follow-on from the `if`
 family (see History). #786 replaced the raw "is this token spelled like a
@@ -80,6 +85,14 @@ regression episode that motivates it:
 
 ## History
 
+- **2026-07-27** — execution-gate families 1/2 arbitrated in real Chrome
+  (Playwright debug spec, standing artifact — see the HANDOFF's "Real-browser
+  arbitration" section): jsdom exonerated for both; family 1 (element-target
+  writes) and family 2 (show/hide strategy) are permanent engine differences,
+  reasons rewritten to verdicts. The `set <idref>` bug candidate dissolved
+  (same-value write); one new defect found and queued (filtered scoped `show`,
+  table above). Brief:
+  [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
 - **2026-07-27** — event filters enforced: `on keydown[key=='Escape']` ran on
   ANY key because the runtime never read `EventHandlerNode.condition` (parsed,
   typed, documented, never consumed). The gate's first finding, fixed the same

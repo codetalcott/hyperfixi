@@ -17,7 +17,7 @@
         "Δinput:45 cls[show] attr[placeholder=Search quotes…,type=text] style[] text[]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "hyperfixi DEFECT — arbitrated in real Chrome 2026-07-27: filtered scoped show (`show <sel/> in <expr> when <cond>`) is a no-op in the shipped browser bundle and mis-targets `me` under the gate Runtime path, while upstream correctly shows matching blockquotes and hides the rest. Queued in docs-internal/PARSER_NEXT_STEPS.md."
     },
     {
       "key": "examples/dialogs/modal.html::37ad17f250::click",
@@ -28,7 +28,7 @@
         "Δdiv:16#info-modal cls[modal-overlay show] attr[id=info-modal] style[] text[]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/dialogs/modal.html::8dbe740dd3::click",
@@ -39,7 +39,7 @@
         "Δdiv:31#confirm-modal cls[modal-overlay show] attr[id=confirm-modal] style[] text[]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/dialogs/modal.html::c9f964d2a2::click",
@@ -50,7 +50,7 @@
         "Δdiv:46#form-modal cls[modal-overlay show] attr[id=form-modal] style[] text[]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/events-and-dom/counter.html::6f9009e740::click",
@@ -62,7 +62,7 @@
         "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[-1]"
       ],
       "upstream": ["-div:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/events-and-dom/counter.html::7f5ebb38b0::click",
@@ -74,7 +74,7 @@
         "Δspan:20#count-mirror cls[] attr[id=count-mirror] style[] text[1]"
       ],
       "upstream": ["-div:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/events-and-dom/show-hide.html::8aeb3a46f9::click",
@@ -83,7 +83,7 @@
       "excerpt": "on click show #content1",
       "hyperfixi": ["Δdiv:26#content1 cls[content-box show] attr[id=content1] style[] text[]"],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/experiments/01-polyglot-playground.html::6f9009e740::click",
@@ -92,7 +92,7 @@
       "excerpt": "on click decrement #count",
       "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
       "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/experiments/01-polyglot-playground.html::7f5ebb38b0::click",
@@ -101,7 +101,7 @@
       "excerpt": "on click increment #count",
       "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
       "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/experiments/02-multilingual-sync.html::227e004ae8::click",
@@ -112,7 +112,7 @@
         "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
       ],
       "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/experiments/02-multilingual-sync.html::aeeb82b882::click",
@@ -123,7 +123,7 @@
         "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
       ],
       "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/experiments/03-adaptive-rtl-ltr.html::f701a8b242::click",
@@ -132,7 +132,7 @@
       "excerpt": "on click decrement #counter",
       "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
       "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/experiments/03-adaptive-rtl-ltr.html::0d0a6b9a18::click",
@@ -141,7 +141,7 @@
       "excerpt": "on click increment #counter",
       "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
       "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/forms/form-validation.html::e85adbe538::input",
@@ -155,7 +155,7 @@
       "upstream": [
         "Δinput:24#email cls[error] attr[id=email,placeholder=you@example.com,type=email] style[] text[]"
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/forms/form-validation.html::6b07d036d3::input",
@@ -169,7 +169,7 @@
       "upstream": [
         "Δinput:28#password cls[error] attr[id=password,placeholder=Enter password (min 8 characters),type=password] style[] text[]"
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/forms/form-validation.html::467bb365ef::input",
@@ -183,7 +183,7 @@
       "upstream": [
         "Δinput:32#confirm cls[error] attr[id=confirm,placeholder=Re-enter password,type=password] style[] text[]"
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/multilingual/adaptive-rtl-ltr.html::f701a8b242::click",
@@ -192,7 +192,7 @@
       "excerpt": "on click decrement #counter",
       "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
       "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/adaptive-rtl-ltr.html::0d0a6b9a18::click",
@@ -201,7 +201,7 @@
       "excerpt": "on click increment #counter",
       "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
       "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/index.html::6f9009e740::click",
@@ -210,7 +210,7 @@
       "excerpt": "on click decrement #count",
       "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[-1]"],
       "upstream": ["-div:51#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/index.html::7f5ebb38b0::click",
@@ -219,7 +219,7 @@
       "excerpt": "on click increment #count",
       "hyperfixi": ["Δdiv:51#count cls[counter-display] attr[id=count] style[] text[1]"],
       "upstream": ["-div:51#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/multilingual-sync.html::227e004ae8::click",
@@ -230,7 +230,7 @@
         "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
       ],
       "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/multilingual-sync.html::aeeb82b882::click",
@@ -241,7 +241,7 @@
         "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
       ],
       "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/polyglot-playground.html::6f9009e740::click",
@@ -250,7 +250,7 @@
       "excerpt": "on click decrement #count",
       "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
       "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/polyglot-playground.html::7f5ebb38b0::click",
@@ -259,7 +259,7 @@
       "excerpt": "on click increment #count",
       "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
       "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/showcase.html::406e02080b::click",
@@ -270,7 +270,7 @@
         "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[-1]"
       ],
       "upstream": ["-div:36#counter-value"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/showcase.html::3d4a481500::click",
@@ -281,7 +281,7 @@
         "Δdiv:36#counter-value cls[counter-value] attr[id=counter-value] style[] text[1]"
       ],
       "upstream": ["-div:36#counter-value"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/showcase.html::1db01d96f1::click",
@@ -297,7 +297,7 @@
         "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked ",
         "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/multilingual/showcase.html::38866ac528::click",
@@ -317,7 +317,7 @@
         "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
         "Δdiv:98#panel3 cls[tab-panel] attr[id=panel3] style[display: none;] text[Content for Tab 3. This pattern is common in UI frameworks.]"
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/multilingual/showcase.html::118be448a2::click",
@@ -337,7 +337,7 @@
         "Δdiv:96#panel1 cls[active tab-panel] attr[id=panel1] style[display: none;] text[Content for Tab 1. This demonstrates multi-element coordination.]",
         "Δdiv:97#panel2 cls[tab-panel] attr[id=panel2] style[display: none;] text[Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked "
       ],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/multilingual/test-classic-i18n.html::7f5ebb38b0::click",
@@ -346,7 +346,7 @@
       "excerpt": "on click increment #count",
       "hyperfixi": ["Δspan:17#count cls[counter] attr[id=count] style[] text[1]"],
       "upstream": ["-span:17#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/multilingual/test-classic-i18n.html::ffd8337a94::click",
@@ -355,7 +355,7 @@
       "excerpt": "on click set #count to 0",
       "hyperfixi": [],
       "upstream": ["-span:17#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes. The hyperfixi-empty signature on THIS entry is a same-value write (the page opens with #count already 0), not a no-op."
     },
     {
       "key": "examples/swap-and-morph/swap-morph.html::f3c10ab34d::click",
@@ -414,7 +414,7 @@
         "Δbutton:52#target-btn cls[demo-target] attr[disabled=undefined,id=target-btn] style[] text[\n                    Target Button\n                ]",
         "Δspan:55#disabled-status cls[] attr[id=disabled-status] style[] text[disabled]"
       ],
-      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+      "reason": "boolean-attribute toggle — arbitrated in real Chrome 2026-07-27: both engines disable the control (disabled property true); hyperfixi writes canonical disabled=\"\" (a FALSY attribute value), upstream writes the literal string \"undefined\" (truthy). Representation-only, permanent; the #disabled-status delta is downstream truthiness of those values in the sibling `if X's @disabled` handler."
     },
     {
       "key": "examples/toggle-and-state/toggle-attributes.html::6812ec8c63::click",
@@ -427,7 +427,7 @@
       "upstream": [
         "Δinput:66#email-input cls[demo-target] attr[id=email-input,placeholder=Enter email...,required=undefined,type=email] style[] text[]"
       ],
-      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+      "reason": "boolean-attribute toggle — arbitrated in real Chrome 2026-07-27: both engines disable the control (disabled property true); hyperfixi writes canonical disabled=\"\" (a FALSY attribute value), upstream writes the literal string \"undefined\" (truthy). Representation-only, permanent; the #disabled-status delta is downstream truthiness of those values in the sibling `if X's @disabled` handler."
     },
     {
       "key": "examples/toggle-and-state/toggle-attributes.html::1d1cf3bb14::click",
@@ -440,7 +440,7 @@
       "upstream": [
         "Δbutton:131#prop-btn cls[demo-target] attr[disabled=undefined,id=prop-btn] style[] text[\n                    Another Target\n                ]"
       ],
-      "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
+      "reason": "boolean-attribute toggle — arbitrated in real Chrome 2026-07-27: both engines disable the control (disabled property true); hyperfixi writes canonical disabled=\"\" (a FALSY attribute value), upstream writes the literal string \"undefined\" (truthy). Representation-only, permanent; the #disabled-status delta is downstream truthiness of those values in the sibling `if X's @disabled` handler."
     },
     {
       "key": "examples/vite-plugin-multilingual/index.html::3fed702e4e::click",
@@ -451,7 +451,7 @@
         "Δdiv:40#en-content cls[show] attr[id=en-content] style[] text[English content that can be shown/hidden.]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/vite-plugin-multilingual/index.html::b0b708a0c6::click",
@@ -460,7 +460,7 @@
       "excerpt": "on click decrement #en-count",
       "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[-1]"],
       "upstream": ["-span:43#en-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/vite-plugin-multilingual/index.html::712d7ec0b1::click",
@@ -469,7 +469,7 @@
       "excerpt": "on click increment #en-count",
       "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[1]"],
       "upstream": ["-span:43#en-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/vite-plugin-test/index.html::cbac0b8e43::click",
@@ -480,7 +480,7 @@
         "Δdiv:7#content cls[show] attr[id=content] style[] text[This content can be shown/hidden.]"
       ],
       "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
+      "reason": "show/hide strategy — arbitrated in real Chrome 2026-07-27 (execution-arbitration.spec.ts): upstream show/hide manages ONLY the inline display property (computed styles are consulted by toggle alone; the earlier inert-under-jsdom framing was wrong) and cannot reveal stylesheet-hidden elements in ANY environment; hyperfixi deliberately adds a .show marker class and restores inline display (commit 6e33c7c9), which these pages own .show CSS rules are authored for. Permanent strategy difference: visible outcomes match for inline-hidden and already-visible targets; stylesheet-hidden targets (modals, tabs, error boxes) open under hyperfixi only."
     },
     {
       "key": "examples/vite-plugin-test/index.html::6f9009e740::click",
@@ -489,7 +489,7 @@
       "excerpt": "on click decrement #count",
       "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[-1]"],
       "upstream": ["-span:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     },
     {
       "key": "examples/vite-plugin-test/index.html::7f5ebb38b0::click",
@@ -498,7 +498,7 @@
       "excerpt": "on click increment #count",
       "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[1]"],
       "upstream": ["-span:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
+      "reason": "element-target write semantics — arbitrated in real Chrome 2026-07-27 (packages/core/src/compatibility/browser-tests/debug/execution-arbitration.spec.ts): upstream idRef assignment is replaceInDom — the element is REPLACED by the stringified value (literal NaN for increment/decrement, which parseFloat an element object), identical to its jsdom `-key` diff; hyperfixi writes the value in place and the element survives. Not a jsdom artifact; permanent deliberate engine difference — the shipped pages are authored for in-place writes."
     }
   ]
 }

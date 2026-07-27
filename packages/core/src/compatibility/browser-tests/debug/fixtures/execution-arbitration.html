@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Execution-gate arbitration fixture</title>
+  <!--
+    Real-browser arbitration fixture for the shipped-examples execution gate's
+    baseline families 1 (element-target writes) and 2 (show/hide strategy).
+    Each block replicates the exact shape of a shipped example that diverges
+    between engines under jsdom. Load with ?engine=hyperfixi (default) or
+    ?engine=upstream; the spec (execution-arbitration.spec.ts) drives both and
+    compares the VISIBLE outcomes, not the mechanisms.
+  -->
+  <style>
+    /* modal.html shape: stylesheet-hidden + a `.show` reveal rule */
+    .modal-overlay { display: none; }
+    .modal-overlay.show { display: flex; }
+    /* form-validation.html shape (same class of CSS, kept for clarity) */
+    .error-message { display: none; }
+    .error-message.show { display: block; }
+    /* showcase.html tabs shape */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+  </style>
+  <script>
+    var engine = new URLSearchParams(location.search).get('engine') || 'hyperfixi';
+    document.write(engine === 'upstream'
+      ? '<script src="/node_modules/hyperscript.org/dist/_hyperscript.js"><\/script>'
+      : '<script src="/packages/core/dist/hyperfixi.js"><\/script>');
+  </script>
+</head>
+<body>
+  <!-- Family 1a: increment on an element target (counter.html shape) -->
+  <div id="count1" class="counter-display">0</div>
+  <button id="b-inc" _="on click increment #count1">inc</button>
+
+  <!-- Family 1b: decrement -->
+  <div id="count2" class="counter-display">5</div>
+  <button id="b-dec" _="on click decrement #count2">dec</button>
+
+  <!-- Family 1c: set <idref> to <value> (test-classic-i18n.html shape) -->
+  <span id="count3" class="counter">5</span>
+  <button id="b-set" _="on click set #count3 to 0">set</button>
+
+  <!-- Family 2a: show a stylesheet-hidden element (modal.html shape) -->
+  <div id="modal" class="modal-overlay">modal content</div>
+  <button id="b-show-modal" _="on click show #modal">show modal</button>
+  <button id="b-hide-modal" _="on click hide #modal">hide modal</button>
+
+  <!-- Family 2b: show an inline-hidden element -->
+  <div id="inline-hidden" style="display:none">inline hidden</div>
+  <button id="b-show-inline" _="on click show #inline-hidden">show inline</button>
+
+  <!-- Family 2c: show an already-visible element (show-hide.html #content1 shape) -->
+  <div id="vis-box">visible box</div>
+  <button id="b-show-vis" _="on click show #vis-box">show vis</button>
+  <button id="b-hide-vis" _="on click hide #vis-box">hide vis</button>
+
+  <!-- Family 2d: tabs — hide stylesheet-hidden panels then show one (showcase.html shape) -->
+  <div>
+    <button class="tab-btn active" id="tab1" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel1">Tab 1</button>
+    <button class="tab-btn" id="tab2" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel2">Tab 2</button>
+  </div>
+  <div class="tab-panel active" id="panel1">Panel 1</div>
+  <div class="tab-panel" id="panel2">Panel 2</div>
+
+  <!-- Family 2e: filtered show (recipes.html quote-search shape) -->
+  <input id="quote-search" type="text" placeholder="Search quotes…"
+         _="on keyup show <blockquote/> in the next <div/> when its textContent contains my value">
+  <div class="quotes">
+    <blockquote id="q1">"Talk is cheap. Show me the code." — Linus Torvalds</blockquote>
+    <blockquote id="q2">"Programs must be written for people to read." — Harold Abelson</blockquote>
+  </div>
+
+  <!-- Family 4 (bonus probe): boolean-attribute toggle (toggle-attributes.html shape) -->
+  <button id="target-btn" class="demo-target">Target</button>
+  <button id="b-toggle-disabled" _="on click toggle @disabled on #target-btn">toggle disabled</button>
+</body>
+</html>
