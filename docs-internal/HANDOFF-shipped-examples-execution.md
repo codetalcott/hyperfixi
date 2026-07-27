@@ -28,9 +28,12 @@ committed allowlist, no stale allowlist entry. The allowlist key embeds a
 source hash, so fixing a handler forces its entry's removal — the list only
 ratchets down.
 
-Current numbers (2026-07-27): 55 pages, 333 handlers, 162 compared
-(74 real matches, 42 vacuous empty-vs-empty pairs — counted separately, never
-as parity), 46 allowlisted divergences in six triaged families, 171 skips each
+Current numbers (2026-07-27, post filter fix): 55 pages, 333 handlers, 162
+compared (74 real matches, 43 vacuous empty-vs-empty pairs — counted
+separately, never as parity; the fixed filter handler converged INTO the
+vacuous column, both engines now correctly doing nothing on an unmet filter),
+**45** allowlisted divergences (46 at introduction; the event-filter fix
+converged one and the stale-entry ratchet forced its removal), 171 skips each
 with a recorded reason (upstream-rejects 51, non-event handlers 27, `wait` 26,
 hyperfixi-recovers 25, `fetch` 13, js-blocks 11, …).
 
@@ -51,12 +54,15 @@ the baseline JSON:
    command — no oracle for the effect, only for the no-crash.
 4. **Boolean-attribute toggles** (3): `toggle @disabled` representation
    differs.
-5. **Unmet event filter still fires** (1): `on keydown[key=='Escape'] from
-   window hide .modal-overlay` — the dispatched Event has no `.key`, so the
-   filter is false; upstream correctly does nothing, **hyperfixi hides every
-   modal anyway**. REAL BUG CANDIDATE — the strongest single finding. Verify
-   the filter path in `packages/core` and fix; the gate entry then goes stale
-   and forces its own removal.
+5. **Unmet event filter still fires** (~~1~~ → **FIXED 2026-07-27**, the same
+   day the gate landed): the runtime never read `EventHandlerNode.condition` —
+   every filtered handler ran unfiltered. Fixed in `runtime-base.ts`
+   (`createEventHandler` evaluates the condition with event properties
+   resolvable as bare identifiers); or-join legs stay unfiltered pending
+   per-event condition representation (queued). The fix triggered THIS gate's
+   stale-entry assertion and shrank the baseline 46 → 45 — the ratchet's first
+   full cycle, exactly as designed. Coverage:
+   `packages/core/src/api/event-filter-execution.test.ts`.
 6. **js property-path argument** (1): `put document.getElementById(...).value
    into #result4` — hyperfixi produces no effect. REAL BUG CANDIDATE.
 

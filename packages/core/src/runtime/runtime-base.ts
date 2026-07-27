@@ -139,6 +139,31 @@ function isImplicitCommand(val: unknown): val is ImplicitCommandResult {
 /** Track event recursion depth per-event without expando properties on Event objects */
 const eventRecursionDepth = new WeakMap<Event, number>();
 
+/**
+ * Every identifier name referenced anywhere in an expression tree. Used by the
+ * event-filter evaluation to decide which event properties to expose as locals
+ * (`on keydown[key=='Escape']` — `key` must resolve to `event.key`). A generic
+ * object walk rather than a typed visitor: filter expressions are small, and
+ * the walk must see identifiers wherever a node shape nests them.
+ */
+function collectIdentifierNames(node: unknown, out: Set<string> = new Set()): Set<string> {
+  if (node === null || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    for (const item of node) collectIdentifierNames(item, out);
+    return out;
+  }
+  const obj = node as Record<string, unknown>;
+  if (obj.type === 'identifier' && typeof obj.name === 'string') {
+    out.add(obj.name);
+  }
+  for (const key of Object.keys(obj)) {
+    // Positions/tokens carry no identifiers worth exposing.
+    if (key === 'start' || key === 'end' || key === 'line' || key === 'column') continue;
+    collectIdentifierNames(obj[key], out);
+  }
+  return out;
+}
+
 export interface RuntimeBaseOptions {
   /**
    * The registry instance containing allowed commands.
@@ -1338,6 +1363,7 @@ export class RuntimeBase {
       target,
       args,
       selector,
+      condition,
       attributeName,
       watchTarget,
       modifiers,
@@ -1469,13 +1495,24 @@ export class RuntimeBase {
     // STANDARD CASE: DOM Event Listeners
     // Create handler via helper to limit closure scope — only captures what's needed,
     // not the full executeEventHandler scope (node, targets, globalTarget, eventNames, etc.)
+    // KNOWN GAP: the filter is applied only to SINGLE-event handlers. The
+    // parser attaches ONE `condition` to the whole node even when the filter
+    // syntactically belongs to one leg of an `or`-join — upstream gives each
+    // event spec its own filter (`on click or keypress[key=='Enter']` filters
+    // ONLY keypress). Gating every leg on the shared condition would break the
+    // unfiltered legs (a plain click would evaluate `key=='Enter'` and never
+    // run), so multi-event handlers keep their historical unfiltered behavior
+    // until conditions are represented per event. Queued in
+    // docs-internal/PARSER_NEXT_STEPS.md.
+    const applicableCondition = eventNames.length === 1 ? condition : undefined;
     const baseEventHandler = RuntimeBase.createEventHandler(
       this,
       commands,
       context,
       selector,
       args,
-      { errorSymbol, errorHandler, finallyHandler }
+      { errorSymbol, errorHandler, finallyHandler },
+      applicableCondition
     );
 
     // Apply event modifiers
@@ -1629,7 +1666,8 @@ export class RuntimeBase {
       errorSymbol?: string;
       errorHandler?: ASTNode[];
       finallyHandler?: ASTNode[];
-    }
+    },
+    condition?: ASTNode
   ): (domEvent: Event) => Promise<void> {
     return async (domEvent: Event) => {
       // Recursion Guard (uses WeakMap instead of expando property on Event)
@@ -1674,6 +1712,39 @@ export class RuntimeBase {
         for (const argName of args) {
           const value = eventObj[argName] ?? detail?.[argName] ?? null;
           eventContext.locals.set(argName, value);
+        }
+      }
+
+      // Event filter (`on keydown[key=='Escape'] …`): upstream evaluates the
+      // bracketed expression against the EVENT before running the body — bare
+      // identifiers in the filter resolve to properties of the event. The
+      // parser has always delivered it as `node.condition`, but nothing here
+      // consumed it, so every filtered handler ran UNFILTERED (found by the
+      // shipped-examples execution gate: the modal.html Escape filter hid
+      // every modal on any key; upstream correctly did nothing).
+      //
+      // Placed AFTER arg destructuring so `on pointerdown(x, y)[x > 3]` can
+      // reference destructured args. Identifiers the filter names are resolved
+      // from the event into locals first — unless already bound (behavior-init
+      // locals and the `target` local take precedence). An evaluation ERROR
+      // also skips the body: upstream wraps the body in `if (<filter>)`, so a
+      // throwing filter never runs it either.
+      if (condition) {
+        const eventProps = domEvent as unknown as Record<string, unknown>;
+        for (const name of collectIdentifierNames(condition)) {
+          if (!eventContext.locals.has(name) && name in eventProps) {
+            eventContext.locals.set(name, eventProps[name]);
+          }
+        }
+        let filterResult: unknown;
+        try {
+          filterResult = await runtime.evaluateExpression(condition, eventContext);
+        } catch (e) {
+          debug.runtime(`Event filter threw; skipping handler body:`, e);
+          return;
+        }
+        if (!filterResult) {
+          return;
         }
       }
 
