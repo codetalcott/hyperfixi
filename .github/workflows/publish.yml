@@ -306,6 +306,58 @@ jobs:
           # them appeared in the summary).
           echo "all_packages=$(echo $ALL_PACKAGES | tr -s '[:space:]' ' ')" >> $GITHUB_OUTPUT
 
+      # The bump step below only runs for a REAL release, so the credential it
+      # depends on was untestable until packages were already on npm — which is
+      # precisely how v2.9.1 broke (RELEASE_BUMP_TOKEN denied, both landing paths
+      # failed, main left a version behind). A dry run now proves the token can
+      # push before anyone commits to a release.
+      #
+      # `origin/main:main` pushes the commit that is ALREADY on main, so this is
+      # a genuine no-op ("Everything up-to-date") when permitted, and the same
+      # denial when not. It cannot move the branch.
+      #
+      # Non-fatal on purpose: a dry run's job is to report, and a missing token
+      # is a valid configuration (the PR fallback exists for it). The warning is
+      # loud because that fallback stalls — PRs opened with GITHUB_TOKEN do not
+      # trigger CI, so main's required checks never start and auto-merge never
+      # fires.
+      - name: Verify RELEASE_BUMP_TOKEN can push (dry run only)
+        if: ${{ github.event.inputs.dry-run == 'true' }}
+        env:
+          RELEASE_BUMP_TOKEN: ${{ secrets.RELEASE_BUMP_TOKEN }}
+        run: |
+          set -o pipefail
+          if [ -z "$RELEASE_BUMP_TOKEN" ]; then
+            echo "::warning::RELEASE_BUMP_TOKEN is not set. A real release will fall back to a release-bump PR, which stalls: PRs opened with GITHUB_TOKEN do not trigger CI, so the required checks never start and auto-merge never fires. Expect to land the bump by hand."
+            exit 0
+          fi
+
+          BRANCH="${{ github.ref_name }}"
+          # FETCH_HEAD rather than origin/$BRANCH: actions/checkout does a
+          # shallow single-ref fetch, so the remote-tracking ref is not
+          # guaranteed to exist, but FETCH_HEAD always is.
+          git fetch origin "$BRANCH" --quiet
+
+          # actions/checkout persists GITHUB_TOKEN as an http.extraheader that
+          # silently overrides URL credentials — clear it so we test the token
+          # we actually mean to test.
+          if git -c http.https://github.com/.extraheader= \
+              push "https://x-access-token:${RELEASE_BUMP_TOKEN}@github.com/${{ github.repository }}.git" \
+              "FETCH_HEAD:${BRANCH}" 2>&1 | tee /tmp/token-check.log; then
+            echo "✓ RELEASE_BUMP_TOKEN can push to $BRANCH — a real release will land its bump directly."
+            # A green result here is only as strong as the branch it pushed to.
+            # An unprotected branch needs Contents: write and nothing else;
+            # main additionally needs the token's identity to bypass the six
+            # required checks (possible only because enforce_admins is off).
+            # Passing on a feature branch therefore does NOT prove a release
+            # dispatched on main will land — say so, rather than let a ✓ imply it.
+            if [ "$BRANCH" != "main" ]; then
+              echo "::notice::That check ran against '$BRANCH', which is not branch-protected. It proves the token has Contents: write, but NOT that it can push to main past its required checks. Re-run this dry run with the workflow dispatched on main for the definitive answer."
+            fi
+          else
+            echo "::warning::RELEASE_BUMP_TOKEN cannot push to $BRANCH. For a fine-grained PAT, check that Repository access includes ${{ github.repository }} AND Permissions -> Repository -> Contents is 'Read and write'; for a classic PAT, the 'repo' scope. A real release would fall back to a release-bump PR, which stalls on required checks that never start."
+          fi
+
       - name: Commit version changes
         id: bump
         # When version-type=current, the bump was already committed by hand

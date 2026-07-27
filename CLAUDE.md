@@ -489,10 +489,24 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > `main` is push-protected. The workflow tries `RELEASE_BUMP_TOKEN` (admin PAT, direct push),
 > then a plain push, then a `release-bump/vX.Y.Z` branch + PR. On v2.6.0 and again on v2.9.1
 > **all** paths failed and the bump was landed by hand (#603, #772). The workflow now fails
-> loudly instead of going green, but for the fallback to actually work the repo needs
-> _Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and
-> approve pull requests"_ enabled, or a valid `RELEASE_BUMP_TOKEN` (which removes the need for
-> a PR at all). After any release, confirm `main`'s version matches npm.
+> loudly instead of going green.
+>
+> **`RELEASE_BUMP_TOKEN` is required, not just preferred.** The PR fallback does not finish on
+> its own: PRs opened with `GITHUB_TOKEN` do not trigger CI, so `main`'s six required checks
+> never start, `gh pr merge --auto` never fires, and the PR sits pending until a human pushes
+> an empty commit or closes/reopens it. Enabling _Settings → Actions → General → Workflow
+> permissions → "Allow GitHub Actions to create and approve pull requests"_ lets the PR be
+> **created**; only the token makes a release hands-off.
+>
+> If the token is denied (`Permission to … denied to <user>` — note that this means it
+> authenticated fine and is NOT expired), then for a fine-grained PAT check that _Repository
+> access_ includes this repo and _Permissions → Repository → Contents_ is **Read and write**;
+> for a classic PAT, the `repo` scope. Editing a fine-grained PAT's permissions in place keeps
+> the same token string, so the stored secret stays valid and its `updatedAt` will not change.
+>
+> Run the workflow with `dry-run=true` to verify the token can push before committing to a
+> release — that step is a no-op push of `main` onto itself. After any real release, confirm
+> `main`'s version matches npm.
 
 **Archived Workflows:**
 
