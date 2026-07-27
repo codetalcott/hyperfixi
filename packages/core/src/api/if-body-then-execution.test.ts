@@ -174,6 +174,56 @@ describe('a command after a single-line if runs regardless of the condition', ()
 });
 
 /**
+ * The behavioural half of the command-word-condition fix and the chain rule
+ * (parse-shape halves in `src/parser/__tests__/then-as-separator.test.ts`).
+ *
+ * A condition STARTING with a command-name word (`if log is 3 …`) used to kill
+ * the parse — silently inside a handler, where recovery dropped the `if` and its
+ * body ran unconditionally. And a SAME-LINE then-joined body (`if c add .a then
+ * add .b`) briefly had its second command evicted as an unconditional sibling by
+ * the first-command bound. Both are the same failure the rest of this file
+ * exists for: a command running, or not running, against its condition.
+ * See docs-internal/HANDOFF-command-word-in-if-condition.md.
+ */
+describe('a command-word condition and a same-line then-joined body obey the condition', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('does NOT run the body of a command-word condition that is false', () => {
+    // `log` resolves to no value, so `log is 3` is false. The silent case:
+    // recovery used to run `add .a` unconditionally. The sibling line must still
+    // run — both fixes composed.
+    const host = setupTarget();
+
+    return hyperscript.eval('if log is 3 add .a to #target\nadd .b to #target', host).then(() => {
+      expect(target().classList.contains('a')).toBe(false);
+      expect(target().classList.contains('b')).toBe(true);
+    });
+  });
+
+  it('does NOT run a same-line then-joined body when the condition is false', () => {
+    // BOTH adds are conditional (upstream keeps then-joined commands in the
+    // body). The first-command bound briefly made `.b` unconditional.
+    const host = setupTarget();
+
+    return hyperscript.eval('if 1 is 2 add .a to #target then add .b to #target', host).then(() => {
+      expect(target().classList.contains('a')).toBe(false);
+      expect(target().classList.contains('b')).toBe(false);
+    });
+  });
+
+  it('runs the whole same-line then-joined body when the condition is true', () => {
+    const host = setupTarget();
+
+    return hyperscript.eval('if 1 is 1 add .a to #target then add .b to #target', host).then(() => {
+      expect(target().classList.contains('a')).toBe(true);
+      expect(target().classList.contains('b')).toBe(true);
+    });
+  });
+});
+
+/**
  * The behavioural half of the residual where the two defects above meet
  * (parse-shape half: the `a body `then` on a later line does not make a
  * single-line if multi-line` block in
