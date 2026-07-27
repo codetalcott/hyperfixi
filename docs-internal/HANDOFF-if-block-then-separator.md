@@ -1,5 +1,41 @@
 # Handoff: `then` inside an `if` body silently hoists the body out of the conditional
 
+> **RESOLVED.** Fixed in the `then`-as-command-separator change; this document is
+> kept as history. Read the corrections below before trusting the triage in it.
+>
+> **What the fix was.** `parseIfCommand`'s two branch loops were replaced by one
+> `parseIfBranchCommands` helper that consumes a separating `then` (and skips `--`
+> comments), and the header-`then` consumption now checks the token instead of
+> trusting the `hasThen` lookahead flag. `Parser.parseCommandBlock` (def / init /
+> catch / finally) and `parseTellCommand` had the same missing-separator defect and
+> were fixed alongside. Coverage:
+> `packages/core/src/parser/__tests__/then-as-separator.test.ts` (parse shape) and
+> `packages/core/src/api/if-body-then-execution.test.ts` (DOM effect).
+>
+> **Correction 1 — "suspect 1" was misdiagnosed.** The line-crossing lookahead is
+> real but is NOT worth bounding, and bounding it was tried and rejected. The
+> damage came from the *unconditional* `ctx.advance()` that trusted the flag; once
+> that checks the token, a wrongly-set `hasThen` is harmless (it only feeds
+> `isMultiLine`, and those shapes are multi-line anyway). A line bound would also
+> reclassify the legitimate `then`-on-the-next-line form
+> (`parser-integration.test.ts:381`). The single-line shapes it would newly reach
+> are broken by an **independent** pre-existing defect in the implicit-multi-line
+> scan: `if 1 is 1 log 'a'\nlog 'b'` already mis-nests with no `then` involved.
+>
+> **Correction 2 — the `infinite-scroll.html` recommendation (step 3) was wrong.**
+> Its `end`s were balanced all along; there was no "genuinely missing `end`". Its
+> entire hyperfixi error was a *second* gap in the same branch loop — `--` comments
+> in an `if` body were not skipped, though every sibling body loop skips them. It
+> came clean with no edit to the example. Upstream still rejects that file, but over
+> the multi-line `make a <li>…</li>` element literal with `#{}` interpolation, which
+> it does not support — so we are now more permissive there. Noted in the allowlist,
+> not chased.
+>
+> **Still open:** `and` is not a command separator anywhere (the pratt parser
+> absorbs it as a binary operator before any body loop sees it) — pinned as a KNOWN
+> GAP in both test files. And `examples/drag-and-drop/sortable-list.html` (step 4)
+> is untouched and still allowlisted.
+
 Found by the shipped-sources validity gate added in #784. Everything below is
 verified against `main` @ `fe478dd1` + that branch; the oracle is
 `loadCanonicalParser()` in

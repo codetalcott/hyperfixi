@@ -1,36 +1,16 @@
 {
   "description": "Allowlist for the shipped-sources validity gate (packages/testing-framework/src/multilingual/shipped-sources-validity.test.ts). Each entry is a hyperscript source we ship that hyperfixi parses in the recovers-with-errors state (ok:true with a non-empty errors array). A NEW such source outside this list, or an allowlisted key that becomes clean, both fail the gate. Shrink this list as fixes land.",
-  "note": "The `key` is file::sha1(source)[0:10], so it CHANGES when the source is edited — a fix cannot silently keep its allowlist cover, it drops off and the stale-entry test demands removal. `upstream` records the real hyperscript.org verdict for each, which is what distinguishes a malformed example (upstream also rejects) from a hyperfixi parser defect (upstream accepts). All four below predate the gate; they were found by it, not by the handoff that motivated it.",
+  "note": "The `key` is file::sha1(source)[0:10], so it CHANGES when the source is edited — a fix cannot silently keep its allowlist cover, it drops off and the stale-entry test demands removal. `upstream` records the real hyperscript.org verdict, which is what distinguishes a malformed example (upstream also rejects) from a hyperfixi parser defect (upstream accepts). Three of the original four entries were cleared by the `then`-as-command-separator work: native-dialog and infinite-scroll by the parser fix (parseIfCommand's branch loops dropped BOTH the `then` separator and `--` comments, which every sibling body loop already handled), and fetch-data by deleting its `log 'typeof it:', (typeof it)` line — `typeof` is JavaScript, not a hyperscript operator.",
+  "infiniteScrollFollowUp": "The handoff's guess that infinite-scroll.html also had a genuinely missing `end` was WRONG — its `end`s were balanced all along, and the whole hyperfixi error was the comment-in-if-body defect. Upstream still rejects it (\"Expected 'end' but found 'on'\", \"Unexpected Token : {\") over the multi-line `make a <li>…</li>` element literal with `#{}` interpolation, which upstream does not support in that form. So we are now MORE permissive than upstream on that file. That laxness divergence is real but out of this gate's scope — the gate tracks hyperfixi's recovered state only.",
   "checkedAtGeneration": 454,
-  "cleanAtGeneration": 408,
+  "cleanAtGeneration": 411,
   "allowedRecovered": [
-    {
-      "key": "examples/dialogs/native-dialog.html::ecfd89d643",
-      "file": "examples/dialogs/native-dialog.html",
-      "error": "Expected 'end' after if block",
-      "upstream": "VALID",
-      "reason": "HYPERFIXI PARSER DEFECT, not a malformed example — upstream accepts this source, and its `end` is present. Isolated cause: a `then` used as a COMMAND SEPARATOR inside an `if` body makes the parser lose the block's `end`. Minimal repro (upstream-valid, hyperfixi reports \"Expected 'end' after if block\"):\n    if 1 is 1\\n get #u then log 'a'\\nend\nThe same source with the body's `then` removed parses clean, and it reproduces whether or not the `if` itself carries an explicit `then`. Here the trigger is `get #username then set username to it.value`. Do NOT 'fix' the example — fix the parser. Separately, upstream also tolerates an `if/then` with no `end` at the end of a handler, which we reject; that is a second, independent laxness gap."
-    },
     {
       "key": "examples/drag-and-drop/sortable-list.html::d64eff65f5",
       "file": "examples/drag-and-drop/sortable-list.html",
       "error": "Expected property name after '.' - malformed member access",
       "upstream": "You must parenthesize math operations with different operators",
       "reason": "MIXED — both engines reject, but for unrelated reasons, so this is two bugs in one file. Upstream's is an authoring bug with a known fix: `set midpoint to box.top + box.height / 2` mixes `+` and `/` without parens, which hyperscript forbids (x2 occurrences); `box.top + (box.height / 2)` is the fix. Hyperfixi's complaint is DIFFERENT ('malformed member access') and survives that fix, so it is likely a second parser-side gap around the `add { prop: value; }` inline-style syntax — confirm before editing the example."
-    },
-    {
-      "key": "examples/fetch-and-async/fetch-data.html::1d94c11092",
-      "file": "examples/fetch-and-async/fetch-data.html",
-      "error": "Expected closing parenthesis ')' after expression - unclosed parentheses",
-      "upstream": "Expected ')' but found 'it'",
-      "reason": "Genuinely malformed, and the clearest fix of the four: `log 'typeof it:', (typeof it)` uses `typeof`, which is JavaScript and not a hyperscript operator (upstream: \"Expected ')' but found 'it'\"). The comma-separated `log 'x', it` form is also used throughout. Rewrite as separate `log` commands with no `typeof`; no parser change needed."
-    },
-    {
-      "key": "examples/fetch-and-async/infinite-scroll.html::7b89d333ac",
-      "file": "examples/fetch-and-async/infinite-scroll.html",
-      "error": "Expected 'end' after if block",
-      "upstream": "Expected 'end' but found 'on'",
-      "reason": "MIXED, and must be triaged AFTER the native-dialog parser fix. Hyperfixi's message is the same \"Expected 'end' after if block\" signature as native-dialog, so part of it is likely that same then-in-if-body defect. But upstream ALSO rejects this one (\"Expected 'end' but found 'on'\"), so there is a genuinely missing `end` on top. Fix the parser first, re-run the gate, and see what residue is left before editing the example."
     }
   ]
 }

@@ -128,7 +128,6 @@
                    add .loading to me
                    fetch 'https://jsonplaceholder.typicode.com/todos/1' as json
                    log 'Fetch result:', it
-                   log 'typeof it:', (typeof it)
                    put it into todoData
                    log 'todoData:', todoData
                    put `<h3>Todo #${todoData.id}</h3>
