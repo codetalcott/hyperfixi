@@ -13,22 +13,25 @@ A common challenge in web applications is keeping disparate parts of the UI in s
 **Use Case:** A user updates their profile. After the `fetch` confirms the update was successful, it sends a `profileUpdated` event with the new user data as a payload.
 
 ```html
-<form _="on submit fetch /user/profile with method: 'POST', body: formToJSON(me)
-         then send profileUpdated({user: it}) to body">
-  <input name="name" type="text"/>
+<form
+  _="on submit fetch /user/profile with method: 'POST', body: formToJSON(me)
+         then send profileUpdated({user: it}) to body"
+>
+  <input name="name" type="text" />
   <button type="submit">Save</button>
 </form>
 
 ---
 
 <div id="main-nav">
-  Welcome, <span _="on profileUpdated(user) from body put user.name into me">
-    Current User Name
-  </span>
+  Welcome,
+  <span _="on profileUpdated(user) from body put user.name into me"> Current User Name </span>
 </div>
 
-<h1 _="on profileUpdated(user) from body
-         set my.textContent to `Welcome back, ${user.name}!`">
+<h1
+  _="on profileUpdated(user) from body
+         set my.textContent to `Welcome back, ${user.name}!`"
+>
   Welcome back...
 </h1>
 ```
@@ -45,17 +48,19 @@ This is the reverse pattern and is equally powerful. An action in one component 
 
 ```html
 <div id="product-gallery">
-  <img src="thumb1.jpg" _="on click send showProduct(id: 1) to #product-modal">
-  <img src="thumb2.jpg" _="on click send showProduct(id: 2) to #product-modal">
+  <img src="thumb1.jpg" _="on click send showProduct(id: 1) to #product-modal" />
+  <img src="thumb2.jpg" _="on click send showProduct(id: 2) to #product-modal" />
 </div>
 
 ---
 
-<div id="product-modal" class="hidden"
-     _="on showProduct(id)
-          fetch /products/{id} and put it into me
-          then remove .hidden from me">
-  </div>
+<div
+  id="product-modal"
+  class="hidden"
+  _="on showProduct(id)
+          fetch /products/${id} and put it into me
+          then remove .hidden from me"
+></div>
 ```
 
 **Why this is powerful:** The thumbnails are "dumb." They only know how to announce that a product should be shown. The modal is completely self-contained. It defines the logic for how it gets populated and displayed. This separation of concerns is a hallmark of clean architecture.
@@ -68,15 +73,15 @@ You can chain these patterns to create complex workflows that remain readable an
 
 ```html
 <div id="checkout-flow">
-
   <div id="step-1">
-    <button _="on click
+    <button
+      _="on click
                  fetch /cart/validate with method: 'POST'
-                 then send loadStep(url: it.nextStepUrl) to #checkout-flow">
+                 then send loadStep(url: it.nextStepUrl) to #checkout-flow"
+    >
       Validate Items
     </button>
   </div>
-
 </div>
 
 <script type="text/hyperscript">
@@ -90,6 +95,7 @@ You can chain these patterns to create complex workflows that remain readable an
 ```
 
 **Why this is powerful:** The logic for the entire flow is not hard-coded.
+
 1. The button in Step 1 triggers a `fetch`.
 2. The server response (`it`) contains the URL for the next step (`it.nextStepUrl`).
 3. The `then` clause uses this URL to `send` a `loadStep` event to the main `#checkout-flow` container.

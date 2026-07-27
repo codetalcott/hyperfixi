@@ -517,8 +517,8 @@ When using global variables, document their purpose:
 
 ```hyperscript
 <!-- Each handler gets its own :count -->
-<button _="on click set :count to 1 put :count">Button 1</button>
-<button _="on click set :count to 2 put :count">Button 2</button>
+<button _="on click set :count to 1 then put :count into #out">Button 1</button>
+<button _="on click set :count to 2 then put :count into #out">Button 2</button>
 ```
 
 ### Problem: Complex Concatenation Not Working
