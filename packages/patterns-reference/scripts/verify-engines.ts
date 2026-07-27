@@ -5,13 +5,20 @@
  * engines and records which accept it:
  *
  *   - `lokascript` — @hyperfixi/core (this repo). Bar: `compileSync(code).ok`
- *     (the exact call the browser `_=` attribute path makes, so "compiles"
- *     here means "the shipped hyperfixi.js bundle would accept it"), PLUS an
- *     install smoke: the compiled AST executes top-level in jsdom (event
- *     handlers register, init blocks run) without a synchronous error inside
- *     a short settle window. The @hyperfixi/reactivity plugin is installed
- *     first — it is part of the shipped ecosystem and registers the
- *     `live`/`when`/`bind`/`$var`/caret-var syntax.
+ *     with ZERO recovered errors (the exact call the browser `_=` attribute
+ *     path makes, so "compiles" here means "the shipped hyperfixi.js bundle
+ *     would accept it"), PLUS an install smoke: the compiled AST executes
+ *     top-level in jsdom (event handlers register, init blocks run) without a
+ *     synchronous error inside a short settle window. The @hyperfixi/reactivity
+ *     plugin is installed first — it is part of the shipped ecosystem and
+ *     registers the `live`/`when`/`bind`/`$var`/caret-var syntax.
+ *
+ *     The "zero recovered errors" half matters: the parser is resilient, so
+ *     `ok` stays true for input it recovered from (that is deliberate — see
+ *     ParseResult.success). Gating on `ok` alone therefore stamped
+ *     `lokascript` on patterns hyperfixi does not cleanly accept either,
+ *     which is how `set-color-variable` (`*--primary-color`, rejected by BOTH
+ *     engines) carried a lokascript verdict. Both legs now use the same bar.
  *   - `hyperscript` — upstream _hyperscript (hyperscript.org, pinned in
  *     devDependencies) with its official socket/worker/eventsource
  *     extensions loaded. Bar: `_hyperscript.parse(code)` reports zero parse
@@ -258,7 +265,9 @@ async function main(): Promise<void> {
 
   const verifyLokascriptSnippet = async (code: string): Promise<string | null> => {
     const compiled = hyperscript.compileSync(code);
-    if (!compiled.ok) {
+    // Symmetric with the upstream leg's `errors.length === 0`. `ok` alone is
+    // "is there a runnable AST?", which stays true for a recovered parse.
+    if (!compiled.ok || compiled.errors?.length) {
       return compiled.errors?.[0]?.message ?? 'compile failed';
     }
     // Install smoke: top-level execute must not fail synchronously or within
@@ -384,7 +393,7 @@ async function main(): Promise<void> {
     meta: {
       bar: {
         lokascript:
-          'compileSync(code).ok via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)',
+          'compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)',
         hyperscript: `upstream _hyperscript parse with zero recovered errors (extensions loaded: ${upstreamExtensions.join(', ') || 'none'}); parse-level only`,
         html: 'HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim',
       },
