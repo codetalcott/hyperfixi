@@ -15,8 +15,9 @@
  *
  * The FOREIGN-side sibling (foreign-canonical-validity.ts) is folded into
  * `multilingual/cli.ts`'s `--regression` gate as the R4 canonical-validity
- * ratchet. This en-side check remains vitest-only (its allowlist holds exactly
- * one entry, pick-text-range). The same loader recipe now also ships in the
+ * ratchet. This en-side check remains vitest-only; its allowlist is currently
+ * EMPTY (134/134 corpus references render valid — it formerly held one entry,
+ * pick-text-range). The same loader recipe now also ships in the
  * build-time `@hyperscript-tools/i18n` transpiler (`src/validate.ts`, CLI
  * `--check`, Eleventy `parseCheck`) to gate its ENGLISH side (input + foreign→
  * English output). Faithful foreign-OUTPUT gating still awaits the v2

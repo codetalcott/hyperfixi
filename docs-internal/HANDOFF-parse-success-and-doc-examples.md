@@ -3,6 +3,31 @@
 Follow-ups from the 2.9.1 downstream-report arc (PRs #774–#783, merged 2026-07-27,
 `main` @ `c0492d42`). Both items were surfaced by that work rather than fixed by it.
 
+> **STATUS — both items are DONE** (branch `fix/doc-examples-and-parse-recovered`,
+> 2026-07-27). Item 2: all five sources fixed and verified on both engines. Item 1:
+> resolved as option (3), an additive `ParseResult.recovered`. The sweep is now a
+> permanent gate. Two claims below were measured and found WRONG during the work —
+> they are corrected in place and flagged **[CORRECTED]** so the record is not
+> misleading; the reasoning built on them is left as written.
+>
+> Three things the work turned up that this note did not know:
+>
+> 1. **The sweep is incomplete for `examples/`.** Four more shipped sources parse
+>    recovers-with-errors: `dialogs/native-dialog.html`,
+>    `drag-and-drop/sortable-list.html`, `fetch-and-async/fetch-data.html`,
+>    `fetch-and-async/infinite-scroll.html`. Three are genuinely malformed (upstream
+>    rejects too). The fourth, **`native-dialog.html`, is a hyperfixi PARSER DEFECT —
+>    upstream ACCEPTS it** and we report `Expected 'end' after if block`. All four are
+>    allowlisted in `baselines/shipped-sources-validity.json` with their upstream
+>    verdict, and are the obvious next queue.
+> 2. **`examples/vite-plugin-test/` is gitignored and untracked** (`.gitignore:2`), so
+>    finding #1 was never a shipped source. It is fixed on disk but cannot be
+>    committed, and CI never sees it.
+> 3. **`verify-engines.ts` had the same bug in a second place.** Its lokascript leg
+>    gated on `compileSync().ok` while its upstream leg required zero errors, so
+>    `set-color-variable` was stamped `engine: "lokascript"` for a source hyperfixi
+>    does not cleanly accept either. Both legs now use the same bar.
+
 Everything below is verified against `main` as of this commit. The oracle throughout
 is the real upstream engine, already wired up as
 `loadCanonicalParser()` in
@@ -29,6 +54,20 @@ parse('toggle .active')  ->  success: true,  errors: []
 
 `success: true` therefore means "an AST exists", not "the input was valid" — and
 ~213 non-test call sites across the monorepo check `.success`.
+
+> **[CORRECTED] The 213 figure is wrong by more than an order of magnitude.** For the
+> hyperscript `ParseResult` specifically it is **11 non-test sites, all inside
+> `packages/core`, zero in any other package** (plus 332 test assertions). The other
+> ~130 non-test `.success` reads belong to unrelated types — Zod `safeParse`, the
+> `TypedResult` union in `expressions/**`, the semantic adapter's
+> `SemanticParseAttempt`, testing-framework's own `ParseResult`. Nine of the 11 are the
+> identical guard `if (!r.success || !r.node) throw` — runnable checks that are already
+> correct under today's semantics. This makes option (2) far cheaper than priced below,
+> but also less necessary; the decision recorded at the end still went to (3), because
+> `ParseResult` is a **published** export (semver-major to redefine `success`) and
+> because (2) would put the "`ok` must stay true" invariant on a hand-edit at
+> `hyperscript-api.ts:861`. The real cost of (2) is re-verifying the 332 test
+> assertions, not the 11 sources.
 
 ### What #780 already fixed, and what it left
 
@@ -68,6 +107,20 @@ My weak preference is (3) then (1): (3) makes the distinction visible at the typ
 level without a 213-site audit, and (1) alone is too easy to ignore. But this is the
 owner's call — do not treat that as decided.
 
+> **DECIDED (2026-07-27): (3) plus (1).** `ParseResult.recovered` is set in
+> `Parser.parse()` — the single place `errors` is attached, so it cannot drift from it
+> — and `success` is documented on the type as "AST produced, NOT a validity claim".
+> `CompileResult.ok` is untouched, so the must-not-regress invariant holds by
+> construction rather than by care.
+>
+> The audit also turned up **one live instance of #780's defect in a second surface**:
+> the classic-i18n `compile()` shim (`browser-bundle-classic-i18n.ts:502-504`) copied
+> the singular `error` and dropped `errors`, so it returned `{ success: true,
+> errors: [] }` for input carrying a real diagnostic. Demo pages consume it
+> (`examples/animation/color-cycling-debug.html:158`,
+> `examples/multilingual/test-classic-i18n.html:178,191,192`). Fixed, with a guard
+> verified to fail without the fix.
+
 ### Where to start
 
 - `packages/core/src/parser/parser.ts` — the `success: true` returns are at roughly
@@ -79,6 +132,13 @@ owner's call — do not treat that as decided.
 - `packages/language-server/src/server.ts:665,732` reads `result.errors` directly
   without consulting `success`, which is why the LSP was right when `validate()` was
   wrong. It is the existing precedent for "errors are the truth".
+
+  > **[CORRECTED] Line numbers drifted, and the point is stronger than stated.** The
+  > real reads are **729 / 732 / 754** (plus a second pair at 1317-1319). More to the
+  > point, the server does not read `.success` *anywhere* — `grep` for it in
+  > `packages/language-server/src/` returns nothing, as it does for
+  > `mcp-server/src/tools/lsp-bridge.ts`. Both get it right by ignoring the flag
+  > entirely, which is the cleanest statement of "errors are the truth".
 
 ### Do not regress
 
@@ -132,6 +192,11 @@ Two defects. `has` is not a hyperscript operator (upstream: `Expected 'end' but
 found 'has'`) — the membership operator is `matches`, or `I match`. And the `if`
 block is unterminated (ours: `Expected 'end' after if block`). Both engines accept
 the replacement.
+
+> **[CORRECTED] This file is not a shipped source.** `examples/vite-plugin-test/` is
+> gitignored (`.gitignore:2`) and untracked, so the fix applies on disk but cannot be
+> committed, and neither CI nor the new gate ever sees it. The diagnosis above is
+> right; only its status as one of "five real ones" is not. The tracked count is four.
 
 **2 & 3 — `packages/core/docs/LOCAL_VARIABLES_GUIDE.md:520-521`**
 
@@ -189,6 +254,28 @@ baseline to move — regenerate it with `--save-baseline` and commit the result,
 the root CLAUDE.md procedure. The other four are plain doc edits with no such
 coupling.
 
+> **DECIDED (2026-07-27): a third option — keep the `of`-possessive, swap the
+> property.** `on click set the *background-color of #theme to "#ff6600"`, verified
+> valid on both engines. Neither listed option was right, because this row turns out
+> to be the corpus's **only exerciser of the selector-head branch** of
+> `tryMatchOfPossessiveExpression` (`semantic/src/parser/pattern-matcher.ts:1525`) —
+> and `pattern-matcher.ts:2382` names `set-color-variable` when justifying its
+> `source`-only marker gating. The `setProperty` rewrite would have dropped that from
+> 24-language corpus coverage to three hardcoded unit tests, while adding nothing
+> (`call-function` already covers the `call` shape). Retitled, since it no longer
+> demonstrates a custom property.
+>
+> **Baseline impact was nil**: the regenerated baseline moves only `bundleSize` and
+> the stamps. Not one per-pattern metric changed. Translations are auto-generated
+> (`translation_method DEFAULT 'auto-generated'`), so no hand-authoring was needed.
+>
+> **The R4 warning above was backwards, and worth understanding.** This row's en code
+> was upstream-*invalid*, so it was silently EXCLUDED from both canonical-validity
+> denominators. Making it valid *adds* it: the en-side went 133 → **134** checked,
+> 134 valid, allowlist still empty; the foreign R4 gate passes with no new invalid
+> pairs. Making a corpus row valid can therefore only ever grow those denominators —
+> the risk is new exposure, not regression.
+
 ### Re-running the sweep
 
 The triage that produced this list: for every hyperscript source in `examples/`,
@@ -210,3 +297,33 @@ After the five fixes, the sweep should report **zero** sources where hyperfixi
 recovers-with-errors — meaning `validate()` returns `valid: true` for every example
 we ship. That is a much better invariant to gate on than the current "six known
 exceptions".
+
+> **DONE, and the count was not zero.** The gate is
+> `packages/testing-framework/src/multilingual/shipped-sources-validity.ts` +
+> `.test.ts`, allowlist in `baselines/shipped-sources-validity.json`, npm script
+> `test:shipped-sources`. It sweeps **454 sources, 408 clean, 4 allowlisted** — the
+> four `examples/**` findings listed at the top of this note, none of which this
+> handoff knew about. The corpus half did reach zero: `set-color-variable` was the
+> only recovers-with-errors row in all 164.
+>
+> Three scoping decisions worth knowing before touching it:
+>
+> - **Only `ok:true`-with-errors is gated.** `ok:false` is a much larger and mostly
+>   legitimate class (non-English sources needing the multilingual path, plugin syntax
+>   whose feature is not installed, deliberate "this does not work" snippets). Gating
+>   it would drown the signal, and an outright failure is loud anyway.
+> - **Bare `hyperscript`-fenced blocks are excluded.** In this repo they are
+>   overwhelmingly syntax *notation* (`send <event> to <target>`), which no parser can
+>   accept. Only `_=`/`hx-live` attributes and `<script type="text/hyperscript">`
+>   bodies are collected, from `.html` files and from `html`-fenced blocks in `.md`.
+> - **CI needed a new path filter.** The `code` filter excludes `**/*.md`, `docs/**`
+>   and `examples/**` — exactly the trees this gate walks — so a step in `unit-tests`
+>   would never have run on a docs/examples-only PR, i.e. never on the diffs most
+>   likely to introduce the bug. There is now a narrow `docsources` filter (the gate's
+>   three roots) which also un-gates `build`, plus a small dedicated job.
+>
+> The method note above is now enforced structurally rather than by discipline:
+> extraction goes through the DOM via `extractHyperscriptFromMarkup`, exported from
+> `@hyperfixi/patterns-reference` and shared with `verify-engines.ts` so the two
+> cannot drift. Escaped text in a `<pre>`/`.code` block decodes to a text node, never
+> an attribute, so the `send-events.html` false-positive class is unreachable.
