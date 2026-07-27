@@ -15,11 +15,13 @@ Follow-ups from the 2.9.1 downstream-report arc (PRs #774–#783, merged 2026-07
 > 1. **The sweep is incomplete for `examples/`.** Four more shipped sources parse
 >    recovers-with-errors: `dialogs/native-dialog.html`,
 >    `drag-and-drop/sortable-list.html`, `fetch-and-async/fetch-data.html`,
->    `fetch-and-async/infinite-scroll.html`. Three are genuinely malformed (upstream
->    rejects too). The fourth, **`native-dialog.html`, is a hyperfixi PARSER DEFECT —
->    upstream ACCEPTS it** and we report `Expected 'end' after if block`. All four are
->    allowlisted in `baselines/shipped-sources-validity.json` with their upstream
->    verdict, and are the obvious next queue.
+>    `fetch-and-async/infinite-scroll.html`. All four are allowlisted in
+>    `baselines/shipped-sources-validity.json` with their upstream verdict.
+>    `native-dialog.html` is a hyperfixi **parser defect** — upstream accepts it —
+>    and it is worse than a bad diagnostic: the conditional body is hoisted out of
+>    the `if` and **runs unconditionally**, at `ok: true`. Triage, minimal repro,
+>    ruled-out hypotheses and the recommended order for all four are in
+>    **[HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md)**.
 > 2. **`examples/vite-plugin-test/` is gitignored and untracked** (`.gitignore:2`), so
 >    finding #1 was never a shipped source. It is fixed on disk but cannot be
 >    committed, and CI never sees it.
