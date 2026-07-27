@@ -737,13 +737,17 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
         break;
       }
 
-      // Handle 'and' between commands (tell x add .a and add .b)
-      if (ctx.match(KEYWORDS.AND)) {
+      // Separator between two commands in the tell body (tell x add .a and add .b,
+      // tell x add .a then add .b). Upstream's TellCommand.parse takes a
+      // `commandList` for its body, and every commandList consumes a joining
+      // `then` — so a `then`-joined command belongs INSIDE the tell (running once
+      // per target), not after it. Breaking here let it escape the body.
+      if (ctx.match(KEYWORDS.AND) || ctx.match(KEYWORDS.THEN)) {
         continue;
       }
 
       // Check for control flow boundaries after parsing a command
-      if (ctx.check(KEYWORDS.THEN) || ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
+      if (ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
         break;
       }
 
