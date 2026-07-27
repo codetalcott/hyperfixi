@@ -53,20 +53,6 @@
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
     },
     {
-      "key": "examples/dialogs/modal.html::27fb619873::keydown",
-      "file": "examples/dialogs/modal.html",
-      "event": "keydown",
-      "excerpt": "on keydown[key=='Escape'] from window hide .modal-overlay",
-      "hyperfixi": [
-        "Δdiv:16#info-modal cls[modal-overlay] attr[id=info-modal] style[display: none;] text[]",
-        "Δdiv:31#confirm-modal cls[modal-overlay] attr[id=confirm-modal] style[display: none;] text[]",
-        "Δdiv:46#form-modal cls[modal-overlay] attr[id=form-modal] style[display: none;] text[]",
-        "Δdiv:68#behavior-modal cls[modal-overlay] attr[id=behavior-modal] style[display: none;] text[]"
-      ],
-      "upstream": [],
-      "reason": "hyperfixi runs the handler although the event filter [key=='Escape'] is unmet (dispatched Event has no .key; undefined=='Escape' is false) — REAL BUG CANDIDATE, queued in PARSER_NEXT_STEPS.md"
-    },
-    {
       "key": "examples/events-and-dom/counter.html::6f9009e740::click",
       "file": "examples/events-and-dom/counter.html",
       "event": "click",

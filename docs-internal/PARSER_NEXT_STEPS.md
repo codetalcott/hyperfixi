@@ -24,7 +24,7 @@ ones, because the gate *is* the tracking mechanism.
 
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
-| **Unmet event filter still fires** | **high** — `on keydown[key=='Escape']` runs with no `.key`; upstream correctly does not | ✅ execution-gate allowlist entry | found by the execution gate; family 5 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
+| **Or-join filters have no per-event representation** | low — `on click or keypress[key=='Enter']` runs keypress unfiltered (upstream filters that leg); single-event filters ARE enforced | ✅ KNOWN GAP test | `packages/core/src/api/event-filter-execution.test.ts`; the runtime-side note at the `applicableCondition` site in `runtime-base.ts` |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
@@ -38,11 +38,16 @@ ones, because the gate *is* the tracking mechanism.
 - **`sortable-list.html`** — the allowlist key embeds `sha1(source)`, and
   assertion 3 of the shipped-sources gate **fails** when an allowlisted source
   goes clean. The list can only ratchet down. It cannot be silently forgotten.
-- **The execution-gate entries** (event filter; `set <idref>` / js-path no-ops) —
-  same mechanism as `sortable-list.html`: their allowlist keys in
+- **The execution-gate entries** (`set <idref>` / js-path no-ops) — same
+  mechanism as `sortable-list.html`: their allowlist keys in
   `packages/testing-framework/baselines/shipped-examples-execution.json` embed a
   source hash, and the gate's stale-entry assertion fails when a divergence
-  converges, forcing the entry's removal in the fixing change.
+  converges, forcing the entry's removal in the fixing change. This is not
+  theoretical: the event-filter fix (History) triggered exactly that assertion
+  and shrank the baseline 46 → 45 in the same change.
+- **Or-join filters** — the KNOWN GAP test pins the current unfiltered behavior
+  of BOTH legs; per-event condition representation flips both halves, so the
+  fix is forced to be deliberate and visible.
 
 The ungated one (`tell`) has no such mechanism. **It is what this document is
 for.**
@@ -54,9 +59,10 @@ execution gate runs every eligible `_=` handler on both hyperfixi and the real
 `hyperscript.org` engine in jsdom and ratchets on DOM-effect divergence —
 upstream as the behavioral oracle, the R4 pattern applied to behavior. It is
 what would have caught the #785 defect on *behaviour* rather than on a
-diagnostic. Design, current numbers, the six divergence families, and the
+diagnostic. Design, current numbers, the divergence families, and the
 harness lessons: [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
-Its first sweep produced the two bug-candidate rows in the table above.
+Its first sweep produced two bug candidates: the unmet-event-filter defect
+(**fixed** — see History) and the `set <idref>` / js-path no-ops row above.
 
 **Expression-first condition parsing** is the deferred follow-on from the `if`
 family (see History). #786 replaced the raw "is this token spelled like a
@@ -74,6 +80,15 @@ regression episode that motivates it:
 
 ## History
 
+- **2026-07-27** — event filters enforced: `on keydown[key=='Escape']` ran on
+  ANY key because the runtime never read `EventHandlerNode.condition` (parsed,
+  typed, documented, never consumed). The gate's first finding, fixed the same
+  day; the fix triggered the gate's stale-entry ratchet, shrinking its baseline
+  46 → 45 in the same change — the loop's first full cycle. Filters resolve
+  bare identifiers from the event (upstream semantics), run after arg
+  destructuring, and gate SINGLE-event handlers only (or-join legs need
+  per-event conditions — the new table row). Coverage:
+  `packages/core/src/api/event-filter-execution.test.ts`.
 - **2026-07-27** — shipped-examples execution gate landed: `examples/**`
   handlers executed on both engines in jsdom, DOM-effect divergence ratcheted
   against `hyperscript.org` as the behavioral oracle. 46 divergences baselined
