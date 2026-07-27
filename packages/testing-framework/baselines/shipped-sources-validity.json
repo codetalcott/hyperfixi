@@ -1,0 +1,36 @@
+{
+  "description": "Allowlist for the shipped-sources validity gate (packages/testing-framework/src/multilingual/shipped-sources-validity.test.ts). Each entry is a hyperscript source we ship that hyperfixi parses in the recovers-with-errors state (ok:true with a non-empty errors array). A NEW such source outside this list, or an allowlisted key that becomes clean, both fail the gate. Shrink this list as fixes land.",
+  "note": "The `key` is file::sha1(source)[0:10], so it CHANGES when the source is edited — a fix cannot silently keep its allowlist cover, it drops off and the stale-entry test demands removal. `upstream` records the real hyperscript.org verdict for each, which is what distinguishes a malformed example (upstream also rejects) from a hyperfixi parser defect (upstream accepts). All four below predate the gate; they were found by it, not by the handoff that motivated it.",
+  "checkedAtGeneration": 454,
+  "cleanAtGeneration": 408,
+  "allowedRecovered": [
+    {
+      "key": "examples/dialogs/native-dialog.html::ecfd89d643",
+      "file": "examples/dialogs/native-dialog.html",
+      "error": "Expected 'end' after if block",
+      "upstream": "VALID",
+      "reason": "HYPERFIXI PARSER DEFECT, not a malformed example — upstream accepts this source. A trailing `if` inside an event handler, with the handler's end implying the block's end. Fixing the doc would be wrong; the parser should accept it. Needs its own investigation."
+    },
+    {
+      "key": "examples/drag-and-drop/sortable-list.html::d64eff65f5",
+      "file": "examples/drag-and-drop/sortable-list.html",
+      "error": "Expected property name after '.' - malformed member access",
+      "upstream": "You must parenthesize math operations with different operators",
+      "reason": "Genuinely malformed — both engines reject, for different reasons. Deferred: needs the example's intent re-derived before rewriting."
+    },
+    {
+      "key": "examples/fetch-and-async/fetch-data.html::1d94c11092",
+      "file": "examples/fetch-and-async/fetch-data.html",
+      "error": "Expected closing parenthesis ')' after expression - unclosed parentheses",
+      "upstream": "Expected ')' but found 'it'",
+      "reason": "Genuinely malformed — both engines reject. Uses `log 'x', it` comma-argument form and `(typeof it)`; neither parses. Deferred."
+    },
+    {
+      "key": "examples/fetch-and-async/infinite-scroll.html::7b89d333ac",
+      "file": "examples/fetch-and-async/infinite-scroll.html",
+      "error": "Expected 'end' after if block",
+      "upstream": "Expected 'end' but found 'on'",
+      "reason": "Genuinely malformed — both engines reject. An unterminated `if` inside `init`, before the following `on scroll` handler. Deferred."
+    }
+  ]
+}

@@ -276,6 +276,14 @@ export function createPatternsReference(options?: ConnectionOptions): PatternsRe
 }
 
 /**
+ * DOM-based extraction of hyperscript out of HTML markup. Shared with the
+ * testing-framework's shipped-sources validity gate so both harnesses agree on
+ * what counts as a live source (and neither regresses to a regex).
+ */
+export { extractHyperscriptFromMarkup } from './html-snippets';
+export type { MarkupSnippets } from './html-snippets';
+
+/**
  * Version of the package.
  */
 export const VERSION = '0.1.0';

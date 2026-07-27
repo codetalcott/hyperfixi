@@ -63,6 +63,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       protocol: ${{ steps.filter.outputs.protocol }}
       goclient: ${{ steps.filter.outputs.goclient }}
+      docsources: ${{ steps.filter.outputs.docsources }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -99,6 +100,17 @@ jobs:
               - 'protocol/**'
             goclient:
               - 'clients/go-client/**'
+            # The trees the shipped-sources validity gate walks (its
+            # DEFAULT_ROOTS). These are all EXCLUDED from `code` above, so
+            # without their own filter the one gate that reads them would never
+            # run on a diff that only touches them — i.e. never on the PRs most
+            # likely to introduce a malformed example. Deliberately narrow: a
+            # README typo elsewhere still skips the npm stack, and protocol/
+            # and clients/ diffs are unaffected.
+            docsources:
+              - 'examples/**'
+              - 'docs/**'
+              - 'packages/core/docs/**'
 
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
@@ -110,7 +122,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    # `docsources` is here so a docs/examples-only PR still produces the core
+    # build the shipped-sources gate needs. Everything else downstream stays
+    # gated on `code` alone, so that PR pays for one build and one small job,
+    # not the full fan-out.
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.docsources == 'true'
 
     steps:
       - name: Checkout
@@ -308,6 +324,53 @@ jobs:
             packages/speech/dist/
             packages/intent-element/dist/
           retention-days: 3
+
+  # ============================================
+  # Job 1.5: Shipped-Sources Validity
+  # Every hyperscript source in examples/ and the doc trees must not parse in
+  # the recovers-with-errors state (ok:true WITH a non-empty errors array) —
+  # the state in which a genuinely malformed source neither throws nor reports
+  # failure, which is how five of them shipped undetected.
+  #
+  # Its own job rather than a step in unit-tests, because it must also run on
+  # docs/examples-only PRs (see the `docsources` filter): those skip `code`, so
+  # a step inside unit-tests would never fire on exactly the diffs that can
+  # introduce the bug. Small and fast — one vitest file over a built core.
+  # ============================================
+  shipped-sources:
+    name: Shipped Sources Validity
+    runs-on: ubuntu-latest
+    needs: build
+    # PR-only, same reasoning as export-validation.
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts
+          path: packages
+
+      - name: Rebuild workspace links
+        run: |
+          rm -rf node_modules/@hyperfixi node_modules/@lokascript
+          npm install
+
+      - name: Shipped-sources validity gate
+        run: npm run test:shipped-sources --prefix packages/testing-framework
 
   # ============================================
   # Job 2: Export Validation
