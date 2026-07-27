@@ -415,13 +415,25 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   // to a BODY command rather than to the `if` header. That is tolerated on
   // purpose: `hasThen` only feeds `isMultiLine`, and a body spanning lines is
   // multi-line either way, while the header-`then` consumption below now checks
-  // the token instead of trusting this flag. Bounding the scan to
-  // `commandToken.line` was tried and rejected — it is a near-no-op given that
-  // check, it would reclassify the legitimate `then`-on-the-next-line form
-  // (parser-integration.test.ts:381), and the single-line shapes it would newly
-  // reach are broken by an INDEPENDENT pre-existing defect in the implicit
-  // multi-line scan below: `if 1 is 1 log 'a'\nlog 'b'` already swallows
-  // `log 'b'` into the block with a bogus "Expected 'end'", no `then` involved.
+  // the token instead of trusting this flag.
+  //
+  // Bounding the scan to `commandToken.line` remains WRONG: it would reclassify
+  // the legitimate `then`-on-the-next-line header form
+  // (parser-integration.test.ts:381, and the guard in then-as-separator.test.ts).
+  //
+  // #785 gave a second reason for leaving this unbounded — that the single-line
+  // shapes a bound would newly reach were broken anyway by the implicit
+  // multi-line scan below. That defect is now FIXED (see the line-bound in that
+  // scan, and docs-internal/HANDOFF-implicit-multiline-if.md), so only the
+  // next-line-header reason still stands.
+  //
+  // Residual, deliberately NOT fixed here: a single-line `if` whose FOLLOWING
+  // line contains a body `then` (`if 1 is 1 log 'a'` + `set x to 1 then log 'b'`)
+  // is still misread as multi-line and swallows that line. Bounding this scan at
+  // the FIRST COMMAND — not at the line — fixes it while preserving the
+  // next-line header form, since a header `then` always precedes the body. That
+  // change measured green on the core suite and the multilingual ratchet; it is
+  // queued in docs-internal/PARSER_NEXT_STEPS.md to land with its own coverage.
   let hasThen = false;
   const savedPosForThen = ctx.savePosition();
   const maxThenLookahead = 500; // Increased to handle large conditional expressions
@@ -456,11 +468,29 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     const savedPosition = ctx.savePosition();
     const ifStatementLine = commandToken.line; // Line where 'if' keyword appears
     const maxLookahead = 100;
+    // Set once the FIRST command is found on the `if`'s own line — i.e. the form
+    // question is already answered as single-line. See the line-bound below.
+    let firstCommandOnIfLine = false;
 
     // Scan forward to find the FIRST command after the condition
     while (!ctx.isAtEnd() && ctx.current - savedPosition < maxLookahead) {
       const token = ctx.peek();
       const tokenValue = token.value?.toLowerCase();
+
+      // Once the first command has been seen on the `if`'s own line, the only
+      // reason to keep scanning is a same-line `else`/`end` (see below), so the
+      // moment the scan leaves that line there is nothing left for it to find.
+      //
+      // Without this bound the scan ran on into the NEXT line, found the
+      // following sibling command, and set `hasImplicitMultiLineEnd` — defeating
+      // the "FIRST command" rule by the second command. `if 1 is 1 log 'a'` +
+      // `log 'b'` on the next line swallowed `log 'b'` into the if-block, so it
+      // stopped running whenever the condition was false, with only a recovered
+      // "Expected 'end' after if block" (ok/success both stayed true) to show for
+      // it. See docs-internal/HANDOFF-implicit-multiline-if.md.
+      if (firstCommandOnIfLine && token.line !== undefined && token.line !== ifStatementLine) {
+        break;
+      }
 
       // Stop at structural boundaries
       if (
@@ -492,6 +522,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
           break;
         }
         // Don't break - continue scanning to find 'else' or 'end' on same line
+        firstCommandOnIfLine = true;
       }
 
       ctx.advance();

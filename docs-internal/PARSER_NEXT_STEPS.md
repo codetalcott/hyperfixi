@@ -24,7 +24,7 @@ ones, because the gate *is* the tracking mechanism.
 
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
-| **Implicit-multiline `if` swallows the next line** | **high** — an unconditional command silently stops running | **none** | [HANDOFF-implicit-multiline-if.md](HANDOFF-implicit-multiline-if.md) |
+| **Single-line `if` + next-line body `then` still swallowed** | medium — same silent class as the fixed defect, narrower trigger | **none** | comment at the `hasThen` scan in `packages/core/src/parser/command-parsers/control-flow-commands.ts` |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
 | **Nothing executes a shipped example** | medium — `examples/**` is parsed but never run | **none** | "Wider question" in [HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
@@ -43,14 +43,21 @@ The ungated three have no such mechanism. **They are what this document is for.*
 
 ## Notes on the ungated three
 
-**Implicit-multiline `if`** is the one to do first. It is the mirror image of the
-`then` defect fixed in #785 (that one pushed a conditional body *out* so it ran
-unconditionally; this one pulls an unconditional command *in* so it stops
-running), and it is the reason #785 left the `hasThen` lookahead unbounded —
-bounding it routes more inputs down this already-broken path. Fix this, then
-re-evaluate that bound. **The shipped-sources gate is not the regression test
-here** — no shipped example trips it, so the gate would pass a broken fix. Write
-the coverage first.
+**The `hasThen` residual** is what is left of the implicit-multiline `if` defect
+(resolved — see History). A single-line `if` whose *following* line contains a
+body `then` — `if 1 is 1 log 'a'` then `set x to 1 then log 'b'` — is still read
+as multi-line and swallows that line, because the `hasThen` lookahead crosses
+newlines and cannot tell a header `then` from a body one.
+
+The re-evaluation #785 and the handoff both called for has been **done**, and the
+answer is not the bound they considered. A **line** bound (`commandToken.line`)
+is still wrong — it breaks the legitimate `then`-on-the-next-line header form. A
+**first-command** bound is right: a header `then` always precedes the body, so
+stopping the scan at the first command token separates the two directly, and it
+preserves the next-line header form. Measured green on the core suite (7645) and
+on the full multilingual `--regression` run, but deliberately **not landed** — it
+needs its own coverage first, per the rule below that the shipped-sources gate
+will pass a broken fix.
 
 **No execution test for `examples/**`** is the systemic one. #785 added
 `packages/core/src/api/if-body-then-execution.test.ts`, which is the right shape
@@ -63,6 +70,13 @@ body running unconditionally and every parse-level gate was green.
 
 ## History
 
+- **2026-07-27** — implicit-multiline `if` swallowing the following line into its
+  block. The lookahead answered the "FIRST command's line" question correctly and
+  then kept walking, so the second command overrode the answer; it is now bounded
+  to the `if`'s own line once that first command is found, which preserves the
+  same-line `else`/`end` hunt the missing `break` exists for. Brief:
+  [HANDOFF-implicit-multiline-if.md](HANDOFF-implicit-multiline-if.md) (read its
+  RESOLVED header — one residual stays open, at the top of the table above).
 - **#785** (2026-07-27) — `then` as a command separator in `if`/`unless`, `def` /
   `init` / `catch` / `finally`, and `tell` bodies; `--` comments in `if` bodies;
   shipped-sources allowlist 4 → 1. Brief:

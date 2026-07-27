@@ -1,5 +1,27 @@
 # Handoff: a single-line `if` swallows the following line into its block
 
+> **RESOLVED 2026-07-27.** Fixed in `parseIfCommand`'s implicit-multi-line scan:
+> once the FIRST command is found on the `if`'s own line, the scan now stops the
+> moment it leaves that line, so a later-line command can no longer set
+> `hasImplicitMultiLineEnd`. The deliberate missing `break` is preserved — the
+> scan still runs past the same-line first command to find a same-line
+> `else`/`end`.
+>
+> Coverage: 11 parse-shape cases in
+> `packages/core/src/parser/__tests__/then-as-separator.test.ts` (describe: *a
+> single-line if does not swallow the following line*) and 5 DOM-effect cases in
+> `packages/core/src/api/if-body-then-execution.test.ts` (describe: *a command
+> after a single-line if runs regardless of the condition*). 10 of the 16 fail
+> against the unfixed parser; the other 6 are guards that must pass in both
+> states.
+>
+> **One residual left open**, tracked in
+> [PARSER_NEXT_STEPS.md](PARSER_NEXT_STEPS.md): a single-line `if` whose
+> *following* line contains a body `then` is still swallowed, via the separate
+> `hasThen` lookahead. See "Why the `then` fix did not touch it" below — the
+> re-evaluation it calls for was done, and the answer is a **first-command**
+> bound, not the line bound #785 rejected.
+
 Found while fixing the `then`-as-command-separator defect
 (`HANDOFF-if-block-then-separator.md`). **Independent of it** — this reproduces
 with no `then` anywhere — and it survived that fix untouched. Everything below is

@@ -87,3 +87,88 @@ describe('an if body joined by `then` obeys its condition', () => {
       });
   });
 });
+
+/**
+ * The behavioural half of the mirror-image defect (parse-shape half: the
+ * `a single-line if does not swallow the following line` block in
+ * `src/parser/__tests__/then-as-separator.test.ts`).
+ *
+ * `parseIfCommand`'s implicit-multi-line lookahead decided the form from the
+ * first command's line and then kept scanning, so the NEXT line's command was
+ * pulled INTO the if-block. With a false condition that command silently stopped
+ * running — while `ok`/`success` stayed true and the only trace was a recovered
+ * "Expected 'end' after if block".
+ *
+ * These assert the DOM, because that is the only place the damage was visible.
+ * See docs-internal/HANDOFF-implicit-multiline-if.md.
+ */
+describe('a command after a single-line if runs regardless of the condition', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('runs the following line when the condition is FALSE', () => {
+    // THE case. `.b` was swallowed into the false branch and never applied.
+    const host = setupTarget();
+
+    return hyperscript.eval('if 1 is 2 add .a to #target\nadd .b to #target', host).then(() => {
+      expect(target().classList.contains('a')).toBe(false);
+      expect(target().classList.contains('b')).toBe(true);
+    });
+  });
+
+  it('runs both when the condition is TRUE', () => {
+    // The bug was invisible here — a swallowed command still runs on a true
+    // condition — so this pins that the fix did not overcorrect.
+    const host = setupTarget();
+
+    return hyperscript.eval('if 1 is 1 add .a to #target\nadd .b to #target', host).then(() => {
+      expect(target().classList.contains('a')).toBe(true);
+      expect(target().classList.contains('b')).toBe(true);
+    });
+  });
+
+  it('runs every following line, not just the first', () => {
+    const host = setupTarget();
+
+    return hyperscript
+      .eval('if 1 is 2 add .a to #target\nadd .b to #target\nadd .c to #target', host)
+      .then(() => {
+        expect(target().classList.contains('a')).toBe(false);
+        expect(target().classList.contains('b')).toBe(true);
+        expect(target().classList.contains('c')).toBe(true);
+      });
+  });
+
+  it('keeps consecutive single-line ifs independently conditional', () => {
+    // Each `if` governs only its own line: `.a` suppressed, `.b` applied,
+    // `.c` unconditional.
+    const host = setupTarget();
+
+    return hyperscript
+      .eval('if 1 is 2 add .a to #target\nif 1 is 1 add .b to #target\nadd .c to #target', host)
+      .then(() => {
+        expect(target().classList.contains('a')).toBe(false);
+        expect(target().classList.contains('b')).toBe(true);
+        expect(target().classList.contains('c')).toBe(true);
+      });
+  });
+
+  it('still runs the same-line `else` branch, and the line after it', () => {
+    // The guard, behaviourally: a same-line `else`/`end` keeps the multi-line
+    // reading (so the else branch exists at all) while the following line stays
+    // unconditional. Collapsing that shape to single-line would drop `.else-ran`.
+    const host = setupTarget();
+
+    return hyperscript
+      .eval(
+        'if 1 is 2 add .then-ran to #target else add .else-ran to #target end\nadd .after to #target',
+        host
+      )
+      .then(() => {
+        expect(target().classList.contains('then-ran')).toBe(false);
+        expect(target().classList.contains('else-ran')).toBe(true);
+        expect(target().classList.contains('after')).toBe(true);
+      });
+  });
+});
