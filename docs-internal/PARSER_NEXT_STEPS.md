@@ -24,7 +24,7 @@ ones, because the gate *is* the tracking mechanism.
 
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
-| **Single-line `if` + next-line body `then` still swallowed** | medium — same silent class as the fixed defect, narrower trigger | **none** | comment at the `hasThen` scan in `packages/core/src/parser/command-parsers/control-flow-commands.ts` |
+| **A command-name word in a single-line `if` condition** | **high** — in a handler the `if` vanishes and its body runs unconditionally | **none** | [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md) |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
 | **Nothing executes a shipped example** | medium — `examples/**` is parsed but never run | **none** | "Wider question" in [HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
@@ -43,21 +43,17 @@ The ungated three have no such mechanism. **They are what this document is for.*
 
 ## Notes on the ungated three
 
-**The `hasThen` residual** is what is left of the implicit-multiline `if` defect
-(resolved — see History). A single-line `if` whose *following* line contains a
-body `then` — `if 1 is 1 log 'a'` then `set x to 1 then log 'b'` — is still read
-as multi-line and swallows that line, because the `hasThen` lookahead crosses
-newlines and cannot tell a header `then` from a body one.
+**The command-word condition** is the one to do first, and the third member of the
+family the other two `if` defects belong to. All three are `parseIfCommand`
+deciding structure from a token-level "is this a command?" question that cannot
+tell a command from an identifier spelled the same way, or a header keyword from a
+body one. This one is the worst of the three in a handler: the `if` node is
+dropped outright and its body becomes an unconditional sibling, with `ok: true`.
 
-The re-evaluation #785 and the handoff both called for has been **done**, and the
-answer is not the bound they considered. A **line** bound (`commandToken.line`)
-is still wrong — it breaks the legitimate `then`-on-the-next-line header form. A
-**first-command** bound is right: a header `then` always precedes the body, so
-stopping the scan at the first command token separates the two directly, and it
-preserves the next-line header form. Measured green on the core suite (7645) and
-on the full multilingual `--regression` run, but deliberately **not landed** — it
-needs its own coverage first, per the rule below that the shipped-sources gate
-will pass a broken fix.
+A real fix likely has to stop asking `checkIsCommand()` in isolation — a command
+name is only a command in command *position*. Note that both fixes already landed
+here are narrow line-bounds around the same heuristic, not repairs to it; a third
+patch in that style may not be the right answer.
 
 **No execution test for `examples/**`** is the systemic one. #785 added
 `packages/core/src/api/if-body-then-execution.test.ts`, which is the right shape
@@ -70,6 +66,12 @@ body running unconditionally and every parse-level gate was green.
 
 ## History
 
+- **2026-07-27** — the `hasThen` residual of the entry below: a single-line `if`
+  whose FOLLOWING line carried a body `then` was still swallowed, because that
+  lookahead crosses newlines. Bounded at the **first command** — a header `then`
+  always precedes the body — which is the re-evaluation #785 asked for; the
+  `commandToken.line` bound it had considered stays rejected, since a header
+  `then` may sit on the line after the condition.
 - **2026-07-27** — implicit-multiline `if` swallowing the following line into its
   block. The lookahead answered the "FIRST command's line" question correctly and
   then kept walking, so the second command overrode the answer; it is now bounded
