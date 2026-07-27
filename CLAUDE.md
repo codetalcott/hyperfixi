@@ -329,7 +329,7 @@ the committed baseline:
   lowest R1 languages are now th/ms/de/fr ≈ 0.985 — the remaining headroom is
   thin and flat).
 
-> **Figures snapshot:** as of the **2026-07-11** baseline (`c5c884cc`). They drift as work lands
+> **Figures snapshot:** as of the **2026-07-27** baseline (`77f9c2bc`). They drift as work lands
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,
@@ -410,8 +410,9 @@ yields a 0 delta):
    parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
    triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
    standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
-   disagree; the en-side twin (`canonical-validity.test.ts`, allowlist of exactly 1:
-   `pick-text-range`) remains vitest-only.
+   disagree; the en-side twin (`canonical-validity.test.ts`) remains vitest-only, and
+   its allowlist is now **empty** — 134/134 corpus references render canonically
+   valid. (It formerly held one entry, `pick-text-range`.)
 
 10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
     longer parses at all, at **tolerance 0**. Not redundant with signal 1: every

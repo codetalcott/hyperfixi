@@ -19,6 +19,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { hyperscript } from './hyperscript-api';
+import { parse } from '../parser/parser';
 
 /** Malformed, recovered by the parser, and rejected by upstream _hyperscript. */
 const RECOVERED = 'put 1 2 3 into';
@@ -70,5 +71,71 @@ describe('compile() keeps executing what it always executed', () => {
     const result = hyperscript.compileSync(FATAL);
     expect(result.ok).toBe(false);
     expect(result.ast).toBeUndefined();
+  });
+});
+
+/**
+ * `success` answers "is there an AST?", never "was the input valid?". That is
+ * intentional — every execute path wants the former — but the name reads like
+ * the latter, and nothing on the result said otherwise. `recovered` is the
+ * missing signal, set in the one place `errors` is attached so it cannot drift.
+ */
+describe('ParseResult.recovered marks a degraded AST', () => {
+  it('is true, alongside success, when the parser recovered', () => {
+    const result = parse(RECOVERED);
+    expect(result.success).toBe(true); // an AST exists...
+    expect(result.recovered).toBe(true); // ...but it is degraded
+    expect(result.errors?.length).toBeGreaterThan(0);
+  });
+
+  it('is absent for a clean parse', () => {
+    const result = parse('toggle .active');
+    expect(result.success).toBe(true);
+    expect(result.recovered).toBeUndefined();
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('tracks errors exactly — never set without them, never omitted with them', () => {
+    // The invariant that makes `recovered` safe to trust: it is derived from
+    // the same array in the same statement, so no parse can disagree.
+    for (const source of [RECOVERED, FATAL, 'toggle .active', 'on click add .x to me']) {
+      const result = parse(source);
+      expect(Boolean(result.recovered)).toBe((result.errors?.length ?? 0) > 0);
+    }
+  });
+
+  it('reports the singular `error` as undefined on a recovered parse', () => {
+    // This asymmetry is the root cause, not an incidental detail: recovery
+    // paths restore `this.error` but never unwind `this.errors`. Anything
+    // reading only `error` therefore sees a clean parse — which is exactly the
+    // bug fixed in the classic compile shim below.
+    const result = parse(RECOVERED);
+    expect(result.error).toBeUndefined();
+    expect(result.errors?.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The classic-i18n bundle ships its own `compile()` shim for _hyperscript API
+ * compatibility. It read the singular `error` and dropped `errors`, so it
+ * reported `{ success: true, errors: [] }` for genuinely malformed input —
+ * #780's defect, surviving in a second surface. Demo pages consume it
+ * (examples/animation/color-cycling-debug.html, test-classic-i18n.html).
+ */
+describe('classic-i18n compile() shim reports recovered errors', () => {
+  it('does not claim a clean compile for a recovered parse', async () => {
+    const api = (await import('../compatibility/browser-bundle-classic-i18n')).default;
+    const result = api.compile(RECOVERED);
+    // `success` stays true — the shim mirrors ParseResult, and the AST is
+    // still what the runtime has always run. The diagnostics must be there.
+    expect(result.success).toBe(true);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it('still reports no errors for a clean parse', async () => {
+    const api = (await import('../compatibility/browser-bundle-classic-i18n')).default;
+    const result = api.compile('toggle .active');
+    expect(result.success).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 });

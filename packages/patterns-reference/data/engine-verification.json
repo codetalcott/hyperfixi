@@ -1,11 +1,11 @@
 {
   "meta": {
     "bar": {
-      "lokascript": "compileSync(code).ok via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)",
+      "lokascript": "compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)",
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
       "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
     },
-    "lokascriptVersion": "2.6.0",
+    "lokascriptVersion": "2.9.1",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -129,7 +129,7 @@
     "send-event-to-form": "both",
     "send-with-detail": "both",
     "set-attribute": "both",
-    "set-color-variable": "lokascript",
+    "set-color-variable": "both",
     "set-inner-html-possessive-dot": "both",
     "set-opacity": "both",
     "set-style": "both",
@@ -677,8 +677,7 @@
     },
     "set-color-variable": {
       "lokascript": true,
-      "hyperscript": false,
-      "hyperscriptError": "Unexpected value: *"
+      "hyperscript": true
     },
     "set-inner-html-possessive-dot": {
       "lokascript": true,

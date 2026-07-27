@@ -5,13 +5,20 @@
  * engines and records which accept it:
  *
  *   - `lokascript` — @hyperfixi/core (this repo). Bar: `compileSync(code).ok`
- *     (the exact call the browser `_=` attribute path makes, so "compiles"
- *     here means "the shipped hyperfixi.js bundle would accept it"), PLUS an
- *     install smoke: the compiled AST executes top-level in jsdom (event
- *     handlers register, init blocks run) without a synchronous error inside
- *     a short settle window. The @hyperfixi/reactivity plugin is installed
- *     first — it is part of the shipped ecosystem and registers the
- *     `live`/`when`/`bind`/`$var`/caret-var syntax.
+ *     with ZERO recovered errors (the exact call the browser `_=` attribute
+ *     path makes, so "compiles" here means "the shipped hyperfixi.js bundle
+ *     would accept it"), PLUS an install smoke: the compiled AST executes
+ *     top-level in jsdom (event handlers register, init blocks run) without a
+ *     synchronous error inside a short settle window. The @hyperfixi/reactivity
+ *     plugin is installed first — it is part of the shipped ecosystem and
+ *     registers the `live`/`when`/`bind`/`$var`/caret-var syntax.
+ *
+ *     The "zero recovered errors" half matters: the parser is resilient, so
+ *     `ok` stays true for input it recovered from (that is deliberate — see
+ *     ParseResult.success). Gating on `ok` alone therefore stamped
+ *     `lokascript` on patterns hyperfixi does not cleanly accept either,
+ *     which is how `set-color-variable` (`*--primary-color`, rejected by BOTH
+ *     engines) carried a lokascript verdict. Both legs now use the same bar.
  *   - `hyperscript` — upstream _hyperscript (hyperscript.org, pinned in
  *     devDependencies) with its official socket/worker/eventsource
  *     extensions loaded. Bar: `_hyperscript.parse(code)` reports zero parse
@@ -47,6 +54,7 @@
 
 import { JSDOM } from 'jsdom';
 import Database from 'better-sqlite3';
+import { extractHyperscriptFromMarkup, type MarkupSnippets } from '../src/html-snippets';
 import { writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -57,9 +65,6 @@ const PKG_ROOT = join(__dirname, '..');
 const DB_PATH = join(PKG_ROOT, 'data', 'patterns.db');
 const OUT_PATH = join(PKG_ROOT, 'data', 'engine-verification.json');
 const require_ = createRequire(import.meta.url);
-
-/** Attribute prefixes that only the hyperfixi htmx-compat layer implements. */
-const HYPERFIXI_ONLY_ATTR_PREFIXES = ['hx-live', 'sse-', 'ws-'];
 
 /** Settle window for the lokascript install smoke (ms). */
 const INSTALL_SETTLE_MS = 500;
@@ -171,42 +176,14 @@ function installDomGlobals(): JSDOM {
   return dom;
 }
 
-/** Extract verifiable hyperscript snippets from an HTML-markup pattern. */
-function extractSnippets(dom: JSDOM, markup: string): { snippets: string[]; hyperfixiOnly: boolean } {
-  const container = dom.window.document.createElement('div');
-  container.innerHTML = markup;
-  const snippets: string[] = [];
-  let hyperfixiOnly = false;
-
-  for (const el of container.querySelectorAll('*')) {
-    for (const attr of el.attributes) {
-      if (attr.name === '_' && attr.value.trim()) {
-        snippets.push(attr.value);
-      }
-      // hx-live values ARE hyperscript (the htmx-compat layer compiles them),
-      // so verify them like `_=` snippets. The other hyperfixi-only attribute
-      // values (sse-connect URLs, sse-swap event names, ws-connect URLs) are
-      // not hyperscript and carry no snippet to verify.
-      if (attr.name === 'hx-live' && attr.value.trim()) {
-        snippets.push(attr.value);
-      }
-      if (HYPERFIXI_ONLY_ATTR_PREFIXES.some(p => attr.name.startsWith(p))) {
-        hyperfixiOnly = true;
-      }
-    }
-    if (
-      el.tagName === 'SCRIPT' &&
-      (el.getAttribute('type') === 'text/hyperscript' ||
-        el.getAttribute('type') === 'text/hyperscript-template')
-    ) {
-      if (el.getAttribute('type') === 'text/hyperscript-template') {
-        hyperfixiOnly = true;
-      } else if (el.textContent?.trim()) {
-        snippets.push(el.textContent);
-      }
-    }
-  }
-  return { snippets, hyperfixiOnly };
+/**
+ * Extract verifiable hyperscript snippets from an HTML-markup pattern.
+ *
+ * Delegates to the shared extractor so this harness and the testing-framework's
+ * shipped-sources gate cannot drift on what counts as a live source.
+ */
+function extractSnippets(dom: JSDOM, markup: string): MarkupSnippets {
+  return extractHyperscriptFromMarkup(dom.window.document, markup);
 }
 
 async function main(): Promise<void> {
@@ -258,7 +235,9 @@ async function main(): Promise<void> {
 
   const verifyLokascriptSnippet = async (code: string): Promise<string | null> => {
     const compiled = hyperscript.compileSync(code);
-    if (!compiled.ok) {
+    // Symmetric with the upstream leg's `errors.length === 0`. `ok` alone is
+    // "is there a runnable AST?", which stays true for a recovered parse.
+    if (!compiled.ok || compiled.errors?.length) {
       return compiled.errors?.[0]?.message ?? 'compile failed';
     }
     // Install smoke: top-level execute must not fail synchronously or within
@@ -384,7 +363,7 @@ async function main(): Promise<void> {
     meta: {
       bar: {
         lokascript:
-          'compileSync(code).ok via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)',
+          'compileSync(code).ok with zero recovered errors via @hyperfixi/core (same call as the browser _= path), with @hyperfixi/reactivity and @hyperfixi/realtime installed (both ship pre-installed in hyperfixi.js), plus a jsdom top-level install smoke (no error within 500ms settle window)',
         hyperscript: `upstream _hyperscript parse with zero recovered errors (extensions loaded: ${upstreamExtensions.join(', ') || 'none'}); parse-level only`,
         html: 'HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim',
       },

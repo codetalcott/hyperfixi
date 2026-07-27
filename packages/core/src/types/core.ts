@@ -48,12 +48,7 @@ export type ElementType = 'command' | 'expression' | 'feature' | 'keyword' | 'sp
 export type ElementStatus = 'Draft' | 'Review' | 'Approved' | 'Deprecated';
 
 export type ExpressionCategory =
-  | 'Arithmetic'
-  | 'Logical'
-  | 'Comparison'
-  | 'Reference'
-  | 'Conversion'
-  | 'Special';
+  'Arithmetic' | 'Logical' | 'Comparison' | 'Reference' | 'Conversion' | 'Special';
 
 export type Associativity = 'Left' | 'Right' | 'None';
 
@@ -269,11 +264,32 @@ export interface ParseWarning {
 }
 
 export interface ParseResult<T = ASTNode> {
+  /**
+   * An AST was produced — **not** a validity claim.
+   *
+   * The parser is deliberately resilient: it recovers from some malformed
+   * input and returns a usable-but-degraded AST *plus* diagnostics. Such a
+   * parse is `success: true` with a non-empty `errors`. Callers that want
+   * "is this runnable?" should read this flag (that is what every execute
+   * path does); callers that want "is this correct?" must check `recovered`
+   * or `errors.length === 0`.
+   */
   success: boolean;
   node?: T;
   ast?: T; // Alias for node - some code uses ast instead of node
   error?: ParseError;
   errors?: ParseError[]; // All accumulated errors (resilient parsing)
+  /**
+   * The parse recovered from at least one error, so `node` is degraded.
+   * Mirrors `errors.length > 0`, and is set in `Parser.parse()` — the single
+   * place `errors` is attached — so the two cannot drift apart.
+   *
+   * Exists because `success` alone cannot express the difference: the parser's
+   * recovery paths restore the singular `this.error` but never unwind the
+   * push onto `this.errors`, which is exactly how a recovered parse ends up
+   * reporting `success: true`.
+   */
+  recovered?: boolean;
   warnings?: ParseWarning[];
   tokens: Token[];
 }

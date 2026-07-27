@@ -892,9 +892,21 @@ const SEED_EXAMPLES: SeedExample[] = [
   },
   {
     id: 'set-color-variable',
-    title: 'Set CSS Variable',
-    raw_code: 'on click set the *--primary-color of #theme to "#ff6600"',
-    description: 'Set a CSS custom property',
+    title: 'Set Style Property on Another Element',
+    // NOTE: this row used to be `set the *--primary-color of #theme to …`.
+    // The `*` style prefix does NOT extend to CSS custom properties in either
+    // engine (upstream: "Unexpected value: *"; hyperfixi recovered with 2
+    // errors, making it the corpus's only recovers-with-errors row). Plain
+    // style properties in the same `of`-possessive form are accepted by both.
+    // Do not restore the `--var` form without implementing support first.
+    //
+    // The `of`-possessive is why this row is kept rather than rewritten to
+    // `call #theme.style.setProperty(…)`: it is the corpus's only exerciser of
+    // the SELECTOR-head branch of tryMatchOfPossessiveExpression
+    // (semantic/src/parser/pattern-matcher.ts), and pattern-matcher.ts names
+    // set-color-variable when justifying its `source`-only marker gating.
+    raw_code: 'on click set the *background-color of #theme to "#ff6600"',
+    description: 'Set a style property on a different element via the of-possessive',
     feature: 'css-styles',
   },
   {

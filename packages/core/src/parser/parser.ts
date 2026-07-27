@@ -258,9 +258,17 @@ export class Parser {
     // Clear Pratt expression cache for this parse
     this.prattCache.clear();
     const result = this.parseInternal();
-    // Attach accumulated errors for resilient parsing
+    // Attach accumulated errors for resilient parsing.
+    //
+    // This is the ONE place both facts are in hand, which is why `recovered`
+    // is set here rather than at the `parseInternal()` return literals: those
+    // never see `this.errors`, so a per-literal flag would drift. `success`
+    // is derived from the singular `this.error`, which recovery paths restore
+    // (see parseCommandWithErrorRecovery) without unwinding this array — so a
+    // recovered parse is `success: true` with a non-empty `errors`.
     if (this.errors.length > 0) {
       result.errors = [...this.errors];
+      result.recovered = true;
     }
     return result;
   }
