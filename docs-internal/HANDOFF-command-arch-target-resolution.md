@@ -7,10 +7,12 @@
 > `commands/helpers/attribute-target.ts` and reused `property-target.ts`; both
 > are now shared by set/append/prepend.
 >
-> **Status: all three steps implemented (2026-07-28).** Step 1 merged (#796);
-> steps 2 (#797) and 3 landed behind it. See the Status log at the bottom for
-> per-step outcomes and the two decisions this arc had to record. When the arc
-> completes, add one History line to the queue doc and stop updating this file.
+> **Status: COMPLETE (2026-07-28).** All three steps merged sequentially into
+> main — #796 (step 1), #797 (step 2), #798 (step 3). The queue doc carries the
+> arc's History line; **this file is now a record, not a plan — stop updating
+> it.** Read the Status log at the bottom for per-step outcomes, the two
+> decisions the arc had to record, and the one follow-up it deliberately left
+> open (the `toElementListFiltered`/`toElementListStrict` divergence).
 
 ## Objective
 
@@ -228,11 +230,21 @@ and both coercions).
   merging the tails — set's evaluated-value tail (object literal, "the X of Y"
   string, CSS shorthand, possessive string, element, element array) has no
   counterpart in insertion-base and stayed in set.
-- 2026-07-28 — **step 3 implemented** (branched on #797; rebase onto main once
-  that merges). Two decisions recorded above: the Arc C pairing (landed alone,
-  tests are C's ratchet) and the `toElementListFiltered`/`toElementListStrict`
-  divergence (preserved and documented rather than unified — see the CORRECTION
-  under step 3's anchors).
+- 2026-07-28 — **step 3 merged (#798)**, full CI green including the ten-signal
+  multilingual ratchet. Two decisions recorded above: the Arc C pairing (landed
+  alone; the shape tests are C's ratchet) and the
+  `toElementListFiltered`/`toElementListStrict` divergence (preserved and
+  documented rather than unified — see the CORRECTION under step 3's anchors).
+  Step 3 also added `parser/__tests__/selector-shape.test.ts`, which the gate
+  table's "sync and async" wording asks for and the rule-level unit tests do not
+  give: each case evaluates one source string through BOTH evaluator entry
+  points and asserts the halves agree *before* checking the shape, so un-wiring
+  either caller fails even if the surviving copy is still correct.
+- 2026-07-28 — **arc complete.** Net effect: put.ts −46 lines, insertion-base.ts
+  −29, set.ts −4, with the shared rules now in `write-target.ts` (136) and
+  `target-elements.ts` (140). Core suite 7702 → 7738 tests, every increment a
+  NEW test rather than a changed one (11 rung-order + 20 shape/coercion + 5
+  sync-vs-async wiring).
 - **Open follow-up left by this arc:** decide whether put's and append/prepend's
   element-list coercions should agree. It is the only Arc D item deliberately
   not closed, it is a behavior decision rather than a refactor, and both
