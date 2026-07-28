@@ -283,7 +283,7 @@ not the core abstractions.
     Verified: `unless false then add .ran to #probe end` adds nothing.
     `unless.test.ts` is green because it feeds **mocks carrying `.execute()`** —
     a shape the parser never produces. **A live bug in a shipped, documented
-    command**; it wants its own PR, not a slot inside step 2. **FIXED in #804**
+    command**; it wants its own PR, not a slot inside step 2. **FIXED in #805**
     (same day): unless now takes the parser's block node exactly as `if` does,
     the executor fall-throughs that returned bodies unexecuted now execute, and
     the end-to-end describe in `unless.test.ts` is the regression gate. The

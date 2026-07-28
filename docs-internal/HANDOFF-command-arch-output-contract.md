@@ -262,7 +262,7 @@ Every `defect:` row from the step-1 audit, with its step-2 action:
 | `push` / `replace` | not upstream (extension) | `null` | **none** |
 | `settle` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
 | `transition` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
-| `unless` | not upstream (extension) | ~~AST node~~ | **FIXED** (#804) — now `null`/Event, matching `if` |
+| `unless` | not upstream (extension) | ~~AST node~~ | **FIXED** (#805) — now `null`/Event, matching `if` |
 
 For all fourteen "none" rows the handler column is wrong and the sequence column
 is right, so **deleting the loop in step 3 converges them onto the correct value
@@ -275,7 +275,7 @@ touched every one of these.
 The audit's `null` is that element path, and it matches upstream. Not an
 inconsistency.
 
-#### The one fix: `unless` — DONE (#804)
+#### The one fix: `unless` — DONE (#805)
 
 > Landed 2026-07-28 as its own PR, per the recommendation below. The fix:
 > `parseInput` takes `raw.args[1]` (the parser's block node) exactly as `if`
@@ -490,7 +490,7 @@ commands. If it does, something out of scope was touched.
     of the arc, with a test that goes through the real parser.
   - Two genuine judgment calls left open and named: `settle` and `transition`
     self-assign the element where upstream sets nothing.
-- 2026-07-28 — **`unless` fix merged (#804)**, as its own PR ahead of the arc per
+- 2026-07-28 — **`unless` fix merged (#805)**, as its own PR ahead of the arc per
   the recommendation above. Body now executes on every surface form (then/end,
   bare, multi-command, in-handler); the unless-only `it` self-assign is gone;
   the executor's silent return-the-body-unexecuted fallthroughs now execute
