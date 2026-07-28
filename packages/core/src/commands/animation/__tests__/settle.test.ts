@@ -326,14 +326,18 @@ describe('SettleCommand (Standalone V2)', () => {
       expect(result.element).toBe(element);
     });
 
-    it('should set context.it to the target element', async () => {
+    it('leaves context.it untouched — upstream parity', async () => {
+      // DELIBERATE CHANGE (Arc C close-out). Upstream's settle sets no result;
+      // the self-assign this replaced was a silent divergence, and the element
+      // is re-nameable one clause later (`settle #x then add .done to #x`).
+      // The settled element still surfaces on the command output.
       const context = createMockContext();
-      const element = context.me as HTMLElement;
 
       expect(context.it).toBeUndefined();
-      await command.execute({}, context);
+      const result = await command.execute({}, context);
 
-      expect(context.it).toBe(element);
+      expect(result.element).toBe(context.me);
+      expect(context.it).toBeUndefined();
     });
 
     it('should use default timeout of 5000ms when not specified', async () => {
@@ -367,7 +371,7 @@ describe('SettleCommand (Standalone V2)', () => {
         const result = await command.execute({ target: '#settle-target' }, context);
 
         expect(result.element).toBe(targetEl);
-        expect(context.it).toBe(targetEl);
+        expect(context.it).toBeUndefined(); // no self-assign — upstream parity
       } finally {
         document.body.removeChild(targetEl);
       }
@@ -438,7 +442,7 @@ describe('SettleCommand (Standalone V2)', () => {
       expect(result.element).toBe(meEl);
       expect(result.settled).toBe(true);
       expect(result.timeout).toBe(5000);
-      expect(context.it).toBe(meEl);
+      expect(context.it).toBeUndefined(); // no self-assign — upstream parity
     });
 
     it('should settle on specified target with custom timeout', async () => {
@@ -466,7 +470,7 @@ describe('SettleCommand (Standalone V2)', () => {
         expect(result.element).toBe(targetEl);
         expect(result.settled).toBe(true);
         expect(result.timeout).toBe(2500);
-        expect(context.it).toBe(targetEl);
+        expect(context.it).toBeUndefined(); // no self-assign — upstream parity
         expect(waitForAnimationComplete).toHaveBeenCalledWith(
           targetEl,
           300, // from default mocked getComputedStyle (0.3s)

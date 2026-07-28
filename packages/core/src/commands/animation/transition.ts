@@ -163,8 +163,7 @@ export class TransitionCommand implements DecoratedCommand {
       targetElement.style.removeProperty(property);
     }
 
-    Object.assign(context, { it: targetElement });
-
+    // No `it` assignment — upstream parity; same reasoning as settle.ts.
     return {
       element: targetElement,
       property,

@@ -122,7 +122,12 @@ export class SettleCommand implements DecoratedCommand {
     const result = await waitForAnimationComplete(targetElement, totalAnimationTime, timeout);
     const duration = Date.now() - startTime;
 
-    Object.assign(context, { it: targetElement });
+    // No `it` assignment — upstream parity. Upstream's settle sets no result,
+    // and the element was explicitly named one clause earlier (`settle #x then
+    // add .done to #x`, or `tell #x`). The self-assign this replaces was a
+    // silent divergence: hyperfixi-only chains like `settle #x then … it` would
+    // break on the canonical engine. Decided in Arc C's close-out — see
+    // docs-internal/HANDOFF-command-arch-output-contract.md.
     return { element: targetElement, settled: result.completed, timeout, duration };
   }
 }
