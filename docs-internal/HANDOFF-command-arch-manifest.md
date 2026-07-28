@@ -7,7 +7,9 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: BRIEF WRITTEN, ARC NOT STARTED.** Next action: step 1 PR.
+> **Status: PRE-ARC GHOST FIX LANDED (Finding 5); ARC STEPS NOT STARTED.**
+> Next action: step 1 PR. Baseline for step 1 is **7800**, not 7795 — the ghost
+> fix added five tests.
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -135,9 +137,23 @@ queue's claim holds.
 the LSP tier lists. A command exported, referenced, and counted but **never
 registered** passes `verify:reference` clean. Its scope is 3 of the ~20 places.
 
-### Finding 5 — a new ghost class, in a list the queue does not name
+### Finding 5 — a new ghost class, in a list the queue does not name — **FIXED**
 
-`lsp-metadata.ts` `COMMAND_KEYWORDS` advertises **`pushUrl`** and
+> **Landed as the standalone pre-arc PR** (branch
+> `fix/lsp-metadata-url-command-ghosts`), the way `unless` landed ahead of Arc C.
+> The two entries became `'push'` / `'replace'` — a **rename, not a deletion**:
+> deleting would have dropped LSP completions for a real shipped command and
+> then re-added them at step 4.3. Because the rename also fills two of the six
+> gaps below, **step 4.3's gap count is now 4**, not 6.
+>
+> The PR also added `packages/core/src/lsp-metadata.test.ts` — a **bidirectional**
+> gate, since writing another one-directional ghost test would have reproduced
+> the exact defect Claim 3 documents. Mutation-verified both ways: re-introducing
+> `pushUrl` fails it, and dropping `toggle` fails it (the direction
+> `capability-ghosts` and `command-tiers` cannot see). Step 1's audit should
+> absorb it.
+
+`lsp-metadata.ts` `COMMAND_KEYWORDS` advertised **`pushUrl`** and
 **`replaceUrl`**. Neither parses:
 
 ```text
@@ -146,16 +162,12 @@ REJECTS  replaceUrl "/x"     PARSES  replace url "/x"
 ```
 
 This is precisely the `transfer` class that motivated `command-tiers.test.ts`,
-alive in a sibling list that has **no ghost test**. `COMMAND_KEYWORDS` feeds
+alive in a sibling list that had **no ghost test**. `COMMAND_KEYWORDS` feeds
 `ALL_KEYWORDS` (`lsp-metadata.ts:212`), which `language-server/src/server.ts:1544`
-uses as its canonical keyword list — so the LSP offers two completions the engine
+uses as its canonical keyword list — so the LSP offered two completions the engine
 rejects. Six registered commands (`process`, `pseudo-command`, `push`, `replace`,
-`scroll`, `start`) are missing from the same list.
-
-**Recommend fixing the two ghosts as their own small PR ahead of the arc**, the
-way `unless` was landed ahead of Arc C: it is a live LSP defect that is only
-incidentally Arc A's, and the arc's audit will otherwise carry it as a red row
-for several PRs.
+`scroll`, `start`) were missing from the same list; **`push` and `replace` are now
+present**, leaving `process`, `pseudo-command`, `scroll`, `start`.
 
 ### Finding 6 — registration already mutates the parser's command set
 
@@ -340,8 +352,11 @@ step-1 audit rows so the diff is the review artifact:
    `_hyperscript` checkout — the Arc C step-2 oracle.
 2. **template-capabilities** (12 unclassified; latent). Also decide the
    `COMMAND_IMPLEMENTATIONS` second-list overlap.
-3. **`COMMAND_KEYWORDS`** (6 gaps) — assuming the two ghosts already landed
-   separately per Finding 5.
+3. **`COMMAND_KEYWORDS`** (**4** gaps — `process`, `pseudo-command`, `scroll`,
+   `start`; the two ghosts landed separately per Finding 5, and that rename
+   closed `push`/`replace`). The gaps are already an explicit `KEYWORD_GAPS`
+   allowlist in `lsp-metadata.test.ts` with a stale-entry check, so closing one
+   means deleting its line there — fold that gate into step 1's audit.
 4. **`packageInfo.commands`** as a derived value; fix the drifted "48/58/59"
    docstrings (`runtime/runtime.ts` has "48 commands" in **six** places, plus
    undercounting per-category group comments — e.g. "DOM Commands (11)" above 15
@@ -358,7 +373,7 @@ step-1 audit rows so the diff is the review artifact:
 
 | Step | Suites | Command |
 | ---- | ------ | ------- |
-| all | quick validation (baseline **7795**) | `npm run test:quick --prefix packages/core` |
+| all | quick validation (baseline **7800**; was 7795 before the Finding 5 fix) | `npm run test:quick --prefix packages/core` |
 | all | the reference gate | `npm run verify:reference --prefix packages/core` |
 | 1 | the new audit test itself | added in the step-1 PR |
 | 2, 3 | bundle size — the tree-shaking guard | `npm run bundle-size` (`--check`, ±5% vs `baseline.json`) |
@@ -443,3 +458,15 @@ was touched.
   (177 B vs 38,395 B). All run against `b69bc035` with a clean tree and reverted.
   Next action: the `pushUrl`/`replaceUrl` ghost fix as a standalone PR
   (Finding 5), then step 1.
+- 2026-07-28 — **Finding 5 ghost fix landed** (branch
+  `fix/lsp-metadata-url-command-ghosts`, off `d6e3ba18`). `COMMAND_KEYWORDS`'
+  `pushUrl`/`replaceUrl` → `push`/`replace`; new bidirectional gate
+  `packages/core/src/lsp-metadata.test.ts` (5 tests). Re-verified the ghost by
+  probe before touching anything (`push url "/x"` parses, `pushUrl "/x"` does
+  not; registry = 59, has `push`+`replace`, not `pushUrl`/`replaceUrl`), and
+  mutation-verified the new gate in both directions. Gates: core 7800 passing /
+  128 skipped / 300 files, `verify:reference` clean (59 = 59), `typecheck`
+  clean, `test:check` exit 0 across all packages, language-server 223 passing
+  against the rebuilt core dist. Two knock-on edits to this brief: step 4.3 is
+  now **4** gaps not 6, and the step baseline is 7800.
+  Next action: step 1 (the audit-as-gate).
