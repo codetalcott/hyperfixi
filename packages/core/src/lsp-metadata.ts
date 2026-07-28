@@ -51,8 +51,14 @@ export const COMMAND_KEYWORDS = [
 
   // Navigation Commands
   'go',
-  'pushUrl',
-  'replaceUrl',
+  // The registered command names are `push` and `replace` (one HistoryCommand,
+  // registered as 'push' with a 'replace' alias). The camelCase `pushUrl` /
+  // `replaceUrl` spellings that used to sit here were ghosts: the engine
+  // rejects them, only `push url <url>` / `replace url <url>` parse. This list
+  // feeds ALL_KEYWORDS, which the language server uses as its canonical keyword
+  // list, so the LSP was offering two completions nothing accepts.
+  'push',
+  'replace',
 
   // Control Flow Commands
   'if',
