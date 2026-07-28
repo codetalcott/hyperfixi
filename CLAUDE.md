@@ -531,10 +531,17 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
 > the doc exists. `docs-internal/PARSER_FIX_STATUS.md` is an **archived**
 > single-defect report, not an index, despite its name.
+>
+> **Structural work on the command layer** — registration, metadata, output
+> contracts, bundle executors — has its own queue in
+> `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`. Read it before adding,
+> removing, or restructuring a command surface: the command set is currently
+> described in ~20 hand-maintained places and executed in 4 implementations, and
+> that doc holds the staged plan for collapsing both.
 
 ### Command Pattern
 
-All 58 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
+All 59 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts
