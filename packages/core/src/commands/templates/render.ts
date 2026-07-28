@@ -575,9 +575,11 @@ export class RenderCommand {
 
     // Check context properties
     if (name === 'me') return context.me;
-    if (name === 'it') return context.it;
+    // `it`/`result` are one slot resolved through either name — see the note in
+    // parser/runtime.ts's resolveVariable.
+    if (name === 'it') return context.it ?? context.result;
     if (name === 'you') return context.you;
-    if (name === 'result') return context.result;
+    if (name === 'result') return context.result ?? context.it;
 
     // Check globals
     if (context.globals?.has(name)) {
