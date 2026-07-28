@@ -32,6 +32,7 @@ export interface MultiWordPattern {
  */
 export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
   { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
+  { command: 'prepend', keywords: ['to'], syntax: 'prepend <value> [to <target>]' },
   {
     command: 'make',
     keywords: ['a', 'an', 'from', 'called'],

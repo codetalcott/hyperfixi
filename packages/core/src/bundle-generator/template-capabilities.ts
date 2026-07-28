@@ -19,6 +19,7 @@ export const AVAILABLE_COMMANDS = [
   'hide',
   'put',
   'append',
+  'prepend',
   'take',
   'empty',
   // Data/variables

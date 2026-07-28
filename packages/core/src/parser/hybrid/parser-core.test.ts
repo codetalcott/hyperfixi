@@ -701,6 +701,22 @@ describe('HybridParser', () => {
     });
   });
 
+  describe('prepend command', () => {
+    it('should parse prepend with target', () => {
+      const ast = parse('prepend "text" to #list');
+      const cmd = ast.commands[0];
+      expect(cmd.name).toBe('prepend');
+      expect(cmd.target).toBeDefined();
+    });
+
+    it('should parse prepend without target', () => {
+      const ast = parse('prepend "text"');
+      const cmd = ast.commands[0];
+      expect(cmd.name).toBe('prepend');
+      expect(cmd.target).toBeUndefined();
+    });
+  });
+
   describe('halt command', () => {
     it('should parse bare halt', () => {
       const ast = parse('halt');

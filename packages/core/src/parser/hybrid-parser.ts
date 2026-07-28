@@ -49,6 +49,7 @@ class HybridParserImpl implements ParserInterface {
     'remove',
     'put',
     'append',
+    'prepend',
     'set',
     'get',
     'call',

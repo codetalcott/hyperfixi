@@ -89,6 +89,7 @@ import { createBlurCommand } from '../commands/execution/blur';
 
 // Content Commands (1)
 import { createAppendCommand } from '../commands/content/append';
+import { createPrependCommand } from '../commands/content/prepend';
 
 // Animation Commands (4)
 import { createTransitionCommand } from '../commands/animation/transition';
@@ -174,8 +175,9 @@ const SUPPORTED_COMMANDS = [
   // Execution (2)
   'call',
   'pseudo-command',
-  // Content (1)
+  // Content (2)
   'append',
+  'prepend',
   // Animation (4)
   'transition',
   'measure',
@@ -258,8 +260,9 @@ const runtime = createTreeShakeableRuntime(
     createPseudoCommand(),
     createFocusCommand(),
     createBlurCommand(),
-    // Content (1)
+    // Content (2)
     createAppendCommand(),
+    createPrependCommand(),
     // Animation (4)
     createTransitionCommand(),
     createMeasureCommand(),

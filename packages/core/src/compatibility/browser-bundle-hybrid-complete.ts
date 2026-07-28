@@ -408,10 +408,12 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return content;
     }
 
-    case 'append': {
+    case 'append':
+    case 'prepend': {
       const content = await evaluate(cmd.args[0], ctx);
       const targets = await getTarget();
-      for (const el of targets) el.insertAdjacentHTML('beforeend', String(content));
+      const where = cmd.name === 'append' ? 'beforeend' : 'afterbegin';
+      for (const el of targets) el.insertAdjacentHTML(where, String(content));
       ctx.it = content;
       return content;
     }
@@ -924,6 +926,7 @@ const api = {
     'remove',
     'put',
     'append',
+    'prepend',
     'set',
     'get',
     'call',

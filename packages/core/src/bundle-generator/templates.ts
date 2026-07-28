@@ -259,6 +259,15 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return content;
     }`,
 
+  prepend: `
+    case 'prepend': {
+      const content = await evaluate(cmd.args[0], ctx);
+      const targets = await getTarget();
+      for (const el of targets) el.insertAdjacentHTML('afterbegin', String(content));
+      ctx.it = content;
+      return content;
+    }`,
+
   morph: `
     case 'morph': {
       const targets = await getTarget();
