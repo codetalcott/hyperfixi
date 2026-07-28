@@ -223,12 +223,21 @@ const AUDIT: Record<string, AuditRow> = {
 
   // ---- the rows that prove the point: each command had ALREADY assigned `it`
   // correctly, and the propagation loop overwrote it with the wrapper. Deleting
-  // the loop makes both paths agree on the value the command itself chose —
-  // no per-command change was needed for any of them.
-  settle: { snippet: 'settle #probe', sequence: '<DIV>', handler: '<DIV>' },
+  // the loop made both paths agree on the value the command itself chose.
+  // These two stay self-assigning because UPSTREAM sets `result` for them —
+  // the rule is "a command sets `it` iff upstream sets `result`".
   pick: { snippet: 'pick first 1 of ["a","b"]', sequence: 'Array(1)', handler: 'Array(1)' },
   render: { snippet: 'render #tpl', sequence: '<DIV>', handler: '<DIV>' },
-  transition: { snippet: 'transition opacity to 0.5', sequence: '<DIV>', handler: '<DIV>' },
+
+  // ---- settle and transition joined the void family in the Arc C close-out:
+  // they used to self-assign the target element, but upstream sets NO result
+  // for either, making that a silent divergence (hyperfixi-only chains like
+  // `settle #x then … it` would break on the canonical engine). The self-assigns
+  // were removed while the both-paths-agree state was still unreleased — the
+  // only moment the removal was free. The element still surfaces on each
+  // command's output, and was explicitly named one clause earlier anyway.
+  settle: { snippet: 'settle #probe', sequence: 'null', handler: 'Event' },
+  transition: { snippet: 'transition opacity to 0.5', sequence: 'null', handler: 'Event' },
 
   // ---- unless: fixed. This audit originally recorded an AST node in `it` on
   // BOTH paths; tracing it found the body never executed at all (parseInput
@@ -300,23 +309,23 @@ describe('the `it` contract, per command, per execution path', () => {
     });
   }
 
-  it('the two paths disagree for 26 of the 45 exercised commands', () => {
+  it('the two paths disagree for 28 of the 45 exercised commands', () => {
     // The headline number, asserted so a change cannot move it silently.
     //
-    // 29 when the audit landed → 30 after the unless fix → **26** after step 3
-    // deleted the propagation loop. The four that converged are settle, pick,
-    // render and transition: each had already assigned `it` correctly and the
-    // loop was overwriting it with a wrapper, so removing the loop made both
-    // paths agree on the command's own value — with no per-command change.
+    // 29 when the audit landed → 30 after the unless fix → 26 after step 3
+    // deleted the propagation loop → **28** after the close-out removed
+    // settle/transition's self-assigns (upstream parity), moving them into the
+    // initial-value family below.
     //
-    // The 26 that remain are ALL the initial-value divergence, which is this
-    // arc's declared non-goal: neither mechanism fires for a void command, so
-    // `it` keeps what the context was built with — `null` for a sequence, the
-    // DOM event inside a handler (runtime-base.ts). Closing that gap is a
-    // context-construction question, not a command-output one. Nothing left
-    // here is a wrapper leak.
+    // The 28 are ALL the initial-value divergence, which is this arc's
+    // declared non-goal: nothing sets `it` for these commands, so it keeps
+    // what the context was built with — `null` for a sequence, the DOM event
+    // inside a handler (runtime-base.ts). Closing that gap is a
+    // context-construction question, not a command-output one. Nothing here
+    // is a wrapper leak; a NEW disagreement of any other kind means a second
+    // propagation mechanism has grown back.
     const disagreeing = Object.entries(AUDIT).filter(([, r]) => r.sequence !== r.handler);
-    expect(disagreeing).toHaveLength(26);
+    expect(disagreeing).toHaveLength(28);
   });
 
   it('has no known-wrong rows left', () => {

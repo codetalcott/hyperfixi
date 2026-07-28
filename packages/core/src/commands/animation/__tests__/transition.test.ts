@@ -396,15 +396,19 @@ describe('TransitionCommand (Standalone V2)', () => {
   // ====================================================================
 
   describe('execute - context', () => {
-    it('should set context.it to the resolved element', async () => {
+    it('leaves context.it untouched — upstream parity', async () => {
+      // DELIBERATE CHANGE (Arc C close-out). Upstream's transition sets no
+      // result; same reasoning as settle. The element still surfaces on the
+      // command output.
       const context = createMockContext();
       const element = context.me as HTMLElement;
 
       expect(context.it).toBeUndefined();
 
-      await command.execute({ property: 'opacity', value: '1' }, context);
+      const result = await command.execute({ property: 'opacity', value: '1' }, context);
 
-      expect(context.it).toBe(element);
+      expect(result.element).toBe(element);
+      expect(context.it).toBeUndefined();
     });
 
     it('should use default duration of 300ms when not specified', async () => {
@@ -449,7 +453,7 @@ describe('TransitionCommand (Standalone V2)', () => {
       expect(result.toValue).toBe('0');
       expect(result.duration).toBe(300);
       expect(result.completed).toBe(true);
-      expect(context.it).toBe(element);
+      expect(context.it).toBeUndefined(); // no self-assign — upstream parity
     });
 
     it('should end-to-end transition with target, duration, and timing', async () => {
@@ -491,7 +495,7 @@ describe('TransitionCommand (Standalone V2)', () => {
         expect(result.toValue).toBe('red');
         expect(result.duration).toBe(500);
         expect(result.completed).toBe(true);
-        expect(context.it).toBe(targetEl);
+        expect(context.it).toBeUndefined(); // no self-assign — upstream parity
 
         expect(waitForTransitionEnd).toHaveBeenCalledWith(targetEl, 'background-color', 500);
       } finally {
