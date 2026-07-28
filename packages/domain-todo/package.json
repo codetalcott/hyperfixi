@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-todo",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "description": "Natural language todo list management — example domain for the LokaScript framework",
   "type": "module",
   "sideEffects": false,
@@ -24,11 +24,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.9.2",
-    "@lokascript/semantic": "^2.9.2"
+    "@lokascript/framework": "^2.9.3",
+    "@lokascript/semantic": "^2.9.3"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.9.2",
+    "@lokascript/domain-toolkit": "^2.9.3",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
