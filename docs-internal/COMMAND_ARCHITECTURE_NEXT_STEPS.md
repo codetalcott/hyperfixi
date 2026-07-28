@@ -272,6 +272,27 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc C steps 0 and 1 landed** (#801, #802), and **step 2
+  specified** against an upstream-parity pass. Two findings that belong outside
+  the arc as well as in it:
+  - **`unless` never executes its body.** `control-flow/if.ts` `parseInput`
+    gives `unless` an *array* (`raw.args.slice(1)`) where `if` gets the block
+    *node* (`raw.args[1]`); `executeCommands` returns any entry without an
+    `.execute` method verbatim, which a parsed AST node is, so the body is
+    skipped and the node lands in `it` via an `unless`-only self-assign.
+    Verified: `unless false then add .ran to #probe end` adds nothing.
+    `unless.test.ts` is green because it feeds **mocks carrying `.execute()`** —
+    a shape the parser never produces. **A live bug in a shipped, documented
+    command**; it wants its own PR, not a slot inside step 2.
+  - **Five commands' own documented `metadata.examples` do not parse** (`async`,
+    `default`, `process`, `pseudo-command`, `take`) — found because the step-1
+    audit drew its snippets from `metadata.examples` rather than hand-authoring
+    them. Skipped in the audit with their error text; candidates for
+    [PARSER_NEXT_STEPS.md](./PARSER_NEXT_STEPS.md).
+
+  Step 2 itself turned out to be nearly empty: fourteen of the fifteen defect
+  rows need no per-command change, because their sequence-path value is already
+  upstream-correct and step 3's deletion converges them. Table in the brief.
 - **2026-07-28** — **Arc C brief written**
   ([HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)),
   arc not started. Two measurements changed the plan. (a) `it` is set by two

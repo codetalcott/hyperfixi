@@ -210,12 +210,117 @@ fixes it.
 
 ### Step 2 — make self-assignment the sole mechanism
 
-Per-command, smallest PRs that are still reviewable. For each command in the
-fall-through set, decide from the audit table:
+**Revised 2026-07-28, after step 1 landed.** The original text gave a decision
+*rule* and no decisions; the audit plus an upstream-parity pass turns it into a
+table. The headline: **step 2 is nearly empty.** Almost every wrapper-leak
+command's sequence-path value is already upstream-correct, so step 3's deletion
+does the work. What remains is one bug fix and two judgment calls.
 
-- **sequence path already correct** → no code change; the fix arrives with step 3.
-- **should set `it`, currently doesn't on either path** → add the self-assign.
-- **should not touch `it`** → nothing.
+#### The oracle
+
+For each command, the question "should this set `it`?" is answered by upstream
+_hyperscript, whose commands assign `context.result` (the value `it` aliases)
+only when they produce one. Reproduce the survey from a checkout of
+`_hyperscript`:
+
+```bash
+cd _hyperscript/src/parsetree/commands
+# each command class carries `static keyword = "…"`; check whether its body
+# assigns ctx.result / context.result
+grep -n 'static keyword\|\(ctx\|context\)\.result *=' *.js
+```
+
+Upstream commands that **do** set `result`: `wait` (event variant only),
+`pick`, `render`, `measure`, `make`, `fetch`, `js`, `call`/`get`,
+`increment`/`decrement`, `ask`/`answer`. Everything else — including `go`,
+`scroll`, `settle`, `transition`, `start`, `beep!`, `toggle`, `put`, `take`,
+`set`, `tell`, `send`/`trigger` — does **not**.
+
+Note `wait`'s split, because it is the one that looks like a defect and isn't:
+upstream sets `context.result = evt` inside the **event** listener
+(`commands/events.js`, the `wait for click` variant) and never for
+`wait 2s`. hyperfixi matches this already (`async/wait.ts` self-assigns the
+event). The audit's `wait 1ms` row showing `null` on the sequence path is
+therefore **correct**, not a gap.
+
+#### The decision table
+
+Every `defect:` row from the step-1 audit, with its step-2 action:
+
+| Command | Upstream sets `result`? | hyperfixi sequence path | Step-2 action |
+| ------- | ----------------------- | ----------------------- | ------------- |
+| `wait` | yes — event variant only | `null` (time) / event (event) | **none** — already correct |
+| `pick` | yes | `Array(1)` | **none** — already correct |
+| `render` | yes | `<DIV>` | **none** — already correct |
+| `go` | no | `null` | **none** |
+| `scroll` | no | `null` | **none** |
+| `start` | no | `null` | **none** |
+| `beep` | no | `null` | **none** |
+| `toggle` | no | `null` | **none** — do NOT add a self-assign |
+| `put` | no | `null` (element path) | **none** — see note below |
+| `copy` | not upstream (extension) | `null` | **none** |
+| `push` / `replace` | not upstream (extension) | `null` | **none** |
+| `settle` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
+| `transition` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
+| `unless` | not upstream (extension) | AST node | **FIX** (below) |
+
+For all fourteen "none" rows the handler column is wrong and the sequence column
+is right, so **deleting the loop in step 3 converges them onto the correct value
+with no per-command change at all.** That is the payoff from the revised
+destination: the envelope migration the queue originally prescribed would have
+touched every one of these.
+
+`put` note: `dom/put.ts` self-assigns `it` on its **variable** path only
+(`put x into y`); the element path returns `HTMLElement[]` and assigns nothing.
+The audit's `null` is that element path, and it matches upstream. Not an
+inconsistency.
+
+#### The one fix: `unless`
+
+The audit recorded `unless` leaving an AST node in `it`. Tracing it found a
+larger bug: **`unless` never executes its body at all.**
+
+- `control-flow/if.ts` `parseInput` sets `thenCommands = raw.args.slice(1)` for
+  `unless` — an **array** — while the `if` path takes `raw.args[1]`, the block
+  **node**.
+- `executeCommandsOrBlock` routes a block node to `executeBlock` (which runs it
+  through `_runtimeExecute`) and an array to `executeCommands`.
+- `executeCommands` handles only entries with an `.execute` method or a
+  function; anything else hits `else lastResult = cmd`, returning the raw node.
+  A parsed AST block node has neither. So the body is **skipped** and the node
+  is returned.
+- `execute` then does `if (mode === 'unless') Object.assign(context, { it: result })`
+  — an `unless`-only self-assign — which puts that node in `it`.
+
+Verified: `unless false then add .ran to #probe end` leaves `#probe` without the
+class, while `if true then add .ran to #probe end` adds it.
+
+**Why the existing suite is green:** `control-flow/__tests__/unless.test.ts`
+builds `thenCommands` from **mock objects carrying `.execute()`**, a shape the
+parser never produces. The tests exercise the one branch of `executeCommands`
+that works. Fixing this must include a test that goes through the real parser.
+
+**This is a live user-facing bug in a shipped, documented command, and it is
+only incidentally Arc C's.** Consider landing it as its own PR ahead of the arc
+rather than inside step 2 — the `it` leak is a symptom, and the fix (route
+`unless` through the same block path as `if`) is unrelated to the output
+contract. The `unless`-only self-assign should go with it: once the body runs
+through `executeBlock`, `unless` has no reason to set `it` when `if` does not.
+
+#### The two judgment calls: `settle` and `transition`
+
+Both self-assign the element, and upstream sets nothing. After step 3 the
+sequence value is what both paths will hold, so this decides what `it` is after
+`settle #x` — the element, or untouched.
+
+Neither is obviously wrong: returning the element makes `settle #x then add .a to it`
+work, which reads well and costs nothing. But it is a **deliberate divergence
+from upstream**, and it is currently undocumented and untested as such. Decide
+it explicitly and record it in the audit row either way. Note `measure` is the
+precedent for a documented divergence being fine — upstream sets `result` there
+too, so it is not evidence either way.
+
+#### Working shape
 
 Each PR flips the affected rows in the step-1 audit table, so the diff shows
 exactly which `it` values changed. That is the review artifact.
@@ -223,7 +328,14 @@ exactly which `it` values changed. That is the review artifact.
 ### Step 3 — delete `unwrapCommandResult`, the loop, and the `:121` collapse
 
 Delete the function, replace the two (by then one) call sites with nothing, and
-retire `runtime.test.ts:950-986`'s six positive cases.
+retire `runtime.test.ts:950-986`'s six positive cases (plus step 0's four
+`propagateCommandResult` cases, which go with the helper).
+
+**Per step 2's decision table, this step does most of the arc's work**: fourteen
+commands whose handler-path `it` is wrong and whose sequence-path `it` is already
+upstream-correct converge with no per-command change. Expect fourteen audit rows
+to flip in this one PR — that is the intended shape, not a sign the change is too
+big. The audit's asserted disagreement count (29 of 45) drops in the same diff.
 
 **The `:121` array policy is decided here, and Arc D left it a pinned rule to
 decide against.** Read `commands/helpers/__tests__/target-elements.test.ts` and
@@ -345,3 +457,21 @@ commands. If it does, something out of scope was touched.
   - **The headline number is asserted: 29 of the 45 exercised commands disagree
     between the two paths.** Step 3 should drive that down; nothing else should
     move it.
+- 2026-07-28 — **step 2 specified** (docs only; no code). Ran an upstream-parity
+  pass over `_hyperscript/src/parsetree/commands` to answer, per command, "should
+  this set `it`?", and turned step 2 from a decision *rule* into a decision
+  *table*. Two results worth carrying:
+  - **Step 2 is nearly empty.** Fourteen of the fifteen `defect:` rows need no
+    per-command change — their sequence-path value already matches upstream, so
+    step 3's deletion converges them. The envelope migration the queue originally
+    prescribed would have touched every one of them for no gain.
+  - **`unless` is worse than the audit could see: its body never executes.**
+    `parseInput` hands `unless` an *array* where `if` gets the block *node*, and
+    `executeCommands` silently returns any entry lacking an `.execute` method —
+    which a parsed AST node does. The `it` leak is that returned node. The
+    existing `unless.test.ts` is green because it feeds **mock objects with
+    `.execute()`**, a shape the parser never produces. This is a live bug in a
+    shipped command and only incidentally Arc C's; it deserves its own PR ahead
+    of the arc, with a test that goes through the real parser.
+  - Two genuine judgment calls left open and named: `settle` and `transition`
+    self-assign the element where upstream sets nothing.
