@@ -263,8 +263,8 @@ Every `defect:` row from the step-1 audit, with its step-2 action:
 | `put` | no | `null` (element path) | **none** — see note below |
 | `copy` | not upstream (extension) | `null` | **none** |
 | `push` / `replace` | not upstream (extension) | `null` | **none** |
-| `settle` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
-| `transition` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
+| `settle` | **no** | ~~`<DIV>`~~ | **DECIDED** (#808) — self-assign removed; now `null`/Event |
+| `transition` | **no** | ~~`<DIV>`~~ | **DECIDED** (#808) — self-assign removed; now `null`/Event |
 | `unless` | not upstream (extension) | ~~AST node~~ | **FIXED** (#805) — now `null`/Event, matching `if` |
 
 For all fourteen "none" rows the handler column is wrong and the sequence column
@@ -325,7 +325,15 @@ rather than inside step 2 — the `it` leak is a symptom, and the fix (route
 contract. The `unless`-only self-assign should go with it: once the body runs
 through `executeBlock`, `unless` has no reason to set `it` when `if` does not.
 
-#### The two judgment calls: `settle` and `transition`
+#### The two judgment calls: `settle` and `transition` — DECIDED (#808): removed
+
+> Landed 2026-07-28. Both self-assigns removed for upstream parity, decided on
+> three measurements: zero in-repo reliance (examples, behaviors, compat
+> suites, docs, their own metadata.examples); the element is re-nameable one
+> clause later; and — decisive — the removal was only free while #806's
+> both-paths-agree state was unreleased. The command-set rule is now uniform
+> (`it` iff upstream sets `result`), with send/trigger recorded in the queue
+> doc as the one open sibling. The discussion below is preserved as written.
 
 Both self-assign the element, and upstream sets nothing. After step 3 the
 sequence value is what both paths will hold, so this decides what `it` is after
@@ -562,8 +570,12 @@ commands. If it does, something out of scope was touched.
     the knowledge survives; it wants its own triage.
   - Core suite 7834 → 7795 (net −39: ~54 tests deleted with the mechanism, ~15
     added). Full CI green.
-- **Open decision this arc did NOT close:** whether `settle` and `transition`
-  should self-assign the element at all. Upstream sets no result for either;
-  hyperfixi does, and after step 3 that value is what BOTH paths hold. Both are
-  now pinned by audit rows, so either direction is a visible, testable change.
-  This is the only remaining Arc C item.
+- 2026-07-28 — **the open decision closed (#808): settle/transition self-assigns
+  removed** (upstream parity). Decided from measurement, not taste: zero in-repo
+  reliance; in every released version the handler path delivered a wrapper, not
+  the element, so no shipped cohort ever saw the behaviour being removed; and
+  the removal was free only while #806 was unreleased. Audit rows flipped to
+  `null`/Event, disagreement assert 26 → 28, seven unit pins flipped in place.
+  Suite 7795 → 7795. **The arc is now fully closed.** The one recorded sibling —
+  send/trigger's `it = event` where upstream sets nothing — is the queue doc's
+  follow-up, deliberately not folded in here.

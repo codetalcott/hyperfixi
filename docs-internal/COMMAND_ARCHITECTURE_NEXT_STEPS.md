@@ -129,9 +129,14 @@ Three things later arcs should carry forward:
   records what `it` holds after every registered command on BOTH execution paths,
   and ratchets the registry list in both directions. A new command must be given a
   row or a documented skip.
-- **One decision left open:** whether `settle` and `transition` should self-assign
-  the element at all (upstream sets no result for either). Both are pinned by
-  audit rows, so either direction is a visible change.
+- **Decided (#808):** `settle`/`transition` no longer self-assign — upstream
+  parity, removed while #806's both-paths state was still unreleased (the only
+  moment it was free). The command-set rule is uniform: **a command sets `it`
+  iff upstream sets `result` for it** — with ONE recorded exception still open:
+  **send/trigger** self-assign the dispatched Event (`trigger.ts`,
+  `(context as any).it = event`) where upstream sets nothing. Different
+  usefulness profile (post-dispatch `defaultPrevented` is not re-derivable), so
+  it wants its own decision; nothing else in the command set diverges.
 
 Superseded plan, kept for the record:
 
@@ -290,6 +295,11 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc C's last open item closed (#808):** settle/transition
+  self-assigns removed for upstream parity, while the #806 state was still
+  unreleased and the removal therefore free. Command-set rule now uniform
+  (`it` iff upstream sets `result`); the send/trigger sibling is recorded above
+  as the one deliberate open question.
 - **2026-07-28** — **Arc C complete** (#801 → #802 → #803 → #805 → #806, merged
   sequentially into main, full CI matrix on each). The seven-branch
   `unwrapCommandResult` propagation is gone; command self-assignment is the sole
