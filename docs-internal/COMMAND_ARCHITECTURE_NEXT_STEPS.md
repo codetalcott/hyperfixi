@@ -80,13 +80,13 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | Arc | Value | Gate today | Detail |
 | --- | ----- | ---------- | ------ |
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
-| C — output contract | **~20 live `it` divergences, *plus* `it` disagreeing between execution paths** | **none, and measurably so** — disabling the mechanism fails only its own 4 unit tests | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — **revises the plan below** |
+| ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
 | A — command manifest | kills ~15 of ~30 registration points | ✅ partial: verify:reference, capability-ghosts, command-tiers, bundle-manifest-consistency | gates carry the migration; manifest replaces the lists they guard |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
-## The arcs — remaining sequence C → A → B → E → F (D is done)
+## The arcs — remaining sequence A → B → E → F (C and D are done)
 
 ### Arc D — target-resolution consolidation — ✅ DONE 2026-07-28
 
@@ -112,10 +112,28 @@ Two things later arcs should carry forward:
   `target-elements.ts` as `toElementListFiltered` / `toElementListStrict`, both
   tested. Deciding whether they should agree wants its own change.
 
-### Arc C — command output contract (medium-large; highest correctness value; start here)
+### Arc C — command output contract — ✅ DONE 2026-07-28
 
-The wrapper-`it` class is ~20 live divergences, not a latent risk — hence ranked
-ahead of the manifest.
+Landed as #801 (step 0, one propagation call site), #802 (step 1, the audit),
+#803 (step 2 spec) + #805 (the `unless` fix step 2 surfaced), and #806 (step 3,
+the deletion). Detail and per-step outcomes live in
+[HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md).
+
+Three things later arcs should carry forward:
+
+- **`it` and `result` are now ONE slot**, resolved through either name (upstream's
+  model). Commands self-assign `it`; nothing propagates from a command's return
+  value any more. If you add a command that should set `it`, self-assign it —
+  there is no longer a runtime mechanism that will infer it from your output shape.
+- **The audit test is the gate.** `runtime/__tests__/command-output-contract.test.ts`
+  records what `it` holds after every registered command on BOTH execution paths,
+  and ratchets the registry list in both directions. A new command must be given a
+  row or a documented skip.
+- **One decision left open:** whether `settle` and `transition` should self-assign
+  the element at all (upstream sets no result for either). Both are pinned by
+  audit rows, so either direction is a visible change.
+
+Superseded plan, kept for the record:
 
 > **Read [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)
 > first — it REVISES steps 2 and 3 below.** The brief's exploration measured
@@ -272,6 +290,22 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc C complete** (#801 → #802 → #803 → #805 → #806, merged
+  sequentially into main, full CI matrix on each). The seven-branch
+  `unwrapCommandResult` propagation is gone; command self-assignment is the sole
+  `it` mechanism, and it runs on every execution path. All 14 known-wrong audit
+  rows flipped and the defect list is empty; four commands (`settle`, `pick`,
+  `render`, `transition`) converged because the loop had been overwriting a value
+  they had already set correctly. **No command was migrated** — the step-2
+  decision table predicted that, and it held.
+  Two findings worth carrying: (a) the loop wrote `result` as well as `it`, and
+  commands write only `it`, so the deletion would have silently broken
+  `put result into …` inside handlers — fixed by making `it`/`result` one slot
+  resolved through either name (upstream's model) rather than by touching ~20
+  commands; (b) `get` is invisible to the immediately-following command
+  (`get 42 then put it into #probe` → empty, but works with any command in
+  between). Verified pre-existing on main, pinned as a KNOWN DEFECT test, not
+  fixed — it wants its own triage.
 - **2026-07-28** — **Arc C steps 0 and 1 landed** (#801, #802), and **step 2
   specified** against an upstream-parity pass. Two findings that belong outside
   the arc as well as in it:

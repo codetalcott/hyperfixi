@@ -49,7 +49,12 @@ export const itExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
 
   async evaluate(context: ExecutionContext): Promise<unknown> {
-    return context.it;
+    // `it` and `result` are ONE slot, as upstream (`result` canonical, `it` its
+    // alias) — hence the fallback in both directions here and in
+    // `resultExpression`. Commands self-assign `it`; before Arc C step 3 the
+    // handler-body propagation loop was the only writer of `result`, so
+    // `put result into …` resolved inside a handler and nowhere else.
+    return context.it ?? context.result;
   },
 
   validate: validateNoArgs,
@@ -62,7 +67,7 @@ export const itsExpression: ExpressionImplementation = {
 
   async evaluate(context: ExecutionContext): Promise<unknown> {
     // 'its' refers to the same context as 'it' - they are aliases
-    return context.it;
+    return context.it ?? context.result;
   },
 
   validate: validateNoArgs,
@@ -74,7 +79,8 @@ export const resultExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
 
   async evaluate(context: ExecutionContext): Promise<unknown> {
-    return context.result;
+    // See `itExpression` — one slot, resolved through either name.
+    return context.result ?? context.it;
   },
 
   validate: validateNoArgs,

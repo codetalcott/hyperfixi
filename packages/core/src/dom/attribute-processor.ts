@@ -6,7 +6,6 @@
 import { hyperscript, config } from '../api/hyperscript-api';
 import type { CompileError } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
-import { propagateCommandResult } from '../runtime/runtime-base';
 import { debug } from '../utils/debug';
 
 // Type declarations for window extensions used by external packages
@@ -490,8 +489,10 @@ export class AttributeProcessor {
           (eventContext as any).event = event;
 
           for (const command of ast.commands) {
-            const cmdResult = await hyperscript.execute(command, eventContext);
-            propagateCommandResult(eventContext, cmdResult);
+            // No return-value propagation into `it`/`result` — commands that
+            // produce a value self-assign. Mirrors the handler-body executor in
+            // runtime-base.ts; see the comment there.
+            await hyperscript.execute(command, eventContext);
           }
         }
 

@@ -83,8 +83,21 @@ describe('Reference Expressions', () => {
         expect(result).toEqual({ key: 'value' });
       });
 
-      it('should return undefined when not set', async () => {
+      it('falls back to `result` when `it` is unset — they are one slot', async () => {
+        // DELIBERATE CHANGE (Arc C step 3). `it` is upstream's alias for
+        // `result`, and `resolveIdentifierSync` already resolved it as
+        // `context.it ?? context.result`; this expression was the inconsistent
+        // copy. Making them alias is what lets `put result into …` keep working
+        // now that the handler-body propagation loop — previously the only
+        // writer of `result` — is gone. Commands self-assign `it` only.
         context.it = undefined;
+        const result = await referenceExpressions.it.evaluate(context);
+        expect(result).toBe('test-result');
+      });
+
+      it('should return undefined when NEITHER `it` nor `result` is set', async () => {
+        context.it = undefined;
+        context.result = undefined;
         const result = await referenceExpressions.it.evaluate(context);
         expect(result).toBeUndefined();
       });

@@ -947,81 +947,66 @@ describe('RuntimeBase Method Coverage', () => {
     });
   });
 
-  describe('unwrapCommandResult()', () => {
-    // Import directly for testing
-    it('should return undefined for undefined input', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(unwrapCommandResult(undefined)).toBeUndefined();
+  describe('`it` / `result` are one slot (Arc C step 3)', () => {
+    // The handler-body propagation loop used to write BOTH `it` and `result`
+    // from each command's return value. It was deleted because all seven of
+    // its sniffing branches were redundant with commands' own self-assignment
+    // — but self-assignment writes only `it`, so `put result into …` would
+    // have silently stopped resolving inside handlers. Resolution now falls
+    // back in both directions, which is upstream's model (`result` canonical,
+    // `it` its alias) and makes the two agree on every execution path.
+    //
+    // Asserted end-to-end through the real runtime because the regression this
+    // guards is a resolver change, not a function's return value.
+    let host: HTMLElement;
+
+    beforeEach(() => {
+      document.body.innerHTML = '<div id="host"></div><div id="probe"></div>';
+      host = document.getElementById('host') as HTMLElement;
     });
 
-    it('should unwrap CallCommand result', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(unwrapCommandResult({ result: 'value', wasAsync: false })).toBe('value');
+    async function run(src: string): Promise<string> {
+      const { hyperscript } = await import('../api/hyperscript-api');
+      await hyperscript.eval(src, host);
+      return document.getElementById('probe')!.textContent || '';
+    }
+
+    it('resolves `result` from a value a command assigned to `it`', async () => {
+      expect(await run('set x to 5 then put result into #probe')).toBe('5');
     });
 
-    it('should unwrap GetCommand result', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(unwrapCommandResult({ value: 42 })).toBe(42);
+    it('resolves `it` from a value a command assigned to `result`', async () => {
+      // `call` writes both; this pins the other direction of the fallback.
+      expect(await run('call Math.max(1,2) then put it into #probe')).toBe('2');
     });
 
-    it('should unwrap FetchCommand result', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(unwrapCommandResult({ data: { items: [] }, status: 200, headers: {} })).toEqual({
-        items: [],
-      });
+    it('resolves `result` inside an event-handler body', async () => {
+      // The case the deleted loop used to carry on its own.
+      await run('on probe set x to 5 then put result into #probe');
+      host.dispatchEvent(new CustomEvent('probe'));
+      const deadline = Date.now() + 2000;
+      const probe = document.getElementById('probe')!;
+      while (!probe.textContent && Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 5));
+      }
+      expect(probe.textContent).toBe('5');
     });
 
-    it('should return undefined for IfCommand with no result', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(
-        unwrapCommandResult({ conditionResult: true, executedBranch: 'then' })
-      ).toBeUndefined();
+    it('resolves `result` from a js block', async () => {
+      expect(await run('js return 7 end then put result into #probe')).toBe('7');
     });
 
-    it('should pass through primitive values', async () => {
-      const { unwrapCommandResult } = await import('./runtime-base');
-      expect(unwrapCommandResult('hello')).toBe('hello');
-      expect(unwrapCommandResult(42)).toBe(42);
-      expect(unwrapCommandResult(true)).toBe(true);
-    });
-  });
-
-  describe('propagateCommandResult()', () => {
-    // The runtime-side half of the `it` contract, shared by the event-handler
-    // body loop and the lazy-attribute stub. Its load-bearing property is the
-    // `undefined` GUARD: a void command must leave `it` alone rather than
-    // blanking it, which is what lets a `then`-joined chain carry `it` across a
-    // `log`/`add`/`show` in the middle. Inlining the unwrap at a call site and
-    // dropping the guard is the regression this pins.
-
-    it('assigns both it and result when the command returned a value', async () => {
-      const { propagateCommandResult } = await import('./runtime-base');
-      const context = { it: 'stale', result: 'stale' };
-      propagateCommandResult(context, { value: 42 });
-      expect(context).toEqual({ it: 42, result: 42 });
-    });
-
-    it('leaves it UNTOUCHED when the command returned undefined', async () => {
-      const { propagateCommandResult } = await import('./runtime-base');
-      const context = { it: 'keep me', result: 'keep me' };
-      propagateCommandResult(context, undefined);
-      expect(context).toEqual({ it: 'keep me', result: 'keep me' });
-    });
-
-    it('leaves it untouched when the wrapper unwraps to undefined', async () => {
-      // IfCommand with no branch result — the unwrap returns undefined to
-      // signal "do not update", which is distinct from "update it to undefined".
-      const { propagateCommandResult } = await import('./runtime-base');
-      const context = { it: 'keep me', result: 'keep me' };
-      propagateCommandResult(context, { conditionResult: true, executedBranch: 'then' });
-      expect(context).toEqual({ it: 'keep me', result: 'keep me' });
-    });
-
-    it('propagates a falsy-but-defined value rather than skipping it', async () => {
-      const { propagateCommandResult } = await import('./runtime-base');
-      const context = { it: 'stale', result: 'stale' };
-      propagateCommandResult(context, { value: 0 });
-      expect(context).toEqual({ it: 0, result: 0 });
+    it('KNOWN DEFECT (pre-existing, not Arc C): `get` is invisible to the NEXT command', async () => {
+      // `get 42 then put it into #probe` yields '' — but insert any command
+      // between them and it yields '42'. Verified identical on main before the
+      // step-3 deletion, so this is a `get`-specific sequencing defect, not a
+      // consequence of removing the propagation loop, and not the `it`/`result`
+      // alias (it reproduces through `it` alone).
+      //
+      // Pinned rather than dropped so the knowledge is not lost. If you fix
+      // `get`, this test tells you to update it — both lines should become '42'.
+      expect(await run('get 42 then put it into #probe')).toBe('');
+      expect(await run('get 42 then log result then put it into #probe')).toBe('42');
     });
   });
 

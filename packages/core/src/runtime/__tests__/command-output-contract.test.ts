@@ -2,33 +2,34 @@
  * The command output contract — Arc C's audit
  *
  * Arc C of `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`; the brief is
- * `docs-internal/HANDOFF-command-arch-output-contract.md`. This file is step 1:
- * the authoritative inventory, landed as a test so the migration ratchets it
- * down instead of being argued from prose.
+ * `docs-internal/HANDOFF-command-arch-output-contract.md`. Landed as step 1 (the
+ * inventory) and ratcheted down by step 3 (the deletion).
  *
- * ## Why it asserts what it asserts
+ * ## What it pins
  *
- * `it` is set by TWO independent mechanisms:
+ * `it` is set by command **self-assignment**: `Object.assign(context, { it })`
+ * inside the command's own `execute()`, copied back onto the real context by the
+ * adapter (`runtime/command-adapter.ts`). That is now the ONLY mechanism, and it
+ * runs on every execution path.
  *
- * 1. **Command self-assignment** — `Object.assign(context, { it })` inside the
- *    command's own `execute()`, copied back onto the real context by the
- *    adapter (`runtime/command-adapter.ts`). Runs on **every** execution path.
- * 2. **Runtime propagation** — `propagateCommandResult` / `unwrapCommandResult`
- *    (`runtime/runtime-base.ts`), which sniffs the command's RETURN value.
- *    Runs in **event-handler bodies only**. The `then`-joined sequence executor
- *    (`executeCommandSequenceWithResult`, the path `hyperscript.eval` takes)
- *    never calls it.
+ * It used to have a rival. `unwrapCommandResult` sniffed each command's RETURN
+ * value through seven branches and ran in **event-handler bodies only** — never
+ * in the `then`-joined sequence executor. So the same command could leave `it`
+ * holding different things depending on how it was invoked. All seven branches
+ * turned out to be redundant with self-assignment; what the loop uniquely
+ * contributed was ~21 internal wrappers leaking into `it` and an array collapse
+ * that took the first element of `toggle`/`put`'s element list. Step 3 deleted
+ * it, and the four commands it had been actively corrupting (settle, pick,
+ * render, transition) converged with no per-command change.
  *
- * So the same command can leave `it` holding different things depending on how
- * it was invoked. That is the defect this arc closes, and it is why every row
- * below records BOTH paths. Recording only one would make a migration look
- * complete while half the divergence survived.
+ * Every row still records BOTH paths, because that is the property worth
+ * guarding: the 26 remaining disagreements are all the initial-value non-goal
+ * (`null` vs the DOM event for void commands), and a NEW disagreement of any
+ * other kind means a second propagation mechanism has grown back.
  *
- * **These expectations document current behavior, including the wrong parts.**
- * A row marked `defect:` is a known-bad value with the step that fixes it. When
- * a migration lands, the row FLIPS — that diff is the review artifact, and is
- * the whole reason this is an explicit table rather than a snapshot file
- * (a snapshot gets re-blessed on first failure; a hand-edited row does not).
+ * When a change moves a row, the row FLIPS — that diff is the review artifact,
+ * and is why this is an explicit table rather than a snapshot file (a snapshot
+ * gets re-blessed on first failure; a hand-edited row does not).
  *
  * Do NOT "fix" a failing row by editing the expectation unless you are the
  * change that deliberately moved it.
@@ -37,42 +38,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { hyperscript } from '../../api/hyperscript-api';
 import { Runtime } from '../runtime';
-import { unwrapCommandResult } from '../runtime-base';
-
-// Output types, imported so the literals below are COMPILER-CHECKED against the
-// real interfaces. If a command changes its output shape, the literal stops
-// typechecking — the classification cannot silently drift from the code.
-import type { CallCommandOutput } from '../../commands/execution/call';
-import type { JsCommandOutput } from '../../commands/advanced/js';
-import type { RepeatCommandOutput } from '../../commands/control-flow/repeat';
-import type { ConditionalCommandOutput } from '../../commands/control-flow/if';
-import type { GetCommandOutput } from '../../commands/data/get';
-import type { SetCommandOutput } from '../../commands/data/set';
-import type { InsertionCommandOutput } from '../../commands/content/insertion-base';
-import type { FetchCommandOutput } from '../../commands/async/fetch';
-import type { MeasureCommandOutput } from '../../commands/animation/measure';
-import type { DefaultCommandOutput } from '../../commands/data/default';
-import type { WaitCommandOutput } from '../../commands/async/wait';
-import type { HaltCommandOutput } from '../../commands/control-flow/halt';
-import type { GoCommandOutput } from '../../commands/navigation/go';
-import type { HistoryCommandOutput } from '../../commands/navigation/push-url';
-import type { ScrollCommandOutput } from '../../commands/navigation/scroll-to';
-import type { SettleCommandOutput } from '../../commands/animation/settle';
-import type { TakeCommandOutput } from '../../commands/animation/take';
-import type { TransitionCommandOutput } from '../../commands/animation/transition';
-import type { StartViewTransitionOutput } from '../../commands/animation/start-view-transition';
-import type { PickCommandOutput } from '../../commands/utility/pick';
-import type { CopyCommandOutput } from '../../commands/utility/copy';
-import type { BeepCommandOutput } from '../../commands/utility/beep';
-import type { TellCommandOutput } from '../../commands/utility/tell';
-import type { RenderCommandOutput } from '../../commands/templates/render';
-import type { PseudoCommandOutput } from '../../commands/execution/pseudo-command';
-import type { SignalCommandOutput } from '../../commands/control-flow/signal-base';
-import type { ReturnCommandOutput } from '../../commands/control-flow/return';
-import type { ThrowCommandOutput } from '../../commands/control-flow/throw';
-import type { InstallCommandOutput } from '../../commands/behaviors/install';
-import type { AsyncCommandOutput } from '../../commands/advanced/async';
-import type { ProcessPartialsResult } from '../../commands/dom/process-partials';
 
 // ===========================================================================
 // Harness
@@ -101,7 +66,7 @@ let seq = 0;
  * Compared as a STRING rather than by identity so a flipped row reads as a
  * legible diff (`'null'` → `'<P>'`) instead of an object dump, and so the table
  * doubles as documentation. Key names are kept for wrappers because the key set
- * is exactly what `unwrapCommandResult` sniffs on.
+ * is exactly what a wrapper leak used to look like.
  */
 function describeIt(v: unknown): string {
   if (v === undefined) return 'undefined';
@@ -217,24 +182,13 @@ const AUDIT: Record<string, AuditRow> = {
   // arc (see the brief) and these rows exist to keep it visible, not to fix it.
   add: { snippet: 'add .active to #probe', sequence: 'null', handler: 'Event' },
   remove: { snippet: 'remove .active from #probe', sequence: 'null', handler: 'Event' },
-  toggle: {
-    snippet: 'toggle .active on .item',
-    sequence: 'null',
-    handler: '<P>',
-    defect:
-      'ARRAY COLLAPSE (step 3). toggle returns HTMLElement[]; unwrapCommandResult collapses any ' +
-      'array to val[0], so `it` is the FIRST of two matched elements. This violates the selector-shape ' +
-      'rule Arc D pinned (`.cls` keeps the collection — see helpers/__tests__/target-elements.test.ts). ' +
-      "Same shape as append's pre-#792 `.cls` no-op, seen from the propagation end.",
-  },
-  put: {
-    snippet: 'put "Hello" into #probe',
-    sequence: 'null',
-    handler: '<DIV>',
-    defect:
-      'ARRAY COLLAPSE (step 3). put returns HTMLElement[]; same val[0] collapse as toggle. Note put ' +
-      'ALSO self-assigns `it` to the inserted value, which the propagation then overwrites with the element.',
-  },
+  // toggle and put return HTMLElement[]. The deleted propagation collapsed any
+  // array to val[0], so `it` was the FIRST of two matched elements — violating
+  // the selector-shape rule Arc D pinned (`.cls` keeps the collection). Upstream
+  // sets no result for either, so they now behave exactly like the other void
+  // rows. put self-assigns only on its VARIABLE path (`put x into y`), not here.
+  toggle: { snippet: 'toggle .active on .item', sequence: 'null', handler: 'Event' },
+  put: { snippet: 'put "Hello" into #probe', sequence: 'null', handler: 'Event' },
   show: { snippet: 'show #probe', sequence: 'null', handler: 'Event' },
   hide: { snippet: 'hide #probe', sequence: 'null', handler: 'Event' },
   empty: { snippet: 'empty #probe', sequence: 'null', handler: 'Event' },
@@ -249,93 +203,32 @@ const AUDIT: Record<string, AuditRow> = {
   if: { snippet: 'if true then log "y" end', sequence: 'null', handler: 'Event' },
   log: { snippet: 'log "Hello World"', sequence: 'null', handler: 'Event' },
 
-  // ---- wrapper leaks: the propagation loop puts an internal wrapper object in
-  // `it`. Nothing can usefully consume `{halted,timestamp}` or
-  // `{url,title,mode}`. Fixed by step 3 (delete the loop).
-  wait: {
-    snippet: 'wait 1ms',
-    sequence: 'null',
-    handler: '{type,result,duration}',
-    defect:
-      'WRAPPER LEAK (step 3). WaitCommandOutput reaches `it`. wait ALSO self-assigns `it` to the ' +
-      'received Event on its event branch — the propagation overwrites that.',
-  },
-  go: {
-    snippet: 'go to #probe',
-    sequence: 'null',
-    handler: '{result,type}',
-    defect: 'WRAPPER LEAK (step 3). GoCommandOutput reaches `it`.',
-  },
-  push: {
-    snippet: 'push url "/page/2"',
-    sequence: 'null',
-    handler: '{url,title,mode}',
-    defect: 'WRAPPER LEAK (step 3). HistoryCommandOutput reaches `it`.',
-  },
-  replace: {
-    snippet: 'replace url "/search"',
-    sequence: 'null',
-    handler: '{url,title,mode}',
-    defect: 'WRAPPER LEAK (step 3). Same implementation as `push` (aliased).',
-  },
-  scroll: {
-    snippet: 'scroll to #probe',
-    sequence: 'null',
-    handler: '{element,position,smooth}',
-    defect: 'WRAPPER LEAK (step 3). ScrollCommandOutput reaches `it`.',
-  },
-  copy: {
-    snippet: 'copy "Hello World"',
-    sequence: 'null',
-    handler: '{success,text,format,method}',
-    defect: 'WRAPPER LEAK (step 3). CopyCommandOutput reaches `it`.',
-  },
-  beep: {
-    snippet: 'beep 42',
-    sequence: 'null',
-    handler: '{expressionCount,debugged,outputs}',
-    defect: 'WRAPPER LEAK (step 3). BeepCommandOutput reaches `it`.',
-  },
+  // ---- formerly wrapper leaks. The propagation loop put an internal wrapper
+  // object in `it` (`{halted,timestamp}`, `{url,title,mode}`, …) — values
+  // nothing could usefully consume. Upstream sets no result for any of these,
+  // so with the loop gone they leave `it` at its initial value, matching the
+  // void family above and matching their own sequence-path behaviour.
+  wait: { snippet: 'wait 1ms', sequence: 'null', handler: 'Event' },
+  go: { snippet: 'go to #probe', sequence: 'null', handler: 'Event' },
+  push: { snippet: 'push url "/page/2"', sequence: 'null', handler: 'Event' },
+  replace: { snippet: 'replace url "/search"', sequence: 'null', handler: 'Event' },
+  scroll: { snippet: 'scroll to #probe', sequence: 'null', handler: 'Event' },
+  copy: { snippet: 'copy "Hello World"', sequence: 'null', handler: 'Event' },
+  beep: { snippet: 'beep 42', sequence: 'null', handler: 'Event' },
   start: {
     snippet: 'start view transition add .highlight to #probe end',
     sequence: 'null',
-    handler: '{usedViewTransition,commandsExecuted}',
-    defect: 'WRAPPER LEAK (step 3). StartViewTransitionOutput reaches `it`.',
-  },
-  transition: {
-    snippet: 'transition opacity to 0.5',
-    sequence: '<DIV>',
-    handler: '{element,property,fromValue,toValue,duration,completed}',
-    defect: 'WRAPPER LEAK (step 3). The sequence path already holds the element.',
+    handler: 'Event',
   },
 
-  // ---- the sharpest rows: the command ALREADY set `it` correctly, and the
-  // propagation loop overwrote it with the wrapper. Mechanism 2 is not filling
-  // a gap here; it is destroying a correct value.
-  settle: {
-    snippet: 'settle #probe',
-    sequence: '<DIV>',
-    handler: '{element,settled,timeout,duration}',
-    defect:
-      'OVERWRITES A CORRECT VALUE (step 3). settle self-assigns `it` to the element; the propagation ' +
-      'loop replaces it with SettleCommandOutput. The sequence column is what both paths should read.',
-  },
-  pick: {
-    snippet: 'pick first 1 of ["a","b"]',
-    sequence: 'Array(1)',
-    handler: '{selectedItem,sourceLength,sourceType,variant}',
-    defect:
-      'OVERWRITES A CORRECT VALUE (step 3). pick self-assigns the selection; the propagation loop ' +
-      'replaces it with PickCommandOutput.',
-  },
-  render: {
-    snippet: 'render #tpl',
-    sequence: '<DIV>',
-    handler: '{element,rendered,directivesProcessed}',
-    defect:
-      'OVERWRITES A CORRECT VALUE (step 3). render self-assigns the rendered element; the propagation ' +
-      'loop replaces it with RenderCommandOutput.',
-  },
+  // ---- the rows that prove the point: each command had ALREADY assigned `it`
+  // correctly, and the propagation loop overwrote it with the wrapper. Deleting
+  // the loop makes both paths agree on the value the command itself chose —
+  // no per-command change was needed for any of them.
+  settle: { snippet: 'settle #probe', sequence: '<DIV>', handler: '<DIV>' },
+  pick: { snippet: 'pick first 1 of ["a","b"]', sequence: 'Array(1)', handler: 'Array(1)' },
+  render: { snippet: 'render #tpl', sequence: '<DIV>', handler: '<DIV>' },
+  transition: { snippet: 'transition opacity to 0.5', sequence: '<DIV>', handler: '<DIV>' },
 
   // ---- unless: fixed. This audit originally recorded an AST node in `it` on
   // BOTH paths; tracing it found the body never executed at all (parseInput
@@ -407,275 +300,30 @@ describe('the `it` contract, per command, per execution path', () => {
     });
   }
 
-  it('the two paths disagree for 30 of the 45 exercised commands', () => {
-    // The headline number, asserted so a migration cannot shrink it silently
-    // — or grow it. Step 3 should drive this down; nothing else should move it.
-    // (Was 29 at the audit's landing; the unless fix moved it to 30, because a
-    // fixed unless behaves like if — null on the sequence path, the DOM event
-    // in a handler — which is the initial-value divergence, the non-goal. The
-    // broken unless "agreed" only because both paths held the same leaked AST
-    // node.)
+  it('the two paths disagree for 26 of the 45 exercised commands', () => {
+    // The headline number, asserted so a change cannot move it silently.
+    //
+    // 29 when the audit landed → 30 after the unless fix → **26** after step 3
+    // deleted the propagation loop. The four that converged are settle, pick,
+    // render and transition: each had already assigned `it` correctly and the
+    // loop was overwriting it with a wrapper, so removing the loop made both
+    // paths agree on the command's own value — with no per-command change.
+    //
+    // The 26 that remain are ALL the initial-value divergence, which is this
+    // arc's declared non-goal: neither mechanism fires for a void command, so
+    // `it` keeps what the context was built with — `null` for a sequence, the
+    // DOM event inside a handler (runtime-base.ts). Closing that gap is a
+    // context-construction question, not a command-output one. Nothing left
+    // here is a wrapper leak.
     const disagreeing = Object.entries(AUDIT).filter(([, r]) => r.sequence !== r.handler);
-    expect(disagreeing).toHaveLength(30);
+    expect(disagreeing).toHaveLength(26);
   });
 
-  it('names every row whose recorded value is known-wrong', () => {
-    // 14 defect rows: 2 array collapses (toggle, put), 9 wrapper leaks, and
-    // 3 overwrites-a-correct-value (settle, pick, render). The void rows are
-    // NOT counted (they are the initial-value non-goal, deliberately left
-    // undecorated), and unless left this list when its fix landed.
+  it('has no known-wrong rows left', () => {
+    // Step 3 emptied this list. It stays as a ratchet: a future change that
+    // knowingly records a bad value has to add a `defect:` string, and that
+    // makes this test fail loudly rather than the value slipping in silently.
     const defective = Object.entries(AUDIT).filter(([, r]) => r.defect);
-    expect(defective.map(([n]) => n).sort()).toEqual(
-      [
-        'beep',
-        'copy',
-        'go',
-        'pick',
-        'push',
-        'put',
-        'render',
-        'replace',
-        'scroll',
-        'settle',
-        'start',
-        'toggle',
-        'transition',
-        'wait',
-      ].sort()
-    );
-  });
-});
-
-// ===========================================================================
-// 3. The mechanism — which branch each output shape hits
-// ===========================================================================
-
-/**
- * Every command output interface, as a compiler-checked literal.
- *
- * The type annotations are load-bearing: they are what ties this catalog to the
- * real command code. Change `WaitCommandOutput` and this file stops compiling,
- * rather than silently cataloging a shape that no longer exists.
- *
- * Step 3 deletes `unwrapCommandResult`, and this section with it. Until then it
- * is the inventory of what the seven sniffing branches actually do.
- */
-describe('unwrapCommandResult — the seven branches and what falls through', () => {
-  describe('branches that match by design', () => {
-    it('call → { result, wasAsync }', () => {
-      const o: CallCommandOutput = { result: 'v', wasAsync: false, expressionType: 'value' };
-      expect(unwrapCommandResult(o)).toBe('v');
-    });
-
-    it('js → { result, executed } (and preserveArrayResult skips the collapse)', () => {
-      const o: JsCommandOutput = {
-        result: [1, 2],
-        executed: true,
-        codeLength: 3,
-        preserveArrayResult: true,
-      };
-      expect(unwrapCommandResult(o)).toEqual([1, 2]);
-    });
-
-    it('repeat → { type, lastResult }', () => {
-      const o: RepeatCommandOutput = {
-        type: 'times',
-        iterations: 2,
-        completed: true,
-        lastResult: 'last',
-      };
-      expect(unwrapCommandResult(o)).toBe('last');
-    });
-
-    it('if/unless → { conditionResult, executedBranch }, skipping when no branch result', () => {
-      const o: ConditionalCommandOutput = {
-        mode: 'if',
-        conditionResult: true,
-        executedBranch: 'then',
-        result: undefined,
-      };
-      expect(unwrapCommandResult(o)).toBeUndefined();
-    });
-
-    it('get → lone { value }', () => {
-      const o: GetCommandOutput = { value: 42 };
-      expect(unwrapCommandResult(o)).toBe(42);
-    });
-
-    it('set → { target, value, targetType }', () => {
-      const o: SetCommandOutput = { target: 'x', value: 7, targetType: 'variable' };
-      expect(unwrapCommandResult(o)).toBe(7);
-    });
-
-    it('append/prepend → the same envelope as set', () => {
-      const o: InsertionCommandOutput = { target: 'x', value: 'AB', targetType: 'variable' };
-      expect(unwrapCommandResult(o)).toBe('AB');
-    });
-
-    it('fetch → { data, status, headers }', () => {
-      const o = {
-        status: 200,
-        statusText: 'OK',
-        headers: new Headers(),
-        data: { items: [] },
-        url: '/x',
-        duration: 1,
-      } as unknown as FetchCommandOutput;
-      expect(unwrapCommandResult(o)).toEqual({ items: [] });
-    });
-  });
-
-  describe('accidental matches — right answer, wrong reason', () => {
-    it('measure hits the CALL branch because it happens to have result+wasAsync', () => {
-      const o: MeasureCommandOutput = {
-        result: 3,
-        wasAsync: false,
-        element: document.createElement('div'),
-        property: 'width',
-        value: 3,
-        unit: 'px',
-      };
-      // Yields the right number, but via a branch written for `call`. measure
-      // also self-assigns, so deleting the branch is a no-op for it.
-      expect(unwrapCommandResult(o)).toBe(3);
-    });
-
-    it('default hits the SET branch because it happens to have value+target+targetType', () => {
-      const o: DefaultCommandOutput = {
-        target: 'x',
-        value: 9,
-        wasSet: true,
-        targetType: 'variable',
-      };
-      expect(unwrapCommandResult(o)).toBe(9);
-    });
-  });
-
-  describe('a fall-through hiding inside a matched branch', () => {
-    it('repeat with NO lastResult falls through with its whole wrapper', () => {
-      // `lastResult` is optional, so `'lastResult' in obj` is false and the
-      // branch does not fire. Not recorded in the queue doc; found by this audit.
-      const o: RepeatCommandOutput = { type: 'times', iterations: 2, completed: true };
-      expect(unwrapCommandResult(o)).toEqual({ type: 'times', iterations: 2, completed: true });
-    });
-  });
-
-  describe('fall-throughs — the whole wrapper becomes `it`', () => {
-    const el = () => document.createElement('div');
-
-    // Each case asserts identity with its input: nothing was unwrapped.
-    const cases: Array<[string, unknown]> = [
-      ['wait', { type: 'time', result: 5, duration: 5 } satisfies WaitCommandOutput],
-      ['halt', { halted: true, timestamp: 1 } satisfies HaltCommandOutput],
-      ['go', { result: '/x', type: 'url' } satisfies GoCommandOutput],
-      ['push-url/replace-url', { url: '/x', mode: 'push' } satisfies HistoryCommandOutput],
-      ['scroll', { element: el(), position: 'start', smooth: false } satisfies ScrollCommandOutput],
-      [
-        'settle',
-        { element: el(), settled: true, timeout: 1, duration: 1 } satisfies SettleCommandOutput,
-      ],
-      ['take', { targetElement: el(), property: 'p', value: 'v' } satisfies TakeCommandOutput],
-      [
-        'transition',
-        {
-          element: el(),
-          property: 'opacity',
-          fromValue: '1',
-          toValue: '0',
-          duration: 1,
-          completed: true,
-        } satisfies TransitionCommandOutput,
-      ],
-      [
-        'start view transition',
-        { usedViewTransition: false, commandsExecuted: 1 } satisfies StartViewTransitionOutput,
-      ],
-      [
-        'pick',
-        {
-          selectedItem: 'a',
-          sourceLength: 2,
-          sourceType: 'array',
-          variant: 'first',
-        } as PickCommandOutput,
-      ],
-      [
-        'copy',
-        {
-          success: true,
-          text: 't',
-          format: 'text',
-          method: 'clipboard-api',
-        } satisfies CopyCommandOutput,
-      ],
-      ['beep', { expressionCount: 1, debugged: true, outputs: [] } satisfies BeepCommandOutput],
-      [
-        'tell',
-        { targetElements: [], commandResults: [], executionCount: 0 } satisfies TellCommandOutput,
-      ],
-      [
-        'render',
-        {
-          element: el(),
-          rendered: '<i></i>',
-          directivesProcessed: [],
-        } satisfies RenderCommandOutput,
-      ],
-      [
-        'pseudo-command',
-        { result: 'r', methodName: 'm', target: null } satisfies PseudoCommandOutput,
-      ],
-      ['break/continue/exit', { signalType: 'break', timestamp: 1 } as SignalCommandOutput],
-      ['return', { returnValue: 1, timestamp: 1 } satisfies ReturnCommandOutput],
-      ['throw', { error: new Error('x') } satisfies ThrowCommandOutput],
-      [
-        'install',
-        {
-          success: true,
-          behaviorName: 'B',
-          installedCount: 1,
-          instances: [],
-        } satisfies InstallCommandOutput,
-      ],
-      [
-        'async',
-        { commandCount: 1, results: [], executed: true, duration: 1 } satisfies AsyncCommandOutput,
-      ],
-      [
-        'process partials',
-        {
-          count: 0,
-          targets: [],
-          errors: [],
-          validationWarnings: [],
-        } as ProcessPartialsResult,
-      ],
-    ];
-
-    it.each(cases)('%s falls through unchanged', (_name, output) => {
-      expect(unwrapCommandResult(output)).toBe(output);
-    });
-
-    it('covers 21 distinct fall-through output types', () => {
-      // Matches the figure the queue doc re-verified. Independently derived
-      // here by classifying every command's declared execute return type.
-      expect(cases).toHaveLength(21);
-    });
-  });
-
-  describe('the :121 array collapse', () => {
-    it('collapses ANY array to its first element', () => {
-      // What makes `toggle .a on .items` leave `it` as one element. Contrast
-      // with the selector-shape rule Arc D pinned, where `.cls` keeps the
-      // collection (helpers/__tests__/target-elements.test.ts). Step 3 decides
-      // this policy; the recommendation in the brief is "no collapse".
-      const a = document.createElement('p');
-      const b = document.createElement('p');
-      expect(unwrapCommandResult([a, b])).toBe(a);
-    });
-
-    it('leaves an EMPTY array alone', () => {
-      expect(unwrapCommandResult([])).toEqual([]);
-    });
+    expect(defective.map(([n]) => n)).toEqual([]);
   });
 });
