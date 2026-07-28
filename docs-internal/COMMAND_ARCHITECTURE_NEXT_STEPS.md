@@ -283,7 +283,12 @@ not the core abstractions.
     Verified: `unless false then add .ran to #probe end` adds nothing.
     `unless.test.ts` is green because it feeds **mocks carrying `.execute()`** —
     a shape the parser never produces. **A live bug in a shipped, documented
-    command**; it wants its own PR, not a slot inside step 2.
+    command**; it wants its own PR, not a slot inside step 2. **FIXED in #805**
+    (same day): unless now takes the parser's block node exactly as `if` does,
+    the executor fall-throughs that returned bodies unexecuted now execute, and
+    the end-to-end describe in `unless.test.ts` is the regression gate. The
+    hybrid parser never had the bug (it desugars `unless` to `if not(...)`) —
+    the canonical class was the broken copy, the #792 pattern again.
   - **Five commands' own documented `metadata.examples` do not parse** (`async`,
     `default`, `process`, `pseudo-command`, `take`) — found because the step-1
     audit drew its snippets from `metadata.examples` rather than hand-authoring
