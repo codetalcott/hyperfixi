@@ -122,7 +122,9 @@ export const de: Dictionary = {
     reset: 'zurücksetzen',
     load: 'laden',
     unload: 'entladen',
-    resize: 'größeändern',
+    // 'größeändern' was a malformed compound: German either separates the verb
+    // phrase ('Größe ändern') or compounds with the linking -n- ('Größenänderung').
+    resize: 'größenänderung',
     scroll: 'scrollen',
     touchstart: 'berührungstart',
     touchend: 'berührungend',

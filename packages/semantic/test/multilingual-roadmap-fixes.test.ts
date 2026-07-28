@@ -1259,10 +1259,12 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     // resize (window-resize): dict emits a native verb the profiles didn't list as
     // an event → it typed as expression. Registered as the resize event in the 6
     // space-using Latin profiles (de/es/fr/it/pl/pt). resize has no command homonym.
+    ['de', 'resize', 'bei größenänderung umschalten .x'],
     ['de', 'resize', 'bei größeändern umschalten .x'],
     ['es', 'resize', 'en redimensionar alternar .x'],
     ['fr', 'resize', 'sur redimensionner basculer .x'],
     ['it', 'resize', 'su ridimensiona commutare .x'],
+    ['pl', 'resize', 'gdy zmiana rozmiaru przełącz .x'],
     ['pl', 'resize', 'gdy zmieńrozmiar przełącz .x'],
     ['pt', 'resize', 'em redimensionar alternar .x'],
     // mousedown (repeat-until-event handler event): dict emits a native form the
@@ -1272,6 +1274,7 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     // the fused spellings stay registered as alternatives, so both must type literal.
     ['es', 'mousedown', 'en ratón abajo alternar .x'],
     ['es', 'mousedown', 'en ratónabajo alternar .x'],
+    ['pt', 'mousedown', 'em mouse pressionado alternar .x'],
     ['pt', 'mousedown', 'em mouse baixo alternar .x'],
     ['pt', 'mousedown', 'em mouseBaixo alternar .x'],
     ['ja', 'mousedown', '.x を マウス押下 で 切り替え'],

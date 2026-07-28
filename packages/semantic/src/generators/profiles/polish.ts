@@ -296,7 +296,13 @@ export const polishProfile: LanguageProfile = {
     click: { primary: 'kliknięciu', alternatives: ['klikniecie', 'klik'], normalized: 'click' },
     // `resize` event (window-resize): dict emits zmieńrozmiar; register it so the
     // event types as literal="resize" (matching en) instead of expression.
-    resize: { primary: 'zmieńrozmiar', normalized: 'resize' },
+    // 'zmieńrozmiar' fused a two-word phrase; Polish writes 'zmiana rozmiaru'
+    // (noun) or 'zmień rozmiar' (imperative). Fused form kept as an alternative.
+    resize: {
+      primary: 'zmiana rozmiaru',
+      alternatives: ['zmień rozmiar', 'zmieńrozmiar'],
+      normalized: 'resize',
+    },
     hover: { primary: 'najechaniu', alternatives: ['hover'], normalized: 'hover' },
     submit: { primary: 'wysłaniu', alternatives: ['wyslaniu', 'submit'], normalized: 'submit' },
     // i18n dict emits `wejście` for `input`; recognize it so `on input` types as literal.
