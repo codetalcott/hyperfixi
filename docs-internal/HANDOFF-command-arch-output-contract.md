@@ -6,7 +6,10 @@
 > Format follows [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: brief written, arc not started.** Next action: step 0.
+> **Status: ARC COMPLETE (2026-07-28).** Steps 0 (#801), 1 (#802), 2 (#803 spec
+> + #805 the `unless` fix) and 3 (#806) are all merged. **This file is now a
+> record, not a plan — stop updating it**, except for the one open decision
+> named at the end of the Status log. Read that log for per-step outcomes.
 >
 > **This brief REVISES the queue doc's Arc C plan.** The exploration that
 > produced it measured something the queue's audit did not: `it` is set by
@@ -340,7 +343,20 @@ too, so it is not evidence either way.
 Each PR flips the affected rows in the step-1 audit table, so the diff shows
 exactly which `it` values changed. That is the review artifact.
 
-### Step 3 — delete `unwrapCommandResult`, the loop, and the `:121` collapse
+### Step 3 — delete `unwrapCommandResult`, the loop, and the `:121` collapse — DONE (#806)
+
+> Landed 2026-07-28. One thing the plan below did NOT anticipate, found while
+> implementing and worth reading before touching `it`/`result` again: the loop
+> wrote **both** `it` and `result`, while commands self-assign **only `it`**. So
+> deleting it would have silently broken the `result` symbol inside handlers —
+> `set x to 5 then put result into #probe` rendered `5` in a handler and nothing
+> in a sequence, and `start view transition … then put result into #panel` is a
+> *documented example* that depends on it. The fix was not a per-command
+> migration but making `it` and `result` genuinely one slot resolved through
+> either name (upstream's model: `result` canonical, `it` its alias) — four
+> resolvers, no command touched. `resolveIdentifierSync` already did
+> `context.it ?? context.result`; the registered expressions were the
+> inconsistent copies.
 
 Delete the function, replace the two (by then one) call sites with nothing, and
 retire `runtime.test.ts:950-986`'s six positive cases (plus step 0's four
@@ -425,10 +441,16 @@ commands. If it does, something out of scope was touched.
   `it` holds surfaces in expression evaluation, not in the runtime.
 - **Mechanism 1 depends on the adapter's write-back** at
   `command-adapter.ts:338`. If a future refactor stops copying the typed context
-  back, every self-assigning command silently stops setting `it` — and, per
-  Consequence 3, nothing in the suite would fail. Worth its own test.
-- `export { X } from './f'` creates **no local binding** — relevant when moving
-  `unwrapCommandResult`/`propagateCommandResult` between modules.
+  back, every self-assigning command stops setting `it`. **CORRECTED
+  2026-07-28 — this is well guarded, contrary to what this line first claimed.**
+  Measured by disabling the write-back and running the suite: **23 tests fail
+  across 7 files**, including ones that predate this arc (`def-execution`,
+  `append`, `prepend`, `make`, `htmx-wire`, `runtime`). The original claim
+  ("nothing in the suite would fail") was inferred from Consequence 3 rather
+  than measured, and it was wrong — Consequence 3 is specific to the *return-value*
+  mechanism. **Do not add a dedicated test for this; it would be redundant.**
+- `export { X } from './f'` creates **no local binding** — relevant if the
+  deleted propagation helpers are ever reintroduced elsewhere.
 - The MCP server serves **stale dist** after rebuilds; a tool refusing with
   "serving STALE code" is the guard working — restart, don't debug.
 
@@ -503,3 +525,45 @@ commands. If it does, something out of scope was touched.
   `unless` to `if not(...)` and never had the bug — the canonical class was the
   broken copy, the #792 pattern again. **With this, step 2's remaining work is
   only the settle/transition judgment call; everything else is step 3.**
+- 2026-07-28 — **step 3 merged (#806) — arc complete.** `unwrapCommandResult`,
+  `propagateCommandResult` and both call sites are gone; `runtime.test.ts`'s ten
+  direct tests and the audit's whole branch-classification section went with
+  them (the mechanism they described no longer exists). Outcomes:
+  - **All 14 defect rows flipped and the defect list is now empty.** Ten
+    (`wait`, `go`, `push`, `replace`, `scroll`, `copy`, `beep`, `start`,
+    `toggle`, `put`) leave `it` at its initial value, matching both upstream and
+    their own sequence-path behaviour. Four — `settle`, `pick`, `render`,
+    `transition` — **converged**: each had already assigned `it` correctly and
+    the loop was overwriting it, so deletion alone fixed them. The step-2
+    decision table predicted every one of these; **no command was migrated.**
+  - **Path disagreements 30 → 26**, and the remainder are ALL the initial-value
+    non-goal (`null` vs the DOM event, for void commands). No wrapper leaks
+    remain. A new disagreement of any other kind now means a second propagation
+    mechanism has grown back.
+  - **The unplanned find:** the loop wrote both `it` AND `result`, while
+    commands self-assign only `it` — so deleting it would have silently broken
+    the `result` symbol in handlers (`set x to 5 then put result into #probe`
+    worked in a handler and nowhere else; `start view transition … then put
+    result into #panel` is a documented example that depends on it). Fixed by
+    making `it`/`result` one slot resolved through either name — the
+    `it`/`its`/`result` expressions plus the sync/async identifier resolvers and
+    `render.ts` — rather than by touching ~20 commands. `resolveIdentifierSync`
+    already did `context.it ?? context.result`; the registered expressions were
+    the inconsistent copies. Four new tests in `runtime.test.ts` pin it,
+    including inside a handler. One existing test
+    (`references/index.test.ts`, "should return undefined when not set") pinned
+    the OLD independence and was deliberately updated, with a second case added
+    for the genuinely-both-unset path.
+  - **Pre-existing defect found and pinned, NOT fixed:** `get` is invisible to
+    the immediately-following command — `get 42 then put it into #probe` yields
+    `''`, but insert any command between them and it yields `42`. Verified
+    identical on main before this change, so it is a `get` sequencing bug, not
+    an Arc C consequence. Pinned as a KNOWN DEFECT test in `runtime.test.ts` so
+    the knowledge survives; it wants its own triage.
+  - Core suite 7834 → 7795 (net −39: ~54 tests deleted with the mechanism, ~15
+    added). Full CI green.
+- **Open decision this arc did NOT close:** whether `settle` and `transition`
+  should self-assign the element at all. Upstream sets no result for either;
+  hyperfixi does, and after step 3 that value is what BOTH paths hold. Both are
+  now pinned by audit rows, so either direction is a visible, testable change.
+  This is the only remaining Arc C item.

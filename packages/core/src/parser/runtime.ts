@@ -384,6 +384,8 @@ function resolveIdentifierSync(name: string, context: ExecutionContext, scope?: 
   if (name === 'me' || name === 'my' || name === 'I') return context.me;
   if (name === 'you' || name === 'your' || name === 'yourself') return context.you;
   if (name === 'it' || name === 'its') return context.it ?? context.result;
+  // `result` is the same slot under its canonical name — mirrors resultExpression.
+  if (name === 'result') return context.result ?? context.it;
   if (name === 'window') return typeof window !== 'undefined' ? window : globalThis;
   if (name === 'document') return typeof document !== 'undefined' ? document : undefined;
   // Element-scoped `:name` — read from the owner element's store, no fallthrough.
@@ -547,6 +549,9 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   }
   if (name === 'it' || name === 'its') {
     return getExpr(context, 'it').evaluate(context);
+  }
+  if (name === 'result') {
+    return getExpr(context, 'result').evaluate(context);
   }
   if (name === 'window') {
     return getExpr(context, 'window').evaluate(context);
@@ -1261,8 +1266,21 @@ function resolveTemplateVariable(varName: string, context: ExecutionContext): un
   }
   if (varName === 'me' && context.me) return context.me;
   if (varName === 'you' && context.you) return context.you;
-  if (varName === 'it' && context.it) return context.it;
-  if (varName === 'result' && context.result) return context.result;
+  // `it` and `result` are the SAME slot, as upstream (`result` is canonical,
+  // `it` its alias) — so each falls back to the other. Commands self-assign
+  // `it`; before the Arc C step-3 deletion, the handler-body propagation loop
+  // was the only thing that also wrote `result`, which is why `put result
+  // into …` worked inside a handler and nowhere else. Resolving through both
+  // makes the two agree on every execution path without asking ~20 commands
+  // to write the slot twice. Symmetric with the same fallback at :386/:409.
+  if (varName === 'it') {
+    const v = context.it ?? context.result;
+    if (v) return v;
+  }
+  if (varName === 'result') {
+    const v = context.result ?? context.it;
+    if (v) return v;
+  }
   if (typeof window !== 'undefined' && varName === 'window') return window;
   if (context.globals?.has(varName)) return context.globals.get(varName);
   return undefined;

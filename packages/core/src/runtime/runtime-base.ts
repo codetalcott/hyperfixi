@@ -63,94 +63,6 @@ import {
 } from '../registry/runtime-integration';
 
 /**
- * Unwrap a command's return value to extract the user-facing result.
- *
- * Commands return different wrapper shapes (CallCommand, JsCommand, FetchCommand, etc.).
- * This function extracts the meaningful value from those wrappers so it can be assigned
- * to `context.it` / `context.result` between sequential command executions.
- *
- * Returns `undefined` when the result should NOT update the context (e.g. IfCommand
- * with no branch result), signalling the caller to skip assignment.
- */
-export function unwrapCommandResult(result: unknown): unknown | undefined {
-  if (result === undefined) return undefined;
-
-  let val: unknown = result;
-  if (val && typeof val === 'object') {
-    const obj = val as Record<string, unknown>;
-
-    // CallCommand returns { result, wasAsync }
-    if ('result' in obj && 'wasAsync' in obj) {
-      val = obj.result;
-    }
-    // JsCommand returns { result, executed, codeLength, parameters, preserveArrayResult }
-    else if ('result' in obj && 'executed' in obj) {
-      val = obj.result;
-      // JsCommand sets preserveArrayResult to skip array unwrapping
-      if (obj.preserveArrayResult) {
-        return val !== undefined ? val : undefined;
-      }
-    }
-    // RepeatCommand/IfCommand returns { type, lastResult }
-    else if ('lastResult' in obj && 'type' in obj) {
-      val = obj.lastResult;
-    }
-    // IfCommand returns { conditionResult, executedBranch, result }
-    // Don't clobber context.result with if command metadata
-    else if ('conditionResult' in obj && 'executedBranch' in obj) {
-      if (obj.result !== undefined) {
-        val = obj.result;
-      } else {
-        return undefined; // don't update context
-      }
-    }
-    // GetCommand returns { value }
-    else if ('value' in obj && Object.keys(obj).length === 1) {
-      val = obj.value;
-    }
-    // SetCommand returns { target, value, targetType }
-    else if ('value' in obj && 'target' in obj && 'targetType' in obj) {
-      val = obj.value;
-    }
-    // FetchCommand returns { status, statusText, headers, data, url, duration }
-    // In _hyperscript, 'it' should be the actual data (not the wrapper)
-    else if ('data' in obj && 'status' in obj && 'headers' in obj) {
-      val = obj.data;
-    }
-  }
-  if (Array.isArray(val) && val.length > 0) val = val[0];
-
-  return val;
-}
-
-/**
- * Propagate one command's return value into `it` / `result`.
- *
- * The single definition of the runtime-side half of the `it` contract. It runs
- * in **event-handler bodies only** — `runtime-base`'s `runCommands` and the
- * lazy `_="on …"` attribute stub in `dom/attribute-processor.ts`. The
- * `then`-joined command sequence (`executeCommandSequenceWithResult`, and so
- * `hyperscript.eval`) does NOT call this, which is why `it` can differ between
- * the two paths for the same command.
- *
- * That asymmetry is a known defect, not a design: commands also set `it`
- * themselves (`Object.assign(context, { it })` inside `execute()`, copied back
- * by the adapter), and that mechanism DOES run on every path. See
- * `docs-internal/HANDOFF-command-arch-output-contract.md` — this function and
- * its `unwrapCommandResult` sniffing are slated for deletion in favour of
- * self-assignment. It exists as one function so that change lands once.
- *
- * @param context Execution context to mutate.
- * @param result Raw value returned by the command's `execute()`.
- */
-export function propagateCommandResult(context: object, result: unknown): void {
-  const val = unwrapCommandResult(result);
-  if (val !== undefined) {
-    Object.assign(context, { it: val, result: val });
-  }
-}
-
-/**
  * Pattern from expression evaluator where a space-separated "word token" is
  * interpreted as an implicit command invocation (e.g. "add .class").
  */
@@ -1776,11 +1688,21 @@ export class RuntimeBase {
       }
 
       // Execution
+      //
+      // No `it`/`result` propagation from the command's RETURN value: commands
+      // that produce a user-facing value assign `context.it` themselves inside
+      // execute(), and the adapter copies that back — a mechanism that runs on
+      // EVERY execution path, unlike this loop, which only ever ran here and in
+      // the lazy attribute stub. The removed `unwrapCommandResult` sniffed
+      // return shapes through seven branches; all seven were redundant with
+      // self-assignment, and what it uniquely contributed was ~21 internal
+      // wrapper objects leaking into `it` plus an array collapse that took the
+      // first element of `toggle`/`put`'s element list. See
+      // docs-internal/HANDOFF-command-arch-output-contract.md.
       const runCommands = async (toRun: ASTNode[]): Promise<void> => {
         for (const command of toRun) {
           try {
-            const result = await runtime.execute(command, eventContext);
-            propagateCommandResult(eventContext, result);
+            await runtime.execute(command, eventContext);
           } catch (e) {
             if (isControlFlowError(e)) {
               if (e.isHalt || e.isExit) break;
