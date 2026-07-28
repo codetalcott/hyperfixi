@@ -1,0 +1,35 @@
+{
+  // Typecheck the maintenance scripts in `scripts/`.
+  //
+  // The main tsconfig includes only `src/**/*`, so nothing ever typechecked
+  // this directory. That is how `generate-command-docs.ts` and
+  // `audit-command-metadata.ts` kept importing `../src/commands/data/persist`
+  // and `../src/commands/data/bind` for six months after those commands were
+  // deleted (c8cd050e): both scripts crashed on startup and no gate noticed.
+  //
+  // Separate from the main tsconfig because these run under tsx (Node, no DOM
+  // bundler resolution) and must not be emitted into dist/.
+  "extends": "./tsconfig.json",
+
+  "compilerOptions": {
+    "noEmit": true,
+    // Script-local: they are executed, never built, so the incremental/composite
+    // project machinery from the base config does not apply.
+    "incremental": false,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "types": ["node"]
+  },
+
+  "include": ["scripts/**/*.ts", "src/**/*"],
+
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/legacy/**/*",
+    "src/context/**/*",
+    "src/test-helpers/**/*"
+  ]
+}

@@ -534,6 +534,13 @@ jobs:
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
 
+      # The main tsconfig includes only src/**, so packages/core/scripts/ was
+      # typechecked by nothing — that is how the doc generators kept importing
+      # deleted commands (persist/bind) for six months while crashing on every
+      # run. This gate makes a broken maintenance script fail loudly.
+      - name: Typecheck core scripts
+        run: npm run typecheck:scripts --prefix packages/core
+
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
 

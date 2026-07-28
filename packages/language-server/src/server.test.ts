@@ -1785,7 +1785,7 @@ describe('Command Tiers', () => {
       expect(isLokascriptOnlyCommand('settle')).toBe(true);
       expect(isLokascriptOnlyCommand('measure')).toBe(true);
       expect(isLokascriptOnlyCommand('morph')).toBe(true);
-      expect(isLokascriptOnlyCommand('persist')).toBe(true);
+      expect(isLokascriptOnlyCommand('prepend')).toBe(true);
       expect(isLokascriptOnlyCommand('install')).toBe(true);
     });
 
@@ -1814,7 +1814,7 @@ describe('Command Tiers', () => {
       const commands = getCommandsForMode('hyperscript');
       expect(commands).toEqual(HYPERSCRIPT_COMMANDS);
       expect(commands).not.toContain('morph');
-      expect(commands).not.toContain('persist');
+      expect(commands).not.toContain('prepend');
     });
 
     it('returns all commands in lokascript mode', () => {
@@ -1822,7 +1822,7 @@ describe('Command Tiers', () => {
       expect(commands).toEqual(ALL_COMMANDS);
       expect(commands).toContain('toggle');
       expect(commands).toContain('morph');
-      expect(commands).toContain('persist');
+      expect(commands).toContain('prepend');
     });
 
     it('lokascript mode includes all hyperscript commands', () => {
@@ -1866,7 +1866,7 @@ describe('LokaScript Feature Detection', () => {
     });
 
     it('detects multiple lokascript-only commands', () => {
-      const features = detectLokascriptFeatures('make a div then settle then persist it as "key"');
+      const features = detectLokascriptFeatures('make a div then settle then morph it');
       const commandFeatures = features.filter(f => f.feature === 'command');
       expect(commandFeatures.length).toBeGreaterThanOrEqual(3);
     });

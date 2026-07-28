@@ -220,6 +220,7 @@
     "test:prod": "NODE_ENV=production node production-test-runner.js --quiet",
     "test:prod:verbose": "node production-test-runner.js",
     "typecheck": "tsc --noEmit",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
     "clean": "rm -rf dist",
     "analyze:usage": "node scripts/analyze-usage.mjs",
     "size": "npm run size:analysis",

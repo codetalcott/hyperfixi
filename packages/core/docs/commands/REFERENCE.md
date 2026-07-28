@@ -1,7 +1,7 @@
-# LokaScript Command Reference
+# HyperFixi Command Reference
 
 > Auto-generated from command metadata
-> Generated: 2025-12-05T04:07:58.067Z
+> Generated: 2026-07-28T15:21:42.542Z
 
 ## Table of Contents
 
@@ -21,50 +21,51 @@
 
 ## Quick Reference
 
-| Command          | Category     | Description                                                                                                    |
-| ---------------- | ------------ | -------------------------------------------------------------------------------------------------------------- |
-| `add`            | dom          | Add CSS classes to elements.                                                                                   |
-| `append`         | content      | Add content to the end of a string, array, or HTML element.                                                    |
-| `async`          | advanced     | Execute commands asynchronously without blocking.                                                              |
-| `beep`           | utility      | Debug output for expressions with type information.                                                            |
-| `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                                        |
-| `call`           | execution    | Evaluate an expression and store the result in the it variable.                                                |
-| `continue`       | control-flow | Skip to the next iteration of the current loop.                                                                |
-| `copy`           | utility      | Copy text or element content to the clipboard.                                                                 |
-| `decrement`      | data         | Decrement a variable or property by a specified amount (default: 1).                                           |
-| `default`        | data         | Set a value only if it doesn't already exist.                                                                  |
-| `exit`           | control-flow | Immediately terminate execution of the current event handler or behavior.                                      |
-| `fetch`          | async        | Make HTTP requests with lifecycle event support.                                                               |
-| `get`            | data         | Evaluate an expression and store the result in it.                                                             |
-| `go`             | navigation   | Provides navigation functionality including URL navigation, element scrolling, and browser history management. |
-| `halt`           | control-flow | Stop command execution or prevent event defaults.                                                              |
-| `hide`           | dom          | Hide elements by setting display to none.                                                                      |
-| `if`             | control-flow | Conditional execution based on boolean expressions.                                                            |
-| `increment`      | data         | Increment a variable or property by a specified amount (default: 1).                                           |
-| `install`        | behaviors    | Install a behavior on an element with optional parameters.                                                     |
-| `js`             | advanced     | Execute inline JavaScript code with access to hyperscript context.                                             |
-| `log`            | utility      | Log values to the console.                                                                                     |
-| `make`           | dom          | The make command can be used to create class instances or DOM elements.                                        |
-| `measure`        | animation    | Measure DOM element dimensions, positions, and properties.                                                     |
-| `pick`           | utility      | Select a random element from a collection.                                                                     |
-| `pseudo-command` | execution    | Treat a method on an object as a top-level command.                                                            |
-| `put`            | dom          | Insert content into elements or properties.                                                                    |
-| `remove`         | dom          | Remove CSS classes from elements.                                                                              |
-| `render`         | templates    | Render templates with @if, @else, and @repeat directives.                                                      |
-| `repeat`         | control-flow | Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops.                     |
-| `return`         | control-flow | Return a value from a command sequence or function, terminating execution.                                     |
-| `send`           | event        | Send custom events to elements with optional data.                                                             |
-| `set`            | data         | Set values to variables, attributes, or properties.                                                            |
-| `settle`         | animation    | Wait for CSS transitions and animations to complete.                                                           |
-| `show`           | dom          | Show elements by restoring display property.                                                                   |
-| `take`           | animation    | Move classes, attributes, and properties from one element to another.                                          |
-| `tell`           | utility      | Execute commands in the context of target elements.                                                            |
-| `throw`          | control-flow | Throw an error with a specified message.                                                                       |
-| `toggle`         | dom          | Toggle classes, attributes, or interactive elements.                                                           |
-| `transition`     | animation    | Animate CSS properties using CSS transitions.                                                                  |
-| `trigger`        | event        | Trigger events on elements using "trigger X on Y" syntax.                                                      |
-| `unless`         | control-flow | Execute commands only if condition is false (inverse of if).                                                   |
-| `wait`           | async        | Wait for time delay, event, or race condition.                                                                 |
+| Command          | Category     | Description                                                                                |
+| ---------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| `add`            | dom          | Add CSS classes, attributes, or styles to elements.                                        |
+| `append`         | content      | Add content to the end of a string, array, Set, or HTML element.                           |
+| `async`          | advanced     | Execute commands asynchronously without blocking.                                          |
+| `beep`           | utility      | Debug output for expressions with type information.                                        |
+| `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                    |
+| `call`           | execution    | Evaluate an expression and store the result in the it variable.                            |
+| `continue`       | control-flow | Skip to the next iteration of the current loop.                                            |
+| `copy`           | utility      | Copy text or element content to the clipboard.                                             |
+| `decrement`      | data         | Modify a variable or property by a specified amount (default: 1).                          |
+| `default`        | data         | Set a value only if it doesn't already exist.                                              |
+| `exit`           | control-flow | Immediately terminate execution of the current event handler or behavior.                  |
+| `fetch`          | async        | Make HTTP requests with lifecycle event support.                                           |
+| `get`            | data         | Evaluate an expression and store the result in it.                                         |
+| `go`             | navigation   | Navigation functionality including URL navigation, element scrolling, and browser history. |
+| `halt`           | control-flow | Stop command execution or prevent event defaults.                                          |
+| `hide`           | dom          | Hide elements by setting display to none.                                                  |
+| `if`             | control-flow | Conditional execution based on boolean expressions.                                        |
+| `increment`      | data         | Modify a variable or property by a specified amount (default: 1).                          |
+| `install`        | behaviors    | Install a behavior on an element with optional parameters.                                 |
+| `js`             | advanced     | Execute inline JavaScript code with access to hyperscript context.                         |
+| `log`            | utility      | Log values to the console.                                                                 |
+| `make`           | dom          | Create DOM elements or class instances.                                                    |
+| `measure`        | animation    | Measure DOM element dimensions, positions, and properties.                                 |
+| `pick`           | utility      | Select from a collection (first/last/random/range/regex match).                            |
+| `prepend`        | content      | Add content to the start of a string, array, Set, or HTML element.                         |
+| `pseudo-command` | execution    | Treat a method on an object as a top-level command.                                        |
+| `put`            | dom          | Insert content into elements or properties.                                                |
+| `remove`         | dom          | Remove CSS classes, attributes, styles, or elements from the DOM.                          |
+| `render`         | templates    | Render templates with @if, @else, and @repeat directives.                                  |
+| `repeat`         | control-flow | Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops. |
+| `return`         | control-flow | Return a value from a command sequence or function, terminating execution.                 |
+| `send`           | event        | Dispatch events on elements.                                                               |
+| `set`            | data         | Set values to variables, attributes, or properties.                                        |
+| `settle`         | animation    | Wait for CSS transitions and animations to complete.                                       |
+| `show`           | dom          | Show elements by restoring display property.                                               |
+| `take`           | animation    | Move classes, attributes, and properties from one element to another.                      |
+| `tell`           | utility      | Execute commands in the context of target elements.                                        |
+| `throw`          | control-flow | Throw an error with a specified message.                                                   |
+| `toggle`         | dom          | Toggle classes, attributes, or interactive elements.                                       |
+| `transition`     | animation    | Animate CSS properties using CSS transitions.                                              |
+| `trigger`        | event        | Dispatch events on elements.                                                               |
+| `unless`         | control-flow | Conditional execution based on boolean expressions.                                        |
+| `wait`           | async        | Wait for time delay, event, or race condition.                                             |
 
 ## Animation Commands
 
@@ -86,10 +87,6 @@ measure <property>
 measure <target> <property>
 ```
 
-```hyperscript
-measure <property> and set <variable>
-```
-
 **Examples:**
 
 ```hyperscript
@@ -102,10 +99,6 @@ measure width
 
 ```hyperscript
 measure #element height
-```
-
-```hyperscript
-measure scrollTop and set scrollPosition
 ```
 
 ```hyperscript
@@ -140,6 +133,8 @@ settle #animated-element
 settle for 3000
 ```
 
+**Side Effects:** timing
+
 ---
 
 ### take
@@ -159,19 +154,11 @@ take <property> from <source> and put it on <target>
 **Examples:**
 
 ```hyperscript
-take class from <#source/> and put it on me
+take class from <#source/>
 ```
 
 ```hyperscript
 take @data-value from <.source/> and put it on <#target/>
-```
-
-```hyperscript
-take title from <#old-button/>
-```
-
-```hyperscript
-take background-color from <.theme-source/>
 ```
 
 **Side Effects:** dom-mutation, property-transfer
@@ -202,6 +189,8 @@ transition left to 100px over 500ms
 transition background-color to red over 1s with ease-in-out
 ```
 
+**Side Effects:** style-change, timing
+
 ---
 
 ## Asynchronous Commands
@@ -224,10 +213,6 @@ fetch <url> as <type>
 fetch <url> with <options>
 ```
 
-```hyperscript
-fetch <url> with <options> as <type>
-```
-
 **Examples:**
 
 ```hyperscript
@@ -239,19 +224,7 @@ fetch "/api/users" as json
 ```
 
 ```hyperscript
-fetch "/api/save" with method:"POST"
-```
-
-```hyperscript
-fetch "/api/upload" with { method:"POST", body:formData }
-```
-
-```hyperscript
-fetch "/partial.html" as html
-```
-
-```hyperscript
-fetch "/slow" with timeout:5000
+fetch "/api/save" with { method:"POST" }
 ```
 
 **Side Effects:** network, event-dispatching
@@ -283,15 +256,7 @@ wait 2s
 ```
 
 ```hyperscript
-wait 500ms
-```
-
-```hyperscript
 wait for click
-```
-
-```hyperscript
-wait for load
 ```
 
 ```hyperscript
@@ -300,10 +265,6 @@ wait for click or 1s
 
 ```hyperscript
 wait for mousemove(clientX, clientY)
-```
-
-```hyperscript
-wait for load from <iframe/>
 ```
 
 **Side Effects:** time, event-listening
@@ -330,10 +291,6 @@ break
 
 ```hyperscript
 if found then break
-```
-
-```hyperscript
-unless isValid then break
 ```
 
 ```hyperscript
@@ -365,10 +322,6 @@ if item.isInvalid then continue
 ```
 
 ```hyperscript
-unless item.isActive then continue
-```
-
-```hyperscript
 repeat for item in items { if item.skip then continue; process item }
 ```
 
@@ -394,10 +347,6 @@ exit
 
 ```hyperscript
 if no draggedItem exit
-```
-
-```hyperscript
-if condition is false exit
 ```
 
 ```hyperscript
@@ -437,10 +386,6 @@ if error then halt
 ```
 
 ```hyperscript
-unless user.isValid then halt
-```
-
-```hyperscript
 on click halt the event then log "clicked"
 ```
 
@@ -462,6 +407,10 @@ if <condition> then <commands>
 if <condition> then <commands> else <commands>
 ```
 
+```hyperscript
+unless <condition> <commands>
+```
+
 **Examples:**
 
 ```hyperscript
@@ -473,11 +422,7 @@ if user.isAdmin then show #adminPanel else hide #adminPanel
 ```
 
 ```hyperscript
-if localStorage.getItem("theme") == "dark" then add .dark-mode
-```
-
-```hyperscript
-if form.checkValidity() then submit else show .error
+unless user.isLoggedIn showLoginForm
 ```
 
 **Side Effects:** conditional-execution
@@ -491,27 +436,23 @@ Iteration in hyperscript - for-in, counted, conditional, event-driven, and infin
 **Syntax:**
 
 ```hyperscript
-repeat for <var> in <collection> [index <indexVar>] { <commands> }
+repeat for <var> in <collection> { <commands> }
 ```
 
 ```hyperscript
-repeat <count> times [index <indexVar>] { <commands> }
+repeat <count> times { <commands> }
 ```
 
 ```hyperscript
-repeat while <condition> [index <indexVar>] { <commands> }
+repeat while <condition> { <commands> }
 ```
 
 ```hyperscript
-repeat until <condition> [index <indexVar>] { <commands> }
+repeat until <condition> { <commands> }
 ```
 
 ```hyperscript
-repeat until <event> [from <target>] [index <indexVar>] { <commands> }
-```
-
-```hyperscript
-repeat forever [index <indexVar>] { <commands> }
+repeat forever { <commands> }
 ```
 
 **Examples:**
@@ -522,22 +463,6 @@ repeat for item in items { log item }
 
 ```hyperscript
 repeat 5 times { log "hello" }
-```
-
-```hyperscript
-repeat while count < 10 { increment count }
-```
-
-```hyperscript
-repeat until done { checkStatus }
-```
-
-```hyperscript
-repeat until click from #button { animate }
-```
-
-```hyperscript
-repeat forever { monitor }
 ```
 
 **Side Effects:** iteration, conditional-execution
@@ -573,11 +498,7 @@ return user.name
 ```
 
 ```hyperscript
-return "success"
-```
-
-```hyperscript
-if found then return result else return null
+if found then return result
 ```
 
 **Side Effects:** control-flow, context-mutation
@@ -601,10 +522,6 @@ throw "Invalid input"
 ```
 
 ```hyperscript
-throw new Error("Custom error")
-```
-
-```hyperscript
 if not valid then throw "Validation failed"
 ```
 
@@ -614,30 +531,34 @@ if not valid then throw "Validation failed"
 
 ### unless
 
-Execute commands only if condition is false (inverse of if)
+Conditional execution based on boolean expressions
 
 **Syntax:**
 
 ```hyperscript
-unless <condition> <command> [<command> ...]
+if <condition> then <commands>
+```
+
+```hyperscript
+if <condition> then <commands> else <commands>
+```
+
+```hyperscript
+unless <condition> <commands>
 ```
 
 **Examples:**
 
 ```hyperscript
+if x > 5 then add .active
+```
+
+```hyperscript
+if user.isAdmin then show #adminPanel else hide #adminPanel
+```
+
+```hyperscript
 unless user.isLoggedIn showLoginForm
-```
-
-```hyperscript
-unless data.isValid clearForm showError
-```
-
-```hyperscript
-unless element.isVisible fadeIn
-```
-
-```hyperscript
-unless count > 10 increment
 ```
 
 **Side Effects:** conditional-execution
@@ -648,15 +569,27 @@ unless count > 10 increment
 
 ### decrement
 
-Decrement a variable or property by a specified amount (default: 1)
+Modify a variable or property by a specified amount (default: 1)
 
 **Syntax:**
+
+```hyperscript
+increment <target> [by <number>]
+```
 
 ```hyperscript
 decrement <target> [by <number>]
 ```
 
 **Examples:**
+
+```hyperscript
+increment counter
+```
+
+```hyperscript
+increment counter by 5
+```
 
 ```hyperscript
 decrement counter
@@ -666,9 +599,7 @@ decrement counter
 decrement counter by 5
 ```
 
-```hyperscript
-decrement me.scrollTop by 100
-```
+**Side Effects:** data-mutation, context-modification
 
 ---
 
@@ -694,10 +625,6 @@ default @data-theme to "light"
 
 ```hyperscript
 default my innerHTML to "No content"
-```
-
-```hyperscript
-default count to 0
 ```
 
 **Side Effects:** data-mutation, dom-mutation
@@ -728,22 +655,22 @@ get <button/>
 get me.parentElement
 ```
 
-```hyperscript
-get #count then set x to it.textContent
-```
-
 **Side Effects:** context-mutation
 
 ---
 
 ### increment
 
-Increment a variable or property by a specified amount (default: 1)
+Modify a variable or property by a specified amount (default: 1)
 
 **Syntax:**
 
 ```hyperscript
 increment <target> [by <number>]
+```
+
+```hyperscript
+decrement <target> [by <number>]
 ```
 
 **Examples:**
@@ -757,8 +684,14 @@ increment counter by 5
 ```
 
 ```hyperscript
-increment me.scrollTop by 100
+decrement counter
 ```
+
+```hyperscript
+decrement counter by 5
+```
+
+**Side Effects:** data-mutation, context-modification
 
 ---
 
@@ -786,10 +719,6 @@ set @data-theme to "dark"
 set my innerHTML to "content"
 ```
 
-```hyperscript
-set its textContent to "text"
-```
-
 **Side Effects:** state-mutation, dom-mutation
 
 ---
@@ -798,12 +727,12 @@ set its textContent to "text"
 
 ### add
 
-Add CSS classes to elements
+Add CSS classes, attributes, or styles to elements
 
 **Syntax:**
 
 ```hyperscript
-add <classes> [to <target>]
+add <classes|@attr|{styles}> [to <target>]
 ```
 
 **Examples:**
@@ -818,6 +747,10 @@ add "active selected" to <button/>
 
 ```hyperscript
 add .highlighted to #modal
+```
+
+```hyperscript
+add [@data-test="value"] to #element
 ```
 
 **Side Effects:** dom-mutation
@@ -858,35 +791,29 @@ hide <button/>
 
 ### make
 
-The make command can be used to create class instances or DOM elements. In the first form: make a URL from "/path/", "https://origin.example.com" is equal to the JavaScript new URL("/path/", "https://origin.example.com"). In the second form: make an <a.navlink/> will create an <a> element and add the class "navlink" to it.
+Create DOM elements or class instances
 
 **Syntax:**
 
 ```hyperscript
-make (a|an) <expression> [from <arg-list>] [called <identifier>]
+make a <tag#id.class1.class2/>
+```
+
+```hyperscript
+make a <ClassName> from <args> called <identifier>
 ```
 
 **Examples:**
-
-```hyperscript
-make a URL from "/path/", "https://origin.example.com"
-```
 
 ```hyperscript
 make an <a.navlink/> called linkElement
 ```
 
 ```hyperscript
-make a Date from "2023-01-01"
+make a URL from "/path/", "https://origin.example.com"
 ```
 
-```hyperscript
-make an <div#content.container/>
-```
-
-```hyperscript
-make a Map called myMap
-```
+**Side Effects:** dom-creation, data-mutation
 
 ---
 
@@ -908,14 +835,6 @@ put <value> before <target>
 put <value> after <target>
 ```
 
-```hyperscript
-put <value> at start of <target>
-```
-
-```hyperscript
-put <value> at end of <target>
-```
-
 **Examples:**
 
 ```hyperscript
@@ -927,15 +846,7 @@ put <div>Content</div> before #target
 ```
 
 ```hyperscript
-put "text" at end of #container
-```
-
-```hyperscript
 put value into #elem's innerHTML
-```
-
-```hyperscript
-put 42 into obj's dataset.count
 ```
 
 **Side Effects:** dom-mutation
@@ -944,12 +855,12 @@ put 42 into obj's dataset.count
 
 ### remove
 
-Remove CSS classes from elements
+Remove CSS classes, attributes, styles, or elements from the DOM
 
 **Syntax:**
 
 ```hyperscript
-remove <classes> [from <target>]
+remove <classes|@attr|*prop|element> [from <target>]
 ```
 
 **Examples:**
@@ -964,6 +875,14 @@ remove "active selected" from <button/>
 
 ```hyperscript
 remove .highlighted from #modal
+```
+
+```hyperscript
+remove me
+```
+
+```hyperscript
+remove closest .item
 ```
 
 **Side Effects:** dom-mutation
@@ -1009,23 +928,19 @@ Toggle classes, attributes, or interactive elements
 **Syntax:**
 
 ```hyperscript
-toggle <class-expression> [on <target>]
+toggle <class> [on <target>]
 ```
 
 ```hyperscript
-toggle @attribute [on <target>]
+toggle @attr
 ```
 
 ```hyperscript
-toggle <element-selector> [as modal]
+toggle <element> [as modal]
 ```
 
 ```hyperscript
-toggle <expression> for <duration>
-```
-
-```hyperscript
-toggle <expression> until <event>
+toggle <expr> for <duration>
 ```
 
 **Examples:**
@@ -1039,31 +954,11 @@ toggle @disabled
 ```
 
 ```hyperscript
-toggle [@disabled="true"]
-```
-
-```hyperscript
-toggle "loading spinner"
-```
-
-```hyperscript
-toggle #myDialog
-```
-
-```hyperscript
-toggle #confirmDialog as modal
-```
-
-```hyperscript
-toggle #faqSection
+toggle #myDialog as modal
 ```
 
 ```hyperscript
 toggle .loading for 2s
-```
-
-```hyperscript
-toggle .active until click
 ```
 
 **Side Effects:** dom-mutation
@@ -1074,7 +969,7 @@ toggle .active until click
 
 ### append
 
-Add content to the end of a string, array, or HTML element
+Add content to the end of a string, array, Set, or HTML element
 
 **Syntax:**
 
@@ -1101,11 +996,47 @@ append item to myArray
 ```
 
 ```hyperscript
-append "<p>New paragraph</p>" to #content
+append "<p>New</p>" to #content
 ```
 
 ```hyperscript
-append text to me
+append " (edited)" to #title's textContent
+```
+
+**Side Effects:** data-mutation, dom-mutation
+
+---
+
+### prepend
+
+Add content to the start of a string, array, Set, or HTML element
+
+**Syntax:**
+
+```hyperscript
+prepend <content>
+```
+
+```hyperscript
+prepend <content> to <target>
+```
+
+**Examples:**
+
+```hyperscript
+prepend "Hello"
+```
+
+```hyperscript
+prepend "World" to greeting
+```
+
+```hyperscript
+prepend item to myArray
+```
+
+```hyperscript
+prepend "<p>First</p>" to #content
 ```
 
 **Side Effects:** data-mutation, dom-mutation
@@ -1116,50 +1047,37 @@ append text to me
 
 ### go
 
-Provides navigation functionality including URL navigation, element scrolling, and browser history management
+Navigation functionality including URL navigation, element scrolling, and browser history
 
 **Syntax:**
 
 ```hyperscript
-go [to] <url> [in new window]       — URL navigation (bare URL, upstream 0.9.90)
-go [to] url <url> [in new window]   — legacy URL form, still supported
-go [to] [position] [of] <target> [offset] [behavior]
 go back
 ```
 
-**Note (upstream 0.9.90):** prefer `scroll to <target>` over `go to top of <target>`; prefer
-bare URLs (`go to /path` or `go to "https://..."`) over `go to url "..."`. Both old
-forms still work.
+```hyperscript
+go to url <url> [in new window]
+```
+
+```hyperscript
+go to [position] [of] <element>
+```
 
 **Examples:**
 
 ```hyperscript
-go to "https://example.com"    -- bare URL (upstream 0.9.90, preferred)
-```
-
-```hyperscript
-go to /users/42                -- bare path
-```
-
-```hyperscript
 go back
 ```
 
 ```hyperscript
-scroll to top of <#header/>    -- upstream 0.9.90 replacement for `go to top of`
+go to url "https://example.com"
 ```
 
 ```hyperscript
-go to "https://example.com" in new window
+go to top of #header
 ```
 
-```hyperscript
-go to middle of <.content/>
-```
-
-```hyperscript
-go to bottom of <#footer/> +100px smoothly
-```
+**Side Effects:** navigation, scrolling
 
 ---
 
@@ -1197,10 +1115,6 @@ beep! myValue
 beep! me.id, me.className
 ```
 
-```hyperscript
-beep! user.name, user.age
-```
-
 **Side Effects:** console-output, debugging
 
 ---
@@ -1231,10 +1145,6 @@ copy #code-snippet
 
 ```hyperscript
 copy my textContent
-```
-
-```hyperscript
-copy <div/> to clipboard
 ```
 
 **Side Effects:** clipboard-write, custom-events
@@ -1275,22 +1185,58 @@ log "Result:" result
 
 ### pick
 
-Select a random element from a collection
+Select from a collection (first/last/random/range/regex match)
 
 **Syntax:**
 
 ```hyperscript
-pick <item1>, <item2>, ...
+pick first <count> of <expr>
+```
+
+```hyperscript
+pick last <count> of <expr>
+```
+
+```hyperscript
+pick random [<count>] of <expr>
+```
+
+```hyperscript
+pick items <i> to <j> of <expr>
+```
+
+```hyperscript
+pick match of <regex> from <expr>
 ```
 
 ```hyperscript
 pick from <array>
 ```
 
+```hyperscript
+pick <item1>, <item2>, ...
+```
+
 **Examples:**
 
 ```hyperscript
-pick "red", "green", "blue"
+pick first 3 of items
+```
+
+```hyperscript
+pick last 2 of items
+```
+
+```hyperscript
+pick random 2 of items
+```
+
+```hyperscript
+pick items 1 to 3 of items
+```
+
+```hyperscript
+pick match of "[0-9]+" from text
 ```
 
 ```hyperscript
@@ -1298,11 +1244,7 @@ pick from colors
 ```
 
 ```hyperscript
-pick 1, 2, 3, 4, 5
-```
-
-```hyperscript
-pick from document.querySelectorAll(".option")
+pick "red", "green", "blue"
 ```
 
 **Side Effects:** random-selection
@@ -1333,10 +1275,6 @@ tell .buttons add .disabled
 tell closest <form/> submit
 ```
 
-```hyperscript
-tell children <input/> set value to ""
-```
-
 **Side Effects:** context-switching, command-execution
 
 ---
@@ -1365,10 +1303,6 @@ async fetchData processData
 
 ```hyperscript
 async animateIn showContent
-```
-
-```hyperscript
-async loadImage fadeIn
 ```
 
 **Side Effects:** async-execution
@@ -1403,10 +1337,6 @@ js(x, y) return x + y end
 js me.style.color = "red" end
 ```
 
-```hyperscript
-js(element) element.classList.add("active") end
-```
-
 **Side Effects:** code-execution, data-mutation
 
 ---
@@ -1415,59 +1345,7 @@ js(element) element.classList.add("active") end
 
 ### send
 
-Send custom events to elements with optional data
-
-**Syntax:**
-
-```hyperscript
-send <event> to <target>
-```
-
-```hyperscript
-send <event>(<detail>) to <target>
-```
-
-```hyperscript
-send <event> to <target> with <options>
-```
-
-```hyperscript
-trigger <event> on <target>
-```
-
-**Examples:**
-
-```hyperscript
-send customEvent to me
-```
-
-```hyperscript
-send click to #button
-```
-
-```hyperscript
-send dataEvent(foo: "bar", count: 42) to #target
-```
-
-```hyperscript
-send myEvent to window
-```
-
-```hyperscript
-send event to #target with bubbles
-```
-
-```hyperscript
-trigger loaded on document
-```
-
-**Side Effects:** event-dispatch
-
----
-
-### trigger
-
-Trigger events on elements using "trigger X on Y" syntax
+Dispatch events on elements
 
 **Syntax:**
 
@@ -1480,7 +1358,11 @@ trigger <event>(<detail>) on <target>
 ```
 
 ```hyperscript
-trigger <event> on <target> with <options>
+send <event> to <target>
+```
+
+```hyperscript
+send <event>(<detail>) to <target>
 ```
 
 **Examples:**
@@ -1494,19 +1376,55 @@ trigger customEvent on me
 ```
 
 ```hyperscript
-trigger dataEvent(foo: "bar", count: 42) on #target
+send dataEvent to #target
 ```
 
 ```hyperscript
-trigger globalEvent on window
+send myEvent(count: 42) to me
+```
+
+**Side Effects:** event-dispatch
+
+---
+
+### trigger
+
+Dispatch events on elements
+
+**Syntax:**
+
+```hyperscript
+trigger <event> on <target>
 ```
 
 ```hyperscript
-trigger event on #target with bubbles
+trigger <event>(<detail>) on <target>
 ```
 
 ```hyperscript
-trigger docEvent on document
+send <event> to <target>
+```
+
+```hyperscript
+send <event>(<detail>) to <target>
+```
+
+**Examples:**
+
+```hyperscript
+trigger click on #button
+```
+
+```hyperscript
+trigger customEvent on me
+```
+
+```hyperscript
+send dataEvent to #target
+```
+
+```hyperscript
+send myEvent(count: 42) to me
 ```
 
 **Side Effects:** event-dispatch
@@ -1525,10 +1443,6 @@ Evaluate an expression and store the result in the it variable
 call <expression>
 ```
 
-```hyperscript
-get <expression>
-```
-
 **Examples:**
 
 ```hyperscript
@@ -1536,23 +1450,11 @@ call myFunction()
 ```
 
 ```hyperscript
-get user.name
-```
-
-```hyperscript
 call fetch("/api/data")
 ```
 
 ```hyperscript
-get Math.random()
-```
-
-```hyperscript
-call new Date().toISOString()
-```
-
-```hyperscript
-get localStorage.getItem("key")
+call element.focus()
 ```
 
 **Side Effects:** function-execution, context-mutation
@@ -1703,6 +1605,8 @@ Commands may produce the following side effects:
 | `control-flow`          | Affects control flow (break, continue, return)               |
 | `execution-termination` | Terminates script execution                                  |
 | `time`                  | Delays or schedules execution                                |
+| `timing`                | No description available                                     |
+| `style-change`          | No description available                                     |
 | `event-listening`       | Adds event listeners                                         |
 | `event-dispatch`        | Dispatches events                                            |
 | `event-dispatching`     | Dispatches custom events                                     |
@@ -1727,6 +1631,7 @@ Commands may produce the following side effects:
 | `animation`             | Creates animations or transitions                            |
 | `focus`                 | Changes element focus                                        |
 | `scroll`                | Scrolls elements or viewport                                 |
+| `scrolling`             | No description available                                     |
 | `template-execution`    | Executes template logic                                      |
 | `behavior-installation` | Installs behaviors on elements                               |
 | `random-selection`      | Makes random selections                                      |
