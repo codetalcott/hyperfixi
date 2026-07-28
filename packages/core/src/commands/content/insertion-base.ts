@@ -46,6 +46,7 @@ import {
   type PropertyTarget,
 } from '../helpers/property-target';
 import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
+import { queryTargetElements, toElementListStrict } from '../helpers/target-elements';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
 
 /** Where content lands, and how scalar values combine. */
@@ -148,7 +149,7 @@ export abstract class ContentInsertionCommand implements DecoratedCommand {
 
     // Anything else: evaluate and dispatch on the runtime value.
     const value = await evaluator.evaluate(toNode as ASTNode, context);
-    const elements = this.asElementList(value);
+    const elements = toElementListStrict(value);
     if (elements) return { kind: 'elements', elements, content };
     return { kind: 'value', target: value, content };
   }
@@ -206,14 +207,9 @@ export abstract class ContentInsertionCommand implements DecoratedCommand {
 
   /** Resolve a selector to elements and insert into every match. */
   private insertIntoSelector(selector: string, content: unknown): HTMLElement[] {
-    if (typeof document === 'undefined') throw new Error('DOM not available');
-    const els = Array.from(document.querySelectorAll(selector)).filter((e): e is HTMLElement =>
-      isHTMLElement(e)
-    );
-    // Same contract as `put`: an unmatched selector is a programming error, not
-    // a silent no-op.
-    if (!els.length) throw new Error(`No elements: "${selector}"`);
-    return this.insertIntoEach(els, content);
+    // `queryTargetElements` carries the contract shared with `put`: an unmatched
+    // selector is a programming error, not a silent no-op.
+    return this.insertIntoEach(queryTargetElements(selector), content);
   }
 
   private insertIntoEach(elements: HTMLElement[], content: unknown): HTMLElement[] {
@@ -254,26 +250,6 @@ export abstract class ContentInsertionCommand implements DecoratedCommand {
     if (current instanceof Set) return 'set';
     if (isHTMLElement(current)) return 'element';
     return 'result';
-  }
-
-  /** An evaluated value that is element-like, or null. */
-  private asElementList(value: unknown): HTMLElement[] | null {
-    if (isHTMLElement(value)) return [value as HTMLElement];
-    if (Array.isArray(value) && value.length > 0 && value.every(v => isHTMLElement(v))) {
-      return value as HTMLElement[];
-    }
-    if (
-      value &&
-      typeof value === 'object' &&
-      typeof (value as { length?: unknown }).length === 'number' &&
-      typeof (value as { item?: unknown }).item === 'function'
-    ) {
-      const list = Array.from(value as ArrayLike<unknown>).filter((v): v is HTMLElement =>
-        isHTMLElement(v)
-      );
-      return list.length ? list : null;
-    }
-    return null;
   }
 
   private executeVariable(

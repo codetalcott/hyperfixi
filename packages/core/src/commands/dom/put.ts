@@ -26,6 +26,7 @@ import {
   type ContentInsertPosition,
   type SemanticPosition,
 } from '../helpers/dom-mutation';
+import { queryTargetElements, toElementListFiltered } from '../helpers/target-elements';
 import {
   command,
   meta,
@@ -202,7 +203,7 @@ export class PutCommand implements DecoratedCommand {
         } else {
           // Evaluate to check if variable holds an element reference (matches _hyperscript semantics)
           const ev = await evaluator.evaluate(targetArg, context);
-          const resolved = this.resolveEvaluatedAsElements(ev);
+          const resolved = toElementListFiltered(ev);
           if (resolved) {
             return { value, targets: resolved, position, memberPath };
           }
@@ -210,7 +211,7 @@ export class PutCommand implements DecoratedCommand {
         }
       } else {
         const ev = await evaluator.evaluate(targetArg, context);
-        const resolved = this.resolveEvaluatedAsElements(ev);
+        const resolved = toElementListFiltered(ev);
         if (resolved) {
           return { value, targets: resolved, position, memberPath };
         } else if (typeof ev === 'string') {
@@ -273,33 +274,12 @@ export class PutCommand implements DecoratedCommand {
         throw new Error('put: no target and context.me is null');
       return [ctx.me as HTMLElement];
     }
-    const els = Array.from(document.querySelectorAll(sel)).filter((e): e is HTMLElement =>
-      isHTMLElement(e)
-    );
-    if (!els.length) throw new Error(`No elements: "${sel}"`);
-    return els;
+    return queryTargetElements(sel);
   }
 
   private parseValue(v: any): string | HTMLElement {
     if (isHTMLElement(v)) return v as HTMLElement;
     return v == null ? '' : String(v);
-  }
-
-  /**
-   * Attempt to resolve an evaluated value as element target(s).
-   * Returns an array of HTMLElements if the value is element-like, or null otherwise.
-   */
-  private resolveEvaluatedAsElements(ev: unknown): HTMLElement[] | null {
-    if (isHTMLElement(ev)) return [ev as HTMLElement];
-    if (Array.isArray(ev)) {
-      const elements = ev.filter(isHTMLElement) as HTMLElement[];
-      return elements.length > 0 ? elements : null;
-    }
-    if (typeof NodeList !== 'undefined' && ev instanceof NodeList) {
-      const elements = Array.from(ev).filter(isHTMLElement) as HTMLElement[];
-      return elements.length > 0 ? elements : null;
-    }
-    return null;
   }
 
   private looksLikeCss(s: string): boolean {
