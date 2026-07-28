@@ -326,8 +326,34 @@ gated before anything depends on it. `upstreamOrExtension` starts as the tier
 lists' current content plus `unknown` for the 23 — the classification is step 4's
 work, not a blocker here.
 
-Verify with `npm run bundle-size` (`scripts/bundle-size-snapshot.mjs --check`,
-±5%) that importing the manifest anywhere costs nothing.
+Step-1 knock-ons for this step (2026-07-28):
+
+- **Reuse the audit's fixtures, don't re-derive.** The step-1 gate
+  (`runtime/__tests__/command-manifest-audit.test.ts`) already has the
+  registry-derivation, the `ghostsIn`/`gapsIn` helpers, the `SPELLINGS`
+  normalization map, and the `TIER_UNCLASSIFIED` set. The manifest's name-set
+  test belongs in or beside that file, keyed on the same derivation.
+- **Couple the `unknown`s to the audit.** Assert the manifest's
+  `upstreamOrExtension === 'unknown'` set equals the audit's
+  `TIER_UNCLASSIFIED` — then step 4.1 must move both together and the two
+  cannot drift apart (the disease this arc exists to cure).
+- **`category` has two candidate sources; measure their agreement before
+  choosing.** `reference/index.ts`'s `category:` fields (validated by
+  `verify-reference-data.ts` against its 13-name list) and the
+  `@command({ category })` decorator statics. Nothing currently compares them.
+  A disagreement is a finding worth recording here, not silently resolving.
+- **`consolidationAliasOf` means Finding 7's FIRST mechanism only** — the four
+  `metadata.aliases` registered by `command-adapter.ts:440`, which back real
+  command names. Not the eleven slim-bundle synonyms (`COMMAND_ALIASES`),
+  whose divergence is deferred out of the arc.
+
+Verify with `npm run snapshot:bundle-size --prefix packages/core`
+(`scripts/bundle-size-snapshot.mjs --check`, ±5% vs
+`scripts/bundle-snapshots/baseline.json`) that importing the manifest anywhere
+costs nothing. **The command name matters:** this brief previously said
+`npm run bundle-size`, which does not exist in any package.json — a session
+that ran it, saw it fail, and shrugged would skip the exact guard Finding 9
+makes this step exist to satisfy.
 
 ### Step 3 — migrate the mechanical consumers
 
@@ -380,7 +406,7 @@ step-1 audit rows so the diff is the review artifact:
 | all | quick validation (baseline **7800**; was 7795 before the Finding 5 fix) | `npm run test:quick --prefix packages/core` |
 | all | the reference gate | `npm run verify:reference --prefix packages/core` |
 | 1 | the new audit test itself | added in the step-1 PR |
-| 2, 3 | bundle size — the tree-shaking guard | `npm run bundle-size` (`--check`, ±5% vs `baseline.json`) |
+| 2, 3 | bundle size — the tree-shaking guard | `npm run snapshot:bundle-size --prefix packages/core` (`--check`, ±5% vs `scripts/bundle-snapshots/baseline.json`) |
 | 3 | parser + runtime + LSP | `npm test --prefix packages/core -- --run src/parser/ src/runtime/` and `npm test --prefix packages/language-server` |
 | 3, 4 | Playwright bundle compatibility matrix | `cd packages/core && npx playwright test src/compatibility/` (MUST run from packages/core) |
 | 4 | `npm run test:check` (the cross-package gate) | catches language-server / vite-plugin consumers |
@@ -496,3 +522,12 @@ was touched.
   registration-call uniformity. Gates: core 7814 passing / 128 skipped / 300
   files, `verify:reference` clean, `typecheck` clean, prettier/oxlint clean.
   Next action: step 2 (the manifest, data-only, gated, consumed by nobody).
+- 2026-07-28 — post-step-1 brief maintenance (docs-only PR): the step-2/3
+  bundle-size gate was named **`npm run bundle-size`, which does not exist** in
+  any package.json — corrected to `npm run snapshot:bundle-size --prefix
+  packages/core` in the step-2 section and the gates table (verified: runs
+  clean on `5fa21dd4`, all bundles within tolerance). Step 2's section also
+  absorbed the step-1 knock-ons: reuse the audit's fixtures, couple the
+  manifest's `unknown` set to `TIER_UNCLASSIFIED`, measure the two `category`
+  sources (reference vs decorator) before choosing one, and
+  `consolidationAliasOf` = the four `metadata.aliases` only.
