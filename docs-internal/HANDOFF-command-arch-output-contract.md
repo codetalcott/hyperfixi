@@ -96,7 +96,7 @@ wrapper leaks and the `:121` collapse.
 Stubbing `unwrapCommandResult` to `return undefined` unconditionally (i.e.
 simulating the loop's deletion) and running the full core suite:
 
-```
+```text
 Test Files  1 failed | 297 passed | 1 skipped (299)
      Tests  4 failed | 7735 passed | 128 skipped (7867)
 ```
@@ -312,3 +312,36 @@ commands. If it does, something out of scope was touched.
   Consequence 1) and the stub-the-unwrap blast-radius run (Consequence 3). Both
   were run against main `e9c579bb` with a clean tree and reverted. Next action:
   step 0 PR.
+- 2026-07-28 — **step 0 merged (#801)**. `propagateCommandResult(context, result)`
+  in `runtime/runtime-base.ts` is now the single call site; 7738 → 7738 on the
+  refactor, +4 tests pinning the `undefined` guard. Nothing surprising.
+- 2026-07-28 — **step 1 merged (#802)** —
+  `runtime/__tests__/command-output-contract.test.ts`, 85 tests. Notes for step 2:
+  - **Snippets come from each command's own `metadata.examples`**, fixture-adapted.
+    That was worth doing over hand-authoring: it is derive-don't-trust applied to
+    the audit's own inputs, and it surfaced five commands whose documented example
+    does not parse (see below).
+  - **The harness must not sleep.** `settle`, `transition` and
+    `start view transition` complete asynchronously; a fixed-sleep harness let a
+    late completion write into the *next* command's row and produced a
+    convincingly wrong table (transition's output appeared under `unless`). The
+    committed harness waits on a per-run marker instead. If you extend the table,
+    keep that property.
+  - **45 of 59 commands exercised, 14 skipped with reasons.** The skip list is
+    length-asserted so a migration cannot quietly demote an inconvenient row.
+    **Five of the skips are latent parse defects, not environment limits**, and
+    each deserves triage independent of this arc: `async` (`async do … end` →
+    "Async command execution failed"), `default` (`default @data-theme to "light"`
+    → "Invalid target type: object"), `process` (`process partials in <var>` →
+    "expects partials keyword"), `pseudo-command` (no top-level form compiles),
+    `take` (`take .item from <.item/> for #probe` → "Expected variable name").
+    Every one of these is the command's *own documented example*, adapted only for
+    the fixture. Candidates for `PARSER_NEXT_STEPS.md`.
+  - **New defect found, and step 3 will NOT fix it:** `unless` leaves an **AST
+    node** (`{type,commands,start,end,line,column}`) in `it` — on **both** paths,
+    so it is not caused by the propagation loop. `unless` shares
+    `ConditionalCommand` with `if`, and `if` leaves `it` alone on the same input.
+    Belongs to step 2 and needs triage first.
+  - **The headline number is asserted: 29 of the 45 exercised commands disagree
+    between the two paths.** Step 3 should drive that down; nothing else should
+    move it.
