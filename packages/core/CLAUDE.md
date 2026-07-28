@@ -84,14 +84,26 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 
 ## Adding a New Command
 
+> The list below is long because the command set is described in ~20
+> hand-maintained places. That is a known structural defect with a staged fix —
+> see `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md` before doing structural
+> work here. Until then: **run `npm run verify:reference` locally before
+> pushing.** It is the gate that catches the step you missed (it caught the
+> `metadata.ts` counts during the `prepend` arc, #792).
+
 1. Create implementation in `src/commands/{category}/{name}.ts`
 2. Export a named factory in `src/commands/index.ts` and add the command name to the `COMMANDS` set in `src/parser/parser-constants.ts`
 3. Register the factory in the runtime entry points that need it (`src/runtime/runtime.ts` and any `src/compatibility/browser-bundle-*.ts` that should ship the command)
 4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
 5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
-7. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
-8. If the command should be available multilingually, sync `packages/semantic/`:
+7. Bump the counts in `src/metadata.ts` — `packageInfo.commands` plus the
+   `commandCount` of each full-runtime bundle (`browser`, `hybrid-hx-v4`,
+   `multilingual`). The `verify:reference` CI gate fails otherwise; it also
+   derives the list-publishing bundles' counts from their own `commands: [...]`
+   arrays, so those stay honest on their own.
+8. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
+9. If the command should be available multilingually, sync `packages/semantic/`:
    - Add the action to the `ActionType` union in `packages/semantic/src/types.ts`
    - Add a schema (with `markerOverride` for any required keyword markers) to `packages/semantic/src/generators/command-schemas.ts` and append it to the `commandSchemas` registry
    - Add keyword entries (`primary`, optional `alternatives`, `normalized`) to all 24 language profiles in `packages/semantic/src/generators/profiles/*.ts`. Research each translation against `packages/i18n/src/dictionaries/` (which often already has it) and the existing profile's verb-form convention (infinitive vs. imperative vs. base). Avoid hyphens — many tokenizers split on them; prefer underscores for compounds.
