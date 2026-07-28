@@ -986,6 +986,45 @@ describe('RuntimeBase Method Coverage', () => {
     });
   });
 
+  describe('propagateCommandResult()', () => {
+    // The runtime-side half of the `it` contract, shared by the event-handler
+    // body loop and the lazy-attribute stub. Its load-bearing property is the
+    // `undefined` GUARD: a void command must leave `it` alone rather than
+    // blanking it, which is what lets a `then`-joined chain carry `it` across a
+    // `log`/`add`/`show` in the middle. Inlining the unwrap at a call site and
+    // dropping the guard is the regression this pins.
+
+    it('assigns both it and result when the command returned a value', async () => {
+      const { propagateCommandResult } = await import('./runtime-base');
+      const context = { it: 'stale', result: 'stale' };
+      propagateCommandResult(context, { value: 42 });
+      expect(context).toEqual({ it: 42, result: 42 });
+    });
+
+    it('leaves it UNTOUCHED when the command returned undefined', async () => {
+      const { propagateCommandResult } = await import('./runtime-base');
+      const context = { it: 'keep me', result: 'keep me' };
+      propagateCommandResult(context, undefined);
+      expect(context).toEqual({ it: 'keep me', result: 'keep me' });
+    });
+
+    it('leaves it untouched when the wrapper unwraps to undefined', async () => {
+      // IfCommand with no branch result — the unwrap returns undefined to
+      // signal "do not update", which is distinct from "update it to undefined".
+      const { propagateCommandResult } = await import('./runtime-base');
+      const context = { it: 'keep me', result: 'keep me' };
+      propagateCommandResult(context, { conditionResult: true, executedBranch: 'then' });
+      expect(context).toEqual({ it: 'keep me', result: 'keep me' });
+    });
+
+    it('propagates a falsy-but-defined value rather than skipping it', async () => {
+      const { propagateCommandResult } = await import('./runtime-base');
+      const context = { it: 'stale', result: 'stale' };
+      propagateCommandResult(context, { value: 0 });
+      expect(context).toEqual({ it: 0, result: 0 });
+    });
+  });
+
   describe('Behavior timeout protection', () => {
     it('should timeout on slow init block', async () => {
       // Use a very short timeout

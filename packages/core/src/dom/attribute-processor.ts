@@ -6,7 +6,7 @@
 import { hyperscript, config } from '../api/hyperscript-api';
 import type { CompileError } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
-import { unwrapCommandResult } from '../runtime/runtime-base';
+import { propagateCommandResult } from '../runtime/runtime-base';
 import { debug } from '../utils/debug';
 
 // Type declarations for window extensions used by external packages
@@ -491,10 +491,7 @@ export class AttributeProcessor {
 
           for (const command of ast.commands) {
             const cmdResult = await hyperscript.execute(command, eventContext);
-            const val = unwrapCommandResult(cmdResult);
-            if (val !== undefined) {
-              Object.assign(eventContext, { it: val, result: val });
-            }
+            propagateCommandResult(eventContext, cmdResult);
           }
         }
 
