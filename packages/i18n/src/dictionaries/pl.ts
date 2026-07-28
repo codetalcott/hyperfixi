@@ -116,7 +116,8 @@ export const pl: Dictionary = {
     reset: 'zresetuj', // Batch 3: resetuj captured on.event as expression (broken listener) — profile word round-trips
     load: 'załaduj',
     unload: 'wyładuj',
-    resize: 'zmieńrozmiar',
+    // 'zmieńrozmiar' was a fused two-word phrase; Polish writes 'zmiana rozmiaru'.
+    resize: 'zmiana rozmiaru',
     scroll: 'przewiń',
     touchstart: 'dotykstart',
     touchend: 'dotykkoniec',

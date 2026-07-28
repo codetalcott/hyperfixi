@@ -188,8 +188,19 @@ export const portugueseProfile: LanguageProfile = {
     // register so both the on.event and the repeat until-event type as literal.
     // Completes the V3 Batch 2 fused-form split (see keydown/mouseover above);
     // the camelCase spellings stay as parse alternatives for back-compat.
-    mousedown: { primary: 'mouse baixo', alternatives: ['mouseBaixo'], normalized: 'mousedown' },
-    mouseup: { primary: 'mouse cima', alternatives: ['mouseCima'], normalized: 'mouseup' },
+    // baixo/cima was a spatial calque of down/up. pt-BR says "pressionado"/
+    // "solto" — cf. MDN pt-BR and Scratch pt-BR ("mouse pressionado?").
+    // Note this vocabulary is Brazilian: pt-PT would say "rato", not "mouse".
+    mousedown: {
+      primary: 'mouse pressionado',
+      alternatives: ['mouse baixo', 'mouseBaixo'],
+      normalized: 'mousedown',
+    },
+    mouseup: {
+      primary: 'mouse solto',
+      alternatives: ['mouse liberado', 'mouse cima', 'mouseCima'],
+      normalized: 'mouseup',
+    },
     // Event modifiers (for repeat until event)
     until: { primary: 'até', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },

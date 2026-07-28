@@ -675,7 +675,9 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   gönder: ['tr'],
   gönderme: ['tr'],
   göster: ['tr'],
+  'größe ändern': ['de'],
   größeändern: ['de'],
+  größenänderung: ['de'],
   gửi: ['vi'],
   gulir: ['id'],
   gulung: ['id'],
@@ -1095,6 +1097,9 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   mostrare: ['it'],
   'mouse baixo': ['pt'],
   'mouse cima': ['pt'],
+  'mouse liberado': ['pt'],
+  'mouse pressionado': ['pt'],
+  'mouse solto': ['pt'],
   mousebaixo: ['pt'],
   mousecima: ['pt'],
   mpito: ['sw'],
@@ -1983,7 +1988,9 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   zeigen: ['de'],
   zeruj: ['pl'],
   zmiana: ['pl'],
+  'zmiana rozmiaru': ['pl'],
   zmianie: ['pl'],
+  'zmień rozmiar': ['pl'],
   zmieńrozmiar: ['pl'],
   zmierz: ['pl'],
   zmniejsz: ['pl'],
@@ -3459,7 +3466,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3257
+ * Total keywords: 3264
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 195
  */
