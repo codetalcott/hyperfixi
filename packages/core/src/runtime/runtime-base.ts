@@ -124,6 +124,33 @@ export function unwrapCommandResult(result: unknown): unknown | undefined {
 }
 
 /**
+ * Propagate one command's return value into `it` / `result`.
+ *
+ * The single definition of the runtime-side half of the `it` contract. It runs
+ * in **event-handler bodies only** — `runtime-base`'s `runCommands` and the
+ * lazy `_="on …"` attribute stub in `dom/attribute-processor.ts`. The
+ * `then`-joined command sequence (`executeCommandSequenceWithResult`, and so
+ * `hyperscript.eval`) does NOT call this, which is why `it` can differ between
+ * the two paths for the same command.
+ *
+ * That asymmetry is a known defect, not a design: commands also set `it`
+ * themselves (`Object.assign(context, { it })` inside `execute()`, copied back
+ * by the adapter), and that mechanism DOES run on every path. See
+ * `docs-internal/HANDOFF-command-arch-output-contract.md` — this function and
+ * its `unwrapCommandResult` sniffing are slated for deletion in favour of
+ * self-assignment. It exists as one function so that change lands once.
+ *
+ * @param context Execution context to mutate.
+ * @param result Raw value returned by the command's `execute()`.
+ */
+export function propagateCommandResult(context: object, result: unknown): void {
+  const val = unwrapCommandResult(result);
+  if (val !== undefined) {
+    Object.assign(context, { it: val, result: val });
+  }
+}
+
+/**
  * Pattern from expression evaluator where a space-separated "word token" is
  * interpreted as an implicit command invocation (e.g. "add .class").
  */
@@ -1753,10 +1780,7 @@ export class RuntimeBase {
         for (const command of toRun) {
           try {
             const result = await runtime.execute(command, eventContext);
-            const val = unwrapCommandResult(result);
-            if (val !== undefined) {
-              Object.assign(eventContext, { it: val, result: val });
-            }
+            propagateCommandResult(eventContext, result);
           } catch (e) {
             if (isControlFlowError(e)) {
               if (e.isHalt || e.isExit) break;
