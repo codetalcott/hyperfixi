@@ -1,26 +1,13 @@
 /**
  * _hyperscript Plugin
  *
- * Registers with _hyperscript.use() to intercept getScript() and
- * preprocess non-English hyperscript into English before parsing.
+ * Registers with _hyperscript.use() to rewrite non-English hyperscript
+ * attributes into English before _hyperscript.org parses them.
  */
 
 import { resolveLanguage } from './language-resolver';
 import { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
-
-/**
- * The _hyperscript global object shape (minimal subset we need).
- */
-interface HyperscriptGlobal {
-  internals: {
-    runtime: HyperscriptRuntime;
-  };
-  config: Record<string, unknown>;
-}
-
-interface HyperscriptRuntime {
-  getScript(elt: Element): string | null;
-}
+import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
 
 export interface PluginOptions extends Partial<PreprocessorConfig> {
   /** Default language for all elements (overridable per-element). */
@@ -48,14 +35,7 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
  */
 export function hyperscriptI18n(options: PluginOptions = {}) {
   return function plugin(hs: unknown): void {
-    const { internals } = hs as HyperscriptGlobal;
-    const runtime = internals.runtime;
-    const originalGetScript = runtime.getScript.bind(runtime);
-
-    runtime.getScript = function (elt: Element): string | null {
-      const src = originalGetScript(elt);
-      if (!src) return null;
-
+    installAttributeTranslator(hs as HyperscriptHost, (src, elt) => {
       // Resolve language
       const lang = resolveLanguageWithOptions(elt, options);
 
@@ -79,7 +59,7 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       }
 
       return english;
-    };
+    });
   };
 }
 

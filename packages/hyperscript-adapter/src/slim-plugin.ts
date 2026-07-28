@@ -9,21 +9,13 @@ import { resolveLanguage } from './language-resolver';
 import { preprocessToEnglish } from './slim-preprocessor';
 import type { PreprocessorConfig } from './preprocessor';
 import type { PluginOptions } from './plugin';
+import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
 
 export type { PluginOptions };
 
 export function hyperscriptI18n(options: PluginOptions = {}) {
   return function plugin(hs: unknown): void {
-    const { internals } = hs as {
-      internals: { runtime: { getScript: (elt: Element) => string | null } };
-    };
-    const runtime = internals.runtime;
-    const originalGetScript = runtime.getScript.bind(runtime);
-
-    runtime.getScript = function (elt: Element): string | null {
-      const src = originalGetScript(elt);
-      if (!src) return null;
-
+    installAttributeTranslator(hs as HyperscriptHost, (src, elt) => {
       const lang = resolveLanguageWithOptions(elt, options);
       if (!lang || lang === 'en') return src;
 
@@ -34,7 +26,7 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       }
 
       return english;
-    };
+    });
   };
 }
 

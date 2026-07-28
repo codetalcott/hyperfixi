@@ -31,44 +31,13 @@ export const supportedLanguages = getSupportedLanguages();
 
 export { hyperscriptI18n as plugin, preprocess, preprocessToEnglish, resolveLanguage };
 
-// Auto-register if _hyperscript is available globally
+// Auto-register if _hyperscript is available globally. hyperscriptI18n()
+// registers an addBeforeProcessHook, which _hyperscript.org's own initial
+// page scan is guaranteed to run after (that scan is deferred to
+// DOMContentLoaded/ready(), well after this synchronous <script> tag runs) —
+// no separate reprocessing pass is needed.
 declare const _hyperscript: { use: (plugin: unknown) => void } | undefined;
 
 if (typeof _hyperscript !== 'undefined' && _hyperscript.use) {
   _hyperscript.use(hyperscriptI18n());
-  reprocessInitializedElements();
-}
-
-/**
- * _hyperscript processes the DOM immediately on load (via browserInit()),
- * so elements are already marked as initialized with unparsed multilingual
- * text by the time the adapter registers. Clear the initialized flag on
- * all script-bearing elements and re-process them through the patched
- * getScript() pipeline.
- */
-function reprocessInitializedElements(): void {
-  if (typeof document === 'undefined') return;
-
-  const hs = _hyperscript as unknown as {
-    internals?: {
-      runtime?: {
-        getInternalData: (el: Element) => { initialized?: boolean };
-        processNode: (el: Element) => void;
-        getScriptSelector: () => string;
-      };
-    };
-  };
-
-  const runtime = hs?.internals?.runtime;
-  if (!runtime?.processNode || !runtime?.getInternalData) return;
-
-  const selector = runtime.getScriptSelector?.() ?? '[_], [script], [data-script]';
-  document.querySelectorAll(selector).forEach(el => {
-    const data = runtime.getInternalData(el);
-    if (data.initialized) {
-      data.initialized = false;
-    }
-  });
-
-  runtime.processNode(document.body);
 }
