@@ -136,10 +136,20 @@ export const spanishProfile: LanguageProfile = {
     keyup: { primary: 'tecla arriba', normalized: 'keyup' },
     mouseover: { primary: 'ratón encima', alternatives: ['raton encima'], normalized: 'mouseover' },
     mouseout: { primary: 'ratón fuera', alternatives: ['raton fuera'], normalized: 'mouseout' },
-    // mousedown/mouseup (repeat-until-event): dict emits ratónabajo/ratónarriba —
+    // mousedown/mouseup (repeat-until-event): dict emits the spaced forms —
     // register so both the on.event and the repeat until-event type as literal.
-    mousedown: { primary: 'ratónabajo', normalized: 'mousedown' },
-    mouseup: { primary: 'ratónarriba', normalized: 'mouseup' },
+    // Completes the V3 Batch 2 fused-form split (see keydown/mouseover above);
+    // the fused spellings stay as parse alternatives for back-compat.
+    mousedown: {
+      primary: 'ratón abajo',
+      alternatives: ['raton abajo', 'ratónabajo'],
+      normalized: 'mousedown',
+    },
+    mouseup: {
+      primary: 'ratón arriba',
+      alternatives: ['raton arriba', 'ratónarriba'],
+      normalized: 'mouseup',
+    },
     // Navigation
     go: { primary: 'ir', alternatives: ['navegar', 've'], normalized: 'go' },
     push: { primary: 'empujar', alternatives: ['push'], normalized: 'push' },

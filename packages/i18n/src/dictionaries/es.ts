@@ -86,12 +86,12 @@ export const es: Dictionary = {
   events: {
     click: 'clic',
     dblclick: 'dobleclic',
-    mousedown: 'ratónabajo',
-    mouseup: 'ratónarriba',
     mouseenter: 'ratónentrar',
     mouseleave: 'ratónsalir',
     // V3 Batch 2: fused forms split to the S5b/tokenizer-known forms (the fused
     // spellings captured event=expression:undefined — broken listeners)
+    mousedown: 'ratón abajo',
+    mouseup: 'ratón arriba',
     mouseover: 'ratón encima',
     mouseout: 'ratón fuera',
     mousemove: 'ratónmover',

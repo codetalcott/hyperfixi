@@ -92,12 +92,12 @@ export const pt: Dictionary = {
   events: {
     click: 'clique',
     dblclick: 'duploClique',
-    mousedown: 'mouseBaixo',
-    mouseup: 'mouseCima',
     mouseenter: 'mouseEntrar',
     mouseleave: 'mouseSair',
     // V3 Batch 2: camelCase forms split to the S5b/tokenizer-known forms (the
     // fused spellings captured event=expression:undefined — broken listeners)
+    mousedown: 'mouse baixo',
+    mouseup: 'mouse cima',
     mouseover: 'mouse sobre',
     mouseout: 'mouse fora',
     mousemove: 'mouseMover',
