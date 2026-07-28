@@ -7,9 +7,10 @@
 > `commands/helpers/attribute-target.ts` and reused `property-target.ts`; both
 > are now shared by set/append/prepend.
 >
-> **Status: not started.** Update the per-step status lines below as PRs land;
-> when the arc completes, add one History line to the queue doc and stop
-> updating this file.
+> **Status: all three steps implemented (2026-07-28).** Step 1 merged (#796);
+> steps 2 (#797) and 3 landed behind it. See the Status log at the bottom for
+> per-step outcomes and the two decisions this arc had to record. When the arc
+> completes, add one History line to the queue doc and stop updating this file.
 
 ## Objective
 
@@ -98,13 +99,30 @@ trust the number).
   including the shared "unmatched selector throws" contract
   (insertion-base :218 comments "Same contract as `put`"). Fold these into the
   same helper.
-- **Arc C pairing (recorded decision needed).** The queue doc pairs this step
-  with Arc C step 3 (the `:121` collapse is this asymmetry seen from the
-  propagation end). If Arc C hasn't started when this step is reached: land
-  step 3 with the shape-pinning tests and leave `:121` untouched, noting in the
-  PR that the tests are the ratchet Arc C will build on — or hold step 3 until
-  C step 3 is ready and land them together. Either is fine; record which in
-  this file.
+- **CORRECTION (found while implementing, 2026-07-28).** The
+  `resolveEvaluatedAsElements` / `asElementList` pair is **not** a duplication —
+  the two differ in two observable ways:
+  1. **Mixed array.** put FILTERS (`[el, 'junk']` → `[el]`, writes into `el`);
+     append/prepend REJECT, so the value stays an Array target and the content
+     is pushed into it (upstream's dispatch order).
+  2. **Array-likes.** put gates on `instanceof NodeList`; insertion-base
+     duck-types `length` + `item`, so it accepts an HTMLCollection and put does
+     not.
+  Unifying them is therefore a behavior change, not a refactor. They were moved
+  into the shared module as `toElementListFiltered` / `toElementListStrict` —
+  adjacent, documented, and both pinned by tests — with the divergence left
+  intact. **Whether to reconcile them is an open decision, not an oversight**;
+  it wants its own change with its own gate. `looksLikeCss` turned out to be
+  put-only (nothing else in core defines an equivalent), so it stayed in put.
+- **Arc C pairing — DECIDED 2026-07-28: landed step 3 alone.** Arc C had not
+  started when step 3 was reached, so step 3 shipped with the shape-pinning
+  tests and left `unwrapCommandResult`'s `:121` collapse untouched. Those tests
+  (`commands/helpers/__tests__/target-elements.test.ts`) are the ratchet Arc C
+  step 3 builds on — in particular the two cases a "simplifying" change breaks
+  first: `#id` unmatched → `null` while `.cls` unmatched → `[]`, and a
+  single-match `.cls` staying a one-element array rather than collapsing to the
+  element. Arc C step 3 now has a pinned rule to decide the `:121` policy
+  against instead of inheriting it.
 
 ## Gates, per step
 
@@ -175,7 +193,47 @@ and changes no command lists. If it fails, something out of scope was touched.
   path) — one of Arc C's fall-throughs. Do not "improve" it here; Arc C owns
   the output contract, and changing it in a pure-refactor PR muddies both arcs.
 
+## What the arc left behind
+
+Three helper modules under `commands/helpers/`, each the single definition of a
+rule that used to exist in two or three places:
+
+| Module | Defines | Consumers |
+| ------ | ------- | --------- |
+| `dom-mutation.ts` (pre-existing) | content insertion at a position | put, append, prepend |
+| `write-target.ts` (step 2) | the writable-target **rung order** | set, append, prepend |
+| `target-elements.ts` (step 3) | the selector **shape rule**, the query contract, both list coercions | `parser/runtime.ts` (sync + async), put, append, prepend |
+
+Two new test files are the gates: `write-target.test.ts` (11 cases, rung order
+and rung opt-in) and `target-elements.test.ts` (20 cases, both selector shapes
+and both coercions).
+
 ## Status log
 
 - 2026-07-28 — brief written; arc not started. Next action: step 1 PR
   (put `insertContent` collapse).
+- 2026-07-28 — **step 1 merged (#796)**, full CI green. Surprise worth carrying:
+  the put suite asserts `input.position` ~42 times, so re-pointing `mapPosition`
+  at `SemanticPosition` names (which the brief prescribes) churns the test file.
+  Those are white-box assertions on the input's internal spelling — every
+  DOM-outcome expectation was left untouched, so this is not the "test changes
+  expectation → stop and ask" case the non-goals mean. `InsertPosition` was kept
+  as a deprecated alias of `ContentInsertPosition` rather than deleted; it is
+  publicly re-exported from `commands/index.ts`.
+- 2026-07-28 — **step 2 opened (#797)**. The two ladders overlapped less than
+  the brief's line-anchors suggest: #792 had already shared the attribute and
+  property RUNGS, so what was actually duplicated was the **order** around them
+  plus the rung-selection. `resolveWriteTarget` therefore takes opt-in flags
+  (`nodeWriters`, `selectorSource`, `styleSplit`, `bareReference`) rather than
+  merging the tails — set's evaluated-value tail (object literal, "the X of Y"
+  string, CSS shorthand, possessive string, element, element array) has no
+  counterpart in insertion-base and stayed in set.
+- 2026-07-28 — **step 3 implemented** (branched on #797; rebase onto main once
+  that merges). Two decisions recorded above: the Arc C pairing (landed alone,
+  tests are C's ratchet) and the `toElementListFiltered`/`toElementListStrict`
+  divergence (preserved and documented rather than unified — see the CORRECTION
+  under step 3's anchors).
+- **Open follow-up left by this arc:** decide whether put's and append/prepend's
+  element-list coercions should agree. It is the only Arc D item deliberately
+  not closed, it is a behavior decision rather than a refactor, and both
+  behaviors are now pinned by tests so either direction is a visible change.
