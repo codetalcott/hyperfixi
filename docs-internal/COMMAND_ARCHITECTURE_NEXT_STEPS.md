@@ -80,7 +80,7 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | Arc | Value | Gate today | Detail |
 | --- | ----- | ---------- | ------ |
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
-| C — output contract | **~20 live `it` divergences** | **none for the `it` contract** — R2 covers only the DOM-visible half; 6 positive unwrap cases tested, no fall-throughs | the ungated one; it is what this document is for |
+| C — output contract | **~20 live `it` divergences, *plus* `it` disagreeing between execution paths** | **none, and measurably so** — disabling the mechanism fails only its own 4 unit tests | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — **revises the plan below** |
 | A — command manifest | kills ~15 of ~30 registration points | ✅ partial: verify:reference, capability-ghosts, command-tiers, bundle-manifest-consistency | gates carry the migration; manifest replaces the lists they guard |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
@@ -116,6 +116,18 @@ Two things later arcs should carry forward:
 
 The wrapper-`it` class is ~20 live divergences, not a latent risk — hence ranked
 ahead of the manifest.
+
+> **Read [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)
+> first — it REVISES steps 2 and 3 below.** The brief's exploration measured
+> that `it` is set by **two** independent mechanisms: command self-assignment
+> (which works on every execution path) and the `unwrapCommandResult` loop
+> (which runs only in event-handler bodies, not in `then`-joined sequences). All
+> seven sniffing branches turned out to be redundant with self-assignment, so
+> the destination moved from "migrate ~25 commands to the envelope" to **delete
+> the propagation loop** — the envelope is read only by the mechanism that
+> doesn't run everywhere, so migrating to it preserves the path disagreement
+> rather than fixing it. The brief is authoritative; the steps below are kept
+> for the record.
 
 0. **Collapse the two propagation call sites first.** `unwrapCommandResult` is
    called independently from `runtime-base.ts:1756` and
@@ -260,6 +272,28 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc C brief written**
+  ([HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)),
+  arc not started. Two measurements changed the plan. (a) `it` is set by two
+  independent mechanisms, and the queue described only one: commands
+  self-assign `context.it` (copied back by the adapter at
+  `command-adapter.ts:338`, works on **every** path), while
+  `unwrapCommandResult` runs **only** in event-handler bodies and the lazy
+  attribute stub — `executeCommandSequenceWithResult` (`runtime-base.ts:824`,
+  the `then`-joined path `hyperscript.eval` takes) never unwraps. So `it`
+  already **disagrees between execution paths** for 18 of 29 probed commands,
+  and for `settle`/`pick` the loop demonstrably *overwrites a correct value the
+  command had already set*. All seven sniffing branches were then verified
+  redundant — every branch owner also self-assigns. (b) Stubbing
+  `unwrapCommandResult` to return `undefined` and running the full core suite
+  fails **only its own 4 unit tests**: 7735 pass. The gate isn't merely thin,
+  it is absent, which is why step 1's audit has to assert on `it` end-to-end
+  through both paths rather than on the function in isolation. The queue's
+  "21 distinct output types / ~25 commands" figure was independently
+  corroborated, as were both accidental matches (`measure` on `result`+`wasAsync`,
+  `default` on `value`+`target`+`targetType`); one new near-miss found —
+  `RepeatCommandOutput.lastResult` is optional, so a `repeat` with no body
+  result falls through with its whole wrapper.
 - **2026-07-28** — **Arc D complete** (#796 → #797 → #798, merged sequentially
   into main; full CI matrix on each, including the ten-signal multilingual
   ratchet). Three rules that existed in two or three places each now have one
