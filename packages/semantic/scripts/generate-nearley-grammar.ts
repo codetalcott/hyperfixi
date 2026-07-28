@@ -8,9 +8,17 @@
  * Usage:
  *   npx tsx scripts/generate-nearley-grammar.ts
  *   npx tsx scripts/generate-nearley-grammar.ts --dry-run
+ *   npx tsx scripts/generate-nearley-grammar.ts --check   # CI drift guard
  *
  * Output:
  *   src/parser/generated/language-grammar.ts
+ *
+ * Output is run through prettier before writing, using the repo config, so the
+ * committed file is byte-identical to a fresh run. That is what makes --check
+ * meaningful: before this, the generator emitted quoted keys that prettier then
+ * unquoted on commit, so every regeneration produced a ~2000-line phantom diff
+ * on top of the real change — which is why nobody ran it and the file drifted
+ * across all 24 languages.
  *
  * The grammar classifies input tokens as language-specific keywords.
  * Nearley's Earley algorithm handles ambiguity when one token matches
@@ -20,6 +28,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import * as prettier from 'prettier';
 
 // Import all profiles
 import { arabicProfile } from '../src/generators/profiles/arabic';
@@ -53,6 +62,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const OUTPUT_FILE = path.resolve(__dirname, '../src/parser/generated/language-grammar.ts');
 const DRY_RUN = process.argv.includes('--dry-run');
+const CHECK = process.argv.includes('--check');
 
 const ALL_PROFILES: LanguageProfile[] = [
   englishProfile, spanishProfile, portugueseProfile, frenchProfile, germanProfile,
@@ -230,9 +240,29 @@ const unique = keywordMap.size - ambiguous;
 console.log(`Keywords: ${keywordMap.size} total (${unique} unique, ${ambiguous} ambiguous)`);
 console.log(`Languages: ${ALL_PROFILES.length}`);
 
-const output = generateModule(keywordMap);
+const raw = generateModule(keywordMap);
 
-if (DRY_RUN) {
+// Format with the repo's prettier config so a regeneration is byte-idempotent
+// against the committed (prettier-formatted) file.
+const prettierConfig = await prettier.resolveConfig(OUTPUT_FILE);
+const output = await prettier.format(raw, {
+  ...prettierConfig,
+  filepath: OUTPUT_FILE,
+  parser: 'typescript',
+});
+
+if (CHECK) {
+  const committed = fs.existsSync(OUTPUT_FILE) ? fs.readFileSync(OUTPUT_FILE, 'utf8') : '';
+  if (committed !== output) {
+    console.error(
+      `\n✗ ${path.relative(process.cwd(), OUTPUT_FILE)} is stale.\n` +
+        `  The language profiles changed without regenerating it.\n` +
+        `  Run: npm run generate:grammar --prefix packages/semantic\n`
+    );
+    process.exit(1);
+  }
+  console.log(`\n✓ ${path.relative(process.cwd(), OUTPUT_FILE)} is up to date`);
+} else if (DRY_RUN) {
   console.log(`\n[DRY RUN] Would write ${output.length} bytes to:`);
   console.log(`  ${OUTPUT_FILE}`);
 } else {

@@ -541,6 +541,15 @@ jobs:
       - name: Typecheck core scripts
         run: npm run typecheck:scripts --prefix packages/core
 
+      # Committed generated artifacts drift silently when profiles change: both
+      # of these were stale across all 24 languages. Their generators are now
+      # prettier-idempotent, so a fresh run is byte-identical to the committed
+      # file and these checks are exact.
+      - name: Check generated artifacts are in sync
+        run: |
+          npm run check:grammar --prefix packages/semantic
+          npm run check:keywords --prefix packages/vite-plugin
+
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
 

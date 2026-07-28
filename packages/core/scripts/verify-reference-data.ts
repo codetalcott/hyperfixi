@@ -335,6 +335,29 @@ function verifyAvailabilities() {
 // 5. VERIFY BUNDLE COMMAND COUNTS ARE REASONABLE
 // =============================================================================
 
+/**
+ * Bundles that publish their own `commands: [...]` array. Their metadata
+ * commandCount is checked against that array rather than trusted: lite-plus and
+ * the two hybrids were stale by 4-5 commands each for months, because nothing
+ * compared the advertised number to the real list. (The full-runtime bundles
+ * have no such array — they register everything the default runtime does, so
+ * their count is checked against packageInfo.commands instead.)
+ */
+const BUNDLES_WITH_COMMAND_LISTS: Record<string, string> = {
+  'lite-plus': 'browser-bundle-lite-plus.ts',
+  'hybrid-complete': 'browser-bundle-hybrid-complete.ts',
+};
+
+/** Count entries in a bundle source's `commands: [ ... ]` array. */
+function actualCommandCount(sourceFile: string): number | null {
+  const bundlePath = resolve(__dirname, '../src/compatibility', sourceFile);
+  if (!existsSync(bundlePath)) return null;
+  const source = readFileSync(bundlePath, 'utf-8');
+  const block = source.match(/commands:\s*\[([\s\S]*?)\]/);
+  if (!block) return null;
+  return (block[1].match(/'[^']+'/g) ?? []).length;
+}
+
 function verifyBundleCommandCounts() {
   const errors: string[] = [];
 
@@ -356,6 +379,21 @@ function verifyBundleCommandCounts() {
     errors.push(
       `Browser bundle has ${browserBundle.commandCount} commands, expected ${packageInfo.commands}`
     );
+  }
+
+  // Derive, don't trust: compare each list-publishing bundle's advertised count
+  // against the commands it actually ships.
+  for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_COMMAND_LISTS)) {
+    const bundle = bundleInfo.find((b) => b.id === id);
+    if (!bundle) continue;
+    const actual = actualCommandCount(sourceFile);
+    if (actual === null) {
+      errors.push(`${id}: could not read the commands array from ${sourceFile}`);
+    } else if (actual !== bundle.commandCount) {
+      errors.push(
+        `${id} advertises ${bundle.commandCount} commands but ${sourceFile} ships ${actual}`
+      );
+    }
   }
 
   const passed = errors.length === 0;
