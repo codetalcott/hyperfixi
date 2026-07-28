@@ -112,7 +112,7 @@ describe('PutCommand', () => {
       );
 
       expect(input.value).toBe('Hello World');
-      expect(input.position).toBe('replace');
+      expect(input.position).toBe('into');
       expect(input.targets).toHaveLength(1);
       expect(input.targets[0].id).toBe('target');
     });
@@ -139,7 +139,7 @@ describe('PutCommand', () => {
   });
 
   describe('Parsing - Position Keywords', () => {
-    it('should map "into" to replace position', async () => {
+    it('should map "into" to the into position', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext(createMockElement('target'));
 
@@ -153,10 +153,10 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('replace');
+      expect(input.position).toBe('into');
     });
 
-    it('should map "before" to beforebegin position', async () => {
+    it('should map "before" to the before position', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext(createMockElement('target'));
 
@@ -170,10 +170,10 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('beforebegin');
+      expect(input.position).toBe('before');
     });
 
-    it('should map "after" to afterend position', async () => {
+    it('should map "after" to the after position', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext(createMockElement('target'));
 
@@ -187,10 +187,10 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('afterend');
+      expect(input.position).toBe('after');
     });
 
-    it('should map "at start of" to afterbegin position', async () => {
+    it('should map "at start of" to the prepend position', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext(createMockElement('target'));
 
@@ -204,10 +204,10 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('afterbegin');
+      expect(input.position).toBe('prepend');
     });
 
-    it('should map "at end of" to beforeend position', async () => {
+    it('should map "at end of" to the append position', async () => {
       const evaluator = createMockEvaluator();
       const context = createMockContext(createMockElement('target'));
 
@@ -221,7 +221,7 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('beforeend');
+      expect(input.position).toBe('append');
     });
   });
 
@@ -240,7 +240,7 @@ describe('PutCommand', () => {
       );
 
       expect(input.value).toBe('Hello');
-      expect(input.position).toBe('replace');
+      expect(input.position).toBe('into');
       expect(input.targets).toHaveLength(1);
     });
 
@@ -257,7 +257,7 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('beforebegin');
+      expect(input.position).toBe('before');
     });
 
     it('should parse semantic parser format with after modifier', async () => {
@@ -273,7 +273,7 @@ describe('PutCommand', () => {
         context
       );
 
-      expect(input.position).toBe('afterend');
+      expect(input.position).toBe('after');
     });
   });
 
@@ -337,7 +337,7 @@ describe('PutCommand', () => {
 
       expect(input.targets).toEqual([element]);
       expect(input.memberPath).toBe('textContent');
-      expect(input.position).toBe('replace');
+      expect(input.position).toBe('into');
     });
 
     it('should resolve "#el\'s innerHTML" as a property-write target', async () => {
@@ -402,14 +402,14 @@ describe('PutCommand', () => {
   });
 
   describe('Execution - Content Insertion', () => {
-    it('should insert text content with replace position', async () => {
+    it('should insert text content with the into position', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
 
       const input: PutCommandInput = {
         value: 'New Content',
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -417,14 +417,14 @@ describe('PutCommand', () => {
       expect(target.textContent).toBe('New Content');
     });
 
-    it('should insert HTML content with replace position', async () => {
+    it('should insert HTML content with the into position', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
 
       const input: PutCommandInput = {
         value: '<strong>Bold</strong>',
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -432,7 +432,7 @@ describe('PutCommand', () => {
       expect(target.innerHTML).toBe('<strong>Bold</strong>');
     });
 
-    it('should insert HTMLElement with replace position', async () => {
+    it('should insert HTMLElement with the into position', async () => {
       const context = createMockContext();
       const target = createMockElement('target');
       const newElement = document.createElement('p');
@@ -441,7 +441,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: newElement,
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -460,7 +460,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: '<span>Before</span>',
         targets: [target],
-        position: 'beforebegin',
+        position: 'before',
       };
 
       await command.execute(input, context);
@@ -479,7 +479,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: '<span>After</span>',
         targets: [target],
-        position: 'afterend',
+        position: 'after',
       };
 
       await command.execute(input, context);
@@ -496,7 +496,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: '<strong>First</strong>',
         targets: [target],
-        position: 'afterbegin',
+        position: 'prepend',
       };
 
       await command.execute(input, context);
@@ -513,7 +513,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: '<strong>Last</strong>',
         targets: [target],
-        position: 'beforeend',
+        position: 'append',
       };
 
       await command.execute(input, context);
@@ -530,7 +530,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'Shared Content',
         targets: [target1, target2],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -548,7 +548,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'custom-value',
         targets: [target],
-        position: 'replace',
+        position: 'into',
         memberPath: 'className',
       };
 
@@ -566,7 +566,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'test-value',
         targets: [target],
-        position: 'replace',
+        position: 'into',
         memberPath: 'customData.nested',
       };
 
@@ -582,7 +582,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'value',
         targets: [target],
-        position: 'replace',
+        position: 'into',
         memberPath: 'nonexistent.property',
       };
 
@@ -597,7 +597,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 42,
         targets: [],
-        position: 'replace',
+        position: 'into',
         variableName: 'myVar',
       };
 
@@ -613,7 +613,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'Hello',
         targets: [],
-        position: 'replace',
+        position: 'into',
         variableName: 'greeting',
       };
 
@@ -631,7 +631,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: null,
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -646,7 +646,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: undefined,
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -661,7 +661,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 123,
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -676,7 +676,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'Plain text with < and > symbols',
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -693,7 +693,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: '',
         targets: [target],
-        position: 'replace',
+        position: 'into',
       };
 
       await command.execute(input, context);
@@ -711,7 +711,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 'Content',
         targets: [target1, target2],
-        position: 'replace',
+        position: 'into',
       };
 
       const result = await command.execute(input, context);
@@ -725,7 +725,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 42,
         targets: [],
-        position: 'replace',
+        position: 'into',
         variableName: 'myVar',
       };
 
@@ -880,7 +880,7 @@ describe('PutCommand', () => {
       const input: PutCommandInput = {
         value: 42,
         targets: [],
-        position: 'replace',
+        position: 'into',
         variableName: 'myVar',
       };
 

@@ -22,6 +22,11 @@ import {
   resolvePropertyTargetFromString,
 } from '../helpers/property-target';
 import {
+  insertContentSemantic,
+  type ContentInsertPosition,
+  type SemanticPosition,
+} from '../helpers/dom-mutation';
+import {
   command,
   meta,
   createFactory,
@@ -29,12 +34,17 @@ import {
   type CommandMetadata,
 } from '../decorators';
 
-export type InsertPosition = 'replace' | 'beforeend' | 'afterend' | 'beforebegin' | 'afterbegin';
+/**
+ * @deprecated Use `ContentInsertPosition` from `commands/helpers/dom-mutation`,
+ * which this now aliases (the two were value-identical duplicates). `put`'s own
+ * input carries `SemanticPosition` names, shared with `append`/`prepend`.
+ */
+export type InsertPosition = ContentInsertPosition;
 
 export interface PutCommandInput {
   value: any;
   targets: HTMLElement[];
-  position: InsertPosition;
+  position: SemanticPosition;
   memberPath?: string;
   variableName?: string;
 }
@@ -130,7 +140,7 @@ export class PutCommand implements DecoratedCommand {
         return {
           value,
           targets: [propertyTarget.element],
-          position: 'replace',
+          position: 'into',
           memberPath: propertyTarget.property,
         };
       }
@@ -147,7 +157,7 @@ export class PutCommand implements DecoratedCommand {
               return {
                 value,
                 targets: [context.me as HTMLElement],
-                position: 'replace',
+                position: 'into',
                 memberPath: prop.name,
               };
             }
@@ -178,7 +188,7 @@ export class PutCommand implements DecoratedCommand {
             return {
               value,
               targets: [target.element],
-              position: 'replace',
+              position: 'into',
               memberPath: target.property,
             };
           }
@@ -231,24 +241,27 @@ export class PutCommand implements DecoratedCommand {
     } else {
       for (const t of targets) {
         const content = this.parseValue(value);
-        this.insertContent(t, content, position);
+        // NOTE: an Element value can only exist in one place, so across multiple
+        // targets it MOVES and ends up inside the last one. Strings are copied.
+        insertContentSemantic(t, content, position);
       }
     }
     return targets;
   }
 
-  private mapPosition(prep: string): InsertPosition {
+  /** Preposition surface form → the shared semantic position vocabulary. */
+  private mapPosition(prep: string): SemanticPosition {
     switch (prep) {
       case 'into':
-        return 'replace';
+        return 'into';
       case 'before':
-        return 'beforebegin';
+        return 'before';
       case 'after':
-        return 'afterend';
+        return 'after';
       case 'at start of':
-        return 'afterbegin';
+        return 'prepend';
       case 'at end of':
-        return 'beforeend';
+        return 'append';
       default:
         throw new Error(`Invalid position: ${prep}`);
     }
@@ -270,45 +283,6 @@ export class PutCommand implements DecoratedCommand {
   private parseValue(v: any): string | HTMLElement {
     if (isHTMLElement(v)) return v as HTMLElement;
     return v == null ? '' : String(v);
-  }
-
-  private insertContent(
-    target: HTMLElement,
-    content: string | HTMLElement,
-    pos: InsertPosition
-  ): void {
-    if (pos === 'replace') {
-      if (isHTMLElement(content)) {
-        target.innerHTML = '';
-        target.appendChild(content as HTMLElement);
-      } else {
-        const hasHTML = content.includes('<') && content.includes('>');
-        if (hasHTML) target.innerHTML = content;
-        else target.textContent = content;
-      }
-      return;
-    }
-    if (isHTMLElement(content)) {
-      const el = content as HTMLElement;
-      switch (pos) {
-        case 'beforebegin':
-          target.parentElement?.insertBefore(el, target);
-          break;
-        case 'afterbegin':
-          target.insertBefore(el, target.firstChild);
-          break;
-        case 'beforeend':
-          target.appendChild(el);
-          break;
-        case 'afterend':
-          target.parentElement?.insertBefore(el, target.nextSibling);
-          break;
-      }
-    } else {
-      const hasHTML = content.includes('<') && content.includes('>');
-      if (hasHTML) target.insertAdjacentHTML(pos, content);
-      else target.insertAdjacentText(pos, content);
-    }
   }
 
   /**
