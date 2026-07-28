@@ -168,7 +168,15 @@ export const germanProfile: LanguageProfile = {
     // `resize` event (window-resize): the i18n dict emits größeändern; without it
     // the word tokenized as an identifier → event:expression (the on.event R1
     // residue). Registering it as the resize event yields event:literal="resize".
-    resize: { primary: 'größeändern', normalized: 'resize' },
+    // 'größeändern' was a malformed compound — German either separates the verb
+    // phrase or compounds with the linking -n-. Noun form chosen as primary: it
+    // stays a single token, so it also works as an `on-`/`al-` attribute name,
+    // which a spaced phrase cannot.
+    resize: {
+      primary: 'Größenänderung',
+      alternatives: ['größenänderung', 'Größe ändern', 'größeändern'],
+      normalized: 'resize',
+    },
     // Event modifiers (for repeat until event)
     until: { primary: 'bis', normalized: 'until' },
     event: { primary: 'Ereignis', alternatives: ['Event'], normalized: 'event' },

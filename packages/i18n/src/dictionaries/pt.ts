@@ -96,8 +96,11 @@ export const pt: Dictionary = {
     mouseleave: 'mouseSair',
     // V3 Batch 2: camelCase forms split to the S5b/tokenizer-known forms (the
     // fused spellings captured event=expression:undefined — broken listeners)
-    mousedown: 'mouse baixo',
-    mouseup: 'mouse cima',
+    // pt-BR idiom is "pressionado"/"solto", not the spatial baixo/cima calque —
+    // cf. MDN pt-BR ("um botão ... é pressionado") and Scratch pt-BR
+    // ("mouse pressionado?"). The calques stay as profile parse alternatives.
+    mousedown: 'mouse pressionado',
+    mouseup: 'mouse solto',
     mouseover: 'mouse sobre',
     mouseout: 'mouse fora',
     mousemove: 'mouseMover',
