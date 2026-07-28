@@ -27,10 +27,9 @@ import { setVariableValue } from '../helpers/variable-access';
 import { setElementVar } from '../../core/context';
 import {
   isPropertyTargetString,
-  resolveAnyPropertyTarget,
   resolvePropertyTargetFromString,
 } from '../helpers/property-target';
-import { resolveAttributeWriteTarget } from '../helpers/attribute-target';
+import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import {
   command,
   meta,
@@ -38,7 +37,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
-import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
+import type { NodeWriterFn } from '../../parser/extensions';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -60,6 +59,39 @@ export interface SetCommandOutput {
   target: string | HTMLElement;
   value: unknown;
   targetType: 'variable' | 'attribute' | 'property';
+}
+
+/**
+ * Map a resolved {@link WriteTarget} onto SetCommand's input union.
+ *
+ * The `selector` and `variable` rungs are unreachable here: set does not request
+ * them (a bare identifier is set's variable-assignment path, and a `selector`
+ * node is its "set #element to value → textContent" path — both belong to the
+ * evaluated tail in `parseInput`).
+ */
+function toSetInput(target: WriteTarget, value: unknown): SetCommandInput {
+  switch (target.kind) {
+    case 'node-write':
+      return { type: 'node-write', node: target.node, value, writer: target.writer };
+    case 'attribute':
+      return { type: 'attribute', elements: target.elements, name: target.name, value };
+    case 'style':
+      return {
+        type: 'style',
+        element: target.element,
+        property: target.property,
+        value: String(value),
+      };
+    case 'property':
+      return {
+        type: 'property',
+        element: target.target.element,
+        property: target.target.property,
+        value,
+      };
+    default:
+      throw new Error(`set: unrequested write-target rung '${target.kind}'`);
+  }
 }
 
 @meta({
@@ -89,56 +121,20 @@ export class SetCommand implements DecoratedCommand {
     // to element scope / globals instead of execution-locals.
     const argScope = firstArg?.scope as 'element' | 'global' | 'local' | undefined;
 
-    // Plugin-defined write targets — e.g. `set ^count to 0` routes through
-    // the reactivity plugin's caretVar writer. Dispatch BEFORE evaluating
-    // firstArg so the writer can interpret the raw AST node (the target
-    // value at this point hasn't been written yet).
-    const firstArgType = firstArg?.type as string | undefined;
-    if (firstArgType) {
-      const writer = getRegisteredNodeWriter(firstArgType);
-      if (writer) {
-        const value = await this.extractValue(raw, evaluator, context);
-        return { type: 'node-write', node: firstArg as ASTNode, value, writer };
-      }
-    }
-
-    // Attribute write targets: `set @attr to V`, `set [@attr] to V`,
-    // `set @attr of X to V`, `set X[@attr] to V`. Intercept before the generic
-    // property/member paths so the attributeAccess node routes to setAttribute
-    // (otherwise the computed-member path would key the write on the attribute's
-    // *current* value instead of writing the attribute).
-    const attrTarget = await resolveAttributeWriteTarget(firstArg, evaluator, context, () =>
-      this.resolveTargets(raw.modifiers.on, evaluator, context)
-    );
-    if (attrTarget) {
-      const value = await this.extractValue(raw, evaluator, context);
-      return { type: 'attribute', elements: attrTarget.elements, name: attrTarget.name, value };
-    }
-
-    // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
-    const propertyTarget = await resolveAnyPropertyTarget(
-      firstArg as import('../../types/base-types').ASTNode,
-      evaluator,
-      context
-    );
-    if (propertyTarget) {
-      const value = await this.extractValue(raw, evaluator, context);
-      // Handle CSS style properties (*opacity syntax)
-      if (propertyTarget.property.startsWith('*')) {
-        const styleProp = propertyTarget.property.substring(1);
-        return {
-          type: 'style',
-          element: propertyTarget.element,
-          property: styleProp,
-          value: String(value),
-        };
-      }
-      return {
-        type: 'property',
-        element: propertyTarget.element,
-        property: propertyTarget.property,
-        value,
-      };
+    // The raw-AST write-target ladder, shared with append/prepend
+    // (`helpers/write-target.ts`, which documents why the rung order is
+    // semantics). set requests the plugin-writer rung — `set ^count to 0` routes
+    // through the reactivity plugin's caretVar writer, and it must see the raw
+    // node because the target value hasn't been written yet — and the `*prop`
+    // style split. It does NOT request selector-source or bare-reference
+    // capture; those shapes are set's evaluated tail below.
+    const writeTarget = await resolveWriteTarget(firstArg, evaluator, context, {
+      scopeElements: () => this.resolveTargets(raw.modifiers.on, evaluator, context),
+      nodeWriters: true,
+      styleSplit: true,
+    });
+    if (writeTarget) {
+      return toSetInput(writeTarget, await this.extractValue(raw, evaluator, context));
     }
 
     // Handle memberExpression / propertyAccess: "set my innerHTML to X", "set event.dataTransfer.effectAllowed to X"

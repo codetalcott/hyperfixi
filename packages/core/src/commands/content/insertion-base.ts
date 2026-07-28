@@ -41,12 +41,11 @@ import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue, setVariableValue } from '../helpers/variable-access';
 import { insertContentSemantic, type SemanticPosition } from '../helpers/dom-mutation';
 import {
-  resolveAnyPropertyTarget,
   readPropertyTarget,
   writePropertyTarget,
   type PropertyTarget,
 } from '../helpers/property-target';
-import { resolveAttributeWriteTarget } from '../helpers/attribute-target';
+import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import type { DecoratedCommand, CommandMetadata } from '../decorators';
 
 /** Where content lands, and how scalar values combine. */
@@ -75,6 +74,28 @@ export interface InsertionCommandOutput {
 /** Content coerced for DOM insertion: elements stay live, everything else stringifies. */
 function toInsertable(content: unknown): string | HTMLElement {
   return isHTMLElement(content) ? (content as HTMLElement) : String(content);
+}
+
+/**
+ * Map a resolved {@link WriteTarget} onto the insertion input union.
+ *
+ * The `node-write` and `style` rungs are unreachable here: append/prepend don't
+ * request plugin writers or the `*prop` split (read/writePropertyTarget already
+ * route a `*` prefix to inline style, so `*opacity` stays a property target).
+ */
+function toInsertionInput(target: WriteTarget, content: unknown): InsertionCommandInput {
+  switch (target.kind) {
+    case 'selector':
+      return { kind: 'selector', selector: target.selector, content };
+    case 'attribute':
+      return { kind: 'attribute', elements: target.elements, name: target.name, content };
+    case 'property':
+      return { kind: 'property', property: target.target, content };
+    case 'variable':
+      return { kind: 'variable', name: target.name, scope: target.scope, content };
+    default:
+      throw new Error(`unrequested write-target rung '${target.kind}'`);
+  }
 }
 
 export abstract class ContentInsertionCommand implements DecoratedCommand {
@@ -111,47 +132,21 @@ export abstract class ContentInsertionCommand implements DecoratedCommand {
       ExpressionNode | undefined;
     if (!toNode) return { kind: 'implicit', content };
 
-    const node = toNode as unknown as Record<string, unknown>;
-    const nodeType = node.type as string | undefined;
+    // The raw-AST write-target ladder, shared with `set`
+    // (`helpers/write-target.ts`, which documents why the rung order is
+    // semantics). append/prepend request selector-source — so a multi-match
+    // selector inserts into every element — and bare-reference capture, so
+    // execute can read-modify-write the binding rather than lose it to
+    // evaluation. A standalone `@attr` scopes to `me`: append/prepend have no
+    // `on` modifier (MULTI_WORD_PATTERNS lists only `to`).
+    const writeTarget = await resolveWriteTarget(toNode, evaluator, context, {
+      scopeElements: async () => (isHTMLElement(context.me) ? [context.me as HTMLElement] : []),
+      selectorSource: true,
+      bareReference: true,
+    });
+    if (writeTarget) return toInsertionInput(writeTarget, content);
 
-    // (1) Selector nodes keep their SOURCE text — resolving at execute time lets
-    //     a multi-match selector insert into every element.
-    if (nodeType === 'selector' && typeof node.value === 'string') {
-      return { kind: 'selector', selector: node.value, content };
-    }
-
-    // (2) Attribute write targets (`@attr`, `@attr of X`, `X[@attr]`), recognized
-    //     before evaluation. Standalone `@attr` scopes to `me` — append/prepend
-    //     have no `on` modifier (MULTI_WORD_PATTERNS lists only `to`).
-    const attrTarget = await resolveAttributeWriteTarget(toNode, evaluator, context, async () =>
-      isHTMLElement(context.me) ? [context.me as HTMLElement] : []
-    );
-    if (attrTarget) {
-      return {
-        kind: 'attribute',
-        elements: attrTarget.elements,
-        name: attrTarget.name,
-        content,
-      };
-    }
-
-    // (3) Property targets: `#el's value`, `my innerHTML`, `the X of Y`, `*opacity`.
-    const propertyTarget = await resolveAnyPropertyTarget(toNode as ASTNode, evaluator, context);
-    if (propertyTarget) return { kind: 'property', property: propertyTarget, content };
-
-    // (4) Bare references keep their NAME so execute can read+write the binding.
-    //     Evaluating would yield the current value and lose it. The parser's
-    //     scope tag routes `:name` to element scope and `$name`/`global` to globals.
-    if (
-      (nodeType === 'identifier' || nodeType === 'variable' || nodeType === 'symbol') &&
-      typeof node.name === 'string'
-    ) {
-      const rawScope = node.scope as string | undefined;
-      const scope = rawScope === 'element' || rawScope === 'global' ? rawScope : undefined;
-      return { kind: 'variable', name: node.name, scope, content };
-    }
-
-    // (5) Anything else: evaluate and dispatch on the runtime value.
+    // Anything else: evaluate and dispatch on the runtime value.
     const value = await evaluator.evaluate(toNode as ASTNode, context);
     const elements = this.asElementList(value);
     if (elements) return { kind: 'elements', elements, content };
