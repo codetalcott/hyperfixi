@@ -7,9 +7,9 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: PRE-ARC GHOST FIX LANDED (Finding 5); ARC STEPS NOT STARTED.**
-> Next action: step 1 PR. Baseline for step 1 is **7800**, not 7795 — the ghost
-> fix added five tests.
+> **Status: STEP 1 LANDED (the audit-as-gate). Next action: step 2 (the
+> manifest, data-only, consumed by nobody).** Baseline for step 2 is **7814**
+> (step 1 absorbed `lsp-metadata.test.ts`'s 5 tests and added 19).
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -350,7 +350,11 @@ step-1 audit rows so the diff is the review artifact:
 
 1. **LSP tiers** (23 unclassified; live false negative). Classify against a
    `_hyperscript` checkout — the Arc C step-2 oracle.
-2. **template-capabilities** (12 unclassified; latent). Also decide the
+2. **template-capabilities** (**13** unclassified, not 12 — see the 2026-07-28
+   step-1 status entry; latent). 10 rows have no classification at all
+   (`CAPABILITY_UNCLASSIFIED` in the audit); `if`/`repeat`/`fetch` are
+   classified only as blocks (`CAPABILITY_BLOCK_ONLY`) and need an explicit
+   blocks-count-as-classified decision. Also decide the
    `COMMAND_IMPLEMENTATIONS` second-list overlap.
 3. **`COMMAND_KEYWORDS`** (**4** gaps — `process`, `pseudo-command`, `scroll`,
    `start`; the two ghosts landed separately per Finding 5, and that rename
@@ -470,3 +474,25 @@ was touched.
   against the rebuilt core dist. Two knock-on edits to this brief: step 4.3 is
   now **4** gaps not 6, and the step baseline is 7800.
   Next action: step 1 (the audit-as-gate).
+- 2026-07-28 — **Step 1 landed** (branch `test/command-manifest-audit`, off
+  `46f187b3`): `packages/core/src/runtime/__tests__/command-manifest-audit.test.ts`,
+  19 tests scoring every hand-maintained list against
+  `new Runtime().getRegistry().getCommandNames()` in both directions — the four
+  core lists (exact, modulo the four alias spellings in a shared `SPELLINGS`
+  map), the LSP tier lists (read from language-server source text to avoid a
+  package cycle), the capability lists, `COMMAND_KEYWORDS`, and the nine
+  per-bundle `commands: [...]` arrays (zero ghosts; counts pinned). Absorbed and
+  deleted `lsp-metadata.test.ts`. Landed GREEN, not red: every divergence is an
+  explicit allowlist row naming its fixing step, and the headline counts test
+  pins 23 (step 4.1) + 10 + 3 (step 4.2) + 4 (step 4.3). **One measured
+  correction to this brief:** the Claim 3 table's "12" for template-capabilities
+  is actually **13** — the table counted `if` as classified, but `if` sits in
+  neither command list, exactly like `repeat`/`fetch` (all three are only in
+  `AVAILABLE_BLOCKS`, split out as `CAPABILITY_BLOCK_ONLY`). Mutation-verified
+  the three directions the old gates could not see: dropping `trigger` from
+  `AVAILABLE_COMMANDS`, dropping `toggle` from `HYPERSCRIPT_COMMANDS`, and
+  re-introducing `pushUrl` each fail the audit (the first two were measured
+  SILENT pre-step-1). Also pinned: Finding 6's seed mutation and Claim 1's
+  registration-call uniformity. Gates: core 7814 passing / 128 skipped / 300
+  files, `verify:reference` clean, `typecheck` clean, prettier/oxlint clean.
+  Next action: step 2 (the manifest, data-only, gated, consumed by nobody).
