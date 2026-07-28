@@ -201,11 +201,14 @@ function parseCommand(code: string): LiteCommand | null {
     return { name: 'put', args: [content], modifier: match[5], target: match[6] };
   }
 
-  // append "content" to target
+  // append/prepend "content" to target
   match = trimmed.match(/^(\w+)\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s+to\s+(.+)$/i);
-  if (match && normalizeCommand(match[1]) === 'append') {
-    const content = match[2] || match[3] || match[4];
-    return { name: 'append', args: [content], target: match[5] };
+  if (match) {
+    const insertion = normalizeCommand(match[1]);
+    if (insertion === 'append' || insertion === 'prepend') {
+      const content = match[2] || match[3] || match[4];
+      return { name: insertion, args: [content], target: match[5] };
+    }
   }
 
   // set target to value
@@ -485,10 +488,12 @@ async function executeCommand(
       return elements.length === 1 ? elements[0] : elements;
     }
 
-    case 'append': {
+    case 'append':
+    case 'prepend': {
       const content = evaluateValue(cmd.args[0], me, locals);
+      const where = cmd.name === 'append' ? 'beforeend' : 'afterbegin';
       for (const el of elements) {
-        (el as HTMLElement).insertAdjacentHTML('beforeend', String(content));
+        (el as HTMLElement).insertAdjacentHTML(where, String(content));
       }
       return elements.length === 1 ? elements[0] : elements;
     }
@@ -769,6 +774,7 @@ const api = {
     'take',
     'put',
     'append',
+    'prepend',
     'set',
     'increment',
     'decrement',

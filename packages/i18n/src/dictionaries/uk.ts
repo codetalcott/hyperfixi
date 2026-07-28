@@ -56,7 +56,7 @@ export const ukrainianDictionary: Dictionary = {
     swap: 'поміняти',
     morph: 'трансформувати',
     settle: 'стабілізувати',
-    append: 'дописати', // profile alternative; the compound splits and додати parses as add
+    append: 'дописати', // matches the uk profile primary
     exit: 'вийти',
     else: 'інакше',
     install: 'інсталювати', // loanword — `встановити` is `set` (homonym); see ukrainian profile
@@ -65,7 +65,7 @@ export const ukrainianDictionary: Dictionary = {
     focus: 'сфокусувати',
     blur: 'розфокусувати',
     clone: 'клонувати',
-    prepend: 'додати_на_початок',
+    prepend: 'додати на початок', // natural form; see ru.ts
     breakpoint: 'точка-зупинки',
     clear: 'очистити',
     close: 'закрити',

@@ -75,6 +75,7 @@ import { AsyncCommand } from '../src/commands/advanced/async';
 import { GoCommand } from '../src/commands/navigation/go';
 
 import { AppendCommand } from '../src/commands/content/append';
+import { PrependCommand } from '../src/commands/content/prepend';
 import { RenderCommand } from '../src/commands/templates/render';
 
 import { InstallCommand } from '../src/commands/behaviors/install';
@@ -152,6 +153,7 @@ const COMMANDS: CommandEntry[] = [
 
   // Content
   { name: 'append', class: AppendCommand },
+  { name: 'prepend', class: PrependCommand },
   { name: 'render', class: RenderCommand },
 
   // Behaviors

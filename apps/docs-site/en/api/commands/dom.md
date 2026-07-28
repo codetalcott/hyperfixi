@@ -116,12 +116,39 @@ Insert content into elements. The most versatile content command.
 
 ### `append`
 
-Add content to the end of an element or string.
+Add content to the end of an element, string, array, or Set.
 
 ```html
 <button _="on click append ' more' to #text">Add More</button>
 <button _="on click append '<li>Item</li>' to #list">Add Item</button>
 ```
+
+Existing children are left untouched — appending to a list does not disturb
+input values, focus, or event listeners on the items already there.
+
+The target can also be a variable, an attribute, or a property, and with no
+target at all the content accumulates onto the implicit result (`it`):
+
+```html
+<button _="on click append ' (edited)' to #title's textContent">Mark Edited</button>
+<button _="on click append 'x' to @data-log">Log</button>
+<button _="on click set items to [] then append 'first' to items">Collect</button>
+```
+
+Appending to an array pushes; to a Set, adds; to an element, inserts at the end.
+An element value is **moved**, not copied.
+
+### `prepend`
+
+Add content to the _start_ of an element, string, array, or Set — `append`'s
+mirror, with the same target forms and the same preservation guarantees.
+
+```html
+<button _="on click prepend '<li>Newest</li>' to #list">Add to Top</button>
+```
+
+> **LokaScript extension.** Original \_hyperscript has no `prepend` command; its
+> equivalent is `put <content> at the start of <target>`, which also works here.
 
 ### `set`
 
@@ -184,19 +211,20 @@ Commands can be chained with `then`:
 
 ## Summary Table
 
-| Command  | Description                       | Example                   |
-| -------- | --------------------------------- | ------------------------- |
-| `toggle` | Toggle class/attribute/visibility | `toggle .active on me`    |
-| `add`    | Add class                         | `add .active to me`       |
-| `remove` | Remove class                      | `remove .active from me`  |
-| `take`   | Take class from siblings          | `take .active from .tab`  |
-| `show`   | Show element                      | `show #modal`             |
-| `hide`   | Hide element                      | `hide me`                 |
-| `put`    | Insert content                    | `put 'Hi' into #out`      |
-| `append` | Add to end                        | `append 'x' to #out`      |
-| `set`    | Set property                      | `set me.innerHTML to 'x'` |
-| `get`    | Get value                         | `get #input.value`        |
-| `make`   | Create element                    | `make a <div/>`           |
+| Command   | Description                       | Example                   |
+| --------- | --------------------------------- | ------------------------- |
+| `toggle`  | Toggle class/attribute/visibility | `toggle .active on me`    |
+| `add`     | Add class                         | `add .active to me`       |
+| `remove`  | Remove class                      | `remove .active from me`  |
+| `take`    | Take class from siblings          | `take .active from .tab`  |
+| `show`    | Show element                      | `show #modal`             |
+| `hide`    | Hide element                      | `hide me`                 |
+| `put`     | Insert content                    | `put 'Hi' into #out`      |
+| `append`  | Add to end                        | `append 'x' to #out`      |
+| `prepend` | Add to start (extension)          | `prepend 'x' to #out`     |
+| `set`     | Set property                      | `set me.innerHTML to 'x'` |
+| `get`     | Get value                         | `get #input.value`        |
+| `make`    | Create element                    | `make a <div/>`           |
 
 ## Next Steps
 

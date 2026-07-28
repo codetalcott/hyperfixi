@@ -22,7 +22,7 @@
  * - Utility: log, tell, call, copy, pick, beep (6)
  * - Advanced: js, async (2)
  * - Navigation: go (1)
- * - Special: install, append, render, pseudo-command (4)
+ * - Special: install, append, prepend, render, pseudo-command (5)
  *
  * Expected size: ~210KB uncompressed (~70KB gzipped)
  * Full bundle: ~366KB uncompressed (~112KB gzipped)
@@ -133,6 +133,7 @@ import { createGoCommand } from '../commands/navigation/go';
 // ============================================================================
 import { createInstallCommand } from '../commands/behaviors/install';
 import { createAppendCommand } from '../commands/content/append';
+import { createPrependCommand } from '../commands/content/prepend';
 import { createRenderCommand } from '../commands/templates/render';
 import { createPseudoCommand } from '../commands/execution/pseudo-command';
 
@@ -224,6 +225,7 @@ const runtime = createTreeShakeableRuntime(
     // Special (4)
     createInstallCommand(),
     createAppendCommand(),
+    createPrependCommand(),
     createRenderCommand(),
     createPseudoCommand(),
   ],
@@ -320,6 +322,7 @@ const api = {
     // Special (4)
     'install',
     'append',
+    'prepend',
     'render',
     'pseudo-command',
   ],

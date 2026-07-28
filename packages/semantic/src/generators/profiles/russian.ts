@@ -88,13 +88,24 @@ export const russianProfile: LanguageProfile = {
       normalized: 'put',
       form: 'infinitive',
     },
+    // Underscore compounds are not natural Russian — they were a tokenizer
+    // workaround, and a broken one: the Cyrillic extractor split on `_`, so
+    // `добавить_в_конец` parsed as `добавить` (= `add`) and ru append/prepend
+    // silently became `add`. The extractor now keeps `_` mid-word, so all three
+    // spellings below parse; the PRIMARY is what `translate()` renders, so it is
+    // the natural form a Russian speaker would actually write.
     append: {
-      primary: 'добавить_в_конец',
-      alternatives: ['дописать'],
+      primary: 'дописать',
+      alternatives: ['добавить в конец', 'добавить_в_конец'],
       normalized: 'append',
       form: 'infinitive',
     },
-    prepend: { primary: 'добавить_в_начало', normalized: 'prepend', form: 'infinitive' },
+    prepend: {
+      primary: 'добавить в начало',
+      alternatives: ['добавить_в_начало'],
+      normalized: 'prepend',
+      form: 'infinitive',
+    },
     take: { primary: 'взять', alternatives: ['возьми'], normalized: 'take', form: 'infinitive' },
     make: { primary: 'создать', alternatives: ['создай'], normalized: 'make', form: 'infinitive' },
     clone: {

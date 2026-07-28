@@ -58,6 +58,7 @@ export const KEYWORDS = new Set([
   'call',
   'return',
   'append',
+  'prepend',
   'log',
   'send',
   'trigger',

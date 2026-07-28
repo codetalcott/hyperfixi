@@ -243,7 +243,7 @@ const KEYWORDS = new Set([
   'on', 'from', 'to', 'into', 'before', 'after', 'in', 'of', 'at', 'with',
   'if', 'else', 'unless', 'end', 'then', 'and', 'or', 'not',
   'repeat', 'times', 'for', 'each', 'while', 'until',
-  'toggle', 'add', 'remove', 'put', 'set', 'get', 'call', 'return', 'append',
+  'toggle', 'add', 'remove', 'put', 'set', 'get', 'call', 'return', 'append', 'prepend',
   'log', 'send', 'trigger', 'wait', 'settle', 'fetch', 'as',
   'show', 'hide', 'take', 'increment', 'decrement', 'focus', 'blur', 'empty', 'go', 'transition', 'over',
   'the', 'a', 'an', 'my', 'its', 'me', 'it', 'you',
@@ -537,7 +537,8 @@ class HybridParser {
       add: () => this.parseAdd(),
       remove: () => this.parseRemove(),
       put: () => this.parsePut(),
-      append: () => this.parseAppend(),
+      append: () => this.parseInsertion('append'),
+      prepend: () => this.parseInsertion('prepend'),
       set: () => this.parseSet(),
       get: () => this.parseGet(),
       call: () => this.parseCall(),
@@ -689,15 +690,15 @@ class HybridParser {
     return { type: 'command', name: 'put', args: [content], target, modifier };
   }
 
-  parseAppend() {
-    this.expect('append');
+  parseInsertion(name) {
+    this.expect(name);
     const content = this.parseExpression();
     let target;
     if (this.match('to')) {
       this.advance();
       target = this.parseExpression();
     }
-    return { type: 'command', name: 'append', args: [content], target };
+    return { type: 'command', name, args: [content], target };
   }
 
   parseSet() {

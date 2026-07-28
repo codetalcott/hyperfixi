@@ -3469,6 +3469,7 @@ export class Parser {
       'decrement',
       'add',
       'append',
+      'prepend',
       'toggle',
       'if',
       'unless',

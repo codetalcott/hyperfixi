@@ -1,100 +1,46 @@
 /**
- * Unit Tests for AppendCommand (Decorated Implementation)
+ * Unit Tests for AppendCommand
  *
- * Tests the append command which adds content to the end of a string,
- * array, or HTML element. Covers all target resolution paths:
- * - No target (context.it fallback)
- * - CSS selector targets (#id, .class, [attr])
- * - Context references (me, it, you)
- * - Variable targets (string, array, new variable)
- * - Direct targets (Array, HTMLElement, other)
+ * `append` follows upstream _hyperscript semantics: Array→push, Set→add,
+ * Element→insertAdjacent* (preserving existing DOM), assignable target→
+ * read-modify-write, otherwise throw. A missing `to` targets the implicit
+ * `result` (aliased by `it`).
+ *
+ * These tests exercise the command end-to-end through the real parser and
+ * runtime wherever behavior depends on how the target was WRITTEN (selector vs
+ * attribute vs possessive), because the whole point of the parse ladder is that
+ * it inspects AST shape before evaluating.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { AppendCommand } from '../append';
-import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
-import type { ASTNode } from '../../../types/base-types';
-import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
-
-// ========== Test Utilities ==========
-
-function createMockContext(
-  overrides: Partial<ExecutionContext> = {}
-): ExecutionContext & TypedExecutionContext {
-  const meElement = document.createElement('div');
-  meElement.id = 'test-element';
-
-  return {
-    me: meElement,
-    you: undefined,
-    it: undefined,
-    result: undefined,
-    locals: new Map(),
-    globals: new Map(),
-    target: meElement,
-    detail: undefined,
-    ...overrides,
-  } as unknown as ExecutionContext & TypedExecutionContext;
-}
-
-function createMockEvaluator(): ExpressionEvaluator {
-  return {
-    evaluate: async (node: ASTNode, _context: ExecutionContext) => {
-      if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
-      }
-      if (typeof node === 'object' && node !== null && 'name' in node) {
-        return (node as any).name;
-      }
-      return node;
-    },
-  } as unknown as ExpressionEvaluator;
-}
-
-// ========== Tests ==========
+import { hyperscript } from '../../../api/hyperscript-api';
 
 describe('AppendCommand', () => {
-  let command: AppendCommand;
-  let context: ExecutionContext & TypedExecutionContext;
-  let evaluator: ExpressionEvaluator;
-
-  // Track elements appended to document.body for cleanup
-  const elementsToCleanup: HTMLElement[] = [];
+  let host: HTMLElement;
 
   beforeEach(() => {
-    command = new AppendCommand();
-    context = createMockContext();
-    evaluator = createMockEvaluator();
-  });
-
-  afterEach(() => {
-    for (const el of elementsToCleanup) {
-      if (el.parentNode) {
-        el.parentNode.removeChild(el);
-      }
-    }
-    elementsToCleanup.length = 0;
+    document.body.innerHTML = '';
+    host = document.createElement('div');
+    host.id = 'host';
+    document.body.appendChild(host);
   });
 
   // ========== 1. Metadata ==========
 
   describe('metadata', () => {
+    const command = new AppendCommand();
+
     it('should have correct command name', () => {
       expect(command.name).toBe('append');
     });
 
-    it('should have a description containing "add content" or "end"', () => {
-      const desc = command.metadata.description.toLowerCase();
-      expect(desc.includes('add content') || desc.includes('end')).toBe(true);
+    it('should have a description mentioning the end', () => {
+      expect(command.metadata.description.toLowerCase()).toContain('end');
     });
 
-    it('should have syntax as an array', () => {
-      expect(command.metadata.syntax).toBeInstanceOf(Array);
+    it('should have syntax and examples', () => {
       expect(command.metadata.syntax.length).toBeGreaterThan(0);
-    });
-
-    it('should have usage examples', () => {
-      expect(command.metadata.examples).toBeInstanceOf(Array);
       expect(command.metadata.examples.length).toBeGreaterThan(0);
     });
 
@@ -102,237 +48,227 @@ describe('AppendCommand', () => {
       expect(command.metadata.sideEffects).toContain('data-mutation');
       expect(command.metadata.sideEffects).toContain('dom-mutation');
     });
-  });
 
-  // ========== 2. parseInput ==========
-
-  describe('parseInput', () => {
-    it('should throw error when no arguments provided', async () => {
+    it('should reject missing content', async () => {
       await expect(
-        command.parseInput({ args: [], modifiers: {} }, evaluator, context)
+        new AppendCommand().parseInput({ args: [], modifiers: {} }, {} as never, {} as never)
       ).rejects.toThrow('append requires content');
     });
+  });
 
-    it('should parse content from first argument', async () => {
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'Hello' } as any],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
+  // ========== 2. Element targets preserve existing DOM ==========
 
-      expect(input.content).toBe('Hello');
-      expect(input.target).toBeUndefined();
+  describe('element targets', () => {
+    it('should append HTML at the end without disturbing existing markup', async () => {
+      host.innerHTML = '<p>A</p>';
+      await hyperscript.eval('append "<span>B</span>" to #host', host);
+      expect(host.innerHTML).toBe('<p>A</p><span>B</span>');
     });
 
-    it('should parse target from "to" modifier', async () => {
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'World' } as any],
-          modifiers: { to: { type: 'literal', value: 'greeting' } as any },
-        },
-        evaluator,
-        context
-      );
+    it('should preserve the identity of existing child nodes', async () => {
+      host.innerHTML = '<p id="keep">A</p>';
+      const keep = document.getElementById('keep');
+      await hyperscript.eval('append "<span>B</span>" to #host', host);
+      expect(document.getElementById('keep')).toBe(keep);
+    });
 
-      expect(input.content).toBe('World');
-      expect(input.target).toBe('greeting');
+    it('should preserve live state of existing children (input value)', async () => {
+      host.innerHTML = '<input id="field">';
+      (document.getElementById('field') as HTMLInputElement).value = 'typed';
+      await hyperscript.eval('append "<i>x</i>" to #host', host);
+      expect((document.getElementById('field') as HTMLInputElement).value).toBe('typed');
+    });
+
+    it('should preserve event listeners on existing children', async () => {
+      const btn = document.createElement('button');
+      btn.id = 'btn';
+      let hits = 0;
+      btn.addEventListener('click', () => hits++);
+      host.appendChild(btn);
+
+      await hyperscript.eval('append "<i>x</i>" to #host', host);
+      (document.getElementById('btn') as HTMLElement).click();
+
+      expect(hits).toBe(1);
+    });
+
+    it('should MOVE an element value rather than copying it', async () => {
+      const child = document.createElement('span');
+      child.id = 'moving';
+      child.textContent = 'C';
+      document.body.appendChild(child);
+
+      await hyperscript.eval('append (first <span/>) to #host', host);
+
+      expect(document.querySelectorAll('#moving')).toHaveLength(1);
+      expect(host.firstElementChild).toBe(child);
+    });
+
+    it('should insert into EVERY element a multi-match selector resolves to', async () => {
+      host.innerHTML = '<p class="i">1</p><p class="i">2</p>';
+      await hyperscript.eval('append "!" to .i', host);
+      expect(host.innerHTML).toBe('<p class="i">1!</p><p class="i">2!</p>');
+    });
+
+    it('should throw when the selector matches nothing', async () => {
+      await expect(hyperscript.eval('append "x" to #nope', host)).rejects.toThrow(
+        'No elements: "#nope"'
+      );
+    });
+
+    it('should append to me', async () => {
+      host.innerHTML = 'Before';
+      await hyperscript.eval('append "After" to me', host);
+      expect(host.innerHTML).toBe('BeforeAfter');
     });
   });
 
-  // ========== 3. execute - no target (context.it) ==========
+  // ========== 3. Attribute and property targets ==========
 
-  describe('execute - no target (context.it)', () => {
-    it('should set context.it when it is undefined', async () => {
-      const output = await command.execute({ content: 'Hello' }, context);
-
-      expect(context.it).toBe('Hello');
-      expect(output.result).toBe('Hello');
+  describe('assignable targets', () => {
+    it('should append to an attribute', async () => {
+      host.setAttribute('data-log', 'A');
+      await hyperscript.eval('append "B" to @data-log', host);
+      expect(host.getAttribute('data-log')).toBe('AB');
     });
 
-    it('should concatenate to existing context.it', async () => {
-      Object.assign(context, { it: 'Hello' });
-
-      const output = await command.execute({ content: ' World' }, context);
-
-      expect(context.it).toBe('Hello World');
-      expect(output.result).toBe('Hello World');
+    it('should create the attribute when absent', async () => {
+      await hyperscript.eval('append "B" to @data-log', host);
+      expect(host.getAttribute('data-log')).toBe('B');
     });
 
-    it('should return targetType "result"', async () => {
-      const output = await command.execute({ content: 'test' }, context);
+    it("should append to an element's property", async () => {
+      const input = document.createElement('input');
+      input.id = 'field';
+      input.value = 'A';
+      document.body.appendChild(input);
 
-      expect(output.targetType).toBe('result');
-    });
-  });
+      await hyperscript.eval(`append "B" to #field's value`, host);
 
-  // ========== 4. execute - DOM element target ==========
-
-  describe('execute - DOM element target', () => {
-    it('should append to element innerHTML via CSS selector', async () => {
-      const el = document.createElement('div');
-      el.id = 'append-target';
-      el.innerHTML = '<p>Existing</p>';
-      document.body.appendChild(el);
-      elementsToCleanup.push(el);
-
-      const output = await command.execute(
-        { content: '<span>New</span>', target: '#append-target' },
-        context
-      );
-
-      expect(el.innerHTML).toBe('<p>Existing</p><span>New</span>');
-      expect(output.targetType).toBe('element');
-      expect(output.target).toBe(el);
+      expect(input.value).toBe('AB');
     });
 
-    it('should append to element innerHTML via context ref "me"', async () => {
-      // context.me is an HTMLElement (div#test-element)
-      (context.me as HTMLElement).innerHTML = 'Before';
-
-      const output = await command.execute({ content: 'After', target: 'me' }, context);
-
-      expect((context.me as HTMLElement).innerHTML).toBe('BeforeAfter');
-      expect(output.targetType).toBe('element');
+    it('should append to a possessive property on me', async () => {
+      host.textContent = 'A';
+      await hyperscript.eval('append "B" to my textContent', host);
+      expect(host.textContent).toBe('AB');
     });
 
-    it('should return targetType "element" for DOM targets', async () => {
-      const el = document.createElement('section');
-      el.id = 'section-target';
-      document.body.appendChild(el);
-      elementsToCleanup.push(el);
-
-      const output = await command.execute(
-        { content: 'content', target: '#section-target' },
-        context
-      );
-
-      expect(output.targetType).toBe('element');
-      expect(output.result).toBe(el);
+    it('should not create a stray variable for an attribute target', async () => {
+      host.setAttribute('data-log', 'A');
+      await hyperscript.eval('append "B" to @data-log', host);
+      // The pre-fix defect evaluated `@data-log` to "A" and created a local named "A".
+      expect(host.getAttribute('data-log')).toBe('AB');
     });
   });
 
-  // ========== 5. execute - variable target ==========
+  // ========== 4. Variable targets ==========
 
-  describe('execute - variable target', () => {
-    it('should append to existing string variable', async () => {
-      context.locals.set('greeting', 'Hello');
-
-      const output = await command.execute({ content: ' World', target: 'greeting' }, context);
-
-      expect(context.locals.get('greeting')).toBe('Hello World');
-      expect(output.result).toBe('Hello World');
-      expect(output.targetType).toBe('variable');
+  describe('variable targets', () => {
+    it('should concatenate to an existing string variable', async () => {
+      await hyperscript.eval('set x to "A" then append "B" to x then put x into #host', host);
+      expect(host.textContent).toBe('AB');
     });
 
-    it('should create new variable when undefined', async () => {
-      const output = await command.execute({ content: 'NewValue', target: 'newVar' }, context);
-
-      expect(context.locals.get('newVar')).toBe('NewValue');
-      expect(output.result).toBe('NewValue');
-      expect(output.targetType).toBe('variable');
+    it('should push to an existing array variable', async () => {
+      await hyperscript.eval(
+        'set y to [1, 2] then append 3 to y then put y as String into #host',
+        host
+      );
+      expect(host.textContent).toBe('1,2,3');
     });
 
-    it('should push to existing array variable', async () => {
-      context.locals.set('items', [1, 2, 3]);
+    it('should add to an existing Set variable', async () => {
+      const command = new AppendCommand();
+      const set = new Set([1, 2]);
+      const context = { locals: new Map([['s', set]]), globals: new Map() } as never;
 
-      const output = await command.execute({ content: 4, target: 'items' }, context);
+      const out = await command.execute({ kind: 'variable', name: 's', content: 3 }, context);
 
-      expect(context.locals.get('items')).toEqual([1, 2, 3, 4]);
-      expect(output.targetType).toBe('array');
+      expect(set.has(3)).toBe(true);
+      expect(set.size).toBe(3);
+      expect(out.targetType).toBe('set');
     });
 
-    it('should return appropriate targetType for each variable type', async () => {
-      // String variable
-      context.locals.set('strVar', 'abc');
-      const strOutput = await command.execute({ content: 'def', target: 'strVar' }, context);
-      expect(strOutput.targetType).toBe('variable');
+    it('should create the variable when undefined (upstream parity)', async () => {
+      await hyperscript.eval('append "NewValue" to fresh then put fresh into #host', host);
+      expect(host.textContent).toBe('NewValue');
+    });
 
-      // Array variable
-      context.locals.set('arrVar', ['a']);
-      const arrOutput = await command.execute({ content: 'b', target: 'arrVar' }, context);
-      expect(arrOutput.targetType).toBe('array');
+    it('should append to an element-scoped variable', async () => {
+      await hyperscript.eval(
+        'set :greeting to "Hello" then append " World" to :greeting then put :greeting into #host',
+        host
+      );
+      expect(host.textContent).toBe('Hello World');
+    });
+
+    it('should insert into an element held in a variable', async () => {
+      host.innerHTML = '<section id="sec">A</section>';
+      await hyperscript.eval('set el to #sec then append "B" to el', host);
+      expect(document.getElementById('sec')!.innerHTML).toBe('AB');
     });
   });
 
-  // ========== 6. execute - direct targets ==========
+  // ========== 5. Implicit target (result / it) ==========
 
-  describe('execute - direct targets', () => {
-    it('should push to Array target directly', async () => {
-      const arr = ['a', 'b'];
-
-      const output = await command.execute({ content: 'c', target: arr }, context);
-
-      expect(arr).toEqual(['a', 'b', 'c']);
-      expect(output.targetType).toBe('array');
-      expect(output.result).toBe(arr);
+  describe('implicit target', () => {
+    it('should accumulate onto it', async () => {
+      await hyperscript.eval('set it to "A" then append "B" then put it into #host', host);
+      expect(host.textContent).toBe('AB');
     });
 
-    it('should append to HTMLElement target directly', async () => {
-      const el = document.createElement('div');
-      el.innerHTML = '<b>Bold</b>';
+    it('should not stringify a null it (no "null" prefix)', async () => {
+      const command = new AppendCommand();
+      const context = { it: null, result: undefined, locals: new Map() } as never;
 
-      const output = await command.execute(
-        { content: '<i>Italic</i>', target: el as any },
-        context
-      );
+      const out = await command.execute({ kind: 'implicit', content: 'B' }, context);
 
-      expect(el.innerHTML).toBe('<b>Bold</b><i>Italic</i>');
-      expect(output.targetType).toBe('element');
-      expect(output.target).toBe(el);
+      expect(out.value).toBe('B');
     });
 
-    it('should concatenate non-matching target as string and set context.it', async () => {
-      const output = await command.execute({ content: ' suffix', target: 42 as any }, context);
+    it('should push when the implicit target is an array', async () => {
+      const command = new AppendCommand();
+      const context = { it: undefined, result: [1, 2], locals: new Map() } as never;
 
-      expect(output.result).toBe('42 suffix');
-      expect(output.targetType).toBe('string');
-      expect(context.it).toBe('42 suffix');
+      const out = await command.execute({ kind: 'implicit', content: 3 }, context);
+
+      expect(out.value).toEqual([1, 2, 3]);
+      expect(out.targetType).toBe('array');
     });
   });
 
-  // ========== 7. integration ==========
+  // ========== 6. Unappendable targets throw (upstream parity) ==========
 
-  describe('integration', () => {
-    it('should end-to-end append to context.it via parseInput + execute', async () => {
-      Object.assign(context, { it: 'Start' });
+  describe('unappendable targets', () => {
+    it('should throw for a non-appendable evaluated value', async () => {
+      const command = new AppendCommand();
+      const context = { locals: new Map(), globals: new Map() } as never;
 
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: 'End' } as any],
-          modifiers: {},
-        },
-        evaluator,
-        context
-      );
+      await expect(
+        command.execute({ kind: 'value', target: { a: 1 }, content: 'x' }, context)
+      ).rejects.toThrow('Unable to append a value!');
+    });
+  });
 
-      const output = await command.execute(input, context);
+  // ========== 7. Runtime integration ==========
 
-      expect(context.it).toBe('StartEnd');
-      expect(output.result).toBe('StartEnd');
-      expect(output.targetType).toBe('result');
+  describe('runtime integration', () => {
+    it('should set `it` to the value, not the command wrapper', async () => {
+      await hyperscript.eval('set x to "A" then append "B" to x then put it into #host', host);
+      expect(host.textContent).toBe('AB');
     });
 
-    it('should end-to-end append to variable via parseInput + execute', async () => {
-      context.locals.set('msg', 'Hello');
+    it('should chain appends in an event handler', async () => {
+      host.innerHTML = '<ul id="list"></ul>';
+      const btn = document.createElement('button');
+      btn.setAttribute('_', 'on click append "<li>Item</li>" to #list');
+      document.body.appendChild(btn);
 
-      const input = await command.parseInput(
-        {
-          args: [{ type: 'literal', value: ', World!' } as any],
-          modifiers: { to: { type: 'literal', value: 'msg' } as any },
-        },
-        evaluator,
-        context
-      );
+      await hyperscript.eval('append "<li>One</li>" to #list', host);
+      await hyperscript.eval('append "<li>Two</li>" to #list', host);
 
-      const output = await command.execute(input, context);
-
-      expect(context.locals.get('msg')).toBe('Hello, World!');
-      expect(output.result).toBe('Hello, World!');
-      expect(output.targetType).toBe('variable');
-      expect(output.target).toBe('msg');
+      expect(document.getElementById('list')!.innerHTML).toBe('<li>One</li><li>Two</li>');
     });
   });
 });

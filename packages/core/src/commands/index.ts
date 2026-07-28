@@ -92,6 +92,7 @@ export { createBlurCommand as blur } from './execution/blur';
 
 // Content Commands (factories)
 export { createAppendCommand as append } from './content/append';
+export { createPrependCommand as prepend } from './content/prepend';
 
 // Animation Commands (factories)
 export { createTransitionCommand as transition } from './animation/transition';
@@ -200,6 +201,7 @@ export { BlurCommand, createBlurCommand } from './execution/blur';
 
 // Content Commands
 export { AppendCommand, createAppendCommand } from './content/append';
+export { PrependCommand, createPrependCommand } from './content/prepend';
 
 // Animation Commands
 export { TransitionCommand, createTransitionCommand } from './animation/transition';
@@ -288,6 +290,7 @@ export type { CallCommandInput } from './execution/call';
 export type { FocusCommandInput } from './execution/focus';
 export type { BlurCommandInput } from './execution/blur';
 export type { AppendCommandInput } from './content/append';
+export type { PrependCommandInput } from './content/prepend';
 export type { TransitionCommandInput } from './animation/transition';
 export type { MeasureCommandInput } from './animation/measure';
 export type { SettleCommandInput } from './animation/settle';

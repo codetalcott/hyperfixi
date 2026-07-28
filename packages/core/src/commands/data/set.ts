@@ -30,6 +30,7 @@ import {
   resolveAnyPropertyTarget,
   resolvePropertyTargetFromString,
 } from '../helpers/property-target';
+import { resolveAttributeWriteTarget } from '../helpers/attribute-target';
 import {
   command,
   meta,
@@ -106,7 +107,9 @@ export class SetCommand implements DecoratedCommand {
     // property/member paths so the attributeAccess node routes to setAttribute
     // (otherwise the computed-member path would key the write on the attribute's
     // *current* value instead of writing the attribute).
-    const attrTarget = await this.resolveAttributeWriteTarget(firstArg, raw, evaluator, context);
+    const attrTarget = await resolveAttributeWriteTarget(firstArg, evaluator, context, () =>
+      this.resolveTargets(raw.modifiers.on, evaluator, context)
+    );
     if (attrTarget) {
       const value = await this.extractValue(raw, evaluator, context);
       return { type: 'attribute', elements: attrTarget.elements, name: attrTarget.name, value };
@@ -301,59 +304,6 @@ export class SetCommand implements DecoratedCommand {
   }
 
   // ========== Private Helpers ==========
-
-  /**
-   * Recognize attribute write targets and resolve the element they apply to.
-   * Covers `set @attr to V` / `set [@attr] to V` (a standalone attributeAccess,
-   * written to the `on` target or `me`), `set @attr of X to V` (binary `of` with
-   * an attributeAccess LHS), and `set X[@attr] to V` (a computed member whose
-   * property is an attributeAccess). Returns null for non-attribute targets so
-   * the caller falls through to the existing property/member/variable paths.
-   */
-  private async resolveAttributeWriteTarget(
-    firstArg: Record<string, unknown>,
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<{ elements: HTMLElement[]; name: string } | null> {
-    const node = firstArg as Record<string, any>;
-
-    // Standalone `@attr` / `[@attr]` — writes to the `on` scope (which may match
-    // many elements, e.g. `set @aria-selected to "false" on .tab`) or `me`.
-    if (node?.type === 'attributeAccess') {
-      const elements = await this.resolveTargets(raw.modifiers.on, evaluator, context);
-      return { elements, name: node.attributeName as string };
-    }
-
-    // `@attr of X` / `[@attr] of X` — binary `of` with an attributeAccess LHS.
-    if (
-      node?.type === 'binaryExpression' &&
-      node.operator === 'of' &&
-      node.left?.type === 'attributeAccess'
-    ) {
-      const element = await this.evaluateToElement(node.right as ASTNode, evaluator, context);
-      if (element) return { elements: [element], name: node.left.attributeName as string };
-    }
-
-    // `X[@attr]` — computed member access whose property is an attributeAccess.
-    if (node?.type === 'memberExpression' && node.property?.type === 'attributeAccess') {
-      const element = await this.evaluateToElement(node.object as ASTNode, evaluator, context);
-      if (element) return { elements: [element], name: node.property.attributeName as string };
-    }
-
-    return null;
-  }
-
-  /** Evaluate an AST node to a single HTMLElement (unwrapping selector arrays). */
-  private async evaluateToElement(
-    node: ASTNode,
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<HTMLElement | null> {
-    const value = await evaluator.evaluate(node, context);
-    const el = Array.isArray(value) ? value[0] : value;
-    return isHTMLElement(el) ? (el as HTMLElement) : null;
-  }
 
   private async tryParseMemberExpression(
     firstArg: Record<string, unknown>,

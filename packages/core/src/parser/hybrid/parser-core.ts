@@ -131,7 +131,8 @@ export class HybridParser {
       add: () => this.parseAdd(),
       remove: () => this.parseRemove(),
       put: () => this.parsePut(),
-      append: () => this.parseAppend(),
+      append: () => this.parseInsertion('append'),
+      prepend: () => this.parseInsertion('prepend'),
       set: () => this.parseSet(),
       get: () => this.parseGet(),
       call: () => this.parseCall(),
@@ -334,15 +335,16 @@ export class HybridParser {
     return { type: 'command', name: 'put', args: [content], target, modifier };
   }
 
-  private parseAppend(): CommandNode {
-    this.expect('append');
+  /** `append`/`prepend <content> [to <target>]` — identical shape, both ends. */
+  private parseInsertion(name: 'append' | 'prepend'): CommandNode {
+    this.expect(name);
     const content = this.parseExpression();
     let target: ASTNode | undefined;
     if (this.match('to')) {
       this.advance();
       target = this.parseExpression();
     }
-    return { type: 'command', name: 'append', args: [content], target };
+    return { type: 'command', name, args: [content], target };
   }
 
   private parseSet(): CommandNode {

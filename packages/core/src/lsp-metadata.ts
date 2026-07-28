@@ -36,6 +36,7 @@ export const COMMAND_KEYWORDS = [
   'swap',
   'morph',
   'append',
+  'prepend',
   'take',
   'render',
 
@@ -347,6 +348,12 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'append',
     description: 'Appends content to an element.',
     example: 'append "<li>Item</li>" to #list',
+    category: 'command',
+  },
+  prepend: {
+    title: 'prepend',
+    description: 'Prepends content to an element (hyperfixi extension).',
+    example: 'prepend "<li>Item</li>" to #list',
     category: 'command',
   },
   take: {

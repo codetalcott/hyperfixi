@@ -10,7 +10,18 @@ import type { ContextAwareExtractor, TokenizerContext } from '../context-aware-e
 
 function createCyrillicCharClassifiers(pattern: RegExp) {
   const isLetter = (char: string) => pattern.test(char);
-  const isIdentifierChar = (char: string) => /[0-9]/.test(char) || pattern.test(char);
+  // `_` is a word character MID-word only, so an underscore compound keyword
+  // (`добавить_в_конец`, `по_умолчанию`, `пока_не`) walks whole and reaches
+  // lookupKeyword as one string. Without it the walk stopped at the underscore
+  // and each shard was classified on its own — `добавить` is `add`'s primary, so
+  // ru/uk `append` and `prepend` silently parsed as `add` with junk roles, and
+  // `prepend` (which has no single-word alternative) was unreachable entirely.
+  //
+  // Deliberately NOT added to `isLetter`: `canExtract` uses that, so a LEADING
+  // underscore still isn't a word start (it stays available as a sigil/operator).
+  // This matches the Malay/Latin extractors and the framework's own default
+  // word-char test, both of which already count `_`.
+  const isIdentifierChar = (char: string) => /[0-9_]/.test(char) || pattern.test(char);
   return { isLetter, isIdentifierChar };
 }
 

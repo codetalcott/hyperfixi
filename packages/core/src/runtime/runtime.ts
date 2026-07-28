@@ -64,6 +64,7 @@ import { createBlurCommand } from '../commands/execution/blur';
 
 // Content Commands (1)
 import { createAppendCommand } from '../commands/content/append';
+import { createPrependCommand } from '../commands/content/prepend';
 
 // Animation Commands - Phase 6-3 (3)
 import { createTransitionCommand } from '../commands/animation/transition';
@@ -231,6 +232,7 @@ export class Runtime extends RuntimeBase {
       // Phase 6-2 Commands (4)
       registry.register(createCallCommand());
       registry.register(createAppendCommand());
+      registry.register(createPrependCommand());
 
       // v0.9.90 focus/blur (Phase 1 of deferred features plan)
       registry.register(createFocusCommand());

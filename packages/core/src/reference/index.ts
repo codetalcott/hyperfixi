@@ -481,6 +481,14 @@ export const commands: Record<string, CommandRef> = {
     availability: 'hybrid',
     examples: ['append "<li>New</li>" to #list', 'append result to #container'],
   },
+  prepend: {
+    name: 'prepend',
+    description: 'Prepend content to element (hyperfixi extension)',
+    syntax: 'prepend content to target',
+    category: 'content',
+    availability: 'hybrid',
+    examples: ['prepend "<li>First</li>" to #list', 'prepend result to #container'],
+  },
 
   // Animation Commands
   start: {

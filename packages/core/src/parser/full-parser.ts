@@ -81,6 +81,7 @@ class FullParserImpl implements ParserInterface {
     'pseudo',
     // Content
     'append',
+    'prepend',
     // Animation
     'transition',
     'measure',

@@ -124,6 +124,7 @@ export const COMMANDS = new Set([
   'measure',
   'morph', // htmx-like: DOM morphing with state preservation
   'pick',
+  'prepend',
   'process', // htmx-like: process partials
   'push', // htmx-like: push url to history
   'put',

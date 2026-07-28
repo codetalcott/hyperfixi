@@ -60,6 +60,9 @@ export const HYPERSCRIPT_COMMANDS = [
  * These do NOT work in original _hyperscript.
  */
 export const LOKASCRIPT_ONLY_COMMANDS = [
+  // Upstream _hyperscript has no `prepend`; it offers only
+  // `put <content> at the start of <target>`.
+  'prepend',
   'make',
   'settle',
   'measure',
