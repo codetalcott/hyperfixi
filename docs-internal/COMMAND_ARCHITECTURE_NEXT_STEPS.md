@@ -79,41 +79,40 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 
 | Arc | Value | Gate today | Detail |
 | --- | ----- | ---------- | ------ |
-| D — target-resolution consolidation | S effort, pure refactor | ✅ suites + R2 execution subset | proven model: `attribute-target.ts` / `property-target.ts` extractions from #792 |
+| ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
 | C — output contract | **~20 live `it` divergences** | **none for the `it` contract** — R2 covers only the DOM-visible half; 6 positive unwrap cases tested, no fall-throughs | the ungated one; it is what this document is for |
 | A — command manifest | kills ~15 of ~30 registration points | ✅ partial: verify:reference, capability-ghosts, command-tiers, bundle-manifest-consistency | gates carry the migration; manifest replaces the lists they guard |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
-## The arcs — recommended sequence D → C → A → B → E → F
+## The arcs — remaining sequence C → A → B → E → F (D is done)
 
-### Arc D — target-resolution consolidation (small; start here)
+### Arc D — target-resolution consolidation — ✅ DONE 2026-07-28
 
-Pure refactor, no behavior change, and the model is already proven (#792
-extracted `commands/helpers/attribute-target.ts` and reused
-`property-target.ts`; both now shared by set/append/prepend).
+Landed as #796 (put's `insertContent` collapse), #797 (the writable-target rung
+ladder → `commands/helpers/write-target.ts`), #798 (the selector-shape rule →
+`commands/helpers/target-elements.ts`). Detail, per-step outcomes, and the
+decisions it recorded live in
+[HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md).
 
-1. Collapse `put.ts`'s private `insertContent` (:275-311) onto
-   `commands/helpers/dom-mutation.ts` — `insertContentSemantic` exists precisely
-   for this and is already the append/prepend insertion path
-   (`content/insertion-base.ts`), so put is the last hand-rolled copy. Deferred
-   from #792. Gate: put suite + the R2 execution subset.
-2. Extract set's writable-target ladder (`set.ts` parseInput :75-229 +
-   `tryParseMemberExpression`) into `commands/helpers/write-target.ts` returning
-   a discriminated union; consume from set and `insertion-base.ts`. Gate:
-   set/append/prepend suites + Playwright `test-multiword-commands.spec.ts`
-   (the element-scoped `:greeting` case).
-3. Put the selector-shape asymmetry (`#id`→element, `.cls`→array — the root
-   cause of append's pre-#792 silent `.cls` no-op) behind one documented
-   `resolveTargetElements()` API. Contained: `evaluateSelectorSync`
-   (`parser/runtime.ts:441`) has exactly one caller (:337) and is unexported,
-   but it mirrors async `evaluateSelector` — migrate the pair together. Gate:
-   new unit tests pinning both shapes. **Pairs with Arc C step 3**: the `:121`
-   array collapse is this same asymmetry seen from the propagation end. If C is
-   in flight, land the two together rather than at opposite ends of the queue.
+Two things later arcs should carry forward:
 
-### Arc C — command output contract (medium-large; highest correctness value)
+- **Arc C step 3 has its ratchet now.** D step 3 landed alone (C had not
+  started), so `unwrapCommandResult`'s `:121` array collapse is untouched — but
+  the `#id`→element / `.cls`→collection rule it depends on is now a single
+  definition with both shapes pinned by tests, through both the sync and the
+  async evaluator. C step 3 decides the `:121` policy *against* a pinned rule
+  instead of inheriting an implicit one.
+- **One follow-up left open, deliberately.** put and append/prepend coerce a
+  value to an element list *differently* — put filters a mixed array, they
+  reject it; put gates array-likes on `instanceof NodeList`, they duck-type and
+  accept an HTMLCollection. Both differences are observable, so reconciling them
+  is a behavior change, not a refactor. They now sit side by side in
+  `target-elements.ts` as `toElementListFiltered` / `toElementListStrict`, both
+  tested. Deciding whether they should agree wants its own change.
+
+### Arc C — command output contract (medium-large; highest correctness value; start here)
 
 The wrapper-`it` class is ~20 live divergences, not a latent risk — hence ranked
 ahead of the manifest.
@@ -151,8 +150,16 @@ ahead of the manifest.
    step 3's defect from the other end.** The selector-shape asymmetry
    (`#id`→element, `.cls`→array) is what makes the collapse fire, so
    `toggle .a on .items` silently leaves `it` as the *first* element: the same
-   shape as append's pre-#792 `.cls` no-op. Land it with Arc D step 3, or record
-   why not.
+   shape as append's pre-#792 `.cls` no-op.
+   **Pairing resolved (2026-07-28):** Arc D step 3 landed WITHOUT this — D
+   reached step 3 before C started, so it shipped the shape-pinning tests and
+   left `:121` alone. That is the easier position to decide from, not a missed
+   opportunity: the rule now has one definition (`resolveTargetElements` in
+   `commands/helpers/target-elements.ts`) with both shapes pinned by
+   `commands/helpers/__tests__/target-elements.test.ts` and
+   `parser/__tests__/selector-shape.test.ts`. Read those two files first —
+   they state what `it` *should* hold for each shape, which is exactly the
+   question this step has to answer.
 
 ### Arc A — command manifest (medium)
 
@@ -253,6 +260,25 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc D complete** (#796 → #797 → #798, merged sequentially
+  into main; full CI matrix on each, including the ten-signal multilingual
+  ratchet). Three rules that existed in two or three places each now have one
+  definition: content insertion (`dom-mutation.ts`, put joined append/prepend),
+  the writable-target rung ORDER (`write-target.ts`, shared by set and
+  append/prepend), and the selector shape rule plus the query contract
+  (`target-elements.ts`, shared by the sync and async evaluators, put, and
+  append/prepend). Command files net-shrank (put −46, insertion-base −29, set
+  −4); the core suite went 7702 → 7738 with **every** increment a new test
+  rather than a changed one — 11 rung-order cases, 20 shape/coercion cases, 5
+  sync-vs-async wiring cases.
+  Two findings worth carrying: (a) the step-2 ladders overlapped **less** than
+  the brief's anchors implied — #792 had already shared the attribute and
+  property *rungs*, so what was actually duplicated was the ORDER, which is why
+  `resolveWriteTarget` takes opt-in rung flags rather than merging the two
+  evaluated-value tails; (b) the step-3 "duplicated" element-list coercion was
+  **not** duplicated — put filters a mixed array where append/prepend reject it,
+  and they detect array-likes differently, both observable. That divergence is
+  preserved, documented, tested, and left as the arc's one open decision.
 - **2026-07-28** — Queue created, from the append/prepend arc (#792: upstream
   parity, DOM preservation, ru/uk `add` mis-parse; four-implementation
   divergence and the ~30-point registration checklist measured directly) and
