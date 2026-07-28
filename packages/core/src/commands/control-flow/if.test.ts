@@ -165,7 +165,10 @@ describe('ConditionalCommand', () => {
 
       expect(input.mode).toBe('unless');
       expect(input.condition).toBe(false);
-      expect(input.thenCommands).toEqual([commandNode]);
+      // args[1] verbatim — the parser wraps every unless body in one block
+      // node there, same as if. The old slice(1) array shape is what made
+      // unless bodies silently unexecutable (see unless.test.ts end-to-end).
+      expect(input.thenCommands).toBe(commandNode);
     });
 
     it('should throw error if unless has no commands', async () => {
@@ -313,7 +316,12 @@ describe('ConditionalCommand', () => {
       expect(mockExecute).not.toHaveBeenCalled();
     });
 
-    it('should update context.it with result in unless mode', async () => {
+    it('should leave context.it alone in unless mode (parity with if)', async () => {
+      // The unless-only `Object.assign(context, { it })` is gone — it existed
+      // only to propagate the body's last result, and in practice propagated
+      // the UNEXECUTED body node (the args.slice(1) bug). `if` never assigned
+      // `it` here; the body's own commands do. The body result still surfaces
+      // on the command output.
       const context = createMockContext();
       const expectedResult = 'unless-result';
       context.locals.set(
@@ -327,9 +335,10 @@ describe('ConditionalCommand', () => {
         thenCommands: createMockBlock([{ type: 'command' }]),
       };
 
-      await command.execute(input, context);
+      const output = await command.execute(input, context);
 
-      expect(context.it).toBe(expectedResult);
+      expect(output.result).toBe(expectedResult);
+      expect(context.it).toBeUndefined();
     });
   });
 

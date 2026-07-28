@@ -262,7 +262,7 @@ Every `defect:` row from the step-1 audit, with its step-2 action:
 | `push` / `replace` | not upstream (extension) | `null` | **none** |
 | `settle` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
 | `transition` | **no** | `<DIV>` — hyperfixi extension | **decide** (below) |
-| `unless` | not upstream (extension) | AST node | **FIX** (below) |
+| `unless` | not upstream (extension) | ~~AST node~~ | **FIXED** (#804) — now `null`/Event, matching `if` |
 
 For all fourteen "none" rows the handler column is wrong and the sequence column
 is right, so **deleting the loop in step 3 converges them onto the correct value
@@ -275,7 +275,22 @@ touched every one of these.
 The audit's `null` is that element path, and it matches upstream. Not an
 inconsistency.
 
-#### The one fix: `unless`
+#### The one fix: `unless` — DONE (#804)
+
+> Landed 2026-07-28 as its own PR, per the recommendation below. The fix:
+> `parseInput` takes `raw.args[1]` (the parser's block node) exactly as `if`
+> does, ignoring any stray else block; `executeCommandsOrBlock`'s single-value
+> fallthrough and `executeCommands`' AST-node case now execute through
+> `_runtimeExecute` instead of returning the body unexecuted; the unless-only
+> `it` self-assign is gone. Regression gate: the end-to-end describe in
+> `commands/control-flow/__tests__/unless.test.ts` (real parser, real runtime,
+> DOM assertions). The audit's `unless` row now reads `null`/Event — identical
+> to `if` — and the asserted disagreement count moved 29 → 30 (a fixed unless
+> joins the initial-value non-goal family; the broken one "agreed" only because
+> both paths held the same leaked node). One note for Arc E: the hybrid
+> parser never had this bug — it desugars `unless` to `if not(...)` at parse
+> time. The canonical class was the broken copy, the #792 pattern again.
+> The diagnosis below is preserved as written.
 
 The audit recorded `unless` leaving an AST node in `it`. Tracing it found a
 larger bug: **`unless` never executes its body at all.**
@@ -475,3 +490,16 @@ commands. If it does, something out of scope was touched.
     of the arc, with a test that goes through the real parser.
   - Two genuine judgment calls left open and named: `settle` and `transition`
     self-assign the element where upstream sets nothing.
+- 2026-07-28 — **`unless` fix merged (#804)**, as its own PR ahead of the arc per
+  the recommendation above. Body now executes on every surface form (then/end,
+  bare, multi-command, in-handler); the unless-only `it` self-assign is gone;
+  the executor's silent return-the-body-unexecuted fallthroughs now execute
+  through `_runtimeExecute`. Regression gate: the end-to-end describe in
+  `unless.test.ts` (real parser → real runtime → DOM assertions). Audit row
+  flipped to `null`/Event = `if`; disagreement assert 29 → 30 (see the comment
+  in the audit — the broken unless "agreed" only because both paths held the
+  same leaked node). Four mock-based tests that pinned the broken contract were
+  updated in the same PR. Finding for Arc E: the hybrid parser desugars
+  `unless` to `if not(...)` and never had the bug — the canonical class was the
+  broken copy, the #792 pattern again. **With this, step 2's remaining work is
+  only the settle/transition judgment call; everything else is step 3.**
