@@ -19,6 +19,7 @@ import {
 export { setGlobal };
 import { getElementVar, setElementVar } from '../core/context';
 import { convertToNumber } from '../commands/helpers/variable-access';
+import { resolveTargetElements } from '../commands/helpers/target-elements';
 
 // Static imports limited to plain utilities + lazy-evaluating collection helpers,
 // which aren't registered as ExpressionImplementations. Named-expression dispatch
@@ -470,12 +471,7 @@ function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): un
     (typeof document !== 'undefined' ? document : null);
   if (!doc) throw new NotSyncEvaluable('selector');
   const elements = Array.from(doc.querySelectorAll(escaped));
-  // Bare `#id` unwraps to a single element/null; query-form (`<#id/>`) and class
-  // selectors return the collection — matches evaluateSelector.
-  if (!node.fromQuery && selector.startsWith('#')) {
-    return elements[0] ?? null;
-  }
-  return elements;
+  return resolveTargetElements(elements, selector, node.fromQuery);
 }
 
 /**
@@ -1630,6 +1626,10 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
  * Canonical previously unwrapped all array results to first element, which
  * broke `.class` callers asserting iterability. Aligning with upstream:
  * only `#id` selectors yield a single element.
+ *
+ * The shape rule itself lives in `resolveTargetElements`
+ * (`commands/helpers/target-elements.ts`), shared with the sync mirror
+ * `evaluateSelectorSync` so the two halves cannot drift.
  */
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
   let selector = node.value;
@@ -1667,15 +1667,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
   const escaped = typeof selector === 'string' ? escapeSelectorForQuery(node, selector) : selector;
   const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 
-  // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
-  // parser with `fromQuery: true`) always returns the collection — matches
-  // upstream's QueryRef → ElementCollection vs IdRef → getElementById.
-  if (!node.fromQuery && typeof selector === 'string' && selector.startsWith('#')) {
-    if (Array.isArray(result)) return result[0] ?? null;
-    return result;
-  }
-
-  return result;
+  return resolveTargetElements(result, selector, node.fromQuery);
 }
 
 /**
