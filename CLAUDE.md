@@ -492,6 +492,20 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > **all** paths failed and the bump was landed by hand (#603, #772). The workflow now fails
 > loudly instead of going green.
 >
+> **If a release fails to land the bump, suspect `RELEASE_BUMP_TOKEN` first — it may just need
+> a refresh.** PATs expire, and an expired one is the cheapest explanation for a release that
+> published to npm but left `main` on the old version. Refreshing the secret is the first thing
+> to try before digging into the workflow. (Last refreshed **2026-07-28**.) Distinguish the two
+> failure shapes, because they need different fixes:
+>
+> - **Auth failed / token invalid or expired** → refresh the secret with a new PAT.
+> - **`Permission to … denied to <user>`** → the token authenticated fine and is **not**
+>   expired; this is a _scope_ problem. For a fine-grained PAT check that _Repository access_
+>   includes this repo and _Permissions → Repository → Contents_ is **Read and write**; for a
+>   classic PAT, the `repo` scope. Editing a fine-grained PAT's permissions in place keeps the
+>   same token string, so the stored secret stays valid and its `updatedAt` will not change —
+>   meaning a working-looking secret can still be under-scoped.
+>
 > **`RELEASE_BUMP_TOKEN` is required, not just preferred.** The PR fallback does not finish on
 > its own: PRs opened with `GITHUB_TOKEN` do not trigger CI, so `main`'s six required checks
 > never start, `gh pr merge --auto` never fires, and the PR sits pending until a human pushes
@@ -499,15 +513,9 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > permissions → "Allow GitHub Actions to create and approve pull requests"_ lets the PR be
 > **created**; only the token makes a release hands-off.
 >
-> If the token is denied (`Permission to … denied to <user>` — note that this means it
-> authenticated fine and is NOT expired), then for a fine-grained PAT check that _Repository
-> access_ includes this repo and _Permissions → Repository → Contents_ is **Read and write**;
-> for a classic PAT, the `repo` scope. Editing a fine-grained PAT's permissions in place keeps
-> the same token string, so the stored secret stays valid and its `updatedAt` will not change.
->
 > Run the workflow with `dry-run=true` to verify the token can push before committing to a
-> release — that step is a no-op push of `main` onto itself. After any real release, confirm
-> `main`'s version matches npm.
+> release — that step is a no-op push of `main` onto itself, so it exercises the exact path
+> that has broken twice. After any real release, confirm `main`'s version matches npm.
 
 **Archived Workflows:**
 
