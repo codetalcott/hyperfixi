@@ -81,7 +81,7 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | --- | ----- | ---------- | ------ |
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
-| A — command manifest | kills ~15 of ~30 registration points | ✅ partial: verify:reference, capability-ghosts, command-tiers, bundle-manifest-consistency | gates carry the migration; manifest replaces the lists they guard |
+| A — command manifest | kills ~15 of ~30 registration points | ⚠️ **weaker than it looks** — the ghost gates are one-directional (see brief) | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — **REVISES the order and shape below** |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
@@ -198,6 +198,21 @@ Superseded plan, kept for the record:
 
 ### Arc A — command manifest (medium)
 
+> **Read [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)
+> first — it REVISES the migration ORDER and the manifest SHAPE below.** The
+> exploration measured three of this paragraph's claims. Two did not survive.
+> (a) "both already ghost-tested, so the tests carry the migration" is **false in
+> the direction that matters**: both gates only filter *for* ghosts, so dropping
+> a real command from either list is silent (measured by mutation — `trigger`
+> from `AVAILABLE_COMMANDS`, `toggle` from the tier lists, both green). And those
+> two lists are **already wrong** by 23 and 12 entries against the registry, so
+> migrating them is a per-command classification decision, not a substitution —
+> making them the arc's *last* targets, not its first. The genuinely mechanical
+> ones are the four 59-entry lists that already agree exactly, sequenced last
+> below. (b) A `factory` field in the manifest **defeats tree-shaking**: measured
+> 177 B → 38,395 B for a names-only consumer at four commands. The manifest must
+> be data-only. The paragraph below is kept for the record.
+
 One `packages/core/src/commands/manifest.ts` as the registry-of-record: name,
 category, factory, parser kind, multiword keywords, bundle tier,
 upstream-vs-extension flag, aliases. Consumers migrate **one at a time**,
@@ -295,6 +310,42 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-28** — **Arc A brief written**
+  ([HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), arc
+  not started. Five measurements, two of which changed the plan.
+  - **The ghost gates do not carry the migration.** `capability-ghosts` and
+    `command-tiers` both compute `list.filter(isGhost)` and assert `[]` — they
+    catch a list naming a command that doesn't exist and are structurally blind
+    to a list *omitting* one that does. Proved by mutation: dropping `'trigger'`
+    from `AVAILABLE_COMMANDS` leaves all 31 bundle-generator tests green;
+    dropping `'toggle'` from the LSP tiers leaves all 5 tier tests green. (The
+    one failure `toggle` does produce comes from a **hardcoded 16-name
+    spot-check** in `bundle-generator/validation.test.ts`, not from the ghost
+    test.) So Arc A needs an audit-as-gate step the queue's plan never had.
+  - **The two "lowest-risk" lists are already wrong**, by **23** (LSP tiers) and
+    **12** (template-capabilities) entries against the 59-name registry, plus 6
+    in `lsp-metadata.COMMAND_KEYWORDS`. Both files' doc comments claim a
+    partition. Migrating them is a classification decision, not a substitution —
+    they move to the END of the order, and the four already-agreeing 59-entry
+    lists (parser `COMMANDS`, `commands/index`, `reference/index`, the 59 uniform
+    registration calls) become the mechanical first targets.
+  - **A `factory` field in the manifest defeats tree-shaking** — measured with
+    esbuild: a names-only consumer costs **177 B** with a data-only manifest and
+    **38,395 B** when the manifest references factories, at four commands. The
+    manifest must be data-only; any factory map is a separate module.
+  - Two findings outside the arc's own scope, both recorded in the brief:
+    `lsp-metadata.COMMAND_KEYWORDS` carries **genuine ghosts** (`pushUrl`,
+    `replaceUrl` — neither parses; the engine takes `push url`/`replace url`) in
+    a list with no ghost test, recommended as a standalone PR ahead of the arc
+    the way `unless` preceded Arc C; and the **eleven synonym aliases**
+    (`flip`, `fire`, `goto`, …) parse in hybrid-complete and lite-plus but are
+    **rejected by the full parser** — the 7.7 KB bundle has a feature the 310 KB
+    one lacks, inverting the documented upgrade path. The #792 pattern a third
+    time.
+  - Verified as claimed: the 59 registration calls really are perfectly uniform
+    (zero non-matching lines), and `verify:reference` really does derive the
+    list-publishing bundles' counts — though it reads only 3 files and never
+    sees the registration block, `parser-constants`, or any LSP/capability list.
 - **2026-07-28** — **Arc C's last open item closed (#808):** settle/transition
   self-assigns removed for upstream parity, while the #806 state was still
   unreleased and the removal therefore free. Command-set rule now uniform
