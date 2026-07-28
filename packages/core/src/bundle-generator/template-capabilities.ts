@@ -76,10 +76,8 @@ export const FULL_RUNTIME_ONLY_COMMANDS = [
   // DOM operations (complex)
   'make',
   'swap',
-  'process-partials',
-  // Data binding
-  'bind',
-  'persist',
+  'process',
+  // Data
   'default',
   // Utility (complex - need runtime integration)
   'tell',

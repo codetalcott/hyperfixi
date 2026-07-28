@@ -26,6 +26,7 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:watch": "vitest",
     "sync-keywords": "npx tsx scripts/sync-keywords.ts",
+    "check:keywords": "npx tsx scripts/sync-keywords.ts --check",
     "sync-htmx-vocab": "npx tsx scripts/sync-htmx-vocab.ts",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },

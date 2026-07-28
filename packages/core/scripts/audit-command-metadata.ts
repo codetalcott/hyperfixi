@@ -50,8 +50,6 @@ import { GetCommand } from '../src/commands/data/get';
 import { IncrementCommand } from '../src/commands/data/increment';
 import { DecrementCommand } from '../src/commands/data/decrement';
 import { DefaultCommand } from '../src/commands/data/default';
-import { PersistCommand } from '../src/commands/data/persist';
-import { BindCommand } from '../src/commands/data/bind';
 
 import { TriggerCommand } from '../src/commands/events/trigger';
 import { SendCommand } from '../src/commands/events/send';
@@ -123,8 +121,6 @@ const COMMANDS: CommandEntry[] = [
   { name: 'increment', class: IncrementCommand, file: 'data/increment.ts' },
   { name: 'decrement', class: DecrementCommand, file: 'data/decrement.ts' },
   { name: 'default', class: DefaultCommand, file: 'data/default.ts' },
-  { name: 'persist', class: PersistCommand, file: 'data/persist.ts' },
-  { name: 'bind', class: BindCommand, file: 'data/bind.ts' },
 
   // Events
   { name: 'trigger', class: TriggerCommand, file: 'events/trigger.ts' },

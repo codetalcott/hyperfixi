@@ -66,11 +66,9 @@ export const LOKASCRIPT_ONLY_COMMANDS = [
   'make',
   'settle',
   'measure',
-  'transfer',
   'morph',
-  'persist',
   'install',
-  'process-partials',
+  'process',
 ] as const;
 
 /**

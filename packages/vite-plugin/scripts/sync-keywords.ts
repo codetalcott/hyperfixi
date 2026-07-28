@@ -21,6 +21,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import * as prettier from 'prettier';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -89,17 +90,20 @@ const FILENAME_TO_ISO: Record<string, string> = {
 
 interface Args {
   dryRun: boolean;
+  check: boolean;
   language?: string;
   help: boolean;
 }
 
 function parseArgs(): Args {
   const args = process.argv.slice(2);
-  const result: Args = { dryRun: false, help: false };
+  const result: Args = { dryRun: false, check: false, help: false };
 
   for (const arg of args) {
     if (arg === '--dry-run') {
       result.dryRun = true;
+    } else if (arg === '--check') {
+      result.check = true;
     } else if (arg === '--help' || arg === '-h') {
       result.help = true;
     } else if (arg.startsWith('--language=')) {
@@ -159,9 +163,18 @@ function extractKeywordsFromProfile(profilePath: string): Set<string> | null {
 // Update Keywords File
 // =============================================================================
 
-function updateKeywordsFile(
+/**
+ * Rewrite the keyword sets and return the formatted file content.
+ *
+ * Formatting with the repo's prettier config is what makes a regeneration
+ * byte-idempotent: the raw regex splice emits one keyword per line with
+ * trailing-comma choices prettier then rewrites, so every sync used to produce
+ * a diff full of formatting noise on top of the real vocabulary change. That
+ * noise is why this was rarely run and the file drifted across all 24 languages.
+ */
+async function buildKeywordsFile(
   languageUpdates: Map<string, { name: string; keywords: Set<string>; isNonLatin: boolean }>
-): void {
+): Promise<string> {
   let content = fs.readFileSync(KEYWORDS_FILE, 'utf-8');
 
   for (const [code, { name, keywords, isNonLatin }] of languageUpdates) {
@@ -218,14 +231,19 @@ export const ${upperCode}_KEYWORDS`
     }
   }
 
-  fs.writeFileSync(KEYWORDS_FILE, content);
+  const prettierConfig = await prettier.resolveConfig(KEYWORDS_FILE);
+  return prettier.format(content, {
+    ...prettierConfig,
+    filepath: KEYWORDS_FILE,
+    parser: 'typescript',
+  });
 }
 
 // =============================================================================
 // Main
 // =============================================================================
 
-function main() {
+async function main(): Promise<void> {
   const args = parseArgs();
 
   if (args.help) {
@@ -294,7 +312,19 @@ the primary and alternative keywords for detection.
     return;
   }
 
-  if (args.dryRun) {
+  if (args.check) {
+    const expected = await buildKeywordsFile(languageUpdates);
+    const committed = fs.readFileSync(KEYWORDS_FILE, 'utf-8');
+    if (committed !== expected) {
+      console.error(
+        `\n✗ ${path.relative(process.cwd(), KEYWORDS_FILE)} is stale.\n` +
+          `  The semantic language profiles changed without re-syncing.\n` +
+          `  Run: npm run sync-keywords --prefix packages/vite-plugin\n`
+      );
+      process.exit(1);
+    }
+    console.log(`\n✓ ${path.relative(process.cwd(), KEYWORDS_FILE)} is up to date`);
+  } else if (args.dryRun) {
     console.log('\n[DRY RUN] Would update:');
     for (const [code, { name, keywords }] of languageUpdates) {
       console.log(`  - ${code} (${name}): ${keywords.size} keywords`);
@@ -302,9 +332,9 @@ the primary and alternative keywords for detection.
     console.log('\nTo apply changes, run without --dry-run');
   } else {
     console.log('\nUpdating language-keywords.ts...');
-    updateKeywordsFile(languageUpdates);
+    fs.writeFileSync(KEYWORDS_FILE, await buildKeywordsFile(languageUpdates));
     console.log('\nDone! Run "npm run typecheck" to verify.');
   }
 }
 
-main();
+await main();
