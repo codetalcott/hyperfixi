@@ -1093,6 +1093,8 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   morph: ['en'],
   mostrar: ['es', 'pt'],
   mostrare: ['it'],
+  'mouse baixo': ['pt'],
+  'mouse cima': ['pt'],
   mousebaixo: ['pt'],
   mousecima: ['pt'],
   mpito: ['sw'],
@@ -1374,6 +1376,10 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   'ràng buộc': ['vi'],
   rantikunakuy: ['qu'],
   rantin_tikray: ['qu'],
+  'raton abajo': ['es'],
+  'ratón abajo': ['es'],
+  'raton arriba': ['es'],
+  'ratón arriba': ['es'],
   'raton encima': ['es'],
   'ratón encima': ['es'],
   'raton fuera': ['es'],
@@ -3453,7 +3459,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3251
+ * Total keywords: 3257
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 195
  */

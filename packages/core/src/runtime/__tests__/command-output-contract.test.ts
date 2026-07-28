@@ -337,16 +337,18 @@ const AUDIT: Record<string, AuditRow> = {
       'loop replaces it with RenderCommandOutput.',
   },
 
-  // ---- neither a wrapper nor a value: an AST node.
+  // ---- unless: fixed. This audit originally recorded an AST node in `it` on
+  // BOTH paths; tracing it found the body never executed at all (parseInput
+  // handed executeCommands an array holding the block NODE, whose fallthrough
+  // returned it verbatim, and an unless-only self-assign put that node in
+  // `it`). Fixed by routing unless through the same block path as `if` and
+  // dropping the self-assign — so it now sits in the void/initial-value family
+  // above, matching `if` exactly. Regression gate:
+  // commands/control-flow/__tests__/unless.test.ts, the end-to-end describe.
   unless: {
     snippet: 'unless false then log "y" end',
-    sequence: '{type,commands,start,end,line,column}',
-    handler: '{type,commands,start,end,line,column}',
-    defect:
-      'AST NODE IN `it` (step 2) — and it leaks on BOTH paths, so this one is NOT caused by the ' +
-      'propagation loop and step 3 will not fix it. `unless` shares ConditionalCommand with `if`, ' +
-      'yet `if` leaves `it` alone here while `unless` assigns a parse node. Not recorded in the ' +
-      'queue doc; found by this audit. Needs its own triage before step 2 touches it.',
+    sequence: 'null',
+    handler: 'Event',
   },
 };
 
@@ -405,17 +407,23 @@ describe('the `it` contract, per command, per execution path', () => {
     });
   }
 
-  it('the two paths disagree for 29 of the 45 exercised commands', () => {
+  it('the two paths disagree for 30 of the 45 exercised commands', () => {
     // The headline number, asserted so a migration cannot shrink it silently
     // — or grow it. Step 3 should drive this down; nothing else should move it.
+    // (Was 29 at the audit's landing; the unless fix moved it to 30, because a
+    // fixed unless behaves like if — null on the sequence path, the DOM event
+    // in a handler — which is the initial-value divergence, the non-goal. The
+    // broken unless "agreed" only because both paths held the same leaked AST
+    // node.)
     const disagreeing = Object.entries(AUDIT).filter(([, r]) => r.sequence !== r.handler);
-    expect(disagreeing).toHaveLength(29);
+    expect(disagreeing).toHaveLength(30);
   });
 
   it('names every row whose recorded value is known-wrong', () => {
-    // 21 defect rows: 2 array collapses, 10 wrapper leaks, 3 overwrites,
-    // 1 AST-node leak, and the 5 void rows are NOT counted (they are the
-    // initial-value non-goal, deliberately left undecorated).
+    // 14 defect rows: 2 array collapses (toggle, put), 9 wrapper leaks, and
+    // 3 overwrites-a-correct-value (settle, pick, render). The void rows are
+    // NOT counted (they are the initial-value non-goal, deliberately left
+    // undecorated), and unless left this list when its fix landed.
     const defective = Object.entries(AUDIT).filter(([, r]) => r.defect);
     expect(defective.map(([n]) => n).sort()).toEqual(
       [
@@ -432,7 +440,6 @@ describe('the `it` contract, per command, per execution path', () => {
         'start',
         'toggle',
         'transition',
-        'unless',
         'wait',
       ].sort()
     );

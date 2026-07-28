@@ -184,10 +184,12 @@ export const portugueseProfile: LanguageProfile = {
     submit: { primary: 'envio', alternatives: ['submeter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['inserção'], normalized: 'input' },
     change: { primary: 'alteração', alternatives: ['mudança'], normalized: 'change' },
-    // mousedown/mouseup (repeat-until-event): dict emits mouseBaixo/mouseCima —
+    // mousedown/mouseup (repeat-until-event): dict emits the spaced forms —
     // register so both the on.event and the repeat until-event type as literal.
-    mousedown: { primary: 'mouseBaixo', normalized: 'mousedown' },
-    mouseup: { primary: 'mouseCima', normalized: 'mouseup' },
+    // Completes the V3 Batch 2 fused-form split (see keydown/mouseover above);
+    // the camelCase spellings stay as parse alternatives for back-compat.
+    mousedown: { primary: 'mouse baixo', alternatives: ['mouseBaixo'], normalized: 'mousedown' },
+    mouseup: { primary: 'mouse cima', alternatives: ['mouseCima'], normalized: 'mouseup' },
     // Event modifiers (for repeat until event)
     until: { primary: 'até', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },

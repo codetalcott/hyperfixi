@@ -1268,7 +1268,11 @@ describe('Event-keyword alignment: i18n-emitted event words recognized (on.event
     // mousedown (repeat-until-event handler event): dict emits a native form the
     // profiles/tokenizers didn't list → the handler event typed as expression.
     // es/pt via profile keyword; ja/ko via tokenizer EXTRAS (non-Latin).
+    // es/pt now emit the spaced form (V3 Batch 2 split, matching mouseover/keydown);
+    // the fused spellings stay registered as alternatives, so both must type literal.
+    ['es', 'mousedown', 'en ratón abajo alternar .x'],
     ['es', 'mousedown', 'en ratónabajo alternar .x'],
+    ['pt', 'mousedown', 'em mouse baixo alternar .x'],
     ['pt', 'mousedown', 'em mouseBaixo alternar .x'],
     ['ja', 'mousedown', '.x を マウス押下 で 切り替え'],
     ['ko', 'mousedown', '.x 를 마우스다운 할 때 토글'],
