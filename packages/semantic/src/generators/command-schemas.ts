@@ -1272,12 +1272,24 @@ export const appendSchema: CommandSchema = {
   description: 'Append content to an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `append <content>` with no destination targets the implicit result (`it`),
+  // which core and upstream both support. Modeled as a separate no-destination
+  // pattern rather than `required: false`: an optional role becomes a SKIPPABLE
+  // marker group, and the bare value then re-binds by particle metadata in
+  // marker languages (the verified `transition` regression, see the goal-role
+  // note above). It also keeps `requiredRoles.length === 2`, so append's fused
+  // SOV/VSO event-handler patterns are untouched in all 24 languages.
+  omitRoleVariants: ['destination'],
   roles: [
     {
       role: 'patient',
       description: 'The content to append',
       required: true,
-      expectedTypes: ['literal', 'selector', 'expression'],
+      // `reference` admits `append it to #out` / `append result to #out` —
+      // context references tokenize as `reference`, and the single-token check
+      // in pattern-matcher compares expectedTypes with a raw `.includes`, so the
+      // type has to be listed explicitly. Same list as put.patient.
+      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1285,7 +1297,12 @@ export const appendSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to append to',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      // `expression` admits a bare-identifier target (`append item to myArray`,
+      // `append " World" to greeting`) — both documented core forms, and both
+      // rejected while this was [selector, reference], since a plain identifier
+      // tokenizes as `expression`. Marker-guarded, same precedent as
+      // add.destination (#571) and send.destination.
+      expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 1,
       markerOverride: { en: 'to' }, // "append <content> to #element"
@@ -1301,12 +1318,15 @@ export const prependSchema: CommandSchema = {
   description: 'Prepend content to an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // Kept in lockstep with appendSchema — see its notes for why each of these is
+  // shaped the way it is.
+  omitRoleVariants: ['destination'],
   roles: [
     {
       role: 'patient',
       description: 'The content to prepend',
       required: true,
-      expectedTypes: ['literal', 'selector', 'expression'],
+      expectedTypes: ['literal', 'selector', 'reference', 'expression'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1314,7 +1334,7 @@ export const prependSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to prepend to',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 1,
       markerOverride: { en: 'to' }, // "prepend <content> to #element"
