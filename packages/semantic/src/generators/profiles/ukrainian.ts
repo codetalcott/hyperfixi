@@ -88,13 +88,21 @@ export const ukrainianProfile: LanguageProfile = {
       normalized: 'put',
       form: 'infinitive',
     },
+    // See the russian.ts note: underscore compounds were an inert tokenizer
+    // workaround (the extractor split on `_`, so uk append/prepend parsed as
+    // `add`). All spellings parse now; the primary is the natural one.
     append: {
-      primary: 'додати_в_кінець',
-      alternatives: ['дописати'],
+      primary: 'дописати',
+      alternatives: ['додати в кінець', 'додати_в_кінець'],
       normalized: 'append',
       form: 'infinitive',
     },
-    prepend: { primary: 'додати_на_початок', normalized: 'prepend', form: 'infinitive' },
+    prepend: {
+      primary: 'додати на початок',
+      alternatives: ['додати_на_початок'],
+      normalized: 'prepend',
+      form: 'infinitive',
+    },
     take: { primary: 'взяти', alternatives: ['візьми'], normalized: 'take', form: 'infinitive' },
     make: { primary: 'створити', alternatives: ['створи'], normalized: 'make', form: 'infinitive' },
     clone: {

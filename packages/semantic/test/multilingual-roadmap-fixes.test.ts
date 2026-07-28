@@ -3062,6 +3062,54 @@ describe('compound-split append — ru/uk dict realign + pl handcrafted collisio
   it('[pl] plain add still parses (regression guard)', () => {
     expect(actions(parse('dodaj .highlight do #item', 'pl')).has('add')).toBe(true);
   });
+
+  // The ru/uk half above was a DICT realign only — it routed around the split by
+  // using the single-word alternative and left the underscore compounds broken.
+  // The Cyrillic extractor now keeps `_` mid-word (isIdentifierChar, NOT
+  // isLetter, so a leading `_` is still not a word start), so the compounds
+  // resolve as whole keywords. This closes the class rather than one instance:
+  // ru/uk `prepend` had no single-word alternative at all and was therefore
+  // UNREACHABLE, and `default`/`until` are the same shape.
+  describe('Cyrillic underscore compounds tokenize whole (root-cause fix)', () => {
+    const compounds: Array<[string, string, string]> = [
+      ['ru', 'добавить_в_конец "<li/>" в #list', 'append'],
+      ['ru', 'добавить_в_начало "<li/>" в #list', 'prepend'],
+      ['uk', 'додати_в_кінець "<li/>" в #list', 'append'],
+      ['uk', 'додати_на_початок "<li/>" в #list', 'prepend'],
+    ];
+    for (const [lang, input, expected] of compounds) {
+      it(`[${lang}] ${input.split(' ')[0]} → ${expected}, not add`, () => {
+        const a = actions(parse(input, lang as 'ru'));
+        expect(a.has(expected)).toBe(true);
+        expect(a.has('add')).toBe(false);
+      });
+    }
+
+    it('[ru] по_умолчанию (default) resolves as one keyword', () => {
+      expect(actions(parse('по_умолчанию :x в 5', 'ru')).has('default')).toBe(true);
+    });
+  });
+
+  // Underscores are not natural Cyrillic orthography. With the tokenizer fixed,
+  // the profile primaries — which are what `translate()` renders — are the forms
+  // a native speaker would actually write. The compounds stay as accepted
+  // alternatives so existing sources keep parsing.
+  describe('ru/uk render natural vocabulary and round-trip', () => {
+    const natural: Array<[string, string, string]> = [
+      ['ru', 'append', 'дописать'],
+      ['ru', 'prepend', 'добавить в начало'],
+      ['uk', 'append', 'дописати'],
+      ['uk', 'prepend', 'додати на початок'],
+    ];
+    for (const [lang, action, verb] of natural) {
+      it(`[${lang}] ${action} renders "${verb}" and parses back`, () => {
+        const rendered = render(parse(`${action} "x" to #output`, 'en'), lang) as string;
+        expect(rendered).toContain(verb);
+        expect(rendered).not.toContain('_');
+        expect(actions(parse(rendered, lang as 'ru')).has(action)).toBe(true);
+      });
+    }
+  });
 });
 
 describe('Generated swap patterns match the transformer emission shape (swap pattern gap)', () => {

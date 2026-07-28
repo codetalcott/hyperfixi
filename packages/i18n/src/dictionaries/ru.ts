@@ -56,7 +56,7 @@ export const russianDictionary: Dictionary = {
     swap: 'поменять',
     morph: 'трансформировать',
     settle: 'стабилизировать',
-    append: 'дописать', // profile alternative; the compound splits and добавить parses as add
+    append: 'дописать', // matches the ru profile primary
     exit: 'выйти',
     else: 'иначе',
     install: 'инсталлировать', // loanword — `установить` is `set` (homonym); see russian profile
@@ -65,7 +65,7 @@ export const russianDictionary: Dictionary = {
     focus: 'сфокусировать',
     blur: 'размыть',
     clone: 'клонировать',
-    prepend: 'добавить_в_начало',
+    prepend: 'добавить в начало', // natural form; the underscore compound was never natural Russian
     breakpoint: 'точка-останова',
     clear: 'очистить',
     close: 'закрыть',
