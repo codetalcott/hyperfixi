@@ -4,7 +4,7 @@ This file provides guidance for working with the `@hyperfixi/core` package.
 
 ## Package Purpose
 
-Main hyperscript runtime, parser, and 58 command implementations. This is the primary package for HyperFixi development.
+Main hyperscript runtime, parser, and 59 command implementations. This is the primary package for HyperFixi development.
 
 ## Essential Commands
 

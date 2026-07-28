@@ -32,9 +32,10 @@ including `transfer`, which never existed anywhere), and the bundle-generator
 capability lists. Six independent rot instances, one cause: *lists that describe
 code, that nothing compares to the code*. Exhibit: when this doc was written the
 actual count was 59, the root CLAUDE.md said 58 (corrected in the same commit as
-this doc), and `runtime/runtime.ts` still says "48 commands" in three places
-with several per-category group comments undercounting — those are left alone
-deliberately, because Arc A makes the number derived rather than re-typed.
+this doc), and `runtime/runtime.ts` still says "48 commands" in **six** places
+(:3, :10, :135, :164, :168, :178) with several per-category group comments
+undercounting — those are left alone deliberately, because Arc A makes the
+number derived rather than re-typed.
 
 **The command set is executed in 4 semi-independent implementations.** Full
 runtime classes, the lite-plus inline executor, the hybrid-complete inline
@@ -79,7 +80,7 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | Arc | Value | Gate today | Detail |
 | --- | ----- | ---------- | ------ |
 | D — target-resolution consolidation | S effort, pure refactor | ✅ suites + R2 execution subset | proven model: `attribute-target.ts` / `property-target.ts` extractions from #792 |
-| C — output contract | **~20 live `it` divergences** | **none** — only 6 positive unwrap cases tested | the ungated one; it is what this document is for |
+| C — output contract | **~20 live `it` divergences** | **none for the `it` contract** — R2 covers only the DOM-visible half; 6 positive unwrap cases tested, no fall-throughs | the ungated one; it is what this document is for |
 | A — command manifest | kills ~15 of ~30 registration points | ✅ partial: verify:reference, capability-ghosts, command-tiers, bundle-manifest-consistency | gates carry the migration; manifest replaces the lists they guard |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
@@ -108,13 +109,22 @@ extracted `commands/helpers/attribute-target.ts` and reused
    `resolveTargetElements()` API. Contained: `evaluateSelectorSync`
    (`parser/runtime.ts:441`) has exactly one caller (:337) and is unexported,
    but it mirrors async `evaluateSelector` — migrate the pair together. Gate:
-   new unit tests pinning both shapes.
+   new unit tests pinning both shapes. **Pairs with Arc C step 3**: the `:121`
+   array collapse is this same asymmetry seen from the propagation end. If C is
+   in flight, land the two together rather than at opposite ends of the queue.
 
 ### Arc C — command output contract (medium-large; highest correctness value)
 
 The wrapper-`it` class is ~20 live divergences, not a latent risk — hence ranked
 ahead of the manifest.
 
+0. **Collapse the two propagation call sites first.** `unwrapCommandResult` is
+   called independently from `runtime-base.ts:1756` and
+   `dom/attribute-processor.ts:494`. Deleting sniffing branches (step 3) while
+   two copies of the loop exist is precisely the *duplication hides which
+   implementation is the truth* disease this queue's preamble names — sitting
+   inside the arc meant to cure it. Cheap and mechanical, and it makes every
+   later step land once instead of twice.
 1. **Audit first**: a test that instantiates every registered command, catalogs
    its execute-output shape against the seven sniffing branches
    (`result+wasAsync` / `result+executed` / `lastResult+type` /
@@ -127,11 +137,22 @@ ahead of the manifest.
    #792 adopted for append/prepend) or a void return for commands that should
    not touch `it` at all (e.g. `wait`; upstream doesn't set result there). The
    per-command decision is recorded in the audit snapshot. Each migration ships
-   with an event-handler `it` assertion (the #792 test shape) — **each one is a
-   deliberate behavior change to `it`**, which is why the arc is sequenced in
-   small PRs.
-3. Delete the sniffing branches last, and decide the :121 array policy
-   deliberately rather than by inheritance.
+   with an event-handler `it` assertion (the #792 test shape). **Each one is a
+   deliberate behavior change to `it`** — but read that phrase with its blast
+   radius attached, because on its own it reads scarier than the work is: for
+   the ~20 fall-throughs `it` currently holds a wrapper *nothing can usefully
+   consume* (what reads `{ halted, timestamp, eventHalted }`?). The genuinely
+   observable changes are the few whose wrapper happens to be readable, plus the
+   two accidental matches. Small sequential PRs are for reviewability — not
+   because each one carries real user-visible risk. That is what makes this arc
+   safe to sequence this early.
+3. Delete the sniffing branches, and decide the :121 array policy deliberately
+   rather than by inheritance. **`:121` is not a tail-end cleanup — it is Arc D
+   step 3's defect from the other end.** The selector-shape asymmetry
+   (`#id`→element, `.cls`→array) is what makes the collapse fire, so
+   `toggle .a on .items` silently leaves `it` as the *first* element: the same
+   shape as append's pre-#792 `.cls` no-op. Land it with Arc D step 3, or record
+   why not.
 
 ### Arc A — command manifest (medium)
 
@@ -156,9 +177,10 @@ Replace `@meta`'s runtime `defineProperty` statics with
 type system (the invisibility is why `scripts/` typechecking stayed off for six
 months, and why `metadataOf()` exists). Verified 2026-07-28: the three decorator
 symbols are module-private with zero external readers (the exported getters are
-dead); the only live instance-side readers are `command-adapter.ts:421` (name
-fallback) and **:440 — the aliases read, which is load-bearing: dropping it
-silently un-registers alias keywords** — plus a cosmetic projection (:212-221)
+dead); the only live instance-side readers are
+`packages/core/src/runtime/command-adapter.ts:421` (name fallback) and **:440 —
+the aliases read, which is load-bearing: dropping it silently un-registers alias
+keywords** — plus a cosmetic projection (:212-221)
 and `command-pattern-validator`. Keep instance `.metadata` working via an
 instance field/getter, or point the two adapter sites at
 `impl.constructor.metadata`. Current props are `configurable: false`: hybrid
@@ -188,12 +210,14 @@ absolute ceilings), the Playwright bundle compatibility matrix,
 
 ### Arc F — semantic schema-driven mappers + scaffolder (medium)
 
-Verified: 47 mappers in `ast-builder/command-mappers.ts`; ~30 are mechanically
-identical (patient→args plus one role→modifier rename); ~10 carry real logic
-(go's `'back'` literal, wait's event/duration branch, pick/swap/set/put/send/
-morph) plus 7 block mappers. The role→preposition mapping already exists as
-switches in **two** places (each mapper, and `semantic-integration.ts:386`) —
-it is data. Add `astModifier` to `RoleSpec`, implement one generic schema-driven
+Verified: 47 mappers in `packages/semantic/src/ast-builder/command-mappers.ts`;
+~30 are mechanically identical (patient→args plus one role→modifier rename); ~10
+carry real logic (go's `'back'` literal, wait's event/duration branch,
+pick/swap/set/put/send/morph) plus 7 block mappers — all 47 in that one file,
+registered into a single `mappers` Map. The role→preposition mapping already
+exists as switches in **two** places, and the second one is **not** in this
+package: each mapper, and `packages/core/src/parser/semantic-integration.ts:386`.
+It is data. Add `astModifier` to `RoleSpec`, implement one generic schema-driven
 mapper as the fallback, keep `registerCommandMapper` as the override, migrate
 the ~30, keep the rest. Then an `add-command` scaffolder (sibling of
 `packages/semantic/scripts/add-language.ts`) that stubs the core file,
@@ -219,7 +243,7 @@ not the core abstractions.
 - tsup multi-entry `splitting: false` **forks singletons** — verify at dist
   level, not just via test-config aliases.
 - **Stacked PRs get zero CI** and still report clean — arcs merge sequentially.
-- `command-adapter.ts:440` (aliases from instance metadata) is load-bearing;
+- `runtime/command-adapter.ts:440` (aliases from instance metadata) is load-bearing;
   silently dropping it un-registers alias keywords.
 - Decorator-installed props are `configurable: false` — never re-decorate a
   migrated class.
@@ -237,3 +261,15 @@ not the core abstractions.
   derive-don't-trust `verify:reference`). The Arc C audit figures (seven unwrap
   branches, ~20 fall-through commands, two accidental matches) were verified
   against main `6825d3d9` during the exploration for this document.
+- **2026-07-28** — Re-verified against main `e0d01c09` (a read-only pass over
+  every line reference and count in this doc). All figures held; two were
+  understated and are now corrected. The `runtime.ts` "48 commands" docstrings
+  are **six**, not three. The Arc C fall-through set measured by classifying
+  every command's declared execute-output type against the seven branches is
+  **21 distinct output types** — ~25 commands, since `signal-base` backs
+  break/continue/exit and `push-url` backs push-url/replace-url. "~20" is left
+  in the prose above as the deliberately round figure; 25 is the number the
+  step-1 audit test should expect to catalog. The same pass added Arc C step 0
+  and the Arc C↔D `:121` pairing, and qualified Arc C's "gate today" (R2 does
+  cover the DOM-visible half of an `it`-propagation change; it just cannot see
+  `it` holding a wrapper, since nothing asserts on `it`).
