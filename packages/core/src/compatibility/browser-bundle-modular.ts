@@ -69,10 +69,10 @@ import {
 // Option A: Regex parser (~5 KB) - 8 commands, simple syntax only
 // import { regexParser as parser } from '../parser/regex-parser';
 
-// Option B: Hybrid parser (~7 KB) - 21+ commands, ~85% coverage
+// Option B: Hybrid parser (~7 KB) - 24 commands, ~85% coverage
 import { hybridParser as parser } from '../parser/hybrid-parser';
 
-// Option C: Full parser (~180 KB) - 48 commands, 100% coverage
+// Option C: Full parser (~180 KB) - all 59 commands, 100% coverage
 // import { fullParser as parser } from '../parser/full-parser';
 
 // =============================================================================

@@ -4,7 +4,8 @@
  * This bundle uses true tree-shaking by importing:
  * - createTreeShakeableRuntime (zero module-level command imports)
  * - createCoreExpressionEvaluator (only 3 expression categories)
- * - Only the 8 commands needed for minimal functionality
+ * - Only the 10 commands needed for minimal functionality (11 register: createSendCommand
+ *   also registers its `trigger` alias)
  *
  * Commands included (10 minimal):
  * - add, remove, toggle (DOM manipulation)

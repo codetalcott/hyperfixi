@@ -97,11 +97,16 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
 5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
-7. Bump the counts in `src/metadata.ts` — `packageInfo.commands` plus the
-   `commandCount` of each full-runtime bundle (`browser`, `hybrid-hx-v4`,
-   `multilingual`). The `verify:reference` CI gate fails otherwise; it also
-   derives the list-publishing bundles' counts from their own `commands: [...]`
-   arrays, so those stay honest on their own.
+7. **No longer needed for the full-runtime counts** — `packageInfo.commands` and
+   the `commandCount` of `browser` / `hybrid-hx-v4` are derived from the
+   manifest (`COMMAND_NAMES.length`) as of Arc A step 4.4, so adding a command
+   updates them automatically. What you DO still update is any bundle you added
+   the command to: each non-full bundle carries its own measured count, and
+   `verify:reference` re-derives every one of them from the bundle source via
+   `compatibility/bundle-sources.ts` (its `commands: [...]` array, its
+   `createTreeShakeableRuntime` factory list, or the bundle it re-exports).
+   Note `multilingual` is NOT a full-runtime bundle despite once claiming 59 —
+   it hand-picks 52.
 8. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
 9. If the command should be available multilingually, sync `packages/semantic/`:
    - Add the action to the `ActionType` union in `packages/semantic/src/types.ts`

@@ -5,7 +5,7 @@
  * single source of truth for all command metadata.
  *
  * Benefits:
- * - Consistent metadata format across all 43+ commands
+ * - Consistent metadata format across all 59 commands
  * - Better documentation generation
  * - IDE tooling support
  * - Validation improvements

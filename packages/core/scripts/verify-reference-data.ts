@@ -33,6 +33,20 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { COMMAND_MANIFEST, toRegisteredName } from '../src/commands/manifest';
+// Imported rather than text-scraped for the same reason as the manifest above:
+// `metadata.ts` is pure data with no DOM reach. It has to be imported now —
+// step 4.4 made the full-runtime counts DERIVED expressions
+// (`FULL_RUNTIME_COMMAND_COUNT`), and the regexes this file used to scrape them
+// with (`commandCount:\s*(\d+)`) match only literal digits, so they silently
+// skipped exactly the entries the gate most needs to see.
+import { bundleInfo, packageInfo } from '../src/metadata';
+// The bundle→source pairing lives in one place so this gate and the audit test
+// cannot disagree about which file backs which bundle.
+import {
+  BUNDLES_WITH_COMMAND_LISTS,
+  BUNDLES_WITH_FACTORY_LISTS,
+  BUNDLES_INHERITING,
+} from '../src/compatibility/bundle-sources';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(__dirname, '..');
@@ -88,37 +102,8 @@ function parseReferenceCommands(): Record<string, { category: string; availabili
   return commands;
 }
 
-function parseBundleInfo(): Array<{ id: string; filename: string; commandCount: number }> {
-  const metaPath = resolve(CORE_ROOT, 'src/metadata.ts');
-  const content = readFileSync(metaPath, 'utf-8');
-
-  const bundles: Array<{ id: string; filename: string; commandCount: number }> = [];
-
-  // Match bundle entries
-  const bundleRegex = /id:\s*'([^']+)'[^}]*filename:\s*'([^']+)'[^}]*commandCount:\s*(\d+)/g;
-
-  let match;
-  while ((match = bundleRegex.exec(content)) !== null) {
-    bundles.push({
-      id: match[1],
-      filename: match[2],
-      commandCount: parseInt(match[3], 10),
-    });
-  }
-
-  return bundles;
-}
-
-function parsePackageInfo(): { commands: number } {
-  const metaPath = resolve(CORE_ROOT, 'src/metadata.ts');
-  const content = readFileSync(metaPath, 'utf-8');
-
-  // Match: commands: 43
-  const match = content.match(/commands:\s*(\d+)/);
-  return {
-    commands: match ? parseInt(match[1], 10) : 0,
-  };
-}
+// `parseBundleInfo` / `parsePackageInfo` were deleted in step 4.4 — see the
+// `metadata` import above. The values now come from the module itself.
 
 // =============================================================================
 // PARSE DATA
@@ -126,8 +111,6 @@ function parsePackageInfo(): { commands: number } {
 
 const factoryNames = parseCommandFactories();
 const refCommands = parseReferenceCommands();
-const bundleInfo = parseBundleInfo();
-const packageInfo = parsePackageInfo();
 
 /** The registry-of-record every list below is scored against. */
 const manifestNames = COMMAND_MANIFEST.map(entry => entry.name);
@@ -374,17 +357,22 @@ function verifyAvailabilities() {
 // =============================================================================
 
 /**
- * Bundles that publish their own `commands: [...]` array. Their metadata
- * commandCount is checked against that array rather than trusted: lite-plus and
- * the two hybrids were stale by 4-5 commands each for months, because nothing
- * compared the advertised number to the real list. (The full-runtime bundles
- * have no such array — they register everything the default runtime does, so
- * their count is checked against packageInfo.commands instead.)
+ * Every bundle's advertised commandCount is re-derived from its own source
+ * rather than trusted — the pairing lives in `compatibility/bundle-sources.ts`.
+ * lite-plus and the two hybrids were stale by 4-5 commands each for months
+ * because nothing compared the advertised number to the real list; step 4.4
+ * widened the same idea to the rest and caught three more (`minimal` 30→10,
+ * `standard` 35→25, `multilingual` 59→52).
  */
-const BUNDLES_WITH_COMMAND_LISTS: Record<string, string> = {
-  'lite-plus': 'browser-bundle-lite-plus.ts',
-  'hybrid-complete': 'browser-bundle-hybrid-complete.ts',
-};
+
+/** Count `createXCommand()` calls in a bundle's tree-shakeable runtime list. */
+function actualFactoryCount(sourceFile: string): number | null {
+  const bundlePath = resolve(__dirname, '../src/compatibility', sourceFile);
+  if (!existsSync(bundlePath)) return null;
+  const source = readFileSync(bundlePath, 'utf-8');
+  const calls = source.match(/^\s+create[A-Za-z0-9]*Command\(\),?$/gm);
+  return calls ? new Set(calls.map(c => c.trim())).size : null;
+}
 
 /** Count entries in a bundle source's `commands: [ ... ]` array. */
 function actualCommandCount(sourceFile: string): number | null {
@@ -430,6 +418,32 @@ function verifyBundleCommandCounts() {
     } else if (actual !== bundle.commandCount) {
       errors.push(
         `${id} advertises ${bundle.commandCount} commands but ${sourceFile} ships ${actual}`
+      );
+    }
+  }
+
+  // Same, for the bundles that hand-pick factories without publishing an array.
+  for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_FACTORY_LISTS)) {
+    const bundle = bundleInfo.find(b => b.id === id);
+    if (!bundle) continue;
+    const actual = actualFactoryCount(sourceFile);
+    if (actual === null) {
+      errors.push(`${id}: could not read the factory list from ${sourceFile}`);
+    } else if (actual !== bundle.commandCount) {
+      errors.push(
+        `${id} advertises ${bundle.commandCount} commands but ${sourceFile} registers ${actual}`
+      );
+    }
+  }
+
+  // And the bundles that re-export another bundle wholesale.
+  for (const [id, inheritsFrom] of Object.entries(BUNDLES_INHERITING)) {
+    const bundle = bundleInfo.find(b => b.id === id);
+    const parent = bundleInfo.find(b => b.id === inheritsFrom);
+    if (!bundle || !parent) continue;
+    if (bundle.commandCount !== parent.commandCount) {
+      errors.push(
+        `${id} re-exports ${inheritsFrom} but advertises ${bundle.commandCount} vs its ${parent.commandCount}`
       );
     }
   }

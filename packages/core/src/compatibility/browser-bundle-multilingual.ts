@@ -36,7 +36,9 @@ import { createFullExpressionRegistry } from '../expressions/index';
 import { createContext, ensureContext } from '../core/context';
 import type { ASTNode } from '../types/base-types';
 
-// Import ALL V2 commands (41 commands total)
+// Import the 52 commands this bundle ships (was labelled 41; the label had
+// drifted). Authoritative count: metadata.ts `bundleInfo`, gated by
+// verify:reference against the factory list below.
 // DOM Commands (7)
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
@@ -214,7 +216,8 @@ const SUPPORTED_LANGUAGES = [
   'sw',
 ] as const;
 
-// Create runtime with ALL 41 commands
+// Create runtime with 52 commands — NOT the full 59. Absent vs the manifest:
+// morph, process, push, replace, scroll, start, swap.
 const runtime = createTreeShakeableRuntime(
   [
     // DOM (7)

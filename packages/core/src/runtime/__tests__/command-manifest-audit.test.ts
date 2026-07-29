@@ -70,6 +70,8 @@ import {
   resolveCommandKey,
 } from '../../bundle-generator/template-capabilities';
 import { COMMAND_KEYWORDS, ALL_KEYWORDS, HOVER_DOCS } from '../../lsp-metadata';
+import { bundleInfo } from '../../metadata';
+import { BUNDLES_WITH_COMMAND_LISTS } from '../../compatibility/bundle-sources';
 import { commands as referenceCommands } from '../../reference/index';
 import { parse } from '../../parser/parser';
 
@@ -744,6 +746,30 @@ describe('the per-bundle commands arrays', () => {
     const counts = Object.fromEntries(Object.entries(arrays).map(([f, n]) => [f, n.length]));
     expect(counts).toEqual(BUNDLE_COMMAND_COUNTS);
   });
+
+  /**
+   * The link whose ABSENCE was the bug. §6 pinned each array's size and
+   * `metadata.ts` advertised a `commandCount`, but the two were never compared,
+   * so `minimal` sat at 30 against an array of 10 and `standard` at 35 against
+   * 25 — both for as long as the entries have existed. Pinning one side and
+   * advertising the other is not a check; only the comparison is.
+   *
+   * Scoped to the array-publishing bundles: `verify:reference` covers the
+   * factory-list and re-export arms with the same `bundle-sources.ts` pairing.
+   */
+  it('metadata commandCount matches the array each bundle actually publishes', () => {
+    const mismatches: string[] = [];
+    for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_COMMAND_LISTS)) {
+      const advertised = bundleInfo.find(b => b.id === id)?.commandCount;
+      const actual = arrays[sourceFile]?.length;
+      if (advertised === undefined || actual === undefined) {
+        mismatches.push(`${id}: no metadata entry or no array in ${sourceFile}`);
+      } else if (advertised !== actual) {
+        mismatches.push(`${id}: metadata says ${advertised}, ${sourceFile} publishes ${actual}`);
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
 });
 
 // ===========================================================================
@@ -941,8 +967,11 @@ describe('the command manifest', () => {
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
-  // Zero CLASSIFICATION debt; step 4.4 (deriving `packageInfo.commands`) is a
-  // derivation, not a classification, and is not counted here.
+  // Zero CLASSIFICATION debt. Step 4.4 (deriving `packageInfo.commands`) has
+  // now LANDED and correctly added no row here: it is a derivation, not a
+  // classification. Arc A is complete — every count below stays at its decided
+  // value, and the counts 4.4 governs are gated in §6 and by verify:reference
+  // rather than tracked as debt.
   it('0 rows await deliberate classification (4.1, 4.2, 4.3 all landed)', () => {
     // The numbers the arc exists to burn down. A step that classifies a
     // command flips its allowlist row AND moves the count here, so the diff

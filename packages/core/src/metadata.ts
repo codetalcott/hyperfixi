@@ -16,6 +16,25 @@
  * ```
  */
 
+import { COMMAND_NAMES } from './commands/manifest';
+
+/**
+ * The number of commands the default runtime registers — derived, never typed.
+ *
+ * Sourced from `COMMAND_NAMES` and **not** `COMMAND_MANIFEST.map(...)`: a
+ * `.map()` over the entries references the entries, dragging every command's
+ * `category`/`tier`/`upstreamOrExtension`/`multiword` into any bundle that
+ * reaches this module (Finding 11 in the arc brief — that shape cost
+ * `hyperfixi-hx.js` +4.8 KB / +7.5% and failed the ±5% size gate in step 3).
+ * `COMMAND_NAMES` is a flat string list, and the audit asserts the two are
+ * equal as ordered lists, so this cannot drift from the manifest.
+ *
+ * Only bundles that register the WHOLE registry may use this. Bundles that
+ * hand-pick commands carry their own measured count — see the note on
+ * `commandCount` below.
+ */
+const FULL_RUNTIME_COMMAND_COUNT = COMMAND_NAMES.length;
+
 // =============================================================================
 // PACKAGE INFO
 // =============================================================================
@@ -31,7 +50,7 @@ export const packageInfo = {
   description: 'Modern hyperscript engine with fixi/htmx integration',
   compatibility: '~85% official _hyperscript',
   languages: 24,
-  commands: 59,
+  commands: FULL_RUNTIME_COMMAND_COUNT,
   repository: 'https://github.com/codetalcott/hyperfixi',
   documentation: 'https://github.com/codetalcott/hyperfixi/tree/main/packages/core#readme',
 } as const;
@@ -51,7 +70,20 @@ export interface BundleInfo {
   gzipSize: string;
   /** Raw size (approximate) */
   rawSize: string;
-  /** Number of commands included */
+  /**
+   * Number of commands the bundle actually registers.
+   *
+   * Bundles that register the whole registry (`browser`, `hybrid-hx-v4`) use
+   * `FULL_RUNTIME_COMMAND_COUNT` so they track the manifest automatically.
+   * Every other bundle hand-picks its commands, so its count is a measured
+   * literal — and `verify:reference` re-derives each one from the bundle
+   * source rather than trusting it.
+   *
+   * Widening that check in step 4.4 found three that were wrong, all in the
+   * ungated set: `minimal` 30→10, `standard` 35→25, `multilingual` 59→52.
+   * The two bundles that were already gated (`lite-plus`, `hybrid-complete`)
+   * were both correct — the errors were exactly where nothing was looking.
+   */
   commandCount: number;
   /** Parser type used */
   parser: 'regex' | 'hybrid' | 'full';
@@ -151,7 +183,8 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-hx-v4.js',
     gzipSize: '323.7 KB',
     rawSize: '1507 KB',
-    commandCount: 59,
+    // Re-exports `browser-bundle.ts`, so it inherits the full registry.
+    commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -168,7 +201,13 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-minimal.js',
     gzipSize: '76.6 KB',
     rawSize: '315 KB',
-    commandCount: 30,
+    // Was 30, ungated and wrong by 20. `browser-bundle-minimal-v2.ts`
+    // advertises 10 in its own `commands: [...]` array, which is what this
+    // mirrors. Note it REGISTERS 11: `createSendCommand` also registers the
+    // consolidation alias `trigger`, so `trigger` works there but is not
+    // advertised. Left as-is deliberately — changing a shipped bundle's
+    // advertised surface is a behavior call, not part of a derivation step.
+    commandCount: 10,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -185,7 +224,9 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-standard.js',
     gzipSize: '83.1 KB',
     rawSize: '343 KB',
-    commandCount: 35,
+    // Was 35, ungated and wrong by 10. `browser-bundle-standard-v2.ts`
+    // registers 25, matching its own published `commands: [...]` array exactly.
+    commandCount: 25,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -202,7 +243,9 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi.js',
     gzipSize: '312.2 KB',
     rawSize: '1470 KB',
-    commandCount: 59,
+    // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
+    // gaps and no extras vs the manifest).
+    commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -219,7 +262,12 @@ export const bundleInfo: BundleInfo[] = [
     filename: 'hyperfixi-multilingual.js',
     gzipSize: '97.5 KB',
     rawSize: '403 KB',
-    commandCount: 59,
+    // NOT a full-runtime bundle, despite the old 59. It hand-picks 52 via
+    // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
+    // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it
+    // SHOULD ship all 59 is a behavior question, deliberately left to its own
+    // PR — this step only stops the number from lying.
+    commandCount: 52,
     parser: 'full',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -431,7 +479,7 @@ export function compareBundles(bundleIds: string[]): Record<string, BundleInfo> 
 export const ecosystem = {
   core: {
     name: '@hyperfixi/core',
-    description: 'Main runtime, parser, 43 commands',
+    description: `Main runtime, parser, ${FULL_RUNTIME_COMMAND_COUNT} commands`,
     npm: 'https://www.npmjs.com/package/@hyperfixi/core',
   },
   semantic: {
