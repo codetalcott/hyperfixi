@@ -1056,7 +1056,30 @@ describe('the classification debt, counted', () => {
  * emptying this set fails (measured 1 ≠ 0), and populating 58 while leaving this
  * as the whole registry fails too (measured 1 ≠ 59).
  */
-const COMPATIBILITY_UNSET = new Set<string>(REGISTRY);
+const COMPATIBILITY_UNSET = new Set<string>([]);
+
+/**
+ * Names whose served `compatibility` cannot match their own manifest side,
+ * because a SHARED implementation cannot carry two values.
+ *
+ * `unless` is the only such row in the registry, and it is structural rather
+ * than an oversight: `ConditionalCommand` is registered as both `if`
+ * (upstream → `'standard'`) and `unless` (extension → `'lokascript-extension'`),
+ * and both names resolve to the SAME instance — which is exactly how
+ * `command-adapter.ts:440` registers the alias in the first place. One object,
+ * one `compatibility`. The class carries `'standard'`, matching `if`: the
+ * primary registered name, and the upstream one.
+ *
+ * Checked against the shared groups rather than hand-listed: of the four groups,
+ * only this one straddles the upstream/extension line (`send`/`trigger` are both
+ * upstream, `push`/`replace` both extension, `decrement`/`increment` both
+ * upstream). Splitting metadata per registered name would fix it and is an
+ * architectural change, so it is pinned here the way Arc A pinned the
+ * two-category-unions disagreement rather than resolved inside a mechanical step.
+ */
+const COMPATIBILITY_ALIAS_DIVERGENCE: Record<string, { served: string; ownSide: string }> = {
+  unless: { served: 'standard', ownSide: 'lokascript-extension' },
+};
 
 /**
  * Commands deliberately marked `'experimental'`. Empty, and it must stay empty
@@ -1092,11 +1115,43 @@ describe('metadata.compatibility', () => {
     for (const [name, served] of servedCompatibility()) {
       if (served === undefined) continue; // unset rows are governed below
       if (served === 'experimental') continue; // governed by its own test
+      if (name in COMPATIBILITY_ALIAS_DIVERGENCE) continue; // shared impl, governed below
       if (served !== expectedCompatibility(name)) {
         wrong.push(`${name}: ${String(served)} (manifest projects ${expectedCompatibility(name)})`);
       }
     }
     expect(wrong).toEqual([]);
+  });
+
+  it('the alias divergences are exactly the shared groups that straddle the tier line', () => {
+    // Derived, not hand-listed: any OTHER shared implementation whose names
+    // disagree on tier would appear here and fail, so adding a consolidated
+    // alias across the line cannot pass unnoticed.
+    const straddling: string[] = [];
+    const byCtor = new Map<string, string[]>();
+    const registered = new Runtime().getRegistry();
+    for (const name of REGISTRY) {
+      const ctor = (registered.getImplementation(name) as object | undefined)?.constructor?.name;
+      if (!ctor) continue;
+      byCtor.set(ctor, [...(byCtor.get(ctor) ?? []), name]);
+    }
+    for (const names of byCtor.values()) {
+      if (names.length < 2) continue;
+      const sides = new Set(names.map(n => expectedCompatibility(n)));
+      if (sides.size > 1) {
+        // every name in the group except the one the class actually matches
+        for (const n of names) {
+          const served = servedCompatibility().get(n);
+          if (served !== expectedCompatibility(n)) straddling.push(n);
+        }
+      }
+    }
+    expect(straddling.sort()).toEqual(Object.keys(COMPATIBILITY_ALIAS_DIVERGENCE).sort());
+    // And the allowlist stays honest about WHICH way each row diverges.
+    for (const [name, { served, ownSide }] of Object.entries(COMPATIBILITY_ALIAS_DIVERGENCE)) {
+      expect(servedCompatibility().get(name), `${name} served`).toBe(served);
+      expect(expectedCompatibility(name), `${name} own side`).toBe(ownSide);
+    }
   });
 
   it('the unset rows are exactly the allowlist, both directions', () => {

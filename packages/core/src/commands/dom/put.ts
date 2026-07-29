@@ -28,8 +28,8 @@ import {
 } from '../helpers/dom-mutation';
 import { queryTargetElements, toElementListFiltered } from '../helpers/target-elements';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -56,24 +56,30 @@ export interface PutCommandInput {
  * Before: 562 lines
  * After: ~250 lines (56% reduction)
  */
-@meta({
-  description: 'Insert content into elements or properties',
-  syntax: [
-    'put <value> into <target>',
-    'put <value> before <target>',
-    'put <value> after <target>',
-  ],
-  examples: [
-    'put "Hello World" into me',
-    'put <div>Content</div> before #target',
-    "put value into #elem's innerHTML",
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'put', category: 'dom' })
 export class PutCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Insert content into elements or properties',
+    syntax: [
+      'put <value> into <target>',
+      'put <value> before <target>',
+      'put <value> after <target>',
+    ],
+    examples: [
+      'put "Hello World" into me',
+      'put <div>Content</div> before #target',
+      "put value into #elem's innerHTML",
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return PutCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

@@ -15,8 +15,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -150,20 +150,26 @@ export interface FetchCommandOutput {
  * Before: 640 lines
  * After: ~250 lines (61% reduction)
  */
-@meta({
-  description: 'Make HTTP requests with lifecycle event support',
-  syntax: ['fetch <url>', 'fetch <url> as <type>', 'fetch <url> with <options>'],
-  examples: [
-    'fetch "/api/data"',
-    'fetch "/api/users" as json',
-    'fetch "/api/save" with { method:"POST" }',
-  ],
-  sideEffects: ['network', 'event-dispatching'],
-})
 @command({ name: 'fetch', category: 'async' })
 export class FetchCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Make HTTP requests with lifecycle event support',
+    syntax: ['fetch <url>', 'fetch <url> as <type>', 'fetch <url> with <options>'],
+    examples: [
+      'fetch "/api/data"',
+      'fetch "/api/users" as json',
+      'fetch "/api/save" with { method:"POST" }',
+    ],
+    sideEffects: ['network', 'event-dispatching'],
+    category: 'async',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return FetchCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

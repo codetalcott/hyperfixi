@@ -18,8 +18,8 @@ import { isHTMLElement } from '../../utils/element-check';
 import { debug } from '../../utils/debug';
 import type { SwapStrategy } from './swap';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -209,20 +209,29 @@ export function processPartials(html: string, morphOptions?: MorphOptions): Proc
  * Before: ~130 lines (builder pattern section)
  * After: ~100 lines (decorator pattern)
  */
-@meta({
-  description: 'Process <hx-partial> elements for multi-target swaps',
-  syntax: ['process partials in <content>', 'process partials in <content> using view transition'],
-  examples: [
-    'process partials in it',
-    'process partials in fetchedHtml',
-    'process partials in it using view transition',
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'process', category: 'dom' })
 export class ProcessPartialsCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Process <hx-partial> elements for multi-target swaps',
+    syntax: [
+      'process partials in <content>',
+      'process partials in <content> using view transition',
+    ],
+    examples: [
+      'process partials in it',
+      'process partials in fetchedHtml',
+      'process partials in it using view transition',
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return ProcessPartialsCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

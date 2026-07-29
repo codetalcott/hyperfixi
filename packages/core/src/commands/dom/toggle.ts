@@ -45,8 +45,8 @@ import {
   type PropertyTarget,
 } from '../helpers/property-target';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -176,26 +176,32 @@ function detectExpressionType(
   return { type: 'class', expression: '' };
 }
 
-@meta({
-  description: 'Toggle classes, attributes, or interactive elements',
-  syntax: [
-    'toggle <class> [on <target>]',
-    'toggle @attr',
-    'toggle <element> [as modal]',
-    'toggle <expr> for <duration>',
-  ],
-  examples: [
-    'toggle .active on me',
-    'toggle @disabled',
-    'toggle #myDialog as modal',
-    'toggle .loading for 2s',
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'toggle', category: 'dom' })
 export class ToggleCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Toggle classes, attributes, or interactive elements',
+    syntax: [
+      'toggle <class> [on <target>]',
+      'toggle @attr',
+      'toggle <element> [as modal]',
+      'toggle <expr> for <duration>',
+    ],
+    examples: [
+      'toggle .active on me',
+      'toggle @disabled',
+      'toggle #myDialog as modal',
+      'toggle .loading for 2s',
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ToggleCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

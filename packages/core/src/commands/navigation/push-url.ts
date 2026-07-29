@@ -15,8 +15,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -51,27 +51,33 @@ export interface HistoryCommandOutput {
  * Consolidates PushUrlCommand and ReplaceUrlCommand into single implementation.
  * Registered under both 'push' and 'replace' names via aliases.
  */
-@meta({
-  description: 'Modify browser history URL without page reload',
-  syntax: [
-    'push url <url>',
-    'push url <url> with title <title>',
-    'replace url <url>',
-    'replace url <url> with title <title>',
-  ],
-  examples: [
-    'push url "/page/2"',
-    'push url "/search" with title "Search Results"',
-    'replace url "/search?q=test"',
-    'replace url "/page" with title "Updated Page"',
-  ],
-  sideEffects: ['navigation'],
-  aliases: ['replace'],
-})
 @command({ name: 'push', category: 'navigation' })
 export class HistoryCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Modify browser history URL without page reload',
+    syntax: [
+      'push url <url>',
+      'push url <url> with title <title>',
+      'replace url <url>',
+      'replace url <url> with title <title>',
+    ],
+    examples: [
+      'push url "/page/2"',
+      'push url "/search" with title "Search Results"',
+      'replace url "/search?q=test"',
+      'replace url "/page" with title "Updated Page"',
+    ],
+    sideEffects: ['navigation'],
+    aliases: ['replace'],
+    category: 'navigation',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return HistoryCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },

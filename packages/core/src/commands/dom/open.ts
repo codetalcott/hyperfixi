@@ -31,8 +31,8 @@ import {
   resolveSmartElementTargets,
 } from '../helpers/smart-element';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -79,16 +79,22 @@ function isPopoverElement(el: HTMLElement): boolean {
   return el.hasAttribute('popover');
 }
 
-@meta({
-  description: 'Open a dialog, details element, or popover',
-  syntax: ['open [<target>]', 'open <dialog> as modal', 'open <dialog> as non-modal'],
-  examples: ['open', 'open #myDialog', 'open #details', 'open #popup as non-modal'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'open', category: 'dom' })
 export class OpenCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Open a dialog, details element, or popover',
+    syntax: ['open [<target>]', 'open <dialog> as modal', 'open <dialog> as non-modal'],
+    examples: ['open', 'open #myDialog', 'open #details', 'open #popup as non-modal'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return OpenCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

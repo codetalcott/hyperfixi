@@ -19,26 +19,32 @@ import {
   type InsertionCommandInput,
   type InsertionCommandOutput,
 } from './insertion-base';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { commandMeta, command, createFactory, type CommandMetadata } from '../decorators';
 
 export type PrependCommandInput = InsertionCommandInput;
 export type PrependCommandOutput = InsertionCommandOutput;
 
-@meta({
-  description: 'Add content to the start of a string, array, Set, or HTML element',
-  syntax: ['prepend <content>', 'prepend <content> to <target>'],
-  examples: [
-    'prepend "Hello"',
-    'prepend "World" to greeting',
-    'prepend item to myArray',
-    'prepend "<p>First</p>" to #content',
-  ],
-  sideEffects: ['data-mutation', 'dom-mutation'],
-})
 @command({ name: 'prepend', category: 'content' })
 export class PrependCommand extends ContentInsertionCommand {
+  static readonly metadata = commandMeta({
+    description: 'Add content to the start of a string, array, Set, or HTML element',
+    syntax: ['prepend <content>', 'prepend <content> to <target>'],
+    examples: [
+      'prepend "Hello"',
+      'prepend "World" to greeting',
+      'prepend item to myArray',
+      'prepend "<p>First</p>" to #content',
+    ],
+    sideEffects: ['data-mutation', 'dom-mutation'],
+    category: 'content',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return PrependCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   constructor() {
     super('prepend');

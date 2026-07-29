@@ -14,8 +14,8 @@
 import type { TypedExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -49,22 +49,28 @@ export type { NumericTargetInput as DecrementCommandInput };
  * Consolidates IncrementCommand and DecrementCommand into single implementation.
  * Registered under both 'increment' and 'decrement' names via aliases.
  */
-@meta({
-  description: 'Modify a variable or property by a specified amount (default: 1)',
-  syntax: ['increment <target> [by <number>]', 'decrement <target> [by <number>]'],
-  examples: [
-    'increment counter',
-    'increment counter by 5',
-    'decrement counter',
-    'decrement counter by 5',
-  ],
-  sideEffects: ['data-mutation', 'context-modification'],
-  aliases: ['decrement'],
-})
 @command({ name: 'increment', category: 'data' })
 export class NumericModifyCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Modify a variable or property by a specified amount (default: 1)',
+    syntax: ['increment <target> [by <number>]', 'decrement <target> [by <number>]'],
+    examples: [
+      'increment counter',
+      'increment counter by 5',
+      'decrement counter',
+      'decrement counter by 5',
+    ],
+    sideEffects: ['data-mutation', 'context-modification'],
+    aliases: ['decrement'],
+    category: 'data',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return NumericModifyCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   /**
    * Parse raw AST input into structured input object

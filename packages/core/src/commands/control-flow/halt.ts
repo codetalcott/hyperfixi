@@ -13,8 +13,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -42,21 +42,27 @@ export interface HaltCommandOutput {
  * Before: 216 lines
  * After: ~100 lines (54% reduction)
  */
-@meta({
-  description: 'Stop command execution or prevent event defaults',
-  syntax: ['halt', 'halt the event'],
-  examples: [
-    'halt',
-    'halt the event',
-    'if error then halt',
-    'on click halt the event then log "clicked"',
-  ],
-  sideEffects: ['control-flow', 'event-prevention'],
-})
 @command({ name: 'halt', category: 'control-flow' })
 export class HaltCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Stop command execution or prevent event defaults',
+    syntax: ['halt', 'halt the event'],
+    examples: [
+      'halt',
+      'halt the event',
+      'if error then halt',
+      'on click halt the event then log "clicked"',
+    ],
+    sideEffects: ['control-flow', 'event-prevention'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return HaltCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

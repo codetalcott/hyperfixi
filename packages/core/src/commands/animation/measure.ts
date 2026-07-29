@@ -16,8 +16,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -45,16 +45,22 @@ export interface MeasureCommandOutput {
  * Before: 376 lines
  * After: ~180 lines (52% reduction)
  */
-@meta({
-  description: 'Measure DOM element dimensions, positions, and properties',
-  syntax: ['measure', 'measure <property>', 'measure <target> <property>'],
-  examples: ['measure', 'measure width', 'measure #element height', 'measure x and set dragX'],
-  sideEffects: ['data-mutation'],
-})
 @command({ name: 'measure', category: 'animation' })
 export class MeasureCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Measure DOM element dimensions, positions, and properties',
+    syntax: ['measure', 'measure <property>', 'measure <target> <property>'],
+    examples: ['measure', 'measure width', 'measure #element height', 'measure x and set dragX'],
+    sideEffects: ['data-mutation'],
+    category: 'animation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return MeasureCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

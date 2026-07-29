@@ -16,8 +16,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { parseDurationStrict } from '../helpers/duration-parsing';
 import { waitForTime, waitForEvent } from '../helpers/event-waiting';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -51,21 +51,27 @@ export interface WaitCommandOutput {
  * Before: 650 lines
  * After: ~280 lines (57% reduction)
  */
-@meta({
-  description: 'Wait for time delay, event, or race condition',
-  syntax: ['wait <time>', 'wait for <event>', 'wait for <event> or <condition>'],
-  examples: [
-    'wait 2s',
-    'wait for click',
-    'wait for click or 1s',
-    'wait for mousemove(clientX, clientY)',
-  ],
-  sideEffects: ['time', 'event-listening'],
-})
 @command({ name: 'wait', category: 'async' })
 export class WaitCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Wait for time delay, event, or race condition',
+    syntax: ['wait <time>', 'wait for <event>', 'wait for <event> or <condition>'],
+    examples: [
+      'wait 2s',
+      'wait for click',
+      'wait for click or 1s',
+      'wait for mousemove(clientX, clientY)',
+    ],
+    sideEffects: ['time', 'event-listening'],
+    category: 'async',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return WaitCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

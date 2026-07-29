@@ -13,8 +13,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -40,20 +40,26 @@ export interface JsCommandOutput {
  * Before: 241 lines
  * After: ~160 lines (34% reduction)
  */
-@meta({
-  description: 'Execute inline JavaScript code with access to hyperscript context',
-  syntax: ['js <code> end', 'js(param1, param2) <code> end'],
-  examples: [
-    'js console.log("Hello") end',
-    'js(x, y) return x + y end',
-    'js me.style.color = "red" end',
-  ],
-  sideEffects: ['code-execution', 'data-mutation'],
-})
 @command({ name: 'js', category: 'advanced' })
 export class JsCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Execute inline JavaScript code with access to hyperscript context',
+    syntax: ['js <code> end', 'js(param1, param2) <code> end'],
+    examples: [
+      'js console.log("Hello") end',
+      'js(x, y) return x + y end',
+      'js me.style.color = "red" end',
+    ],
+    sideEffects: ['code-execution', 'data-mutation'],
+    category: 'advanced',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return JsCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

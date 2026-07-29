@@ -7,7 +7,7 @@
  * Syntax: break
  */
 
-import { command, meta, createFactory } from '../decorators';
+import { commandMeta, command, createFactory } from '../decorators';
 import { ControlFlowSignalBase } from './signal-base';
 
 // Re-export for backward compatibility
@@ -20,18 +20,25 @@ export interface BreakCommandOutput {
 /**
  * BreakCommand - Exits from the current loop
  */
-@meta({
-  description: 'Exit from the current loop (repeat, for, while, until)',
-  syntax: ['break'],
-  examples: [
-    'break',
-    'if found then break',
-    'repeat for item in items { if item == target then break }',
-  ],
-  sideEffects: ['control-flow'],
-})
 @command({ name: 'break', category: 'control-flow' })
 export class BreakCommand extends ControlFlowSignalBase {
+  static readonly metadata = commandMeta({
+    description: 'Exit from the current loop (repeat, for, while, until)',
+    syntax: ['break'],
+    examples: [
+      'break',
+      'if found then break',
+      'repeat for item in items { if item == target then break }',
+    ],
+    sideEffects: ['control-flow'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return BreakCommand.metadata;
+  }
+
   protected readonly signalType = 'break' as const;
   protected readonly errorMessage = 'BREAK_LOOP';
   protected readonly errorFlag = 'isBreak';

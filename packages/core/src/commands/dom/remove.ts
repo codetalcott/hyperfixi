@@ -24,7 +24,7 @@ import {
   batchRemoveStyles,
 } from '../helpers/batch-dom-operations';
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
-import { command, meta, createFactory } from '../decorators';
+import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
 
 /**
@@ -55,20 +55,27 @@ export type RemoveCommandInput =
 /**
  * RemoveCommand - Removes classes, attributes, styles, or elements
  */
-@meta({
-  description: 'Remove CSS classes, attributes, styles, or elements from the DOM',
-  syntax: 'remove <classes|@attr|*prop|element> [from <target>]',
-  examples: [
-    'remove .active from me',
-    'remove "active selected" from <button/>',
-    'remove .highlighted from #modal',
-    'remove me',
-    'remove closest .item',
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'remove', category: 'dom' })
 export class RemoveCommand extends DOMModificationBase {
+  static readonly metadata = commandMeta({
+    description: 'Remove CSS classes, attributes, styles, or elements from the DOM',
+    syntax: 'remove <classes|@attr|*prop|element> [from <target>]',
+    examples: [
+      'remove .active from me',
+      'remove "active selected" from <button/>',
+      'remove .highlighted from #modal',
+      'remove me',
+      'remove closest .item',
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return RemoveCommand.metadata;
+  }
+
   protected readonly mode = 'remove' as const;
   protected readonly preposition = 'from';
 

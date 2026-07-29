@@ -19,8 +19,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -30,16 +30,22 @@ export interface EmptyCommandInput {
   targets: HTMLElement[];
 }
 
-@meta({
-  description: 'Remove all children from an element (sets innerHTML to empty)',
-  syntax: ['empty', 'empty <target>', 'empty the <target>'],
-  examples: ['empty me', 'empty #list', 'empty .results'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'empty', category: 'dom' })
 export class EmptyCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Remove all children from an element (sets innerHTML to empty)',
+    syntax: ['empty', 'empty <target>', 'empty the <target>'],
+    examples: ['empty me', 'empty #list', 'empty .results'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return EmptyCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

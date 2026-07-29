@@ -15,8 +15,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue } from '../helpers/variable-access';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -43,17 +43,23 @@ export interface GoCommandOutput {
  * Before: 682 lines
  * After: ~350 lines (49% reduction)
  */
-@meta({
-  description:
-    'Navigation functionality including URL navigation, element scrolling, and browser history',
-  syntax: ['go back', 'go to url <url> [in new window]', 'go to [position] [of] <element>'],
-  examples: ['go back', 'go to url "https://example.com"', 'go to top of #header'],
-  sideEffects: ['navigation', 'scrolling'],
-})
 @command({ name: 'go', category: 'navigation' })
 export class GoCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description:
+      'Navigation functionality including URL navigation, element scrolling, and browser history',
+    syntax: ['go back', 'go to url <url> [in new window]', 'go to [position] [of] <element>'],
+    examples: ['go back', 'go to url "https://example.com"', 'go to top of #header'],
+    sideEffects: ['navigation', 'scrolling'],
+    category: 'navigation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return GoCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

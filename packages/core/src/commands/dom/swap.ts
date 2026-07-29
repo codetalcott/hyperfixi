@@ -30,8 +30,8 @@ import {
 import type { MorphOptions } from '../../lib/morph-adapter';
 import { isHTMLElement } from '../../utils/element-check';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -95,28 +95,34 @@ async function resolveTargets(
  * Before: ~210 lines (builder pattern section)
  * After: ~200 lines (decorator pattern)
  */
-@meta({
-  description: 'Swap content into target elements with intelligent morphing support',
-  syntax: [
-    'swap <target> with <content>',
-    'swap [strategy] of <target> with <content>',
-    'swap into <target> with <content>',
-    'swap over <target> with <content>',
-    'swap delete <target>',
-    'swap <target> with <content> using view transition',
-  ],
-  examples: [
-    'swap #target with it',
-    'swap innerHTML of #target with it',
-    'swap over #modal with fetchedContent',
-    'swap delete #notification',
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'swap', category: 'dom' })
 export class SwapCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Swap content into target elements with intelligent morphing support',
+    syntax: [
+      'swap <target> with <content>',
+      'swap [strategy] of <target> with <content>',
+      'swap into <target> with <content>',
+      'swap over <target> with <content>',
+      'swap delete <target>',
+      'swap <target> with <content> using view transition',
+    ],
+    examples: [
+      'swap #target with it',
+      'swap innerHTML of #target with it',
+      'swap over #modal with fetchedContent',
+      'swap delete #notification',
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return SwapCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
@@ -359,16 +365,22 @@ export class SwapCommand implements DecoratedCommand {
  * Before: ~90 lines (builder pattern section)
  * After: ~80 lines (decorator pattern)
  */
-@meta({
-  description: 'Morph content into target elements (intelligent diffing, preserves state)',
-  syntax: ['morph <target> with <content>', 'morph over <target> with <content>'],
-  examples: ['morph #target with it', 'morph over #modal with fetchedContent'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'morph', category: 'dom' })
 export class MorphCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Morph content into target elements (intelligent diffing, preserves state)',
+    syntax: ['morph <target> with <content>', 'morph over <target> with <content>'],
+    examples: ['morph #target with it', 'morph over #modal with fetchedContent'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return MorphCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

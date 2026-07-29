@@ -500,10 +500,68 @@ its metadata. Pre-existing (step 1's registry oracle was byte-identical), and
 recorded in §9's docstring so the next reader does not re-introduce it. Step 3
 should expect this asymmetry to disappear as the 52 gain real values.
 
-**Step 3 — migrate the 52 decorated classes.** `static readonly metadata =
-commandMeta({…})` plus the `get metadata()` bridge, keeping `@command` for
-name/category or folding category into the literal (decide in step 1 and record
-it). Populate `compatibility` here, against step 2's live gate.
+**Step 3 — migrate the 52 decorated classes — ✅ DONE.** All 52 moved to
+`static readonly metadata = commandMeta({…})` + `get metadata()`, `@meta` removed
+from every call site, `category` folded into the literal, and `compatibility`
+populated on all **55** literals against step 2's live gate.
+
+**The arc's goal is delivered and proven.** `ToggleCommand.metadata.description`
+was `TS2339` before this step and now typechecks, with
+`ToggleCommand.metadata.category` narrowing to the literal `'dom'`.
+
+**`@meta` is now completely dead** — zero call sites, zero importers. So are
+`MetaConfig` and the `COMMAND_METADATA` symbol, and `metadataOf()`'s reason for
+existing is gone. Step 4 removes them; step 3 deliberately does not, to keep the
+migration diff separable from the deletion diff.
+
+The shape was uniform enough to script: all 51 files matched a single canonical
+layout (`@meta({…})` → `@command({name, category})` → `class X`), with `swap.ts`
+(two decorated classes) the only structural exception.
+
+**Two things the type system caught that `defineProperty` had hidden:**
+
+- **18 errors, one cause** — the four base classes (`ContentInsertionCommand`,
+  `ControlFlowSignalBase`, `DOMModificationBase`, `VisibilityCommandBase`)
+  declared `metadata` as a `declare readonly` **property**, and a subclass may not
+  override a property with an accessor (`TS2611`, plus `TS4114` wanting
+  `override`). Nine subclasses. Fixed by making the base member
+  `abstract readonly metadata: CommandMetadata` — which is also the honest
+  declaration, since the unchecked `declare` was itself the shape this arc exists
+  to remove. Invisible before, because the runtime `defineProperty` simply
+  shadowed the declaration.
+- **A shared implementation cannot carry two `compatibility` values.**
+  `ConditionalCommand` is registered as both `if` (upstream → `'standard'`) and
+  `unless` (extension → `'lokascript-extension'`), and both names resolve to the
+  same instance — which is precisely how `command-adapter.ts:440` registers the
+  alias. The class carries `'standard'` (matching `if`, the primary and upstream
+  name) and `unless` is pinned in §9's `COMPATIBILITY_ALIAS_DIVERGENCE`. Checked
+  **derived, not hand-listed**: of the four shared groups only this one straddles
+  the tier line, so a future consolidated alias across it fails loudly. Splitting
+  metadata per registered name would fix it and is architectural — pinned, the way
+  Arc A pinned the two category unions.
+
+**Two gate rows MOVED deliberately, and are left as assertions rather than
+deleted** so they read as decisions:
+
+- Step 1's test asserting the three converted classes carry **no**
+  `isBlocking`/`hasBody`/`version` is **inverted** — they now carry them, because
+  `commandMeta` fills `@meta`'s defaults, which is what keeps the *fifty-two*
+  byte-identical. The larger preservation won.
+- `COMPATIBILITY_UNSET` goes from the whole registry to **empty**, which step 2's
+  gate forced: populating a value correctly still failed the row-moving assertion
+  until this set moved in the same diff.
+
+**Registry oracle diff — exactly the predicted 3 rows.** `install`,
+`pseudo-command`, `render`, on `hasBody`+`isBlocking` only. Registered count,
+distinct implementations, all four shared-implementation groups, and every alias
+identity: **identical**.
+
+> **A caution earned the hard way in this step.** The first oracle diff reported
+> **0 rows changed** and was WRONG — it iterated only the *before* row's keys, so
+> a field that was **added** was structurally invisible. That is this arc's own
+> central disease (a one-directional check that reads as green) reproduced in the
+> verification instrument itself. Diff the **union** of both key sets. The
+> corrected diff found the 3 rows immediately.
 
 - Registry oracle diff is the behaviour-preservation instrument. Names, classes,
   aliases, categories, shared-implementation groups, and both metadata-presence

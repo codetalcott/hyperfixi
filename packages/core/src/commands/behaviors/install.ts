@@ -89,6 +89,7 @@ export class InstallCommand {
       'install MyBehavior(foo: 42) on the first <div/>',
     ],
     category: 'behaviors',
+    compatibility: 'standard',
     sideEffects: ['behavior-installation', 'element-modification'],
   });
 

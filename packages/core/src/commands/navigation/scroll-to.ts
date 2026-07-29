@@ -16,8 +16,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue } from '../helpers/variable-access';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -33,16 +33,22 @@ export interface ScrollCommandOutput {
   smooth: boolean;
 }
 
-@meta({
-  description: 'Scroll an element into view (upstream _hyperscript 0.9.90)',
-  syntax: ['scroll to <target>', 'scroll to top of <target>', 'scroll to <target> smoothly'],
-  examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
-  sideEffects: ['scrolling'],
-})
 @command({ name: 'scroll', category: 'navigation' })
 export class ScrollCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Scroll an element into view (upstream _hyperscript 0.9.90)',
+    syntax: ['scroll to <target>', 'scroll to top of <target>', 'scroll to <target> smoothly'],
+    examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
+    sideEffects: ['scrolling'],
+    category: 'navigation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ScrollCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

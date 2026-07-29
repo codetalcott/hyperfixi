@@ -249,14 +249,30 @@ export type CommandMetaInput = Omit<CommandMetadata, 'version'> & {
  * excess-property and enum checking fire. Drop `const` and the arc trades
  * inference for checking instead of getting both.
  *
- * Returns its argument unchanged — deliberately identity, with **no default
- * filling**, so a migrated class's runtime shape is byte-for-byte what it was.
- * `@meta`'s `isBlocking`/`hasBody`/`version` defaults are its own behavior;
- * folding them in here would silently change `undefined` to `false` on the
- * classes this migrates.
+ * ## The defaults, and why they are here
+ *
+ * Fills `isBlocking`/`hasBody`/`version` exactly as `@meta` did, so the 52
+ * classes step 3 migrated keep byte-identical metadata. Step 1 shipped this as a
+ * pure identity function and said the choice had to be made deliberately in step
+ * 3 rather than by omission; this is that decision. The cost is that the three
+ * `commandMeta` classes migrated in step 1 (`install`, `pseudo-command`,
+ * `render`) now GAIN the three fields — a change their tests assert explicitly,
+ * so it shows up as a moved row rather than as drift.
+ *
+ * Spread order is load-bearing: the defaults come first, so a literal that
+ * states `isBlocking: true` wins and still narrows to `true`.
+ *
+ * **These three fields are unauthored and unread.** No command literal sets
+ * them, nothing in production reads them, and every one of the 40 rows in the
+ * shipped `docs/commands/commands.json` therefore says `isBlocking: false`,
+ * `hasBody: false`, `version: '1.0.0'` — which is FALSE for `wait`, `fetch`,
+ * `settle`, `transition` (they block) and for `if`, `repeat`, `tell` (they take
+ * bodies). Preserving them here is deliberately a refactor-preserving choice,
+ * not an endorsement; authoring them truthfully is filed as its own item in
+ * `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`.
  */
-export function commandMeta<const T extends CommandMetaInput>(metadata: T): T {
-  return metadata;
+export function commandMeta<const T extends CommandMetaInput>(metadata: T) {
+  return { isBlocking: false, hasBody: false, version: '1.0.0', ...metadata };
 }
 
 // ============================================================================

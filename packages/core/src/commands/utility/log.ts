@@ -14,8 +14,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -42,16 +42,22 @@ export interface LogCommandOutput {
  * Before: 192 lines
  * After: ~70 lines (64% reduction)
  */
-@meta({
-  description: 'Log values to the console',
-  syntax: 'log [<values...>]',
-  examples: ['log "Hello World"', 'log me.value', 'log x y z', 'log "Result:" result'],
-  sideEffects: ['console-output'],
-})
 @command({ name: 'log', category: 'utility' })
 export class LogCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Log values to the console',
+    syntax: 'log [<values...>]',
+    examples: ['log "Hello World"', 'log me.value', 'log x y z', 'log "Result:" result'],
+    sideEffects: ['console-output'],
+    category: 'utility',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return LogCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

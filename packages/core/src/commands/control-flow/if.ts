@@ -15,8 +15,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { evaluateCondition } from '../helpers/condition-helpers';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -67,25 +67,31 @@ export interface IfCommandOutput extends ConditionalCommandOutput {}
  * - 'if' mode: executes then-branch when condition is TRUE
  * - 'unless' mode: executes then-branch when condition is FALSE
  */
-@meta({
-  description: 'Conditional execution based on boolean expressions',
-  syntax: [
-    'if <condition> then <commands>',
-    'if <condition> then <commands> else <commands>',
-    'unless <condition> <commands>',
-  ],
-  examples: [
-    'if x > 5 then add .active',
-    'if user.isAdmin then show #adminPanel else hide #adminPanel',
-    'unless user.isLoggedIn showLoginForm',
-  ],
-  sideEffects: ['conditional-execution'],
-  aliases: ['unless'],
-})
 @command({ name: 'if', category: 'control-flow' })
 export class ConditionalCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Conditional execution based on boolean expressions',
+    syntax: [
+      'if <condition> then <commands>',
+      'if <condition> then <commands> else <commands>',
+      'unless <condition> <commands>',
+    ],
+    examples: [
+      'if x > 5 then add .active',
+      'if user.isAdmin then show #adminPanel else hide #adminPanel',
+      'unless user.isLoggedIn showLoginForm',
+    ],
+    sideEffects: ['conditional-execution'],
+    aliases: ['unless'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ConditionalCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },

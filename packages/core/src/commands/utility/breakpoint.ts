@@ -16,8 +16,8 @@ import type {
 } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -28,16 +28,22 @@ export interface BreakpointCommandInput {
   _tag?: 'breakpoint';
 }
 
-@meta({
-  description: 'Drop into the debugger (emits a debugger; statement)',
-  syntax: ['breakpoint'],
-  examples: ['breakpoint', 'on click breakpoint'],
-  sideEffects: ['debugging'],
-})
 @command({ name: 'breakpoint', category: 'utility' })
 export class BreakpointCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Drop into the debugger (emits a debugger; statement)',
+    syntax: ['breakpoint'],
+    examples: ['breakpoint', 'on click breakpoint'],
+    sideEffects: ['debugging'],
+    category: 'utility',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return BreakpointCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

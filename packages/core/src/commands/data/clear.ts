@@ -26,8 +26,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -43,17 +43,23 @@ function isFormFieldElement(
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 }
 
-@meta({
-  description:
-    'Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>)',
-  syntax: ['clear <var>', 'clear :var', 'clear <target>'],
-  examples: ['clear :count', 'clear myVar', 'clear #search', 'clear <textarea/>'],
-  sideEffects: ['state-mutation', 'dom-mutation'],
-})
 @command({ name: 'clear', category: 'data' })
 export class ClearCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description:
+      'Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>)',
+    syntax: ['clear <var>', 'clear :var', 'clear <target>'],
+    examples: ['clear :count', 'clear myVar', 'clear #search', 'clear <textarea/>'],
+    sideEffects: ['state-mutation', 'dom-mutation'],
+    category: 'data',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ClearCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

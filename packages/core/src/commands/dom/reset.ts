@@ -18,8 +18,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -33,16 +33,22 @@ function isFormElement(el: HTMLElement): el is HTMLFormElement {
   return el.tagName === 'FORM';
 }
 
-@meta({
-  description: 'Reset a <form> element to its default values (HTMLFormElement.reset())',
-  syntax: ['reset', 'reset <target>'],
-  examples: ['reset', 'reset #myForm', 'reset <form/>'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'reset', category: 'dom' })
 export class ResetCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Reset a <form> element to its default values (HTMLFormElement.reset())',
+    syntax: ['reset', 'reset <target>'],
+    examples: ['reset', 'reset #myForm', 'reset <form/>'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ResetCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

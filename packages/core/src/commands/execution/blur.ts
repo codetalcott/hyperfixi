@@ -19,8 +19,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -30,16 +30,22 @@ export interface BlurCommandInput {
   targets: HTMLElement[];
 }
 
-@meta({
-  description: 'Remove focus from an element (calls HTMLElement.blur())',
-  syntax: ['blur', 'blur <target>', 'blur on <target>'],
-  examples: ['blur', 'blur #search', 'blur on <input/>'],
-  sideEffects: ['focus'],
-})
 @command({ name: 'blur', category: 'execution' })
 export class BlurCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Remove focus from an element (calls HTMLElement.blur())',
+    syntax: ['blur', 'blur <target>', 'blur on <target>'],
+    examples: ['blur', 'blur #search', 'blur on <input/>'],
+    sideEffects: ['focus'],
+    category: 'execution',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return BlurCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

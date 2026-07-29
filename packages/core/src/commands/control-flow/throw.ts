@@ -12,8 +12,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -39,16 +39,22 @@ export interface ThrowCommandOutput {
  * Before: 143 lines
  * After: ~60 lines (58% reduction)
  */
-@meta({
-  description: 'Throw an error with a specified message',
-  syntax: ['throw <message>'],
-  examples: ['throw "Invalid input"', 'if not valid then throw "Validation failed"'],
-  sideEffects: ['error-throwing', 'execution-termination'],
-})
 @command({ name: 'throw', category: 'control-flow' })
 export class ThrowCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Throw an error with a specified message',
+    syntax: ['throw <message>'],
+    examples: ['throw "Invalid input"', 'if not valid then throw "Validation failed"'],
+    sideEffects: ['error-throwing', 'execution-termination'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ThrowCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

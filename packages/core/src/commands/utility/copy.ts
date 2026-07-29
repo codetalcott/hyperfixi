@@ -15,8 +15,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -46,16 +46,22 @@ export interface CopyCommandOutput {
  * Before: 312 lines
  * After: ~140 lines (55% reduction)
  */
-@meta({
-  description: 'Copy text or element content to the clipboard',
-  syntax: ['copy <source>', 'copy <source> to clipboard'],
-  examples: ['copy "Hello World"', 'copy #code-snippet', 'copy my textContent'],
-  sideEffects: ['clipboard-write', 'custom-events'],
-})
 @command({ name: 'copy', category: 'utility' })
 export class CopyCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Copy text or element content to the clipboard',
+    syntax: ['copy <source>', 'copy <source> to clipboard'],
+    examples: ['copy "Hello World"', 'copy #code-snippet', 'copy my textContent'],
+    sideEffects: ['clipboard-write', 'custom-events'],
+    category: 'utility',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return CopyCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

@@ -19,8 +19,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -48,16 +48,22 @@ export interface BeepCommandOutput {
  * Before: 279 lines
  * After: ~130 lines (53% reduction)
  */
-@meta({
-  description: 'Debug output for expressions with type information',
-  syntax: ['beep!', 'beep! <expression>', 'beep! <expression>, <expression>, ...'],
-  examples: ['beep!', 'beep! myValue', 'beep! me.id, me.className'],
-  sideEffects: ['console-output', 'debugging'],
-})
 @command({ name: 'beep', category: 'utility' })
 export class BeepCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Debug output for expressions with type information',
+    syntax: ['beep!', 'beep! <expression>', 'beep! <expression>, <expression>, ...'],
+    examples: ['beep!', 'beep! myValue', 'beep! me.id, me.className'],
+    sideEffects: ['console-output', 'debugging'],
+    category: 'utility',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return BeepCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

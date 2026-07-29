@@ -29,8 +29,8 @@ import {
   resolveSmartElementTargets,
 } from '../helpers/smart-element';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -44,16 +44,22 @@ function isPopoverElement(el: HTMLElement): boolean {
   return el.hasAttribute('popover');
 }
 
-@meta({
-  description: 'Close a dialog, details element, or popover',
-  syntax: ['close', 'close <target>'],
-  examples: ['close', 'close #myDialog', 'close #details', 'close #popup'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'close', category: 'dom' })
 export class CloseCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Close a dialog, details element, or popover',
+    syntax: ['close', 'close <target>'],
+    examples: ['close', 'close #myDialog', 'close #details', 'close #popup'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return CloseCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
