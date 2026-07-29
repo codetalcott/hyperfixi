@@ -31,6 +31,7 @@
     "lint:domains": "for pkg in sql bdd behaviorspec flow jsx learn llm todo voice; do npm test --prefix packages/domain-$pkg -- --run lint || exit 1; done",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "format:check:src": "prettier --check \"packages/*/src/**/*.ts\"",
     "typecheck": "npm run typecheck --workspaces",
     "generate:language-assets": "npm run generate:language-assets --prefix packages/semantic",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
@@ -77,7 +78,7 @@
     "lerna": "^9.0.3",
     "lint-staged": "^16.4.0",
     "oxlint": "^1.74.0",
-    "prettier": "^3.7.4",
+    "prettier": "3.9.5",
     "typescript": "^5.9.3"
   },
   "overrides": {

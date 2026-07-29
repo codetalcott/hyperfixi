@@ -89,9 +89,7 @@ export type SerializablePrimitive = null | undefined | boolean | number | string
 
 /** Supported value types for serialization */
 export type SerializableValue =
-  | SerializablePrimitive
-  | SerializableValue[]
-  | { [key: string]: SerializableValue };
+  SerializablePrimitive | SerializableValue[] | { [key: string]: SerializableValue };
 
 // =============================================================================
 // Internal Types

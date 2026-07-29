@@ -335,8 +335,7 @@ export class RepeatCommand implements DecoratedCommand {
     ) {
       const block = commands as { commands?: unknown[] };
       const runtimeExecute = context.locals.get('_runtimeExecute') as
-        | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>)
-        | undefined;
+        ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
       if (!runtimeExecute) throw new Error('Runtime execute function not available');
       let lastResult: unknown;
       if (block.commands) {

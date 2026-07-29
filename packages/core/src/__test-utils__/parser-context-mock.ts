@@ -208,14 +208,12 @@ export function createMockParserContext(
     parseCommandListUntilEnd: vi.fn(() => []),
 
     // Position
-    getPosition: vi.fn(
-      (): Position => ({
-        start: currentPosition,
-        end: currentPosition,
-        line: 1,
-        column: currentPosition,
-      })
-    ),
+    getPosition: vi.fn((): Position => ({
+      start: currentPosition,
+      end: currentPosition,
+      line: 1,
+      column: currentPosition,
+    })),
 
     // Error handling
     addError: vi.fn(),

@@ -156,12 +156,10 @@ export function setElementProperty(element: HTMLElement, property: string, value
   try {
     (element as unknown as Record<string, unknown>)[property] = value;
   } catch (error) {
-    if (
-      !(
-        error instanceof TypeError &&
-        (error.message.includes('only a getter') || error.message.includes('read only'))
-      )
-    ) {
+    if (!(
+      error instanceof TypeError &&
+      (error.message.includes('only a getter') || error.message.includes('read only'))
+    )) {
       throw new Error(
         `Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`
       );

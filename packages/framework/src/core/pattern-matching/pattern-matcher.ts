@@ -1560,8 +1560,7 @@ export class PatternMatcher {
       }
 
       const metadata = token.metadata as
-        | { modifierName: string; value?: number | string }
-        | undefined;
+        { modifierName: string; value?: number | string } | undefined;
       if (!metadata) {
         break;
       }

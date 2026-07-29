@@ -1,7 +1,7 @@
 /**
  * HyperFixi Classic Browser Bundle with i18n Support
  *
- * Combines the classic _hyperscript runtime (37 commands) with full
+ * Combines the classic _hyperscript runtime (43 commands) with full
  * internationalization support including:
  * - 12 language keyword providers (es, ja, fr, de, ar, ko, zh, tr, id, pt, qu, sw)
  * - Automatic browser locale detection

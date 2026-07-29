@@ -367,11 +367,7 @@ export interface SpecialSymbol {
  * Element type for searching across language elements.
  */
 export type LanguageElementType =
-  | 'command'
-  | 'expression'
-  | 'keyword'
-  | 'feature'
-  | 'special_symbol';
+  'command' | 'expression' | 'keyword' | 'feature' | 'special_symbol';
 
 /**
  * A language element (union of all documentation types).

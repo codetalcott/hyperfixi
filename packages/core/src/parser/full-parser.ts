@@ -1,8 +1,9 @@
 /**
  * Full Parser - Complete Hyperscript Parser with 100% Coverage
  *
- * This is the largest parser (~180KB) but supports all 48 commands
- * and 100% of the official _hyperscript syntax.
+ * This is the largest parser (~180KB) but supports all 59 commands
+ * (the manifest's `COMMAND_NAMES`) and 100% of the official _hyperscript
+ * syntax. The previous `48` predated eleven commands.
  *
  * Use this parser when you need full hyperscript compatibility.
  * For smaller bundles, consider hybridParser or regexParser.

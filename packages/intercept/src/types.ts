@@ -26,11 +26,7 @@ export interface ExecutionContext {
 
 /** The five cache strategies upstream ships. */
 export type Strategy =
-  | 'cache-first'
-  | 'network-first'
-  | 'stale-while-revalidate'
-  | 'network-only'
-  | 'cache-only';
+  'cache-first' | 'network-first' | 'stale-while-revalidate' | 'network-only' | 'cache-only';
 
 /** Runtime config posted to the service worker as `hs:intercept:config`. */
 export interface InterceptConfig {

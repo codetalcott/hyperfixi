@@ -84,8 +84,7 @@ export class StartViewTransitionCommand implements DecoratedCommand {
     context: TypedExecutionContext
   ): Promise<StartViewTransitionOutput> {
     const runtimeExecute = context.locals.get('_runtimeExecute') as
-      | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>)
-      | undefined;
+      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
 
     let commandsExecuted = 0;
 

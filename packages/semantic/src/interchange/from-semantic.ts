@@ -131,13 +131,7 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
       return {
         type: 'positional',
         position: node.position as
-          | 'first'
-          | 'last'
-          | 'next'
-          | 'previous'
-          | 'closest'
-          | 'parent'
-          | 'random',
+          'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
         ...(node.target ? { target: fromSemanticAST(node.target as SemanticASTNode) } : {}),
         ...pos(node),
       };
@@ -145,13 +139,7 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
       return {
         type: 'positional',
         position: node.operator as
-          | 'first'
-          | 'last'
-          | 'next'
-          | 'previous'
-          | 'closest'
-          | 'parent'
-          | 'random',
+          'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
         ...(node.argument ? { target: fromSemanticAST(node.argument as SemanticASTNode) } : {}),
         ...pos(node),
       };

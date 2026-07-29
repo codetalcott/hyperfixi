@@ -4,7 +4,7 @@
  * This bundle uses true tree-shaking by importing:
  * - createTreeShakeableRuntime (zero module-level command imports)
  * - createCommonExpressionEvaluator (5 expression categories)
- * - Only the 16 commands needed for standard functionality
+ * - Only the 25 commands needed for standard functionality
  *
  * Commands included (25 standard):
  * - DOM: add, remove, toggle, show, hide, put, make, empty, open, close, select, reset (12)

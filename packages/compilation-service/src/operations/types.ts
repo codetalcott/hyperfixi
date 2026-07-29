@@ -13,9 +13,7 @@
 
 /** A reference to the target of an operation */
 export type TargetRef =
-  | { kind: 'self' }
-  | { kind: 'selector'; value: string }
-  | { kind: 'variable'; value: string };
+  { kind: 'self' } | { kind: 'selector'; value: string } | { kind: 'variable'; value: string };
 
 // =============================================================================
 // Abstract Operations

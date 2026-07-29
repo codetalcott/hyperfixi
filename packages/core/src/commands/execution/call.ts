@@ -75,8 +75,7 @@ export class CallCommand implements DecoratedCommand {
     // canonical `evaluateAST` — the bundle's registry is already threaded
     // through `context.registry`.
     const mockEvaluator = context.locals?.get('__evaluator') as
-      | { evaluate(node: ASTNode, ctx: ExecutionContext): unknown }
-      | undefined;
+      { evaluate(node: ASTNode, ctx: ExecutionContext): unknown } | undefined;
     const expression = mockEvaluator
       ? await mockEvaluator.evaluate(expressionNode, context)
       : await evaluateAST(expressionNode, context);

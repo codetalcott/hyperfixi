@@ -5,8 +5,14 @@
  * Different parsers have different capabilities and bundle sizes:
  *
  * - **regexParser**: ~5KB, 8 commands, simple syntax only
- * - **hybridParser**: ~7KB, 21+ commands, ~85% hyperscript coverage
- * - **fullParser**: ~180KB, 48 commands, 100% hyperscript coverage
+ * - **hybridParser**: ~7KB, 24 commands, ~85% hyperscript coverage
+ * - **fullParser**: ~180KB, all 59 commands, 100% hyperscript coverage
+ *
+ * The counts track the bundles these parsers ship in — `lite`,
+ * `hybrid-complete`, and the full-runtime bundles respectively. Authoritative
+ * values live in `metadata.ts`'s `bundleInfo`, which `verify:reference`
+ * re-derives from each bundle's source; the full count is the manifest's
+ * (`COMMAND_NAMES`). The `48` here was stale by eleven commands.
  *
  * @example
  * ```typescript
