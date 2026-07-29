@@ -464,12 +464,41 @@ or a decoration of one of these, fails loudly). Mutation-verified: deleting
 
 Registry oracle: **byte-identical** before and after.
 
-**Step 2 — the coupling for `compatibility`, before any values are copied.**
-Land the audit assertions and `COMPATIBILITY_EXPERIMENTAL` while the expected
-state is "unset on all 59", so the gate is proven to fail correctly *before* it
-has values to bless. Then populate the 59 values in step 3's mechanical sweep.
-Sequencing it this way is the lesson from Arc A step 1: the audit lands first and
-the migration ratchets it down.
+**Step 2 — the coupling for `compatibility`, before any values are copied — ✅ DONE.**
+Landed as §9 of `runtime/__tests__/command-manifest-audit.test.ts`, five tests,
+while the expected state is still "unset on all 59". The audit goes 39 → 44.
+
+Because the projection test is **vacuous over values today**, it was
+mutation-verified rather than trusted — and the three outcomes are the design,
+not an accident:
+
+| Mutation | What fired |
+| --- | --- |
+| `copy` (an extension) marked `'standard'` — **wrong side** | projection test **+** the allowlist test |
+| `copy` marked `'lokascript-extension'` — **correct** | **only** the allowlist test |
+| `copy` marked `'experimental'` | the experimental guard **+** the allowlist test |
+| a row added to `EXTENSIONS` (re-partitioning the registry) | §3's existing 51/8 split **+** two of §9's tests |
+
+The middle row is the one that matters: populating a value *correctly* is allowed
+by the projection but still fails the row-moving assertion, so **step 3 cannot
+populate silently** — it has to empty `COMPATIBILITY_UNSET` in the same diff.
+That is the `TIER_UNCLASSIFIED` discipline, and it now demonstrably works in both
+directions before there is anything to bless.
+
+`COMPATIBILITY_UNSET` is seeded as `new Set(REGISTRY)` rather than 59 literal
+names — it cannot be satisfied by accident either way: populating 58 of 59 and
+emptying the set fails (measured 1 ≠ 0), and populating 58 while leaving the set
+whole fails too (1 ≠ 59).
+
+**Finding — every check here must be value-based, never key-presence.**
+`'compatibility' in metadata` is measurably a *different question* from
+`metadata.compatibility === undefined`: `@meta` assigns the key unconditionally,
+so **56** commands carry it holding `undefined`, while the **3** `commandMeta`
+classes omit it entirely. A key-presence check therefore splits the registry 56/3
+and reads as a classification when it is an artifact of how each class declares
+its metadata. Pre-existing (step 1's registry oracle was byte-identical), and
+recorded in §9's docstring so the next reader does not re-introduce it. Step 3
+should expect this asymmetry to disappear as the 52 gain real values.
 
 **Step 3 — migrate the 52 decorated classes.** `static readonly metadata =
 commandMeta({…})` plus the `get metadata()` bridge, keeping `@command` for
