@@ -1465,7 +1465,35 @@ jobs:
       # output were therefore discarded; the job burned its budget for nothing.
       - name: Run benchmarks
         run: npm run bench:ci --prefix packages/core
+        # Kept non-fatal deliberately: benchmarks have no pass/fail thresholds, so a
+        # slow machine must never fail the run, and `vitest bench` is also exposed to
+        # the known post-run esbuild daemon hang. But see the next step — this flag is
+        # what let a TOTAL startup failure sit unnoticed, so the output is now asserted
+        # separately.
         continue-on-error: true
+
+      # `continue-on-error` above cannot distinguish "benchmarks ran and were slow"
+      # from "benchmarks never ran". It was the latter: `bench:ci` used
+      # `--reporter=json`, which vitest 4 tries to resolve as a CUSTOM reporter module
+      # in bench mode and dies with "Failed to load custom Reporter from json". The
+      # job still reported success, and the upload silently picked up two COMMITTED
+      # 2025-12-05 files, so the artifact looked healthy at 1.5 KB while containing
+      # seven-month-old data. This step makes that failure mode loud without making a
+      # slow benchmark fatal. A real report is ~30 KB.
+      - name: Verify benchmark output was produced
+        run: |
+          f=packages/core/benchmark-results/latest.json
+          if [ ! -s "$f" ]; then
+            echo "::error::$f missing or empty — bench:ci did not produce a report."
+            exit 1
+          fi
+          bytes=$(wc -c <"$f")
+          echo "benchmark report: $bytes bytes"
+          if [ "$bytes" -lt 1000 ]; then
+            echo "::error::$f is only $bytes bytes — implausibly small for a report."
+            exit 1
+          fi
+          node -e "const j=require('./$f'); if(!j.files?.length) { console.error('no benchmark files in report'); process.exit(1); } console.log('files:', j.files.length)"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7

@@ -165,8 +165,12 @@ test-ast-check.js
 # Test outputs
 test-results/
 
-# Benchmark results (stored via CI cache, not in repo)
+# Benchmark results (uploaded as a CI artifact, not committed)
 packages/semantic/benchmarks/
+# Two 2025-12-05 files WERE committed here, which is how the benchmarks job looked
+# healthy while broken: `bench:ci` failed at startup and produced nothing, so the
+# artifact upload fell back to those stale files and still measured 1.5 KB.
+packages/core/benchmark-results/
 
 # Test result files (session artifacts)
 *-test-results*.txt
