@@ -11,6 +11,7 @@ import {
   BLOCK_IMPLEMENTATIONS,
   STYLE_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
+  MORPH_COMMANDS,
   getCommandImplementations,
   getBlockImplementations,
   type CodeFormat,
@@ -40,6 +41,12 @@ export function generateBundleCode(config: GeneratorOptions): string {
 
   const needsStyleHelpers = commands.some(cmd => STYLE_COMMANDS.includes(cmd));
   const needsElementArrayHelper = commands.some(cmd => ELEMENT_ARRAY_COMMANDS.includes(cmd));
+  // MORPH_COMMANDS has been exported since the template was written but was
+  // never read here, so the `morph` template's `morphlexMorph`/`morphlexMorphInner`
+  // calls were free identifiers: any bundle requesting `morph` threw
+  // ReferenceError on first use. The parse-level check could not see it —
+  // nothing had ever executed a generated `morph` bundle.
+  const needsMorphlex = commands.some(cmd => MORPH_COMMANDS.includes(cmd));
   const hasBlocks = blocks.length > 0;
   const hasReturn = commands.includes('return');
 
@@ -76,6 +83,7 @@ export function generateBundleCode(config: GeneratorOptions): string {
 
 import { HybridParser } from '${parserImportPath}/parser-core';
 import type { ASTNode, CommandNode, EventNode${hasBlocks ? ', BlockNode' : ''} } from '${parserImportPath}/ast-types';
+${needsMorphlex ? "import { morph as morphlexMorph, morphInner as morphlexMorphInner } from 'morphlex';" : ''}
 
 // =============================================================================
 // RUNTIME

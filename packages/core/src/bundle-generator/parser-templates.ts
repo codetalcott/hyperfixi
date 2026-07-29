@@ -436,6 +436,9 @@ function tokenize(code) {
 // Parser
 class HybridParser {
   constructor(code) {
+    // Kept for \`js … end\`, whose body is sliced from the raw source rather
+    // than reassembled from tokens (the tokenizer reads JS as hyperscript).
+    this.source = code;
     this.tokens = tokenize(code);
     this.pos = 0;
   }
@@ -543,8 +546,8 @@ class HybridParser {
       get: () => this.parseGet(),
       call: () => this.parseCall(),
       log: () => this.parseLog(),
-      send: () => this.parseSend(),
-      trigger: () => this.parseSend(),
+      send: () => this.parseSend('to'),
+      trigger: () => this.parseSend('on'),
       wait: () => this.parseWait(),
       show: () => this.parseShow(),
       hide: () => this.parseHide(),
@@ -557,6 +560,17 @@ class HybridParser {
       go: () => this.parseGo(),
       return: () => this.parseReturn(),
       transition: () => this.parseTransition(),
+      halt: () => this.parseHalt(),
+      copy: () => this.parseCopy(),
+      beep: () => this.parseBeep(),
+      push: () => this.parseUrlCommand('push'),
+      replace: () => this.parseUrlCommand('replace'),
+      morph: () => this.parseMorph(),
+      js: () => this.parseJs(),
+      throw: () => this.parseThrow(),
+      break: () => this.parseBare('break'),
+      continue: () => this.parseBare('continue'),
+      exit: () => this.parseBare('exit'),
     };
 
     const normalized = normalizeCommand(this.peek().value);
@@ -736,11 +750,14 @@ class HybridParser {
     return { type: 'command', name: 'log', args };
   }
 
-  parseSend() {
+  // \`send <event> to <t>\` / \`trigger <event> on <t>\` — one node, one template.
+  // The marker is a parameter: \`trigger\` used to reuse this rule with \`to\`
+  // hardcoded, silently abandoning \`on #target\` so the dispatch hit \`me\`.
+  parseSend(marker) {
     this.advance();
     const event = this.advance().value;
     let target;
-    if (this.match('to')) {
+    if (this.match(marker)) {
       this.advance();
       target = this.parseExpression();
     }
@@ -828,6 +845,97 @@ class HybridParser {
       target = this.parseExpression();
     }
     return { type: 'command', name: 'empty', args: [], target };
+  }
+
+  parseHalt() {
+    this.expect('halt');
+    if (this.match('the')) this.advance();
+    if (this.match('event', 'default')) this.advance();
+    return { type: 'command', name: 'halt', args: [] };
+  }
+
+  parseCopy() {
+    this.expect('copy');
+    return { type: 'command', name: 'copy', args: [this.parseExpression()] };
+  }
+
+  // Upstream spells it \`beep!\`; both forms are accepted. The \`!\` is consumed
+  // here or parseUnary would read it as negation of the first argument.
+  parseBeep() {
+    this.advance();
+    if (this.match('!')) this.advance();
+    const args = [];
+    while (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      args.push(this.parseExpression());
+      if (this.match(',')) this.advance();
+      else break;
+    }
+    return { type: 'command', name: 'beep', args };
+  }
+
+  // \`push|replace url <url> [with title <t>]\`. The \`url\` keyword is consumed
+  // here, as parseGo already does. \`push-url\`/\`replace-url\` are bundle-config
+  // aliases, not source spellings — the full parser rejects both.
+  parseUrlCommand(name) {
+    this.advance();
+    if (this.match('url')) this.advance();
+    const url = this.parseExpression();
+    const modifiers = {};
+    if (this.match('with')) {
+      this.advance();
+      if (this.match('title')) {
+        this.advance();
+        modifiers.title = this.parseExpression();
+      }
+    }
+    return { type: 'command', name, args: [url], modifiers };
+  }
+
+  parseMorph() {
+    this.expect('morph');
+    let modifier;
+    if (this.match('over')) {
+      this.advance();
+      modifier = 'over';
+    }
+    const target = this.parseExpression();
+    if (this.match('with', 'to', 'into')) this.advance();
+    const content = this.parseExpression();
+    return { type: 'command', name: 'morph', args: [content], target, modifier };
+  }
+
+  // Body sliced from the raw source, never rebuilt from tokens — the tokenizer
+  // reads JS as hyperscript and mangles regexes and quotes. \`end\` inside a JS
+  // string is safe (one token, quotes included); a bare identifier \`end\` is not.
+  parseJs() {
+    this.advance();
+    if (this.match('(')) {
+      while (!this.isAtEnd() && !this.match(')')) this.advance();
+      if (this.match(')')) this.advance();
+    }
+    const start = this.peek().pos;
+    while (!this.isAtEnd() && !this.match('end')) this.advance();
+    const stop = this.peek().pos;
+    if (this.match('end')) this.advance();
+    return {
+      type: 'command',
+      name: 'js',
+      args: [{ type: 'literal', value: this.source.slice(start, stop).trim() }],
+    };
+  }
+
+  parseThrow() {
+    this.expect('throw');
+    let value;
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      value = this.parseExpression();
+    }
+    return { type: 'command', name: 'throw', args: value ? [value] : [] };
+  }
+
+  parseBare(name) {
+    this.advance();
+    return { type: 'command', name, args: [] };
   }
 
   parseGo() {

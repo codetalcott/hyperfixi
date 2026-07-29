@@ -1,22 +1,38 @@
+// @vitest-environment jsdom
 /**
- * Can the generator actually emit what `template-capabilities.ts` advertises?
+ * Does a generated bundle actually RUN what `template-capabilities.ts` advertises?
  *
- * `capability-ghosts.test.ts` asks whether each entry names a REAL command.
- * Nothing asked the question this file exists for: whether a command listed as
- * available can be emitted into a bundle and then reached by that bundle's
- * parser. Arc A step 4.2 measured it and the answer was no for 14 of 38.
+ * ---------------------------------------------------------------------------
+ * THE ORACLE IS EXECUTION, and that is a deliberate escalation.
+ * ---------------------------------------------------------------------------
  *
- * The oracle is the generator itself — `templates.ts` (which case labels get
- * emitted), `parser/hybrid/parser-core.ts` (the parser `generateBundle()`
- * points every bundle at), and `parser-templates.ts`'s `HYBRID_PARSER_TEMPLATE`
- * (the copy the vite-plugin embeds instead). Deliberately NOT upstream
- * _hyperscript: what upstream accepts is a different question, answered by the
- * LSP tier lists (step 4.1).
+ * Three questions have been asked of these lists, each strictly stronger:
+ *
+ *   1. `capability-ghosts.test.ts` — does the entry name a REAL command?
+ *   2. this file, as written by Arc A step 4.2 — can the bundle PARSER produce
+ *      a node for it? (Answer then: no, for 14 of 38 — Finding 13.)
+ *   3. this file now — does a generated bundle, imported and executed against a
+ *      DOM, produce the command's observable effect?
+ *
+ * Question 2 was not sufficient, and the gap was not theoretical. `take` passed
+ * it and threw `Invalid selector .` in every bundle that carried it; `morph`
+ * passed it and threw ReferenceError because the generator never emitted the
+ * morphlex import its template calls; `trigger foo on #t` reached a node while
+ * abandoning `on #t`, so the dispatch landed on `me`. None of those is visible
+ * to a parse-level check, because a parse tree is not an outcome.
+ *
+ * Every `check` below MUST assert a real effect — a DOM mutation, a dispatched
+ * event, a history entry, a resolved value, a thrown signal. `() => true` is
+ * banned: step 4.2 recorded that nine of the fourteen dead labels first scored
+ * "RUNS" precisely because their check was vacuous, and an empty command list
+ * throws nothing. Absence of an error is not evidence of a command.
  *
  * See `docs-internal/HANDOFF-command-arch-manifest.md`, Finding 13.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   AVAILABLE_COMMANDS,
   AVAILABLE_BLOCKS,
@@ -27,6 +43,7 @@ import {
 import { COMMAND_IMPLEMENTATIONS, BLOCK_IMPLEMENTATIONS } from '../templates';
 import { HYBRID_PARSER_TEMPLATE } from '../parser-templates';
 import { HybridParser } from '../../parser/hybrid/parser-core';
+import { generateBundle } from '../generator';
 
 // ===========================================================================
 // 1. The lists mirror the implementation maps, both directions
@@ -61,99 +78,254 @@ describe('the capability lists mirror the generator implementation maps', () => 
 });
 
 // ===========================================================================
-// 2. Reachability: is the emitted case label ever executed?
+// 2. Execution: does a generated bundle produce the effect?
 // ===========================================================================
 
-/**
- * A representative surface per advertised command. These are the probes step
- * 4.2 ran; they are recorded rather than reduced to a boolean so the next
- * reader re-verifies instead of trusting.
- */
-const SURFACES: Record<string, string[]> = {
-  toggle: ['toggle .x on #t'],
-  add: ['add .x to #t'],
-  remove: ['remove me', 'remove #t'],
-  removeClass: ['remove .x from #t'],
-  show: ['show #t'],
-  hide: ['hide #t'],
-  put: ['put "hi" into #t'],
-  append: ['append "hi" to #t'],
-  prepend: ['prepend "hi" to #t'],
-  take: ['take .x from .p'],
-  empty: ['empty #t', 'empty me', 'on click empty #t'],
-  set: ['set :v to 1'],
-  get: ['get "v"'],
-  increment: ['increment :v'],
-  decrement: ['decrement :v'],
-  wait: ['wait 1ms'],
-  transition: ["transition #t's opacity to 0.5"],
-  send: ['send foo to #t'],
-  trigger: ['trigger foo on #t'],
-  log: ['log "hi"'],
-  call: ['call foo()'],
-  copy: ['copy "hi"', 'copy #t', 'on click copy "x"'],
-  beep: ['beep "x"', 'beep! me', 'beep'],
-  go: ['go to url "/x"'],
-  push: ['push url "/p"', 'push "/p"'],
-  'push-url': ['push url "/p"', 'push-url "/p"'],
-  replace: ['replace url "/r"', 'replace "/r"'],
-  'replace-url': ['replace url "/r"', 'replace-url "/r"'],
-  focus: ['focus #t'],
-  blur: ['blur #t'],
-  return: ['return 1'],
-  break: ['break', 'repeat 3 times break end'],
-  continue: ['continue', 'repeat 3 times continue end'],
-  halt: ['halt'],
-  exit: ['exit', 'on click exit'],
-  throw: ['throw "e"', 'on click throw "e"'],
-  js: ['js return 1 end'],
-  morph: ['morph #t to "<p></p>"', 'morph me to "<p></p>"'],
-};
+interface Outcome {
+  doc: Document;
+  me: Element;
+  result: unknown;
+  error: Error | null;
+}
+
+interface Surface {
+  /** Hyperscript a user would write to invoke this command. */
+  code: string;
+  /** Blocks the surface needs (`repeat` for break/continue). */
+  blocks?: string[];
+  /** Extra templates the surface needs to WITNESS the effect (never to cause it). */
+  also?: string[];
+  setup?: (doc: Document, me: Element) => void;
+  /** The observable effect. Must be falsifiable — see the module header. */
+  check: (o: Outcome) => boolean;
+}
+
+const clipboardWrites: string[] = [];
+const consoleLines: unknown[][] = [];
+const t = (d: Document) => d.querySelector('#t') as HTMLElement;
+/** The node `morph` must REUSE rather than replace — see that surface's note. */
+let morphNodeBefore: Element | null = null;
 
 /**
- * Advertised commands whose emitted `case` label the bundle parser can NEVER
- * reach. Requesting one produces a bundle that carries its implementation as
- * dead code while the user's source silently no-ops — the parser's unknown-command
- * fallback advances one token and returns null (`parser-core.ts`, end of
- * `parseCommand()`), so there is no error either.
+ * One executable surface per advertised command. This is the review artifact:
+ * each row records the syntax a user writes and the effect they are entitled to
+ * expect, so the next reader re-verifies rather than trusting a boolean.
  *
- * Two distinct causes, both measured:
- *
- *  - NOT IN THE PARSER'S `cmdMap` at all (12): `copy`, `beep`, `push`,
- *    `push-url`, `replace`, `replace-url`, `break`, `continue`, `exit`,
- *    `throw`, `js`, `morph`. `parseCommand()` has 24 entries; these are not
- *    among them.
- *  - PARSED UNDER ANOTHER NAME (2): `trigger` is mapped to `parseSend()`, which
- *    emits a node named `send`; `empty` is absent from `parser-core.ts` (though
- *    present in the embedded template — see §3).
- *
- * NOT fixed by reclassifying them full-runtime-only. Every one has a working
- * template, so the remedy that keeps the capability is a parser rule (or, for
- * `trigger`, a `COMMAND_ALIASES` entry pointing it at the `send` template the
- * way `push-url` points at `push`). Reclassification would delete a working
- * feature and bump every project using `trigger`/`break`/`continue` from ~8 KB
- * to the full runtime. That trade is a behavior change wanting its own PR —
- * the treatment Findings 7, 10 and 12's deferred half got.
- *
- * Tolerance 0 in both directions: a NEW dead label is a regression, and a name
- * that becomes reachable must be deleted from this list in the same change.
+ * The `push-url`/`replace-url` rows deliberately write `push url`/`replace url`.
+ * Those two are bundle-CONFIG aliases, not source spellings — the full parser
+ * rejects `push-url "/x"` outright — so the honest question for them is whether
+ * requesting the alias yields a bundle that runs the real syntax.
  */
-const UNREACHABLE_CASE_LABELS = new Set([
-  'beep',
-  'break',
-  'continue',
-  'copy',
-  'empty',
-  'exit',
-  'js',
-  'morph',
-  'push',
-  'push-url',
-  'replace',
-  'replace-url',
-  'throw',
-  'trigger',
-]);
+const SURFACES: Record<string, Surface> = {
+  toggle: { code: 'toggle .x on #t', check: o => t(o.doc).classList.contains('x') },
+  add: { code: 'add .x to #t', check: o => t(o.doc).classList.contains('x') },
+  remove: { code: 'remove #t', check: o => !o.doc.querySelector('#t') },
+  removeClass: { code: 'remove .seed from #t', check: o => !t(o.doc).classList.contains('seed') },
+  show: {
+    code: 'show #t',
+    setup: d => (t(d).style.display = 'none'),
+    check: o => t(o.doc).style.display === '',
+  },
+  hide: { code: 'hide #t', check: o => t(o.doc).style.display === 'none' },
+  put: { code: 'put "PUT" into #t', check: o => t(o.doc).innerHTML === 'PUT' },
+  append: { code: 'append "AP" to #t', check: o => t(o.doc).innerHTML === 'seedAP' },
+  prepend: { code: 'prepend "PR" to #t', check: o => t(o.doc).innerHTML === 'PRseed' },
+  take: { code: 'take .x from #t', check: o => o.me.classList.contains('x') },
+  empty: { code: 'empty #t', check: o => t(o.doc).innerHTML === '' },
+  set: { code: 'set #t\'s innerHTML to "S"', check: o => t(o.doc).innerHTML === 'S' },
+  get: { code: 'get "G"', check: o => o.result === 'G' },
+  increment: {
+    code: 'increment #t',
+    setup: d => (t(d).textContent = '4'),
+    check: o => t(o.doc).textContent === '5',
+  },
+  decrement: {
+    code: 'decrement #t',
+    setup: d => (t(d).textContent = '4'),
+    check: o => t(o.doc).textContent === '3',
+  },
+  wait: { code: 'wait 7ms', check: o => o.result === 7 },
+  transition: {
+    code: "transition #t's opacity to 0.5",
+    check: o => t(o.doc).style.opacity === '0.5',
+  },
+  send: { code: 'send foo to #t', check: o => t(o.doc).hasAttribute('data-got-foo') },
+  // The sharpest of the fourteen: this reported success and dispatched nothing.
+  trigger: { code: 'trigger foo on #t', check: o => t(o.doc).hasAttribute('data-got-foo') },
+  log: { code: 'log "LOGGED"', check: () => consoleLines.some(l => l.includes('LOGGED')) },
+  call: { code: 'call window.__capCall()', check: () => Boolean(win().__capCall_ran) },
+  copy: { code: 'copy "COPIED"', check: () => clipboardWrites.includes('COPIED') },
+  beep: { code: 'beep "BEEPED"', check: () => consoleLines.some(l => l.includes('BEEPED')) },
+  go: { code: 'go to url "#gone"', check: () => location.hash === '#gone' },
+  push: { code: 'push url "/pushed"', check: () => location.pathname === '/pushed' },
+  'push-url': {
+    code: 'push url "/pushed-alias"',
+    check: () => location.pathname === '/pushed-alias',
+  },
+  replace: { code: 'replace url "/replaced"', check: () => location.pathname === '/replaced' },
+  'replace-url': {
+    code: 'replace url "/replaced-alias"',
+    check: () => location.pathname === '/replaced-alias',
+  },
+  focus: { code: 'focus #i', check: o => o.doc.activeElement?.id === 'i' },
+  blur: {
+    code: 'blur #i',
+    setup: d => (d.querySelector('#i') as HTMLElement).focus(),
+    check: o => o.doc.activeElement?.id !== 'i',
+  },
+  // executeAST catches the {type:'return'} signal and resolves to its value.
+  return: { code: 'return 42', check: o => o.result === 42 },
+  // Runs the body once and stops: 'B', not 'BBB'. `append` only witnesses it.
+  break: {
+    code: 'repeat 3 times append "B" to #t then break end',
+    blocks: ['repeat'],
+    also: ['append'],
+    setup: d => (t(d).innerHTML = ''),
+    check: o => t(o.doc).innerHTML === 'B',
+  },
+  // Skips the rest of the body on all three passes: nothing is appended.
+  continue: {
+    code: 'repeat 3 times continue then append "C" to #t end',
+    blocks: ['repeat'],
+    also: ['append'],
+    setup: d => (t(d).innerHTML = ''),
+    check: o => t(o.doc).innerHTML === '',
+  },
+  halt: { code: 'halt', check: o => /HALT_EXECUTION/.test(o.error?.message ?? '') },
+  exit: { code: 'exit', check: o => /EXIT_COMMAND/.test(o.error?.message ?? '') },
+  throw: { code: 'throw "BOOM"', check: o => o.error?.message === 'BOOM' },
+  js: { code: 'js window.__capJs = 42 end', check: () => win().__capJs === 42 },
+  /**
+   * Morphing is asserted by STATE PRESERVATION, not by the resulting markup.
+   *
+   * The template wraps its morphlex calls in a try/catch that falls back to
+   * `innerHTML = content`, so a check on markup alone passes whether the morph
+   * ran or crashed into the fallback — and mutation-testing proved it: deleting
+   * the generator's morphlex import (a ReferenceError on every use) left a
+   * markup check perfectly green. That is the vacuous-check trap the module
+   * header describes, hiding inside a row that looked specific.
+   *
+   * A real morph reuses the existing node, so a value the user typed survives;
+   * the innerHTML fallback rebuilds the subtree and destroys both. Measured
+   * directly against morphlex in jsdom before being relied on here.
+   */
+  morph: {
+    code: 'morph #t to "<input id=\'keep\'>"',
+    setup: d => {
+      t(d).innerHTML = "<input id='keep'>";
+      const input = d.getElementById('keep') as HTMLInputElement;
+      input.value = 'typed';
+      morphNodeBefore = input;
+    },
+    check: o => {
+      const after = o.doc.getElementById('keep') as HTMLInputElement | null;
+      return after !== null && after === morphNodeBefore && after.value === 'typed';
+    },
+  },
+};
+
+const win = (): Record<string, unknown> => globalThis as unknown as Record<string, unknown>;
+
+/**
+ * Generated bundles are written here and imported. They must live inside the
+ * project so vitest transforms them, and outside the `*.test.ts` glob so they
+ * are not collected as suites. Removed before AND after: a crashed run must not
+ * leave stray `.ts` files for the next `typecheck`.
+ */
+const GEN_DIR = join(__dirname, '.generated');
+
+const runInBundle = async (name: string, surface: Surface): Promise<Outcome> => {
+  const gen = generateBundle({
+    name: `Cap${name.replace(/-/g, '')}`,
+    commands: [name, ...(surface.also ?? [])],
+    blocks: surface.blocks ?? [],
+    autoInit: false,
+    parserImportPath: '../../../parser/hybrid',
+  });
+  expect(gen.errors, `generateBundle rejected the advertised command '${name}'`).toEqual([]);
+
+  const file = join(GEN_DIR, `${name.replace(/-/g, '_')}.ts`);
+  writeFileSync(file, gen.code);
+
+  document.body.innerHTML =
+    '<div id="host"></div><div id="t" class="seed">seed</div><input id="i">';
+  const me = document.getElementById('host')!;
+  t(document).addEventListener('foo', e =>
+    (e.currentTarget as Element).setAttribute('data-got-foo', '1')
+  );
+  clipboardWrites.length = 0;
+  consoleLines.length = 0;
+  win().__capJs = undefined;
+  win().__capCall_ran = false;
+  win().__capCall = () => (win().__capCall_ran = true);
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText: async (s: string) => void clipboardWrites.push(s) },
+    configurable: true,
+  });
+  surface.setup?.(document, me);
+
+  const realLog = console.log;
+  console.log = (...a: unknown[]) => void consoleLines.push(a);
+  try {
+    const mod = await import(/* @vite-ignore */ file);
+    let result: unknown;
+    let error: Error | null = null;
+    try {
+      result = await mod.api.execute(surface.code, me);
+    } catch (e) {
+      error = e as Error;
+    }
+    return { doc: document, me, result, error };
+  } finally {
+    console.log = realLog;
+  }
+};
+
+describe('every advertised command runs in a generated bundle', () => {
+  beforeAll(() => {
+    rmSync(GEN_DIR, { recursive: true, force: true });
+    mkdirSync(GEN_DIR, { recursive: true });
+  });
+  afterAll(() => rmSync(GEN_DIR, { recursive: true, force: true }));
+
+  it('has an executable surface for every advertised command', () => {
+    // Guards the gate itself: a command added to AVAILABLE_COMMANDS without a
+    // surface would otherwise be silently unmeasured rather than failing.
+    expect(AVAILABLE_COMMANDS.filter(name => !SURFACES[name])).toEqual([]);
+  });
+
+  it('all 38 produce their observable effect — zero dead case labels', async () => {
+    const dead: string[] = [];
+    for (const name of AVAILABLE_COMMANDS) {
+      const surface = SURFACES[name];
+      const outcome = await runInBundle(name, surface);
+      if (!surface.check(outcome)) {
+        dead.push(
+          `${name}${outcome.error ? ` (threw: ${String(outcome.error.message).slice(0, 60)})` : ''}`
+        );
+      }
+    }
+    // Tolerance 0, both directions. This list was 14 long before Finding 13 was
+    // closed (plus `take`, which the parse-level oracle could not see at all).
+    expect(dead).toEqual([]);
+    expect(AVAILABLE_COMMANDS.length).toBe(38);
+  }, 60000);
+
+  it('a trigger-only bundle now dispatches on the named target', async () => {
+    // Kept as its own case because it is the one that made Finding 13 a
+    // correctness defect rather than a tidiness one: the generator reported no
+    // error, emitted `case 'trigger':`, and the listener never fired. Two
+    // separate bugs had to be fixed — the missing template alias AND the
+    // hardcoded `to` marker that abandoned `on #t` and dispatched on `me`.
+    const { doc, me } = await runInBundle('trigger', SURFACES.trigger);
+    expect(t(doc).hasAttribute('data-got-foo')).toBe(true);
+    expect(me.hasAttribute('data-got-foo')).toBe(false);
+  }, 20000);
+});
+
+// ===========================================================================
+// 3. Reachability, stated over the parse tree
+// ===========================================================================
 
 /** Every command-node name anywhere in a parse tree. */
 const commandNamesIn = (node: unknown, acc: string[] = []): string[] => {
@@ -167,79 +339,119 @@ const commandNamesIn = (node: unknown, acc: string[] = []): string[] => {
   return acc;
 };
 
-/** Can the bundle parser produce a node named `key` for any listed surface? */
-const isReachable = (advertised: string): boolean => {
-  const key = resolveCommandKey(advertised);
-  return (SURFACES[advertised] ?? []).some(code => {
-    try {
-      return commandNamesIn(new HybridParser(code).parse()).includes(key);
-    } catch {
-      return false;
-    }
-  });
-};
+/** `case 'x':` labels a template emits into the generated switch. */
+const caseLabelsIn = (template: string): string[] =>
+  [...template.matchAll(/case '([^']+)':/g)].map(m => m[1]);
 
-describe('every advertised command can be reached by the bundle parser', () => {
-  it('has a probe surface for every advertised command', () => {
-    // Guards the gate itself: a command added to AVAILABLE_COMMANDS without a
-    // surface here would otherwise score as unreachable for the wrong reason.
-    expect(AVAILABLE_COMMANDS.filter(name => !SURFACES[name])).toEqual([]);
-  });
-
-  it('the unreachable set is exactly the documented allowlist', () => {
-    const unreachable = AVAILABLE_COMMANDS.filter(name => !isReachable(name));
-    expect(unreachable.sort()).toEqual([...UNREACHABLE_CASE_LABELS].sort());
-  });
-
-  it('24 of 38 advertised commands are reachable', () => {
-    // A count as well as a list, so a change has to move a number too — the
-    // discipline the audit's §8 headline counts use.
-    expect(AVAILABLE_COMMANDS.length).toBe(38);
-    expect(UNREACHABLE_CASE_LABELS.size).toBe(14);
+describe('no template emits a case label the parser cannot produce', () => {
+  it('every emitted label is a node name some surface actually yields', () => {
+    // The converse of §2, and the direction that catches a label added without a
+    // parse rule. `push-url`/`replace-url` used to live here as private labels
+    // inside the push/replace templates — unreachable by construction, since no
+    // parser emits a node by either name.
+    const emittable = new Set(
+      AVAILABLE_COMMANDS.flatMap(name =>
+        commandNamesIn(new HybridParser(SURFACES[name].code).parse())
+      )
+    );
+    const dead = Object.entries(COMMAND_IMPLEMENTATIONS).flatMap(([key, template]) =>
+      caseLabelsIn(template)
+        .filter(label => !emittable.has(label))
+        .map(label => `${key} → case '${label}'`)
+    );
+    expect(dead).toEqual([]);
   });
 
-  it('trigger parses, but as send — so a trigger-only bundle dispatches nothing', () => {
-    // The sharpest of the 14, and the reason this is a correctness defect and
-    // not a tidiness one: the user's code is valid and the generator reports no
-    // error, yet the emitted bundle carries `case 'trigger'` and the parser
-    // hands it a node named `send`.
-    expect(commandNamesIn(new HybridParser('trigger foo on #t').parse())).toEqual(['send']);
-    expect(COMMAND_IMPLEMENTATIONS.trigger).toContain("case 'trigger'");
-    expect(COMMAND_IMPLEMENTATIONS.trigger).not.toContain("case 'send'");
-  });
-
-  it('an unknown command is skipped silently, which is why this is invisible', () => {
-    // The mechanism behind all 14. No throw, no warning, no node.
-    expect(commandNamesIn(new HybridParser('copy "hi"').parse())).toEqual([]);
+  it('an unrecognized command is still skipped silently — the mechanism to guard against', () => {
+    // Unchanged and deliberately kept: the parser's unknown-command fallback
+    // advances one token and returns null, with no throw and no warning. That is
+    // why a dead case label is invisible without this file, and it is still true
+    // for anything genuinely not a command.
+    expect(commandNamesIn(new HybridParser('zzznotacommand "hi"').parse())).toEqual([]);
   });
 });
 
 // ===========================================================================
-// 3. The two bundle parsers do not agree on their command set
+// 4. The two bundle parsers agree on their command set
 // ===========================================================================
 
-/** The `cmdMap` keys of the embedded template, read from its source text. */
+const SRC = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf-8');
+
+/** cmdMap keys of `parser/hybrid/parser-core.ts`, read from source text. */
+const coreCommandKeys = (): string[] => {
+  const block = SRC('../../parser/hybrid/parser-core.ts').match(
+    /private readonly cmdMap[^{]*\{([\s\S]*?)\n {2}\};/
+  );
+  if (!block) return [];
+  return [...block[1].matchAll(/^ {4}([A-Za-z_][\w]*):/gm)].map(m => m[1]);
+};
+
+/** cmdMap keys of the embedded template, read from its source text. */
 const templateCommandKeys = (): string[] => {
   const block = HYBRID_PARSER_TEMPLATE.match(/const cmdMap = \{([\s\S]*?)\n {4}\};/);
   if (!block) return [];
-  return [...block[1].matchAll(/^\s{6}([A-Za-z_][\w]*):/gm)].map(m => m[1]);
+  return [...block[1].matchAll(/^ {6}([A-Za-z_][\w]*):/gm)].map(m => m[1]);
 };
 
-describe('parser-core and the embedded parser template classify the same commands', () => {
-  it('differ on exactly empty and halt', () => {
+describe('parser-core and the embedded parser template dispatch the same commands', () => {
+  it('the two cmdMaps are identical', () => {
     // `generateBundle()` in core imports `parser/hybrid/parser-core`, but the
-    // vite-plugin's own generator embeds HYBRID_PARSER_TEMPLATE instead, so the
-    // two paths have different reachable sets. Measured: the template handles
-    // `empty` and parser-core does not; parser-core handles `halt` and the
-    // template does not. `parser-template-drift.test.ts` compares the two on
-    // catch/finally only and cannot see this.
-    const inTemplate = new Set(templateCommandKeys());
-    expect(inTemplate.size, 'cmdMap regex found nothing — the template shape changed').toBe(24);
+    // vite-plugin's generator embeds HYBRID_PARSER_TEMPLATE instead. While the
+    // two differed, the set of commands that actually ran depended on which
+    // generator the user went through: the template had `empty` and no `halt`,
+    // parser-core the reverse. `parser-template-drift.test.ts` compares them on
+    // catch/finally only and is structurally unable to see this.
+    const core = coreCommandKeys();
+    const template = templateCommandKeys();
+    expect(core.length, 'cmdMap regex found nothing — parser-core shape changed').toBeGreaterThan(
+      30
+    );
+    expect(template.length, 'cmdMap regex found nothing — the template shape changed').toBe(
+      core.length
+    );
+    expect([...template].sort()).toEqual([...core].sort());
+  });
 
-    expect(inTemplate.has('empty')).toBe(true);
-    expect(isReachable('empty')).toBe(false); // parser-core lacks it
+  it('every advertised command resolves to a dispatched keyword', () => {
+    // Ties §1's lists to the parsers: an advertised name must be something a
+    // cmdMap can dispatch, under its own spelling (`toggle`) or its alias
+    // target (`push-url` → `push`, `trigger` → `send`).
+    //
+    // One documented exception, not a blob: `removeClass` is a NODE NAME the
+    // parser emits, never a keyword a user types — `remove .x from #t` takes
+    // parseRemove's class branch and yields it. It is advertised because a
+    // bundle must be able to request the class-removal template separately from
+    // the element-removal one. §3 is what proves it reachable.
+    const DISPATCHED_UNDER_ANOTHER_KEYWORD = new Set(['removeClass']);
+    const dispatched = new Set(coreCommandKeys());
+    const orphans = AVAILABLE_COMMANDS.filter(
+      name =>
+        !dispatched.has(name) &&
+        !dispatched.has(resolveCommandKey(name)) &&
+        !DISPATCHED_UNDER_ANOTHER_KEYWORD.has(name)
+    );
+    expect(orphans).toEqual([]);
+  });
+});
 
-    expect(inTemplate.has('halt')).toBe(false);
-    expect(isReachable('halt')).toBe(true); // parser-core has it
+// ===========================================================================
+// 5. `isCommandKeyword` is a documented subset, not a second copy
+// ===========================================================================
+
+describe('isCommandKeyword', () => {
+  it('names only commands the parser dispatches', () => {
+    // It is deliberately NARROWER than cmdMap (see its doc comment): several
+    // command keywords are ordinary English or JS words that also appear as
+    // property names and operands, and promoting them would change expression
+    // parsing. What must never happen is the reverse — a name here that the
+    // parser does not dispatch would terminate an `and` chain for a command
+    // that then fails to parse.
+    const block = SRC('../../parser/hybrid/parser-core.ts').match(
+      /isCommandKeyword\(token: Token\): boolean \{\s*const cmds = \[([\s\S]*?)\];/
+    );
+    expect(block, 'isCommandKeyword shape changed').not.toBeNull();
+    const subset = [...block![1].matchAll(/'([^']+)'/g)].map(m => m[1]);
+    expect(subset.length).toBeGreaterThan(0);
+    expect(subset.filter(name => !coreCommandKeys().includes(name))).toEqual([]);
   });
 });

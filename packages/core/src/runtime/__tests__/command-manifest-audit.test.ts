@@ -506,10 +506,11 @@ const CAPABILITY_BLOCK_ONLY = new Set(['fetch', 'if', 'repeat']);
  * and `fetch` which it did count.
  *
  * The mirror defect the same oracle run exposed — 14 of the 38 ADVERTISED
- * commands emit a case label the bundle parser can never reach — is gated
- * separately in `bundle-generator/__tests__/capability-emission.test.ts`
- * (`UNREACHABLE_CASE_LABELS`), because its remedy is a parser rule rather than
- * a reclassification. See Finding 13 in the brief.
+ * commands emitted a case label the bundle parser could never reach — was
+ * closed by the Finding 13 PR with parser rules rather than a reclassification,
+ * so nothing moved in or out of these lists. It is gated in
+ * `bundle-generator/__tests__/capability-emission.test.ts`, which now EXECUTES
+ * a generated bundle per advertised command instead of parsing one.
  */
 const CAPABILITY_UNCLASSIFIED = new Set<string>([]);
 
@@ -523,8 +524,16 @@ describe('the capability lists', () => {
   it('the advertised aliases resolve to registered commands', () => {
     expect(resolveCommandKey('push-url')).toBe('push');
     expect(resolveCommandKey('replace-url')).toBe('replace');
+    // `trigger` joined them when Finding 13 was closed. Unlike the other two it
+    // IS a registered command and a real source spelling; what it shares with
+    // them is having no template of its own, because `trigger foo on #t` and
+    // `send foo to #t` yield the same node — mirroring the registry, where
+    // `trigger` is a consolidation alias sharing `send`'s implementation.
+    expect(resolveCommandKey('trigger')).toBe('send');
     expect(REGISTERED.has(resolveCommandKey('push-url'))).toBe(true);
     expect(REGISTERED.has(resolveCommandKey('replace-url'))).toBe(true);
+    expect(REGISTERED.has('trigger')).toBe(true);
+    expect(REGISTERED.has(resolveCommandKey('trigger'))).toBe(true);
   });
 
   it('only the 3 block-only rows are outside the command partition (step 4.2)', () => {

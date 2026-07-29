@@ -13,10 +13,71 @@ import { normalizeCommand, normalizeEvent } from './aliases';
 export class HybridParser {
   private tokens: Token[];
   private pos = 0;
+  /**
+   * The raw source. Kept because `js … end` must be sliced from it verbatim —
+   * the tokenizer reads a JS body as hyperscript and mangles regexes, template
+   * literals and single quotes. Same approach as the full parser's
+   * `parseJsCommand`, which slices between token offsets for the same reason.
+   */
+  private source: string;
 
   constructor(code: string) {
+    this.source = code;
     this.tokens = tokenize(code);
   }
+
+  /**
+   * Command keyword → parse rule. Built once per parse rather than once per
+   * command, and the single place the parser's command set is written down:
+   * `isCommandKeyword()` reads these keys instead of carrying its own copy.
+   *
+   * MUST stay in sync with `bundle-generator/parser-templates.ts`'s
+   * `HYBRID_PARSER_TEMPLATE` — core's `generateBundle()` imports this file
+   * while the vite-plugin's generator embeds that template, so a name in only
+   * one of them makes the reachable command set depend on which generator the
+   * user went through. Gated by `capability-emission.test.ts` §3.
+   */
+  private readonly cmdMap: Record<string, () => CommandNode> = {
+    toggle: () => this.parseToggle(),
+    add: () => this.parseAdd(),
+    remove: () => this.parseRemove(),
+    put: () => this.parsePut(),
+    append: () => this.parseInsertion('append'),
+    prepend: () => this.parseInsertion('prepend'),
+    set: () => this.parseSet(),
+    get: () => this.parseGet(),
+    call: () => this.parseCall(),
+    log: () => this.parseLog(),
+    send: () => this.parseSend('to'),
+    // `trigger <event> on <target>` — same node as `send`, per the runtime,
+    // where `trigger` is a consolidation alias sharing `send`'s implementation.
+    // The target marker differs, which is why it is a parameter and not a
+    // second entry pointing at the same rule (that dropped the target).
+    trigger: () => this.parseSend('on'),
+    wait: () => this.parseWait(),
+    show: () => this.parseShow(),
+    hide: () => this.parseHide(),
+    take: () => this.parseTake(),
+    empty: () => this.parseEmpty(),
+    increment: () => this.parseIncDec('increment'),
+    decrement: () => this.parseIncDec('decrement'),
+    focus: () => this.parseFocusBlur('focus'),
+    blur: () => this.parseFocusBlur('blur'),
+    go: () => this.parseGo(),
+    return: () => this.parseReturn(),
+    transition: () => this.parseTransition(),
+    halt: () => this.parseHalt(),
+    copy: () => this.parseCopy(),
+    beep: () => this.parseBeep(),
+    push: () => this.parseUrlCommand('push'),
+    replace: () => this.parseUrlCommand('replace'),
+    morph: () => this.parseMorph(),
+    js: () => this.parseJs(),
+    throw: () => this.parseThrow(),
+    break: () => this.parseBare('break'),
+    continue: () => this.parseBare('continue'),
+    exit: () => this.parseBare('exit'),
+  };
 
   private peek(offset = 0): Token {
     return this.tokens[Math.min(this.pos + offset, this.tokens.length - 1)];
@@ -125,37 +186,10 @@ export class HybridParser {
     if (this.match('while')) return this.parseWhile();
     if (this.match('fetch')) return this.parseFetchBlock();
 
-    // Commands
-    const cmdMap: Record<string, () => CommandNode> = {
-      toggle: () => this.parseToggle(),
-      add: () => this.parseAdd(),
-      remove: () => this.parseRemove(),
-      put: () => this.parsePut(),
-      append: () => this.parseInsertion('append'),
-      prepend: () => this.parseInsertion('prepend'),
-      set: () => this.parseSet(),
-      get: () => this.parseGet(),
-      call: () => this.parseCall(),
-      log: () => this.parseLog(),
-      send: () => this.parseSend(),
-      trigger: () => this.parseSend(),
-      wait: () => this.parseWait(),
-      show: () => this.parseShow(),
-      hide: () => this.parseHide(),
-      take: () => this.parseTake(),
-      increment: () => this.parseIncDec('increment'),
-      decrement: () => this.parseIncDec('decrement'),
-      focus: () => this.parseFocusBlur('focus'),
-      blur: () => this.parseFocusBlur('blur'),
-      go: () => this.parseGo(),
-      return: () => this.parseReturn(),
-      transition: () => this.parseTransition(),
-      halt: () => this.parseHalt(),
-    };
-
+    // Commands — dispatch table is the `cmdMap` field (see its doc comment).
     const normalized = normalizeCommand(this.peek().value);
-    if (cmdMap[normalized]) {
-      return cmdMap[normalized]();
+    if (this.cmdMap[normalized]) {
+      return this.cmdMap[normalized]();
     }
 
     // `catch`/`finally` open error blocks only the full AST parser understands.
@@ -390,11 +424,21 @@ export class HybridParser {
     return { type: 'command', name: 'log', args };
   }
 
-  private parseSend(): CommandNode {
+  /**
+   * `send <event> to <target>` / `trigger <event> on <target>`.
+   *
+   * Both emit a `send` node — the runtime registers `trigger` as a
+   * consolidation alias sharing `send`'s implementation, so the bundle
+   * generator carries one template for both. The marker is a parameter
+   * because it is the ONLY difference: `trigger` used to reuse this rule with
+   * `to` hardcoded, which parsed the event name and then silently abandoned
+   * `on #target`, leaving the dispatch to land on `me`.
+   */
+  private parseSend(marker: 'to' | 'on'): CommandNode {
     this.advance();
     const event = this.advance().value;
     let target: ASTNode | undefined;
-    if (this.match('to')) {
+    if (this.match(marker)) {
       this.advance();
       target = this.parseExpression();
     }
@@ -507,6 +551,130 @@ export class HybridParser {
     return { type: 'command', name: 'return', args: value ? [value] : [] };
   }
 
+  // ---------------------------------------------------------------------------
+  // Rules restoring the commands the capability list advertised but this parser
+  // could not reach (Finding 13). Every one already had a working template in
+  // `bundle-generator/templates.ts`; only the parse rule was missing, so the
+  // emitted `case` label was dead and the user's source silently no-opped.
+  // ---------------------------------------------------------------------------
+
+  /** `empty [<target>]` — clears children. Defaults to `me`. */
+  private parseEmpty(): CommandNode {
+    this.expect('empty');
+    let target: ASTNode | undefined;
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      target = this.parseExpression();
+    }
+    return { type: 'command', name: 'empty', args: [], target };
+  }
+
+  /** `copy <value>` — clipboard write. */
+  private parseCopy(): CommandNode {
+    this.expect('copy');
+    return { type: 'command', name: 'copy', args: [this.parseExpression()] };
+  }
+
+  /**
+   * `beep[!] [<value>, …]` — debug echo.
+   *
+   * Upstream spells it `beep!`; hyperfixi accepts both (see the tier list's
+   * note on the same nuance). The `!` is consumed here because the tokenizer
+   * emits it as a separate operator, and `parseUnary` would otherwise read it
+   * as logical negation of the first argument.
+   */
+  private parseBeep(): CommandNode {
+    this.advance();
+    if (this.match('!')) this.advance();
+    const args: ASTNode[] = [];
+    while (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      args.push(this.parseExpression());
+      if (this.match(',')) this.advance();
+      else break;
+    }
+    return { type: 'command', name: 'beep', args };
+  }
+
+  /**
+   * `push|replace url <url> [with title <title>]` — History API navigation.
+   *
+   * The `url` keyword is consumed here rather than left for the executor, the
+   * way `parseGo` already does it. Note `push-url` / `replace-url` are NOT
+   * source spellings — the full parser rejects both — they exist only as
+   * bundle-config aliases resolving to these templates.
+   */
+  private parseUrlCommand(name: 'push' | 'replace'): CommandNode {
+    this.advance();
+    if (this.match('url')) this.advance();
+    const url = this.parseExpression();
+    const modifiers: Record<string, ASTNode> = {};
+    if (this.match('with')) {
+      this.advance();
+      if (this.match('title')) {
+        this.advance();
+        modifiers.title = this.parseExpression();
+      }
+    }
+    return { type: 'command', name, args: [url], modifiers };
+  }
+
+  /** `morph [over] <target> with|to|into <content>` — all four connectives the full parser takes. */
+  private parseMorph(): CommandNode {
+    this.expect('morph');
+    let modifier: string | undefined;
+    if (this.match('over')) {
+      this.advance();
+      modifier = 'over';
+    }
+    const target = this.parseExpression();
+    if (this.match('with', 'to', 'into')) this.advance();
+    const content = this.parseExpression();
+    return { type: 'command', name: 'morph', args: [content], target, modifier };
+  }
+
+  /**
+   * `js[(<params>)] <raw JavaScript> end`.
+   *
+   * The body is sliced from the ORIGINAL SOURCE between token offsets, never
+   * reassembled from tokens — the tokenizer reads it as hyperscript, which
+   * mangles regexes, template literals and possessive-looking quotes. This
+   * mirrors the full parser's `parseJsCommand`.
+   *
+   * Known limit: the terminator scan matches the `end` TOKEN, so `end` inside a
+   * JS *string* is safe (the tokenizer keeps a string as one token, quotes
+   * included) but a bare JS identifier named `end` would cut the body early.
+   * The full parser's `findJsEndBoundary` handles that; replicating it is not
+   * worth the bytes in a bundle this size.
+   */
+  private parseJs(): CommandNode {
+    this.advance();
+    if (this.match('(')) {
+      while (!this.isAtEnd() && !this.match(')')) this.advance();
+      if (this.match(')')) this.advance();
+    }
+    const start = this.peek().pos;
+    while (!this.isAtEnd() && !this.match('end')) this.advance();
+    const stop = this.peek().pos;
+    if (this.match('end')) this.advance();
+    const code = this.source.slice(start, stop).trim();
+    return { type: 'command', name: 'js', args: [{ type: 'literal', value: code }] };
+  }
+
+  /** `throw <value>` */
+  private parseThrow(): CommandNode {
+    this.expect('throw');
+    let value: ASTNode | undefined;
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      value = this.parseExpression();
+    }
+    return { type: 'command', name: 'throw', args: value ? [value] : [] };
+  }
+
+  /** `break` / `continue` / `exit` — bare control-flow signals, no arguments. */
+  private parseBare(name: 'break' | 'continue' | 'exit'): CommandNode {
+    this.advance();
+    return { type: 'command', name, args: [] };
+  }
+
   private parseHalt(): CommandNode {
     this.expect('halt');
     // Skip optional 'the'
@@ -591,6 +759,23 @@ export class HybridParser {
     return left;
   }
 
+  /**
+   * Does this token start a command rather than continue an expression?
+   *
+   * Used in two places with different stakes: terminating an `and` chain
+   * (`toggle .x and add .y`), and refusing to read a command name as a
+   * possessive property (`my show`).
+   *
+   * This is a deliberate SUBSET of `cmdMap`'s keys, not a second copy of it —
+   * asserted as a subset in `capability-emission.test.ts` §4 so it cannot
+   * name something the parser does not dispatch. It is not the full set
+   * because several of the newer keys are ordinary English or JS words
+   * (`copy`, `empty`, `push`, `replace`, `break`) that appear as property
+   * names and operands; promoting them here would change expression parsing,
+   * which is a separate decision from command reachability. The cost is that
+   * `… and break` reads `break` as an operand; `then` is the canonical
+   * separator and is handled by `parseCommandSequence` directly.
+   */
   private isCommandKeyword(token: Token): boolean {
     const cmds = [
       'toggle',

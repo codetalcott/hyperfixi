@@ -36,15 +36,16 @@
  * checks that list first, so listing them would force a full-runtime fallback
  * for `if`/`repeat`/`fetch` code that lite bundles execute correctly today.
  *
- * **Known open defect (step 4.2 follow-up).** Membership here means the case
- * label is EMITTED, not that the generated parser ever reaches it. 14 of the
- * entries below are unreachable — the parser produces no node for them, or
- * produces one under a different name — so the emitted `case` is dead code and
- * the user's source silently no-ops. They are named, counted and pinned in
- * `capability-emission.test.ts` (`UNREACHABLE_CASE_LABELS`). They are NOT
- * reclassified here: every one has a working template, so the correct remedy is
- * a parser rule that restores the capability, not a reclassification that
- * removes it and bumps those projects to the full runtime.
+ * **Membership now means the command RUNS** (Finding 13, closed). It used to
+ * mean only that the `case` label was emitted: 14 of these entries were
+ * unreachable, so a bundle carried the implementation as dead code while the
+ * user's valid source silently no-opped. The remedy was the one the finding
+ * called for — parser rules in `parser/hybrid/parser-core.ts` and its embedded
+ * twin in `parser-templates.ts`, plus a `trigger` → `send` alias below — so no
+ * capability was removed and no project was bumped to the full runtime.
+ * `capability-emission.test.ts` now gates the claim by EXECUTING a generated
+ * bundle per row and asserting the observable effect; a `case` label the parser
+ * cannot reach fails it at tolerance 0.
  */
 
 /**
@@ -176,16 +177,26 @@ export const FULL_RUNTIME_ONLY_COMMANDS = [
 ] as const;
 
 /**
- * Advertised command names that are implemented under a different template key.
- * `push-url`/`replace-url` have no key of their own in COMMAND_IMPLEMENTATIONS —
- * the `push`/`replace` templates carry `case 'push-url':`/`case 'replace-url':`
- * labels internally. Without this map, `isAvailableCommand('push-url')` was true
- * while `generateBundle({ commands: ['push-url'] })` rejected it as
+ * Advertised command names implemented by another command's template.
+ *
+ * `push-url`/`replace-url` are bundle-CONFIG spellings only — the full parser
+ * rejects `push-url "/x"` as source, and users write `push url "/x"`, which
+ * yields a `push` node. Without this map `isAvailableCommand('push-url')` was
+ * true while `generateBundle({ commands: ['push-url'] })` rejected it as
  * unknown-command (the two public surfaces disagreed).
+ *
+ * `trigger` joined them when Finding 13 was closed. It IS a real source
+ * spelling, but `trigger foo on #t` and `send foo to #t` produce the same
+ * `send` node — mirroring the runtime, where `trigger` is a consolidation alias
+ * sharing `send`'s implementation instance. It previously had a byte-identical
+ * private template whose `case 'trigger':` label nothing could reach, so a
+ * trigger-only bundle generated cleanly and dispatched nothing. Aliasing is
+ * what makes the advertisement true; the duplicate template is gone.
  */
 export const COMMAND_ALIASES: Record<string, string> = {
   'push-url': 'push',
   'replace-url': 'replace',
+  trigger: 'send',
 };
 
 /**
