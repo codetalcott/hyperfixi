@@ -637,7 +637,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (8.2 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~322 KB), minimal (76 KB), standard (83 KB), browser (~310 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (8.2 KB), hybrid-hx (18.6 KB), hybrid-hx-v4 (~321 KB), minimal (71.5 KB), standard (78 KB), browser (~309 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -861,9 +861,9 @@ Quick selection (sizes gzipped):
 | `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
 | `hyperfixi-hybrid-complete.js` | 8.2 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
 | `hyperfixi-hx.js`              | 18 KB     | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
-| `hyperfixi-hx-v4.js`           | ~322 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
-| `hyperfixi.js`                 | ~310 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
-| `hyperfixi-multilingual.js`    | 97 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
+| `hyperfixi-hx-v4.js`           | ~321 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
+| `hyperfixi.js`                 | ~309 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
+| `hyperfixi-multilingual.js`    | 93 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |
 | semantic bundles               | 62–203 KB | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) |
 
 Rule of thumb: start as small as you can; upgrade when you hit a missing feature.
