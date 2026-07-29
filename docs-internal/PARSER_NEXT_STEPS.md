@@ -28,6 +28,7 @@ ones, because the gate *is* the tracking mechanism.
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
 | **`tell <target> to <command>` drops the `tell` wrapper** | medium — **silent wrong target** on the form users actually write | **none** | see the measured table below; found by Arc A step 4.3 (Finding 14 in [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), re-verified 2026-07-29 |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
+| **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 
@@ -79,6 +80,37 @@ Not fixed by Arc A, deliberately: it is a behavior change to the parser with its
 own tests, and folding it into a classification step would have buried that
 step's review artifact.
 
+### `for <duration>` on `toggle` / `wait` — the measured shape
+
+Measured 2026-07-29. Each source was parsed on hyperfixi and on the real
+`hyperscript.org` engine (`hs.parse(src).errors`, the loader at
+`packages/testing-framework/src/multilingual/canonical-validity.ts:70-82`).
+**Upstream accepts both; hyperfixi rejects both.** Each is the command's own
+`metadata.examples` entry, so the shipped documentation advertises a form the
+shipped parser refuses:
+
+| Source | Upstream | hyperfixi |
+| ------ | -------- | --------- |
+| `toggle .loading for 2s` | accepts | `Expected variable name after "for"` |
+| `wait for click or 1s` | accepts | `Expected event name after "for"` |
+
+Both errors read as a `for`-tail being parsed as the start of a loop/event
+construct rather than as a duration modifier, but the two commands take different
+paths, so treat them as one family with two fixes and confirm they share a cause
+before assuming they do.
+
+Two adjacent diagnostics found in the same sweep, both cosmetic and neither
+worth its own arc — fold them into whichever change touches this area:
+
+- **An error position is reported past the end of the input.** Three of the
+  sweep's rows report `column 78` for source strings 37 and 69 characters long.
+- **`start` reports a `repeat` error.** `start view transition` (no terminator)
+  fails with `Expected "end" to close repeat block`; `start view transition using
+  "slide" end` parses. The message names the wrong construct, which cost real
+  triage time. The same wrong-construct routing shows on `process partials in it
+  using view transition`, which fails with `Transition command requires a CSS
+  property`.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
@@ -107,6 +139,15 @@ regression episode that motivates it:
 
 ## History
 
+- **2026-07-29** — two entries added from the Arc B examples sweep: the
+  `for <duration>` family above, and the diagnostics beside it. Found by probing
+  all 202 `metadata.examples` strings against the parser and then triaging the
+  16 failures on the upstream engine — the same oracle discipline as R4. Only 2
+  of the 16 were parser gaps; 10 were examples authored in syntax **neither**
+  engine has ever accepted (notably a brace-block `repeat … { … }` form in four
+  places), which is a docs defect and is being fixed in the arc's own diff, not
+  here. Triage table:
+  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a.
 - **2026-07-27** — event filters enforced: `on keydown[key=='Escape']` ran on
   ANY key because the runtime never read `EventHandlerNode.condition` (parsed,
   typed, documented, never consumed). The gate's first finding, fixed the same

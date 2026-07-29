@@ -87,7 +87,7 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
 | ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
-| B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
+| B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — brief written 2026-07-29, arc not started; it CORRECTS the arc's stated motivation |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
@@ -264,6 +264,23 @@ derived values land. Gates already in place: `verify:reference`,
 
 ### Arc B — metadata single-sourcing (medium; verified mechanical)
 
+> **Read [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)
+> first — it CORRECTS this paragraph's stated motivation.** "Making metadata
+> visible to the type system" is right; the implied corollary that tsc does not
+> currently reject a mis-shaped metadata literal is **false for 52 of 55
+> implementations** (`meta(config: MetaConfig)` types its parameter, so a typoed
+> field is already `TS2561` — mutation-verified with a misspelled field name).
+> The static really is invisible
+> (`TS2339`, also mutation-verified), and that — plus **three undecorated classes
+> whose metadata is checked by nothing at all** — is the arc's actual payoff.
+> The brief also settles the `compatibility` domain mismatch, records the
+> verified `commandMeta()` signature, and adds four findings: a **second
+> `CommandMetadata` interface** in `command-adapter.ts` that the load-bearing
+> reader uses, a third `CommandCategory` union, `generate-command-docs.ts` as a
+> **21st hand-maintained list that is 16 commands short and gated by nothing**,
+> and **16 dead `metadata.examples` across 12 commands** (a different set from
+> Arc C's five, because it is a different oracle).
+
 Replace `@meta`'s runtime `defineProperty` statics with
 `static readonly metadata = commandMeta({...})`, making metadata visible to the
 type system (the invisibility is why `scripts/` typechecking stayed off for six
@@ -368,6 +385,53 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B brief written**
+  ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)), arc
+  not started. Measured against main `973ee1c5`.
+  - **The arc's own premise failed the queue's five-times-paid lesson.** "Score
+    the rows already there" applies to motivations too: `@meta(config: MetaConfig)`
+    types its parameter, so the 52 decorated literals are **already** checked
+    (`TS2561` on a misspelled field, mutation-verified). What is actually broken is
+    narrower and different — the **static** is invisible (`TS2339`), and the
+    **three undecorated classes** (`install`, `pseudo-command`, `render`) are
+    checked by nothing at all (a bogus `category` *and* a bogus `sideEffects` entry
+    both accepted). Selling step 1 on "tsc will now reject bad metadata" would have
+    built a gate that mostly existed.
+  - **The target shape already exists in-tree, three times** — those same three
+    classes are written as `static readonly metadata = {…} as const` plus a
+    `get metadata()` bridge, which is the proposed end state including the
+    mechanism that keeps `command-adapter.ts:440` working. A working reference
+    implementation, not a design sketch. Their `as const` is exactly why they are
+    unchecked, which is what `commandMeta()` fixes; its signature is verified in
+    the brief (`<const T extends MetaInput>` — keeps literal types, catches typos,
+    bad categories, and bad side-effects).
+  - **Two `CommandMetadata` interfaces**, and the load-bearing reader uses the
+    loose one: `command-adapter.ts:54-60` declares its own with an
+    `[extra: string]: unknown` index signature, which is the only reason
+    `impl.metadata?.name` typechecks — the canonical type has **no `name` field**.
+    Narrowing it turns :421 into a type error, and `readonly` vs mutable arrays
+    will bite. Contained to one file (exported, imported by nobody). Third
+    instance of the dual-type-definition pattern.
+  - **`generate-command-docs.ts` is a 21st hand-maintained list: 43 entries
+    against a 59-command registry, gated by nothing** — no npm script, no CI
+    step, no audit coupling, 16 commands missing. #793 fixed drift of the
+    *output* (`commands.json` matches the table); nothing checks the *input*.
+    The one instance Arc A did not sweep, because the generator is invisible to
+    `verify:reference`.
+  - **A named harvest, non-empty as predicted: 16 dead `metadata.examples`
+    across 12 commands** — and a *different* set from Arc C's five, because it is
+    a different oracle (raw string at parse level vs adapted snippet at
+    execution). Splits cleanly into examples authored in syntax the language never
+    had (the brace-block `repeat … { … }` in three commands; an `unless` example
+    on `if`) and real parser gaps to file (`toggle .loading for 2s`,
+    `wait for click or 1s` — both upstream syntax, check the published engine
+    first). Also: `increment`/`decrement` examples parse to a `set` node, so a
+    future "example reaches its own command" gate must allowlist that row.
+  - **`compatibility`'s domain mismatch is decided in the brief**, not left to
+    the arc: `upstream → 'standard'`, `extension → 'lokascript-extension'`,
+    `'experimental'` kept as an allowlisted third state at size 0, coupled via
+    the `TIER_UNCLASSIFIED`-equality trick against the audit's existing
+    `EXTENSIONS` set and `TIER_COUNTS`.
 - **2026-07-29** — **Arc A CLOSED**, and its recommended follow-on (Finding 13,
   the 14 unreachable capability case labels) closed with it. Both records are in
   [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md); the
