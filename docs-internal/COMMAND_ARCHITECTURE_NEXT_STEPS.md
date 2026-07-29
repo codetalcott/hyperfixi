@@ -385,6 +385,26 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B step 1 landed**: `commandMeta()` plus the three
+  undecorated classes (`install`, `pseudo-command`, `render`). Per-step detail in
+  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md).
+  - **The brief's predicted defects did not exist.** It expected the conversion to
+    surface real problems in three literals nothing had ever checked; typecheck was
+    clean on the first run. The *unchecked* state was measured and real; the
+    *broken* state was an assumption. Worth recording — a failed prediction is
+    cheap here and expensive one arc later.
+  - **The new gate was mutation-verified rather than assumed**, at the real call
+    sites: a bad `category` → TS2820, a nonsense `sideEffects` entry → TS2820, a
+    misspelled field → TS2561. And the *runtime* gate too — deleting
+    `RenderCommand`'s `get metadata()` fails 3 of the new file's 10 tests.
+  - **Two decisions step 3 must not inherit by omission.** `commandMeta` is pure
+    identity and fills **no** defaults (so the three classes' `undefined`
+    `isBlocking`/`hasBody` did not silently become `false`) — but the 52 decorated
+    classes *do* get those defaults from `@meta`, so step 3 has to choose
+    deliberately. And `category` belongs **in** the literal, because a static whose
+    type omits it cannot serve `metadata.category`, which the audit's §7 reads.
+  - Core 7610 → **7620** with every increment a new test and none changed;
+    registry oracle **byte-identical**; all ten bundles **+0.0%**.
 - **2026-07-29** — **Arc B brief written**
   ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)), arc
   not started. Measured against main `973ee1c5`.

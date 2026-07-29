@@ -416,13 +416,53 @@ columns are 59/59 today; they must still be 59/59 after every step.
 
 **Step 0 (this PR).** The brief. Docs-only.
 
-**Step 1 — `commandMeta()` + the three undecorated classes.** Add the helper with
-the verified signature. Convert `install`, `pseudo-command`, `render` from
-`as const` to `commandMeta({…})`. Small, self-contained, and it is the only step
-where "tsc rejects a mis-shaped literal" is a genuinely new gate — so it is where
-the type oracle gets mutation-verified in the PR body (typo a field, show the
-error, revert). Expect this step to surface real defects in those three literals,
-since nothing has ever checked them.
+**Step 1 — `commandMeta()` + the three undecorated classes — ✅ DONE.**
+`commandMeta` lives in `commands/decorators/index.ts` (that module's imports are
+all type-only, so it carries zero runtime weight and adds no module edge — every
+command file already imports from it). `install`, `pseudo-command` and `render`
+are converted from `as const` to `commandMeta({…})`.
+
+**The predicted defects did not exist.** This brief expected the conversion to
+surface real problems in three literals nothing had ever checked; typecheck came
+back clean on the first run. All three were already valid. Recorded because a
+prediction that fails is worth as much as one that lands — the *unchecked* state
+was real and measured, the *broken* state was an assumption.
+
+The gate is real, not vacuous. Mutation-verified at the real call sites, each
+reverted after:
+
+| Mutation in `install.ts` | Result |
+| --- | --- |
+| `category: 'behaviorz'` | `TS2820: not assignable to type 'CommandCategory'. Did you mean "behaviors"?` |
+| `sideEffects: ['behavior-instalation', …]` | `TS2820: not assignable to type 'CommandSideEffect'` |
+| `descriptio:` | `TS2561: … does not exist in type 'CommandMetaInput'` |
+
+Two decisions settled here, both load-bearing for step 3:
+
+- **`commandMeta` is pure identity — it fills NO defaults.** `@meta` defaults
+  `isBlocking`/`hasBody` to `false` and stamps `version: '1.0.0'`; the three
+  converted classes carried none of those fields, so filling them would have
+  flipped `undefined → false` on three commands as a side effect of a refactor.
+  A test pins their absence. **Step 3 has to decide this deliberately for the 52**,
+  because those *do* currently get the defaults from `@meta` — either `@meta`
+  keeps stamping them, or the literals become explicit. Do not let it happen by
+  omission.
+- **`category` belongs IN the literal.** `CommandMetaInput` requires it, because a
+  static whose *type* omits `category` cannot serve `metadata.category` — which
+  is exactly what the manifest audit's §7 reads. Consequence for step 3: the 52
+  decorated literals gain a `category:` line each, and `@command` keeps owning
+  `name`. Mechanical and diff-visible, which is the point.
+
+Gate added: `commands/decorators/__tests__/command-meta.test.ts`, 10 tests. It
+deliberately does **not** unit-test `commandMeta`'s runtime behaviour (it returns
+its argument; the gate is `typecheck`). What it pins is the **bridge invariant**
+step 3 depends on — every registered command serves the *same object* through its
+static and its instance, both are defined, and the set of commands with an *own*
+`name` property is exactly the three converted classes (so a fourth conversion,
+or a decoration of one of these, fails loudly). Mutation-verified: deleting
+`RenderCommand`'s `get metadata()` fails 3 of the 10.
+
+Registry oracle: **byte-identical** before and after.
 
 **Step 2 — the coupling for `compatibility`, before any values are copied.**
 Land the audit assertions and `COMPATIBILITY_EXPERIMENTAL` while the expected

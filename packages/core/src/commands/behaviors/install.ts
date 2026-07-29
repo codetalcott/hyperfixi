@@ -31,6 +31,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { commandMeta } from '../decorators';
 
 /**
  * Typed input for InstallCommand
@@ -72,7 +73,7 @@ export class InstallCommand {
   /**
    * Command metadata for documentation and tooling
    */
-  static readonly metadata = {
+  static readonly metadata = commandMeta({
     description: 'Install a behavior on an element with optional parameters',
     syntax: [
       'install <BehaviorName>',
@@ -89,7 +90,7 @@ export class InstallCommand {
     ],
     category: 'behaviors',
     sideEffects: ['behavior-installation', 'element-modification'],
-  } as const;
+  });
 
   /**
    * Instance accessor for metadata (backward compatibility)

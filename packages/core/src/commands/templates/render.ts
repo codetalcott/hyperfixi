@@ -29,6 +29,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { debug } from '../../utils/debug';
+import { commandMeta } from '../decorators';
 
 /**
  * Typed input for RenderCommand
@@ -67,7 +68,7 @@ export class RenderCommand {
   /**
    * Command metadata for documentation and tooling
    */
-  static readonly metadata = {
+  static readonly metadata = commandMeta({
     description: 'Render templates with @if, @else, and @repeat directives',
     syntax: [
       'render <template>',
@@ -82,7 +83,7 @@ export class RenderCommand {
     ],
     category: 'templates',
     sideEffects: ['dom-creation', 'template-execution'],
-  } as const;
+  });
 
   /**
    * Instance accessor for metadata (backward compatibility)

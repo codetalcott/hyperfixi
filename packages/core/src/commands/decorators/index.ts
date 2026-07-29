@@ -203,6 +203,63 @@ export function meta(config: MetaConfig) {
 }
 
 // ============================================================================
+// commandMeta — type-visible metadata (Arc B)
+// ============================================================================
+
+/**
+ * Input accepted by {@link commandMeta}: `CommandMetadata` with `version`
+ * optional, since it is a published constant rather than something an author
+ * chooses per command.
+ */
+export type CommandMetaInput = Omit<CommandMetadata, 'version'> & {
+  readonly version?: string;
+};
+
+/**
+ * Declare a command's metadata as a **type-visible** static.
+ *
+ * ```ts
+ * export class InstallCommand {
+ *   readonly name = 'install';
+ *   static readonly metadata = commandMeta({ … });
+ *   get metadata() { return InstallCommand.metadata; }
+ * }
+ * ```
+ *
+ * ## Why this exists, precisely
+ *
+ * `@meta` installs `metadata` with `Object.defineProperty`, and a class
+ * decorator that returns the original class cannot widen its type — so
+ * TypeScript never sees the static. That invisibility (not a lack of
+ * validation) is the defect: `meta(config: MetaConfig)` already type-checks
+ * the literal passed to it, but `SomeCommand.metadata` is `TS2339` at every
+ * read, which is why `scripts/generate-command-docs.ts` needs a runtime
+ * `metadataOf()` assertion and why script typechecking stayed off for months.
+ *
+ * The classes this replaces used a bare `as const`, which has the mirror-image
+ * problem: the static is visible but validated by **nothing**. Measured before
+ * this helper existed — an invalid `category` and a nonsense `sideEffects`
+ * entry both compiled clean.
+ *
+ * ## Why the `const` type parameter is load-bearing
+ *
+ * `<const T>` preserves the literal types `as const` gave (so
+ * `metadata.syntax[0]` stays a literal, not `string`), while
+ * `extends CommandMetaInput` supplies the contextual type that makes
+ * excess-property and enum checking fire. Drop `const` and the arc trades
+ * inference for checking instead of getting both.
+ *
+ * Returns its argument unchanged — deliberately identity, with **no default
+ * filling**, so a migrated class's runtime shape is byte-for-byte what it was.
+ * `@meta`'s `isBlocking`/`hasBody`/`version` defaults are its own behavior;
+ * folding them in here would silently change `undefined` to `false` on the
+ * classes this migrates.
+ */
+export function commandMeta<const T extends CommandMetaInput>(metadata: T): T {
+  return metadata;
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
