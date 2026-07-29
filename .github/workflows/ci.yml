@@ -745,7 +745,19 @@ jobs:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # The `!cancelled()` is REQUIRED, and its absence was a real bug: this job
+    # skipped on a workflow_dispatch run even though the event matched and `build`
+    # succeeded (verified 2026-07-29, run 30493248972 — 0 steps executed). GitHub's
+    # skip propagation is TRANSITIVE: `changes` is skipped on schedule/dispatch, and
+    # every job in that needs-closure inherits an implicit `success()` over it unless
+    # it carries its own status function. `build` had one; this job did not, so the
+    # whole nightly chain silently did nothing while the run still reported success.
+    # `needs.build.result == 'success'` restores the dependency check that
+    # `!cancelled()` opts out of, so a broken build still stops us.
+    if: >-
+      ${{ !cancelled()
+          && needs.build.result == 'success'
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 20
 
     steps:
@@ -1412,7 +1424,12 @@ jobs:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # `!cancelled()` required for the same transitive skip-propagation reason as the
+    # coverage job — see the comment there.
+    if: >-
+      ${{ !cancelled()
+          && needs.build.result == 'success'
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 20
 
     steps:
