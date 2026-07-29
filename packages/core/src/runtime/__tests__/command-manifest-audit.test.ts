@@ -49,7 +49,8 @@ import { readFileSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { COMMANDS } from '../../parser/parser-constants';
+import { COMMANDS, COMPOUND_COMMANDS } from '../../parser/parser-constants';
+import { COMMAND_MANIFEST } from '../../commands/manifest';
 import {
   AVAILABLE_COMMANDS,
   AVAILABLE_BLOCKS,
@@ -497,7 +498,183 @@ describe('the per-bundle commands arrays', () => {
 });
 
 // ===========================================================================
-// 7. The headline counts
+// 7. The manifest (commands/manifest.ts) — Arc A step 2
+// ===========================================================================
+
+/**
+ * The manifest is a **checked mirror**, never an independent copy: every field
+ * is asserted against the source it mirrors, so it cannot drift into being the
+ * twenty-first hand-maintained place. It lives here rather than beside
+ * `manifest.ts` because the coupling assertion below needs `TIER_UNCLASSIFIED`,
+ * and re-deriving the registry in a second file is the duplication this arc
+ * exists to remove.
+ */
+const MANIFEST_BY_NAME = new Map(COMMAND_MANIFEST.map(e => [e.name, e]));
+
+/**
+ * The only keys a manifest entry may carry. A `factory` field defeats
+ * tree-shaking (Finding 9: 177 B → 38,395 B for a names-only consumer at four
+ * commands), and this asserts the shape structurally so the bundle-size
+ * snapshot is a second line of defence rather than the only one.
+ */
+const ALLOWED_KEYS = new Set([
+  'name',
+  'category',
+  'tier',
+  'upstreamOrExtension',
+  'consolidationAliasOf',
+  'multiword',
+]);
+
+/**
+ * `send` and `trigger` are `'events'` in `reference/index.ts` and `'event'` in
+ * the `@command` decorator — the only two of 59 where the two category sources
+ * disagree, and not a typo: `reference/index.ts` and `types/command-metadata.ts`
+ * declare two independent `CommandCategory` unions that differ in exactly two
+ * members (`'events'` vs `'event'`, and `'storage'` present only in the latter).
+ * Nothing compared them before this audit.
+ *
+ * The manifest follows the decorator/registry union (it mirrors what the engine
+ * serves). Reconciling the two unions is a rename with LSP and docs reach, so
+ * it is pinned here rather than resolved inside a data-only step — the same
+ * treatment Finding 7's synonym aliases got.
+ */
+const CATEGORY_DOC_DISAGREEMENTS: Record<string, { reference: string; decorator: string }> = {
+  send: { reference: 'events', decorator: 'event' },
+  trigger: { reference: 'events', decorator: 'event' },
+};
+
+describe('the command manifest', () => {
+  it('names exactly the registered set, both directions', () => {
+    const names = COMMAND_MANIFEST.map(e => e.name);
+    expect(ghostsIn(names)).toEqual([]);
+    expect(gapsIn(names)).toEqual([]);
+    // A duplicated entry satisfies both checks above and COLLAPSES in the Map,
+    // so the Map's size cannot see it — the array length is what rules it out.
+    expect(COMMAND_MANIFEST.length).toBe(59);
+    expect(MANIFEST_BY_NAME.size).toBe(59);
+  });
+
+  it('is sorted in registry order, so the diff of an added command is one line', () => {
+    expect(COMMAND_MANIFEST.map(e => e.name)).toEqual(REGISTRY);
+  });
+
+  it('carries no factory field, and no field the schema does not name (Finding 9)', () => {
+    for (const entry of COMMAND_MANIFEST) {
+      const extra = Object.keys(entry).filter(k => !ALLOWED_KEYS.has(k));
+      expect(extra, `${entry.name} carries unexpected keys`).toEqual([]);
+    }
+    // The specific field the measurement rules out, named so a future edit that
+    // reintroduces it fails against the reason rather than a generic schema.
+    expect(COMMAND_MANIFEST.some(e => 'factory' in e)).toBe(false);
+  });
+
+  it('category mirrors what the registry serves', () => {
+    const registered = new Runtime().getRegistry();
+    for (const name of REGISTRY) {
+      const served = registered.getImplementation(name)?.metadata?.category;
+      expect(MANIFEST_BY_NAME.get(name)!.category, `${name} category`).toBe(served);
+    }
+  });
+
+  it('pins the 2 rows where the reference and decorator categories disagree', () => {
+    const disagreeing: string[] = [];
+    for (const [key, ref] of Object.entries(referenceCommands)) {
+      const name = normalize(key);
+      const manifest = MANIFEST_BY_NAME.get(name);
+      if (manifest && manifest.category !== (ref as { category: string }).category) {
+        disagreeing.push(name);
+      }
+    }
+    expect(disagreeing.sort()).toEqual(Object.keys(CATEGORY_DOC_DISAGREEMENTS).sort());
+    // Keeps the allowlist honest about WHICH spellings diverge, so a partial
+    // fix (one side renamed) fails instead of silently re-pointing the row.
+    for (const [name, { reference, decorator }] of Object.entries(CATEGORY_DOC_DISAGREEMENTS)) {
+      const ref = Object.entries(referenceCommands).find(([k]) => normalize(k) === name)![1];
+      expect((ref as { category: string }).category, `${name} reference category`).toBe(reference);
+      expect(MANIFEST_BY_NAME.get(name)!.category, `${name} manifest category`).toBe(decorator);
+    }
+  });
+
+  it('tier mirrors reference/index.ts availability', () => {
+    for (const [key, ref] of Object.entries(referenceCommands)) {
+      const name = normalize(key);
+      const availability = (ref as { availability: string }).availability;
+      expect(MANIFEST_BY_NAME.get(name)!.tier, `${name} tier`).toBe(availability);
+    }
+  });
+
+  it('multiword mirrors COMPOUND_COMMANDS', () => {
+    const manifestMultiword = COMMAND_MANIFEST.filter(e => e.multiword)
+      .map(e => e.name)
+      .sort();
+    expect(manifestMultiword).toEqual([...COMPOUND_COMMANDS].sort());
+    expect(manifestMultiword.length).toBe(22);
+  });
+
+  it('consolidationAliasOf names the 4 shared implementations, and only those', () => {
+    // Derived by implementation IDENTITY, not by re-reading metadata.aliases:
+    // two registered names backed by one instance IS the consolidation, and
+    // that is the property `command-adapter.ts` actually establishes.
+    const registered = new Runtime().getRegistry();
+    const byImpl = new Map<unknown, string[]>();
+    for (const name of REGISTRY) {
+      const impl = registered.getImplementation(name);
+      if (!byImpl.has(impl)) byImpl.set(impl, []);
+      byImpl.get(impl)!.push(name);
+    }
+
+    const expected: Record<string, string> = {};
+    for (const [impl, names] of byImpl) {
+      if (names.length === 1) continue;
+      const primary = (impl as { name: string }).name;
+      for (const name of names) if (name !== primary) expected[name] = primary;
+    }
+
+    const actual = Object.fromEntries(
+      COMMAND_MANIFEST.filter(e => e.consolidationAliasOf).map(e => [
+        e.name,
+        e.consolidationAliasOf!,
+      ])
+    );
+    expect(actual).toEqual(expected);
+    // Finding 7's FIRST mechanism only — four real command names sharing an
+    // implementation, NOT the eleven slim-bundle synonyms in COMMAND_ALIASES.
+    expect(actual).toEqual({
+      decrement: 'increment',
+      replace: 'push',
+      send: 'trigger',
+      unless: 'if',
+    });
+    // Every alias target is itself a manifest row, so the graph never dangles.
+    for (const target of Object.values(actual)) expect(MANIFEST_BY_NAME.has(target)).toBe(true);
+  });
+
+  it('upstreamOrExtension agrees with the LSP tier lists', () => {
+    for (const name of REGISTRY) {
+      const expected = HYPERSCRIPT_TIER.includes(name)
+        ? 'upstream'
+        : LOKASCRIPT_TIER.includes(name)
+          ? 'extension'
+          : 'unknown';
+      expect(MANIFEST_BY_NAME.get(name)!.upstreamOrExtension, `${name} tier`).toBe(expected);
+    }
+  });
+
+  it('the unknown set IS the audit TIER_UNCLASSIFIED set (step 4.1 moves both)', () => {
+    // The coupling that stops the two from drifting apart — which is the exact
+    // disease this arc exists to cure. Classifying a command in step 4.1 must
+    // delete its row HERE and in TIER_UNCLASSIFIED in the same diff, or this
+    // fails.
+    const unknown = COMMAND_MANIFEST.filter(e => e.upstreamOrExtension === 'unknown')
+      .map(e => e.name)
+      .sort();
+    expect(unknown).toEqual([...TIER_UNCLASSIFIED].sort());
+  });
+});
+
+// ===========================================================================
+// 8. The headline counts
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
