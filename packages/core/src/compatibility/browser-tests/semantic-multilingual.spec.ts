@@ -15,19 +15,18 @@ test.describe('Semantic Multilingual Parser', () => {
     await gotoSemanticPage(page);
   });
 
-  test('bundle loads and exposes LokaScriptSemantic global @quick', async ({ page }) => {
-    const hasGlobal = await page.evaluate(() => {
-      return typeof (window as any).LokaScriptSemantic !== 'undefined';
-    });
-    expect(hasGlobal).toBe(true);
-  });
-
-  test('exposes parse function @quick', async ({ page }) => {
-    const hasParseFunction = await page.evaluate(() => {
-      return typeof (window as any).LokaScriptSemantic.parse === 'function';
-    });
-    expect(hasParseFunction).toBe(true);
-  });
+  // NOTE: two API-surface tests were removed from here as exact duplicates of
+  // semantic-package.spec.ts, which loads the same fixture and the same ~906 KB
+  // bundle:
+  //   - `bundle loads and exposes LokaScriptSemantic global @quick` was
+  //     byte-identical to that file's test of the same name (and the beforeEach
+  //     helper already fails loudly if the global never appears, so the
+  //     assertion was a third check of the same fact).
+  //   - `exposes parse function @quick` is a strict subset of that file's
+  //     `exposes all core API methods @quick`, which checks parse alongside the
+  //     rest of the surface.
+  // Every @quick test here costs a full bundle load, so the duplicates were the
+  // most expensive kind of redundancy in this suite.
 
   test('exposes translate function', async ({ page }) => {
     const hasTranslateFunction = await page.evaluate(() => {

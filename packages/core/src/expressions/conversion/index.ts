@@ -589,6 +589,3 @@ export type ConversionExpressionName = keyof typeof conversionExpressions;
 
 // Export utility functions for testing
 export { getFormValues, getFormValuesProcessed, getInputValue, parseFixedPrecision };
-
-// Re-export enhanced implementations for tests
-export { AsExpression, createAsExpression } from './impl/index';

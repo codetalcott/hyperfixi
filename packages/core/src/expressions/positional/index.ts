@@ -634,11 +634,3 @@ export {
   findPreviousElementWithinContainer,
   getElementPosition,
 };
-
-// Re-export enhanced implementations for tests
-export {
-  FirstExpression,
-  LastExpression,
-  createFirstExpression,
-  createLastExpression,
-} from './impl/index';

@@ -5,20 +5,20 @@
  * This ensures consistent multilingual support and identifies coverage gaps.
  *
  * Test structure:
- * - Each priority language (11) × each core command (10) = 110 test cases
- * - Tests verify: tokenization, parsing success, correct command extraction
+ * - Each priority language (14) × each core command (10) = 140 test cases
+ * - Each case asserts the parse extracts the right action.
+ *
+ * There is ONE assertion per cell by design. This file used to run three
+ * (`tokenizes`, `can parse`, `parses with correct action`) and the first two are
+ * strictly implied by the third: `canParse` is literally
+ * `try { parse(); return true } catch { return false }`, and a parse that yields
+ * the expected action necessarily tokenized. That made 280 of the 420 tests
+ * redundant parses of the same input.
  */
 
 import { describe, it, expect } from 'vitest';
 import { parse, canParse, tokenize } from '../../src';
-import {
-  PRIORITY_LANGUAGES,
-  CORE_COMMANDS,
-  TEST_CASES,
-  getTestCase,
-  type PriorityLanguage,
-  type CoreCommand,
-} from './test-cases';
+import { PRIORITY_LANGUAGES, CORE_COMMANDS, getTestCase } from './test-cases';
 
 // =============================================================================
 // Language Coverage Matrix
@@ -31,16 +31,6 @@ describe('Language Coverage Matrix', () => {
       // Test each core command
       for (const cmd of CORE_COMMANDS) {
         const testCase = getTestCase(cmd, lang);
-
-        it(`tokenizes "${cmd}" command: "${testCase}"`, () => {
-          const stream = tokenize(testCase, lang);
-          expect(stream.tokens.length).toBeGreaterThan(0);
-        });
-
-        it(`can parse "${cmd}" command: "${testCase}"`, () => {
-          const result = canParse(testCase, lang);
-          expect(result).toBe(true);
-        });
 
         it(`parses "${cmd}" with correct action: "${testCase}"`, () => {
           const node = parse(testCase, lang);
@@ -98,73 +88,11 @@ describe('Cross-Language Consistency', () => {
   });
 });
 
-// =============================================================================
-// Coverage Summary
-// =============================================================================
-
-describe('Coverage Summary', () => {
-  it('reports coverage statistics', () => {
-    const stats = {
-      totalTests: PRIORITY_LANGUAGES.length * CORE_COMMANDS.length,
-      byLanguage: {} as Record<PriorityLanguage, { passed: number; failed: number }>,
-      byCommand: {} as Record<CoreCommand, { passed: number; failed: number }>,
-    };
-
-    // Initialize counters
-    for (const lang of PRIORITY_LANGUAGES) {
-      stats.byLanguage[lang] = { passed: 0, failed: 0 };
-    }
-    for (const cmd of CORE_COMMANDS) {
-      stats.byCommand[cmd] = { passed: 0, failed: 0 };
-    }
-
-    // Collect stats
-    for (const lang of PRIORITY_LANGUAGES) {
-      for (const cmd of CORE_COMMANDS) {
-        const testCase = getTestCase(cmd, lang);
-        try {
-          const result = canParse(testCase, lang);
-          if (result) {
-            const node = parse(testCase, lang);
-            if (node.action === cmd) {
-              stats.byLanguage[lang].passed++;
-              stats.byCommand[cmd].passed++;
-            } else {
-              stats.byLanguage[lang].failed++;
-              stats.byCommand[cmd].failed++;
-            }
-          } else {
-            stats.byLanguage[lang].failed++;
-            stats.byCommand[cmd].failed++;
-          }
-        } catch {
-          stats.byLanguage[lang].failed++;
-          stats.byCommand[cmd].failed++;
-        }
-      }
-    }
-
-    // Log summary (visible in test output)
-    console.log('\n=== Language Coverage Summary ===\n');
-    console.log('By Language:');
-    for (const lang of PRIORITY_LANGUAGES) {
-      const { passed, failed } = stats.byLanguage[lang];
-      const pct = Math.round((passed / (passed + failed)) * 100);
-      console.log(`  ${lang.toUpperCase()}: ${passed}/${passed + failed} (${pct}%)`);
-    }
-
-    console.log('\nBy Command:');
-    for (const cmd of CORE_COMMANDS) {
-      const { passed, failed } = stats.byCommand[cmd];
-      const pct = Math.round((passed / (passed + failed)) * 100);
-      console.log(`  ${cmd}: ${passed}/${passed + failed} (${pct}%)`);
-    }
-
-    const totalPassed = Object.values(stats.byLanguage).reduce((sum, s) => sum + s.passed, 0);
-    const totalFailed = Object.values(stats.byLanguage).reduce((sum, s) => sum + s.failed, 0);
-    console.log(`\nTotal: ${totalPassed}/${totalPassed + totalFailed} (${Math.round((totalPassed / (totalPassed + totalFailed)) * 100)}%)`);
-
-    // This test always passes - it's for reporting only
-    expect(true).toBe(true);
-  });
-});
+// NOTE: a `Coverage Summary` describe used to sit here. It re-ran the entire
+// 140-cell matrix a FOURTH time purely to console.log pass percentages, then
+// closed with `expect(true).toBe(true)` — it could not fail, so it reported
+// nothing the matrix above doesn't already gate. Removed rather than kept as a
+// reporter: the per-cell test names already identify which language/command
+// broke, and the authoritative multilingual coverage numbers come from the
+// testing-framework sweep's committed baseline
+// (packages/testing-framework/baselines/multilingual-priority.json).
