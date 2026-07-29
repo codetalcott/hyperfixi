@@ -27,6 +27,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { commandMeta } from '../decorators';
 
 /**
  * Typed input for PseudoCommand
@@ -69,7 +70,7 @@ export class PseudoCommand {
   /**
    * Command metadata for documentation and tooling
    */
-  static readonly metadata = {
+  static readonly metadata = commandMeta({
     description: 'Treat a method on an object as a top-level command',
     syntax: ['<method>(<args>) [(to|on|with|into|from|at)] <expression>'],
     examples: [
@@ -80,7 +81,7 @@ export class PseudoCommand {
     ],
     category: 'execution',
     sideEffects: ['method-execution'],
-  } as const;
+  });
 
   /**
    * Instance accessor for metadata (backward compatibility)
