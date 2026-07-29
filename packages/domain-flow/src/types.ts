@@ -8,15 +8,7 @@
  */
 
 export type FlowAction =
-  | 'fetch'
-  | 'poll'
-  | 'stream'
-  | 'submit'
-  | 'transform'
-  | 'enter'
-  | 'follow'
-  | 'perform'
-  | 'capture';
+  'fetch' | 'poll' | 'stream' | 'submit' | 'transform' | 'enter' | 'follow' | 'perform' | 'capture';
 
 /**
  * Structured data flow specification.

@@ -122,7 +122,8 @@ describe('HTMLScanner', () => {
         attributeNames: ['hs', 'hyperscript'],
       });
 
-      const html = '<button hs="on click toggle .a">A</button><button hyperscript="toggle .b">B</button>';
+      const html =
+        '<button hs="on click toggle .a">A</button><button hyperscript="toggle .b">B</button>';
       const scripts = customScanner.extract(html, 'test.html');
 
       expect(scripts).toHaveLength(2);

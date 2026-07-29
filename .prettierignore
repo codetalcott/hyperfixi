@@ -6,6 +6,15 @@
 # docs/, CLAUDE.md) stays formatted.
 docs-internal/
 
+# Archived material: superseded phase/plan/summary docs kept for history, plus
+# retired workflows and scripts. Same prose-mangling risk as docs-internal/, and
+# nothing here is edited any more — so formatting them only drags unrelated
+# churn into whichever diff happens to touch them (52 of the 68 markdown files
+# that had drifted under the old floating prettier range lived in
+# packages/core/docs/archive/ alone). Live docs stay formatted; only /archive/
+# is exempt.
+**/archive/
+
 # Build outputs / generated / vendored — never formatted. Keeps the local
 # `format` / `format:check` scripts (prettier .) scoped to real source.
 **/dist/

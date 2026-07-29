@@ -34,8 +34,7 @@ import {
 } from '../decorators';
 
 export type ClearCommandInput =
-  | { type: 'variable'; name: string }
-  | { type: 'form-fields'; targets: HTMLElement[] };
+  { type: 'variable'; name: string } | { type: 'form-fields'; targets: HTMLElement[] };
 
 function isFormFieldElement(
   el: HTMLElement

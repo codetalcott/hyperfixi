@@ -16,12 +16,7 @@ import { escapeRegExp } from './utils.js';
 // =============================================================================
 
 export type SymbolKind =
-  | 'behavior'
-  | 'function'
-  | 'variable'
-  | 'event'
-  | 'caretVar'
-  | 'componentAttr';
+  'behavior' | 'function' | 'variable' | 'event' | 'caretVar' | 'componentAttr';
 
 export interface SymbolLocation {
   /** Line in the overall document (0-based). */

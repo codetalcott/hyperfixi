@@ -503,9 +503,7 @@ export function validateRoleValues(
  * Collision type indicating how the keyword overlap occurs.
  */
 export type KeywordCollisionType =
-  | 'primary-primary'
-  | 'primary-alternative'
-  | 'alternative-alternative';
+  'primary-primary' | 'primary-alternative' | 'alternative-alternative';
 
 /**
  * A keyword collision between two or more commands in a language profile.

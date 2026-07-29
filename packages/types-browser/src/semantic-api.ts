@@ -3,19 +3,7 @@
  */
 
 export type SupportedLanguage =
-  | 'en'
-  | 'ja'
-  | 'ar'
-  | 'es'
-  | 'ko'
-  | 'tr'
-  | 'zh'
-  | 'pt'
-  | 'fr'
-  | 'de'
-  | 'id'
-  | 'qu'
-  | 'sw';
+  'en' | 'ja' | 'ar' | 'es' | 'ko' | 'tr' | 'zh' | 'pt' | 'fr' | 'de' | 'id' | 'qu' | 'sw';
 
 /**
  * HyperFixi semantic parser API exposed on window.HyperFixiSemantic

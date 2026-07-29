@@ -60,11 +60,7 @@ export interface FeedbackDiagnostic {
  * Machine-actionable fix type for LLM retry logic.
  */
 export type FixType =
-  | 'missing_role'
-  | 'invalid_type'
-  | 'unknown_command'
-  | 'unknown_role'
-  | 'syntax_error';
+  'missing_role' | 'invalid_type' | 'unknown_command' | 'unknown_role' | 'syntax_error';
 
 // =============================================================================
 // Confidence-Aware Disambiguation (Level 2)

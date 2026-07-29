@@ -22,15 +22,7 @@ export type MarkingStrategy = 'preposition' | 'postposition' | 'particle' | 'cas
  * to handle mixed-script input (e.g., Arabic verb + CSS property name).
  */
 export type ScriptType =
-  | 'latin'
-  | 'cyrillic'
-  | 'arabic'
-  | 'cjk'
-  | 'devanagari'
-  | 'hangul'
-  | 'bengali'
-  | 'thai'
-  | 'hebrew';
+  'latin' | 'cyrillic' | 'arabic' | 'cjk' | 'devanagari' | 'hangul' | 'bengali' | 'thai' | 'hebrew';
 
 /**
  * A grammatical marker (preposition, particle, etc.) for a semantic role.

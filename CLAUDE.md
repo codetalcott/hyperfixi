@@ -282,7 +282,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 0    | `changes`                 | ✓   | ✓                 | Path classifier (code / protocol / goclient)      |
 | 1    | `build`                   | ✓   | ✓                 | Build all packages once; gated on `code` paths    |
 | 2    | `export-validation`       | ✓   | —                 | Verify package.json exports resolve to dist       |
-| 3    | `lint-typecheck`          | ✓   | —                 | ESLint + TypeScript checks                        |
+| 3    | `lint-typecheck`          | ✓   | —                 | oxlint + TypeScript checks                        |
 | 4    | `unit-tests`              | ✓   | —                 | Vitest tests on Node 24                           |
 | 5    | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)       |
 | 6    | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)             |

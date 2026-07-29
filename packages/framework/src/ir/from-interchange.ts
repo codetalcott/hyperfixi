@@ -167,8 +167,7 @@ function convertIf(node: INode): SemanticNode {
   let elseBranch: SemanticNode[] | undefined;
 
   const elseIfBranches = node.elseIfBranches as
-    | ReadonlyArray<{ condition: INode; body: INode[] }>
-    | undefined;
+    ReadonlyArray<{ condition: INode; body: INode[] }> | undefined;
 
   if (elseIfBranches && elseIfBranches.length > 0) {
     // Chain else-if branches as nested conditionals

@@ -17,11 +17,7 @@ import { isHTMLElement } from '../../utils/element-check';
  * Note: We use a custom type name to avoid conflict with the DOM InsertPosition type
  */
 export type ContentInsertPosition =
-  | 'beforebegin'
-  | 'afterbegin'
-  | 'beforeend'
-  | 'afterend'
-  | 'replace';
+  'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'replace';
 
 /**
  * Semantic position names mapped to InsertPosition

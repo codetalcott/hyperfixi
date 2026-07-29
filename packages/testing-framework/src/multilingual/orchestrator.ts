@@ -155,8 +155,7 @@ export class TestOrchestrator {
       // Report regression if enabled
       if (this.config.regression) {
         const regressionReporter = this.reporters.find(r => r instanceof RegressionReporter) as
-          | RegressionReporter
-          | undefined;
+          RegressionReporter | undefined;
 
         if (regressionReporter?.hasBaseline()) {
           const regressionResults = regressionReporter.getRegressionResults();
@@ -471,8 +470,7 @@ export class TestOrchestrator {
    */
   getRegressionReporter(): RegressionReporter | undefined {
     return this.reporters.find(r => r instanceof RegressionReporter) as
-      | RegressionReporter
-      | undefined;
+      RegressionReporter | undefined;
   }
 }
 

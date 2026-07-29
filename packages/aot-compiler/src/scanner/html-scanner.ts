@@ -5,7 +5,12 @@
  * Supports _ attributes, data-hs attributes, and script tags.
  */
 
-import type { ExtractedScript, SourceLocation, ScannerOptions, ScanResult } from '../types/aot-types.js';
+import type {
+  ExtractedScript,
+  SourceLocation,
+  ScannerOptions,
+  ScanResult,
+} from '../types/aot-types.js';
 
 // =============================================================================
 // DEFAULT OPTIONS
@@ -27,10 +32,7 @@ const DEFAULT_OPTIONS: Required<ScannerOptions> = {
  */
 function createAttributeRegex(attrName: string): RegExp {
   const escaped = attrName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(
-    `${escaped}\\s*=\\s*(?:"([^"]*?)"|'([^']*?)'|([^\\s>]+))`,
-    'gi'
-  );
+  return new RegExp(`${escaped}\\s*=\\s*(?:"([^"]*?)"|'([^']*?)'|([^\\s>]+))`, 'gi');
 }
 
 /**
@@ -41,7 +43,8 @@ const ELEMENT_REGEX = /<([a-z][a-z0-9-]*)\s+([^>]*?)>/gi;
 /**
  * Match script tags with type="text/hyperscript".
  */
-const SCRIPT_TAG_REGEX = /<script\s+[^>]*type\s*=\s*["']text\/hyperscript["'][^>]*>([\s\S]*?)<\/script>/gi;
+const SCRIPT_TAG_REGEX =
+  /<script\s+[^>]*type\s*=\s*["']text\/hyperscript["'][^>]*>([\s\S]*?)<\/script>/gi;
 
 /**
  * Extract id attribute from element.
@@ -457,7 +460,10 @@ export async function scanFiles(
 /**
  * Create a scanner for the appropriate file type.
  */
-export function createScanner(filename: string, options?: ScannerOptions): HTMLScanner | JSXScanner {
+export function createScanner(
+  filename: string,
+  options?: ScannerOptions
+): HTMLScanner | JSXScanner {
   if (filename.endsWith('.vue')) {
     return new VueScanner(options);
   }

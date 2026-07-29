@@ -142,13 +142,7 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
       return {
         type: 'positional',
         position: node.position as
-          | 'first'
-          | 'last'
-          | 'next'
-          | 'previous'
-          | 'closest'
-          | 'parent'
-          | 'random',
+          'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
         ...(node.target ? { target: fromCoreAST(node.target as CoreNode) } : {}),
         ...pos(node),
       };
@@ -156,13 +150,7 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
       return {
         type: 'positional',
         position: node.operator as
-          | 'first'
-          | 'last'
-          | 'next'
-          | 'previous'
-          | 'closest'
-          | 'parent'
-          | 'random',
+          'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
         ...(node.argument ? { target: fromCoreAST(node.argument as CoreNode) } : {}),
         ...pos(node),
       };

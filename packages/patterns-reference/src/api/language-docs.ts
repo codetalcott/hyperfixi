@@ -172,8 +172,7 @@ export async function getCommandByName(
   const db = getDatabase({ ...options, readonly: true });
 
   const row = db.prepare('SELECT * FROM commands WHERE LOWER(name) = LOWER(?)').get(name) as
-    | CommandRow
-    | undefined;
+    CommandRow | undefined;
 
   return row ? mapCommand(row) : null;
 }
@@ -224,8 +223,7 @@ export async function getExpressionByName(
   const db = getDatabase({ ...options, readonly: true });
 
   const row = db.prepare('SELECT * FROM expressions WHERE LOWER(name) = LOWER(?)').get(name) as
-    | ExpressionRow
-    | undefined;
+    ExpressionRow | undefined;
 
   if (!row) return null;
 
@@ -312,8 +310,7 @@ export async function getKeywordByName(
   const db = getDatabase({ ...options, readonly: true });
 
   const row = db.prepare('SELECT * FROM keywords WHERE LOWER(name) = LOWER(?)').get(name) as
-    | KeywordRow
-    | undefined;
+    KeywordRow | undefined;
 
   return row ? mapKeyword(row) : null;
 }
@@ -343,8 +340,7 @@ export async function getFeatureByName(
   const db = getDatabase({ ...options, readonly: true });
 
   const row = db.prepare('SELECT * FROM features WHERE LOWER(name) = LOWER(?)').get(name) as
-    | FeatureRow
-    | undefined;
+    FeatureRow | undefined;
 
   return row ? mapFeature(row) : null;
 }

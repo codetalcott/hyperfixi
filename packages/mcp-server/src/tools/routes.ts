@@ -143,11 +143,7 @@ async function generateServerRoutes(args: Record<string, unknown>): Promise<Tool
 
   const html = getString(args, 'html');
   const framework = getString(args, 'framework', 'express') as
-    | 'express'
-    | 'hono'
-    | 'openapi'
-    | 'django'
-    | 'fastapi';
+    'express' | 'hono' | 'openapi' | 'django' | 'fastapi';
   const typescript = getBoolean(args, 'typescript', true);
   const filename = getString(args, 'filename', 'input.html');
 
