@@ -40,8 +40,8 @@ Use the `@hyperscript-tools/vscode` extension instead — it bundles this server
 
 This is a thin wrapper around `@lokascript/language-server` that defaults to `hyperscript` mode. In this mode:
 
-- Only \_hyperscript-compatible commands are suggested (31 commands)
-- LokaScript extensions (make, settle, measure, etc.) are flagged as errors
+- Only \_hyperscript-compatible commands are suggested (51 of the engine's 59, plus the `for`/`while` loop keywords and the 7 feature definitions)
+- LokaScript extensions (`prepend`, `process`, `copy`, `push`/`replace`, `async`, `unless`, bare `beep`) are flagged as errors — the full list is `LOKASCRIPT_ONLY_COMMANDS` in `@lokascript/language-server`, where each entry records the probe against the published `hyperscript.org` engine that classified it
 - LokaScript syntax patterns (dot notation, optional chaining) produce warnings
 - No multilingual features are exposed
 

@@ -83,9 +83,18 @@ const REGISTERED = new Set(REGISTRY);
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 
-/** Extract the single-quoted string literals from a source-text block. */
+/**
+ * Extract the single-quoted string literals from a source-text block.
+ *
+ * Line comments are stripped FIRST. The lists this reads are annotated data —
+ * step 4.1 put the upstream-parity probe for each command in a trailing `//`
+ * comment — and prose contains apostrophes, which would otherwise pair up
+ * across lines and yield a multi-line "name" that no registry has. Command
+ * names never contain `//`, so removing it to end-of-line cannot eat one.
+ */
 function stringsIn(block: string): string[] {
-  return (block.match(/'[^']+'/g) ?? []).map(s => s.slice(1, -1));
+  const code = block.replace(/\/\/[^\n]*/g, '');
+  return (code.match(/'[^'\n]+'/g) ?? []).map(s => s.slice(1, -1));
 }
 
 /** Entries of `list` the registry does not have, sorted. */
@@ -338,10 +347,22 @@ const tiersSource = readFileSync(
   resolve(DIR, '../../../../language-server/src/command-tiers.ts'),
   'utf-8'
 );
-const HYPERSCRIPT_TIER = stringsIn(tiersSource.match(/HYPERSCRIPT_COMMANDS = \[([\s\S]*?)\]/)![1]);
-const LOKASCRIPT_TIER = stringsIn(
-  tiersSource.match(/LOKASCRIPT_ONLY_COMMANDS = \[([\s\S]*?)\]/)![1]
-);
+/**
+ * Anchored on the closing `] as const;` rather than the first `]`. The old
+ * non-greedy `\]` stopped at whatever bracket came first, so a `]` inside one
+ * of the annotation comments step 4.1 added would silently truncate the list
+ * and turn every command below it into a phantom gap.
+ */
+function tierList(name: string): string[] {
+  const block = tiersSource.match(new RegExp(`${name} = \\[([\\s\\S]*?)\\n\\] as const;`));
+  // Module scope, so a plain throw rather than expect(): a collection-time
+  // failure here must name the cause, not surface as "expect outside test".
+  if (!block) throw new Error(`${name} literal moved or changed shape in command-tiers.ts`);
+  return stringsIn(block[1]);
+}
+
+const HYPERSCRIPT_TIER = tierList('HYPERSCRIPT_COMMANDS');
+const LOKASCRIPT_TIER = tierList('LOKASCRIPT_ONLY_COMMANDS');
 
 /**
  * In the tier lists but not registered commands, legitimately: the seven
@@ -361,42 +382,48 @@ const TIER_NOT_COMMANDS = new Set([
 ]);
 
 /**
- * Registered commands in NEITHER tier list — unclassified against a file whose
- * own doc comment defines a partition ("which features are hyperscript … [or]
- * LokaScript extensions"). This is the arc's LIVE defect:
- * `detectLokascriptFeatures()` warns only for commands in
- * `LOKASCRIPT_ONLY_COMMANDS`, so a LokaScript-only command missing here
- * produces NO compatibility warning. Several of these (`empty`, `clear`,
- * `open`, `close`, `select`, `reset`, `swap`, `push`, `replace`, `focus`,
- * `blur`, `copy`, `unless`) read as extensions on the Arc C upstream survey.
+ * Registered commands in NEITHER tier list — **empty since step 4.1**, and the
+ * assertion below keeps it that way.
  *
- * Every entry is fixed by step 4.1 — a per-command classification against the
- * upstream _hyperscript checkout, not a mechanical migration.
+ * It held 23 names. That was the arc's one LIVE defect rather than a latent
+ * one: `detectLokascriptFeatures()` scans only `LOKASCRIPT_ONLY_COMMANDS`, and
+ * `language-server/src/server.ts` turns each hit into a
+ * `DiagnosticSeverity.Error`, so an unclassified extension produced NO
+ * diagnostic — a user writing non-portable code was told nothing.
+ *
+ * Step 4.1 classified all 23 against the published original engine
+ * (`hyperscript.org@0.9.93` from this repo's node_modules, cross-checked
+ * against an 0.9.91 checkout): **17 upstream, 6 extension**. The per-command
+ * probe that decided each row is recorded beside it in `command-tiers.ts`.
+ *
+ * Worth keeping as a named empty set rather than deleting: a command added
+ * later without a tier row lands here, and the failure message says
+ * "unclassified" instead of reporting a bare set difference.
  */
-const TIER_UNCLASSIFIED = new Set([
+const TIER_UNCLASSIFIED = new Set<string>([]);
+
+/**
+ * The classification, counted. Step 4.1's judgment calls are only reviewable
+ * if a later change has to move a number as well as a row — the same
+ * discipline as §8's headline counts. 51 + 8 = the 59 registered commands.
+ */
+const TIER_COUNTS = { upstream: 51, extension: 8 };
+
+/**
+ * The eight extensions, named. A count alone would let two rows swap sides
+ * unnoticed, and this list is what `detectLokascriptFeatures()` raises editor
+ * ERRORS from, so moving a command into or out of it is a user-visible change
+ * that should never be incidental to another edit.
+ */
+const EXTENSIONS = new Set([
   'async',
-  'beep',
-  'blur',
-  'break',
-  'breakpoint',
-  'clear',
-  'close',
-  'continue',
+  'beep', // upstream spells it `beep!`; the bare spelling is ours
   'copy',
-  'empty',
-  'focus',
-  'open',
-  'pick',
-  'pseudo-command',
+  'prepend',
+  'process',
   'push',
-  'render',
   'replace',
-  'reset',
-  'scroll',
-  'select',
-  'start',
-  'swap',
-  'unless',
+  'unless', // upstream has `unless` only as a TRAILING statement modifier
 ]);
 
 describe('the LSP tier lists', () => {
@@ -408,10 +435,28 @@ describe('the LSP tier lists', () => {
     );
   });
 
-  it('23 registered commands are unclassified — the live false negative (step 4.1)', () => {
+  it('classifies every registered command — the partition is total (step 4.1)', () => {
     expect(gapsIn([...HYPERSCRIPT_TIER, ...LOKASCRIPT_TIER])).toEqual(
       [...TIER_UNCLASSIFIED].sort()
     );
+    expect(TIER_UNCLASSIFIED.size, 'a command lost its classification').toBe(0);
+  });
+
+  it('the two tiers split the registry 51 / 8', () => {
+    const upstream = HYPERSCRIPT_TIER.filter(name => REGISTERED.has(name));
+    const extension = LOKASCRIPT_TIER.filter(name => REGISTERED.has(name));
+    expect(extension.sort()).toEqual([...EXTENSIONS].sort());
+    expect({ upstream: upstream.length, extension: extension.length }).toEqual(TIER_COUNTS);
+    expect(upstream.length + extension.length).toBe(REGISTRY.length);
+  });
+
+  it('the tiers stay disjoint', () => {
+    // command-tiers.test.ts asserts this too, but from inside the
+    // language-server package. Repeated here because §7 derives the manifest's
+    // upstreamOrExtension from these lists with `HYPERSCRIPT_TIER` winning:
+    // a name in both would silently classify as upstream.
+    const upstream = new Set(HYPERSCRIPT_TIER);
+    expect(LOKASCRIPT_TIER.filter(name => upstream.has(name))).toEqual([]);
   });
 });
 
@@ -770,15 +815,18 @@ describe('the command manifest', () => {
     }
   });
 
-  it('the unknown set IS the audit TIER_UNCLASSIFIED set (step 4.1 moves both)', () => {
+  it('the unknown set IS the audit TIER_UNCLASSIFIED set (both empty since 4.1)', () => {
     // The coupling that stops the two from drifting apart — which is the exact
-    // disease this arc exists to cure. Classifying a command in step 4.1 must
-    // delete its row HERE and in TIER_UNCLASSIFIED in the same diff, or this
-    // fails.
+    // disease this arc exists to cure. It did its job in step 4.1: classifying
+    // the 23 required deleting each row HERE and in TIER_UNCLASSIFIED in one
+    // diff. Both sides are now empty, so on its own this is a weak assertion —
+    // the load is carried by the per-command equality test above and by §3's
+    // 51/8 split, which a re-classification cannot satisfy by accident.
     const unknown = COMMAND_MANIFEST.filter(e => e.upstreamOrExtension === 'unknown')
       .map(e => e.name)
       .sort();
     expect(unknown).toEqual([...TIER_UNCLASSIFIED].sort());
+    expect(unknown).toEqual([]);
   });
 });
 
@@ -787,12 +835,15 @@ describe('the command manifest', () => {
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
-  it('40 rows await deliberate classification (steps 4.1–4.3)', () => {
+  it('17 rows await deliberate classification (steps 4.2–4.3)', () => {
     // The numbers the arc exists to burn down. A step that classifies a
     // command flips its allowlist row AND moves the count here, so the diff
     // shows both the decision and its scope. Do not adjust a count without
     // moving the rows that justify it.
-    expect(TIER_UNCLASSIFIED.size).toBe(23); // step 4.1 — live LSP false negative
+    //
+    // Step 4.1 took this from 40 to 17: the LSP tier lists are now a total
+    // partition of the registry (51 upstream / 8 extension), asserted in §3.
+    expect(TIER_UNCLASSIFIED.size).toBe(0); // step 4.1 — DONE, was 23
     expect(CAPABILITY_UNCLASSIFIED.size).toBe(10); // step 4.2 — latent, costs bundle size
     expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — decide blocks-as-classification
     expect(KEYWORD_GAPS.size).toBe(4); // step 4.3 — missing LSP completions

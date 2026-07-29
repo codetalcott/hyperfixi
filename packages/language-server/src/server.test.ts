@@ -1781,12 +1781,51 @@ describe('Command Tiers', () => {
     });
 
     it('classifies lokascript extensions as lokascript-only', () => {
-      expect(isLokascriptOnlyCommand('make')).toBe(true);
-      expect(isLokascriptOnlyCommand('settle')).toBe(true);
-      expect(isLokascriptOnlyCommand('measure')).toBe(true);
-      expect(isLokascriptOnlyCommand('morph')).toBe(true);
+      // Every name here was rejected by hyperscript.org@0.9.93 — the probe is
+      // recorded per-row in command-tiers.ts. `make`/`settle`/`measure`/
+      // `morph`/`install` used to be asserted here and are NOT extensions; Arc
+      // A step 4.1 measured them and moved them (see the test below).
       expect(isLokascriptOnlyCommand('prepend')).toBe(true);
-      expect(isLokascriptOnlyCommand('install')).toBe(true);
+      expect(isLokascriptOnlyCommand('process')).toBe(true);
+      expect(isLokascriptOnlyCommand('async')).toBe(true);
+      expect(isLokascriptOnlyCommand('copy')).toBe(true);
+      expect(isLokascriptOnlyCommand('push')).toBe(true);
+      expect(isLokascriptOnlyCommand('replace')).toBe(true);
+      expect(isLokascriptOnlyCommand('beep')).toBe(true);
+      expect(isLokascriptOnlyCommand('unless')).toBe(true);
+    });
+
+    it('classifies upstream commands this list once called extensions', () => {
+      // The false-POSITIVE half of step 4.1. These five sat in
+      // LOKASCRIPT_ONLY_COMMANDS, so the LSP raised a DiagnosticSeverity.Error
+      // on portable code. All five parse on stock hyperscript.org@0.9.93.
+      for (const cmd of ['make', 'settle', 'measure', 'morph', 'install']) {
+        expect(isHyperscriptCommand(cmd), `${cmd} is upstream`).toBe(true);
+        expect(isLokascriptOnlyCommand(cmd), `${cmd} is not an extension`).toBe(false);
+      }
+    });
+
+    it('classifies the commands step 4.1 added to the upstream tier', () => {
+      // The false-NEGATIVE half: these were in NEITHER list, so nothing
+      // classified them at all.
+      for (const cmd of [
+        'blur',
+        'clear',
+        'empty',
+        'focus',
+        'open',
+        'close',
+        'pick',
+        'render',
+        'reset',
+        'scroll',
+        'select',
+        'start',
+        'swap',
+        'breakpoint',
+      ]) {
+        expect(isHyperscriptCommand(cmd), `${cmd} is upstream`).toBe(true);
+      }
     });
 
     it('does not classify hyperscript commands as lokascript-only', () => {
@@ -1796,16 +1835,16 @@ describe('Command Tiers', () => {
     });
 
     it('does not classify lokascript commands as hyperscript', () => {
-      expect(isHyperscriptCommand('morph')).toBe(false);
+      expect(isHyperscriptCommand('prepend')).toBe(false);
       expect(isHyperscriptCommand('persist')).toBe(false);
-      expect(isHyperscriptCommand('settle')).toBe(false);
+      expect(isHyperscriptCommand('process')).toBe(false);
     });
 
     it('handles case insensitivity', () => {
       expect(isHyperscriptCommand('Toggle')).toBe(true);
       expect(isHyperscriptCommand('TOGGLE')).toBe(true);
-      expect(isLokascriptOnlyCommand('Morph')).toBe(true);
-      expect(isLokascriptOnlyCommand('MORPH')).toBe(true);
+      expect(isLokascriptOnlyCommand('Prepend')).toBe(true);
+      expect(isLokascriptOnlyCommand('PREPEND')).toBe(true);
     });
   });
 
@@ -1813,16 +1852,16 @@ describe('Command Tiers', () => {
     it('returns only hyperscript commands in hyperscript mode', () => {
       const commands = getCommandsForMode('hyperscript');
       expect(commands).toEqual(HYPERSCRIPT_COMMANDS);
-      expect(commands).not.toContain('morph');
       expect(commands).not.toContain('prepend');
+      expect(commands).not.toContain('unless');
     });
 
     it('returns all commands in lokascript mode', () => {
       const commands = getCommandsForMode('lokascript');
       expect(commands).toEqual(ALL_COMMANDS);
       expect(commands).toContain('toggle');
-      expect(commands).toContain('morph');
       expect(commands).toContain('prepend');
+      expect(commands).toContain('unless');
     });
 
     it('lokascript mode includes all hyperscript commands', () => {
@@ -1858,17 +1897,45 @@ describe('Command Tiers', () => {
 describe('LokaScript Feature Detection', () => {
   describe('detectLokascriptFeatures', () => {
     it('detects lokascript-only commands', () => {
-      const features = detectLokascriptFeatures('morph #target to "<div>new</div>"');
+      const features = detectLokascriptFeatures('prepend "<li>x</li>" to #list');
       expect(features).toHaveLength(1);
       expect(features[0].feature).toBe('command');
-      expect(features[0].description).toContain("'morph'");
+      expect(features[0].description).toContain("'prepend'");
       expect(features[0].description).toContain('LokaScript extension');
     });
 
     it('detects multiple lokascript-only commands', () => {
-      const features = detectLokascriptFeatures('make a div then settle then morph it');
+      const features = detectLokascriptFeatures('prepend "x" to #a then copy it then beep');
       const commandFeatures = features.filter(f => f.feature === 'command');
       expect(commandFeatures.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('stays silent on upstream commands it used to flag (step 4.1)', () => {
+      // The regression this half of step 4.1 fixes: every one of these parses
+      // on stock hyperscript.org, and each produced an editor ERROR reading
+      // "'X' command is a LokaScript extension (not compatible with
+      // _hyperscript)". Measured, not assumed — see command-tiers.ts.
+      const portable = 'make a <div/> then settle then morph #a to "<p>x</p>" then measure #b';
+      expect(detectLokascriptFeatures(portable).filter(f => f.feature === 'command')).toEqual([]);
+      expect(detectLokascriptFeatures('install Draggable')).toEqual([]);
+    });
+
+    it('now warns on the extensions that were classified nowhere (step 4.1)', () => {
+      // The other half: these were in NEITHER tier list, so detection returned
+      // nothing at all and non-portable code shipped unflagged.
+      for (const [code, cmd] of [
+        ['async do log "x" end', 'async'],
+        ['copy "text"', 'copy'],
+        ['push url "/next"', 'push'],
+        ['replace url "/next"', 'replace'],
+        ['unless $x is empty log "y" end', 'unless'],
+      ] as const) {
+        const commands = detectLokascriptFeatures(code).filter(f => f.feature === 'command');
+        expect(
+          commands.map(f => f.pattern),
+          code
+        ).toContain(cmd);
+      }
     });
 
     it('detects dot notation syntax', () => {
@@ -1938,7 +2005,7 @@ describe('LokaScript Feature Detection', () => {
     it('detects multiple feature types in one code block', () => {
       const code = `on input.debounce(300)
         set val to my.value as Int
-        morph #preview to val`;
+        prepend val to #preview`;
       const features = detectLokascriptFeatures(code);
 
       expect(features.some(f => f.pattern === 'debounce')).toBe(true);
@@ -1951,8 +2018,11 @@ describe('LokaScript Feature Detection', () => {
 
 describe('Mode-Specific Behavior', () => {
   describe('hyperscript mode constraints', () => {
-    it('should flag morph command in hyperscript mode', () => {
-      const features = detectLokascriptFeatures('morph #target to html');
+    it('should flag prepend command in hyperscript mode', () => {
+      // Was `morph`, which step 4.1 measured to be upstream (it parses on
+      // stock hyperscript.org) and moved to HYPERSCRIPT_COMMANDS. `prepend` is
+      // a real extension: upstream offers only `put <x> at the start of <y>`.
+      const features = detectLokascriptFeatures('prepend "<li>x</li>" to #list');
       expect(features.length).toBeGreaterThan(0);
       // detectLokascriptFeatures returns the base description
       // The server adds "(not compatible with _hyperscript)" when reporting
@@ -2055,7 +2125,7 @@ describe('Server Mode Types', () => {
       // Both should flag LokaScript-only features
       // Both should use hyperscript branding
       // Only hyperscript-i18n enables multilingual
-      const features = detectLokascriptFeatures('morph #target');
+      const features = detectLokascriptFeatures('prepend "x" to #target');
       expect(features.length).toBeGreaterThan(0); // Flagged in both modes
     });
 
@@ -2067,8 +2137,8 @@ describe('Server Mode Types', () => {
       const lokascriptCommands = getCommandsForMode('lokascript');
 
       // hyperscript-i18n would use hyperscript command set
-      expect(hyperscriptCommands).not.toContain('morph');
-      expect(lokascriptCommands).toContain('morph');
+      expect(hyperscriptCommands).not.toContain('prepend');
+      expect(lokascriptCommands).toContain('prepend');
     });
   });
 });
