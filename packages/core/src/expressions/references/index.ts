@@ -452,14 +452,3 @@ export const referencesExpressions = {
 } as const;
 
 export type ReferenceExpressionName = keyof typeof referencesExpressions;
-
-// Re-export implementations for tests
-export {
-  MeExpression,
-  YouExpression,
-  ItExpression,
-  CSSSelectorExpression,
-  createMeExpression,
-  createYouExpression,
-  createItExpression,
-} from './impl/index';

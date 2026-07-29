@@ -1031,13 +1031,3 @@ export const logicalExpressions = {
 } as const;
 
 export type LogicalExpressionName = keyof typeof logicalExpressions;
-
-// Re-export implementations for tests
-export {
-  AndExpression,
-  OrExpression,
-  NotExpression,
-  createAndExpression,
-  createOrExpression,
-  createNotExpression,
-} from './impl/index';

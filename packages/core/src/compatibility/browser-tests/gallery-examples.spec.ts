@@ -36,13 +36,19 @@ const EXAMPLES_TO_TEST = [
   '/examples/drag-and-drop/sortable-list.html',
 ];
 
+// NOTE: nothing here is tagged @quick anymore, so this whole file is
+// full-project only. It used to tag the seven events-and-dom/toggle-and-state
+// examples, and gallery-interactions.spec.ts already covers all seven with a
+// STRICTLY STRONGER @quick test: it loads the same page, asserts
+// expectNoCriticalErrors (the same console/pageerror check this file makes) AND
+// verifies observable DOM behaviour. Five were covered outright; send-events and
+// tell-command had behavioural tests that were merely untagged, so they were
+// promoted to @quick rather than keeping the load-only versions here. That is
+// the same reasoning this file's counterpart records in its own header ("runtime
+// errors that only fire on user interaction were invisible to load-only tests").
 test.describe('Gallery Examples @gallery', () => {
   for (const example of EXAMPLES_TO_TEST) {
-    const isBasic =
-      example.startsWith('/examples/events-and-dom/') ||
-      example.startsWith('/examples/toggle-and-state/');
-    const tagSuffix = isBasic ? ' @quick' : '';
-    test(`${example} loads without JS errors${tagSuffix}`, async ({ page }) => {
+    test(`${example} loads without JS errors`, async ({ page }) => {
       const errors: string[] = [];
 
       page.on('console', msg => {

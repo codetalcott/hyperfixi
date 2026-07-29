@@ -14,7 +14,7 @@ Decision tree for the most common cases:
 3. **Need only htmx v1/v2 attributes (`hx-get`/`hx-post`/etc.)?** Use `hyperfixi-hx.js` (~18 KB gz). Includes htmx-compat + the slim hybrid runtime for `_=` attributes. No reactivity, no streaming.
 4. **Pure hyperscript (`_=` attributes), ~85% feature coverage, smallest realistic size?** Use `hyperfixi-hybrid-complete.js` (~8.2 KB gz). Full AST parser, expressions, event modifiers, block commands (`if`, `for`, `repeat`, `while`, `fetch`).
 5. **Tiny static page (toggle / show / hide / put / set)?** Use `hyperfixi-lite.js` (~1.9 KB gz). Regex parser, 8 commands. Drops to `hyperfixi-lite-plus.js` (~2.6 KB gz) if you need a few more commands + i18n aliases.
-6. **Authoring in multiple languages (Japanese, Korean, Arabic, etc.) or need the full semantic parser at runtime?** Use `hyperfixi.js` (full bundle, ~310 KB gz) or `hyperfixi-multilingual.js` (~97 KB, parser-free i18n via the semantic bundle loaded separately).
+6. **Authoring in multiple languages (Japanese, Korean, Arabic, etc.) or need the full semantic parser at runtime?** Use `hyperfixi.js` (full bundle, ~310 KB gz) or `hyperfixi-multilingual.js` (~93 KB, parser-free i18n via the semantic bundle loaded separately).
 
 Rule of thumb: start as small as you can; upgrade when you hit a missing feature. The vite plugin removes this decision entirely for projects that use it.
 
@@ -301,7 +301,7 @@ For developers writing hyperscript in their native language:
 </script>
 ```
 
-**Total size:** ~300 KB gz (97 KB multilingual + 203 KB all-24 semantic) vs ~310 KB gz full bundle
+**Total size:** ~296 KB gz (93 KB multilingual + 203 KB all-24 semantic) vs ~309 KB gz full bundle
 
 ## Full Bundle Usage
 

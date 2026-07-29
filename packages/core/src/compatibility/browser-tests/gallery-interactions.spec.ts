@@ -439,7 +439,9 @@ test.describe('Landing Page @gallery @interaction', () => {
     expectNoCriticalErrors(collector);
   });
 
-  test('send-events: send hello updates event log', async ({ page }) => {
+  // @quick: promoted from gallery-examples.spec.ts's load-only smoke test for
+  // this page — same cost in the quick project, but asserts behaviour too.
+  test('send-events: send hello updates event log @quick', async ({ page }) => {
     const collector = await setup(page, '/examples/events-and-dom/send-events.html');
 
     await page.locator('button:has-text("Send")').click();
@@ -451,7 +453,9 @@ test.describe('Landing Page @gallery @interaction', () => {
     expectNoCriticalErrors(collector);
   });
 
-  test('tell-command: highlight paragraphs in article', async ({ page }) => {
+  // @quick: promoted from gallery-examples.spec.ts's load-only smoke test for
+  // this page — same cost in the quick project, but asserts behaviour too.
+  test('tell-command: highlight paragraphs in article @quick', async ({ page }) => {
     const collector = await setup(page, '/examples/events-and-dom/tell-command.html');
 
     // Click the article to trigger tell <p/> in me add .highlight

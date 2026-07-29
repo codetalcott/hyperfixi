@@ -10,14 +10,20 @@
 #   PR therefore runs just the fast required checks → reports green → mergeable,
 #   while skipping the expensive jobs.
 #
-#   push to main / develop — post-merge effects ONLY:
+#   push to main / develop — the tree-skew detector ONLY: `build`. The skew
+#   detectors (export-validation, lint-typecheck, unit-tests) are NOT re-run on
+#   push: branch protection is `strict` (branch must be up to date), so the PR
+#   already validated the exact merged result.
+#
+#   schedule (nightly) / workflow_dispatch — the trend jobs:
 #     - build      (needed by the two below)
 #     - coverage   (uploads to Codecov)
-#     - benchmarks (tracks perf trends on main)
-#   The skew detectors (export-validation, lint-typecheck, unit-tests) are NOT
-#   re-run on push: branch protection is `strict` (branch must be up to date),
-#   so the PR already validated the exact merged result. This removes the only
-#   PR<->push duplication.
+#     - benchmarks (tracks perf trends)
+#   These are NOT on push. Under `strict` branch protection the post-merge tree
+#   is the tree the PR validated, so running coverage there re-executed the full
+#   core + semantic + i18n + language-server suites (430 files) a second time per
+#   merge for a Codecov datapoint. Nightly keeps the trend and drops the
+#   duplicate execution. Neither job is a gate (both are continue-on-error).
 #
 #   `concurrency: cancel-in-progress` means rapid pushes to a PR cancel stale
 #   runs, so the heavy jobs effectively run once per PR — most of a merge
@@ -35,6 +41,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Nightly trend jobs (coverage + benchmarks). They used to run on every push
+  # to main, which under `strict` branch protection re-ran suites the PR had
+  # already run on the identical tree. Runs on the default branch.
+  schedule:
+    - cron: '0 6 * * *'
+  # Manual trigger for the same trend jobs (also the way to verify this path
+  # without waiting for the cron).
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,6 +73,10 @@ jobs:
     name: Detect changes
     runs-on: ubuntu-latest
     # Runs on push too: `build` (push + PR) now gates on the `code` output.
+    # Skipped on schedule/workflow_dispatch — dorny/paths-filter has no diff base
+    # on those events, and the nightly trend jobs want to run unconditionally.
+    # `build` compensates with an explicit status function (see its `if:`).
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     outputs:
       code: ${{ steps.filter.outputs.code }}
       protocol: ${{ steps.filter.outputs.protocol }}
@@ -126,7 +144,20 @@ jobs:
     # build the shipped-sources gate needs. Everything else downstream stays
     # gated on `code` alone, so that PR pays for one build and one small job,
     # not the full fan-out.
-    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.docsources == 'true'
+    #
+    # The `!cancelled()` status function is REQUIRED, not cosmetic: `changes` is
+    # skipped on schedule/workflow_dispatch, and without an explicit status
+    # function GitHub applies an implicit `success()` to every `needs`, which
+    # would skip this job (and with it the nightly coverage/benchmarks that need
+    # it). `needs.changes.result != 'failure'` keeps a genuinely broken
+    # classifier from silently building anyway.
+    if: >-
+      ${{ !cancelled()
+          && needs.changes.result != 'failure'
+          && (github.event_name == 'schedule'
+              || github.event_name == 'workflow_dispatch'
+              || needs.changes.outputs.code == 'true'
+              || needs.changes.outputs.docsources == 'true') }}
 
     steps:
       - name: Checkout
@@ -378,10 +409,12 @@ jobs:
   export-validation:
     name: Export Validation
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, changes]
     # PR-only: `strict` branch protection means the PR validated the merged
     # result, so re-running this on the post-merge push would be redundant.
-    if: github.event_name == 'pull_request'
+    # Also gated on `code`: package exports cannot change in a docs/examples-only
+    # diff, and a skipped required check satisfies branch protection.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 5
 
     steps:
@@ -455,9 +488,11 @@ jobs:
   lint-typecheck:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, changes]
     # PR-only (see export-validation): redundant on push under `strict`.
-    if: github.event_name == 'pull_request'
+    # Also gated on `code`: a docs/examples-only PR has nothing to lint or
+    # typecheck, and a skipped required check satisfies branch protection.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 10
 
     steps:
@@ -553,8 +588,13 @@ jobs:
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
 
-      - name: Lint domains (cross-file invariants)
-        run: npm run lint:domains
+      # NOTE: `npm run lint:domains` deliberately does NOT run here. It is
+      # `npm test --prefix packages/domain-<x> -- --run lint`, i.e. vitest, and
+      # each domain's vitest include is `src/**/*.test.ts` — which already
+      # contains src/__test__/lint.test.ts. The unit-tests job therefore runs all
+      # nine domain lint suites; invoking them here too paid for nine extra
+      # vitest boots and nine ensure-fresh passes for zero additional coverage.
+      # The root script is kept for local use.
 
   # ============================================
   # Job 4: Unit Tests
@@ -562,9 +602,12 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, changes]
     # PR-only (see export-validation): redundant on push under `strict`.
-    if: github.event_name == 'pull_request'
+    # Also gated on `code`: a docs/examples-only PR ran the entire 27-package
+    # suite for nothing (the shipped-sources gate is what covers those trees,
+    # and it stays ungated). A skipped required check satisfies branch protection.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 15
 
     steps:
@@ -692,13 +735,17 @@ jobs:
         run: npm test --prefix packages/components -- --run
 
   # ============================================
-  # Job 5: Coverage Report
+  # Job 5: Coverage Report (nightly / manual)
+  # Was push-to-main. Under `strict` branch protection the post-merge tree IS the
+  # tree the PR validated, so this re-ran the full core + semantic + i18n +
+  # language-server suites (430 files) a second time per merge just to produce a
+  # Codecov datapoint. Nightly keeps the trend without the duplicate execution.
   # ============================================
   coverage:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 20
 
     steps:
@@ -928,13 +975,16 @@ jobs:
           cd packages/testing-framework
           npx tsx src/vocab/cli.ts validate
 
-      # Quick mode (10 core patterns/lang) is genuinely expected at 100% — a real
-      # gate, no continue-on-error. A drop here is a real regression in core
-      # multilingual parsing.
-      - name: Test priority languages (quick mode)
-        run: |
-          cd packages/testing-framework
-          npx tsx src/multilingual/cli.ts --languages en,ja,ko,es,zh,ar --quick --bundle browser-priority
+      # NOTE: the former "quick mode" step (--languages en,ja,ko,es,zh,ar --quick)
+      # is deliberately gone. It was a STRICT SUBSET of the full step below and
+      # bought no signal: --quick is a deterministic slice(0, 10) per language of
+      # the very same corpus (pattern-loader.ts samplePatterns, 'stratified' —
+      # no shuffle), its six languages are all inside the full step's list, and
+      # the committed baseline records all six at parseRate 1.000 across all 154
+      # patterns. So its "absolute 100%" assertion is implied by the full step's
+      # R5 per-pattern ratchet, which fails at tolerance 0 when ANY
+      # baseline-passing pattern stops parsing. Quick mode remains useful locally
+      # for fast iteration: add --quick to the command below.
 
       # Full mode is 154 patterns/lang, and the committed baseline now records
       # every one of the 24 languages at parseRate 1.000 (the historical ~85%
@@ -1354,13 +1404,15 @@ jobs:
         run: go test ./...
 
   # ============================================
-  # Job 11: Performance Benchmarks (main branch only)
+  # Job 11: Performance Benchmarks (nightly / manual)
+  # Trend tracking, never a gate (continue-on-error). Moved off push-to-main
+  # alongside coverage — see that job's note.
   # ============================================
   benchmarks:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 20
 
     steps:
@@ -1388,13 +1440,20 @@ jobs:
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
 
+      # `bench:ci`, not `bench:run`: only the former writes a results file
+      # (--reporter=json --outputFile=benchmark-results/latest.json). This job
+      # ran `bench:run`, which writes nothing, and then uploaded from
+      # ./core/benchmark-results/ — a path that does not exist (the real one is
+      # packages/core/benchmark-results/). Both halves of the trend-tracking
+      # output were therefore discarded; the job burned its budget for nothing.
       - name: Run benchmarks
-        run: npm run bench:run --prefix packages/core
+        run: npm run bench:ci --prefix packages/core
         continue-on-error: true
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
-          path: ./core/benchmark-results/
+          path: packages/core/benchmark-results/
           retention-days: 3
+          if-no-files-found: warn
