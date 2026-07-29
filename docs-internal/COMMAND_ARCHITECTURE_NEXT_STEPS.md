@@ -34,8 +34,13 @@ code, that nothing compares to the code*. Exhibit: when this doc was written the
 actual count was 59, the root CLAUDE.md said 58 (corrected in the same commit as
 this doc), and `runtime/runtime.ts` still says "48 commands" in **six** places
 (:3, :10, :135, :164, :168, :178) with several per-category group comments
-undercounting — those are left alone deliberately, because Arc A makes the
-number derived rather than re-typed.
+undercounting — those were left alone deliberately, because Arc A makes the
+number derived rather than re-typed. **Arc A did exactly that**: all six, and
+the undercounting group comments, went with step 3's registration loop, and
+`packageInfo.commands` plus the full-runtime `commandCount`s are now computed
+from the manifest (step 4.4). `grep "48 commands" packages/core/src` returns
+nothing today. The paragraph is kept because the *shape* it describes is the
+point, and Findings 15 and 17 are the same shape recurring elsewhere.
 
 **The command set is executed in 4 semi-independent implementations.** Full
 runtime classes, the lite-plus inline executor, the hybrid-complete inline
@@ -81,12 +86,12 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | --- | ----- | ---------- | ------ |
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
-| A — command manifest | kills ~15 of ~30 registration points | ⚠️ **weaker than it looks** — the ghost gates are one-directional (see brief) | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — **REVISES the order and shape below** |
+| ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
 | B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | decorator statics invisible to TS remain the root cause |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
-## The arcs — remaining sequence A → B → E → F (C and D are done)
+## The arcs — remaining sequence B → E → F (A, C and D are done)
 
 ### Arc D — target-resolution consolidation — ✅ DONE 2026-07-28
 
@@ -196,7 +201,37 @@ Superseded plan, kept for the record:
    they state what `it` *should* hold for each shape, which is exactly the
    question this step has to answer.
 
-### Arc A — command manifest (medium)
+### Arc A — command manifest — ✅ DONE 2026-07-28/29
+
+Landed as #811 (step 1, the audit-as-gate), #813 (step 2, the data-only
+manifest), #814 (step 3, the four mechanical consumers), then the four
+decision-bearing consumers: #815 (4.1, LSP tiers vs the published engine), #817
+(4.2, capability lists vs the generator), #818 (4.3, `COMMAND_KEYWORDS` vs the
+parser), #819 (4.4, `packageInfo.commands` derived). Detail, per-step outcomes
+and all seventeen findings live in
+[HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md).
+
+**Classification debt is zero** — every registered command is classified in
+every list, and each of the four `*_UNCLASSIFIED`/`*_GAPS` sets is an empty set
+the audit holds at 0.
+
+Things later arcs should carry forward:
+
+- **Arc B can copy 59 *finished* values.** 4.1 deliberately decided NOT to
+  populate `metadata.compatibility`, leaving `upstreamOrExtension` absorbed from
+  the tier lists. Waiting cost Arc B nothing and gained it a settled column —
+  it could not have copied 23 rows reading `'unknown'`.
+- **`tier` and the capability lists are two different facts** that disagree on
+  16 of 59 rows. Neither may be derived from the other; anything wanting "can
+  the generator emit this" needs its own field.
+- **Three follow-ups are open and named**, each a behavior call with its
+  measurement already in hand: Finding 17 (below, under Arc E), and Finding 15's
+  two — `multilingual` ships 52 commands rather than the full 59, and `minimal`
+  registers 11 while advertising 10.
+
+**The original plan paragraph is kept below for the record.** Two of its three
+claims did not survive measurement, and that is the reason it is worth keeping:
+it is the record of what a plausible-sounding plan got wrong.
 
 > **Read [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)
 > first — it REVISES the migration ORDER and the manifest SHAPE below.** The
@@ -265,6 +300,29 @@ absolute ceilings), the Playwright bundle compatibility matrix,
 `dist-charset-safety`, `bundle-manifest-consistency`. Prior art:
 [proposals/aot-compiler-design.md](./proposals/aot-compiler-design.md).
 
+> **Arc E now has a concrete, measured motivating case — Finding 17** in
+> [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md).
+> Closing Finding 13 (the 14 unreachable capability case labels) put eleven
+> restored command rules into `parser/hybrid/parser-core.ts`, which serves BOTH
+> the generated bundles (38 commands via `COMMAND_IMPLEMENTATIONS`) and the
+> handwritten `browser-bundle-hybrid-complete.ts` (**24** cases in its own
+> `switch`). So the shipped hybrid bundles now PARSE 35 commands and EXECUTE
+> 24, paying +388 bytes gzip (hybrid-complete) and +386 (hx) for rules they
+> cannot run. That is exactly the "4 executors → 1 template source" problem this
+> arc exists to remove: generating the executor cores from the same templates
+> would close the gap instead of documenting it.
+>
+> **Two constraints for whoever starts this.** (1) `hyperfixi-hx.js` is at
+> **19019 bytes gzip against `MAX_HYBRID=20000`** — ~980 bytes of headroom, and
+> generating executors makes bundles grow before they shrink, so budget a
+> deliberate ceiling change rather than discovering one. (2) The "generate
+> `HYBRID_PARSER_TEMPLATE` from `parser-core.ts`" step is now *more* valuable
+> and *better specified*: the two copies were measured to disagree (the template
+> had `empty` and no `halt`, parser-core the reverse), they were reconciled by
+> hand, and `capability-emission.test.ts` §4 asserts their cmdMaps are
+> identical — that assertion is the spec the generator must satisfy, and it
+> retires into the generator exactly as this arc describes.
+
 ### Arc F — semantic schema-driven mappers + scaffolder (medium)
 
 Verified: 47 mappers in `packages/semantic/src/ast-builder/command-mappers.ts`;
@@ -310,6 +368,30 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc A CLOSED**, and its recommended follow-on (Finding 13,
+  the 14 unreachable capability case labels) closed with it. Both records are in
+  [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md); the
+  queue rows above are updated to match.
+  - **The arc's repeated lesson, which paid five times running: score the rows
+    that are already classified, not only the gaps you were sent for.** 4.1
+    found 5 of 7 tier entries wrong; 4.2 found 14 of 38 capability rows dead;
+    4.3's 58 incumbents came back clean but the sweep found three dead LSP hover
+    examples; 4.4's named work was two correct lines while three advertised
+    bundle counts beside it were false; Finding 13's fix found `take` broken at
+    execution, `morph` throwing ReferenceError, and `trigger` still mis-targeted
+    after its alias landed. Same structural cause every time — **a fact pinned
+    in one place and advertised in another, with nothing comparing the two.**
+  - **Each step must state its ORACLE, and the choice keeps changing the
+    answer.** 4.1 asked the published engine, 4.2 the generator, 4.3 the parser,
+    4.4 the manifest, Finding 13 **execution** (the first needing a built
+    artifact). Escalating 4.2's parse-level check to execution is what exposed
+    three defects a parse tree cannot express — including a half-fix the
+    parse-level gate would have called green.
+  - **A correct-looking effect is not evidence the command ran** (Finding 16).
+    Where a fallback can produce the same end state, a check on that end state
+    measures the fallback: mutation-testing showed `morph` passing a markup
+    assertion with its morphlex import deleted. Assert what a command is *for*.
+    This is the third costume of 4.1's `success: true` trap.
 - **2026-07-28** — **Arc A brief written**
   ([HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), arc
   not started. Five measurements, two of which changed the plan.

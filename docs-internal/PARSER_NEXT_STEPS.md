@@ -26,6 +26,7 @@ ones, because the gate *is* the tracking mechanism.
 | ---- | -------- | ---- | ------ |
 | **Or-join filters have no per-event representation** | low — `on click or keypress[key=='Enter']` runs keypress unfiltered (upstream filters that leg); single-event filters ARE enforced | ✅ KNOWN GAP test | `packages/core/src/api/event-filter-execution.test.ts`; the runtime-side note at the `applicableCondition` site in `runtime-base.ts` |
 | **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
+| **`tell <target> to <command>` drops the `tell` wrapper** | medium — **silent wrong target** on the form users actually write | **none** | see the measured table below; found by Arc A step 4.3 (Finding 14 in [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), re-verified 2026-07-29 |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
@@ -49,8 +50,34 @@ ones, because the gate *is* the tracking mechanism.
   of BOTH legs; per-event condition representation flips both halves, so the
   fix is forced to be deliberate and visible.
 
-The ungated one (`tell`) has no such mechanism. **It is what this document is
-for.**
+The ungated ones (both `tell` entries) have no such mechanism. **They are what
+this document is for.**
+
+### `tell <target> to <command>` — the measured shape
+
+Both `tell` rows are in `parseTellCommand`, but they are separate defects: the
+one above is a missing terminator, this one is a **dropped wrapper**, and this
+one is the more dangerous because it is silent and the failing form is the one
+people write. Measured 2026-07-29 against `packages/core/src/parser/parser.ts`:
+
+| Source | Result |
+| ------ | ------ |
+| `on click tell #modal to show` | `success: true`, **0 errors**, commands `["show"]` — no `tell` node, so `show` runs against the handler's `me`, not `#modal` |
+| `on click tell .items to add .x` | `success: true`, 0 errors, commands `["add"]` — same |
+| `on click tell #modal to show then log "after"` | `["show", "log"]` — the rest of the sequence survives, so nothing looks wrong |
+| `tell #modal to show` (bare, no handler) | `success: false`, 1 error — fails loudly |
+| `on click tell #modal show` (no `to`) | `["tell", "show"]` — **correct** |
+
+The bare form failing loudly is why this reads as harmless if probed casually;
+inside an event handler — the normal way to write it — it parses clean and
+silently retargets. Note also that a caller cannot distinguish this from a
+correct parse: `success` is `true` and the error list is empty, which is step
+4.1's and 4.3's trap (`success: true` is not evidence of a command) in a third
+engine.
+
+Not fixed by Arc A, deliberately: it is a behavior change to the parser with its
+own tests, and folding it into a classification step would have buried that
+step's review artifact.
 
 ## Notes
 
