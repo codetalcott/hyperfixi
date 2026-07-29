@@ -69,8 +69,9 @@ import {
   FULL_RUNTIME_ONLY_COMMANDS,
   resolveCommandKey,
 } from '../../bundle-generator/template-capabilities';
-import { COMMAND_KEYWORDS, ALL_KEYWORDS } from '../../lsp-metadata';
+import { COMMAND_KEYWORDS, ALL_KEYWORDS, HOVER_DOCS } from '../../lsp-metadata';
 import { commands as referenceCommands } from '../../reference/index';
+import { parse } from '../../parser/parser';
 
 /** Finding 6: snapshot the static parser seed BEFORE any Runtime exists. */
 const STATIC_SEED = new Set<string>(COMMANDS);
@@ -563,25 +564,112 @@ describe('the capability lists', () => {
 const KEYWORD_NOT_COMMANDS = new Set(['else', 'for', 'while']);
 
 /**
- * Registered commands COMMAND_KEYWORDS does not yet advertise, so the LSP
- * offers no completion for them. Was six before the Finding 5 ghost fix
- * renamed `pushUrl`/`replaceUrl` to `push`/`replace` (#810). Adding these is a
- * docs + completions decision — step 4.3.
+ * Registered commands COMMAND_KEYWORDS does not advertise, so the LSP offers
+ * no completion for them. Was six before the Finding 5 ghost fix renamed
+ * `pushUrl`/`replaceUrl` to `push`/`replace` (#810), then four, and step 4.3
+ * closed the last three (`process`, `scroll`, `start` — each probed live
+ * against the parser). **Now empty, and it stays empty**: a registered command
+ * belongs here only while somebody is actively deciding, and the two settled
+ * outcomes have their own homes — advertised (in the list) or permanently
+ * excluded (`KEYWORD_NOT_ADVERTISED` below, which requires a reason).
  */
-const KEYWORD_GAPS = new Set([
-  'process', // htmx-like: process partials in <content>
-  'pseudo-command', // method-call-as-command; absent from the static seed too (Finding 6)
-  'scroll', // upstream _hyperscript 0.9.90 `scroll to <target>`
-  'start', // start view transition ... end
-]);
+const KEYWORD_GAPS = new Set<string>([]);
+
+/**
+ * Registered commands deliberately kept OUT of COMMAND_KEYWORDS. Not debt —
+ * each row is a decision, and the reason has to survive next to it.
+ *
+ * `pseudo-command` is the name the parser EMITS for the method-call-as-command
+ * form: `setAttribute('a','b') on me` yields a node named `pseudo-command`. No
+ * user writes that token. It is not unreachable — step 3's note said it was
+ * ("`-` is not an identifier character"), and step 4.3 measured that FALSE: `-`
+ * is an identifier character, `pseudo-command` tokenizes as one identifier and
+ * reaches a command node. But the node it reaches carries no `methodName`, so
+ * advertising the token would offer a completion that parses and then does
+ * nothing — a subtler form of the `pushUrl` defect, not a fix for it.
+ */
+const KEYWORD_NOT_ADVERTISED = new Set(['pseudo-command']);
+
+/**
+ * The parse oracle for §5 — the question nothing asked before step 4.3.
+ *
+ * `ghostsIn` checks registry membership, which is only a PROXY for what this
+ * list promises: that the token parses. The proxy is weaker in BOTH directions.
+ * `pseudo-command` is registered yet is not a keyword anybody writes, and a
+ * name could parse without being registered (`else`, `for`, `while` do exactly
+ * that). So the entries are probed against the real parser here.
+ *
+ * The snippet is each keyword's own `HOVER_DOCS` example, deliberately — it is
+ * the text the LSP puts in front of the user, so a dead example is the shipped
+ * defect (`pushUrl`, #810) one level down. It also means there is no second
+ * hand-maintained probe table to drift: documenting a keyword IS probing it.
+ *
+ * A keyword passes when its example reaches at least one real command node.
+ * `success` alone is NOT sufficient and must never be substituted: an
+ * unrecognized word makes the command-list parser stop cleanly and hand back an
+ * EMPTY command list with `success: true` — `on click zzznotacommand .x` parses
+ * "fine". This is the same trap step 4.1 hit on the upstream engine, and it is
+ * live here too. It is what made three hover examples dead code in silence.
+ */
+function commandNodesIn(source: string): string[] {
+  const result = parse(source);
+  const found: string[] = [];
+  const seen = new Set<unknown>();
+  const walk = (node: unknown, depth = 0): void => {
+    if (!node || typeof node !== 'object' || depth > 25 || seen.has(node)) return;
+    seen.add(node);
+    if (Array.isArray(node)) {
+      node.forEach(child => walk(child, depth + 1));
+      return;
+    }
+    const rec = node as Record<string, unknown>;
+    if (rec.type === 'command' && typeof rec.name === 'string') found.push(rec.name);
+    for (const key of Object.keys(rec)) if (key !== 'tokens') walk(rec[key], depth + 1);
+  };
+  walk((result as { node?: unknown }).node);
+  return found;
+}
 
 describe('COMMAND_KEYWORDS', () => {
   it('every keyword names a registered command or an allowlisted block keyword', () => {
     expect(ghostsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_COMMANDS].sort());
   });
 
-  it('4 registered commands are not advertised (step 4.3)', () => {
-    expect(gapsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_GAPS].sort());
+  it('every registered command is advertised, or excluded with a reason (step 4.3)', () => {
+    expect(gapsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_ADVERTISED].sort());
+    expect([...KEYWORD_GAPS]).toEqual([]);
+  });
+
+  it('every keyword is documented — the probe corpus has no holes', () => {
+    // Guards the gate below from going vacuously green: an undocumented
+    // keyword has no example, so it would otherwise be silently unprobed.
+    // `push`/`replace` sat undocumented from #810 until step 4.3.
+    expect(COMMAND_KEYWORDS.filter(kw => !HOVER_DOCS[kw])).toEqual([]);
+  });
+
+  it('every keyword PARSES — its own hover example reaches a command node', () => {
+    // The check `ghostsIn` cannot make. Mutation-verified: restoring any of the
+    // three examples step 4.3 fixed (`repeat` without `end`, standalone
+    // `while`, `transition #box's opacity`) fails here, and all three were
+    // SILENT before this test existed.
+    const dead = COMMAND_KEYWORDS.filter(kw => {
+      const example = HOVER_DOCS[kw]?.example;
+      if (!example) return false; // covered by the test above
+      return commandNodesIn(`on click ${example.replace(/\n/g, '\n  ')}`).length === 0;
+    });
+    expect(dead).toEqual([]);
+  });
+
+  it('the excluded rows are excluded for the stated reason, not by accident', () => {
+    for (const name of KEYWORD_NOT_ADVERTISED) {
+      expect(REGISTERED.has(name)).toBe(true); // still registered
+      expect(COMMAND_KEYWORDS as readonly string[]).not.toContain(name);
+    }
+    // `pseudo-command` is reachable as a token — step 3's "unreachable"
+    // note was measured false — but only as a degenerate node. Both halves
+    // are pinned so a future reader re-checks rather than trusting either.
+    expect(commandNodesIn('on click pseudo-command')).toContain('pseudo-command');
+    expect(commandNodesIn('on click setAttribute("a","b") on me')).toContain('pseudo-command');
   });
 
   it('advertises the history command under its parsing names', () => {
@@ -853,7 +941,9 @@ describe('the command manifest', () => {
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
-  it('4 rows await deliberate classification (step 4.3)', () => {
+  // Zero CLASSIFICATION debt; step 4.4 (deriving `packageInfo.commands`) is a
+  // derivation, not a classification, and is not counted here.
+  it('0 rows await deliberate classification (4.1, 4.2, 4.3 all landed)', () => {
     // The numbers the arc exists to burn down. A step that classifies a
     // command flips its allowlist row AND moves the count here, so the diff
     // shows both the decision and its scope. Do not adjust a count without
@@ -865,9 +955,13 @@ describe('the classification debt, counted', () => {
     // capability rows as full-runtime-only and RESOLVING the block-only three
     // as classified-by-AVAILABLE_BLOCKS rather than unclassified, so they no
     // longer count as debt (they are still pinned in §4, both directions).
+    // Step 4.3 took it to ZERO: `process`/`scroll`/`start` are advertised, and
+    // `pseudo-command` moved to KEYWORD_NOT_ADVERTISED — a decision with a
+    // reason, not an open row.
     expect(TIER_UNCLASSIFIED.size).toBe(0); // step 4.1 — DONE, was 23
     expect(CAPABILITY_UNCLASSIFIED.size).toBe(0); // step 4.2 — DONE, was 10
     expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — DECIDED: blocks classify
-    expect(KEYWORD_GAPS.size).toBe(4); // step 4.3 — missing LSP completions
+    expect(KEYWORD_GAPS.size).toBe(0); // step 4.3 — DONE, was 4
+    expect(KEYWORD_NOT_ADVERTISED.size).toBe(1); // step 4.3 — DECIDED: pseudo-command
   });
 });

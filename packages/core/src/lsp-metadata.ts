@@ -16,6 +16,32 @@
 
 /**
  * All command keywords in LokaScript
+ *
+ * ## The contract, and the oracle that checks it (Arc A step 4.3)
+ *
+ * Every entry is a token the **hyperfixi parser** accepts at command position.
+ * That is a different question from "names a registered command", which is all
+ * anything checked before 2026-07-29 — and the weaker one: `pseudo-command` is
+ * registered yet is not a keyword anybody writes (see below). The audit,
+ * `packages/core/src/runtime/__tests__/command-manifest-audit.test.ts` §5, now
+ * probes the parser directly, using each entry's `HOVER_DOCS` example as the
+ * snippet. That is deliberately the same text the LSP shows the user: the
+ * defect this list has actually shipped (`pushUrl` / `replaceUrl`, #810) was
+ * advertising a spelling the engine rejects, and an example that does not parse
+ * is the same defect one level down.
+ *
+ * All 58 pre-existing entries were probed in step 4.3 and every one is live
+ * syntax — unlike the sibling lists step 4.1 and 4.2 scored, which were wrong
+ * on 5 of 7 and 14 of 38 rows respectively.
+ *
+ * `pseudo-command` is registered but deliberately **absent**. It is the name
+ * the parser EMITS for the method-call-as-command form — `setAttribute('a','b')
+ * on me` yields a node named `pseudo-command` — not a token a user ever types.
+ * The bare token does reach a command node (`-` IS an identifier character, so
+ * it tokenizes as one identifier; the step-3 note claiming it is "unreachable
+ * as a token" was measured false in step 4.3), but only a degenerate one
+ * carrying no `methodName`. Advertising it would offer a completion that parses
+ * and then does nothing.
  */
 export const COMMAND_KEYWORDS = [
   // DOM Commands
@@ -39,6 +65,10 @@ export const COMMAND_KEYWORDS = [
   'prepend',
   'take',
   'render',
+  // Added in step 4.3. Probed: `scroll to #section` and `process partials in
+  // result` each reach a real command node.
+  'scroll',
+  'process',
 
   // Async Commands
   'wait',
@@ -92,6 +122,9 @@ export const COMMAND_KEYWORDS = [
   // Animation Commands
   'transition',
   'measure',
+  // Added in step 4.3. Probed: `start view transition end` reaches a real
+  // command node. The bare token does not — `start` always opens a block.
+  'start',
 
   // Data Commands
   'increment',
@@ -374,6 +407,18 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'render #template with {name: "World"}',
     category: 'command',
   },
+  scroll: {
+    title: 'scroll',
+    description: 'Scrolls an element into view.',
+    example: 'scroll to #section\nscroll to the top of me',
+    category: 'command',
+  },
+  process: {
+    title: 'process',
+    description: 'Processes hyperscript/partials in freshly-inserted content.',
+    example: 'process partials in result',
+    category: 'command',
+  },
 
   // Async Commands
   wait: {
@@ -416,6 +461,22 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'go to url /home\ngo to #section\ngo back',
     category: 'command',
   },
+  // `push` and `replace` replaced the `pushUrl` / `replaceUrl` ghosts in #810
+  // but arrived without hover docs; added in step 4.3. The examples carry the
+  // `url` keyword because that is the form that parses — `pushUrl "/x"` was
+  // exactly the spelling the engine rejects.
+  push: {
+    title: 'push',
+    description: 'Pushes a URL onto the browser history stack.',
+    example: 'push url "/page/2"',
+    category: 'command',
+  },
+  replace: {
+    title: 'replace',
+    description: 'Replaces the current browser history entry.',
+    example: 'replace url "/page/2"',
+    category: 'command',
+  },
 
   // Control Flow Commands
   if: {
@@ -439,7 +500,11 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   repeat: {
     title: 'repeat',
     description: 'Loops a specified number of times or over items.',
-    example: 'repeat 5 times log "hello"\nrepeat for item in items',
+    // Both forms need the closing `end`. Without it the parser yields NO
+    // command node at all rather than an error, so the previous example —
+    // `repeat 5 times log "hello"` with no `end` — was dead code the LSP
+    // showed on hover (found by the step-4.3 parse probe).
+    example: 'repeat 5 times\n  log "hello"\nend\nrepeat for item in items\n  log item\nend',
     category: 'command',
   },
   for: {
@@ -450,8 +515,11 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   while: {
     title: 'while',
-    description: 'Loops while condition is true.',
-    example: 'while :count < 10\n  increment :count\nend',
+    description: 'Loops while a condition holds. Used as `repeat while <cond>`.',
+    // `while` is a MODIFIER on `repeat`, not a standalone construct: bare
+    // `while :count < 10 … end` fails to parse outright. The previous example
+    // was exactly that dead form (found by the step-4.3 parse probe).
+    example: 'repeat while :count < 10\n  increment :count\nend',
     category: 'command',
   },
   break: {
@@ -565,13 +633,25 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   transition: {
     title: 'transition',
     description: 'Applies CSS transition.',
-    example: "transition #box's opacity to 0 over 500ms",
+    // The grammar is `transition <property> to <value> [over <duration>]`,
+    // where the property is a bare name or a `*`-sigil style reference. The
+    // possessive target form the previous example used —
+    // `transition #box's opacity to 0 over 500ms` — parses to NO command node
+    // at all (found by the step-4.3 parse probe); to transition another
+    // element, use `tell`.
+    example: "transition *opacity to 0 over 500ms\ntransition *background-color to 'red' over 2s",
     category: 'command',
   },
   measure: {
     title: 'measure',
     description: 'Measures element dimensions.',
     example: 'measure #box then log result.width',
+    category: 'command',
+  },
+  start: {
+    title: 'start',
+    description: 'Starts a View Transition around a block of commands.',
+    example: 'start view transition\n  add .expanded to #panel\nend',
     category: 'command',
   },
 
