@@ -270,35 +270,39 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
-- **Two-tier job set**: full matrix on `pull_request`, slim skew-detector set on `push` to main/develop
-- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient`); `build` gates on `code` and every npm job inherits the gate through `needs: build`. Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs).
+- **Three-tier job set**: full matrix on `pull_request`; `build` only on `push` to main/develop (tree-skew detector); `coverage` + `benchmarks` on a nightly `schedule` (also `workflow_dispatch`)
+- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient`); `build` gates on `code` and every npm job inherits the gate through `needs: build`. Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`).
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`); only the perf `benchmarks` job uses `continue-on-error` (trend tracking, never a gate)
 
 **Jobs:**
 
-| #    | Job                       | PR  | push main/develop | Notes                                             |
-| ---- | ------------------------- | --- | ----------------- | ------------------------------------------------- |
-| 0    | `changes`                 | ✓   | ✓                 | Path classifier (code / protocol / goclient)      |
-| 1    | `build`                   | ✓   | ✓                 | Build all packages once; gated on `code` paths    |
-| 2    | `export-validation`       | ✓   | —                 | Verify package.json exports resolve to dist       |
-| 3    | `lint-typecheck`          | ✓   | —                 | oxlint + TypeScript checks                        |
-| 4    | `unit-tests`              | ✓   | —                 | Vitest tests on Node 24                           |
-| 5    | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)       |
-| 6    | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)             |
-| 7    | `multilingual-validation` | ✓   | —                 | 20-language sweep; PR-only (slim post-merge)      |
-| 8    | `bundle-size`             | ✓   | —                 | Size report; PR-only (slim post-merge)            |
-| 9    | `mcp-demos`               | ✓   | —                 | Demo capture + drift check; PR-only               |
-| 10   | `protocol-conformance`    | ✓   | —                 | 4 reference parsers; gated on `protocol/**` paths |
-| 10.5 | `go-client`               | ✓   | —                 | `go build` + `go test`; gated on go-client paths  |
-| 11   | `benchmarks`              | —   | main only         | Perf trend tracking (already gated to push+main)  |
+| #    | Job                       | PR  | push main/develop | nightly | Notes                                                      |
+| ---- | ------------------------- | --- | ----------------- | ------- | ---------------------------------------------------------- |
+| 0    | `changes`                 | ✓   | ✓                 | —       | Path classifier (code / protocol / goclient)               |
+| 1    | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` paths             |
+| 1.5  | `shipped-sources`         | ✓   | —                 | —       | Shipped-sources validity; ungated (walks examples/, docs/) |
+| 2    | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                |
+| 3    | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                 |
+| 4    | `unit-tests`              | ✓   | —                 | —       | Vitest tests on Node 24 (27 packages)                      |
+| 5    | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)   |
+| 6    | `browser-tests`           | ✓   | —                 | —       | Playwright `--project=quick`; PR-only                      |
+| 7    | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only          |
+| 8    | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                     |
+| 9    | `mcp-demos`               | ✓   | —                 | —       | Demo capture + drift check; PR-only                        |
+| 10   | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths          |
+| 10.5 | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths           |
+| 11   | `benchmarks`              | —   | —                 | ✓       | Perf trend tracking; nightly since 2026-07-29              |
 
-The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only `build` + `coverage` + `benchmarks`. For the reasoning see the job comments in `.github/workflows/ci.yml`.
+The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only `build`. For the reasoning see the job comments in `.github/workflows/ci.yml`.
+
+`coverage` and `benchmarks` moved off push-to-main on **2026-07-29**: under `strict` protection the post-merge tree is the tree the PR validated, so `coverage` was re-executing the full core + semantic + i18n + language-server suites (430 files) a second time per merge purely for a Codecov datapoint. Neither is a required check (required = Build All Packages, Lint & Typecheck, Unit Tests, Export Validation, Multilingual Validation, Browser Tests), so nightly costs no gate strength. Same change fixed `benchmarks`, which ran `bench:run` (writes no file) and uploaded from a nonexistent `./core/benchmark-results/` — its output had always been discarded; it now runs `bench:ci` and uploads `packages/core/benchmark-results/`.
 
 **Triggers:**
 
-- Push to `main` or `develop` (slim job set — see table)
+- Push to `main` or `develop` (`build` only — tree-skew detector)
 - Pull requests to `main` or `develop` (full job set)
+- `schedule` nightly at 06:00 UTC, plus `workflow_dispatch` (`coverage` + `benchmarks`). `changes` is skipped on these events — paths-filter has no diff base — so `build` carries an explicit `!cancelled()` status function; without it the implicit `success()` on a skipped `needs` would skip the whole nightly chain.
 - Concurrency: Cancels in-progress runs on new push (per `${{ github.workflow }}-${{ github.ref }}`; pre-merge and post-merge runs are on different refs so the post-merge run is NOT cancelled)
 
 **Known Issues:**
