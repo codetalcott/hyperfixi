@@ -385,6 +385,21 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B step 2 landed**: the `compatibility` coupling, as §9 of
+  the manifest audit (39 → 44 tests), while the expected state is still "unset on
+  all 59" — so the gate is proven before it has values to bless.
+  - **A vacuous gate was mutation-verified instead of trusted**, and the three
+    outcomes are the design: a **wrong** value trips the projection, a
+    **correct** value trips *only* the row-moving allowlist (so step 3 cannot
+    populate silently — it must empty `COMPATIBILITY_UNSET` in the same diff),
+    and `'experimental'` trips its own guard. Re-partitioning `EXTENSIONS` fires
+    §3's existing 51/8 split as well, so the two sections are genuinely coupled.
+  - **Key-presence is not the same question as value.** `@meta` assigns
+    `compatibility` unconditionally, so 56 commands carry the key holding
+    `undefined` while the 3 `commandMeta` classes omit it entirely — a
+    `'compatibility' in md` check splits the registry 56/3 and reads as a
+    classification when it is an artifact of declaration style. Every §9 check
+    asks for the value.
 - **2026-07-29** — **Arc B step 1 landed**: `commandMeta()` plus the three
   undecorated classes (`install`, `pseudo-command`, `render`). Per-step detail in
   [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md).

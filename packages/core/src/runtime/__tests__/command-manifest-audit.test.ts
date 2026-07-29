@@ -1003,3 +1003,143 @@ describe('the classification debt, counted', () => {
     expect(KEYWORD_NOT_ADVERTISED.size).toBe(1); // step 4.3 — DECIDED: pseudo-command
   });
 });
+
+// ===========================================================================
+// 9. metadata.compatibility (Arc B step 2) — the coupling, landed BEFORE values
+// ===========================================================================
+
+/**
+ * `metadata.compatibility` is UNSET on all 59 registered commands, deliberately:
+ * Arc A step 4.1 declined to populate it so Arc B could copy 59 *finished*
+ * values instead of 23 `'unknown'`s. This section is the coupling that makes
+ * that copy reviewable, and it lands **before** the values do — so the gate is
+ * proven to fail correctly while there is still nothing for it to bless. A gate
+ * written after the migration can only confirm what the migration decided.
+ *
+ * ## The domain mismatch, and the decision
+ *
+ * The two vocabularies do not line up:
+ *
+ * | manifest `upstreamOrExtension` | decorator `compatibility` |
+ * | ------------------------------ | ------------------------- |
+ * | `upstream` (51 rows)           | `'standard'`              |
+ * | `extension` (8 rows)           | `'lokascript-extension'`  |
+ * | *(no counterpart)*             | `'experimental'`          |
+ *
+ * DECIDED: project `upstream → 'standard'`, `extension → 'lokascript-extension'`,
+ * and keep `'experimental'` as a third state that no command occupies. Dropping
+ * it would narrow an exported public type for no present benefit; keeping it
+ * unguarded would make it an escape hatch from this coupling. So it is
+ * allowlisted at size 0 — a command marked `'experimental'` fails the projection
+ * AND has to be named below with a reason, in the same diff. That is the
+ * `TIER_UNCLASSIFIED` discipline: a judgment call is only reviewable if making
+ * it moves a row and a count.
+ *
+ * ## Why every check here is value-based, never key-presence
+ *
+ * `'compatibility' in metadata` is measurably NOT the same question as
+ * `metadata.compatibility === undefined`. `@meta` assigns the key
+ * unconditionally (`compatibility: config.compatibility`), so 56 commands carry
+ * the key holding `undefined`, while the three `commandMeta` classes
+ * (`install`, `pseudo-command`, `render`) omit it entirely. A key-presence check
+ * therefore splits the registry 56/3 and reads as a classification when it is
+ * an artifact of how each class declares its metadata. Every assertion below
+ * asks for the VALUE.
+ */
+
+/**
+ * Registered commands with no `compatibility` value. Currently the whole
+ * registry, which is the state Arc A deliberately left.
+ *
+ * Step 3 replaces this with the rows it could not classify — expected `[]`. It
+ * cannot be satisfied by accident in either direction: populating 58 of 59 and
+ * emptying this set fails (measured 1 ≠ 0), and populating 58 while leaving this
+ * as the whole registry fails too (measured 1 ≠ 59).
+ */
+const COMPATIBILITY_UNSET = new Set<string>(REGISTRY);
+
+/**
+ * Commands deliberately marked `'experimental'`. Empty, and it must stay empty
+ * unless someone writes down why a command has a compatibility state the
+ * manifest cannot express.
+ */
+const COMPATIBILITY_EXPERIMENTAL = new Set<string>([]);
+
+/** The projection this arc commits to: manifest tier → decorator vocabulary. */
+function expectedCompatibility(name: string): 'standard' | 'lokascript-extension' {
+  return EXTENSIONS.has(name) ? 'lokascript-extension' : 'standard';
+}
+
+/** Read through the INSTANCE, the same path `command-adapter.ts` uses. */
+function servedCompatibility(): Map<string, unknown> {
+  const registered = new Runtime().getRegistry();
+  return new Map(
+    REGISTRY.map(name => [
+      name,
+      (registered.getImplementation(name) as { metadata?: { compatibility?: unknown } } | undefined)
+        ?.metadata?.compatibility,
+    ])
+  );
+}
+
+describe('metadata.compatibility', () => {
+  it('every populated row matches the manifest projection', () => {
+    // THE live gate. Vacuous over values today (all 59 unset) and deliberately
+    // so — mutation-verified when it landed by setting one command's
+    // compatibility to the wrong side and watching this fail. Step 3 populates
+    // into a gate that already works rather than one written to fit its output.
+    const wrong: string[] = [];
+    for (const [name, served] of servedCompatibility()) {
+      if (served === undefined) continue; // unset rows are governed below
+      if (served === 'experimental') continue; // governed by its own test
+      if (served !== expectedCompatibility(name)) {
+        wrong.push(`${name}: ${String(served)} (manifest projects ${expectedCompatibility(name)})`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it('the unset rows are exactly the allowlist, both directions', () => {
+    const unset = [...servedCompatibility()]
+      .filter(([, served]) => served === undefined)
+      .map(([name]) => name)
+      .sort();
+    expect(unset).toEqual([...COMPATIBILITY_UNSET].sort());
+  });
+
+  it("only allowlisted commands may be 'experimental'", () => {
+    // The escape-hatch guard. `'experimental'` has no manifest counterpart, so
+    // the projection test above cannot judge it — this is what stops it being
+    // used to route around the projection.
+    const experimental = [...servedCompatibility()]
+      .filter(([, served]) => served === 'experimental')
+      .map(([name]) => name)
+      .sort();
+    expect(experimental).toEqual([...COMPATIBILITY_EXPERIMENTAL].sort());
+    expect(COMPATIBILITY_EXPERIMENTAL.size, 'an experimental row needs a written reason').toBe(0);
+  });
+
+  it('the projection is total and splits 51 / 8, matching §3', () => {
+    // Ties this section to the count §3 already enforces, so the projection
+    // cannot quietly re-partition the registry. If EXTENSIONS gains or loses a
+    // row, this fails here as well as there.
+    const tally = { standard: 0, 'lokascript-extension': 0 };
+    for (const name of REGISTRY) tally[expectedCompatibility(name)]++;
+    expect(tally).toEqual({
+      standard: TIER_COUNTS.upstream,
+      'lokascript-extension': TIER_COUNTS.extension,
+    });
+    expect(tally.standard + tally['lokascript-extension']).toBe(REGISTRY.length);
+  });
+
+  it('agrees with the manifest row-by-row, not just in aggregate', () => {
+    // A count can be satisfied by two rows swapping sides. This cannot.
+    for (const name of REGISTRY) {
+      const manifestSide = MANIFEST_BY_NAME.get(name)!.upstreamOrExtension;
+      const projected = expectedCompatibility(name);
+      expect(projected, `${name} projection vs manifest`).toBe(
+        manifestSide === 'upstream' ? 'standard' : 'lokascript-extension'
+      );
+    }
+  });
+});
