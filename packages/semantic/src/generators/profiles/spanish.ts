@@ -106,8 +106,23 @@ export const spanishProfile: LanguageProfile = {
     trigger: { primary: 'disparar', alternatives: ['activar'], normalized: 'trigger' },
     send: { primary: 'enviar', alternatives: ['envía'], normalized: 'send' },
     // DOM focus
-    focus: { primary: 'enfocar', alternatives: ['enfoque'], normalized: 'focus' },
-    blur: { primary: 'desenfocar', alternatives: ['desenfoque'], normalized: 'blur' },
+    // Nominalized 2026-07-28: an infinitive reads as a command to the browser,
+    // an event names an occurrence. Both spellings already shipped; this is an
+    // ordering fix.
+    focus: { primary: 'enfoque', alternatives: ['enfocar'], normalized: 'focus' },
+    // 'pérdida de foco' rather than 'desenfoque', DEPARTING from the Spanish
+    // review, which endorsed 'desenfoque'. The parallel Portuguese review
+    // rejected the exact cognate 'desfoque' because in front-end usage it names
+    // the CSS visual blur — and that is the same false friend already found in
+    // ja 'ぼかし', ko '블러' and de 'defokussieren'. Spanish 'desenfoque' is
+    // likewise the photographic sense (desenfoque gaussiano). The Spanish review
+    // itself records 'pérdida de foco' as attested for the event. Both older
+    // spellings stay as parse alternatives.
+    blur: {
+      primary: 'pérdida de foco',
+      alternatives: ['perdida de foco', 'desenfoque', 'desenfocar'],
+      normalized: 'blur',
+    },
     // Phase 1 (v0.9.90): DOM / form state / debug
     open: { primary: 'abrir', normalized: 'open' },
     close: { primary: 'cerrar', normalized: 'close' },
@@ -123,7 +138,16 @@ export const spanishProfile: LanguageProfile = {
     click: { primary: 'clic', alternatives: ['hacer clic', 'click'], normalized: 'click' },
     // `resize` event (window-resize): dict emits redimensionar; register it so the
     // event types as literal="resize" (matching en) instead of expression.
-    resize: { primary: 'redimensionar', normalized: 'resize' },
+    // Lookup folds case and separators but NOT accents (verified against the
+    // runtime), so every accented form needs its plain-ASCII twin registered —
+    // the same reason 'raton abajo' has always sat beside 'ratón abajo'. It
+    // matters most here: these are legal in an `al-…` attribute name only if
+    // the author can type ñ/é into one.
+    resize: {
+      primary: 'cambio de tamaño',
+      alternatives: ['cambio de tamano', 'redimensionar'],
+      normalized: 'resize',
+    },
     hover: { primary: 'sobrevolar', alternatives: ['pasar por encima'], normalized: 'hover' },
     submit: { primary: 'envío', alternatives: ['envio', 'someter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
@@ -131,23 +155,63 @@ export const spanishProfile: LanguageProfile = {
     // i18n dict emits the verb `cargar` for `load` (profile primary is the noun
     // `carga`); recognize it so `on load` events type as a literal, not expression.
     load: { primary: 'carga', alternatives: ['cargar'], normalized: 'load' },
-    scroll: { primary: 'desplazar', alternatives: ['desplazamiento'], normalized: 'scroll' },
-    keydown: { primary: 'tecla abajo', normalized: 'keydown' },
-    keyup: { primary: 'tecla arriba', normalized: 'keyup' },
-    mouseover: { primary: 'ratón encima', alternatives: ['raton encima'], normalized: 'mouseover' },
-    mouseout: { primary: 'ratón fuera', alternatives: ['raton fuera'], normalized: 'mouseout' },
+    scroll: { primary: 'desplazamiento', alternatives: ['desplazar'], normalized: 'scroll' },
+    // 'abajo'/'arriba' calqued the English spatial down/up — in Spanish they say
+    // the key is physically below, which describes nothing about a switch being
+    // actuated. Spanish teaching material says "cuando se presiona una tecla" /
+    // "cuando una tecla pulsada se suelta". 'pulsar' is peninsular and
+    // 'presionar' Latin American, so both ship; the spatial forms stay parseable.
+    keydown: {
+      primary: 'tecla pulsada',
+      alternatives: ['tecla presionada', 'tecla abajo'],
+      normalized: 'keydown',
+    },
+    keyup: {
+      primary: 'tecla soltada',
+      alternatives: ['tecla liberada', 'tecla arriba'],
+      normalized: 'keyup',
+    },
+    // 'mouse' is the Latin American word for the device (RAE's Diccionario
+    // panhispánico notes 'ratón' dominates in Spain, 'mouse' in the Americas),
+    // so every ratón-* form gets a mouse-* alias.
+    mouseover: {
+      primary: 'ratón encima',
+      alternatives: ['raton encima', 'mouse encima'],
+      normalized: 'mouseover',
+    },
+    mouseout: {
+      primary: 'ratón fuera',
+      alternatives: ['raton fuera', 'mouse fuera'],
+      normalized: 'mouseout',
+    },
     // mousedown/mouseup (repeat-until-event): dict emits the spaced forms —
     // register so both the on.event and the repeat until-event type as literal.
-    // Completes the V3 Batch 2 fused-form split (see keydown/mouseover above);
-    // the fused spellings stay as parse alternatives for back-compat.
+    //
+    // The 2026-05-23 split un-fused 'ratónabajo' but kept the spatial calque;
+    // 2026-07-28 finished the job. 'ratón abajo' says the mouse is positioned
+    // below, which is not what the event reports — the button is being pressed.
+    // Now parallel to the keyboard pair above and to pt 'mouse pressionado'.
+    // Every superseded spelling still parses.
     mousedown: {
-      primary: 'ratón abajo',
-      alternatives: ['raton abajo', 'ratónabajo'],
+      primary: 'ratón pulsado',
+      alternatives: [
+        'raton pulsado',
+        'mouse presionado',
+        'ratón abajo',
+        'raton abajo',
+        'ratónabajo',
+      ],
       normalized: 'mousedown',
     },
     mouseup: {
-      primary: 'ratón arriba',
-      alternatives: ['raton arriba', 'ratónarriba'],
+      primary: 'ratón soltado',
+      alternatives: [
+        'raton soltado',
+        'mouse soltado',
+        'ratón arriba',
+        'raton arriba',
+        'ratónarriba',
+      ],
       normalized: 'mouseup',
     },
     // Navigation
@@ -207,7 +271,11 @@ export const spanishProfile: LanguageProfile = {
     async: { primary: 'asíncrono', alternatives: ['asincrono'], normalized: 'async' },
     tell: { primary: 'decir', normalized: 'tell' },
     default: { primary: 'predeterminar', alternatives: ['por defecto'], normalized: 'default' },
-    init: { primary: 'iniciar', alternatives: ['inicializar'], normalized: 'init' },
+    init: {
+      primary: 'inicio',
+      alternatives: ['inicialización', 'iniciar', 'inicializar'],
+      normalized: 'init',
+    },
     behavior: { primary: 'comportamiento', normalized: 'behavior' },
     install: { primary: 'instalar', normalized: 'install' },
     measure: { primary: 'medir', normalized: 'measure' },

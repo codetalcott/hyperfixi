@@ -81,8 +81,12 @@ export const chineseProfile: LanguageProfile = {
     trigger: { primary: '触发', normalized: 'trigger' },
     send: { primary: '发送', normalized: 'send' },
     // DOM focus
-    focus: { primary: '聚焦', normalized: 'focus' },
-    blur: { primary: '失焦', normalized: 'blur' },
+    // 取得焦點 / 失去焦點 added 2026-07-28: Taiwanese tutorials use the explicit
+    // verb-object pairs where Mainland writing uses the two-character shorthand.
+    // Aliases rather than a zh-Hant fork — the divergence is lexical, and
+    // normLang strips the subtag so zh-TW resolves as zh.
+    focus: { primary: '聚焦', alternatives: ['取得焦點'], normalized: 'focus' },
+    blur: { primary: '失焦', alternatives: ['失去焦點'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
     empty: { primary: '清空', alternatives: ['空的'], normalized: 'empty' },
     open: { primary: '打开', normalized: 'open' },
@@ -94,12 +98,17 @@ export const chineseProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: '点击', normalized: 'click' },
     hover: { primary: '悬停', alternatives: ['悬浮'], normalized: 'hover' },
-    submit: { primary: '提交', normalized: 'submit' },
+    // 送出 is the Taiwan/HK form for sending form data; 提交 is understood there
+    // but is the Mainland default.
+    submit: { primary: '提交', alternatives: ['送出'], normalized: 'submit' },
     input: { primary: '输入', normalized: 'input' },
-    change: { primary: '改变', alternatives: ['变化'], normalized: 'change' },
+    // 变化 leads: Chinese tutorials describe the event intransitively as
+    // 「值发生变化」, whereas 改变 is transitive and reads as an instruction to
+    // change something. Ordering fix only — both spellings still parse.
+    change: { primary: '变化', alternatives: ['改变'], normalized: 'change' },
     // Navigation
     go: { primary: '前往', normalized: 'go' },
-    scroll: { primary: '滚动', normalized: 'scroll' },
+    scroll: { primary: '滚动', alternatives: ['捲動'], normalized: 'scroll' },
     push: { primary: '推送', normalized: 'push' },
     replace: { primary: '替换', normalized: 'replace' },
     process: { primary: '处理', normalized: 'process' },

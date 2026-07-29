@@ -86,8 +86,33 @@ export const germanProfile: LanguageProfile = {
     on: { primary: 'bei', alternatives: ['auf'], normalized: 'on' },
     trigger: { primary: 'auslösen', normalized: 'trigger' },
     send: { primary: 'senden', alternatives: ['schicken'], normalized: 'send' },
-    focus: { primary: 'fokussieren', normalized: 'focus' },
-    blur: { primary: 'defokussieren', alternatives: ['entfokussieren'], normalized: 'blur' },
+    // Nominalized 2026-07-28: a bare infinitive reads as a command to the browser
+    // ('focus this!'), not as the occurrence an event names. Every other German
+    // event identifier here is a noun (Klick, Eingabe, Änderung, Absenden), so
+    // 'fokussieren' was the odd one out. 'Fokuserhalt' is the term German HTML
+    // references pair with 'Fokusverlust' below; 'Fokus' leads because it is the
+    // shortest form a beginner recognises.
+    focus: {
+      primary: 'Fokus',
+      alternatives: ['Fokuserhalt', 'fokussieren'],
+      normalized: 'focus',
+    },
+    // 'defokussieren'/'entfokussieren' have no attested use in German web writing —
+    // defokussieren belongs to optics/photography. German HTML references gloss
+    // onblur as 'bei Fokusverlust', paired with 'bei Fokuserhalt' for onfocus.
+    // Well-formed compound, single token, reads as an event rather than a command.
+    // Old spellings kept as parse alternatives.
+    //
+    // 'verlassen' added as an alternative 2026-07-28: SelfHTML and MediaEvent
+    // both gloss the event with the leaving metaphor ('beim Verlassen ausgelöst'),
+    // so authors reach for it. It stays an alternative rather than the primary
+    // because it is a bare infinitive — the same word-class defect corrected on
+    // `focus` directly above — and because alone it does not say what was left.
+    blur: {
+      primary: 'Fokusverlust',
+      alternatives: ['verlassen', 'defokussieren', 'entfokussieren'],
+      normalized: 'blur',
+    },
     // Phase 1 (v0.9.90): DOM / form state / debug
     empty: { primary: 'leeren', alternatives: ['leer'], normalized: 'empty' },
     open: { primary: 'öffnen', alternatives: ['oeffnen'], normalized: 'open' },
@@ -146,7 +171,14 @@ export const germanProfile: LanguageProfile = {
     async: { primary: 'asynchron', normalized: 'async' },
     tell: { primary: 'sagen', normalized: 'tell' },
     default: { primary: 'standard', normalized: 'default' },
-    init: { primary: 'initialisieren', normalized: 'init' },
+    // Nominalized 2026-07-28, same reasoning as `focus` above: 'bei
+    // Initialisierung' patterns with 'bei Änderung' / 'bei Eingabe', whereas the
+    // infinitive reads as an instruction to initialize something.
+    init: {
+      primary: 'Initialisierung',
+      alternatives: ['initialisieren'],
+      normalized: 'init',
+    },
     behavior: { primary: 'verhalten', normalized: 'behavior' },
     install: { primary: 'installieren', normalized: 'install' },
     measure: { primary: 'messen', normalized: 'measure' },
@@ -172,9 +204,14 @@ export const germanProfile: LanguageProfile = {
     // phrase or compounds with the linking -n-. Noun form chosen as primary: it
     // stays a single token, so it also works as an `on-`/`al-` attribute name,
     // which a spaced phrase cannot.
+    // 'grössenänderung' is not a typo: Swiss Standard German has no ß — it is not
+    // taught in Swiss schools and is absent from the Swiss keyboard layout, so the
+    // ß spelling is untypeable there. Lookup folds case and separators but NOT
+    // ß↔ss (verified against the runtime), so the ss form needs registering
+    // explicitly. This is the only German term containing ß.
     resize: {
       primary: 'Größenänderung',
-      alternatives: ['größenänderung', 'Größe ändern', 'größeändern'],
+      alternatives: ['größenänderung', 'grössenänderung', 'Größe ändern', 'größeändern'],
       normalized: 'resize',
     },
     // Event modifiers (for repeat until event)
