@@ -149,7 +149,7 @@ See [docs/API.md](docs/API.md) for complete documentation.
 | Bundle                         | Size (gzip) | Use Case                                          |
 | ------------------------------ | ----------- | ------------------------------------------------- |
 | `hyperfixi-lite.js`            | 1.9 KB      | Minimal (8 commands, regex parser)                |
-| `hyperfixi-hybrid-complete.js` | 8.1 KB      | Recommended (~85% coverage)                       |
+| `hyperfixi-hybrid-complete.js` | 8.2 KB      | Recommended (~85% coverage)                       |
 | `hyperfixi-hx.js`              | 18 KB       | hybrid-complete + htmx/fixi v1/v2 attributes      |
 | `hyperfixi-hx-v4.js`           | ~322 KB     | Full runtime + htmx-compat + reactivity (hx-live) |
 | `hyperfixi.js`                 | ~310 KB     | Everything + bundled reactivity/realtime plugins  |
