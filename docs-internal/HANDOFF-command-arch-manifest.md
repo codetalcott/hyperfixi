@@ -7,10 +7,11 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: STEPS 1–3, 4.1 AND 4.2 LANDED** (the audit-as-gate, the manifest,
-> the four mechanical consumers, the LSP tier classification, then the
-> capability lists). **Next action: step 4.3 (`COMMAND_KEYWORDS`, 4 gaps).**
-> Baseline after 4.2 is **7840** core / **227** language-server.
+> **Status: STEPS 1–3 AND 4.1–4.3 LANDED** (the audit-as-gate, the manifest, the
+> four mechanical consumers, then the three decision-bearing classifications).
+> **The arc's classification debt is ZERO** — §8's headline counts all read 0.
+> **Next action: step 4.4 (`packageInfo.commands` as a derived value), the arc's
+> last step.** Baseline after 4.3 is **7843** core / **227** language-server.
 >
 > **Step 4.2 also opened a new live defect it deliberately did NOT fix** — 14 of
 > the 38 advertised capability rows emit a case label the bundle parser can
@@ -441,6 +442,71 @@ lacks `empty`. So the reachable set depends on which generator you went through.
 `parser-template-drift.test.ts` compares the two on `catch`/`finally` only and
 is structurally unable to see this; §3 of the new gate pins it.
 
+### Finding 14 — `COMMAND_KEYWORDS`' incumbents are CLEAN, and the negative result is the point (measured in step 4.3)
+
+Steps 4.1 and 4.2 both found the already-classified rows wrong (5 of 7, then 14
+of 38), and step 4.3 was told to expect the same. It ran the same sweep and
+found the opposite: **all 58 pre-existing entries are live syntax.** Recorded
+because a negative result from a mandated check is evidence, and the next
+session should not re-run this sweep expecting a harvest.
+
+The sweep was not free, though — it found three defects one level down, in the
+same file, and a wrong claim in this brief:
+
+1. **The step-3 "unreachable" note is false.** It said `pseudo-command` is
+   "unreachable as a token (`-` is not an identifier character)". Measured: `-`
+   IS an identifier character. `pseudo-command` tokenizes as ONE identifier and
+   `on click pseudo-command` reaches a real command node. The conclusion
+   survives on different evidence — the node carries no `methodName`, because
+   `pseudo-command` is the name the parser EMITS for the method-call form
+   (`setAttribute('a','b') on me` yields it). So it is degenerate, not
+   unreachable, and it is excluded from `COMMAND_KEYWORDS` deliberately
+   (`KEYWORD_NOT_ADVERTISED`) rather than being a gap. **Step 4.3 is therefore 3
+   additions plus a reasoned exclusion, not 4 additions.**
+
+2. **Three of the 55 command hover examples were dead code** — the LSP showed
+   them to users and none reaches a command node: `repeat` (both forms written
+   without the closing `end`), `while` (written standalone, but `while` is a
+   MODIFIER on `repeat` and the bare form fails to parse), and `transition`
+   (`transition #box's opacity to 0 over 500ms` — the grammar is
+   `transition <property> to <value>`, where the property is a bare name or a
+   `*` style reference; the possessive target form yields nothing). Fixed in the
+   step-4.3 PR: same file, same defect class as Finding 5, evidence in hand —
+   the treatment Finding 12 got.
+
+3. **`push`/`replace` had no hover docs at all**, from #810's rename onward. So
+   the LSP advertised two keywords it could say nothing about. Added.
+
+**The methodological trap, and it is step 4.1's trap in a second engine.**
+`parse()` returning `success: true` does NOT mean the command exists:
+`on click zzznotacommand .x` parses "fine" and hands back an EMPTY command list.
+The probe must assert a real command node. This is exactly why the three dead
+examples were dead *silently*, and it is why the new gate walks the AST instead
+of reading `success`.
+
+**The gate that replaces the proxy.** `ghostsIn` checks registry membership,
+which is only a proxy for what this list promises — and it is weaker in both
+directions (`pseudo-command` is registered but not a keyword; `else`/`for`/
+`while` are keywords but not registered). §5 now probes the parser directly,
+using each keyword's own `HOVER_DOCS` example as the snippet. That choice is
+load-bearing: it is the text the LSP puts in front of the user, and it means
+there is no second hand-maintained probe table to drift — documenting a keyword
+IS probing it. A companion assertion requires every keyword to HAVE a doc, so
+the gate cannot go vacuously green by way of an undocumented entry.
+
+**Two defects found and deliberately NOT fixed** (out of the file, and each
+wants its own decision):
+
+- `tell <target> to <command>` **drops the `tell` wrapper**: `tell #modal to
+  show` parses to `[show]` alone, with no `tell` node, so the command would run
+  against the wrong target. The form without `to` is fine (`tell #modal show` →
+  `[tell, show]`). A parser defect for `docs-internal/PARSER_NEXT_STEPS.md`.
+- `increment`/`decrement` **desugar to a `set` command node** carrying a `+`
+  binary expression, so the registered `increment` implementation is never
+  reached from source. Legitimate as desugaring and not a defect on its face,
+  but it means the registry entry and the parse path disagree about what runs —
+  Arc E (the executors) territory.
+
 ## What changed vs. the queue doc's plan
 
 The queue says: consumers migrate "lowest-risk first — template-capabilities
@@ -645,11 +711,20 @@ step-1 audit rows so the diff is the review artifact:
    `hybrid` yet absent from the capability lists entirely. Two facts, not one
    fact stored twice — the manifest will need a second field for this, not a
    reuse of `tier`.
-3. **`COMMAND_KEYWORDS`** (**4** gaps — `process`, `pseudo-command`, `scroll`,
-   `start`; the two ghosts landed separately per Finding 5, and that rename
-   closed `push`/`replace`). The gaps are already an explicit `KEYWORD_GAPS`
-   allowlist in `lsp-metadata.test.ts` with a stale-entry check, so closing one
-   means deleting its line there — fold that gate into step 1's audit.
+3. **`COMMAND_KEYWORDS`** — **DONE** (see the status log). The 4 gaps resolved
+   as **3 additions** (`process`, `scroll`, `start` — each probed live against
+   the parser) **plus one reasoned exclusion**: `pseudo-command` is the name the
+   parser EMITS for the method-call form, not a token any user writes, so it
+   moved to a new `KEYWORD_NOT_ADVERTISED` allowlist rather than into the list.
+   `KEYWORD_GAPS` is now empty and stays empty — a registered command belongs
+   there only while somebody is actively deciding.
+   **The oracle was the hyperfixi parser** (not the published engine, which was
+   4.1's question, nor the generator, which was 4.2's): does `<keyword> …` reach
+   a real command node? Per Finding 14 the 58 incumbents all passed, but the
+   sweep found three dead hover examples, two undocumented keywords, and a wrong
+   claim in step 3's own notes.
+   §5 of the audit no longer proxies this through registry membership: it probes
+   the parser, using each keyword's `HOVER_DOCS` example as the snippet.
 4. **`packageInfo.commands`** as a derived value. **Step-3 knock-on: the
    `runtime/runtime.ts` half of the docstring fix is already done.** All six
    "48 commands" mentions and every undercounting per-category group comment
@@ -689,7 +764,7 @@ step-1 audit rows so the diff is the review artifact:
 
 | Step | Suites | Command |
 | ---- | ------ | ------- |
-| all | quick validation (baseline **7840** after step 4.2; was 7829 after 4.1, 7827 after step 3, 7824 after step 2, 7814 after step 1, 7800 after the Finding 5 fix, 7795 before it) | `npm run test:quick --prefix packages/core` |
+| all | quick validation (baseline **7843** after step 4.3; was 7840 after 4.2, 7829 after 4.1, 7827 after step 3, 7824 after step 2, 7814 after step 1, 7800 after the Finding 5 fix, 7795 before it) | `npm run test:quick --prefix packages/core` |
 | all | the reference gate | `npm run verify:reference --prefix packages/core` |
 | 1 | the new audit test itself | added in the step-1 PR |
 | 2, 3 | bundle size — the tree-shaking guard | `npm run snapshot:bundle-size --prefix packages/core` (`--check`, ±5% vs `scripts/bundle-snapshots/baseline.json`) |
@@ -872,8 +947,13 @@ was touched.
   `getCommandNames()` enumeration order is now alphabetical rather than
   registration order (consumers sort it or use it for an error string), and the
   static parser seed gained `pseudo-command`, which is Finding 6's disagreement
-  closing by construction. It is unreachable as a token anyway (`-` is not an
-  identifier character), so nothing parses differently.
+  closing by construction. ~~It is unreachable as a token anyway (`-` is not an
+  identifier character), so nothing parses differently.~~ **That parenthetical
+  is wrong and step 4.3 measured it wrong**: `-` IS an identifier character, so
+  `pseudo-command` tokenizes as a single identifier and `on click
+  pseudo-command` reaches a real command node. The conclusion it was supporting
+  still holds, but for a different reason — the node carries no `methodName`,
+  so it is degenerate rather than unreachable. See Finding 14.
   **One measured constraint the brief did not anticipate, recorded above as
   Finding 11:** deriving the seed as `COMMAND_MANIFEST.map(e => e.name)` shipped
   the whole rich array into `hyperfixi-hx.js` — +4.8 KB raw, **+7.5%, a real
@@ -1024,3 +1104,68 @@ was touched.
   whose detection surface this changes); typecheck clean.
   Next action: step 4.3 (`COMMAND_KEYWORDS` — 4 gaps: `process`,
   `pseudo-command`, `scroll`, `start`).
+- 2026-07-29 — **Step 4.3 landed** (branch `fix/lsp-command-keywords-coverage`,
+  off `8c12cab5`): `COMMAND_KEYWORDS` is now a **total partition** of the
+  registry — 61 entries, every registered command either advertised or excluded
+  with a reason, and `KEYWORD_GAPS` empty. **§8's headline counts are all zero:
+  the arc's classification debt is gone.**
+  **The oracle was the hyperfixi parser**, and stating it mattered: 4.1 asked
+  the published upstream engine and 4.2 asked the bundle generator, but this
+  list's promise is that the token PARSES. Probe: does `on click <snippet>`
+  reach a real command node?
+  **The 4 gaps resolved 3 + 1, not 4.** `process`, `scroll` and `start` are live
+  syntax and were added (with hover docs). `pseudo-command` was NOT: it is the
+  name the parser EMITS for the method-call form — `setAttribute('a','b') on me`
+  yields a node called `pseudo-command` — so no user ever types it. It moved to
+  a new `KEYWORD_NOT_ADVERTISED` allowlist. **This also corrected step 3's own
+  note**, which said the token was "unreachable (`-` is not an identifier
+  character)": `-` IS an identifier character, the token tokenizes as one
+  identifier and does reach a command node, just a degenerate one with no
+  `methodName`. Right conclusion, wrong evidence; the strikethrough is in step
+  3's section and the detail is Finding 14.
+  **The incumbent sweep came back CLEAN — all 58 live** (Finding 14). Worth
+  recording as a negative result: 4.1 found 5 of 7 wrong and 4.2 found 14 of 38
+  dead, and a session reading only those two would expect a harvest here. The
+  sweep still paid for itself one level down, in the same file: **three of the
+  55 command hover examples were dead code** the LSP showed users — `repeat`
+  (both forms missing the closing `end`), `while` (written standalone, but it is
+  a MODIFIER on `repeat`), `transition` (the possessive `#box's opacity` target
+  form, which yields no command node) — and **`push`/`replace` had no hover docs
+  at all** since #810's rename. All fixed here: same file, same defect class as
+  Finding 5, evidence in hand — Finding 12's treatment.
+  **Step 4.1's methodological trap is live in this engine too:** `parse()`
+  returning `success: true` does NOT mean the command exists. `on click
+  zzznotacommand .x` parses "fine" with an EMPTY command list. That is precisely
+  why the three dead examples were dead *silently*, and why the new gate walks
+  the AST rather than reading `success`.
+  **The gate replaces a proxy with the real question.** `ghostsIn` checks
+  registry membership, which is weaker in both directions (`pseudo-command` is
+  registered but is not a keyword; `else`/`for`/`while` are keywords but are not
+  registered). §5 now probes the parser, using each keyword's own `HOVER_DOCS`
+  example as the snippet — the text the LSP actually shows, so there is no
+  second probe table to drift, and documenting a keyword IS probing it. A
+  companion assertion requires every keyword to have a doc, so an undocumented
+  entry cannot make the gate vacuously green.
+  Mutation-verified in **6** directions, all caught: each of the three restored
+  dead examples, advertising `pseudo-command`, **dropping `scroll`** (the
+  omission direction the ghost tests are structurally blind to), removing a
+  hover doc (the probe-corpus hole), and silently re-widening `KEYWORD_GAPS`.
+  **Two defects found and deliberately NOT fixed**, both outside this file and
+  each wanting its own decision (Finding 14): `tell <target> to <command>` drops
+  the `tell` wrapper (`tell #modal to show` → `[show]`, so it would run against
+  the wrong target — one for `PARSER_NEXT_STEPS.md`), and `increment`/
+  `decrement` desugar to a `set` node so the registered implementation is never
+  reached from source (Arc E territory).
+  Gates: core **7843** passing / 128 skipped / 301 files; `verify:reference`
+  clean (59 = 59, availability chain valid); language-server **227** passing
+  against the rebuilt core dist; typecheck, prettier, oxlint clean;
+  `snapshot:bundle-size` all 10 within tolerance; Playwright `src/compatibility/`
+  1110 passed / 9 skipped with the 10 known-local failures (behaviors-demo,
+  i18n-htmx, swap-debug — green in CI). `test:check` has two failures,
+  **both reproduced with this diff stashed at `8c12cab5`** and both artifacts of
+  a worktree whose non-core `dist/` trees were copied rather than rebuilt:
+  behaviors (2 files fail to collect, 134 tests still pass) and
+  testing-framework (`shipped-examples-execution`, "expected 52 to be greater
+  than 60").
+  Next action: step 4.4 (`packageInfo.commands` as a derived value) — the arc's
+  last step.
