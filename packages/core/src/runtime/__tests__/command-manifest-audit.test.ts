@@ -473,36 +473,42 @@ const CAPABILITY_NOT_COMMANDS = new Set(['removeClass', 'push-url', 'replace-url
 
 /**
  * Registered commands in NEITHER capability list, but present in
- * AVAILABLE_BLOCKS — classified as blocks rather than commands. Whether that
- * satisfies the file's partition ("available in generated lite bundles versus
- * … the full runtime") is step 4.2's decision to make explicit.
+ * AVAILABLE_BLOCKS — classified as blocks rather than commands.
+ *
+ * **Step 4.2 decided this DOES satisfy the file's partition, and that these
+ * three must stay out of `FULL_RUNTIME_ONLY_COMMANDS`.** The generator
+ * dispatches them through `BLOCK_IMPLEMENTATIONS`, not
+ * `COMMAND_IMPLEMENTATIONS`, and lite bundles execute them correctly today;
+ * `vite-plugin`'s `getUnsupportedCommands()` checks the full-runtime list
+ * first, so listing them there would force a full-runtime fallback for working
+ * `if`/`repeat`/`fetch` code. The reason they look unclassified is that they
+ * are commands in the ENGINE and blocks in the GENERATOR — one name, two
+ * dispatch surfaces.
  */
 const CAPABILITY_BLOCK_ONLY = new Set(['fetch', 'if', 'repeat']);
 
 /**
  * Registered commands with NO classification anywhere in the capability file.
- * Latent rather than live: `vite-plugin/src/generator.ts` treats an
- * unclassified command as unsupported and falls back to the full runtime, so
- * these cost bundle size, not correctness. All fixed by step 4.2 (which must
- * also decide the COMMAND_IMPLEMENTATIONS second-list overlap).
  *
- * NOTE: the brief's Claim 3 table says 12 gaps for this file. Measured, it is
- * 13 = these 10 + the 3 block-only rows above — the table counted `if` as
+ * **Emptied by step 4.2** — all ten moved into `FULL_RUNTIME_ONLY_COMMANDS`.
+ * Measured against the generator (this file's oracle): none has a
+ * `COMMAND_IMPLEMENTATIONS` key, so `generateBundle()` rejects each as
+ * `unknown-command`, and none is reachable in the generated parser.
+ * Behavior-preserving for bundle selection, and it makes them scannable so
+ * their use routes to a tier that runs them.
+ *
+ * NOTE: the brief's Claim 3 table says 12 gaps for this file. Measured, it was
+ * 13 = those 10 + the 3 block-only rows above — the table counted `if` as
  * classified, but `if` appears in neither command list, exactly like `repeat`
  * and `fetch` which it did count.
+ *
+ * The mirror defect the same oracle run exposed — 14 of the 38 ADVERTISED
+ * commands emit a case label the bundle parser can never reach — is gated
+ * separately in `bundle-generator/__tests__/capability-emission.test.ts`
+ * (`UNREACHABLE_CASE_LABELS`), because its remedy is a parser rule rather than
+ * a reclassification. See Finding 13 in the brief.
  */
-const CAPABILITY_UNCLASSIFIED = new Set([
-  'breakpoint',
-  'clear',
-  'close',
-  'open',
-  'pseudo-command',
-  'render',
-  'reset',
-  'scroll',
-  'select',
-  'start',
-]);
+const CAPABILITY_UNCLASSIFIED = new Set<string>([]);
 
 describe('the capability lists', () => {
   it('every capability entry is a registered command or an allowlisted generator name', () => {
@@ -518,10 +524,12 @@ describe('the capability lists', () => {
     expect(REGISTERED.has(resolveCommandKey('replace-url'))).toBe(true);
   });
 
-  it('13 registered commands are outside the command partition (step 4.2)', () => {
+  it('only the 3 block-only rows are outside the command partition (step 4.2)', () => {
+    // Was 13 before step 4.2 (10 unclassified + these 3).
     expect(gapsIn([...AVAILABLE_COMMANDS, ...FULL_RUNTIME_ONLY_COMMANDS])).toEqual(
       [...CAPABILITY_BLOCK_ONLY, ...CAPABILITY_UNCLASSIFIED].sort()
     );
+    expect(CAPABILITY_UNCLASSIFIED.size, 'a command lost its classification').toBe(0);
   });
 
   it('the block-only rows really are classified as blocks', () => {
@@ -529,6 +537,16 @@ describe('the capability lists', () => {
     // AVAILABLE_BLOCKS it must move to CAPABILITY_UNCLASSIFIED, not linger.
     for (const name of CAPABILITY_BLOCK_ONLY) {
       expect(AVAILABLE_BLOCKS, `${name} left AVAILABLE_BLOCKS`).toContain(name);
+    }
+  });
+
+  it('the block-only rows are NOT full-runtime-only (step 4.2 decision)', () => {
+    // The decision, pinned as an assertion rather than only as prose: adding
+    // one of these to FULL_RUNTIME_ONLY_COMMANDS would bump every project using
+    // an `if` block to the full runtime, because getUnsupportedCommands()
+    // consults that list before anything else.
+    for (const name of CAPABILITY_BLOCK_ONLY) {
+      expect(FULL_RUNTIME_ONLY_COMMANDS as readonly string[]).not.toContain(name);
     }
   });
 });
@@ -835,7 +853,7 @@ describe('the command manifest', () => {
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
-  it('17 rows await deliberate classification (steps 4.2–4.3)', () => {
+  it('4 rows await deliberate classification (step 4.3)', () => {
     // The numbers the arc exists to burn down. A step that classifies a
     // command flips its allowlist row AND moves the count here, so the diff
     // shows both the decision and its scope. Do not adjust a count without
@@ -843,9 +861,13 @@ describe('the classification debt, counted', () => {
     //
     // Step 4.1 took this from 40 to 17: the LSP tier lists are now a total
     // partition of the registry (51 upstream / 8 extension), asserted in §3.
+    // Step 4.2 took it from 17 to 4 by classifying the ten unclassified
+    // capability rows as full-runtime-only and RESOLVING the block-only three
+    // as classified-by-AVAILABLE_BLOCKS rather than unclassified, so they no
+    // longer count as debt (they are still pinned in §4, both directions).
     expect(TIER_UNCLASSIFIED.size).toBe(0); // step 4.1 — DONE, was 23
-    expect(CAPABILITY_UNCLASSIFIED.size).toBe(10); // step 4.2 — latent, costs bundle size
-    expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — decide blocks-as-classification
+    expect(CAPABILITY_UNCLASSIFIED.size).toBe(0); // step 4.2 — DONE, was 10
+    expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — DECIDED: blocks classify
     expect(KEYWORD_GAPS.size).toBe(4); // step 4.3 — missing LSP completions
   });
 });
