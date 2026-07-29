@@ -200,7 +200,7 @@
     "test:coverage": "bash ../../scripts/vitest-run.sh --coverage",
     "bench": "vitest bench",
     "bench:run": "vitest bench --run",
-    "bench:ci": "vitest bench --run --reporter=json --outputFile=benchmark-results/latest.json",
+    "bench:ci": "vitest bench --run --outputJson=benchmark-results/latest.json",
     "test:ui": "vitest --ui",
     "test:browser": "npm run build:browser && npx playwright test --project=full",
     "test:browser:smoke": "node scripts/check-dist-freshness.mjs && npx playwright test --project=smoke --reporter=list",

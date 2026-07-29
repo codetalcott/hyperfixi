@@ -745,7 +745,19 @@ jobs:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # The `!cancelled()` is REQUIRED, and its absence was a real bug: this job
+    # skipped on a workflow_dispatch run even though the event matched and `build`
+    # succeeded (verified 2026-07-29, run 30493248972 — 0 steps executed). GitHub's
+    # skip propagation is TRANSITIVE: `changes` is skipped on schedule/dispatch, and
+    # every job in that needs-closure inherits an implicit `success()` over it unless
+    # it carries its own status function. `build` had one; this job did not, so the
+    # whole nightly chain silently did nothing while the run still reported success.
+    # `needs.build.result == 'success'` restores the dependency check that
+    # `!cancelled()` opts out of, so a broken build still stops us.
+    if: >-
+      ${{ !cancelled()
+          && needs.build.result == 'success'
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 20
 
     steps:
@@ -1412,7 +1424,12 @@ jobs:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # `!cancelled()` required for the same transitive skip-propagation reason as the
+    # coverage job — see the comment there.
+    if: >-
+      ${{ !cancelled()
+          && needs.build.result == 'success'
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 20
 
     steps:
@@ -1448,7 +1465,35 @@ jobs:
       # output were therefore discarded; the job burned its budget for nothing.
       - name: Run benchmarks
         run: npm run bench:ci --prefix packages/core
+        # Kept non-fatal deliberately: benchmarks have no pass/fail thresholds, so a
+        # slow machine must never fail the run, and `vitest bench` is also exposed to
+        # the known post-run esbuild daemon hang. But see the next step — this flag is
+        # what let a TOTAL startup failure sit unnoticed, so the output is now asserted
+        # separately.
         continue-on-error: true
+
+      # `continue-on-error` above cannot distinguish "benchmarks ran and were slow"
+      # from "benchmarks never ran". It was the latter: `bench:ci` used
+      # `--reporter=json`, which vitest 4 tries to resolve as a CUSTOM reporter module
+      # in bench mode and dies with "Failed to load custom Reporter from json". The
+      # job still reported success, and the upload silently picked up two COMMITTED
+      # 2025-12-05 files, so the artifact looked healthy at 1.5 KB while containing
+      # seven-month-old data. This step makes that failure mode loud without making a
+      # slow benchmark fatal. A real report is ~30 KB.
+      - name: Verify benchmark output was produced
+        run: |
+          f=packages/core/benchmark-results/latest.json
+          if [ ! -s "$f" ]; then
+            echo "::error::$f missing or empty — bench:ci did not produce a report."
+            exit 1
+          fi
+          bytes=$(wc -c <"$f")
+          echo "benchmark report: $bytes bytes"
+          if [ "$bytes" -lt 1000 ]; then
+            echo "::error::$f is only $bytes bytes — implausibly small for a report."
+            exit 1
+          fi
+          node -e "const j=require('./$f'); if(!j.files?.length) { console.error('no benchmark files in report'); process.exit(1); } console.log('files:', j.files.length)"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7
