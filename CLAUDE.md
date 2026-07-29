@@ -633,7 +633,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.7 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~322 KB), minimal (76 KB), standard (83 KB), browser (~310 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (8.1 KB), hybrid-hx (18 KB), hybrid-hx-v4 (~322 KB), minimal (76 KB), standard (83 KB), browser (~310 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -855,7 +855,7 @@ Quick selection (sizes gzipped):
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------ |
 | via `@hyperfixi/vite-plugin`   | minimal   | **Default for Vite projects** — scans usage, emits the right bundle                        |
 | `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
-| `hyperfixi-hybrid-complete.js` | 7.7 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
+| `hyperfixi-hybrid-complete.js` | 8.1 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
 | `hyperfixi-hx.js`              | 18 KB     | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
 | `hyperfixi-hx-v4.js`           | ~322 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
 | `hyperfixi.js`                 | ~310 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
