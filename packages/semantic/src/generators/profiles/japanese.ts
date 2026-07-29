@@ -105,8 +105,25 @@ export const japaneseProfile: LanguageProfile = {
     trigger: { primary: '引き金', alternatives: ['発火', 'トリガー'], normalized: 'trigger' },
     send: { primary: '送る', alternatives: ['送信'], normalized: 'send' },
     // DOM focus
-    focus: { primary: 'フォーカス', alternatives: ['集中'], normalized: 'focus' },
-    blur: { primary: 'ぼかし', alternatives: ['フォーカス解除', 'ブラー'], normalized: 'blur' },
+    // 集中 dropped: it means mental concentration and is never used for UI focus,
+    // so it would mislead a beginner rather than help one.
+    focus: { primary: 'フォーカス', normalized: 'focus' },
+    // 'ぼかし' is the image-processing sense of blur (Photoshop ぼかしフィルター /
+    // ガウスぼかし) and carries no focus meaning in Japanese at all — a developer
+    // reading it would expect a visual effect.
+    //
+    // フォーカスアウト demoted from primary 2026-07-28 (independent verification
+    // pass): it is the established Japanese name for the DOM `focusout` event,
+    // which is a DIFFERENT event from `blur` — same moment, but focusout bubbles
+    // and blur does not. Naming blur with it teaches a false equivalence and
+    // spends the only term available if focusout is ever published. フォーカス解除
+    // is the native, unambiguous name for losing focus and names no other API.
+    // Both demoted forms stay as parse alternatives, so existing pages keep working.
+    blur: {
+      primary: 'フォーカス解除',
+      alternatives: ['フォーカスアウト', 'ブラー', 'ぼかし'],
+      normalized: 'blur',
+    },
     // Phase 1 (v0.9.90): DOM / form state / debug
     // Batch 3: do NOT add bare 空 here — probed: registering it as an empty
     // keyword injects a phantom `empty` command into the corpus-hot `is empty`
@@ -191,7 +208,9 @@ export const japaneseProfile: LanguageProfile = {
     async: { primary: '非同期', alternatives: ['アシンク'], normalized: 'async' },
     tell: { primary: '伝える', alternatives: ['テル'], normalized: 'tell' },
     default: { primary: '既定', alternatives: ['デフォルト'], normalized: 'default' },
-    init: { primary: '初期化', alternatives: ['イニット'], normalized: 'init' },
+    // イニット dropped: essentially no currency — Japanese developers write init
+    // in Latin letters or say イニシャライザ for the initializer.
+    init: { primary: '初期化', normalized: 'init' },
     behavior: { primary: '振る舞い', alternatives: ['ビヘイビア'], normalized: 'behavior' },
     install: { primary: 'インストール', alternatives: ['導入'], normalized: 'install' },
     measure: { primary: '測定', alternatives: ['計測', 'メジャー'], normalized: 'measure' },

@@ -93,8 +93,21 @@ export const portugueseProfile: LanguageProfile = {
     on: { primary: 'em', alternatives: ['ao'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['ativar'], normalized: 'trigger' },
     send: { primary: 'enviar', normalized: 'send' },
-    focus: { primary: 'focar', normalized: 'focus' },
-    blur: { primary: 'desfocar', normalized: 'blur' },
+    // Nominalized 2026-07-28: an event names an occurrence, so it takes a noun;
+    // the bare infinitive reads as a command ('focus this!'). Portuguese prose
+    // says an element 'recebe o foco' / 'perde foco'.
+    focus: { primary: 'foco', alternatives: ['focar'], normalized: 'focus' },
+    // 'desfoque' was the obvious nominalization and is deliberately NOT used:
+    // in front-end Portuguese it is the CSS visual blur (filter: blur(),
+    // backdrop-filter), the same false-friend trap that put ぼかし in Japanese
+    // and 블러 in Korean. 'perda de foco' is what MDN pt-BR and Alura use for
+    // the event, and the multi-word form is fine — lookup collapses separators,
+    // so `on-perda-de-foco` resolves too.
+    blur: {
+      primary: 'perda de foco',
+      alternatives: ['desfocar'],
+      normalized: 'blur',
+    },
     // Phase 1 (v0.9.90): DOM / form state / debug
     empty: { primary: 'esvaziar', alternatives: ['vazio'], normalized: 'empty' },
     open: { primary: 'abrir', normalized: 'open' },
@@ -108,7 +121,13 @@ export const portugueseProfile: LanguageProfile = {
       normalized: 'breakpoint',
     },
     go: { primary: 'ir', alternatives: ['navegar', 'vá'], normalized: 'go' },
-    scroll: { primary: 'rolar', alternatives: ['scroll'], normalized: 'scroll' },
+    // 'evento de rolagem' is the attested phrasing; 'deslocamento' is the
+    // European Portuguese form (barra de deslocamento).
+    scroll: {
+      primary: 'rolagem',
+      alternatives: ['rolar', 'deslocamento', 'scroll'],
+      normalized: 'scroll',
+    },
     push: { primary: 'empurrar', alternatives: ['push'], normalized: 'push' },
     replace: { primary: 'repor', alternatives: ['recolocar'], normalized: 'replace' },
     process: { primary: 'processar', normalized: 'process' },
@@ -162,7 +181,11 @@ export const portugueseProfile: LanguageProfile = {
     async: { primary: 'assíncrono', normalized: 'async' },
     tell: { primary: 'dizer', normalized: 'tell' },
     default: { primary: 'padrão', normalized: 'default' },
-    init: { primary: 'iniciar', alternatives: ['inicializar'], normalized: 'init' },
+    init: {
+      primary: 'inicialização',
+      alternatives: ['iniciar', 'inicializar'],
+      normalized: 'init',
+    },
     behavior: { primary: 'comportamento', normalized: 'behavior' },
     install: { primary: 'instalar', normalized: 'install' },
     measure: { primary: 'medir', normalized: 'measure' },
@@ -179,9 +202,18 @@ export const portugueseProfile: LanguageProfile = {
     click: { primary: 'clique', alternatives: ['clicar'], normalized: 'click' },
     // `resize` event (window-resize): dict emits redimensionar; register it so the
     // event types as literal="resize" (matching en) instead of expression.
-    resize: { primary: 'redimensionar', normalized: 'resize' },
+    resize: {
+      primary: 'redimensionamento',
+      alternatives: ['redimensionar'],
+      normalized: 'resize',
+    },
     hover: { primary: 'sobrevoar', alternatives: ['passar'], normalized: 'hover' },
-    submit: { primary: 'envio', alternatives: ['submeter'], normalized: 'submit' },
+    // 'submissão' is the European Portuguese form; pt-BR says 'envio'.
+    submit: {
+      primary: 'envio',
+      alternatives: ['submeter', 'submissão'],
+      normalized: 'submit',
+    },
     input: { primary: 'entrada', alternatives: ['inserção'], normalized: 'input' },
     change: { primary: 'alteração', alternatives: ['mudança'], normalized: 'change' },
     // mousedown/mouseup (repeat-until-event): dict emits the spaced forms —
@@ -191,14 +223,17 @@ export const portugueseProfile: LanguageProfile = {
     // baixo/cima was a spatial calque of down/up. pt-BR says "pressionado"/
     // "solto" — cf. MDN pt-BR and Scratch pt-BR ("mouse pressionado?").
     // Note this vocabulary is Brazilian: pt-PT would say "rato", not "mouse".
+    // pt-PT 'rato …' forms added 2026-07-28 as parse aliases rather than a
+    // separate locale: the split is lexical (rato/mouse, libertado/solto), not
+    // orthographic, and normLang strips the subtag so pt-PT resolves as pt.
     mousedown: {
       primary: 'mouse pressionado',
-      alternatives: ['mouse baixo', 'mouseBaixo'],
+      alternatives: ['rato pressionado', 'mouse baixo', 'mouseBaixo'],
       normalized: 'mousedown',
     },
     mouseup: {
       primary: 'mouse solto',
-      alternatives: ['mouse liberado', 'mouse cima', 'mouseCima'],
+      alternatives: ['mouse liberado', 'rato libertado', 'mouse cima', 'mouseCima'],
       normalized: 'mouseup',
     },
     // Event modifiers (for repeat until event)

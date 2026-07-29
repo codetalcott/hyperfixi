@@ -103,7 +103,11 @@ export const koreanProfile: LanguageProfile = {
     send: { primary: '보내다', alternatives: ['보내세요'], normalized: 'send' },
     // DOM focus
     focus: { primary: '포커스', normalized: 'focus' },
-    blur: { primary: '블러', normalized: 'blur' },
+    // '블러' means the visual blur effect almost exclusively in Korean (블러 처리,
+    // 블러 효과, filter: blur()), so it reads as image blurring rather than focus
+    // loss. Korean writers say 포커스아웃 / 포커스 해제; 포커스아웃 is a single
+    // hangul token and pairs with the shipped 포커스 for focus.
+    blur: { primary: '포커스아웃', alternatives: ['블러'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
     // Batch 3: 비어있는 added — the i18n dict renders the empty COMMAND with its
     // `is empty` adjective (category-shadowed), which parsed null.
