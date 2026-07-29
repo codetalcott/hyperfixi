@@ -103,7 +103,12 @@ Problems:
 
 Benefits:
 ✅ Build packages 1 time per run (80% reduction)
-✅ Zero duplication
+⚠️  Zero duplication — NOT true as written; consolidating workflow FILES did not
+    remove cross-JOB duplication. A 2026-07-29 audit found four redundancies
+    still in ci.yml (nine domain lint suites run twice, a multilingual --quick
+    sweep subsumed by the --full one, unit-tests running on docs-only PRs, and
+    coverage re-running 430 files per merge). All fixed; details in
+    CONSOLIDATION_SUMMARY.md § "Duplication".
 ✅ Artifacts shared efficiently
 ✅ ~15-20 minutes total CI time (40% faster)
 ✅ 3 workflow files (57% reduction)
@@ -258,11 +263,21 @@ Savings: 56 minutes of build time per CI run! 🚀
 | **Total Jobs**       | 16           | 8          | 50% fewer     |
 | **Package Builds**   | 5+ per run   | 1 per run  | 80% reduction |
 | **CI Duration**      | 25-35 min    | 15-20 min  | 40% faster    |
-| **Duplication**      | 60% overlap  | 0% overlap | Eliminated    |
+| **Duplication**      | 60% overlap  | see note   | Partly†       |
 | **Artifact Sharing** | None         | All jobs   | New feature   |
 | **Parallel Jobs**    | Limited      | 7 jobs     | 7× parallel   |
 | **Node Versions**    | 3 (18,20,22) | 1 (24 LTS) | 67% reduction |
 | **Maintenance**      | Complex      | Simple     | Much easier   |
+
+† The original "0% overlap / Eliminated" was wrong. Consolidating workflow FILES
+did not remove cross-JOB duplication, and four redundancies survived in ci.yml
+until a 2026-07-29 audit: nine domain lint suites running twice per PR, a
+multilingual `--quick` sweep strictly subsumed by the `--full` one beside it,
+`unit-tests`/`lint-typecheck`/`export-validation` running on docs-only PRs, and
+`coverage` re-executing 430 test files on every push to main. All four are fixed;
+see CONSOLIDATION_SUMMARY.md § "Duplication: the 0% overlap claim was false".
+This whole document is a snapshot — `ci.yml` and its job comments are the source
+of truth.
 
 ## Timeline Visualization
 

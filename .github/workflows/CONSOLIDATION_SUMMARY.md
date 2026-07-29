@@ -33,14 +33,20 @@
 
 ```yaml
 build (runs once)
-├─> lint-typecheck
-├─> unit-tests (Node 18, 20, 22)
-├─> coverage
-├─> browser-tests
-├─> multilingual-validation
-├─> bundle-size
-└─> benchmarks (main branch only)
+├─> lint-typecheck            # PR only, gated on `code`
+├─> unit-tests (Node 24)      # PR only, gated on `code`
+├─> browser-tests             # PR only, gated on `code`
+├─> multilingual-validation   # PR only, gated on `code`
+├─> bundle-size               # PR only, gated on `code`
+├─> coverage                  # nightly schedule / workflow_dispatch
+└─> benchmarks                # nightly schedule / workflow_dispatch
 ```
+
+> This diagram is a snapshot, not the source of truth — `.github/workflows/ci.yml`
+> is. It said `unit-tests (Node 18, 20, 22)` long after the matrix was replaced by
+> a single Node 24; treat the job comments in ci.yml as authoritative. `coverage`
+> and `benchmarks` moved from push-to-main to a nightly schedule on 2026-07-29
+> (see the note under "Duplication" below).
 
 ### Job Breakdown
 
@@ -59,10 +65,15 @@ build (runs once)
 
 - Tests all packages on Node 24 (Active LTS)
 
-#### 4. Coverage (20 min)
+#### 4. Coverage (20 min, nightly / workflow_dispatch)
 
 - Generates coverage reports
 - Uploads to Codecov
+- Was push-to-main until 2026-07-29. Under `strict` branch protection the
+  post-merge tree is the tree the PR validated, so this re-executed the full
+  core + semantic + i18n + language-server suites (430 files) a second time per
+  merge for one Codecov datapoint. Not a required check, so nightly costs no
+  gate strength.
 
 #### 5. Browser Tests (30 min)
 
@@ -80,14 +91,21 @@ build (runs once)
 - Warns on size limit violations
 - Limits: lite (4KB), hybrid (15KB), browser (230KB)
 
-#### 8. Benchmarks (20 min, main only)
+#### 8. Benchmarks (20 min, nightly / workflow_dispatch)
 
-- Performance benchmarks
-- Only runs on main branch pushes
+- Performance benchmarks, `continue-on-error` (trend only, never a gate)
+- Was main-branch pushes until 2026-07-29; moved alongside coverage
+- Its output had always been discarded: it ran `bench:run`, which writes no
+  file (only `bench:ci` passes `--outputFile`), and uploaded from
+  `./core/benchmark-results/` rather than `packages/core/benchmark-results/`.
+  Both halves fixed in the same change.
 
 ---
 
 ## Performance Improvements
+
+Figures from the original 2026-01-23 consolidation. Kept for history; the
+**Duplication** row was wrong and is corrected below.
 
 | Metric             | Before       | After      | Improvement   |
 | ------------------ | ------------ | ---------- | ------------- |
@@ -95,8 +113,29 @@ build (runs once)
 | **Total Jobs**     | 16 jobs      | 8 jobs     | 50% reduction |
 | **CI Time**        | 25-35 min    | 15-20 min  | 40% faster    |
 | **Package Builds** | 5+ times     | 1 time     | 80% reduction |
-| **Duplication**    | 60% overlap  | 0% overlap | Eliminated    |
+| **Duplication**    | 60% overlap  | see below  | Partly        |
 | **Node Versions**  | 3 (18,20,22) | 1 (24 LTS) | 67% reduction |
+
+### Duplication: the "0% overlap" claim was false
+
+Consolidating the workflow files removed cross-**workflow** duplication, not
+cross-**job** duplication. A 2026-07-29 audit found four redundancies still in
+ci.yml, all since fixed:
+
+1. `lint-typecheck` ran `npm run lint:domains`, which is vitest
+   (`npm test --prefix packages/domain-<x> -- --run lint`) over the same
+   `src/__test__/lint.test.ts` files `unit-tests` already ran via its
+   `src/**/*.test.ts` include — nine suites twice per PR.
+2. `multilingual-validation` ran a `--quick` sweep that was a strict subset of
+   the `--full` sweep on the next line (deterministic `slice(0, 10)` of the same
+   corpus, six languages all inside the full run's 21).
+3. `export-validation` / `lint-typecheck` / `unit-tests` gated on
+   `pull_request` alone, so a docs-only PR ran the whole 27-package unit suite —
+   contradicting this workflow's own claim that such a PR is cheap.
+4. `coverage` re-ran 430 test files on every push to main (see job 4 above).
+
+Measured cost before the fixes: ~11.5 min per PR run plus ~10.5 min per
+post-merge run, i.e. ~22 min of CI per merged change.
 
 ---
 
@@ -149,15 +188,15 @@ If branch protection rules reference old workflow names:
 ```yaml
 # Old (may need updating)
 required_status_checks:
-  - "Test Suite"
-  - "Multilingual Validation"
-  - "Browser Tests"
+  - 'Test Suite'
+  - 'Multilingual Validation'
+  - 'Browser Tests'
 
 # New (recommended)
 required_status_checks:
-  - "Lint & Typecheck"
-  - "Unit Tests"
-  - "Browser Tests"
+  - 'Lint & Typecheck'
+  - 'Unit Tests'
+  - 'Browser Tests'
 ```
 
 ### For Badges
