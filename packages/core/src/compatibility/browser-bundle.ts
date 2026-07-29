@@ -1,11 +1,11 @@
 /**
  * HyperFixi Full Browser Bundle
- * Includes ALL commands and features (40+ commands)
+ * Includes ALL commands and features (all 59 — this bundle constructs Runtime)
  *
  * This is the complete bundle for maximum compatibility.
  * For smaller bundle sizes, consider:
- * - hyperfixi-minimal.js (~50-60KB gzipped, 8 commands, core expressions)
- * - hyperfixi-standard.js (~100-110KB gzipped, 20 commands, core+common expressions)
+ * - hyperfixi-minimal.js (~50-60KB gzipped, 10 commands, core expressions)
+ * - hyperfixi-standard.js (~100-110KB gzipped, 25 commands, core+common expressions)
  *
  * Phase 2 optimization notes:
  * - When using createRuntime(), specify expressionPreload option:

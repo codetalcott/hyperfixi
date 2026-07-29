@@ -7,11 +7,23 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: STEPS 1–3 AND 4.1–4.3 LANDED** (the audit-as-gate, the manifest, the
-> four mechanical consumers, then the three decision-bearing classifications).
-> **The arc's classification debt is ZERO** — §8's headline counts all read 0.
-> **Next action: step 4.4 (`packageInfo.commands` as a derived value), the arc's
-> last step.** Baseline after 4.3 is **7843** core / **227** language-server.
+> **Status: ARC A COMPLETE — steps 1–3 and 4.1–4.4 all landed** (the
+> audit-as-gate, the manifest, the four mechanical consumers, the three
+> decision-bearing classifications, and the derivation).
+> **The arc's classification debt is ZERO** — §8's headline counts all read 0,
+> and 4.4 correctly added no row to it.
+> Baseline after 4.4 is **7844** core / **227** language-server.
+>
+> **4.4 found three ADVERTISED COUNTS THAT WERE FALSE** (Finding 15), all in the
+> set nothing was checking: `minimal` 30→10, `standard` 35→25, and
+> `multilingual` **59→52** — the last claiming the full-registry number while
+> shipping seven fewer commands. The derivation itself was a two-line change;
+> the yield was entirely in the rows next to it.
+>
+> **Next action: none in this arc.** The recommended follow-on remains
+> **Finding 13** (14 unreachable capability case labels — the largest
+> user-visible stake). Finding 15 also leaves two named behavior questions for
+> their own PRs.
 >
 > **Step 4.2 also opened a new live defect it deliberately did NOT fix** — 14 of
 > the 38 advertised capability rows emit a case label the bundle parser can
@@ -507,6 +519,60 @@ wants its own decision):
   but it means the registry entry and the parse path disagree about what runs —
   Arc E (the executors) territory.
 
+### Finding 15 — three advertised bundle counts were FALSE, all in the ungated set (measured in step 4.4)
+
+Step 4.4's own subject — `packageInfo.commands` — was a two-line change and was
+never wrong. The yield was entirely in the counts beside it.
+
+`metadata.ts` advertises a `commandCount` per bundle. Before this step
+`verify:reference` checked exactly two of the nine against anything
+(`lite-plus`, `hybrid-complete`, via their own `commands: [...]` arrays). Both
+were correct. **Every remaining checkable one was wrong:**
+
+| Bundle | Advertised | Actual | How the actual was measured |
+| ------ | ---------- | ------ | --------------------------- |
+| `minimal` | 30 | **10** | its own `commands: [...]` array |
+| `standard` | 35 | **25** | its own `commands: [...]` array |
+| `multilingual` | 59 | **52** | the factory list it passes to `createTreeShakeableRuntime` |
+
+`multilingual` is the sharp one: 59 is the *full-registry* number, so the entry
+read as a full-runtime bundle. It is not. Missing vs the manifest are `morph`,
+`process`, `push`, `replace`, `scroll`, `start`, `swap` — measured by
+replicating `CommandRegistryV2.register()` over its factory list (52 factories →
+52 names; no phantoms in the other direction).
+
+The two that WERE gated were right and the three that were not were wrong, which
+is the whole finding: the numbers were pinned in one place (§6 pins each array's
+size) and advertised in another (`metadata.ts`), and **nothing compared the two**.
+Pinning one side and advertising the other is not a check.
+
+Verified honest and left alone:
+
+- `browser` — constructs `Runtime`; measured 59, no gaps and no extras.
+- `hybrid-hx-v4` / `hybrid-hx` — re-export `browser` / `hybrid-complete`
+  wholesale, so they inherit 59 / 24.
+- `lite` (8), and the `textshelf` bundles (10).
+
+**Two behavior questions deliberately NOT answered here**, since 4.4 is a
+derivation and neither is:
+
+1. **Should `multilingual` ship all 59?** It is the flagship multilingual bundle
+   and silently lacks seven commands. This step only stopped the number lying.
+2. **`minimal` registers 11 but advertises 10.** Its `createSendCommand` also
+   registers the consolidation alias `trigger`, so `trigger` works there and is
+   absent from the published array. The metadata count mirrors the *advertised*
+   array so the two stay comparable; correcting the array is a change to a
+   shipped bundle's public surface.
+
+**What moved so this cannot recur:** the bundle→source pairing now lives in one
+place (`compatibility/bundle-sources.ts`), read by both `verify:reference` and
+audit §6. The gate re-derives all nine counts (array, factory list, or
+re-export target); §6 gained the metadata↔array comparison that was missing.
+`verify:reference` also had to stop text-scraping `metadata.ts` — its
+`commandCount:\s*(\d+)` regex matches only literal digits, so the moment the
+full-runtime counts became derived expressions it would have silently skipped
+exactly the entries it most needed to see.
+
 ## What changed vs. the queue doc's plan
 
 The queue says: consumers migrate "lowest-risk first — template-capabilities
@@ -725,7 +791,20 @@ step-1 audit rows so the diff is the review artifact:
    claim in step 3's own notes.
    §5 of the audit no longer proxies this through registry membership: it probes
    the parser, using each keyword's `HOVER_DOCS` example as the snippet.
-4. **`packageInfo.commands`** as a derived value. **Step-3 knock-on: the
+4. **`packageInfo.commands`** as a derived value — **DONE** (see the status log
+   and Finding 15). The oracle was **the manifest itself** (`COMMAND_NAMES`),
+   which is what made this step's named work nearly free — and why the risk sat
+   elsewhere. `packageInfo.commands` and the two genuinely-full-runtime bundle
+   counts (`browser`, `hybrid-hx-v4`) now read `COMMAND_NAMES.length` via a
+   `FULL_RUNTIME_COMMAND_COUNT` constant; `COMMAND_NAMES` and **not**
+   `COMMAND_MANIFEST.map(...)`, per Finding 11. Measured clean: all 10 bundles
+   within tolerance, `hyperfixi-hx.js` +0.4%, and the built bundle verified
+   directly to contain no `metadata.ts` content and none of the manifest's
+   classification fields — `metadata.ts` turns out to be a leaf module that
+   nothing in `src/` imports.
+   **The three false counts Finding 15 records were fixed in the same PR**, and
+   the gate widened from 2 of 9 bundles to all 9.
+   **Step-3 knock-on: the
    `runtime/runtime.ts` half of the docstring fix is already done.** All six
    "48 commands" mentions and every undercounting per-category group comment
    ("DOM Commands (11)" above 15 registrations, "Phase 6-5 Commands (6)" above
@@ -1169,3 +1248,41 @@ was touched.
   than 60").
   Next action: step 4.4 (`packageInfo.commands` as a derived value) — the arc's
   last step.
+- 2026-07-29 — **step 4.4 landed; ARC A COMPLETE** (branch
+  `feat/manifest-derived-command-counts`, off `5425f26a`). Oracle: **the manifest
+  itself** (`COMMAND_NAMES`) — stated up front, and the reason the named work was
+  nearly free. `packageInfo.commands`, `browser.commandCount` and
+  `hybrid-hx-v4.commandCount` now derive from a `FULL_RUNTIME_COMMAND_COUNT =
+  COMMAND_NAMES.length` constant (**not** `COMMAND_MANIFEST.map()`, per
+  Finding 11), as does `ecosystem.core.description`, which had rotted to "43
+  commands".
+  **The yield was adjacent, exactly as the 4.1/4.2/4.3 pattern predicted:
+  three advertised bundle counts were FALSE** — `minimal` 30→10, `standard`
+  35→25, `multilingual` **59→52** (Finding 15). The two bundles the gate already
+  covered were both correct; every unchecked-and-checkable one was wrong.
+  `multilingual` claimed the full-registry number while missing `morph`,
+  `process`, `push`, `replace`, `scroll`, `start`, `swap`.
+  Also corrected eleven stale prose counts across eight files (`48 commands` in
+  the three named files, plus `41` ×5 in the multilingual/semantic-complete
+  bundles, `43+`, `40+`, `37`, `16`, `8`).
+  Structural: new `compatibility/bundle-sources.ts` holds the bundle→source
+  pairing once, read by both `verify:reference` and audit §6; the gate now
+  re-derives **all nine** counts (was two) across three arms — published array,
+  factory list, re-export target — each negative-tested to fail. `verify:reference`
+  stopped text-scraping `metadata.ts` (its `\d+` regexes cannot see a derived
+  expression). §6 gained the metadata↔array comparison whose absence was the
+  bug; §8 correctly gained no row. Core CLAUDE.md step 7 rewritten — the
+  full-runtime counts no longer need bumping by hand.
+  Deliberately NOT done, both behavior calls wanting their own PR: making
+  `multilingual` ship all 59, and adding the registered-but-unadvertised
+  `trigger` to `minimal`'s published array (it registers 11, advertises 10).
+  Gates: core **7844** passing / 128 skipped / 301 files (+1 = the new §6 test);
+  `verify:reference` clean; language-server **227**; `snapshot:bundle-size` all
+  10 within tolerance with `hyperfixi-hx.js` at +0.4%, plus a direct check that
+  the built bundle carries no `metadata.ts` content and none of the manifest's
+  classification fields; Playwright `src/compatibility/` **1111 passed / 8
+  skipped** with the same 10 known-local failures. **`test:check` was FULLY
+  GREEN** — the two failures the previous entry recorded did NOT reproduce,
+  confirming its own diagnosis that they were copied-`dist/` worktree artifacts:
+  this session ran in the main tree with freshly rebuilt dists.
+  Next action: none in this arc. Recommended follow-on is still **Finding 13**.
