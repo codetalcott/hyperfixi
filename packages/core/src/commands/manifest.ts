@@ -66,7 +66,7 @@
  * | `name` | `new Runtime().getRegistry().getCommandNames()` | set equality, both directions |
  * | `category` | the implementation's `metadata.category` (what the registry serves) | exact, all 59 |
  * | `tier` | `reference/index.ts`'s `availability` | exact, all 59 |
- * | `upstreamOrExtension` | the LSP tier lists (`language-server/src/command-tiers.ts`) | `unknown` set === the audit's `TIER_UNCLASSIFIED` |
+ * | `upstreamOrExtension` | the LSP tier lists (`language-server/src/command-tiers.ts`) | per-command equality, all 59; plus `unknown` set === the audit's `TIER_UNCLASSIFIED` (both empty since step 4.1) |
  * | `consolidationAliasOf` | `metadata.aliases`, resolved by shared implementation identity | exact, the 4 pairs |
  * | `multiword` | `parser-constants.COMPOUND_COMMANDS` | set equality |
  *
@@ -103,9 +103,27 @@
  * the `@meta` decorator forwards it — but **all 59 commands leave it unset**.
  * So the fact genuinely is recorded nowhere except the LSP tier lists, as the
  * brief found; what is new is that the natural home for it already exists and
- * is vacant. Step 4.1 classifies the 23 `unknown` rows against an upstream
- * `_hyperscript` checkout; populating `metadata.compatibility` at the same time
- * would let this field become derived rather than absorbed.
+ * is vacant.
+ *
+ * **Step 4.1 decided NOT to populate it, deliberately.** The classification
+ * stays absorbed from the tier lists and mirrored here under assertion. Three
+ * reasons, in order of weight:
+ *
+ * 1. Arc A's non-goals fence the decorator statics off as **Arc B** ("the
+ *    manifest is a sibling of `metadata`, not a replacement"). Populating
+ *    `compatibility` is that arc's work, not this one's.
+ * 2. The review artifact. Step 4.1 is 23 per-command judgment calls; they are
+ *    reviewable as one annotated table in one file, and unreviewable as a
+ *    one-line decorator change spread over 59 implementation files.
+ * 3. The domains do not line up. `compatibility` offers `'experimental'`,
+ *    which has no counterpart here, and this field offers `'unknown'`, which
+ *    has none there. Populating it would force a second, undiscussed decision
+ *    about what `'experimental'` means inside a PR about upstream parity.
+ *
+ * Nothing is lost by waiting: the classification is now **complete**, so Arc B
+ * can invert the direction (registry-derived rather than tier-list-absorbed)
+ * by copying 59 finished values, which it could not have done while 23 of them
+ * read `'unknown'`.
  *
  * ## Not in this file
  *
@@ -142,12 +160,23 @@ export type CommandTier = 'lite' | 'lite-plus' | 'hybrid' | 'full';
  * Whether a command exists in upstream `_hyperscript` or is a LokaScript
  * extension.
  *
- * `'unknown'` is not a placeholder for "we did not bother" — it is the 23-row
- * classification debt the step-1 audit pins as `TIER_UNCLASSIFIED`, and the
- * audit asserts these two sets are equal so step 4.1 has to move both together.
- * This is the arc's one *live* defect: `detectLokascriptFeatures()` warns only
- * for commands in `LOKASCRIPT_ONLY_COMMANDS`, so an extension missing from
- * that list produces no compatibility warning at all.
+ * **`'unknown'` is now unused — step 4.1 classified all 59 (51 upstream, 8
+ * extension).** It is kept in the union rather than deleted so the audit can go
+ * on asserting the empty-set coupling described below; a row that reappears as
+ * `'unknown'` fails the gate rather than being unrepresentable, which keeps the
+ * failure message about the classification instead of about a type.
+ *
+ * It was a 23-row classification debt, pinned by the step-1 audit as
+ * `TIER_UNCLASSIFIED`, and the audit asserts the manifest's `'unknown'` set and
+ * that set are **equal** — so step 4.1 had to empty both in one diff. That debt
+ * was the arc's one *live* defect: `detectLokascriptFeatures()` scans only
+ * `LOKASCRIPT_ONLY_COMMANDS` and `language-server/src/server.ts` turns each hit
+ * into a `DiagnosticSeverity.Error`, so an extension missing from that list
+ * produced no diagnostic at all.
+ *
+ * The values are measured against the published original engine, not recalled;
+ * `language-server/src/command-tiers.ts` carries the per-command probe and the
+ * oracle version, and is the source this field mirrors.
  */
 export type UpstreamOrExtension = 'upstream' | 'extension' | 'unknown';
 
@@ -283,35 +312,35 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'async',
     category: 'advanced',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     multiword: false,
   },
   {
     name: 'beep',
     category: 'utility',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     multiword: false,
   },
   {
     name: 'blur',
     category: 'execution',
     tier: 'lite-plus',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'break',
     category: 'control-flow',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'breakpoint',
     category: 'utility',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -325,28 +354,28 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'clear',
     category: 'data',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'close',
     category: 'dom',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'continue',
     category: 'control-flow',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'copy',
     category: 'utility',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     multiword: false,
   },
   {
@@ -368,7 +397,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'empty',
     category: 'dom',
     tier: 'lite-plus',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -389,7 +418,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'focus',
     category: 'execution',
     tier: 'lite-plus',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -432,7 +461,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'install',
     category: 'behaviors',
     tier: 'full',
-    upstreamOrExtension: 'extension',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -453,35 +482,35 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'make',
     category: 'dom',
     tier: 'hybrid',
-    upstreamOrExtension: 'extension',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'measure',
     category: 'animation',
     tier: 'full',
-    upstreamOrExtension: 'extension',
+    upstreamOrExtension: 'upstream',
     multiword: true,
   },
   {
     name: 'morph',
     category: 'dom',
     tier: 'full',
-    upstreamOrExtension: 'extension',
+    upstreamOrExtension: 'upstream',
     multiword: true,
   },
   {
     name: 'open',
     category: 'dom',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'pick',
     category: 'utility',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: true,
   },
   {
@@ -502,14 +531,14 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'pseudo-command',
     category: 'execution',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'push',
     category: 'navigation',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     multiword: true,
   },
   { name: 'put', category: 'dom', tier: 'lite', upstreamOrExtension: 'upstream', multiword: true },
@@ -524,7 +553,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'render',
     category: 'templates',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -538,7 +567,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'replace',
     category: 'navigation',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     consolidationAliasOf: 'push',
     multiword: true,
   },
@@ -546,7 +575,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'reset',
     category: 'dom',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -560,14 +589,14 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'scroll',
     category: 'navigation',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
     name: 'select',
     category: 'dom',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   {
@@ -583,7 +612,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'settle',
     category: 'animation',
     tier: 'full',
-    upstreamOrExtension: 'extension',
+    upstreamOrExtension: 'upstream',
     multiword: false,
   },
   { name: 'show', category: 'dom', tier: 'lite', upstreamOrExtension: 'upstream', multiword: true },
@@ -591,14 +620,14 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'start',
     category: 'animation',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: true,
   },
   {
     name: 'swap',
     category: 'dom',
     tier: 'hybrid',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'upstream',
     multiword: true,
   },
   {
@@ -647,7 +676,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     name: 'unless',
     category: 'control-flow',
     tier: 'full',
-    upstreamOrExtension: 'unknown',
+    upstreamOrExtension: 'extension',
     consolidationAliasOf: 'if',
     multiword: false,
   },

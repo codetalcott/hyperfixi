@@ -7,10 +7,10 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: STEPS 1–3 LANDED (the audit-as-gate, the manifest, then the four
-> mechanical consumers). Next action: step 4 (the decision-bearing consumers,
-> one PR each — start with 4.1, the live LSP false negative).** Baseline for
-> step 4 is **7827** (step 3 added 3 tests to the audit file).
+> **Status: STEPS 1–3 AND 4.1 LANDED** (the audit-as-gate, the manifest, the
+> four mechanical consumers, then the LSP tier classification — the arc's one
+> live defect). **Next action: step 4.2 (template-capabilities, 13 rows,
+> latent).** Baseline after 4.1 is **7829** core / **227** language-server.
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -124,13 +124,20 @@ two separate PRs and not one:**
   size, not correctness. (Note the second escape hatch, `COMMAND_IMPLEMENTATIONS`
   keyed by name: a command can be "available" via a list the capability file does
   not know about. Two lists, one fact — the queue's own disease.)
-- **LSP tiers: a live false negative.** `detectLokascriptFeatures()` loops
-  `LOKASCRIPT_ONLY_COMMANDS` and warns "'X' command is a LokaScript extension".
-  A LokaScript-only command missing from that list produces **no warning**, so a
-  user writing code that will not run on original \_hyperscript is told nothing.
-  Several of the 23 (`empty`, `clear`, `open`, `close`, `select`, `reset`,
-  `swap`, `push`, `replace`, `focus`, `blur`, `copy`, `unless`) are extensions on
-  the Arc C upstream survey's reading.
+- **LSP tiers: a live false negative** — **FIXED in step 4.1.**
+  `detectLokascriptFeatures()` loops `LOKASCRIPT_ONLY_COMMANDS` and warns "'X'
+  command is a LokaScript extension"; `server.ts` renders that as a
+  `DiagnosticSeverity.Error`. A LokaScript-only command missing from that list
+  produced **no warning**, so a user writing code that will not run on original
+  \_hyperscript was told nothing.
+  > The sentence that followed here — "several of the 23 (`empty`, `clear`,
+  > `open`, `close`, `select`, `reset`, `swap`, `push`, `replace`, `focus`,
+  > `blur`, `copy`, `unless`) are extensions on the Arc C upstream survey's
+  > reading" — was a **guess, and mostly wrong**: measured against the engine,
+  > only `push`, `replace`, `copy` and `unless` of those thirteen are
+  > extensions. The other nine are upstream. Kept as written because it is the
+  > reason the step was specified as an oracle run rather than a reading. See
+  > Finding 12, which also records the false positives the same run exposed.
 
 ### Claim 4 — "verify:reference derives what it claims" — TRUE but far narrower than the queue implies
 
@@ -334,6 +341,48 @@ should be **measured, not assumed**. `npm run snapshot:bundle-size --prefix
 packages/core` is the instrument; the ±5% tolerance on the small bundles is
 tight enough that 4.8 KB fails it.
 
+### Finding 12 — the tier lists carried FALSE POSITIVES too, and the detector is a bare word match (measured in step 4.1)
+
+Claim 3 framed the tier lists as *incomplete* (23 unclassified). Running the
+oracle over the whole file rather than only the gaps found the mirror defect:
+**5 of the 7 entries in `LOKASCRIPT_ONLY_COMMANDS` were not extensions at
+all.** `make`, `measure`, `morph`, `settle` are upstream commands
+(`basic.js`, `dom.js`, `animations.js`), and `install` is an upstream *feature*
+(`install Foo` at element level is portable). Since `server.ts` renders every
+hit as a `DiagnosticSeverity.Error`, the LSP was flagging portable code as
+incompatible. Step 4.1 moved all five.
+
+Only 2 of the original 7 survived: `prepend` and `process`.
+
+**And the brief's own guess about the 23 was mostly wrong**, which is the case
+for keeping the oracle mandatory rather than reasoning from names. Claim 3 said
+`empty, clear, open, close, select, reset, swap, push, replace, focus, blur,
+copy, unless` "read as extensions"; measured, only `push`, `replace`, `copy` and
+`unless` are. The other nine are upstream.
+
+**The deferred half.** `detectLokascriptFeatures()` matches
+`new RegExp('\\b' + cmd + '\\b', 'i')` against raw source — no string-literal
+stripping, no command-position anchor, no guard against a preceding `.`. That
+was tolerable while the list held `prepend`/`morph`/`settle`; step 4.1 adds
+`push`, `copy`, `replace`, `unless`, `async`, `beep`, which are ordinary English
+and JS words. Measured after the change:
+
+| Portable code | Spurious flag |
+| ------------- | ------------- |
+| `call $items.push(1)` | `push` — a JS method call |
+| `set x to "copy me"` | `copy` — inside a string literal |
+| `put "replace" into #a` | `replace` — inside a string literal |
+| `log "x" unless $flag` | `unless` — the upstream TRAILING modifier is portable |
+| `beep! me` | `beep` — the upstream spelling; `\b` matches before `!` |
+
+This is pre-existing crudeness (it already fired on `process`), but step 4.1
+widens its reach, so it is recorded rather than shipped silently. **Not fixed
+here**: anchoring the scan to command position is a behavior change to the
+detector with its own tests, and folding it in would bury the 23 judgment calls
+that are this step's review artifact — the same treatment Findings 7 and 10 got.
+Mitigating factor: the scan runs only in `hyperscript`/`hyperscript-i18n` mode,
+which is opt-in. Recommended as the next LSP PR.
+
 ## What changed vs. the queue doc's plan
 
 The queue says: consumers migrate "lowest-risk first — template-capabilities
@@ -468,18 +517,24 @@ and the seed gaining `pseudo-command`.
 Each carries an explicit classification decision for its gaps, and each flips its
 step-1 audit rows so the diff is the review artifact:
 
-1. **LSP tiers** (23 unclassified; live false negative). Classify against a
-   `_hyperscript` checkout — the Arc C step-2 oracle. **Step-2 knock-on:** the
-   classification has a typed home already — `CommandMetadata` declares
+1. **LSP tiers** — **DONE** (see the status log). 23 unclassified rows became
+   17 upstream + 6 extension, and Finding 12's 5 false positives moved the
+   other way, so the lists are now a total partition of the registry: **51
+   upstream / 8 extension**. The oracle was `hyperscript.org@0.9.93` from this
+   repo's `node_modules` (the engine the R4 gate already loads), cross-checked
+   against a 0.9.91 checkout.
+   **The step-2 knock-on was decided NO:** `CommandMetadata` declares
    `compatibility?: 'standard' | 'lokascript-extension' | 'experimental'` and
-   `@meta` forwards it, but **all 59 commands leave it unset** (measured). So
-   Finding 8's "recorded nowhere but the tier lists" is right, and the sharper
-   statement is that the slot exists and is vacant. Populating it as the
-   classification lands would let `upstreamOrExtension` become *derived* rather
-   than absorbed, and would put the fact on the implementation where the other
-   per-command metadata already lives. Whichever way it goes, the manifest's
-   `unknown` set and the audit's `TIER_UNCLASSIFIED` are asserted equal — both
-   move in the same diff or the gate fails.
+   `@meta` forwards it, but all 59 commands still leave it unset, and
+   `upstreamOrExtension` stays *absorbed* from the tier lists rather than
+   derived from the implementations. Reasons, recorded in `manifest.ts`: the
+   decorator statics are Arc B by this brief's own non-goals; 23 judgment calls
+   are reviewable as one annotated table and not as a one-line change across 59
+   files; and the two domains do not line up (`'experimental'` has no
+   counterpart here, `'unknown'` none there), so populating it would force a
+   second undiscussed decision inside an upstream-parity PR. Arc B loses
+   nothing by waiting — it can now copy 59 *finished* values, which it could
+   not have done while 23 read `'unknown'`.
 2. **template-capabilities** (**13** unclassified, not 12 — see the 2026-07-28
    step-1 status entry; latent). 10 rows have no classification at all
    (`CAPABILITY_UNCLASSIFIED` in the audit); `if`/`repeat`/`fetch` are
@@ -529,7 +584,7 @@ step-1 audit rows so the diff is the review artifact:
 
 | Step | Suites | Command |
 | ---- | ------ | ------- |
-| all | quick validation (baseline **7827** after step 3; was 7824 after step 2, 7814 after step 1, 7800 after the Finding 5 fix, 7795 before it) | `npm run test:quick --prefix packages/core` |
+| all | quick validation (baseline **7829** after step 4.1; was 7827 after step 3, 7824 after step 2, 7814 after step 1, 7800 after the Finding 5 fix, 7795 before it) | `npm run test:quick --prefix packages/core` |
 | all | the reference gate | `npm run verify:reference --prefix packages/core` |
 | 1 | the new audit test itself | added in the step-1 PR |
 | 2, 3 | bundle size — the tree-shaking guard | `npm run snapshot:bundle-size --prefix packages/core` (`--check`, ±5% vs `scripts/bundle-snapshots/baseline.json`) |
@@ -748,3 +803,58 @@ was touched.
   itself what the manifest calls it, and each alias row resolves to its
   primary's instance with the alias declared in its `metadata.aliases`).
   Next action: step 4.1 (LSP tiers — 23 unclassified, the arc's one live defect).
+- 2026-07-28 — **Step 4.1 landed** (branch
+  `fix/lsp-command-tiers-classification`, off `4246469c`): the LSP tier lists
+  are now a **total partition** of the registry — **51 upstream / 8 extension**,
+  zero unclassified — and `TIER_UNCLASSIFIED` is an empty set the audit holds
+  at zero.
+  **The oracle changed, and it is better than the brief specified.** Step 4.1
+  was told to classify against "an upstream `_hyperscript` checkout"; the
+  stronger instrument was already in the repo — `hyperscript.org@0.9.93` in
+  `node_modules`, the *published* engine that
+  `testing-framework/src/multilingual/canonical-validity.ts` loads for the R4
+  gate. Versioned, reproducible in CI, and not a personal fork. Every row was
+  probed on it and cross-checked against a `bigskysoftware/_hyperscript` 0.9.91
+  checkout; **the two agree on every command**. The per-command probe and its
+  result are recorded inline in `command-tiers.ts`, so the next reader
+  re-verifies rather than trusts.
+  **One methodological trap, worth not re-discovering:** `hs.parse(...)`
+  returning no errors does NOT mean the command exists. A *feature* keyword
+  makes the command-list parser stop cleanly and hand back an EMPTY command
+  list — `on click install Foo` parses without error and contains nothing. The
+  probe must assert a real command node. Checking `errors` alone classified
+  `install` as an upstream command; it is an upstream *feature*.
+  **The 23 split 17 upstream / 6 extension**, and the brief's guess at them was
+  mostly wrong (Claim 3 named 13 as likely extensions; 4 are). Extensions:
+  `async`, `beep`, `copy`, `push`, `replace`, `unless`. Two carry a nuance
+  recorded in the file: upstream spells beep `beep!` (bare `beep` is ours, and
+  hyperfixi accepts both), and upstream has `unless` only as a TRAILING
+  statement modifier, so the leading block form is the addition.
+  **Scope note — Finding 12, the mirror defect.** The same oracle run scored
+  the rows that were already classified and found **5 of the 7**
+  `LOKASCRIPT_ONLY_COMMANDS` entries were not extensions: `make`, `measure`,
+  `morph`, `settle` are upstream commands and `install` is an upstream feature.
+  Because `server.ts` renders each hit as a `DiagnosticSeverity.Error`, the LSP
+  was erroring on portable code. Fixed in the same PR rather than deferred —
+  same file, same function, same defect class, evidence already in hand — but
+  kept as a separate commit and a separate test so it can be reverted without
+  unpicking the 23.
+  **Deferred, deliberately:** the detector's bare `\b<cmd>\b` scan. Adding
+  `push`/`copy`/`replace`/`unless` widens a pre-existing false-positive surface
+  (measured table in Finding 12 — `call $items.push(1)` now flags). Anchoring
+  the scan to command position is a behavior change wanting its own PR and its
+  own tests, and folding it in would bury this step's review artifact.
+  **The step-2 knock-on was decided NO** — `metadata.compatibility` stays
+  unset and `upstreamOrExtension` stays absorbed; the reasoning is in
+  `manifest.ts` and in step 4.1's section above.
+  Two gate hardenings the classification forced: the audit's `stringsIn` now
+  strips line comments before extracting quoted names (the tier lists carry
+  per-row prose, and an apostrophe in it paired across lines into a phantom
+  name), and the tier-list block regex is anchored on `] as const;` instead of
+  the first `]`.
+  Gates: core **7829** passing / 128 skipped / 300 files; language-server
+  **227** passing (was 223); `verify:reference` clean (59 = 59, availability
+  chain valid); `test:check` clean across all packages; Playwright
+  `src/compatibility/`; typecheck, prettier, oxlint clean.
+  Next action: step 4.2 (template-capabilities — 13 rows, latent, costs bundle
+  size not correctness).
