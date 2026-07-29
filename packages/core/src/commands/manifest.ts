@@ -6,14 +6,30 @@
  * currently described in ~20 hand-maintained places; this file is the one that
  * the others will be migrated onto, one consumer per PR (steps 3 and 4).
  *
- * ## Status: consumed by nobody, deliberately
+ * ## Status: the four mechanical consumers are migrated (step 3)
  *
- * Nothing imports this module yet. That is the point of step 2 — the manifest
- * becomes real and gated before anything depends on it, so its arrival carries
- * zero behavioral risk. Its gate lives in
- * `runtime/__tests__/command-manifest-audit.test.ts` (§7), beside the step-1
- * audit whose registry derivation and allowlists it reuses rather than
- * re-deriving.
+ * Step 2 landed this file consumed by nobody, deliberately — the manifest
+ * became real and gated before anything depended on it, so its arrival carried
+ * zero behavioral risk. Step 3 then pointed the four lists that already agreed
+ * with it (the brief's Claim 2) at this array:
+ *
+ * | Consumer | Relationship | Where |
+ * | -------- | ------------ | ----- |
+ * | `parser/parser-constants.ts` `COMMANDS` | **driven** — the seed IS the manifest names + the parser-only `for` | `parser-constants.ts` |
+ * | `runtime/runtime.ts` registration | **driven** — one loop over the manifest, `COMMAND_FACTORIES` supplies the factory per name | `runtime.ts` |
+ * | `commands/index.ts` factory aliases | **checked** — re-export statements cannot be generated without pinning all 59 (Finding 9) | audit §2 |
+ * | `reference/index.ts` + `metadata.ts` counts | **checked** — the manifest is now `verify:reference`'s spine | `scripts/verify-reference-data.ts` |
+ *
+ * Finding 6 is honored by the first two rows together: the static parser seed
+ * and the registration-time `COMMANDS.add` were two halves of one mechanism,
+ * and the manifest now feeds both halves rather than the runtime patching the
+ * parser at construction time. `command-adapter.ts`'s `COMMANDS.add` stays —
+ * it is what teaches the parser about commands registered from OUTSIDE the
+ * manifest (plugins, tests, custom bundles), and the audit pins that.
+ *
+ * The gate lives in `runtime/__tests__/command-manifest-audit.test.ts` (§7),
+ * beside the step-1 audit whose registry derivation and allowlists it reuses
+ * rather than re-deriving.
  *
  * ## Data-only, and why that is load-bearing (Finding 9)
  *
@@ -30,11 +46,18 @@
  * At 59 commands a `factory` field would pull the entire command set into any
  * bundle that merely wants the name list — and the intended consumers
  * (`template-capabilities`, the bundle generator, the LSP tier lists) are
- * exactly the slim-bundle-facing ones. If a factory map is ever wanted it is a
- * separate module, imported only by `runtime/runtime.ts`, which already imports
- * all 59 anyway. Every import below is `import type`, so this module erases to
- * a single array literal. The guard is
+ * exactly the slim-bundle-facing ones. Every import below is `import type`, so
+ * this module erases to two plain data literals. The guard is
  * `npm run snapshot:bundle-size --prefix packages/core`, not inspection.
+ *
+ * Step 3's manifest-driven registration loop needs a name → factory map, and
+ * that map lives in `runtime/runtime.ts` rather than here for exactly this
+ * reason: `runtime.ts` already imports every command implementation, so the
+ * pinning it causes is already paid there and nowhere else.
+ * `parser-constants.ts` imports the manifest for its names and gets no
+ * factories with them — which is the whole point of the split: a names-only
+ * consumer must never pull the command implementations in behind them. The
+ * data payload has the same hazard one level down; see {@link COMMAND_NAMES}.
  *
  * ## Where each field's values come from
  *
@@ -150,11 +173,102 @@ export interface CommandManifestEntry {
 }
 
 /**
+ * Just the names, for consumers that want the command SET and none of the
+ * facts about it.
+ *
+ * ## Why this is a second literal and not `COMMAND_MANIFEST.map(e => e.name)`
+ *
+ * Same hazard as Finding 9's `factory` field, one level down: a `.map()` over
+ * the entries references the entries, so the whole rich array — `category`,
+ * `tier`, `upstreamOrExtension`, `multiword` for 59 commands — survives into
+ * any bundle that wanted a name list. Measured on `hyperfixi-hx.js` (18 KB
+ * gzipped, a hybrid-parser bundle with no command registry at all) when
+ * `parser-constants.ts` derived its `COMMANDS` seed that way in step 3:
+ *
+ * ```text
+ * names via COMMAND_MANIFEST.map()   raw 73.3 KB  (+7.5%, over the ±5% gate)
+ * names via COMMAND_NAMES            raw 69.1 KB  (+0.9%)
+ * ```
+ *
+ * The entries are shaken out entirely by the second form, because nothing in
+ * that bundle's graph mentions them.
+ *
+ * ## This is not a hand-maintained second copy
+ *
+ * The audit asserts the two are equal **as ordered lists**, so a command added
+ * to one and not the other fails the gate rather than drifting — which is the
+ * only property that matters. It is the same trade Finding 9 already forced for
+ * `commands/index.ts`: an explicit list, gated at tolerance 0, because
+ * generating it would pin what must stay shakeable.
+ */
+export const COMMAND_NAMES: readonly string[] = [
+  'add',
+  'append',
+  'async',
+  'beep',
+  'blur',
+  'break',
+  'breakpoint',
+  'call',
+  'clear',
+  'close',
+  'continue',
+  'copy',
+  'decrement',
+  'default',
+  'empty',
+  'exit',
+  'fetch',
+  'focus',
+  'get',
+  'go',
+  'halt',
+  'hide',
+  'if',
+  'increment',
+  'install',
+  'js',
+  'log',
+  'make',
+  'measure',
+  'morph',
+  'open',
+  'pick',
+  'prepend',
+  'process',
+  'pseudo-command',
+  'push',
+  'put',
+  'remove',
+  'render',
+  'repeat',
+  'replace',
+  'reset',
+  'return',
+  'scroll',
+  'select',
+  'send',
+  'set',
+  'settle',
+  'show',
+  'start',
+  'swap',
+  'take',
+  'tell',
+  'throw',
+  'toggle',
+  'transition',
+  'trigger',
+  'unless',
+  'wait',
+];
+
+/**
  * All 59 registered commands, in registry (sorted) order.
  *
- * Adding or removing a command means editing this array **and** the registry
- * list in the audit — the gate compares them as sets in both directions, so
- * neither can move alone.
+ * Adding or removing a command means editing this array, {@link COMMAND_NAMES}
+ * above, **and** the registry list in the audit — the gate compares all three
+ * in both directions, so none can move alone.
  */
 export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
   { name: 'add', category: 'dom', tier: 'lite', upstreamOrExtension: 'upstream', multiword: true },
@@ -545,3 +659,42 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     multiword: false,
   },
 ];
+
+/**
+ * Four commands are SPELLED differently in the two published lists than the
+ * name they register under, mapped here (lowercased, `_`/`Cmd` suffixes already
+ * stripped) → the registered name.
+ *
+ * `commands/index.ts` exports `createPushUrlCommand as pushUrl` and
+ * `reference/index.ts` keys the same command `pushUrl`, but the registry
+ * dispatches it as `push` (the parsing name — `push url "/x"` parses,
+ * `pushUrl "/x"` does not; that gap was the Finding 5 ghost, #810). Both
+ * spellings are **public API** — the export alias is part of
+ * `@hyperfixi/core/commands` and the reference key is part of the docs surface
+ * — so they are normalized here rather than renamed.
+ *
+ * This map is exported because two step-3 consumers need the same
+ * normalization and a second copy would be the twenty-first hand-maintained
+ * place this arc exists to remove: the audit
+ * (`runtime/__tests__/command-manifest-audit.test.ts`) and
+ * `scripts/verify-reference-data.ts`. It is a separate export from
+ * `COMMAND_MANIFEST` so a names-only consumer shakes it out.
+ */
+export const COMMAND_LIST_SPELLINGS: Readonly<Record<string, string>> = {
+  processpartials: 'process',
+  pushurl: 'push',
+  replaceurl: 'replace',
+  pseudo: 'pseudo-command',
+};
+
+/**
+ * Normalize a name as `commands/index.ts` or `reference/index.ts` spells it to
+ * the name the registry dispatches on: strip the `_` suffix that keeps
+ * reserved words legal identifiers (`if_`, `break_`), strip the `Cmd` suffix
+ * that does the same for `default`/`processPartials`, lowercase, then apply
+ * {@link COMMAND_LIST_SPELLINGS}.
+ */
+export function toRegisteredName(listSpelling: string): string {
+  const lower = listSpelling.replace(/_$/, '').replace(/Cmd$/, '').toLowerCase();
+  return COMMAND_LIST_SPELLINGS[lower] ?? lower;
+}

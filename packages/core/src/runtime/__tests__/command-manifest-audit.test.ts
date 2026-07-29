@@ -32,9 +32,21 @@
  * ## Ordering constraint (Finding 6)
  *
  * `command-adapter.ts`'s `register()` does `COMMANDS.add(name)`, so the parser's
- * static seed grows from 59 to 60 entries the moment a Runtime is constructed.
- * The seed snapshot below is taken BEFORE the Runtime that derives the registry,
- * and the mutation itself is pinned as a test — step 3 must account for it.
+ * command set is mutable and grows whenever anything is registered. The seed
+ * snapshot below is therefore still taken BEFORE the Runtime that derives the
+ * registry: a snapshot taken after would be measuring the runtime, not the
+ * seed. Step 3 made the seed manifest-derived, so the built-in 59 no longer
+ * arrive by mutation — but the mutation itself remains live for commands from
+ * outside the manifest, and §2 pins it on a synthetic command.
+ *
+ * ## What is still independent, post-step-3
+ *
+ * The registry is now DERIVED from the manifest (`runtime.ts` loops it), so
+ * "the manifest names equal the registry names" no longer compares two
+ * independently-authored lists. Two things carry that weight instead, and
+ * neither may be softened into a derivation: the hardcoded 59-name list in §1,
+ * and the per-command factory identity check in §2 (each factory builds a
+ * command that calls itself what the manifest calls it).
  *
  * ## Cross-package reads
  *
@@ -50,7 +62,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { COMMANDS, COMPOUND_COMMANDS } from '../../parser/parser-constants';
-import { COMMAND_MANIFEST } from '../../commands/manifest';
+import { COMMAND_MANIFEST, COMMAND_NAMES, toRegisteredName } from '../../commands/manifest';
 import {
   AVAILABLE_COMMANDS,
   AVAILABLE_BLOCKS,
@@ -88,23 +100,19 @@ function gapsIn(list: Iterable<string>): string[] {
 }
 
 /**
- * The four alias-name spellings. `commands/index.ts`, `reference/index.ts`, and
- * the `runtime.ts` registration block all spell four commands differently from
- * their registered names (`createPushUrlCommand` registers `push`, etc.). One
- * map, applied after lowercasing, normalizes all three lists.
+ * `commands/index.ts` and `reference/index.ts` spell four commands differently
+ * from their registered names (`createPushUrlCommand as pushUrl` registers
+ * `push`, etc.). Both spellings are published API, so they are normalized
+ * rather than renamed.
+ *
+ * The map lives in `commands/manifest.ts` as `COMMAND_LIST_SPELLINGS` rather
+ * than here, because `scripts/verify-reference-data.ts` needs the identical
+ * normalization and two copies of it would be one more hand-maintained place
+ * (step 3). A local copy previously also carried `startviewtransition` for the
+ * `runtime.ts` registration block; that block is now a manifest-driven loop
+ * keyed on registered names, so the entry has no reader left.
  */
-const SPELLINGS: Record<string, string> = {
-  processpartials: 'process',
-  pushurl: 'push',
-  replaceurl: 'replace',
-  pseudo: 'pseudo-command',
-  startviewtransition: 'start', // registration stem only; the export alias is already `start`
-};
-
-function normalize(name: string): string {
-  const lower = name.replace(/_$/, '').replace(/Cmd$/, '').toLowerCase();
-  return SPELLINGS[lower] ?? lower;
-}
+const normalize = toRegisteredName;
 
 // ===========================================================================
 // 1. The registry — the arc's source of truth
@@ -114,6 +122,12 @@ describe('the registry', () => {
   it('registers exactly the 59 documented commands', () => {
     // Adding or removing a command must edit this list deliberately, the same
     // way command-output-contract.test.ts demands a row per command.
+    //
+    // Since step 3 this is also the arc's LAST independently-authored copy of
+    // the command set — everything else is derived from or checked against the
+    // manifest, and the manifest is what this list holds to account. Do not
+    // replace it with `COMMAND_MANIFEST.map(e => e.name)`; that would make the
+    // whole file self-confirming.
     expect(REGISTRY).toEqual([
       'add',
       'append',
@@ -177,13 +191,30 @@ describe('the registry', () => {
     ]);
   });
 
-  it('registration mutates the parser static seed (Finding 6)', () => {
-    // The seed is a static list the parser uses standalone; registration then
-    // augments it (`COMMANDS.add` in command-adapter.ts). Step 3 must treat the
-    // seed and the registration-time add as two halves of one mechanism, not as
-    // an independent hand-maintained copy.
-    expect(STATIC_SEED.has('pseudo-command')).toBe(false);
-    expect(COMMANDS.has('pseudo-command')).toBe(true);
+  it('registration still teaches the parser about non-manifest commands (Finding 6)', () => {
+    // `command-adapter.ts`'s register() does `COMMANDS.add(name)`, so the
+    // parser's command set grows at runtime. Before step 3 this was measurable
+    // on a BUILT-IN: `pseudo-command` was absent from the static seed and
+    // appeared only once a Runtime existed, so the standalone parser and the
+    // post-Runtime parser disagreed about a shipped command. The manifest now
+    // feeds both halves (see the seed test below), so that particular symptom
+    // is gone — but the mechanism itself is still load-bearing for commands
+    // the manifest never names: plugins, custom bundles, commands a test
+    // registers. Pinned here on a synthetic command so it cannot be deleted as
+    // dead code.
+    const name = 'audit-synthetic-command';
+    expect(COMMANDS.has(name)).toBe(false);
+
+    const registry = new Runtime().getRegistry();
+    registry.register({ name, metadata: { name, aliases: ['audit-synthetic-alias'] } });
+
+    expect(COMMANDS.has(name)).toBe(true);
+    expect(COMMANDS.has('audit-synthetic-alias')).toBe(true);
+
+    // Leave the module-level Set as it was found — it is shared process state
+    // and later assertions in this file read it.
+    COMMANDS.delete(name);
+    COMMANDS.delete('audit-synthetic-alias');
   });
 });
 
@@ -192,12 +223,25 @@ describe('the registry', () => {
 // ===========================================================================
 
 describe('the four core lists agree with the registry', () => {
-  it('parser-constants COMMANDS: the static seed differs only by for / pseudo-command', () => {
-    // `for` is a control-flow keyword with no command implementation, extra in
-    // the seed by design; `pseudo-command` is added at registration time (see
-    // the Finding 6 test above). Neither is rot.
+  it('parser-constants COMMANDS: the static seed is the manifest plus `for`', () => {
+    // Step 3 made this DERIVED, not merely agreeing. The one remaining
+    // divergence is `for`: a control-flow keyword the parser accepts in command
+    // position (parseForCommand) with no command implementation and so no
+    // manifest row. `pseudo-command` used to be the gap in the other direction
+    // — the seed lacked it and only registration supplied it — and deriving the
+    // seed closed that by construction.
     expect(ghostsIn(STATIC_SEED)).toEqual(['for']);
-    expect(gapsIn(STATIC_SEED)).toEqual(['pseudo-command']);
+    expect(gapsIn(STATIC_SEED)).toEqual([]);
+    expect(STATIC_SEED.size).toBe(REGISTRY.length + 1);
+
+    // Derivation, asserted rather than assumed: reverting the seed to a
+    // hand-written copy that happens to match today would pass the two checks
+    // above, so pin the source text too. `COMMAND_NAMES` and not
+    // `COMMAND_MANIFEST` — see the manifest's note; the rich array would ship
+    // into every bundle that reaches the parser constants.
+    const source = readFileSync(resolve(DIR, '../../parser/parser-constants.ts'), 'utf-8');
+    expect(source).toMatch(/import \{ COMMAND_NAMES \} from '\.\.\/commands\/manifest'/);
+    expect(source).toMatch(/new Set<string>\(\[\s*\.\.\.COMMAND_NAMES,/);
   });
 
   it('commands/index.ts exports one tree-shakeable factory per registered command', () => {
@@ -217,18 +261,72 @@ describe('the four core lists agree with the registry', () => {
     expect([...documented].sort()).toEqual(REGISTRY);
   });
 
-  it('runtime.ts registers every command with a uniform factory call', () => {
+  it('runtime.ts has exactly one registration site, and it loops the manifest', () => {
+    // Claim 1 was "59 flat, perfectly uniform `register(createXCommand())`
+    // calls", which is what made the block step 3's most mechanical target.
+    // They are now one loop. Pinning the count at 1 is strictly stronger than
+    // pinning uniformity at 59: a hand-added registration outside the loop —
+    // the way a command would once again come to exist without a manifest row
+    // — fails here.
     const source = readFileSync(resolve(DIR, '../runtime.ts'), 'utf-8');
-    const uniform = [...source.matchAll(/registry\.register\(create(\w+)Command\(\)\);/g)].map(m =>
-      normalize(m[1])
-    );
-    const anyRegister = [...source.matchAll(/registry\.register\(/g)];
-    // Claim 1: all registration calls have the exact `register(createXCommand())`
-    // shape — no arguments, no conditionals. This uniformity is what makes the
-    // block step 3's most mechanical migration target.
-    expect(anyRegister.length).toBe(uniform.length);
-    expect(uniform.length).toBe(59);
-    expect([...uniform].sort()).toEqual(REGISTRY);
+    // Anchored at statement position so the prose in the file header, which
+    // quotes the old `registry.register(createXCommand())` shape, is not
+    // counted as a second site.
+    expect([...source.matchAll(/^\s*registry\.register\(/gm)]).toHaveLength(1);
+    expect(source).toMatch(/for \(const entry of COMMAND_MANIFEST\)/);
+  });
+
+  it('runtime.ts supplies a factory for every manifest command that needs one', () => {
+    // The COMMAND_FACTORIES map is module-private (exporting it would publish
+    // an internal and, worse, invite a slim bundle to import it — the map is
+    // Finding 9's whole hazard), so it is read from source text, the same way
+    // the LSP tier lists are.
+    const source = readFileSync(resolve(DIR, '../runtime.ts'), 'utf-8');
+    const block = source.match(/const COMMAND_FACTORIES[\s\S]*?= \{([\s\S]*?)\n\};/);
+    expect(block, 'the COMMAND_FACTORIES literal moved or changed shape').not.toBeNull();
+
+    // Keys are bare identifiers or quoted (`'pseudo-command'`), values are the
+    // factory identifier — never a call, since the map holds factories, not
+    // instances. A trailing `// + the \`send\` alias` note is allowed.
+    const keys = [
+      ...block![1].matchAll(/^\s{2}'?([\w-]+)'?:\s*create\w+Command,\s*(?:\/\/.*)?$/gm),
+    ].map(m => m[1]);
+
+    // 59 commands, 55 factories: the four consolidation-alias rows are
+    // registered from their primary's metadata.aliases, not from a factory of
+    // their own. Set equality both ways, so a factory for a command the
+    // manifest does not name fails just as loudly as a missing one.
+    const needsFactory = COMMAND_MANIFEST.filter(e => !e.consolidationAliasOf).map(e => e.name);
+    expect(needsFactory).toHaveLength(55);
+    expect([...keys].sort()).toEqual([...needsFactory].sort());
+  });
+
+  it('each factory builds a command that registers under its manifest name', () => {
+    // The check that keeps the loop honest. With registration manifest-driven,
+    // "the manifest names equal the registry names" is very nearly a tautology
+    // — this is not. A map entry pointing at the wrong factory (`toggle:
+    // createAddCommand`) would register `add` twice and leave `toggle` absent,
+    // and the identity below is what names the mistake instead of leaving it
+    // to the hardcoded 59-name list above to report as a bare diff.
+    const registered = new Runtime().getRegistry();
+    for (const entry of COMMAND_MANIFEST) {
+      const impl = registered.getImplementation(entry.name) as
+        { name: string; metadata?: { aliases?: string[] } } | undefined;
+      expect(impl, `${entry.name} has no implementation`).toBeDefined();
+
+      if (entry.consolidationAliasOf) {
+        // An alias row resolves to its PRIMARY's implementation, and that
+        // implementation is what declares the alias — i.e. the row exists
+        // because `command-adapter.ts` acted on `metadata.aliases`, not
+        // because something registered it directly.
+        expect(impl!.name.toLowerCase(), `${entry.name} primary`).toBe(entry.consolidationAliasOf);
+        expect(impl!.metadata?.aliases ?? [], `${entry.name} alias declaration`).toContain(
+          entry.name
+        );
+      } else {
+        expect(impl!.name.toLowerCase(), `${entry.name} self-name`).toBe(entry.name);
+      }
+    }
   });
 });
 
@@ -557,6 +655,17 @@ describe('the command manifest', () => {
 
   it('is sorted in registry order, so the diff of an added command is one line', () => {
     expect(COMMAND_MANIFEST.map(e => e.name)).toEqual(REGISTRY);
+  });
+
+  it('COMMAND_NAMES is the same list, in the same order', () => {
+    // The names are a second literal in the manifest module rather than
+    // `COMMAND_MANIFEST.map(e => e.name)`, because a `.map()` references the
+    // rich entries and drags all of them into names-only bundles (measured:
+    // +4.8 KB raw in hyperfixi-hx.js, past the ±5% size gate). Equality as
+    // ORDERED lists, not as sets, so the two cannot drift in either content or
+    // order — which is what makes the split a shape change rather than a
+    // second hand-maintained copy.
+    expect(COMMAND_NAMES).toEqual(COMMAND_MANIFEST.map(e => e.name));
   });
 
   it('carries no factory field, and no field the schema does not name (Finding 9)', () => {

@@ -7,9 +7,10 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: STEPS 1–2 LANDED (the audit-as-gate, then the manifest). Next
-> action: step 3 (migrate the four mechanical consumers).** Baseline for step 3
-> is **7824** (step 2 added 10 manifest tests to the audit file).
+> **Status: STEPS 1–3 LANDED (the audit-as-gate, the manifest, then the four
+> mechanical consumers). Next action: step 4 (the decision-bearing consumers,
+> one PR each — start with 4.1, the live LSP false negative).** Baseline for
+> step 4 is **7827** (step 3 added 3 tests to the audit file).
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -17,10 +18,18 @@
 > [What changed](#what-changed-vs-the-queue-docs-plan) before following the
 > queue's wording.
 
-## Verified state (2026-07-28, main `b69bc035`, working tree clean)
+## Verified state (measured 2026-07-28 on `b69bc035`; re-stamped after step 3, `051dd47e`)
 
 Line refs will drift — re-verify by symbol (`grep -n`), not by number.
-Baseline for the arc: **7795 passing, 128 skipped, 298 files** (`npm run test:quick --prefix packages/core`).
+Baseline when the arc opened: **7795 passing, 128 skipped, 298 files**
+(`npm run test:quick --prefix packages/core`). Current: **7827 / 128 / 300**.
+
+> **Claims 1 and 2 below describe the PRE-step-3 code and are kept as the
+> record of what made those lists safe to migrate. Two of them no longer
+> describe the tree:** the 59 flat `registry.register(create<X>Command())` calls
+> are now one manifest loop (Claim 1), and `parser-constants.COMMANDS` is now
+> derived rather than merely agreeing (Claim 2's first row). Claims 3 and 4 and
+> Findings 5–10 are still live.
 
 ### What the registry actually holds
 
@@ -286,6 +295,45 @@ side holds — so a half-finished reconciliation fails rather than silently
 re-pointing the row. Reconciling the unions is a rename touching the LSP and the
 docs surface, so it is deferred out of the arc alongside Finding 7.
 
+### Finding 11 — the manifest's DATA payload does not tree-shake either (measured in step 3)
+
+Finding 9 ruled out a `factory` field because referencing a factory pins the
+implementation. The same hazard exists one level down, and step 3 hit it: a
+consumer that wants only the command NAMES cannot get them via
+`COMMAND_MANIFEST.map(e => e.name)`, because the `.map()` references the entries
+and every entry's `category` / `tier` / `upstreamOrExtension` / `multiword`
+survives into the bundle.
+
+Measured when `parser-constants.COMMANDS` was first derived that way. Deltas are
+against the same commit built without the change (the committed
+`baseline.json` has its own accumulated drift, so the gate's percentages are not
+the measurement):
+
+| Bundle | via `COMMAND_MANIFEST.map()` | via `COMMAND_NAMES` |
+| ------ | ---------------------------- | ------------------- |
+| `hyperfixi-hx.js` (68.5 KB raw) | **+4.8 KB (+7.5% — FAILS the ±5% gate)** | +0.0 KB |
+| `hyperfixi-minimal.js` | +4.9 KB | +0.0 KB |
+| `hyperfixi.js` / `hx-v4` | +5.2 KB | +5.2 KB |
+
+`hyperfixi-hx.js` is the sharp case: an 18 KB-gzip hybrid-parser bundle with no
+command registry at all, which reaches `parser-constants.ts` and would have
+carried the classification data for 59 commands it cannot execute. The fix is a
+second literal in `manifest.ts` — `COMMAND_NAMES` — asserted equal to
+`COMMAND_MANIFEST.map(e => e.name)` **as an ordered list**, so it is a shape
+split rather than a hand-maintained copy. The last row is the honest cost and is
+correct: only the bundles that construct `Runtime` carry the rich array, and
+they are the ones that need it.
+
+**Knock-on for step 4.** Both remaining consumers want the RICH entries, not the
+names: 4.1 needs `upstreamOrExtension`, 4.2 needs whatever field the capability
+partition lands in. Before pointing either at `COMMAND_MANIFEST`, check whether
+that consumer reaches a shipped browser bundle — `template-capabilities.ts` is
+imported by `bundle-generator/`, which is build-time, but
+`vite-plugin/src/generator.ts` reading it does not make it browser-side and this
+should be **measured, not assumed**. `npm run snapshot:bundle-size --prefix
+packages/core` is the instrument; the ±5% tolerance on the small bundles is
+tight enough that 4.8 KB fails it.
+
 ## What changed vs. the queue doc's plan
 
 The queue says: consumers migrate "lowest-risk first — template-capabilities
@@ -381,7 +429,7 @@ costs nothing. **The command name matters:** this brief previously said
 that ran it, saw it fail, and shrugged would skip the exact guard Finding 9
 makes this step exist to satisfy.
 
-### Step 3 — migrate the mechanical consumers
+### Step 3 — migrate the mechanical consumers — **DONE**
 
 The four already-agreeing lists (Claim 2), one PR:
 `parser-constants.COMMANDS` seed, `commands/index.ts`, the `reference/index.ts`
@@ -394,6 +442,26 @@ parser at construction.
 per-bundle factory imports. Manifest-*checked*, not manifest-driven, wherever
 shaking matters. `runtime/runtime.ts` is the exception — it already imports all
 59, so a manifest-driven registration loop there costs nothing.
+
+**As landed**, two of the four are driven and two are checked:
+
+| Consumer | Result |
+| -------- | ------ |
+| `parser-constants.COMMANDS` | **driven** — `new Set([...COMMAND_NAMES, 'for'])`; `for` is the one parser-only keyword |
+| `runtime.ts` registration | **driven** — one loop over the manifest; a private `COMMAND_FACTORIES` map supplies the factory per name |
+| `commands/index.ts` | **checked** — re-export statements cannot be generated without pinning all 59 |
+| `reference/index.ts` + `metadata.ts` counts | **checked** — the manifest is now `verify:reference`'s spine |
+
+The loop registers the **55** rows without `consolidationAliasOf`; the other
+four names arrive from their primary's `metadata.aliases`. The pre-step-3 block
+did call `createDecrementCommand()` and its three siblings, but those calls were
+**redundant, not load-bearing** — `createDecrementCommand` is
+`createFactory(NumericModifyCommand)`, the same class whose `name` is
+`'increment'`, so the call re-registered `increment` over the entry the previous
+line had just made. Verified by a before/after registry oracle: identical names,
+classes, `metadata.aliases`, categories, and shared-implementation pairs; the
+only differences are `getCommandNames()` enumeration order (now alphabetical)
+and the seed gaining `pseudo-command`.
 
 ### Step 4 — the decision-bearing consumers, one PR each
 
@@ -435,10 +503,18 @@ step-1 audit rows so the diff is the review artifact:
    closed `push`/`replace`). The gaps are already an explicit `KEYWORD_GAPS`
    allowlist in `lsp-metadata.test.ts` with a stale-entry check, so closing one
    means deleting its line there — fold that gate into step 1's audit.
-4. **`packageInfo.commands`** as a derived value; fix the drifted "48/58/59"
-   docstrings (`runtime/runtime.ts` has "48 commands" in **six** places, plus
-   undercounting per-category group comments — e.g. "DOM Commands (11)" above 15
-   registrations, "Phase 6-5 Commands (6)" above 7) as the derived values land.
+4. **`packageInfo.commands`** as a derived value. **Step-3 knock-on: the
+   `runtime/runtime.ts` half of the docstring fix is already done.** All six
+   "48 commands" mentions and every undercounting per-category group comment
+   ("DOM Commands (11)" above 15 registrations, "Phase 6-5 Commands (6)" above
+   7) were in or immediately around the registration block step 3 replaced, so
+   leaving them would have meant shipping stale prose beside freshly-written
+   code. What remains for 4.4 is the actual derivation: `metadata.ts`'s
+   `packageInfo.commands` and the full-runtime bundles' `commandCount` are still
+   hand-typed numbers, checked against the manifest by `verify:reference` (step
+   3) but not computed from it. Other files still carrying stale counts —
+   `compatibility/browser-bundle-modular.ts`, `parser/parser-interface.ts`,
+   `parser/full-parser.ts` — were untouched, being outside step 3's diff.
 
 ### Deferred out of the arc, deliberately
 
@@ -453,7 +529,7 @@ step-1 audit rows so the diff is the review artifact:
 
 | Step | Suites | Command |
 | ---- | ------ | ------- |
-| all | quick validation (baseline **7800**; was 7795 before the Finding 5 fix) | `npm run test:quick --prefix packages/core` |
+| all | quick validation (baseline **7827** after step 3; was 7824 after step 2, 7814 after step 1, 7800 after the Finding 5 fix, 7795 before it) | `npm run test:quick --prefix packages/core` |
 | all | the reference gate | `npm run verify:reference --prefix packages/core` |
 | 1 | the new audit test itself | added in the step-1 PR |
 | 2, 3 | bundle size — the tree-shaking guard | `npm run snapshot:bundle-size --prefix packages/core` (`--check`, ±5% vs `scripts/bundle-snapshots/baseline.json`) |
@@ -512,11 +588,15 @@ was touched.
 - **A `factory` field in the manifest defeats tree-shaking** (Finding 9,
   measured: 177 B → 38 KB at four commands). Guard with the bundle-size snapshot,
   not by inspection.
-- **Registration mutates `COMMANDS`** (Finding 6). A test that reads
-  `parser-constants.COMMANDS` *after* any test in the same file constructed a
-  Runtime sees 60, not 59. Read the list from source text, or assert before
-  construction — `capability-ghosts.test.ts` imports the live Set and is exposed
-  to this ordering.
+- **Registration mutates `COMMANDS`** (Finding 6). Still true after step 3, but
+  the symptom moved: the built-in 59 are now in the seed from the start, so a
+  Runtime construction no longer changes the count. What still mutates it is
+  registration of anything the manifest does not name — a plugin, a custom
+  bundle, a command a test registers. A test that reads
+  `parser-constants.COMMANDS` after such a registration sees the extra entries.
+  Read the list from source text, or snapshot it before — `capability-ghosts.test.ts`
+  imports the live Set and is exposed to this ordering, and the audit snapshots
+  `STATIC_SEED` before its own Runtime for the same reason.
 - `export { X } from './f'` creates **no local binding** — import then export
   when moving registration points.
 - tsup multi-entry `splitting: false` **forks singletons** — verify at dist
@@ -618,3 +698,53 @@ was touched.
   oxlint clean, and `npm run snapshot:bundle-size` — the Finding 9 guard — all
   10 bundles within tolerance.
   Next action: step 3 (the four mechanical consumers, one PR).
+- 2026-07-28 — **Step 3 landed** (branch `feat/command-manifest-consumers`, off
+  `051dd47e`): the four mechanical consumers migrated, two driven and two
+  checked — see the table in the step-3 section. `parser-constants.COMMANDS` is
+  `new Set([...COMMAND_NAMES, 'for'])`; `runtime.ts`'s 59 registration calls are
+  one loop over the manifest against a private 55-entry `COMMAND_FACTORIES` map;
+  `verify:reference` scores `commands/index.ts` AND `reference/index.ts` against
+  the manifest instead of against each other (they used to be compared pairwise,
+  so an omission shared by both passed clean).
+  **Behavior preserved, measured not assumed:** a before/after registry oracle
+  (name → class, `metadata.aliases`, category, shared-implementation groups)
+  came back identical. The only two differences are intended —
+  `getCommandNames()` enumeration order is now alphabetical rather than
+  registration order (consumers sort it or use it for an error string), and the
+  static parser seed gained `pseudo-command`, which is Finding 6's disagreement
+  closing by construction. It is unreachable as a token anyway (`-` is not an
+  identifier character), so nothing parses differently.
+  **One measured constraint the brief did not anticipate, recorded above as
+  Finding 11:** deriving the seed as `COMMAND_MANIFEST.map(e => e.name)` shipped
+  the whole rich array into `hyperfixi-hx.js` — +4.8 KB raw, **+7.5%, a real
+  failure of the ±5% bundle-size gate** on a bundle with no command registry at
+  all. Finding 9's hazard one level down. Fixed with a `COMMAND_NAMES` literal
+  asserted equal to the entries as an ORDERED list. Step 4's consumers want the
+  rich entries, so this must be re-measured there, not assumed.
+  Two knock-ons outside `packages/core`: `language-server`'s
+  `command-tiers.test.ts` read core's `COMMANDS` literal by regex and now reads
+  `COMMAND_NAMES` from the manifest (the better anchor — `COMMANDS` is the
+  parser's set and carries `for`, while the file's title claims to check what
+  the engine executes); and step 4.4's `runtime.ts` docstring half is already
+  done (see that step).
+  The §2 gate was mutation-verified in **11** directions, all caught: a deleted
+  manifest entry, a deleted `COMMAND_NAMES` row with entries intact, a reordered
+  `COMMAND_NAMES`, a removed `COMMAND_FACTORIES` entry, a miswired one
+  (`toggle: createAddCommand`), a stray `registry.register()` outside the loop,
+  `parser-constants` reverted to a hand-written literal that happens to match
+  today, a dropped `commands/index.ts` factory export, a renamed
+  `reference/index.ts` entry, a deleted `COMMANDS.add` in `command-adapter.ts`
+  (Finding 6's mechanism), and a manifest name the LSP tiers still advertise.
+  Gates: core **7827** passing / 128 skipped / 300 files; `verify:reference`
+  clean (59 = 59); `snapshot:bundle-size` all 10 within tolerance; parser +
+  runtime 1873 passing; language-server 223 passing; Playwright
+  `src/compatibility/` 1111 passed / 8 skipped; typecheck, prettier, oxlint
+  clean.
+  **Note for step 4 on what the gate can no longer see:** the registry is now
+  DERIVED from the manifest, so "manifest names == registry names" is close to a
+  tautology. Two assertions carry that weight instead and must not be softened
+  into derivations — the hardcoded 59-name list in audit §1, and the new
+  per-command factory-identity test (each factory builds a command that calls
+  itself what the manifest calls it, and each alias row resolves to its
+  primary's instance with the alias declared in its `metadata.aliases`).
+  Next action: step 4.1 (LSP tiers — 23 unclassified, the arc's one live defect).

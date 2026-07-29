@@ -3,6 +3,8 @@
  * Centralized location for all keywords, commands, and magic strings used in parser
  */
 
+import { COMMAND_NAMES } from '../commands/manifest';
+
 /**
  * Core hyperscript keywords used in expressions and control flow
  */
@@ -88,71 +90,47 @@ export const COMMAND_TERMINATORS = [
 ] as const;
 
 /**
- * All hyperscript commands
+ * Every name the parser will accept in command position.
+ *
+ * ## Manifest-driven (Arc A step 3)
+ *
+ * The registered commands come from `commands/manifest.ts`, not from a hand-
+ * maintained copy of it. This was one of the four lists the manifest arc names
+ * as "already agreeing" (the brief's Claim 2), and it is now derived rather
+ * than merely agreeing.
+ *
+ * It imports `COMMAND_NAMES`, deliberately, and not `COMMAND_MANIFEST`. The
+ * parser wants the command SET; it has no use for each command's category,
+ * tier, or upstream classification, and referencing the rich array would ship
+ * all of it — measured at +4.8 KB raw in `hyperfixi-hx.js`, a hybrid-parser
+ * bundle with no command registry at all, which is enough to break the ±5%
+ * bundle-size gate on its own. See the note on `COMMAND_NAMES`.
+ *
+ * ## This Set is mutable at runtime, deliberately (Finding 6)
+ *
+ * `runtime/command-adapter.ts`'s `register()` calls `COMMANDS.add(name)` for
+ * every command AND every `metadata.aliases` entry, so the parser learns about
+ * commands the manifest never named — plugins, custom bundles, commands
+ * registered by a test. Before step 3 that mechanism was also load-bearing for
+ * a *manifest* command (`pseudo-command` was absent from the seed and only
+ * appeared once a Runtime existed, which made the standalone parser and the
+ * post-Runtime parser disagree). The manifest now feeds both halves, so
+ * registration only ever ADDS to what is already here for the built-in 59.
+ *
+ * Practical consequence for tests: a test that reads this Set after any other
+ * test in the same file constructed a Runtime sees whatever that Runtime
+ * registered. Snapshot it before construction if that matters.
  */
-export const COMMANDS = new Set([
-  'add',
-  'append',
-  'async',
-  'beep',
-  'blur',
-  'break',
-  'breakpoint',
-  'call',
-  'clear',
-  'close',
-  'continue',
-  'copy',
-  'decrement',
-  'default',
-  'empty',
-  'exit',
-  'fetch',
-  'focus',
+export const COMMANDS = new Set<string>([
+  ...COMMAND_NAMES,
+  // Parser-only, with no command implementation and so no manifest row: `for`
+  // is the loop KEYWORD (`for x in y`), accepted in command position and
+  // handled by `parseForCommand`, which builds the same node shape `repeat`'s
+  // `for` loop type produces. It is also in CONTROL_FLOW_COMMANDS below.
+  // `while` is deliberately NOT here: it is only ever reached inside `repeat`'s
+  // own syntax (`repeat while <cond>`, and as a repeat-block terminator), never
+  // in command position.
   'for',
-  'get',
-  'go',
-  'halt',
-  'hide',
-  'open',
-  'if',
-  'increment',
-  'install',
-  'js',
-  'log',
-  'make',
-  'measure',
-  'morph', // htmx-like: DOM morphing with state preservation
-  'pick',
-  'prepend',
-  'process', // htmx-like: process partials
-  'push', // htmx-like: push url to history
-  'put',
-  'remove',
-  'render',
-  'repeat',
-  'replace', // htmx-like: replace url in history
-  'reset',
-  'return',
-  'scroll', // scroll to <target> (upstream _hyperscript 0.9.90)
-  'select',
-  'send',
-  'set',
-  'settle',
-  'show',
-  // `start` is currently a parse-prefix for `start view transition <body> end`
-  // (upstream _hyperscript animations.js:298-372). The parser dispatches to a
-  // dedicated parseStartCommand to handle the multi-word form.
-  'start',
-  'swap', // htmx-like: DOM swapping with multiple strategies
-  'take',
-  'tell',
-  'throw',
-  'toggle',
-  'transition',
-  'trigger',
-  'unless',
-  'wait',
 ]);
 
 /**

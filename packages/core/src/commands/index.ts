@@ -20,6 +20,29 @@
  *   { expressionEvaluator: createCoreExpressionEvaluator() }
  * );
  * ```
+ *
+ * ## Relationship to the command manifest (Arc A step 3)
+ *
+ * `commands/manifest.ts` is the registry-of-record for WHICH commands exist.
+ * This file is **manifest-checked, not manifest-driven**, and that is
+ * deliberate: these are `export … from` statements, and the only way to
+ * generate them from data is an object literal referencing all 59 factories —
+ * which pins every one of them and defeats tree-shaking for consumers that
+ * import a single command (Finding 9, measured at 177 B → 38 KB). Explicit
+ * re-exports are what make this file shakeable, so they stay explicit.
+ *
+ * The gate is `runtime/__tests__/command-manifest-audit.test.ts` §2, which
+ * parses the tree-shakeable section below and asserts its alias set equals the
+ * registry's in BOTH directions — an added command missing an export here
+ * fails, and so does an export naming a command that does not exist.
+ * `scripts/verify-reference-data.ts` scores the same section against the
+ * manifest.
+ *
+ * Four aliases below are spelled differently from the name the command
+ * registers under (`pushUrl` → `push`, `replaceUrl` → `replace`,
+ * `processPartialsCmd` → `process`, `pseudo` → `pseudo-command`). Both gates
+ * normalize through `COMMAND_LIST_SPELLINGS` in the manifest; the aliases are
+ * published API and so are not renamed to match.
  */
 
 // =============================================================================

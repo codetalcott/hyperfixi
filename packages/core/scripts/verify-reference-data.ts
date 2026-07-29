@@ -8,12 +8,31 @@
  * - Command availability follows proper subset chain (lite ⊂ lite-plus ⊂ hybrid ⊂ full)
  * - All commands in reference have matching exports
  *
+ * ## The manifest is the spine (Arc A step 3)
+ *
+ * This script used to compare two hand-maintained lists against EACH OTHER —
+ * `commands/index.ts`'s factory aliases and `reference/index.ts`'s command
+ * entries — plus a count in `metadata.ts`. Two lists agreeing tells you they
+ * agree; it does not tell you either is right, and an identical omission in
+ * both passed clean.
+ *
+ * All three are now scored against `commands/manifest.ts`, which is itself
+ * gated against the live registry in both directions by
+ * `runtime/__tests__/command-manifest-audit.test.ts`. So the chain terminates
+ * at what the engine actually executes instead of closing on itself.
+ *
+ * Importing the manifest is safe here despite the "parse source text to avoid
+ * DOM dependency issues" rule the rest of this file follows: every import in
+ * `manifest.ts` is `import type`, so it pulls in no runtime code at all.
+ *
  * Run: npm run verify:reference
  */
 
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+import { COMMAND_MANIFEST, toRegisteredName } from '../src/commands/manifest';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(__dirname, '..');
@@ -30,18 +49,18 @@ function parseCommandFactories(): string[] {
 
   // Only process the TREE-SHAKEABLE section (before BACKWARD-COMPATIBLE)
   const treeshakeableEnd = content.indexOf('// BACKWARD-COMPATIBLE');
-  const treeshakeableSection = treeshakeableEnd > 0 ? content.substring(0, treeshakeableEnd) : content;
+  const treeshakeableSection =
+    treeshakeableEnd > 0 ? content.substring(0, treeshakeableEnd) : content;
 
   // Match all: createXxxCommand as yyy patterns (handles multiple exports per line)
   const aliasPattern = /create(\w+)Command\s+as\s+(\w+)/g;
 
   let match;
   while ((match = aliasPattern.exec(treeshakeableSection)) !== null) {
-    // Normalize: if_ -> if, break_ -> break, async_ -> async, defaultCmd -> default
-    let alias = match[2].replace(/_$/, '').toLowerCase();
-    // Also normalize Cmd suffix: defaultcmd -> default, processpartialscmd -> processpartials
-    alias = alias.replace(/cmd$/, '');
-    factories.add(alias);
+    // Normalize the export alias to the name the registry dispatches on:
+    // if_ -> if, defaultCmd -> default, pushUrl -> push, pseudo -> pseudo-command.
+    // Shared with the audit test so the two cannot normalize differently.
+    factories.add(toRegisteredName(match[2]));
   }
 
   return Array.from(factories);
@@ -55,7 +74,8 @@ function parseReferenceCommands(): Record<string, { category: string; availabili
   const commands: Record<string, { category: string; availability: string }> = {};
 
   // Match command entries: name: { ... category: 'xxx', ... availability: 'yyy' ... }
-  const commandBlockRegex = /^\s+(\w+):\s*\{[^}]*category:\s*'([^']+)'[^}]*availability:\s*'([^']+)'/gm;
+  const commandBlockRegex =
+    /^\s+(\w+):\s*\{[^}]*category:\s*'([^']+)'[^}]*availability:\s*'([^']+)'/gm;
 
   let match;
   while ((match = commandBlockRegex.exec(content)) !== null) {
@@ -109,6 +129,10 @@ const refCommands = parseReferenceCommands();
 const bundleInfo = parseBundleInfo();
 const packageInfo = parsePackageInfo();
 
+/** The registry-of-record every list below is scored against. */
+const manifestNames = COMMAND_MANIFEST.map(entry => entry.name);
+const manifestCommands = new Set(manifestNames);
+
 // =============================================================================
 // VERIFICATION FUNCTIONS
 // =============================================================================
@@ -123,7 +147,13 @@ interface VerificationResult {
 
 const results: VerificationResult[] = [];
 
-function verify(name: string, passed: boolean, message: string, details?: string[], isWarning?: boolean) {
+function verify(
+  name: string,
+  passed: boolean,
+  message: string,
+  details?: string[],
+  isWarning?: boolean
+) {
   results.push({ name, passed, message, details, isWarning });
 }
 
@@ -131,36 +161,44 @@ function verify(name: string, passed: boolean, message: string, details?: string
 // 1. VERIFY COMMAND COUNT
 // =============================================================================
 
+/** Score `list` against the manifest in both directions. */
+function diffAgainstManifest(list: string[]): { missing: string[]; extra: string[] } {
+  const present = new Set(list);
+  return {
+    missing: manifestNames.filter(n => !present.has(n)),
+    extra: [...new Set(list)].filter(n => !manifestCommands.has(n)).sort(),
+  };
+}
+
 function verifyCommandCount() {
-  // Count commands in reference
   const refCommandNames = Object.keys(refCommands);
-
-  const factoryCount = factoryNames.length;
-  const refCount = refCommandNames.length;
-
-  // Get the expected count from packageInfo
-  const expectedCount = packageInfo.commands;
+  const refNormalized = refCommandNames.map(toRegisteredName);
 
   const details: string[] = [];
 
-  if (factoryCount !== expectedCount) {
-    details.push(`  Factory exports: ${factoryCount}, packageInfo.commands: ${expectedCount}`);
+  // The manifest is the spine: every list is scored against IT, not against
+  // whichever other list happens to sit next to it. An omission shared by two
+  // hand-maintained lists used to pass this check clean.
+  if (packageInfo.commands !== manifestNames.length) {
+    details.push(
+      `  packageInfo.commands: ${packageInfo.commands}, manifest: ${manifestNames.length}`
+    );
   }
 
-  if (refCount !== expectedCount) {
-    details.push(`  Reference commands: ${refCount}, packageInfo.commands: ${expectedCount}`);
+  const factories = diffAgainstManifest(factoryNames);
+  if (factories.missing.length > 0) {
+    details.push(`  Manifest commands with no factory export: ${factories.missing.join(', ')}`);
+  }
+  if (factories.extra.length > 0) {
+    details.push(`  Factory exports the manifest does not name: ${factories.extra.join(', ')}`);
   }
 
-  // Find factories without reference entries
-  const refLower = refCommandNames.map((n) => n.toLowerCase());
-  const missingInRef = factoryNames.filter((f) => !refLower.includes(f));
-  const extraInRef = refLower.filter((r) => !factoryNames.includes(r));
-
-  if (missingInRef.length > 0) {
-    details.push(`  Commands missing from reference: ${missingInRef.join(', ')}`);
+  const reference = diffAgainstManifest(refNormalized);
+  if (reference.missing.length > 0) {
+    details.push(`  Manifest commands missing from reference: ${reference.missing.join(', ')}`);
   }
-  if (extraInRef.length > 0) {
-    details.push(`  Extra commands in reference: ${extraInRef.join(', ')}`);
+  if (reference.extra.length > 0) {
+    details.push(`  Reference entries the manifest does not name: ${reference.extra.join(', ')}`);
   }
 
   const passed = details.length === 0;
@@ -168,8 +206,8 @@ function verifyCommandCount() {
     'Command Count',
     passed,
     passed
-      ? `✓ ${refCount} commands in reference match ${factoryCount} factories`
-      : `✗ Command count mismatch`,
+      ? `✓ ${manifestNames.length} manifest commands match ${factoryNames.length} factory exports and ${refCommandNames.length} reference entries`
+      : `✗ Command set mismatch against commands/manifest.ts`,
     details.length > 0 ? details : undefined
   );
 }
@@ -211,7 +249,7 @@ function verifyBundleFiles() {
     passed
       ? `✓ All ${bundleInfo.length} bundle files exist in dist/`
       : `⚠ ${missingBundles.length} bundle files missing (${foundBundles.length} found)`,
-    missingBundles.length > 0 ? missingBundles.map((b) => `  ${b}`) : undefined,
+    missingBundles.length > 0 ? missingBundles.map(b => `  ${b}`) : undefined,
     true // Mark as warning - don't fail CI for missing bundles
   );
 }
@@ -303,7 +341,7 @@ function verifyCategories() {
     'Valid Categories',
     passed,
     passed ? `✓ All commands have valid categories` : `✗ Invalid categories found`,
-    invalidCategories.length > 0 ? invalidCategories.map((c) => `  ${c}`) : undefined
+    invalidCategories.length > 0 ? invalidCategories.map(c => `  ${c}`) : undefined
   );
 }
 
@@ -327,7 +365,7 @@ function verifyAvailabilities() {
     'Valid Availabilities',
     passed,
     passed ? `✓ All commands have valid availabilities` : `✗ Invalid availabilities found`,
-    invalidAvailabilities.length > 0 ? invalidAvailabilities.map((a) => `  ${a}`) : undefined
+    invalidAvailabilities.length > 0 ? invalidAvailabilities.map(a => `  ${a}`) : undefined
   );
 }
 
@@ -374,7 +412,7 @@ function verifyBundleCommandCounts() {
   }
 
   // Verify browser (full) bundle has all commands
-  const browserBundle = bundleInfo.find((b) => b.id === 'browser');
+  const browserBundle = bundleInfo.find(b => b.id === 'browser');
   if (browserBundle && browserBundle.commandCount !== packageInfo.commands) {
     errors.push(
       `Browser bundle has ${browserBundle.commandCount} commands, expected ${packageInfo.commands}`
@@ -384,7 +422,7 @@ function verifyBundleCommandCounts() {
   // Derive, don't trust: compare each list-publishing bundle's advertised count
   // against the commands it actually ships.
   for (const [id, sourceFile] of Object.entries(BUNDLES_WITH_COMMAND_LISTS)) {
-    const bundle = bundleInfo.find((b) => b.id === id);
+    const bundle = bundleInfo.find(b => b.id === id);
     if (!bundle) continue;
     const actual = actualCommandCount(sourceFile);
     if (actual === null) {
@@ -400,9 +438,7 @@ function verifyBundleCommandCounts() {
   verify(
     'Bundle Command Counts',
     passed,
-    passed
-      ? `✓ Bundle command counts are reasonable`
-      : `✗ Bundle command count issues`,
+    passed ? `✓ Bundle command counts are reasonable` : `✗ Bundle command count issues`,
     errors.length > 0 ? errors : undefined
   );
 }
