@@ -7,9 +7,9 @@
 > (Arc C, complete) and [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md)
 > (Arc D, complete).
 >
-> **Status: STEP 1 LANDED (the audit-as-gate). Next action: step 2 (the
-> manifest, data-only, consumed by nobody).** Baseline for step 2 is **7814**
-> (step 1 absorbed `lsp-metadata.test.ts`'s 5 tests and added 19).
+> **Status: STEPS 1–2 LANDED (the audit-as-gate, then the manifest). Next
+> action: step 3 (migrate the four mechanical consumers).** Baseline for step 3
+> is **7824** (step 2 added 10 manifest tests to the audit file).
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -260,6 +260,32 @@ factory map is wanted, it is a separate module imported only by
 `runtime/runtime.ts`, which already imports all 59 anyway (61 import lines, 58 of
 them per-command deep imports).
 
+### Finding 10 — `category` has two sources, and they disagree on 2 of 59 (measured in step 2)
+
+The step-1 knock-ons asked step 2 to measure this rather than assume it.
+Measured: **57 of 59 agree**. The two that do not are `send` and `trigger` —
+`'events'` in `reference/index.ts`, `'event'` in the `@command` decorator.
+
+It is not a typo. There are **two independent `CommandCategory` unions**, and
+they differ in exactly two members:
+
+```text
+reference/index.ts         …| 'events' |…              (no 'storage')
+types/command-metadata.ts  …| 'event'  | 'storage' |…
+```
+
+`'event'` is the only spelling the decorator union will accept, so
+`events/trigger.ts` could not have used `'events'` — each file is internally
+consistent and the two were simply never compared. Nothing in the repo compared
+them before the step-2 audit section.
+
+The manifest follows the **decorator/registry** union, because the manifest
+mirrors what the engine serves. The reference-side divergence is pinned in the
+audit as `CATEGORY_DOC_DISAGREEMENTS`, which also asserts *which* spelling each
+side holds — so a half-finished reconciliation fails rather than silently
+re-pointing the row. Reconciling the unions is a rename touching the LSP and the
+docs surface, so it is deferred out of the arc alongside Finding 7.
+
 ## What changed vs. the queue doc's plan
 
 The queue says: consumers migrate "lowest-risk first — template-capabilities
@@ -375,13 +401,35 @@ Each carries an explicit classification decision for its gaps, and each flips it
 step-1 audit rows so the diff is the review artifact:
 
 1. **LSP tiers** (23 unclassified; live false negative). Classify against a
-   `_hyperscript` checkout — the Arc C step-2 oracle.
+   `_hyperscript` checkout — the Arc C step-2 oracle. **Step-2 knock-on:** the
+   classification has a typed home already — `CommandMetadata` declares
+   `compatibility?: 'standard' | 'lokascript-extension' | 'experimental'` and
+   `@meta` forwards it, but **all 59 commands leave it unset** (measured). So
+   Finding 8's "recorded nowhere but the tier lists" is right, and the sharper
+   statement is that the slot exists and is vacant. Populating it as the
+   classification lands would let `upstreamOrExtension` become *derived* rather
+   than absorbed, and would put the fact on the implementation where the other
+   per-command metadata already lives. Whichever way it goes, the manifest's
+   `unknown` set and the audit's `TIER_UNCLASSIFIED` are asserted equal — both
+   move in the same diff or the gate fails.
 2. **template-capabilities** (**13** unclassified, not 12 — see the 2026-07-28
    step-1 status entry; latent). 10 rows have no classification at all
    (`CAPABILITY_UNCLASSIFIED` in the audit); `if`/`repeat`/`fetch` are
    classified only as blocks (`CAPABILITY_BLOCK_ONLY`) and need an explicit
    blocks-count-as-classified decision. Also decide the
    `COMMAND_IMPLEMENTATIONS` second-list overlap.
+   **Step-2 knock-on — do NOT derive these lists from the manifest's `tier`.**
+   The manifest's `tier` mirrors `reference/index.ts`'s `availability` (which
+   prebuilt bundle first ships a command; `verify:reference` already checks the
+   chain `lite(7) ⊂ lite-plus(17) ⊂ hybrid(31) ⊂ full(59)`). That is a
+   **different fact** from the capability lists ("can the generator emit it into
+   a lite bundle"). Measured under the natural mapping `full` ↔
+   full-runtime-only, they disagree on **16 of 59** rows: `beep`, `copy`, `js`,
+   `take`, `exit`, `halt`, `morph`, `return`, `throw`, `transition` are `full`
+   yet generator-available; `async`, `fetch`, `if`, `make`, `repeat`, `swap` are
+   `hybrid` yet absent from the capability lists entirely. Two facts, not one
+   fact stored twice — the manifest will need a second field for this, not a
+   reuse of `tier`.
 3. **`COMMAND_KEYWORDS`** (**4** gaps — `process`, `pseudo-command`, `scroll`,
    `start`; the two ghosts landed separately per Finding 5, and that rename
    closed `push`/`replace`). The gaps are already an explicit `KEYWORD_GAPS`
@@ -398,6 +446,8 @@ step-1 audit rows so the diff is the review artifact:
   own decision, like Arc D's element-list follow-up.
 - **The `COMMAND_ALIASES` duplication** — real, but not yet drifted; it should
   fold into the manifest only once Finding 7 is decided.
+- **The two `CommandCategory` unions** (found in step 2, see Finding 10). A
+  rename with LSP and docs reach; pinned by the audit meanwhile.
 
 ## Gates, per step
 
@@ -531,3 +581,40 @@ was touched.
   manifest's `unknown` set to `TIER_UNCLASSIFIED`, measure the two `category`
   sources (reference vs decorator) before choosing one, and
   `consolidationAliasOf` = the four `metadata.aliases` only.
+- 2026-07-28 — **Step 2 landed** (branch `feat/command-manifest`, off
+  `b83c26dc`): `packages/core/src/commands/manifest.ts`, 59 data-only entries
+  (`name`, `category`, `tier`, `upstreamOrExtension`, `consolidationAliasOf?`,
+  `multiword`), plus a 10-test §7 added to the step-1 audit file. **Imported by
+  nobody** — verified by grep across all packages, which is the step's whole
+  point. Every import in the manifest is `import type`, so it erases to one
+  array literal; there is no `factory` field and the audit asserts the entry
+  key set structurally, so Finding 9 is guarded by shape as well as by the
+  bundle-size snapshot.
+  Each field is a **checked mirror**, never a fresh copy: `category` vs the
+  registry's `metadata.category`, `tier` vs `reference/index.ts` `availability`,
+  `multiword` vs `COMPOUND_COMMANDS` (22, zero ghosts), `consolidationAliasOf`
+  vs *implementation identity* (the four shared instances — `decrement`→
+  `increment`, `replace`→`push`, `send`→`trigger`, `unless`→`if` — derived by
+  identity rather than by re-reading `metadata.aliases`, since sharing one
+  instance is what `command-adapter.ts` actually establishes), and
+  `upstreamOrExtension` vs the LSP tier lists. The knock-on coupling is in
+  place: the manifest's `unknown` set is asserted **equal** to the audit's
+  `TIER_UNCLASSIFIED`, so step 4.1 must move both in one diff.
+  The §7 gate was mutation-verified in 11 directions, all caught: dropping an
+  entry (the omission direction Claim 3 says the old gates are blind to — 6
+  failures), duplicating one, reordering one, a wrong `category`, a wrong
+  `tier`, a dropped `multiword`, a wrong alias target, a removed alias,
+  reintroducing a `factory` field, and classifying an `unknown` without touching
+  `TIER_UNCLASSIFIED`. (One self-correction found by the mutation run: a
+  duplicated entry **collapses** in a name-keyed Map, so the Map's size cannot
+  see it — the array-length assertion is what rules it out.)
+  Two measurements the brief asked for, both recorded above as **Finding 10**
+  (the two `CommandCategory` unions; 57/59 agree) and as step-4 knock-ons
+  (`metadata.compatibility` is a typed-but-empty slot on all 59 → step 4.1;
+  `tier` and the capability lists are two different facts disagreeing on 16/59
+  rows → step 4.2 must not derive one from the other).
+  Gates: core **7824** passing / 128 skipped / 300 files, `verify:reference`
+  clean (59 = 59, availability chain valid), `typecheck` clean, prettier +
+  oxlint clean, and `npm run snapshot:bundle-size` — the Finding 9 guard — all
+  10 bundles within tolerance.
+  Next action: step 3 (the four mechanical consumers, one PR).
