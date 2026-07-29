@@ -20,14 +20,17 @@
 > shipping seven fewer commands. The derivation itself was a two-line change;
 > the yield was entirely in the rows next to it.
 >
-> **Next action: none in this arc.** The recommended follow-on remains
-> **Finding 13** (14 unreachable capability case labels — the largest
-> user-visible stake). Finding 15 also leaves two named behavior questions for
-> their own PRs.
+> **Finding 13 is CLOSED (2026-07-29)** — the recommended follow-on landed.
+> 14 unreachable capability case labels became **38 of 38 advertised commands
+> executing**, via parser rules rather than reclassification. Its oracle was
+> EXECUTION, and escalating from 4.2's parse-level check caught three further
+> defects in rows the parse oracle had certified (**Finding 16** — read it
+> before trusting a parse-level check anywhere else).
 >
-> **Step 4.2 also opened a new live defect it deliberately did NOT fix** — 14 of
-> the 38 advertised capability rows emit a case label the bundle parser can
-> never reach (Finding 13). Gated and pinned, remedy is a parser PR.
+> **Next action: Finding 17**, which closing 13 opened — the shipped
+> `hybrid-complete`/`hx` bundles now PARSE 35 commands and EXECUTE 24, and
+> `hyperfixi-hx.js` has ~980 bytes left under the CI ceiling. Finding 15 also
+> leaves two named behavior questions for their own PRs.
 >
 > **This brief REVISES the queue doc's Arc A plan — specifically its migration
 > ORDER and its manifest SHAPE.** Three of the paragraph's claims were measured
@@ -446,6 +449,12 @@ got. Named, counted and pinned meanwhile in
 `bundle-generator/__tests__/capability-emission.test.ts`
 (`UNREACHABLE_CASE_LABELS`, tolerance 0 both directions).
 
+> **CLOSED 2026-07-29** by the follow-on PR, along the route recorded above:
+> eleven parser rules plus the `trigger` alias, no reclassification. **38 of 38
+> advertised commands now execute.** The step's own oracle escalation found
+> three more defects and is written up as **Finding 16** — read that before
+> treating a parse-level check as sufficient anywhere else.
+
 **A second drift the same run exposed.** Core's `generateBundle()` IMPORTS
 `parser/hybrid/parser-core`, but `vite-plugin/src/generator.ts` embeds
 `HYBRID_PARSER_TEMPLATE` instead — and the two `cmdMap`s are **not the same 24
@@ -572,6 +581,94 @@ re-export target); §6 gained the metadata↔array comparison that was missing.
 `commandCount:\s*(\d+)` regex matches only literal digits, so the moment the
 full-runtime counts became derived expressions it would have silently skipped
 exactly the entries it most needed to see.
+
+### Finding 16 — a parse tree is not an outcome: three defects only EXECUTION could see (measured closing Finding 13)
+
+Every 4.x step had a different oracle (4.1 the published engine, 4.2 the
+generator, 4.3 the parser, 4.4 the manifest). Finding 13's is **execution** —
+generate a bundle per advertised command, write it to disk, import it, run it
+against a DOM, assert the observable effect — and it is the first oracle in the
+arc that needs a built artifact rather than a parse.
+
+Escalating from 4.2's parse-level check was not cosmetic. It found three
+defects that a parse tree is structurally incapable of expressing, **all three
+in rows the parse oracle had certified as fine**:
+
+| Row | Parse oracle said | Execution said |
+| --- | ----------------- | -------------- |
+| `take` | reachable (1 of the 24) | throws `Invalid selector .` in every bundle carrying it |
+| `morph` | one of the 14, fixed by a parse rule | still `ReferenceError` — the generator never emitted the morphlex import |
+| `trigger` | fixed by the alias alone | still dispatched on `me`, not on `#t` |
+
+- **`take`** passed `getClassName` the EVALUATED value; every sibling template
+  (`toggle`, `add`, `removeClass`) passes the NODE. It received a NodeList,
+  returned `''`, and `querySelectorAll('.' + '')` threw. It was one of the 24
+  "reachable" rows for the whole of step 4.2.
+- **`morph`** called `morphlexMorph`/`morphlexMorphInner` as free identifiers.
+  `MORPH_COMMANDS` had been exported from `templates.ts` for exactly this since
+  the template was written, and `generator.ts` never read it. Inner morph also
+  passed a string where morphlex wants an element, so it degraded to `innerHTML`
+  on every call.
+- **`trigger foo on #t`** reached a node while abandoning `on #t`, because
+  `parseSend` hardcoded the `to` marker. **The alias alone would have shipped a
+  half-fix that the parse-level gate would have called green** — the node is
+  named `send` either way.
+
+**The methodological trap, one level deeper than 4.1's and 4.3's.** Those two
+recorded that *`success: true` is not evidence of a command*. This step's
+version: **a correct-looking effect is not evidence the command ran.** The
+`morph` template wraps its morphlex calls in a `try/catch` that falls back to
+`innerHTML = content`, so a check asserting the resulting MARKUP passes whether
+the morph ran or crashed into the fallback. Mutation-testing caught this —
+deleting the generator's morphlex import left a markup-level check perfectly
+green (1 of 9 mutations missed on the first pass). The row now asserts **state
+preservation**: a real morph reuses the existing node so a typed `input` value
+survives, while the fallback rebuilds the subtree and destroys it. Verified
+against morphlex in jsdom before being relied on.
+
+Generalised rule for the next gate: **assert the thing the command is FOR, not
+the thing it leaves behind.** Where a fallback exists, a check on the end state
+measures the fallback.
+
+### Finding 17 — the shipped hybrid bundles parse 35 commands and execute 24
+
+Closing Finding 13 exposed a structural mismatch that is NOT fixed and wants its
+own decision.
+
+`parser/hybrid/parser-core.ts` has two consumers with different executors:
+
+1. **generated** bundles (`generateBundle`, the vite-plugin) — 38 commands via
+   `COMMAND_IMPLEMENTATIONS`. This is what `template-capabilities.ts` describes,
+   and what Finding 13 was about.
+2. **handwritten** `browser-bundle-hybrid-complete.ts` (re-exported by
+   `hyperfixi-hx.js`) — its own `switch` with **24** command cases, which never
+   included `empty`, `copy`, `beep`, `push`, `replace`, `morph`, `js`, `throw`,
+   `break`, `continue` or `exit`.
+
+The parser must cover the union, so (2) now pays for eleven rules it cannot run:
+**+388 bytes gzip on hybrid-complete (8023 → 8411) and +386 on hx (18633 →
+19019)**, measured by building both with the change stashed. Behaviour there is
+strictly better but still wrong — the eleven now hit the executor's
+`default:` and log `Unknown command: X` instead of vanishing silently.
+
+Two alternatives were considered and rejected, both for reasons worth recording:
+
+- **Split the parser** into `parser-core` (24 rules, handwritten bundles) plus
+  an extended module (generated bundles). Rejected: it reintroduces precisely
+  the two-copies drift this PR closed, with a config-dependent twist — the
+  reachable set would again depend on which path you came through.
+- **Give hybrid-complete the missing executors.** The honest fix, and it would
+  make the size cost buy capability. Rejected here because it does not fit under
+  the CI ceiling (`MAX_HYBRID=20000`; hx now sits at **19019**, ~980 bytes of
+  headroom) and because it changes a shipped bundle's advertised command list —
+  `bundle-sources.ts` derives its count of 24, so `verify:reference` and
+  `metadata.ts` move with it. That is Finding 15's shape: a behaviour call for
+  its own PR.
+
+**Recommended next**, with the measurement in hand: decide whether
+`hybrid-complete` should execute what its parser now recognises, and raise
+`MAX_HYBRID` deliberately if so. Note the ceiling headroom is the binding
+constraint on any future parser work in this file.
 
 ## What changed vs. the queue doc's plan
 
@@ -825,19 +922,13 @@ step-1 audit rows so the diff is the review artifact:
   fold into the manifest only once Finding 7 is decided.
 - **The two `CommandCategory` unions** (found in step 2, see Finding 10). A
   rename with LSP and docs reach; pinned by the audit meanwhile.
-- **The 14 unreachable case labels** (found in step 4.2, see Finding 13) — the
-  arc's second live defect, and the one with the largest user-visible stake.
-  **Recommended as the next bundle-generator PR**, with the evidence already in
-  hand: the gate names all 14, splits them by cause, and the remedy differs per
-  group. `trigger` is a one-line `COMMAND_ALIASES` entry (→ `send`, exactly like
-  `push-url` → `push`) and is the cheapest real fix. `empty` and `halt` want the
-  two parser copies reconciled (they disagree on precisely those two). The
-  remaining twelve want `cmdMap` rules in
-  `parser/hybrid/parser-core.ts` **and** `parser-templates.ts` — their templates
-  already exist and work, so this restores capability rather than removing it.
-  Reclassifying them full-runtime-only is the wrong fix: it would make the lists
-  honest by deleting a working feature and bumping every `trigger`/`break`/
-  `continue` project to the full runtime.
+- ~~**The 14 unreachable case labels**~~ — **DONE 2026-07-29**, exactly along the
+  route this entry recommended: eleven `cmdMap` rules in both parser copies plus
+  a `trigger` → `send` alias, no reclassification, nothing bumped to the full
+  runtime. 38 of 38 advertised commands execute. See Findings 13 (closed), 16
+  (the oracle escalation and what it caught) and 17 (the follow-up it opened).
+- **`hybrid-complete` parses 35 commands and executes 24** (Finding 17) — the
+  follow-up the above opened. A behaviour call plus a CI-ceiling decision.
 
 ## Gates, per step
 
@@ -1276,6 +1367,62 @@ was touched.
   Deliberately NOT done, both behavior calls wanting their own PR: making
   `multilingual` ship all 59, and adding the registered-but-unadvertised
   `trigger` to `minimal`'s published array (it registers 11, advertises 10).
+- 2026-07-29 — **Finding 13 CLOSED** (branch
+  `fix/bundle-parser-unreachable-commands`, off `33f10a32`; three commits).
+  **The oracle was EXECUTION** — stated up front, and the first in the arc
+  needing a built artifact rather than a parse: each advertised command is
+  generated into its own bundle, written to disk, imported, and run against a
+  jsdom DOM, asserting an observable effect (DOM mutation, dispatched event,
+  history entry, resolved value, thrown signal). Measured before/after:
+  **23 of 38 ran → 38 of 38.**
+  **The fix restores capability, as the entry required.** Eleven `cmdMap` rules
+  (`empty`, `copy`, `beep`, `push`, `replace`, `morph`, `js`, `throw`, `break`,
+  `continue`, `exit`) in `parser-core.ts` AND its embedded twin, plus a
+  `trigger` → `send` `COMMAND_ALIASES` entry. Nothing reclassified
+  full-runtime-only; no project bumped off the ~8 KB tier. `js` slices its body
+  from raw source between token offsets, as the full parser does. The two
+  parser copies now dispatch an identical 35, closing the empty/halt drift, and
+  `cmdMap` became a field so `isCommandKeyword` reads its keys rather than
+  carrying a second copy.
+  **The 4.1/4.2/4.4 lesson paid a fifth time, and hardest yet — see Finding
+  16.** Scoring the rows already there found `take` BROKEN at execution while
+  the parse oracle certified it reachable (its template passed the evaluated
+  value where every sibling passes the node), `morph` still throwing
+  ReferenceError after its parse rule landed (`MORPH_COMMANDS` exported for that
+  purpose, never read by `generator.ts`), and `trigger` still dispatching on
+  `me` after the alias landed (`parseSend` hardcoded the `to` marker) — **a
+  half-fix the parse-level gate would have called green.**
+  **`remove #id` was a fourth, in its own commit** so it can be reverted without
+  unpicking the rest: `parseRemove` discriminated on token TYPE, and `#id` is a
+  `selector` token too, so `remove #t` stripped a class named `t` from `me` and
+  left the element. The full parser yields `remove` for the same source.
+  Also fixed: two `case` labels deleted rather than made reachable (`push-url`
+  and `replace-url` are bundle-CONFIG spellings — the full parser rejects them
+  as source), and morphlex's inner morph was being handed a string where it
+  wants an element, so it degraded to `innerHTML` on every call.
+  **The gate escalated with the oracle.** `UNREACHABLE_CASE_LABELS` is deleted,
+  not emptied; a new section asserts the converse (no template may emit a label
+  no surface yields); §4 asserts the two cmdMaps are identical rather than
+  "differ on exactly empty and halt"; §5 pins `isCommandKeyword` as a documented
+  SUBSET. Mutation-verified in **9** directions. **One was MISSED on the first
+  pass and is the finding's sharpest lesson:** un-wiring the morphlex import
+  left the gate green, because `morph`'s template falls back to `innerHTML` — a
+  markup check measures the fallback. That row now asserts state preservation
+  (a real morph reuses the node, so a typed input value survives).
+  **Size: accepted and re-baselined, deliberately** — Finding 17.
+  +388 bytes gzip on hybrid-complete and +386 on hx, for rules those handwritten
+  bundles cannot execute (their executor has 24 cases). The cost is structural,
+  the two alternatives are recorded and rejected, and **`hyperfixi-hx.js` now
+  has ~980 bytes under `MAX_HYBRID=20000`** — the binding constraint on future
+  work in this file.
+  Gates: core **7847** passing / 128 skipped / 301 files; `verify:reference`
+  clean (59 = 59, availability chain valid); language-server **227**;
+  vite-plugin **315**; `test:check` **fully green** across all packages;
+  Playwright `src/compatibility/` **1111 passed / 8 skipped** with the same 10
+  known-local failures; typecheck, prettier, oxlint clean; `snapshot:bundle-size`
+  green against the new baseline.
+  Next action: **Finding 17** (should `hybrid-complete` execute what it now
+  parses?), or Finding 15's two, or Finding 12's deferred half, or Arc B.
   Gates: core **7844** passing / 128 skipped / 301 files (+1 = the new §6 test);
   `verify:reference` clean; language-server **227**; `snapshot:bundle-size` all
   10 within tolerance with `hyperfixi-hx.js` at +0.4%, plus a direct check that
