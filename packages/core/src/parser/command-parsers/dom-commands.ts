@@ -99,8 +99,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     // comes back as a single binary `and` expression. Split it back into the
     // flat `classA, and, classB` shape the toggle command's parseInput expects.
     const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]) as
-      | (ASTNode & { type?: string; operator?: string; left?: ASTNode; right?: ASTNode })
-      | undefined;
+      (ASTNode & { type?: string; operator?: string; left?: ASTNode; right?: ASTNode }) | undefined;
     if (firstArg && firstArg.type === 'binaryExpression' && firstArg.operator === 'and') {
       if (firstArg.left) args.push(firstArg.left);
       args.push(ctx.createIdentifier('and'));

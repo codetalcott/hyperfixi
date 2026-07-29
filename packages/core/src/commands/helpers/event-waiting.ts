@@ -224,8 +224,7 @@ export function waitForAnimationComplete(
  * Wait condition for racing
  */
 export type WaitCondition =
-  | { type: 'time'; ms: number }
-  | { type: 'event'; target: EventTarget; eventName: string };
+  { type: 'time'; ms: number } | { type: 'event'; target: EventTarget; eventName: string };
 
 /**
  * Result of a race between conditions

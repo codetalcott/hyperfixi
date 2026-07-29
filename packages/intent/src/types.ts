@@ -30,12 +30,7 @@ export type SemanticRole = string;
 // =============================================================================
 
 export type SemanticValue =
-  | LiteralValue
-  | SelectorValue
-  | ReferenceValue
-  | PropertyPathValue
-  | ExpressionValue
-  | FlagValue;
+  LiteralValue | SelectorValue | ReferenceValue | PropertyPathValue | ExpressionValue | FlagValue;
 
 /** Expected value types for role tokens. */
 export type ExpectedType = SemanticValue['type'];

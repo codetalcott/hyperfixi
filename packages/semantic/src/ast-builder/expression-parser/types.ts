@@ -31,13 +31,7 @@ export interface LiteralNode extends ExpressionNode {
   readonly value: string | number | boolean | null | undefined;
   readonly raw?: string | undefined;
   readonly dataType?:
-    | 'string'
-    | 'number'
-    | 'boolean'
-    | 'null'
-    | 'undefined'
-    | 'duration'
-    | undefined;
+    'string' | 'number' | 'boolean' | 'null' | 'undefined' | 'duration' | undefined;
 }
 
 export interface TemplateLiteralNode extends ExpressionNode {
@@ -63,17 +57,7 @@ export interface SelectorNode extends ExpressionNode {
 // =============================================================================
 
 export type ContextType =
-  | 'me'
-  | 'you'
-  | 'it'
-  | 'its'
-  | 'my'
-  | 'your'
-  | 'result'
-  | 'event'
-  | 'target'
-  | 'body'
-  | 'detail';
+  'me' | 'you' | 'it' | 'its' | 'my' | 'your' | 'result' | 'event' | 'target' | 'body' | 'detail';
 
 export interface ContextReferenceNode extends ExpressionNode {
   readonly type: 'contextReference' | 'symbol';

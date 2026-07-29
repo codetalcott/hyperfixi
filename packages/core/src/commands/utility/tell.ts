@@ -82,8 +82,7 @@ export class TellCommand implements DecoratedCommand {
 
     // Get runtime execute function for AST command nodes (same pattern as RepeatCommand)
     const runtimeExecute = context.locals.get('_runtimeExecute') as
-      | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>)
-      | undefined;
+      ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
 
     const commandResults: any[] = [];
 

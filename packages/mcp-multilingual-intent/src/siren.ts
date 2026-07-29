@@ -11,14 +11,7 @@
  */
 
 export type SirenFieldType =
-  | 'text'
-  | 'number'
-  | 'hidden'
-  | 'email'
-  | 'url'
-  | 'search'
-  | 'tel'
-  | 'password';
+  'text' | 'number' | 'hidden' | 'email' | 'url' | 'search' | 'tel' | 'password';
 
 export interface SirenField {
   name: string;

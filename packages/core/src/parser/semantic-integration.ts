@@ -23,11 +23,7 @@ import {
  * Semantic value types that can be captured from patterns.
  */
 export type SemanticValueType =
-  | 'literal'
-  | 'selector'
-  | 'reference'
-  | 'property-path'
-  | 'expression';
+  'literal' | 'selector' | 'reference' | 'property-path' | 'expression';
 
 /**
  * A semantic value from pattern matching.
