@@ -212,15 +212,12 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return event;
     }`,
 
-  trigger: `
-    case 'trigger': {
-      const eventName = await evaluate(cmd.args[0], ctx);
-      const targets = await getTarget();
-      const event = new CustomEvent(String(eventName), { bubbles: true, detail: ctx.it });
-      for (const el of targets) el.dispatchEvent(event);
-      ctx.it = event;
-      return event;
-    }`,
+  // NOTE: `trigger` has no template of its own — it is a COMMAND_ALIASES entry
+  // resolving to `send`, the way `push-url` resolves to `push`. The parser emits
+  // a `send` node for both spellings (the runtime likewise registers `trigger` as
+  // a consolidation alias sharing `send`'s implementation), so a private
+  // `case 'trigger':` was a label nothing could ever reach — the bundle reported
+  // success and dispatched nothing. See Finding 13.
 
   put: `
     case 'put': {
@@ -280,7 +277,13 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
           if (isOuter) {
             morphlexMorph(target, contentStr);
           } else {
-            morphlexMorphInner(target, contentStr);
+            // morphlex's morphInner takes an ELEMENT, not a string — the same
+            // wrapping src/lib/morph-adapter.ts does. Passing the string threw
+            // straight into the fallback below, so inner morph never actually
+            // morphed (it silently degraded to innerHTML on every call).
+            const wrapper = document.createElement(target.tagName);
+            wrapper.innerHTML = contentStr;
+            morphlexMorphInner(target, wrapper);
           }
         } catch (error) {
           // Fallback to innerHTML/outerHTML if morph fails
@@ -298,7 +301,11 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
 
   take: `
     case 'take': {
-      const className = getClassName(await evaluate(cmd.args[0], ctx));
+      // getClassName reads a NODE (as toggle/add/removeClass all do). Passing the
+      // EVALUATED value handed it a NodeList, which yielded '' and then threw
+      // 'Invalid selector .' — a command the parse-level reachability check
+      // certified while every generated bundle carrying it crashed.
+      const className = getClassName(cmd.args[0]);
       const from = cmd.target ? await getTarget() : [ctx.me.parentElement!];
       for (const container of from) {
         const siblings = container.querySelectorAll('.' + className);
@@ -536,16 +543,15 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
     }`,
 
   // === URL Navigation Commands ===
+  // 'push-url' is a bundle-CONFIG alias resolving to this template, not a source
+  // spelling: the full parser rejects `push-url "/x"`, and no parser emits a node
+  // by that name, so a `case 'push-url':` label was unreachable by construction.
+  // The `url` keyword is consumed by the parser (parseUrlCommand), so the old
+  // identifier-skip here was dead too — and doubly so, since it tested `.name`
+  // while every node this parser builds carries `.value`.
   push: `
-    case 'push':
-    case 'push-url': {
-      // Handle "push url '/path'" pattern
-      let urlArg = cmd.args[0];
-      if (urlArg?.type === 'identifier' && urlArg.name === 'url') {
-        urlArg = cmd.args[1];
-      }
-
-      const url = String(await evaluate(urlArg, ctx));
+    case 'push': {
+      const url = String(await evaluate(cmd.args[0], ctx));
       let title = '';
 
       // Check for "with title" modifier
@@ -563,16 +569,10 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return { url, title, mode: 'push' };
     }`,
 
+  // 'replace-url' is a bundle-config alias, not a source spelling — see `push`.
   replace: `
-    case 'replace':
-    case 'replace-url': {
-      // Handle "replace url '/path'" pattern
-      let urlArg = cmd.args[0];
-      if (urlArg?.type === 'identifier' && urlArg.name === 'url') {
-        urlArg = cmd.args[1];
-      }
-
-      const url = String(await evaluate(urlArg, ctx));
+    case 'replace': {
+      const url = String(await evaluate(cmd.args[0], ctx));
       let title = '';
 
       // Check for "with title" modifier

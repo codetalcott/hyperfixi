@@ -215,10 +215,21 @@ describe('capability list ↔ generator consistency (2026-07-20 audit regression
   });
 
   it('aliased names include the implementing template', () => {
-    const result = generateBundle({ name: 'AliasProbe', commands: ['push-url', 'replace-url'] });
+    // These used to assert `case 'push-url':` / `case 'replace-url':`, i.e. that
+    // the alias got its own label. Those labels were unreachable by
+    // construction — no parser emits a node called `push-url`, and the full
+    // parser rejects `push-url "/x"` as source outright — so asserting them
+    // pinned dead code. What the alias actually promises is that requesting it
+    // yields the IMPLEMENTING template; `capability-emission.test.ts` then
+    // executes the real syntax through it. Same for `trigger` → `send`.
+    const result = generateBundle({
+      name: 'AliasProbe',
+      commands: ['push-url', 'replace-url', 'trigger'],
+    });
     expect(result.errors).toHaveLength(0);
-    expect(result.code).toContain("case 'push-url':");
-    expect(result.code).toContain("case 'replace-url':");
+    expect(result.code).toContain("case 'push':");
+    expect(result.code).toContain("case 'replace':");
+    expect(result.code).toContain("case 'send':");
   });
 
   it('requesting a command and its alias includes the template exactly once', () => {
@@ -226,7 +237,17 @@ describe('capability list ↔ generator consistency (2026-07-20 audit regression
     expect(result.errors).toHaveLength(0);
     // Duplicate case labels would be silently dead code in the generated
     // switch — assert the template body appears once.
-    const occurrences = result.code.split("case 'push-url':").length - 1;
+    const occurrences = result.code.split("case 'push':").length - 1;
     expect(occurrences).toBe(1);
+  });
+
+  it('an alias-only bundle carries no label for the alias name itself', () => {
+    // The regression this pair replaces: a `trigger`-only bundle emitted
+    // `case 'trigger':` and no `case 'send':`, so it generated cleanly, carried
+    // the implementation, and dispatched nothing (Finding 13's sharpest row).
+    const result = generateBundle({ name: 'TriggerOnly', commands: ['trigger'] });
+    expect(result.errors).toHaveLength(0);
+    expect(result.code).toContain("case 'send':");
+    expect(result.code).not.toContain("case 'trigger':");
   });
 });
