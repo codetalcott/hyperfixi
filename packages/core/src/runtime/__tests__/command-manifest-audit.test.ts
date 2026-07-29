@@ -69,8 +69,9 @@ import {
   FULL_RUNTIME_ONLY_COMMANDS,
   resolveCommandKey,
 } from '../../bundle-generator/template-capabilities';
-import { COMMAND_KEYWORDS, ALL_KEYWORDS } from '../../lsp-metadata';
+import { COMMAND_KEYWORDS, ALL_KEYWORDS, HOVER_DOCS } from '../../lsp-metadata';
 import { commands as referenceCommands } from '../../reference/index';
+import { parse } from '../../parser/parser';
 
 /** Finding 6: snapshot the static parser seed BEFORE any Runtime exists. */
 const STATIC_SEED = new Set<string>(COMMANDS);
@@ -473,36 +474,42 @@ const CAPABILITY_NOT_COMMANDS = new Set(['removeClass', 'push-url', 'replace-url
 
 /**
  * Registered commands in NEITHER capability list, but present in
- * AVAILABLE_BLOCKS — classified as blocks rather than commands. Whether that
- * satisfies the file's partition ("available in generated lite bundles versus
- * … the full runtime") is step 4.2's decision to make explicit.
+ * AVAILABLE_BLOCKS — classified as blocks rather than commands.
+ *
+ * **Step 4.2 decided this DOES satisfy the file's partition, and that these
+ * three must stay out of `FULL_RUNTIME_ONLY_COMMANDS`.** The generator
+ * dispatches them through `BLOCK_IMPLEMENTATIONS`, not
+ * `COMMAND_IMPLEMENTATIONS`, and lite bundles execute them correctly today;
+ * `vite-plugin`'s `getUnsupportedCommands()` checks the full-runtime list
+ * first, so listing them there would force a full-runtime fallback for working
+ * `if`/`repeat`/`fetch` code. The reason they look unclassified is that they
+ * are commands in the ENGINE and blocks in the GENERATOR — one name, two
+ * dispatch surfaces.
  */
 const CAPABILITY_BLOCK_ONLY = new Set(['fetch', 'if', 'repeat']);
 
 /**
  * Registered commands with NO classification anywhere in the capability file.
- * Latent rather than live: `vite-plugin/src/generator.ts` treats an
- * unclassified command as unsupported and falls back to the full runtime, so
- * these cost bundle size, not correctness. All fixed by step 4.2 (which must
- * also decide the COMMAND_IMPLEMENTATIONS second-list overlap).
  *
- * NOTE: the brief's Claim 3 table says 12 gaps for this file. Measured, it is
- * 13 = these 10 + the 3 block-only rows above — the table counted `if` as
+ * **Emptied by step 4.2** — all ten moved into `FULL_RUNTIME_ONLY_COMMANDS`.
+ * Measured against the generator (this file's oracle): none has a
+ * `COMMAND_IMPLEMENTATIONS` key, so `generateBundle()` rejects each as
+ * `unknown-command`, and none is reachable in the generated parser.
+ * Behavior-preserving for bundle selection, and it makes them scannable so
+ * their use routes to a tier that runs them.
+ *
+ * NOTE: the brief's Claim 3 table says 12 gaps for this file. Measured, it was
+ * 13 = those 10 + the 3 block-only rows above — the table counted `if` as
  * classified, but `if` appears in neither command list, exactly like `repeat`
  * and `fetch` which it did count.
+ *
+ * The mirror defect the same oracle run exposed — 14 of the 38 ADVERTISED
+ * commands emit a case label the bundle parser can never reach — is gated
+ * separately in `bundle-generator/__tests__/capability-emission.test.ts`
+ * (`UNREACHABLE_CASE_LABELS`), because its remedy is a parser rule rather than
+ * a reclassification. See Finding 13 in the brief.
  */
-const CAPABILITY_UNCLASSIFIED = new Set([
-  'breakpoint',
-  'clear',
-  'close',
-  'open',
-  'pseudo-command',
-  'render',
-  'reset',
-  'scroll',
-  'select',
-  'start',
-]);
+const CAPABILITY_UNCLASSIFIED = new Set<string>([]);
 
 describe('the capability lists', () => {
   it('every capability entry is a registered command or an allowlisted generator name', () => {
@@ -518,10 +525,12 @@ describe('the capability lists', () => {
     expect(REGISTERED.has(resolveCommandKey('replace-url'))).toBe(true);
   });
 
-  it('13 registered commands are outside the command partition (step 4.2)', () => {
+  it('only the 3 block-only rows are outside the command partition (step 4.2)', () => {
+    // Was 13 before step 4.2 (10 unclassified + these 3).
     expect(gapsIn([...AVAILABLE_COMMANDS, ...FULL_RUNTIME_ONLY_COMMANDS])).toEqual(
       [...CAPABILITY_BLOCK_ONLY, ...CAPABILITY_UNCLASSIFIED].sort()
     );
+    expect(CAPABILITY_UNCLASSIFIED.size, 'a command lost its classification').toBe(0);
   });
 
   it('the block-only rows really are classified as blocks', () => {
@@ -529,6 +538,16 @@ describe('the capability lists', () => {
     // AVAILABLE_BLOCKS it must move to CAPABILITY_UNCLASSIFIED, not linger.
     for (const name of CAPABILITY_BLOCK_ONLY) {
       expect(AVAILABLE_BLOCKS, `${name} left AVAILABLE_BLOCKS`).toContain(name);
+    }
+  });
+
+  it('the block-only rows are NOT full-runtime-only (step 4.2 decision)', () => {
+    // The decision, pinned as an assertion rather than only as prose: adding
+    // one of these to FULL_RUNTIME_ONLY_COMMANDS would bump every project using
+    // an `if` block to the full runtime, because getUnsupportedCommands()
+    // consults that list before anything else.
+    for (const name of CAPABILITY_BLOCK_ONLY) {
+      expect(FULL_RUNTIME_ONLY_COMMANDS as readonly string[]).not.toContain(name);
     }
   });
 });
@@ -545,25 +564,112 @@ describe('the capability lists', () => {
 const KEYWORD_NOT_COMMANDS = new Set(['else', 'for', 'while']);
 
 /**
- * Registered commands COMMAND_KEYWORDS does not yet advertise, so the LSP
- * offers no completion for them. Was six before the Finding 5 ghost fix
- * renamed `pushUrl`/`replaceUrl` to `push`/`replace` (#810). Adding these is a
- * docs + completions decision — step 4.3.
+ * Registered commands COMMAND_KEYWORDS does not advertise, so the LSP offers
+ * no completion for them. Was six before the Finding 5 ghost fix renamed
+ * `pushUrl`/`replaceUrl` to `push`/`replace` (#810), then four, and step 4.3
+ * closed the last three (`process`, `scroll`, `start` — each probed live
+ * against the parser). **Now empty, and it stays empty**: a registered command
+ * belongs here only while somebody is actively deciding, and the two settled
+ * outcomes have their own homes — advertised (in the list) or permanently
+ * excluded (`KEYWORD_NOT_ADVERTISED` below, which requires a reason).
  */
-const KEYWORD_GAPS = new Set([
-  'process', // htmx-like: process partials in <content>
-  'pseudo-command', // method-call-as-command; absent from the static seed too (Finding 6)
-  'scroll', // upstream _hyperscript 0.9.90 `scroll to <target>`
-  'start', // start view transition ... end
-]);
+const KEYWORD_GAPS = new Set<string>([]);
+
+/**
+ * Registered commands deliberately kept OUT of COMMAND_KEYWORDS. Not debt —
+ * each row is a decision, and the reason has to survive next to it.
+ *
+ * `pseudo-command` is the name the parser EMITS for the method-call-as-command
+ * form: `setAttribute('a','b') on me` yields a node named `pseudo-command`. No
+ * user writes that token. It is not unreachable — step 3's note said it was
+ * ("`-` is not an identifier character"), and step 4.3 measured that FALSE: `-`
+ * is an identifier character, `pseudo-command` tokenizes as one identifier and
+ * reaches a command node. But the node it reaches carries no `methodName`, so
+ * advertising the token would offer a completion that parses and then does
+ * nothing — a subtler form of the `pushUrl` defect, not a fix for it.
+ */
+const KEYWORD_NOT_ADVERTISED = new Set(['pseudo-command']);
+
+/**
+ * The parse oracle for §5 — the question nothing asked before step 4.3.
+ *
+ * `ghostsIn` checks registry membership, which is only a PROXY for what this
+ * list promises: that the token parses. The proxy is weaker in BOTH directions.
+ * `pseudo-command` is registered yet is not a keyword anybody writes, and a
+ * name could parse without being registered (`else`, `for`, `while` do exactly
+ * that). So the entries are probed against the real parser here.
+ *
+ * The snippet is each keyword's own `HOVER_DOCS` example, deliberately — it is
+ * the text the LSP puts in front of the user, so a dead example is the shipped
+ * defect (`pushUrl`, #810) one level down. It also means there is no second
+ * hand-maintained probe table to drift: documenting a keyword IS probing it.
+ *
+ * A keyword passes when its example reaches at least one real command node.
+ * `success` alone is NOT sufficient and must never be substituted: an
+ * unrecognized word makes the command-list parser stop cleanly and hand back an
+ * EMPTY command list with `success: true` — `on click zzznotacommand .x` parses
+ * "fine". This is the same trap step 4.1 hit on the upstream engine, and it is
+ * live here too. It is what made three hover examples dead code in silence.
+ */
+function commandNodesIn(source: string): string[] {
+  const result = parse(source);
+  const found: string[] = [];
+  const seen = new Set<unknown>();
+  const walk = (node: unknown, depth = 0): void => {
+    if (!node || typeof node !== 'object' || depth > 25 || seen.has(node)) return;
+    seen.add(node);
+    if (Array.isArray(node)) {
+      node.forEach(child => walk(child, depth + 1));
+      return;
+    }
+    const rec = node as Record<string, unknown>;
+    if (rec.type === 'command' && typeof rec.name === 'string') found.push(rec.name);
+    for (const key of Object.keys(rec)) if (key !== 'tokens') walk(rec[key], depth + 1);
+  };
+  walk((result as { node?: unknown }).node);
+  return found;
+}
 
 describe('COMMAND_KEYWORDS', () => {
   it('every keyword names a registered command or an allowlisted block keyword', () => {
     expect(ghostsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_COMMANDS].sort());
   });
 
-  it('4 registered commands are not advertised (step 4.3)', () => {
-    expect(gapsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_GAPS].sort());
+  it('every registered command is advertised, or excluded with a reason (step 4.3)', () => {
+    expect(gapsIn(COMMAND_KEYWORDS)).toEqual([...KEYWORD_NOT_ADVERTISED].sort());
+    expect([...KEYWORD_GAPS]).toEqual([]);
+  });
+
+  it('every keyword is documented — the probe corpus has no holes', () => {
+    // Guards the gate below from going vacuously green: an undocumented
+    // keyword has no example, so it would otherwise be silently unprobed.
+    // `push`/`replace` sat undocumented from #810 until step 4.3.
+    expect(COMMAND_KEYWORDS.filter(kw => !HOVER_DOCS[kw])).toEqual([]);
+  });
+
+  it('every keyword PARSES — its own hover example reaches a command node', () => {
+    // The check `ghostsIn` cannot make. Mutation-verified: restoring any of the
+    // three examples step 4.3 fixed (`repeat` without `end`, standalone
+    // `while`, `transition #box's opacity`) fails here, and all three were
+    // SILENT before this test existed.
+    const dead = COMMAND_KEYWORDS.filter(kw => {
+      const example = HOVER_DOCS[kw]?.example;
+      if (!example) return false; // covered by the test above
+      return commandNodesIn(`on click ${example.replace(/\n/g, '\n  ')}`).length === 0;
+    });
+    expect(dead).toEqual([]);
+  });
+
+  it('the excluded rows are excluded for the stated reason, not by accident', () => {
+    for (const name of KEYWORD_NOT_ADVERTISED) {
+      expect(REGISTERED.has(name)).toBe(true); // still registered
+      expect(COMMAND_KEYWORDS as readonly string[]).not.toContain(name);
+    }
+    // `pseudo-command` is reachable as a token — step 3's "unreachable"
+    // note was measured false — but only as a degenerate node. Both halves
+    // are pinned so a future reader re-checks rather than trusting either.
+    expect(commandNodesIn('on click pseudo-command')).toContain('pseudo-command');
+    expect(commandNodesIn('on click setAttribute("a","b") on me')).toContain('pseudo-command');
   });
 
   it('advertises the history command under its parsing names', () => {
@@ -835,7 +941,9 @@ describe('the command manifest', () => {
 // ===========================================================================
 
 describe('the classification debt, counted', () => {
-  it('17 rows await deliberate classification (steps 4.2–4.3)', () => {
+  // Zero CLASSIFICATION debt; step 4.4 (deriving `packageInfo.commands`) is a
+  // derivation, not a classification, and is not counted here.
+  it('0 rows await deliberate classification (4.1, 4.2, 4.3 all landed)', () => {
     // The numbers the arc exists to burn down. A step that classifies a
     // command flips its allowlist row AND moves the count here, so the diff
     // shows both the decision and its scope. Do not adjust a count without
@@ -843,9 +951,17 @@ describe('the classification debt, counted', () => {
     //
     // Step 4.1 took this from 40 to 17: the LSP tier lists are now a total
     // partition of the registry (51 upstream / 8 extension), asserted in §3.
+    // Step 4.2 took it from 17 to 4 by classifying the ten unclassified
+    // capability rows as full-runtime-only and RESOLVING the block-only three
+    // as classified-by-AVAILABLE_BLOCKS rather than unclassified, so they no
+    // longer count as debt (they are still pinned in §4, both directions).
+    // Step 4.3 took it to ZERO: `process`/`scroll`/`start` are advertised, and
+    // `pseudo-command` moved to KEYWORD_NOT_ADVERTISED — a decision with a
+    // reason, not an open row.
     expect(TIER_UNCLASSIFIED.size).toBe(0); // step 4.1 — DONE, was 23
-    expect(CAPABILITY_UNCLASSIFIED.size).toBe(10); // step 4.2 — latent, costs bundle size
-    expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — decide blocks-as-classification
-    expect(KEYWORD_GAPS.size).toBe(4); // step 4.3 — missing LSP completions
+    expect(CAPABILITY_UNCLASSIFIED.size).toBe(0); // step 4.2 — DONE, was 10
+    expect(CAPABILITY_BLOCK_ONLY.size).toBe(3); // step 4.2 — DECIDED: blocks classify
+    expect(KEYWORD_GAPS.size).toBe(0); // step 4.3 — DONE, was 4
+    expect(KEYWORD_NOT_ADVERTISED.size).toBe(1); // step 4.3 — DECIDED: pseudo-command
   });
 });

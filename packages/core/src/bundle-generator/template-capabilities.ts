@@ -3,11 +3,56 @@
  *
  * Documents which commands and blocks are available in generated lite bundles
  * versus those that require the full runtime.
+ *
+ * ---------------------------------------------------------------------------
+ * WHAT "AVAILABLE" MEANS HERE, AND WHERE THE FACT ACTUALLY LIVES
+ * (Arc A step 4.2 — `docs-internal/HANDOFF-command-arch-manifest.md`)
+ * ---------------------------------------------------------------------------
+ *
+ * These lists answer ONE question: *can the bundle generator emit this command
+ * into a lite bundle?* That is deliberately NOT the same question as the
+ * command manifest's `tier` (`commands/manifest.ts`), which mirrors
+ * `reference/index.ts`'s `availability` — "which prebuilt bundle first ships
+ * it". Measured under the natural mapping the two facts disagree on 16 of 59
+ * rows, so neither may be derived from the other.
+ *
+ * The generator's emission fact is `COMMAND_IMPLEMENTATIONS` in `./templates.ts`
+ * (a `Record<name, caseSource>`): `generateBundle()` filters on it, and a name
+ * with no key is rejected as `unknown-command`. `AVAILABLE_COMMANDS` below is a
+ * **checked mirror** of its key set plus the two advertised aliases — not a
+ * third hand-maintained copy. `capability-emission.test.ts` asserts the
+ * equality in both directions, so the two cannot drift.
+ *
+ * It stays a literal rather than `Object.keys(COMMAND_IMPLEMENTATIONS)` for the
+ * reason recorded as Finding 9/11 in the brief: a derivation references
+ * `templates.ts`, dragging all 36 command source strings into every consumer of
+ * this module. Same shape-split as `COMMAND_NAMES` vs `COMMAND_MANIFEST`.
+ *
+ * **Blocks count as a classification.** `if`, `repeat` and `fetch` are
+ * registered commands that appear in neither list below; they are classified by
+ * `AVAILABLE_BLOCKS`, and the generator dispatches them through
+ * `BLOCK_IMPLEMENTATIONS`, not `COMMAND_IMPLEMENTATIONS`. They must NOT be
+ * added to `FULL_RUNTIME_ONLY_COMMANDS`: `vite-plugin`'s `getUnsupportedCommands`
+ * checks that list first, so listing them would force a full-runtime fallback
+ * for `if`/`repeat`/`fetch` code that lite bundles execute correctly today.
+ *
+ * **Known open defect (step 4.2 follow-up).** Membership here means the case
+ * label is EMITTED, not that the generated parser ever reaches it. 14 of the
+ * entries below are unreachable — the parser produces no node for them, or
+ * produces one under a different name — so the emitted `case` is dead code and
+ * the user's source silently no-ops. They are named, counted and pinned in
+ * `capability-emission.test.ts` (`UNREACHABLE_CASE_LABELS`). They are NOT
+ * reclassified here: every one has a working template, so the correct remedy is
+ * a parser rule that restores the capability, not a reclassification that
+ * removes it and bumps those projects to the full runtime.
  */
 
 /**
  * Commands available in generated lite bundles.
  * These have simplified implementations that cover common use cases.
+ *
+ * Exactly `Object.keys(COMMAND_IMPLEMENTATIONS)` plus `push-url`/`replace-url`
+ * (see COMMAND_ALIASES below) — gated, both directions.
  */
 export const AVAILABLE_COMMANDS = [
   // DOM manipulation
@@ -62,6 +107,10 @@ export const AVAILABLE_COMMANDS = [
 
 /**
  * Blocks available in generated lite bundles.
+ *
+ * Exactly `Object.keys(BLOCK_IMPLEMENTATIONS)` — gated, both directions. Three
+ * of these (`if`, `repeat`, `fetch`) are also registered commands; this list is
+ * their classification (see the module header).
  */
 export const AVAILABLE_BLOCKS = ['if', 'repeat', 'for', 'while', 'fetch'] as const;
 
@@ -69,6 +118,11 @@ export const AVAILABLE_BLOCKS = ['if', 'repeat', 'for', 'while', 'fetch'] as con
  * Commands NOT available in lite bundles (require full runtime).
  * These either have complex implementations or depend on features
  * not included in lite bundles.
+ *
+ * Invariant, gated: no entry here has a `COMMAND_IMPLEMENTATIONS` key. Being
+ * listed routes the vite-plugin's bundle selection to the full runtime, which
+ * is the conservative and correct default for anything the generator cannot
+ * emit.
  */
 export const FULL_RUNTIME_ONLY_COMMANDS = [
   // Advanced execution
@@ -89,6 +143,36 @@ export const FULL_RUNTIME_ONLY_COMMANDS = [
   'measure',
   // Behaviors (requires registry)
   'install',
+
+  // -------------------------------------------------------------------------
+  // Classified by Arc A step 4.2. These ten were in NEITHER list — registered
+  // commands the capability file had no opinion about, against a doc comment
+  // that claims a partition. Measured against the generator (the oracle for
+  // this file): none has a `COMMAND_IMPLEMENTATIONS` key, so `generateBundle()`
+  // rejects each as `unknown-command`, and none is reachable in the generated
+  // parser. Full-runtime-only is therefore the accurate classification, not a
+  // conservative guess.
+  //
+  // Behavior-preserving for bundle selection — `getUnsupportedCommands()`
+  // already treated an unclassified name as unsupported via its
+  // `!isAvailableCommand && !COMMAND_IMPLEMENTATIONS[cmd]` arm. What DOES
+  // change is detection: `vite-plugin/src/scanner.ts` builds its command regex
+  // from both lists, so these nine (`pseudo-command` is filtered out by the
+  // scanner's `/^[A-Za-z]+$/` guard) become scannable. That is the improvement
+  // the scanner's own comment asks for — previously their use went undetected
+  // and got a lite bundle that silently no-opped them; now it routes to a tier
+  // that runs them.
+  // -------------------------------------------------------------------------
+  'breakpoint', // debugger integration — needs the full runtime's debug hooks
+  'clear', // storage/DOM clear
+  'close', // dialog/details close
+  'open', // dialog/details open
+  'pseudo-command', // method-call-as-command; needs full expression evaluation
+  'render', // template rendering — needs the template registry
+  'reset', // form reset
+  'scroll', // scroll to target
+  'select', // selection API
+  'start', // start view transition … end
 ] as const;
 
 /**
