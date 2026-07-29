@@ -306,7 +306,18 @@ export class HybridParser {
 
   private parseRemove(): CommandNode {
     this.expect('remove');
-    if (this.matchType('selector')) {
+    // Discriminate on the selector's SIGIL, not merely on the token type.
+    // `#id` and `<tag/>` are also `selector` tokens, so the old type-only test
+    // sent `remove #t` down the class branch: `getClassName` sliced the sigil
+    // off and the bundle removed a class named `t` from `me` instead of
+    // removing the element. The full parser yields a `remove` node for
+    // `remove #t` (its own hover doc is `remove #temp`), so this was a silent
+    // divergence between the two parsers on ordinary code.
+    //
+    // `@attr` stays on the class branch deliberately: attribute removal has no
+    // template, and routing it to element removal would turn a wrong-class bug
+    // into a destructive one. Recorded as a known gap rather than widened here.
+    if (this.matchType('selector') && /^[.@]/.test(this.peek().value)) {
       const what = this.parseExpression();
       let target: ASTNode | undefined;
       if (this.match('from')) {

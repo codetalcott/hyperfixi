@@ -661,7 +661,10 @@ class HybridParser {
 
   parseRemove() {
     this.expect('remove');
-    if (this.matchType('selector')) {
+    // Sigil, not token type: \`#id\` and \`<tag/>\` are selector tokens too, so a
+    // type-only test sent \`remove #t\` down the class branch and stripped a
+    // class named \`t\` from \`me\`. \`@attr\` stays here (no attribute template).
+    if (this.matchType('selector') && /^[.@]/.test(this.peek().value)) {
       const what = this.parseExpression();
       let target;
       if (this.match('from')) {
