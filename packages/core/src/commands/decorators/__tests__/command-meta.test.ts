@@ -93,16 +93,33 @@ describe('the classes converted to commandMeta() in step 1', () => {
     }
   );
 
-  it.each(CONVERTED)('$name declares no defaults commandMeta did not fill', ({ cls }) => {
-    // `commandMeta` is deliberately identity — it does NOT fill @meta's
-    // `isBlocking`/`hasBody`/`version` defaults. These three carried no such
-    // fields before the conversion, so they must carry none after it: that is
-    // what makes step 1 a shape-preserving change rather than a silent
-    // undefined-to-false flip on three commands.
+  it.each(CONVERTED)('$name now carries the three defaults (step 3 MOVED this row)', ({ cls }) => {
+    // INVERTED in step 3, deliberately, and left as an explicit assertion
+    // rather than deleted so the change reads as a moved row.
+    //
+    // Step 1 shipped `commandMeta` as pure identity and asserted these three
+    // fields were ABSENT here, because that was shape-preserving for the three
+    // classes it converted. Step 3 chose the other way — `commandMeta` fills
+    // `isBlocking`/`hasBody`/`version` exactly as `@meta` did — because that is
+    // what keeps the FIFTY-TWO classes it migrated byte-identical, which is the
+    // larger preservation. The cost is these three gaining the fields, and this
+    // assertion is that cost, written down.
+    //
+    // The values are boilerplate and two of them are false for other commands
+    // (`wait`/`fetch` do block, `if`/`repeat` do take bodies). Authoring them
+    // truthfully is a separate, filed item — do NOT quietly fix it here.
     const md = cls.metadata as Record<string, unknown>;
-    expect('isBlocking' in md).toBe(false);
-    expect('hasBody' in md).toBe(false);
-    expect('version' in md).toBe(false);
+    expect(md.isBlocking).toBe(false);
+    expect(md.hasBody).toBe(false);
+    expect(md.version).toBe('1.0.0');
+  });
+
+  it.each(CONVERTED)('$name carries a compatibility value (step 3)', ({ cls }) => {
+    // None of the three is a LokaScript extension, so all three project to
+    // 'standard'. The projection itself is gated in the manifest audit's §9;
+    // this only pins that step 3 did not skip the classes it had already
+    // touched in step 1.
+    expect((cls.metadata as Record<string, unknown>).compatibility).toBe('standard');
   });
 
   it('is exactly the set of registered commands whose name is an OWN property', () => {

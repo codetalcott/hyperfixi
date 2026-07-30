@@ -31,8 +31,8 @@ import {
 } from '../helpers/property-target';
 import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -94,16 +94,26 @@ function toSetInput(target: WriteTarget, value: unknown): SetCommandInput {
   }
 }
 
-@meta({
-  description: 'Set values to variables, attributes, or properties',
-  syntax: ['set <target> to <value>'],
-  examples: ['set myVar to "value"', 'set @data-theme to "dark"', 'set my innerHTML to "content"'],
-  sideEffects: ['state-mutation', 'dom-mutation'],
-})
 @command({ name: 'set', category: 'data' })
 export class SetCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Set values to variables, attributes, or properties',
+    syntax: ['set <target> to <value>'],
+    examples: [
+      'set myVar to "value"',
+      'set @data-theme to "dark"',
+      'set my innerHTML to "content"',
+    ],
+    sideEffects: ['state-mutation', 'dom-mutation'],
+    category: 'data',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return SetCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

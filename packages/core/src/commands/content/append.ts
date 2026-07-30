@@ -16,27 +16,33 @@ import {
   type InsertionCommandInput,
   type InsertionCommandOutput,
 } from './insertion-base';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { commandMeta, command, createFactory, type CommandMetadata } from '../decorators';
 
 export type AppendCommandInput = InsertionCommandInput;
 export type AppendCommandOutput = InsertionCommandOutput;
 
-@meta({
-  description: 'Add content to the end of a string, array, Set, or HTML element',
-  syntax: ['append <content>', 'append <content> to <target>'],
-  examples: [
-    'append "Hello"',
-    'append "World" to greeting',
-    'append item to myArray',
-    'append "<p>New</p>" to #content',
-    'append " (edited)" to #title\'s textContent',
-  ],
-  sideEffects: ['data-mutation', 'dom-mutation'],
-})
 @command({ name: 'append', category: 'content' })
 export class AppendCommand extends ContentInsertionCommand {
+  static readonly metadata = commandMeta({
+    description: 'Add content to the end of a string, array, Set, or HTML element',
+    syntax: ['append <content>', 'append <content> to <target>'],
+    examples: [
+      'append "Hello"',
+      'append "World" to greeting',
+      'append item to myArray',
+      'append "<p>New</p>" to #content',
+      'append " (edited)" to #title\'s textContent',
+    ],
+    sideEffects: ['data-mutation', 'dom-mutation'],
+    category: 'content',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return AppendCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   constructor() {
     super('append');

@@ -18,8 +18,8 @@ import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, camelToKebab } from '../helpers/duration-parsing';
 import { waitForTransitionEnd } from '../helpers/event-waiting';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -54,20 +54,26 @@ export interface TransitionCommandOutput {
  * Before: 250 lines
  * After: ~130 lines (48% reduction)
  */
-@meta({
-  description: 'Animate CSS properties using CSS transitions',
-  syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
-  examples: [
-    'transition opacity to 0.5',
-    'transition left to 100px over 500ms',
-    'transition background-color to red over 1s with ease-in-out',
-  ],
-  sideEffects: ['style-change', 'timing'],
-})
 @command({ name: 'transition', category: 'animation' })
 export class TransitionCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Animate CSS properties using CSS transitions',
+    syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
+    examples: [
+      'transition opacity to 0.5',
+      'transition left to 100px over 500ms',
+      'transition background-color to red over 1s with ease-in-out',
+    ],
+    sideEffects: ['style-change', 'timing'],
+    category: 'animation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return TransitionCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

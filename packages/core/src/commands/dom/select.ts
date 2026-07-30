@@ -21,8 +21,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -37,16 +37,22 @@ function isTextFieldElement(el: HTMLElement): el is HTMLInputElement | HTMLTextA
   return tag === 'INPUT' || tag === 'TEXTAREA';
 }
 
-@meta({
-  description: 'Select the contents of a text field, or select the contents of a DOM element',
-  syntax: ['select', 'select <target>'],
-  examples: ['select #search', 'select <textarea/>', 'select me'],
-  sideEffects: ['focus', 'dom-mutation'],
-})
 @command({ name: 'select', category: 'dom' })
 export class SelectCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Select the contents of a text field, or select the contents of a DOM element',
+    syntax: ['select', 'select <target>'],
+    examples: ['select #search', 'select <textarea/>', 'select me'],
+    sideEffects: ['focus', 'dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return SelectCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

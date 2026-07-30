@@ -18,8 +18,8 @@ import { evaluateCondition } from '../helpers/condition-helpers';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -64,23 +64,29 @@ export interface RepeatCommandOutput {
   interrupted?: boolean;
 }
 
-@meta({
-  description:
-    'Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops',
-  syntax: [
-    'repeat for <var> in <collection> { <commands> }',
-    'repeat <count> times { <commands> }',
-    'repeat while <condition> { <commands> }',
-    'repeat until <condition> { <commands> }',
-    'repeat forever { <commands> }',
-  ],
-  examples: ['repeat for item in items { log item }', 'repeat 5 times { log "hello" }'],
-  sideEffects: ['iteration', 'conditional-execution'],
-})
 @command({ name: 'repeat', category: 'control-flow' })
 export class RepeatCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description:
+      'Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops',
+    syntax: [
+      'repeat for <var> in <collection> { <commands> }',
+      'repeat <count> times { <commands> }',
+      'repeat while <condition> { <commands> }',
+      'repeat until <condition> { <commands> }',
+      'repeat forever { <commands> }',
+    ],
+    examples: ['repeat for item in items { log item }', 'repeat 5 times { log "hello" }'],
+    sideEffects: ['iteration', 'conditional-execution'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return RepeatCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

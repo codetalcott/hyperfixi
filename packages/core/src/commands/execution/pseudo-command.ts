@@ -80,6 +80,7 @@ export class PseudoCommand {
       'foo() on me',
     ],
     category: 'execution',
+    compatibility: 'standard',
     sideEffects: ['method-execution'],
   });
 

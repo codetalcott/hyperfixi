@@ -12,8 +12,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import { evaluateAST } from '../../parser/runtime';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -41,16 +41,22 @@ export interface CallCommandOutput {
  * Before: 238 lines
  * After: ~85 lines (64% reduction)
  */
-@meta({
-  description: 'Evaluate an expression and store the result in the it variable',
-  syntax: ['call <expression>'],
-  examples: ['call myFunction()', 'call fetch("/api/data")', 'call element.focus()'],
-  sideEffects: ['function-execution', 'context-mutation'],
-})
 @command({ name: 'call', category: 'execution' })
 export class CallCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Evaluate an expression and store the result in the it variable',
+    syntax: ['call <expression>'],
+    examples: ['call myFunction()', 'call fetch("/api/data")', 'call element.focus()'],
+    sideEffects: ['function-execution', 'context-mutation'],
+    category: 'execution',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return CallCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

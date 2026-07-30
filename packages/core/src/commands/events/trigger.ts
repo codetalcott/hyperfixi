@@ -18,8 +18,8 @@ import { isHTMLElement } from '../../utils/element-check';
 import { createCustomEvent, parseEventValue } from '../helpers/event-helpers';
 import type { EventOptions } from '../helpers/event-helpers';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -54,27 +54,33 @@ export type SendCommandInput = Omit<EventDispatchInput, 'mode'>;
  * Consolidates TriggerCommand and SendCommand into single implementation.
  * Registered under both 'trigger' and 'send' names via aliases.
  */
-@meta({
-  description: 'Dispatch events on elements',
-  syntax: [
-    'trigger <event> on <target>',
-    'trigger <event>(<detail>) on <target>',
-    'send <event> to <target>',
-    'send <event>(<detail>) to <target>',
-  ],
-  examples: [
-    'trigger click on #button',
-    'trigger customEvent on me',
-    'send dataEvent to #target',
-    'send myEvent(count: 42) to me',
-  ],
-  sideEffects: ['event-dispatch'],
-  aliases: ['send'],
-})
 @command({ name: 'trigger', category: 'event' })
 export class EventDispatchCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Dispatch events on elements',
+    syntax: [
+      'trigger <event> on <target>',
+      'trigger <event>(<detail>) on <target>',
+      'send <event> to <target>',
+      'send <event>(<detail>) to <target>',
+    ],
+    examples: [
+      'trigger click on #button',
+      'trigger customEvent on me',
+      'send dataEvent to #target',
+      'send myEvent(count: 42) to me',
+    ],
+    sideEffects: ['event-dispatch'],
+    aliases: ['send'],
+    category: 'event',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return EventDispatchCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },

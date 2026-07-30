@@ -21,8 +21,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -57,32 +57,38 @@ export interface PickCommandOutput {
   variant: PickCommandInput['variant'];
 }
 
-@meta({
-  description: 'Select from a collection (first/last/random/range/regex match)',
-  syntax: [
-    'pick first <count> of <expr>',
-    'pick last <count> of <expr>',
-    'pick random [<count>] of <expr>',
-    'pick items <i> to <j> of <expr>',
-    'pick match of <regex> from <expr>',
-    'pick from <array>',
-    'pick <item1>, <item2>, ...',
-  ],
-  examples: [
-    'pick first 3 of items',
-    'pick last 2 of items',
-    'pick random 2 of items',
-    'pick items 1 to 3 of items',
-    'pick match of "[0-9]+" from text',
-    'pick from colors',
-    'pick "red", "green", "blue"',
-  ],
-  sideEffects: ['random-selection'],
-})
 @command({ name: 'pick', category: 'utility' })
 export class PickCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Select from a collection (first/last/random/range/regex match)',
+    syntax: [
+      'pick first <count> of <expr>',
+      'pick last <count> of <expr>',
+      'pick random [<count>] of <expr>',
+      'pick items <i> to <j> of <expr>',
+      'pick match of <regex> from <expr>',
+      'pick from <array>',
+      'pick <item1>, <item2>, ...',
+    ],
+    examples: [
+      'pick first 3 of items',
+      'pick last 2 of items',
+      'pick random 2 of items',
+      'pick items 1 to 3 of items',
+      'pick match of "[0-9]+" from text',
+      'pick from colors',
+      'pick "red", "green", "blue"',
+    ],
+    sideEffects: ['random-selection'],
+    category: 'utility',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return PickCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

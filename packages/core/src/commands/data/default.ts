@@ -24,8 +24,8 @@ import {
   isEmpty,
 } from '../helpers/element-property-access';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -52,20 +52,26 @@ export interface DefaultCommandOutput {
   targetType: 'variable' | 'attribute' | 'property' | 'element';
 }
 
-@meta({
-  description: "Set a value only if it doesn't already exist",
-  syntax: ['default <expression> to <expression>'],
-  examples: [
-    'default myVar to "fallback"',
-    'default @data-theme to "light"',
-    'default my innerHTML to "No content"',
-  ],
-  sideEffects: ['data-mutation', 'dom-mutation'],
-})
 @command({ name: 'default', category: 'data' })
 export class DefaultCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: "Set a value only if it doesn't already exist",
+    syntax: ['default <expression> to <expression>'],
+    examples: [
+      'default myVar to "fallback"',
+      'default @data-theme to "light"',
+      'default my innerHTML to "No content"',
+    ],
+    sideEffects: ['data-mutation', 'dom-mutation'],
+    category: 'data',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return DefaultCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

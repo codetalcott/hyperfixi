@@ -8,7 +8,7 @@
  *   exit
  */
 
-import { command, meta, createFactory } from '../decorators';
+import { commandMeta, command, createFactory } from '../decorators';
 import { ControlFlowSignalBase } from './signal-base';
 
 /**
@@ -27,14 +27,21 @@ export interface ExitCommandOutput {
 /**
  * ExitCommand - Exits from event handler
  */
-@meta({
-  description: 'Immediately terminate execution of the current event handler or behavior',
-  syntax: ['exit'],
-  examples: ['exit', 'if no draggedItem exit', 'on click if disabled exit'],
-  sideEffects: ['control-flow'],
-})
 @command({ name: 'exit', category: 'control-flow' })
 export class ExitCommand extends ControlFlowSignalBase {
+  static readonly metadata = commandMeta({
+    description: 'Immediately terminate execution of the current event handler or behavior',
+    syntax: ['exit'],
+    examples: ['exit', 'if no draggedItem exit', 'on click if disabled exit'],
+    sideEffects: ['control-flow'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ExitCommand.metadata;
+  }
+
   protected readonly signalType = 'exit' as const;
   protected readonly errorMessage = 'EXIT_COMMAND';
   protected readonly errorFlag = 'isExit';

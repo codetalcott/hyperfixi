@@ -12,8 +12,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -47,20 +47,26 @@ export interface AsyncCommandOutput {
  * Before: 233 lines
  * After: ~150 lines (36% reduction)
  */
-@meta({
-  description: 'Execute commands asynchronously without blocking',
-  syntax: ['async <command> [<command> ...]'],
-  examples: [
-    'async command1 command2',
-    'async fetchData processData',
-    'async animateIn showContent',
-  ],
-  sideEffects: ['async-execution'],
-})
 @command({ name: 'async', category: 'advanced' })
 export class AsyncCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Execute commands asynchronously without blocking',
+    syntax: ['async <command> [<command> ...]'],
+    examples: [
+      'async command1 command2',
+      'async fetchData processData',
+      'async animateIn showContent',
+    ],
+    sideEffects: ['async-execution'],
+    category: 'advanced',
+    compatibility: 'lokascript-extension',
+  });
+
+  get metadata() {
+    return AsyncCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

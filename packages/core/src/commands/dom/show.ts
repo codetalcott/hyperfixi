@@ -10,7 +10,7 @@
  */
 
 import type { TypedExecutionContext } from '../../types/core';
-import { command, meta, createFactory } from '../decorators';
+import { commandMeta, command, createFactory } from '../decorators';
 import { isHTMLElement } from '../../utils/element-check';
 import { VisibilityCommandBase, type VisibilityCommandInput } from './visibility-base';
 
@@ -22,14 +22,21 @@ export interface ShowCommandInput extends VisibilityCommandInput {
 /**
  * ShowCommand - Restores element visibility
  */
-@meta({
-  description: 'Show elements by restoring display property',
-  syntax: 'show [<target>]',
-  examples: ['show me', 'show #modal', 'show .hidden', 'show <button/>'],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'show', category: 'dom' })
 export class ShowCommand extends VisibilityCommandBase {
+  static readonly metadata = commandMeta({
+    description: 'Show elements by restoring display property',
+    syntax: 'show [<target>]',
+    examples: ['show me', 'show #modal', 'show .hidden', 'show <button/>'],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ShowCommand.metadata;
+  }
+
   protected readonly mode = 'show' as const;
 
   async execute(input: VisibilityCommandInput, _context: TypedExecutionContext): Promise<void> {

@@ -82,6 +82,7 @@ export class RenderCommand {
       'render template with (items: data)',
     ],
     category: 'templates',
+    compatibility: 'standard',
     sideEffects: ['dom-creation', 'template-execution'],
   });
 

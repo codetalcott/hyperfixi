@@ -15,8 +15,8 @@ import { isHTMLElement } from '../../utils/element-check';
 import { setVariableValue } from '../helpers/variable-access';
 import { evaluateExpressionFromSource } from '../../parser/runtime';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -178,19 +178,28 @@ async function resolveVariableName(
   return typeof value === 'string' ? value : undefined;
 }
 
-@meta({
-  description: 'Create DOM elements or class instances',
-  syntax: ['make a <tag#id.class1.class2/>', 'make a <ClassName> from <args> called <identifier>'],
-  examples: [
-    'make an <a.navlink/> called linkElement',
-    'make a URL from "/path/", "https://origin.example.com"',
-  ],
-  sideEffects: ['dom-creation', 'data-mutation'],
-})
 @command({ name: 'make', category: 'dom' })
 export class MakeCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Create DOM elements or class instances',
+    syntax: [
+      'make a <tag#id.class1.class2/>',
+      'make a <ClassName> from <args> called <identifier>',
+    ],
+    examples: [
+      'make an <a.navlink/> called linkElement',
+      'make a URL from "/path/", "https://origin.example.com"',
+    ],
+    sideEffects: ['dom-creation', 'data-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return MakeCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ASTNode> },

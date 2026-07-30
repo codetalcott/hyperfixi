@@ -31,7 +31,15 @@ export interface SignalCommandOutput {
  */
 export abstract class ControlFlowSignalBase implements DecoratedCommand {
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
+  /**
+   * Each concrete subclass supplies this via `static readonly metadata =
+   * commandMeta({…})` plus an instance getter (Arc B step 3). Declared
+   * `abstract` rather than `declare readonly`: a `declare`d PROPERTY cannot be
+   * overridden by an accessor (TS2611), and the unchecked `declare` was itself
+   * the shape Arc B exists to remove — it asserted a type the compiler never
+   * verified.
+   */
+  abstract readonly metadata: CommandMetadata;
 
   /** Subclasses must define their signal type */
   protected abstract readonly signalType: SignalType;

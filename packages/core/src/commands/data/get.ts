@@ -13,8 +13,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -40,16 +40,22 @@ export interface GetCommandOutput {
  * Before: 160 lines
  * After: ~65 lines (59% reduction)
  */
-@meta({
-  description: 'Evaluate an expression and store the result in it',
-  syntax: 'get <expression>',
-  examples: ['get #my-dialog', 'get <button/>', 'get me.parentElement'],
-  sideEffects: ['context-mutation'],
-})
 @command({ name: 'get', category: 'data' })
 export class GetCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Evaluate an expression and store the result in it',
+    syntax: 'get <expression>',
+    examples: ['get #my-dialog', 'get <button/>', 'get me.parentElement'],
+    sideEffects: ['context-mutation'],
+    category: 'data',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return GetCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

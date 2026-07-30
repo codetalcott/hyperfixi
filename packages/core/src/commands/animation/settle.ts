@@ -22,8 +22,8 @@ import {
 } from '../helpers/duration-parsing';
 import { waitForAnimationComplete } from '../helpers/event-waiting';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -53,16 +53,22 @@ export interface SettleCommandOutput {
  * Before: 191 lines
  * After: ~120 lines (37% reduction)
  */
-@meta({
-  description: 'Wait for CSS transitions and animations to complete',
-  syntax: 'settle [<target>] [for <timeout>]',
-  examples: ['settle', 'settle #animated-element', 'settle for 3000'],
-  sideEffects: ['timing'],
-})
 @command({ name: 'settle', category: 'animation' })
 export class SettleCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Wait for CSS transitions and animations to complete',
+    syntax: 'settle [<target>] [for <timeout>]',
+    examples: ['settle', 'settle #animated-element', 'settle for 3000'],
+    sideEffects: ['timing'],
+    category: 'animation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return SettleCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

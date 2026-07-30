@@ -13,8 +13,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElements } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -43,16 +43,22 @@ export interface TellCommandOutput {
  * Before: 204 lines
  * After: ~90 lines (56% reduction)
  */
-@meta({
-  description: 'Execute commands in the context of target elements',
-  syntax: ['tell <target> <command> [<command> ...]'],
-  examples: ['tell #sidebar hide', 'tell .buttons add .disabled', 'tell closest <form/> submit'],
-  sideEffects: ['context-switching', 'command-execution'],
-})
 @command({ name: 'tell', category: 'utility' })
 export class TellCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Execute commands in the context of target elements',
+    syntax: ['tell <target> <command> [<command> ...]'],
+    examples: ['tell #sidebar hide', 'tell .buttons add .disabled', 'tell closest <form/> submit'],
+    sideEffects: ['context-switching', 'command-execution'],
+    category: 'utility',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return TellCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

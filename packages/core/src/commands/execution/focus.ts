@@ -19,8 +19,8 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -30,16 +30,22 @@ export interface FocusCommandInput {
   targets: HTMLElement[];
 }
 
-@meta({
-  description: 'Focus an element (calls HTMLElement.focus())',
-  syntax: ['focus', 'focus <target>', 'focus on <target>'],
-  examples: ['focus', 'focus #search', 'focus on <input/>'],
-  sideEffects: ['focus'],
-})
 @command({ name: 'focus', category: 'execution' })
 export class FocusCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Focus an element (calls HTMLElement.focus())',
+    syntax: ['focus', 'focus <target>', 'focus on <target>'],
+    examples: ['focus', 'focus #search', 'focus on <input/>'],
+    sideEffects: ['focus'],
+    category: 'execution',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return FocusCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

@@ -368,6 +368,26 @@ curated-behaviors philosophy. Each proved itself under pressure in the very
 session that produced this queue. The problem is the hand-maintained periphery,
 not the core abstractions.
 
+## Open, filed rather than folded in
+
+- **`metadata.isBlocking` / `hasBody` publish false claims for ≥7 commands.**
+  Neither field is authored anywhere — every value comes from `@meta`'s (now
+  `commandMeta`'s) `?? false` default — and nothing in production reads them. But
+  they ARE published: `packages/core/docs/commands/commands.json` carries
+  `isBlocking: false`, `hasBody: false`, `version: '1.0.0'` on 40 of its 43
+  entries, with **zero variance**. So the shipped docs state that `wait`, `fetch`,
+  `settle` and `transition` do not block, and that `if`, `repeat` and `tell` take
+  no body. All false.
+  Arc B step 3 deliberately PRESERVED the boilerplate rather than fixing or
+  deleting it, to keep the migration a refactor (decision recorded in
+  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)).
+  Authoring the two booleans truthfully is ~59 judgment calls with its own review
+  surface, and `version` is meaningless per-command — worth its own change.
+  Note there may be derivable sources: `COMPOUND_COMMANDS` and the parser's
+  `CommandNode.isBlocking` already encode part of this, so check before hand-
+  authoring 59 rows. Discovered by Arc B while measuring what should happen to
+  `@meta`'s defaults — the queue's "score the rows already there" lesson again.
+
 ## Risk register
 
 - `export { X } from './f'` creates **no local binding** — import then export
@@ -385,6 +405,35 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B step 3 landed**: all 52 decorated classes migrated to
+  `static readonly metadata = commandMeta({…})` + `get metadata()`, `@meta`
+  removed from every call site, and `compatibility` populated on all 55 literals.
+  **The arc's goal is delivered**: `ToggleCommand.metadata` was `TS2339` and now
+  typechecks, with `.category` narrowing to `'dom'`. `@meta`, `MetaConfig`, the
+  `COMMAND_METADATA` symbol and `metadataOf()`'s reason for existing are all dead
+  — step 4 deletes them, kept separate from the migration diff.
+  - **The type system found 18 errors with one cause, invisible before.** The four
+    base classes declared `metadata` as a `declare readonly` PROPERTY, and a
+    subclass cannot override a property with an accessor (TS2611/TS4114) — nine
+    subclasses. The runtime `defineProperty` had simply shadowed the declaration.
+    Fixed by `abstract readonly metadata`, which is also the honest declaration.
+  - **A shared implementation cannot carry two `compatibility` values.**
+    `ConditionalCommand` is registered as both `if` (upstream) and `unless`
+    (extension) and both names resolve to the same instance. It carries
+    `'standard'`; `unless` is pinned in §9, **derived** from the shared groups
+    rather than hand-listed, so a future alias across the tier line fails loudly.
+  - **Two gate rows moved deliberately and were left as assertions, not deleted**:
+    step 1's "no defaults on the three" is INVERTED (the 52's byte-identity was
+    the larger preservation), and `COMPATIBILITY_UNSET` went from the whole
+    registry to empty — which step 2's gate forced into the same diff.
+  - Registry oracle diff was **exactly the predicted 3 rows**. Slim bundles
+    +0.0% (`hyperfixi-hx.js` byte-identical at 19019, headroom intact); full
+    bundles +0.1% gzip for the new field.
+  - **The verification instrument had the arc's own disease.** The first oracle
+    diff said "0 rows changed" and was wrong: it iterated only the BEFORE row's
+    keys, so an ADDED field was structurally invisible. Diff the union of both key
+    sets. A one-directional check that reads as green — the exact thing this queue
+    exists to catch, reproduced in the tool used to catch it.
 - **2026-07-29** — **Arc B step 2 landed**: the `compatibility` coupling, as §9 of
   the manifest audit (39 → 44 tests), while the expected state is still "unset on
   all 59" — so the gate is proven before it has values to bless.

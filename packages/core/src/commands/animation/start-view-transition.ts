@@ -28,8 +28,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { withViewTransition, isViewTransitionsSupported } from '../../lib/view-transitions';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -49,19 +49,25 @@ export interface StartViewTransitionOutput {
   commandsExecuted: number;
 }
 
-@meta({
-  description: 'Wrap a block of commands in document.startViewTransition()',
-  syntax: ['start view transition [using <type>] <body> end'],
-  examples: [
-    'start view transition add .highlight to me end',
-    'start view transition using "slide" then put result into #panel end',
-  ],
-  sideEffects: ['animation', 'dom-mutation'],
-})
 @command({ name: 'start', category: 'animation' })
 export class StartViewTransitionCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Wrap a block of commands in document.startViewTransition()',
+    syntax: ['start view transition [using <type>] <body> end'],
+    examples: [
+      'start view transition add .highlight to me end',
+      'start view transition using "slide" then put result into #panel end',
+    ],
+    sideEffects: ['animation', 'dom-mutation'],
+    category: 'animation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return StartViewTransitionCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

@@ -14,8 +14,8 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElement } from '../helpers/element-resolution';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -39,19 +39,28 @@ export interface TakeCommandOutput {
  * Before: 406 lines
  * After: ~180 lines (56% reduction)
  */
-@meta({
-  description: 'Move classes, attributes, and properties from one element to another',
-  syntax: ['take <property> from <source>', 'take <property> from <source> and put it on <target>'],
-  examples: [
-    'take class from <#source/>',
-    'take @data-value from <.source/> and put it on <#target/>',
-  ],
-  sideEffects: ['dom-mutation', 'property-transfer'],
-})
 @command({ name: 'take', category: 'animation' })
 export class TakeCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Move classes, attributes, and properties from one element to another',
+    syntax: [
+      'take <property> from <source>',
+      'take <property> from <source> and put it on <target>',
+    ],
+    examples: [
+      'take class from <#source/>',
+      'take @data-value from <.source/> and put it on <#target/>',
+    ],
+    sideEffects: ['dom-mutation', 'property-transfer'],
+    category: 'animation',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return TakeCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

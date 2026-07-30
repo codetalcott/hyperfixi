@@ -13,8 +13,8 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import {
+  commandMeta,
   command,
-  meta,
   createFactory,
   type DecoratedCommand,
   type CommandMetadata,
@@ -41,16 +41,22 @@ export interface ReturnCommandOutput {
  * Before: 152 lines
  * After: ~65 lines (57% reduction)
  */
-@meta({
-  description: 'Return a value from a command sequence or function, terminating execution',
-  syntax: ['return', 'return <value>'],
-  examples: ['return', 'return 42', 'return user.name', 'if found then return result'],
-  sideEffects: ['control-flow', 'context-mutation'],
-})
 @command({ name: 'return', category: 'control-flow' })
 export class ReturnCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: 'Return a value from a command sequence or function, terminating execution',
+    syntax: ['return', 'return <value>'],
+    examples: ['return', 'return 42', 'return user.name', 'if found then return result'],
+    sideEffects: ['control-flow', 'context-mutation'],
+    category: 'control-flow',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return ReturnCommand.metadata;
+  }
+
   declare readonly name: string;
-  declare readonly metadata: CommandMetadata;
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },

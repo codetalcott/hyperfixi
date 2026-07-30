@@ -22,7 +22,7 @@ import {
   batchSetStyles,
 } from '../helpers/batch-dom-operations';
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
-import { command, meta, createFactory } from '../decorators';
+import { commandMeta, command, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
 
 /**
@@ -50,19 +50,26 @@ export type AddCommandInput =
 /**
  * AddCommand - Adds classes, attributes, or styles to elements
  */
-@meta({
-  description: 'Add CSS classes, attributes, or styles to elements',
-  syntax: 'add <classes|@attr|{styles}> [to <target>]',
-  examples: [
-    'add .active to me',
-    'add "active selected" to <button/>',
-    'add .highlighted to #modal',
-    'add [@data-test="value"] to #element',
-  ],
-  sideEffects: ['dom-mutation'],
-})
 @command({ name: 'add', category: 'dom' })
 export class AddCommand extends DOMModificationBase {
+  static readonly metadata = commandMeta({
+    description: 'Add CSS classes, attributes, or styles to elements',
+    syntax: 'add <classes|@attr|{styles}> [to <target>]',
+    examples: [
+      'add .active to me',
+      'add "active selected" to <button/>',
+      'add .highlighted to #modal',
+      'add [@data-test="value"] to #element',
+    ],
+    sideEffects: ['dom-mutation'],
+    category: 'dom',
+    compatibility: 'standard',
+  });
+
+  get metadata() {
+    return AddCommand.metadata;
+  }
+
   protected readonly mode = 'add' as const;
   protected readonly preposition = 'to';
 
