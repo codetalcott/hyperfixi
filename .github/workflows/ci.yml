@@ -438,21 +438,53 @@ jobs:
           rm -rf node_modules/@hyperfixi node_modules/@lokascript
           npm install
 
+      # Everything after this marker is this shard's output. See the staging
+      # step below for why the shard is identified by mtime and not by name.
+      - name: Mark build start
+        run: touch "$RUNNER_TEMP/build-marker"
+
       - name: Build browser bundles (shard ${{ matrix.shard }})
         run: npm run build:browser --prefix packages/core -- --only=${{ matrix.only }}
+
+      # Collect exactly what the build WROTE, rather than what its files are
+      # NAMED. The first version of this job globbed `hyperfixi*.js` and looked
+      # right: every entry in the BUNDLES map does output a `hyperfixi-*.js`.
+      # But `build:browser` has a `postbuild:browser` hook —
+      # `create-bundle-aliases.mjs` — which then writes v1 back-compat copies
+      # under `lokascript-*.js`. The glob silently dropped every one of them,
+      # and `test-multilingual-e2e.html` loads
+      # `/packages/core/dist/lokascript-multilingual.js`, so eight browser tests
+      # failed against a bundle that had built perfectly. `if-no-files-found`
+      # could not catch it: the shard did produce matching files, just not all
+      # of them.
+      #
+      # mtime has no such blind spot — it cannot be out of date with a rename,
+      # a new alias, or a new output kind. `npm ci`/`npm install` both run
+      # before the marker, so nothing they touch is picked up.
+      - name: Stage produced bundles
+        run: |
+          cd packages/core
+          staged="$RUNNER_TEMP/bundle-stage"
+          rm -rf "$staged"
+          count=0
+          while IFS= read -r -d '' f; do
+            mkdir -p "$staged/$(dirname "$f")"
+            cp "$f" "$staged/$f"
+            count=$((count + 1))
+          done < <(find dist -type f -newer "$RUNNER_TEMP/build-marker" \
+                        ! -name '*.tsbuildinfo' -print0)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::shard ${{ matrix.shard }} produced no files — the build wrote nothing."
+            exit 1
+          fi
+          echo "staged $count file(s) from shard ${{ matrix.shard }}:"
+          find "$staged" -type f | sed "s|$staged/||" | sort
 
       - name: Upload browser bundles
         uses: actions/upload-artifact@v7
         with:
           name: browser-bundles-${{ matrix.shard }}
-          # Only the rollup outputs — core/dist also holds the tsup build that
-          # arrived in build-artifacts, and re-uploading it would make three
-          # shards fight over the same files on merge.
-          path: |
-            packages/core/dist/hyperfixi*.js
-            packages/core/dist/hyperfixi*.js.map
-            packages/core/dist/hyperfixi*.mjs
-            packages/core/dist/chunks/
+          path: ${{ runner.temp }}/bundle-stage/dist
           if-no-files-found: error
           retention-days: 3
 
