@@ -14,6 +14,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as prettier from 'prettier';
 import {
   COMMAND_CATEGORIES,
   COMMAND_SIDE_EFFECTS,
@@ -22,61 +23,67 @@ import {
   type CommandMetadata,
 } from '../src/types/command-metadata';
 
-// Import all command classes
+// Import every command class, in registry order.
+//
+// The list is COMPLETE by gate, not by care: `docs-coverage.test.ts` asserts
+// the table below names exactly `COMMAND_NAMES`, both directions. Before Arc B
+// step 4b it held 43 of 59 and nothing compared it to anything, so sixteen
+// shipped commands were simply undocumented.
 import { AddCommand } from '../src/commands/dom/add';
-import { RemoveCommand } from '../src/commands/dom/remove';
-import { ToggleCommand } from '../src/commands/dom/toggle';
-import { ShowCommand } from '../src/commands/dom/show';
-import { HideCommand } from '../src/commands/dom/hide';
-import { PutCommand } from '../src/commands/dom/put';
-import { MakeCommand } from '../src/commands/dom/make';
-
-import { WaitCommand } from '../src/commands/async/wait';
-import { FetchCommand } from '../src/commands/async/fetch';
-
-import { TransitionCommand } from '../src/commands/animation/transition';
-import { MeasureCommand } from '../src/commands/animation/measure';
-import { SettleCommand } from '../src/commands/animation/settle';
-import { TakeCommand } from '../src/commands/animation/take';
-
-import { IfCommand } from '../src/commands/control-flow/if';
-import { RepeatCommand } from '../src/commands/control-flow/repeat';
-import { BreakCommand } from '../src/commands/control-flow/break';
-import { ContinueCommand } from '../src/commands/control-flow/continue';
-import { ReturnCommand } from '../src/commands/control-flow/return';
-import { ExitCommand } from '../src/commands/control-flow/exit';
-import { HaltCommand } from '../src/commands/control-flow/halt';
-import { ThrowCommand } from '../src/commands/control-flow/throw';
-import { UnlessCommand } from '../src/commands/control-flow/unless';
-
-import { SetCommand } from '../src/commands/data/set';
-import { GetCommand } from '../src/commands/data/get';
-import { IncrementCommand } from '../src/commands/data/increment';
-import { DecrementCommand } from '../src/commands/data/decrement';
-import { DefaultCommand } from '../src/commands/data/default';
-
-import { TriggerCommand } from '../src/commands/events/trigger';
-import { SendCommand } from '../src/commands/events/send';
-
-import { LogCommand } from '../src/commands/utility/log';
-import { BeepCommand } from '../src/commands/utility/beep';
-import { TellCommand } from '../src/commands/utility/tell';
-import { PickCommand } from '../src/commands/utility/pick';
-import { CopyCommand } from '../src/commands/utility/copy';
-
-import { CallCommand } from '../src/commands/execution/call';
-import { PseudoCommand } from '../src/commands/execution/pseudo-command';
-
-import { JsCommand } from '../src/commands/advanced/js';
-import { AsyncCommand } from '../src/commands/advanced/async';
-
-import { GoCommand } from '../src/commands/navigation/go';
-
 import { AppendCommand } from '../src/commands/content/append';
-import { PrependCommand } from '../src/commands/content/prepend';
-import { RenderCommand } from '../src/commands/templates/render';
-
+import { AsyncCommand } from '../src/commands/advanced/async';
+import { BeepCommand } from '../src/commands/utility/beep';
+import { BlurCommand } from '../src/commands/execution/blur';
+import { BreakCommand } from '../src/commands/control-flow/break';
+import { BreakpointCommand } from '../src/commands/utility/breakpoint';
+import { CallCommand } from '../src/commands/execution/call';
+import { ClearCommand } from '../src/commands/data/clear';
+import { CloseCommand } from '../src/commands/dom/close';
+import { ContinueCommand } from '../src/commands/control-flow/continue';
+import { CopyCommand } from '../src/commands/utility/copy';
+import { NumericModifyCommand } from '../src/commands/data/increment';
+import { DefaultCommand } from '../src/commands/data/default';
+import { EmptyCommand } from '../src/commands/dom/empty';
+import { ExitCommand } from '../src/commands/control-flow/exit';
+import { FetchCommand } from '../src/commands/async/fetch';
+import { FocusCommand } from '../src/commands/execution/focus';
+import { GetCommand } from '../src/commands/data/get';
+import { GoCommand } from '../src/commands/navigation/go';
+import { HaltCommand } from '../src/commands/control-flow/halt';
+import { HideCommand } from '../src/commands/dom/hide';
+import { ConditionalCommand } from '../src/commands/control-flow/if';
 import { InstallCommand } from '../src/commands/behaviors/install';
+import { JsCommand } from '../src/commands/advanced/js';
+import { LogCommand } from '../src/commands/utility/log';
+import { MakeCommand } from '../src/commands/dom/make';
+import { MeasureCommand } from '../src/commands/animation/measure';
+import { MorphCommand } from '../src/commands/dom/swap';
+import { OpenCommand } from '../src/commands/dom/open';
+import { PickCommand } from '../src/commands/utility/pick';
+import { PrependCommand } from '../src/commands/content/prepend';
+import { ProcessPartialsCommand } from '../src/commands/dom/process-partials';
+import { PseudoCommand } from '../src/commands/execution/pseudo-command';
+import { HistoryCommand } from '../src/commands/navigation/push-url';
+import { PutCommand } from '../src/commands/dom/put';
+import { RemoveCommand } from '../src/commands/dom/remove';
+import { RenderCommand } from '../src/commands/templates/render';
+import { RepeatCommand } from '../src/commands/control-flow/repeat';
+import { ResetCommand } from '../src/commands/dom/reset';
+import { ReturnCommand } from '../src/commands/control-flow/return';
+import { ScrollCommand } from '../src/commands/navigation/scroll-to';
+import { SelectCommand } from '../src/commands/dom/select';
+import { EventDispatchCommand } from '../src/commands/events/trigger';
+import { SetCommand } from '../src/commands/data/set';
+import { SettleCommand } from '../src/commands/animation/settle';
+import { ShowCommand } from '../src/commands/dom/show';
+import { StartViewTransitionCommand } from '../src/commands/animation/start-view-transition';
+import { SwapCommand } from '../src/commands/dom/swap';
+import { TakeCommand } from '../src/commands/animation/take';
+import { TellCommand } from '../src/commands/utility/tell';
+import { ThrowCommand } from '../src/commands/control-flow/throw';
+import { ToggleCommand } from '../src/commands/dom/toggle';
+import { TransitionCommand } from '../src/commands/animation/transition';
+import { WaitCommand } from '../src/commands/async/wait';
 
 // ============================================================================
 // Command Registry
@@ -105,72 +112,65 @@ interface CommandEntry {
 }
 
 const COMMANDS: CommandEntry[] = [
-  // DOM
   { name: 'add', class: AddCommand },
-  { name: 'remove', class: RemoveCommand },
-  { name: 'toggle', class: ToggleCommand },
-  { name: 'show', class: ShowCommand },
-  { name: 'hide', class: HideCommand },
-  { name: 'put', class: PutCommand },
-  { name: 'make', class: MakeCommand },
-
-  // Async
-  { name: 'wait', class: WaitCommand },
-  { name: 'fetch', class: FetchCommand },
-
-  // Animation
-  { name: 'transition', class: TransitionCommand },
-  { name: 'measure', class: MeasureCommand },
-  { name: 'settle', class: SettleCommand },
-  { name: 'take', class: TakeCommand },
-
-  // Control Flow
-  { name: 'if', class: IfCommand },
-  { name: 'repeat', class: RepeatCommand },
-  { name: 'break', class: BreakCommand },
-  { name: 'continue', class: ContinueCommand },
-  { name: 'return', class: ReturnCommand },
-  { name: 'exit', class: ExitCommand },
-  { name: 'halt', class: HaltCommand },
-  { name: 'throw', class: ThrowCommand },
-  { name: 'unless', class: UnlessCommand },
-
-  // Data
-  { name: 'set', class: SetCommand },
-  { name: 'get', class: GetCommand },
-  { name: 'increment', class: IncrementCommand },
-  { name: 'decrement', class: DecrementCommand },
-  { name: 'default', class: DefaultCommand },
-
-  // Events
-  { name: 'trigger', class: TriggerCommand },
-  { name: 'send', class: SendCommand },
-
-  // Utility
-  { name: 'log', class: LogCommand },
-  { name: 'beep', class: BeepCommand },
-  { name: 'tell', class: TellCommand },
-  { name: 'pick', class: PickCommand },
-  { name: 'copy', class: CopyCommand },
-
-  // Execution
-  { name: 'call', class: CallCommand },
-  { name: 'pseudo-command', class: PseudoCommand },
-
-  // Advanced
-  { name: 'js', class: JsCommand },
-  { name: 'async', class: AsyncCommand },
-
-  // Navigation
-  { name: 'go', class: GoCommand },
-
-  // Content
   { name: 'append', class: AppendCommand },
-  { name: 'prepend', class: PrependCommand },
-  { name: 'render', class: RenderCommand },
-
-  // Behaviors
+  { name: 'async', class: AsyncCommand },
+  { name: 'beep', class: BeepCommand },
+  { name: 'blur', class: BlurCommand },
+  { name: 'break', class: BreakCommand },
+  { name: 'breakpoint', class: BreakpointCommand },
+  { name: 'call', class: CallCommand },
+  { name: 'clear', class: ClearCommand },
+  { name: 'close', class: CloseCommand },
+  { name: 'continue', class: ContinueCommand },
+  { name: 'copy', class: CopyCommand },
+  { name: 'decrement', class: NumericModifyCommand },
+  { name: 'default', class: DefaultCommand },
+  { name: 'empty', class: EmptyCommand },
+  { name: 'exit', class: ExitCommand },
+  { name: 'fetch', class: FetchCommand },
+  { name: 'focus', class: FocusCommand },
+  { name: 'get', class: GetCommand },
+  { name: 'go', class: GoCommand },
+  { name: 'halt', class: HaltCommand },
+  { name: 'hide', class: HideCommand },
+  { name: 'if', class: ConditionalCommand },
+  { name: 'increment', class: NumericModifyCommand },
   { name: 'install', class: InstallCommand },
+  { name: 'js', class: JsCommand },
+  { name: 'log', class: LogCommand },
+  { name: 'make', class: MakeCommand },
+  { name: 'measure', class: MeasureCommand },
+  { name: 'morph', class: MorphCommand },
+  { name: 'open', class: OpenCommand },
+  { name: 'pick', class: PickCommand },
+  { name: 'prepend', class: PrependCommand },
+  { name: 'process', class: ProcessPartialsCommand },
+  { name: 'pseudo-command', class: PseudoCommand },
+  { name: 'push', class: HistoryCommand },
+  { name: 'put', class: PutCommand },
+  { name: 'remove', class: RemoveCommand },
+  { name: 'render', class: RenderCommand },
+  { name: 'repeat', class: RepeatCommand },
+  { name: 'replace', class: HistoryCommand },
+  { name: 'reset', class: ResetCommand },
+  { name: 'return', class: ReturnCommand },
+  { name: 'scroll', class: ScrollCommand },
+  { name: 'select', class: SelectCommand },
+  { name: 'send', class: EventDispatchCommand },
+  { name: 'set', class: SetCommand },
+  { name: 'settle', class: SettleCommand },
+  { name: 'show', class: ShowCommand },
+  { name: 'start', class: StartViewTransitionCommand },
+  { name: 'swap', class: SwapCommand },
+  { name: 'take', class: TakeCommand },
+  { name: 'tell', class: TellCommand },
+  { name: 'throw', class: ThrowCommand },
+  { name: 'toggle', class: ToggleCommand },
+  { name: 'transition', class: TransitionCommand },
+  { name: 'trigger', class: EventDispatchCommand },
+  { name: 'unless', class: ConditionalCommand },
+  { name: 'wait', class: WaitCommand },
 ];
 
 // ============================================================================
@@ -203,8 +203,8 @@ function generateMarkdown(commands: CommandEntry[]): string {
 
   lines.push('# HyperFixi Command Reference');
   lines.push('');
-  lines.push('> Auto-generated from command metadata');
-  lines.push(`> Generated: ${new Date().toISOString()}`);
+  lines.push('> Auto-generated from command metadata by `npm run docs:commands`.');
+  lines.push('> Do not edit by hand — `npm run docs:commands:check` fails on drift.');
   lines.push('');
 
   // Table of contents
@@ -363,7 +363,6 @@ function generateJSON(commands: CommandEntry[]): string {
   const output = {
     $schema: 'https://hyperfixi.dev/schemas/commands.json',
     version: '1.0.0',
-    generatedAt: new Date().toISOString(),
     categories: COMMAND_CATEGORIES,
     sideEffects: COMMAND_SIDE_EFFECTS,
     commands: Object.fromEntries(
@@ -398,6 +397,33 @@ if (format === 'json') {
 } else {
   content = generateMarkdown(COMMANDS);
   filename = 'REFERENCE.md';
+}
+
+// Run the emitted text through prettier with the repo's own config.
+//
+// Without this the generator is NOT idempotent: it emits unpadded markdown
+// tables, the pre-commit hook pads them, and the next run un-pads them again —
+// which produced a 252-line diff of pure column padding with identical content
+// (Arc B step 4a). A `--check` gate over a non-idempotent generator is unusable,
+// so this is a prerequisite for the gate below, not a tidiness pass.
+content = await prettier.format(content, {
+  ...(await prettier.resolveConfig(path.join(process.cwd(), filename))),
+  filepath: filename,
+});
+
+// `--check`: fail if the committed artifact differs from what we would write.
+// Deterministic by construction — the generator emits no timestamp, precisely
+// so that this comparison means "the content drifted" and nothing else.
+if (args.includes('--check')) {
+  const filePath = path.join(process.cwd(), outputDir, filename);
+  const onDisk = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+  if (onDisk !== content) {
+    console.error(`\u2717 ${filename} is out of date. Run: npm run docs:commands`);
+    if (!onDisk) console.error('  (the file does not exist)');
+    process.exit(1);
+  }
+  console.log(`\u2713 ${filename} is up to date (${COMMANDS.length} commands)`);
+  process.exit(0);
 }
 
 // Output

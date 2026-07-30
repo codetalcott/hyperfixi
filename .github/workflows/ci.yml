@@ -580,10 +580,18 @@ jobs:
       # of these were stale across all 24 languages. Their generators are now
       # prettier-idempotent, so a fresh run is byte-identical to the committed
       # file and these checks are exact.
+      # `docs:commands:check` joined them in Arc B step 4b. Its generator had the
+      # same two defects these had: it emitted unpadded markdown tables that the
+      # pre-commit hook then padded (so a fresh run showed a 252-line diff of pure
+      # column padding with identical content), and a `Generated: <ISO>` line that
+      # made any whole-file comparison fail on every run. Both are fixed, so this
+      # check is exact too. Coverage of the generator's command table is a separate
+      # gate — src/commands/__tests__/docs-coverage.test.ts, in the unit suite.
       - name: Check generated artifacts are in sync
         run: |
           npm run check:grammar --prefix packages/semantic
           npm run check:keywords --prefix packages/vite-plugin
+          npm run docs:commands:check --prefix packages/core
 
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core

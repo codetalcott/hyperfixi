@@ -226,6 +226,8 @@
     "size": "npm run size:analysis",
     "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'",
     "verify:reference": "tsx scripts/verify-reference-data.ts",
+    "docs:commands": "tsx scripts/generate-command-docs.ts && tsx scripts/generate-command-docs.ts --format json",
+    "docs:commands:check": "tsx scripts/generate-command-docs.ts --check && tsx scripts/generate-command-docs.ts --format json --check",
     "update:sizes": "tsx scripts/update-bundle-sizes.ts",
     "update:sizes:auto": "tsx scripts/update-bundle-sizes.ts --update"
   },

@@ -87,11 +87,11 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
 | ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
-| B — metadata single-sourcing | types see metadata; docs generated | ✅ partial: typecheck:scripts, metadataOf() throws | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — brief written 2026-07-29, arc not started; it CORRECTS the arc's stated motivation |
+| ~~B — metadata single-sourcing~~ | **DONE** (#823/#824/#825/#826/#827/#828) | ✅ the 7-test docs-coverage gate + §9's compatibility coupling + the static/instance bridge invariant; `metadataOf()` deleted, its check now `TS2322` | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — now a record, not a plan |
 | E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
-## The arcs — remaining sequence B → E → F (A, C and D are done)
+## The arcs — remaining sequence E → F (A, B, C and D are done)
 
 ### Arc D — target-resolution consolidation — ✅ DONE 2026-07-28
 
@@ -262,7 +262,42 @@ derived values land. Gates already in place: `verify:reference`,
 `capability-ghosts.test.ts`, `command-tiers.test.ts`,
 `bundle-manifest-consistency.test.ts`.
 
-### Arc B — metadata single-sourcing (medium; verified mechanical)
+### Arc B — metadata single-sourcing — ✅ DONE 2026-07-29
+
+Landed as #823 (the brief), #824 (`commandMeta()` + the three undecorated
+classes), #825 (the `compatibility` coupling, before any values existed), #826
+(all 52 decorated classes migrated), #827 (`@meta` and `metadataOf()` deleted),
+and #828 (the docs generator, 43 → 59, with its coverage gate). Detail, per-step
+outcomes, and all findings live in
+[HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md).
+
+**The arc's goal is delivered**: decorator statics are type-visible —
+`ToggleCommand.metadata.category` narrows to `'dom'` where every read used to be
+`TS2339` — and the workarounds that invisibility forced (`metadataOf()`, the three
+dead getters, script typechecking staying off) are gone. The decorator module went
+257 → 179 lines while *gaining* `commandMeta`.
+
+Things later arcs should carry forward:
+
+- **The arc's own stated motivation was wrong, and measuring caught it.** `@meta`
+  already type-checked its 52 literals; the defects were the invisible *static* and
+  three literals checked by nothing. A plan's premise deserves the same scoring as
+  its rows.
+- **A gate never seen to fail is not known to work.** Step 2 landed a gate that was
+  vacuous over values and mutation-verified it anyway; step 3's oracle then reported
+  a false `0` because it iterated one side's keys only. Diff the UNION, and take
+  baselines from the MERGED PARENT commit — a mid-step snapshot made a pure deletion
+  look like 59 changed rows.
+- **Two structural facts the type system surfaced** that `defineProperty` had
+  hidden: base classes cannot declare `metadata` as a property if subclasses supply
+  a getter (18 errors, 9 subclasses), and a **shared implementation cannot carry two
+  `compatibility` values** — `ConditionalCommand` is both `if` (upstream) and
+  `unless` (extension), pinned in §9 derived from the shared groups.
+
+**The original plan paragraph is kept below for the record.**
+
+> **Superseded — this is what the plan said before the arc ran.**
+
 
 > **Read [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)
 > first — it CORRECTS this paragraph's stated motivation.** "Making metadata
@@ -370,6 +405,19 @@ not the core abstractions.
 
 ## Open, filed rather than folded in
 
+- **`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
+  reader uses it.** `:54-60` defines a loose shape with an
+  `[extra: string]: unknown` index signature — which is the only reason
+  `impl.metadata?.name` at `:421` typechecks, since the canonical
+  `types/command-metadata.ts` interface has **no `name` field**. Narrowing the
+  adapter to the canonical type turns `:421` into a type error, and `readonly` vs
+  mutable arrays will bite as well. Contained to one file (the shadow type is
+  exported but imported by nobody). It is a **behavior** question — that fallback
+  is the only path for a V1 command carrying `metadata.name` — so it wants its own
+  change rather than a slot inside a refactor. Third instance of the
+  dual-type-definition pattern (see also `ASTNode`/`ExpressionMetadata`). Detail:
+  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B1.
+
 - **`metadata.isBlocking` / `hasBody` publish false claims for ≥7 commands.**
   Neither field is authored anywhere — every value comes from `@meta`'s (now
   `commandMeta`'s) `?? false` default — and nothing in production reads them. But
@@ -405,6 +453,29 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B step 4b landed, closing the arc.** The command-docs
+  generator now covers all **59** commands (was 43), and the gate F-B3 said did
+  not exist is `packages/core/src/commands/__tests__/docs-coverage.test.ts`: the
+  table must name exactly `COMMAND_NAMES` in the same order, carry no duplicates,
+  and match what the runtime registers — asked of the runtime directly, because the
+  point of the file is comparing a docs list to the CODE. The sixteen commands that
+  had been silently undocumented: `blur`, `breakpoint`, `clear`, `close`, `empty`,
+  `focus`, `morph`, `open`, `process`, `push`, `replace`, `reset`, `scroll`,
+  `select`, `start`, `swap`.
+  - **Both 4a blockers fixed and each now gated**: the generator formats with
+    prettier (regeneration is a no-op, not a re-flow) and emits no timestamp
+    (`--check` means "content drifted"). `npm run docs:commands{,:check}` added, the
+    check joined the existing "Check generated artifacts are in sync" CI step, and
+    failure was mutation-verified in both directions.
+  - **One planned item was already done, and measuring beat building it.** The plan
+    opened 4b with "completeness tests for `reference/index.ts` and
+    `lsp-metadata.ts` (cheap)" — **Arc A had already built both** (§2 and §5 of the
+    manifest audit, both directions). Rewriting them would have added a second
+    place to maintain and no new check; the non-duplication is recorded in the new
+    test file instead. That freed effort went into a **prose ratchet** guarding
+    what `commandMeta` structurally cannot: `''` is a perfectly good `string`, so
+    the type system will never object to an empty description while the generator
+    will happily publish it.
 - **2026-07-29** — **Arc B step 4a landed**: the dead surface step 3 created is
   deleted. `meta()`, `MetaConfig`, all three module-private symbols,
   `ClassWithSymbols` and the three dead exported getters are gone; `@command`
