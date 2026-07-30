@@ -88,7 +88,7 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
 | ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
 | ~~B — metadata single-sourcing~~ | **DONE** (#823/#824/#825/#826/#827/#828) | ✅ the 7-test docs-coverage gate + §9's compatibility coupling + the static/instance bridge invariant; `metadataOf()` deleted, its check now `TS2322` | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — now a record, not a plan |
-| E — generated static bundles | 4 executors → 1 template source | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test | drift test becomes a generator |
+| E — generated static bundles | **5** executors → 1 template source (brief written; measured, arc not started) | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test — and **no per-command execution gate on the shipped bundles**, which is how a live `take` crash shipped | [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md) — read § "The premise, corrected" first |
 | F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
 
 ## The arcs — remaining sequence E → F (A, B, C and D are done)
@@ -336,6 +336,19 @@ plus `--check` pattern), and `generate-command-docs --check` in CI so
 [HANDOFF_vitest-oxc-decorators.md](./HANDOFF_vitest-oxc-decorators.md).
 
 ### Arc E — generated static bundles (medium-large)
+
+> **Brief written 2026-07-29 —
+> [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md).**
+> It re-measured this paragraph and two of its claims did not survive: there are
+> **five** executor copies (not four — `browser-bundle-lite.ts` is its own),
+> and the two regex bundles structurally *cannot* consume the AST templates, so
+> the arc's scope is the two AST executors + templates → one source, with the
+> lite family joining at the boot-shell step only. It also found a **live
+> shipped bug** (`take` throws in `hybrid-complete`/`hx`, probe-confirmed) and
+> that the copies disagree on 8 real rows in *both* directions. Follow the
+> brief's step order — it inserts an execution gate + divergence reconciliation
+> ahead of the four steps named below, because generating from unreconciled
+> templates is a behavior change wearing a refactor's commit message.
 
 The split is clean, verified: `browser-bundle-lite-plus.ts` is parser (:112-292),
 executor (:294-697), and a ~92-line boot shell; `browser-bundle-hybrid-complete.ts`
