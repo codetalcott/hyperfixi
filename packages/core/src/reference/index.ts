@@ -637,7 +637,7 @@ export const bundles: BundleRef[] = [
   {
     name: 'lite',
     file: 'lokascript-lite.js',
-    size: '1.9 KB',
+    size: '2.0 KB',
     commandCount: 8,
     hasBlocks: false,
     hasEventModifiers: false,
