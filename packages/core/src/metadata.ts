@@ -113,7 +113,7 @@ export const bundleInfo: BundleInfo[] = [
     id: 'lite',
     name: 'Lite',
     filename: 'hyperfixi-lite.js',
-    gzipSize: '1.9 KB',
+    gzipSize: '2.0 KB',
     rawSize: '5 KB',
     commandCount: 8,
     parser: 'regex',

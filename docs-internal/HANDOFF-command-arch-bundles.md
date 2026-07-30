@@ -350,6 +350,125 @@ either style branch, dropping `via`, dropping `with`, and un-emitting
 green, so none is an incidental compile crash). The `getClassName` mutation
 names exactly the four `@attr` rows.
 
+## Step 3 — CLOSED: the shared boot shell, and the shells that were not counted
+
+The step's own premise was the first thing to fail re-measurement, in the way
+this arc keeps re-learning. The brief said four shells (hybrid-complete, lite,
+lite-plus, the generator). Measured: **seven emission sites across two
+packages** — the three handwritten bundles, core's
+`bundle-generator/generator.ts`, and **three more in `@hyperfixi/vite-plugin`**
+that no one had counted: `generator.ts`'s main shell, its separate
+empty-bundle shell, and `compiled-generator.ts`'s AOT shell. The union was
+taken by executing the modules and reading `Object.keys(api)`, not by reading
+source — a count-only or one-side diff would have missed three of the seven.
+
+### The measured union (this replaces the brief's step-3 sentence)
+
+| key | hybrid-complete | lite | lite-plus | core-gen | vite main | vite empty | vite compiled |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `version` `parse` `execute` `init` `process` `commands` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (stubs) | partial |
+| `blocks` | ✓ (7) | — | — | conditional | conditional | — | — |
+| `run` `eval` `parserName` | — | — | — | ✓ | ✓ | ✓ | — |
+| `tokenize` `evaluate` | ✓ | — | — | — | — | — | — |
+| `addAliases` `addEventAliases` | ✓ | — | ✓ | — | — | — | — |
+| `window._hyperscript` | — | — | — | ✓ | ✓ | ✓ | ✓ |
+
+Two of the brief's step-3 claims were wrong: `addAliases`/`addEventAliases` are
+on lite-plus too (not hybrid-complete alone), and the `compiled-generator`
+shell has neither `parse` nor `execute` — `hyperfixi.execute(...)` is undefined
+on an AOT-compiled vite bundle while every other bundle has it. That last one
+is left filed, not fixed: it is a capability gap in the compile-mode runtime,
+not a shell divergence.
+
+### The decisions — the union was NOT unioned
+
+Scored per family, and the rule that fell out is worth carrying: **an extra
+survives where a consumer or gate witnesses it, and is removed where nothing
+does.** Unioning all fourteen keys into all seven shells would have put
+unrequested API into four shipped bundles and into every bundle the vite-plugin
+emits — the step-2 `getClassName` comment-trim trade, at larger scale.
+
+1. **hybrid-complete gains `run`/`eval`/`parserName`? DECLINED.** Nothing reads
+   them on a handwritten bundle, and `hyperfixi-hx.js` spreads
+   hybrid-complete's api wholesale (`browser-bundle-hybrid-hx.ts:171`), so any
+   addition is user-visible API on **two** shipped bundles. Scoring found the
+   inverse of what "dead code" would predict: `parserName` is NOT dead — it is
+   read by `examples/vite-plugin-test/main.js` and
+   `examples/vite-plugin-multilingual/main.js`, AND it is the regex anchor the
+   vite-plugin splices semantic api props after (`generator.ts:765`,
+   `/parserName: '(?:lite|hybrid)',/`). A rename there breaks the semantic
+   bundle path silently.
+2. **The emitted shell gains `tokenize`/`evaluate`/`addAliases`/
+   `addEventAliases`? DECLINED.** Bytes in EVERY generated bundle for API
+   nothing requests; `tokenize` would additionally force a parser-core import
+   into a path that is deliberately self-contained.
+3. **Does any hybrid bundle set `window._hyperscript`? NO — and the four that
+   did, stop.** This is the step's one behavior change. Measured against
+   `hyperscript.org@0.9.93`: `_hyperscript` is a **callable function**
+   (`_hyperscript('1 + 1')` → `2`) carrying `evaluate`, `processNode`,
+   `internals`, `config`, `addCommand`, `addFeature`. The bundle `api` is a
+   plain object with none of them. On a page loading both, last-write-wins; if
+   the generated bundle won, `_hyperscript(...)` threw "not a function",
+   `.evaluate` was undefined, and `parse`/`process` — the only overlapping
+   names — silently did something else. No shipped handwritten bundle ever did
+   this and **no test in either package asserted it**, which is why it survived
+   in four emitters. The convergence is toward the shipped bundles' behavior.
+4. **`eval` KEPT on generated bundles.** Redundant alias of `execute` with zero
+   consumers, but removing published API is a breaking change with no defect
+   behind it — unlike `_hyperscript`, which actively breaks a third party.
+
+### S3-a — the shared helper was measured, and the obvious design REJECTED
+
+The natural reading of "one helper" is a factory that takes an options object
+and returns the api. Built, measured, reverted: **+103 bytes gzip on
+`hyperfixi-hybrid-complete.js`, +63 on `hyperfixi-hx.js`.** Terser inlines the
+call but cannot collapse the two object literals or the property indirection
+through the options bag, and since every bundle is rolled up independently the
+indirection buys no sharing at runtime — it is pure overhead in four shipped
+bundles.
+
+What shipped instead shares only what is genuinely identical — the `[_]` scan
+loop (`createProcessElements`) and the global install (`installBundleGlobal`) —
+while each bundle keeps a flat api literal typed as `BundleShellApi<TAst>`.
+Final cost: hybrid-complete **+27 gz**, hx **+22 gz**, lite +33, lite-plus +34.
+The generalizable half: **the anti-drift property comes from the GATE, not from
+the indirection.** Once `bundle-shell.test.ts` pins the key sets, the factory
+was buying nothing the type and the test did not already buy, for 4× the bytes.
+
+### S3-b — a gate row that measured nothing, caught by mutation testing
+
+The first version asserted "a scan error is contained, not thrown" by feeding
+each shell gibberish. Mutation testing (replace the `catch` with `throw err`)
+left it **green**: neither the regex nor the hybrid parser throws
+*synchronously* on malformed source — they degrade and return a node, and the
+executor's rejection is an un-awaited promise. The row was exercising nothing.
+
+Replaced with five tests against `createProcessElements` directly, injecting a
+throwing parse and a throwing run. This is Finding 16's rule arriving from a
+new direction: it is not enough to assert a real effect, the input must be
+capable of PRODUCING the failure the assertion describes. **11 of 11 mutations
+now fail their intended test and nothing else** (verified individually, so none
+is an incidental compile crash).
+
+### Gate — step 3
+
+`compatibility/bundle-shell.test.ts` (37 tests) pins each shell's key set as
+**set equality, both directions** — an ADDED key fails too, which is what makes
+it a ratchet — plus what every core export is FOR (`execute` applies a DOM
+effect, `init` wires elements under a root, `process` IS `init`, `blocks`
+present iff the bundle has blocks) and what each witnessed extra is for
+(`addAliases` makes the alias actually execute). `vite-plugin/src/
+emitted-shell.test.ts` (4 tests) covers the three sites a core-side gate cannot
+see. Both sides assert the `_hyperscript` absence, since neither can see the
+other's emitters.
+
+### Measured cost — SHIPPED bundles only
+
+Only the four slim bundles moved; the six full bundles are untouched.
+`baseline.json` was updated **for those four entries only** — a blanket
+`--update` would have absorbed the +0.3–0.8% raw local-vs-recorded drift the
+full bundles already show into the committed numbers, blinding the gate to it.
+
 ## Finding 17, restated with the arc's numbers
 
 The shipped hybrid bundles PARSE 35 commands and EXECUTE 24. The 11 orphans —
@@ -398,16 +517,16 @@ capability-emission row. Affects GENERATED bundle sizes only (vite-plugin
 users) — snapshot the delta in the PR body. After this step the templates are
 the undisputed best copy of every row they carry.
 
-**Step 3 — shared boot-shell helper.** The queue says the shells "differ only
-in their commands/blocks arrays and alias-registration identity" — measured,
-they also differ in: `tokenize`/`evaluate` exports and `addAliases`/
-`addEventAliases` (hybrid-complete has them; the generator's emitted shell
-does not), `run`/`eval`/`parserName` and the `window._hyperscript` global
-(generator has them; the handwritten shells do not). Decide the union surface
-once, in one helper consumed by the generator and both handwritten families
-(lite/lite-plus join here). `hyperfixi-hx.js` imports hybrid-complete's
-default export (`browser-bundle-hybrid-hx.ts:35`) — its API surface is a
-consumer to keep green.
+**Step 3 — shared boot-shell helper. CLOSED — see § "Step 3 — CLOSED" above
+for the measured union, the four decisions, and the two findings.** The
+paragraph that stood here undercounted the shells (four; there are **seven**,
+three of them in `@hyperfixi/vite-plugin`) and misattributed
+`addAliases`/`addEventAliases` to hybrid-complete alone. Outcome in one line:
+the union was deliberately NOT unioned — extras stay where a consumer or gate
+witnesses them — the shared helper covers only the `[_]` scan loop and the
+global install (the api-building factory was measured at +103 gz and
+rejected), and `window._hyperscript` is gone from all four emitters that
+claimed it.
 
 **Step 4 — generate the hybrid-complete executor core; commit output with a
 `--check` drift guard.** `generateBundleCode()` already emits the whole file

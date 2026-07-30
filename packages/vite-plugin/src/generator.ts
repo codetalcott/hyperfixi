@@ -540,7 +540,6 @@ ${
     ? `
 if (typeof window !== 'undefined') {
   window.${globalName} = api;
-  window._hyperscript = api;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => processElements());
@@ -837,7 +836,6 @@ const api = {
 
 if (typeof window !== 'undefined') {
   (window).${globalName} = api;
-  (window)._hyperscript = api;
 }
 
 export default api;
