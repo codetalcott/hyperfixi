@@ -33,7 +33,7 @@ function isFormElement(el: HTMLElement): el is HTMLFormElement {
   return el.tagName === 'FORM';
 }
 
-@command({ name: 'reset', category: 'dom' })
+@command({ name: 'reset' })
 export class ResetCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Reset a <form> element to its default values (HTMLFormElement.reset())',

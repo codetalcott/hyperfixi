@@ -20,7 +20,7 @@ export interface ContinueCommandOutput {
 /**
  * ContinueCommand - Skips to next loop iteration
  */
-@command({ name: 'continue', category: 'control-flow' })
+@command({ name: 'continue' })
 export class ContinueCommand extends ControlFlowSignalBase {
   static readonly metadata = commandMeta({
     description: 'Skip to the next iteration of the current loop',

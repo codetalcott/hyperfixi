@@ -53,7 +53,7 @@ export interface SettleCommandOutput {
  * Before: 191 lines
  * After: ~120 lines (37% reduction)
  */
-@command({ name: 'settle', category: 'animation' })
+@command({ name: 'settle' })
 export class SettleCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Wait for CSS transitions and animations to complete',

@@ -57,7 +57,7 @@ export interface PickCommandOutput {
   variant: PickCommandInput['variant'];
 }
 
-@command({ name: 'pick', category: 'utility' })
+@command({ name: 'pick' })
 export class PickCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Select from a collection (first/last/random/range/regex match)',

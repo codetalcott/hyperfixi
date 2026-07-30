@@ -30,7 +30,7 @@ export interface EmptyCommandInput {
   targets: HTMLElement[];
 }
 
-@command({ name: 'empty', category: 'dom' })
+@command({ name: 'empty' })
 export class EmptyCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Remove all children from an element (sets innerHTML to empty)',

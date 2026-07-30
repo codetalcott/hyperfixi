@@ -44,7 +44,7 @@ function isPopoverElement(el: HTMLElement): boolean {
   return el.hasAttribute('popover');
 }
 
-@command({ name: 'close', category: 'dom' })
+@command({ name: 'close' })
 export class CloseCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Close a dialog, details element, or popover',

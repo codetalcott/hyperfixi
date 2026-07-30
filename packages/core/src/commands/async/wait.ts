@@ -51,7 +51,7 @@ export interface WaitCommandOutput {
  * Before: 650 lines
  * After: ~280 lines (57% reduction)
  */
-@command({ name: 'wait', category: 'async' })
+@command({ name: 'wait' })
 export class WaitCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Wait for time delay, event, or race condition',

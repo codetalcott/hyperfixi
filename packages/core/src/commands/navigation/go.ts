@@ -43,7 +43,7 @@ export interface GoCommandOutput {
  * Before: 682 lines
  * After: ~350 lines (49% reduction)
  */
-@command({ name: 'go', category: 'navigation' })
+@command({ name: 'go' })
 export class GoCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description:

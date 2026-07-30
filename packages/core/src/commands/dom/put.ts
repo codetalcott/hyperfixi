@@ -56,7 +56,7 @@ export interface PutCommandInput {
  * Before: 562 lines
  * After: ~250 lines (56% reduction)
  */
-@command({ name: 'put', category: 'dom' })
+@command({ name: 'put' })
 export class PutCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Insert content into elements or properties',

@@ -40,7 +40,7 @@ export interface JsCommandOutput {
  * Before: 241 lines
  * After: ~160 lines (34% reduction)
  */
-@command({ name: 'js', category: 'advanced' })
+@command({ name: 'js' })
 export class JsCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Execute inline JavaScript code with access to hyperscript context',

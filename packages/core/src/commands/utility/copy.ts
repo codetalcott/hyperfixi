@@ -46,7 +46,7 @@ export interface CopyCommandOutput {
  * Before: 312 lines
  * After: ~140 lines (55% reduction)
  */
-@command({ name: 'copy', category: 'utility' })
+@command({ name: 'copy' })
 export class CopyCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Copy text or element content to the clipboard',

@@ -30,7 +30,7 @@ export interface FocusCommandInput {
   targets: HTMLElement[];
 }
 
-@command({ name: 'focus', category: 'execution' })
+@command({ name: 'focus' })
 export class FocusCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Focus an element (calls HTMLElement.focus())',

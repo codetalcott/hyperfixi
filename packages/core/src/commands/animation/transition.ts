@@ -54,7 +54,7 @@ export interface TransitionCommandOutput {
  * Before: 250 lines
  * After: ~130 lines (48% reduction)
  */
-@command({ name: 'transition', category: 'animation' })
+@command({ name: 'transition' })
 export class TransitionCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Animate CSS properties using CSS transitions',

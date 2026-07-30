@@ -22,7 +22,7 @@ export interface ShowCommandInput extends VisibilityCommandInput {
 /**
  * ShowCommand - Restores element visibility
  */
-@command({ name: 'show', category: 'dom' })
+@command({ name: 'show' })
 export class ShowCommand extends VisibilityCommandBase {
   static readonly metadata = commandMeta({
     description: 'Show elements by restoring display property',

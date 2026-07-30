@@ -209,7 +209,7 @@ export function processPartials(html: string, morphOptions?: MorphOptions): Proc
  * Before: ~130 lines (builder pattern section)
  * After: ~100 lines (decorator pattern)
  */
-@command({ name: 'process', category: 'dom' })
+@command({ name: 'process' })
 export class ProcessPartialsCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Process <hx-partial> elements for multi-target swaps',

@@ -176,7 +176,7 @@ function detectExpressionType(
   return { type: 'class', expression: '' };
 }
 
-@command({ name: 'toggle', category: 'dom' })
+@command({ name: 'toggle' })
 export class ToggleCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Toggle classes, attributes, or interactive elements',

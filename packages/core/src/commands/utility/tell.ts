@@ -43,7 +43,7 @@ export interface TellCommandOutput {
  * Before: 204 lines
  * After: ~90 lines (56% reduction)
  */
-@command({ name: 'tell', category: 'utility' })
+@command({ name: 'tell' })
 export class TellCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Execute commands in the context of target elements',

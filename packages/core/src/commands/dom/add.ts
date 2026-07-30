@@ -50,7 +50,7 @@ export type AddCommandInput =
 /**
  * AddCommand - Adds classes, attributes, or styles to elements
  */
-@command({ name: 'add', category: 'dom' })
+@command({ name: 'add' })
 export class AddCommand extends DOMModificationBase {
   static readonly metadata = commandMeta({
     description: 'Add CSS classes, attributes, or styles to elements',

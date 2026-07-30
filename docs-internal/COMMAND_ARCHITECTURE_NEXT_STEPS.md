@@ -405,6 +405,23 @@ not the core abstractions.
 
 ## History
 
+- **2026-07-29** — **Arc B step 4a landed**: the dead surface step 3 created is
+  deleted. `meta()`, `MetaConfig`, all three module-private symbols,
+  `ClassWithSymbols` and the three dead exported getters are gone; `@command`
+  reduces to **name-only** (with `meta()` deleted nothing read `COMMAND_CATEGORY`,
+  so `CommandConfig.category` would have been a parameter accepted on 52 call
+  sites that goes nowhere — worse than duplication, because it reads as
+  authoritative); and **`metadataOf()` is deleted with the type doing its job** —
+  the docs-generator table now *requires* `readonly metadata: CommandMetadata`, so
+  a class without it is **TS2322 at compile time** where it used to be a runtime
+  throw. That is the arc's thesis paying off in the exact place that motivated it.
+  - **Two findings about the generated artifact, both for 4b.** The generator is
+    **not prettier-idempotent** — it emits unpadded markdown tables, so a fresh run
+    produced a **252-line diff that was pure column padding** (content verified
+    identical; after `prettier --write` the whole diff collapsed to one line). And
+    the `Generated:` ISO timestamp is then the *only* remaining difference, so a
+    `--check` gate diffing the whole file would fail 100% of the time. 4b must fix
+    both or the gate is unusable and regenerations will read as rewrites.
 - **2026-07-29** — **Arc B step 3 landed**: all 52 decorated classes migrated to
   `static readonly metadata = commandMeta({…})` + `get metadata()`, `@meta`
   removed from every call site, and `compatibility` populated on all 55 literals.

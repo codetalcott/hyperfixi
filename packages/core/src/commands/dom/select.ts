@@ -37,7 +37,7 @@ function isTextFieldElement(el: HTMLElement): el is HTMLInputElement | HTMLTextA
   return tag === 'INPUT' || tag === 'TEXTAREA';
 }
 
-@command({ name: 'select', category: 'dom' })
+@command({ name: 'select' })
 export class SelectCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Select the contents of a text field, or select the contents of a DOM element',

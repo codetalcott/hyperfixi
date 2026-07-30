@@ -95,7 +95,7 @@ async function resolveTargets(
  * Before: ~210 lines (builder pattern section)
  * After: ~200 lines (decorator pattern)
  */
-@command({ name: 'swap', category: 'dom' })
+@command({ name: 'swap' })
 export class SwapCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Swap content into target elements with intelligent morphing support',
@@ -365,7 +365,7 @@ export class SwapCommand implements DecoratedCommand {
  * Before: ~90 lines (builder pattern section)
  * After: ~80 lines (decorator pattern)
  */
-@command({ name: 'morph', category: 'dom' })
+@command({ name: 'morph' })
 export class MorphCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Morph content into target elements (intelligent diffing, preserves state)',

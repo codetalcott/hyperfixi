@@ -33,7 +33,7 @@ export interface ScrollCommandOutput {
   smooth: boolean;
 }
 
-@command({ name: 'scroll', category: 'navigation' })
+@command({ name: 'scroll' })
 export class ScrollCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Scroll an element into view (upstream _hyperscript 0.9.90)',

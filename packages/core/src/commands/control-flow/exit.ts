@@ -27,7 +27,7 @@ export interface ExitCommandOutput {
 /**
  * ExitCommand - Exits from event handler
  */
-@command({ name: 'exit', category: 'control-flow' })
+@command({ name: 'exit' })
 export class ExitCommand extends ControlFlowSignalBase {
   static readonly metadata = commandMeta({
     description: 'Immediately terminate execution of the current event handler or behavior',

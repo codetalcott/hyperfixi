@@ -83,31 +83,25 @@ import { InstallCommand } from '../src/commands/behaviors/install';
 // ============================================================================
 
 /**
- * A `@command`/`@meta`-decorated command class.
+ * A command class carrying its metadata as a type-visible static.
  *
- * `@meta` attaches `metadata` as a STATIC property at runtime, via
- * `Object.defineProperty` (see commands/decorators/index.ts). A class decorator
- * that returns the original class cannot widen its type, so TypeScript never
- * sees that static — which is why this table cannot be typed as
- * `{ metadata: CommandMetadata }` directly. `metadataOf()` is the single place
- * that asserts the runtime contract, and it checks rather than assumes.
+ * Arc B step 3 replaced `@meta`'s runtime `Object.defineProperty` with
+ * `static readonly metadata = commandMeta({...})`, so TypeScript now SEES the
+ * static and this table can simply require it. Before that it could not: a class
+ * decorator returning the original class cannot widen its type, so every read was
+ * `TS2339` and a runtime `metadataOf()` assertion stood in for the type — which is
+ * also why script typechecking stayed off for six months. Both are gone.
+ *
+ * `metadata.category` is the class's own declared category; there is no second
+ * copy on `@command` to disagree with it any more.
  */
-type CommandClass = abstract new (...args: never[]) => object;
+type CommandClass = (abstract new (...args: never[]) => object) & {
+  readonly metadata: CommandMetadata;
+};
 
 interface CommandEntry {
   name: string;
   class: CommandClass;
-}
-
-/** Read a decorated class's static metadata, failing loudly if @meta is absent. */
-function metadataOf(entry: CommandEntry): CommandMetadata {
-  const metadata = (entry.class as unknown as { metadata?: CommandMetadata }).metadata;
-  if (!metadata) {
-    throw new Error(
-      `Command '${entry.name}' has no static metadata — is the @meta decorator applied to ${entry.class.name}?`
-    );
-  }
-  return metadata;
 }
 
 const COMMANDS: CommandEntry[] = [
@@ -217,7 +211,7 @@ function generateMarkdown(commands: CommandEntry[]): string {
   lines.push('## Table of Contents');
   lines.push('');
   for (const category of COMMAND_CATEGORIES) {
-    const categoryCommands = commands.filter((c) => metadataOf(c).category === category);
+    const categoryCommands = commands.filter(c => c.class.metadata.category === category);
     if (categoryCommands.length === 0) continue;
     lines.push(`- [${CATEGORY_NAMES[category]} Commands](#${category}-commands)`);
   }
@@ -229,7 +223,7 @@ function generateMarkdown(commands: CommandEntry[]): string {
   lines.push('| Command | Category | Description |');
   lines.push('|---------|----------|-------------|');
   for (const cmd of commands.sort((a, b) => a.name.localeCompare(b.name))) {
-    const meta = metadataOf(cmd);
+    const meta = cmd.class.metadata;
     const desc = meta.description.split('.')[0] + '.'; // First sentence
     lines.push(`| \`${cmd.name}\` | ${meta.category} | ${desc} |`);
   }
@@ -237,14 +231,14 @@ function generateMarkdown(commands: CommandEntry[]): string {
 
   // Commands by category
   for (const category of COMMAND_CATEGORIES) {
-    const categoryCommands = commands.filter((c) => metadataOf(c).category === category);
+    const categoryCommands = commands.filter(c => c.class.metadata.category === category);
     if (categoryCommands.length === 0) continue;
 
     lines.push(`## ${CATEGORY_NAMES[category]} Commands`);
     lines.push('');
 
     for (const cmd of categoryCommands.sort((a, b) => a.name.localeCompare(b.name))) {
-      const meta = metadataOf(cmd);
+      const meta = cmd.class.metadata;
 
       lines.push(`### ${cmd.name}`);
       lines.push('');
@@ -373,11 +367,11 @@ function generateJSON(commands: CommandEntry[]): string {
     categories: COMMAND_CATEGORIES,
     sideEffects: COMMAND_SIDE_EFFECTS,
     commands: Object.fromEntries(
-      commands.map((cmd) => [
+      commands.map(cmd => [
         cmd.name,
         {
-          ...metadataOf(cmd),
-          syntax: getSyntaxArray(metadataOf(cmd)),
+          ...cmd.class.metadata,
+          syntax: getSyntaxArray(cmd.class.metadata),
         },
       ])
     ),
@@ -390,12 +384,8 @@ function generateJSON(commands: CommandEntry[]): string {
 // ============================================================================
 
 const args = process.argv.slice(2);
-const format = args.includes('--format')
-  ? args[args.indexOf('--format') + 1]
-  : 'markdown';
-const outputDir = args.includes('--output')
-  ? args[args.indexOf('--output') + 1]
-  : 'docs/commands';
+const format = args.includes('--format') ? args[args.indexOf('--format') + 1] : 'markdown';
+const outputDir = args.includes('--output') ? args[args.indexOf('--output') + 1] : 'docs/commands';
 const toStdout = args.includes('--stdout');
 
 // Generate content
@@ -423,5 +413,5 @@ if (toStdout) {
   console.log(`✓ Generated ${filePath}`);
   console.log(`  Format: ${format}`);
   console.log(`  Commands: ${COMMANDS.length}`);
-  console.log(`  Categories: ${new Set(COMMANDS.map((c) => metadataOf(c).category)).size}`);
+  console.log(`  Categories: ${new Set(COMMANDS.map(c => c.class.metadata.category)).size}`);
 }

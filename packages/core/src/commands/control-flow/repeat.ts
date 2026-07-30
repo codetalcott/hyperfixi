@@ -64,7 +64,7 @@ export interface RepeatCommandOutput {
   interrupted?: boolean;
 }
 
-@command({ name: 'repeat', category: 'control-flow' })
+@command({ name: 'repeat' })
 export class RepeatCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description:

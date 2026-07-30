@@ -551,17 +551,39 @@ deleted** so they read as decisions:
   gate forced: populating a value correctly still failed the row-moving assertion
   until this set moved in the same diff.
 
-**Registry oracle diff — exactly the predicted 3 rows.** `install`,
-`pseudo-command`, `render`, on `hasBody`+`isBlocking` only. Registered count,
-distinct implementations, all four shared-implementation groups, and every alias
-identity: **identical**.
+**Registry oracle diff.** Two intended changes, and PR #826's description stated
+only the first — corrected here, since this file is the durable record:
 
-> **A caution earned the hard way in this step.** The first oracle diff reported
-> **0 rows changed** and was WRONG — it iterated only the *before* row's keys, so
-> a field that was **added** was structurally invisible. That is this arc's own
-> central disease (a one-directional check that reads as green) reproduced in the
-> verification instrument itself. Diff the **union** of both key sets. The
-> corrected diff found the 3 rows immediately.
+1. **3 rows on `hasBody`+`isBlocking`** — `install`, `pseudo-command`, `render`,
+   from `commandMeta` gaining the defaults. This was the predicted diff.
+2. **59 rows gaining `compatibility`** — the population itself, which is the whole
+   point of the step and is gated by §9. The #826 text said the diff was "exactly
+   the predicted 3 rows" because the oracle snapshot behind that sentence was
+   taken **before** the population ran, so it was measuring the migration alone.
+   The claim was true of what it measured and incomplete about the step.
+
+Registered count, distinct implementations, all four shared-implementation groups,
+and every alias identity: **identical**.
+
+> **Two cautions about the oracle itself, both earned here. The instrument needed
+> more debugging than the migration did.**
+>
+> **1. Diff the UNION of both key sets.** The first diff reported **0 rows
+> changed** and was WRONG: it iterated only the *before* row's keys, so a field
+> that was **added** was structurally invisible. That is this arc's own central
+> disease — a one-directional check that reads as green — reproduced inside the
+> instrument built to catch it. The corrected diff found the 3 rows immediately.
+>
+> **2. Take the baseline from the merged parent commit.** A snapshot is only a
+> baseline for the tree that produced it. Step 4a diffed against a step-3 snapshot
+> taken mid-step and showed **59** changed rows; against merged `main` the same
+> code showed **0**, which is the true answer for a pure deletion. A mid-step
+> baseline silently folds the earlier step's unfinished work into the later step's
+> diff.
+>
+> Note the two interact usefully: 4a's `0` is trustworthy *because* the same
+> instrument had just produced a non-zero result on a different comparison. A gate
+> that has never been seen to fail is not known to work.
 
 - Registry oracle diff is the behaviour-preservation instrument. Names, classes,
   aliases, categories, shared-implementation groups, and both metadata-presence
@@ -583,13 +605,55 @@ identity: **identical**.
   change**, because a class field is reachable differently from a
   `defineProperty` side effect and could defeat the shaking that keeps them out.
 
-**Step 4 — retire the workarounds, then the prose.** With the static visible:
-delete `metadataOf()`; delete the three dead exported getters; consider narrowing
-the adapter's shadow `CommandMetadata` (F-B1, and settle :421's fate). Then the
-prose half — completeness tests for `reference/index.ts` and `lsp-metadata.ts`
-first (cheap), then `generate-command-docs.ts`'s 43-entry table replaced by the
-manifest plus a factory map (F-B3), an npm script, and `--check` in CI on the
-idempotent-generator pattern from #793.
+**Step 4 splits**, following Arc A's own 4.1–4.4 precedent: the deletions are
+mechanical and verifiable, the prose half is a different kind of work.
+
+**Step 4a — retire the dead surface — ✅ DONE.** Step 3 made all of this dead;
+this deletes it.
+
+- `meta()`, `MetaConfig`, all three module-private symbols (`COMMAND_NAME`,
+  `COMMAND_CATEGORY`, `COMMAND_METADATA`), `ClassWithSymbols`, and the three dead
+  exported getters — gone.
+- **`@command` reduces to name-only.** With `meta()` deleted, nothing read
+  `COMMAND_CATEGORY`, so `CommandConfig.category` would have been a parameter
+  accepted on 52 call sites that goes nowhere — worse than duplication, because it
+  reads as authoritative. Removed from the interface and from every call site;
+  `@command`'s only job is now the prototype `name` it advertises. The category
+  lives in the class's own literal, where §7 already gates it against the manifest.
+- **`metadataOf()` deleted, and the type now does its job.** `CommandClass` in
+  `scripts/generate-command-docs.ts` became
+  `(abstract new (...args: never[]) => object) & { readonly metadata: CommandMetadata }`,
+  so the table simply *requires* the static. Mutation-verified: adding a class with
+  no metadata is now **`TS2322` at compile time** where it used to be a runtime
+  throw. That is the arc's thesis paying off in the exact place that motivated it.
+
+**Two findings for 4b, both about the generated artifact:**
+
+1. **The generator is not prettier-idempotent.** It emits unpadded markdown
+   tables; the committed `REFERENCE.md` is prettier-formatted, so a fresh run
+   produces a **252-line diff that is pure column padding**. Content was verified
+   identical — after `prettier --write` the entire diff collapsed to one line.
+   This is the exact failure mode #793 fixed elsewhere and the reason
+   "prettier-idempotent generators" is in the design principles. **4b must make the
+   generator emit prettier-formatted output**, or every regeneration will look like
+   a rewrite and reviewers will stop reading it.
+2. **The `Generated:` timestamp defeats a naive `--check` gate.** After padding is
+   accounted for, the *only* remaining diff is
+   `> Generated: <ISO timestamp>` — which changes on every run. A `--check` that
+   diffs the whole file would fail 100% of the time. 4b must either drop the
+   timestamp or exclude it from the comparison.
+
+`commands.json` was deliberately NOT regenerated here: it still lacks the
+`compatibility` field the metadata now carries, which is 4b's business along with
+the `--check` gate. Regenerating it in 4a would have shipped an artifact change
+with no gate to keep it honest.
+
+**Step 4b — the prose (NOT started).** Completeness tests for
+`reference/index.ts` and `lsp-metadata.ts` first (cheap), then
+`generate-command-docs.ts`'s 43-entry table replaced by the manifest plus a
+factory map (F-B3 — it is 16 commands short and gated by nothing), an npm script,
+and `--check` in CI, honouring both findings above. Also still open from F-B1:
+narrowing the adapter's shadow `CommandMetadata` and settling `:421`'s fate.
 
 ## Gate couplings that must move in the same diff
 

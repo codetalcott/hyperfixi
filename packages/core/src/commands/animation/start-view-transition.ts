@@ -49,7 +49,7 @@ export interface StartViewTransitionOutput {
   commandsExecuted: number;
 }
 
-@command({ name: 'start', category: 'animation' })
+@command({ name: 'start' })
 export class StartViewTransitionCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Wrap a block of commands in document.startViewTransition()',

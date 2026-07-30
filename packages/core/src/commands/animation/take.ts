@@ -39,7 +39,7 @@ export interface TakeCommandOutput {
  * Before: 406 lines
  * After: ~180 lines (56% reduction)
  */
-@command({ name: 'take', category: 'animation' })
+@command({ name: 'take' })
 export class TakeCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Move classes, attributes, and properties from one element to another',

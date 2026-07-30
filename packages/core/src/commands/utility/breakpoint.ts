@@ -28,7 +28,7 @@ export interface BreakpointCommandInput {
   _tag?: 'breakpoint';
 }
 
-@command({ name: 'breakpoint', category: 'utility' })
+@command({ name: 'breakpoint' })
 export class BreakpointCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Drop into the debugger (emits a debugger; statement)',

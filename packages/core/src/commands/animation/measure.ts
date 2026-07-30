@@ -45,7 +45,7 @@ export interface MeasureCommandOutput {
  * Before: 376 lines
  * After: ~180 lines (52% reduction)
  */
-@command({ name: 'measure', category: 'animation' })
+@command({ name: 'measure' })
 export class MeasureCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Measure DOM element dimensions, positions, and properties',
