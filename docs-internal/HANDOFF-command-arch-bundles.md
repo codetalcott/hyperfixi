@@ -139,12 +139,15 @@ capability-emission (generated bundles only).
 
 ### D2 — hybrid-complete richer than the templates (generation as-is would DROP these)
 
-| Row | hybrid-complete has | templates have |
-| --- | --- | --- |
-| `toggle`/`add`/`removeClass` | `@attr` attribute toggling (`toggle @disabled`) | classList only — `@disabled` becomes a bogus class name |
-| `increment`/`decrement` | style-prop branch (possessive `*opacity`) | no style branch |
-| `fetch` block | `via <METHOD>` + `with <options>` (FormData, RequestInit merge) | url + responseType only |
-| `removeClass` | sets `ctx.it` to targets | returns targets without setting `ctx.it` |
+**All four rows are now DECIDED — see § "Step 2 — CLOSED" for the reasoning and
+the measured before/after.** Three absorbed, one declined.
+
+| Row | hybrid-complete has | templates have | Step 2 |
+| --- | --- | --- | --- |
+| `toggle`/`add`/`removeClass` | `@attr` attribute toggling (`toggle @disabled`) | classList only — `@disabled` becomes a bogus class name | **absorbed** |
+| `increment`/`decrement` | style-prop branch (possessive `*opacity`) | no style branch | **absorbed** |
+| `fetch` block | `via <METHOD>` + `with <options>` (FormData, RequestInit merge) | url + responseType only | **absorbed** |
+| `removeClass` | sets `ctx.it` to targets | returns targets without setting `ctx.it` | **declined** — the template is the copy Arc C endorses |
 
 ### D3 — templates richer than hybrid-complete (generation closes real gaps)
 
@@ -167,6 +170,185 @@ not a silent side effect of choosing which copy the generator reads. The
 default posture: templates absorb D2 (superset), D3 stands as-is (templates
 already the better copy), D1 is fixed by generation itself once the templates
 are the source — but it should not WAIT for generation (step 1).
+
+## Step 1 — CLOSED (#830 the gate + two fixes, #829 this brief)
+
+`compatibility/shipped-bundle-execution.test.ts` exists now (602 lines, 10
+tests, 43 surfaces) and is the INCUMBENT execution gate for the handwritten
+bundles — **extend it, never write a second one.** Its completeness test is a
+ratchet: a name added to a bundle's `commands`/`blocks` array without a surface
+FAILS. D1 (`take`) is fixed — hybrid-complete now passes the NODE, matching the
+template.
+
+The gate found **two defects beyond the one the brief predicted**, and both are
+recorded here because they lived only in #830's PR body and code comments until
+now — #829 merged AFTER #830, so this brief never received them. That is the
+exact rot this queue exists to fight.
+
+### S1-a — hybrid-complete's `case 'trigger':` (`:474`) is UNREACHABLE DEAD CODE
+
+The parser emits name `'send'` for all of `send`/`trigger`/`fire` —
+`parseSend(marker)` hardcodes `name: 'send'`. This is **Finding 13's mirror,
+inside the handwritten bundle**: the templates' `trigger` label was deleted for
+this reason and a comment left in its place (`templates.ts`, above `put`), while
+hybrid-complete's identical label survived.
+
+It was load-bearing when added (2026-07-20 audit — `trigger` really was a silent
+no-op then); Finding 13's parser work killed it silently. The sharp part:
+`bundle-manifest-consistency.test.ts:73-76` **PINS it with a source-text
+regex** — the *gate that locks the defect in* antipattern, now measured rather
+than hypothesized. Deleting the label by hand would fail that gate, so it comes
+out **structurally in step 4**, when the executor is generated and the manifest
+gate's source-text assumption is retired with it.
+
+### S1-b — `for x in #t.children` iterates ONCE for an N-element collection
+
+The coercion is `Array.isArray(items) ? items : items instanceof NodeList ?
+Array.from(items) : [items]`, and an **HTMLCollection satisfies neither arm**,
+so it is wrapped as a single item. Present in BOTH copies (hybrid-complete
+`:700`, the `for` template) — an agreement, not a divergence, so no D2/D3 row
+sees it.
+
+This is Arc D's deliberately-deferred array-like question
+(`toElementListFiltered` vs `toElementListStrict`: `put` filters a mixed array
+and gates on `instanceof NodeList`; `append`/`prepend` duck-type and accept an
+HTMLCollection). It is therefore a **behavior change, not a step-2 refactor**.
+The step-1 gate's `for` row deliberately uses a multi-match selector
+(`for x in .item`) and records the gap in its comment.
+
+### S1-c — `return` leaked its internal token out of the public API (fixed in #830)
+
+Unpredicted by the brief, and the reason the gate earned its keep twice in one
+sitting. `return` unwinds by throwing `{type:'return', value}`. **Three of four**
+sequence entry points caught it — the event-handler path, the init path, and the
+generated bundles' `executeAST` — but hybrid-complete's top-level sequence path
+did not, so `hyperfixi.execute('return 42')` rejected with a bare internal
+object (no `message`, not an `Error`) instead of resolving to `42`. Fixed at
+`browser-bundle-hybrid-complete.ts:803`.
+
+The generalizable shape: **a control-flow signal implemented as a throw needs a
+catch at EVERY entry point, and "three of four" is invisible to any gate that
+exercises one path.**
+
+## Step 2 — CLOSED: the templates are now the superset
+
+Three of the four D2 rows absorbed, one declined. Every row was measured in
+BOTH copies before anything was written (#792's rule, applied for the fourth
+time) — and that is what turned row 4 around.
+
+### The four decisions
+
+1. **`@attr` on `toggle`/`add`/`removeClass` — ABSORBED.** Measured before:
+   `toggle @disabled on #t` left the attribute untouched and added a class
+   literally named `disabled`; `remove @disabled` was a silent no-op. After: all
+   three match hybrid-complete exactly.
+2. **Style-prop `increment`/`decrement` — ABSORBED.** Measured before:
+   `increment #t's *opacity by 0.25` was a **silent no-op** — no error, no
+   effect, opacity unmoved — because the possessive fell through to the
+   textContent path where `toElementArray` of an evaluated style value yields no
+   elements. After: 0.5 → 0.75, matching hybrid-complete.
+3. **`fetch` `via`/`with` — ABSORBED.** Measured before: the template
+   destructured neither, so `fetch "/api" via POST with opts` issued a plain
+   **GET with no body and reported success**. That is a wrong request shape, not
+   a missing feature, which is what justifies the bytes.
+4. **`removeClass`'s `ctx.it` — DECLINED, and this is the row that inverted.**
+   The brief's default posture ("templates absorb D2") would have adopted
+   hybrid-complete's `ctx.it = targets`. Arc C's contract says the opposite:
+   `remove .active from #probe` leaves `it` at its initial value, pinned in
+   `runtime/__tests__/command-output-contract.test.ts`, under the rule *a
+   command sets `it` iff upstream sets `result` for it*. **The template was
+   already the correct copy.** Absorbing would have added a NEW divergence from
+   the canonical engine inside the arc meant to remove copies.
+   **Consequence for step 4:** generating hybrid-complete from the templates
+   REMOVES that assignment from the shipped bundle — a deliberate behavior
+   change that must be restated in step 4's PR body, not discovered there.
+
+### S2-a — the D2 table described case BODIES; two of three absorptions needed the SHELL
+
+The harvest's method was diffing `case` blocks, so it was structurally unable to
+see helper divergence. Two absorptions turned out to be **shell** changes, both
+in `bundle-generator/generator.ts`, and either one alone would have made its
+template a silent no-op:
+
+- `getClassName` sliced EVERY selector, so `@disabled` arrived as `disabled` and
+  the new `raw.startsWith('@')` branch could never fire. It now passes `@`
+  through unsliced, matching hybrid-complete's helper.
+- `getStyleProp` **was never emitted at all** — only `isStyleProp`/
+  `getStyleName`/`setStyleProp`. Now emitted behind a new `STYLE_READ_COMMANDS`
+  export (a strict subset of `STYLE_COMMANDS`: `set`/`put` only ever write), so
+  the very common `put`-only bundle does not carry a getter it never calls.
+
+Generalizable: **when a divergence table is built by diffing bodies, budget for
+the helpers those bodies call.** Step 3 (the shared boot shell) is where these
+helpers stop being a separate surface.
+
+### S2-b — both bundle executors diverge from Arc C's `it` contract on ≥5 more rows
+
+Found while scoring row 4. `toggle`, `add`, `put`, `append`/`prepend` and
+`transition` all self-assign `ctx.it` in BOTH bundle copies, where the canonical
+runtime sets nothing (`transition` deliberately, in Arc C's close-out). Because
+the two copies **agree**, no D2/D3 row sees it — the harvest's method is blind to
+a shared divergence from a third party.
+
+Deliberately NOT fixed here: it is a behavior change to generated bundles across
+five rows, and **no execution gate currently asserts `it` at all** (both gates
+assert DOM effects and return values). It wants its own decision, like S1-b.
+
+### S2-c — the `'js'` output format emits invalid JavaScript for 6 of 40 templates
+
+`stripTypes()` has no rule for the non-null assertion (`block.condition!`,
+`ctx.me.parentElement!` — `if`/`repeat`/`while`/`take`), for a bare `let x: any;`
+(`fetch`), or for `const promises: Promise[] = []` (`transition`). Verified
+byte-identical before and after step 2, so it is **pre-existing**, and
+**nothing requests `format: 'js'` today** — every consumer takes the `'ts'`
+default, which is why it has never surfaced.
+
+Step 2 deliberately did not add to it: the new fetch code writes
+`{} as RequestInit`, not `: RequestInit`, because `stripTypes` removes `as Type`
+casts but has no rule for a `const x: Type =` annotation. That reasoning is
+recorded in the template itself so the next editor does not "tidy" it back.
+
+### Measured cost — GENERATED bundles only
+
+The Oracle-3 claim was verified, not assumed: no shipped bundle entry imports
+`bundle-generator` (the `rollup.config.mjs` hit is a library subpath entry, not a
+size-gated browser bundle). Shipped sizes are unmoved; `hyperfixi-hx.js` does not
+budge, as required.
+
+| Generated config | before | after | delta |
+| --- | --- | --- | --- |
+| full 35 cmds + 5 blocks | 31740 raw / 7375 gz | 34105 / 7766 | **+2365 / +391** |
+| hybrid-complete-equivalent 24+5 | 25579 / 5951 | 27944 / 6345 | **+2365 / +394** |
+| typical vite bundle (5+1) | 14735 / 3742 | 15395 / 3875 | +660 / +133 |
+| `put` + `fetch` block only | 13738 / 3672 | 14458 / 3886 | +720 / +214 |
+
+Unminified generator output; the shipped rollup+terser pipeline lands lower.
+Note the `getClassName` `@` branch lands in EVERY generated bundle (it is an
+unconditional shell helper), which is why even a `put`-only bundle moves.
+Its explanatory comment was deliberately cut to one line for the same reason —
+emitted shell code is shipped bytes, and the rationale belongs in `templates.ts`
+and here, not in every user's bundle.
+
+**Step 4's budget is now tighter than Finding 17 measured it.** The orphan cost
+re-measures at **+1421 gz** (24+5 → 35+5 on the current templates), consistent
+with Finding 17's +1433 — but step 2 adds a further **~+390 gz** to the executor
+core that step 4 will generate. The `MAX_HYBRID` → 22000 recommendation still
+looks adequate against `hyperfixi-hx.js`'s 19003-baseline gzip, but step 4 must
+**re-measure rather than inherit** it.
+
+### Gate
+
+`capability-emission.test.ts` gained a `CAPABILITIES` list (7 rows) kept separate
+from `SURFACES`, whose one-row-per-advertised-command completeness ratchet
+depends on being exactly 1:1. `toggle` gets **both** directions, because a
+`toggle` that only ever removes passes an adding-only row. Each row also asserts
+the *bogus class did not appear* — the literal defect shape, not a proxy for it.
+
+Mutation-verified, 7 for 7: reverting the `getClassName` `@` branch, deleting
+either style branch, dropping `via`, dropping `with`, and un-emitting
+`getStyleProp` each fail **only** the new capability test (12 other tests stay
+green, so none is an incidental compile crash). The `getClassName` mutation
+names exactly the four `@attr` rows.
 
 ## Finding 17, restated with the arc's numbers
 
