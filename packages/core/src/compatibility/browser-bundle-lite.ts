@@ -15,6 +15,8 @@
  * - wait (async timing)
  */
 
+import { createProcessElements, installBundleGlobal, type BundleShellApi } from './bundle-shell';
+
 // ============== LITE PARSER ==============
 // Regex-based parser for minimal bundle size
 
@@ -470,69 +472,29 @@ function evaluateCondition(expr: string, me: Element, locals: Map<string, any>):
 
 // ============== DOM PROCESSOR ==============
 
-/**
- * Process all elements with _="" attributes
- */
-function processElements(root: Element | Document = document): void {
-  const elements = root.querySelectorAll('[_]');
-
-  for (const el of elements) {
-    const code = el.getAttribute('_');
-    if (code) {
-      try {
-        const parsed = parseLite(code);
-        executeParsed(parsed, el);
-      } catch (err) {
-        console.error('HyperFixi Lite error:', err, 'Code:', code);
-      }
-    }
-  }
-}
+/** Scans `[_]` and runs each element's code. Shared with every other bundle. */
+const processElements = createProcessElements(parseLite, executeParsed, 'Lite');
 
 // ============== PUBLIC API ==============
 
-const api = {
+// Shape shared via `bundle-shell.ts`; keys pinned by its gate. Lite carries the
+// core surface and nothing else — no `blocks` (it executes none) and no
+// alias registration (unlike lite-plus, which advertises i18n aliases).
+const api: BundleShellApi<LiteEventHandler | LiteCommand[]> = {
   version: '1.0.0-lite',
 
-  /**
-   * Parse hyperscript code (returns internal representation)
-   */
   parse: parseLite,
 
-  /**
-   * Execute hyperscript code on an element
-   */
-  execute: async (code: string, element?: Element) => {
-    const me = element || document.body;
-    const parsed = parseLite(code);
-    return executeParsed(parsed, me);
-  },
+  execute: async (code: string, element?: Element) =>
+    executeParsed(parseLite(code), element || document.body),
 
-  /**
-   * Process all _="" attributes in the document
-   */
   init: processElements,
-
-  /**
-   * Process _="" attributes in a specific root
-   */
   process: processElements,
 
-  /**
-   * Available commands in this lite bundle
-   */
   commands: ['add', 'remove', 'toggle', 'put', 'set', 'log', 'send', 'wait'],
 };
 
 // Auto-initialize
-if (typeof window !== 'undefined') {
-  (window as any).hyperfixi = api;
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => processElements());
-  } else {
-    processElements();
-  }
-}
+installBundleGlobal(api, processElements);
 
 export default api;

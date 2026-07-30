@@ -20,6 +20,14 @@
  * Extensible via keyword aliases for internationalization.
  */
 
+import { createProcessElements, installBundleGlobal, type BundleShellApi } from './bundle-shell';
+
+/** The extras lite-plus adds above the shared core surface. */
+interface LitePlusExtras {
+  addAliases: (aliases: Record<string, string>) => void;
+  addEventAliases: (aliases: Record<string, string>) => void;
+}
+
 // ============== KEYWORD ALIASES ==============
 // Pattern for extending to other languages.
 // To add Spanish: import { SPANISH_ALIASES } from './aliases/es';
@@ -697,49 +705,23 @@ async function executeParsed(
 
 // ============== DOM PROCESSOR ==============
 
-function processElements(root: Element | Document = document): void {
-  const elements = root.querySelectorAll('[_]');
-
-  for (const el of elements) {
-    const code = el.getAttribute('_');
-    if (code) {
-      try {
-        const parsed = parseLite(code);
-        executeParsed(parsed, el);
-      } catch (err) {
-        console.error('HyperFixi Lite+ error:', err, 'Code:', code);
-      }
-    }
-  }
-}
+/** Scans `[_]` and runs each element's code. Shared with every other bundle. */
+const processElements = createProcessElements(parseLite, executeParsed, 'Lite+');
 
 // ============== PUBLIC API ==============
 
-const api = {
+// Shape shared via `bundle-shell.ts`; keys pinned by its gate. Lite+ carries
+// the core surface plus alias registration — a witnessed extra it shares with
+// hybrid-complete. It advertises no `blocks`: its regex executor has none.
+const api: BundleShellApi<LiteEventHandler | LiteCommand[]> & LitePlusExtras = {
   version: '1.0.0-lite-plus',
 
-  /**
-   * Parse hyperscript code
-   */
   parse: parseLite,
 
-  /**
-   * Execute hyperscript code on an element
-   */
-  execute: async (code: string, element?: Element) => {
-    const me = element || document.body;
-    const parsed = parseLite(code);
-    return executeParsed(parsed, me);
-  },
+  execute: async (code: string, element?: Element) =>
+    executeParsed(parseLite(code), element || document.body),
 
-  /**
-   * Process all _="" attributes
-   */
   init: processElements,
-
-  /**
-   * Process _="" attributes in a root
-   */
   process: processElements,
 
   /**
@@ -791,14 +773,6 @@ const api = {
 };
 
 // Auto-initialize
-if (typeof window !== 'undefined') {
-  (window as any).hyperfixi = api;
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => processElements());
-  } else {
-    processElements();
-  }
-}
+installBundleGlobal(api, processElements);
 
 export default api;
