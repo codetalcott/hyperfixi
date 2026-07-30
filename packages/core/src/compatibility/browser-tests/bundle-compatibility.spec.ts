@@ -19,7 +19,7 @@ const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const BUNDLES = {
   lite: {
     file: 'hyperfixi-lite.js',
-    size: '1.9 KB',
+    size: '2.0 KB',
     features: {
       toggle: true,
       addClass: true,

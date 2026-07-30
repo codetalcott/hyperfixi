@@ -4,7 +4,7 @@
   "generated": "2026-07-29",
   "commit": "09010f5c",
   "tolerance_percent": 5,
-  "notes": "Updated 2026-07-29 (#821): every full bundle DROPPED ~29.1 KB raw / ~6 KB gzip — a near-constant across minimal, standard, classic, classic-i18n, browser and hx-v4 — when the dead src/expressions/*/impl/ classes were deleted. They were unreachable at runtime (the registry objects in each category's index.ts are what execute) but were kept alive in the payload by trailing 'Re-export implementations for tests' lines, which made them public API surface that tree-shaking could not drop. The four slim bundles (lite, lite-plus, hybrid-complete, hybrid-hx) are unchanged, since they never pull in the expression registry. Both directions of this gate matter: it uses Math.abs, so a size IMPROVEMENT this large trips it too and must be recorded here. Previously updated 2026-07-20 (pre-release audit): added the four slim bundles, which had NO size-regression coverage, and refreshed all sizes post-#736. Runs in the CI bundle-size job. Run `node scripts/bundle-size-snapshot.mjs --check` after changes; failures (±5% drift) point to tree-shaking or duplication regressions. Regenerate with --update after an INTENTIONAL size change; the numbers here are macOS-local and read ~1 KB (0.3%) below CI Linux zlib on the full bundles, well inside the tolerance. metadata.ts, by contrast, must carry the CI numbers.",
+  "notes": "Updated 2026-07-30 (Arc E step 3, shared boot shell): ONLY the four slim bundles were re-baselined, because only they changed — they now import the shared `[_]` scanner and global installer from `compatibility/bundle-shell.ts` instead of each inlining their own. gzip deltas: lite +33 (+1.7%), lite-plus +34 (+1.3%), hybrid-complete +27 (+0.3%), hx +22 (+0.1%); raw deltas are +15 to +54. The gzip cost exceeds the raw cost on the two smallest bundles because the shared arrow-function form compresses slightly worse than the inline for-loop it replaced. A factory that also BUILT the api object was measured and rejected at +103 gz on hybrid-complete / +63 on hx — see the header of bundle-shell.ts. The six full bundles were deliberately NOT re-baselined: this change does not touch them, and a blanket --update would have absorbed the +0.3-0.8% raw local-vs-recorded drift they already show into the committed numbers, blinding the gate to it. Updated 2026-07-29 (#821): every full bundle DROPPED ~29.1 KB raw / ~6 KB gzip — a near-constant across minimal, standard, classic, classic-i18n, browser and hx-v4 — when the dead src/expressions/*/impl/ classes were deleted. They were unreachable at runtime (the registry objects in each category's index.ts are what execute) but were kept alive in the payload by trailing 'Re-export implementations for tests' lines, which made them public API surface that tree-shaking could not drop. The four slim bundles (lite, lite-plus, hybrid-complete, hybrid-hx) are unchanged, since they never pull in the expression registry. Both directions of this gate matter: it uses Math.abs, so a size IMPROVEMENT this large trips it too and must be recorded here. Previously updated 2026-07-20 (pre-release audit): added the four slim bundles, which had NO size-regression coverage, and refreshed all sizes post-#736. Runs in the CI bundle-size job. Run `node scripts/bundle-size-snapshot.mjs --check` after changes; failures (±5% drift) point to tree-shaking or duplication regressions. Regenerate with --update after an INTENTIONAL size change; the numbers here are macOS-local and read ~1 KB (0.3%) below CI Linux zlib on the full bundles, well inside the tolerance. metadata.ts, by contrast, must carry the CI numbers.",
   "bundles": {
     "hyperfixi-minimal.js": {
       "config": "rollup.browser-minimal.config.mjs",
@@ -52,29 +52,29 @@
       "config": "rollup.browser-lite.config.mjs",
       "entry": "src/compatibility/browser-bundle-lite.ts",
       "evaluator_strategy": "inline regex mini-parser (no AST evaluator)",
-      "raw_bytes": 5294,
-      "gzip_bytes": 1967
+      "raw_bytes": 5309,
+      "gzip_bytes": 2000
     },
     "hyperfixi-lite-plus.js": {
       "config": "rollup.browser-lite-plus.config.mjs",
       "entry": "src/compatibility/browser-bundle-lite-plus.ts",
       "evaluator_strategy": "inline regex mini-parser (no AST evaluator)",
-      "raw_bytes": 8298,
-      "gzip_bytes": 2658
+      "raw_bytes": 8313,
+      "gzip_bytes": 2692
     },
     "hyperfixi-hybrid-complete.js": {
       "config": "rollup.browser-hybrid-complete.config.mjs",
       "entry": "src/compatibility/browser-bundle-hybrid-complete.ts",
       "evaluator_strategy": "HybridParser + inline executeCommand switch",
-      "raw_bytes": 33227,
-      "gzip_bytes": 8382
+      "raw_bytes": 33279,
+      "gzip_bytes": 8409
     },
     "hyperfixi-hx.js": {
       "config": "rollup.browser-hybrid-hx.config.mjs",
       "entry": "src/compatibility/browser-bundle-hybrid-hx.ts",
       "evaluator_strategy": "hybrid-complete runtime + htmx/fixi attribute layer",
-      "raw_bytes": 72173,
-      "gzip_bytes": 19003
+      "raw_bytes": 72227,
+      "gzip_bytes": 19025
     }
   }
 }

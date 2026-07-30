@@ -129,7 +129,6 @@ const api={
 
 if(typeof window!=='undefined'){
   window.${globalName}=api;
-  window._hyperscript=api;
   document.readyState==='loading'
     ?document.addEventListener('DOMContentLoaded',()=>init())
     :init();

@@ -485,6 +485,13 @@ function processElements(root: Element | Document = document): void {
 // =============================================================================
 // PUBLIC API
 // =============================================================================
+// Shape mirrors \`compatibility/bundle-shell.ts\` (BundleShellApi). The two are
+// separate copies on purpose — a generated bundle is self-contained and must
+// not import from @hyperfixi/core — so \`bundle-shell.test.ts\` asserts the
+// emitted key set matches the handwritten one, the way Oracle 2 pins the two
+// cmdMaps. \`run\`/\`eval\`/\`parserName\` are generated-only extras; see the
+// witnessed-extras table in bundle-shell.ts for why they stay here and are not
+// added to the shipped handwritten bundles.
 
 const api = {
   version: '1.0.0-${name.toLowerCase().replace(/\s+/g, '-')}',
@@ -520,7 +527,6 @@ ${
     ? `
 if (typeof window !== 'undefined') {
   (window as any).${globalName} = api;
-  (window as any)._hyperscript = api;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => processElements());

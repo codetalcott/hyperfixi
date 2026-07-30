@@ -29,6 +29,15 @@ import { HybridParser } from '../parser/hybrid/parser-core';
 import { tokenize } from '../parser/hybrid/tokenizer';
 import type { ASTNode, CommandNode, BlockNode, EventNode } from '../parser/hybrid/ast-types';
 import { addCommandAliases, addEventAliases } from '../parser/hybrid/aliases';
+import { createProcessElements, installBundleGlobal, type BundleShellApi } from './bundle-shell';
+
+/** The extras hybrid-complete adds above the shared core surface. */
+interface HybridCompleteExtras {
+  addAliases: typeof addCommandAliases;
+  addEventAliases: typeof addEventAliases;
+  tokenize: typeof tokenize;
+  evaluate: typeof evaluate;
+}
 
 // =============================================================================
 // RUNTIME (stays inline - specific to this bundle)
@@ -895,49 +904,31 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
 // DOM PROCESSOR
 // =============================================================================
 
-function processElement(el: Element): void {
-  const code = el.getAttribute('_');
-  if (!code) return;
+const parseCode = (code: string): ASTNode => new HybridParser(code).parse();
 
-  try {
-    const parser = new HybridParser(code);
-    const ast = parser.parse();
-    executeAST(ast, el);
-  } catch (err) {
-    console.error('HyperFixi Hybrid Complete error:', err, 'Code:', code);
-  }
-}
-
-function processElements(root: Element | Document = document): void {
-  const elements = root.querySelectorAll('[_]');
-  elements.forEach(processElement);
-}
+const processElements = createProcessElements(parseCode, executeAST, 'Hybrid Complete');
 
 // =============================================================================
-// PUBLIC API
+// PUBLIC API — shape shared via `bundle-shell.ts`, keys pinned by its gate
 // =============================================================================
 
-const api = {
+const api: BundleShellApi<ASTNode> & HybridCompleteExtras = {
   version: '1.0.0-hybrid-complete',
 
-  parse(code: string): ASTNode {
-    const parser = new HybridParser(code);
-    return parser.parse();
-  },
+  parse: parseCode,
 
-  async execute(code: string, element?: Element): Promise<any> {
-    const me = element || document.body;
-    const parser = new HybridParser(code);
-    const ast = parser.parse();
-    return executeAST(ast, me);
+  async execute(code: string, element?: Element): Promise<unknown> {
+    return executeAST(parseCode(code), element || document.body);
   },
 
   init: processElements,
   process: processElements,
 
+  // Witnessed extras, not shell core: `addAliases` is pinned by
+  // `browser-tests/hybrid-complete.spec.ts`, and `tokenize`/`evaluate` mirror
+  // the full bundle's surface. See the table in `bundle-shell.ts`.
   addAliases: addCommandAliases,
-  addEventAliases: addEventAliases,
-
+  addEventAliases,
   tokenize,
   evaluate,
 
@@ -975,14 +966,6 @@ const api = {
 // AUTO-INITIALIZE
 // =============================================================================
 
-if (typeof window !== 'undefined') {
-  (window as any).hyperfixi = api;
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => processElements());
-  } else {
-    processElements();
-  }
-}
+installBundleGlobal(api, processElements);
 
 export default api;
