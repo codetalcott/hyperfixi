@@ -20,7 +20,7 @@ export interface BreakCommandOutput {
 /**
  * BreakCommand - Exits from the current loop
  */
-@command({ name: 'break', category: 'control-flow' })
+@command({ name: 'break' })
 export class BreakCommand extends ControlFlowSignalBase {
   static readonly metadata = commandMeta({
     description: 'Exit from the current loop (repeat, for, while, until)',

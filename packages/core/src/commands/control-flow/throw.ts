@@ -39,7 +39,7 @@ export interface ThrowCommandOutput {
  * Before: 143 lines
  * After: ~60 lines (58% reduction)
  */
-@command({ name: 'throw', category: 'control-flow' })
+@command({ name: 'throw' })
 export class ThrowCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Throw an error with a specified message',

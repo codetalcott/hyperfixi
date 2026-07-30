@@ -47,7 +47,7 @@ export interface AsyncCommandOutput {
  * Before: 233 lines
  * After: ~150 lines (36% reduction)
  */
-@command({ name: 'async', category: 'advanced' })
+@command({ name: 'async' })
 export class AsyncCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Execute commands asynchronously without blocking',

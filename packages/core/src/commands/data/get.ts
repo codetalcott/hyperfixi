@@ -40,7 +40,7 @@ export interface GetCommandOutput {
  * Before: 160 lines
  * After: ~65 lines (59% reduction)
  */
-@command({ name: 'get', category: 'data' })
+@command({ name: 'get' })
 export class GetCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Evaluate an expression and store the result in it',

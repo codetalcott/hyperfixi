@@ -41,7 +41,7 @@ export interface CallCommandOutput {
  * Before: 238 lines
  * After: ~85 lines (64% reduction)
  */
-@command({ name: 'call', category: 'execution' })
+@command({ name: 'call' })
 export class CallCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Evaluate an expression and store the result in the it variable',

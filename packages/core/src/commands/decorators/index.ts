@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * @command({ name: 'increment', category: 'data' })
+ * @command({ name: 'increment' })
  * @meta({
  *   description: 'Increment a variable',
  *   syntax: 'increment <target>',
@@ -37,34 +37,7 @@ import type {
 export interface CommandConfig {
   /** Command name as used in hyperscript */
   name: string;
-  /** Command category */
-  category: CommandCategory;
 }
-
-/**
- * Simplified metadata for the @meta decorator (excludes category which is in @command)
- */
-export interface MetaConfig {
-  description: string;
-  syntax: string | readonly string[];
-  examples: readonly string[];
-  sideEffects?: readonly CommandSideEffect[];
-  deprecated?: boolean;
-  deprecationMessage?: string;
-  aliases?: readonly string[];
-  relatedCommands?: readonly string[];
-  isBlocking?: boolean;
-  hasBody?: boolean;
-  /** @see CommandMetadata.compatibility */
-  compatibility?: 'standard' | 'lokascript-extension' | 'experimental';
-}
-
-/**
- * Symbol keys for storing decorator data
- */
-const COMMAND_NAME = Symbol('command:name');
-const COMMAND_CATEGORY = Symbol('command:category');
-const COMMAND_METADATA = Symbol('command:metadata');
 
 /**
  * Interface for decorated command classes
@@ -73,15 +46,6 @@ export interface DecoratedCommand {
   readonly name: string;
   readonly metadata: CommandMetadata;
 }
-
-/**
- * Type for class constructors with symbol properties
- */
-type ClassWithSymbols = {
-  [COMMAND_NAME]?: string;
-  [COMMAND_CATEGORY]?: CommandCategory;
-  [COMMAND_METADATA]?: CommandMetadata;
-};
 
 // ============================================================================
 // @command Decorator
@@ -96,7 +60,7 @@ type ClassWithSymbols = {
  *
  * @example
  * ```typescript
- * @command({ name: 'increment', category: 'data' })
+ * @command({ name: 'increment' })
  * class IncrementCommand { ... }
  * ```
  */
@@ -105,96 +69,11 @@ export function command(config: CommandConfig) {
     target: T,
     context: ClassDecoratorContext
   ): T | void {
-    // Store config on class for later use
-    const targetWithSymbols = target as T & ClassWithSymbols;
-    targetWithSymbols[COMMAND_NAME] = config.name;
-    targetWithSymbols[COMMAND_CATEGORY] = config.category;
-
     // Add name property to prototype
     Object.defineProperty(target.prototype, 'name', {
       value: config.name,
       writable: false,
       enumerable: true,
-    });
-
-    // Return undefined to keep original class (mutated)
-    return;
-  };
-}
-
-// ============================================================================
-// @meta Decorator
-// ============================================================================
-
-/**
- * Class decorator that sets command metadata.
- *
- * Adds:
- * - static `metadata` property
- * - instance `metadata` getter
- *
- * Must be used after @command to access category.
- *
- * @example
- * ```typescript
- * @command({ name: 'increment', category: 'data' })
- * @meta({
- *   description: 'Increment a variable or property',
- *   syntax: 'increment <target> [by <amount>]',
- *   examples: ['increment counter', 'increment counter by 5'],
- * })
- * class IncrementCommand { ... }
- * ```
- */
-export function meta(config: MetaConfig) {
-  return function <T extends new (...args: unknown[]) => object>(
-    target: T,
-    context: ClassDecoratorContext
-  ): T | void {
-    // Build full metadata (category comes from @command decorator)
-    const targetWithSymbols = target as T & ClassWithSymbols;
-    const category = targetWithSymbols[COMMAND_CATEGORY];
-
-    if (!category) {
-      throw new Error(
-        `@meta decorator requires @command decorator to be applied first on ${target.name}`
-      );
-    }
-
-    const fullMetadata: CommandMetadata = {
-      description: config.description,
-      syntax: config.syntax,
-      examples: config.examples,
-      category,
-      sideEffects: config.sideEffects,
-      deprecated: config.deprecated,
-      deprecationMessage: config.deprecationMessage,
-      aliases: config.aliases,
-      relatedCommands: config.relatedCommands,
-      isBlocking: config.isBlocking ?? false,
-      hasBody: config.hasBody ?? false,
-      version: '1.0.0',
-      compatibility: config.compatibility,
-    };
-
-    // Store on class
-    targetWithSymbols[COMMAND_METADATA] = fullMetadata;
-
-    // Add static metadata property
-    Object.defineProperty(target, 'metadata', {
-      value: fullMetadata,
-      writable: false,
-      enumerable: true,
-      configurable: false,
-    });
-
-    // Add instance metadata getter via prototype
-    Object.defineProperty(target.prototype, 'metadata', {
-      get() {
-        return fullMetadata;
-      },
-      enumerable: true,
-      configurable: false,
     });
 
     // Return undefined to keep original class (mutated)
@@ -231,10 +110,11 @@ export type CommandMetaInput = Omit<CommandMetadata, 'version'> & {
  * `@meta` installs `metadata` with `Object.defineProperty`, and a class
  * decorator that returns the original class cannot widen its type — so
  * TypeScript never sees the static. That invisibility (not a lack of
- * validation) is the defect: `meta(config: MetaConfig)` already type-checks
- * the literal passed to it, but `SomeCommand.metadata` is `TS2339` at every
- * read, which is why `scripts/generate-command-docs.ts` needs a runtime
+ * validation) was the defect: the now-deleted `@meta` decorator DID type-check
+ * the literal passed to it, but `SomeCommand.metadata` was `TS2339` at every
+ * read — which is why `scripts/generate-command-docs.ts` needed a runtime
  * `metadataOf()` assertion and why script typechecking stayed off for months.
+ * Both are gone as of Arc B step 4.
  *
  * The classes this replaces used a bare `as const`, which has the mirror-image
  * problem: the static is visible but validated by **nothing**. Measured before
@@ -280,41 +160,11 @@ export function commandMeta<const T extends CommandMetaInput>(metadata: T) {
 // ============================================================================
 
 /**
- * Get command name from a decorated class
- */
-export function getCommandName<T extends new (...args: unknown[]) => object>(
-  target: T
-): string | undefined {
-  const targetWithSymbols = target as T & ClassWithSymbols;
-  return targetWithSymbols[COMMAND_NAME];
-}
-
-/**
- * Get command category from a decorated class
- */
-export function getCommandCategory<T extends new (...args: unknown[]) => object>(
-  target: T
-): CommandCategory | undefined {
-  const targetWithSymbols = target as T & ClassWithSymbols;
-  return targetWithSymbols[COMMAND_CATEGORY];
-}
-
-/**
- * Get command metadata from a decorated class
- */
-export function getCommandMetadata<T extends new (...args: unknown[]) => object>(
-  target: T
-): CommandMetadata | undefined {
-  const targetWithSymbols = target as T & ClassWithSymbols;
-  return targetWithSymbols[COMMAND_METADATA];
-}
-
-/**
  * Create a factory function for a command class
  *
  * @example
  * ```typescript
- * @command({ name: 'increment', category: 'data' })
+ * @command({ name: 'increment' })
  * @meta({ ... })
  * class IncrementCommand { ... }
  *

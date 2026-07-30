@@ -54,7 +54,7 @@ export type SendCommandInput = Omit<EventDispatchInput, 'mode'>;
  * Consolidates TriggerCommand and SendCommand into single implementation.
  * Registered under both 'trigger' and 'send' names via aliases.
  */
-@command({ name: 'trigger', category: 'event' })
+@command({ name: 'trigger' })
 export class EventDispatchCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Dispatch events on elements',

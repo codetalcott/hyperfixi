@@ -43,7 +43,7 @@ function isFormFieldElement(
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 }
 
-@command({ name: 'clear', category: 'data' })
+@command({ name: 'clear' })
 export class ClearCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description:

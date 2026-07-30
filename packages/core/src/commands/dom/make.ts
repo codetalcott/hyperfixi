@@ -178,7 +178,7 @@ async function resolveVariableName(
   return typeof value === 'string' ? value : undefined;
 }
 
-@command({ name: 'make', category: 'dom' })
+@command({ name: 'make' })
 export class MakeCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Create DOM elements or class instances',

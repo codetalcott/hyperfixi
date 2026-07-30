@@ -67,7 +67,7 @@ export interface IfCommandOutput extends ConditionalCommandOutput {}
  * - 'if' mode: executes then-branch when condition is TRUE
  * - 'unless' mode: executes then-branch when condition is FALSE
  */
-@command({ name: 'if', category: 'control-flow' })
+@command({ name: 'if' })
 export class ConditionalCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Conditional execution based on boolean expressions',

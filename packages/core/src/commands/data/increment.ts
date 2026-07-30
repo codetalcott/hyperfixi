@@ -49,7 +49,7 @@ export type { NumericTargetInput as DecrementCommandInput };
  * Consolidates IncrementCommand and DecrementCommand into single implementation.
  * Registered under both 'increment' and 'decrement' names via aliases.
  */
-@command({ name: 'increment', category: 'data' })
+@command({ name: 'increment' })
 export class NumericModifyCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Modify a variable or property by a specified amount (default: 1)',

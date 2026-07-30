@@ -48,7 +48,7 @@ export interface BeepCommandOutput {
  * Before: 279 lines
  * After: ~130 lines (53% reduction)
  */
-@command({ name: 'beep', category: 'utility' })
+@command({ name: 'beep' })
 export class BeepCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Debug output for expressions with type information',

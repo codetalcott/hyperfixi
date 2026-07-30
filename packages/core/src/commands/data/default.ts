@@ -52,7 +52,7 @@ export interface DefaultCommandOutput {
   targetType: 'variable' | 'attribute' | 'property' | 'element';
 }
 
-@command({ name: 'default', category: 'data' })
+@command({ name: 'default' })
 export class DefaultCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: "Set a value only if it doesn't already exist",

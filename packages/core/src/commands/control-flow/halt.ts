@@ -42,7 +42,7 @@ export interface HaltCommandOutput {
  * Before: 216 lines
  * After: ~100 lines (54% reduction)
  */
-@command({ name: 'halt', category: 'control-flow' })
+@command({ name: 'halt' })
 export class HaltCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Stop command execution or prevent event defaults',

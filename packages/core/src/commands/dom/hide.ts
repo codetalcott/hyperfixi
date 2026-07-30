@@ -21,7 +21,7 @@ export type HideCommandInput = VisibilityInput;
 /**
  * HideCommand - Hides elements
  */
-@command({ name: 'hide', category: 'dom' })
+@command({ name: 'hide' })
 export class HideCommand extends VisibilityCommandBase {
   static readonly metadata = commandMeta({
     description: 'Hide elements by setting display to none',

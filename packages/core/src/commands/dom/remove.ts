@@ -55,7 +55,7 @@ export type RemoveCommandInput =
 /**
  * RemoveCommand - Removes classes, attributes, styles, or elements
  */
-@command({ name: 'remove', category: 'dom' })
+@command({ name: 'remove' })
 export class RemoveCommand extends DOMModificationBase {
   static readonly metadata = commandMeta({
     description: 'Remove CSS classes, attributes, styles, or elements from the DOM',

@@ -79,7 +79,7 @@ function isPopoverElement(el: HTMLElement): boolean {
   return el.hasAttribute('popover');
 }
 
-@command({ name: 'open', category: 'dom' })
+@command({ name: 'open' })
 export class OpenCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Open a dialog, details element, or popover',

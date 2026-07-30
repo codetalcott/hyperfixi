@@ -21,7 +21,7 @@ import { commandMeta, command, createFactory, type CommandMetadata } from '../de
 export type AppendCommandInput = InsertionCommandInput;
 export type AppendCommandOutput = InsertionCommandOutput;
 
-@command({ name: 'append', category: 'content' })
+@command({ name: 'append' })
 export class AppendCommand extends ContentInsertionCommand {
   static readonly metadata = commandMeta({
     description: 'Add content to the end of a string, array, Set, or HTML element',

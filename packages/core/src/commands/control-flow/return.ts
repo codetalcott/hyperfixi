@@ -41,7 +41,7 @@ export interface ReturnCommandOutput {
  * Before: 152 lines
  * After: ~65 lines (57% reduction)
  */
-@command({ name: 'return', category: 'control-flow' })
+@command({ name: 'return' })
 export class ReturnCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Return a value from a command sequence or function, terminating execution',

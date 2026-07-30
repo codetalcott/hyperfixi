@@ -24,7 +24,7 @@ import { commandMeta, command, createFactory, type CommandMetadata } from '../de
 export type PrependCommandInput = InsertionCommandInput;
 export type PrependCommandOutput = InsertionCommandOutput;
 
-@command({ name: 'prepend', category: 'content' })
+@command({ name: 'prepend' })
 export class PrependCommand extends ContentInsertionCommand {
   static readonly metadata = commandMeta({
     description: 'Add content to the start of a string, array, Set, or HTML element',

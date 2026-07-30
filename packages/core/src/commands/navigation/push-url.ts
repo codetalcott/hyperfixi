@@ -51,7 +51,7 @@ export interface HistoryCommandOutput {
  * Consolidates PushUrlCommand and ReplaceUrlCommand into single implementation.
  * Registered under both 'push' and 'replace' names via aliases.
  */
-@command({ name: 'push', category: 'navigation' })
+@command({ name: 'push' })
 export class HistoryCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Modify browser history URL without page reload',

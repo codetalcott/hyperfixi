@@ -94,7 +94,7 @@ function toSetInput(target: WriteTarget, value: unknown): SetCommandInput {
   }
 }
 
-@command({ name: 'set', category: 'data' })
+@command({ name: 'set' })
 export class SetCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Set values to variables, attributes, or properties',

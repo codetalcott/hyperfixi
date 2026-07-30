@@ -30,7 +30,7 @@ export interface BlurCommandInput {
   targets: HTMLElement[];
 }
 
-@command({ name: 'blur', category: 'execution' })
+@command({ name: 'blur' })
 export class BlurCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Remove focus from an element (calls HTMLElement.blur())',

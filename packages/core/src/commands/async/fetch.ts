@@ -150,7 +150,7 @@ export interface FetchCommandOutput {
  * Before: 640 lines
  * After: ~250 lines (61% reduction)
  */
-@command({ name: 'fetch', category: 'async' })
+@command({ name: 'fetch' })
 export class FetchCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Make HTTP requests with lifecycle event support',

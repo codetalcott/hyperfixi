@@ -42,7 +42,7 @@ export interface LogCommandOutput {
  * Before: 192 lines
  * After: ~70 lines (64% reduction)
  */
-@command({ name: 'log', category: 'utility' })
+@command({ name: 'log' })
 export class LogCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Log values to the console',
