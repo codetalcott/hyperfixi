@@ -648,12 +648,55 @@ this deletes it.
 the `--check` gate. Regenerating it in 4a would have shipped an artifact change
 with no gate to keep it honest.
 
-**Step 4b — the prose (NOT started).** Completeness tests for
-`reference/index.ts` and `lsp-metadata.ts` first (cheap), then
-`generate-command-docs.ts`'s 43-entry table replaced by the manifest plus a
-factory map (F-B3 — it is 16 commands short and gated by nothing), an npm script,
-and `--check` in CI, honouring both findings above. Also still open from F-B1:
-narrowing the adapter's shadow `CommandMetadata` and settling `:421`'s fate.
+**Step 4b — the prose — ✅ DONE.**
+
+- **The generator now covers all 59** (was 43). The 16 previously-undocumented
+  commands: `blur`, `breakpoint`, `clear`, `close`, `empty`, `focus`, `morph`,
+  `open`, `process`, `push`, `replace`, `reset`, `scroll`, `select`, `start`,
+  `swap`. The import block and table were regenerated from the manifest order, so
+  the file no longer holds a hand-curated subset.
+- **The gate F-B3 said did not exist:**
+  `src/commands/__tests__/docs-coverage.test.ts`, 7 tests. The table must name
+  exactly `COMMAND_NAMES` **in the same order**, carry no duplicate rows, and match
+  what the runtime actually registers (asked directly, not through the manifest —
+  the whole point is comparing a docs list to the *code*). Mutation-verified in
+  four directions: dropping `toggle` fails 2 tests, duplicating a row fails 3,
+  reintroducing the timestamp fails its guard, removing the `prettier.format` call
+  fails its guard.
+- **Both 4a blockers fixed, and each is now itself gated.** The generator formats
+  its output with prettier (so regenerating is a no-op, not a re-flow) and emits
+  **no timestamp** (so `--check` means "content drifted" and nothing else).
+  Idempotence verified by running it twice and getting an identical diffstat, and
+  `prettier --check` is clean on both artifacts — so the pre-commit hook will not
+  fight the gate.
+- **`npm run docs:commands` / `docs:commands:check`** added, and the check joins
+  the existing "Check generated artifacts are in sync" CI step, which already
+  carries exactly this reasoning for two other generators. `--check` failure
+  mutation-verified in both directions (perturbed artifact; dropped table row).
+- **`commands.json` and `REFERENCE.md` regenerated** — now 59 commands each, and
+  carrying the `compatibility` field the metadata gained in step 3.
+
+**One thing the plan asked for that was already done.** The queue named
+"completeness tests for `reference/index.ts` and `lsp-metadata.ts` first (cheap)"
+as 4b's opening move. **Arc A already built both** — the manifest audit's §2
+asserts `reference/index.ts` "documents exactly the registered set" and §5 gates
+`COMMAND_KEYWORDS`/`HOVER_DOCS` in both directions. Writing them again would have
+added a second place to maintain and no new check, so `docs-coverage.test.ts`
+records the non-duplication instead. Measured before writing — the same "score the
+rows already there" check that corrected this arc's premise in the brief.
+
+What 4b substituted for that freed effort: a **prose ratchet** on the metadata
+itself (non-empty description, ≥1 syntax form, ≥1 example, all 59 passing today).
+It guards the thing `commandMeta` structurally cannot — `''` is a perfectly good
+`string`, so the type system will never object to an empty description, while the
+generator will happily publish it.
+
+**Still open from F-B1, deliberately not folded in:** narrowing
+`command-adapter.ts`'s shadow `CommandMetadata` and settling `:421`'s name
+fallback. It is a behavior question (the fallback is the only path for a V1
+command carrying `metadata.name`, and the canonical type has no `name` field), not
+a docs one, so it does not belong in the same PR as a docs generator. Recorded in
+the queue.
 
 ## Gate couplings that must move in the same diff
 

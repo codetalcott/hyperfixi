@@ -1,7 +1,6 @@
 {
   "$schema": "https://hyperfixi.dev/schemas/commands.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-28T15:22:24.229Z",
   "categories": [
     "animation",
     "async",
@@ -68,6 +67,9 @@
   ],
   "commands": {
     "add": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Add CSS classes, attributes, or styles to elements",
       "syntax": ["add <classes|@attr|{styles}> [to <target>]"],
       "examples": [
@@ -76,87 +78,367 @@
         "add .highlighted to #modal",
         "add [@data-test=\"value\"] to #element"
       ],
-      "category": "dom",
       "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "append": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
-    },
-    "remove": {
-      "description": "Remove CSS classes, attributes, styles, or elements from the DOM",
-      "syntax": ["remove <classes|@attr|*prop|element> [from <target>]"],
+      "version": "1.0.0",
+      "description": "Add content to the end of a string, array, Set, or HTML element",
+      "syntax": ["append <content>", "append <content> to <target>"],
       "examples": [
-        "remove .active from me",
-        "remove \"active selected\" from <button/>",
-        "remove .highlighted from #modal",
-        "remove me",
-        "remove closest .item"
+        "append \"Hello\"",
+        "append \"World\" to greeting",
+        "append item to myArray",
+        "append \"<p>New</p>\" to #content",
+        "append \" (edited)\" to #title's textContent"
       ],
-      "category": "dom",
-      "sideEffects": ["dom-mutation"],
+      "sideEffects": ["data-mutation", "dom-mutation"],
+      "category": "content",
+      "compatibility": "standard"
+    },
+    "async": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
-    },
-    "toggle": {
-      "description": "Toggle classes, attributes, or interactive elements",
-      "syntax": [
-        "toggle <class> [on <target>]",
-        "toggle @attr",
-        "toggle <element> [as modal]",
-        "toggle <expr> for <duration>"
-      ],
+      "version": "1.0.0",
+      "description": "Execute commands asynchronously without blocking",
+      "syntax": ["async <command> [<command> ...]"],
       "examples": [
-        "toggle .active on me",
-        "toggle @disabled",
-        "toggle #myDialog as modal",
-        "toggle .loading for 2s"
+        "async command1 command2",
+        "async fetchData processData",
+        "async animateIn showContent"
       ],
-      "category": "dom",
-      "sideEffects": ["dom-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "sideEffects": ["async-execution"],
+      "category": "advanced",
+      "compatibility": "lokascript-extension"
     },
-    "show": {
-      "description": "Show elements by restoring display property",
-      "syntax": ["show [<target>]"],
-      "examples": ["show me", "show #modal", "show .hidden", "show <button/>"],
-      "category": "dom",
-      "sideEffects": ["dom-mutation"],
+    "beep": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Debug output for expressions with type information",
+      "syntax": ["beep!", "beep! <expression>", "beep! <expression>, <expression>, ..."],
+      "examples": ["beep!", "beep! myValue", "beep! me.id, me.className"],
+      "sideEffects": ["console-output", "debugging"],
+      "category": "utility",
+      "compatibility": "lokascript-extension"
+    },
+    "blur": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Remove focus from an element (calls HTMLElement.blur())",
+      "syntax": ["blur", "blur <target>", "blur on <target>"],
+      "examples": ["blur", "blur #search", "blur on <input/>"],
+      "sideEffects": ["focus"],
+      "category": "execution",
+      "compatibility": "standard"
+    },
+    "break": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Exit from the current loop (repeat, for, while, until)",
+      "syntax": ["break"],
+      "examples": [
+        "break",
+        "if found then break",
+        "repeat for item in items { if item == target then break }"
+      ],
+      "sideEffects": ["control-flow"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "breakpoint": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Drop into the debugger (emits a debugger; statement)",
+      "syntax": ["breakpoint"],
+      "examples": ["breakpoint", "on click breakpoint"],
+      "sideEffects": ["debugging"],
+      "category": "utility",
+      "compatibility": "standard"
+    },
+    "call": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Evaluate an expression and store the result in the it variable",
+      "syntax": ["call <expression>"],
+      "examples": ["call myFunction()", "call fetch(\"/api/data\")", "call element.focus()"],
+      "sideEffects": ["function-execution", "context-mutation"],
+      "category": "execution",
+      "compatibility": "standard"
+    },
+    "clear": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>)",
+      "syntax": ["clear <var>", "clear :var", "clear <target>"],
+      "examples": ["clear :count", "clear myVar", "clear #search", "clear <textarea/>"],
+      "sideEffects": ["state-mutation", "dom-mutation"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "close": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Close a dialog, details element, or popover",
+      "syntax": ["close", "close <target>"],
+      "examples": ["close", "close #myDialog", "close #details", "close #popup"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "continue": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Skip to the next iteration of the current loop",
+      "syntax": ["continue"],
+      "examples": [
+        "continue",
+        "if item.isInvalid then continue",
+        "repeat for item in items { if item.skip then continue; process item }"
+      ],
+      "sideEffects": ["control-flow"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "copy": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Copy text or element content to the clipboard",
+      "syntax": ["copy <source>", "copy <source> to clipboard"],
+      "examples": ["copy \"Hello World\"", "copy #code-snippet", "copy my textContent"],
+      "sideEffects": ["clipboard-write", "custom-events"],
+      "category": "utility",
+      "compatibility": "lokascript-extension"
+    },
+    "decrement": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Modify a variable or property by a specified amount (default: 1)",
+      "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
+      "examples": [
+        "increment counter",
+        "increment counter by 5",
+        "decrement counter",
+        "decrement counter by 5"
+      ],
+      "sideEffects": ["data-mutation", "context-modification"],
+      "aliases": ["decrement"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "default": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Set a value only if it doesn't already exist",
+      "syntax": ["default <expression> to <expression>"],
+      "examples": [
+        "default myVar to \"fallback\"",
+        "default @data-theme to \"light\"",
+        "default my innerHTML to \"No content\""
+      ],
+      "sideEffects": ["data-mutation", "dom-mutation"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "empty": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Remove all children from an element (sets innerHTML to empty)",
+      "syntax": ["empty", "empty <target>", "empty the <target>"],
+      "examples": ["empty me", "empty #list", "empty .results"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "exit": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Immediately terminate execution of the current event handler or behavior",
+      "syntax": ["exit"],
+      "examples": ["exit", "if no draggedItem exit", "on click if disabled exit"],
+      "sideEffects": ["control-flow"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "fetch": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Make HTTP requests with lifecycle event support",
+      "syntax": ["fetch <url>", "fetch <url> as <type>", "fetch <url> with <options>"],
+      "examples": [
+        "fetch \"/api/data\"",
+        "fetch \"/api/users\" as json",
+        "fetch \"/api/save\" with { method:\"POST\" }"
+      ],
+      "sideEffects": ["network", "event-dispatching"],
+      "category": "async",
+      "compatibility": "standard"
+    },
+    "focus": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Focus an element (calls HTMLElement.focus())",
+      "syntax": ["focus", "focus <target>", "focus on <target>"],
+      "examples": ["focus", "focus #search", "focus on <input/>"],
+      "sideEffects": ["focus"],
+      "category": "execution",
+      "compatibility": "standard"
+    },
+    "get": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Evaluate an expression and store the result in it",
+      "syntax": ["get <expression>"],
+      "examples": ["get #my-dialog", "get <button/>", "get me.parentElement"],
+      "sideEffects": ["context-mutation"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "go": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Navigation functionality including URL navigation, element scrolling, and browser history",
+      "syntax": ["go back", "go to url <url> [in new window]", "go to [position] [of] <element>"],
+      "examples": ["go back", "go to url \"https://example.com\"", "go to top of #header"],
+      "sideEffects": ["navigation", "scrolling"],
+      "category": "navigation",
+      "compatibility": "standard"
+    },
+    "halt": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Stop command execution or prevent event defaults",
+      "syntax": ["halt", "halt the event"],
+      "examples": [
+        "halt",
+        "halt the event",
+        "if error then halt",
+        "on click halt the event then log \"clicked\""
+      ],
+      "sideEffects": ["control-flow", "event-prevention"],
+      "category": "control-flow",
+      "compatibility": "standard"
     },
     "hide": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Hide elements by setting display to none",
       "syntax": ["hide [<target>]"],
       "examples": ["hide me", "hide #modal", "hide .warnings", "hide <button/>"],
-      "category": "dom",
       "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "if": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
-    },
-    "put": {
-      "description": "Insert content into elements or properties",
+      "version": "1.0.0",
+      "description": "Conditional execution based on boolean expressions",
       "syntax": [
-        "put <value> into <target>",
-        "put <value> before <target>",
-        "put <value> after <target>"
+        "if <condition> then <commands>",
+        "if <condition> then <commands> else <commands>",
+        "unless <condition> <commands>"
       ],
       "examples": [
-        "put \"Hello World\" into me",
-        "put <div>Content</div> before #target",
-        "put value into #elem's innerHTML"
+        "if x > 5 then add .active",
+        "if user.isAdmin then show #adminPanel else hide #adminPanel",
+        "unless user.isLoggedIn showLoginForm"
       ],
-      "category": "dom",
-      "sideEffects": ["dom-mutation"],
+      "sideEffects": ["conditional-execution"],
+      "aliases": ["unless"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "increment": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Modify a variable or property by a specified amount (default: 1)",
+      "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
+      "examples": [
+        "increment counter",
+        "increment counter by 5",
+        "decrement counter",
+        "decrement counter by 5"
+      ],
+      "sideEffects": ["data-mutation", "context-modification"],
+      "aliases": ["decrement"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "install": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Install a behavior on an element with optional parameters",
+      "syntax": [
+        "install <BehaviorName>",
+        "install <BehaviorName> on <element>",
+        "install <BehaviorName>(param: value)",
+        "install <BehaviorName>(param: value) on <element>"
+      ],
+      "examples": [
+        "install Removable",
+        "install Draggable on #box",
+        "install Tooltip(text: \"Help\", position: \"top\")",
+        "install Sortable(axis: \"y\") on .list",
+        "install MyBehavior(foo: 42) on the first <div/>"
+      ],
+      "category": "behaviors",
+      "compatibility": "standard",
+      "sideEffects": ["behavior-installation", "element-modification"]
+    },
+    "js": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Execute inline JavaScript code with access to hyperscript context",
+      "syntax": ["js <code> end", "js(param1, param2) <code> end"],
+      "examples": [
+        "js console.log(\"Hello\") end",
+        "js(x, y) return x + y end",
+        "js me.style.color = \"red\" end"
+      ],
+      "sideEffects": ["code-execution", "data-mutation"],
+      "category": "advanced",
+      "compatibility": "standard"
+    },
+    "log": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Log values to the console",
+      "syntax": ["log [<values...>]"],
+      "examples": ["log \"Hello World\"", "log me.value", "log x y z", "log \"Result:\" result"],
+      "sideEffects": ["console-output"],
+      "category": "utility",
+      "compatibility": "standard"
     },
     "make": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Create DOM elements or class instances",
       "syntax": [
         "make a <tag#id.class1.class2/>",
@@ -166,56 +448,14 @@
         "make an <a.navlink/> called linkElement",
         "make a URL from \"/path/\", \"https://origin.example.com\""
       ],
-      "category": "dom",
       "sideEffects": ["dom-creation", "data-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "wait": {
-      "description": "Wait for time delay, event, or race condition",
-      "syntax": ["wait <time>", "wait for <event>", "wait for <event> or <condition>"],
-      "examples": [
-        "wait 2s",
-        "wait for click",
-        "wait for click or 1s",
-        "wait for mousemove(clientX, clientY)"
-      ],
-      "category": "async",
-      "sideEffects": ["time", "event-listening"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "fetch": {
-      "description": "Make HTTP requests with lifecycle event support",
-      "syntax": ["fetch <url>", "fetch <url> as <type>", "fetch <url> with <options>"],
-      "examples": [
-        "fetch \"/api/data\"",
-        "fetch \"/api/users\" as json",
-        "fetch \"/api/save\" with { method:\"POST\" }"
-      ],
-      "category": "async",
-      "sideEffects": ["network", "event-dispatching"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "transition": {
-      "description": "Animate CSS properties using CSS transitions",
-      "syntax": ["transition <property> to <value> [over <duration>] [with <timing>]"],
-      "examples": [
-        "transition opacity to 0.5",
-        "transition left to 100px over 500ms",
-        "transition background-color to red over 1s with ease-in-out"
-      ],
-      "category": "animation",
-      "sideEffects": ["style-change", "timing"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "category": "dom",
+      "compatibility": "standard"
     },
     "measure": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Measure DOM element dimensions, positions, and properties",
       "syntax": ["measure", "measure <property>", "measure <target> <property>"],
       "examples": [
@@ -224,312 +464,36 @@
         "measure #element height",
         "measure x and set dragX"
       ],
-      "category": "animation",
       "sideEffects": ["data-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "settle": {
-      "description": "Wait for CSS transitions and animations to complete",
-      "syntax": ["settle [<target>] [for <timeout>]"],
-      "examples": ["settle", "settle #animated-element", "settle for 3000"],
       "category": "animation",
-      "sideEffects": ["timing"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "compatibility": "standard"
     },
-    "take": {
-      "description": "Move classes, attributes, and properties from one element to another",
-      "syntax": [
-        "take <property> from <source>",
-        "take <property> from <source> and put it on <target>"
-      ],
-      "examples": [
-        "take class from <#source/>",
-        "take @data-value from <.source/> and put it on <#target/>"
-      ],
-      "category": "animation",
-      "sideEffects": ["dom-mutation", "property-transfer"],
+    "morph": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Morph content into target elements (intelligent diffing, preserves state)",
+      "syntax": ["morph <target> with <content>", "morph over <target> with <content>"],
+      "examples": ["morph #target with it", "morph over #modal with fetchedContent"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
     },
-    "if": {
-      "description": "Conditional execution based on boolean expressions",
-      "syntax": [
-        "if <condition> then <commands>",
-        "if <condition> then <commands> else <commands>",
-        "unless <condition> <commands>"
-      ],
-      "examples": [
-        "if x > 5 then add .active",
-        "if user.isAdmin then show #adminPanel else hide #adminPanel",
-        "unless user.isLoggedIn showLoginForm"
-      ],
-      "category": "control-flow",
-      "sideEffects": ["conditional-execution"],
-      "aliases": ["unless"],
+    "open": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
-    },
-    "repeat": {
-      "description": "Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops",
-      "syntax": [
-        "repeat for <var> in <collection> { <commands> }",
-        "repeat <count> times { <commands> }",
-        "repeat while <condition> { <commands> }",
-        "repeat until <condition> { <commands> }",
-        "repeat forever { <commands> }"
-      ],
-      "examples": ["repeat for item in items { log item }", "repeat 5 times { log \"hello\" }"],
-      "category": "control-flow",
-      "sideEffects": ["iteration", "conditional-execution"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "break": {
-      "description": "Exit from the current loop (repeat, for, while, until)",
-      "syntax": ["break"],
-      "examples": [
-        "break",
-        "if found then break",
-        "repeat for item in items { if item == target then break }"
-      ],
-      "category": "control-flow",
-      "sideEffects": ["control-flow"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "continue": {
-      "description": "Skip to the next iteration of the current loop",
-      "syntax": ["continue"],
-      "examples": [
-        "continue",
-        "if item.isInvalid then continue",
-        "repeat for item in items { if item.skip then continue; process item }"
-      ],
-      "category": "control-flow",
-      "sideEffects": ["control-flow"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "return": {
-      "description": "Return a value from a command sequence or function, terminating execution",
-      "syntax": ["return", "return <value>"],
-      "examples": ["return", "return 42", "return user.name", "if found then return result"],
-      "category": "control-flow",
-      "sideEffects": ["control-flow", "context-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "exit": {
-      "description": "Immediately terminate execution of the current event handler or behavior",
-      "syntax": ["exit"],
-      "examples": ["exit", "if no draggedItem exit", "on click if disabled exit"],
-      "category": "control-flow",
-      "sideEffects": ["control-flow"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "halt": {
-      "description": "Stop command execution or prevent event defaults",
-      "syntax": ["halt", "halt the event"],
-      "examples": [
-        "halt",
-        "halt the event",
-        "if error then halt",
-        "on click halt the event then log \"clicked\""
-      ],
-      "category": "control-flow",
-      "sideEffects": ["control-flow", "event-prevention"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "throw": {
-      "description": "Throw an error with a specified message",
-      "syntax": ["throw <message>"],
-      "examples": ["throw \"Invalid input\"", "if not valid then throw \"Validation failed\""],
-      "category": "control-flow",
-      "sideEffects": ["error-throwing", "execution-termination"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "unless": {
-      "description": "Conditional execution based on boolean expressions",
-      "syntax": [
-        "if <condition> then <commands>",
-        "if <condition> then <commands> else <commands>",
-        "unless <condition> <commands>"
-      ],
-      "examples": [
-        "if x > 5 then add .active",
-        "if user.isAdmin then show #adminPanel else hide #adminPanel",
-        "unless user.isLoggedIn showLoginForm"
-      ],
-      "category": "control-flow",
-      "sideEffects": ["conditional-execution"],
-      "aliases": ["unless"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "set": {
-      "description": "Set values to variables, attributes, or properties",
-      "syntax": ["set <target> to <value>"],
-      "examples": [
-        "set myVar to \"value\"",
-        "set @data-theme to \"dark\"",
-        "set my innerHTML to \"content\""
-      ],
-      "category": "data",
-      "sideEffects": ["state-mutation", "dom-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "get": {
-      "description": "Evaluate an expression and store the result in it",
-      "syntax": ["get <expression>"],
-      "examples": ["get #my-dialog", "get <button/>", "get me.parentElement"],
-      "category": "data",
-      "sideEffects": ["context-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "increment": {
-      "description": "Modify a variable or property by a specified amount (default: 1)",
-      "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
-      "examples": [
-        "increment counter",
-        "increment counter by 5",
-        "decrement counter",
-        "decrement counter by 5"
-      ],
-      "category": "data",
-      "sideEffects": ["data-mutation", "context-modification"],
-      "aliases": ["decrement"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "decrement": {
-      "description": "Modify a variable or property by a specified amount (default: 1)",
-      "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
-      "examples": [
-        "increment counter",
-        "increment counter by 5",
-        "decrement counter",
-        "decrement counter by 5"
-      ],
-      "category": "data",
-      "sideEffects": ["data-mutation", "context-modification"],
-      "aliases": ["decrement"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "default": {
-      "description": "Set a value only if it doesn't already exist",
-      "syntax": ["default <expression> to <expression>"],
-      "examples": [
-        "default myVar to \"fallback\"",
-        "default @data-theme to \"light\"",
-        "default my innerHTML to \"No content\""
-      ],
-      "category": "data",
-      "sideEffects": ["data-mutation", "dom-mutation"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "trigger": {
-      "description": "Dispatch events on elements",
-      "syntax": [
-        "trigger <event> on <target>",
-        "trigger <event>(<detail>) on <target>",
-        "send <event> to <target>",
-        "send <event>(<detail>) to <target>"
-      ],
-      "examples": [
-        "trigger click on #button",
-        "trigger customEvent on me",
-        "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
-      ],
-      "category": "event",
-      "sideEffects": ["event-dispatch"],
-      "aliases": ["send"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "send": {
-      "description": "Dispatch events on elements",
-      "syntax": [
-        "trigger <event> on <target>",
-        "trigger <event>(<detail>) on <target>",
-        "send <event> to <target>",
-        "send <event>(<detail>) to <target>"
-      ],
-      "examples": [
-        "trigger click on #button",
-        "trigger customEvent on me",
-        "send dataEvent to #target",
-        "send myEvent(count: 42) to me"
-      ],
-      "category": "event",
-      "sideEffects": ["event-dispatch"],
-      "aliases": ["send"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "log": {
-      "description": "Log values to the console",
-      "syntax": ["log [<values...>]"],
-      "examples": ["log \"Hello World\"", "log me.value", "log x y z", "log \"Result:\" result"],
-      "category": "utility",
-      "sideEffects": ["console-output"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "beep": {
-      "description": "Debug output for expressions with type information",
-      "syntax": ["beep!", "beep! <expression>", "beep! <expression>, <expression>, ..."],
-      "examples": ["beep!", "beep! myValue", "beep! me.id, me.className"],
-      "category": "utility",
-      "sideEffects": ["console-output", "debugging"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "tell": {
-      "description": "Execute commands in the context of target elements",
-      "syntax": ["tell <target> <command> [<command> ...]"],
-      "examples": [
-        "tell #sidebar hide",
-        "tell .buttons add .disabled",
-        "tell closest <form/> submit"
-      ],
-      "category": "utility",
-      "sideEffects": ["context-switching", "command-execution"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Open a dialog, details element, or popover",
+      "syntax": ["open [<target>]", "open <dialog> as modal", "open <dialog> as non-modal"],
+      "examples": ["open", "open #myDialog", "open #details", "open #popup as non-modal"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
     },
     "pick": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Select from a collection (first/last/random/range/regex match)",
       "syntax": [
         "pick first <count> of <expr>",
@@ -549,33 +513,48 @@
         "pick from colors",
         "pick \"red\", \"green\", \"blue\""
       ],
-      "category": "utility",
       "sideEffects": ["random-selection"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "copy": {
-      "description": "Copy text or element content to the clipboard",
-      "syntax": ["copy <source>", "copy <source> to clipboard"],
-      "examples": ["copy \"Hello World\"", "copy #code-snippet", "copy my textContent"],
       "category": "utility",
-      "sideEffects": ["clipboard-write", "custom-events"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "compatibility": "standard"
     },
-    "call": {
-      "description": "Evaluate an expression and store the result in the it variable",
-      "syntax": ["call <expression>"],
-      "examples": ["call myFunction()", "call fetch(\"/api/data\")", "call element.focus()"],
-      "category": "execution",
-      "sideEffects": ["function-execution", "context-mutation"],
+    "prepend": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Add content to the start of a string, array, Set, or HTML element",
+      "syntax": ["prepend <content>", "prepend <content> to <target>"],
+      "examples": [
+        "prepend \"Hello\"",
+        "prepend \"World\" to greeting",
+        "prepend item to myArray",
+        "prepend \"<p>First</p>\" to #content"
+      ],
+      "sideEffects": ["data-mutation", "dom-mutation"],
+      "category": "content",
+      "compatibility": "lokascript-extension"
+    },
+    "process": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Process <hx-partial> elements for multi-target swaps",
+      "syntax": [
+        "process partials in <content>",
+        "process partials in <content> using view transition"
+      ],
+      "examples": [
+        "process partials in it",
+        "process partials in fetchedHtml",
+        "process partials in it using view transition"
+      ],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "lokascript-extension"
     },
     "pseudo-command": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Treat a method on an object as a top-level command",
       "syntax": ["<method>(<args>) [(to|on|with|into|from|at)] <expression>"],
       "examples": [
@@ -585,78 +564,71 @@
         "foo() on me"
       ],
       "category": "execution",
+      "compatibility": "standard",
       "sideEffects": ["method-execution"]
     },
-    "js": {
-      "description": "Execute inline JavaScript code with access to hyperscript context",
-      "syntax": ["js <code> end", "js(param1, param2) <code> end"],
-      "examples": [
-        "js console.log(\"Hello\") end",
-        "js(x, y) return x + y end",
-        "js me.style.color = \"red\" end"
-      ],
-      "category": "advanced",
-      "sideEffects": ["code-execution", "data-mutation"],
+    "push": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
-    },
-    "async": {
-      "description": "Execute commands asynchronously without blocking",
-      "syntax": ["async <command> [<command> ...]"],
-      "examples": [
-        "async command1 command2",
-        "async fetchData processData",
-        "async animateIn showContent"
+      "version": "1.0.0",
+      "description": "Modify browser history URL without page reload",
+      "syntax": [
+        "push url <url>",
+        "push url <url> with title <title>",
+        "replace url <url>",
+        "replace url <url> with title <title>"
       ],
-      "category": "advanced",
-      "sideEffects": ["async-execution"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
-    },
-    "go": {
-      "description": "Navigation functionality including URL navigation, element scrolling, and browser history",
-      "syntax": ["go back", "go to url <url> [in new window]", "go to [position] [of] <element>"],
-      "examples": ["go back", "go to url \"https://example.com\"", "go to top of #header"],
+      "examples": [
+        "push url \"/page/2\"",
+        "push url \"/search\" with title \"Search Results\"",
+        "replace url \"/search?q=test\"",
+        "replace url \"/page\" with title \"Updated Page\""
+      ],
+      "sideEffects": ["navigation"],
+      "aliases": ["replace"],
       "category": "navigation",
-      "sideEffects": ["navigation", "scrolling"],
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0"
+      "compatibility": "lokascript-extension"
     },
-    "append": {
-      "description": "Add content to the end of a string, array, Set, or HTML element",
-      "syntax": ["append <content>", "append <content> to <target>"],
-      "examples": [
-        "append \"Hello\"",
-        "append \"World\" to greeting",
-        "append item to myArray",
-        "append \"<p>New</p>\" to #content",
-        "append \" (edited)\" to #title's textContent"
-      ],
-      "category": "content",
-      "sideEffects": ["data-mutation", "dom-mutation"],
+    "put": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Insert content into elements or properties",
+      "syntax": [
+        "put <value> into <target>",
+        "put <value> before <target>",
+        "put <value> after <target>"
+      ],
+      "examples": [
+        "put \"Hello World\" into me",
+        "put <div>Content</div> before #target",
+        "put value into #elem's innerHTML"
+      ],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
     },
-    "prepend": {
-      "description": "Add content to the start of a string, array, Set, or HTML element",
-      "syntax": ["prepend <content>", "prepend <content> to <target>"],
-      "examples": [
-        "prepend \"Hello\"",
-        "prepend \"World\" to greeting",
-        "prepend item to myArray",
-        "prepend \"<p>First</p>\" to #content"
-      ],
-      "category": "content",
-      "sideEffects": ["data-mutation", "dom-mutation"],
+    "remove": {
       "isBlocking": false,
       "hasBody": false,
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "description": "Remove CSS classes, attributes, styles, or elements from the DOM",
+      "syntax": ["remove <classes|@attr|*prop|element> [from <target>]"],
+      "examples": [
+        "remove .active from me",
+        "remove \"active selected\" from <button/>",
+        "remove .highlighted from #modal",
+        "remove me",
+        "remove closest .item"
+      ],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
     },
     "render": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
       "description": "Render templates with @if, @else, and @repeat directives",
       "syntax": [
         "render <template>",
@@ -670,25 +642,324 @@
         "render template with (items: data)"
       ],
       "category": "templates",
+      "compatibility": "standard",
       "sideEffects": ["dom-creation", "template-execution"]
     },
-    "install": {
-      "description": "Install a behavior on an element with optional parameters",
+    "repeat": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops",
       "syntax": [
-        "install <BehaviorName>",
-        "install <BehaviorName> on <element>",
-        "install <BehaviorName>(param: value)",
-        "install <BehaviorName>(param: value) on <element>"
+        "repeat for <var> in <collection> { <commands> }",
+        "repeat <count> times { <commands> }",
+        "repeat while <condition> { <commands> }",
+        "repeat until <condition> { <commands> }",
+        "repeat forever { <commands> }"
+      ],
+      "examples": ["repeat for item in items { log item }", "repeat 5 times { log \"hello\" }"],
+      "sideEffects": ["iteration", "conditional-execution"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "replace": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Modify browser history URL without page reload",
+      "syntax": [
+        "push url <url>",
+        "push url <url> with title <title>",
+        "replace url <url>",
+        "replace url <url> with title <title>"
       ],
       "examples": [
-        "install Removable",
-        "install Draggable on #box",
-        "install Tooltip(text: \"Help\", position: \"top\")",
-        "install Sortable(axis: \"y\") on .list",
-        "install MyBehavior(foo: 42) on the first <div/>"
+        "push url \"/page/2\"",
+        "push url \"/search\" with title \"Search Results\"",
+        "replace url \"/search?q=test\"",
+        "replace url \"/page\" with title \"Updated Page\""
       ],
-      "category": "behaviors",
-      "sideEffects": ["behavior-installation", "element-modification"]
+      "sideEffects": ["navigation"],
+      "aliases": ["replace"],
+      "category": "navigation",
+      "compatibility": "lokascript-extension"
+    },
+    "reset": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Reset a <form> element to its default values (HTMLFormElement.reset())",
+      "syntax": ["reset", "reset <target>"],
+      "examples": ["reset", "reset #myForm", "reset <form/>"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "return": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Return a value from a command sequence or function, terminating execution",
+      "syntax": ["return", "return <value>"],
+      "examples": ["return", "return 42", "return user.name", "if found then return result"],
+      "sideEffects": ["control-flow", "context-mutation"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "scroll": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Scroll an element into view (upstream _hyperscript 0.9.90)",
+      "syntax": ["scroll to <target>", "scroll to top of <target>", "scroll to <target> smoothly"],
+      "examples": ["scroll to #top", "scroll to bottom of #chat", "scroll to me smoothly"],
+      "sideEffects": ["scrolling"],
+      "category": "navigation",
+      "compatibility": "standard"
+    },
+    "select": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Select the contents of a text field, or select the contents of a DOM element",
+      "syntax": ["select", "select <target>"],
+      "examples": ["select #search", "select <textarea/>", "select me"],
+      "sideEffects": ["focus", "dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "send": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Dispatch events on elements",
+      "syntax": [
+        "trigger <event> on <target>",
+        "trigger <event>(<detail>) on <target>",
+        "send <event> to <target>",
+        "send <event>(<detail>) to <target>"
+      ],
+      "examples": [
+        "trigger click on #button",
+        "trigger customEvent on me",
+        "send dataEvent to #target",
+        "send myEvent(count: 42) to me"
+      ],
+      "sideEffects": ["event-dispatch"],
+      "aliases": ["send"],
+      "category": "event",
+      "compatibility": "standard"
+    },
+    "set": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Set values to variables, attributes, or properties",
+      "syntax": ["set <target> to <value>"],
+      "examples": [
+        "set myVar to \"value\"",
+        "set @data-theme to \"dark\"",
+        "set my innerHTML to \"content\""
+      ],
+      "sideEffects": ["state-mutation", "dom-mutation"],
+      "category": "data",
+      "compatibility": "standard"
+    },
+    "settle": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Wait for CSS transitions and animations to complete",
+      "syntax": ["settle [<target>] [for <timeout>]"],
+      "examples": ["settle", "settle #animated-element", "settle for 3000"],
+      "sideEffects": ["timing"],
+      "category": "animation",
+      "compatibility": "standard"
+    },
+    "show": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Show elements by restoring display property",
+      "syntax": ["show [<target>]"],
+      "examples": ["show me", "show #modal", "show .hidden", "show <button/>"],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "start": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Wrap a block of commands in document.startViewTransition()",
+      "syntax": ["start view transition [using <type>] <body> end"],
+      "examples": [
+        "start view transition add .highlight to me end",
+        "start view transition using \"slide\" then put result into #panel end"
+      ],
+      "sideEffects": ["animation", "dom-mutation"],
+      "category": "animation",
+      "compatibility": "standard"
+    },
+    "swap": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Swap content into target elements with intelligent morphing support",
+      "syntax": [
+        "swap <target> with <content>",
+        "swap [strategy] of <target> with <content>",
+        "swap into <target> with <content>",
+        "swap over <target> with <content>",
+        "swap delete <target>",
+        "swap <target> with <content> using view transition"
+      ],
+      "examples": [
+        "swap #target with it",
+        "swap innerHTML of #target with it",
+        "swap over #modal with fetchedContent",
+        "swap delete #notification"
+      ],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "take": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Move classes, attributes, and properties from one element to another",
+      "syntax": [
+        "take <property> from <source>",
+        "take <property> from <source> and put it on <target>"
+      ],
+      "examples": [
+        "take class from <#source/>",
+        "take @data-value from <.source/> and put it on <#target/>"
+      ],
+      "sideEffects": ["dom-mutation", "property-transfer"],
+      "category": "animation",
+      "compatibility": "standard"
+    },
+    "tell": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Execute commands in the context of target elements",
+      "syntax": ["tell <target> <command> [<command> ...]"],
+      "examples": [
+        "tell #sidebar hide",
+        "tell .buttons add .disabled",
+        "tell closest <form/> submit"
+      ],
+      "sideEffects": ["context-switching", "command-execution"],
+      "category": "utility",
+      "compatibility": "standard"
+    },
+    "throw": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Throw an error with a specified message",
+      "syntax": ["throw <message>"],
+      "examples": ["throw \"Invalid input\"", "if not valid then throw \"Validation failed\""],
+      "sideEffects": ["error-throwing", "execution-termination"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "toggle": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Toggle classes, attributes, or interactive elements",
+      "syntax": [
+        "toggle <class> [on <target>]",
+        "toggle @attr",
+        "toggle <element> [as modal]",
+        "toggle <expr> for <duration>"
+      ],
+      "examples": [
+        "toggle .active on me",
+        "toggle @disabled",
+        "toggle #myDialog as modal",
+        "toggle .loading for 2s"
+      ],
+      "sideEffects": ["dom-mutation"],
+      "category": "dom",
+      "compatibility": "standard"
+    },
+    "transition": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Animate CSS properties using CSS transitions",
+      "syntax": ["transition <property> to <value> [over <duration>] [with <timing>]"],
+      "examples": [
+        "transition opacity to 0.5",
+        "transition left to 100px over 500ms",
+        "transition background-color to red over 1s with ease-in-out"
+      ],
+      "sideEffects": ["style-change", "timing"],
+      "category": "animation",
+      "compatibility": "standard"
+    },
+    "trigger": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Dispatch events on elements",
+      "syntax": [
+        "trigger <event> on <target>",
+        "trigger <event>(<detail>) on <target>",
+        "send <event> to <target>",
+        "send <event>(<detail>) to <target>"
+      ],
+      "examples": [
+        "trigger click on #button",
+        "trigger customEvent on me",
+        "send dataEvent to #target",
+        "send myEvent(count: 42) to me"
+      ],
+      "sideEffects": ["event-dispatch"],
+      "aliases": ["send"],
+      "category": "event",
+      "compatibility": "standard"
+    },
+    "unless": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Conditional execution based on boolean expressions",
+      "syntax": [
+        "if <condition> then <commands>",
+        "if <condition> then <commands> else <commands>",
+        "unless <condition> <commands>"
+      ],
+      "examples": [
+        "if x > 5 then add .active",
+        "if user.isAdmin then show #adminPanel else hide #adminPanel",
+        "unless user.isLoggedIn showLoginForm"
+      ],
+      "sideEffects": ["conditional-execution"],
+      "aliases": ["unless"],
+      "category": "control-flow",
+      "compatibility": "standard"
+    },
+    "wait": {
+      "isBlocking": false,
+      "hasBody": false,
+      "version": "1.0.0",
+      "description": "Wait for time delay, event, or race condition",
+      "syntax": ["wait <time>", "wait for <event>", "wait for <event> or <condition>"],
+      "examples": [
+        "wait 2s",
+        "wait for click",
+        "wait for click or 1s",
+        "wait for mousemove(clientX, clientY)"
+      ],
+      "sideEffects": ["time", "event-listening"],
+      "category": "async",
+      "compatibility": "standard"
     }
   }
 }

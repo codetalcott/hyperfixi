@@ -1,7 +1,7 @@
 # HyperFixi Command Reference
 
-> Auto-generated from command metadata
-> Generated: 2026-07-28T15:21:42.542Z
+> Auto-generated from command metadata by `npm run docs:commands`.
+> Do not edit by hand — `npm run docs:commands:check` fails on drift.
 
 ## Table of Contents
 
@@ -21,51 +21,67 @@
 
 ## Quick Reference
 
-| Command          | Category     | Description                                                                                |
-| ---------------- | ------------ | ------------------------------------------------------------------------------------------ |
-| `add`            | dom          | Add CSS classes, attributes, or styles to elements.                                        |
-| `append`         | content      | Add content to the end of a string, array, Set, or HTML element.                           |
-| `async`          | advanced     | Execute commands asynchronously without blocking.                                          |
-| `beep`           | utility      | Debug output for expressions with type information.                                        |
-| `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                    |
-| `call`           | execution    | Evaluate an expression and store the result in the it variable.                            |
-| `continue`       | control-flow | Skip to the next iteration of the current loop.                                            |
-| `copy`           | utility      | Copy text or element content to the clipboard.                                             |
-| `decrement`      | data         | Modify a variable or property by a specified amount (default: 1).                          |
-| `default`        | data         | Set a value only if it doesn't already exist.                                              |
-| `exit`           | control-flow | Immediately terminate execution of the current event handler or behavior.                  |
-| `fetch`          | async        | Make HTTP requests with lifecycle event support.                                           |
-| `get`            | data         | Evaluate an expression and store the result in it.                                         |
-| `go`             | navigation   | Navigation functionality including URL navigation, element scrolling, and browser history. |
-| `halt`           | control-flow | Stop command execution or prevent event defaults.                                          |
-| `hide`           | dom          | Hide elements by setting display to none.                                                  |
-| `if`             | control-flow | Conditional execution based on boolean expressions.                                        |
-| `increment`      | data         | Modify a variable or property by a specified amount (default: 1).                          |
-| `install`        | behaviors    | Install a behavior on an element with optional parameters.                                 |
-| `js`             | advanced     | Execute inline JavaScript code with access to hyperscript context.                         |
-| `log`            | utility      | Log values to the console.                                                                 |
-| `make`           | dom          | Create DOM elements or class instances.                                                    |
-| `measure`        | animation    | Measure DOM element dimensions, positions, and properties.                                 |
-| `pick`           | utility      | Select from a collection (first/last/random/range/regex match).                            |
-| `prepend`        | content      | Add content to the start of a string, array, Set, or HTML element.                         |
-| `pseudo-command` | execution    | Treat a method on an object as a top-level command.                                        |
-| `put`            | dom          | Insert content into elements or properties.                                                |
-| `remove`         | dom          | Remove CSS classes, attributes, styles, or elements from the DOM.                          |
-| `render`         | templates    | Render templates with @if, @else, and @repeat directives.                                  |
-| `repeat`         | control-flow | Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops. |
-| `return`         | control-flow | Return a value from a command sequence or function, terminating execution.                 |
-| `send`           | event        | Dispatch events on elements.                                                               |
-| `set`            | data         | Set values to variables, attributes, or properties.                                        |
-| `settle`         | animation    | Wait for CSS transitions and animations to complete.                                       |
-| `show`           | dom          | Show elements by restoring display property.                                               |
-| `take`           | animation    | Move classes, attributes, and properties from one element to another.                      |
-| `tell`           | utility      | Execute commands in the context of target elements.                                        |
-| `throw`          | control-flow | Throw an error with a specified message.                                                   |
-| `toggle`         | dom          | Toggle classes, attributes, or interactive elements.                                       |
-| `transition`     | animation    | Animate CSS properties using CSS transitions.                                              |
-| `trigger`        | event        | Dispatch events on elements.                                                               |
-| `unless`         | control-flow | Conditional execution based on boolean expressions.                                        |
-| `wait`           | async        | Wait for time delay, event, or race condition.                                             |
+| Command          | Category     | Description                                                                                  |
+| ---------------- | ------------ | -------------------------------------------------------------------------------------------- |
+| `add`            | dom          | Add CSS classes, attributes, or styles to elements.                                          |
+| `append`         | content      | Add content to the end of a string, array, Set, or HTML element.                             |
+| `async`          | advanced     | Execute commands asynchronously without blocking.                                            |
+| `beep`           | utility      | Debug output for expressions with type information.                                          |
+| `blur`           | execution    | Remove focus from an element (calls HTMLElement.                                             |
+| `break`          | control-flow | Exit from the current loop (repeat, for, while, until).                                      |
+| `breakpoint`     | utility      | Drop into the debugger (emits a debugger; statement).                                        |
+| `call`           | execution    | Evaluate an expression and store the result in the it variable.                              |
+| `clear`          | data         | Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>). |
+| `close`          | dom          | Close a dialog, details element, or popover.                                                 |
+| `continue`       | control-flow | Skip to the next iteration of the current loop.                                              |
+| `copy`           | utility      | Copy text or element content to the clipboard.                                               |
+| `decrement`      | data         | Modify a variable or property by a specified amount (default: 1).                            |
+| `default`        | data         | Set a value only if it doesn't already exist.                                                |
+| `empty`          | dom          | Remove all children from an element (sets innerHTML to empty).                               |
+| `exit`           | control-flow | Immediately terminate execution of the current event handler or behavior.                    |
+| `fetch`          | async        | Make HTTP requests with lifecycle event support.                                             |
+| `focus`          | execution    | Focus an element (calls HTMLElement.                                                         |
+| `get`            | data         | Evaluate an expression and store the result in it.                                           |
+| `go`             | navigation   | Navigation functionality including URL navigation, element scrolling, and browser history.   |
+| `halt`           | control-flow | Stop command execution or prevent event defaults.                                            |
+| `hide`           | dom          | Hide elements by setting display to none.                                                    |
+| `if`             | control-flow | Conditional execution based on boolean expressions.                                          |
+| `increment`      | data         | Modify a variable or property by a specified amount (default: 1).                            |
+| `install`        | behaviors    | Install a behavior on an element with optional parameters.                                   |
+| `js`             | advanced     | Execute inline JavaScript code with access to hyperscript context.                           |
+| `log`            | utility      | Log values to the console.                                                                   |
+| `make`           | dom          | Create DOM elements or class instances.                                                      |
+| `measure`        | animation    | Measure DOM element dimensions, positions, and properties.                                   |
+| `morph`          | dom          | Morph content into target elements (intelligent diffing, preserves state).                   |
+| `open`           | dom          | Open a dialog, details element, or popover.                                                  |
+| `pick`           | utility      | Select from a collection (first/last/random/range/regex match).                              |
+| `prepend`        | content      | Add content to the start of a string, array, Set, or HTML element.                           |
+| `process`        | dom          | Process <hx-partial> elements for multi-target swaps.                                        |
+| `pseudo-command` | execution    | Treat a method on an object as a top-level command.                                          |
+| `push`           | navigation   | Modify browser history URL without page reload.                                              |
+| `put`            | dom          | Insert content into elements or properties.                                                  |
+| `remove`         | dom          | Remove CSS classes, attributes, styles, or elements from the DOM.                            |
+| `render`         | templates    | Render templates with @if, @else, and @repeat directives.                                    |
+| `repeat`         | control-flow | Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops.   |
+| `replace`        | navigation   | Modify browser history URL without page reload.                                              |
+| `reset`          | dom          | Reset a <form> element to its default values (HTMLFormElement.                               |
+| `return`         | control-flow | Return a value from a command sequence or function, terminating execution.                   |
+| `scroll`         | navigation   | Scroll an element into view (upstream _hyperscript 0.                                        |
+| `select`         | dom          | Select the contents of a text field, or select the contents of a DOM element.                |
+| `send`           | event        | Dispatch events on elements.                                                                 |
+| `set`            | data         | Set values to variables, attributes, or properties.                                          |
+| `settle`         | animation    | Wait for CSS transitions and animations to complete.                                         |
+| `show`           | dom          | Show elements by restoring display property.                                                 |
+| `start`          | animation    | Wrap a block of commands in document.                                                        |
+| `swap`           | dom          | Swap content into target elements with intelligent morphing support.                         |
+| `take`           | animation    | Move classes, attributes, and properties from one element to another.                        |
+| `tell`           | utility      | Execute commands in the context of target elements.                                          |
+| `throw`          | control-flow | Throw an error with a specified message.                                                     |
+| `toggle`         | dom          | Toggle classes, attributes, or interactive elements.                                         |
+| `transition`     | animation    | Animate CSS properties using CSS transitions.                                                |
+| `trigger`        | event        | Dispatch events on elements.                                                                 |
+| `unless`         | control-flow | Conditional execution based on boolean expressions.                                          |
+| `wait`           | async        | Wait for time delay, event, or race condition.                                               |
 
 ## Animation Commands
 
@@ -134,6 +150,30 @@ settle for 3000
 ```
 
 **Side Effects:** timing
+
+---
+
+### start
+
+Wrap a block of commands in document.startViewTransition()
+
+**Syntax:**
+
+```hyperscript
+start view transition [using <type>] <body> end
+```
+
+**Examples:**
+
+```hyperscript
+start view transition add .highlight to me end
+```
+
+```hyperscript
+start view transition using "slide" then put result into #panel end
+```
+
+**Side Effects:** animation, dom-mutation
 
 ---
 
@@ -567,6 +607,46 @@ unless user.isLoggedIn showLoginForm
 
 ## Data Commands
 
+### clear
+
+Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>)
+
+**Syntax:**
+
+```hyperscript
+clear <var>
+```
+
+```hyperscript
+clear :var
+```
+
+```hyperscript
+clear <target>
+```
+
+**Examples:**
+
+```hyperscript
+clear :count
+```
+
+```hyperscript
+clear myVar
+```
+
+```hyperscript
+clear #search
+```
+
+```hyperscript
+clear <textarea/>
+```
+
+**Side Effects:** state-mutation, dom-mutation
+
+---
+
 ### decrement
 
 Modify a variable or property by a specified amount (default: 1)
@@ -757,6 +837,78 @@ add [@data-test="value"] to #element
 
 ---
 
+### close
+
+Close a dialog, details element, or popover
+
+**Syntax:**
+
+```hyperscript
+close
+```
+
+```hyperscript
+close <target>
+```
+
+**Examples:**
+
+```hyperscript
+close
+```
+
+```hyperscript
+close #myDialog
+```
+
+```hyperscript
+close #details
+```
+
+```hyperscript
+close #popup
+```
+
+**Side Effects:** dom-mutation
+
+---
+
+### empty
+
+Remove all children from an element (sets innerHTML to empty)
+
+**Syntax:**
+
+```hyperscript
+empty
+```
+
+```hyperscript
+empty <target>
+```
+
+```hyperscript
+empty the <target>
+```
+
+**Examples:**
+
+```hyperscript
+empty me
+```
+
+```hyperscript
+empty #list
+```
+
+```hyperscript
+empty .results
+```
+
+**Side Effects:** dom-mutation
+
+---
+
 ### hide
 
 Hide elements by setting display to none
@@ -814,6 +966,106 @@ make a URL from "/path/", "https://origin.example.com"
 ```
 
 **Side Effects:** dom-creation, data-mutation
+
+---
+
+### morph
+
+Morph content into target elements (intelligent diffing, preserves state)
+
+**Syntax:**
+
+```hyperscript
+morph <target> with <content>
+```
+
+```hyperscript
+morph over <target> with <content>
+```
+
+**Examples:**
+
+```hyperscript
+morph #target with it
+```
+
+```hyperscript
+morph over #modal with fetchedContent
+```
+
+**Side Effects:** dom-mutation
+
+---
+
+### open
+
+Open a dialog, details element, or popover
+
+**Syntax:**
+
+```hyperscript
+open [<target>]
+```
+
+```hyperscript
+open <dialog> as modal
+```
+
+```hyperscript
+open <dialog> as non-modal
+```
+
+**Examples:**
+
+```hyperscript
+open
+```
+
+```hyperscript
+open #myDialog
+```
+
+```hyperscript
+open #details
+```
+
+```hyperscript
+open #popup as non-modal
+```
+
+**Side Effects:** dom-mutation
+
+---
+
+### process
+
+Process <hx-partial> elements for multi-target swaps
+
+**Syntax:**
+
+```hyperscript
+process partials in <content>
+```
+
+```hyperscript
+process partials in <content> using view transition
+```
+
+**Examples:**
+
+```hyperscript
+process partials in it
+```
+
+```hyperscript
+process partials in fetchedHtml
+```
+
+```hyperscript
+process partials in it using view transition
+```
+
+**Side Effects:** dom-mutation
 
 ---
 
@@ -889,6 +1141,70 @@ remove closest .item
 
 ---
 
+### reset
+
+Reset a <form> element to its default values (HTMLFormElement.reset())
+
+**Syntax:**
+
+```hyperscript
+reset
+```
+
+```hyperscript
+reset <target>
+```
+
+**Examples:**
+
+```hyperscript
+reset
+```
+
+```hyperscript
+reset #myForm
+```
+
+```hyperscript
+reset <form/>
+```
+
+**Side Effects:** dom-mutation
+
+---
+
+### select
+
+Select the contents of a text field, or select the contents of a DOM element
+
+**Syntax:**
+
+```hyperscript
+select
+```
+
+```hyperscript
+select <target>
+```
+
+**Examples:**
+
+```hyperscript
+select #search
+```
+
+```hyperscript
+select <textarea/>
+```
+
+```hyperscript
+select me
+```
+
+**Side Effects:** focus, dom-mutation
+
+---
+
 ### show
 
 Show elements by restoring display property
@@ -915,6 +1231,58 @@ show .hidden
 
 ```hyperscript
 show <button/>
+```
+
+**Side Effects:** dom-mutation
+
+---
+
+### swap
+
+Swap content into target elements with intelligent morphing support
+
+**Syntax:**
+
+```hyperscript
+swap <target> with <content>
+```
+
+```hyperscript
+swap [strategy] of <target> with <content>
+```
+
+```hyperscript
+swap into <target> with <content>
+```
+
+```hyperscript
+swap over <target> with <content>
+```
+
+```hyperscript
+swap delete <target>
+```
+
+```hyperscript
+swap <target> with <content> using view transition
+```
+
+**Examples:**
+
+```hyperscript
+swap #target with it
+```
+
+```hyperscript
+swap innerHTML of #target with it
+```
+
+```hyperscript
+swap over #modal with fetchedContent
+```
+
+```hyperscript
+swap delete #notification
 ```
 
 **Side Effects:** dom-mutation
@@ -1081,6 +1449,130 @@ go to top of #header
 
 ---
 
+### push
+
+Modify browser history URL without page reload
+
+**Syntax:**
+
+```hyperscript
+push url <url>
+```
+
+```hyperscript
+push url <url> with title <title>
+```
+
+```hyperscript
+replace url <url>
+```
+
+```hyperscript
+replace url <url> with title <title>
+```
+
+**Examples:**
+
+```hyperscript
+push url "/page/2"
+```
+
+```hyperscript
+push url "/search" with title "Search Results"
+```
+
+```hyperscript
+replace url "/search?q=test"
+```
+
+```hyperscript
+replace url "/page" with title "Updated Page"
+```
+
+**Side Effects:** navigation
+
+---
+
+### replace
+
+Modify browser history URL without page reload
+
+**Syntax:**
+
+```hyperscript
+push url <url>
+```
+
+```hyperscript
+push url <url> with title <title>
+```
+
+```hyperscript
+replace url <url>
+```
+
+```hyperscript
+replace url <url> with title <title>
+```
+
+**Examples:**
+
+```hyperscript
+push url "/page/2"
+```
+
+```hyperscript
+push url "/search" with title "Search Results"
+```
+
+```hyperscript
+replace url "/search?q=test"
+```
+
+```hyperscript
+replace url "/page" with title "Updated Page"
+```
+
+**Side Effects:** navigation
+
+---
+
+### scroll
+
+Scroll an element into view (upstream _hyperscript 0.9.90)
+
+**Syntax:**
+
+```hyperscript
+scroll to <target>
+```
+
+```hyperscript
+scroll to top of <target>
+```
+
+```hyperscript
+scroll to <target> smoothly
+```
+
+**Examples:**
+
+```hyperscript
+scroll to #top
+```
+
+```hyperscript
+scroll to bottom of #chat
+```
+
+```hyperscript
+scroll to me smoothly
+```
+
+**Side Effects:** scrolling
+
+---
+
 ## Utility Commands
 
 ### beep
@@ -1116,6 +1608,30 @@ beep! me.id, me.className
 ```
 
 **Side Effects:** console-output, debugging
+
+---
+
+### breakpoint
+
+Drop into the debugger (emits a debugger; statement)
+
+**Syntax:**
+
+```hyperscript
+breakpoint
+```
+
+**Examples:**
+
+```hyperscript
+breakpoint
+```
+
+```hyperscript
+on click breakpoint
+```
+
+**Side Effects:** debugging
 
 ---
 
@@ -1433,6 +1949,42 @@ send myEvent(count: 42) to me
 
 ## Execution Commands
 
+### blur
+
+Remove focus from an element (calls HTMLElement.blur())
+
+**Syntax:**
+
+```hyperscript
+blur
+```
+
+```hyperscript
+blur <target>
+```
+
+```hyperscript
+blur on <target>
+```
+
+**Examples:**
+
+```hyperscript
+blur
+```
+
+```hyperscript
+blur #search
+```
+
+```hyperscript
+blur on <input/>
+```
+
+**Side Effects:** focus
+
+---
+
 ### call
 
 Evaluate an expression and store the result in the it variable
@@ -1458,6 +2010,42 @@ call element.focus()
 ```
 
 **Side Effects:** function-execution, context-mutation
+
+---
+
+### focus
+
+Focus an element (calls HTMLElement.focus())
+
+**Syntax:**
+
+```hyperscript
+focus
+```
+
+```hyperscript
+focus <target>
+```
+
+```hyperscript
+focus on <target>
+```
+
+**Examples:**
+
+```hyperscript
+focus
+```
+
+```hyperscript
+focus #search
+```
+
+```hyperscript
+focus on <input/>
+```
+
+**Side Effects:** focus
 
 ---
 
