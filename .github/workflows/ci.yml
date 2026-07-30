@@ -300,9 +300,12 @@ jobs:
       - name: Build intent-element package
         run: npm run build --prefix packages/intent-element
 
-      - name: Build all browser bundles
-        run: npm run build:browser --prefix packages/core
-
+      # The browser bundles are NOT built here — see the `bundles` job below.
+      # They were 151s of this job's 6m35s and are pure CPU work that gains
+      # nothing from sharing one runner with the package builds. Measured:
+      # `lite` (a 5 KB output) took 109.8s in CI against 1.7s uncontended
+      # locally, because all 11 bundles were spawned concurrently onto ~4 cores.
+      #
       # Note: Semantic browser bundles are already built by "npm run build" via tsup.config.ts
       # Running build:browser separately would wipe the dist folder and delete index.d.ts
 
@@ -354,6 +357,135 @@ jobs:
             packages/components/dist/
             packages/speech/dist/
             packages/intent-element/dist/
+          retention-days: 3
+
+  # ============================================
+  # Job 1.2: Browser Bundles (sharded)
+  #
+  # Split out of `build` on 2026-07-30. It was one 151s step there, and the
+  # profile showed it was CPU-starved rather than serialized: all 11 bundles
+  # start together and finish within 41s of each other, tiny and huge alike —
+  # `lite` (5 KB of output) took 109.8s in CI against 1.7s uncontended locally.
+  # `build-browser-bundles.mjs` already runs them through `Promise.all`, so
+  # there was no process-level parallelism left to add; the constraint is the
+  # runner's ~4 cores. Sharding across runners is the only way to add CPU.
+  #
+  # Shards are balanced by MEASURED solo build cost (local, `--sequential`),
+  # not by bundle count:
+  #   classic-i18n 7.4s  standard 6.7  hx-v4 5.9  lite 5.5  main 5.0
+  #   modular 4.8  multilingual 3.4  minimal 3.1  hybrid-hx 1.9
+  #   hybrid-complete 1.8  lite-plus 1.6                    (total 47.2s)
+  # → shard 1 ≈ 17.6s, shard 2 ≈ 16.9s, shard 3 ≈ 12.6s.
+  #
+  # If you ADD a bundle to `BUNDLES` in build-browser-bundles.mjs, add it to a
+  # shard here too. `scripts/check-bundle-shards.cjs` (run in lint-typecheck and
+  # from the pre-commit hook) fails on a bundle no shard claims, a shard entry
+  # that is not a real bundle, and a bundle claimed twice — because `--only`
+  # silently ignores unknown names, so none of those drift is self-announcing.
+  # ============================================
+  bundles:
+    name: Browser Bundles (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    # `changes` is needed for its output, not for ordering — `build` already
+    # depends on it. It is skipped on schedule/dispatch, which is why the `if`
+    # below opts out of GitHub's implicit success() with `!cancelled()`.
+    needs: [build, changes]
+    # Mirrors `build`'s gate: a docs-only PR that built core for the
+    # shipped-sources gate does not need the browser bundles.
+    if: >-
+      ${{ !cancelled()
+          && needs.build.result == 'success'
+          && (github.event_name == 'schedule'
+              || github.event_name == 'workflow_dispatch'
+              || needs.changes.outputs.code == 'true') }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 1
+            only: classic-i18n,lite,minimal,lite-plus
+          - shard: 2
+            only: standard,main,multilingual,hybrid-complete
+          - shard: 3
+            only: hybrid-hx-v4,modular,hybrid-hx
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The bundles compile core from SOURCE, but still resolve workspace deps
+      # through node_modules: the main entry inlines @lokascript/semantic, and
+      # #616 added the prebuilt reactivity/realtime dists. So this job needs
+      # `build`'s artifacts and cannot run beside it.
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts
+          path: packages
+
+      - name: Rebuild workspace links
+        run: |
+          rm -rf node_modules/@hyperfixi node_modules/@lokascript
+          npm install
+
+      # Everything after this marker is this shard's output. See the staging
+      # step below for why the shard is identified by mtime and not by name.
+      - name: Mark build start
+        run: touch "$RUNNER_TEMP/build-marker"
+
+      - name: Build browser bundles (shard ${{ matrix.shard }})
+        run: npm run build:browser --prefix packages/core -- --only=${{ matrix.only }}
+
+      # Collect exactly what the build WROTE, rather than what its files are
+      # NAMED. The first version of this job globbed `hyperfixi*.js` and looked
+      # right: every entry in the BUNDLES map does output a `hyperfixi-*.js`.
+      # But `build:browser` has a `postbuild:browser` hook —
+      # `create-bundle-aliases.mjs` — which then writes v1 back-compat copies
+      # under `lokascript-*.js`. The glob silently dropped every one of them,
+      # and `test-multilingual-e2e.html` loads
+      # `/packages/core/dist/lokascript-multilingual.js`, so eight browser tests
+      # failed against a bundle that had built perfectly. `if-no-files-found`
+      # could not catch it: the shard did produce matching files, just not all
+      # of them.
+      #
+      # mtime has no such blind spot — it cannot be out of date with a rename,
+      # a new alias, or a new output kind. `npm ci`/`npm install` both run
+      # before the marker, so nothing they touch is picked up.
+      - name: Stage produced bundles
+        run: |
+          cd packages/core
+          staged="$RUNNER_TEMP/bundle-stage"
+          rm -rf "$staged"
+          count=0
+          while IFS= read -r -d '' f; do
+            mkdir -p "$staged/$(dirname "$f")"
+            cp "$f" "$staged/$f"
+            count=$((count + 1))
+          done < <(find dist -type f -newer "$RUNNER_TEMP/build-marker" \
+                        ! -name '*.tsbuildinfo' -print0)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::shard ${{ matrix.shard }} produced no files — the build wrote nothing."
+            exit 1
+          fi
+          echo "staged $count file(s) from shard ${{ matrix.shard }}:"
+          find "$staged" -type f | sed "s|$staged/||" | sort
+
+      - name: Upload browser bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-bundles-${{ matrix.shard }}
+          path: ${{ runner.temp }}/bundle-stage/dist
+          if-no-files-found: error
           retention-days: 3
 
   # ============================================
@@ -409,7 +541,7 @@ jobs:
   export-validation:
     name: Export Validation
     runs-on: ubuntu-latest
-    needs: [build, changes]
+    needs: [build, bundles, changes]
     # PR-only: `strict` branch protection means the PR validated the merged
     # result, so re-running this on the post-merge push would be redundant.
     # Also gated on `code`: package exports cannot change in a docs/examples-only
@@ -435,6 +567,14 @@ jobs:
         with:
           name: build-artifacts
           path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
 
       - name: Rebuild workspace links
         run: |
@@ -488,7 +628,7 @@ jobs:
   lint-typecheck:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
-    needs: [build, changes]
+    needs: [build, bundles, changes]
     # PR-only (see export-validation): redundant on push under `strict`.
     # Also gated on `code`: a docs/examples-only PR has nothing to lint or
     # typecheck, and a skipped required check satisfies branch protection.
@@ -511,6 +651,12 @@ jobs:
       - name: Verify CI build order
         run: node scripts/check-ci-build-order.cjs
 
+      # Keeps the `bundles` job's hand-written shard lists in sync with the
+      # BUNDLES map they shard. A bundle in neither list would simply never be
+      # built in CI, and nothing downstream checks for a complete set.
+      - name: Verify browser-bundle shard coverage
+        run: node scripts/check-bundle-shards.cjs
+
       # Cheap guard: zero-dep node script that keeps scripts/test-check-all.sh
       # in sync with the workspace — both a listed-but-deleted package (which
       # makes the gate exit 1 on a green tree) and a package with tests that
@@ -531,6 +677,14 @@ jobs:
         with:
           name: build-artifacts
           path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
 
       - name: Verify artifact extraction
         run: |
@@ -610,7 +764,7 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    needs: [build, changes]
+    needs: [build, bundles, changes]
     # PR-only (see export-validation): redundant on push under `strict`.
     # Also gated on `code`: a docs/examples-only PR ran the entire 27-package
     # suite for nothing (the shipped-sources gate is what covers those trees,
@@ -637,6 +791,14 @@ jobs:
           name: build-artifacts
           path: packages
 
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
+
       - name: Rebuild workspace links
         run: |
           # Remove stale workspace symlinks and reinstall
@@ -659,6 +821,67 @@ jobs:
       - name: Test semantic
         run: npm test --prefix packages/semantic
 
+  # ============================================
+  # Job 4b: Unit Tests (packages)
+  #
+  # Split from `unit-tests` on 2026-07-30. That job was 3m30s, of which 162s
+  # was test work and 39s setup — and the test work is dominated by two
+  # packages: core 64s and semantic 23s. The other ~25 packages together came
+  # to ~75s, most of it vitest/npm startup rather than test execution, run as
+  # sequential steps on one runner.
+  #
+  # So the split is by MEASURED cost, not package count: `unit-tests` keeps
+  # core + semantic (~87s), this job takes the remaining ~25 (~75s). Both are
+  # required checks; a package must appear in exactly one of them.
+  # ============================================
+  unit-tests-packages:
+    name: Unit Tests (packages)
+    runs-on: ubuntu-latest
+    needs: [build, bundles, changes]
+    # PR-only (see export-validation): redundant on push under `strict`.
+    # Also gated on `code`: a docs/examples-only PR ran the entire 27-package
+    # suite for nothing (the shipped-sources gate is what covers those trees,
+    # and it stays ungated). A skipped required check satisfies branch protection.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts
+          path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
+
+      - name: Rebuild workspace links
+        run: |
+          # Remove stale workspace symlinks and reinstall
+          rm -rf node_modules/@hyperfixi node_modules/@lokascript
+          npm install
+
+      # Note: vitest with pool:'forks' may hang after tests complete due to
+      # esbuild daemon keeping worker processes alive. The timeout wrapper
+      # kills the process after 5 minutes and treats exit code 124 (timeout)
+      # as success, since the tests themselves completed.
       - name: Test i18n
         run: npm test --prefix packages/i18n
 
@@ -752,7 +975,7 @@ jobs:
   coverage:
     name: Coverage Report
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, bundles]
     # The `!cancelled()` is REQUIRED, and its absence was a real bug: this job
     # skipped on a workflow_dispatch run even though the event matched and `build`
     # succeeded (verified 2026-07-29, run 30493248972 — 0 steps executed). GitHub's
@@ -786,6 +1009,14 @@ jobs:
         with:
           name: build-artifacts
           path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
 
       - name: Rebuild workspace links
         run: |
@@ -869,7 +1100,7 @@ jobs:
   browser-tests:
     name: Browser Tests
     runs-on: ubuntu-latest
-    needs: [build, changes]
+    needs: [build, bundles, changes]
     # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
     if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 30
@@ -895,6 +1126,14 @@ jobs:
         with:
           name: build-artifacts
           path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
 
       - name: Rebuild workspace links
         run: |
@@ -1059,7 +1298,7 @@ jobs:
   bundle-size:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
-    needs: [build, changes]
+    needs: [build, bundles, changes]
     # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
     if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 15
@@ -1082,6 +1321,14 @@ jobs:
         with:
           name: build-artifacts
           path: packages
+
+      - name: Download browser bundles
+        uses: actions/download-artifact@v8
+        with:
+          # Three shards, merged back into the dist they were split out of.
+          pattern: browser-bundles-*
+          merge-multiple: true
+          path: packages/core/dist
 
       - name: Rebuild workspace links
         run: |
@@ -1510,3 +1757,66 @@ jobs:
           path: packages/core/benchmark-results/
           retention-days: 3
           if-no-files-found: warn
+
+  # ============================================
+  # Job 12: CI Gate — the one required check
+  #
+  # Added 2026-07-30 with the `bundles` split, because that split introduced a
+  # way for a PR to merge on a broken tree.
+  #
+  # Branch protection requires six checks BY NAME (Build All Packages, Lint &
+  # Typecheck, Unit Tests, Export Validation, Multilingual Validation, Browser
+  # Tests). That list is safe only while every one of them runs directly off
+  # `build`. Now that four of them also `needs: bundles`, a FAILING bundle shard
+  # SKIPS them — and a skipped required check SATISFIES branch protection (this
+  # repo depends on that behaviour for doc-only PRs). So a bundle build that
+  # failed to compile would have gone green-by-omission.
+  #
+  # This job collapses the whole graph into a single status. `skipped` stays
+  # acceptable — that is the path-gating mechanism working — but `failure` and
+  # `cancelled` anywhere fail here, including in a matrix leg that no by-name
+  # required check could ever cover.
+  #
+  # >>> To adopt: make "CI Gate" the ONLY required status check on `main`. <<<
+  # Leaving the six in place as well is harmless but redundant; removing them
+  # without adding this one would leave the hole described above.
+  #
+  # `coverage` and `benchmarks` are deliberately NOT in `needs`: they are
+  # nightly-only, non-required trend jobs, and gating merges on them would make
+  # a slow benchmark block a PR.
+  # ============================================
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - changes
+      - build
+      - bundles
+      - shipped-sources
+      - export-validation
+      - lint-typecheck
+      - unit-tests
+      - unit-tests-packages
+      - browser-tests
+      - multilingual-validation
+      - bundle-size
+      - mcp-demos
+      - protocol-conformance
+      - go-client
+
+    steps:
+      - name: Fail if any job failed or was cancelled
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          bad=$(echo "$RESULTS" | jq -r 'to_entries[]
+            | select(.value.result == "failure" or .value.result == "cancelled")
+            | "\(.key)=\(.value.result)"')
+          if [ -n "$bad" ]; then
+            echo "::error::CI Gate: the following jobs did not pass:"
+            echo "$bad"
+            exit 1
+          fi
+          echo "CI Gate: every job succeeded or was skipped."
