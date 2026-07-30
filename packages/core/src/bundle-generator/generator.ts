@@ -10,6 +10,7 @@ import {
   COMMAND_IMPLEMENTATIONS,
   BLOCK_IMPLEMENTATIONS,
   STYLE_COMMANDS,
+  STYLE_READ_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
   MORPH_COMMANDS,
   getCommandImplementations,
@@ -40,6 +41,7 @@ export function generateBundleCode(config: GeneratorOptions): string {
   } = config;
 
   const needsStyleHelpers = commands.some(cmd => STYLE_COMMANDS.includes(cmd));
+  const needsStyleReadHelper = commands.some(cmd => STYLE_READ_COMMANDS.includes(cmd));
   const needsElementArrayHelper = commands.some(cmd => ELEMENT_ARRAY_COMMANDS.includes(cmd));
   // MORPH_COMMANDS has been exported since the template was written but was
   // never read here, so the `morph` template's `morphlexMorph`/`morphlexMorphInner`
@@ -288,7 +290,15 @@ const setStyleProp = (el: Element, prop: string, value: any): boolean => {
   (el as HTMLElement).style.setProperty(getStyleName(prop), String(value));
   return true;
 };
+${
+  needsStyleReadHelper
+    ? `const getStyleProp = (el: Element, prop: string): string | undefined => {
+  if (!isStyleProp(prop)) return undefined;
+  return getComputedStyle(el as HTMLElement).getPropertyValue(getStyleName(prop));
+};
 `
+    : ''
+}`
     : ''
 }
 
@@ -317,7 +327,11 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
 
   const getClassName = (node: any): string => {
     if (!node) return '';
-    if (node.type === 'selector') return node.value.slice(1);
+    if (node.type === 'selector') {
+      // \`@attr\` passes through unsliced; .class / #id lose their prefix.
+      if (node.value.startsWith('@')) return node.value;
+      return node.value.slice(1);
+    }
     if (node.type === 'string' || node.type === 'literal') {
       const val = node.value;
       return typeof val === 'string' && val.startsWith('.') ? val.slice(1) : String(val);

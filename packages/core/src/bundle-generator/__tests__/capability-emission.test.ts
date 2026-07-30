@@ -224,6 +224,95 @@ const SURFACES: Record<string, Surface> = {
   },
 };
 
+/**
+ * A capability of a command that already has a SURFACES row — a second syntax
+ * the same template must serve. Arc E step 2 absorbed four such capabilities
+ * from the handwritten hybrid-complete executor into the templates, and each
+ * one gets a row here so "the templates are the superset" is measured rather
+ * than asserted in a commit message.
+ *
+ * Kept as a separate list, not merged into SURFACES, because SURFACES is
+ * one-row-per-advertised-command and its completeness ratchet depends on that
+ * being exactly true.
+ */
+interface Capability extends Surface {
+  /** Unique file id for the generated bundle (SURFACES rows use the command). */
+  id: string;
+  /** The template the capability belongs to — what gets put in the bundle. */
+  command: string;
+}
+
+/** Requests the generated bundle issued, so a `via`/`with` row can inspect them. */
+const fetchCalls: Array<{ url: string; init: RequestInit | undefined }> = [];
+
+const ATTR_NOTE = 'the attribute form; before step 2 the @ was sliced off and applied as a class';
+
+const CAPABILITIES: Capability[] = [
+  // Both directions, because a `toggle` that only ever REMOVES passes the
+  // adding row and vice versa. Each also asserts no bogus class appeared —
+  // that was the literal shape of the defect, not just a proxy for it.
+  {
+    id: 'toggle_attr_off',
+    command: 'toggle',
+    code: 'toggle @disabled on #t',
+    setup: d => t(d).setAttribute('disabled', ''),
+    check: o => !t(o.doc).hasAttribute('disabled') && !t(o.doc).classList.contains('disabled'),
+  },
+  {
+    id: 'toggle_attr_on',
+    command: 'toggle',
+    code: 'toggle @disabled on #t',
+    check: o => t(o.doc).hasAttribute('disabled') && !t(o.doc).classList.contains('disabled'),
+  },
+  {
+    id: 'add_attr',
+    command: 'add',
+    code: 'add @hidden to #t',
+    check: o => t(o.doc).hasAttribute('hidden') && !t(o.doc).classList.contains('hidden'),
+  },
+  {
+    id: 'removeclass_attr',
+    command: 'removeClass',
+    code: 'remove @disabled from #t',
+    setup: d => t(d).setAttribute('disabled', ''),
+    check: o => !t(o.doc).hasAttribute('disabled'),
+  },
+  // The style-property branch. Asserted on the STYLE, and on textContent being
+  // untouched: the pre-step-2 fallback treated the possessive as an element
+  // reference, so a row that only checked "opacity is a number" would have been
+  // satisfied by the silent no-op that left it at its initial value.
+  {
+    id: 'increment_style',
+    command: 'increment',
+    code: "increment #t's *opacity by 0.25",
+    setup: d => (t(d).style.opacity = '0.5'),
+    check: o => t(o.doc).style.opacity === '0.75' && t(o.doc).textContent === 'seed',
+  },
+  {
+    id: 'decrement_style',
+    command: 'decrement',
+    code: "decrement #t's *opacity by 0.25",
+    setup: d => (t(d).style.opacity = '0.5'),
+    check: o => t(o.doc).style.opacity === '0.25' && t(o.doc).textContent === 'seed',
+  },
+  // `via`/`with`. The check inspects the REQUEST, not the response: the
+  // pre-step-2 template dropped both and issued a plain GET, which still
+  // resolved and still filled #t. A row asserting only the swapped-in body
+  // would have passed against the defect — the fallback-measuring trap the
+  // module header describes, here with the "fallback" being the wrong verb.
+  {
+    id: 'fetch_via_with',
+    command: 'put',
+    blocks: ['fetch'],
+    code: 'fetch "/api" via POST with window.__capFetchOpts as text then put it into #t end',
+    check: o =>
+      fetchCalls.length === 1 &&
+      fetchCalls[0].init?.method === 'POST' &&
+      (fetchCalls[0].init as { headers?: Record<string, string> }).headers?.['X-Cap'] === '1' &&
+      t(o.doc).innerHTML === 'FETCHED',
+  },
+];
+
 const win = (): Record<string, unknown> => globalThis as unknown as Record<string, unknown>;
 
 /**
@@ -234,9 +323,13 @@ const win = (): Record<string, unknown> => globalThis as unknown as Record<strin
  */
 const GEN_DIR = join(__dirname, '.generated');
 
-const runInBundle = async (name: string, surface: Surface): Promise<Outcome> => {
+const runInBundle = async (
+  name: string,
+  surface: Surface,
+  fileId: string = name
+): Promise<Outcome> => {
   const gen = generateBundle({
-    name: `Cap${name.replace(/-/g, '')}`,
+    name: `Cap${fileId.replace(/-/g, '')}`,
     commands: [name, ...(surface.also ?? [])],
     blocks: surface.blocks ?? [],
     autoInit: false,
@@ -244,7 +337,7 @@ const runInBundle = async (name: string, surface: Surface): Promise<Outcome> => 
   });
   expect(gen.errors, `generateBundle rejected the advertised command '${name}'`).toEqual([]);
 
-  const file = join(GEN_DIR, `${name.replace(/-/g, '_')}.ts`);
+  const file = join(GEN_DIR, `${fileId.replace(/-/g, '_')}.ts`);
   writeFileSync(file, gen.code);
 
   document.body.innerHTML =
@@ -255,6 +348,12 @@ const runInBundle = async (name: string, surface: Surface): Promise<Outcome> => 
   );
   clipboardWrites.length = 0;
   consoleLines.length = 0;
+  fetchCalls.length = 0;
+  win().__capFetchOpts = { headers: { 'X-Cap': '1' } };
+  win().fetch = async (url: string, init?: RequestInit) => {
+    fetchCalls.push({ url: String(url), init });
+    return new Response('FETCHED', { status: 200 });
+  };
   win().__capJs = undefined;
   win().__capCall_ran = false;
   win().__capCall = () => (win().__capCall_ran = true);
@@ -309,6 +408,24 @@ describe('every advertised command runs in a generated bundle', () => {
     // closed (plus `take`, which the parse-level oracle could not see at all).
     expect(dead).toEqual([]);
     expect(AVAILABLE_COMMANDS.length).toBe(38);
+  }, 60000);
+
+  it('every capability absorbed from hybrid-complete runs (Arc E step 2)', async () => {
+    // The templates are now claimed to be the SUPERSET of the two AST
+    // executors. This is the claim, measured. Each row failed against the
+    // pre-step-2 templates and passed against hybrid-complete — the divergence
+    // was measured in both copies before any of it was written, because #792
+    // established that the canonical copy is sometimes the broken one.
+    const dead: string[] = [];
+    for (const cap of CAPABILITIES) {
+      const outcome = await runInBundle(cap.command, cap, cap.id);
+      if (!cap.check(outcome)) {
+        dead.push(
+          `${cap.id}${outcome.error ? ` (threw: ${String(outcome.error.message).slice(0, 60)})` : ''}`
+        );
+      }
+    }
+    expect(dead).toEqual([]);
   }, 60000);
 
   it('a trigger-only bundle now dispatches on the named target', async () => {

@@ -37,20 +37,40 @@ function stripTypes(code: string, format: CodeFormat): string {
  * Each command is a complete case block for the executeCommand switch.
  */
 const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
+  // The three class commands share an ATTRIBUTE form (`toggle @disabled`,
+  // `add @hidden`, `remove @disabled`), absorbed from the handwritten
+  // hybrid-complete executor in Arc E step 2. The shell's `getClassName` passes
+  // an `@`-prefixed selector through UNSLICED precisely so this branch can tell
+  // the two apart; without it `@disabled` was sliced to `disabled` and applied
+  // as a bogus CLASS NAME, leaving the attribute untouched (measured, all three
+  // rows). Gated by the `@attr` surfaces in capability-emission.test.ts.
   toggle: `
     case 'toggle': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.toggle(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) {
+          if (el.hasAttribute(attr)) el.removeAttribute(attr);
+          else el.setAttribute(attr, '');
+        }
+      } else {
+        for (const el of targets) el.classList.toggle(raw);
+      }
       ctx.it = targets.length === 1 ? targets[0] : targets;
       return ctx.it;
     }`,
 
   add: `
     case 'add': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.add(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) el.setAttribute(attr, '');
+      } else {
+        for (const el of targets) el.classList.add(raw);
+      }
       ctx.it = targets.length === 1 ? targets[0] : targets;
       return ctx.it;
     }`,
@@ -62,11 +82,25 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return null;
     }`,
 
+  // NOTE — the `ctx.it` half of this row was DECIDED AGAINST absorption.
+  // hybrid-complete sets `ctx.it = targets` here; this template does not, and
+  // that is the copy Arc C's contract endorses: `remove .active from #probe`
+  // leaves `it` at its initial value in the canonical runtime, pinned by
+  // `runtime/__tests__/command-output-contract.test.ts` ("a command sets `it`
+  // iff upstream sets `result` for it"). Absorbing it would have added a NEW
+  // divergence from the canonical engine in the arc meant to remove copies.
+  // Step 4's generation therefore REMOVES that assignment from the shipped
+  // bundle — a deliberate behavior change, to be restated in that PR body.
   removeClass: `
     case 'removeClass': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.remove(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) el.removeAttribute(attr);
+      } else {
+        for (const el of targets) el.classList.remove(raw);
+      }
       return targets;
     }`,
 
@@ -315,6 +349,11 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return ctx.me;
     }`,
 
+  // The possessive STYLE-PROPERTY branch below (`increment #t's *opacity`) is
+  // absorbed from hybrid-complete in Arc E step 2. Without it the possessive
+  // fell through to the textContent path, where `toElementArray` of an
+  // evaluated style value yields no elements — so the command was a SILENT
+  // NO-OP: no error, no effect, opacity unmoved (measured on both rows).
   increment: `
     case 'increment': {
       const target = cmd.args[0];
@@ -328,6 +367,18 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
         map.set(varName, newVal);
         ctx.it = newVal;
         return newVal;
+      }
+
+      if (target.type === 'possessive' && isStyleProp(target.property)) {
+        const obj = await evaluate(target.object, ctx);
+        const elements = toElementArray(obj);
+        for (const el of elements) {
+          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
+          const newVal = current + amount;
+          setStyleProp(el, target.property, newVal);
+          ctx.it = newVal;
+        }
+        return ctx.it;
       }
 
       const elements = toElementArray(await evaluate(target, ctx));
@@ -353,6 +404,18 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
         map.set(varName, newVal);
         ctx.it = newVal;
         return newVal;
+      }
+
+      if (target.type === 'possessive' && isStyleProp(target.property)) {
+        const obj = await evaluate(target.object, ctx);
+        const elements = toElementArray(obj);
+        for (const el of elements) {
+          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
+          const newVal = current - amount;
+          setStyleProp(el, target.property, newVal);
+          ctx.it = newVal;
+        }
+        return ctx.it;
       }
 
       const elements = toElementArray(await evaluate(target, ctx));
@@ -663,12 +726,38 @@ const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
       return null;
     }`,
 
+  // \`via <METHOD>\` and \`with <options>\` are absorbed from hybrid-complete in
+  // Arc E step 2. The parser has always emitted \`method\`/\`options\` on the
+  // fetchConfig node; this template destructured neither, so a generated bundle
+  // DROPPED them silently — \`fetch "/api" via POST with body\` issued a plain
+  // GET with no body and reported success. Not a missing feature so much as a
+  // wrong request shape, which is why it is worth the bytes.
+  //
+  // \`{} as RequestInit\` rather than \`: RequestInit\` deliberately: stripTypes()
+  // removes \` as Type\` casts but has no rule for a \`const x: Type =\`
+  // annotation, so the annotated form would emit invalid JS in 'js' format.
   fetch: `
     case 'fetch': {
-      const { url, responseType } = block.condition as any;
+      const { url, responseType, options, method } = block.condition as any;
       try {
         const urlVal = await evaluate(url, ctx);
-        const response = await fetch(String(urlVal));
+        const fetchInit = {} as RequestInit;
+
+        if (method) {
+          const methodVal = await evaluate(method, ctx);
+          fetchInit.method = String(methodVal).toUpperCase();
+        }
+
+        if (options) {
+          const optionsVal = await evaluate(options, ctx);
+          if (optionsVal instanceof FormData) {
+            fetchInit.body = optionsVal;
+          } else if (optionsVal && typeof optionsVal === 'object' && !(optionsVal instanceof Element)) {
+            Object.assign(fetchInit, optionsVal);
+          }
+        }
+
+        const response = await fetch(String(urlVal), fetchInit);
         if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
 
         const resType = await evaluate(responseType, ctx);
@@ -699,6 +788,16 @@ const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
  * Commands that require style property helpers (isStyleProp, setStyleProp)
  */
 export const STYLE_COMMANDS = ['set', 'put', 'increment', 'decrement'];
+
+/**
+ * Commands that additionally READ a style property back (`getStyleProp`).
+ *
+ * A strict subset of STYLE_COMMANDS: `set`/`put` only ever write, while
+ * increment/decrement must read the current value to add to it. Kept separate
+ * so the two write-only commands — `put` in particular, which is in nearly
+ * every generated bundle — do not carry a getter they never call.
+ */
+export const STYLE_READ_COMMANDS = ['increment', 'decrement'];
 
 /**
  * Commands that require toElementArray helper
