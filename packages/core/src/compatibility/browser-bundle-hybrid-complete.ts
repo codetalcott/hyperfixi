@@ -569,7 +569,15 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
     }
 
     case 'take': {
-      const className = getClassName(await evaluate(cmd.args[0], ctx));
+      // getClassName reads a NODE, exactly as toggle/add/removeClass above do.
+      // This passed it the EVALUATED value instead, which for the documented
+      // `take .x from #t` form is an Element/NodeList — getClassName returns ''
+      // and `querySelectorAll('.' + '')` throws `SyntaxError: '.'`. Shipped
+      // broken in hyperfixi-hybrid-complete.js and hyperfixi-hx.js: the source-
+      // text manifest gate saw a `case` label and passed, and the execution
+      // gate that would have caught it covered only GENERATED bundles, where
+      // the same defect was found and fixed as Finding 16.
+      const className = getClassName(cmd.args[0]);
       const from = cmd.target ? await getTarget() : [ctx.me.parentElement!];
       for (const container of from) {
         const siblings = container.querySelectorAll('.' + className);
@@ -786,7 +794,20 @@ async function executeSequence(nodes: ASTNode[], ctx: Context): Promise<any> {
 async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any> {
   const ctx: Context = { me, event, locals: new Map(), globals: globalVars };
 
-  if (ast.type === 'sequence') return executeSequence(ast.commands, ctx);
+  // `return` is implemented by throwing an internal `{type:'return'}` token,
+  // which every OTHER entry into a sequence already catches — the event handler
+  // and init paths below, and the generated bundles' executeAST. This path did
+  // not, so `hyperfixi.execute('return 42')` rejected with the raw internal
+  // token instead of resolving to 42: a control-flow signal escaping the public
+  // API. Found by the per-command execution gate.
+  if (ast.type === 'sequence') {
+    try {
+      return await executeSequence(ast.commands, ctx);
+    } catch (err: any) {
+      if (err?.type === 'return') return err.value;
+      throw err;
+    }
+  }
 
   if (ast.type === 'event') {
     const eventNode = ast as EventNode;
