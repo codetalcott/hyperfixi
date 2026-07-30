@@ -42,6 +42,7 @@
     "docs:build": "npm run build --workspace=apps/docs-site",
     "check:fresh": "./scripts/ensure-fresh.sh packages/framework packages/semantic packages/i18n packages/patterns-reference packages/intent packages/core packages/reactivity packages/aot-compiler packages/compilation-service packages/mcp-server packages/domain-toolkit packages/domain-config packages/planner",
     "check:ci-order": "node scripts/check-ci-build-order.cjs",
+    "check:bundle-shards": "node scripts/check-bundle-shards.cjs",
     "check:ci-order:test": "node --test scripts/check-ci-build-order.test.cjs",
     "check:test-list": "node scripts/check-test-check-list.cjs",
     "check:test-list:test": "node --test scripts/check-test-check-list.test.cjs",
@@ -68,8 +69,8 @@
     "rebuild:full": "./scripts/rebuild-all.sh",
     "rebuild:clean": "./scripts/rebuild-all.sh --clean",
     "rebuild:fast": "./scripts/rebuild-all.sh --skip-tests",
-    "hooks:enable-pre-push": "cp .husky/pre-push.example .husky/pre-push && chmod +x .husky/pre-push && echo '✅ Pre-push hook enabled'",
-    "hooks:disable-pre-push": "rm -f .husky/pre-push && echo '✅ Pre-push hook disabled'",
+    "hooks:enable-pre-push": "cp .husky/pre-push.example .husky/pre-push && chmod +x .husky/pre-push && echo '\u2705 Pre-push hook enabled'",
+    "hooks:disable-pre-push": "rm -f .husky/pre-push && echo '\u2705 Pre-push hook disabled'",
     "prepublishOnly": "npm run version:validate && npm run changelog:validate && npm run build && npm run test",
     "prepare": "husky"
   },

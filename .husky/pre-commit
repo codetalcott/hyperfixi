@@ -13,3 +13,9 @@ fi
 if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|scripts/test-check-all\.sh)$'; then
   node scripts/check-test-check-list.cjs || exit 1
 fi
+
+# Verify every browser bundle is claimed by exactly one CI shard. Only when
+# ci.yml or the bundle orchestrator is staged — the two files that can drift.
+if git diff --cached --name-only | grep -qE '^(\.github/workflows/ci\.yml|packages/core/scripts/build-browser-bundles\.mjs)$'; then
+  node scripts/check-bundle-shards.cjs || exit 1
+fi
