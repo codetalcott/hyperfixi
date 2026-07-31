@@ -1605,10 +1605,15 @@ export const takeSchema: CommandSchema = {
     },
     {
       role: 'source',
-      description: 'The element to take from (defaults to me)',
+      // NO default. Upstream's bare `take .active` removes the class from
+      // every element CURRENTLY HOLDING it, not from `me` — a `me` default
+      // here parsed `take .active` as "take from me", which the runtime then
+      // faithfully executed as a near-no-op (remove from me, add to me).
+      // Absent source is the signal the runtime needs to run the
+      // all-current-holders form.
+      description: 'The element to take from (defaults to all current holders)',
       required: false,
       expectedTypes: ['selector', 'reference'],
-      default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
     },

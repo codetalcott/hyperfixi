@@ -184,6 +184,10 @@ Move classes, attributes, and properties from one element to another
 **Syntax:**
 
 ```hyperscript
+take <class> [from <source>] [for <recipient>]
+```
+
+```hyperscript
 take <property> from <source>
 ```
 
@@ -192,6 +196,10 @@ take <property> from <source> and put it on <target>
 ```
 
 **Examples:**
+
+```hyperscript
+take .active from .tab for me
+```
 
 ```hyperscript
 take class from <#source/>

@@ -236,6 +236,67 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
 }
 
 /**
+ * Parse take command
+ *
+ * Syntax: take <class|@attr|property> [from <source>] [for <recipient>]
+ *
+ * `take` had no case in `parseCompoundCommand`, so it fell to
+ * `parseRegularCommand` — which cannot consume a `for` tail. Upstream's
+ * classic tab idiom `take .active from .tab for me` therefore failed exactly
+ * the way `toggle … for 2s` did before #846: the unconsumed `for` was read as
+ * the head of a `for` LOOP by the next parse round (`Expected "in" after
+ * variable name in for loop`). Both `from` and `for` tails are accepted by the
+ * real `hyperscript.org` engine.
+ *
+ * Shapes match the neighbours deliberately: `from` stays in the flat
+ * `[what, 'from', source]` args shape `parseRemoveCommand` uses, and the
+ * `for` recipient goes to MODIFIERS the way `toggle`'s temporal tail does —
+ * `TakeCommand.parseInput` reads `modifiers.for`, and the semantic path
+ * already produces the modifier shape (`modifiers.from`).
+ *
+ * Upstream's `with <classRef>` / `giving <expr>` replacement forms remain
+ * unsupported (they error rather than mis-parse).
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param identifierNode - The 'take' identifier node
+ * @returns CommandNode representing the take command
+ */
+export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
+  const args: ASTNode[] = [];
+  const modifiers: Record<string, ExpressionNode> = {};
+
+  // First argument: what to take (stops at 'from'/'for' boundaries)
+  const whatArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.FOR]);
+  if (whatArg) {
+    args.push(whatArg);
+  }
+
+  // Optional `from <source>` — flat args, same shape as remove
+  if (ctx.check(KEYWORDS.FROM)) {
+    consumeKeywordToArgs(ctx, KEYWORDS.FROM, args);
+    const sourceArg = parseOneArgument(ctx, [KEYWORDS.FOR]);
+    if (sourceArg) {
+      args.push(sourceArg);
+    }
+  }
+
+  // Optional `for <recipient>` — must be consumed here or the next parse
+  // round reads it as a `for` loop head
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FOR)) {
+    const recipient = parseOneArgument(ctx);
+    if (recipient) {
+      modifiers['for'] = recipient as ExpressionNode;
+    }
+  }
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .withModifiers(modifiers)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
  * Parse add command
  *
  * Syntax:

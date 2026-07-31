@@ -3438,6 +3438,10 @@ export class Parser {
     //   - toggle: `.class` / `@attr` / `*property` argument references —
     //     semantic parsing drops the prefix, so `toggle @disabled` loses the
     //     attribute reference (sibling of add / remove, which are also here)
+    //   - take: same family as toggle/add/remove, plus a `for <recipient>`
+    //     tail the semantic schema does not model — the semantic match left
+    //     `for me` unconsumed, skipToCommandBoundary() stopped at `for` (a
+    //     command token), and the next round parsed it as a for LOOP
     //   - if / unless: condition role + multi-branch bodies
     //   - make / measure / trigger / halt / remove / exit / return / closest:
     //     each carries hyperscript-specific shape that semantic doesn't capture
@@ -3471,6 +3475,7 @@ export class Parser {
       'append',
       'prepend',
       'toggle',
+      'take',
       'if',
       'unless',
       'make',

@@ -176,6 +176,62 @@ describe('TakeCommand (Standalone V2)', () => {
         )
       ).rejects.toThrow('take requires property, "from", and source');
     });
+
+    it('should accept the semantic modifiers shape (args [what], modifiers.from)', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'selector', value: '.active', selectorType: 'class' } as any],
+          modifiers: { from: { type: 'literal', value: '.tab' } as any },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.property).toBe('.active');
+      expect(input.source).toBe('.tab');
+    });
+
+    it('should read the `for` recipient modifier', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+
+      const input = await command.parseInput(
+        {
+          args: [
+            { type: 'selector', value: '.active', selectorType: 'class' } as any,
+            { type: 'identifier', name: 'from' } as any,
+            { type: 'literal', value: '.tab' } as any,
+          ],
+          modifiers: { for: { type: 'literal', value: '#panel' } as any },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.property).toBe('.active');
+      expect(input.source).toBe('.tab');
+      expect(input.target).toBe('#panel');
+    });
+
+    it('should allow a bare class reference with no source (class variant)', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'selector', value: '.active', selectorType: 'class' } as any],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.property).toBe('.active');
+      expect(input.source).toBeUndefined();
+    });
   });
 
   describe('takeProperty - classes', () => {

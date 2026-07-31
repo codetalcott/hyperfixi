@@ -2904,6 +2904,34 @@ The two headlines for this side:
   `for` was an unconsumed-tail artifact and the duration role removes it. The
   corpus row parses faithfully in all 24 and needs no allowlist entry.
 
+## `take` has no `recipient` role — the en reference drops `for me` (opened 2026-07-31)
+
+Found while fixing the core-side `take` rejection (PARSER_NEXT_STEPS.md § the
+take table). `takeSchema` models `patient` + `source` only, so the semantic
+parser matches `take .active from .tab-button for me` at **confidence 1.0**
+while leaving `"for me"` unconsumed — the `unconsumed-input` warning
+diagnostic is the only tell. The corpus row `take-class-from-siblings` is
+EXACTLY this surface, which means:
+
+- The **en reference parse itself drops the recipient**, so every language
+  matches the dropped reference and R0/R1/R3 all score a perfect 1.0 — the
+  documented en-reference blind spot, live on a real corpus row. No current
+  signal can see it (R3's firestorm inversion doesn't fire because the
+  recipient is `me`, not a language-invariant value).
+- Core-side this is now harmless in ENGLISH — `take` sits on
+  `skipSemanticParsing`, so the traditional parser handles the `for` tail —
+  but any consumer of the semantic parse alone (multilingual bundles, the
+  bridge, translate()) silently loses the recipient in all 24 languages.
+
+The work, when taken: a `recipient` role on `takeSchema` (upstream's `for`
+clause), per-language markers (the `for`-word history in the toggle-for brief
+above is directly relevant — `for` collides with the LOOP keyword in several
+languages; bn `জন্য` was measured particle-safe there), i18n transformer
+rendering, and a baseline regen. Until then the schema's `source` role also
+carries a warning: its `default: me` was REMOVED 2026-07-31 (bare
+`take .active` must mean "take from all current holders", not "take from me")
+— do not reinstate it when adding the recipient.
+
 ## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged

@@ -30,7 +30,7 @@ ones, because the gate *is* the tracking mechanism.
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
 | **`transition` rejects a POSSESSIVE property target** | medium — upstream-valid, and it is the form the docs and the corpus use | **none** | see the measured table below; found by #847's reachability probe |
-| **`take <class> from <source>` rejected** | medium — upstream-valid classic hyperscript on a shipped command | **none** | see the measured table below; found by #847's reachability probe |
+| ~~**`take <class> from <source>` rejected**~~ | **FIXED 2026-07-31** — `parseTakeCommand` + runtime rewrite (upstream ownership-transfer semantics), `take` added to `skipSemanticParsing` with its toggle/add/remove siblings | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`; history below |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 
@@ -269,19 +269,43 @@ two adjacent gaps rather than one. Note the possessive form is what
 `TransitionCommand`'s own surface area implies and what the multilingual corpus
 renders, so the working bare form is the narrower case.
 
-**`take <class> from <source>` is rejected outright**, and its `for` tail is the
-`toggle`/`wait` bug again:
+**`take <class> from <source>` is rejected outright** — **FIXED 2026-07-31.**
+The measured table, for history:
 
-| source | hyperfixi |
-| ------ | --------- |
+| source | hyperfixi (before) |
+| ------ | ------------------ |
 | `take .active from .tab` | `take requires property, "from", and source` (semantic) / `take syntax: take <property> from <source>` (traditional) |
 | `take .active for me` | `Expected "in" after variable name in for loop` |
 | `take .active from .tab for me` | same |
 
-The first is the interesting one: both messages describe the syntax that was
-just supplied. The `for`-tail rows are the same defect class #846 fixed for
-`toggle` — an unconsumed `for` read as a loop head by the next parse round — so
-whoever fixes `take` should reuse `parseTemporalTail`.
+Turned out to be THREE separable defects, none of them what the messages said:
+(1) `take` was in `COMPOUND_COMMANDS` with no case in `parseCompoundCommand`,
+so it fell to `parseRegularCommand`, which cannot consume a `for` tail — same
+class as #846, fixed with a dedicated `parseTakeCommand` (the brief's
+`parseTemporalTail` suggestion was close but wrong in one detail: take's `for`
+is a RECIPIENT expression, not a duration; the tail-consumption mechanism is
+the same, the modifier's meaning is not). (2) `TakeCommand.parseInput`
+*evaluated* the `from` keyword identifier — a variable lookup returning
+undefined — so the flat-args shape ALWAYS threw, and it never read the
+semantic path's `modifiers.from` shape at all; both messages described exactly
+the syntax that was supplied because both AST shapes were rejected. (3) On the
+auto path the semantic match consumed `take .active` at confidence 0.82–1.0
+and left `for me` unconsumed for the next round — `take` now sits on
+`parseCommandCore`'s `skipSemanticParsing` list with its siblings
+toggle/add/remove (same `.class`/`@attr` prefix-dropping reason, plus the
+unmodeled `for` clause). Execution now follows upstream ownership-transfer
+semantics for the class variant (remove from EVERY source element — or every
+current holder when `from` is absent — then add to the recipient, default
+`me`); the takeSchema `source` default of `me` was removed for the same reason
+(bare `take .active` parsed as a near-no-op "take from me"). The non-class
+value-transfer forms keep hyperfixi's semantics. e2e both paths:
+`packages/core/src/commands/animation/__tests__/take-from-for.test.ts`.
+Still open, deliberately: upstream's `with <classRef>` / `giving <expr>`
+replacement forms (error rather than mis-parse), the `and put it on` tail
+(never parseable — pre-existing, programmatic-AST only), and the semantic
+schema's missing `recipient` role (queued in MULTILINGUAL_NEXT_STEPS.md — the
+en reference for `take-class-from-siblings` silently drops `for me`, the
+`unconsumed-input` warning at confidence 1.0 is the tell).
 
 Two adjacent diagnostics found in the same sweep, both cosmetic and neither
 worth its own arc — fold them into whichever change touches this area:
