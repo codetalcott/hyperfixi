@@ -140,6 +140,78 @@ the transformer's rendering of it — a multilingual arc with no gate today. Who
 takes it should add a `toggle … for` corpus row FIRST, so the ratchet stops being
 blind, then do the markers.
 
+#### Round-2 re-measurement (2026-07-31) — four corrections and one new blocker
+
+Arc F follow-ups round 2 re-ran every step above at `5d256878`. The arc is still
+the right shape, but four of the numbers above are wrong in the helpful
+direction and one new obstacle appeared. Nothing was shipped: the schema half
+alone is a REGRESSION (see 2).
+
+1. **The schema half costs ONE test, not 16.** Adding
+
+   ```ts
+   { role: 'duration', required: false, expectedTypes: ['literal'],
+     svoPosition: 3, sovPosition: 3,
+     markerOverride: { en: 'for', ja: '間', ko: '동안' } }
+   ```
+
+   to `toggleSchema.roles` breaks exactly `ast-shape-consistency`'s
+   `toggle.for ← duration` — the exemption becoming orphaned because the
+   descriptor key now equals the role's en marker. Prune it and the full
+   semantic suite is green (7230 / 108 files). The "16 tests" figure above is
+   the en-marker-ONLY variant; carrying ja/ko from the start avoids it, exactly
+   as the bullet after it says. `parseSemantic('toggle .loading for 2s','en')`
+   then binds `{patient:'.loading', duration:'2s', destination:'me'}`.
+
+2. **Shipping that alone REGRESSES 11 languages.** `translate(en→L)` →
+   `parse(L)` for all 23:
+
+   | outcome | languages |
+   | ------- | --------- |
+   | duration survives and re-parses | de fr pt id ms sw he ar ja ko tl (11) |
+   | duration DROPPED from the render | es it ru uk pl th vi zh hi bn qu (11) |
+   | renders but the parse returns NULL | tr (`.loading 2s değiştir`) |
+
+   With no `duration` role the duration currently survives as bare pass-through
+   text (`alternar .loading 2s`); adding the role makes it vanish
+   (`alternar .loading`). Same "ship them together or not at all" shape as
+   `open`'s two halves. The claim above that "on main every language drops the
+   2s" is wrong — on main every language KEEPS it, unmarked.
+
+3. **The drop is toggle-specific, not a general duration gap.** `transition my
+   *opacity to 0 over 500ms` and `wait 2s` keep their duration in every one of
+   those 11 (checked directly), so the per-language duration machinery works.
+
+4. **Two things not to assume.** `canonicalOrder` is not the discriminator — es
+   (drops) and de/fr/pt (keep) are byte-identical, as are ja/ko (keep) and
+   bn/hi (drop). And there are TWO renderers that disagree: the stored corpus
+   translations come from i18n's `GrammarTransformer` (`sync-translations.ts`),
+   which keeps `2s` unmarked in all 23; the drop above is in the SEMANTIC
+   package's `render`. Whichever is fixed, the other decides what the ratchet
+   scores.
+
+5. **NEW — the corpus row cannot land on its own, because of a bn homonym.**
+   The row is ready (`toggle-class-temporary`, `on click toggle .loading for
+   2s`); `populate` generates all 24 translations and every one parses
+   faithfully. But the gate rejects it on the first run:
+
+   ```
+   ✗ Canonical-validity regression (R4): toggle-class-temporary/bn
+   ```
+
+   bn's `for` LOOP keyword is `জন্য` (`profiles/bengali.ts` keywords.for) and
+   `জন্য` is ALSO bn's duration postposition (its `particles` list). So `2s
+   জন্য` yields a phantom `for` command, and the round-trip renders
+   `on click toggle .loading for 2s in` — a dangling loop `in` the
+   hyperscript.org parser rejects. Same homonym class as tr `değiştir` / hi
+   `बदलें`.
+
+   This matters for sequencing: `baselines/foreign-canonical-validity.json`'s
+   `allowedInvalid` is currently **empty**, and landing the corpus row alone
+   would put the first entry back into it. Disambiguate `জন্য` (a time literal
+   before it is a duration postposition, not a loop head) in the SAME change as
+   the corpus row.
+
 Two adjacent diagnostics found in the same sweep, both cosmetic and neither
 worth its own arc — fold them into whichever change touches this area:
 
