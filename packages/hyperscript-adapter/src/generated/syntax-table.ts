@@ -45,7 +45,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   measure: [['patient', ''], ['source', 'of']],
   morph: [['patient', ''], ['destination', 'to']],
   on: [['event', ''], ['source', 'from']],
-  open: [['style', 'as'], ['patient', '']],
+  open: [['patient', ''], ['style', 'as']],
   pick: [['patient', ''], ['source', 'from']],
   prepend: [['patient', ''], ['destination', 'to']],
   process: [['patient', 'partials in']],

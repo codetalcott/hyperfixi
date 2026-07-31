@@ -266,5 +266,9 @@
   {
     "key": "V1|vi|change",
     "reason": "V3c burn-down 2026-07-14: dictionary events.change is deliberate English passthrough — the native form did not round-trip as an event on the parse side (multi-word; buildEventHandler canonicalization is single-word). The profile verb thay đổi stays native for command contexts."
+  },
+  {
+    "key": "V4|ja|として",
+    "reason": "Arc F round 2 / Phase F: `として` (\"as/qua\") is `open.style`'s ja markerOverride — the same word `fetch.responseType` already ships for ja, and it becomes reportable only because `open` is now a second site. Same mechanism class as every other V4 waiver here: pattern literals are consumed by raw token.value before kind, so the identifier classification does not stop the capture. Unlike most of them this one is not probe-only — `packages/semantic/test/hyphenated-word-values.test.ts` runs `translate(en→ja)` → `parse(ja)` for both `modal` and `non-modal` and asserts the action, the target AND the variant; removing the marker fails it (measured: ja renders `modal で #dlg を 開く`, whose `で` is also ja's EVENT marker, and the line parses as `on modal`)."
   }
 ]

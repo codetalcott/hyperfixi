@@ -194,3 +194,44 @@ describe('swap — the strategy forms carry their content', () => {
     expect(astOf('swap innerHTML #target').args).toHaveLength(2);
   });
 });
+
+describe('open — the element is an ARG, the variant an `as` modifier', () => {
+  // packages/core/src/commands/dom/open.ts:
+  //   parseInput  → resolveTargetsFromArgs(raw.args …)
+  //   parseDialogMode → evaluate(modifiers.as), compared as a lowercased
+  //                     string to 'non-modal' / 'nonmodal' / 'modal'
+  // So the target must be positional and the variant must arrive under `as`,
+  // as a value that evaluates to a STRING.
+  //
+  // Before this change `openSchema` gave `style` svoPosition 1, generating
+  // `open [as {style}] [{patient}]` — only the un-English `open as modal #dlg`
+  // bound the role, and `open #dlg as non-modal` (OpenCommand's own documented
+  // example) parsed to `patient` alone with the variant silently dropped.
+
+  it('builds `open #dlg as non-modal` as args:[#dlg] + modifiers.as', () => {
+    const ast = astOf('open #dlg as non-modal');
+
+    expect(ast.name).toBe('open');
+    expect(ast.args).toHaveLength(1);
+    expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#dlg' });
+    expect(ast.modifiers?.as).toMatchObject({ type: 'literal', value: 'non-modal' });
+  });
+
+  it('builds `open #dlg as modal` the same way', () => {
+    const ast = astOf('open #dlg as modal');
+    expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#dlg' });
+    expect(ast.modifiers?.as).toBeDefined();
+  });
+
+  it('leaves `open #dlg` with no variant, so the runtime defaults to modal', () => {
+    const ast = astOf('open #dlg');
+    expect(ast.args).toHaveLength(1);
+    expect(ast.modifiers?.as).toBeUndefined();
+  });
+
+  it('never leaves the variant out of the node for the documented surface', () => {
+    // The pre-fix shape was exactly `{ name: 'open', args: [#dlg] }` — the
+    // variant dropped, so a non-modal open silently opened a modal.
+    expect(astOf('open #dlg as non-modal').modifiers?.as).toBeDefined();
+  });
+});
