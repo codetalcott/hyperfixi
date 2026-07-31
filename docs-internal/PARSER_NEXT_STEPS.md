@@ -91,13 +91,54 @@ shipped parser refuses:
 
 | Source | Upstream | hyperfixi |
 | ------ | -------- | --------- |
-| `toggle .loading for 2s` | accepts | `Expected variable name after "for"` |
+| ~~`toggle .loading for 2s`~~ | accepts | **FIXED** — was `Expected variable name after "for"` |
 | `wait for click or 1s` | accepts | `Expected event name after "for"` |
 
 Both errors read as a `for`-tail being parsed as the start of a loop/event
 construct rather than as a duration modifier, but the two commands take different
-paths, so treat them as one family with two fixes and confirm they share a cause
-before assuming they do.
+paths. **Measured 2026-07-31: they do NOT share a cause**, so the "confirm they
+share a cause" instruction resolves to *no*:
+
+- **`toggle`** — `parseToggleCommand` returned after the optional `on <target>`
+  and never consumed the tail, so the next parse round read `for` as a `for`
+  LOOP. Fixed by `parseTemporalTail`, which emits `modifiers.for` /
+  `modifiers.until` (where `parseTemporalModifiers` reads them). The same sweep
+  found `toggle .a until click` parsing while *silently dropping* the tail, and
+  that the whole `commands/helpers/temporal-modifiers.ts` reversion machinery was
+  unreachable — `for 2s` and `until` appeared in exactly two files, both source.
+- **`wait`** — a different function and a different shape.
+  `parseWaitCommand`'s event branch is a `do…while` over `or`-separated event
+  names; `1s` is a number token, `isIdentifierLike` is false, and it throws
+  `Expected event name after "for"`. The fix is to accept a time expression as an
+  alternative inside that or-chain, and it shares no code with the toggle path.
+  Still open.
+
+**The semantic-side half of `toggle … for` is NOT done, and was reverted after
+measurement rather than shipped.** `toggleSchema.ast` already declares
+`for: 'duration'`; making it live needs a `duration` role on the schema. That
+was tried, and the measurement is worth keeping:
+
+- With `markerOverride: { en: 'for' }` alone, **16 semantic tests fail** —
+  including plain `#button の .active を 切り替え`, which stops parsing entirely.
+  Cause: SOV languages get `[{destination} に] {patient} を [{duration}] 切り替え`
+  with a **marker-less optional slot** — the same hazard class as R3 family F1
+  (the connective swallowed as `increment.quantity`).
+- Adding `ja: '間'`, `ko: '동안'` clears all 16, and the full semantic suite plus a
+  24-language `toggle .active [on #btn]` round-trip probe go green. (The two
+  probe misses, bn and hi, are **pre-existing on main** — verified by stash.)
+- But the role also changes what the i18n transformer RENDERS, and that is where
+  it fails: on main every language drops the `2s` (tr renders `.loading değiştir`);
+  with the role, **tr renders `.loading 2s değiştir`, which the tr parser then
+  rejects** — a new round-trip failure. 9 more languages (bn/es/hi/it/pl/qu/ru/
+  th/uk/vi/zh) still drop the duration in rendering, so support would be partial.
+- **The corpus ratchet is blind to all of it** (green, nothing moved): no corpus
+  row uses `toggle … for`, so R1–R5 never see the form. The unit tests caught the
+  16; the round-trip probe caught tr.
+
+So the remaining work is a per-language `duration` marker table for `toggle` plus
+the transformer's rendering of it — a multilingual arc with no gate today. Whoever
+takes it should add a `toggle … for` corpus row FIRST, so the ratchet stops being
+blind, then do the markers.
 
 Two adjacent diagnostics found in the same sweep, both cosmetic and neither
 worth its own arc — fold them into whichever change touches this area:
