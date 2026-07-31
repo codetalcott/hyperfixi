@@ -50,6 +50,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import hybridComplete from './browser-bundle-hybrid-complete';
 import litePlus from './browser-bundle-lite-plus';
+import { AVAILABLE_COMMANDS, resolveCommandKey } from '../bundle-generator/template-capabilities';
+import { COMMAND_IMPLEMENTATIONS } from '../bundle-generator/templates';
 
 // ===========================================================================
 // Harness
@@ -90,8 +92,19 @@ interface BundleApi {
 
 const consoleLines: unknown[][] = [];
 const consoleWarnings: unknown[][] = [];
+const clipboardWrites: string[] = [];
 const win = (): Record<string, unknown> => globalThis as unknown as Record<string, unknown>;
 const t = (d: Document) => d.querySelector('#t') as HTMLElement;
+
+/**
+ * `history.length` immediately before the surface runs, so `push` and `replace`
+ * can be told apart. jsdom implements both, and the entry count is the only
+ * observable difference between them once the URL matches.
+ */
+let historyLenBefore = 0;
+
+/** The pre-morph node, captured in `setup` so `check` can assert identity. */
+let morphNodeBefore: Element | null = null;
 
 /** Fixture: `#me` is the subject, `#t` the target, `#i` a focusable input. */
 const FIXTURE = `
@@ -123,9 +136,21 @@ const resetFixture = () => {
   document.body.innerHTML = FIXTURE;
   consoleLines.length = 0;
   consoleWarnings.length = 0;
+  clipboardWrites.length = 0;
+  morphNodeBefore = null;
   win().__shipCall_ran = false;
   win().__shipCall = () => (win().__shipCall_ran = true);
+  win().__shipJs = undefined;
+  // jsdom ships no clipboard; `copy`'s fallback path uses `document.execCommand`,
+  // which jsdom also lacks, so the row would assert the catch arm rather than
+  // the command. Defined per-surface because `configurable: true` is what lets
+  // it be redefined at all.
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText: async (s: string) => void clipboardWrites.push(s) },
+    configurable: true,
+  });
   history.replaceState({}, '', '/');
+  historyLenBefore = history.length;
 };
 
 const runSurface = async (api: BundleApi, surface: Surface): Promise<Outcome> => {
@@ -472,6 +497,127 @@ const LITE_PLUS_COMMANDS: Record<string, Surface> = {
   go: { code: 'go to url "#gone-lite"', check: o => ok(o, location.hash === '#gone-lite') },
 };
 
+// ---------------------------------------------------------------------------
+// The eleven orphans, plus `removeClass` and the two url aliases (Arc E step 4)
+// ---------------------------------------------------------------------------
+//
+// These are Finding 17: names the shipped hybrid bundles PARSED and did not
+// EXECUTE. Each fell to `default:` → `console.warn('Unknown command')` → null,
+// which is why every row below runs through `ok()` — its `noWarning()` half is
+// what distinguishes "the command ran and did nothing visible" from "the
+// command was never dispatched", and it is the assertion that fails first if a
+// name is ever advertised again without a case.
+//
+// Written against the TEMPLATES' semantics, since those are now the shipped
+// implementation. Each was mutation-verified by deleting its generated case and
+// confirming it fails this row and nothing else.
+
+Object.assign(HYBRID_COMMANDS, {
+  // `remove .x from #t` parses to a `removeClass` NODE — the class-removal
+  // branch of parseRemove — so this row exercises a name no user types.
+  // Asserted against a target that must SURVIVE: a `removeClass` that fell
+  // through to element-removal would also clear the class.
+  removeClass: {
+    code: 'remove .x from #t',
+    setup: d => t(d).classList.add('x'),
+    check: o => ok(o, !!t(o.doc) && !t(o.doc).classList.contains('x')),
+  },
+  // Emptying is about the CHILDREN, not the element. A row that only checked
+  // `innerHTML === ''` passes against a `remove`, which deletes #t entirely.
+  empty: {
+    code: 'empty #t',
+    setup: d => (t(d).innerHTML = '<span>child</span>'),
+    check: o => ok(o, !!t(o.doc) && t(o.doc).innerHTML === ''),
+  },
+  copy: {
+    code: 'copy "COPIED"',
+    check: o => ok(o, clipboardWrites.includes('COPIED')),
+  },
+  // `beep` logs a TYPE-ANNOTATED line, which is what distinguishes it from
+  // `log`: asserting only that "BEEPED" appears would pass for either.
+  beep: {
+    code: 'beep "BEEPED"',
+    check: o =>
+      ok(
+        o,
+        consoleLines.some(l => l.includes('[beep]') && l.includes('BEEPED'))
+      ),
+  },
+  // History rows assert the URL *and* the direction. `push` must leave the
+  // previous entry behind and `replace` must not — a `replace` implemented as
+  // `push` passes any location-only check.
+  push: {
+    code: 'push url "/pushed"',
+    check: o => ok(o, location.pathname === '/pushed' && history.length > historyLenBefore),
+  },
+  'push-url': {
+    code: 'push url "/pushed-alias"',
+    check: o => ok(o, location.pathname === '/pushed-alias' && history.length > historyLenBefore),
+  },
+  replace: {
+    code: 'replace url "/replaced"',
+    check: o => ok(o, location.pathname === '/replaced' && history.length === historyLenBefore),
+  },
+  'replace-url': {
+    code: 'replace url "/replaced-alias"',
+    check: o =>
+      ok(o, location.pathname === '/replaced-alias' && history.length === historyLenBefore),
+  },
+  // `break` leaves the loop after the FIRST pass; `continue` skips the rest of
+  // the body on ALL passes. The two assertions are each other's control: a
+  // `break` that behaved like `continue` yields '' and fails, and vice versa.
+  break: {
+    code: 'repeat 3 times append "B" to #t then break end',
+    setup: d => (t(d).innerHTML = ''),
+    check: o => ok(o, t(o.doc).innerHTML === 'B'),
+  },
+  continue: {
+    code: 'repeat 3 times continue then append "C" to #t end',
+    setup: d => (t(d).innerHTML = ''),
+    check: o => ok(o, t(o.doc).innerHTML === ''),
+  },
+  // `exit`/`throw` are FOR aborting, so the effect is the signal reaching the
+  // caller. `ok()` would reject them for having an error, so both bypass it and
+  // assert `noWarning()` directly — the half that still matters here.
+  exit: {
+    code: 'exit',
+    check: o => /EXIT_COMMAND/.test(o.error?.message ?? '') && noWarning(),
+  },
+  throw: {
+    code: 'throw "BOOM"',
+    check: o => o.error?.message === 'BOOM' && noWarning(),
+  },
+  js: {
+    code: 'js window.__shipJs = 42 end',
+    check: o => ok(o, win().__shipJs === 42),
+  },
+  /**
+   * Morph is asserted by NODE IDENTITY, never by markup.
+   *
+   * The template wraps its morphlex calls in a try/catch that falls back to
+   * `innerHTML = content`, so a markup check passes whether the morph ran or
+   * crashed into the fallback. capability-emission recorded this exact trap:
+   * deleting the morphlex import left a markup-only check perfectly green.
+   *
+   * A real morph reuses the existing node, so a value the user typed survives.
+   * That also makes this row the only gate on the new `morphlex` import — the
+   * single dependency Arc E step 4 added to the shipped bundle.
+   */
+  morph: {
+    code: 'morph #t to "<input id=\'keep\'>"',
+    setup: d => {
+      t(d).innerHTML = "<input id='keep'>";
+      const input = d.getElementById('keep') as HTMLInputElement;
+      input.value = 'typed';
+      morphNodeBefore = input;
+    },
+    check: o => {
+      const after = o.doc.getElementById('keep') as HTMLInputElement | null;
+      return ok(o, after !== null && after === morphNodeBefore && after.value === 'typed');
+    },
+  },
+} satisfies Record<string, Surface>);
+
 // ===========================================================================
 // The gate
 // ===========================================================================
@@ -598,5 +744,36 @@ describe('return resolves rather than leaking its internal signal (Arc E step 1)
       throw new Error('BOOM');
     };
     await expect(hybridComplete.execute('call window.__shipThrow()', me)).rejects.toThrow('BOOM');
+  });
+});
+
+// ===========================================================================
+// The advertised list is the generation input (Arc E step 4)
+// ===========================================================================
+
+describe('hybrid-complete advertises exactly what the templates can emit', () => {
+  it('its `commands` array is AVAILABLE_COMMANDS, both directions', () => {
+    // Finding 17 was "advertises 35, executes 24". Step 4 made the array the
+    // INPUT to `scripts/generate-bundles.ts`, so the executor can no longer
+    // fall behind it — but nothing stopped the array itself from drifting away
+    // from the capability list, which is the other half of the same fact.
+    //
+    // Set equality both directions, which is what makes it a ratchet: a name
+    // dropped here silently REMOVES a working command from the shipped bundle
+    // (generation would delete its case on the next run), and a name added
+    // without a template makes generation emit nothing while the bundle keeps
+    // claiming it — the original defect, restored.
+    expect([...hybridComplete.commands].sort()).toEqual([...AVAILABLE_COMMANDS].sort());
+  });
+
+  it('every advertised name reaches a template — aliases included', () => {
+    // The array carries 38 names but yields 35 case groups, because `trigger`,
+    // `push-url` and `replace-url` fold into the templates they alias. This
+    // asserts the folding is total: a name resolving to no template would be
+    // advertised, generate nothing, and warn `Unknown command` at runtime.
+    const orphans = hybridComplete.commands.filter(
+      name => !COMMAND_IMPLEMENTATIONS[resolveCommandKey(name)]
+    );
+    expect(orphans).toEqual([]);
   });
 });

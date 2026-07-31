@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
-- **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **18 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
+- **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **21.5 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
 - **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
@@ -637,7 +637,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (8.2 KB), hybrid-hx (18.6 KB), hybrid-hx-v4 (~321 KB), minimal (71.5 KB), standard (78 KB), browser (~309 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (11.1 KB), hybrid-hx (21.5 KB), hybrid-hx-v4 (~321 KB), minimal (71.5 KB), standard (78 KB), browser (~309 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -859,8 +859,8 @@ Quick selection (sizes gzipped):
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------ |
 | via `@hyperfixi/vite-plugin`   | minimal   | **Default for Vite projects** — scans usage, emits the right bundle                        |
 | `hyperfixi-lite.js`            | 1.9 KB    | Tiny static page (8 commands, regex parser)                                                |
-| `hyperfixi-hybrid-complete.js` | 8.2 KB    | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
-| `hyperfixi-hx.js`              | 18 KB     | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
+| `hyperfixi-hybrid-complete.js` | 11.1 KB   | Pure hyperscript, ~85% coverage (AST parser, blocks, modifiers)                            |
+| `hyperfixi-hx.js`              | 21.5 KB   | + htmx v1/v2 attributes (`hx-get` etc.); no reactivity/streaming                           |
 | `hyperfixi-hx-v4.js`           | ~321 KB   | `hx-live`, `bind`, `when`, SSE, WebSocket — full runtime + reactivity                      |
 | `hyperfixi.js`                 | ~309 KB   | Full bundle with parser (`window.hyperfixi`); reactivity + realtime plugins pre-installed  |
 | `hyperfixi-multilingual.js`    | 93 KB     | Multilingual, parser-free (pair with a semantic bundle)                                    |

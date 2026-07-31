@@ -228,6 +228,8 @@
     "verify:reference": "tsx scripts/verify-reference-data.ts",
     "docs:commands": "tsx scripts/generate-command-docs.ts && tsx scripts/generate-command-docs.ts --format json",
     "docs:commands:check": "tsx scripts/generate-command-docs.ts --check && tsx scripts/generate-command-docs.ts --format json --check",
+    "generate:bundles": "tsx scripts/generate-bundles.ts",
+    "generate:bundles:check": "tsx scripts/generate-bundles.ts --check",
     "update:sizes": "tsx scripts/update-bundle-sizes.ts",
     "update:sizes:auto": "tsx scripts/update-bundle-sizes.ts --update"
   },

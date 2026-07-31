@@ -13,11 +13,10 @@ import {
   STYLE_READ_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
   MORPH_COMMANDS,
-  getCommandImplementations,
-  getBlockImplementations,
   type CodeFormat,
 } from './templates';
 import { resolveCommandKey } from './template-capabilities';
+import { emitCommandCases, emitBlockCases } from './executor-core';
 
 /**
  * Generate bundle code from configuration
@@ -52,23 +51,12 @@ export function generateBundleCode(config: GeneratorOptions): string {
   const hasBlocks = blocks.length > 0;
   const hasReturn = commands.includes('return');
 
-  // Get format-specific implementations
-  const commandImpls = getCommandImplementations(format);
-  const blockImpls = getBlockImplementations(format);
-
-  // Resolve advertised aliases (push-url → push) to their template key, and
-  // dedupe: each template already carries the case labels for its aliases, so
-  // requesting both 'push' and 'push-url' must include the template once
-  // (duplicate case labels would shadow silently).
-  const commandCases = [...new Set(commands.map(resolveCommandKey))]
-    .filter(cmd => commandImpls[cmd])
-    .map(cmd => commandImpls[cmd])
-    .join('\n');
-
-  const blockCases = blocks
-    .filter(block => blockImpls[block])
-    .map(block => blockImpls[block])
-    .join('\n');
+  // Shared with `scripts/generate-bundles.ts`, which splices the same case
+  // bodies into the committed `browser-bundle-hybrid-complete.ts`. Alias
+  // resolution and dedupe live in the emitter so the two consumers cannot drift
+  // — see `executor-core.ts`.
+  const commandCases = emitCommandCases(commands, format);
+  const blockCases = emitBlockCases(blocks, format);
 
   return `/**
  * HyperFixi ${name} Bundle (Auto-Generated)

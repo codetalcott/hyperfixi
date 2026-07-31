@@ -158,12 +158,40 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return value;
     }`,
 
+  // `wait` carries TWO case labels because the parser emits two names for it.
+  // `parseWait` returns `{ name: 'waitFor' }` for `wait for <event>` and
+  // `{ name: 'wait' }` for a duration — and `waitFor` is NOT a `cmdMap` key, so
+  // no key-set check between the parser and these templates can see it. The
+  // label was absent here until Arc E step 4 measured the parser's EMITTED-name
+  // set (28) against the template case labels (35) rather than against
+  // `cmdMap`'s keys (35, which agree and are the wrong question). Every
+  // generated bundle carrying `wait` therefore fell to `default:` on
+  // `wait for click` — warned once and resolved IMMEDIATELY instead of waiting,
+  // so a handler's remaining commands ran at once. Same class as the `morph`
+  // free identifier and the `take` DOMException: invisible to a parse-level or
+  // key-set check, visible only to execution.
   wait: `
     case 'wait': {
       const duration = await evaluate(cmd.args[0], ctx);
       const ms = typeof duration === 'number' ? duration : parseInt(String(duration));
       await new Promise(resolve => setTimeout(resolve, ms));
       return ms;
+    }
+
+    case 'waitFor': {
+      const eventName = await evaluate(cmd.args[0], ctx);
+      const targets = await getTarget();
+      const target = targets[0] || ctx.me;
+      return new Promise(resolve => {
+        target.addEventListener(
+          String(eventName),
+          e => {
+            ctx.it = e;
+            resolve(e);
+          },
+          { once: true }
+        );
+      });
     }`,
 
   transition: `
@@ -536,11 +564,19 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       }
 
       // Build context object for the Function
+      //
+      // \`target\` is \`ctx.me\` outright, not \`ctx.target || ctx.me\`. No Context
+      // in any bundle declares a \`target\` field and no executor assigns one, so
+      // the left operand was always \`undefined\` and the expression always
+      // yielded \`ctx.me\` — same value, and a type error the moment the template
+      // lands in a file that is actually typechecked (Arc E step 4, where it
+      // did). Generated bundles are written, imported and executed but never
+      // \`tsc\`'d, which is how a phantom property survived here.
       const jsContext = {
         me: ctx.me,
         it: ctx.it,
         event: ctx.event,
-        target: ctx.target || ctx.me,
+        target: ctx.me,
         locals: Object.fromEntries(ctx.locals),
         globals: Object.fromEntries(globalVars),
         document: typeof document !== 'undefined' ? document : undefined,

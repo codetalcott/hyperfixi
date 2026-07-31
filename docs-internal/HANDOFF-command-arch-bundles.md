@@ -469,6 +469,159 @@ Only the four slim bundles moved; the six full bundles are untouched.
 `--update` would have absorbed the +0.3–0.8% raw local-vs-recorded drift the
 full bundles already show into the committed numbers, blinding the gate to it.
 
+## Step 4 — CLOSED: the executor core is generated, and Finding 17 is shut
+
+`browser-bundle-hybrid-complete.ts`'s `executeCommand` and `executeBlock` switch
+bodies are now emitted from `bundle-generator/templates.ts` by
+`packages/core/scripts/generate-bundles.ts`, committed, and guarded by
+`generate:bundles:check` in CI's "Check generated artifacts are in sync" step.
+The bundle EXECUTES all 38 advertised names, not 24.
+
+### The step's own premise failed re-measurement, again
+
+The brief's step-4 paragraph says to "point `generateBundleCode()` at the
+reconciled templates + shared shell and commit the output". Measured, that would
+have been a behavior change across the ENTIRE runtime, not a refactor:
+
+| region | hybrid-complete | emitted | identical? |
+| --- | --- | --- | --- |
+| `evaluate` | 86 L (`unary`/`object`/`array`/`valuesOf`, `collectFormValues`) | 71 L | NO |
+| `evaluateBinary` | 68 L | 39 L | NO |
+| `evaluatePositional` | present | conditional | NO |
+| `executeSequence` / `executeAST` | 11 L / 100 L | 21 L / 60 L | NO |
+| `Context` | has `globals`, is `export`ed | neither | NO |
+
+Step 2 reconciled the command and block CASE BODIES. It did not reconcile — and
+never claimed to reconcile — the surrounding runtime. So the region generated
+here is **only the case bodies**, spliced between `#region generated:` markers
+INSIDE each switch. The switch, its `default:` arm, the helper closures, the
+whole evaluator and the shell stay handwritten.
+
+That also settles the design question the kickoff posed (parameterize the shell
+emission, or generate the executor core only): **(b), the executor core only**.
+Parameterizing the emitter to produce both api shapes would have built a
+generalized emitter for exactly one consumer — S3-a's rejected indirection at a
+different level — against a surface that is gated as set equality in both
+directions and spread wholesale by `hyperfixi-hx.js`. Narrowing the region is
+also what keeps the emitter parameterless: the two `default:` arms warn with
+different text and the two bundles scope their helpers differently, and none of
+that has to be modelled.
+
+The shared emitter is `bundle-generator/executor-core.ts`
+(`emitCommandCases`/`emitBlockCases`), called by BOTH `generateBundleCode()` and
+the script. Without that, the arc would have replaced a duplicated executor with
+a duplicated emitter — the alias-dedupe rule is exactly the kind of thing that
+drifts.
+
+### S4-a — the templates were NOT the superset: `waitFor` was missing
+
+Step 2 concluded "the templates are the undisputed best copy of every row they
+carry." Measured against the parser, they were not, and generating from them
+as-is would have broken `wait for <event>` in the shipped bundle.
+
+The reason no existing check could see it is precise and worth carrying: every
+list gate compares against **`cmdMap`'s keys**. `cmdMap` has 35 keys and the
+templates have 35 case labels and the two agree — but `cmdMap`'s keys are the
+wrong question. What an executor must switch on is the set of names the parser
+**EMITS**, and those differ:
+
+| set | size | notes |
+| --- | --- | --- |
+| `cmdMap` keys | 35 | includes `trigger`; excludes `removeClass`, `waitFor` |
+| parser-emitted `name:` literals | 28 | includes `removeClass`, `waitFor`; excludes `trigger` |
+| template case labels (before) | 35 | included `removeClass`; **missing `waitFor`** |
+
+`parseWait` returns `{ name: 'waitFor' }` for `wait for <event>`. Confirmed by
+execution, not by reading: a generated bundle carrying `wait` fell to `default:`,
+warned once, and **resolved immediately** — so every command after
+`wait for click` in a handler ran without waiting. `hybrid-complete` had the case
+and was correct. Same class as the `morph` free identifier and the `take`
+DOMException: invisible to a parse-level or key-set check, visible only to
+execution.
+
+Fixed by absorbing the second label into the `wait` template, with two gates: a
+`SECONDARY_LABEL_SURFACES` entry so §3's label-reachability check stays at
+tolerance 0 (rather than allowlisting the label), and an execution row asserting
+the thing the command is FOR — that it had NOT resolved before the event and had
+after. A row that merely awaited the promise passes against the broken template,
+which is how this survived.
+
+### S4-b — `ctx.target` in the `js` template: templates are never typechecked
+
+Generation surfaced a type error that had been latent for the life of the
+template: `target: ctx.target || ctx.me`, where no `Context` in ANY bundle
+declares a `target` field and no executor assigns one. The left operand was
+always `undefined`, so the value was always `ctx.me` — harmless, and a hard
+error the moment the template landed in a file that is actually compiled.
+
+The generalizable half: **generated bundles are written, imported and executed,
+but never `tsc`'d.** `capability-emission.test.ts` writes them to
+`__tests__/.generated/` and removes them before AND after the run, so `typecheck`
+never sees them. Execution coverage does not imply type coverage, and this arc
+now has one instance of each blind spot finding the other.
+
+### S4-c — the advertised array became the generation INPUT
+
+`commands: [...]` is what the script reads and emits from. This is what makes
+Finding 17 unrepeatable rather than merely fixed: "advertised but not executed"
+stops being a state the file can be in. Two gates hold the other half —
+`shipped-bundle-execution.test.ts` pins the array as set-equal to
+`AVAILABLE_COMMANDS` in both directions (a dropped name would silently DELETE a
+working command on the next generation), and asserts every advertised name
+resolves to a real template.
+
+38 names, 35 case groups: `trigger`, `push-url` and `replace-url` fold into the
+templates they alias. `removeClass` is in the array despite being a parser NODE
+name no user types — it needs a case, so it needs to be there.
+
+### S4-d — the size estimate excluded the largest cost
+
+The arc's pre-measurement was **+1433 B gz**, taken on `generateBundle()`'s
+output. That output is TypeScript SOURCE TEXT, in which
+`import { morph } from 'morphlex'` is one line — so the estimate structurally
+excluded the library that line pulls in. Built and measured instead:
+
+| bundle | before | +12 cmds (no `morph`) | +13 cmds (with `morph`) |
+| --- | --- | --- | --- |
+| `hyperfixi-hybrid-complete.js` | 8409 | 9317 (+10.9%) | **11376 (+35.3%)** |
+| `hyperfixi-hx.js` | 19025 | 19888 (+4.8%) | **21997 (+15.6%)** |
+
+`morphlex` alone is **+2057 gz** — 69% of the increase for 1 of 13 commands.
+Including it was a deliberate call by the owner: no advertised command may be a
+no-op. `MAX_HYBRID` therefore moved 20000 → **24000** (ci.yml AND
+pre-publish-check.yml); the arc's recommended 22000 predates this measurement and
+would have failed on the first run at hx's 21997. `baseline.json` was updated for
+those two entries ONLY, per step 3's precedent.
+
+### S4-e — two gates transformed, neither dropped
+
+- `bundle-manifest-consistency.test.ts` pinned `case 'trigger':\n case 'send': {`
+  by source regex. That label was measured UNREACHABLE (the parser emits a `send`
+  node for both spellings) and generation removed it structurally, so the pin was
+  asserting the presence of code that could not run — it would have blocked the
+  fix it was written to protect. Replaced with the structural claim (`trigger`
+  resolves to a template that IS emitted) plus the execution row that already
+  covers the dispatch. Its advertised-command check also had to resolve through
+  the GENERATOR's alias map, not the parser's: `trigger` is a VALUE in one and a
+  KEY in the other, and conflating them made a correct file look broken.
+- `command-manifest-audit.test.ts`'s ghost check assumed a bundle's `commands`
+  array and the registry are one vocabulary. Since the array is now the
+  generation input they are two: `push-url`/`replace-url` are advertised alias
+  spellings (the registry's own aliases are the unhyphenated
+  `pushurl`/`replaceurl`), and `removeClass` is a parser node name. It resolves
+  through `resolveCommandKey` first, with `removeClass` as one named exception —
+  the same exception, for the same reason, that capability-emission already
+  carries.
+
+### Gate — step 4
+
+Core `test:quick` **7687 / 106 / 300** (from 7684; +1 waitFor execution row, +2
+advertised-list rows). All 14 new execution rows mutation-verified by deleting
+each generated case: every one fails its OWN row and nothing else (`push` and
+`replace` also fail their alias rows, correctly — the aliases resolve to those
+templates). The advertised-array gate mutation-verified in both directions.
+`generate:bundles:check` is idempotent under the pinned prettier.
+
 ## Finding 17, restated with the arc's numbers
 
 The shipped hybrid bundles PARSE 35 commands and EXECUTE 24. The 11 orphans —
@@ -529,7 +682,14 @@ rejected), and `window._hyperscript` is gone from all four emitters that
 claimed it.
 
 **Step 4 — generate the hybrid-complete executor core; commit output with a
-`--check` drift guard.** `generateBundleCode()` already emits the whole file
+`--check` drift guard. CLOSED — see § "Step 4 — CLOSED" above for the design
+decision (executor core only, NOT the shell or the runtime), the `waitFor` gap
+that made the templates not-yet-a-superset, and the measured size carry.** The
+paragraph below is the plan as written; two of its assumptions did not survive
+measurement — `generateBundleCode()` emits a whole-file shape whose every
+runtime region diverges from hybrid-complete's, and the +1433 gz estimate was
+taken on source text and so excluded `morphlex` entirely (the real figure is
++2967, of which 2057 is that one library). `generateBundleCode()` already emits the whole file
 shape (parser import via `parserImportPath`, runtime, shell, autoInit) — this
 step points it at the reconciled templates + shared shell and commits the
 output as the `browser-bundle-hybrid-complete.ts` entry (script under

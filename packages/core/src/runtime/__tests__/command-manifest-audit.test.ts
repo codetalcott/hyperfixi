@@ -712,7 +712,10 @@ describe('COMMAND_KEYWORDS', () => {
 const BUNDLE_COMMAND_COUNTS: Record<string, number> = {
   'browser-bundle-classic-i18n.ts': 43,
   'browser-bundle-classic.ts': 52,
-  'browser-bundle-hybrid-complete.ts': 24,
+  // 24 -> 38 in Arc E step 4: the array became the generation input, so it now
+  // carries every name the templates implement (Finding 17 — it advertised 35
+  // and executed 24). See scripts/generate-bundles.ts.
+  'browser-bundle-hybrid-complete.ts': 38,
   'browser-bundle-lite-plus.ts': 19,
   'browser-bundle-lite.ts': 8,
   'browser-bundle-minimal-v2.ts': 10,
@@ -746,8 +749,29 @@ describe('the per-bundle commands arrays', () => {
   });
 
   it('no bundle advertises a command the registry does not have', () => {
+    // A bundle's `commands` array and the registry are two vocabularies, and
+    // Arc E step 4 is where they stopped coinciding. hybrid-complete's array is
+    // now the INPUT to `scripts/generate-bundles.ts`, so it names things the
+    // generator resolves — which includes spellings the registry does not carry:
+    //
+    //   - `push-url` / `replace-url` are advertised ALIASES. The registry's
+    //     canonical names are `push`/`replace` (its own alias entries are the
+    //     unhyphenated `pushurl`/`replaceurl`), so these resolve rather than
+    //     being ghosts. Resolving through the same map generation uses is what
+    //     keeps this honest: a name resolving to an UNREGISTERED target still
+    //     fails.
+    //   - `removeClass` is a parser NODE name, never a keyword a user types —
+    //     `remove .x from #t` takes parseRemove's class branch and yields it.
+    //     It must appear in the array or generation emits no case for it and
+    //     class removal silently stops working, so the exception is named here
+    //     rather than the array being trimmed. Same exception, same reason, as
+    //     capability-emission.test.ts's DISPATCHED_UNDER_ANOTHER_KEYWORD.
+    const PARSER_NODE_NAMES = new Set(['removeClass']);
     for (const [file, names] of Object.entries(arrays)) {
-      expect(ghostsIn(names), `${file} advertises unregistered commands`).toEqual([]);
+      const unresolved = names
+        .filter(name => !PARSER_NODE_NAMES.has(name))
+        .map(name => resolveCommandKey(name));
+      expect(ghostsIn(unresolved), `${file} advertises unregistered commands`).toEqual([]);
     }
   });
 
