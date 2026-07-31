@@ -375,7 +375,7 @@ the committed baseline:
 > not truth. Current plan + per-arc history:
 > `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
-The `--regression` gate ratchets on **ten** signals (each fails CI; each guarded so
+The `--regression` gate ratchets on **eleven** signals (each fails CI; each guarded so
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
@@ -417,6 +417,18 @@ yields a 0 delta):
    (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
    verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
    blind spot for repeated roles.
+   **Plus the role-set flip ratchet (tolerance 0, added 2026-07-31):** a pattern
+   that was role-FAITHFUL in the baseline (absent from its `roleLossyPatterns`)
+   and now has an incomplete role set fails outright. The average above cannot
+   see a single pattern losing one role — ~0.0013 in a ~154-pattern language,
+   15× under its tolerance — and that blind spot was **measured**, not
+   hypothesized: a `required: false` duration role on toggleSchema cost es/pl/vi
+   the second toggle's positional destination on `toggle-aria-expanded`
+   (`next .panel` silently became `me`) and the gate stayed green;
+   `tools/triage-r1.ts` found it by hand. Same binary-flip argument as the
+   lossy/R5 zeros. Guarded by the baseline carrying `roleLossyPatterns`, so an
+   un-regenerated baseline never retro-flags; pre-existing role-lossy patterns
+   are the R1 burn-down list, not regressions.
 7. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
    matched the en reference and now diverges (pass→fail; tolerance 0).
 8. **value-recall ratchet (R3)** — a per-language **avgValueRecall** drop > 0.02.

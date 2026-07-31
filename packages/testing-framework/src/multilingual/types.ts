@@ -308,6 +308,18 @@ export interface LanguageResults {
    */
   lossyPasses?: string[] | undefined;
 
+  /**
+   * R1 — pattern IDs that parse with roleFidelity < 1 (the `action.role:valueType`
+   * set vs the English reference is incomplete). The per-pattern counterpart of
+   * `avgRoleFidelity`: a single pattern losing a role moves the average by
+   * ~0.0013 in a ~154-pattern language, which the 0.02 avg tolerance swallows —
+   * measured doing exactly that (es/pl/vi lost `toggle-aria-expanded`'s
+   * positional destination to a schema change and the gate stayed green). The
+   * role-set flip ratchet compares this list against the baseline's at
+   * tolerance 0.
+   */
+  roleLossyPatterns?: string[] | undefined;
+
   /** Duration in ms */
   duration: number;
 
@@ -378,6 +390,8 @@ export interface Baseline {
         degeneratePasses?: string[] | undefined;
         /** Pattern IDs that pass *lossily* (fidelity in [0.5, 1.0) — drop ≥1 command). */
         lossyPasses?: string[] | undefined;
+        /** R1 — pattern IDs whose role set is incomplete vs the en reference (roleFidelity < 1). */
+        roleLossyPatterns?: string[] | undefined;
         bundleSize: number | undefined;
         /** Pattern-level results for detailed tracking */
         patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
@@ -434,6 +448,14 @@ export interface RegressionResult {
    * misses. Empty when the baseline has no lossy data yet (never retro-flags).
    */
   newLossyPasses: string[];
+  /**
+   * R1 — patterns that were *role-faithful* (roleFidelity 1.0) in the baseline
+   * but now have an incomplete role set (roleFidelity < 1). The binary
+   * per-pattern signal the avgRoleFidelity tolerance cannot provide: one flip
+   * moves the average by ~0.0013, far under 0.02. Empty when the baseline has
+   * no `roleLossyPatterns` data yet (never retro-flags).
+   */
+  newRoleLossyPatterns: string[];
   status: 'improved' | 'regressed' | 'unchanged';
 }
 

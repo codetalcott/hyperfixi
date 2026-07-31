@@ -285,6 +285,7 @@ export class TestOrchestrator {
 
       const degenerate: string[] = [];
       const lossy: string[] = [];
+      const roleLossy: string[] = [];
       const scores: number[] = [];
       const precisionScores: number[] = [];
       const multisetRecallScores: number[] = [];
@@ -330,6 +331,11 @@ export class TestOrchestrator {
           if (roleFidelity !== undefined) {
             result.roleFidelity = roleFidelity;
             roleScores.push(roleFidelity);
+            // Per-pattern R1: the average above cannot see a single pattern
+            // losing a role (~0.0013 in a ~154-pattern language, vs the 0.02
+            // gate tolerance). Recording WHICH patterns are role-incomplete
+            // makes the flip binary and ratchetable at tolerance 0.
+            if (roleFidelity < 1) roleLossy.push(result.pattern.codeExampleId);
           }
         }
 
@@ -371,6 +377,7 @@ export class TestOrchestrator {
           : undefined;
       lang.degeneratePasses = degenerate.sort();
       lang.lossyPasses = lossy.sort();
+      lang.roleLossyPatterns = roleLossy.sort();
     }
   }
 

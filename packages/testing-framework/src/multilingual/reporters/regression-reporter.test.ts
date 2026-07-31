@@ -482,3 +482,106 @@ describe('RegressionReporter per-pattern parse ratchet — R5', () => {
     expect(r.newFailures).toHaveLength(25);
   });
 });
+
+describe('RegressionReporter role-set flip ratchet — R1 per-pattern', () => {
+  // LOCK: the avgRoleFidelity delta cannot see a single pattern losing a role —
+  // ~0.0013 in a ~154-pattern language, 15× under its 0.02 tolerance. That is
+  // not hypothetical: a `required: false` duration role on toggleSchema cost
+  // es/pl/vi the second toggle's positional destination on `toggle-aria-expanded`
+  // (`next .panel` silently became `me`) and `--regression` stayed green. This
+  // ratchet is the binary per-pattern signal that sees the flip, at tolerance 0.
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'roleflip-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  function langWithRoleLossy(roleLossyPatterns: string[]): LanguageResults {
+    return {
+      ...lang([pass('was-role-faithful'), pass('was-role-lossy'), pass('stable')], []),
+      roleLossyPatterns,
+    };
+  }
+
+  const baseline: Baseline = {
+    timestamp: '',
+    commit: 'base',
+    languages: {
+      ja: {
+        parseSuccess: 3,
+        parseFailure: 0,
+        parseRate: 1,
+        avgConfidence: 1,
+        avgRoleFidelity: 0.99,
+        roleLossyPatterns: ['was-role-lossy'],
+        bundleSize: undefined,
+        patterns: {
+          'was-role-faithful': { success: true, confidence: 1 },
+          'was-role-lossy': { success: true, confidence: 1 },
+          'was-failing': { success: false, confidence: 0 },
+          stable: { success: true, confidence: 1 },
+        },
+      },
+    },
+    bundles: {},
+  };
+
+  it('flags a role-faithful baseline pattern that is now role-incomplete', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithRoleLossy(['was-role-faithful', 'was-role-lossy'])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newRoleLossyPatterns).toEqual(['was-role-faithful']);
+    expect(r.newRoleLossyPatterns).not.toContain('was-role-lossy'); // burn-down, not regression
+    expect(r.status).toBe('regressed');
+  });
+
+  it('does not flag when the role-lossy set is unchanged', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithRoleLossy(['was-role-lossy'])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newRoleLossyPatterns).toEqual([]);
+    expect(r.status).not.toBe('regressed');
+  });
+
+  it('treats a role-lossy pattern that became faithful as improvement-neutral', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithRoleLossy([])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newRoleLossyPatterns).toEqual([]);
+  });
+
+  it('does not flag a pattern whose PARSE failed in the baseline (improvement path)', () => {
+    // `was-failing` did not parse in the baseline; parsing role-incompletely now
+    // is strictly better, not a regression.
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(results(langWithRoleLossy(['was-failing'])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newRoleLossyPatterns).toEqual([]);
+  });
+
+  it('never retro-flags when the baseline has no roleLossyPatterns data', () => {
+    const noRoleData: Baseline = structuredClone(baseline);
+    delete noRoleData.languages.ja!.roleLossyPatterns;
+    const reporter = reporterWith(noRoleData);
+    reporter.reportComplete(
+      results(langWithRoleLossy(['was-role-faithful', 'was-role-lossy', 'stable']))
+    );
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newRoleLossyPatterns).toEqual([]);
+  });
+
+  it('persists roleLossyPatterns when saving a baseline', () => {
+    const reporter = reporterWith(baseline);
+    const res = results(langWithRoleLossy(['was-role-lossy', 'stable']));
+    reporter.reportComplete(res);
+    reporter.saveAsBaseline(res);
+    const saved = JSON.parse(readFileSync(join(dir, 'baseline.json'), 'utf-8')) as Baseline;
+    expect(saved.languages.ja!.roleLossyPatterns).toEqual(['was-role-lossy', 'stable']);
+  });
+});
