@@ -191,7 +191,7 @@ describe('sockets feature — supplementary coverage', () => {
     it('handles open, message, error and close events', async () => {
       const connected = await out.connection.connect(socketConfig());
       expect(connected).toBe(true);
-      const ws = MockWS.instances.at(-1)!;
+      const ws = MockWS.instances[MockWS.instances.length - 1]!;
 
       // open -> connected
       ws.triggerOpen();
@@ -211,7 +211,7 @@ describe('sockets feature — supplementary coverage', () => {
 
     it('reports connection info and state after connecting', async () => {
       await out.connection.connect(socketConfig());
-      MockWS.instances.at(-1)!.triggerOpen();
+      MockWS.instances[MockWS.instances.length - 1]!.triggerOpen();
       await Promise.resolve();
       const info = out.connection.getConnectionInfo();
       expect(info).toBeDefined();
