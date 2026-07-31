@@ -14,7 +14,6 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { resolvePossessive } from '../helpers/element-resolution';
 import { getVariableValue, setVariableValue } from '../helpers/variable-access';
 import {
   getElementProperty,
@@ -23,6 +22,7 @@ import {
   setElementValue,
   isEmpty,
 } from '../helpers/element-property-access';
+import { resolveWriteTarget, type WriteTarget } from '../helpers/write-target';
 import {
   commandMeta,
   command,
@@ -32,14 +32,21 @@ import {
 } from '../decorators';
 
 /**
- * Typed input for DefaultCommand
+ * Typed input for DefaultCommand (discriminated union).
+ *
+ * Mirrors `SetCommandInput`: `default` is set's write surface with a nullish
+ * guard in front of it, and it resolves its target the same way — symbolically,
+ * from the raw AST node. The previous single `{ target, value }` shape forced
+ * `parseInput` to EVALUATE the target and `execute` to re-derive the slot by
+ * string-matching the result, which is what broke every documented example
+ * (evaluating an unset variable yields `undefined` — precisely the case
+ * `default` exists to handle).
  */
-export interface DefaultCommandInput {
-  /** Target variable, element, or attribute */
-  target: string | HTMLElement;
-  /** Value to set if target doesn't exist */
-  value: unknown;
-}
+export type DefaultCommandInput =
+  | { type: 'variable'; name: string; value: unknown; scope?: 'element' | 'global' }
+  | { type: 'attribute'; elements: HTMLElement[]; name: string; value: unknown }
+  | { type: 'property'; element: HTMLElement; property: string; value: unknown }
+  | { type: 'element'; element: HTMLElement; value: unknown };
 
 /**
  * Output from default command execution
@@ -50,6 +57,56 @@ export interface DefaultCommandOutput {
   wasSet: boolean;
   existingValue?: unknown;
   targetType: 'variable' | 'attribute' | 'property' | 'element';
+}
+
+/**
+ * `:x` / `$x` — the semantic path's shape for a scoped variable.
+ *
+ * The shared ladder's bare-reference rung claims `identifier`/`variable`/
+ * `symbol` nodes, which is what the TRADITIONAL parser emits (`:x` →
+ * `identifier{ name:'x', scope:'element' }`). The semantic path renders the
+ * same source as a `contextReference`, a kind the rung does not claim — and
+ * must not, since `me`/`it`/`result` are contextReferences too and are not
+ * writable variable slots. Hence the sigil gate here rather than a widening of
+ * the shared ladder, which `set`/`append`/`prepend` also walk.
+ */
+function scopedVariableTarget(
+  node: Record<string, unknown> | undefined
+): { name: string; scope: 'element' | 'global' } | null {
+  if (node?.['type'] !== 'contextReference') return null;
+  const name = node['name'];
+  if (typeof name !== 'string') return null;
+  if (name.startsWith(':')) return { name: name.slice(1), scope: 'element' };
+  if (name.startsWith('$')) return { name: name.slice(1), scope: 'global' };
+  return null;
+}
+
+/** Map a resolved write slot onto default's input union. */
+function toDefaultInput(target: WriteTarget, value: unknown): DefaultCommandInput {
+  switch (target.kind) {
+    case 'attribute':
+      return { type: 'attribute', elements: target.elements, name: target.name, value };
+    case 'property':
+      return {
+        type: 'property',
+        element: target.target.element,
+        property: target.target.property,
+        value,
+      };
+    case 'variable': {
+      // A `$`-prefixed name must lose its sigil here: `setVariableValue` stores
+      // `$g` under the BARE key `g` in globals while `getVariableValue` looks up
+      // the literal name, so a target that kept its sigil would read `undefined`
+      // forever and overwrite the global on every run — the exact bug `default`
+      // exists to avoid. (`set` never reads, so it does not notice.)
+      const isGlobalSigil = target.name.startsWith('$');
+      const name = isGlobalSigil ? target.name.slice(1) : target.name;
+      const scope = isGlobalSigil ? 'global' : target.scope;
+      return { type: 'variable', name, value, ...(scope ? { scope } : {}) };
+    }
+    default:
+      throw new Error(`default: unrequested write-target rung '${target.kind}'`);
+  }
 }
 
 @command({ name: 'default' })
@@ -82,57 +139,107 @@ export class DefaultCommand implements DecoratedCommand {
       throw new Error('default command requires a target');
     }
 
-    const target = await evaluator.evaluate(raw.args[0], context);
-    let value: unknown;
+    const value = await this.extractValue(raw, evaluator, context);
+    const firstArg = raw.args[0] as unknown as Record<string, unknown>;
 
-    if (raw.modifiers?.to) {
-      value = await evaluator.evaluate(raw.modifiers.to, context);
-    } else if (raw.args.length >= 2) {
-      value = await evaluator.evaluate(raw.args[1], context);
-    } else {
-      throw new Error('default command requires a value (use "to <value>")');
+    const scoped = scopedVariableTarget(firstArg);
+    if (scoped) {
+      return { type: 'variable', name: scoped.name, value, scope: scoped.scope };
     }
 
-    return { target, value };
+    // The shared raw-AST write-target ladder (`helpers/write-target.ts`), the
+    // same one `set`/`append`/`prepend` walk. Every rung inspects the node
+    // BEFORE evaluation, which is the whole point: evaluating a write target
+    // yields its current VALUE, and for `default` that value is `undefined`
+    // exactly when the command is supposed to act.
+    //
+    // Rungs requested: attribute + property + bare reference. Not requested:
+    // `nodeWriters` (plugin write targets like reactivity's `^count` — `default
+    // ^count to 0` is undocumented and the plugin has no read side to guard
+    // against), `selectorSource` and `styleSplit` (default has no `on` modifier
+    // and no `*prop` form; a selector target means "fill this element's value",
+    // which is the evaluated tail below).
+    const slot = await resolveWriteTarget(firstArg, evaluator, context, {
+      scopeElements: async () => (context.me ? [context.me as HTMLElement] : []),
+      bareReference: true,
+    });
+    if (slot) return toDefaultInput(slot, value);
+
+    // Evaluated tail: shapes the ladder does not name. A selector or expression
+    // whose VALUE is the element to fill (`default #out to "x"`) — here
+    // evaluation is correct, because the element is the target, not its name.
+    const evaluated = await evaluator.evaluate(raw.args[0], context);
+    if (isHTMLElement(evaluated)) {
+      return { type: 'element', element: evaluated as HTMLElement, value };
+    }
+    if (Array.isArray(evaluated) && isHTMLElement(evaluated[0])) {
+      return { type: 'element', element: evaluated[0] as HTMLElement, value };
+    }
+    if (typeof evaluated === 'string') {
+      // A target that legitimately evaluates to a NAME (e.g. a literal node).
+      return { type: 'variable', name: evaluated, value };
+    }
+
+    throw new Error(`Invalid target type: ${typeof evaluated}`);
+  }
+
+  /**
+   * The value to install: `to <value>`.
+   *
+   * Three shapes reach here, and the middle one was silently broken. The
+   * semantic path emits `modifiers.to`; the TRADITIONAL parser emits the
+   * positional `[target, identifier('to'), value]` triple that
+   * `SetCommand.parseInput` also reads — and the old code took `args[1]` for
+   * it, which is the `to` KEYWORD, so every `default X to Y` parsed
+   * traditionally installed `undefined` (measured: `default #out to "x"` wrote
+   * the string "undefined"). The bare two-arg form is kept for callers that
+   * build the node directly.
+   */
+  private async extractValue(
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<unknown> {
+    if (raw.modifiers?.to) {
+      return evaluator.evaluate(raw.modifiers.to, context);
+    }
+
+    const second = raw.args[1] as unknown as Record<string, unknown> | undefined;
+    const isToMarker =
+      second?.['type'] === 'identifier' && String(second['name']).toLowerCase() === 'to';
+    if (isToMarker && raw.args.length >= 3) {
+      return evaluator.evaluate(raw.args[2], context);
+    }
+    if (!isToMarker && raw.args.length >= 2) {
+      return evaluator.evaluate(raw.args[1], context);
+    }
+
+    throw new Error('default command requires a value (use "to <value>")');
   }
 
   async execute(
     input: DefaultCommandInput,
     context: TypedExecutionContext
   ): Promise<DefaultCommandOutput> {
-    const { target, value } = input;
-
-    if (typeof target === 'string') {
-      // Attribute syntax: @attr
-      if (target.startsWith('@')) {
-        return this.defaultAttribute(context, target.substring(1), value);
-      }
-
-      // Possessive expression: "my innerHTML", "its value"
-      const possessiveMatch = target.match(/^(my|its?|your?)\s+(.+)$/);
-      if (possessiveMatch) {
-        const [, possessive, property] = possessiveMatch;
-        return this.defaultElementProperty(context, possessive, property, value);
-      }
-
-      // Regular variable
-      return this.defaultVariable(context, target, value);
+    switch (input.type) {
+      case 'variable':
+        return this.defaultVariable(context, input.name, input.value, input.scope);
+      case 'attribute':
+        return this.defaultAttribute(context, input.elements, input.name, input.value);
+      case 'property':
+        return this.defaultElementProperty(context, input.element, input.property, input.value);
+      case 'element':
+        return this.defaultElementValue(context, input.element, input.value);
     }
-
-    // HTML element
-    if (isHTMLElement(target)) {
-      return this.defaultElementValue(context, target as HTMLElement, value);
-    }
-
-    throw new Error(`Invalid target type: ${typeof target}`);
   }
 
   private defaultVariable(
     context: TypedExecutionContext,
     name: string,
-    value: unknown
+    value: unknown,
+    scope?: 'element' | 'global'
   ): DefaultCommandOutput {
-    const existingValue = getVariableValue(name, context);
+    const existingValue = getVariableValue(name, context, scope);
 
     // Nullish check (matches upstream _hyperscript 0.9.90+): only null/undefined
     // are considered "missing". Preserves falsy values like 0, false, ''.
@@ -140,7 +247,7 @@ export class DefaultCommand implements DecoratedCommand {
       return { target: name, value, wasSet: false, existingValue, targetType: 'variable' };
     }
 
-    setVariableValue(name, value, context);
+    setVariableValue(name, value, context, scope);
     Object.assign(context, { it: value });
 
     return { target: name, value, wasSet: true, targetType: 'variable' };
@@ -148,20 +255,29 @@ export class DefaultCommand implements DecoratedCommand {
 
   private defaultAttribute(
     context: TypedExecutionContext,
+    elements: HTMLElement[],
     name: string,
     value: unknown
   ): DefaultCommandOutput {
-    if (!context.me) {
+    if (elements.length === 0) {
       throw new Error('No element context available for attribute default');
     }
 
-    const existingValue = context.me.getAttribute(name);
+    const missing = elements.filter(el => el.getAttribute(name) === null);
 
-    if (existingValue !== null) {
-      return { target: `@${name}`, value, wasSet: false, existingValue, targetType: 'attribute' };
+    if (missing.length === 0) {
+      return {
+        target: `@${name}`,
+        value,
+        wasSet: false,
+        existingValue: elements[0].getAttribute(name),
+        targetType: 'attribute',
+      };
     }
 
-    context.me.setAttribute(name, String(value));
+    for (const el of missing) {
+      el.setAttribute(name, String(value));
+    }
     Object.assign(context, { it: value });
 
     return { target: `@${name}`, value, wasSet: true, targetType: 'attribute' };
@@ -169,23 +285,20 @@ export class DefaultCommand implements DecoratedCommand {
 
   private defaultElementProperty(
     context: TypedExecutionContext,
-    possessive: string,
+    element: HTMLElement,
     property: string,
     value: unknown
   ): DefaultCommandOutput {
-    // Use shared helper for possessive resolution
-    const targetElement = resolvePossessive(possessive, context, 'default');
-    const existingValue = getElementProperty(targetElement, property);
-    const targetName = `${possessive} ${property}`;
+    const existingValue = getElementProperty(element, property);
 
     if (!isEmpty(existingValue)) {
-      return { target: targetName, value, wasSet: false, existingValue, targetType: 'property' };
+      return { target: property, value, wasSet: false, existingValue, targetType: 'property' };
     }
 
-    setElementProperty(targetElement, property, value);
+    setElementProperty(element, property, value);
     Object.assign(context, { it: value });
 
-    return { target: targetName, value, wasSet: true, targetType: 'property' };
+    return { target: property, value, wasSet: true, targetType: 'property' };
   }
 
   private defaultElementValue(
