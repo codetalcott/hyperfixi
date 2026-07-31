@@ -83,6 +83,14 @@ export interface SemanticAnalysisResult {
 }
 
 /**
+ * The command payload an analyzer reports: an action name plus its semantic roles.
+ */
+export interface SemanticCommand {
+  readonly name: string;
+  readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
+}
+
+/**
  * Interface for semantic analysis that can be integrated into the core parser.
  * This allows the core parser to optionally use semantic parsing with
  * confidence-based fallback to traditional parsing.
@@ -106,6 +114,25 @@ export interface SemanticAnalyzer {
    * Get the list of supported languages.
    */
   supportedLanguages(): string[];
+
+  /**
+   * Convert an analyzed command's roles into a `CommandNode`.
+   *
+   * This is the role→AST step, and core deliberately does NOT implement it:
+   * `@lokascript/semantic`'s `ASTBuilder` owns that knowledge (schema `ast`
+   * descriptors plus the four hand-written mappers), and it is what the
+   * multilingual and semantic-complete browser bundles already execute.
+   * {@link createSemanticAdapter} wires it in from the semantic module the
+   * caller already holds, so core keeps no hard import and no second copy.
+   *
+   * An analyzer without this method still parses — {@link
+   * SemanticIntegrationAdapter.trySemanticParse} reports failure for the
+   * generic command tail and the traditional parser takes the segment.
+   *
+   * @param command The analyzed action name and its roles
+   * @returns The command node, or undefined if no node could be built
+   */
+  buildCommandNode?(command: SemanticCommand): CommandNode | undefined;
 }
 
 // =============================================================================
@@ -336,6 +363,15 @@ export class SemanticIntegrationAdapter {
 
   /**
    * Build a CommandNode from semantic analysis result.
+   *
+   * Everything except the four loop/assignment/conditional shapes below is
+   * delegated to the analyzer's {@link SemanticAnalyzer.buildCommandNode} —
+   * i.e. to `@lokascript/semantic`'s `ASTBuilder`. Core used to carry a second
+   * role→AST implementation here (a blanket `destination`→`on` /
+   * `source`→`from` mapping); it had drifted from the builder for 15 of the 29
+   * measured commands and was the live English path for every command absent
+   * from `parser.ts`'s `skipSemanticParsing` list. See the delegation probe in
+   * `semantic-integration-delegation.test.ts`.
    */
   private buildCommandNode(result: SemanticAnalysisResult): CommandNode {
     const { command } = result;
@@ -343,7 +379,18 @@ export class SemanticIntegrationAdapter {
       throw new Error('Cannot build command node without command data');
     }
 
-    // Route commands to specialized handlers
+    // Route commands whose core runtime contract the semantic ASTBuilder does
+    // NOT produce. Measured 2026-07-31, English, one parse fed to both paths:
+    //
+    //   repeat forever  builder: args:[]                     core needs args:[identifier('forever')]
+    //   repeat 5 times  builder: args:[literal(5)]           core needs args:[identifier('times'), 5]
+    //   for item in xs  builder: name:'for', modifiers:{in:…} core needs name:'repeat'
+    //   set x to 5      builder: args:[x] modifiers:{to:5}   core needs args:[x, identifier('to'), 5]
+    //
+    // The builder's shapes are correct for ITS consumers (they carry the loop
+    // variant on `LoopSemanticNode`, which a single-command parse has already
+    // discarded). Delegating these would break `SetCommand.parseInput` and the
+    // repeat variant discriminator, so they keep their dedicated builders.
     if (command.name === 'repeat') {
       return this.buildRepeatCommandNode(command);
     }
@@ -361,89 +408,17 @@ export class SemanticIntegrationAdapter {
       return this.buildIfCommandNode(command);
     }
 
-    const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    // Convert semantic roles to command arguments/modifiers
-    for (const [role, value] of command.roles) {
-      const exprNode = this.semanticValueToExpression(value);
-
-      switch (role) {
-        // Primary arguments (patient, event) go into args array
-        case 'patient':
-        case 'event':
-          args.push(exprNode);
-          break;
-
-        // Destination role maps to position-based modifiers
-        // Each command uses different prepositions for the target:
-        case 'destination':
-          if (command.name === 'put') {
-            modifiers['into'] = exprNode;
-          } else if (
-            command.name === 'add' ||
-            command.name === 'append' ||
-            command.name === 'prepend'
-          ) {
-            modifiers['to'] = exprNode;
-          } else {
-            // toggle, set, send, etc use 'on'
-            modifiers['on'] = exprNode;
-          }
-          break;
-
-        // Source role - for fetch command, the source (URL) goes into args
-        // For other commands, it becomes a 'from' modifier
-        case 'source':
-          if (command.name === 'fetch') {
-            args.push(exprNode);
-          } else {
-            modifiers['from'] = exprNode;
-          }
-          break;
-
-        // Quantitative roles
-        case 'quantity':
-          modifiers['by'] = exprNode;
-          break;
-
-        case 'duration':
-          modifiers['over'] = exprNode;
-          break;
-
-        // Adverbial roles
-        case 'responseType':
-          modifiers['as'] = exprNode; // Response format (json, text, html)
-          break;
-
-        case 'style':
-          modifiers['with'] = exprNode;
-          break;
-
-        // Condition role - maps to 'when' modifier (matches core implementation)
-        case 'condition':
-          modifiers['when'] = exprNode;
-          break;
-
-        // Unknown roles become modifiers with role name as key. `method` lands
-        // here: no command reads a `method` modifier (FetchCommand takes the HTTP
-        // method from the evaluated `with` options object), so it needs no case.
-        default:
-          modifiers[role] = exprNode;
-      }
+    const delegated = this.analyzer.buildCommandNode?.(command);
+    if (!delegated) {
+      // No builder wired (or it declined). Reporting failure hands the segment
+      // to the traditional parser rather than inventing a second role→AST
+      // mapping here — that duplication is exactly what this delegation removed.
+      throw new Error(
+        `Semantic analyzer cannot build an AST node for '${command.name}' ` +
+          `(no buildCommandNode wired — see createSemanticAdapter's buildAST dep)`
+      );
     }
-
-    return {
-      type: 'command',
-      name: command.name,
-      args,
-      modifiers: Object.keys(modifiers).length > 0 ? modifiers : undefined,
-      isBlocking: false,
-      start: 0,
-      end: 0,
-      line: 1,
-      column: 0,
-    };
+    return delegated;
   }
 
   /**
@@ -923,6 +898,43 @@ interface SemanticParseFn {
 }
 
 /**
+ * Minimal shape of `buildAST` from `@lokascript/semantic`. Re-declared here for
+ * the same reason as {@link SemanticParseFn} — core takes no hard import on the
+ * semantic package from this module.
+ *
+ * The parameter is `never` deliberately. {@link SemanticParseFn} can spell its
+ * node structurally because it appears in RETURN position (covariant, so the
+ * real `SemanticNode` is assignable to a looser shape); a parameter is
+ * contravariant, and the loose shape is NOT assignable to `SemanticNode`
+ * (`action: string` vs its `ActionType` union). `never` is assignable to every
+ * type, so the real `buildAST` satisfies this at each call site, and the single
+ * cast lives below where we build the node we know is a valid command node.
+ */
+type BuildASTFn = (node: never) => { ast: unknown; warnings?: string[] };
+
+/**
+ * Give a semantic-built node the fields core's AST contract requires.
+ *
+ * `ASTBuilder` emits position-free nodes (its own consumers do not need spans),
+ * and marks `isBlocking` only where the schema declares it. Core's
+ * `CommandNode` requires `isBlocking`, and its error messages read the span.
+ */
+function normalizeBuiltNode(ast: unknown): CommandNode | undefined {
+  if (!ast || typeof ast !== 'object') return undefined;
+  const node = ast as Record<string, unknown>;
+  if (node['type'] !== 'command' || typeof node['name'] !== 'string') return undefined;
+  return {
+    start: 0,
+    end: 0,
+    line: 1,
+    column: 0,
+    ...node,
+    isBlocking: node['isBlocking'] === true,
+    args: Array.isArray(node['args']) ? (node['args'] as ExpressionNode[]) : [],
+  } as CommandNode;
+}
+
+/**
  * Build a `SemanticAnalyzer` from the new semantic primitives (`parseSemantic`,
  * `isLanguageRegistered`, `getRegisteredLanguages`). The returned object
  * conforms to core's local `SemanticAnalyzer` interface so the
@@ -931,15 +943,23 @@ interface SemanticParseFn {
  * Replaces the deprecated `createSemanticAnalyzer()` factory from
  * `@lokascript/semantic`.
  *
+ * Pass `buildAST` too: it is what turns an analyzed command's roles into a
+ * `CommandNode`. Without it the adapter still analyzes, but the generic command
+ * tail falls back to the traditional parser (core keeps no role→AST copy of its
+ * own — see {@link SemanticAnalyzer.buildCommandNode}).
+ *
  * @example
  * ```typescript
- * import { parseSemantic, isLanguageRegistered, getRegisteredLanguages } from '@lokascript/semantic';
+ * import {
+ *   parseSemantic, isLanguageRegistered, getRegisteredLanguages, buildAST,
+ * } from '@lokascript/semantic';
  * import { createSemanticAdapter } from '@hyperfixi/core/parser/semantic-integration';
  *
  * const analyzer = createSemanticAdapter({
  *   parse: parseSemantic,
  *   isRegistered: isLanguageRegistered,
  *   registered: getRegisteredLanguages,
+ *   buildAST,
  * });
  * ```
  */
@@ -947,8 +967,31 @@ export function createSemanticAdapter(deps: {
   parse: SemanticParseFn;
   isRegistered: (language: string) => boolean;
   registered: () => string[];
+  buildAST?: BuildASTFn;
 }): SemanticAnalyzer {
+  const { buildAST } = deps;
   return {
+    ...(buildAST
+      ? {
+          buildCommandNode(command: SemanticCommand): CommandNode | undefined {
+            // `ASTBuilder` reads only `action` and `roles` off a command node,
+            // so an analyzed command reconstitutes one losslessly. Going
+            // through the command payload (rather than smuggling the original
+            // parse node through the result) keeps this working for any
+            // analyzer, including the mock ones in the test suite.
+            try {
+              const { ast } = buildAST({
+                kind: 'command',
+                action: command.name,
+                roles: command.roles,
+              } as never);
+              return normalizeBuiltNode(ast);
+            } catch {
+              return undefined;
+            }
+          },
+        }
+      : {}),
     analyze(input: string, language: string): SemanticAnalysisResult {
       if (!deps.isRegistered(language)) {
         return {

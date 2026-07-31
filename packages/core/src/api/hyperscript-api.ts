@@ -35,6 +35,7 @@ import {
   parseSemantic,
   isLanguageRegistered,
   getRegisteredLanguages,
+  buildAST,
   DEFAULT_CONFIDENCE_THRESHOLD,
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
@@ -266,6 +267,7 @@ function getSemanticAnalyzer(): SemanticAnalyzerInterface {
       parse: parseSemantic,
       isRegistered: isLanguageRegistered,
       registered: getRegisteredLanguages,
+      buildAST,
     }) as unknown as SemanticAnalyzerInterface;
   }
   return semanticAnalyzerInstance;
