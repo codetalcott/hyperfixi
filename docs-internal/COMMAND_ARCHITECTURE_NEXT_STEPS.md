@@ -517,8 +517,27 @@ not the core abstractions.
   @data-count to "0"`), and `swap-content` (`swap #a with #b`).
 
 
-- **Core's `semantic-integration.ts` switch is a SECOND semantic→AST
-  implementation, and it has already drifted from the first.** Measured
+- ~~**Core's `semantic-integration.ts` switch is a SECOND semantic→AST
+  implementation, and it has already drifted from the first.**~~ **FIXED — #847
+  (Arc F follow-ups round 2, Phase A).** Option (b) shipped: the switch is gone
+  and core delegates the generic command tail to `@lokascript/semantic`'s
+  `ASTBuilder`, injected through the analyzer seam (`createSemanticAdapter`'s
+  `buildAST` dep) so core still takes no hard import. Five live English defects
+  went with it — `go back`, `go to url`, `get #target` and `scroll to …` threw;
+  `pick first 2 from .items` silently returned ONE item.
+  Two things delegation deliberately did NOT take over, both measured and pinned
+  in `semantic-integration-delegation.test.ts`: `repeat`/`for`/`set`/`if`/
+  `unless` keep dedicated builders (the builder drops the loop-variant
+  discriminator, keeps a `for` name core has no command for, and puts set's value
+  in `modifiers.to` where `SetCommand` reads a positional `[target,'to',value]`),
+  and `show`/`hide`/`transition … *prop` keep returning no node.
+  Behavior deltas named at the time: nodes now carry the builder's `isBlocking`
+  (the switch hardcoded `false`, mismarking `fetch`) and its `semanticRoles`;
+  `send`'s target moved from `modifiers.on` to `modifiers.to`, which
+  `SendCommand` already accepted. The original measurement follows, kept because
+  it is the reason the decision went the way it did.
+
+  Measured
   2026-07-31 during Arc F step 1, by running both paths over the same semantic
   parse. For `put "x" before #out` (roles `patient`/`destination`/`manner`):
   `buildAST` emits `modifiers: { before: #out }`; `buildCommandNode`
@@ -608,9 +627,25 @@ not the core abstractions.
   deliberately return `NONE` via `shouldSkipSemantic`'s `/\*[a-zA-Z]/` check —
   delegation must preserve that refusal rather than adopt `buildAST`'s output.
 
-- **`DefaultCommand` EVALUATES its target, so `default` is broken on both
-  execution paths.** Independent of the AST-shape defect above, and not fixed by
-  it. `commands/data/default.ts` `parseInput` does `target = await
+- ~~**`DefaultCommand` EVALUATES its target, so `default` is broken on both
+  execution paths.**~~ **FIXED — #848 (Arc F follow-ups round 2, Phase B).**
+  `parseInput` now walks the shared raw-AST write-target ladder
+  (`helpers/write-target.ts`), the same one `set`/`append`/`prepend` use, and
+  `DefaultCommandInput` became a discriminated union mirroring `SetCommandInput`.
+  Two corrections to the measurement below, both found while fixing it:
+  `default my innerHTML to "No content"` did NOT work — it evaluated the target
+  to the element's empty innerHTML string and created a junk local literally
+  named `''`, returning `wasSet: true` while never touching the DOM; and the
+  TRADITIONAL path had a second, independent defect, reading the value from
+  `args[1]` (the `to` KEYWORD), so every `default X to Y` parsed traditionally
+  installed `undefined`. Two shapes the ladder does not cover are handled in the
+  command: `:x`/`$x` arrive as `contextReference` on the semantic path (the
+  bare-reference rung must not claim those, since `me`/`it` are contextReferences
+  too), and a `$name` target loses its sigil so the read and the write agree.
+  New coverage goes through `hyperscript.eval` on both paths
+  (`data/__tests__/default-eval.test.ts`), because the existing unit tests
+  injected a mock evaluator returning `node.value ?? node.name` — the very
+  name-preserving behavior the real evaluator lacks. Original measurement: `commands/data/default.ts` `parseInput` does `target = await
   evaluator.evaluate(raw.args[0])` and then `execute` branches on
   `typeof target === 'string'` — but the target is a *name*, not a value, and
   evaluating an unset variable yields `undefined` (exactly the case `default`

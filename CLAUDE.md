@@ -195,6 +195,41 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
+#### Three gates `test:check` does NOT cover
+
+These are required CI checks that no `test:check` invocation reaches, so a green
+local run can still fail CI. Each cost a full CI round-trip during Arc F
+follow-ups round 2. Run all three whenever a change touches
+`packages/semantic/src/generators/command-schemas.ts`, a language profile, or
+R2's curated execution subset:
+
+```bash
+# 1. Vocab consistency (V1–V4 cross-surface check)
+cd packages/testing-framework && npx tsx src/vocab/cli.ts validate
+
+# 2. Generated syntax-table drift (derives from the command schemas)
+npm run test:check --prefix packages/hyperscript-adapter
+
+# 3. The R2 curated-subset lock (part of the testing-framework suite)
+npm run test:check --prefix packages/testing-framework
+```
+
+1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
+   tokenizes as `identifier` rather than keyword/particle. Waive in
+   `packages/testing-framework/vocab-waivers.json`, keyed `V4|<lang>|<marker>`,
+   with a reason. The error aggregates its SITES, so a marker that has shipped
+   for years can become newly reportable the moment a second schema uses it.
+2. **`syntax-table.ts`** is generated from the schemas and gated by
+   `derive-syntax.test.ts`. Any change to a role's `svoPosition` or marker
+   restages it: `npm run generate:syntax --prefix packages/hyperscript-adapter`.
+   Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
+   `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
+   needs `--no-verify`.
+3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+   exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
+   count in the test title, the sorted expectation array, AND regenerating the
+   multilingual baseline in the same PR.
+
 #### Stale-dist auto-rebuild
 
 Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any workspace dependency whose `src/` is newer than its `dist/` (via [scripts/ensure-fresh.sh](scripts/ensure-fresh.sh)). Per-package `pretest` hooks cover the first path; [scripts/test-check-all.sh](scripts/test-check-all.sh) runs `ensure-fresh` upfront for the second (npm pre/post hooks don't fire for `:check` variants). Manual escape hatch: `npm run check:fresh`.
