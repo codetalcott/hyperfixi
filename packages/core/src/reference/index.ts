@@ -529,10 +529,10 @@ export const commands: Record<string, CommandRef> = {
   take: {
     name: 'take',
     description: 'Take class from siblings (radio-button pattern)',
-    syntax: 'take .class [from siblings]',
+    syntax: 'take .class [from <source>] [for <recipient>]',
     category: 'animation',
     availability: 'full',
-    examples: ['take .active from .tabs', 'take .selected'],
+    examples: ['take .active from .tab for me', 'take .selected'],
   },
 
   // Advanced Commands

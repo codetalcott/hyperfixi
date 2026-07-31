@@ -63,6 +63,8 @@ export function parseCompoundCommand(
       return eventCommands.parseTriggerCommand(ctx, identifierNode);
     case 'remove':
       return domCommands.parseRemoveCommand(ctx, identifierNode);
+    case 'take':
+      return domCommands.parseTakeCommand(ctx, identifierNode);
     case 'toggle':
       return domCommands.parseToggleCommand(ctx, identifierNode);
     case 'set':
