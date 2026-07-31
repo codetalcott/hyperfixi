@@ -8,6 +8,7 @@
  */
 
 import type { LanguagePattern, SemanticRole, SemanticValue } from '../types';
+import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 
 /**
  * Context passed to confidence model methods.
@@ -175,20 +176,42 @@ export class DefaultConfidenceModel implements ConfidenceModel {
       return pattern.extraction?.[role]?.default !== undefined;
     };
 
+    // A shape-anchored role (schema `valueShape`) counts toward the
+    // denominator ONLY when captured — this is valueShape's entire enforcement
+    // (a matcher-side token guard was probed and removed as unfireable; see
+    // the RoleSpec.valueShape doc). The role's surface form is unambiguous, so
+    // its absence carries no evidence against the pattern — but an uncaptured
+    // slot weighted into maxScore DID: toggle's `[{duration}]` dropped
+    // `toggle-es-generated` from 1.0 to 0.69 on `alternar .open a siguiente
+    // .panel`, handing the same-priority `toggle-es-full` (0.82, destination
+    // marker mismatch) the win and silently defaulting the destination to
+    // `me` — the es/pl/vi aria regression the R1 role-set flip ratchet exists
+    // to catch.
+    const schemaRoles = (commandSchemas as Record<string, CommandSchema | undefined>)[
+      pattern.command
+    ]?.roles;
+    const isShapeAnchored = (role: SemanticRole): boolean =>
+      schemaRoles?.find(r => r.role === role)?.valueShape !== undefined;
+
     for (const token of pattern.template.tokens) {
       if (token.type === 'role') {
-        maxScore += 1;
         if (captured.has(token.role)) {
+          maxScore += 1;
           score += 1;
+        } else if (!isShapeAnchored(token.role)) {
+          maxScore += 1;
         }
       } else if (token.type === 'group') {
         for (const subToken of token.tokens) {
           if (subToken.type === 'role') {
-            maxScore += OPTIONAL_ROLE_WEIGHT;
             if (captured.has(subToken.role)) {
+              maxScore += OPTIONAL_ROLE_WEIGHT;
               score += OPTIONAL_ROLE_WEIGHT;
-            } else if (hasDefault(subToken.role)) {
-              score += OPTIONAL_ROLE_WEIGHT * DEFAULT_PARTIAL_CREDIT;
+            } else if (!isShapeAnchored(subToken.role)) {
+              maxScore += OPTIONAL_ROLE_WEIGHT;
+              if (hasDefault(subToken.role)) {
+                score += OPTIONAL_ROLE_WEIGHT * DEFAULT_PARTIAL_CREDIT;
+              }
             }
           }
         }

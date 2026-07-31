@@ -284,6 +284,13 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'class-manipulation',
   },
   {
+    id: 'toggle-class-temporary',
+    title: 'Toggle Class Temporarily',
+    raw_code: 'on click toggle .loading for 2s',
+    description: 'Toggle a CSS class, then revert it after a duration',
+    feature: 'class-manipulation',
+  },
+  {
     id: 'add-class-basic',
     title: 'Add Class',
     raw_code: 'on click add .highlight to me',

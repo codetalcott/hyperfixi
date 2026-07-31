@@ -142,6 +142,35 @@ the transformer's rendering of it — a multilingual arc with no gate today. Who
 takes it should add a `toggle … for` corpus row FIRST, so the ratchet stops being
 blind, then do the markers.
 
+#### CLOSED (2026-07-31, round 3): shipped WITHOUT a marker table — `valueShape` is the anchor
+
+The round-2 brief below concluded "the marker is the only anchor available."
+That was true of the levers `RoleSpec` had; round 3 added the missing lever and
+the arc shipped without per-language markers or i18n transformer work:
+
+- **`valueShape: 'time'` on the duration role**, enforced in the CONFIDENCE
+  model: a shape-anchored role counts toward `scoreRoleCoverage` only when
+  captured. The es/pl/vi regression's measured root cause was never spurious
+  capture — the uncaptured optional slot weighed into the score DENOMINATOR,
+  dropping `toggle-*-generated` from 1.0 to 0.69 so the same-priority hand
+  pattern (0.82, wrong destination markers) won and the destination defaulted
+  to `me`. Fix the scoring and the marker-less slot is safe.
+- A matcher-side token guard (refuse non-time tokens at capture) was built,
+  probed and REMOVED as unfireable — `expectedTypes` plus the positional
+  assembler's next-token gating already refuse every constructible non-time
+  capture. Recorded in `RoleSpec.valueShape`'s doc so it can be reinstated
+  WITH a failing test if a future shape makes capture possible.
+- en `for` + ja `間` / ko `동안` markers stand (the SOV mid-pattern hazard is
+  real; dropping them fails 17 tests). The other 21 languages bind their
+  stored corpus rows' unmarked trailing `2s` directly.
+- Landed with the `toggle-class-temporary` corpus row (155th pattern, parses
+  faithfully in all 24, R4 clean), the `toggle.for` exemption prune, and a
+  baseline regeneration whose diff is uniformly positive (`avgRoleFidelity`
+  up in every language; no `roleLossyPatterns` set changed).
+
+The historical brief below is kept because its measurements are what forced
+each design turn.
+
 #### Round-2 re-measurement (2026-07-31) — the shape is confirmed, five details corrected
 
 Round 2 re-ran every step above, then BUILT the change end to end and reverted

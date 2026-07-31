@@ -2874,6 +2874,15 @@ languages including en (was split everywhere). Follow-up status:
    (`behavior-draggable/resizable/sortable`), and the fix healed those rows too
    (bn avgValueRecall 0.917 → 0.958).
 
+## ~~`toggle … for <duration>`~~ — SHIPPED (2026-07-31, round 3)
+
+Closed without a marker table: `RoleSpec.valueShape` ('time') makes the
+marker-less optional slot safe by counting a shape-anchored role toward
+pattern confidence only when captured. Full record:
+[PARSER_NEXT_STEPS.md](./PARSER_NEXT_STEPS.md) § "CLOSED (2026-07-31, round
+3)". The R1 role-set flip ratchet (#856) guards the exact regression class the
+two failed attempts hit. Historical brief below.
+
 ## `toggle … for <duration>` — measured, not started (2026-07-31)
 
 The multilingual half of the `toggle … for` arc. Its brief lives in

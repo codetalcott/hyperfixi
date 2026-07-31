@@ -37,6 +37,8 @@ describe('deriveEnglishSyntax', () => {
     expect(derived.toggle).toEqual([
       ['patient', ''],
       ['destination', 'on'],
+      // `toggle .a for 2s` — the shape-anchored duration role (Arc F tail).
+      ['duration', 'for'],
     ]);
     expect(derived.add).toEqual([
       ['patient', ''],

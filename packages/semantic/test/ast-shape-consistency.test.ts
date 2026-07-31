@@ -56,13 +56,11 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
       'MorphCommand takes the new content positionally and the element being morphed in `on`, ' +
       "so `on` is a contract key; morphSchema marks patient '' (`morph #target …`, no preposition)",
   },
-  'toggle.for': {
-    kind: 'undeclared',
-    reason:
-      '`duration` is not a toggleSchema role and no en pattern binds it — ' +
-      '`toggle .a on #b for 2s` parses to patient+destination only (the known ' +
-      '`toggle … for 2s` gap filed in PARSER_NEXT_STEPS.md), so this modifier is inert today',
-  },
+  // NOTE: `toggle.for` was an `undeclared` entry here until `duration` became a
+  // real toggleSchema role. The descriptor key now equals the role's en marker
+  // ('for'), so the gate REJECTS the exemption — the mechanism working as
+  // designed, and what forced this pruning.
+
   'send.detail': {
     kind: 'contract',
     reason:
@@ -138,7 +136,9 @@ describe('schema ast descriptors agree with the English marker data', () => {
         }
 
         const detail = roles
-          .map((r, i) => `${r}=${markers[i] === undefined ? '<not a schema role>' : `'${markers[i]}'`}`)
+          .map(
+            (r, i) => `${r}=${markers[i] === undefined ? '<not a schema role>' : `'${markers[i]}'`}`
+          )
           .join(', ');
         expect(
           exemption,
