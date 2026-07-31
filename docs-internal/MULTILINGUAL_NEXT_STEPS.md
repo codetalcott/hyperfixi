@@ -2883,13 +2883,17 @@ blocker the original brief did not have.
 
 The two headlines for this side:
 
-- The schema change is a 2-line role + 1 exemption prune, but shipping it alone
-  **regresses 11 languages' rendering** (the duration currently survives as bare
-  text and would vanish). Ship the marker table and the rendering fix with it.
-- The corpus row is ready and all 24 translations parse faithfully, but bn's
-  `জন্য` is a homonym for its `for` LOOP keyword, so the row fails R4 on its
-  first run (`on click toggle .loading for 2s in`). `allowedInvalid` is
-  currently EMPTY — do not land the row without the bn disambiguation.
+- **A marker-less duration slot cannot work**, which is why the per-language
+  marker table (and the i18n rendering that emits it) is the actual work rather
+  than a nice-to-have. An optional slot silently costs es/pl/vi their positional
+  destination on `toggle-aria-expanded` and R1's tolerance hides it; the
+  `omitRoleVariants` alternative is worse (es swallows `siguiente .panel` into
+  duration). Do not reason from `transition`, whose required `to {goal}` phrase
+  anchors its duration.
+- **There is no bn blocker** — an earlier filing said `জন্য` collides with bn's
+  `for` LOOP keyword, but the tokenizer classifies it as a particle. The phantom
+  `for` was an unconsumed-tail artifact and the duration role removes it. The
+  corpus row parses faithfully in all 24 and needs no allowlist entry.
 
 ## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 

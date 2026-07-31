@@ -142,12 +142,12 @@ the transformer's rendering of it — a multilingual arc with no gate today. Who
 takes it should add a `toggle … for` corpus row FIRST, so the ratchet stops being
 blind, then do the markers.
 
-#### Round-2 re-measurement (2026-07-31) — four corrections and one new blocker
+#### Round-2 re-measurement (2026-07-31) — the shape is confirmed, five details corrected
 
-Arc F follow-ups round 2 re-ran every step above at `5d256878`. The arc is still
-the right shape, but four of the numbers above are wrong in the helpful
-direction and one new obstacle appeared. Nothing was shipped: the schema half
-alone is a REGRESSION (see 2).
+Round 2 re-ran every step above, then BUILT the change end to end and reverted
+it. **The arc's original scoping is right: this needs a per-language duration
+marker table plus the i18n rendering that emits it.** What changed is the
+reasoning — including two points an intermediate filing got wrong. All measured:
 
 1. **The schema half costs ONE test, not 16.** Adding
 
@@ -157,62 +157,65 @@ alone is a REGRESSION (see 2).
      markerOverride: { en: 'for', ja: '間', ko: '동안' } }
    ```
 
-   to `toggleSchema.roles` breaks exactly `ast-shape-consistency`'s
-   `toggle.for ← duration` — the exemption becoming orphaned because the
-   descriptor key now equals the role's en marker. Prune it and the full
-   semantic suite is green (7230 / 108 files). The "16 tests" figure above is
-   the en-marker-ONLY variant; carrying ja/ko from the start avoids it, exactly
-   as the bullet after it says. `parseSemantic('toggle .loading for 2s','en')`
-   then binds `{patient:'.loading', duration:'2s', destination:'me'}`.
+   breaks only `ast-shape-consistency`'s `toggle.for ← duration` — the exemption
+   becoming orphaned, which is the gate working as designed. The "16 tests"
+   figure is the en-marker-ONLY variant; dropping ja/ko reproduces it exactly
+   (17 failures: those 16 plus one new).
 
-2. **Shipping that alone REGRESSES 11 languages.** `translate(en→L)` →
-   `parse(L)` for all 23:
+2. **Measure the STORED translations, not `translate()`.** The gate scores the
+   corpus rows in `patterns.db`, which come from i18n's `GrammarTransformer`
+   (`sync-translations.ts`). Those keep the duration as an UNMARKED trailing
+   token in all 24 languages (bn adds its `জন্য` postposition). `translate()` is
+   the SEMANTIC package's renderer and behaves differently — reading it produced
+   the earlier claim that 11 languages "drop the duration", which is not what
+   the gate sees. With the schema role added, all 24 stored rows parse to a
+   single `toggle` with `duration=2s`, the corpus reaches 3720/3720, R3 stays
+   1.0, and **R4 reports no invalid pair**.
 
-   | outcome | languages |
-   | ------- | --------- |
-   | duration survives and re-parses | de fr pt id ms sw he ar ja ko tl (11) |
-   | duration DROPPED from the render | es it ru uk pl th vi zh hi bn qu (11) |
-   | renders but the parse returns NULL | tr (`.loading 2s değiştir`) |
+3. **But a marker-LESS duration slot is not safe — and that is the blocker.**
+   Both available shapes fail, and the gate hides both:
 
-   With no `duration` role the duration currently survives as bare pass-through
-   text (`alternar .loading 2s`); adding the role makes it vanish
-   (`alternar .loading`). Same "ship them together or not at all" shape as
-   `open`'s two halves. The claim above that "on main every language drops the
-   2s" is wrong — on main every language KEEPS it, unmarked.
+   - `required: false` (an optional slot inside the main pattern) silently costs
+     **es/pl/vi** their SECOND toggle's positional destination on
+     `toggle-aria-expanded`: `toggle.destination:expression` → `:reference`,
+     i.e. `next .panel` becomes `me`. R1's 0.02 tolerance swallows the 0.0013
+     delta, so `--regression` goes GREEN. Found with `tools/triage-r1.ts`,
+     which names the pattern.
+   - `required: true` + `omitRoleVariants: ['duration']` — the shape
+     `transitionSchema`'s `goal` NOTE recommends for exactly this hazard — is
+     WORSE: es then swallows `siguiente .panel` INTO duration
+     (`toggle.duration:reference`).
 
-3. **The drop is toggle-specific, not a general duration gap.** `transition my
-   *opacity to 0 over 500ms` and `wait 2s` keep their duration in every one of
-   those 11 (checked directly), so the per-language duration machinery works.
+   `expectedTypes: ['literal']` does not constrain the slot in either shape (it
+   bound `:reference` and `:expression` values regardless), and `RoleSpec` has
+   no value-shape lever — only `expectedTypes`, `markerOverride`,
+   `markerOptional`. The marker is the only thing that can anchor it.
 
-4. **Two things not to assume.** `canonicalOrder` is not the discriminator — es
-   (drops) and de/fr/pt (keep) are byte-identical, as are ja/ko (keep) and
-   bn/hi (drop). And there are TWO renderers that disagree: the stored corpus
-   translations come from i18n's `GrammarTransformer` (`sync-translations.ts`),
-   which keeps `2s` unmarked in all 23; the drop above is in the SEMANTIC
-   package's `render`. Whichever is fixed, the other decides what the ratchet
-   scores.
+   **Do not reason from `transition` to `toggle`.** transitionSchema gets away
+   with an en-only duration marker because its required `to {goal}` phrase sits
+   between patient and duration and anchors the parse. `toggle` has no anchor.
 
-5. **NEW — the corpus row cannot land on its own, because of a bn homonym.**
-   The row is ready (`toggle-class-temporary`, `on click toggle .loading for
-   2s`); `populate` generates all 24 translations and every one parses
-   faithfully. But the gate rejects it on the first run:
+4. **The bn "homonym blocker" was mis-diagnosed** (by the filing directly above
+   this one, now superseded). bn's `for` LOOP keyword is indeed `জন্য`, but the
+   bn tokenizer classifies the `জন্য` in `2s জন্য` as a **particle**, not that
+   keyword. The phantom `for` command was an unconsumed-TAIL artifact
+   (confidence 0.7, no `patternId`) — the duration role consumes the tail and it
+   disappears. There is no bn-specific work, and the corpus row does NOT need to
+   be sequenced behind a bn fix.
 
-   ```
-   ✗ Canonical-validity regression (R4): toggle-class-temporary/bn
-   ```
+5. **The corpus row is ready** (`toggle-class-temporary`, `on click toggle
+   .loading for 2s`) and must land WITH the marker work, not before it: alone
+   the ratchet cannot see the form, and with a marker-less role it HIDES the
+   es/pl/vi regression above.
 
-   bn's `for` LOOP keyword is `জন্য` (`profiles/bengali.ts` keywords.for) and
-   `জন্য` is ALSO bn's duration postposition (its `particles` list). So `2s
-   জন্য` yields a phantom `for` command, and the round-trip renders
-   `on click toggle .loading for 2s in` — a dangling loop `in` the
-   hyperscript.org parser rejects. Same homonym class as tr `değiştir` / hi
-   `बदलें`.
-
-   This matters for sequencing: `baselines/foreign-canonical-validity.json`'s
-   `allowedInvalid` is currently **empty**, and landing the corpus row alone
-   would put the first entry back into it. Disambiguate `জন্য` (a time literal
-   before it is a duration postposition, not a loop head) in the SAME change as
-   the corpus row.
+Remaining work, unchanged in shape from the original brief: a per-language
+`duration` marker for `toggle` in `command-schemas.ts`; the i18n transformer
+taught to RENDER that marker (otherwise the stored translations stop matching
+the pattern); the corpus row; the `toggle.for` exemption prune (the gate forces
+it); a regenerated baseline. Two gates the usual set misses apply here — the
+generated `syntax-table.ts` drift check (the schema restages `toggle: […
+['duration','for']]`, and `derive-syntax.test.ts` also hand-asserts toggle's
+entry) and vocab consistency.
 
 ### `transition` and `take` — two upstream-valid forms we reject (2026-07-31)
 
