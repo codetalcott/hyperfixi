@@ -46,6 +46,38 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
     kind: 'undeclared',
     reason: '`duration` is not declared on showSchema; the parser relabels into it',
   },
+  'hide.with': {
+    kind: 'undeclared',
+    reason: '`duration` is not declared on hideSchema (which has patient + style); same as show',
+  },
+  'morph.on': {
+    kind: 'contract',
+    reason:
+      'MorphCommand takes the new content positionally and the element being morphed in `on`, ' +
+      "so `on` is a contract key; morphSchema marks patient '' (`morph #target …`, no preposition)",
+  },
+  'toggle.for': {
+    kind: 'undeclared',
+    reason:
+      '`duration` is not a toggleSchema role and no en pattern binds it — ' +
+      '`toggle .a on #b for 2s` parses to patient+destination only (the known ' +
+      '`toggle … for 2s` gap filed in PARSER_NEXT_STEPS.md), so this modifier is inert today',
+  },
+  'send.detail': {
+    kind: 'contract',
+    reason:
+      '`detail` is a runtime contract key, not a preposition; `patient` is also not a ' +
+      'sendSchema role — `send evt(x:1) to #t` binds the whole call to `event`, so this ' +
+      'modifier is inert today',
+  },
+  'default.to': {
+    kind: 'drift',
+    reason:
+      'LIVE BUG preserved verbatim: the builder reads patient→args and source→`to`, but the ' +
+      'parser binds destination=":x" and patient=0, so `default :x to 0` builds ' +
+      '{ name: "default", args: [0] } — the variable is DROPPED and `source` is never bound. ' +
+      'The fix is a behavior change and gets its own PR',
+  },
   'fetch.body': {
     kind: 'contract',
     reason: 'FetchCommand reads the request body from `body`; patient has no en marker',
@@ -64,9 +96,9 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
   },
 };
 
-/** First role of a first-present-of chain (a bare role is a one-role chain). */
-function primaryRole(spec: SemanticRole | ReadonlyArray<SemanticRole>): SemanticRole {
-  return Array.isArray(spec) ? (spec[0] as SemanticRole) : (spec as SemanticRole);
+/** All roles of a first-present-of chain (a bare role is a one-role chain). */
+function chainRoles(spec: SemanticRole | ReadonlyArray<SemanticRole>): readonly SemanticRole[] {
+  return Array.isArray(spec) ? (spec as readonly SemanticRole[]) : [spec as SemanticRole];
 }
 
 /**
@@ -96,27 +128,34 @@ describe('schema ast descriptors agree with the English marker data', () => {
 
   for (const [action, schema] of schemasWithShape()) {
     for (const [key, spec] of Object.entries(schema.ast.modifiers ?? {})) {
-      const role = primaryRole(spec);
+      const roles = chainRoles(spec);
       const exemptionKey = `${action}.${key}`;
 
-      it(`${exemptionKey} ← ${role}`, () => {
-        const expected = enMarkerFor(schema, role);
+      it(`${exemptionKey} ← ${roles.join(' ?? ')}`, () => {
+        // ANY role in a first-present-of chain may justify the key: `measure`'s
+        // `of` chain is [destination, source] and it is `source` that the schema
+        // marks 'of'. Checking only the head role would demand an exemption for
+        // a descriptor that agrees with the marker data perfectly.
+        const markers = roles.map(r => enMarkerFor(schema, r));
         const exemption = EXEMPTIONS[exemptionKey];
 
-        if (key === expected) {
+        if (markers.includes(key)) {
           expect(
             exemption,
-            `STALE exemption '${exemptionKey}': key '${key}' now matches the en marker. ` +
-              'Delete the entry in the change that fixed it.'
+            `STALE exemption '${exemptionKey}': key '${key}' now matches the en marker of ` +
+              `role '${roles[markers.indexOf(key)]}'. Delete the entry in the change that fixed it.`
           ).toBeUndefined();
           return;
         }
 
+        const detail = roles
+          .map((r, i) => `${r}=${markers[i] === undefined ? '<not a schema role>' : `'${markers[i]}'`}`)
+          .join(', ');
         expect(
           exemption,
-          `Descriptor modifier key '${key}' for ${action} does not match the en marker for ` +
-            `role '${role}' (${expected === undefined ? 'role not declared on the schema' : `'${expected}'`}). ` +
-            'Either use the marker as the key, or add an EXEMPTIONS entry stating why it differs.'
+          `Descriptor modifier key '${key}' for ${action} matches no en marker in its role ` +
+            `chain (${detail}). Either use the marker as the key, or add an EXEMPTIONS entry ` +
+            'stating why it differs.'
         ).toBeDefined();
         expect(exemption!.reason.length).toBeGreaterThan(20);
       });
@@ -141,6 +180,6 @@ describe('schema ast descriptors agree with the English marker data', () => {
       .filter(([, v]) => v.kind === 'drift')
       .map(([k]) => k)
       .sort();
-    expect(drift).toEqual(['swap.on', 'swap.with']);
+    expect(drift).toEqual(['default.to', 'swap.on', 'swap.with']);
   });
 });
