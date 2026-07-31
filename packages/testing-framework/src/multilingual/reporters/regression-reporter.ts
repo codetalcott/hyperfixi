@@ -153,6 +153,8 @@ export class RegressionReporter implements Reporter {
       const newDegeneratePasses = this.findNewDegeneratePasses(langResult, baselineLang);
       // Correctness ratchet (R0): faithful pass in baseline → lossy pass now.
       const newLossyPasses = this.findNewLossyPasses(langResult, baselineLang);
+      // Role-set ratchet (R1): role-faithful in baseline → role-incomplete now.
+      const newRoleLossyPatterns = this.findNewRoleLossyPatterns(langResult, baselineLang);
       // Execution ratchet (R2): faithful execution in baseline → divergent now.
       const newExecutionFailures = this.findNewExecutionFailures(langResult, baselineLang);
 
@@ -163,6 +165,7 @@ export class RegressionReporter implements Reporter {
         newFailures.length > 0 ||
         newDegeneratePasses.length > 0 ||
         newLossyPasses.length > 0 ||
+        newRoleLossyPatterns.length > 0 ||
         newExecutionFailures.length > 0
       ) {
         status = 'regressed';
@@ -185,6 +188,7 @@ export class RegressionReporter implements Reporter {
         newSuccesses,
         newDegeneratePasses,
         newLossyPasses,
+        newRoleLossyPatterns,
         newExecutionFailures,
         status,
       });
@@ -322,6 +326,39 @@ export class RegressionReporter implements Reporter {
   }
 
   /**
+   * Role-set ratchet (R1): patterns that were *role-faithful* (roleFidelity 1.0,
+   * i.e. absent from the baseline's `roleLossyPatterns`) but now have an
+   * incomplete role set vs the en reference. The binary counterpart of the
+   * avgRoleFidelity delta, which cannot see a single pattern losing a role
+   * (~0.0013 in a ~154-pattern language, vs the 0.02 tolerance) — measured
+   * doing exactly that (es/pl/vi silently lost `toggle-aria-expanded`'s
+   * positional destination, `next .panel` → `me`, and the gate stayed green).
+   *
+   * Returns [] when the baseline carries no `roleLossyPatterns` data yet, so
+   * adopting the signal never retro-flags — same guard as the degenerate/lossy
+   * ratchets. A pattern already role-lossy in the baseline is the burn-down
+   * list, not a regression; one whose PARSE failed in the baseline and now
+   * parses role-incompletely is an improvement and is excluded by `wasPass`.
+   */
+  private findNewRoleLossyPatterns(
+    current: LanguageResults,
+    baseline: {
+      patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
+      roleLossyPatterns?: string[] | undefined;
+    }
+  ): string[] {
+    if (!baseline.roleLossyPatterns || !baseline.patterns) return [];
+    const baselineRoleLossy = new Set(baseline.roleLossyPatterns);
+
+    const regressed: string[] = [];
+    for (const id of current.roleLossyPatterns ?? []) {
+      const wasPass = baseline.patterns[id]?.success === true;
+      if (wasPass && !baselineRoleLossy.has(id)) regressed.push(id);
+    }
+    return regressed.sort();
+  }
+
+  /**
    * Execution ratchet (R2): curated-subset patterns that executed faithfully in
    * the baseline (scored, and not in its `executionFailures`) but diverge from
    * the en reference now. Returns [] when the baseline carries no execution
@@ -400,6 +437,9 @@ export class RegressionReporter implements Reporter {
         executionFailures: langResult.executionFailures ?? undefined,
         degeneratePasses: langResult.degeneratePasses ?? undefined,
         lossyPasses: langResult.lossyPasses ?? undefined,
+        // R1 per-pattern — which patterns are role-incomplete vs the en
+        // reference. The role-set flip ratchet's baseline side.
+        roleLossyPatterns: langResult.roleLossyPatterns ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,
         patterns,
       };

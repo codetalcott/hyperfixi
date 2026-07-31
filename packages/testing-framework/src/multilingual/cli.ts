@@ -478,6 +478,28 @@ async function main(): Promise<void> {
           r => r.avgRoleFidelityDelta < -AVG_ROLE_FIDELITY_DROP_TOLERANCE
         );
 
+        // R1 — role-set flip ratchet: a pattern that was ROLE-FAITHFUL in the
+        // baseline (its action.role:valueType set matched the en reference
+        // exactly) and is now role-incomplete. Tolerance 0 for the same reason
+        // the lossy flip and R5 sit at 0: a flip is binary and structural, with
+        // no float/collation noise to absorb — the averages' tolerances are
+        // cross-machine headroom, not signal cushions.
+        // Not redundant with the avg ratchet above: one pattern losing one role
+        // moves avgRoleFidelity by ~0.0013 in a ~154-pattern language, 15× under
+        // its 0.02 tolerance. This was MEASURED as the gate's blind spot, not
+        // hypothesized: a `required: false` duration role on toggleSchema cost
+        // es/pl/vi the second toggle's positional destination on
+        // `toggle-aria-expanded` (`toggle.destination:expression` →
+        // `:reference`, i.e. `next .panel` silently became `me`) and
+        // --regression stayed GREEN; tools/triage-r1.ts found it by hand.
+        // Guarded by the baseline carrying `roleLossyPatterns` (the reporter
+        // returns [] without it), so an un-regenerated baseline never
+        // retro-flags. Pre-existing role-lossy patterns are the R1 burn-down
+        // list, not regressions.
+        const roleSetRegressions = allResults.flatMap(r =>
+          r.newRoleLossyPatterns.map(id => `${r.language}/${id}`)
+        );
+
         // R3 — role-VALUE ratchet: same semantics as the role-fidelity ratchet,
         // on the invariant-value signal (`action.role=value` multiset over the
         // code-shaped subset: selectors, sigil refs, time literals,
@@ -690,6 +712,24 @@ async function main(): Promise<void> {
             );
           }
           console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
+        if (roleSetRegressions.length > 0) {
+          console.error(
+            `\n✗ Role-set regression vs baseline (R1): ${roleSetRegressions.length} ` +
+              `role-faithful pattern(s) now have an incomplete role set:`
+          );
+          for (const p of roleSetRegressions.slice(0, 20)) console.error(`   ${p}`);
+          if (roleSetRegressions.length > 20) {
+            console.error(`   … and ${roleSetRegressions.length - 20} more`);
+          }
+          console.error(
+            `   (still parses, but lost/mistyped a role vs the en reference — one flip ` +
+              `moves avgRoleFidelity ~0.0013, far under its tolerance, so this is the ` +
+              `only signal that sees it. Itemize with tools/triage-r1.ts; if ` +
+              `intentional, regenerate the baseline with --save-baseline)`
+          );
           failed = true;
         }
 

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-07-31T15:21:56.895Z",
-  "commit": "1e528bb1",
+  "timestamp": "2026-07-31T16:55:12.906Z",
+  "commit": "910d4066",
   "languages": {
     "ar": {
       "parseSuccess": 154,
@@ -16,6 +16,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-basic": {
@@ -650,6 +651,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -1284,6 +1286,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["last-in-collection", "pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -2543,6 +2546,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -3177,6 +3181,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["last-in-collection", "pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -3811,6 +3816,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range", "set-attribute"],
       "bundleSize": 556874,
       "patterns": {
         "put-content-basic": {
@@ -4445,6 +4451,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -5079,6 +5086,12 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": [
+        "fetch-do-not-throw",
+        "fetch-error-handling",
+        "fetch-json",
+        "pick-text-range"
+      ],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -5713,6 +5726,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -6347,6 +6361,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -6981,6 +6996,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range", "when-multiple-changes", "when-value-changes"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -7615,6 +7631,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["hide-with-transition", "last-in-collection", "pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -8249,6 +8266,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range", "unless-condition"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -8883,6 +8901,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -9517,6 +9536,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["announce-screen-reader", "on-custom-event-receive", "pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -10151,6 +10171,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -10785,6 +10806,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -11419,6 +11441,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["last-in-collection", "pick-text-range", "toggle-aria-expanded"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -12053,6 +12076,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -12687,6 +12711,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -13321,6 +13346,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -13955,6 +13981,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["its-value-possessive-dot", "last-in-collection", "pick-text-range"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-on-other": {
@@ -14589,6 +14616,7 @@
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
+      "roleLossyPatterns": ["pick-text-range", "repeat-forever", "repeat-until-event"],
       "bundleSize": 556874,
       "patterns": {
         "toggle-class-basic": {
