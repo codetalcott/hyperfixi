@@ -147,9 +147,14 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-complete',
     name: 'Hybrid Complete',
     filename: 'hyperfixi-hybrid-complete.js',
-    gzipSize: '8.2 KB',
-    rawSize: '32 KB',
-    commandCount: 24,
+    // Arc E step 4 closed Finding 17: this bundle PARSED 35 commands and
+    // EXECUTED 24. Its `executeCommand`/`executeBlock` switches are now
+    // generated from `bundle-generator/templates.ts`, so the count is the full
+    // advertised list. +2967 B gz, of which 2057 is `morphlex` (the `morph`
+    // case's dependency).
+    gzipSize: '11.1 KB',
+    rawSize: '43 KB',
+    commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
     hasEventModifiers: true,
@@ -164,9 +169,11 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-hx',
     name: 'Hybrid HX',
     filename: 'hyperfixi-hx.js',
-    gzipSize: '18.6 KB',
-    rawSize: '70 KB',
-    commandCount: 24,
+    // Inherits hybrid-complete's runtime wholesale, so it inherits the Arc E
+    // step 4 command set and its size move too (+2972 B gz).
+    gzipSize: '21.5 KB',
+    rawSize: '81 KB',
+    commandCount: 38,
     parser: 'hybrid',
     hasBlocks: true,
     hasEventModifiers: true,

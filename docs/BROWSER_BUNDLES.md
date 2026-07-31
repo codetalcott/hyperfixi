@@ -11,8 +11,8 @@ Decision tree for the most common cases:
 
 1. **Using `@hyperfixi/vite-plugin`?** Don't pick a bundle by hand — the plugin scans your project and emits the right one (minimal handcrafted when possible, falls back to `hx-v4` when it spots htmx v4 features). See [vite plugin README](../packages/vite-plugin/README.md).
 2. **Need `hx-live`, `bind`, `when`, SSE, or WebSocket?** Use `hyperfixi-hx-v4.js` (~322 KB gz). Single script tag, everything auto-installed. The size cost buys correctness — the slim runtime can't satisfy these features (its `set` doesn't fire `notifyGlobalWrite`, the slim parser doesn't know reactive features, and SSE/WS modules aren't wired).
-3. **Need only htmx v1/v2 attributes (`hx-get`/`hx-post`/etc.)?** Use `hyperfixi-hx.js` (~18 KB gz). Includes htmx-compat + the slim hybrid runtime for `_=` attributes. No reactivity, no streaming.
-4. **Pure hyperscript (`_=` attributes), ~85% feature coverage, smallest realistic size?** Use `hyperfixi-hybrid-complete.js` (~8.2 KB gz). Full AST parser, expressions, event modifiers, block commands (`if`, `for`, `repeat`, `while`, `fetch`).
+3. **Need only htmx v1/v2 attributes (`hx-get`/`hx-post`/etc.)?** Use `hyperfixi-hx.js` (~21.5 KB gz). Includes htmx-compat + the slim hybrid runtime for `_=` attributes. No reactivity, no streaming.
+4. **Pure hyperscript (`_=` attributes), ~85% feature coverage, smallest realistic size?** Use `hyperfixi-hybrid-complete.js` (~11.1 KB gz). Full AST parser, expressions, event modifiers, block commands (`if`, `for`, `repeat`, `while`, `fetch`).
 5. **Tiny static page (toggle / show / hide / put / set)?** Use `hyperfixi-lite.js` (~1.9 KB gz). Regex parser, 8 commands. Drops to `hyperfixi-lite-plus.js` (~2.6 KB gz) if you need a few more commands + i18n aliases.
 6. **Authoring in multiple languages (Japanese, Korean, Arabic, etc.) or need the full semantic parser at runtime?** Use `hyperfixi.js` (full bundle, ~310 KB gz) or `hyperfixi-multilingual.js` (~93 KB, parser-free i18n via the semantic bundle loaded separately).
 
@@ -37,8 +37,8 @@ For projects prioritizing bundle size over features:
 | ------------------------------ | ----------- | --------- | ------------------------------------------------------------- |
 | `hyperfixi-lite.js`            | 1.9 KB      | 8         | Regex parser, basic commands                                  |
 | `hyperfixi-lite-plus.js`       | 2.6 KB      | 14        | Regex parser, more commands, i18n aliases                     |
-| `hyperfixi-hybrid-complete.js` | 8.2 KB      | 21+blocks | Full AST parser, expressions, event modifiers                 |
-| `hyperfixi-hx.js`              | 18 KB       | 21+blocks | hybrid-complete + htmx/fixi attribute support                 |
+| `hyperfixi-hybrid-complete.js` | 11.1 KB     | 38+blocks | Full AST parser, expressions, event modifiers                 |
+| `hyperfixi-hx.js`              | 21.5 KB     | 38+blocks | hybrid-complete + htmx/fixi attribute support                 |
 | `hyperfixi-hx-v4.js`           | ~322 KB     | 40+blocks | Full runtime + htmx-compat + reactivity (hx-live, bind, when) |
 
 **Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
@@ -117,7 +117,7 @@ When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the 
 
 The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command.
 
-**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~322 KB vs 18 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
+**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~322 KB vs 21.5 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
 
 ```html
 <script src="hyperfixi-hx-v4.js"></script>

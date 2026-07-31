@@ -337,6 +337,23 @@ plus `--check` pattern), and `generate-command-docs --check` in CI so
 
 ### Arc E — generated static bundles (medium-large)
 
+> **Steps 1-4 CLOSED (#830, #831, #832, #833-adjacent, and the step-4 PR).**
+> Finding 17 is shut: `browser-bundle-hybrid-complete.ts`'s `executeCommand` and
+> `executeBlock` switch bodies are GENERATED from `bundle-generator/templates.ts`
+> by `packages/core/scripts/generate-bundles.ts` and guarded by
+> `generate:bundles:check` in CI. The bundle executes all 38 advertised names,
+> not 24. **Step 5 (generate `HYBRID_PARSER_TEMPLATE` from `parser-core.ts`) is
+> the remaining step** — its spec is unchanged and now stronger, since
+> `executor-core.ts` demonstrates the shared-emitter shape it should follow.
+> Three things a step-5 starter needs that this paragraph predates: the size
+> figures below are stale (hx is now **21997 gz against `MAX_HYBRID=24000`**,
+> raised deliberately in step 4 — `morphlex`, pulled in by the `morph` case, is
+> +2057 of that); the executor generation covers the CASE BODIES ONLY, because
+> every other runtime region was measured to diverge between the two copies; and
+> the parser's EMITTED-name set is not `cmdMap`'s key set (`waitFor` and
+> `removeClass` are emitted and are not keys), which is the check that found the
+> one real gap in step 2's "templates are the superset" claim.
+>
 > **Brief written 2026-07-29 —
 > [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md).**
 > It re-measured this paragraph and two of its claims did not survive: there are

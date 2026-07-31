@@ -741,11 +741,20 @@ jobs:
       # made any whole-file comparison fail on every run. Both are fixed, so this
       # check is exact too. Coverage of the generator's command table is a separate
       # gate — src/commands/__tests__/docs-coverage.test.ts, in the unit suite.
+      # `generate:bundles:check` joined in Arc E step 4. It regenerates the
+      # executor-core regions of the committed browser bundles from
+      # `bundle-generator/templates.ts` and fails if the result differs — the
+      # drift guard that lets hybrid-complete's `executeCommand` switch stop
+      # being a hand-maintained second copy of the templates. Same
+      # prettier-idempotency requirement as the three above: the generator
+      # formats with the pinned prettier before writing, so a fresh run is
+      # byte-identical to the committed file.
       - name: Check generated artifacts are in sync
         run: |
           npm run check:grammar --prefix packages/semantic
           npm run check:keywords --prefix packages/vite-plugin
           npm run docs:commands:check --prefix packages/core
+          npm run generate:bundles:check --prefix packages/core
 
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
@@ -1413,7 +1422,16 @@ jobs:
           # real ~299 KB gz bundle. The browser/hx-v4 ceilings exist to catch
           # RE-duplication (the #616 double core+semantic class).
           MAX_LITE=4000           # 4 KB   (actual ~2 KB)
-          MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
+          # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
+          # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
+          # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
+          # (measured, not estimated). 2057 of that is `morphlex`, pulled in by
+          # the `morph` case — 69% of the increase for 1 of 13 commands, kept
+          # deliberately so no advertised command is a no-op.
+          # hx measured 21960 B gz locally, so 22000 would have failed on the
+          # first run; 24000 restores roughly the ~2 KB of headroom the old
+          # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
+          MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
           MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
           MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
 

@@ -336,7 +336,16 @@ jobs:
           # ceilings exist specifically to catch RE-duplication (any change
           # that re-inlines a second core/semantic blows straight past them).
           MAX_LITE=4000           # 4 KB   (actual ~2 KB)
-          MAX_HYBRID=20000        # 20 KB  (hybrid-hx actual ~18.5 KB gz)
+          # Raised 20000 → 24000 in Arc E step 4, which closed Finding 17: the
+          # hybrid bundles used to PARSE 35 commands and EXECUTE 24, and adding
+          # the missing eleven cost hybrid-complete +2969 B gz / hx +2977 B gz
+          # (measured, not estimated). 2057 of that is `morphlex`, pulled in by
+          # the `morph` case — 69% of the increase for 1 of 13 commands, kept
+          # deliberately so no advertised command is a no-op.
+          # hx measured 21960 B gz locally, so 22000 would have failed on the
+          # first run; 24000 restores roughly the ~2 KB of headroom the old
+          # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
+          MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
           MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
           MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
 

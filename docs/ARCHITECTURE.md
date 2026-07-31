@@ -68,7 +68,7 @@ packages/
 | hyperfixi-lite.js            | 1.9 KB      | Minimal (8 commands, regex parser)          |
 | hyperfixi-lite-plus.js       | 2.6 KB      | More commands + i18n aliases                |
 | hyperfixi-hybrid-complete.js | 7.7 KB      | **Recommended** (~85% hyperscript coverage) |
-| hyperfixi-hx.js              | 18 KB       | hybrid-complete + htmx/fixi support         |
+| hyperfixi-hx.js              | 21.5 KB     | hybrid-complete + htmx/fixi support         |
 | hyperfixi-minimal.js         | 76 KB       | Full parser + 30 commands                   |
 | hyperfixi.js                 | ~299 KB     | Everything + reactivity/realtime plugins    |
 

@@ -1,10 +1,10 @@
 {
   "$schema": "./baseline.schema.json",
   "purpose": "Tree-shaking + bundle-size baseline for the evaluator consolidation arc (parser/runtime.ts canonical + ExpressionRegistry).",
-  "generated": "2026-07-29",
-  "commit": "09010f5c",
+  "generated": "2026-07-30",
+  "commit": "fc17d2c0",
   "tolerance_percent": 5,
-  "notes": "Updated 2026-07-30 (Arc E step 3, shared boot shell): ONLY the four slim bundles were re-baselined, because only they changed — they now import the shared `[_]` scanner and global installer from `compatibility/bundle-shell.ts` instead of each inlining their own. gzip deltas: lite +33 (+1.7%), lite-plus +34 (+1.3%), hybrid-complete +27 (+0.3%), hx +22 (+0.1%); raw deltas are +15 to +54. The gzip cost exceeds the raw cost on the two smallest bundles because the shared arrow-function form compresses slightly worse than the inline for-loop it replaced. A factory that also BUILT the api object was measured and rejected at +103 gz on hybrid-complete / +63 on hx — see the header of bundle-shell.ts. The six full bundles were deliberately NOT re-baselined: this change does not touch them, and a blanket --update would have absorbed the +0.3-0.8% raw local-vs-recorded drift they already show into the committed numbers, blinding the gate to it. Updated 2026-07-29 (#821): every full bundle DROPPED ~29.1 KB raw / ~6 KB gzip — a near-constant across minimal, standard, classic, classic-i18n, browser and hx-v4 — when the dead src/expressions/*/impl/ classes were deleted. They were unreachable at runtime (the registry objects in each category's index.ts are what execute) but were kept alive in the payload by trailing 'Re-export implementations for tests' lines, which made them public API surface that tree-shaking could not drop. The four slim bundles (lite, lite-plus, hybrid-complete, hybrid-hx) are unchanged, since they never pull in the expression registry. Both directions of this gate matter: it uses Math.abs, so a size IMPROVEMENT this large trips it too and must be recorded here. Previously updated 2026-07-20 (pre-release audit): added the four slim bundles, which had NO size-regression coverage, and refreshed all sizes post-#736. Runs in the CI bundle-size job. Run `node scripts/bundle-size-snapshot.mjs --check` after changes; failures (±5% drift) point to tree-shaking or duplication regressions. Regenerate with --update after an INTENTIONAL size change; the numbers here are macOS-local and read ~1 KB (0.3%) below CI Linux zlib on the full bundles, well inside the tolerance. metadata.ts, by contrast, must carry the CI numbers.",
+  "notes": "Updated 2026-07-30 (Arc E step 4, generated executor core): ONLY hybrid-complete and hx were re-baselined, because only they changed. This closes Finding 17 \u2014 both bundles PARSED 35 commands and EXECUTED 24, so the eleven orphans (beep break continue copy empty exit js morph push replace throw) plus removeClass and the two url aliases reached `default:` -> `Unknown command` while their parser rules shipped as dead weight. Measured deltas: hybrid-complete raw +10811 (+32.5%) / gzip +2967 (+35.3%); hx raw +10863 (+15.0%) / gzip +2972 (+15.6%). 2057 gz of that is `morphlex`, bundled by the `morph` case \u2014 69% of the increase for 1 of 13 commands, and the reason the arc's pre-measurement (+1421 gz) was low: it was taken on the generator's SOURCE TEXT, where the morphlex import is one line rather than a library. Including morph was a deliberate call: no advertised command may be a no-op. CI's absolute ceiling moved 20000 -> 24000 in the same change (ci.yml + pre-publish-check.yml); 22000 would have failed immediately at hx's measured 21997. The eight other bundles were deliberately NOT re-baselined \u2014 this change cannot reach them (they share no executor with the hybrid family), and a blanket --update would have absorbed the +0.3-0.8% raw local-vs-recorded drift they already show into the committed numbers, blinding the gate to it. Updated 2026-07-30 (Arc E step 3, shared boot shell): ONLY the four slim bundles were re-baselined, because only they changed \u2014 they now import the shared `[_]` scanner and global installer from `compatibility/bundle-shell.ts` instead of each inlining their own. gzip deltas: lite +33 (+1.7%), lite-plus +34 (+1.3%), hybrid-complete +27 (+0.3%), hx +22 (+0.1%); raw deltas are +15 to +54. The gzip cost exceeds the raw cost on the two smallest bundles because the shared arrow-function form compresses slightly worse than the inline for-loop it replaced. A factory that also BUILT the api object was measured and rejected at +103 gz on hybrid-complete / +63 on hx \u2014 see the header of bundle-shell.ts. The six full bundles were deliberately NOT re-baselined: this change does not touch them, and a blanket --update would have absorbed the +0.3-0.8% raw local-vs-recorded drift they already show into the committed numbers, blinding the gate to it. Updated 2026-07-29 (#821): every full bundle DROPPED ~29.1 KB raw / ~6 KB gzip \u2014 a near-constant across minimal, standard, classic, classic-i18n, browser and hx-v4 \u2014 when the dead src/expressions/*/impl/ classes were deleted. They were unreachable at runtime (the registry objects in each category's index.ts are what execute) but were kept alive in the payload by trailing 'Re-export implementations for tests' lines, which made them public API surface that tree-shaking could not drop. The four slim bundles (lite, lite-plus, hybrid-complete, hybrid-hx) are unchanged, since they never pull in the expression registry. Both directions of this gate matter: it uses Math.abs, so a size IMPROVEMENT this large trips it too and must be recorded here. Previously updated 2026-07-20 (pre-release audit): added the four slim bundles, which had NO size-regression coverage, and refreshed all sizes post-#736. Runs in the CI bundle-size job. Run `node scripts/bundle-size-snapshot.mjs --check` after changes; failures (\u00b15% drift) point to tree-shaking or duplication regressions. Regenerate with --update after an INTENTIONAL size change; the numbers here are macOS-local and read ~1 KB (0.3%) below CI Linux zlib on the full bundles, well inside the tolerance. metadata.ts, by contrast, must carry the CI numbers.",
   "bundles": {
     "hyperfixi-minimal.js": {
       "config": "rollup.browser-minimal.config.mjs",
@@ -37,7 +37,7 @@
     "hyperfixi.js": {
       "config": "rollup.browser.config.mjs",
       "entry": "src/compatibility/browser-bundle.ts",
-      "evaluator_strategy": "kitchen-sink Runtime → constructs full ExpressionRegistry (7 categories) + parser/runtime.ts canonical evaluator",
+      "evaluator_strategy": "kitchen-sink Runtime \u2192 constructs full ExpressionRegistry (7 categories) + parser/runtime.ts canonical evaluator",
       "raw_bytes": 1487392,
       "gzip_bytes": 315478
     },
@@ -65,16 +65,16 @@
     "hyperfixi-hybrid-complete.js": {
       "config": "rollup.browser-hybrid-complete.config.mjs",
       "entry": "src/compatibility/browser-bundle-hybrid-complete.ts",
-      "evaluator_strategy": "HybridParser + inline executeCommand switch",
-      "raw_bytes": 33279,
-      "gzip_bytes": 8409
+      "evaluator_strategy": "HybridParser + GENERATED executeCommand/executeBlock switches (scripts/generate-bundles.ts)",
+      "raw_bytes": 44090,
+      "gzip_bytes": 11376
     },
     "hyperfixi-hx.js": {
       "config": "rollup.browser-hybrid-hx.config.mjs",
       "entry": "src/compatibility/browser-bundle-hybrid-hx.ts",
       "evaluator_strategy": "hybrid-complete runtime + htmx/fixi attribute layer",
-      "raw_bytes": 72227,
-      "gzip_bytes": 19025
+      "raw_bytes": 83090,
+      "gzip_bytes": 21997
     }
   }
 }

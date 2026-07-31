@@ -30,6 +30,10 @@ import { tokenize } from '../parser/hybrid/tokenizer';
 import type { ASTNode, CommandNode, BlockNode, EventNode } from '../parser/hybrid/ast-types';
 import { addCommandAliases, addEventAliases } from '../parser/hybrid/aliases';
 import { createProcessElements, installBundleGlobal, type BundleShellApi } from './bundle-shell';
+// Required by the generated `morph` case. This is the one generated command
+// that pulls a third-party dependency into the bundle; its measured cost is
+// recorded in the Arc E step 4 PR body.
+import { morph as morphlexMorph, morphInner as morphlexMorphInner } from 'morphlex';
 
 /** The extras hybrid-complete adds above the shared core surface. */
 interface HybridCompleteExtras {
@@ -342,6 +346,8 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
   };
 
   switch (cmd.name) {
+    // #region generated:commands — DO NOT EDIT (npm run generate:bundles)
+
     case 'toggle': {
       const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
@@ -371,6 +377,12 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return ctx.it;
     }
 
+    case 'remove': {
+      const targets = await getTarget();
+      for (const el of targets) el.remove();
+      return null;
+    }
+
     case 'removeClass': {
       const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
@@ -380,14 +392,22 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       } else {
         for (const el of targets) el.classList.remove(raw);
       }
-      ctx.it = targets.length === 1 ? targets[0] : targets;
-      return ctx.it;
+      return targets;
     }
 
-    case 'remove': {
+    case 'show': {
       const targets = await getTarget();
-      for (const el of targets) el.remove();
-      return null;
+      for (const el of targets) {
+        (el as HTMLElement).style.display = '';
+        el.classList.remove('hidden');
+      }
+      return targets;
+    }
+
+    case 'hide': {
+      const targets = await getTarget();
+      for (const el of targets) (el as HTMLElement).style.display = 'none';
+      return targets;
     }
 
     case 'put': {
@@ -417,14 +437,41 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return content;
     }
 
-    case 'append':
+    case 'append': {
+      const content = await evaluate(cmd.args[0], ctx);
+      const targets = await getTarget();
+      for (const el of targets) el.insertAdjacentHTML('beforeend', String(content));
+      ctx.it = content;
+      return content;
+    }
+
     case 'prepend': {
       const content = await evaluate(cmd.args[0], ctx);
       const targets = await getTarget();
-      const where = cmd.name === 'append' ? 'beforeend' : 'afterbegin';
-      for (const el of targets) el.insertAdjacentHTML(where, String(content));
+      for (const el of targets) el.insertAdjacentHTML('afterbegin', String(content));
       ctx.it = content;
       return content;
+    }
+
+    case 'take': {
+      // getClassName reads a NODE (as toggle/add/removeClass all do). Passing the
+      // EVALUATED value handed it a NodeList, which yielded '' and then threw
+      // 'Invalid selector .' — a command the parse-level reachability check
+      // certified while every generated bundle carrying it crashed.
+      const className = getClassName(cmd.args[0]);
+      const from = cmd.target ? await getTarget() : [ctx.me.parentElement!];
+      for (const container of from) {
+        const siblings = container.querySelectorAll('.' + className);
+        siblings.forEach(el => el.classList.remove(className));
+      }
+      ctx.me.classList.add(className);
+      return ctx.me;
+    }
+
+    case 'empty': {
+      const targets = await getTarget();
+      for (const el of targets) (el as HTMLElement).innerHTML = '';
+      return targets;
     }
 
     case 'set': {
@@ -442,11 +489,11 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       if (target.type === 'possessive' || target.type === 'member') {
         const obj = await evaluate(target.object, ctx);
         if (obj) {
-          if (obj instanceof Element && setStyleProp(obj, target.property, value)) {
-            ctx.it = value;
-            return value;
+          if (obj instanceof Element && isStyleProp(target.property)) {
+            setStyleProp(obj, target.property, value);
+          } else {
+            (obj as any)[target.property] = value;
           }
-          (obj as any)[target.property] = value;
           ctx.it = value;
           return value;
         }
@@ -462,32 +509,76 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return value;
     }
 
-    case 'call': {
-      const result = await evaluate(cmd.args[0], ctx);
-      ctx.it = result;
-      return result;
+    case 'increment': {
+      const target = cmd.args[0];
+      const amount = cmd.args[1] ? await evaluate(cmd.args[1], ctx) : 1;
+
+      if (target.type === 'variable') {
+        const varName = target.name.slice(1);
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
+        const current = map.get(varName) || 0;
+        const newVal = current + amount;
+        map.set(varName, newVal);
+        ctx.it = newVal;
+        return newVal;
+      }
+
+      if (target.type === 'possessive' && isStyleProp(target.property)) {
+        const obj = await evaluate(target.object, ctx);
+        const elements = toElementArray(obj);
+        for (const el of elements) {
+          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
+          const newVal = current + amount;
+          setStyleProp(el, target.property, newVal);
+          ctx.it = newVal;
+        }
+        return ctx.it;
+      }
+
+      const elements = toElementArray(await evaluate(target, ctx));
+      for (const el of elements) {
+        const current = parseFloat(el.textContent || '0') || 0;
+        const newVal = current + amount;
+        el.textContent = String(newVal);
+        ctx.it = newVal;
+      }
+      return ctx.it;
     }
 
-    case 'log': {
-      const values = await Promise.all(cmd.args.map(a => evaluate(a, ctx)));
-      console.log(...values);
-      return values[0];
-    }
+    case 'decrement': {
+      const target = cmd.args[0];
+      const amount = cmd.args[1] ? await evaluate(cmd.args[1], ctx) : 1;
 
-    // `trigger` is a distinct parser keyword (not an alias — the alias map
-    // canonicalizes `fire`→trigger, `dispatch`→send), so it needs its own
-    // case label here. It was advertised in this bundle's `commands` manifest
-    // but had no case, making `trigger`/`fire` a silent no-op in the
-    // hybrid-complete and hybrid-hx bundles (2026-07-20 audit; pinned by
-    // bundle-manifest-consistency.test.ts).
-    case 'trigger':
-    case 'send': {
-      const eventName = await evaluate(cmd.args[0], ctx);
-      const targets = await getTarget();
-      const event = new CustomEvent(String(eventName), { bubbles: true, detail: ctx.it });
-      for (const el of targets) el.dispatchEvent(event);
-      ctx.it = event;
-      return event;
+      if (target.type === 'variable') {
+        const varName = target.name.slice(1);
+        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
+        const current = map.get(varName) || 0;
+        const newVal = current - amount;
+        map.set(varName, newVal);
+        ctx.it = newVal;
+        return newVal;
+      }
+
+      if (target.type === 'possessive' && isStyleProp(target.property)) {
+        const obj = await evaluate(target.object, ctx);
+        const elements = toElementArray(obj);
+        for (const el of elements) {
+          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
+          const newVal = current - amount;
+          setStyleProp(el, target.property, newVal);
+          ctx.it = newVal;
+        }
+        return ctx.it;
+      }
+
+      const elements = toElementArray(await evaluate(target, ctx));
+      for (const el of elements) {
+        const current = parseFloat(el.textContent || '0') || 0;
+        const newVal = current - amount;
+        el.textContent = String(newVal);
+        ctx.it = newVal;
+      }
+      return ctx.it;
     }
 
     case 'wait': {
@@ -511,21 +602,6 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
           { once: true }
         );
       });
-    }
-
-    case 'show': {
-      const targets = await getTarget();
-      for (const el of targets) {
-        (el as HTMLElement).style.display = '';
-        el.classList.remove('hidden');
-      }
-      return targets;
-    }
-
-    case 'hide': {
-      const targets = await getTarget();
-      for (const el of targets) (el as HTMLElement).style.display = 'none';
-      return targets;
     }
 
     case 'transition': {
@@ -577,61 +653,147 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return ctx.it;
     }
 
-    case 'take': {
-      // getClassName reads a NODE, exactly as toggle/add/removeClass above do.
-      // This passed it the EVALUATED value instead, which for the documented
-      // `take .x from #t` form is an Element/NodeList — getClassName returns ''
-      // and `querySelectorAll('.' + '')` throws `SyntaxError: '.'`. Shipped
-      // broken in hyperfixi-hybrid-complete.js and hyperfixi-hx.js: the source-
-      // text manifest gate saw a `case` label and passed, and the execution
-      // gate that would have caught it covered only GENERATED bundles, where
-      // the same defect was found and fixed as Finding 16.
-      const className = getClassName(cmd.args[0]);
-      const from = cmd.target ? await getTarget() : [ctx.me.parentElement!];
-      for (const container of from) {
-        const siblings = container.querySelectorAll('.' + className);
-        siblings.forEach(el => el.classList.remove(className));
-      }
-      ctx.me.classList.add(className);
-      return ctx.me;
+    case 'send': {
+      const eventName = await evaluate(cmd.args[0], ctx);
+      const targets = await getTarget();
+      const event = new CustomEvent(String(eventName), { bubbles: true, detail: ctx.it });
+      for (const el of targets) el.dispatchEvent(event);
+      ctx.it = event;
+      return event;
     }
 
-    case 'increment':
-    case 'decrement': {
-      const target = cmd.args[0];
-      const amount = await evaluate(cmd.args[1], ctx);
-      const delta = cmd.name === 'increment' ? amount : -amount;
+    case 'log': {
+      const values = await Promise.all(cmd.args.map((a: any) => evaluate(a, ctx)));
+      console.log(...values);
+      return values[0];
+    }
 
-      if (target.type === 'variable') {
-        const varName = target.name.slice(1);
-        const map = target.scope === 'local' ? elemScope(ctx.me) : globalVars;
-        const current = map.get(varName) || 0;
-        const newVal = current + delta;
-        map.set(varName, newVal);
-        ctx.it = newVal;
-        return newVal;
+    case 'call': {
+      const result = await evaluate(cmd.args[0], ctx);
+      ctx.it = result;
+      return result;
+    }
+
+    case 'copy': {
+      const source = await evaluate(cmd.args[0], ctx);
+      let textToCopy = '';
+
+      if (typeof source === 'string') {
+        textToCopy = source;
+      } else if (source instanceof Element) {
+        textToCopy = source.textContent || '';
+      } else {
+        textToCopy = String(source);
       }
 
-      if (target.type === 'possessive' && isStyleProp(target.property)) {
-        const obj = await evaluate(target.object, ctx);
-        const elements = toElementArray(obj);
-        for (const el of elements) {
-          const current = parseFloat(getStyleProp(el, target.property) || '0') || 0;
-          const newVal = current + delta;
-          setStyleProp(el, target.property, newVal);
-          ctx.it = newVal;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          // Fallback for older browsers
+          const textarea = document.createElement('textarea');
+          textarea.value = textToCopy;
+          textarea.style.cssText = 'position:fixed;top:0;left:-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
         }
-        return ctx.it;
+
+        if (ctx.me instanceof Element) {
+          ctx.me.dispatchEvent(
+            new CustomEvent('copy:success', {
+              bubbles: true,
+              detail: { text: textToCopy },
+            })
+          );
+        }
+        ctx.it = textToCopy;
+        return textToCopy;
+      } catch (error) {
+        if (ctx.me instanceof Element) {
+          ctx.me.dispatchEvent(
+            new CustomEvent('copy:error', {
+              bubbles: true,
+              detail: { error },
+            })
+          );
+        }
+        throw error;
+      }
+    }
+
+    case 'beep': {
+      const values = await Promise.all(cmd.args.map((a: any) => evaluate(a, ctx)));
+      const displayValues = values.length > 0 ? values : [ctx.it];
+
+      for (const val of displayValues) {
+        const typeInfo =
+          val === null
+            ? 'null'
+            : val === undefined
+              ? 'undefined'
+              : Array.isArray(val)
+                ? `Array[${val.length}]`
+                : val instanceof Element
+                  ? `Element<${val.tagName.toLowerCase()}>`
+                  : typeof val;
+        console.log('[beep]', typeInfo + ':', val);
+      }
+      return displayValues[0];
+    }
+
+    case 'go': {
+      const dest = await evaluate(cmd.args[0], ctx);
+      const d = String(dest).toLowerCase();
+      if (d === 'back') history.back();
+      else if (d === 'forward') history.forward();
+      else if (d === 'bottom') ctx.me.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      else if (d === 'top') ctx.me.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      else window.location.href = String(dest);
+      return null;
+    }
+
+    case 'push': {
+      const url = String(await evaluate(cmd.args[0], ctx));
+      let title = '';
+
+      // Check for "with title" modifier
+      if (cmd.modifiers?.title) {
+        title = String(await evaluate(cmd.modifiers.title, ctx));
       }
 
-      const elements = toElementArray(await evaluate(target, ctx));
-      for (const el of elements) {
-        const current = parseFloat(el.textContent || '0') || 0;
-        const newVal = current + delta;
-        el.textContent = String(newVal);
-        ctx.it = newVal;
+      window.history.pushState(null, '', url);
+      if (title) document.title = title;
+
+      window.dispatchEvent(
+        new CustomEvent('lokascript:pushurl', {
+          detail: { url, title },
+        })
+      );
+
+      return { url, title, mode: 'push' };
+    }
+
+    case 'replace': {
+      const url = String(await evaluate(cmd.args[0], ctx));
+      let title = '';
+
+      // Check for "with title" modifier
+      if (cmd.modifiers?.title) {
+        title = String(await evaluate(cmd.modifiers.title, ctx));
       }
-      return ctx.it;
+
+      window.history.replaceState(null, '', url);
+      if (title) document.title = title;
+
+      window.dispatchEvent(
+        new CustomEvent('lokascript:replaceurl', {
+          detail: { url, title },
+        })
+      );
+
+      return { url, title, mode: 'replace' };
     }
 
     case 'focus': {
@@ -646,35 +808,141 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       return targets;
     }
 
-    case 'go': {
-      const dest = await evaluate(cmd.args[0], ctx);
-      const d = String(dest).toLowerCase();
-      if (d === 'back') history.back();
-      else if (d === 'forward') history.forward();
-      else window.location.href = String(dest);
-      return null;
-    }
-
     case 'return': {
       const value = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : ctx.it;
       throw { type: 'return', value };
     }
 
-    case 'halt': {
-      if (ctx.event) {
-        ctx.event.preventDefault();
-        ctx.event.stopPropagation();
-      }
-      return null;
+    case 'break': {
+      throw { type: 'break' };
     }
 
+    case 'continue': {
+      throw { type: 'continue' };
+    }
+
+    case 'halt': {
+      // Check for "halt the event" pattern
+      const firstArg = cmd.args[0];
+      let targetEvent = ctx.event;
+      if (
+        firstArg?.type === 'identifier' &&
+        firstArg.name === 'the' &&
+        cmd.args[1]?.name === 'event'
+      ) {
+        targetEvent = ctx.event;
+      } else if (firstArg) {
+        const evaluated = await evaluate(firstArg, ctx);
+        if (evaluated?.preventDefault) targetEvent = evaluated;
+      }
+
+      if (targetEvent && typeof targetEvent.preventDefault === 'function') {
+        targetEvent.preventDefault();
+        targetEvent.stopPropagation();
+        return { halted: true, eventHalted: true };
+      }
+
+      // Regular halt - stop execution
+      const haltError = new Error('HALT_EXECUTION');
+      (haltError as any).isHalt = true;
+      throw haltError;
+    }
+
+    case 'exit': {
+      const exitError = new Error('EXIT_COMMAND');
+      (exitError as any).isExit = true;
+      throw exitError;
+    }
+
+    case 'throw': {
+      const message = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : 'Error';
+      const errorToThrow = message instanceof Error ? message : new Error(String(message));
+      throw errorToThrow;
+    }
+
+    case 'js': {
+      const codeArg = cmd.args[0];
+      let jsCode = '';
+
+      if (codeArg.type === 'string') {
+        jsCode = codeArg.value;
+      } else if (codeArg.type === 'template') {
+        jsCode = await evaluate(codeArg, ctx);
+      } else {
+        jsCode = String(await evaluate(codeArg, ctx));
+      }
+
+      // Build context object for the Function
+      //
+      // `target` is `ctx.me` outright, not `ctx.target || ctx.me`. No Context
+      // in any bundle declares a `target` field and no executor assigns one, so
+      // the left operand was always `undefined` and the expression always
+      // yielded `ctx.me` — same value, and a type error the moment the template
+      // lands in a file that is actually typechecked (Arc E step 4, where it
+      // did). Generated bundles are written, imported and executed but never
+      // `tsc`'d, which is how a phantom property survived here.
+      const jsContext = {
+        me: ctx.me,
+        it: ctx.it,
+        event: ctx.event,
+        target: ctx.me,
+        locals: Object.fromEntries(ctx.locals),
+        globals: Object.fromEntries(globalVars),
+        document: typeof document !== 'undefined' ? document : undefined,
+        window: typeof window !== 'undefined' ? window : undefined,
+      };
+
+      try {
+        const fn = new Function('ctx', `with(ctx) { return (async () => { ${jsCode} })(); }`);
+        const result = await fn(jsContext);
+        ctx.it = result;
+        return result;
+      } catch (error) {
+        console.error('[js] Execution error:', error);
+        throw error;
+      }
+    }
+
+    case 'morph': {
+      const targets = await getTarget();
+      const content = await evaluate(cmd.args[0], ctx);
+      const contentStr = String(content);
+      const isOuter = cmd.modifier === 'over';
+
+      for (const target of targets) {
+        try {
+          if (isOuter) {
+            morphlexMorph(target, contentStr);
+          } else {
+            // morphlex's morphInner takes an ELEMENT, not a string — the same
+            // wrapping src/lib/morph-adapter.ts does. Passing the string threw
+            // straight into the fallback below, so inner morph never actually
+            // morphed (it silently degraded to innerHTML on every call).
+            const wrapper = document.createElement(target.tagName);
+            wrapper.innerHTML = contentStr;
+            morphlexMorphInner(target, wrapper);
+          }
+        } catch (error) {
+          // Fallback to innerHTML/outerHTML if morph fails
+          console.warn('[LokaScript] Morph failed, falling back:', error);
+          if (isOuter) {
+            target.outerHTML = contentStr;
+          } else {
+            target.innerHTML = contentStr;
+          }
+        }
+      }
+      ctx.it = targets.length === 1 ? targets[0] : targets;
+      return ctx.it;
+    }
+    // #endregion generated:commands
     default:
       console.warn(`Unknown command: ${cmd.name}`);
       return null;
   }
 }
 
-async function executeSeqPropagateReturn(nodes: ASTNode[], ctx: Context): Promise<any> {
+async function executeSequenceWithBlocks(nodes: ASTNode[], ctx: Context): Promise<any> {
   try {
     return await executeSequence(nodes, ctx);
   } catch (e: any) {
@@ -685,10 +953,15 @@ async function executeSeqPropagateReturn(nodes: ASTNode[], ctx: Context): Promis
 
 async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
   switch (block.type) {
+    // #region generated:blocks — DO NOT EDIT (npm run generate:bundles)
+
     case 'if': {
       const condition = await evaluate(block.condition!, ctx);
-      if (condition) return executeSeqPropagateReturn(block.body, ctx);
-      else if (block.elseBody) return executeSeqPropagateReturn(block.elseBody, ctx);
+      if (condition) {
+        return executeSequenceWithBlocks(block.body, ctx);
+      } else if (block.elseBody) {
+        return executeSequenceWithBlocks(block.elseBody, ctx);
+      }
       return null;
     }
 
@@ -698,7 +971,13 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
       for (let i = 0; i < n && i < MAX_LOOP_ITERATIONS; i++) {
         ctx.locals.set('__loop_index__', i);
         ctx.locals.set('__loop_count__', i + 1);
-        await executeSeqPropagateReturn(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') continue;
+          throw e;
+        }
       }
       return null;
     }
@@ -716,7 +995,13 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
         ctx.locals.set(varName, arr[i]);
         ctx.locals.set('__loop_index__', i);
         ctx.locals.set('__loop_count__', i + 1);
-        await executeSeqPropagateReturn(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') continue;
+          throw e;
+        }
       }
       return null;
     }
@@ -725,7 +1010,16 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
       let iterations = 0;
       while ((await evaluate(block.condition!, ctx)) && iterations < MAX_LOOP_ITERATIONS) {
         ctx.locals.set('__loop_index__', iterations);
-        await executeSeqPropagateReturn(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') {
+            iterations++;
+            continue;
+          }
+          throw e;
+        }
         iterations++;
       }
       return null;
@@ -735,15 +1029,13 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
       const { url, responseType, options, method } = block.condition as any;
       try {
         const urlVal = await evaluate(url, ctx);
-        const fetchInit: RequestInit = {};
+        const fetchInit = {} as RequestInit;
 
-        // Apply method (from 'via POST' etc.)
         if (method) {
           const methodVal = await evaluate(method, ctx);
           fetchInit.method = String(methodVal).toUpperCase();
         }
 
-        // Apply body/options (from 'with ...')
         if (options) {
           const optionsVal = await evaluate(options, ctx);
           if (optionsVal instanceof FormData) {
@@ -753,7 +1045,6 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
             typeof optionsVal === 'object' &&
             !(optionsVal instanceof Element)
           ) {
-            // Plain object — merge as fetch init options
             Object.assign(fetchInit, optionsVal);
           }
         }
@@ -775,7 +1066,7 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
         ctx.locals.set('result', data);
         ctx.locals.set('response', response);
 
-        await executeSeqPropagateReturn(block.body, ctx);
+        await executeSequenceWithBlocks(block.body, ctx);
       } catch (error: any) {
         if (error?.type === 'return') throw error;
         ctx.locals.set('error', error);
@@ -783,7 +1074,7 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
       }
       return null;
     }
-
+    // #endregion generated:blocks
     default:
       return null;
   }
@@ -932,31 +1223,58 @@ const api: BundleShellApi<ASTNode> & HybridCompleteExtras = {
   tokenize,
   evaluate,
 
+  // THIS ARRAY IS THE GENERATION INPUT, not a description written beside one.
+  // `scripts/generate-bundles.ts` reads it and emits one template per entry into
+  // the `generated:commands` region above, so "advertised but not executed" —
+  // Finding 17, which is what this bundle shipped for its whole life at 35
+  // parsed / 24 executed — stops being a state this file can be in.
+  //
+  // It is exactly `AVAILABLE_COMMANDS` (38 = 35 template keys + the 3 advertised
+  // aliases), pinned as set equality both directions by
+  // `shipped-bundle-execution.test.ts`. Two entries look wrong and are not:
+  // `removeClass` is a NODE name the parser emits for `remove .x from #t`, never
+  // a keyword anyone types — it needs a case, so it needs to be here; and
+  // `trigger`/`push-url`/`replace-url` are aliases the emitter folds into their
+  // implementing template, which is why 38 names yield 35 case groups.
   commands: [
     'toggle',
     'add',
     'remove',
+    'removeClass',
+    'show',
+    'hide',
     'put',
     'append',
     'prepend',
+    'take',
+    'empty',
     'set',
     'get',
-    'call',
-    'log',
-    'send',
-    'trigger',
-    'wait',
-    'show',
-    'hide',
-    'transition',
-    'take',
     'increment',
     'decrement',
+    'wait',
+    'transition',
+    'send',
+    'trigger',
+    'log',
+    'call',
+    'copy',
+    'beep',
+    'go',
+    'push',
+    'push-url',
+    'replace',
+    'replace-url',
     'focus',
     'blur',
-    'go',
     'return',
+    'break',
+    'continue',
     'halt',
+    'exit',
+    'throw',
+    'js',
+    'morph',
   ],
 
   blocks: ['if', 'else', 'unless', 'repeat', 'for', 'while', 'fetch'],

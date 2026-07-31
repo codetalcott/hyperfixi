@@ -428,6 +428,42 @@ describe('every advertised command runs in a generated bundle', () => {
     expect(dead).toEqual([]);
   }, 60000);
 
+  it('`wait for <event>` BLOCKS until the event — the second label runs (Arc E step 4)', async () => {
+    // The row every list-shaped check was structurally blind to. `waitFor` is a
+    // name the parser EMITS but not a `cmdMap` key and not an advertised
+    // command, so §1 (list mirrors), §3 (labels vs surfaces) and §4 (the two
+    // cmdMaps) all agreed while the template had no such case. The generated
+    // bundle warned once and RESOLVED IMMEDIATELY, so every command after
+    // `wait for click` in a handler ran without waiting.
+    //
+    // Asserting the thing the command is FOR (Finding 16): not "it returned",
+    // but "it had NOT returned before the event, and had after". A check that
+    // only awaited the promise passes against the broken template — that is
+    // precisely how this survived.
+    const gen = generateBundle({
+      name: 'CapWaitFor',
+      commands: ['wait'],
+      blocks: [],
+      autoInit: false,
+      parserImportPath: '../../../parser/hybrid',
+    });
+    const file = join(GEN_DIR, 'waitfor_label.ts');
+    writeFileSync(file, gen.code);
+
+    document.body.innerHTML = '<div id="host"></div>';
+    const me = document.getElementById('host')!;
+    const mod = await import(/* @vite-ignore */ file);
+
+    let settled = false;
+    const running = mod.api.execute('wait for foo', me).then(() => (settled = true));
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(settled, 'settled before the event fired — `wait for` did not wait').toBe(false);
+
+    me.dispatchEvent(new Event('foo'));
+    await running;
+    expect(settled).toBe(true);
+  }, 20000);
+
   it('a trigger-only bundle now dispatches on the named target', async () => {
     // Kept as its own case because it is the one that made Finding 13 a
     // correctness defect rather than a tidiness one: the generator reported no
@@ -460,17 +496,34 @@ const commandNamesIn = (node: unknown, acc: string[] = []): string[] => {
 const caseLabelsIn = (template: string): string[] =>
   [...template.matchAll(/case '([^']+)':/g)].map(m => m[1]);
 
+/**
+ * Source a template's NON-PRIMARY case labels are reachable from.
+ *
+ * A template usually carries one label, named for the command a user types, so
+ * `SURFACES[name].code` proves the whole template reachable. `wait` is the
+ * exception: `parseWait` emits `waitFor` for `wait for <event>` and `wait` for a
+ * duration, and one `code` string cannot yield both. Listing the second source
+ * here keeps §3 at tolerance 0 rather than allowlisting the label — the label
+ * must still be PARSER-REACHABLE, just from a surface of its own.
+ */
+const SECONDARY_LABEL_SURFACES: Record<string, string[]> = {
+  wait: ['wait for foo'],
+};
+
 describe('no template emits a case label the parser cannot produce', () => {
   it('every emitted label is a node name some surface actually yields', () => {
     // The converse of §2, and the direction that catches a label added without a
     // parse rule. `push-url`/`replace-url` used to live here as private labels
     // inside the push/replace templates — unreachable by construction, since no
     // parser emits a node by either name.
-    const emittable = new Set(
-      AVAILABLE_COMMANDS.flatMap(name =>
+    const emittable = new Set([
+      ...AVAILABLE_COMMANDS.flatMap(name =>
         commandNamesIn(new HybridParser(SURFACES[name].code).parse())
-      )
-    );
+      ),
+      ...Object.values(SECONDARY_LABEL_SURFACES)
+        .flat()
+        .flatMap(code => commandNamesIn(new HybridParser(code).parse())),
+    ]);
     const dead = Object.entries(COMMAND_IMPLEMENTATIONS).flatMap(([key, template]) =>
       caseLabelsIn(template)
         .filter(label => !emittable.has(label))
