@@ -142,3 +142,55 @@ describe('swap — the AST contract is keyword-positional args, never modifiers'
     expect(astOf('swap delete #t').args.length).toBeGreaterThan(1);
   });
 });
+
+describe('swap — the strategy forms carry their content', () => {
+  // The descriptor was already right for these; the en PATTERNS were not.
+  // Measured at 22059a6e, `swap into #t with it` and its siblings bound
+  // `method` + `destination` only — `swap {method} {destination}` (priority
+  // 110) matched the prefix and the `with` content was never captured, so the
+  // runtime got a two-arg node and swapped in nothing. `swap innerHTML of #t
+  // with "X"` was worse: it bound `destination` to the literal word 'of'.
+  //
+  // With all three roles bound, the AST lands on SwapCommand's fallback branch
+  // exactly as the block above describes: strategy from args[0], target from
+  // args[len-2], content from args[len-1].
+
+  const STRATEGY_FORMS: Array<[string, string, string, unknown]> = [
+    ['swap into #t with it', 'into', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap over #modal with c', 'over', '#modal', { type: 'identifier', name: 'c' }],
+    ['swap beforebegin #t with it', 'beforebegin', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap innerHTML of #t with "X"', 'innerHTML', '#t', { type: 'literal', value: 'X' }],
+    ['swap outerHTML of #t with "Y"', 'outerHTML', '#t', { type: 'literal', value: 'Y' }],
+  ];
+
+  it.each(STRATEGY_FORMS)('%s → [strategy, target, content]', (src, method, target, content) => {
+    const ast = astOf(src);
+
+    expect(ast.name).toBe('swap');
+    expect(ast.args, `${src} must bind all three roles`).toHaveLength(3);
+    // args[0] is what `STRATEGY_KEYWORDS[argKeywords[0]]` reads. `getNodeKeyword`
+    // accepts a literal's value or an identifier's name, lowercased — which is
+    // why `over` arriving as an identifier still selects `outerHTML`.
+    const first = ast.args[0] as { value?: string; name?: string };
+    expect(String(first.value ?? first.name).toLowerCase()).toBe(method.toLowerCase());
+    expect(ast.args[1]).toMatchObject({ type: 'selector', value: target });
+    expect(ast.args[2]).toMatchObject(content as Record<string, unknown>);
+    expect(ast.modifiers).toBeUndefined();
+  });
+
+  it('never binds the `of` marker itself as the destination', () => {
+    // The precise pre-fix failure: `swap {method} {destination}` took
+    // `innerHTML`→method and the bare word `of`→destination, then dropped
+    // both the real target and the content.
+    const ast = astOf('swap innerHTML of #t with "X"');
+    expect(ast.args[1]).not.toMatchObject({ value: 'of' });
+  });
+
+  it('leaves the method-less and content-less forms on their own patterns', () => {
+    // The new patterns need four slots after the verb, so the three-slot
+    // element swap (120) and the two-slot bare strategy (110) are untouched.
+    expect(astOf('swap #a with #b').args).toHaveLength(2);
+    expect(astOf('swap delete #item').args).toHaveLength(2);
+    expect(astOf('swap innerHTML #target').args).toHaveLength(2);
+  });
+});
