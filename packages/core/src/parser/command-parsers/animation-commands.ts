@@ -114,17 +114,45 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
 }
 
 /**
+ * Context possessives and the context variable each aliases. `parsePrimary`
+ * turns `my *opacity` into `memberExpression(me, *opacity)` via
+ * `parseContextPropertyAccess`, so these only need detecting, not decoding.
+ */
+const CONTEXT_POSSESSIVES = new Set(['my', 'its', 'your']);
+
+/**
  * Parse transition command
  *
- * Syntax: transition <property> to <value> [over <duration>] [with <timing-function>]
+ * Syntax: transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]
  *
  * This command transitions a CSS property to a target value with optional
  * duration and timing function. Supports hyphenated CSS properties.
  *
+ * The target may be given four upstream-valid ways, all of which this parser
+ * REJECTED before 2026-07-31 (docs-internal/PARSER_NEXT_STEPS.md — the bare
+ * form was the only one that worked, and it is the narrower case; the
+ * possessive is what the docs and the multilingual corpus render):
+ *
+ *   transition my *opacity to 0      → context possessive
+ *   transition its *opacity to 0     → same
+ *   transition #a's *opacity to 0    → selector possessive
+ *   transition #a *opacity to 0      → space-separated (the `measure` shape)
+ *
+ * Two adjacent gaps, not one: `my`/`its` parsed as the PROPERTY (leaving `to`
+ * unmatched → 'Expected "to" keyword after property'), while a leading
+ * selector matched neither branch and left property null → 'Transition command
+ * requires a CSS property'. Both messages named the thing that was in fact
+ * supplied.
+ *
+ * Emits `args: [target, property]` — the two-arg shape
+ * `TransitionCommand.parseInput` has always accepted (its target branch was
+ * simply unreachable) — or `args: [property]` for the bare form.
+ *
  * Examples:
  *   - transition opacity to 0.5
  *   - transition *background-color to 'red' over 2s
- *   - transition width to 100px over 1s with ease-in-out
+ *   - transition my *opacity to 0 over 200ms
+ *   - transition #a's *opacity to 0 over 1s with ease-in-out
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'transition' command token
@@ -134,17 +162,60 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
   const args: ASTNode[] = [];
   const modifiers: Record<string, ExpressionNode> = {};
 
-  // Parse optional target (if it looks like a selector or identifier followed by a property)
   let property: ASTNode | null = null;
+  let target: ASTNode | null = null;
 
-  // Look ahead to determine if first token is a target or property
-  const firstToken = ctx.peek();
+  // Optional leading target. Mirrors `parseMeasureCommand`'s target detection
+  // (same `<target> *property` shape) and adds the possessive forms.
+  const leadToken = ctx.peek();
+  const startsTarget =
+    ctx.checkAnySelector() ||
+    ctx.checkContextVar() ||
+    ctx.check('<') ||
+    (isIdentifierLike(leadToken) && CONTEXT_POSSESSIVES.has(leadToken.value));
 
-  // Parse property (required)
+  if (startsTarget) {
+    // `parsePrimary` folds both possessive shapes into one node — `#a's
+    // *opacity` to a possessiveExpression, `my *opacity` to a
+    // memberExpression — so decompose rather than re-parsing the property.
+    const parsed = ctx.parsePrimary() as ASTNode & {
+      type?: string;
+      object?: ASTNode;
+      property?: { name?: string };
+      computed?: boolean;
+    };
+
+    if (
+      (parsed.type === 'possessiveExpression' ||
+        (parsed.type === 'memberExpression' && !parsed.computed)) &&
+      parsed.object &&
+      parsed.property?.name
+    ) {
+      target = parsed.object;
+      property = {
+        type: 'string',
+        value: parsed.property.name,
+        start: leadToken.start || 0,
+        end: ctx.getPosition().end,
+        line: leadToken.line,
+        column: leadToken.column,
+      };
+    } else {
+      // Space-separated form: the target stands alone and the property
+      // follows. A stray possessive marker (`#a's` with the property parsed
+      // separately) is consumed here so it cannot reach the property parse.
+      target = parsed;
+      if (ctx.check("'s")) ctx.advance();
+    }
+  }
+
+  // Parse property (required unless a possessive already supplied it)
   // Property can be:
   // - identifier (opacity, width, etc.)
   // - identifier with * prefix (*background-color)
-  if (isIdentifierLike(firstToken) || firstToken.value === '*') {
+  const firstToken = ctx.peek();
+
+  if (!property && (isIdentifierLike(firstToken) || firstToken.value === '*')) {
     let propertyValue = '';
 
     // Handle wildcard prefix
@@ -173,6 +244,9 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
     throw new Error('Transition command requires a CSS property');
   }
 
+  // `[target, property]` is the two-arg shape TransitionCommand.parseInput
+  // already discriminates on; bare stays one-arg.
+  if (target) args.push(target);
   args.push(property);
 
   // Parse 'to' keyword and value (required) - store in modifiers for V2 command
@@ -243,7 +317,7 @@ export function parseStartCommand(
   }
 
   // Body: sequence of commands terminated by `end`.
-  const body = ctx.parseCommandListUntilEnd();
+  const body = ctx.parseCommandListUntilEnd('start view transition');
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...body)

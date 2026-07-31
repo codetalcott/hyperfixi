@@ -29,7 +29,8 @@ ones, because the gate *is* the tracking mechanism.
 | **`tell <target> to <command>` drops the `tell` wrapper** | medium — **silent wrong target** on the form users actually write | **none** | see the measured table below; found by Arc A step 4.3 (Finding 14 in [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), re-verified 2026-07-29 |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
-| **`transition` rejects a POSSESSIVE property target** | medium — upstream-valid, and it is the form the docs and the corpus use | **none** | see the measured table below; found by #847's reachability probe |
+| ~~**`transition` rejects a POSSESSIVE property target**~~ | **FIXED 2026-07-31** — optional leading target in `parseTransitionCommand` (all four shapes), emitting the `[target, property]` args the runtime already discriminated on | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/transition-target.test.ts`; history below |
+| **`process partials … using view transition` mis-parses** | medium — `process` is in `COMPOUND_COMMANDS` with no dispatch case (the `take` root cause), on a shipped command | **none** | see the note below the transition/take tables; filed 2026-07-31 |
 | ~~**`take <class> from <source>` rejected**~~ | **FIXED 2026-07-31** — `parseTakeCommand` + runtime rewrite (upstream ownership-transfer semantics), `take` added to `skipSemanticParsing` with its toggle/add/remove siblings | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`; history below |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
@@ -254,20 +255,35 @@ divergence: both paths fail identically, so this is the shared parser. Every
 form below is `VALID` on the real `hyperscript.org` engine (`hs.parse(src).errors`
 → `[]`).
 
-**`transition`'s property target cannot be possessive.** The bare form works;
-adding ANY possessor breaks it, with two different messages:
+**`transition`'s property target cannot be possessive** — **FIXED 2026-07-31.**
+The bare form worked; adding ANY possessor broke it, with two different
+messages. The measured table, for history:
 
-| source | hyperfixi (both paths) |
-| ------ | ---------------------- |
+| source | hyperfixi (before) |
+| ------ | ------------------ |
 | `transition *opacity to 0 over 200ms` | **works** — writes `style="opacity: 0"` |
 | `transition my *opacity to 0 over 200ms` | `Expected "to" keyword after property in transition command` |
 | `transition its *opacity to 0` | same |
 | `transition #a's *opacity to 0 over 200ms` | `Transition command requires a CSS property` |
+| `transition #a *opacity to 0 over 200ms` | same — **a fourth row the original filing missed** (space-separated target, the shape `measure` already accepts) |
 
-The `my`/`its` and the `#a's` forms fail at different points, so this is likely
-two adjacent gaps rather than one. Note the possessive form is what
-`TransitionCommand`'s own surface area implies and what the multilingual corpus
-renders, so the working bare form is the narrower case.
+The brief's read was right: two adjacent gaps, and the differing messages were
+the tell. `my`/`its` were consumed AS the property (so the real property sat
+where `to` was expected), while a leading selector matched neither branch and
+left property null. `parseTransitionCommand` now takes an optional leading
+target — mirroring `parseMeasureCommand`'s detection, extended with the
+possessive forms — and decomposes what `parsePrimary` returns
+(`possessiveExpression` for `#a's *opacity`, `memberExpression` for
+`my *opacity`) rather than re-parsing the property.
+
+The RUNTIME was never the blocker: `TransitionCommand.parseInput` has always
+discriminated a `[target, property]` two-arg shape, so that branch was simply
+unreachable. Making it reachable exposed one real hole, now closed with a
+regression test: an explicit target that did not resolve (`#nope`, or `its`
+with `it` unset) fell through to `String(undefined)` and transitioned a CSS
+property literally named `"undefined"` — a silent no-op reporting success. Two
+args now means `[target, property]` by construction, and an unresolvable target
+throws.
 
 **`take <class> from <source>` is rejected outright** — **FIXED 2026-07-31.**
 The measured table, for history:
@@ -312,12 +328,30 @@ worth its own arc — fold them into whichever change touches this area:
 
 - **An error position is reported past the end of the input.** Three of the
   sweep's rows report `column 78` for source strings 37 and 69 characters long.
-- **`start` reports a `repeat` error.** `start view transition` (no terminator)
-  fails with `Expected "end" to close repeat block`; `start view transition using
-  "slide" end` parses. The message names the wrong construct, which cost real
-  triage time. The same wrong-construct routing shows on `process partials in it
-  using view transition`, which fails with `Transition command requires a CSS
-  property`.
+  **STILL OPEN** — not reproduced by the `start`/`repeat`/`for` rows probed on
+  2026-07-31 (those are thrown `Error`s with no position, so they report
+  `column 1`). Whoever picks this up needs the original sweep's three rows;
+  the column-78 path is somewhere else.
+- ~~**`start` reports a `repeat` error.**~~ **FIXED 2026-07-31** (folded into the
+  transition-target PR). `parseCommandListUntilEnd` hard-coded `repeat` in its
+  message because that was its only caller when the message was written; it now
+  takes a `construct` parameter (default `repeat`, so `repeat`'s own callers are
+  unchanged). `start view transition` now reports `Expected "end" to close start
+  view transition block`, and `for` reports its own name too — it had silently
+  been claiming `repeat` as well, which the original filing did not notice.
+
+**`process partials in it using view transition` — NOT the same defect** (filed
+2026-07-31, still open). It reports `Transition command requires a CSS property`
+for a different reason than the `start` diagnostic above: `process` is listed in
+`COMPOUND_COMMANDS` but has **no case in `parseCompoundCommand`**, so it falls
+through to `parseRegularCommand`, whose arg loop stops at the `transition`
+COMMAND token — leaving `using view transition` to be parsed as a fresh
+`transition` command. That is the *identical root cause* `take` had (fixed
+in #859), on a shipped command with a real implementation
+(`commands/dom/process-partials.ts`, `@command({ name: 'process' })`). It needs
+a `parseProcessCommand` consuming `partials in <content> [using view
+transition]`, plus its own tests — one PR, not a fold-in. Check the other
+`COMPOUND_COMMANDS` entries for the same shape while there.
 
 ## Notes
 

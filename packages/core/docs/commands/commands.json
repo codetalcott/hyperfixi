@@ -895,9 +895,11 @@
       "hasBody": false,
       "version": "1.0.0",
       "description": "Animate CSS properties using CSS transitions",
-      "syntax": ["transition <property> to <value> [over <duration>] [with <timing>]"],
+      "syntax": ["transition [<target>] <property> to <value> [over <duration>] [with <timing>]"],
       "examples": [
         "transition opacity to 0.5",
+        "transition my *opacity to 0 over 200ms",
+        "transition #box's *opacity to 0 over 200ms",
         "transition left to 100px over 500ms",
         "transition background-color to red over 1s with ease-in-out"
       ],

@@ -505,10 +505,14 @@ export const commands: Record<string, CommandRef> = {
   transition: {
     name: 'transition',
     description: 'Apply CSS transitions',
-    syntax: 'transition property to value [over duration]',
+    syntax: 'transition [target] property to value [over duration]',
     category: 'animation',
     availability: 'full',
-    examples: ['transition opacity to 0 over 300ms', 'transition height to 100px'],
+    examples: [
+      'transition opacity to 0 over 300ms',
+      "transition #box's *opacity to 0 over 300ms",
+      'transition height to 100px',
+    ],
   },
   measure: {
     name: 'measure',
