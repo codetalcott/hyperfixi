@@ -219,8 +219,8 @@ fail CI.
 >   parser path; unchanged out-of-scope decision. (hi window-resize is the
 >   आकार_बदलें `_`-split + बदलें→toggle homonym; the tr boyutlandırma
 >   rename precedent applies if ever taken.)
-> - **swap-content (bn/hi/qu/tr):** F6 wontfix, unchanged (§ R3 families
->   item 6).
+> - **swap-content (bn/hi/qu/tr):** was F6 wontfix at the time of this sweep;
+>   fixed 2026-07-31 (§ R3 families item 6).
 >
 > Residual per-language misses: ja 1 (pick) · bn/tr 2 (pick, swap) · ko 3
 > (pick, on.event ×2) · qu 4 (pick, swap, on.event ×2) · hi 5 (pick, swap,
@@ -2932,13 +2932,18 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    `{goal}`). Fixed in the trailing-DURATION reclaim: skip exactly one particle
    when a TIME-shaped literal directly follows it (`में 500ms` — the
    prepositional sibling of the bn `জন্য` postposition).
-6. **`swap` role-binding flip — ~~WONTFIX~~ RE-OPENED 2026-07-31: the premise
-   was measured false** (ar/bn/hi/ja/ko/qu/tl/tr × `swap-content`, 8 rows). en
-   parses `swap #a with #b` as `destination=#a, patient=#b` (swapSchema:
-   destination bare-marked svoPos 2, patient with-word svoPos 3); the SOV/VSO
-   transformer marks `#a` accusative → the roles land flipped. The 2026-07-10
-   decision rested on **"swap is runtime-symmetric for the element shape, so
-   this is signature noise, not a behavior bug."** It is not symmetric:
+6. ~~**`swap` role-binding flip**~~ **FIXED** (ar/bn/hi/ja/ko/qu/tl/tr ×
+   `swap-content`, 8 rows). Filed as WONTFIX on 2026-07-10 for being
+   "runtime-symmetric", re-opened 2026-07-31 when that premise was measured
+   false, and closed the same arc.
+
+   The premise was _vacuously_ true when it was made, for a reason nobody could
+   see at the time: the swap descriptor emitted `args:[patient, source]` +
+   `modifiers.on`, and `SwapCommand.parseInput` reads only `raw.args`, so
+   `swap #a with #b` threw `could not parse arguments` before either binding
+   could matter. Both orders were equally broken, which is not the same as
+   equivalent. The descriptor fix (#845) made the runtime work — and thereby
+   made the flip consequential:
 
    | AST | `#a` after | `#b` after |
    | --- | ---------- | ---------- |
@@ -2946,25 +2951,23 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    | `swap #b with #a` | `AAA` | `AAA` |
 
    The DOM swap is directional — the target takes the content element's
-   content and the content element is untouched — so a flipped binding swaps
-   the wrong way round. (Measured through parse → `buildAST` → runtime in
-   jsdom.)
+   content — so the eight languages were swapping the wrong way round.
 
-   The claim was _vacuously_ true when it was made, for a reason nobody could
-   see at the time: the swap descriptor emitted `args:[patient, source]` +
-   `modifiers.on`, and `SwapCommand.parseInput` reads only `raw.args`, so
-   `swap #a with #b` threw `could not parse arguments` before either binding
-   could matter. Both orders were equally broken, which is not the same as
-   equivalent. The descriptor fix (#845) made the runtime work — and thereby
-   made the flip consequential.
+   **Fixed in the eight, not by renaming en's roles.** The SOV/VSO
+   event-handler generators bound the fronted (accusative) element to `patient`
+   and the trailing with-marked one to `destination`. Flipping en + the 16 SVO
+   marker tables instead — the direction the original entry proposed — would
+   have made `destination` name the CONTENT and `patient` the TARGET,
+   contradicting swapSchema's own role descriptions and the runtime's meaning.
+   Both generators now bind the fronted slot to `destination` and the trailing
+   with-marked group to `patient` for `swap` only; the markers themselves are
+   untouched.
 
-   Fixing still costs what the original entry said: flip destination/patient
-   across the en hand pattern + swapSchema for all SVO languages together, and
-   audit the ast-builder mapper / runtime / renderer round-trip. What changed is
-   the other side of the trade — it is no longer "zero runtime effect", it is
-   eight languages swapping the wrong element. The 8 rows stay visible in the R3
-   report; do NOT special-case the R3 walker. Regenerate the baseline and watch
-   R1/R2 when it lands.
+   **The missing gate came with it:** `swap-content` joined R2's curated
+   execution subset. R2 stayed at 1.0 through the entire breakage — first while
+   swap threw in every language, then while eight swapped backwards — for one
+   reason: the pattern was not in the list.
+
 7. ~~**qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**~~
    **DONE** (2026-07-10, transformer-rendering arc —
    `docs-internal/HANDOFF_transformer-rendering.md`, resolved; all four

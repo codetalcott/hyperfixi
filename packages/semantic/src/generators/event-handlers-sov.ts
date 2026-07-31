@@ -7,12 +7,13 @@
  * Extracted from pattern-generator.ts for maintainability.
  */
 
-import type { LanguagePattern, PatternToken, ExtractionRule } from '../types';
+import type { LanguagePattern, PatternToken, ExtractionRule, SemanticRole } from '../types';
 import type { LanguageProfile, KeywordTranslation, RoleMarker } from './language-profiles';
 import type { CommandSchema, RoleSpec } from './command-schemas';
 import {
   eventHandlerDestinationExtraction,
   eventHandlerDestinationGroup,
+  eventHandlerPatientGroup,
   eventHandlerSourceExtraction,
   eventHandlerSourceGroup,
 } from './command-schemas';
@@ -198,10 +199,26 @@ export function generateSOVPatientFirstEventHandlerPattern(
 ): LanguagePattern {
   const tokens: PatternToken[] = [];
 
-  // Patient role first
-  tokens.push({ type: 'role', role: 'patient', optional: false });
+  // `swap` is the two-object exception, and its operands are NOT symmetric:
+  // `swap #a with #b` gives #a the content of #b, so the FRONTED (accusative)
+  // element is the target — `destination` in en's reading and in swapSchema's
+  // own role descriptions — and the trailing with-marked element is the
+  // content (`patient`). Binding the fronted slot to `patient` here is what
+  // made ar/bn/hi/ja/ko/qu/tl/tr swap the wrong way round once #845 made the
+  // command execute at all (R3 family 6, re-opened 2026-07-31 with the
+  // falsifying measurement — the old "runtime-symmetric" premise was vacuously
+  // true only while swap threw for every language, English included).
+  //
+  // The accusative MARKER is unchanged; only the role it fills is. Fixing the
+  // eight rather than renaming en's roles keeps `destination`/`patient`
+  // meaning what the schema says they mean.
+  const swapsOperands = commandSchema.action === 'swap';
+  const frontedRole: SemanticRole = swapsOperands ? 'destination' : 'patient';
 
-  // Patient marker (postposition after patient)
+  // Fronted role first
+  tokens.push({ type: 'role', role: frontedRole, optional: false });
+
+  // Patient marker (postposition after the fronted element)
   const patientMarker = profile.roleMarkers.patient;
   if (patientMarker) {
     const patMarkerToken: PatternToken = patientMarker.alternatives
@@ -246,19 +263,23 @@ export function generateSOVPatientFirstEventHandlerPattern(
   // alternatives for swap; otherwise `#b <with>` never matches and #b drops
   // (hi/bn/tr/qu rendered the invalid `swap with #a`). Non-swap commands and
   // languages without a with-override are byte-identical to before.
-  let trailingDestMarker = profile.roleMarkers.destination;
-  if (commandSchema.action === 'swap' && trailingDestMarker) {
+  let trailingMarker = profile.roleMarkers.destination;
+  if (swapsOperands && trailingMarker) {
     const withWord = commandSchema.roles.find(r => r.role === 'patient')?.markerOverride?.[
       profile.code
     ];
-    if (withWord && withWord !== trailingDestMarker.primary) {
-      const existing = trailingDestMarker.alternatives ?? [];
+    if (withWord && withWord !== trailingMarker.primary) {
+      const existing = trailingMarker.alternatives ?? [];
       if (!existing.includes(withWord)) {
-        trailingDestMarker = { ...trailingDestMarker, alternatives: [...existing, withWord] };
+        trailingMarker = { ...trailingMarker, alternatives: [...existing, withWord] };
       }
     }
   }
-  tokens.push(...eventHandlerDestinationGroup(commandSchema, trailingDestMarker));
+  tokens.push(
+    ...(swapsOperands
+      ? eventHandlerPatientGroup(commandSchema, trailingMarker)
+      : eventHandlerDestinationGroup(commandSchema, trailingMarker))
+  );
 
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
@@ -272,8 +293,8 @@ export function generateSOVPatientFirstEventHandlerPattern(
     extraction: {
       action: { value: commandSchema.action },
       event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      ...eventHandlerDestinationExtraction(commandSchema),
+      [frontedRole]: { fromRole: frontedRole },
+      ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
       ...eventHandlerSourceExtraction(commandSchema),
     },
   };

@@ -203,6 +203,16 @@ export const EXECUTION_SUBSET: readonly string[] = [
   //    Fixture adds `<div id="score">0</div>` (appended last).
   'append-content',
   'increment-by-amount',
+  // Expansion wave 11: `swap-content` — `swap #a with #b`. R2 stayed at 1.0
+  // through the ENTIRE swap breakage (the descriptor emitted modifiers
+  // SwapCommand never reads, so every language including English threw
+  // `could not parse arguments`), and then through eight languages binding the
+  // operands BACKWARDS once #845 made it execute. Both were invisible here for
+  // one reason: swap-content was not in this list. It is the missing gate for
+  // R3 family 6, and it turns the operand fix from "trust me" into a row.
+  // Fixture adds `#a`/`#b` with distinguishable content (appended last, so
+  // existing snapshot indices are preserved).
+  'swap-content',
 ];
 
 /**
@@ -229,6 +239,8 @@ const FIXTURE_HTML = `<!DOCTYPE html><html><body>
   <div id="sr-announce"></div>
   <ul id="list"></ul>
   <div id="score">0</div>
+  <div id="a">AAA</div>
+  <div id="b">BBB</div>
 </body></html>`;
 
 /** Per-pattern fixture preconditions (applied identically for every language). */

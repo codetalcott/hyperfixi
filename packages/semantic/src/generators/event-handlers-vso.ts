@@ -133,11 +133,27 @@ export function generateVSOVerbFirstEventHandlerPattern(
     : { type: 'literal', value: keyword.primary };
   tokens.push(verbToken);
 
-  // Patient role
-  tokens.push({ type: 'role', role: 'patient', optional: false });
+  // `swap` is the two-object exception, and its operands are NOT symmetric:
+  // `swap #a with #b` gives #a the content of #b, so the FIRST element is the
+  // target — `destination` in en's reading and in swapSchema's own role
+  // descriptions — and the trailing with-marked element is the content
+  // (`patient`). Binding them the other way round is what made ar and tl swap
+  // BACKWARDS once #845 made the command execute at all. The trailing group
+  // below used to cite F6's "runtime-symmetric" wontfix; that premise was
+  // measured false on 2026-07-31 — it was vacuously true only while swap threw
+  // for every language, English included.
+  const swapsOperands = commandSchema.action === 'swap';
 
-  // Optional destination with preposition
-  const destMarker = profile.roleMarkers.destination;
+  // Patient role — the TARGET for swap, whose trailing group carries the content
+  tokens.push({
+    type: 'role',
+    role: swapsOperands ? 'destination' : 'patient',
+    optional: false,
+  });
+
+  // Optional destination with preposition. Not for swap: its second operand is
+  // the with-marked patient group appended after the event, below.
+  const destMarker = swapsOperands ? undefined : profile.roleMarkers.destination;
   if (destMarker) {
     tokens.push({
       type: 'group',
@@ -178,7 +194,7 @@ export function generateVSOVerbFirstEventHandlerPattern(
   // SOV fix — the operand flip vs en is the documented F6 wontfix, swap being
   // runtime-symmetric). Non-swap commands and languages without an override
   // are byte-identical.
-  if (commandSchema.action === 'swap') {
+  if (swapsOperands) {
     const withWord = commandSchema.roles.find(r => r.role === 'patient')?.markerOverride?.[
       profile.code
     ];
@@ -188,7 +204,7 @@ export function generateVSOVerbFirstEventHandlerPattern(
         optional: true,
         tokens: [
           { type: 'literal', value: withWord },
-          { type: 'role', role: 'destination', optional: false },
+          { type: 'role', role: 'patient', optional: false },
         ],
       });
     }
@@ -206,8 +222,10 @@ export function generateVSOVerbFirstEventHandlerPattern(
     extraction: {
       action: { value: commandSchema.action },
       event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      ...eventHandlerDestinationExtraction(commandSchema),
+      [swapsOperands ? 'destination' : 'patient']: {
+        fromRole: swapsOperands ? 'destination' : 'patient',
+      },
+      ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
       ...eventHandlerSourceExtraction(commandSchema),
     },
   };

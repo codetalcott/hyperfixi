@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 47 curated patterns', () => {
+  it('contains exactly the 48 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -119,6 +119,7 @@ describe('R2 execution subset (lock)', () => {
         'chained-access-possessive-dot',
         'hide-with-transition',
         'show-with-transition',
+        'swap-content',
         // Wave 10 (SOV literal-role-extraction arc, PRs #560/#561): the two R2
         // blockers — the fronted append content literal (bogus `event` role in
         // the body-clause marker lookup) and the trailing bare increment amount

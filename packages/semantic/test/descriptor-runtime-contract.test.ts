@@ -235,3 +235,60 @@ describe('open — the element is an ARG, the variant an `as` modifier', () => {
     expect(astOf('open #dlg as non-modal').modifiers?.as).toBeDefined();
   });
 });
+
+describe('swap — every language binds the operands the same way round', () => {
+  // `swap #a with #b` gives #a the content of #b: the FIRST operand is the
+  // target, the second the content. `SwapCommand` reads them positionally
+  // (target = args[len-2], content = args[len-1]), so the two roles decide
+  // WHICH ELEMENT IS OVERWRITTEN — they are not interchangeable.
+  //
+  // The SOV/VSO event-handler generators bound the fronted (accusative) element
+  // to `patient` and the trailing with-marked one to `destination`, i.e. the
+  // reverse of en, in ar/bn/hi/ja/ko/qu/tl/tr. That was R3 family 6's
+  // "runtime-symmetric" WONTFIX — a premise that was vacuously true only while
+  // the descriptor made swap throw for every language, English included.
+  // Once #845 made it execute, those eight swapped BACKWARDS.
+  //
+  // The fix goes to the eight rather than renaming en's roles: `destination`
+  // and `patient` keep meaning what swapSchema's own role descriptions say.
+
+  const STORED: Array<[string, string]> = [
+    ['ja', '#a を クリック で 交換 #b で'],
+    ['ko', '#a 를 클릭 할 때 교환 #b 로'],
+    ['ar', 'استبدل #a عند نقر بـ#b'],
+    ['hi', '#a को क्लिक पर विनिमय #b से'],
+    ['bn', '#a কে ক্লিক এ বদল #b দিয়ে'],
+    ['tr', '#a i tıklama de takas #b ile'],
+    ['qu', "#a ta ñitiy pi t'inkuy #b wan"],
+    ['tl', 'palitan_pwesto #a kapag click nang #b'],
+    ['en', 'on click swap #a with #b'],
+    ['es', 'en clic intercambiar #a con #b'],
+    ['de', 'bei klick tauschen #a mit #b'],
+    ['zh', '当 点击 时 交换 把 #a 用 #b'],
+  ];
+
+  function findSwap(node: unknown): { roles: Map<string, { value?: string }> } | null {
+    const n = node as Record<string, any> | null;
+    if (!n || typeof n !== 'object') return null;
+    if (n.kind === 'command' && n.action === 'swap') return n as never;
+    for (const key of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      if (Array.isArray(n[key])) {
+        for (const child of n[key]) {
+          const found = findSwap(child);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  it.each(STORED)('%s binds destination=#a, patient=#b', (lang, source) => {
+    // The stored `swap-content` translations, verbatim from patterns.db — the
+    // exact strings the multilingual gate scores.
+    const swap = findSwap(parse(source, lang));
+    expect(swap, `${lang}: no swap node in "${source}"`).not.toBeNull();
+
+    expect(swap!.roles.get('destination')?.value, `${lang}: target`).toBe('#a');
+    expect(swap!.roles.get('patient')?.value, `${lang}: content`).toBe('#b');
+  });
+});
