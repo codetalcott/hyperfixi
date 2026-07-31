@@ -2874,6 +2874,23 @@ languages including en (was split everywhere). Follow-up status:
    (`behavior-draggable/resizable/sortable`), and the fix healed those rows too
    (bn avgValueRecall 0.917 → 0.958).
 
+## `toggle … for <duration>` — measured, not started (2026-07-31)
+
+The multilingual half of the `toggle … for` arc. Its brief lives in
+[PARSER_NEXT_STEPS.md](./PARSER_NEXT_STEPS.md) § "Round-2 re-measurement" — read
+that before starting; round 2 corrected four of the original numbers and found a
+blocker the original brief did not have.
+
+The two headlines for this side:
+
+- The schema change is a 2-line role + 1 exemption prune, but shipping it alone
+  **regresses 11 languages' rendering** (the duration currently survives as bare
+  text and would vanish). Ship the marker table and the rendering fix with it.
+- The corpus row is ready and all 24 translations parse faithfully, but bn's
+  `জন্য` is a homonym for its `for` LOOP keyword, so the row fails R4 on its
+  first run (`on click toggle .loading for 2s in`). `allowedInvalid` is
+  currently EMPTY — do not land the row without the bn disambiguation.
+
 ## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged
