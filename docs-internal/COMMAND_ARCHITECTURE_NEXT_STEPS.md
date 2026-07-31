@@ -649,18 +649,20 @@ not the core abstractions.
     already correct for that shape: give it three roles and the three-arg
     branch (`target = args[len-2]`, `content = args[len-1]`) lands right with
     no further descriptor change.
-  - **The symmetric-swap role flip is now behaviorally consequential.** The
-    stored translations for `swap-content` bind the roles REVERSED in
-    ar/ja/ko/tr (and bn/hi/qu/tl) — e.g. ja `#a を クリック で 交換 #b で`
-    parses `patient=#a, destination=#b` where en parses `destination=#a,
-    patient=#b`. This is R3's long-standing `swap-content` residual (8
-    languages, `avgValueRecall` 0.9968) and it did not move. But its *meaning*
-    changed: while both roles landed in dead slots the flip was invisible, and
-    now it decides which element is the target and which is the content, so
-    those languages swap the wrong way round. Still strictly better than the
-    previous behavior (which threw for every language including English), and
-    still tracked in `MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug
-    families" — but it is no longer cosmetic.
+  - ~~**The symmetric-swap role flip is now behaviorally consequential.**~~
+    **FIXED.** The stored `swap-content` translations bound the roles REVERSED
+    in ar/bn/hi/ja/ko/qu/tl/tr — ja `#a を クリック で 交換 #b で` parsed
+    `patient=#a, destination=#b` where en parses `destination=#a, patient=#b`.
+    While both roles landed in dead slots the flip was invisible; once the
+    descriptor fix made swap execute, it decided which element was the target,
+    so those eight swapped the wrong way round.
+    Fixed in the two SOV/VSO event-handler generators — the fronted
+    (accusative) slot binds `destination` and the trailing with-marked group
+    binds `patient` for `swap` only — rather than by renaming en's roles, which
+    would have made `destination` name the content. `swap-content` also joined
+    R2's curated execution subset, which is the gate that stayed at 1.0 through
+    the whole episode because the pattern was not in it. Detail:
+    `MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug families" item 6.
 
 - **`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
   reader uses it.** `:54-60` defines a loose shape with an

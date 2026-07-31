@@ -332,6 +332,20 @@ export function eventHandlerDestinationGroup(
   return eventHandlerRoleGroup(schema, marker, 'destination');
 }
 
+/**
+ * The same optional trailing group, binding `patient`.
+ *
+ * Only `swap` needs it: it is the two-object command, and its trailing element
+ * is the CONTENT (`swap #a with #b` → `#a` takes `#b`'s content). See the
+ * swap-gated branches in the SOV/VSO event-handler generators.
+ */
+export function eventHandlerPatientGroup(
+  schema: CommandSchema,
+  marker: RoleMarker | undefined
+): PatternToken[] {
+  return eventHandlerRoleGroup(schema, marker, 'patient');
+}
+
 function eventHandlerRoleGroup(
   schema: CommandSchema,
   marker: RoleMarker | undefined,
