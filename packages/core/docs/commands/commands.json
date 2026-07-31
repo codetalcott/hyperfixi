@@ -830,10 +830,12 @@
       "version": "1.0.0",
       "description": "Move classes, attributes, and properties from one element to another",
       "syntax": [
+        "take <class> [from <source>] [for <recipient>]",
         "take <property> from <source>",
         "take <property> from <source> and put it on <target>"
       ],
       "examples": [
+        "take .active from .tab for me",
         "take class from <#source/>",
         "take @data-value from <.source/> and put it on <#target/>"
       ],
