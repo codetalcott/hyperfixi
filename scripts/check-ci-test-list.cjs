@@ -77,12 +77,7 @@ const TEST_JOBS = ['unit-tests', 'unit-tests-packages'];
  * Format: dirName → reason string.
  */
 const INTENTIONALLY_UNGATED = new Map([
-  // The ten packages #857 found missing (~91 test files). Seeded so this guard
-  // could land green and hold the line while they are vetted and enumerated
-  // one at a time — each needs its own check that it can actually run in the
-  // job's environment. Burned down in the same PR; an entry that survives is
-  // rewritten with the specific reason it cannot run.
-  ['testing-framework', 'pending vetting — #857 burn-down, this PR'],
+  // e.g. ['some-package', 'needs a live GPU; covered by the nightly workflow'],
 ]);
 
 /**
