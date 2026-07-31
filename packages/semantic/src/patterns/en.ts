@@ -20,6 +20,12 @@ import { fetchPatternsEn } from './languages/en/fetch';
 // character(s)|match(es) … of <root>`). Same leaf-not-barrel rationale as
 // fetch above: the patterns/languages/en/index.ts barrel has no runtime reader.
 import { pickPatternsEn } from './languages/en/pick';
+// Swap patterns (element swap, strategy swap with/without `of`, bare strategy).
+// Same leaf-not-barrel rationale as fetch and pick above. This module used to
+// redeclare the element and bare-strategy patterns "kept in sync so both
+// builders agree" — a hand-sync that a third pattern would have silently
+// broken, since this list is the one the registered `en` module builds.
+import { swapPatternsEn } from './languages/en/swap';
 
 // Import from consolidated pattern files (Phase 3.2)
 import { getTogglePatternsForLanguage } from './toggle';
@@ -31,57 +37,6 @@ import { getWaitPatternsForLanguage } from './wait';
 // =============================================================================
 // Hand-crafted English-only patterns
 // =============================================================================
-
-/**
- * English: "swap <strategy> <target>" without prepositions.
- */
-const swapSimpleEnglish: LanguagePattern = {
-  id: 'swap-en-handcrafted',
-  language: 'en',
-  command: 'swap',
-  priority: 110,
-  template: {
-    format: 'swap {method} {destination}',
-    tokens: [
-      { type: 'literal', value: 'swap' },
-      { type: 'role', role: 'method' },
-      { type: 'role', role: 'destination' },
-    ],
-  },
-  extraction: {
-    method: { position: 1 },
-    destination: { position: 2 },
-  },
-};
-
-/**
- * English element-swap: "swap {destination} with {patient}" (`swap #a with #b`).
- *
- * The method-less, `with`-marked shape the i18n transformer emits for an element
- * swap. Without this, `swap-en-handcrafted` (`swap {method} {destination}`) greedily
- * binds `#a`→method and the bare word `with`→destination, then DROPS `#b` — a broken
- * en REFERENCE parse the translations (de/es/ja/ko all parse `{destination, patient}`
- * correctly) are penalized against in R1. This captures `destination`+`patient` to
- * match the schema (and the translations). Priority 120 > the method form's 110, and
- * the required `with` literal means it only fires on the element-swap shape — the
- * `swap innerHTML #target` / `swap delete #item` forms (no `with`) still take 110.
- */
-const swapElementEnglish: LanguagePattern = {
-  id: 'swap-en-element',
-  language: 'en',
-  command: 'swap',
-  priority: 120,
-  template: {
-    format: 'swap {destination} with {patient}',
-    tokens: [
-      { type: 'literal', value: 'swap' },
-      { type: 'role', role: 'destination' },
-      { type: 'literal', value: 'with' },
-      { type: 'role', role: 'patient' },
-    ],
-  },
-  extraction: {},
-};
 
 /**
  * English: "repeat until event pointerup from document"
@@ -364,8 +319,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   patterns.push(
     ...fetchPatternsEn,
     ...pickPatternsEn,
-    swapElementEnglish,
-    swapSimpleEnglish,
+    ...swapPatternsEn,
     repeatUntilEventFromEnglish,
     repeatUntilEventEnglish,
     repeatTimesEnglish,
