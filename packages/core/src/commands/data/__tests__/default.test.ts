@@ -122,7 +122,7 @@ describe('DefaultCommand (Standalone V2)', () => {
         context
       );
 
-      expect(input).toEqual({ target: 'myVar', value: 'fallback' });
+      expect(input).toEqual({ type: 'variable', name: 'myVar', value: 'fallback' });
     });
 
     it('should parse target and value from second arg', async () => {
@@ -135,7 +135,77 @@ describe('DefaultCommand (Standalone V2)', () => {
         context
       );
 
-      expect(input).toEqual({ target: 'myVar', value: 42 });
+      expect(input).toEqual({ type: 'variable', name: 'myVar', value: 42 });
+    });
+
+    it('should read the value past the positional "to" keyword marker', async () => {
+      // The traditional parser emits `[target, identifier('to'), value]` — the
+      // same triple `SetCommand.parseInput` reads. Taking `args[1]` for the
+      // value here installed the KEYWORD's evaluation (undefined) instead.
+      const input = await command.parseInput(
+        {
+          args: [
+            { type: 'identifier', name: 'myVar' } as any,
+            { type: 'identifier', name: 'to' } as any,
+            { type: 'literal', value: 'real' } as any,
+          ],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input).toEqual({ type: 'variable', name: 'myVar', value: 'real' });
+    });
+
+    it('keeps a bare identifier target as its NAME, never its current value', async () => {
+      // The defect this rewrite fixes: `evaluate(identifier)` yields the
+      // variable's value, which for an unset variable is `undefined` — exactly
+      // the case `default` exists to handle.
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'identifier', name: 'neverSet' } as any],
+          modifiers: { to: { type: 'literal', value: 7 } as any },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input).toEqual({ type: 'variable', name: 'neverSet', value: 7 });
+    });
+
+    it('routes an attributeAccess target to the attribute slot', async () => {
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'attributeAccess', attributeName: 'data-theme' } as any],
+          modifiers: { to: { type: 'literal', value: 'light' } as any },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input).toEqual({
+        type: 'attribute',
+        elements: [context.me as HTMLElement],
+        name: 'data-theme',
+        value: 'light',
+      });
+    });
+
+    it('routes a `:name` contextReference to an element-scoped variable', async () => {
+      // The semantic path's shape for `default :x to 0`. The shared ladder's
+      // bare-reference rung does not claim contextReference nodes (`me`/`it`
+      // are contextReferences too), so DefaultCommand gates on the sigil.
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'contextReference', contextType: ':x', name: ':x' } as any],
+          modifiers: { to: { type: 'literal', value: 0 } as any },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input).toEqual({ type: 'variable', name: 'x', value: 0, scope: 'element' });
     });
   });
 
@@ -143,7 +213,10 @@ describe('DefaultCommand (Standalone V2)', () => {
 
   describe('execute - Variable Defaults', () => {
     it('should set variable when it is undefined', async () => {
-      const result = await command.execute({ target: 'counter', value: 10 }, context);
+      const result = await command.execute(
+        { type: 'variable', name: 'counter', value: 10 },
+        context
+      );
 
       expect(result.wasSet).toBe(true);
       expect(result.value).toBe(10);
@@ -153,14 +226,20 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should skip when variable already has a value', async () => {
       context.locals.set('counter', 5);
 
-      const result = await command.execute({ target: 'counter', value: 10 }, context);
+      const result = await command.execute(
+        { type: 'variable', name: 'counter', value: 10 },
+        context
+      );
 
       expect(result.wasSet).toBe(false);
       expect(result.existingValue).toBe(5);
     });
 
     it('should return wasSet:true with targetType variable when setting', async () => {
-      const result = await command.execute({ target: 'newVar', value: 'hello' }, context);
+      const result = await command.execute(
+        { type: 'variable', name: 'newVar', value: 'hello' },
+        context
+      );
 
       expect(result.wasSet).toBe(true);
       expect(result.targetType).toBe('variable');
@@ -169,7 +248,10 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should return wasSet:false with targetType variable when skipping', async () => {
       context.locals.set('existingVar', 'already set');
 
-      const result = await command.execute({ target: 'existingVar', value: 'new value' }, context);
+      const result = await command.execute(
+        { type: 'variable', name: 'existingVar', value: 'new value' },
+        context
+      );
 
       expect(result.wasSet).toBe(false);
       expect(result.targetType).toBe('variable');
@@ -178,7 +260,7 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should set context.it to the value when variable is set', async () => {
       expect(context.it).toBeUndefined();
 
-      await command.execute({ target: 'myVar', value: 'set-value' }, context);
+      await command.execute({ type: 'variable', name: 'myVar', value: 'set-value' }, context);
 
       expect(context.it).toBe('set-value');
     });
@@ -188,33 +270,48 @@ describe('DefaultCommand (Standalone V2)', () => {
     describe('nullish-check semantics (upstream 0.9.90)', () => {
       it('should NOT overwrite a variable set to 0', async () => {
         context.locals.set('count', 0);
-        const result = await command.execute({ target: 'count', value: 42 }, context);
+        const result = await command.execute(
+          { type: 'variable', name: 'count', value: 42 },
+          context
+        );
         expect(result.wasSet).toBe(false);
         expect(result.existingValue).toBe(0);
       });
 
       it('should NOT overwrite a variable set to false', async () => {
         context.locals.set('flag', false);
-        const result = await command.execute({ target: 'flag', value: true }, context);
+        const result = await command.execute(
+          { type: 'variable', name: 'flag', value: true },
+          context
+        );
         expect(result.wasSet).toBe(false);
         expect(result.existingValue).toBe(false);
       });
 
       it('should NOT overwrite a variable set to an empty string', async () => {
         context.locals.set('label', '');
-        const result = await command.execute({ target: 'label', value: 'fallback' }, context);
+        const result = await command.execute(
+          { type: 'variable', name: 'label', value: 'fallback' },
+          context
+        );
         expect(result.wasSet).toBe(false);
         expect(result.existingValue).toBe('');
       });
 
       it('should overwrite a variable set to null', async () => {
         context.locals.set('maybe', null);
-        const result = await command.execute({ target: 'maybe', value: 'value' }, context);
+        const result = await command.execute(
+          { type: 'variable', name: 'maybe', value: 'value' },
+          context
+        );
         expect(result.wasSet).toBe(true);
       });
 
       it('should overwrite when variable is undefined', async () => {
-        const result = await command.execute({ target: 'brand-new', value: 'value' }, context);
+        const result = await command.execute(
+          { type: 'variable', name: 'brand-new', value: 'value' },
+          context
+        );
         expect(result.wasSet).toBe(true);
       });
     });
@@ -224,7 +321,15 @@ describe('DefaultCommand (Standalone V2)', () => {
 
   describe('execute - Attribute Defaults', () => {
     it('should set attribute when it does not exist', async () => {
-      const result = await command.execute({ target: '@data-theme', value: 'light' }, context);
+      const result = await command.execute(
+        {
+          type: 'attribute',
+          elements: [context.me as HTMLElement],
+          name: 'data-theme',
+          value: 'light',
+        },
+        context
+      );
 
       expect(result.wasSet).toBe(true);
       expect((context.me as HTMLElement).getAttribute('data-theme')).toBe('light');
@@ -233,14 +338,30 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should skip when attribute already exists', async () => {
       (context.me as HTMLElement).setAttribute('data-theme', 'dark');
 
-      const result = await command.execute({ target: '@data-theme', value: 'light' }, context);
+      const result = await command.execute(
+        {
+          type: 'attribute',
+          elements: [context.me as HTMLElement],
+          name: 'data-theme',
+          value: 'light',
+        },
+        context
+      );
 
       expect(result.wasSet).toBe(false);
       expect(result.existingValue).toBe('dark');
     });
 
     it('should return targetType "attribute"', async () => {
-      const result = await command.execute({ target: '@data-mode', value: 'edit' }, context);
+      const result = await command.execute(
+        {
+          type: 'attribute',
+          elements: [context.me as HTMLElement],
+          name: 'data-mode',
+          value: 'edit',
+        },
+        context
+      );
 
       expect(result.targetType).toBe('attribute');
       expect(result.target).toBe('@data-mode');
@@ -250,7 +371,12 @@ describe('DefaultCommand (Standalone V2)', () => {
       const noMeContext = createMockContext({ me: null as any });
 
       await expect(
-        command.execute({ target: '@data-theme', value: 'light' }, noMeContext)
+        // `parseInput` produces an empty element list when there is no `me`
+        // for the attribute to land on.
+        command.execute(
+          { type: 'attribute', elements: [], name: 'data-theme', value: 'light' },
+          noMeContext
+        )
       ).rejects.toThrow('No element context available for attribute default');
     });
   });
@@ -263,7 +389,12 @@ describe('DefaultCommand (Standalone V2)', () => {
       (context.me as HTMLElement).innerHTML = '';
 
       const result = await command.execute(
-        { target: 'my innerHTML', value: 'No content' },
+        {
+          type: 'property',
+          element: context.me as HTMLElement,
+          property: 'innerHTML',
+          value: 'No content',
+        },
         context
       );
 
@@ -275,7 +406,12 @@ describe('DefaultCommand (Standalone V2)', () => {
       (context.me as HTMLElement).innerHTML = '<p>Existing</p>';
 
       const result = await command.execute(
-        { target: 'my innerHTML', value: 'No content' },
+        {
+          type: 'property',
+          element: context.me as HTMLElement,
+          property: 'innerHTML',
+          value: 'No content',
+        },
         context
       );
 
@@ -286,10 +422,18 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should return targetType "property"', async () => {
       (context.me as HTMLElement).innerHTML = '';
 
-      const result = await command.execute({ target: 'my innerHTML', value: 'fallback' }, context);
+      const result = await command.execute(
+        {
+          type: 'property',
+          element: context.me as HTMLElement,
+          property: 'innerHTML',
+          value: 'fallback',
+        },
+        context
+      );
 
       expect(result.targetType).toBe('property');
-      expect(result.target).toBe('my innerHTML');
+      expect(result.target).toBe('innerHTML');
     });
   });
 
@@ -301,7 +445,10 @@ describe('DefaultCommand (Standalone V2)', () => {
       input.type = 'text';
       input.value = '';
 
-      const result = await command.execute({ target: input, value: 'default text' }, context);
+      const result = await command.execute(
+        { type: 'element', element: input, value: 'default text' },
+        context
+      );
 
       expect(result.wasSet).toBe(true);
       expect(input.value).toBe('default text');
@@ -312,7 +459,10 @@ describe('DefaultCommand (Standalone V2)', () => {
       input.type = 'text';
       input.value = 'existing text';
 
-      const result = await command.execute({ target: input, value: 'default text' }, context);
+      const result = await command.execute(
+        { type: 'element', element: input, value: 'default text' },
+        context
+      );
 
       expect(result.wasSet).toBe(false);
       expect(result.existingValue).toBe('existing text');
@@ -323,7 +473,10 @@ describe('DefaultCommand (Standalone V2)', () => {
       input.type = 'text';
       input.value = '';
 
-      const result = await command.execute({ target: input, value: 'fallback' }, context);
+      const result = await command.execute(
+        { type: 'element', element: input, value: 'fallback' },
+        context
+      );
 
       expect(result.targetType).toBe('element');
       expect(result.target).toBe('element');
@@ -343,7 +496,7 @@ describe('DefaultCommand (Standalone V2)', () => {
         context
       );
 
-      expect(input).toEqual({ target: 'count', value: 0 });
+      expect(input).toEqual({ type: 'variable', name: 'count', value: 0 });
 
       const result = await command.execute(input, context);
 
@@ -356,14 +509,21 @@ describe('DefaultCommand (Standalone V2)', () => {
     it('should work end-to-end: parse and execute attribute default', async () => {
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: '@data-theme' } as any],
+          // The node shape the real parser emits for `@data-theme` — both the
+          // traditional and the semantic path produce `attributeAccess`.
+          args: [{ type: 'attributeAccess', attributeName: 'data-theme' } as any],
           modifiers: { to: { type: 'literal', value: 'light' } as any },
         },
         evaluator,
         context
       );
 
-      expect(input).toEqual({ target: '@data-theme', value: 'light' });
+      expect(input).toEqual({
+        type: 'attribute',
+        elements: [context.me as HTMLElement],
+        name: 'data-theme',
+        value: 'light',
+      });
 
       const result = await command.execute(input, context);
 

@@ -284,17 +284,19 @@ describe('the defects the duplicated switch caused', () => {
     expect(result?.selectedItem).toHaveLength(2);
   });
 
-  it('`default` now reaches the same runtime as the traditional parser', async () => {
-    // The AST-shape half of default's breakage is what this phase fixes: the
-    // switch emitted `args:[value] mods:{on:target}` where DefaultCommand reads
-    // `args[0]`-is-target / `modifiers.to`-is-value. Both paths now agree —
-    // and both hit DefaultCommand's own separate defect (it EVALUATES the
-    // target name), which is a runtime fix, not a parser one.
-    const el = host('');
-    const semantic = await hyperscript.eval('default :x to 0', el).catch(e => `${e.message}`);
-    const traditional = await hyperscript
-      .eval('default :x to 0', el, { traditional: true } as never)
-      .catch(e => `${e.message}`);
-    expect(semantic).toBe(traditional);
+  it('`default` builds the same node on both paths', async () => {
+    // The switch emitted `args:[value] mods:{on:target}` where DefaultCommand
+    // reads `args[0]`-is-target / `modifiers.to`-is-value, so the two paths
+    // disagreed about which slot held what. They now agree on the OUTCOME.
+    //
+    // A fresh element per run matters: `:x` is element-scoped, so reusing one
+    // would have the second run correctly decline to overwrite the first's
+    // write — an artifact of the fixture, not a divergence.
+    const semantic = await hyperscript.eval('default :x to 0', host(''));
+    const traditional = await hyperscript.eval('default :x to 0', host(''), {
+      traditional: true,
+    } as never);
+    expect(semantic).toEqual(traditional);
+    expect(semantic).toMatchObject({ target: 'x', value: 0, wasSet: true });
   });
 });
