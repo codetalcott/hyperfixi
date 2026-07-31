@@ -143,10 +143,7 @@ const NOT_EXERCISED: Record<string, string> = {
     'no single-command snippet parses: `async do … end` fails with "Async command execution failed"',
   default:
     '`default @data-theme to "light"` throws "Invalid target type: object" — suspected parse defect, needs triage',
-  process:
-    '`process partials in <var>` throws "expects partials keyword" — suspected parse defect, needs triage',
   'pseudo-command': 'no top-level form parses: `getAttribute("id") the #probe` fails to compile',
-  take: '`take .item from <.item/> for #probe` fails to compile ("Expected variable name")',
 };
 
 const AUDIT: Record<string, AuditRow> = {
@@ -252,6 +249,21 @@ const AUDIT: Record<string, AuditRow> = {
     sequence: 'null',
     handler: 'Event',
   },
+
+  // ---- two rows promoted out of NOT_EXERCISED once the parse defects that had
+  // kept them unrunnable were fixed. Both skips described a PARSE failure, and
+  // both parse now: `take` since #859, `process` since the COMPOUND_COMMANDS
+  // dispatch fix. A skip whose stated reason has been repaired is a stale skip.
+  //
+  // process self-assigns its ProcessPartialsResult, so both paths agree.
+  process: {
+    snippet: `set h to "<hx-partial target='#probe'>x</hx-partial>" then process partials in h`,
+    sequence: '{count,targets,errors,validationWarnings,validationDetails}',
+    handler: '{count,targets,errors,validationWarnings,validationDetails}',
+  },
+  // take sets no result (upstream sets none either), so it lands in the
+  // initial-value family with add/remove/toggle — null vs the DOM event.
+  take: { snippet: 'take .item from <.item/> for #probe', sequence: 'null', handler: 'Event' },
 };
 
 // ===========================================================================
@@ -280,8 +292,11 @@ describe('audit coverage — derived from the registry, not from this file', () 
   it('exercises most of the command set (guards against skip-creep)', () => {
     // A migration that finds a row inconvenient must not be able to quietly
     // demote it to a skip; the skip budget makes that visible in the diff.
-    expect(Object.keys(NOT_EXERCISED)).toHaveLength(14);
-    expect(Object.keys(AUDIT).length).toBeGreaterThanOrEqual(45);
+    // 14 → 12: `take` and `process` were both skipped for a PARSE failure, and
+    // both parse now (#859 and the COMPOUND_COMMANDS dispatch fix). The budget
+    // only ever ratchets down.
+    expect(Object.keys(NOT_EXERCISED)).toHaveLength(12);
+    expect(Object.keys(AUDIT).length).toBeGreaterThanOrEqual(47);
   });
 });
 
@@ -309,15 +324,17 @@ describe('the `it` contract, per command, per execution path', () => {
     });
   }
 
-  it('the two paths disagree for 28 of the 45 exercised commands', () => {
+  it('the two paths disagree for 29 of the 47 exercised commands', () => {
     // The headline number, asserted so a change cannot move it silently.
     //
     // 29 when the audit landed → 30 after the unless fix → 26 after step 3
-    // deleted the propagation loop → **28** after the close-out removed
+    // deleted the propagation loop → 28 after the close-out removed
     // settle/transition's self-assigns (upstream parity), moving them into the
-    // initial-value family below.
+    // initial-value family below → **29** when `take` became runnable and
+    // joined that same family (`process`, promoted alongside it, self-assigns
+    // and so agrees on both paths).
     //
-    // The 28 are ALL the initial-value divergence, which is this arc's
+    // The 29 are ALL the initial-value divergence, which is this arc's
     // declared non-goal: nothing sets `it` for these commands, so it keeps
     // what the context was built with — `null` for a sequence, the DOM event
     // inside a handler (runtime-base.ts). Closing that gap is a
@@ -325,7 +342,7 @@ describe('the `it` contract, per command, per execution path', () => {
     // is a wrapper leak; a NEW disagreement of any other kind means a second
     // propagation mechanism has grown back.
     const disagreeing = Object.entries(AUDIT).filter(([, r]) => r.sequence !== r.handler);
-    expect(disagreeing).toHaveLength(28);
+    expect(disagreeing).toHaveLength(29);
   });
 
   it('has no known-wrong rows left', () => {

@@ -230,6 +230,89 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       expect(input.useViewTransition).toBe(true);
     });
+
+    // The mock evaluator above resolves an identifier node to its own NAME,
+    // which is what let the old evaluate-then-string-match implementation pass
+    // these tests while failing against the real evaluator — there, a
+    // `partials` identifier is a variable lookup that comes back undefined.
+    // These rows pin the keyword detection to the RAW nodes.
+    const blindEvaluator = {
+      evaluate: async (node: ASTNode) => {
+        const n = node as unknown as { type?: string; value?: unknown };
+        return n.type === 'literal' ? n.value : undefined;
+      },
+    } as unknown as ExpressionEvaluator;
+
+    it('detects keywords on the raw nodes, not on evaluated values', async () => {
+      const context = createMockContext();
+      const htmlContent = '<hx-partial target="#box"><p>Updated</p></hx-partial>';
+
+      const input = await command.parseInput(
+        {
+          args: [kwArg('partials'), kwArg('in'), litArg(htmlContent)],
+          modifiers: {},
+        },
+        blindEvaluator,
+        context
+      );
+
+      expect(input.html).toBe(htmlContent);
+    });
+
+    it('detects the view-transition tail on the raw nodes too', async () => {
+      const context = createMockContext();
+
+      const input = await command.parseInput(
+        {
+          args: [
+            kwArg('partials'),
+            kwArg('in'),
+            litArg('<hx-partial target="#t">x</hx-partial>'),
+            kwArg('using'),
+            kwArg('view'),
+            kwArg('transition'),
+          ],
+          modifiers: {},
+        },
+        blindEvaluator,
+        context
+      );
+
+      expect(input.useViewTransition).toBe(true);
+    });
+
+    it('accepts the patient-only shape the semantic path produces', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+      const htmlContent = '<hx-partial target="#box"><p>Updated</p></hx-partial>';
+
+      // `processSchema` has a single patient role, so buildAST strips the
+      // keywords and hands over the bare content.
+      const input = await command.parseInput(
+        { args: [litArg(htmlContent)], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      expect(input.html).toBe(htmlContent);
+      expect(input.useViewTransition).toBe(false);
+    });
+
+    it('honours a viewTransition modifier (the shape a semantic role would use)', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+
+      const input = await command.parseInput(
+        {
+          args: [litArg('<hx-partial target="#t">x</hx-partial>')],
+          modifiers: { viewTransition: litArg(true) as never },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.useViewTransition).toBe(true);
+    });
   });
 
   // --------------------------------------------------------------------------

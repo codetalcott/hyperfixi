@@ -2932,6 +2932,38 @@ carries a warning: its `default: me` was REMOVED 2026-07-31 (bare
 `take .active` must mean "take from all current holders", not "take from me")
 — do not reinstate it when adding the recipient.
 
+## `process` has no view-transition role — the tail is dropped (opened 2026-07-31)
+
+Found while fixing the core-side `process` mis-parse (PARSER_NEXT_STEPS.md §
+the process entry). `processSchema` is **patient-only** — it models
+`partials in <content>` and nothing else — so the semantic parser matches
+`process partials in it using view transition` on the content alone and leaves
+`using view transition` unconsumed. Measured, not inferred: removing `process`
+from `skipSemanticParsing` makes the auto path fail to compile that form again
+(the stranded `transition` COMMAND token is re-parsed as a fresh `transition`
+command), and the tail keywords are absent from the args.
+
+Scope, and why it is smaller than the `take` filing above:
+
+- **English is safe**: `process` now sits on `skipSemanticParsing` alongside
+  take/toggle/add/remove, so the traditional parser owns the tail.
+- **No corpus row exercises `process`**, so unlike `take-class-from-siblings`
+  this is not live on the multilingual gate — no signal is being fooled,
+  because no pattern reaches the code. It is a latent gap in the schema, not a
+  scored regression.
+- The exposure is the same as take's: any consumer of the semantic parse alone
+  (multilingual bundles, the bridge, `translate()`) silently drops the
+  view-transition request in all 24 languages, turning an animated swap into a
+  plain one.
+
+The work, when taken: a boolean/manner role on `processSchema` for the tail
+(`swap` has the identical `using view transition` surface and the identical
+gap, so do both together), per-language markers, i18n rendering, and — if a
+corpus row is added at the same time — a baseline regen. The runtime already
+accepts a `viewTransition` MODIFIER as well as the flat-args form, so the
+semantic side can emit either shape without a further runtime change
+(`commands/dom/process-partials.ts`, `parseInput`).
+
 ## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged

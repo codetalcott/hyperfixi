@@ -86,6 +86,13 @@ export function parseCompoundCommand(
     case 'swap':
     case 'morph':
       return domCommands.parseSwapCommand(ctx, identifierNode);
+    case 'process':
+      // Falls back for non-`partials` input so the runtime keeps reporting its
+      // own keyword error rather than a parse error.
+      return (
+        domCommands.parseProcessCommand(ctx, identifierNode) ??
+        parseRegularCommand(ctx, identifierNode)
+      );
     default:
       // Fallback to regular parsing
       return parseRegularCommand(ctx, identifierNode);

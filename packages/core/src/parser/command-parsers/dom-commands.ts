@@ -297,6 +297,102 @@ export function parseTakeCommand(ctx: ParserContext, identifierNode: IdentifierN
 }
 
 /**
+ * Consume the optional `using view transition` tail shared by `swap` and
+ * `process`.
+ *
+ * Both commands declare the tail in their own `commandMeta` syntax and both
+ * runtimes already read it — `SwapCommand.parseInput` and
+ * `ProcessPartialsCommand.parseInput` each scan the flat args for
+ * `using` … `view` … `transition` — but neither parser consumed it. Since
+ * `transition` is a COMMAND token, the unconsumed tail was re-parsed as a
+ * fresh `transition` command and both forms died with
+ * `Transition command requires a CSS property`. An unconsumed tail is never
+ * inert: this is the same defect class as `toggle … for 2s` (#846) and
+ * `take … for me` (#859).
+ *
+ * Flat identifier args, not modifiers, because that is the shape both
+ * runtimes already read (and the shape the existing process unit fixtures
+ * are written in).
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param args - Argument array to append the three tail keywords to
+ * @returns True if a tail was present and consumed
+ */
+function consumeViewTransitionTail(ctx: ParserContext, args: ASTNode[]): boolean {
+  if (!ctx.check('using')) {
+    return false;
+  }
+  ctx.advance(); // consume 'using'
+  if (!ctx.match('view')) {
+    throw new Error("expected 'view transition' after 'using'");
+  }
+  if (!ctx.match('transition')) {
+    throw new Error("expected 'transition' after 'using view'");
+  }
+  args.push(ctx.createIdentifier('using'));
+  args.push(ctx.createIdentifier('view'));
+  args.push(ctx.createIdentifier('transition'));
+  return true;
+}
+
+/**
+ * Parse process command
+ *
+ * Syntax: process partials in <content> [using view transition]
+ *
+ * `process` was in COMPOUND_COMMANDS with no case in `parseCompoundCommand`,
+ * so it fell to `parseRegularCommand` — exactly the state `take` was in before
+ * #859. Two things broke as a result, both on the traditional path:
+ *
+ * 1. The generic arg loop stops at `in` (an operator token), so
+ *    `process partials in it` reached the runtime as the single arg
+ *    `[partials]` with the content dropped, and threw
+ *    `process command expects "partials" keyword` — an error message naming
+ *    the one keyword that WAS supplied.
+ * 2. The loop also stops at the `transition` COMMAND token, so
+ *    `using view transition` was re-parsed as a fresh `transition` command:
+ *    `Transition command requires a CSS property`.
+ *
+ * `partials` and `in` stay in the flat args (the shape
+ * `ProcessPartialsCommand.parseInput` reads, and the shape its existing unit
+ * fixtures build) rather than being dropped as pure syntax, so the runtime
+ * can still tell the traditional shape from the semantic one — the semantic
+ * schema is patient-only and hands over a bare `[content]`.
+ *
+ * Returns null when the next token is not `partials`, leaving the caller to
+ * fall back to `parseRegularCommand`; that keeps malformed input reporting the
+ * runtime's own keyword error instead of a parse error.
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param identifierNode - The 'process' identifier node
+ * @returns CommandNode for the partials form, or null to fall back
+ */
+export function parseProcessCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
+  if (!ctx.check('partials')) {
+    return null;
+  }
+
+  const args: ASTNode[] = [];
+  consumeKeywordToArgs(ctx, 'partials', args);
+
+  // `in <content>` — the keyword must be consumed here; the generic loop
+  // treats it as a boundary and silently dropped everything after it.
+  if (consumeKeywordToArgs(ctx, KEYWORDS.IN, args)) {
+    const contentArg = parseOneArgument(ctx, ['using']);
+    if (contentArg) {
+      args.push(contentArg);
+    }
+  }
+
+  consumeViewTransitionTail(ctx, args);
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
  * Parse add command
  *
  * Syntax:
@@ -519,6 +615,10 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
       args.push(contentExpr);
     }
   }
+
+  // Optional `using view transition` — declared by SwapCommand's own
+  // commandMeta and already read by its runtime, but never consumed here.
+  consumeViewTransitionTail(ctx, args);
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)

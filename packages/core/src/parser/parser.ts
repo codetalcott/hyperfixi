@@ -3463,6 +3463,13 @@ export class Parser {
     //     multilingual path: fetchSchema's `style`). Before this entry existed the
     //     URL matched at confidence 1.0 and skipToCommandBoundary() ate the rest,
     //     dropping method/body/headers off the wire in silence.
+    //   - process: `processSchema` is patient-only — it models
+    //     `partials in <content>` and has no role for the
+    //     `using view transition` tail, so the semantic match consumed the
+    //     content at full confidence and left the tail to be re-parsed as a
+    //     fresh `transition` command (`Transition command requires a CSS
+    //     property`). Same shape as take's entry above; the multilingual half
+    //     is filed in docs-internal/MULTILINGUAL_NEXT_STEPS.md.
     // `call` and `get` previously lived on this list; they're now handled by
     // SemanticIntegrationAdapter.parseExpressionString() (method calls etc.).
     // Migrating any of the remaining commands is a multi-PR initiative
@@ -3496,6 +3503,7 @@ export class Parser {
       'js',
       'tell',
       'fetch',
+      'process',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {
