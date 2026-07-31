@@ -46,6 +46,31 @@ export interface RoleSpec {
    */
   readonly markerOverride?: Record<string, string>;
   /**
+   * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
+   * own (`'time'` = a unit-suffixed time literal — `2s`, `500ms`, `1.5s`), so
+   * the slot needs no marker to be safe. Enforced in the CONFIDENCE model
+   * (`scoreRoleCoverage`): a shape-anchored role counts toward a pattern's
+   * score only when captured, so an uncaptured optional slot carries no
+   * evidence against the pattern.
+   *
+   * This is the lever that makes a MARKER-LESS optional slot safe. Without it,
+   * toggle's trailing `[{duration}]` weighed into every toggle pattern's
+   * denominator, dropping `toggle-*-generated` from 1.0 to 0.69 on inputs with
+   * no duration at all — so the same-priority hand pattern (0.82, wrong
+   * destination markers) won and es/pl/vi silently lost the second toggle's
+   * positional destination on `toggle-aria-expanded` (`next .panel` became
+   * `me`). Only the R1 role-set flip ratchet sees that class.
+   *
+   * A matcher-side token guard (refuse non-time tokens at capture) was built,
+   * probed and REMOVED: no constructible input fires it — `expectedTypes`
+   * plus the positional assembler's own next-token gating already refuse every
+   * non-time capture into the slot, and an unfireable branch is unverifiable.
+   * If a future shape (an `omitRoleVariants` clone, a required slot) makes
+   * spurious capture possible again, reinstate it THERE with a failing test
+   * first.
+   */
+  readonly valueShape?: 'time';
+  /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
    * parse. Used for roles whose value is sometimes an unmarked expression — e.g.
@@ -424,6 +449,31 @@ export const toggleSchema: CommandSchema = {
       // destination group (behavior-draggable). Per-command merge via the
       // #588 markerVariants machinery.
       markerVariants: { ko: ['에서'] },
+    },
+    {
+      role: 'duration',
+      description: 'How long the class stays on before reverting (`toggle .a for 2s`)',
+      required: false,
+      expectedTypes: ['literal'],
+      svoPosition: 3,
+      sovPosition: 3,
+      // `valueShape: 'time'` is what makes the marker-less slot safe in the 21
+      // languages whose stored corpus rows carry the duration as an UNMARKED
+      // trailing token (the i18n transformer renders `alternar .loading 2s`).
+      // Without it this exact role, `required: false`, silently cost es/pl/vi
+      // the second toggle's positional destination on `toggle-aria-expanded` —
+      // the regression that motivated the R1 role-set flip ratchet.
+      valueShape: 'time',
+      // en marks with `for`; ja/ko carry real particles because their SOV
+      // generators otherwise emit a marker-less optional slot MID-pattern
+      // (the R3 family-F1 hazard), which stopped plain
+      // `#button の .active を 切り替え` parsing — 16 test failures, measured
+      // twice. The other 21 languages deliberately have NO marker: their
+      // corpus ground truth is the unmarked trailing form, and the shape
+      // constraint is the anchor. Do NOT reason from transitionSchema here —
+      // its en-only duration marker survives because a required `to {goal}`
+      // phrase sits between patient and duration; toggle has no such anchor.
+      markerOverride: { en: 'for', ja: '間', ko: '동안' },
     },
   ],
   // Runtime error documentation

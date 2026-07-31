@@ -105,9 +105,21 @@ function acceptExpression(schema: CommandSchema): CommandSchema {
   };
 }
 
+/**
+ * Drop a role the voice domain does not carry. `toggle` grew a shape-anchored
+ * `duration` role (`toggle .a for 2s`, Arc F tail) whose en/ja/ko markers are
+ * not voice-tokenizer keywords and whose slot voice's spoken surface has no use
+ * for — reusing the reference schema must not widen voice's own grammar, so
+ * the adaptation layer narrows it back out, the same way it already inverts
+ * positions and suppresses markers.
+ */
+function dropRole(schema: CommandSchema, role: string): CommandSchema {
+  return { ...schema, roles: schema.roles.filter(r => r.role !== role) };
+}
+
 /** Adapt a reused reference schema to voice's generator + tokenizer conventions. */
 function adaptForVoice(schema: CommandSchema): CommandSchema {
-  return acceptExpression(invertRolePositions(schema));
+  return acceptExpression(invertRolePositions(dropRole(schema, 'duration')));
 }
 
 // toggle/add: adapt to voice conventions, then reinstate the slice-derived

@@ -68,7 +68,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   take: [['patient', ''], ['source', 'from']],
   tell: [['destination', '']],
   throw: [['patient', '']],
-  toggle: [['patient', ''], ['destination', 'on']],
+  toggle: [['patient', ''], ['destination', 'on'], ['duration', 'for']],
   transition: [['patient', ''], ['goal', 'to'], ['destination', 'on'], ['duration', 'over'], ['style', 'with']],
   trigger: [['event', ''], ['destination', 'on']],
   unless: [['condition', '']],

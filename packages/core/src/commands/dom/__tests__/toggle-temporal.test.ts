@@ -97,3 +97,31 @@ describe('toggle … until <event>', () => {
     expect(result.errors ?? [], JSON.stringify(result.errors)).toHaveLength(0);
   });
 });
+
+describe('the semantic path reaches the same reversion machinery', () => {
+  // #846 fixed `parseToggleCommand` — the TRADITIONAL parser. The semantic path
+  // could not produce `modifiers.for` at all until toggleSchema gained a
+  // shape-anchored `duration` role (the descriptor's `for: 'duration'` key was
+  // inert without it). Both paths now agree, so `hyperscript.eval` reverts
+  // whichever parser runs.
+
+  it('applies and reverts on BOTH paths', async () => {
+    for (const opts of [undefined, { traditional: true } as never]) {
+      const el = host();
+      await hyperscript.eval('toggle .loading for 40ms', el, opts);
+
+      expect(el.classList.contains('loading'), 'applied immediately').toBe(true);
+      await new Promise(r => setTimeout(r, 110));
+      expect(el.classList.contains('loading'), 'reverted after the duration').toBe(false);
+    }
+  });
+
+  it('carries the duration as `modifiers.for` on the semantic path', () => {
+    const result = hyperscript.compileSync('toggle .loading for 2s');
+    expect(result.errors ?? [], JSON.stringify(result.errors)).toHaveLength(0);
+
+    const ast = (result as unknown as { ast?: Record<string, any> }).ast;
+    const node = ast?.type === 'command' ? ast : ast?.commands?.[0];
+    expect(node?.modifiers?.for).toBeDefined();
+  });
+});
