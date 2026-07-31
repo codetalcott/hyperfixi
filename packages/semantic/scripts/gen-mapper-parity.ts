@@ -24,6 +24,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as prettier from 'prettier';
 
 import { resolveCommandMapper, getRegisteredMappers } from '../src/ast-builder/command-mappers';
 import { commandSchemas } from '../src/generators/command-schemas';
@@ -237,7 +238,15 @@ const fixture = {
   actions: buildFixture(),
 };
 
-const serialized = `${JSON.stringify(fixture, null, 2)}\n`;
+// Format with the repo's prettier config so a regeneration is byte-idempotent
+// against the committed file. Without this the pre-commit hook reformats the
+// fixture (compacting short arrays) and `--check` reports permanent staleness
+// on a tree that has not actually drifted.
+const prettierConfig = await prettier.resolveConfig(FIXTURE_PATH);
+const serialized = await prettier.format(JSON.stringify(fixture, null, 2), {
+  ...prettierConfig,
+  filepath: FIXTURE_PATH,
+});
 const isCheck = process.argv.includes('--check');
 
 if (isCheck) {
