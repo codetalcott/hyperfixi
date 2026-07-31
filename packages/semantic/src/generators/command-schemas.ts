@@ -381,6 +381,9 @@ export const toggleSchema: CommandSchema = {
   description: 'Toggle a class or attribute on/off',
   category: 'dom-class',
   primaryRole: 'patient',
+  // `toggle .active on #btn for 2s` → args ['.active'], modifiers { on, for }.
+  // NOTE: `duration` is read here but not declared in `roles` below.
+  ast: { args: ['patient'], modifiers: { on: 'destination', for: 'duration' } },
   roles: [
     {
       role: 'patient',
@@ -544,6 +547,8 @@ export const removeSchema: CommandSchema = {
   description: 'Remove a class or attribute from an element',
   category: 'dom-class',
   primaryRole: 'patient',
+  // `remove .active from #btn` → args ['.active'], modifiers { from: '#btn' }.
+  ast: { args: ['patient'], modifiers: { from: 'source' } },
   // Trailing `from X` is captured by the core parser as `target`; map it to source.
   targetRole: 'source',
   roles: [
@@ -1089,6 +1094,9 @@ export const hideSchema: CommandSchema = {
   description: 'Make an element invisible',
   category: 'dom-visibility',
   primaryRole: 'patient',
+  // The target arrives as EITHER role depending on which pattern matched.
+  // NOTE: `duration`/`destination` are read here but not declared in `roles`.
+  ast: { args: [['destination', 'patient']], modifiers: { with: 'duration' } },
   roles: [
     {
       role: 'patient',
@@ -1118,6 +1126,9 @@ export const onSchema: CommandSchema = {
   description: 'Handle an event',
   category: 'event',
   primaryRole: 'event',
+  // Event-handler declaration reduced to a bare command node; the real
+  // handler path is ASTBuilder.buildEventHandler, not this descriptor.
+  ast: { args: ['event'], modifiers: { from: 'source' } },
   hasBody: true,
   roles: [
     {
@@ -1149,6 +1160,8 @@ export const triggerSchema: CommandSchema = {
   description: 'Trigger/dispatch an event',
   category: 'event',
   primaryRole: 'event',
+  // `trigger click on #btn` → args ['click'], modifiers { on: '#btn' }.
+  ast: { args: ['event'], modifiers: { on: 'destination' } },
   roles: [
     {
       role: 'event',
@@ -1274,6 +1287,9 @@ export const incrementSchema: CommandSchema = {
   description: 'Increment a numeric value',
   category: 'variable',
   primaryRole: 'patient',
+  // `increment #count by 5` → args ['#count'], modifiers { by: 5 }.
+  // The counter arrives as destination or patient depending on the pattern.
+  ast: { args: [['destination', 'patient']], modifiers: { by: 'quantity' } },
   roles: [
     {
       role: 'patient',
@@ -1309,6 +1325,8 @@ export const decrementSchema: CommandSchema = {
   description: 'Decrement a numeric value',
   category: 'variable',
   primaryRole: 'patient',
+  // Mirror of increment.
+  ast: { args: [['destination', 'patient']], modifiers: { by: 'quantity' } },
   roles: [
     {
       role: 'patient',
@@ -1340,6 +1358,8 @@ export const appendSchema: CommandSchema = {
   description: 'Append content to an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `append "text" to #out` → args ['text'], modifiers { to: '#out' }.
+  ast: { args: ['patient'], modifiers: { to: 'destination' } },
   // `append <content>` with no destination targets the implicit result (`it`),
   // which core and upstream both support. Modeled as a separate no-destination
   // pattern rather than `required: false`: an optional role becomes a SKIPPABLE
@@ -1386,6 +1406,8 @@ export const prependSchema: CommandSchema = {
   description: 'Prepend content to an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `prepend "text" to #out` → args ['text'], modifiers { to: '#out' }.
+  ast: { args: ['patient'], modifiers: { to: 'destination' } },
   // Kept in lockstep with appendSchema — see its notes for why each of these is
   // shaped the way it is.
   omitRoleVariants: ['destination'],
@@ -1422,6 +1444,8 @@ export const logSchema: CommandSchema = {
   description: 'Log a value to the console',
   category: 'variable',
   primaryRole: 'patient',
+  // `log "hello"` → args ['hello'].
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -1442,6 +1466,8 @@ export const getCommandSchema: CommandSchema = {
   description: 'Get a value from a source',
   category: 'variable',
   primaryRole: 'source',
+  // `get #el's value` → args [value]. Source or patient, whichever bound.
+  ast: { args: [['source', 'patient']] },
   roles: [
     {
       role: 'source',
@@ -1490,6 +1516,8 @@ export const takeSchema: CommandSchema = {
   description: 'Take content from a source element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `take .active from #parent` → args ['.active'], modifiers { from: '#parent' }.
+  ast: { args: ['patient'], modifiers: { from: 'source' } },
   roles: [
     {
       role: 'patient',
@@ -1519,6 +1547,8 @@ export const makeSchema: CommandSchema = {
   description: 'Create a new element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `make a Date` → args [Date].
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -1540,6 +1570,10 @@ export const haltSchema: CommandSchema = {
   description: 'Halt/stop execution or event propagation',
   category: 'control-flow',
   primaryRole: 'patient',
+  // The patient distinguishes `halt the event` (preventDefault, handler
+  // CONTINUES) from bare `halt` (stops the handler). Dropping it collapsed
+  // both to the bare form. HaltCommand resolves a 'the' target to context.event.
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -1560,6 +1594,8 @@ export const settleSchema: CommandSchema = {
   description: 'Wait for animations/transitions to settle',
   category: 'async',
   primaryRole: 'patient',
+  // `settle #el` → args ['#el']; blocking (waits for transitions to finish).
+  ast: { args: [['destination', 'patient']], isBlocking: true },
   roles: [
     {
       role: 'patient',
@@ -1581,6 +1617,8 @@ export const throwSchema: CommandSchema = {
   description: 'Throw an error',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `throw "message"` → args ['message'].
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -1601,6 +1639,9 @@ export const sendSchema: CommandSchema = {
   description: 'Send an event to an element',
   category: 'event',
   primaryRole: 'event',
+  // `send evt to #target` → args ['evt'], modifiers { to, detail }.
+  // `detail` is a runtime contract key, not a preposition.
+  ast: { args: ['event'], modifiers: { to: 'destination', detail: 'patient' } },
   roles: [
     {
       role: 'event',
@@ -1656,6 +1697,9 @@ export const ifSchema: CommandSchema = {
   description: 'Conditional execution',
   category: 'control-flow',
   primaryRole: 'condition',
+  // Bare-command form only — the real conditional path is
+  // ASTBuilder.buildConditional, which never consults a command mapper.
+  ast: { args: ['condition'] },
   hasBody: true,
   roles: [
     {
@@ -1678,6 +1722,8 @@ export const unlessSchema: CommandSchema = {
   description: 'Negated conditional execution (executes when condition is false)',
   category: 'control-flow',
   primaryRole: 'condition',
+  // Bare-command form only; see the note on `if`.
+  ast: { args: ['condition'] },
   hasBody: true,
   roles: [
     {
@@ -1711,6 +1757,8 @@ export const repeatSchema: CommandSchema = {
   description: 'Repeat a block of commands',
   category: 'control-flow',
   primaryRole: 'loopType',
+  // Bare-command form only — the real loop path is ASTBuilder.buildLoop.
+  ast: { args: [['quantity', 'patient']] },
   hasBody: true,
   roles: [
     {
@@ -1758,6 +1806,10 @@ export const forSchema: CommandSchema = {
   description: 'Iterate over a collection',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `for item in items` → args [item], modifiers { in: items }.
+  // The real loop path is ASTBuilder.buildLoop; this fires only for a
+  // degenerate bare-command parse.
+  ast: { args: ['patient'], modifiers: { in: 'source' } },
   hasBody: true,
   roles: [
     {
@@ -1812,6 +1864,8 @@ export const whileSchema: CommandSchema = {
   description: 'Loop while condition is true',
   category: 'control-flow',
   primaryRole: 'condition',
+  // Bare-command form only — the real loop path is ASTBuilder.buildLoop.
+  ast: { args: ['condition'] },
   hasBody: true,
   roles: [
     {
@@ -1833,6 +1887,8 @@ export const continueSchema: CommandSchema = {
   description: 'Continue to next loop iteration',
   category: 'control-flow',
   primaryRole: 'patient',
+  // Roleless keyword: emits a bare command node.
+  ast: {},
   roles: [], // No roles
 };
 
@@ -2008,6 +2064,9 @@ export const transitionSchema: CommandSchema = {
   description: 'Transition an element with animation',
   category: 'dom-visibility',
   primaryRole: 'patient',
+  // `transition *color to red over 500ms on #el` → args ['*color'],
+  // modifiers { to: goal, over: duration, on: destination }.
+  ast: { args: ['patient'], modifiers: { to: 'goal', over: 'duration', on: 'destination' } },
   // Goal-less `transition {patient} over {duration}` (slide-toggle) parses via
   // a separate generated variant — see the goal role's required NOTE.
   omitRoleVariants: ['goal'],
@@ -2122,6 +2181,8 @@ export const cloneSchema: CommandSchema = {
   description: 'Clone an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `clone #tpl into #container` → args ['#tpl'], modifiers { into: '#container' }.
+  ast: { args: [['source', 'patient']], modifiers: { into: 'destination' } },
   roles: [
     {
       role: 'patient',
@@ -2151,6 +2212,9 @@ export const focusSchema: CommandSchema = {
   description: 'Focus an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `focus #input` → args ['#input']. The original mapper built an always-empty
+  // modifiers object, so no modifier key is emitted.
+  ast: { args: [['destination', 'patient']] },
   roles: [
     {
       role: 'patient',
@@ -2172,6 +2236,8 @@ export const blurSchema: CommandSchema = {
   description: 'Remove focus from an element',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `blur #input` → args ['#input'].
+  ast: { args: [['destination', 'patient']] },
   roles: [
     {
       role: 'patient',
@@ -2360,6 +2426,8 @@ export const callSchema: CommandSchema = {
   description: 'Call a function',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `call fn()` → args [fn()].
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -2388,6 +2456,8 @@ export const returnSchema: CommandSchema = {
   description: 'Return a value from a function',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `return value` → args [value].
+  ast: { args: ['patient'] },
   roles: [
     {
       role: 'patient',
@@ -2408,6 +2478,9 @@ export const jsSchema: CommandSchema = {
   description: 'Execute raw JavaScript code',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `js ... end` → args [code]. Note core's parser skips semantic parsing
+  // for js entirely; this shape only fires on a direct buildAST call.
+  ast: { args: ['patient'] },
   hasBody: true,
   roles: [
     {
@@ -2429,6 +2502,8 @@ export const asyncSchema: CommandSchema = {
   description: 'Execute commands asynchronously',
   category: 'async',
   primaryRole: 'patient',
+  // Roleless keyword: emits a bare command node.
+  ast: {},
   hasBody: true,
   roles: [],
 };
@@ -2441,6 +2516,8 @@ export const tellSchema: CommandSchema = {
   description: 'Execute commands in context of another element',
   category: 'control-flow',
   primaryRole: 'destination',
+  // `tell #el` → args ['#el']. The body is attached by ASTBuilder, not here.
+  ast: { args: [['destination', 'patient']] },
   hasBody: true,
   roles: [
     {
@@ -2468,6 +2545,8 @@ export const defaultSchema: CommandSchema = {
   description: 'Set a default value for a variable',
   category: 'variable',
   primaryRole: 'destination',
+  // `default :x to 0` → args [:x], modifiers { to: 0 }.
+  ast: { args: ['patient'], modifiers: { to: 'source' } },
   roles: [
     {
       role: 'destination',
@@ -2560,6 +2639,8 @@ export const initSchema: CommandSchema = {
   description: 'Initialization block that runs once',
   category: 'control-flow',
   primaryRole: 'patient',
+  // Roleless keyword: emits a bare command node.
+  ast: {},
   hasBody: true,
   roles: [],
 };
@@ -2575,6 +2656,8 @@ export const behaviorSchema: CommandSchema = {
   description: 'Define a reusable behavior',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `behavior Name` → args [Name].
+  ast: { args: ['patient'] },
   hasBody: true,
   roles: [
     {
@@ -2600,6 +2683,8 @@ export const installSchema: CommandSchema = {
   description: 'Install a behavior on an element',
   category: 'control-flow',
   primaryRole: 'patient',
+  // `install Draggable on #el` → args [Draggable], modifiers { on: '#el' }.
+  ast: { args: ['patient'], modifiers: { on: 'destination' } },
   roles: [
     {
       role: 'patient',
@@ -2633,6 +2718,9 @@ export const measureSchema: CommandSchema = {
   description: 'Measure element dimensions (x, y, width, height, etc.)',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `measure width of #el` → args ['width'], modifiers { of: '#el' }.
+  // The element arrives as destination or source depending on the pattern.
+  ast: { args: ['patient'], modifiers: { of: ['destination', 'source'] } },
   roles: [
     {
       role: 'patient',
@@ -2791,6 +2879,9 @@ export const morphSchema: CommandSchema = {
   description: 'Morph an element into another using DOM diffing',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `morph #list to it` → args [content], modifiers { on: element }.
+  // Content is source or destination; the element being morphed is the patient.
+  ast: { args: [['source', 'destination']], modifiers: { on: 'patient' } },
   roles: [
     {
       role: 'patient',

@@ -440,6 +440,44 @@ not the core abstractions.
 
 ## Open, filed rather than folded in
 
+- **Core's `semantic-integration.ts` switch is a SECOND semantic→AST
+  implementation, and it has already drifted from the first.** Measured
+  2026-07-31 during Arc F step 1, by running both paths over the same semantic
+  parse. For `put "x" before #out` (roles `patient`/`destination`/`manner`):
+  `buildAST` emits `modifiers: { before: #out }`; `buildCommandNode`
+  (`semantic-integration.ts:340-430`) emits `modifiers: { into: #out, manner:
+  'before' }` — it hardcodes put's destination to `into` and never reads
+  `manner`, so the positional put becomes an INTO plus a `manner` modifier
+  `PutCommand` does not read. Same for `after` and `at end of`; plain `into`
+  agrees.
+  **Currently latent, and that is the point.** `put` sits in `parser.ts`'s
+  `skipSemanticParsing` list (`:3467`), so the live English path never reaches
+  the switch; and the canonical non-English renderings of a positional put come
+  back without the `manner` role at all (`translate('put "x" before #out',
+  'en', ko|ja|es|de)` renders a plain put-into), so they do not reach it either.
+  Nothing user-visible is broken today — the only thing preventing it is a
+  hand-maintained skip list of command names. That is precisely this queue's
+  thesis in miniature: a duplicated implementation, silently diverged, held
+  safe by a list nothing compares to the code.
+  Not folded into Arc F: Arc F's gates are semantic-stack, while this is a
+  core-side behavior fix dragging the full core gate set. Fix options are
+  (a) teach the switch to read `manner`, (b) have core delegate to semantic's
+  `buildAST`, or (c) delete the switch if the skip list makes it unreachable
+  for every command it mis-handles — (c) needs the reachability measured per
+  command, not assumed. Detail:
+  [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) § fact 2.
+
+- **`swap`'s AST builder reads roles its schema never binds.** The builder
+  consumes `source`/`style` and emits `on` for destination; `swapSchema`
+  declares `method`/`destination`/`patient` and marks destination `of`. So
+  `swap innerHTML of #t with <p>` parses `method: innerHTML` and then drops it
+  — the strategy never reaches the AST. Arc F step 1 migrated the behavior
+  verbatim (a faithful migration must not change output) and pinned both
+  divergences as `kind: 'drift'` entries in
+  `packages/semantic/test/ast-shape-consistency.test.ts`, which fails if they
+  are silently "fixed" or silently widened. The repair is a behavior change and
+  wants its own PR with R2/R3 evidence.
+
 - **`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
   reader uses it.** `:54-60` defines a loose shape with an
   `[extra: string]: unknown` index signature — which is the only reason

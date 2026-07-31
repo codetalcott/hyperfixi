@@ -84,7 +84,17 @@ options). The descriptor needs a boolean for this.
    **behavior change**, so it's staged separately from the byte-parity migration
    (step 4 below).
 
-2. **Two live semantic→AST paths, different logic.** (a) Core's compile path:
+2. **Two live semantic→AST paths, different logic. — CONFIRMED 2026-07-31,
+   and narrower than predicted.** Both paths were run over the same semantic
+   parse. The divergence is real: `put "x" before #out` builds
+   `modifiers: { before: #out }` via `buildAST` and
+   `modifiers: { into: #out, manner: 'before' }` via core's switch (same for
+   `after` / `at end of`; plain `into` agrees). But it is **latent**, not
+   user-visible: `put` is in `parser.ts`'s `skipSemanticParsing` list (`:3467`)
+   so the English path never reaches the switch, and canonical non-English
+   renderings of a positional put come back with no `manner` role at all, so
+   they do not reach it either. Filed in the queue's "Open, filed rather than
+   folded in" section with the three fix options. The original text follows. (a) Core's compile path:
    `SemanticIntegrationAdapter.parseWithSemantics` flattens single-command
    parses to `{name, roles}` and runs the `buildCommandNode` switch
    (`semantic-integration.ts:340-430` + dedicated builders for
