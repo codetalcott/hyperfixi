@@ -145,7 +145,7 @@ describe('eventsource feature — supplementary coverage', () => {
         url: 'https://api.example.com/events',
         withCredentials: false,
       });
-      const es = MockES.instances.at(-1)!;
+      const es = MockES.instances[MockES.instances.length - 1]!;
 
       es.triggerOpen();
       await Promise.resolve();
@@ -164,7 +164,7 @@ describe('eventsource feature — supplementary coverage', () => {
           url: 'https://api.example.com/events',
           withCredentials: false,
         });
-        const es = MockES.instances.at(-1)!;
+        const es = MockES.instances[MockES.instances.length - 1]!;
         es.triggerError();
         await Promise.resolve();
         // Error handler ran and (attempted) reconnection was scheduled but not run.
