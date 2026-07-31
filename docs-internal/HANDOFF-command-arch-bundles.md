@@ -1,6 +1,9 @@
 # Handoff: Arc E — generated static bundles
 
-> **Status: brief written 2026-07-29, arc NOT started.** Every figure below was
+> **Status: ARC CLOSED 2026-07-31 — all five steps shipped** (#830 step 1,
+> #831 step 2, #832 step 3, #835 step 4, step 5 in its own PR). Kept as the
+> arc's record; the per-step CLOSED sections hold what each step measured and
+> decided. Originally: brief written 2026-07-29, measured against `bd0152e7`.** Every figure below was
 > measured against main `bd0152e7` (the #828 merge) for this document; nothing
 > is inherited from the queue paragraph or from Arc A's Finding 17 numbers
 > without re-measurement. Companion to
@@ -622,6 +625,95 @@ each generated case: every one fails its OWN row and nothing else (`push` and
 templates). The advertised-array gate mutation-verified in both directions.
 `generate:bundles:check` is idempotent under the pinned prettier.
 
+## Step 5 — CLOSED: the parser template is generated, and the arc's last hand copy is gone
+
+`HYBRID_PARSER_TEMPLATE` is now emitted by the same
+`scripts/generate-bundles.ts` that generates the executor cores — a second
+target with a `hybrid-parser` region whose body is the real parser
+(`parser/hybrid/{aliases,tokenizer,parser-core}.ts`) transformed to
+self-contained ES2020 JS by esbuild, escaped, and spliced inside the template
+literal. Same `--check` drift guard, same CI step, same prettier-idempotency
+(trivially — prettier does not reformat template-literal interiors).
+
+### The hand copy was BEHIND the real parser on five capabilities
+
+Measured before generating (comment-stripped, prettier-canonicalized diff of
+the hand template vs the esbuild-stripped real modules — raw diff 937 lines,
+semantic residue below):
+
+| divergence | direction | consequence in vite-embedded bundles |
+| --- | --- | --- |
+| `@attr` selector tokenization | real only | `toggle @disabled` mis-tokenized |
+| `'s` possessive operator | real only | `#t's title` unparseable |
+| fetch `via`/`with`/`{options}`/`as a[n]` | real only | `fetch /x via POST` unparseable — step 2 absorbed via/with into the EXECUTOR templates, so the embedded executor could run what its own parser could not produce |
+| `values of` (`valuesOf` node) | real only | unparseable |
+| KEYWORDS: `halt` `via` `values` `default` `event` | real only | classification drift |
+| KEYWORDS: `empty` | template only | a hand-fix the real tokenizer never needed |
+| `addCommandAliases`/`addEventAliases` | real only | no alias-registration API in embedded copies |
+
+Everything else was formatting or esbuild artifacts (quote style, `1e3`,
+`void 0`, a shadowed-variable rename). The cmdMaps were identical — Oracle 2
+held — which is precisely the trap: **every list gate compared cmdMap keys, and
+none of these five capabilities lives in a cmdMap.** Step 4 found the same
+blindness in the other direction (`waitFor`).
+
+### S5-a — nothing executed the embedded template, anywhere
+
+The template's total behavioral coverage was three probes in
+`parser-template-drift.test.ts`. The vite-plugin's own generator tests stop at
+`new Function(code)` — construction without a call, i.e. syntax. So a
+vite-embedded parser could (and did) lack capabilities its own executor
+shipped, invisibly. The closure is an **AST-equivalence suite** in the drift
+test: the committed template and the live `HybridParser` must produce
+deep-equal trees over a 16-source corpus that includes every gained capability
+and two escaping canaries (backtick + `${` inside string literals, backslash
+regexes — the characters the template-literal embedding must escape; a wrong
+escape corrupts exactly these and nothing else notices).
+
+Mutation-verified in all three directions: a crippled `@attr` branch in the
+committed template fails exactly its corpus row; a broken `\${` escape fails
+the whole module loudly at import; a real change to `aliases.ts` without
+regeneration fails `generate:bundles:check` (a comment-only probe does NOT —
+esbuild drops trailing standalone comments — so the mutation had to be real,
+which is itself S3-b's lesson recurring).
+
+### S5-b — the transform is esbuild at es2020, not a regex stripper
+
+S2-c measured the regex `stripTypes` emitting invalid JS for 6 of 40 command
+templates; it was not trusted with a 1000-line parser. esbuild
+(`loader: 'ts'`, `target: 'es2020'`) is a real TS front-end; es2020 matches the
+runtime promise core's tsconfig makes (the same promise that decided #834), so
+parser-core's class fields lower through esbuild's tiny inlined helpers
+(`__publicField`, +~500 raw) instead of shipping ES2022 syntax. Oracle 2's
+regex needed one shape update for the lowered form — and its "found nothing"
+guard fired exactly as designed when the shape changed, rather than passing on
+empty.
+
+### Measured cost — vite-embedded bundles only; ZERO shipped-bundle movement
+
+The template is a string in core's bundle-generator lib; no shipped browser
+bundle embeds it (core's `generateBundleCode` emits an import instead), so
+`baseline.json`, `MAX_HYBRID` and `metadata.ts` do not move — the first step of
+the arc with no size carry. Vite-embedded bundles grow: template string
+6410 → 8443 gz raw-with-comments, of which the post-minification code delta is
+**+522 gz** (consumer builds strip the comments; the committed artifact keeps
+them for reviewability). That 522 buys the five capabilities above.
+
+### What stays hand-maintained, stated
+
+`LITE_PARSER_TEMPLATE` — deliberately. It has no canonical module twin: the
+regex parsers in the lite bundle entries are each their own tier
+simplification, not copies of one source, so there is nothing to generate it
+from. The lite-family copies remain out of scope exactly as the brief's
+premise-correction scoped them.
+
+### Gate — step 5
+
+Core `test:quick` green at the step-4 baseline +15 (the AST-equivalence rows);
+`parser-template-drift.test.ts` 5 → 20 tests; capability-emission 14/14 with
+the transformed §4. Oracle 2 and the drift test both retired INTO the
+generator per the queue — transformed, neither deleted.
+
 ## Finding 17, restated with the arc's numbers
 
 The shipped hybrid bundles PARSE 35 commands and EXECUTE 24. The 11 orphans —
@@ -703,7 +795,11 @@ carries the deliberate ceiling/baseline/count changes bundled above, stated in
 the PR body. Playwright matrix + step-1 gate + capability-emission all run
 against the result.
 
-**Step 5 — generate `HYBRID_PARSER_TEMPLATE` from `parser-core.ts` source.**
+**Step 5 — generate `HYBRID_PARSER_TEMPLATE` from `parser-core.ts` source.
+CLOSED — see § "Step 5 — CLOSED" above: the hand copy was measured BEHIND the
+real parser on five parse capabilities, and nothing executed it (the
+vite-plugin tests stop at `new Function` construction). Oracle 2 and the drift
+test retired into the generator as transformed gates, per this paragraph.**
 `vite-plugin/src/generator.ts:149` embeds the template; core's
 `generateBundle()` imports parser-core directly — the two-copy risk is the
 vite-plugin path. Generate the template from parser-core source text at build
@@ -742,3 +838,40 @@ registers 11 advertising 10) stay filed in the queue — same neighborhood,
 separate decisions. F-B1 (`command-adapter.ts` shadow `CommandMetadata`) and
 the `isBlocking`/`hasBody` false claims likewise. The lite family's
 show/hide desugar (D4) is documented behavior, not a defect to fix in passing.
+
+### Parked (2026-07-31): a tier-appropriate mini-morph could reclaim ~1.5 KB gz
+
+Step 4's owner call kept `morph` in the hybrid bundles at its measured cost
+(+2057 gz of the +2967 is `morphlex`). The engines were then surveyed in case a
+cheaper one exists; measurements, so the eventual decision starts from facts:
+
+| engine | license | standalone min gz | marginal in hybrid-complete |
+| --- | --- | --- | --- |
+| morphlex 1.4 (incumbent) | MIT | 3181 | **2057 measured** |
+| idiomorph 0.7.4 | 0BSD | **3350** | ~2.1–2.3K est |
+| paxi's `mx` (bigskysoftware/paxi) | 0BSD | 690 (entire library) | ~0.4–0.6K est, UNBUILT |
+| trimmed morphlex fork | MIT (keep notice) | — | ~1.3–1.6K est |
+
+- **idiomorph is ruled out by measurement** — larger than morphlex standalone,
+  and the htmx-alignment argument is cosmetic here (the hx layer translates
+  `hx-swap="morph"` into hyperfixi's own morph command, not into idiomorph).
+- **Fork-trimming morphlex is the worst ratio** — ~500–800 gz back (the
+  `#options.x?.()` callback layer is runtime-conditional, so terser cannot drop
+  it) for a vendored fork that stops receiving upstream fixes.
+- **The interesting shape**: inline a paxi-derived `mx` (~30 lines, 0BSD, never
+  writes value props so it is preserveChanges-by-default structurally) INTO the
+  morph template, keeping morphlex in the full runtime (`lib/morph-adapter.ts`,
+  which uses `preserveChanges: true` and the richer `isEqualNode`/`moveBefore`
+  algorithm). The morph template is currently the ONLY template with an external
+  import; inlining kills the generator's `needsMorphlex` special case and lands
+  the saving on every generated vite-plugin bundle too. The cost is a documented
+  D4-class tier split: positional matching for unkeyed children, no
+  `moveBefore`, the server cannot push input values — and the step-1/step-4
+  node-identity gate is what pins the property that matters.
+
+Not taken now because step 4 just shipped the morphlex numbers through four size
+surfaces and the owner accepted them; re-litigating in the same arc would churn
+`MAX_HYBRID`, `baseline.json` and `metadata.ts` twice. If picked up: build it
+FIRST and measure — this arc's estimated sizes have been wrong twice (S4-d), and
+the ~0.5K figure above is exactly the kind of unbuilt estimate the discipline
+forbids relying on.

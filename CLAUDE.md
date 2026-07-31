@@ -680,7 +680,7 @@ window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initB
 2. Register a factory export in `packages/core/src/commands/index.ts` and add the command name to the `COMMANDS` set in `packages/core/src/parser/parser-constants.ts`
 3. Register the factory in the runtime entry points that should include it (`packages/core/src/runtime/runtime.ts` and any relevant `packages/core/src/compatibility/browser-bundle-*.ts`)
 4. Add parser support in `packages/core/src/parser/command-parsers/` (only if the command needs a non-generic parser — simple commands use the default identifier-plus-args parser)
-5. For lite/hybrid bundle coverage, add cases to `packages/core/src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
+5. For lite/hybrid bundle coverage, add cases to `packages/core/src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template and hybrid-complete's executor switches are generated (parser rules go in `packages/core/src/parser/hybrid/parser-core.ts`)
 6. Add reference/LSP entries in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
 7. Write tests in `packages/core/src/commands/{category}/__tests__/{name}.test.ts`
 
