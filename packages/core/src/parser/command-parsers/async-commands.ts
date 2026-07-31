@@ -80,14 +80,33 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
   if (ctx.check('for')) {
     ctx.advance(); // consume 'for'
 
-    // Parse event specifications (can be multiple with 'or')
-    const events: Array<{ name: string; params: string[] }> = [];
+    // Parse the or-separated alternatives. Each is an event name (optionally
+    // with destructured parameters) OR a duration — `wait for click or 1s` is
+    // a race between the event and a timeout, which the real `hyperscript.org`
+    // engine accepts and `WaitCommand` can already execute (its `race` input
+    // takes a mixed list of `time` and `event` conditions). Only the parser was
+    // missing: this loop required `isIdentifierLike`, and `1s` is a number
+    // token, so it threw `Expected event name after "for"`.
+    const alternatives: Array<
+      { kind: 'event'; name: string; params: string[] } | { kind: 'duration'; expr: ASTNode }
+    > = [];
 
     do {
+      // A duration alternative: a time literal (`1s`, `200ms`), a bare number
+      // (milliseconds), or a parenthesized expression.
+      if (ctx.checkTimeExpression() || ctx.checkLiteral() || ctx.check('(')) {
+        alternatives.push({ kind: 'duration', expr: ctx.parseExpression() });
+        if (ctx.check('or')) {
+          ctx.advance();
+          continue;
+        }
+        break;
+      }
+
       // Parse event name
       const eventToken = ctx.peek();
       if (!isIdentifierLike(eventToken)) {
-        throw new Error('Expected event name after "for"');
+        throw new Error('Expected event name or duration after "for"');
       }
       const eventName = eventToken.value;
       ctx.advance();
@@ -120,9 +139,9 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
         ctx.advance();
       }
 
-      events.push({ name: eventName, params: eventParams });
+      alternatives.push({ kind: 'event', name: eventName, params: eventParams });
 
-      // Check for 'or' to continue with more events
+      // Check for 'or' to continue with more alternatives
       if (ctx.check('or')) {
         ctx.advance(); // consume 'or'
         continue;
@@ -144,7 +163,12 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
     }
 
     // Build args array
-    // Format: [eventList, target?]
+    // Format: [alternativeList, target?]
+    //
+    // An event alternative keeps its `{ name, args }` shape; a duration
+    // alternative carries `{ duration: <expr> }`. `WaitCommand.parseEventArrayWait`
+    // reads both and builds a `time` or `event` condition per entry, racing
+    // them when there is more than one.
     const eventPos = {
       start: commandToken.start,
       end: ctx.getPosition().end,
@@ -153,23 +177,28 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
     };
     args.push(
       createArrayLiteral(
-        events.map(event =>
-          createObjectLiteral(
-            [
-              {
-                key: createIdentifier('name', eventPos),
-                value: createLiteral(event.name, `"${event.name}"`, eventPos),
-              },
-              {
-                key: createIdentifier('args', eventPos),
-                value: createArrayLiteral(
-                  event.params.map(param => createLiteral(param, `"${param}"`, eventPos)),
-                  eventPos
-                ),
-              },
-            ],
-            eventPos
-          )
+        alternatives.map(alt =>
+          alt.kind === 'duration'
+            ? createObjectLiteral(
+                [{ key: createIdentifier('duration', eventPos), value: alt.expr }],
+                eventPos
+              )
+            : createObjectLiteral(
+                [
+                  {
+                    key: createIdentifier('name', eventPos),
+                    value: createLiteral(alt.name, `"${alt.name}"`, eventPos),
+                  },
+                  {
+                    key: createIdentifier('args', eventPos),
+                    value: createArrayLiteral(
+                      alt.params.map(param => createLiteral(param, `"${param}"`, eventPos)),
+                      eventPos
+                    ),
+                  },
+                ],
+                eventPos
+              )
         ),
         eventPos
       )

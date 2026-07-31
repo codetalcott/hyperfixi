@@ -169,28 +169,21 @@ export class WaitCommand implements DecoratedCommand {
     return { type: 'event', eventName, target, destructure };
   }
 
+  /**
+   * The `wait for …` alternative list.
+   *
+   * `parseWaitCommand` emits one object literal per or-separated alternative:
+   * `{ name, args }` for an event, `{ duration }` for a timeout. A mixed list
+   * is the `wait for click or 1s` race — the DOM effect is "whichever happens
+   * first", which `executeRace` already implements; before this it never
+   * reached here, because the parser rejected the duration token.
+   */
   private async parseEventArrayWait(
     elements: ASTNode[],
     targetArg: ASTNode | undefined,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<WaitEventInput | WaitRaceInput> {
-    const events: { name: string; params: string[] }[] = [];
-    for (const el of elements) {
-      const obj = el as any;
-      if (obj.type === 'objectLiteral' && obj.properties) {
-        let name = '';
-        let params: string[] = [];
-        for (const p of obj.properties) {
-          const k = p.key?.name || p.key?.value;
-          if (k === 'name' && p.value) name = p.value.value || '';
-          else if (k === 'args' && p.value?.elements)
-            params = p.value.elements.map((e: any) => e.value || e.name || '');
-        }
-        if (name) events.push({ name, params });
-      }
-    }
-
+  ): Promise<WaitTimeInput | WaitEventInput | WaitRaceInput> {
     let target: EventTarget | undefined;
     if (targetArg) {
       const t = await evaluator.evaluate(targetArg, context);
@@ -198,24 +191,40 @@ export class WaitCommand implements DecoratedCommand {
     }
     if (!target) target = context.me ?? undefined;
 
-    if (events.length === 1) {
-      return {
-        type: 'event',
-        eventName: events[0].name,
-        target,
-        destructure: events[0].params.length > 0 ? events[0].params : undefined,
-      };
+    const conditions: (WaitTimeInput | WaitEventInput)[] = [];
+    for (const el of elements) {
+      const obj = el as any;
+      if (obj.type !== 'objectLiteral' || !obj.properties) continue;
+
+      let name = '';
+      let params: string[] = [];
+      let durationNode: ASTNode | undefined;
+      for (const p of obj.properties) {
+        const k = p.key?.name || p.key?.value;
+        if (k === 'name' && p.value) name = p.value.value || '';
+        else if (k === 'args' && p.value?.elements)
+          params = p.value.elements.map((e: any) => e.value || e.name || '');
+        else if (k === 'duration' && p.value) durationNode = p.value as ASTNode;
+      }
+
+      if (durationNode) {
+        const value = await evaluator.evaluate(durationNode, context);
+        conditions.push({ type: 'time', milliseconds: parseDurationStrict(value) });
+      } else if (name) {
+        conditions.push({
+          type: 'event',
+          eventName: name,
+          target,
+          destructure: params.length > 0 ? params : undefined,
+        });
+      }
     }
 
-    return {
-      type: 'race',
-      conditions: events.map(e => ({
-        type: 'event' as const,
-        eventName: e.name,
-        target,
-        destructure: e.params.length > 0 ? e.params : undefined,
-      })),
-    };
+    // A single alternative is not a race — `wait for click` stays an event wait
+    // and `wait for 1s` (which upstream also accepts) becomes a plain timeout.
+    if (conditions.length === 1) return conditions[0];
+
+    return { type: 'race', conditions };
   }
 
   private async parseRaceCondition(
