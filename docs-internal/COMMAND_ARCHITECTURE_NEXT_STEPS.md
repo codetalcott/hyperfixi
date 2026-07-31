@@ -563,6 +563,51 @@ not the core abstractions.
   core-side behavior fix dragging the full core gate set. Detail:
   [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) § fact 2.
 
+  **Reachability measured 2026-07-31 — the answer is (b).** Method: for every
+  action with a schema excluded by **neither** `skipSemanticParsing` (25 names)
+  **nor** `SKIP_SEMANTIC_COMMANDS` (4), feed ONE English semantic parse of each
+  corpus surface to **both** paths — `buildAST` and
+  `SemanticIntegrationAdapter.trySemanticParse` — and diff name / arg shapes /
+  modifier keys. 71 schemas, **45 reachable**, 29 with a parsing en surface.
+  **15 of the 29 diverge.** This is not a `put`-shaped special case: it is the
+  blanket `destination`→`on` / `source`→`from` mapping meeting every command
+  whose runtime contract is positional.
+
+  | command | `buildAST` | the switch | live effect (`hyperscript.eval`, jsdom) |
+  | ------- | ---------- | ---------- | --------------------------------------- |
+  | `go back` | `args:[lit("back")]` | `args:[] mods:{on:id(back)}` | **throws** `Go command requires arguments` (traditional: works) |
+  | `go to url "/page"` | `args:[lit("url"),lit("/page")]` | `args:[] mods:{on,method}` | **throws**, same |
+  | `get #target` | `args:[sel(#target)]` | `args:[] mods:{from:sel}` | **throws** `get command requires an expression argument` |
+  | `pick first 2 from .items` | `args:[sel(.items)] mods:{variant,count}` | `args:[lit(2)] mods:{method,from}` | **no error, WRONG result** — 1 item where traditional returns 2 |
+  | `scroll to #header` | `args:[sel(#header)]` | `args:[] mods:{on:sel}` | **throws** `scroll command requires a target` |
+  | `default :x to 0` | `args:[ctx(:x)] mods:{to:lit(0)}` | `args:[lit(0)] mods:{on:id(:x)}` | **throws** `default command requires a value` |
+  | `bind $greeting to #name-input` | `args:[sel] mods:{on:ctx}` | `args:[] mods:{on:id,from:sel}` | — |
+  | `send … to #t` | `mods:{to:…}` | `mods:{on:…}` | works (SendCommand accepts both) |
+  | `transition … to X over Y` | `mods:{to,over,on}` | `mods:{goal,over,on}` | throws on both paths, different reasons |
+  | `show/hide … with *opacity` | builds | `NONE` (the `*prop` skip regex) | — |
+  | `log me` · `settle` · `blur me` · `clear :x` · `focus first <input/>` | `ctx(…)` / `call(…)` | `id(…)` | mostly benign; `focus` **inverts** (semantic works, traditional throws) |
+
+  Agreeing (14): `take throw push replace empty open close reset call behavior
+  beep copy render live`. No parsing en surface, so unmeasured — **not** proven
+  safe (16): `on else while continue process clone select breakpoint async init
+  break eventsource socket worker intercept compound`.
+
+  - **(c) is refuted.** The skip lists cover 25 of 71 actions and the divergent
+    set sits almost entirely outside them.
+  - **(a) is a re-divergence by construction** — re-implementing 44 descriptors
+    in a second place is the disease applied as the cure.
+  - **(b) fixes five live English defects in one change** (`go` ×2, `get`,
+    `pick`, `scroll`, `default`) and deletes the last full copy of the role→AST
+    knowledge. `buildAST` already backs the multilingual and semantic-complete
+    browser bundles, so this makes the two paths *the same code* rather than
+    agreeing code.
+
+  Two things the delegation PR must handle, both visible above: the switch routes
+  `repeat`/`for`/`set`/`if`/`unless` to dedicated builders *before* the role loop
+  (those must keep working), and `show`/`hide`/`transition` with `*prop` targets
+  deliberately return `NONE` via `shouldSkipSemantic`'s `/\*[a-zA-Z]/` check —
+  delegation must preserve that refusal rather than adopt `buildAST`'s output.
+
 - **`DefaultCommand` EVALUATES its target, so `default` is broken on both
   execution paths.** Independent of the AST-shape defect above, and not fixed by
   it. `commands/data/default.ts` `parseInput` does `target = await
