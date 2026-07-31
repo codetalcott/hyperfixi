@@ -82,15 +82,6 @@ const INTENTIONALLY_UNGATED = new Map([
   // one at a time — each needs its own check that it can actually run in the
   // job's environment. Burned down in the same PR; an entry that survives is
   // rewritten with the specific reason it cannot run.
-  ['behaviors', 'pending vetting — #857 burn-down, this PR'],
-  ['domain-toolkit', 'pending vetting — #857 burn-down, this PR'],
-  ['framework', 'pending vetting — #857 burn-down, this PR'],
-  ['intent', 'pending vetting — #857 burn-down, this PR'],
-  ['intent-element', 'pending vetting — #857 burn-down, this PR'],
-  ['intercept', 'pending vetting — #857 burn-down, this PR'],
-  ['planner', 'pending vetting — #857 burn-down, this PR'],
-  ['server-bridge', 'pending vetting — #857 burn-down, this PR'],
-  ['smart-bundling', 'pending vetting — #857 burn-down, this PR'],
   ['testing-framework', 'pending vetting — #857 burn-down, this PR'],
 ]);
 

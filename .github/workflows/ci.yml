@@ -999,6 +999,39 @@ jobs:
       - name: Test developer-tools
         run: npm test --prefix packages/developer-tools -- --run
 
+      # The rest of the #857 burn-down: nine more packages that were in the
+      # local test:check gate but had never been enumerated here, so CI ran
+      # none of their ~78 test files. `scripts/check-ci-test-list.cjs` now
+      # fails if a package with a "test:check" script is missing from this job.
+      # All nine add ~10s of test work; none needs setup beyond the build
+      # artifacts this job already downloads.
+      - name: Test framework
+        run: npm test --prefix packages/framework -- --run
+
+      - name: Test server-bridge
+        run: npm test --prefix packages/server-bridge -- --run
+
+      - name: Test behaviors
+        run: npm test --prefix packages/behaviors
+
+      - name: Test smart-bundling
+        run: npm test --prefix packages/smart-bundling -- --run
+
+      - name: Test intercept
+        run: npm test --prefix packages/intercept -- --run
+
+      - name: Test intent
+        run: npm test --prefix packages/intent
+
+      - name: Test intent-element
+        run: npm test --prefix packages/intent-element
+
+      - name: Test domain-toolkit
+        run: npm test --prefix packages/domain-toolkit -- --run
+
+      - name: Test planner
+        run: npm test --prefix packages/planner
+
   # ============================================
   # Job 5: Coverage Report (nightly / manual)
   # Was push-to-main. Under `strict` branch protection the post-merge tree IS the
