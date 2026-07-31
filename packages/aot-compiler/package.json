@@ -1,7 +1,7 @@
 {
   "name": "@hyperfixi/aot-compiler",
   "private": true,
-  "version": "2.9.3",
+  "version": "2.9.4",
   "description": "Ahead-of-Time compiler for LokaScript - transforms hyperscript to optimized JavaScript at build time",
   "type": "module",
   "sideEffects": false,
@@ -37,12 +37,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.9.3",
+    "@lokascript/framework": "^2.9.4",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
-    "@hyperfixi/core": "^2.9.3",
-    "@lokascript/semantic": "^2.9.3",
+    "@hyperfixi/core": "^2.9.4",
+    "@lokascript/semantic": "^2.9.4",
     "@types/node": "^26.1.2",
     "commander": "^15.0.0",
     "tsup": "^8.0.1",
@@ -50,8 +50,8 @@
     "vitest": "^4.1.5"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^2.9.3",
-    "@lokascript/semantic": "^2.9.3"
+    "@hyperfixi/core": "^2.9.4",
+    "@lokascript/semantic": "^2.9.4"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {

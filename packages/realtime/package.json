@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/realtime",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "description": "Realtime features for hyperfixi — adds `socket`, `eventsource`, and `worker` top-level features (upstream _hyperscript 0.9.93 extensions; worker is an async main-thread shim).",
   "type": "module",
   "sideEffects": false,
@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "^2.9.3"
+    "@hyperfixi/core": "^2.9.4"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

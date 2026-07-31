@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/server-bridge",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "description": "Extract server route contracts from hyperscript/htmx HTML and generate server-side route scaffolding",
   "type": "module",
   "sideEffects": false,

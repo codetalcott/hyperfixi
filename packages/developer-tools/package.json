@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/developer-tools",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "private": true,
   "sideEffects": false,
   "description": "CLI tools and visual builder API for LokaScript development",
@@ -76,8 +76,8 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^2.9.3",
-    "@lokascript/i18n": "^2.9.3",
+    "@hyperfixi/core": "^2.9.4",
+    "@lokascript/i18n": "^2.9.4",
     "boxen": "^8.0.1",
     "chalk": "^6.0.0",
     "chokidar": "^3.5.0",
