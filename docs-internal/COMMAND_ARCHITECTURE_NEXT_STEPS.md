@@ -472,6 +472,31 @@ not the core abstractions.
 
 ## Open, filed rather than folded in
 
+- **Arc F step 4 — the last two fallback-action mappings, now precisely
+  specified.** Arc F migrated 43 of 47 mappers to schema `ast` descriptors; the
+  24 actions with no mapper still fall through to `buildGenericCommand`'s
+  blanket mapping (`destination`→`on`, `duration`→`for`, `source`→args,
+  `method`→`via`, `style`→`with`, and `condition`/`event`/`goal` in NEITHER list
+  so they are dropped). Measured against each true-fallback schema's own English
+  markers, **12 of 14 are already correct and only two are wrong** — the arc's
+  brief had guessed this would be its structural win, and it is not.
+  Both were then checked against what the runtime command actually READS, which
+  changed one of the two fixes:
+  - **`open`** — the schema marks `style` as `as`, the blanket mapping emits
+    `with`, and `commands/dom/open.ts:55` reads `modifiers.as`. So `open … as
+    dialog` silently loses its variant today. Fix: `ast: { args: ['patient'],
+    modifiers: { as: 'style' } }`. One line, verified against the runtime.
+  - **`scroll`** — flagged as `destination` emitting `on` where the marker is
+    `to`, but `commands/navigation/scroll-to.ts` `parseInput` reads **only
+    `raw.args`** and never looks at modifiers. So re-keying the modifier fixes
+    nothing: the destination has to become an ARG. Needs care with the position
+    tokens (`top`/`bottom`/`smoothly`) the schema lists in `argSkipTokens`.
+  Behavior change either way, so it wants its own PR with ratchet evidence
+  (`scroll` appears in the corpus as `window-scroll`, `open` as `modal-open`).
+  Caveat on the measurement: it only inspects roles a schema DECLARES, so a
+  role the parser relabels in could still be mishandled and not appear here.
+
+
 - **Core's `semantic-integration.ts` switch is a SECOND semantic→AST
   implementation, and it has already drifted from the first.** Measured
   2026-07-31 during Arc F step 1, by running both paths over the same semantic
