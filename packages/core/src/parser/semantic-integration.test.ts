@@ -5,9 +5,11 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { buildAST } from '@lokascript/semantic';
 import {
   SemanticIntegrationAdapter,
   SemanticAnalyzer,
+  SemanticCommand,
   SemanticRole,
   SemanticValue,
   DEFAULT_CONFIDENCE_THRESHOLD,
@@ -21,6 +23,22 @@ import {
 // =============================================================================
 // Mock Semantic Analyzer
 // =============================================================================
+
+/**
+ * The role→AST step every real analyzer carries: `@lokascript/semantic`'s
+ * `ASTBuilder`. Mocks wire the SAME function production does (see
+ * `createSemanticAdapter`'s `buildAST` dep) so their node shapes cannot drift
+ * from the shipped ones — that drift is precisely what the deleted in-core
+ * switch had accumulated.
+ */
+function realBuildCommandNode(command: SemanticCommand) {
+  return createSemanticAdapter({
+    parse: () => ({ node: null, confidence: 0 }),
+    isRegistered: () => true,
+    registered: () => ['en'],
+    buildAST,
+  }).buildCommandNode?.(command);
+}
 
 function createMockAnalyzer(supportedLangs: string[] = ['en', 'es', 'ja', 'ar']): SemanticAnalyzer {
   return {
@@ -45,6 +63,7 @@ function createMockAnalyzer(supportedLangs: string[] = ['en', 'es', 'ja', 'ar'])
     }) as SemanticAnalyzer['analyze'],
     supportsLanguage: (lang: string) => supportedLangs.includes(lang),
     supportedLanguages: () => supportedLangs,
+    buildCommandNode: realBuildCommandNode,
   };
 }
 
@@ -351,6 +370,16 @@ describe('parseExpressionString (via expression type values)', () => {
    * These tests verify the internal parseExpressionString method by testing
    * through the public interface. The adapter calls parseExpressionString
    * when converting 'expression' type semantic values.
+   *
+   * They go through `set` rather than `call`: the generic command tail now
+   * delegates to `@lokascript/semantic`'s ASTBuilder (which brings its own
+   * expression parser), so `parseExpressionString` survives only on the three
+   * shapes the builder cannot produce — repeat/for, set, if/unless. `set` is
+   * the one of those that carries a plain value expression.
+   *
+   * `buildSetCommandNode` emits `[destination, identifier('to'), patient]`,
+   * which is the positional contract `SetCommand.parseInput` reads — hence
+   * `args[2]` for the value below.
    */
 
   function createExpressionMockAnalyzer(expressionValue: string): SemanticAnalyzer {
@@ -358,8 +387,9 @@ describe('parseExpressionString (via expression type values)', () => {
       analyze: vi.fn(() => ({
         confidence: 0.9,
         command: {
-          name: 'call',
+          name: 'set',
           roles: new Map([
+            ['destination' as const, { type: 'reference' as const, value: 'target' }],
             [
               'patient' as const,
               { type: 'expression' as const, value: expressionValue, raw: expressionValue },
@@ -373,6 +403,9 @@ describe('parseExpressionString (via expression type values)', () => {
     };
   }
 
+  /** The value slot of the `[target, 'to', value]` set contract. */
+  const VALUE_ARG = 2;
+
   it('should parse simple identifiers', () => {
     const analyzer = createExpressionMockAnalyzer('myVar');
     const adapter = new SemanticIntegrationAdapter({ analyzer, language: 'en' });
@@ -380,7 +413,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call myVar');
 
     expect(result.success).toBe(true);
-    expect(result.node?.args?.[0]).toMatchObject({
+    expect(result.node?.args?.[VALUE_ARG]).toMatchObject({
       type: 'identifier',
       name: 'myVar',
     });
@@ -393,7 +426,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('get me.textContent');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
     expect(expr.type).toBe('memberExpression');
     expect(expr.object.name).toBe('me');
     expect(expr.property.name).toBe('textContent');
@@ -406,7 +439,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('get obj.foo.bar');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
     expect(expr.type).toBe('memberExpression');
     expect(expr.property.name).toBe('bar');
     expect(expr.object.type).toBe('memberExpression');
@@ -421,7 +454,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call foo()');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
     expect(expr.type).toBe('callExpression');
     expect(expr.callee.name).toBe('foo');
     expect(expr.arguments).toHaveLength(0);
@@ -434,7 +467,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call me.insertBefore(draggedItem, dropTarget)');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
 
     // Should be a callExpression
     expect(expr.type).toBe('callExpression');
@@ -457,7 +490,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call x.y(a.b, c)');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
 
     expect(expr.type).toBe('callExpression');
     expect(expr.arguments).toHaveLength(2);
@@ -479,7 +512,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call obj.method().another()');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
 
     // Outermost: callExpression for .another()
     expect(expr.type).toBe('callExpression');
@@ -501,7 +534,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call foo.bar(x, y)');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
     expect(expr.type).toBe('callExpression');
     expect(expr.callee.property.name).toBe('bar');
     expect(expr.arguments).toHaveLength(2);
@@ -514,7 +547,7 @@ describe('parseExpressionString (via expression type values)', () => {
     const result = adapter.trySemanticParse('call');
 
     expect(result.success).toBe(true);
-    const expr = result.node?.args?.[0] as any;
+    const expr = result.node?.args?.[VALUE_ARG] as any;
     expect(expr.type).toBe('identifier');
     expect(expr.name).toBe('');
   });

@@ -21,6 +21,7 @@ import {
   parseSemantic,
   isLanguageRegistered,
   getRegisteredLanguages,
+  buildAST,
   DEFAULT_CONFIDENCE_THRESHOLD,
 } from '@lokascript/semantic';
 
@@ -37,6 +38,7 @@ function getSemanticAnalyzer(): SemanticAnalyzerInterface {
       parse: parseSemantic,
       isRegistered: isLanguageRegistered,
       registered: getRegisteredLanguages,
+      buildAST,
     }) as unknown as SemanticAnalyzerInterface;
   }
   return semanticAnalyzerInstance;
