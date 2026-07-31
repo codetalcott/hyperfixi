@@ -29,6 +29,8 @@ ones, because the gate *is* the tracking mechanism.
 | **`tell <target> to <command>` drops the `tell` wrapper** | medium — **silent wrong target** on the form users actually write | **none** | see the measured table below; found by Arc A step 4.3 (Finding 14 in [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), re-verified 2026-07-29 |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
+| **`transition` rejects a POSSESSIVE property target** | medium — upstream-valid, and it is the form the docs and the corpus use | **none** | see the measured table below; found by #847's reachability probe |
+| **`take <class> from <source>` rejected** | medium — upstream-valid classic hyperscript on a shipped command | **none** | see the measured table below; found by #847's reachability probe |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 
@@ -211,6 +213,43 @@ alone is a REGRESSION (see 2).
    would put the first entry back into it. Disambiguate `জন্য` (a time literal
    before it is a duration postposition, not a loop head) in the SAME change as
    the corpus row.
+
+### `transition` and `take` — two upstream-valid forms we reject (2026-07-31)
+
+Both surfaced from #847's reachability probe, which fed one English surface per
+reachable command to both AST paths. Neither is a semantic-vs-traditional
+divergence: both paths fail identically, so this is the shared parser. Every
+form below is `VALID` on the real `hyperscript.org` engine (`hs.parse(src).errors`
+→ `[]`).
+
+**`transition`'s property target cannot be possessive.** The bare form works;
+adding ANY possessor breaks it, with two different messages:
+
+| source | hyperfixi (both paths) |
+| ------ | ---------------------- |
+| `transition *opacity to 0 over 200ms` | **works** — writes `style="opacity: 0"` |
+| `transition my *opacity to 0 over 200ms` | `Expected "to" keyword after property in transition command` |
+| `transition its *opacity to 0` | same |
+| `transition #a's *opacity to 0 over 200ms` | `Transition command requires a CSS property` |
+
+The `my`/`its` and the `#a's` forms fail at different points, so this is likely
+two adjacent gaps rather than one. Note the possessive form is what
+`TransitionCommand`'s own surface area implies and what the multilingual corpus
+renders, so the working bare form is the narrower case.
+
+**`take <class> from <source>` is rejected outright**, and its `for` tail is the
+`toggle`/`wait` bug again:
+
+| source | hyperfixi |
+| ------ | --------- |
+| `take .active from .tab` | `take requires property, "from", and source` (semantic) / `take syntax: take <property> from <source>` (traditional) |
+| `take .active for me` | `Expected "in" after variable name in for loop` |
+| `take .active from .tab for me` | same |
+
+The first is the interesting one: both messages describe the syntax that was
+just supplied. The `for`-tail rows are the same defect class #846 fixed for
+`toggle` — an unconsumed `for` read as a loop head by the next parse round — so
+whoever fixes `take` should reuse `parseTemporalTail`.
 
 Two adjacent diagnostics found in the same sweep, both cosmetic and neither
 worth its own arc — fold them into whichever change touches this area:
