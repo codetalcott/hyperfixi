@@ -694,14 +694,18 @@ describe('Tier 2 Command Mappers', () => {
 
 describe('Tier 3 Command Mappers', () => {
   describe('swap mapper', () => {
-    it('should map swap command', () => {
+    // SwapCommand's contract is keyword-positional args in method → destination
+    // → patient order; it never reads `raw.modifiers`. This case used to assert
+    // `modifiers.on` and fed a `source` role no swap pattern binds — it pinned
+    // the drift rather than the contract.
+    it('maps swap roles to positional args, method first', () => {
       const node: CommandSemanticNode = {
         kind: 'command',
         action: 'swap',
         roles: new Map([
-          ['patient', { type: 'literal', value: 'innerHTML', dataType: 'string' }],
-          ['source', { type: 'literal', value: '<p>New content</p>', dataType: 'string' }],
+          ['method', { type: 'literal', value: 'innerHTML', dataType: 'string' }],
           ['destination', { type: 'selector', value: '#target', selectorKind: 'id' }],
+          ['patient', { type: 'literal', value: '<p>New content</p>', dataType: 'string' }],
         ]),
       };
 
@@ -712,8 +716,30 @@ describe('Tier 3 Command Mappers', () => {
       const result = mapper!.toAST(node, builder);
 
       expect(result.name).toBe('swap');
+      expect(result.args).toHaveLength(3);
+      expect(result.args[0]).toMatchObject({ value: 'innerHTML' });
+      expect(result.args[1]).toMatchObject({ value: '#target' });
+      expect(result.args[2]).toMatchObject({ value: '<p>New content</p>' });
+      expect(result.modifiers).toBeUndefined();
+    });
+
+    it('omits an absent method rather than leaving a hole', () => {
+      // `swap #a with #b` binds no method; the target must still be args[0] so
+      // SwapCommand's `args[len-2]`/`args[len-1]` fallback finds it.
+      const node: CommandSemanticNode = {
+        kind: 'command',
+        action: 'swap',
+        roles: new Map([
+          ['destination', { type: 'selector', value: '#a', selectorKind: 'id' }],
+          ['patient', { type: 'selector', value: '#b', selectorKind: 'id' }],
+        ]),
+      };
+
+      const result = resolveCommandMapper('swap')!.toAST(node, new ASTBuilder());
+
       expect(result.args).toHaveLength(2);
-      expect(result.modifiers!['on']).toBeDefined();
+      expect(result.args[0]).toMatchObject({ value: '#a' });
+      expect(result.args[1]).toMatchObject({ value: '#b' });
     });
   });
 

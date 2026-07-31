@@ -32,7 +32,7 @@ Authoritative source: `packages/testing-framework/baselines/multilingual-priorit
 | avgPrecision (R0 trust floor)  | **0.9998**             | bar 3 reached L4 (0.9953); L7 → 0.9963; R3/R1 arcs → 0.9997; pick arc 3 → 0.9998 (min bn 0.9978)                               |
 | avgMultisetRecall (R0 dupes)   | **1.000**              | signal added #632; last sub-1.0 row (qu behavior-resizable) cleared by #638's SOV if-seam work                                 |
 | avgRoleFidelity (R1)           | **0.9974**             | bar 4 reached session 13 (0.9862); #637/#638 → 0.9919; pick arc 3 cleared Family F in all 23 langs → 0.9974 (lowest ms 0.9943 / th / ko / id) |
-| avgValueRecall (R3)            | **0.9968**             | signal added #634; F1–F8 burned down #635; pick arc 3 recovered the pick value rows (14 langs at 1.0); residual = swap F6 wontfix + triaged rows (min 0.9907) |
+| avgValueRecall (R3)            | **0.9968**             | signal added #634; F1–F8 burned down #635; pick arc 3 recovered the pick value rows (14 langs at 1.0); residual = swap F6 (**re-opened 2026-07-31** — its "runtime-symmetric" premise measured false) + triaged rows (min 0.9907) |
 | avgExecutionFidelity (R2)      | **1.000**              | 47-pattern curated subset fully reproduces en DOM effects                                                                      |
 | canonical validity (R4)        | **3059 / 3059**        | BOTH allowlists EMPTY as of pick arc 3 (#736) — any new invalid pair fails at tolerance 0                                      |
 
@@ -2932,18 +2932,39 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    `{goal}`). Fixed in the trailing-DURATION reclaim: skip exactly one particle
    when a TIME-shaped literal directly follows it (`में 500ms` — the
    prepositional sibling of the bn `জন্য` postposition).
-6. **`swap` role-binding flip — WONTFIX** (ar/bn/hi/ja/ko/qu/tl/tr ×
-   `swap-content`, 8 rows, permanent R3 noise). en parses `swap #a with #b` as
-   `destination=#a, patient=#b` (swapSchema: destination bare-marked svoPos 2,
-   patient with-word svoPos 3); the SOV/VSO transformer marks `#a` accusative →
-   the roles land flipped. Same role-type SET (R1-blind) and swap is
-   runtime-symmetric for the element shape, so this is signature noise, not a
-   behavior bug. Aligning would require flipping destination/patient across the
-   en hand pattern + swapSchema for ALL SVO languages together AND auditing the
-   ast-builder swap mapper / core runtime / renderer round-trip — deemed not
-   worth the regression surface for zero runtime effect (decision 2026-07-10).
-   The 8 rows stay visible in the R3 report; do NOT special-case the R3 walker.
-   If a future arc flips it, regenerate the baseline and watch R1/R2.
+6. **`swap` role-binding flip — ~~WONTFIX~~ RE-OPENED 2026-07-31: the premise
+   was measured false** (ar/bn/hi/ja/ko/qu/tl/tr × `swap-content`, 8 rows). en
+   parses `swap #a with #b` as `destination=#a, patient=#b` (swapSchema:
+   destination bare-marked svoPos 2, patient with-word svoPos 3); the SOV/VSO
+   transformer marks `#a` accusative → the roles land flipped. The 2026-07-10
+   decision rested on **"swap is runtime-symmetric for the element shape, so
+   this is signature noise, not a behavior bug."** It is not symmetric:
+
+   | AST | `#a` after | `#b` after |
+   | --- | ---------- | ---------- |
+   | `swap #a with #b` | `BBB` | `BBB` |
+   | `swap #b with #a` | `AAA` | `AAA` |
+
+   The DOM swap is directional — the target takes the content element's
+   content and the content element is untouched — so a flipped binding swaps
+   the wrong way round. (Measured through parse → `buildAST` → runtime in
+   jsdom.)
+
+   The claim was _vacuously_ true when it was made, for a reason nobody could
+   see at the time: the swap descriptor emitted `args:[patient, source]` +
+   `modifiers.on`, and `SwapCommand.parseInput` reads only `raw.args`, so
+   `swap #a with #b` threw `could not parse arguments` before either binding
+   could matter. Both orders were equally broken, which is not the same as
+   equivalent. The descriptor fix (#845) made the runtime work — and thereby
+   made the flip consequential.
+
+   Fixing still costs what the original entry said: flip destination/patient
+   across the en hand pattern + swapSchema for all SVO languages together, and
+   audit the ast-builder mapper / runtime / renderer round-trip. What changed is
+   the other side of the trade — it is no longer "zero runtime effect", it is
+   eight languages swapping the wrong element. The 8 rows stay visible in the R3
+   report; do NOT special-case the R3 walker. Regenerate the baseline and watch
+   R1/R2 when it lands.
 7. ~~**qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**~~
    **DONE** (2026-07-10, transformer-rendering arc —
    `docs-internal/HANDOFF_transformer-rendering.md`, resolved; all four

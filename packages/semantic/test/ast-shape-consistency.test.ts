@@ -78,18 +78,11 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
     kind: 'contract',
     reason: 'FetchCommand reads the request body from `body`; patient has no en marker',
   },
-  'swap.on': {
-    kind: 'drift',
-    reason:
-      "schema marks destination 'of' (`swap innerHTML of #t`) but the AST builder emits `on`; " +
-      'preserved verbatim by the Arc F migration, filed as its own behavior fix',
-  },
-  'swap.with': {
-    kind: 'drift',
-    reason:
-      '`style` is not a swapSchema role — the builder reads a role the patterns never bind, ' +
-      'which is why `swap innerHTML of #t with <p>` drops the strategy today',
-  },
+  // NOTE: `swap.on` and `swap.with` were the last two `drift` entries. The
+  // descriptor now emits NO modifiers at all — SwapCommand's contract is
+  // keyword-positional args and it never reads `raw.modifiers` — so both keys
+  // stopped existing and the orphan check below deleted them. The drift list is
+  // empty; see `descriptor-runtime-contract.test.ts` for what replaced them.
 };
 
 /** All roles of a first-present-of chain (a bare role is a one-role chain). */
@@ -176,6 +169,6 @@ describe('schema ast descriptors agree with the English marker data', () => {
       .filter(([, v]) => v.kind === 'drift')
       .map(([k]) => k)
       .sort();
-    expect(drift).toEqual(['swap.on', 'swap.with']);
+    expect(drift).toEqual([]);
   });
 });

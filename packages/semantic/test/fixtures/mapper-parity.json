@@ -8315,7 +8315,7 @@
       ]
     },
     "swap": {
-      "roles": ["patient", "destination", "source", "style"],
+      "roles": ["patient", "destination", "method"],
       "cases": [
         {
           "name": "no-roles",
@@ -8339,14 +8339,9 @@
               "value": "#destination-v",
               "selectorKind": "id"
             },
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            },
-            "style": {
+            "method": {
               "type": "literal",
-              "value": "style-v"
+              "value": "method-v"
             }
           },
           "ast": {
@@ -8354,30 +8349,22 @@
             "name": "swap",
             "args": [
               {
-                "type": "selector",
-                "value": ".patient-v",
-                "selector": ".patient-v",
-                "selectorType": "class"
+                "type": "literal",
+                "value": "method-v"
               },
               {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
-              }
-            ],
-            "modifiers": {
-              "on": {
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
               },
-              "with": {
-                "type": "literal",
-                "value": "style-v"
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
               }
-            }
+            ]
           }
         },
         {
@@ -8410,14 +8397,9 @@
               "value": "#destination-v",
               "selectorKind": "id"
             },
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            },
-            "style": {
+            "method": {
               "type": "literal",
-              "value": "style-v"
+              "value": "method-v"
             }
           },
           "ast": {
@@ -8425,24 +8407,16 @@
             "name": "swap",
             "args": [
               {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
-              }
-            ],
-            "modifiers": {
-              "on": {
+                "type": "literal",
+                "value": "method-v"
+              },
+              {
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
-              },
-              "with": {
-                "type": "literal",
-                "value": "style-v"
               }
-            }
+            ]
           }
         },
         {
@@ -8457,15 +8431,14 @@
           "ast": {
             "type": "command",
             "name": "swap",
-            "args": [],
-            "modifiers": {
-              "on": {
+            "args": [
+              {
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
               }
-            }
+            ]
           }
         },
         {
@@ -8476,65 +8449,49 @@
               "value": ".patient-v",
               "selectorKind": "class"
             },
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            },
-            "style": {
+            "method": {
               "type": "literal",
-              "value": "style-v"
+              "value": "method-v"
             }
           },
           "ast": {
             "type": "command",
             "name": "swap",
             "args": [
+              {
+                "type": "literal",
+                "value": "method-v"
+              },
               {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
-              },
-              {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
-              }
-            ],
-            "modifiers": {
-              "with": {
-                "type": "literal",
-                "value": "style-v"
-              }
-            }
-          }
-        },
-        {
-          "name": "only-source",
-          "roles": {
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            }
-          },
-          "ast": {
-            "type": "command",
-            "name": "swap",
-            "args": [
-              {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
               }
             ]
           }
         },
         {
-          "name": "without-source",
+          "name": "only-method",
+          "roles": {
+            "method": {
+              "type": "literal",
+              "value": "method-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "swap",
+            "args": [
+              {
+                "type": "literal",
+                "value": "method-v"
+              }
+            ]
+          }
+        },
+        {
+          "name": "without-method",
           "roles": {
             "patient": {
               "type": "selector",
@@ -8545,10 +8502,6 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
-            },
-            "style": {
-              "type": "literal",
-              "value": "style-v"
             }
           },
           "ast": {
@@ -8557,89 +8510,17 @@
             "args": [
               {
                 "type": "selector",
-                "value": ".patient-v",
-                "selector": ".patient-v",
-                "selectorType": "class"
-              }
-            ],
-            "modifiers": {
-              "on": {
-                "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
               },
-              "with": {
-                "type": "literal",
-                "value": "style-v"
-              }
-            }
-          }
-        },
-        {
-          "name": "only-style",
-          "roles": {
-            "style": {
-              "type": "literal",
-              "value": "style-v"
-            }
-          },
-          "ast": {
-            "type": "command",
-            "name": "swap",
-            "args": [],
-            "modifiers": {
-              "with": {
-                "type": "literal",
-                "value": "style-v"
-              }
-            }
-          }
-        },
-        {
-          "name": "without-style",
-          "roles": {
-            "patient": {
-              "type": "selector",
-              "value": ".patient-v",
-              "selectorKind": "class"
-            },
-            "destination": {
-              "type": "selector",
-              "value": "#destination-v",
-              "selectorKind": "id"
-            },
-            "source": {
-              "type": "selector",
-              "value": "#source-v",
-              "selectorKind": "id"
-            }
-          },
-          "ast": {
-            "type": "command",
-            "name": "swap",
-            "args": [
               {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
-              },
-              {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
               }
-            ],
-            "modifiers": {
-              "on": {
-                "type": "selector",
-                "value": "#destination-v",
-                "selector": "#destination-v",
-                "selectorType": "id"
-              }
-            }
+            ]
           }
         },
         {
@@ -8707,30 +8588,22 @@
             "name": "swap",
             "args": [
               {
-                "type": "selector",
-                "value": ".patient-v",
-                "selector": ".patient-v",
-                "selectorType": "class"
+                "type": "literal",
+                "value": "method-v"
               },
               {
-                "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
-              }
-            ],
-            "modifiers": {
-              "on": {
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
               },
-              "with": {
-                "type": "literal",
-                "value": "style-v"
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
               }
-            }
+            ]
           }
         }
       ]
