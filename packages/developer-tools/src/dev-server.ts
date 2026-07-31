@@ -146,8 +146,12 @@ export class DevServer {
       res.send(this.getClientScript());
     });
 
-    // File serving with live reload injection
-    this.app.get('*.html', (req, res, next) => {
+    // File serving with live reload injection. A RegExp route, not the old
+    // string pattern `'*.html'`: express 5's path-to-regexp v8 has no
+    // extension-style wildcards (`*` must be a named `/*splat`), so the string
+    // form throws `Missing parameter name at index 1: *.html` at registration —
+    // every dev-server test failed on it after the express 4 → 5 major.
+    this.app.get(/\.html$/, (req, res, next) => {
       const filePath = path.join(process.cwd(), req.path);
 
       fs.readFile(filePath, 'utf-8')
