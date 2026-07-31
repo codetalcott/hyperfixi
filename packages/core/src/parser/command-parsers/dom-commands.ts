@@ -9,9 +9,10 @@
  */
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
-import type { ASTNode, Token } from '../../types/core';
+import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS, PUT_OPERATIONS, PUT_OPERATION_KEYWORDS } from '../parser-constants';
+import { isIdentifierLike } from '../token-predicates';
 import {
   isCommandBoundary,
   parseOneArgument,
@@ -19,6 +20,71 @@ import {
   consumeOneOfKeywordsToArgs,
   consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
+
+/**
+ * Consume `toggle`'s optional temporal tail into MODIFIERS.
+ *
+ * `for <duration>` and `until <event> [from <target>]` are both accepted by the
+ * real `hyperscript.org` engine, and `toggle .loading for 2s` is ToggleCommand's
+ * own documented example — but neither was consumed here. The `for` tail was
+ * left for the next parse round, which read it as the start of a `for` LOOP and
+ * failed with `Expected variable name after "for"`; the `until` tail was dropped
+ * in silence.
+ *
+ * Modifiers, not args, because that is where the runtime reads them:
+ * `commands/dom/toggle.ts` `parseTemporalModifiers` takes `modifiers.for` and
+ * `modifiers.until`, and `commands/helpers/temporal-modifiers.ts` already
+ * implements both reversions — that machinery was simply unreachable.
+ */
+function parseTemporalTail(ctx: ParserContext): Record<string, ExpressionNode> {
+  const modifiers: Record<string, ExpressionNode> = {};
+
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FOR)) {
+    const duration = ctx.parseExpression();
+    if (duration) modifiers['for'] = duration as ExpressionNode;
+    return modifiers;
+  }
+
+  if (!ctx.check(KEYWORDS.UNTIL)) return modifiers;
+  ctx.advance();
+
+  const eventToken = ctx.peek();
+  if (!eventToken || !isIdentifierLike(eventToken)) return modifiers;
+  ctx.advance();
+
+  // Colon-qualified names (`htmx:afterOnLoad`) tokenize as three tokens —
+  // identifier, `:` operator, identifier — so rejoin them here.
+  let eventName = eventToken.value;
+  if (ctx.check(':')) {
+    ctx.advance();
+    const suffix = ctx.peek();
+    if (suffix && isIdentifierLike(suffix)) {
+      ctx.advance();
+      eventName = `${eventName}:${suffix.value}`;
+    }
+  }
+
+  // A literal, not an identifier node: ToggleCommand EVALUATES `modifiers.until`
+  // and wants the event NAME, where an identifier would resolve as a variable
+  // lookup and come back undefined.
+  modifiers['until'] = {
+    type: 'literal',
+    value: eventName,
+    raw: eventName,
+  } as unknown as ExpressionNode;
+
+  // `until <event> from <target>` — upstream reverts on the event reaching
+  // another element. ToggleCommand's `setupEventReversion` listens on the
+  // toggled element only, so this is carried but not yet honoured; consuming it
+  // is still required, or the trailing `from` becomes a parse error the moment
+  // the `until` tail above is consumed.
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
+    const target = parseOneArgument(ctx);
+    if (target) modifiers['from'] = target as ExpressionNode;
+  }
+
+  return modifiers;
+}
 
 /**
  * Parse remove command
@@ -130,6 +196,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
 
     return CommandNodeBuilder.fromIdentifier(identifierNode)
       .withArgs(...args)
+      .withModifiers(parseTemporalTail(ctx))
       .endingAt(ctx.getPosition())
       .build();
   }
@@ -163,6 +230,7 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
+    .withModifiers(parseTemporalTail(ctx))
     .endingAt(ctx.getPosition())
     .build();
 }
