@@ -1258,7 +1258,19 @@ export const fetchSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'], // json/text/html are identifiers → expression type
       svoPosition: 3,
       sovPosition: 3,
-      markerOverride: { en: 'as' }, // "fetch /api as json" — needed by schema-driven role inference
+      // `as` in en; `として` ("as/qua") in ja. ja's profile style marker is the
+      // instrumental particle `で`, which is ALSO its event marker, so the
+      // rendered `modal で #dlg を 開く` reads as an event-handler head and the
+      // whole line parsed as `on modal` rather than `open` — a fresh break the
+      // 23-language round-trip probe caught, since making the role bind at all
+      // is what first put a style phrase in front of a ja verb.
+      //
+      // ja ONLY: the probe (`translate(en→L)` → `parse(L)`, both variants, all
+      // 23 languages) shows every other language already round-trips both
+      // `modal` and `non-modal` on its existing marker. ko `로서` and tr
+      // `olarak` were tried and reverted — they changed the rendered surface
+      // without fixing anything.
+      markerOverride: { en: 'as', ja: 'として' }, // "fetch /api as json" — needed by schema-driven role inference
     },
     {
       role: 'method',
@@ -2289,6 +2301,11 @@ export const openSchema: CommandSchema = {
   description: 'Open a dialog, details element, or popover',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `open #dlg as non-modal` → args ['#dlg'], modifiers { as: 'non-modal' }.
+  // `OpenCommand.parseInput` reads the element from `args[0]` and the variant
+  // from the `as` modifier, and `as` is also style's English marker, so the key
+  // needs no consistency-gate exemption.
+  ast: { args: ['patient'], modifiers: { as: 'style' } },
   roles: [
     {
       role: 'patient',
@@ -2296,7 +2313,7 @@ export const openSchema: CommandSchema = {
       required: false,
       expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
-      svoPosition: 2,
+      svoPosition: 1,
       sovPosition: 2,
     },
     {
@@ -2304,9 +2321,26 @@ export const openSchema: CommandSchema = {
       description: 'Open-mode variant (modal / non-modal) for <dialog>',
       required: false,
       expectedTypes: ['literal', 'expression'],
-      svoPosition: 1,
+      // The marker FOLLOWS the target: `open #dlg as non-modal`, which is
+      // OpenCommand's own documented example. Style used to sit at svoPosition
+      // 1, generating `open [as {style}] [{patient}]` — so only the un-English
+      // `open as modal #dlg` bound the role, and the documented surface parsed
+      // to `patient` alone with the variant silently dropped.
+      svoPosition: 2,
       sovPosition: 1,
-      markerOverride: { en: 'as' },
+      // `as` in en; `として` ("as/qua") in ja. ja's profile style marker is the
+      // instrumental particle `で`, which is ALSO its event marker, so the
+      // rendered `modal で #dlg を 開く` reads as an event-handler head and the
+      // whole line parsed as `on modal` rather than `open` — a fresh break the
+      // 23-language round-trip probe caught, since making the role bind at all
+      // is what first put a style phrase in front of a ja verb.
+      //
+      // ja ONLY: the probe (`translate(en→L)` → `parse(L)`, both variants, all
+      // 23 languages) shows every other language already round-trips both
+      // `modal` and `non-modal` on its existing marker. ko `로서` and tr
+      // `olarak` were tried and reverted — they changed the rendered surface
+      // without fixing anything.
+      markerOverride: { en: 'as', ja: 'として' },
     },
   ],
 };

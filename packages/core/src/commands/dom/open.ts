@@ -46,6 +46,15 @@ export interface OpenCommandInput {
   dialogMode: OpenDialogMode;
 }
 
+/** Map a mode word to the dialog mode, or undefined if it names neither. */
+function dialogModeOf(word: unknown): OpenDialogMode | undefined {
+  if (typeof word !== 'string') return undefined;
+  const normalized = word.toLowerCase().trim();
+  if (normalized === 'non-modal' || normalized === 'nonmodal') return 'non-modal';
+  if (normalized === 'modal') return 'modal';
+  return undefined;
+}
+
 async function parseDialogMode(
   args: ASTNode[],
   modifiers: Record<string, ExpressionNode>,
@@ -53,13 +62,24 @@ async function parseDialogMode(
   context: ExecutionContext
 ): Promise<OpenDialogMode> {
   if (modifiers?.as) {
-    const value = await evaluator.evaluate(modifiers.as, context);
-    if (typeof value === 'string') {
-      const normalized = value.toLowerCase().trim();
-      if (normalized === 'non-modal' || normalized === 'nonmodal') return 'non-modal';
-      if (normalized === 'modal') return 'modal';
-    }
+    const mode = dialogModeOf(await evaluator.evaluate(modifiers.as, context));
+    if (mode) return mode;
   }
+
+  // The TRADITIONAL parser folds `#dlg as non-modal` into a single
+  // `asExpression` node — the mode is its `targetType`, not a separate `as`
+  // keyword arg, so neither branch around this one could see it and every
+  // traditionally-parsed `open … as non-modal` silently opened a MODAL. The
+  // target half is already handled: `resolveTargetsFromArgs` unwraps the same
+  // node to find `#dlg`.
+  for (const arg of args) {
+    const a = arg as Record<string, unknown>;
+    if (a?.type !== 'asExpression') continue;
+    const targetType = a.targetType as { name?: unknown; value?: unknown } | undefined;
+    const mode = dialogModeOf(targetType?.name ?? targetType?.value);
+    if (mode) return mode;
+  }
+
   for (let i = 0; i < args.length - 1; i++) {
     const arg = args[i] as Record<string, unknown>;
     if (arg?.type === 'identifier' && (arg.name as string)?.toLowerCase() === 'as') {

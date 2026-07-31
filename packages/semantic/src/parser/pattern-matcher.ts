@@ -683,6 +683,14 @@ export class PatternMatcher {
         captured.set(patternToken.role, beepValue);
         return true;
       }
+      // `non-modal` before the operator run, which would read the hyphen as
+      // subtraction and hand the runtime a binaryExpression no string compare
+      // can match.
+      const hyphenValue = this.tryMatchHyphenatedWord(tokens);
+      if (hyphenValue) {
+        captured.set(patternToken.role, hyphenValue);
+        return true;
+      }
       const runValue = this.tryMatchOperatorRunExpression(tokens);
       if (runValue) {
         captured.set(patternToken.role, runValue);
@@ -1164,6 +1172,23 @@ export class PatternMatcher {
    */
   private static readonly RUN_OPERATORS = new Set(['+', '-', '*', '/']);
 
+  /** A bare word: no digits, no sigil — the only thing a hyphen may join. */
+  private static isBareWordToken(token: { value: string } | null | undefined): boolean {
+    return !!token && /^[A-Za-z_][A-Za-z0-9_]*$/.test(token.value);
+  }
+
+  /** Do these two tokens touch in the SOURCE (no whitespace between them)? */
+  private static tokensAdjacent(
+    left: { position?: { start?: number; end?: number } } | null | undefined,
+    right: { position?: { start?: number; end?: number } } | null | undefined
+  ): boolean {
+    return (
+      left?.position?.end !== undefined &&
+      right?.position?.start !== undefined &&
+      left.position.end === right.position.start
+    );
+  }
+
   /**
    * Try to match a multi-token operator-run expression:
    *   <operand> <op> <operand> (<op> <operand>)*
@@ -1222,6 +1247,52 @@ export class PatternMatcher {
       this.currentProfile
     );
     return { type: 'expression', raw, value: raw } as SemanticValue;
+  }
+
+  /**
+   * Match a HYPHENATED WORD as one literal: `non-modal`, `aria-hidden`.
+   *
+   * Every tokenizer here splits on `-`, so `non-modal` arrives as three tokens
+   * and `tryMatchOperatorRunExpression` folds it into the expression
+   * `non - modal` — a subtraction node, which `OpenCommand`'s
+   * `normalized === 'non-modal'` string compare can never match. Left alone,
+   * making the role bind at all (the `open` position swap) would have turned a
+   * silent default into a WRONG value.
+   *
+   * Subtraction is told apart by SOURCE ADJACENCY plus operand shape — the same
+   * pair of vouchers the `.`- and `!`-glue rules in `joinExpressionTokens` use.
+   * A real subtraction either spaces its operator (`a - b`, `count - 1`) or has
+   * a non-word operand (`count-1`, `#a-#b`); two source-adjacent BARE WORDS are
+   * a hyphenated identifier. Runs of three or more (`data-list-item`) fold too.
+   *
+   * Runs BEFORE the operator matcher, which would otherwise consume the first
+   * `word - word` pair and strand the rest.
+   */
+  private tryMatchHyphenatedWord(tokens: TokenStream): SemanticValue | null {
+    const head = tokens.peek();
+    if (!PatternMatcher.isBareWordToken(head)) return null;
+
+    let ahead = 1;
+    const parts: string[] = [head!.value];
+    for (;;) {
+      const hyphen = tokens.peek(ahead);
+      const word = tokens.peek(ahead + 1);
+      if (
+        !hyphen ||
+        hyphen.value !== '-' ||
+        !PatternMatcher.isBareWordToken(word) ||
+        !PatternMatcher.tokensAdjacent(tokens.peek(ahead - 1), hyphen) ||
+        !PatternMatcher.tokensAdjacent(hyphen, word)
+      ) {
+        break;
+      }
+      parts.push(word!.value);
+      ahead += 2;
+    }
+
+    if (parts.length < 2) return null;
+    for (let i = 0; i < ahead; i++) tokens.advance();
+    return createLiteral(parts.join('-'), 'string');
   }
 
   private tryMatchOperatorRunExpression(tokens: TokenStream): SemanticValue | null {
