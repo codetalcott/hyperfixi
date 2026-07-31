@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { buildAST, ASTBuilder } from '../src/ast-builder';
-import { getCommandMapper } from '../src/ast-builder/command-mappers';
+import { resolveCommandMapper } from '../src/ast-builder/command-mappers';
 import type { CommandSemanticNode, SemanticValue, ActionType } from '../src/types';
 
 // =============================================================================
@@ -59,7 +59,7 @@ describe('Toggle Command Mapper', () => {
       patient: selector('.active'),
     });
 
-    const mapper = getCommandMapper('toggle')!;
+    const mapper = resolveCommandMapper('toggle')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -75,7 +75,7 @@ describe('Toggle Command Mapper', () => {
       destination: selector('#button', 'id'),
     });
 
-    const mapper = getCommandMapper('toggle')!;
+    const mapper = resolveCommandMapper('toggle')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -91,7 +91,7 @@ describe('Toggle Command Mapper', () => {
       duration: literal('500ms'),
     });
 
-    const mapper = getCommandMapper('toggle')!;
+    const mapper = resolveCommandMapper('toggle')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -109,7 +109,7 @@ describe('Add Command Mapper', () => {
       patient: selector('.highlight'),
     });
 
-    const mapper = getCommandMapper('add')!;
+    const mapper = resolveCommandMapper('add')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -123,7 +123,7 @@ describe('Add Command Mapper', () => {
       destination: selector('#target', 'id'),
     });
 
-    const mapper = getCommandMapper('add')!;
+    const mapper = resolveCommandMapper('add')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -141,7 +141,7 @@ describe('Remove Command Mapper', () => {
       patient: selector('.selected'),
     });
 
-    const mapper = getCommandMapper('remove')!;
+    const mapper = resolveCommandMapper('remove')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -155,7 +155,7 @@ describe('Remove Command Mapper', () => {
       source: selector('#button', 'id'),
     });
 
-    const mapper = getCommandMapper('remove')!;
+    const mapper = resolveCommandMapper('remove')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -173,7 +173,7 @@ describe('Show Command Mapper', () => {
       destination: reference('me'),
     });
 
-    const mapper = getCommandMapper('show')!;
+    const mapper = resolveCommandMapper('show')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -187,7 +187,7 @@ describe('Show Command Mapper', () => {
       duration: literal('slow'),
     });
 
-    const mapper = getCommandMapper('show')!;
+    const mapper = resolveCommandMapper('show')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -201,7 +201,7 @@ describe('Hide Command Mapper', () => {
       destination: reference('me'),
     });
 
-    const mapper = getCommandMapper('hide')!;
+    const mapper = resolveCommandMapper('hide')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -221,7 +221,7 @@ describe('Set Command Mapper', () => {
       patient: literal('hello', 'string'),
     });
 
-    const mapper = getCommandMapper('set')!;
+    const mapper = resolveCommandMapper('set')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -245,7 +245,7 @@ describe('Increment Command Mapper', () => {
       patient: reference('counter'),
     });
 
-    const mapper = getCommandMapper('increment')!;
+    const mapper = resolveCommandMapper('increment')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -259,7 +259,7 @@ describe('Increment Command Mapper', () => {
       quantity: literal(5, 'number'),
     });
 
-    const mapper = getCommandMapper('increment')!;
+    const mapper = resolveCommandMapper('increment')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -273,7 +273,7 @@ describe('Decrement Command Mapper', () => {
       patient: reference('counter'),
     });
 
-    const mapper = getCommandMapper('decrement')!;
+    const mapper = resolveCommandMapper('decrement')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -291,7 +291,7 @@ describe('Wait Command Mapper', () => {
       duration: literal('500ms'),
     });
 
-    const mapper = getCommandMapper('wait')!;
+    const mapper = resolveCommandMapper('wait')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -303,7 +303,7 @@ describe('Wait Command Mapper', () => {
   it('should map wait without duration', () => {
     const node = createCommandNode('wait', {});
 
-    const mapper = getCommandMapper('wait')!;
+    const mapper = resolveCommandMapper('wait')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -323,7 +323,7 @@ describe('Put Command Mapper', () => {
       destination: reference('me'),
     });
 
-    const mapper = getCommandMapper('put')!;
+    const mapper = resolveCommandMapper('put')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -341,7 +341,7 @@ describe('Put Command Mapper', () => {
       destination: reference('me'),
       manner: literal('before', 'string'),
     });
-    const result = getCommandMapper('put')!.toAST(node, new ASTBuilder());
+    const result = resolveCommandMapper('put')!.toAST(node, new ASTBuilder());
     expect(result.modifiers!['before']).toBeDefined();
     expect(result.modifiers!['into']).toBeUndefined();
   });
@@ -354,7 +354,7 @@ describe('Put Command Mapper', () => {
       destination: reference('body'),
       manner: literal('at end of', 'string'),
     });
-    const result = getCommandMapper('put')!.toAST(node, new ASTBuilder());
+    const result = resolveCommandMapper('put')!.toAST(node, new ASTBuilder());
     expect(result.modifiers!['at end of']).toMatchObject({
       type: 'contextReference',
       contextType: 'body',
@@ -373,7 +373,7 @@ describe('Fetch Command Mapper', () => {
       source: literal('/api/data', 'string'),
     });
 
-    const mapper = getCommandMapper('fetch')!;
+    const mapper = resolveCommandMapper('fetch')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -392,7 +392,7 @@ describe('Log Command Mapper', () => {
       patient: literal('Debug message', 'string'),
     });
 
-    const mapper = getCommandMapper('log')!;
+    const mapper = resolveCommandMapper('log')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -411,7 +411,7 @@ describe('Trigger Command Mapper', () => {
       event: literal('customEvent', 'string'),
     });
 
-    const mapper = getCommandMapper('trigger')!;
+    const mapper = resolveCommandMapper('trigger')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -425,7 +425,7 @@ describe('Trigger Command Mapper', () => {
       destination: selector('#button', 'id'),
     });
 
-    const mapper = getCommandMapper('trigger')!;
+    const mapper = resolveCommandMapper('trigger')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -439,7 +439,7 @@ describe('Send Command Mapper', () => {
       event: literal('myEvent', 'string'),
     });
 
-    const mapper = getCommandMapper('send')!;
+    const mapper = resolveCommandMapper('send')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -463,7 +463,7 @@ describe('Go Command Mapper', () => {
       method: literal('url', 'string'),
     });
 
-    const mapper = getCommandMapper('go')!;
+    const mapper = resolveCommandMapper('go')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -478,7 +478,7 @@ describe('Go Command Mapper', () => {
       destination: literal('back', 'string'),
     });
 
-    const mapper = getCommandMapper('go')!;
+    const mapper = resolveCommandMapper('go')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -492,7 +492,7 @@ describe('Go Command Mapper', () => {
       destination: literal('/path/to/page', 'string'),
     });
 
-    const mapper = getCommandMapper('go')!;
+    const mapper = resolveCommandMapper('go')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -513,7 +513,7 @@ describe('Transition Command Mapper', () => {
       duration: literal('500ms'),
     });
 
-    const mapper = getCommandMapper('transition')!;
+    const mapper = resolveCommandMapper('transition')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -531,7 +531,7 @@ describe('Return Command Mapper', () => {
       patient: literal(42, 'number'),
     });
 
-    const mapper = getCommandMapper('return')!;
+    const mapper = resolveCommandMapper('return')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -542,7 +542,7 @@ describe('Return Command Mapper', () => {
   it('should map return without value', () => {
     const node = createCommandNode('return', {});
 
-    const mapper = getCommandMapper('return')!;
+    const mapper = resolveCommandMapper('return')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -555,7 +555,7 @@ describe('Halt Command Mapper', () => {
   it('should map halt', () => {
     const node = createCommandNode('halt', {});
 
-    const mapper = getCommandMapper('halt')!;
+    const mapper = resolveCommandMapper('halt')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -572,7 +572,7 @@ describe('Halt Command Mapper', () => {
     // skip the toggle.
     const node = createCommandNode('halt', { patient: literal('the', 'string') });
 
-    const mapper = getCommandMapper('halt')!;
+    const mapper = resolveCommandMapper('halt')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -588,7 +588,7 @@ describe('Throw Command Mapper', () => {
       patient: literal('Error occurred', 'string'),
     });
 
-    const mapper = getCommandMapper('throw')!;
+    const mapper = resolveCommandMapper('throw')!;
     const builder = new ASTBuilder();
     const result = mapper.toAST(node, builder);
 
@@ -617,7 +617,7 @@ describe('Command Mapper Registry', () => {
     const missing: string[] = [];
 
     allCommands.forEach(action => {
-      const mapper = getCommandMapper(action);
+      const mapper = resolveCommandMapper(action);
       if (!mapper) {
         missing.push(action);
       }

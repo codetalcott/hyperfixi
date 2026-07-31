@@ -14,7 +14,7 @@ import {
   type CommandNode,
 } from '../src/ast-builder/index';
 import { convertValue, convertLiteral, convertSelector, convertReference } from '../src/ast-builder/value-converters';
-import { getCommandMapper } from '../src/ast-builder/command-mappers';
+import { resolveCommandMapper } from '../src/ast-builder/command-mappers';
 import type {
   SemanticNode,
   CommandSemanticNode,
@@ -184,7 +184,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('toggle');
+      const mapper = resolveCommandMapper('toggle');
       expect(mapper).toBeDefined();
 
       const builder = new ASTBuilder();
@@ -210,7 +210,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('add');
+      const mapper = resolveCommandMapper('add');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -230,7 +230,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('wait');
+      const mapper = resolveCommandMapper('wait');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -250,7 +250,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('wait');
+      const mapper = resolveCommandMapper('wait');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -270,7 +270,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('wait');
+      const mapper = resolveCommandMapper('wait');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -290,7 +290,7 @@ describe('Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('log');
+      const mapper = resolveCommandMapper('log');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -539,7 +539,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('trigger');
+      const mapper = resolveCommandMapper('trigger');
       expect(mapper).toBeDefined();
 
       const builder = new ASTBuilder();
@@ -562,7 +562,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('send');
+      const mapper = resolveCommandMapper('send');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -582,7 +582,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('append');
+      const mapper = resolveCommandMapper('append');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -602,7 +602,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('focus');
+      const mapper = resolveCommandMapper('focus');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -619,7 +619,7 @@ describe('Tier 2 Command Mappers', () => {
         roles: new Map(),
       };
 
-      const mapper = getCommandMapper('halt');
+      const mapper = resolveCommandMapper('halt');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -639,7 +639,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('transition');
+      const mapper = resolveCommandMapper('transition');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -659,7 +659,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('return');
+      const mapper = resolveCommandMapper('return');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -678,7 +678,7 @@ describe('Tier 2 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('throw');
+      const mapper = resolveCommandMapper('throw');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -705,7 +705,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('swap');
+      const mapper = resolveCommandMapper('swap');
       expect(mapper).toBeDefined();
 
       const builder = new ASTBuilder();
@@ -730,7 +730,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('morph');
+      const mapper = resolveCommandMapper('morph');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -751,7 +751,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('clone');
+      const mapper = resolveCommandMapper('clone');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -771,7 +771,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('if');
+      const mapper = resolveCommandMapper('if');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -791,7 +791,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('for');
+      const mapper = resolveCommandMapper('for');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -811,7 +811,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('while');
+      const mapper = resolveCommandMapper('while');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -830,7 +830,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('repeat');
+      const mapper = resolveCommandMapper('repeat');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -849,7 +849,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('behavior');
+      const mapper = resolveCommandMapper('behavior');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -869,7 +869,7 @@ describe('Tier 3 Command Mappers', () => {
         ]),
       };
 
-      const mapper = getCommandMapper('install');
+      const mapper = resolveCommandMapper('install');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -887,7 +887,7 @@ describe('Tier 3 Command Mappers', () => {
         roles: new Map(),
       };
 
-      const mapper = getCommandMapper('async');
+      const mapper = resolveCommandMapper('async');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -904,7 +904,7 @@ describe('Tier 3 Command Mappers', () => {
         roles: new Map(),
       };
 
-      const mapper = getCommandMapper('continue');
+      const mapper = resolveCommandMapper('continue');
       const builder = new ASTBuilder();
       const result = mapper!.toAST(node, builder);
 
@@ -919,7 +919,7 @@ describe('Tier 3 Command Mappers', () => {
 // =============================================================================
 
 describe('Command Mapper Coverage', () => {
-  it('should have mappers for all 46 commands', () => {
+  it('should have mappers for all 47 commands', () => {
     const expectedCommands = [
       // Tier 1
       'toggle', 'add', 'remove', 'set', 'show', 'hide',
@@ -929,7 +929,7 @@ describe('Command Mapper Coverage', () => {
       'go', 'transition', 'focus', 'blur',
       'call', 'return', 'halt', 'throw', 'settle',
       // Tier 3
-      'swap', 'morph', 'clone', 'measure',
+      'swap', 'pick', 'morph', 'clone', 'measure',
       'make', 'tell', 'default',
       'js', 'async',
       'if', 'unless',
@@ -938,11 +938,11 @@ describe('Command Mapper Coverage', () => {
     ];
 
     for (const command of expectedCommands) {
-      const mapper = getCommandMapper(command as any);
+      const mapper = resolveCommandMapper(command as any);
       expect(mapper, `Missing mapper for: ${command}`).toBeDefined();
     }
 
-    expect(expectedCommands.length).toBe(46);
+    expect(expectedCommands.length).toBe(47);
   });
 });
 

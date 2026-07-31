@@ -9,6 +9,7 @@ import type { CommandSemanticNode, ActionType, SemanticValue, SemanticRole } fro
 import { convertValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
 import type { ExpressionNode, LiteralNode } from './expression-parser';
+import { getSchema, type AstShape } from '../generators/command-schemas';
 
 // =============================================================================
 // Command Mapper Interface
@@ -136,27 +137,6 @@ const toggleMapper: CommandMapper = {
 };
 
 /**
- * Add command mapper.
- *
- * Semantic: add patient:.active destination:#button
- * AST: { name: 'add', args: ['.active'], modifiers: { to: '#button' } }
- */
-const addMapper: CommandMapper = {
-  action: 'add',
-  toAST(node, _builder) {
-    const patient = convertRoleValue(node, 'patient');
-    const destination = convertRoleValue(node, 'destination');
-
-    const args: ExpressionNode[] = patient ? [patient] : [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    if (destination) modifiers['to'] = destination;
-
-    return createCommandNode('add', args, modifiers);
-  },
-};
-
-/**
  * Remove command mapper.
  *
  * Semantic: remove patient:.active source:#button
@@ -174,64 +154,6 @@ const removeMapper: CommandMapper = {
     if (source) modifiers['from'] = source;
 
     return createCommandNode('remove', args, modifiers);
-  },
-};
-
-/**
- * Set command mapper.
- *
- * Semantic: set destination:#element's value patient:"hello"
- * AST: { name: 'set', args: [#element's value], modifiers: { to: "hello" } }
- *
- * Note: The destination typically includes the property path (e.g., #element's value)
- * and patient is the value being set.
- */
-const setMapper: CommandMapper = {
-  action: 'set',
-  toAST(node, _builder) {
-    const destination = convertRoleValue(node, 'destination');
-    const patient = convertRoleValue(node, 'patient');
-    const scope = convertRoleValue(node, 'scope');
-
-    const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    // The destination is typically the property path to set
-    if (destination) {
-      args.push(destination);
-    }
-
-    // The patient is the value being set
-    if (patient) modifiers['to'] = patient;
-
-    // The scope (`set @attr to V on <scope>`) is the element(s) to set on —
-    // routed to `modifiers.on`, which the core SetCommand applies to every
-    // matched element (defaulting to `me` when absent). See S1 tabs-aria arc.
-    if (scope) modifiers['on'] = scope;
-
-    return createCommandNode('set', args, modifiers);
-  },
-};
-
-/**
- * Show command mapper.
- */
-const showMapper: CommandMapper = {
-  action: 'show',
-  toAST(node, _builder) {
-    const destination = convertRoleValue(node, 'destination');
-    const patient = convertRoleValue(node, 'patient');
-    const duration = convertRoleValue(node, 'duration');
-
-    const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    // Target can be in destination or patient
-    const target = destination ?? patient;
-    if (target) args.push(target);
-    if (duration) modifiers['with'] = duration;
-
-    return createCommandNode('show', args, modifiers);
   },
 };
 
@@ -376,36 +298,6 @@ const putMapper: CommandMapper = {
     }
 
     return createCommandNode('put', args, modifiers);
-  },
-};
-
-/**
- * Fetch command mapper.
- *
- * Semantic: fetch source:"/api/data" responseType:json method:GET
- * AST: { name: 'fetch', args: ["/api/data"], modifiers: { as: json, with: GET } }
- */
-const fetchMapper: CommandMapper = {
-  action: 'fetch',
-  toAST(node, _builder) {
-    const source = convertRoleValue(node, 'source'); // URL
-    const style = convertRoleValue(node, 'style'); // `with { method, headers, body }`
-    const method = convertRoleValue(node, 'method'); // GET, POST, etc.
-    const responseType = convertRoleValue(node, 'responseType'); // json, text, etc.
-    const patient = convertRoleValue(node, 'patient'); // Body
-
-    const args: ExpressionNode[] = source ? [source] : [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    // FetchCommand reads its RequestInit out of `with`. The options object owns
-    // that slot; the bare `method` role only falls back into it when no options
-    // object was given.
-    if (style) modifiers['with'] = style;
-    else if (method) modifiers['with'] = method;
-    if (responseType) modifiers['as'] = responseType;
-    if (patient) modifiers['body'] = patient;
-
-    return createCommandNode('fetch', args, modifiers, { isBlocking: true });
   },
 };
 
@@ -740,32 +632,6 @@ const settleMapper: CommandMapper = {
 // =============================================================================
 // Tier 3: Advanced Commands
 // =============================================================================
-
-/**
- * Swap command mapper.
- *
- * Semantic: swap patient:innerHTML destination:#element source:"<p>new</p>"
- * AST: { name: 'swap', args: [innerHTML, "<p>new</p>"], modifiers: { on: #element } }
- */
-const swapMapper: CommandMapper = {
-  action: 'swap',
-  toAST(node, _builder) {
-    const patient = convertRoleValue(node, 'patient'); // What to swap (e.g., innerHTML)
-    const source = convertRoleValue(node, 'source'); // New content
-    const destination = convertRoleValue(node, 'destination'); // Target element
-    const style = convertRoleValue(node, 'style'); // Swap strategy (innerHTML, outerHTML, etc.)
-
-    const args: ExpressionNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    if (patient) args.push(patient);
-    if (source) args.push(source);
-    if (destination) modifiers['on'] = destination;
-    if (style) modifiers['with'] = style;
-
-    return createCommandNode('swap', args, modifiers);
-  },
-};
 
 /**
  * Pick command mapper.
@@ -1216,17 +1082,13 @@ const onMapper: CommandMapper = {
 const mappers: Map<ActionType, CommandMapper> = new Map([
   // Tier 1: Core commands
   ['toggle', toggleMapper],
-  ['add', addMapper],
   ['remove', removeMapper],
-  ['set', setMapper],
-  ['show', showMapper],
   ['hide', hideMapper],
   ['increment', incrementMapper],
   ['decrement', decrementMapper],
   ['wait', waitMapper],
   ['log', logMapper],
   ['put', putMapper],
-  ['fetch', fetchMapper],
   // Tier 2: Content manipulation
   ['append', appendMapper],
   ['prepend', prependMapper],
@@ -1248,7 +1110,6 @@ const mappers: Map<ActionType, CommandMapper> = new Map([
   ['throw', throwMapper],
   ['settle', settleMapper],
   // Tier 3: Advanced DOM
-  ['swap', swapMapper],
   ['pick', pickMapper],
   ['morph', morphMapper],
   ['clone', cloneMapper],
@@ -1274,11 +1135,96 @@ const mappers: Map<ActionType, CommandMapper> = new Map([
   ['install', installMapper],
 ]);
 
+// =============================================================================
+// Schema-Driven Generic Mapper
+// =============================================================================
+
 /**
- * Get the command mapper for an action type.
+ * Resolve a first-present-of role chain to its converted expression.
+ *
+ * A bare role is a one-element chain. Returns the first role the parse actually
+ * produced — the declarative form of the `destination ?? patient` fallbacks the
+ * hand-written mappers used.
+ */
+function resolveRoleChain(
+  node: CommandSemanticNode,
+  spec: SemanticRole | ReadonlyArray<SemanticRole>
+): ExpressionNode | undefined {
+  const roles: ReadonlyArray<SemanticRole> = Array.isArray(spec) ? spec : [spec as SemanticRole];
+  for (const role of roles) {
+    const converted = convertRoleValue(node, role);
+    if (converted !== undefined) return converted;
+  }
+  return undefined;
+}
+
+/**
+ * Build a CommandNode from a declarative {@link AstShape}.
+ *
+ * Deliberately shares `createCommandNode` with the hand-written mappers so a
+ * migrated command emits a byte-identical node — including modifier key order,
+ * which follows the descriptor's authoring order.
+ */
+export function buildFromAstShape(
+  node: CommandSemanticNode,
+  action: ActionType,
+  shape: AstShape
+): CommandNode {
+  const args: ExpressionNode[] = [];
+  for (const spec of shape.args ?? []) {
+    const value = resolveRoleChain(node, spec);
+    // Absent roles are skipped rather than leaving a hole, matching the
+    // original mappers' `if (x) args.push(x)`.
+    if (value !== undefined) args.push(value);
+  }
+
+  const modifiers: Record<string, ExpressionNode> = {};
+  for (const [key, spec] of Object.entries(shape.modifiers ?? {})) {
+    const value = resolveRoleChain(node, spec);
+    if (value !== undefined) modifiers[key] = value;
+  }
+
+  return createCommandNode(action, args, modifiers, shape.isBlocking ? { isBlocking: true } : {});
+}
+
+/**
+ * Build a mapper from an action's schema `ast` descriptor, if it declares one.
+ */
+export function getSchemaMapper(action: ActionType): CommandMapper | undefined {
+  const shape = getSchema(action)?.ast;
+  if (!shape) return undefined;
+  return {
+    action,
+    toAST(node) {
+      return buildFromAstShape(node, action, shape);
+    },
+  };
+}
+
+/**
+ * Resolve the mapper the AST builder should use for an action.
+ *
+ * Resolution order — an explicitly registered mapper always wins, so
+ * {@link registerCommandMapper} remains the override:
+ *
+ * 1. a mapper in the registry (the four with real branching logic — `wait`,
+ *    `put`, `go`, `pick` — plus anything registered at runtime)
+ * 2. the schema's declarative {@link AstShape}
+ * 3. undefined → the caller falls back to `ASTBuilder.buildGenericCommand`
+ */
+export function resolveCommandMapper(action: ActionType): CommandMapper | undefined {
+  return mappers.get(action) ?? getSchemaMapper(action);
+}
+
+/**
+ * Get the EXPLICITLY REGISTERED command mapper for an action type.
+ *
+ * Does not consult schema `ast` descriptors — use {@link resolveCommandMapper}
+ * for the mapper the AST builder actually applies. Kept narrow so callers can
+ * still ask "does this action override the declarative shape?".
  *
  * @param action - The action type
- * @returns The mapper, or undefined if no specific mapper exists
+ * @returns The mapper, or undefined if no specific mapper is registered
  */
 export function getCommandMapper(action: ActionType): CommandMapper | undefined {
   return mappers.get(action);
