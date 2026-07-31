@@ -2545,8 +2545,11 @@ export const defaultSchema: CommandSchema = {
   description: 'Set a default value for a variable',
   category: 'variable',
   primaryRole: 'destination',
-  // `default :x to 0` → args [:x], modifiers { to: 0 }.
-  ast: { args: ['patient'], modifiers: { to: 'source' } },
+  // `default :x to 0` → args [:x], modifiers { to: 0 }. Same arg/modifier
+  // inversion as `set`: DefaultCommand's parseInput reads the target from
+  // `args[0]` and the value from `modifiers.to`, while the parser binds the
+  // variable to `destination` and the value to `patient`.
+  ast: { args: ['destination'], modifiers: { to: 'patient' } },
   roles: [
     {
       role: 'destination',
@@ -3050,6 +3053,12 @@ export const scrollSchema: CommandSchema = {
   description: 'Scroll the viewport to a target element',
   category: 'navigation',
   primaryRole: 'destination',
+  // ScrollCommand's parseInput reads ONLY `raw.args` (`parsePosition` and
+  // `resolveTarget` both walk that list) and throws when it is empty, so the
+  // destination has to be an ARG. The blanket fallback mapping emitted
+  // `modifiers.on`, which the command never consults — `scroll to #header`
+  // failed with 'scroll command requires a target'.
+  ast: { args: ['destination'] },
   // Position/behavior keywords appear in the parser's args alongside the target;
   // schema-driven role inference skips them when scanning for the destination.
   // Mirrors the runtime command's skip set in core/commands/navigation/scroll-to.ts.

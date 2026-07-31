@@ -70,14 +70,10 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
       'sendSchema role — `send evt(x:1) to #t` binds the whole call to `event`, so this ' +
       'modifier is inert today',
   },
-  'default.to': {
-    kind: 'drift',
-    reason:
-      'LIVE BUG preserved verbatim: the builder reads patient→args and source→`to`, but the ' +
-      'parser binds destination=":x" and patient=0, so `default :x to 0` builds ' +
-      '{ name: "default", args: [0] } — the variable is DROPPED and `source` is never bound. ' +
-      'The fix is a behavior change and gets its own PR',
-  },
+  // NOTE: `default.to` was a `drift` entry here until the descriptor was
+  // inverted to `args: ['destination'], modifiers: { to: 'patient' }`. The key
+  // now matches patient's `markerOverride.en` ('to'), so the gate rejects the
+  // exemption — which is the mechanism working as designed.
   'fetch.body': {
     kind: 'contract',
     reason: 'FetchCommand reads the request body from `body`; patient has no en marker',
@@ -180,6 +176,6 @@ describe('schema ast descriptors agree with the English marker data', () => {
       .filter(([, v]) => v.kind === 'drift')
       .map(([k]) => k)
       .sort();
-    expect(drift).toEqual(['default.to', 'swap.on', 'swap.with']);
+    expect(drift).toEqual(['swap.on', 'swap.with']);
   });
 });

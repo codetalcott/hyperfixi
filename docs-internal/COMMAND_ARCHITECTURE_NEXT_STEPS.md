@@ -472,29 +472,49 @@ not the core abstractions.
 
 ## Open, filed rather than folded in
 
-- **Arc F step 4 — the last two fallback-action mappings, now precisely
-  specified.** Arc F migrated 43 of 47 mappers to schema `ast` descriptors; the
-  24 actions with no mapper still fall through to `buildGenericCommand`'s
-  blanket mapping (`destination`→`on`, `duration`→`for`, `source`→args,
-  `method`→`via`, `style`→`with`, and `condition`/`event`/`goal` in NEITHER list
-  so they are dropped). Measured against each true-fallback schema's own English
-  markers, **12 of 14 are already correct and only two are wrong** — the arc's
-  brief had guessed this would be its structural win, and it is not.
-  Both were then checked against what the runtime command actually READS, which
-  changed one of the two fixes:
-  - **`open`** — the schema marks `style` as `as`, the blanket mapping emits
-    `with`, and `commands/dom/open.ts:55` reads `modifiers.as`. So `open … as
-    dialog` silently loses its variant today. Fix: `ast: { args: ['patient'],
-    modifiers: { as: 'style' } }`. One line, verified against the runtime.
-  - **`scroll`** — flagged as `destination` emitting `on` where the marker is
-    `to`, but `commands/navigation/scroll-to.ts` `parseInput` reads **only
-    `raw.args`** and never looks at modifiers. So re-keying the modifier fixes
-    nothing: the destination has to become an ARG. Needs care with the position
-    tokens (`top`/`bottom`/`smoothly`) the schema lists in `argSkipTokens`.
-  Behavior change either way, so it wants its own PR with ratchet evidence
-  (`scroll` appears in the corpus as `window-scroll`, `open` as `modal-open`).
-  Caveat on the measurement: it only inspects roles a schema DECLARES, so a
-  role the parser relabels in could still be mishandled and not appear here.
+- **~~Arc F step 4~~ — `scroll` and `default` LANDED; `open` deferred with a
+  measured reason.** Arc F migrated 43 of 47 mappers to schema `ast`
+  descriptors; the 24 actions with no mapper still fall through to
+  `buildGenericCommand`'s blanket mapping (`destination`→`on`, `duration`→`for`,
+  `source`→args, `method`→`via`, `style`→`with`, and `condition`/`event`/`goal`
+  in NEITHER list so they are dropped). Measured against each true-fallback
+  schema's own English markers, **12 of 14 are already correct and only two are
+  wrong** — the arc's brief had guessed this would be its structural win, and it
+  is not.
+  - **`scroll` — DONE.** `commands/navigation/scroll-to.ts` `parseInput` reads
+    **only `raw.args`** and throws when it is empty, so the destination had to
+    become an ARG (re-keying the modifier `on`→`to` would have fixed nothing).
+    Shipped as `ast: { args: ['destination'] }`.
+  - **`default` — DONE.** Not on the step-4 list at all (it already had a
+    descriptor); it was the `default.to` `drift` exemption. Inverted to
+    `ast: { args: ['destination'], modifiers: { to: 'patient' } }`, matching
+    DefaultCommand's `args[0]`-is-target / `modifiers.to`-is-value contract, and
+    the exemption was pruned.
+  - **`open` — DEFERRED, and the one-line fix in this entry was wrong.** The
+    proposed `ast: { args: ['patient'], modifiers: { as: 'style' } }` is
+    **inert**: no en pattern binds `style` for the documented surface. Measured
+    2026-07-31 — `openSchema` gives `style` `svoPosition: 1` and `patient` `2`,
+    so the generated en pattern is `open [as {style}] [{patient}]` and only the
+    un-English `open as modal #dlg` binds the role; `open #dlg as non-modal`
+    (OpenCommand's own documented example) parses to `patient` alone, and
+    `translate(…, 'en', 'ja')` drops the variant from the rendered output too.
+    Making it live needs (a) the two positions swapped so the marker follows the
+    target — a 24-language pattern-shape change, so ratchet evidence — and
+    (b) the captured value to survive: `non-modal` tokenizes to the *expression*
+    `non - modal`, which `convertValue` routes through the expression parser
+    into a subtraction node, where `open.ts`'s `normalized === 'non-modal'`
+    string compare can never match. (a) without (b) turns a silent default into
+    a wrong value. **No corpus row exercises the `open` command**, so the
+    ratchet cannot be the evidence here — vitest behavior tests must be.
+  Caveat on the original measurement, now demonstrated rather than hypothetical:
+  it only inspects roles a schema DECLARES, and says nothing about whether the
+  parser ever BINDS them.
+  **Correction to this entry's own evidence claim:** it named `window-scroll`
+  and `modal-open` as the corpus rows for `scroll`/`open`. Neither is: they are
+  `on scroll from window …` (an event) and `… add .modal-open to body` (a class
+  name). The rows that do exercise these commands are `last-in-collection`
+  (`scroll to last <.message/> in #chat`), `default-value` (`default my
+  @data-count to "0"`), and `swap-content` (`swap #a with #b`).
 
 
 - **Core's `semantic-integration.ts` switch is a SECOND semantic→AST
@@ -507,22 +527,60 @@ not the core abstractions.
   `manner`, so the positional put becomes an INTO plus a `manner` modifier
   `PutCommand` does not read. Same for `after` and `at end of`; plain `into`
   agrees.
-  **Currently latent, and that is the point.** `put` sits in `parser.ts`'s
-  `skipSemanticParsing` list (`:3467`), so the live English path never reaches
-  the switch; and the canonical non-English renderings of a positional put come
-  back without the `manner` role at all (`translate('put "x" before #out',
-  'en', ko|ja|es|de)` renders a plain put-into), so they do not reach it either.
-  Nothing user-visible is broken today — the only thing preventing it is a
-  hand-maintained skip list of command names. That is precisely this queue's
-  thesis in miniature: a duplicated implementation, silently diverged, held
-  safe by a list nothing compares to the code.
+  **Latent FOR `put` ONLY — NOT latent in general (upgraded 2026-07-31).** The
+  original framing generalized from the one command it measured. `put` does sit
+  in `parser.ts`'s `skipSemanticParsing` list (`:3461-3487`), so the live
+  English path never reaches the switch for `put`; the canonical non-English
+  renderings of a positional put also come back without the `manner` role
+  (`translate('put "x" before #out', 'en', ko|ja|es|de)` renders a plain
+  put-into), so they do not reach it either. But the list holds only 24 command
+  names, and **`default` and `scroll` are not among them** — so for those the
+  switch IS the live English path, and it is the blanket
+  `destination`→`modifiers.on` mapping (`:378-393`) that runs, not
+  `buildGenericCommand` and not the schema descriptor.
+  Measured end-to-end through `hyperscript.eval` in jsdom, on `main` at
+  `a9025a36`:
+
+  | source (plain English) | default path | `{ traditional: true }` |
+  | ---------------------- | ------------ | ----------------------- |
+  | `scroll to #header` | throws `scroll command requires a target` | works |
+  | `scroll to last <.message/> in #chat` (corpus row) | throws | works |
+  | `default :x to 0` | throws `default command requires a value` | throws `Invalid target type: undefined` |
+  | `default my @data-count to "0"` (corpus row) | throws | throws `Invalid target type: object` |
+  | `open #dlg as non-modal` | opens **modal** (variant lost) | opens modal |
+
+  So the queue's thesis holds harder than the entry claimed: a duplicated
+  implementation, silently diverged, held safe by a hand-maintained list — and
+  for two commands the list does not in fact hold it safe.
+  **Consequence for the descriptor work:** the `scroll`/`default` descriptor fix
+  landed on `buildAST`, which is the semantic-bundle/multilingual path. It does
+  **not** reach `hyperscript.eval`'s English path, because that path is this
+  switch. Option (b) — core delegates to `buildAST` — is therefore no longer
+  merely a dedupe: it is what makes those fixes reach users, and it promotes
+  this item from cleanup to the highest-value follow-up. (a) is a
+  re-divergence by construction; (c) is refuted for `default`/`scroll`.
   Not folded into Arc F: Arc F's gates are semantic-stack, while this is a
-  core-side behavior fix dragging the full core gate set. Fix options are
-  (a) teach the switch to read `manner`, (b) have core delegate to semantic's
-  `buildAST`, or (c) delete the switch if the skip list makes it unreachable
-  for every command it mis-handles — (c) needs the reachability measured per
-  command, not assumed. Detail:
+  core-side behavior fix dragging the full core gate set. Detail:
   [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) § fact 2.
+
+- **`DefaultCommand` EVALUATES its target, so `default` is broken on both
+  execution paths.** Independent of the AST-shape defect above, and not fixed by
+  it. `commands/data/default.ts` `parseInput` does `target = await
+  evaluator.evaluate(raw.args[0])` and then `execute` branches on
+  `typeof target === 'string'` — but the target is a *name*, not a value, and
+  evaluating an unset variable yields `undefined` (exactly the case `default`
+  exists to handle). Measured against DefaultCommand's own documented examples,
+  traditional path: `default myVar to "fallback"` → `Invalid target type:
+  undefined`; `default @data-theme to "light"` → `Invalid target type: object`;
+  `set myVar2 to 1 then default myVar2 to 9` → `Invalid target type: number`.
+  Only `default my innerHTML to "No content"` works, and only because the
+  possessive path happens to round-trip through a string.
+  `SetCommand` shows the correct shape: it resolves the target **symbolically
+  from the raw AST node** (`firstArg.name`, then `resolveWriteTarget`) and never
+  evaluates it. The existing unit tests miss all of this because they inject a
+  mock evaluator that returns `node.value ?? node.name` — i.e. the very
+  name-preserving behavior the real evaluator does not have. Any fix should land
+  with an end-to-end test through `hyperscript.eval`, not a mocked one.
 
 - **`swap`'s AST builder reads roles its schema never binds.** The builder
   consumes `source`/`style` and emits `on` for destination; `swapSchema`
