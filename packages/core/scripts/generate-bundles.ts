@@ -1,6 +1,11 @@
 #!/usr/bin/env tsx
 /**
- * Generate the committed bundles' executor cores from `bundle-generator/templates.ts`.
+ * Generate the committed generated regions of the bundle layer:
+ *
+ *   - `browser-bundle-hybrid-complete.ts`'s executor cores, from
+ *     `bundle-generator/templates.ts` (Arc E step 4)
+ *   - `parser-templates.ts`'s `HYBRID_PARSER_TEMPLATE`, from the real parser
+ *     modules `parser/hybrid/{aliases,tokenizer,parser-core}.ts` (Arc E step 5)
  *
  *   npm run generate:bundles         # rewrite the generated regions in place
  *   npm run generate:bundles:check   # fail if the committed output is stale
@@ -63,6 +68,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import * as prettier from 'prettier';
+import { transformSync } from 'esbuild';
 import { emitCommandCases, emitBlockCases } from '../src/bundle-generator/executor-core';
 
 /** Package root (`packages/core`); target paths are relative to it. */
@@ -73,12 +79,86 @@ interface Target {
   file: string;
   /** Human label used in failure output. */
   label: string;
+  /**
+   * Region id → body producer. The producer receives the target's CURRENT
+   * source, because some inputs live in the target itself (hybrid-complete's
+   * `commands: [...]` array is the generation input — see the header).
+   */
+  regions: Record<string, (prev: string) => string>;
+}
+
+// ---------------------------------------------------------------------------
+// Step-5 producer: the embedded hybrid parser, from the real parser modules
+// ---------------------------------------------------------------------------
+
+/**
+ * `HYBRID_PARSER_TEMPLATE` used to be a hand-maintained ~1000-line JS copy of
+ * the hybrid parser, and the copies were measured apart in BOTH directions
+ * before generation replaced the hand copy: the template lacked `@attr`
+ * selector tokenization, the `'s` possessive operator, fetch
+ * `via`/`with`/`{options}`/`as a[n]`, `values of`, five KEYWORDS entries and
+ * the alias-registration API — while carrying a stray KEYWORDS entry of its
+ * own. Every vite-plugin bundle that embeds the template shipped those parse
+ * gaps, invisibly: the only behavioral coverage the template had was three
+ * probes in `parser-template-drift.test.ts` (the vite-plugin's own tests check
+ * the emitted code is *syntactically valid* — `new Function` without a call).
+ *
+ * The transform is esbuild (`loader: 'ts'`), not a regex type-stripper — S2-c
+ * measured the regex approach emitting invalid JS for 6 of 40 command
+ * templates, so it is not trusted with a whole parser. `target: 'es2020'`
+ * matches the runtime promise core's tsconfig `lib` makes (the same promise
+ * that decided #834); esbuild lowers parser-core's class fields through its
+ * tiny inlined helpers rather than emitting ES2022 syntax.
+ *
+ * Concatenation order is the dependency order (aliases → tokenizer →
+ * parser-core); all three modules are runtime-import-free, so the result is
+ * self-contained by construction — `new Function`-loadable, which is exactly
+ * how the drift test consumes it.
+ */
+function buildHybridParserTemplate(): string {
+  const MODULES = [
+    'src/parser/hybrid/aliases.ts',
+    'src/parser/hybrid/tokenizer.ts',
+    'src/parser/hybrid/parser-core.ts',
+  ];
+
+  const parts = MODULES.map(rel => {
+    const src = readFileSync(join(ROOT, rel), 'utf8');
+    const js = transformSync(src, { loader: 'ts', target: 'es2020' }).code;
+    return (
+      js
+        .split('\n')
+        // Imports are types plus the two sibling modules concatenated here;
+        // `export` qualifiers drop because the template is one flat scope.
+        .filter(line => !/^import /.test(line))
+        .join('\n')
+        .replace(/^export (class|function|const)/gm, '$1')
+    );
+  });
+
+  const flat = `// Hybrid Parser — generated from parser/hybrid/{aliases,tokenizer,parser-core}.ts\n\n${parts.join('\n')}`;
+
+  // The template lives inside a TypeScript template literal, so its own
+  // backticks, interpolations and backslashes must be escaped. Backslashes
+  // first, or the escapes just added would be re-escaped.
+  return flat.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }
 
 const TARGETS: Target[] = [
   {
     file: 'src/compatibility/browser-bundle-hybrid-complete.ts',
     label: 'hybrid-complete',
+    regions: {
+      commands: prev => emitCommandCases(readStringArray(prev, 'commands', 'hybrid-complete')),
+      blocks: prev => emitBlockCases(readStringArray(prev, 'blocks', 'hybrid-complete')),
+    },
+  },
+  {
+    file: 'src/bundle-generator/parser-templates.ts',
+    label: 'parser-templates',
+    regions: {
+      'hybrid-parser': () => buildHybridParserTemplate(),
+    },
   },
 ];
 
@@ -113,12 +193,12 @@ async function generateOne(target: Target): Promise<{ path: string; next: string
   const path = join(ROOT, target.file);
   const prev = readFileSync(path, 'utf8');
 
-  const commands = readStringArray(prev, 'commands', target.label);
-  const blocks = readStringArray(prev, 'blocks', target.label);
-  if (commands.length === 0) throw new Error(`${target.label}: empty commands array`);
-
-  let next = spliceRegion(prev, 'commands', emitCommandCases(commands), target.label);
-  next = spliceRegion(next, 'blocks', emitBlockCases(blocks), target.label);
+  let next = prev;
+  for (const [id, produce] of Object.entries(target.regions)) {
+    const body = produce(prev);
+    if (!body.trim()) throw new Error(`${target.label}: region '${id}' produced empty output`);
+    next = spliceRegion(next, id, body, target.label);
+  }
 
   const config = await prettier.resolveConfig(path);
   next = await prettier.format(next, { ...config, filepath: path });

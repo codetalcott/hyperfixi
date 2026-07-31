@@ -558,7 +558,15 @@ const coreCommandKeys = (): string[] => {
 
 /** cmdMap keys of the embedded template, read from its source text. */
 const templateCommandKeys = (): string[] => {
-  const block = HYBRID_PARSER_TEMPLATE.match(/const cmdMap = \{([\s\S]*?)\n {4}\};/);
+  // The template's cmdMap is parser-core's class field, lowered by esbuild's
+  // es2020 transform into a constructor-time `__publicField(this, "cmdMap", {`
+  // (Arc E step 5 generates the template from parser-core, and es2020 has no
+  // class-field syntax). When this regex finds nothing, the assertion below
+  // reports it loudly rather than passing on empty — which is exactly how the
+  // step-5 shape change surfaced here instead of slipping by.
+  const block = HYBRID_PARSER_TEMPLATE.match(
+    /__publicField\(this, "cmdMap", \{([\s\S]*?)\n {4}\}\)/
+  );
   if (!block) return [];
   return [...block[1].matchAll(/^ {6}([A-Za-z_][\w]*):/gm)].map(m => m[1]);
 };
@@ -567,10 +575,17 @@ describe('parser-core and the embedded parser template dispatch the same command
   it('the two cmdMaps are identical', () => {
     // `generateBundle()` in core imports `parser/hybrid/parser-core`, but the
     // vite-plugin's generator embeds HYBRID_PARSER_TEMPLATE instead. While the
-    // two differed, the set of commands that actually ran depended on which
-    // generator the user went through: the template had `empty` and no `halt`,
-    // parser-core the reverse. `parser-template-drift.test.ts` compares them on
-    // catch/finally only and is structurally unable to see this.
+    // two were separately hand-maintained, the set of commands that actually
+    // ran depended on which generator the user went through: the template had
+    // `empty` and no `halt`, parser-core the reverse.
+    //
+    // Since Arc E step 5 the template is GENERATED from parser-core, so this
+    // equality holds by construction. It stays as the cheap source-text belt
+    // for a stale commit (someone edits parser-core and skips regeneration):
+    // `generate:bundles:check` fails that in lint-typecheck, this fails it in
+    // unit-tests, and the AST-equivalence suite in
+    // `parser-template-drift.test.ts` fails it wherever the drift is
+    // behavioral. Different jobs, one survivor still catches it.
     const core = coreCommandKeys();
     const template = templateCommandKeys();
     expect(core.length, 'cmdMap regex found nothing — parser-core shape changed').toBeGreaterThan(

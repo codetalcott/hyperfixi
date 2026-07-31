@@ -95,7 +95,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 2. Export a named factory in `src/commands/index.ts` and add the command name to the `COMMANDS` set in `src/parser/parser-constants.ts`
 3. Register the factory in the runtime entry points that need it (`src/runtime/runtime.ts` and any `src/compatibility/browser-bundle-*.ts` that should ship the command)
 4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
-5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
+5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts` and `template-capabilities.ts`, then run `npm run generate:bundles` — the hybrid parser template and hybrid-complete's executor switches are generated (parser rules go in `src/parser/hybrid/parser-core.ts`, never in `parser-templates.ts`'s generated region)
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
 7. **No longer needed for the full-runtime counts** — `packageInfo.commands` and
    the `commandCount` of `browser` / `hybrid-hx-v4` are derived from the
