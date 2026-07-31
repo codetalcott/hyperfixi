@@ -244,29 +244,44 @@ export class ProcessPartialsCommand implements DecoratedCommand {
       throw new Error('process partials command requires content argument');
     }
 
-    const evaluatedArgs: unknown[] = [];
-    const argStrings: string[] = [];
-    for (const arg of args) {
-      const evaluated = await evaluator.evaluate(arg, context);
-      evaluatedArgs.push(evaluated);
-      if (typeof evaluated === 'string') {
-        argStrings.push(evaluated.toLowerCase());
-      }
-    }
+    // Keywords are read off the RAW nodes. The previous implementation
+    // EVALUATED every argument and string-matched the results, so a `partials`
+    // identifier resolved as a variable lookup (undefined) and dropped out of
+    // the comparison entirely — `process partials in it` then failed with
+    // `expects "partials" keyword`, naming the one keyword it had been given.
+    // Same defect #859 fixed in TakeCommand.parseInput.
+    const keywordOf = (node: ASTNode | undefined): string | null => {
+      const n = node as { type?: string; name?: unknown; value?: unknown } | undefined;
+      if (!n || typeof n !== 'object') return null;
+      if (n.type === 'identifier' && typeof n.name === 'string') return n.name.toLowerCase();
+      if (n.type === 'literal' && typeof n.value === 'string') return n.value.toLowerCase();
+      return null;
+    };
+    const keywords = args.map(keywordOf);
 
-    const partialsIndex = argStrings.findIndex(s => s === 'partials');
+    const partialsIndex = keywords.indexOf('partials');
+    const inIndex = keywords.indexOf('in');
+
+    let contentNode: ASTNode | undefined;
     if (partialsIndex === -1) {
-      throw new Error('process command expects "partials" keyword: process partials in <content>');
+      if (inIndex !== -1) {
+        throw new Error(
+          'process command expects "partials" keyword: process partials in <content>'
+        );
+      }
+      // Semantic shape: `processSchema` is patient-only, so buildAST hands
+      // over the bare content with the keywords stripped.
+      contentNode = args[0];
+    } else {
+      if (inIndex === -1 || inIndex <= partialsIndex) {
+        throw new Error(
+          'process partials command expects "in" keyword: process partials in <content>'
+        );
+      }
+      contentNode = args[inIndex + 1];
     }
 
-    const inIndex = argStrings.findIndex(s => s === 'in');
-    if (inIndex === -1 || inIndex <= partialsIndex) {
-      throw new Error(
-        'process partials command expects "in" keyword: process partials in <content>'
-      );
-    }
-
-    const contentArg = evaluatedArgs[inIndex + 1];
+    const contentArg = contentNode ? await evaluator.evaluate(contentNode, context) : undefined;
 
     let html: string;
     if (typeof contentArg === 'string') {
@@ -279,10 +294,14 @@ export class ProcessPartialsCommand implements DecoratedCommand {
       throw new Error('process partials: content must be an HTML string or element');
     }
 
-    const usingIndex = argStrings.findIndex(s => s === 'using');
-    let useViewTransition = false;
+    // `using view transition` arrives as three flat identifier args (the shape
+    // the parser emits and `SwapCommand` already reads). A semantic role for
+    // the tail does not exist yet — when one lands it will arrive as a
+    // modifier, so honour that shape too.
+    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
+    const usingIndex = keywords.indexOf('using');
     if (usingIndex !== -1) {
-      const remaining = argStrings.slice(usingIndex + 1).join(' ');
+      const remaining = keywords.slice(usingIndex + 1);
       if (remaining.includes('view') && remaining.includes('transition')) {
         useViewTransition = true;
       }

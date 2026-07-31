@@ -207,15 +207,21 @@ export const commands: Record<string, CommandRef> = {
     availability: 'full',
     examples: ['morph result into #content', 'morph "<div>New</div>" into me'],
   },
+  // The key is the docs spelling (normalized by COMMAND_LIST_SPELLINGS, like
+  // pushUrl/replaceUrl above); everything else is the shipped surface. This
+  // entry used to document `processPartials content [into target]` — a syntax
+  // no parser has ever accepted — while the command has always been
+  // `process partials in <content>`.
   processPartials: {
-    name: 'processPartials',
-    description: 'Process partial templates in HTML content',
-    syntax: 'processPartials content [into target]',
+    name: 'process partials',
+    description: 'Process <hx-partial> elements for multi-target swaps',
+    syntax: 'process partials in <content> [using view transition]',
     category: 'dom',
     availability: 'full',
     examples: [
-      'processPartials result into #container',
-      'processPartials "<partial name=\"header\">...</partial>"',
+      'process partials in it',
+      'process partials in fetchedHtml',
+      'process partials in it using view transition',
     ],
   },
 

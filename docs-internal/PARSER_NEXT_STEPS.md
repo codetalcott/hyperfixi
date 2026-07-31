@@ -30,7 +30,7 @@ ones, because the gate *is* the tracking mechanism.
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
 | **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
 | ~~**`transition` rejects a POSSESSIVE property target**~~ | **FIXED 2026-07-31** — optional leading target in `parseTransitionCommand` (all four shapes), emitting the `[target, property]` args the runtime already discriminated on | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/transition-target.test.ts`; history below |
-| **`process partials … using view transition` mis-parses** | medium — `process` is in `COMPOUND_COMMANDS` with no dispatch case (the `take` root cause), on a shipped command | **none** | see the note below the transition/take tables; filed 2026-07-31 |
+| ~~**`process partials … using view transition` mis-parses**~~ | **FIXED 2026-07-31** — `parseProcessCommand` + dispatch case, runtime raw-keyword rewrite, `process` added to `skipSemanticParsing`; the same unconsumed tail was also fixed on `swap` | ✅ COMPOUND_COMMANDS coverage gate | `packages/core/src/parser/__tests__/compound-command-coverage.test.ts`; history below |
 | ~~**`take <class> from <source>` rejected**~~ | **FIXED 2026-07-31** — `parseTakeCommand` + runtime rewrite (upstream ownership-transfer semantics), `take` added to `skipSemanticParsing` with its toggle/add/remove siblings | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`; history below |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
@@ -340,18 +340,52 @@ worth its own arc — fold them into whichever change touches this area:
   view transition block`, and `for` reports its own name too — it had silently
   been claiming `repeat` as well, which the original filing did not notice.
 
-**`process partials in it using view transition` — NOT the same defect** (filed
-2026-07-31, still open). It reports `Transition command requires a CSS property`
-for a different reason than the `start` diagnostic above: `process` is listed in
-`COMPOUND_COMMANDS` but has **no case in `parseCompoundCommand`**, so it falls
-through to `parseRegularCommand`, whose arg loop stops at the `transition`
-COMMAND token — leaving `using view transition` to be parsed as a fresh
-`transition` command. That is the *identical root cause* `take` had (fixed
-in #859), on a shipped command with a real implementation
-(`commands/dom/process-partials.ts`, `@command({ name: 'process' })`). It needs
-a `parseProcessCommand` consuming `partials in <content> [using view
-transition]`, plus its own tests — one PR, not a fold-in. Check the other
-`COMPOUND_COMMANDS` entries for the same shape while there.
+- ~~**`process partials in it using view transition` mis-parses.**~~ **FIXED
+  2026-07-31.** The filing was right about the root cause — `process` was in
+  `COMPOUND_COMMANDS` with no case in `parseCompoundCommand`, so it fell to
+  `parseRegularCommand`, whose arg loop stops at the `transition` COMMAND
+  token and left the tail to be re-parsed as a fresh `transition` command —
+  and right that it was the identical root cause `take` had (#859). Measuring
+  it turned up **three** more things the filing did not predict:
+
+  1. The bare form was broken too. `process partials in it` parsed to the
+     single arg `[partials]` — the generic loop also stops at `in` — so the
+     content never reached the runtime and it threw
+     `process command expects "partials" keyword`, naming the one keyword it
+     HAD been given. (The command-output-contract skip row recorded exactly
+     that error and read it as "suspected parse defect, needs triage".)
+  2. `ProcessPartialsCommand.parseInput` EVALUATED every arg and string-matched
+     the results, so a `partials` identifier resolved as a variable lookup
+     (undefined) and dropped out of the comparison — the same antipattern #859
+     rewrote in `TakeCommand.parseInput`. Fixing the parser alone would not
+     have fixed the command.
+  3. **`swap` has a dispatch case and was broken anyway.**
+     `swap … with X using view transition` is declared by `SwapCommand`'s own
+     commandMeta and already read by its `parseInput`, but `parseSwapCommand`
+     never consumed the tail — so it failed with the same transition error.
+     Both now share one `consumeViewTransitionTail` helper.
+
+  **Audit of the rest of `COMPOUND_COMMANDS`** (requested by the original
+  filing, done in the same PR — every member probed on both paths against its
+  own documented syntax):
+
+  | Member | Dispatch case | Outcome |
+  | ------ | ------------- | ------- |
+  | `process` | added here | was broken twice over (above) |
+  | `swap` | had one | tail unconsumed — fixed here |
+  | `show`, `hide`, `push`, `replace` | none | **fine.** Their declared syntax (`show [<target>]`, `push url <url> [with title <title>]`) contains no boundary token, so the generic arg loop consumes all of it. |
+  | `add` | none reaching the dispatcher | **fine.** Intercepted in `parseCommandCore` before dispatch, and measured working through the second entry point (`createCommandFromIdentifier`, e.g. nested in `tell`) where that interception does NOT run. |
+  | all others | have one | parse their documented syntax on both paths |
+
+  Two of twenty-two members were in the defective state before anyone looked,
+  and `swap` shows a dispatch case is not sufficient either — so the
+  correspondence is now guarded behaviourally rather than by inspection:
+  `packages/core/src/parser/__tests__/compound-command-coverage.test.ts` probes
+  every member's documented syntax on both paths and ratchets its probe table
+  against `COMPOUND_COMMANDS` in both directions. It is deliberately not a
+  set-coverage assertion over the switch's case labels — the realistic mutation
+  (delete a case) has to FAIL the gate, and `swap` proves a label-derived check
+  would have passed while the command was broken.
 
 ## Notes
 
