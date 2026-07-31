@@ -749,9 +749,17 @@ jobs:
       # prettier-idempotency requirement as the three above: the generator
       # formats with the pinned prettier before writing, so a fresh run is
       # byte-identical to the committed file.
+      # `check:mapper-parity` joined in Arc F step 1. It regenerates the
+      # command-mapper parity fixture — the oracle proving a command migrated
+      # from a hand-written mapper to a declarative schema `ast` descriptor
+      # emits a byte-identical AST — and fails if the result differs. The
+      # vitest gate (test/mapper-parity.test.ts) asserts the CODE matches the
+      # fixture; this asserts the FIXTURE matches what the generator emits, so
+      # a hand-edited fixture (a case quietly deleted) cannot pass unnoticed.
       - name: Check generated artifacts are in sync
         run: |
           npm run check:grammar --prefix packages/semantic
+          npm run check:mapper-parity --prefix packages/semantic
           npm run check:keywords --prefix packages/vite-plugin
           npm run docs:commands:check --prefix packages/core
           npm run generate:bundles:check --prefix packages/core

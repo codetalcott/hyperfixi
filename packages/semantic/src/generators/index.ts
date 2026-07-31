@@ -52,6 +52,7 @@ export {
   type CommandSchema,
   type CommandPrecondition,
   type RoleSpec,
+  type AstShape,
   type CommandCategory,
   toggleSchema,
   addSchema,

@@ -312,6 +312,7 @@ export {
   // Command schemas
   type CommandSchema,
   type RoleSpec,
+  type AstShape,
   type CommandCategory,
   toggleSchema,
   addSchema,
@@ -445,6 +446,9 @@ export {
   convertExpression,
   // Command mappers
   getCommandMapper,
+  resolveCommandMapper,
+  getSchemaMapper,
+  buildFromAstShape,
   registerCommandMapper,
   getRegisteredMappers,
   // Types

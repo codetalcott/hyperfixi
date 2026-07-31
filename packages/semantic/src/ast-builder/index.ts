@@ -25,7 +25,7 @@ import type {
 } from '../types';
 
 import { convertValue } from './value-converters';
-import { getCommandMapper, type CommandMapperResult } from './command-mappers';
+import { resolveCommandMapper, type CommandMapperResult } from './command-mappers';
 import type { ExpressionNode } from './expression-parser';
 
 // =============================================================================
@@ -244,7 +244,9 @@ export class ASTBuilder {
    * Build a CommandNode from a CommandSemanticNode.
    */
   private buildCommand(node: CommandSemanticNode): CommandNode {
-    const mapper = getCommandMapper(node.action);
+    // A registered mapper wins over the schema's declarative `ast` descriptor,
+    // which in turn wins over the blanket generic mapping below.
+    const mapper = resolveCommandMapper(node.action);
     let cmd: CommandNode;
 
     if (mapper) {
@@ -664,6 +666,9 @@ export {
 // Re-exports from command-mappers
 export {
   getCommandMapper,
+  resolveCommandMapper,
+  getSchemaMapper,
+  buildFromAstShape,
   registerCommandMapper,
   getRegisteredMappers,
   type CommandMapper,

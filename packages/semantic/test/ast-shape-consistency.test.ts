@@ -1,0 +1,146 @@
+/**
+ * AST-shape consistency gate (Arc F).
+ *
+ * A schema `ast` descriptor names the modifier keys the runtime command reads.
+ * For most roles that key IS the English surface marker for the role — `add`'s
+ * destination is marked `to` and lands in `modifiers.to`. Where the two differ
+ * it is for one of exactly three reasons, and this gate forces each one to be
+ * named rather than absorbed:
+ *
+ *   'contract'  the key is a runtime AST contract key that was never a
+ *               preposition (`fetch` body, `send` detail)
+ *   'undeclared' the descriptor reads a role the schema does not declare,
+ *               because the parser relabels into it after matching
+ *   'drift'     a measured disagreement between the mapper and the schema,
+ *               preserved verbatim by a faithful migration and filed as its
+ *               own behavior fix
+ *
+ * Both directions fail (tolerance 0): a NEW unexplained mismatch is a
+ * regression, and a STALE exemption — one whose pair now agrees — must be
+ * pruned in the change that fixed it. Same shape as the R4 canonical-validity
+ * allowlist, for the same reason: an allowlist nobody prunes stops being a
+ * record of what is wrong and becomes a place where wrong things live.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+  commandSchemas,
+  type CommandSchema,
+  type AstShape,
+} from '../src/generators/command-schemas';
+import { englishProfile } from '../src/generators/profiles/english';
+import type { ActionType, SemanticRole } from '../src/types';
+
+type ExemptionKind = 'contract' | 'undeclared' | 'drift';
+
+/**
+ * Keyed `<action>.<modifierKey>`. Every entry states WHY the descriptor's key
+ * is not the role's English marker.
+ */
+const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
+  // NOTE: `set` needs no entry. Its descriptor inverts the usual arg/modifier
+  // roles, but both keys still equal their role's en marker exactly
+  // (patient → 'to', scope → 'on', both via markerOverride). Two exemptions
+  // were written here on the assumption they diverged; the gate rejected both.
+  'show.with': {
+    kind: 'undeclared',
+    reason: '`duration` is not declared on showSchema; the parser relabels into it',
+  },
+  'fetch.body': {
+    kind: 'contract',
+    reason: 'FetchCommand reads the request body from `body`; patient has no en marker',
+  },
+  'swap.on': {
+    kind: 'drift',
+    reason:
+      "schema marks destination 'of' (`swap innerHTML of #t`) but the AST builder emits `on`; " +
+      'preserved verbatim by the Arc F migration, filed as its own behavior fix',
+  },
+  'swap.with': {
+    kind: 'drift',
+    reason:
+      '`style` is not a swapSchema role — the builder reads a role the patterns never bind, ' +
+      'which is why `swap innerHTML of #t with <p>` drops the strategy today',
+  },
+};
+
+/** First role of a first-present-of chain (a bare role is a one-role chain). */
+function primaryRole(spec: SemanticRole | ReadonlyArray<SemanticRole>): SemanticRole {
+  return Array.isArray(spec) ? (spec[0] as SemanticRole) : (spec as SemanticRole);
+}
+
+/**
+ * The English marker for a role in a command: the schema's own override if it
+ * has one, else the en profile's default for that role. `undefined` means the
+ * schema does not declare the role at all.
+ */
+function enMarkerFor(schema: CommandSchema, role: SemanticRole): string | undefined {
+  const spec = schema.roles.find(r => r.role === role);
+  if (!spec) return undefined;
+  const override = spec.markerOverride?.['en'];
+  if (override !== undefined) return override;
+  const markers = englishProfile.roleMarkers as Record<string, { primary?: string } | undefined>;
+  return markers[role]?.primary;
+}
+
+function schemasWithShape(): Array<[ActionType, CommandSchema & { ast: AstShape }]> {
+  return Object.entries(commandSchemas)
+    .filter((entry): entry is [string, CommandSchema & { ast: AstShape }] => Boolean(entry[1].ast))
+    .map(([action, schema]) => [action as ActionType, schema]);
+}
+
+describe('schema ast descriptors agree with the English marker data', () => {
+  it('has at least one migrated command to check', () => {
+    expect(schemasWithShape().length).toBeGreaterThan(0);
+  });
+
+  for (const [action, schema] of schemasWithShape()) {
+    for (const [key, spec] of Object.entries(schema.ast.modifiers ?? {})) {
+      const role = primaryRole(spec);
+      const exemptionKey = `${action}.${key}`;
+
+      it(`${exemptionKey} ← ${role}`, () => {
+        const expected = enMarkerFor(schema, role);
+        const exemption = EXEMPTIONS[exemptionKey];
+
+        if (key === expected) {
+          expect(
+            exemption,
+            `STALE exemption '${exemptionKey}': key '${key}' now matches the en marker. ` +
+              'Delete the entry in the change that fixed it.'
+          ).toBeUndefined();
+          return;
+        }
+
+        expect(
+          exemption,
+          `Descriptor modifier key '${key}' for ${action} does not match the en marker for ` +
+            `role '${role}' (${expected === undefined ? 'role not declared on the schema' : `'${expected}'`}). ` +
+            'Either use the marker as the key, or add an EXEMPTIONS entry stating why it differs.'
+        ).toBeDefined();
+        expect(exemption!.reason.length).toBeGreaterThan(20);
+      });
+    }
+  }
+
+  it('has no exemptions for commands that no longer declare a descriptor', () => {
+    const live = new Set(
+      schemasWithShape().flatMap(([action, schema]) =>
+        Object.keys(schema.ast.modifiers ?? {}).map(key => `${action}.${key}`)
+      )
+    );
+    const orphans = Object.keys(EXEMPTIONS).filter(k => !live.has(k));
+    expect(orphans, 'exemptions referencing a descriptor key that no longer exists').toEqual([]);
+  });
+
+  it('records every known mapper-vs-schema drift as drift, not as contract', () => {
+    // Drift entries are debt with a name. If this count falls, a real behavior
+    // fix landed — prune the entry. If it rises, a migration preserved a new
+    // disagreement and the PR must say so.
+    const drift = Object.entries(EXEMPTIONS)
+      .filter(([, v]) => v.kind === 'drift')
+      .map(([k]) => k)
+      .sort();
+    expect(drift).toEqual(['swap.on', 'swap.with']);
+  });
+});

@@ -118,6 +118,45 @@ export interface RoleSpec {
 }
 
 /**
+ * How a command's semantic roles map onto its AST shape.
+ *
+ * Declarative replacement for the hand-written mappers in
+ * `ast-builder/command-mappers.ts`. A command that can state its AST shape as
+ * data needs no mapper function at all: `buildFromAstShape` reads this and
+ * produces byte-identical output.
+ *
+ * A role entry is either a single role or a **first-present-of chain** — the
+ * declarative form of the `destination ?? patient` fallbacks 14 of the original
+ * mappers used. The first role in the chain that the parse actually produced
+ * wins; the rest are ignored.
+ *
+ * IMPORTANT: the roles named here are the roles the AST BUILDER reads, which is
+ * NOT always the set this schema's `roles` array declares. The parser relabels
+ * and reclaims roles after matching (`normalizeCommandRoles`, the event-name
+ * reclaim in `buildEventHandler`), so a mapper legitimately reads roles no
+ * pattern binds directly. Never "reconcile" the two by editing `roles` — that
+ * changes pattern generation for 24 languages. See
+ * `ast-shape-consistency.test.ts`, which pins every divergence with a reason.
+ */
+export interface AstShape {
+  /**
+   * Roles routed to positional `args`, in emission order. Absent roles are
+   * skipped (they do not leave a hole), matching the original mappers'
+   * `if (x) args.push(x)`.
+   */
+  readonly args?: ReadonlyArray<SemanticRole | ReadonlyArray<SemanticRole>>;
+  /**
+   * Modifier key → role (or first-present-of chain). The key is the AST
+   * contract the runtime command reads — usually the English preposition for
+   * that role, sometimes a non-preposition contract key (`detail`, `body`).
+   * Authoring order is preserved in the emitted object.
+   */
+  readonly modifiers?: Readonly<Record<string, SemanticRole | ReadonlyArray<SemanticRole>>>;
+  /** Emit `isBlocking: true` on the command node (wait / fetch / settle). */
+  readonly isBlocking?: boolean;
+}
+
+/**
  * A precondition that must be met before command execution.
  * Used for runtime error documentation.
  */
@@ -140,6 +179,14 @@ export interface CommandSchema {
   readonly description: string;
   /** Roles this command accepts */
   readonly roles: RoleSpec[];
+  /**
+   * Declarative semantic-roles → AST mapping. When present, the AST builder
+   * uses it instead of a hand-written mapper. Absent means this action either
+   * still has a hand-written mapper (the four with real branching logic:
+   * `wait`, `put`, `go`, `pick`) or falls through to
+   * `ASTBuilder.buildGenericCommand`'s blanket role mapping.
+   */
+  readonly ast?: AstShape;
   /** The primary role (what the command acts on) */
   readonly primaryRole: SemanticRole;
   /** Category for grouping */
@@ -391,6 +438,8 @@ export const addSchema: CommandSchema = {
   description: 'Add a class or attribute to an element',
   category: 'dom-class',
   primaryRole: 'patient',
+  // `add .active to #button` → { args: ['.active'], modifiers: { to: '#button' } }
+  ast: { args: ['patient'], modifiers: { to: 'destination' } },
   roles: [
     {
       role: 'patient',
@@ -659,6 +708,11 @@ export const setSchema: CommandSchema = {
   description: 'Set a property or variable to a value',
   category: 'variable',
   primaryRole: 'destination',
+  // Inverted vs most commands: the DESTINATION (the property path being
+  // written) is the positional arg and the patient (the value) is the `to`
+  // modifier. `scope` carries `set @attr to V on <scope>`, which the core
+  // SetCommand applies to every matched element (defaulting to `me`).
+  ast: { args: ['destination'], modifiers: { to: 'patient', on: 'scope' } },
   roles: [
     {
       role: 'destination',
@@ -1001,6 +1055,11 @@ export const showSchema: CommandSchema = {
   description: 'Make an element visible',
   category: 'dom-visibility',
   primaryRole: 'patient',
+  // The target arrives as EITHER role depending on which pattern matched, so
+  // the arg is a first-present-of chain. NOTE: `duration` and `destination`
+  // are read here but not declared in `roles` below — the parser relabels into
+  // them. Pinned in ast-shape-consistency.test.ts.
+  ast: { args: [['destination', 'patient']], modifiers: { with: 'duration' } },
   roles: [
     {
       role: 'patient',
@@ -1147,6 +1206,15 @@ export const fetchSchema: CommandSchema = {
   description: 'Fetch data from a URL',
   category: 'async',
   primaryRole: 'source',
+  // FetchCommand reads its RequestInit out of `with`. The options object owns
+  // that slot; the bare `method` role only falls back into it when no options
+  // object was given — hence the chain. `body` is a runtime contract key, not
+  // a preposition.
+  ast: {
+    args: ['source'],
+    modifiers: { with: ['style', 'method'], as: 'responseType', body: 'patient' },
+    isBlocking: true,
+  },
   roles: [
     {
       role: 'source',
@@ -2604,6 +2672,14 @@ export const swapSchema: CommandSchema = {
   description: 'Swap DOM content using various strategies (innerHTML, outerHTML, delete, etc.)',
   category: 'dom-content',
   primaryRole: 'destination',
+  // KNOWN DRIFT, preserved verbatim from the mapper this replaces: the AST
+  // builder reads `source`/`style`, which the `roles` below do not declare,
+  // and routes `destination` to `on` although the schema's en marker is `of`.
+  // The roles this schema actually binds are method/destination/patient, so
+  // `swap innerHTML of #t with <p>` currently drops the strategy. Migrating it
+  // faithfully is deliberate — the fix is a behavior change and belongs in its
+  // own PR. Both divergences are pinned in ast-shape-consistency.test.ts.
+  ast: { args: ['patient', 'source'], modifiers: { on: 'destination', with: 'style' } },
   roles: [
     {
       role: 'method',
