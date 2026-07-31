@@ -308,8 +308,14 @@ export interface CommandParser {
   /** Parse a command sequence */
   parseCommandSequence(): ASTNode;
 
-  /** Parse command list until 'end' keyword */
-  parseCommandListUntilEnd(): ASTNode[];
+  /**
+   * Parse command list until 'end' keyword.
+   *
+   * @param construct - Name of the block being closed, used in the
+   *   "Expected \"end\" to close X block" error. Defaults to `repeat`; pass
+   *   your own so an unterminated block does not name the wrong construct.
+   */
+  parseCommandListUntilEnd(construct?: string): ASTNode[];
 
   /**
    * Parse command list until 'end' OR 'else' keyword. Consumes `end` if

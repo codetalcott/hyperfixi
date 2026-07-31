@@ -13,7 +13,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isNodeList } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, camelToKebab } from '../helpers/duration-parsing';
 import { waitForTransitionEnd } from '../helpers/event-waiting';
@@ -58,9 +58,11 @@ export interface TransitionCommandOutput {
 export class TransitionCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Animate CSS properties using CSS transitions',
-    syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
+    syntax: 'transition [<target>] <property> to <value> [over <duration>] [with <timing>]',
     examples: [
       'transition opacity to 0.5',
+      'transition my *opacity to 0 over 200ms',
+      "transition #box's *opacity to 0 over 200ms",
       'transition left to 100px over 500ms',
       'transition background-color to red over 1s with ease-in-out',
     ],
@@ -87,12 +89,27 @@ export class TransitionCommand implements DecoratedCommand {
 
     const firstArg = await evaluator.evaluate(raw.args[0], context);
 
+    // A selector arg can evaluate to an element collection; take the first,
+    // as resolveElement would for a selector string.
+    const asElement = (value: unknown): unknown =>
+      Array.isArray(value) || isNodeList(value) ? (value as ArrayLike<unknown>)[0] : value;
+
+    const firstAsElement = asElement(firstArg);
+
     if (
-      isHTMLElement(firstArg) ||
+      isHTMLElement(firstAsElement) ||
       (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))
     ) {
-      target = firstArg as string | HTMLElement;
+      target = firstAsElement as string | HTMLElement;
       property = String(await evaluator.evaluate(raw.args[1], context));
+    } else if (raw.args.length >= 2) {
+      // The parser emits `[target, property]` (parseTransitionCommand), so a
+      // two-arg call whose target did not resolve is a missing element — NOT a
+      // property. Before this branch existed the target was silently ignored
+      // and `String(undefined)` became the property name: an unset `its` /
+      // absent selector transitioned a property called "undefined", a no-op
+      // with no error.
+      throw new Error('transition: target element not found');
     } else {
       property = String(firstArg);
     }

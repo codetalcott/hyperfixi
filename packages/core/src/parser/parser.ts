@@ -1164,8 +1164,15 @@ export class Parser {
   /**
    * Parse a list of commands until we hit 'end' keyword
    * This is used by repeat blocks and other control flow structures
+   *
+   * @param construct - Name of the block being closed, for the error message.
+   *   Defaults to `repeat` because that was this helper's only caller when the
+   *   message was written — but it is shared, so `start view transition`
+   *   (which has no `repeat` anywhere in it) reported `Expected "end" to close
+   *   repeat block` and sent triage after the wrong construct. Callers that
+   *   are not `repeat` should say so.
    */
-  private parseCommandListUntilEnd(): ASTNode[] {
+  private parseCommandListUntilEnd(construct = 'repeat'): ASTNode[] {
     const { commands } = this.parseCommandListUntilTerminator([]);
     debug.parse('🔍 After loop, checking for "end". Current token:', this.peek().value);
     if (this.check('end')) {
@@ -1178,7 +1185,7 @@ export class Parser {
         'at position:',
         this.peek().start
       );
-      throw new Error('Expected "end" to close repeat block');
+      throw new Error(`Expected "end" to close ${construct} block`);
     }
     return commands;
   }

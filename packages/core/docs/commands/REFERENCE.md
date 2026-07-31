@@ -220,13 +220,21 @@ Animate CSS properties using CSS transitions
 **Syntax:**
 
 ```hyperscript
-transition <property> to <value> [over <duration>] [with <timing>]
+transition [<target>] <property> to <value> [over <duration>] [with <timing>]
 ```
 
 **Examples:**
 
 ```hyperscript
 transition opacity to 0.5
+```
+
+```hyperscript
+transition my *opacity to 0 over 200ms
+```
+
+```hyperscript
+transition #box's *opacity to 0 over 200ms
 ```
 
 ```hyperscript

@@ -854,7 +854,7 @@ export function parseForCommand(ctx: ParserContext, commandToken: Token): Comman
   }
 
   // Parse command block until 'end'
-  const commands: ASTNode[] = ctx.parseCommandListUntilEnd();
+  const commands: ASTNode[] = ctx.parseCommandListUntilEnd('for');
 
   // Build args array to match repeat command's 'for' loop type structure:
   // args[0] = loop type identifier ('for')
