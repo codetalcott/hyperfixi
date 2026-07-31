@@ -982,6 +982,15 @@ jobs:
       - name: Test components
         run: npm test --prefix packages/components -- --run
 
+      # In the local test:check gate (scripts/test-check-all.sh) since the
+      # beginning, but never enumerated here — so the express 4 → 5 major broke
+      # all 26 dev-server tests (`'*.html'` is not a valid path-to-regexp v8
+      # route) and CI stayed green while every local run failed. This job's
+      # package list is hand-maintained; when adding a package to the local
+      # gate, add it here too.
+      - name: Test developer-tools
+        run: npm test --prefix packages/developer-tools -- --run
+
   # ============================================
   # Job 5: Coverage Report (nightly / manual)
   # Was push-to-main. Under `strict` branch protection the post-merge tree IS the
