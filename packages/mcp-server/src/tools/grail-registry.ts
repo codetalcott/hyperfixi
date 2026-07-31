@@ -56,7 +56,11 @@ function execShell(
       const duration_ms = Date.now() - start;
       const output = truncate((stdout ?? '') + (stderr ?? '')).trim();
       const timedOut = !!(error && 'killed' in error && error.killed);
-      const exitCode = error ? (error.code ?? 1) : 0;
+      // `ExecException.code` is `string | number` under @types/node 26 (spawn
+      // failures carry string codes like 'ENOENT'; only process exits carry
+      // numbers). This result's contract is a numeric exit code, so non-numeric
+      // codes fold into the generic failure value alongside `code: undefined`.
+      const exitCode = error ? (typeof error.code === 'number' ? error.code : 1) : 0;
       resolve({
         exitCode,
         output: timedOut ? `Timed out after ${timeout}s` : output,
