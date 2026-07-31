@@ -283,8 +283,8 @@ scaffolding a throwaway command in a worktree and running them.
 | 1 — descriptor + generic mapper + parity harness + 5 pilots | **DONE** | #838 |
 | 2 — migrate the mechanical mappers (26) | **DONE** | #839 |
 | 3 — migrate the coalescing mappers (12) | **DONE** | #839 |
-| 4 — descriptors for the fallback actions | **OPEN**, re-scoped to 2 commands | — |
-| 5 — core `semantic-integration` switch dedupe | **FILED** (confirmed, latent) | — |
+| 4 — descriptors for the fallback actions | `scroll` + `default` **DONE**; `open` deferred (its one-line fix measured inert) | #843 |
+| 5 — core `semantic-integration` switch dedupe | **MEASURED** — 15 of 29 reachable commands diverge, 5 live English defects; NOT latent; answer is (b) delegate to `buildAST` | table in [COMMAND_ARCHITECTURE_NEXT_STEPS.md](./COMMAND_ARCHITECTURE_NEXT_STEPS.md) |
 | 6 — add-command scaffolder | **DONE** | #840 |
 
 `command-mappers.ts`: **1301 → 448 lines**, 43 of 47 mappers now declarative.
@@ -303,8 +303,15 @@ Only `wait`, `put`, `go`, `pick` remain hand-written.
   (drop-one alone is blind to a coalescing chain's losing member), and the
   fixture must be keyed off registry ∪ descriptors, never the shrinking
   registry.
-- **Fact 2 (two live AST paths) was CONFIRMED but is narrower than predicted** —
-  see the annotation inline above. Latent, not user-visible; filed in the queue.
+- **Fact 2 (two live AST paths) was CONFIRMED, and "narrower than predicted" was
+  WRONG.** The arc measured only `put` — which is in `skipSemanticParsing`, hence
+  the "latent, not user-visible" conclusion. The 2026-07-31 reachability probe
+  measured all 45 reachable commands: **15 of the 29 with an en surface diverge,
+  and five are live English defects** (`go back`, `go to url`, `get`, `scroll`,
+  `default` all throw on the default path but work traditionally; `pick first 2`
+  returns the wrong number of items with no error). Generalizing from one command
+  inside the skip list to the whole switch is the same shape as this arc's other
+  wrong premises. Table and the (b)-delegation decision are in the queue.
 - **Step 4's premise was wrong.** The brief called replacing
   `buildGenericCommand` "the arc's structural win". Measured against each
   true-fallback schema's own en markers, 12 of 14 are already correct and only
