@@ -627,16 +627,40 @@ not the core abstractions.
   name-preserving behavior the real evaluator does not have. Any fix should land
   with an end-to-end test through `hyperscript.eval`, not a mocked one.
 
-- **`swap`'s AST builder reads roles its schema never binds.** The builder
-  consumes `source`/`style` and emits `on` for destination; `swapSchema`
-  declares `method`/`destination`/`patient` and marks destination `of`. So
-  `swap innerHTML of #t with <p>` parses `method: innerHTML` and then drops it
-  — the strategy never reaches the AST. Arc F step 1 migrated the behavior
-  verbatim (a faithful migration must not change output) and pinned both
-  divergences as `kind: 'drift'` entries in
-  `packages/semantic/test/ast-shape-consistency.test.ts`, which fails if they
-  are silently "fixed" or silently widened. The repair is a behavior change and
-  wants its own PR with R2/R3 evidence.
+- **~~`swap`'s AST builder reads roles its schema never binds~~ — FIXED; two
+  narrower swap defects remain.** The descriptor now emits
+  `args: ['method', 'destination', 'patient']` and no modifiers, because
+  `commands/dom/swap.ts` `parseInput` takes `const args = raw.args` and never
+  reads `raw.modifiers` at all — the contract is keyword-positional, so every
+  modifier the old descriptor emitted was dead end to end. Measured on the
+  `buildAST` path (parse → buildAST → runtime, the multilingual and
+  semantic-complete bundles): `swap #a with #b` threw `could not parse
+  arguments` and `swap delete #t` threw `command requires arguments`; both now
+  execute. Both `drift` exemptions became orphans and were deleted — the
+  consistency gate's drift list is now **empty**. What is left:
+  - **The strategy forms never bind `patient`, so the content is lost in the
+    parse, not the AST.** `swap into #t with it`, `swap over #modal with c`,
+    `swap beforebegin #t with it` all bind `method` + `destination` only;
+    `swap innerHTML of #t with "X"` additionally binds `destination` to the
+    literal `'of'`. Cause: en has two hand-written patterns
+    (`packages/semantic/src/patterns/languages/en/swap.ts`) — `swap {method}
+    {destination}` and `swap {destination} with {patient}` — and no
+    `swap {method} [of] {destination} with {patient}`. The descriptor is
+    already correct for that shape: give it three roles and the three-arg
+    branch (`target = args[len-2]`, `content = args[len-1]`) lands right with
+    no further descriptor change.
+  - **The symmetric-swap role flip is now behaviorally consequential.** The
+    stored translations for `swap-content` bind the roles REVERSED in
+    ar/ja/ko/tr (and bn/hi/qu/tl) — e.g. ja `#a を クリック で 交換 #b で`
+    parses `patient=#a, destination=#b` where en parses `destination=#a,
+    patient=#b`. This is R3's long-standing `swap-content` residual (8
+    languages, `avgValueRecall` 0.9968) and it did not move. But its *meaning*
+    changed: while both roles landed in dead slots the flip was invisible, and
+    now it decides which element is the target and which is the content, so
+    those languages swap the wrong way round. Still strictly better than the
+    previous behavior (which threw for every language including English), and
+    still tracked in `MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug
+    families" — but it is no longer cosmetic.
 
 - **`command-adapter.ts` declares its own `CommandMetadata`, and the load-bearing
   reader uses it.** `:54-60` defines a loose shape with an

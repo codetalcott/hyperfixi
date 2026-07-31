@@ -85,3 +85,60 @@ describe('scroll — the destination must be an ARG, not a modifier', () => {
     expect(ast.modifiers?.on).toBeUndefined();
   });
 });
+
+describe('swap — the AST contract is keyword-positional args, never modifiers', () => {
+  // packages/core/src/commands/dom/swap.ts parseInput takes `const args =
+  // raw.args` and reads NOTHING else — there is no `raw.modifiers` access in the
+  // function. It then scans the arg list for keyword tokens (`with`, `of`,
+  // `delete`, `using`, `into`, `over`) and, failing all of those, falls back to
+  //   targetNode  = args[args.length - 2]
+  //   contentNode = args[args.length - 1]
+  //   strategy    = STRATEGY_KEYWORDS[argKeywords[0]]  (when args[0] names one)
+  // So `method`, `destination`, `patient` must arrive as positional args in
+  // exactly that order. Every modifier the old descriptor emitted was dead end
+  // to end — which is why `swap #a with #b` and `swap delete #t` both threw.
+
+  it('builds `swap #a with #b` as args:[#a, #b] with no modifiers', () => {
+    const ast = astOf('swap #a with #b');
+
+    expect(ast.name).toBe('swap');
+    // The fallback branch reads args[len-2] as target and args[len-1] as content.
+    expect(ast.args).toHaveLength(2);
+    expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#a' });
+    expect(ast.args[1]).toMatchObject({ type: 'selector', value: '#b' });
+    expect(ast.modifiers).toBeUndefined();
+  });
+
+  it('builds `swap #target with it` the same way', () => {
+    const ast = astOf('swap #target with it');
+
+    expect(ast.args).toHaveLength(2);
+    expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#target' });
+    expect(ast.args[1]).toMatchObject({ type: 'contextReference', name: 'it' });
+    expect(ast.modifiers).toBeUndefined();
+  });
+
+  it('keeps the strategy for `swap delete #t` — args[0] is what selects it', () => {
+    const ast = astOf('swap delete #t');
+
+    // `deleteIndex = argKeywords.findIndex(k => k === 'delete')` must be 0, and
+    // the target is read from `args[deleteIndex + 1]`.
+    expect(ast.args).toHaveLength(2);
+    expect(ast.args[0]).toMatchObject({ type: 'literal', value: 'delete' });
+    expect(ast.args[1]).toMatchObject({ type: 'selector', value: '#t' });
+    expect(ast.modifiers).toBeUndefined();
+  });
+
+  it('never emits an `on` modifier — SwapCommand cannot see one', () => {
+    for (const src of ['swap #a with #b', 'swap delete #t']) {
+      expect(astOf(src).modifiers?.on, src).toBeUndefined();
+    }
+  });
+
+  it('leaves the target out of args for NO swap surface that binds it', () => {
+    // The old shape put `patient` first and the destination in `modifiers.on`,
+    // so `swap #a with #b` reached the runtime as a single-arg node and
+    // `swap delete #t` as a zero-arg one — both throw before doing any work.
+    expect(astOf('swap delete #t').args.length).toBeGreaterThan(1);
+  });
+});

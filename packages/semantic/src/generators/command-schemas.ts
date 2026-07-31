@@ -2763,14 +2763,22 @@ export const swapSchema: CommandSchema = {
   description: 'Swap DOM content using various strategies (innerHTML, outerHTML, delete, etc.)',
   category: 'dom-content',
   primaryRole: 'destination',
-  // KNOWN DRIFT, preserved verbatim from the mapper this replaces: the AST
-  // builder reads `source`/`style`, which the `roles` below do not declare,
-  // and routes `destination` to `on` although the schema's en marker is `of`.
-  // The roles this schema actually binds are method/destination/patient, so
-  // `swap innerHTML of #t with <p>` currently drops the strategy. Migrating it
-  // faithfully is deliberate — the fix is a behavior change and belongs in its
-  // own PR. Both divergences are pinned in ast-shape-consistency.test.ts.
-  ast: { args: ['patient', 'source'], modifiers: { on: 'destination', with: 'style' } },
+  // SwapCommand's contract is keyword-positional ARGS, with no modifier read at
+  // all (`commands/dom/swap.ts` parseInput takes `const args = raw.args` and
+  // never touches `raw.modifiers`). It scans the arg list for `with`/`of`/
+  // `delete`/`using`/`into`/`over` and otherwise falls back to
+  // target = args[len-2], content = args[len-1], strategy = args[0] when that
+  // names one. So the three roles this schema binds have to arrive positionally
+  // in method → destination → patient order.
+  //
+  // The previous descriptor read `source`/`style` — roles no swap pattern binds
+  // — and routed `destination` into `modifiers.on`, so every modifier it emitted
+  // was dead end to end: `swap #a with #b` reached the runtime as a one-arg node
+  // and `swap delete #t` as a zero-arg one, and both threw before doing any
+  // work. Preserved verbatim by the Arc F migration (a faithful migration must
+  // not change output) and pinned as two `drift` exemptions; this is the
+  // behavior fix those entries were waiting for.
+  ast: { args: ['method', 'destination', 'patient'] },
   roles: [
     {
       role: 'method',
