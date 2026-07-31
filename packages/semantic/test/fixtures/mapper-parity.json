@@ -1668,7 +1668,7 @@
       ]
     },
     "default": {
-      "roles": ["patient", "source"],
+      "roles": ["patient", "destination"],
       "cases": [
         {
           "name": "no-roles",
@@ -1687,9 +1687,9 @@
               "value": ".patient-v",
               "selectorKind": "class"
             },
-            "source": {
+            "destination": {
               "type": "selector",
-              "value": "#source-v",
+              "value": "#destination-v",
               "selectorKind": "id"
             }
           },
@@ -1699,17 +1699,17 @@
             "args": [
               {
                 "type": "selector",
-                "value": ".patient-v",
-                "selector": ".patient-v",
-                "selectorType": "class"
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
               }
             ],
             "modifiers": {
               "to": {
                 "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
               }
             }
           }
@@ -1726,64 +1726,63 @@
           "ast": {
             "type": "command",
             "name": "default",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "to": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
           "name": "without-patient",
           "roles": {
-            "source": {
+            "destination": {
               "type": "selector",
-              "value": "#source-v",
+              "value": "#destination-v",
               "selectorKind": "id"
             }
           },
           "ast": {
             "type": "command",
             "name": "default",
-            "args": [],
-            "modifiers": {
-              "to": {
+            "args": [
+              {
                 "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
+                "value": "#destination-v",
+                "selector": "#destination-v",
                 "selectorType": "id"
               }
-            }
+            ]
           }
         },
         {
-          "name": "only-source",
+          "name": "only-destination",
           "roles": {
-            "source": {
+            "destination": {
               "type": "selector",
-              "value": "#source-v",
+              "value": "#destination-v",
               "selectorKind": "id"
             }
           },
           "ast": {
             "type": "command",
             "name": "default",
-            "args": [],
-            "modifiers": {
-              "to": {
+            "args": [
+              {
                 "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
+                "value": "#destination-v",
+                "selector": "#destination-v",
                 "selectorType": "id"
               }
-            }
+            ]
           }
         },
         {
-          "name": "without-source",
+          "name": "without-destination",
           "roles": {
             "patient": {
               "type": "selector",
@@ -1794,14 +1793,15 @@
           "ast": {
             "type": "command",
             "name": "default",
-            "args": [
-              {
+            "args": [],
+            "modifiers": {
+              "to": {
                 "type": "selector",
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
               }
-            ]
+            }
           }
         },
         {
@@ -1870,17 +1870,17 @@
             "args": [
               {
                 "type": "selector",
-                "value": ".patient-v",
-                "selector": ".patient-v",
-                "selectorType": "class"
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
               }
             ],
             "modifiers": {
               "to": {
                 "type": "selector",
-                "value": "#source-v",
-                "selector": "#source-v",
-                "selectorType": "id"
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
               }
             }
           }
@@ -7059,6 +7059,137 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "scroll": {
+      "roles": ["destination"],
+      "cases": [
+        {
+          "name": "no-roles",
+          "roles": {},
+          "ast": {
+            "type": "command",
+            "name": "scroll",
+            "args": []
+          }
+        },
+        {
+          "name": "all-relevant",
+          "roles": {
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "scroll",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "only-destination",
+          "roles": {
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "scroll",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "all-probe-roles",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "source": {
+              "type": "selector",
+              "value": "#source-v",
+              "selectorKind": "id"
+            },
+            "scope": {
+              "type": "selector",
+              "value": "#scope-v",
+              "selectorKind": "id"
+            },
+            "event": {
+              "type": "literal",
+              "value": "event-v"
+            },
+            "condition": {
+              "type": "literal",
+              "value": "condition-v"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            },
+            "quantity": {
+              "type": "literal",
+              "value": "quantity-v"
+            },
+            "style": {
+              "type": "literal",
+              "value": "style-v"
+            },
+            "method": {
+              "type": "literal",
+              "value": "method-v"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            },
+            "responseType": {
+              "type": "literal",
+              "value": "responseType-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "scroll",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
               }
             ]
           }
