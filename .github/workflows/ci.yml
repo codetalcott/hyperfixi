@@ -664,6 +664,14 @@ jobs:
       - name: Verify test:check package list
         run: node scripts/check-test-check-list.cjs
 
+      # Cheap guard: the same question asked of THIS file. The unit-test jobs
+      # below enumerate their packages by hand, and #857 found one that had
+      # been missing since the beginning — an express 4 → 5 major broke all 26
+      # of developer-tools' tests and CI stayed green. Fails if a package with
+      # a "test:check" script is in neither unit-test job.
+      - name: Verify CI unit-test package list
+        run: node scripts/check-ci-test-list.cjs
+
       # Cheap guard: zero-dep node script that fails if package versions have
       # drifted apart (the monorepo publishes uniformly).
       - name: Validate package versions

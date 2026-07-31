@@ -14,6 +14,13 @@ if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|scri
   node scripts/check-test-check-list.cjs || exit 1
 fi
 
+# Verify CI actually runs every package's unit tests. Same shape again: only
+# when a workspace package.json or the workflow is staged — the two files that
+# can drift a package out of CI without anyone noticing (#857).
+if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|\.github/workflows/ci\.yml)$'; then
+  node scripts/check-ci-test-list.cjs || exit 1
+fi
+
 # Verify every browser bundle is claimed by exactly one CI shard. Only when
 # ci.yml or the bundle orchestrator is staged — the two files that can drift.
 if git diff --cached --name-only | grep -qE '^(\.github/workflows/ci\.yml|packages/core/scripts/build-browser-bundles\.mjs)$'; then
