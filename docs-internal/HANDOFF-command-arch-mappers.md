@@ -1,7 +1,12 @@
 # HANDOFF — Arc F: schema-driven semantic mappers + the add-command scaffolder
 
-**Status: brief only — no implementation has started.** Written 2026-07-30 from
-fresh measurement at `a7005d81` (#773, the 13-major Dependabot bump; #836/#837
+**Status: CLOSED. This is now a record, not a plan** — #838 (step 1), #839
+(steps 2–3), #840 (step 6). Step 5 was FILED rather than fixed; step 4 was
+re-scoped by measurement and remains open as a small behavior fix. See
+§ "Outcome" at the end for what actually landed and what each step's
+measurement corrected.
+
+Originally written 2026-07-30 from fresh measurement at `a7005d81` (#773, the 13-major Dependabot bump; #836/#837
 beneath it). All numbers below were re-measured this session under the NEW deps,
 not inherited. Queue entry: `COMMAND_ARCHITECTURE_NEXT_STEPS.md` § Arc F (:413).
 Arcs A–E are closed; F is the last settled arc (order D→C→A→B→E→F).
@@ -267,3 +272,64 @@ scaffolding a throwaway command in a worktree and running them.
 3. **Step 5 placement**: in-arc or filed. Recommendation: file it; Arc F's
    gates are semantic-stack, and the core switch drags in the full core gate
    set for what is really its own divergence-bug fix.
+
+
+---
+
+## Outcome (2026-07-31)
+
+| Step | State | PR |
+| ---- | ----- | -- |
+| 1 — descriptor + generic mapper + parity harness + 5 pilots | **DONE** | #838 |
+| 2 — migrate the mechanical mappers (26) | **DONE** | #839 |
+| 3 — migrate the coalescing mappers (12) | **DONE** | #839 |
+| 4 — descriptors for the fallback actions | **OPEN**, re-scoped to 2 commands | — |
+| 5 — core `semantic-integration` switch dedupe | **FILED** (confirmed, latent) | — |
+| 6 — add-command scaffolder | **DONE** | #840 |
+
+`command-mappers.ts`: **1301 → 448 lines**, 43 of 47 mappers now declarative.
+Only `wait`, `put`, `go`, `pick` remain hand-written.
+
+### What the implementation corrected in this brief
+
+- **The `AstShape` design held**, including the prediction that a role-level
+  field could not express coalescing/ordering/inversion.
+- **The parity harness design changed shape.** The brief proposed copying legacy
+  mapper bodies into the test as fixtures. What shipped is better: a generated
+  332-case oracle (`scripts/gen-mapper-parity.ts`, gated by
+  `check:mapper-parity`) whose regeneration after the migration is
+  **byte-identical**. Two traps, both hit for real, are written up in the
+  script's header — sensitivity discovery must be *drop-one OR alone-vs-empty*
+  (drop-one alone is blind to a coalescing chain's losing member), and the
+  fixture must be keyed off registry ∪ descriptors, never the shrinking
+  registry.
+- **Fact 2 (two live AST paths) was CONFIRMED but is narrower than predicted** —
+  see the annotation inline above. Latent, not user-visible; filed in the queue.
+- **Step 4's premise was wrong.** The brief called replacing
+  `buildGenericCommand` "the arc's structural win". Measured against each
+  true-fallback schema's own en markers, 12 of 14 are already correct and only
+  **`scroll`** (destination emits `on`, marker is `to`) and **`open`** (style
+  emits `with`, marker is `as`) are wrong. Whoever picks it up should re-verify
+  that measurement — it only inspects roles the schema *declares*, so a
+  relabelled-in role could still be mishandled.
+- **Step 6's residual-checklist idea survived; its templates did not.** Five
+  defects were found only by scaffolding throwaway commands in all 13 categories
+  and running the gates — including `commandMeta` being handed a `name` field it
+  does not have, which is the queue's own F-B1 finding hit live. It also
+  measured that "category" is expressed in four disagreeing vocabularies
+  (`commandMeta` `event` / directory `events/` / `reference` `events` /
+  semantic's own set).
+
+### New debt this arc named rather than absorbed
+
+All three are pinned as `drift` exemptions in
+`packages/semantic/test/ast-shape-consistency.test.ts`, which fails if they are
+silently widened *or* silently fixed:
+
+- `default :x to 0` builds `{ name: 'default', args: [0] }` — **the variable is
+  dropped**. The builder reads patient→args and source→`to`; the parser binds
+  destination and patient, so `source` is never bound.
+- `swap` reads `source`/`style`, which `swapSchema` never declares, and emits
+  `on` where the schema marks `of` — so `swap innerHTML of #t with <p>` drops
+  the strategy.
+- `toggle.for` and `send.detail` are inert: no en pattern binds those roles.

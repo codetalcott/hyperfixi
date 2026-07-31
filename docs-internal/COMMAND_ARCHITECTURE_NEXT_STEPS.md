@@ -88,10 +88,10 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 | ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
 | ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
 | ~~B — metadata single-sourcing~~ | **DONE** (#823/#824/#825/#826/#827/#828) | ✅ the 7-test docs-coverage gate + §9's compatibility coupling + the static/instance bridge invariant; `metadataOf()` deleted, its check now `TS2322` | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — now a record, not a plan |
-| E — generated static bundles | **5** executors → 1 template source (brief written; measured, arc not started) | ✅ partial: bundle-size ±5% + ceilings, compat matrix, parser-template drift test — and **no per-command execution gate on the shipped bundles**, which is how a live `take` crash shipped | [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md) — read § "The premise, corrected" first |
-| F — schema-driven mappers | ~30 of 47 mappers deleted | ✅ semantic suite + ten-signal ratchet + R2 | mapper/`semantic-integration` switch duplication is data |
+| ~~E — generated static bundles~~ | **DONE** (#829/#830/#831/#832/#835/#836) | ✅ `generate:bundles:check` in CI's generated-artifacts step; hybrid-complete's executor switches AND `HYBRID_PARSER_TEMPLATE` are both generated | [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md) — now a record, not a plan |
+| ~~F — schema-driven mappers + scaffolder~~ | **DONE** (#838/#839/#840) — 43 of 47 mappers deleted, 1301 → 448 lines | ✅ `check:mapper-parity` (332-case oracle, byte-identical regeneration) + `ast-shape-consistency` + semantic suite + ten-signal ratchet | [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) — now a record, not a plan |
 
-## The arcs — remaining sequence E → F (A, B, C and D are done)
+## The arcs — all six are done (D → C → A → B → E → F)
 
 ### Arc D — target-resolution consolidation — ✅ DONE 2026-07-28
 
@@ -410,22 +410,54 @@ absolute ceilings), the Playwright bundle compatibility matrix,
 > identical — that assertion is the spec the generator must satisfy, and it
 > retires into the generator exactly as this arc describes.
 
-### Arc F — semantic schema-driven mappers + scaffolder (medium)
+### Arc F — semantic schema-driven mappers + scaffolder — **CLOSED** (#838, #839, #840)
 
-Verified: 47 mappers in `packages/semantic/src/ast-builder/command-mappers.ts`;
-~30 are mechanically identical (patient→args plus one role→modifier rename); ~10
-carry real logic (go's `'back'` literal, wait's event/duration branch,
-pick/swap/set/put/send/morph) plus 7 block mappers — all 47 in that one file,
-registered into a single `mappers` Map. The role→preposition mapping already
-exists as switches in **two** places, and the second one is **not** in this
-package: each mapper, and `packages/core/src/parser/semantic-integration.ts:386`.
-It is data. Add `astModifier` to `RoleSpec`, implement one generic schema-driven
-mapper as the fallback, keep `registerCommandMapper` as the override, migrate
-the ~30, keep the rest. Then an `add-command` scaffolder (sibling of
-`packages/semantic/scripts/add-language.ts`) that stubs the core file,
-registrations, schema, profile-entry TODOs, and tests — #792 proved that even a
-perfect checklist gets one step missed; the checklist becomes a tool. Gates: the
-semantic suite, the multilingual ten-signal ratchet, R2.
+Landed 2026-07-31. Brief and full record:
+[HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md).
+
+`CommandSchema` gained an optional `ast: AstShape` descriptor and
+`buildFromAstShape` reads it, so a command whose semantic-roles → AST mapping is
+data needs no mapper function. Resolution is **registry → descriptor →
+`buildGenericCommand`**, leaving `registerCommandMapper` as the override.
+`command-mappers.ts` went **1301 → 448 lines**: 43 of 47 mappers are now
+declarative. The four that remain branch on a role's *value* rather than its
+presence, which no declarative shape expresses — `wait` (event vs duration flips
+the node shape), `put` (preposition from a literal), `go` (injects `'back'`/
+`'url'` args), `pick` (variant dispatch + range splitting).
+
+Step 6 shipped `packages/core/scripts/add-command.ts`.
+
+**Four premises in the paragraph this replaces were wrong, and measurement
+caught each** — the sixth consecutive arc whose plan needed re-scoring:
+
+- "~30 mechanical / ~10 real logic / 7 block mappers" → **29 mechanical, 14
+  coalescing, 4 real logic**. `set`/`swap`/`send`/`morph` are declarative; the
+  "block mappers" are a non-category, since `ASTBuilder.build` dispatches those
+  node kinds to their own builders and bodies never reach a command mapper.
+- "switches in **two** places" → **three**. `buildGenericCommand`'s
+  `roleToModifierKey` is the third, and 24 schema-backed actions fall through to
+  it. (`semantic-integration.ts`'s switch had also drifted from `:386` to `:368`.)
+- "Add `astModifier` to `RoleSpec`" → **impossible for 14 of 47.** A role-level
+  field cannot express coalescing chains (`destination ?? patient`), arg order
+  (`swap`), or `set`'s arg/modifier inversion. The descriptor is command-level.
+- "Replacing the fallback is the arc's structural win" (step 4) → **it is 2
+  commands, not 24.** Comparing the blanket mapping against each true-fallback
+  schema's own en markers: 12 are already correct, and only `scroll`
+  (destination emits `on`, marker is `to`) and `open` (style emits `with`,
+  marker is `as`) are wrong. Step 4 is therefore a small targeted behavior fix,
+  still open, and wants its own PR with ratchet evidence.
+
+**The parity oracle is the reusable artifact.**
+`packages/semantic/scripts/gen-mapper-parity.ts` records what all 47
+mapper-backed actions emit across a matrix of role subsets (332 cases), gated by
+`check:mapper-parity` in CI's generated-artifacts step. Regenerating it after
+migrating 43 commands produced a **byte-identical** fixture — a far stronger
+claim than "the tests pass". Two traps that would have made it vacuous, both hit
+for real: role-sensitivity discovery by "drop one role from all-present" is
+blind to the losing member of a coalescing chain (it under-reported
+blur/show/morph/measure/fetch), and keying the fixture off the mapper registry
+— which shrinks as commands migrate — would have let it stay green by testing
+less each step.
 
 ## Non-goals — keep these
 
