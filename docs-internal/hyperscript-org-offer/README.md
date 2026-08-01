@@ -10,7 +10,7 @@ whichever sub-doc you need.
 | 1    | `@hyperscript-tools/multilingual` self-contained (vendors 31 adapter bundles into its own dist)                              | ✅ done in monorepo                                                             |
 | 2    | `@hyperscript-tools/i18n` package (CLI + Eleventy plugin + programmatic API)                                                 | ✅ done in monorepo                                                             |
 | 3a   | lokascript-docs patterns page: language chip grid + live-execution toggle (in shared partial, gated by `enableTranslations`) | ✅ landed in `_hyper_min` commit `80214fd`                                      |
-| 3b   | hyperfixi-docs patterns page: verify engine showcase                                                                         | 📄 verification doc ready: [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md) |
+| 3b   | hyperfixi-docs patterns page: verify engine showcase                                                                         | 📄 verification doc ready: [hyperfixi-docs-patch.md](../archive/hyperscript-org-offer/hyperfixi-docs-patch.md) |
 | 4    | Drop-in integration guide for hyperscript.org's audience (lives on lokascript.org)                                           | 📄 ready: [integration-guide.md](./integration-guide.md)                        |
 | 5    | Carson hand-off message                                                                                                      | 📄 ready (two variants): [handoff.md](./handoff.md)                             |
 
@@ -22,7 +22,7 @@ whichever sub-doc you need.
 ## What's outside the monorepo
 
 - `~/projects/_hyper_min/` — chip strip + live-execution toggle landed in commit `80214fd` (shared partial at `packages/layouts/includes/patterns-page.njk`, gated by `enableTranslations`).
-- `~/projects/_hyper_min/sites/hyperfixi-docs/` — verification only per [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md). No required edits.
+- `~/projects/_hyper_min/sites/hyperfixi-docs/` — verification only per [hyperfixi-docs-patch.md](../archive/hyperscript-org-offer/hyperfixi-docs-patch.md). No required edits.
 - **Pending:** new page on lokascript.org carrying [integration-guide.md](./integration-guide.md). The Carson hand-off message currently links to `https://lokascript.org/integration-guide`; update if you pick a different URL.
 
 ## Decisions baked in

@@ -12,7 +12,7 @@
 > Not scoped to a release. Nothing below is release-blocking; these are
 > correctness papercuts in a shipped parser. Tying them to a version means either
 > the version slips and this lies, or they defer and this rots — which is exactly
-> how [PARSER_FIX_STATUS.md](PARSER_FIX_STATUS.md) died (its name promised an
+> how [PARSER_FIX_STATUS.md](archive/PARSER_FIX_STATUS.md) died (its name promised an
 > index, it delivered a six-month-old snapshot of one already-fixed defect).
 
 ## Read this before triaging anything below
@@ -27,7 +27,7 @@ ones, because the gate *is* the tracking mechanism.
 | **Or-join filters have no per-event representation** | low — `on click or keypress[key=='Enter']` runs keypress unfiltered (upstream filters that leg); single-event filters ARE enforced | ✅ KNOWN GAP test | `packages/core/src/api/event-filter-execution.test.ts`; the runtime-side note at the `applicableCondition` site in `runtime-base.ts` |
 | ~~**`tell` never consumes a terminating `end`**~~ | **FIXED 2026-08-01** — tell consumes its own `end`; the real damage was nested (post-`end` commands escaped `if`/`repeat` bodies), not the filed "no block form" | ✅ `tell-to-and-end.test.ts` | history below |
 | ~~**`tell <target> to <command>` drops the `tell` wrapper**~~ | **FIXED 2026-08-01** — optional `to` consumed after the target (deliberate superset; upstream rejects the form, but hyperfixi's error recovery turned the throw into the silent retarget) | ✅ `tell-to-and-end.test.ts` (mutation-verified both halves) | history below |
-| **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
+| **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](archive/HANDOFF-shipped-examples-execution.md) |
 | ~~**`for <duration>` tail rejected on `toggle` / `wait`**~~ | **BOTH FIXED** — toggle via `parseTemporalTail` (2026-07-31); wait via #850's duration alternatives in the `for` loop (`wait for click or 1s` races event vs timeout) — **the table below still listed the wait half as open a day after it shipped** | ✅ `wait-event-or-duration.test.ts` + toggle temporal tests | history below |
 | ~~**`transition` rejects a POSSESSIVE property target**~~ | **FIXED 2026-07-31** — optional leading target in `parseTransitionCommand` (all four shapes), emitting the `[target, property]` args the runtime already discriminated on | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/transition-target.test.ts`; history below |
 | ~~**`process partials … using view transition` mis-parses**~~ | **FIXED 2026-07-31** — `parseProcessCommand` + dispatch case, runtime raw-keyword rewrite, `process` added to `skipSemanticParsing`; the same unconsumed tail was also fixed on `swap` | ✅ COMPOUND_COMMANDS coverage gate | `packages/core/src/parser/__tests__/compound-command-coverage.test.ts`; history below |
@@ -450,7 +450,7 @@ execution gate runs every eligible `_=` handler on both hyperfixi and the real
 upstream as the behavioral oracle, the R4 pattern applied to behavior. It is
 what would have caught the #785 defect on *behaviour* rather than on a
 diagnostic. Design, current numbers, the divergence families, and the
-harness lessons: [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
+harness lessons: [HANDOFF-shipped-examples-execution.md](archive/HANDOFF-shipped-examples-execution.md).
 Its first sweep produced two bug candidates: the unmet-event-filter defect
 (**fixed** — see History) and the `set <idref>` / js-path no-ops row above.
 
@@ -466,7 +466,7 @@ classifies the form from what follows — viable, since the pratt parser accepts
 command-word operands (`add is 3` parses cleanly). Fold the residual into that
 work rather than extending `OPERAND_INTRODUCERS` piecemeal. Detail + the
 regression episode that motivates it:
-[HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
+[HANDOFF-command-word-in-if-condition.md](archive/HANDOFF-command-word-in-if-condition.md).
 
 ## History
 
@@ -478,7 +478,7 @@ regression episode that motivates it:
   engine has ever accepted (notably a brace-block `repeat … { … }` form in four
   places), which is a docs defect and is being fixed in the arc's own diff, not
   here. Triage table:
-  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a.
+  [HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md) § F-B4a.
 - **2026-07-27** — event filters enforced: `on keydown[key=='Escape']` ran on
   ANY key because the runtime never read `EventHandlerNode.condition` (parsed,
   typed, documented, never consumed). The gate's first finding, fixed the same
@@ -492,7 +492,7 @@ regression episode that motivates it:
   handlers executed on both engines in jsdom, DOM-effect divergence ratcheted
   against `hyperscript.org` as the behavioral oracle. 46 divergences baselined
   in six families; two promoted to bug-candidate rows above. Brief:
-  [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md).
+  [HANDOFF-shipped-examples-execution.md](archive/HANDOFF-shipped-examples-execution.md).
 - **2026-07-27 (#786, repair commit)** — command-name words in `if`/`unless`
   conditions (`if log is 3 add .a` died with "Expected condition"; in a handler
   the `if` vanished and its body ran unconditionally, `ok: true`). Fixed by
@@ -503,7 +503,7 @@ regression episode that motivates it:
   through it because no in-repo source uses command-word conditions. The
   `hasThen` bound became the command-CHAIN rule (same-line then-joined bodies
   bind; a command starting a later line breaks the chain). Full episode:
-  [HANDOFF-command-word-in-if-condition.md](HANDOFF-command-word-in-if-condition.md).
+  [HANDOFF-command-word-in-if-condition.md](archive/HANDOFF-command-word-in-if-condition.md).
 - **2026-07-27** — the `hasThen` residual of the entry below: a single-line `if`
   whose FOLLOWING line carried a body `then` was still swallowed, because that
   lookahead crosses newlines. First bounded at the first command — over-corrected,
@@ -515,14 +515,14 @@ regression episode that motivates it:
   then kept walking, so the second command overrode the answer; it is now bounded
   to the `if`'s own line once that first command is found, which preserves the
   same-line `else`/`end` hunt the missing `break` exists for. Brief:
-  [HANDOFF-implicit-multiline-if.md](HANDOFF-implicit-multiline-if.md) (read its
+  [HANDOFF-implicit-multiline-if.md](archive/HANDOFF-implicit-multiline-if.md) (read its
   RESOLVED header — one residual stays open, at the top of the table above).
 - **#785** (2026-07-27) — `then` as a command separator in `if`/`unless`, `def` /
   `init` / `catch` / `finally`, and `tell` bodies; `--` comments in `if` bodies;
   shipped-sources allowlist 4 → 1. Brief:
-  [HANDOFF-if-block-then-separator.md](HANDOFF-if-block-then-separator.md)
+  [HANDOFF-if-block-then-separator.md](archive/HANDOFF-if-block-then-separator.md)
   (carries two corrections to its own original triage — read its header).
 - **#784** — shipped-sources validity gate + `ParseResult.recovered`. Brief:
-  [HANDOFF-parse-success-and-doc-examples.md](HANDOFF-parse-success-and-doc-examples.md).
+  [HANDOFF-parse-success-and-doc-examples.md](archive/HANDOFF-parse-success-and-doc-examples.md).
 - 2026-01-30 — behavior parameters shadowing command names. **Resolved**;
-  archived at [PARSER_FIX_STATUS.md](PARSER_FIX_STATUS.md).
+  archived at [PARSER_FIX_STATUS.md](archive/PARSER_FIX_STATUS.md).

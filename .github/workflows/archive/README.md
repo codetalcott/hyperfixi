@@ -92,5 +92,5 @@ If you need to restore these workflows, they're available in git history or can 
 
 ## See Also
 
-- [WORKFLOW_ANALYSIS.md](../../../docs-internal/WORKFLOW_ANALYSIS.md) - Full analysis and rationale
+- `docs-internal/WORKFLOW_ANALYSIS.md` - Full analysis and rationale (deleted in the 2026-08-01 docs-internal triage; recover via git history)
 - [.github/workflows/ci.yml](../ci.yml) - Consolidated workflow

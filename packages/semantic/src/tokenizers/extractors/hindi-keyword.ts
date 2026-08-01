@@ -67,7 +67,7 @@ export class HindiKeywordExtractor implements ContextAwareExtractor {
     // (keydown-key-is-syntax hi: `clear` lost, fid 0.5). When a `-` joins two
     // Devanagari runs, read the joined form and adopt it ONLY if it resolves to a
     // REGISTERED keyword — so hyphenated identifiers/selectors stay split as before.
-    // See docs-internal/HANDOFF-lossy-tail.md (Arc 4 / keydown-key-is-syntax).
+    // See docs-internal/archive/HANDOFF-lossy-tail.md (Arc 4 / keydown-key-is-syntax).
     if (
       this.context &&
       input[pos] === '-' &&

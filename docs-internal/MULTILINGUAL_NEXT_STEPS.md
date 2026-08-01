@@ -2,11 +2,11 @@
 
 > **Entry point, written 2026-06-16.** This is the _current_ forward-looking plan.
 > The detailed session logs live in
-> [CORRECTNESS_RELIABILITY_PLAN.md](CORRECTNESS_RELIABILITY_PLAN.md) (§7a–§7cc, §11),
+> [CORRECTNESS_RELIABILITY_PLAN.md](archive/CORRECTNESS_RELIABILITY_PLAN.md) (§7a–§7cc, §11),
 > [MULTILINGUAL_ROADMAP.md](MULTILINGUAL_ROADMAP.md),
-> [STRUCTURAL_ARCS_ROADMAP.md](STRUCTURAL_ARCS_ROADMAP.md),
-> [MULTILINGUAL_BEHAVIORS_PLAN.md](MULTILINGUAL_BEHAVIORS_PLAN.md) and
-> [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
+> [STRUCTURAL_ARCS_ROADMAP.md](archive/STRUCTURAL_ARCS_ROADMAP.md),
+> [MULTILINGUAL_BEHAVIORS_PLAN.md](archive/MULTILINGUAL_BEHAVIORS_PLAN.md) and
+> [BEHAVIORS_CONSOLIDATION_PLAN.md](archive/BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
 ---
@@ -805,8 +805,8 @@ toggle .pulse` composes fine, so the loop machinery was innocent).
 > **Update 2026-07-05 (R1 RESIDUAL TRIAGE FULLY HARVESTED + TWO RESIDUE SWEEPS — nine PRs
 > #564–#569 / #571–#573 across three sessions; mean R1 0.9535 → 0.9771, every language up at every
 > step, gate green throughout.)** The five-cluster triage in
-> [HANDOFF-r1-residual.md](HANDOFF-r1-residual.md) landed in full, then its residue was swept via
-> [HANDOFF-r1-post-cluster-residue.md](HANDOFF-r1-post-cluster-residue.md) — both handoffs carry
+> [HANDOFF-r1-residual.md](archive/HANDOFF-r1-residual.md) landed in full, then its residue was swept via
+> [HANDOFF-r1-post-cluster-residue.md](archive/HANDOFF-r1-post-cluster-residue.md) — both handoffs carry
 > per-PR status blocks with the A/B numbers and execution learnings; this is the index:
 >
 > - **#564 (cluster B)** — fetch `as json` responseType reclaim under fused SOV event patterns
@@ -846,7 +846,7 @@ toggle .pulse` composes fine, so the loop machinery was innocent).
 
 > **Update 2026-07-04b (SOV LITERAL-ROLE-EXTRACTION ARC: COMPLETE — both R2 blockers fixed +
 > joined; subset 45 → 47, R2 stays 1.0 in all 23 langs. #560 / #561 / #562.)** The arc planned in
-> [HANDOFF-sov-literal-role-extraction.md](HANDOFF-sov-literal-role-extraction.md) landed in three
+> [HANDOFF-sov-literal-role-extraction.md](archive/HANDOFF-sov-literal-role-extraction.md) landed in three
 > stacked increments:
 >
 > 1. **`append-content` — body-clause marker lookup, event-clobber fix (#560).** The predicted
@@ -882,7 +882,7 @@ toggle .pulse` composes fine, so the loop machinery was innocent).
 > signature fragility.
 >
 > **Same-day follow-up: the R1 residual is freshly triaged** — see
-> [HANDOFF-r1-residual.md](HANDOFF-r1-residual.md) (five grounded clusters: SOV `set` role-swap +
+> [HANDOFF-r1-residual.md](archive/HANDOFF-r1-residual.md) (five grounded clusters: SOV `set` role-swap +
 > property-path typing; fetch `as json` responseType under fused SOV; hi event-anchor on fronted
 > positional/property-path phrases; the CORPUS-WIDE `repeat for-each` head noise — the en reference
 > itself mis-parses; i18n transformer mangling of parenthesized expressions). It supersedes the
@@ -2149,11 +2149,11 @@ populate` before grounding R2. The **three genuinely-divergent** candidates rema
 > 2026-06-21 table below is superseded. **What remains is no longer a lossy band** — only the
 > **R1/SOV role-fidelity burn-down (Track 3 / the convergent SOV event-anchor arc)** and the
 > deferred **`tr window-resize`** hard-fail. Per-fix grounding + the remaining arcs are in
-> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md).
+> [`HANDOFF-lossy-tail.md`](archive/HANDOFF-lossy-tail.md).
 
 > **Update 2026-06-26 (priority degenerate band → 0).** The last two priority
 > degenerates are cleared (see
-> [`HANDOFF-remaining-degenerate-singletons.md`](HANDOFF-remaining-degenerate-singletons.md)):
+> [`HANDOFF-remaining-degenerate-singletons.md`](archive/HANDOFF-remaining-degenerate-singletons.md)):
 > **ko `window-scroll`** (semantic Stage-2 command-homonym event-head guard —
 > `hasSOVEventMarkerHead`; the if/else body was a red herring, the blocker was Stage 2
 > short-circuiting on the `스크롤` scroll-command homonym) and **tl `behavior-resizable`**
@@ -2163,7 +2163,7 @@ populate` before grounding R2. The **three genuinely-divergent** candidates rema
 > regressions. Remaining multilingual work is the **lossy tail (Track 4)** and the **R1/SOV
 > role-fidelity burn-down (Track 3)**, scoped (with Arc 1 — th `trigger`/`send` — empirically
 > grounded) in the successor handoff
-> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md). Note: the th lossy tail is NOT a
+> [`HANDOFF-lossy-tail.md`](archive/HANDOFF-lossy-tail.md). Note: the th lossy tail is NOT a
 > "th-wide body-parse" issue as earlier theorized — it is th dropping the `event`-category
 > commands (`trigger`/`send`) specifically; and the ar residual is narrower than the
 > `measure`-drop framing now that #493 cleared the handler-head mangling (re-localize first).
@@ -2309,7 +2309,7 @@ x/y`, and dynamic `add { left: ${…}px }` style templating; (b) if the runtime 
    > headroom above is the next behavior arc, not optional.
    >
    > **⚠️ DIAGNOSIS CORRECTION (2026-06-19).** The earlier triage above — and
-   > [`HANDOFF-transformer-behavior-fidelity.md`](HANDOFF-transformer-behavior-fidelity.md) — blamed
+   > [`HANDOFF-transformer-behavior-fidelity.md`](archive/HANDOFF-transformer-behavior-fidelity.md) — blamed
    > the **i18n `GrammarTransformer`** ("nested `if {…}` bodies flattened into a then-chain"). That
    > was reproduced via `MultilingualHyperscript.translate`, which is **`semantic.translate` =
    > parse→render**, a path the **fidelity gate does not use**. The gate measures the translations in
@@ -2655,7 +2655,7 @@ window-resize` hard-fail and the SOV behavior reorders — NOT the R0 dict-align
 > (`fetch-do-not-throw` #481, `get-value` #498, `tell-*` #504, `set-color-variable` #497, `render`
 > #502, `append` #503, the ar/qu/sw loop-body + ko if-fold residue #506) are all faithful. No
 > control-flow / long-tail lossy passes remain in the priority corpus. Per-fix grounding:
-> [`HANDOFF-lossy-tail.md`](HANDOFF-lossy-tail.md).
+> [`HANDOFF-lossy-tail.md`](archive/HANDOFF-lossy-tail.md).
 
 **Why:** `unless-condition` (8 lossy + 1 degen) is the largest non-behavior lossy pattern;
 the docs' long-standing diagnosis is **control-flow body parsing** (`if`/`unless` headers +
@@ -2860,7 +2860,7 @@ this signal was missing.
 ### ~~Deferred~~ RESOLVED: multilingual `fetch … with { … }` (Part 2b)
 
 **RESOLVED (2026-07-13, Arc E — `feat/arc-e-fetch-with`,
-`docs-internal/HANDOFF_arc-e-fetch-with.md`).** The naked named-arg form is now captured
+`docs-internal/archive/HANDOFF_arc-e-fetch-with.md`).** The naked named-arg form is now captured
 in ALL 24 languages in one change (the all-or-nothing R1 constraint below, honored):
 
 - **Shared fold** (`packages/semantic/src/parser/naked-args-fold.ts`): a run of
@@ -2890,7 +2890,7 @@ lack _lowers_ their R1 — hence the single 24-language change + baseline regen.
 
 ## Colon-event-names follow-ups (opened 2026-07-10)
 
-The colon-qualified event-name arc (`docs-internal/HANDOFF_colon-event-names.md`, resolved)
+The colon-qualified event-name arc (`docs-internal/archive/HANDOFF_colon-event-names.md`, resolved)
 fixed nine of the ten multiset-recall rows via three stacked causes: the tokenizer
 colon-split (framework `BaseTokenizer.mergeColonQualifiedNames`), hi/qu trigger
 accusative markers (trigger schema `markerVariants`), and the ms `it.<command-verb>`
@@ -2899,7 +2899,7 @@ CSS pseudo-class selectors (`#x:hover`, `.a:not(.b)`) also tokenize whole now, i
 languages including en (was split everywhere). Follow-up status:
 
 1. ~~**R3 role-VALUE audit (highest leverage).**~~ **DONE** (2026-07-10, the R3 arc —
-   `docs-internal/HANDOFF_role-value-audit.md`, resolved). Landed exactly as designed:
+   `docs-internal/archive/HANDOFF_role-value-audit.md`, resolved). Landed exactly as designed:
    `collectRoleValueSignature` walker in
    `packages/testing-framework/src/multilingual/fidelity.ts` (invariant-shaped values
    only — whole-surface code, no whitespace/`${` interpolation), live collection in
@@ -2913,7 +2913,7 @@ languages including en (was split everywhere). Follow-up status:
 
 2. ~~**qu behavior-resizable style-sets (the one remaining multiset row).**~~
    **DONE** (2026-07-10, transformer-rendering arc —
-   `docs-internal/HANDOFF_transformer-rendering.md`, resolved). The diagnosis
+   `docs-internal/archive/HANDOFF_transformer-rendering.md`, resolved). The diagnosis
    held: rendering bug, not parser tolerance. The transformer's new
    trailing-`end` strip (`transformSingle` step 0a) renders each inline-if's
    inner set verb-final BEFORE the terminator (`… man churanay tukuy`), the
@@ -3234,7 +3234,7 @@ class will fail if you forget, and the ci.yml step is a two-line add).
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged
 (probe transcript in the R3 arc), then burned down in the value-bug-families arc
-(`docs-internal/HANDOFF_value-bug-families.md`, resolved). Per-family outcomes —
+(`docs-internal/archive/HANDOFF_value-bug-families.md`, resolved). Per-family outcomes —
 F1–F5 + F8 **fixed** (unit-locked in `multilingual-roadmap-fixes.test.ts` § "R3
 value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 
@@ -3326,7 +3326,7 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
 
 7. ~~**qu/tr behavior trigger-event residue — RE-FILED to the transformer arc**~~
    **DONE** (2026-07-10, transformer-rendering arc —
-   `docs-internal/HANDOFF_transformer-rendering.md`, resolved; all four
+   `docs-internal/archive/HANDOFF_transformer-rendering.md`, resolved; all four
    `behavior-sortable` R3 rows gone). Fixed as a scoped render + parser-gap
    pair, NOT a blanket reorder (a full tr/bn canonicalOrder extension was
    tried first and re-rendered the whole corpus into shapes the parser can't
@@ -3467,7 +3467,7 @@ collisions in #558, #560, #569, #586; render/parse symmetry in #565, #636, #638)
 
 Prior art: lint R5 caught 220 real profile↔tokenizer drift findings in the domain
 packages on day one (#615). Lexicon end-state + domain-side history:
-`docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
+`docs-internal/archive/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md` ("a single lexicon", the
 `buildMarkerLookup` foothold).
 
 > **Arc A first ledger (2026-07-12, tool landed warn-only):** **242 errors /
@@ -3565,7 +3565,8 @@ packages on day one (#615). Lexicon end-state + domain-side history:
 >    The SIBLING traditional-parser + interchange layer (the `compileSync`
 >    `{traditional:true}` path the AOT adapter uses — NOT in this corpus) was a
 >    separate gap, resolved 2026-07-14; see
->    `docs-internal/HANDOFF_go-interchange-inference.md`.
+>    `HANDOFF_go-interchange-inference.md` (deleted in the 2026-08-01
+>    docs-internal triage; recover via git history).
 > 2. **`show`/`hide` style role is uncaptured in EVERY language including en**
 >    (`on click show #modal with *opacity` captures patient only). Another
 >    en-denominator gap: hi `साथ` / ar render-style registrations are untestable
@@ -3998,7 +3999,7 @@ _Release-prep notes (2026-07-13):_ the item-4 compound-adapter fix and the
 size-truth docs pass landed together as **#675** (kind gate in
 `createSemanticAdapter`; knownIssue removed; local `[full]` Fetch Data 8/8 with
 real assertions; all doc size figures at measured reality). **v2.8.0 release
-notes are drafted** at `docs-internal/RELEASE_NOTES_v2.8.0-draft.md` — on
+notes are drafted** at `docs-internal/archive/RELEASE_NOTES_v2.8.0-draft.md` — on
 release day, publish.yml auto-creates the release with `--generate-notes`;
 replace its body with the draft via `gh release edit v2.8.0 --notes-file …`.
 _R2 curated-subset expansion (event modifiers) probed and DEFERRED:_ the idea
@@ -4027,6 +4028,6 @@ per-language reviewers whose edits skip triage → founder merge), hash-pinned
 git-committed ledgers under `packages/patterns-reference/data/review/`, agent
 sweep/triage harness, changeset fan-out across the five vocab surfaces, glossary =
 `vocab dump`, and a 3-stage rollout on the lokascript-docs site — lives in
-**[proposals/community-review-system.md](proposals/community-review-system.md)**.
+**[proposals/community-review-system.md](archive/proposals/community-review-system.md)**.
 Targets the business plan's Days 46–90 `/community` window; builds on
 `apps/profile-editor` (apply path) and the vocab CLI (glossary/browser data).

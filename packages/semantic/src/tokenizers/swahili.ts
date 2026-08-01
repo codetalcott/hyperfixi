@@ -109,7 +109,7 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   // inside a word (swahili-keyword.ts), so these resolve as one keyword token —
   // otherwise `kwenye panya_shuka` split and the handler dropped (repeat-until-event
   // sw, fid 0.75). `panya_juu` is the dict's shared mouseup/mouseover form; map it to
-  // mouseup (the corpus use). See docs-internal/HANDOFF-lossy-tail.md.
+  // mouseup (the corpus use). See docs-internal/archive/HANDOFF-lossy-tail.md.
   { native: 'panya_shuka', normalized: 'mousedown' },
   { native: 'panya_juu', normalized: 'mouseup' },
   { native: 'panya_ingia', normalized: 'mouseenter' },

@@ -1,6 +1,6 @@
 /**
  * Arc E — `fetch … with { … }` captured in all 24 languages (release-bar
- * stretch item 5, docs-internal/HANDOFF_arc-e-fetch-with.md). The en braced
+ * stretch item 5, docs-internal/archive/HANDOFF_arc-e-fetch-with.md). The en braced
  * form is pinned by fetch-with-options.test.ts; this file locks the NAKED
  * named-arg form (`with method:"POST" body:form`) across the 24 corpus
  * renders of the four fetch-options rows.

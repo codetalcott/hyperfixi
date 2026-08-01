@@ -2,7 +2,7 @@
  * The command manifest — Arc A's registry-of-record (step 2)
  *
  * Arc A of `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`; the brief is
- * `docs-internal/HANDOFF-command-arch-manifest.md`. The command set is
+ * `docs-internal/archive/HANDOFF-command-arch-manifest.md`. The command set is
  * currently described in ~20 hand-maintained places; this file is the one that
  * the others will be migrated onto, one consumer per PR (steps 3 and 4).
  *

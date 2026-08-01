@@ -444,7 +444,7 @@ const OPERAND_INTRODUCERS = new Set([
  * Both misclassifications previously made the form-detection scans (and the
  * single-line condition loop) treat the condition's first word as the body,
  * failing shapes upstream accepts. See
- * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ * docs-internal/archive/HANDOFF-command-word-in-if-condition.md.
  */
 function isBodyCommandStart(ctx: ParserContext, prevToken: Token | null, token: Token): boolean {
   if (prevToken === null) {
@@ -489,7 +489,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   // must stay outside the block). A pure first-command bound was tried and
   // over-corrected: it also broke at command-WORDS inside the condition
   // (`if log is 3 then …`, `if x is set then …`), failing shapes upstream
-  // accepts — see docs-internal/HANDOFF-command-word-in-if-condition.md.
+  // accepts — see docs-internal/archive/HANDOFF-command-word-in-if-condition.md.
   let hasThen = false;
   const savedPosForThen = ctx.savePosition();
   const maxThenLookahead = 500; // Increased to handle large conditional expressions
@@ -544,7 +544,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     // without those two exemptions a command-WORD in the condition
     // (`if log is 3 …`, `if x is set …`) was read as the body's first command
     // and the form detection collapsed. See
-    // docs-internal/HANDOFF-command-word-in-if-condition.md.
+    // docs-internal/archive/HANDOFF-command-word-in-if-condition.md.
     let prevToken: Token | null = null;
 
     // Scan forward to find the FIRST command after the condition
@@ -562,7 +562,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       // `log 'b'` on the next line swallowed `log 'b'` into the if-block, so it
       // stopped running whenever the condition was false, with only a recovered
       // "Expected 'end' after if block" (ok/success both stayed true) to show for
-      // it. See docs-internal/HANDOFF-implicit-multiline-if.md.
+      // it. See docs-internal/archive/HANDOFF-implicit-multiline-if.md.
       if (firstCommandOnIfLine && token.line !== undefined && token.line !== ifStatementLine) {
         break;
       }
@@ -630,7 +630,7 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     // `log is 3`). With the guard applied from token 0, that shape parsed ZERO
     // condition tokens and died with "Expected condition after if/unless"
     // (silently, when inside a handler — see
-    // docs-internal/HANDOFF-command-word-in-if-condition.md). The command guard
+    // docs-internal/archive/HANDOFF-command-word-in-if-condition.md). The command guard
     // applies from the second parse on, where a command token really does start
     // the body.
     let firstConditionParse = true;

@@ -10,7 +10,7 @@
  * `抓取 把 /api/data` (and `抓取 把 /api/data 的 json` for `fetch … as json`,
  * with `的` standing in for `as`). Neither matches the generated `抓取 从 …`
  * form, so a `fetch` inside an event block / then-chain dropped (degenerate
- * `{on}`). See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#3).
+ * `{on}`). See docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#3).
  *
  * This pattern tolerates the BA marker (`把`, optional) before the `source` URL
  * — mirroring the `toggle-zh-ba` / `wait-zh-ba` convention — and the `的` / `作为`

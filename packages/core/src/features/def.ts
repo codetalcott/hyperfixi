@@ -17,7 +17,7 @@
  *
  * `def` execution lives in `RuntimeBase.installFunction` (see
  * `src/runtime/def-execution.test.ts`), which was written deliberately WITHOUT
- * this module — see `docs-internal/HANDOFF-def-execution.md` for why.
+ * this module — see `docs-internal/archive/HANDOFF-def-execution.md` for why.
  *
  * Slated for removal together with its `src/index.ts` exports in the next
  * breaking-change batch — deleting it is semver-visible, which is the only

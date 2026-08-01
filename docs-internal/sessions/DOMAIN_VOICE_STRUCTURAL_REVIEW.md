@@ -1,7 +1,7 @@
 # domain-voice structural review
 
 **Date:** 2026-07-08 · **Status:** findings recorded; 2 framework fixes landed, the rest deferred
-**Sibling:** [`DOMAIN_REVIEW.md`](./DOMAIN_REVIEW.md) (an earlier review of sql/bdd/jsx that predates the framework↔semantic bridge and never covered voice)
+**Sibling:** [`DOMAIN_REVIEW.md`](../archive/sessions/DOMAIN_REVIEW.md) (an earlier review of sql/bdd/jsx that predates the framework↔semantic bridge and never covered voice)
 
 ## Context
 
@@ -91,7 +91,7 @@ The same verb keyword lives in `vocab/*` (parsing, 154 entries across 11 langs) 
 `COMMAND_KEYWORDS` (rendering, 154 entries), with no shared source — a mismatch only surfaces as a
 round-trip test failure. Voice already did *half* the consolidation (its renderer derives *markers*
 from schemas via `buildMarkerLookup`); the verb table is the remaining half. This is the
-[single-lexicon aspiration](../FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md) (bridge plan §"Vocab-authoring
+[single-lexicon aspiration](../archive/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md) (bridge plan §"Vocab-authoring
 ergonomics"), which **names domain-voice as the foothold to generalize**.
 
 **V4 — Doc drift. → QUICK / OPTIONAL.**
@@ -100,8 +100,8 @@ domain-voice has no `CLAUDE.md`/`README`, and its `package.json` says "8 languag
 
 ### Already tracked — link, don't re-litigate
 
-- **Single-lexicon consolidation** — [`FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md`](../FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md) §"Vocab-authoring ergonomics (backlog)"; voice is the named foothold. Covers V3.
-- **`AbstractCodeGenerator`** — [`DOMAIN_REVIEW.md`](./DOMAIN_REVIEW.md) §4 (per-domain switch boilerplate), proposed, priority #7, unbuilt. Related to V2.
+- **Single-lexicon consolidation** — [`FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md`](../archive/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md) §"Vocab-authoring ergonomics (backlog)"; voice is the named foothold. Covers V3.
+- **`AbstractCodeGenerator`** — [`DOMAIN_REVIEW.md`](../archive/sessions/DOMAIN_REVIEW.md) §4 (per-domain switch boilerplate), proposed, priority #7, unbuilt. Related to V2.
 - **`compilation-service` `AbstractOperation` IR** — [`operations/types.ts`](../../packages/compilation-service/src/operations/types.ts) already defines `ToggleClassOp/ShowOp/HideOp/NavigateOp/FocusOp/HistoryBack/ForwardOp`, heavily overlapping voice's verbs, but is unconnected to the domain DSLs. A candidate backend for V2 if voice's codegen is ever consolidated.
 
 ## Prioritization

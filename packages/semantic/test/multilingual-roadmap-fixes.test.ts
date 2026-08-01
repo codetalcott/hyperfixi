@@ -165,7 +165,7 @@ describe('unless-condition guard parses (qu, vi, zh — unless keyword recognize
   //  - zh: the i18n transformer now keeps the unless condition marker-free
   //    (`除非 I match .disabled 切换 把 .selected`, not `除非 把 I match …`); this
   //    locks that the parser recovers the full body from the corrected form.
-  // See docs-internal/HANDOFF-lossy-tail.md (unless-condition arc).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (unless-condition arc).
   const cases: Array<[string, string]> = [
     ['vi', 'khi nhấp trừ khi I match .disabled chuyển đổi .selected'],
     ['qu', 'I match .disabled tikray .selected ta ñitiy pi mana sichus'],
@@ -188,7 +188,7 @@ describe('vi render keyword alignment (kết xuất, not the show-colliding hi�
   // and the semantic profile reads it as `show` (render primary is `kết xuất`). So
   // `render #x with …` parsed as `show` and the `render` action dropped
   // (render-template-with-data, morph-with-template — fid 0.5/0.667). Dict realigned
-  // to `kết xuất`. See docs-internal/HANDOFF-lossy-tail.md (render cluster).
+  // to `kết xuất`. See docs-internal/archive/HANDOFF-lossy-tail.md (render cluster).
   const cases: Array<[string, string]> = [
     ['kết xuất #user-list với users: $data rồi đặt nó vào #container', 'put'],
     ['kết xuất #row với row: $data rồi biến đổi #target vào nó', undefined as unknown as string],
@@ -210,7 +210,7 @@ describe('qu append keyword alignment (qatichiy, not the _-splitting qhipaman_ya
   // The i18n qu dict emitted `append: 'qhipaman_yapay'`, which the qu tokenizer
   // `_`-splits to `qhipaman`+`yapay`(=add) so `append-content` parsed as `add`
   // (fid 0.5). Realigned the dict to the profile's single-token append primary
-  // `qatichiy`. See docs-internal/HANDOFF-lossy-tail.md (singleton tail).
+  // `qatichiy`. See docs-internal/archive/HANDOFF-lossy-tail.md (singleton tail).
   it('parses qatichiy as append (not add) in an SOV event body', () => {
     const node = parse('"<li>Item</li>" ta #list man ñitiy pi qatichiy', 'qu');
     expect(node.action).toBe('on');
@@ -225,7 +225,7 @@ describe('zh tell BA-marked target (告诉 把 #el — tellSchema markerOverride
   // accusative/BA particle: he את (handled), zh 把 (`告诉 把 #modal`). The generated
   // zh tell pattern didn't expect 把, so the token broke the match and `tell`
   // dropped (tell-command, tell-other-element — fid 0.5/0.75). Added `zh: '把'` to
-  // tellSchema's destination markerOverride. See docs-internal/HANDOFF-lossy-tail.md.
+  // tellSchema's destination markerOverride. See docs-internal/archive/HANDOFF-lossy-tail.md.
   const cases: Array<[string, string[]]> = [
     ['当 点击 时 告诉 把 #modal 到 显示', ['tell']],
     [
@@ -251,7 +251,7 @@ describe('ko if-empty: command verb directly after copula in a split SOV predica
   // `추가`(add) into the condition and dropped it (if-empty/input-validation ko, fid
   // 0.75 — ja/bn escaped only because their copula isn't lexed as a single `is`). The
   // split now fires after a copula when a real SOV command-verb keyword opens here.
-  // See docs-internal/HANDOFF-lossy-tail.md (control-flow if-folding).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (control-flow if-folding).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -313,7 +313,7 @@ describe('hi hyphen-compound keyword (साफ़-करें = clear) tokeniz
   // hyphen (`साफ़-करें`=clear). The keyword reader stopped at `-`, splitting it into
   // three tokens; the command verb never matched and the action dropped
   // (keydown-key-is-syntax hi: `clear` lost, fid 0.5). The reader now joins a `-`
-  // run when it resolves to a registered keyword. See docs-internal/HANDOFF-lossy-tail.md.
+  // run when it resolves to a registered keyword. See docs-internal/archive/HANDOFF-lossy-tail.md.
   it('parses साफ़-करें as clear (keydown-key-is-syntax)', () => {
     const node = parse("मैं को keyup[key is 'Escape'] पर साफ़-करें", 'hi') as Record<
       string,
@@ -386,7 +386,7 @@ describe('Multi-token event names anchor the event handler (ar multi-word, sw un
   // proclitic — so the `عند`/`kwenye <event>` handler never anchored and the WHOLE
   // handler dropped (repeat-until-event ar+sw: `on` lost, fid 0.75). Fixes: the ar
   // tokenizeWithExtractors override now runs tryMultiWordKeyword first; the sw
-  // identifier reader keeps `_` inside a word. See docs-internal/HANDOFF-lossy-tail.md.
+  // identifier reader keeps `_` inside a word. See docs-internal/archive/HANDOFF-lossy-tail.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -448,7 +448,7 @@ describe('qu repeat loop-keyword swallow guard (verb-final wait eats the loop kw
   // argument run, so matchBest succeeded as `wait` and the `repeat` loop keyword
   // was swallowed — the loop node never formed (behavior-draggable qu, fid 0.875).
   // parseClause now rejects a NON-repeat match anchored at the repeat keyword and
-  // emits the bare repeat instead. See docs-internal/HANDOFF-lossy-tail.md (Arc 2).
+  // emits the bare repeat instead. See docs-internal/archive/HANDOFF-lossy-tail.md (Arc 2).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -507,7 +507,7 @@ describe('ar measure keyword alignment (undiacritized قس)', () => {
   // قس. So `قس width`/`قس x` parsed to null and the whole `measure` command
   // dropped from the event-handler body (behavior-draggable, behavior-resizable
   // — fid 0.875/0.889). Added قس to the profile measure alternatives.
-  // See docs-internal/HANDOFF-lossy-tail.md (Arc 2 — ar measure).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (Arc 2 — ar measure).
   for (const clause of ['قس width', 'قس x', 'قس height']) {
     it(`parses "${clause}" as measure`, () => {
       const node = parse(clause, 'ar');
@@ -852,7 +852,7 @@ describe('fused-event trailing `if … end` folds + verb-medial set (fetch-do-no
   // parseBodyWithClauses), recovering the `set` in its then-branch. Flips
   // fetch-do-not-throw bn/hi/ja/ko/tr lossy→faithful (and generalizes to
   // fetch-error-handling, form-disable-on-submit, modal-close-escape). See
-  // docs-internal/HANDOFF-fetch-do-not-throw.md.
+  // docs-internal/archive/HANDOFF-fetch-do-not-throw.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const n = node as Record<string, unknown>;
@@ -1345,7 +1345,7 @@ describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 
   // The transformer now lifts the modifier out and re-emits it as a leading
   // literal, keeping the body patient-first so these transform outputs parse as a
   // full event handler again. These strings are the post-fix transformer output;
-  // the parser must recover every body command. See docs-internal/SOV_REORDER_SCOPE.md.
+  // the parser must recover every body command. See docs-internal/archive/SOV_REORDER_SCOPE.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1516,7 +1516,7 @@ describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
   // Stage-1 fused event pattern can't anchor. The Stage-2 gate now prefers the
   // SOV event extraction when the matched action is a block/loop action, so the
   // event is found, stripped, and the loop body re-parsed. See
-  // docs-internal/SOV_REPEAT_SCOPE.md. Strings below are post-transform output
+  // docs-internal/archive/SOV_REPEAT_SCOPE.md. Strings below are post-transform output
   // (en → lang); the parser must recover the event + body.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
@@ -1628,7 +1628,7 @@ describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)
   // the event (it isn't last), so the bare loop keyword won Stage 2 and the event +
   // body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker>
   // <event>` pair and parses the rest as the loop body. Strings below are
-  // post-transform output (en → lang). See docs-internal/NON_SOV_REPEAT_SCOPE.md.
+  // post-transform output (en → lang). See docs-internal/archive/NON_SOV_REPEAT_SCOPE.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1689,7 +1689,7 @@ describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)
 
 describe('Non-SOV repeat-* loop-body + tail residue — zh/ar/tl/ja/ko/sw (Track 5)', () => {
   // Two parser-side fixes that close the residues scoped in
-  // docs-internal/NON_SOV_REPEAT_SCOPE.md. Strings below are post-transform output
+  // docs-internal/archive/NON_SOV_REPEAT_SCOPE.md. Strings below are post-transform output
   // (en → lang) from the harness pipeline (maskSpans → GrammarTransformer →
   // unmaskSpans). Both fixes are additive — they only recover commands the parser
   // previously dropped, never re-shape an already-faithful parse.
@@ -1813,7 +1813,7 @@ describe('qu/sw increment keyword alignment (yapachiy / ongezeko)', () => {
   // distinct increment primary (qu yapachiy, sw ongezeko). qu additionally needed
   // a handcrafted SOV pattern (`{patient} ta yapachiy`) mirroring add-qu-sov — the
   // generated SOV pattern didn't anchor the verb-final order. See the recommended
-  // follow-up to docs-internal/NON_SOV_REPEAT_SCOPE.md.
+  // follow-up to docs-internal/archive/NON_SOV_REPEAT_SCOPE.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1887,7 +1887,7 @@ describe('zh wait BA-marked duration (等待 把 {duration})', () => {
   // pattern has no `把`, so the marked form didn't parse and the trailing `wait`
   // dropped (the last zh `repeat-forever` residue: 0.67 → 1.0). A handcrafted
   // `wait-zh-ba` pattern now tolerates the `把`. The deeper transformer fix (don't
-  // mark a duration as a fronted patient) is scoped in docs-internal/ZH_BLOCK_BODY_SCOPE.md.
+  // mark a duration as a fronted patient) is scoped in docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1927,7 +1927,7 @@ describe('zh then-connective 那么 recognized (aligns with i18n)', () => {
   // 那么. Today the matchBest clause-loop recovers commands either way (so this was
   // a latent consistency gap, not an observable parse bug), but 那么 is now a
   // first-class then-alternative in the profile so the two packages agree and the
-  // recovery no longer leans on the fallback. See docs-internal/ZH_BLOCK_BODY_SCOPE.md.
+  // recovery no longer leans on the fallback. See docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md.
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1970,7 +1970,7 @@ describe('zh fetch in event block (抓取 把 {source} [的 {responseType}])', (
   // (and emitting `的` for `as`), so a handcrafted `fetch-zh-ba` pattern tolerates
   // the `把`/no-marker source and the `的`/作为 responseType. The trailing `put`
   // (emitted `把 X 放置 到 Y`) recovers via the realigned `put-zh-ba` pattern (its
-  // verb 放置 + separate 到 marker). See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#3).
+  // verb 放置 + separate 到 marker). See docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#3).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -2305,7 +2305,7 @@ describe('socket command keyword alignment (9 native-primary languages)', () => 
   // (degenerate → faithful 1.0; the EN reference for this pattern is just {socket}).
   // Same root-cause family as the focus keyword alignment. See
   // docs-internal/MULTILINGUAL_ROADMAP.md ("socket keyword alignment") and
-  // docs-internal/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0).
+  // docs-internal/archive/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -2368,7 +2368,7 @@ describe('eventsource / worker profile entries (hi, tl) — Phase 0b', () => {
   // entries (English primary — the transformer emits the English literal — with a
   // native transliteration as alternative for hi). Clears all 4 (degenerate →
   // faithful 1.0; the EN reference for each is just {eventsource}/{worker}). See
-  // docs-internal/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0b).
+  // docs-internal/archive/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0b).
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -7184,7 +7184,7 @@ describe('th add destination: positional phrase captured (R2 tails batch)', () =
 
 // =============================================================================
 // R2 structural tails — batch 2 (10 → 5 execution cells). Each cell is a distinct
-// per-language mechanism; see docs-internal/STRUCTURAL_ARCS_ROADMAP.md.
+// per-language mechanism; see docs-internal/archive/STRUCTURAL_ARCS_ROADMAP.md.
 // =============================================================================
 
 import { buildAST } from '../src';
@@ -8137,7 +8137,7 @@ describe('Turkish unless keyword alignment (değilse)', () => {
   // whose markers shatter on the `_` join (hi جब_تک_नہیں, vi trừ_khi → khi=on),
   // collide with a particle (ja でなければ split by the で marker) or with `else`
   // (ko 아니면 = else), or fail structurally with a front marker (zh 除非 mid-`把`).
-  // Those remain lossy — see docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  // Those remain lossy — see docs-internal/archive/HANDOFF-unless-condition-tokenizer.md.
   //
   // Corpus-shaped SOV transformer output from the multilingual baseline
   // (`on click unless I match .disabled toggle .selected`):
@@ -8183,7 +8183,7 @@ describe('Trailing SOV `unless` guard recovery (unless-condition, ko/bn/ja)', ()
   // marker moved off the `で` particle (でなければ → ない限り): `で` is peeled by the
   // particle extractor and shatters the marker, but `ない限り` starts with `な` (not a
   // particle) so it tokenizes as a single `unless` token — then the guard recovers it.
-  // See docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  // See docs-internal/archive/HANDOFF-unless-condition-tokenizer.md.
   const collectActions = (node: unknown, acc: string[] = []): string[] => {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -8238,7 +8238,7 @@ describe('Bare-event mis-anchor guard (hi unless-condition — SOV event-anchor 
   // marker also had to move from the shattering underscore form `जब_तक_नहीं` to the
   // spaced `जब तक नहीं` so it tokenizes as a single `unless` token (longest-first
   // multi-word match beats the `जब तक`=while prefix). See
-  // docs-internal/HANDOFF-unless-condition-tokenizer.md.
+  // docs-internal/archive/HANDOFF-unless-condition-tokenizer.md.
   const input = 'I match .disabled टॉगल .selected को क्लिक पर जब तक नहीं';
   const collectActions = (node: unknown, acc: string[] = []): string[] => {
     if (!node || typeof node !== 'object') return acc;
@@ -8405,7 +8405,7 @@ describe('`do not throw` fetch modifier strip (fetch-do-not-throw phantom-throw)
   // parsing, anchored on the leaked `do` + a `throw`-normalized verb within a small
   // window (ja's negation `ではない` shatters into `で`/`は`/`ない`). The if-body `set`
   // drop is a SEPARATE, deferred recall defect — see the fetch-do-not-throw arc
-  // handoff (docs-internal/HANDOFF-fetch-do-not-throw.md).
+  // handoff (docs-internal/archive/HANDOFF-fetch-do-not-throw.md).
   const collectActions = (node: unknown, acc: string[] = []): string[] => {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -12444,7 +12444,7 @@ describe('qu kanqa chusaq predicate stays inside the condition (empty-arc qu rip
 
 describe('colon-qualified event names: full behavior bodies capture every trigger by VALUE (hi/ja/ko/ms/qu)', () => {
   // The multiset-recall ratchet flagged behavior-draggable/behavior-resizable in
-  // hi/ja/ko/ms/qu (docs-internal/HANDOFF_colon-event-names.md). Three stacked
+  // hi/ja/ko/ms/qu (docs-internal/archive/HANDOFF_colon-event-names.md). Three stacked
   // causes, all fixed together:
   //   1. every non-en tokenizer split `draggable:start` at the local-variable
   //      sigil (BaseTokenizer.mergeColonQualifiedNames — the framework fix);
@@ -12732,7 +12732,7 @@ describe('colon-qualified event names: full behavior bodies capture every trigge
   });
 });
 
-describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', () => {
+describe('R3 value-bug families (docs-internal/archive/HANDOFF_value-bug-families.md)', () => {
   // The R3 value-recall signal compares language-invariant role VALUES verbatim
   // against the en reference. Its first sweep surfaced eight bug families —
   // right actions, right role types, wrong or dropped VALUES — invisible to
@@ -13130,7 +13130,7 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
   });
 });
 
-describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render style (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render style (docs-internal/archive/HANDOFF_r1-role-fidelity.md)', () => {
   // The SOV canonicalOrders carry no `style` slot, so the transformer's
   // safety net strands the with-options blob AFTER the verb with its
   // postposition, where the fused event patterns left it unconsumed —
@@ -13239,7 +13239,7 @@ describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render 
   });
 });
 
-describe('R1 Family B: qu set — oblique manta source + whole backtick templates (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+describe('R1 Family B: qu set — oblique manta source + whole backtick templates (docs-internal/archive/HANDOFF_r1-role-fidelity.md)', () => {
   // Two independent qu-only defects flattened every hard set row to the
   // verb-anchoring fallback (destination:literal / patient:selector, vs en's
   // destination:property-path / patient:expression):
@@ -13366,7 +13366,7 @@ describe('R1 Family B: qu set — oblique manta source + whole backtick template
   });
 });
 
-describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (docs-internal/archive/HANDOFF_r1-role-fidelity.md)', () => {
   // The behaviors' `wait for pointermove(...) or pointerup(...) from document`
   // renders verb-final with a fronted from-phrase (post-#636); no tr/qu wait
   // pattern matched the or-run shape, so the verb-anchoring fallback binned
@@ -13429,7 +13429,7 @@ describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (do
   });
 });
 
-describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDOFF_r1-role-fidelity.md)', () => {
+describe('R1 Family D: SOV fallback value-typing increments (docs-internal/archive/HANDOFF_r1-role-fidelity.md)', () => {
   // The verb-anchoring fallback's typing (tokensToSemanticValue /
   // tokenToSemanticValue) diverged from the pattern path the en reference
   // uses — bare sigil refs fell to literal, multi-token runs glue+first-token
@@ -13628,7 +13628,7 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
   });
 });
 
-describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-internal/archive/HANDOFF_r1-deferred-tail.md)', () => {
   // event-debounce: the en REFERENCE itself truncated the interpolated URL at
   // the space inside `${my value}` (source:literal="/api/search?q=${my"), so
   // every language "missed" against a junk denominator — ja captured
@@ -13687,7 +13687,7 @@ describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-in
   });
 });
 
-describe('R1 deferred-tail Family H: fused halt+call renders verb-final and parses like en (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+describe('R1 deferred-tail Family H: fused halt+call renders verb-final and parses like en (docs-internal/archive/HANDOFF_r1-deferred-tail.md)', () => {
   // form-submit-prevent: en `on submit halt the event call validateForm() if
   // result is false log "Invalid form" end` → halt.patient:reference=event +
   // call.patient:expression=validateForm(). The old SOV renders interleaved
@@ -13747,7 +13747,7 @@ describe('R1 deferred-tail Family H: fused halt+call renders verb-final and pars
   });
 });
 
-describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the fold (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the fold (docs-internal/archive/HANDOFF_r1-deferred-tail.md)', () => {
   // focus-trap: en `if target matches last <button/> in .modal focus first
   // <button/> in .modal halt end` → focus.patient:expression. SOV renders had
   // no boundary between the condition tail and the positional-headed branch
@@ -13803,7 +13803,7 @@ describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the 
   });
 });
 
-describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/HANDOFF_r1-deferred-tail.md)', () => {
+describe('R1 deferred-tail qu tail: per-row alignments (docs-internal/archive/HANDOFF_r1-deferred-tail.md)', () => {
   // Four scoped qu fixes, each locked with the full canonical
   // pattern_translations row and the en-matching capture:
   // - single-quoted strings classify literal (put ×2: make-toast-element,
@@ -13902,7 +13902,7 @@ describe('Spanish hacia destination alignment (vocab Batch 1, V2+V4)', () => {
   // destination=me (the schema default) instead of #item. Registering it as a
   // destination alternative fixes the capture AND its V4 classification (the
   // tokenizer derives keywords from roleMarkers). Probe evidence:
-  // docs-internal/HANDOFF_vocab-batch1-v4-probe.md → MULTILINGUAL_NEXT_STEPS.md
+  // docs-internal/archive/HANDOFF_vocab-batch1-v4-probe.md → MULTILINGUAL_NEXT_STEPS.md
   // § "V4 probe conclusion".
   function findAction(node: unknown, action: string): Record<string, any> | null {
     if (!node || typeof node !== 'object') return null;
@@ -14031,7 +14031,7 @@ describe('go-url destination capture (docs-internal/MULTILINGUAL_NEXT_STEPS.md "
   }
 });
 
-describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wait (docs-internal/HANDOFF_foreign-validity-burndown.md)', () => {
+describe('Foreign-validity Phase 11: bn অথবা→or + verb-first or-run wait (docs-internal/archive/HANDOFF_foreign-validity-burndown.md)', () => {
   // The behaviors' `wait for <e1> or <e2> from document` line: bn authors it
   // verb-first with the "for" half of "wait for" as a floating `জন্য`
   // postposition, in two different positions (draggable vs sortable/resizable).

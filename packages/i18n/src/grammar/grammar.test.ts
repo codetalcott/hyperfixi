@@ -591,7 +591,7 @@ describe('GrammarTransformer', () => {
       // qu `repeat …` transformed to `kutichiy …` and the semantic parser read it
       // as `return`, dropping the loop — degenerate parses for the qu repeat-*
       // cluster (repeat-while, repeat-for-each). Align the emitted verb to the
-      // semantic repeat keyword. See docs-internal/SOV_REPEAT_SCOPE.md.
+      // semantic repeat keyword. See docs-internal/archive/SOV_REPEAT_SCOPE.md.
       const result = transformer.transform(
         'on click repeat for item in .items add .processed to item'
       );
@@ -669,7 +669,7 @@ describe('GrammarTransformer', () => {
     // `1s 를 대기`. The marked forms failed the semantic parser's `等待 {duration}`
     // pattern and the trailing `wait` dropped. The transformer now honours the
     // command's true primary role (`wait` → `duration`, which carries no marker).
-    // See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model).
+    // See docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model).
 
     it('zh: wait emits a grammatical duration (no 把 object marker)', () => {
       const result = new GrammarTransformer('en', 'zh').transform('wait 1s');
@@ -722,7 +722,7 @@ describe('Inline `unless` guard in an event handler (no object marker on conditi
   // the real toggle — the semantic parser then dropped `unless`.
   // tryTransformEventWithUnlessGuard routes the guard through the standalone block
   // path so the marker lands on the toggle patient, not the condition.
-  // See docs-internal/HANDOFF-lossy-tail.md (unless-condition arc).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (unless-condition arc).
   const en = 'on click unless I match .disabled toggle .selected';
 
   it('zh: 把 marks the toggle patient, not the unless condition', () => {
@@ -751,7 +751,7 @@ describe('vi render keyword (kết xuất, distinct from show)', () => {
   // `render`/`show` both mapped to `hiển thị`, which the semantic profile reads as
   // `show` — so vi `render …` parsed as `show`. Dict realigned render → `kết xuất`
   // (the profile's render primary); `show` keeps `hiển thị`.
-  // See docs-internal/HANDOFF-lossy-tail.md (render cluster).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (render cluster).
   it('emits `kết xuất` for render, leaving show as `hiển thị`', () => {
     const t = new GrammarTransformer('en', 'vi');
     const rendered = t.transform('on click render #x with y: $data then put it into #out');
@@ -764,7 +764,7 @@ describe('vi render keyword (kết xuất, distinct from show)', () => {
 describe('qu append keyword (qatichiy, not the _-splitting qhipaman_yapay)', () => {
   // `qhipaman_yapay` `_`-splits at parse time to `qhipaman`+`yapay`(=add); the dict
   // now emits the profile's single-token append primary `qatichiy`.
-  // See docs-internal/HANDOFF-lossy-tail.md (singleton tail).
+  // See docs-internal/archive/HANDOFF-lossy-tail.md (singleton tail).
   it('emits the single-token `qatichiy` for append', () => {
     const result = new GrammarTransformer('en', 'qu').transform(
       'on click append "<li>Item</li>" to #list'
@@ -1805,7 +1805,7 @@ describe('SOV modifier-prefixed event body reorder (Track 5)', () => {
   // transformer now lifts the modifier out and re-emits it as a leading English
   // literal, keeping the body in canonical patient-first SOV order so the event
   // sits mid-stream and the parser's SOV event-extraction recovers the full body.
-  // See docs-internal/SOV_REORDER_SCOPE.md.
+  // See docs-internal/archive/SOV_REORDER_SCOPE.md.
 
   for (const lang of ['ja', 'ko', 'tr'] as const) {
     const t = new GrammarTransformer('en', lang);
@@ -2515,7 +2515,7 @@ describe('qu fused (no-underscore) empty/null value word (chusaq)', () => {
 // SOV reorder stranding (transformer-rendering arc)
 // =============================================================================
 //
-// Three rendering defects, one family (docs-internal/HANDOFF_transformer-rendering.md):
+// Three rendering defects, one family (docs-internal/archive/HANDOFF_transformer-rendering.md):
 // (a) `wait for X or Y from Z` rendered verb-first (tr) / verb-medial (qu) —
 //     reorderRoles' safety-net appended roles missing from canonicalOrder
 //     AFTER the verb, stranding the or-run/from-phrase outside the clause;
@@ -2599,7 +2599,7 @@ describe('SOV reorder stranding (transformer-rendering arc)', () => {
 // halt and the event to call). sovHaltCallFusedRule splits the blob at the
 // language's call verb and emits both commands verb-final, joined by the
 // then-connective (R1 deferred-tail Family H,
-// docs-internal/HANDOFF_r1-deferred-tail.md).
+// docs-internal/archive/HANDOFF_r1-deferred-tail.md).
 describe('SOV fused halt+call heads render both commands verb-final (Family H)', () => {
   const src =
     'on submit halt the event call validateForm() if result is false log "Invalid form" end';

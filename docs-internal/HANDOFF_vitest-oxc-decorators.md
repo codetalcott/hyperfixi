@@ -5,7 +5,7 @@ human; the prompt itself starts after it.
 
 **Arc state:** root-caused and verified; **not fixed**. Three candidate fixes were tried and
 **disproved empirically** — read "What does NOT work" before writing any code, it is the most
-valuable part of this doc. Companion: `docs-internal/SPIKE_vite-plus-toolchain.md` (Addendum,
+valuable part of this doc. Companion: `docs-internal/archive/SPIKE_vite-plus-toolchain.md` (Addendum,
 2026-07-16). Blocks Dependabot #694/695/696.
 
 ---

@@ -206,7 +206,7 @@ export function staleToolError(stale: string[]): {
           `  Fix: restart the MCP server (in Claude Code: /mcp, then reconnect "lokascript").\n\n` +
           `  If you are mid-arc and only need to probe the parser, prefer a direct tsx probe\n` +
           `  (which imports fresh each run) over this server — see the probe recipe in\n` +
-          `  docs-internal/HANDOFF_foreign-validity-burndown.md.`,
+          `  docs-internal/archive/HANDOFF_foreign-validity-burndown.md.`,
       },
     ],
     isError: true,

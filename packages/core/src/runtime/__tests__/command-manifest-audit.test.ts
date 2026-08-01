@@ -2,7 +2,7 @@
  * The command manifest audit — Arc A's gate (step 1)
  *
  * Arc A of `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`; the brief is
- * `docs-internal/HANDOFF-command-arch-manifest.md`. Modelled on Arc C's
+ * `docs-internal/archive/HANDOFF-command-arch-manifest.md`. Modelled on Arc C's
  * `command-output-contract.test.ts`: an explicit audit of current behavior,
  * including the wrong parts, with every wrong row commented with the step that
  * fixes it.
