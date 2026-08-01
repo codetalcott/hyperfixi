@@ -5,7 +5,7 @@
     "real hyperscript.org engine when its trigger event is dispatched in jsdom.",
     "Keys embed a hash of the source: editing the handler changes the key, so entries go",
     "stale and the stale-entry assertion forces their removal — the list only ratchets down.",
-    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md."
+    "Reasons are family-level triage; see docs-internal/archive/HANDOFF-shipped-examples-execution.md."
   ],
   "allowedDivergences": [
     {

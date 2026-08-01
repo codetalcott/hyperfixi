@@ -38,7 +38,7 @@
 
 **Paste "The prompt" below into a fresh Claude Code session opened in `~/projects/hyperfixi`.**
 
-Successor to `docs-internal/HANDOFF-learn-parity-and-markers.md` (all three of its
+Successor to `docs-internal/archive/HANDOFF-learn-parity-and-markers.md` (all three of its
 items landed in PR #763, branch `fix/sovslot-pattern-generation`). That file's
 closing section — "§ What the three items actually found" — is the context for
 items 1 and 2 here; read it, plus the **Traps** section of

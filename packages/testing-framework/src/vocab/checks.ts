@@ -1,6 +1,6 @@
 /**
  * The V1–V4 cross-surface consistency checks
- * (check matrix: docs-internal/HANDOFF_vocab-consistency.md).
+ * (check matrix: docs-internal/archive/HANDOFF_vocab-consistency.md).
  *
  * Tiering rule of thumb: a CONFLICT between two surfaces is an error; a
  * MISSING entry is warn/info depending on the pair's direction of authority.

@@ -12,7 +12,7 @@
  * so the runtime's executeProgram registers every handler. The renderer renders
  * such a compound as `end`-delimited handlers (not a then-chain) so it round-trips.
  *
- * See docs-internal/MULTILINGUAL_BEHAVIORS_PLAN.md (deferred tails: multi-handler).
+ * See docs-internal/archive/MULTILINGUAL_BEHAVIORS_PLAN.md (deferred tails: multi-handler).
  */
 
 import { describe, it, expect } from 'vitest';

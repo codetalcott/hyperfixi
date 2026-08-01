@@ -84,12 +84,12 @@ generators with `--check` CI gates, `typecheck:scripts`, and ghost tests.
 
 | Arc | Value | Gate today | Detail |
 | --- | ----- | ---------- | ------ |
-| ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
-| ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
-| ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md) — now a record, not a plan |
-| ~~B — metadata single-sourcing~~ | **DONE** (#823/#824/#825/#826/#827/#828) | ✅ the 7-test docs-coverage gate + §9's compatibility coupling + the static/instance bridge invariant; `metadataOf()` deleted, its check now `TS2322` | [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) — now a record, not a plan |
-| ~~E — generated static bundles~~ | **DONE** (#829/#830/#831/#832/#835/#836) | ✅ `generate:bundles:check` in CI's generated-artifacts step; hybrid-complete's executor switches AND `HYBRID_PARSER_TEMPLATE` are both generated | [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md) — now a record, not a plan |
-| ~~F — schema-driven mappers + scaffolder~~ | **DONE** (#838/#839/#840) — 43 of 47 mappers deleted, 1301 → 448 lines | ✅ `check:mapper-parity` (332-case oracle, byte-identical regeneration) + `ast-shape-consistency` + semantic suite + ten-signal ratchet | [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) — now a record, not a plan |
+| ~~D — target-resolution consolidation~~ | **DONE** (#796/#797/#798) | ✅ + 36 new tests pinning the rung order and both selector shapes | [HANDOFF-command-arch-target-resolution.md](archive/HANDOFF-command-arch-target-resolution.md) — now a record, not a plan |
+| ~~C — output contract~~ | **DONE** (#801/#802/#803/#805/#806) | ✅ the per-command `it` audit, both execution paths, 45 of 59 commands | [HANDOFF-command-arch-output-contract.md](archive/HANDOFF-command-arch-output-contract.md) — now a record, not a plan |
+| ~~A — command manifest~~ | **DONE** (#811/#813/#814/#815/#817/#818/#819) | ✅ the 19-test bidirectional audit + the manifest's §7; classification debt is **0** | [HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md) — now a record, not a plan |
+| ~~B — metadata single-sourcing~~ | **DONE** (#823/#824/#825/#826/#827/#828) | ✅ the 7-test docs-coverage gate + §9's compatibility coupling + the static/instance bridge invariant; `metadataOf()` deleted, its check now `TS2322` | [HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md) — now a record, not a plan |
+| ~~E — generated static bundles~~ | **DONE** (#829/#830/#831/#832/#835/#836) | ✅ `generate:bundles:check` in CI's generated-artifacts step; hybrid-complete's executor switches AND `HYBRID_PARSER_TEMPLATE` are both generated | [HANDOFF-command-arch-bundles.md](archive/HANDOFF-command-arch-bundles.md) — now a record, not a plan |
+| ~~F — schema-driven mappers + scaffolder~~ | **DONE** (#838/#839/#840) — 43 of 47 mappers deleted, 1301 → 448 lines | ✅ `check:mapper-parity` (332-case oracle, byte-identical regeneration) + `ast-shape-consistency` + semantic suite + ten-signal ratchet | [HANDOFF-command-arch-mappers.md](archive/HANDOFF-command-arch-mappers.md) — now a record, not a plan |
 
 ## The arcs — all six are done (D → C → A → B → E → F)
 
@@ -99,7 +99,7 @@ Landed as #796 (put's `insertContent` collapse), #797 (the writable-target rung
 ladder → `commands/helpers/write-target.ts`), #798 (the selector-shape rule →
 `commands/helpers/target-elements.ts`). Detail, per-step outcomes, and the
 decisions it recorded live in
-[HANDOFF-command-arch-target-resolution.md](./HANDOFF-command-arch-target-resolution.md).
+[HANDOFF-command-arch-target-resolution.md](archive/HANDOFF-command-arch-target-resolution.md).
 
 Two things later arcs should carry forward:
 
@@ -122,7 +122,7 @@ Two things later arcs should carry forward:
 Landed as #801 (step 0, one propagation call site), #802 (step 1, the audit),
 #803 (step 2 spec) + #805 (the `unless` fix step 2 surfaced), and #806 (step 3,
 the deletion). Detail and per-step outcomes live in
-[HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md).
+[HANDOFF-command-arch-output-contract.md](archive/HANDOFF-command-arch-output-contract.md).
 
 Three things later arcs should carry forward:
 
@@ -145,7 +145,7 @@ Three things later arcs should carry forward:
 
 Superseded plan, kept for the record:
 
-> **Read [HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)
+> **Read [HANDOFF-command-arch-output-contract.md](archive/HANDOFF-command-arch-output-contract.md)
 > first — it REVISES steps 2 and 3 below.** The brief's exploration measured
 > that `it` is set by **two** independent mechanisms: command self-assignment
 > (which works on every execution path) and the `unwrapCommandResult` loop
@@ -209,7 +209,7 @@ decision-bearing consumers: #815 (4.1, LSP tiers vs the published engine), #817
 (4.2, capability lists vs the generator), #818 (4.3, `COMMAND_KEYWORDS` vs the
 parser), #819 (4.4, `packageInfo.commands` derived). Detail, per-step outcomes
 and all seventeen findings live in
-[HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md).
+[HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md).
 
 **Classification debt is zero** — every registered command is classified in
 every list, and each of the four `*_UNCLASSIFIED`/`*_GAPS` sets is an empty set
@@ -233,7 +233,7 @@ Things later arcs should carry forward:
 claims did not survive measurement, and that is the reason it is worth keeping:
 it is the record of what a plausible-sounding plan got wrong.
 
-> **Read [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)
+> **Read [HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md)
 > first — it REVISES the migration ORDER and the manifest SHAPE below.** The
 > exploration measured three of this paragraph's claims. Two did not survive.
 > (a) "both already ghost-tested, so the tests carry the migration" is **false in
@@ -269,7 +269,7 @@ classes), #825 (the `compatibility` coupling, before any values existed), #826
 (all 52 decorated classes migrated), #827 (`@meta` and `metadataOf()` deleted),
 and #828 (the docs generator, 43 → 59, with its coverage gate). Detail, per-step
 outcomes, and all findings live in
-[HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md).
+[HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md).
 
 **The arc's goal is delivered**: decorator statics are type-visible —
 `ToggleCommand.metadata.category` narrows to `'dom'` where every read used to be
@@ -299,7 +299,7 @@ Things later arcs should carry forward:
 > **Superseded — this is what the plan said before the arc ran.**
 
 
-> **Read [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)
+> **Read [HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md)
 > first — it CORRECTS this paragraph's stated motivation.** "Making metadata
 > visible to the type system" is right; the implied corollary that tsc does not
 > currently reject a mis-shaped metadata literal is **false for 52 of 55
@@ -360,7 +360,7 @@ plus `--check` pattern), and `generate-command-docs --check` in CI so
 > (brief § "Parked"), which would reclaim ~1.5 KB gz of step 4's carry.
 >
 > **Brief written 2026-07-29 —
-> [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md).**
+> [HANDOFF-command-arch-bundles.md](archive/HANDOFF-command-arch-bundles.md).**
 > It re-measured this paragraph and two of its claims did not survive: there are
 > **five** executor copies (not four — `browser-bundle-lite.ts` is its own),
 > and the two regex bundles structurally *cannot* consume the AST templates, so
@@ -388,7 +388,7 @@ absolute ceilings), the Playwright bundle compatibility matrix,
 [proposals/aot-compiler-design.md](./proposals/aot-compiler-design.md).
 
 > **Arc E now has a concrete, measured motivating case — Finding 17** in
-> [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md).
+> [HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md).
 > Closing Finding 13 (the 14 unreachable capability case labels) put eleven
 > restored command rules into `parser/hybrid/parser-core.ts`, which serves BOTH
 > the generated bundles (38 commands via `COMMAND_IMPLEMENTATIONS`) and the
@@ -413,7 +413,7 @@ absolute ceilings), the Playwright bundle compatibility matrix,
 ### Arc F — semantic schema-driven mappers + scaffolder — **CLOSED** (#838, #839, #840)
 
 Landed 2026-07-31. Brief and full record:
-[HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md).
+[HANDOFF-command-arch-mappers.md](archive/HANDOFF-command-arch-mappers.md).
 
 `CommandSchema` gained an optional `ast: AstShape` descriptor and
 `buildFromAstShape` reads it, so a command whose semantic-roles → AST mapping is
@@ -580,7 +580,7 @@ not the core abstractions.
   re-divergence by construction; (c) is refuted for `default`/`scroll`.
   Not folded into Arc F: Arc F's gates are semantic-stack, while this is a
   core-side behavior fix dragging the full core gate set. Detail:
-  [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) § fact 2.
+  [HANDOFF-command-arch-mappers.md](archive/HANDOFF-command-arch-mappers.md) § fact 2.
 
   **Reachability measured 2026-07-31 — the answer is (b).** Method: for every
   action with a schema excluded by **neither** `skipSemanticParsing` (25 names)
@@ -793,7 +793,7 @@ not the core abstractions.
   that preserves the ambiguity that let the two drift. Third instance of the
   dual-type-definition pattern (see also `ASTNode`/`ExpressionMetadata`).
   Historical detail on the shadow type:
-  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B1.
+  [HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md) § F-B1.
 
 - ~~**`metadata.isBlocking` / `hasBody` publish false claims for ≥7 commands.**~~
   **FIXED 2026-08-01 — by deleting the fields, not by authoring them.** By the
@@ -923,7 +923,7 @@ not the core abstractions.
     asks for the value.
 - **2026-07-29** — **Arc B step 1 landed**: `commandMeta()` plus the three
   undecorated classes (`install`, `pseudo-command`, `render`). Per-step detail in
-  [HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md).
+  [HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md).
   - **The brief's predicted defects did not exist.** It expected the conversion to
     surface real problems in three literals nothing had ever checked; typecheck was
     clean on the first run. The *unchecked* state was measured and real; the
@@ -942,7 +942,7 @@ not the core abstractions.
   - Core 7610 → **7620** with every increment a new test and none changed;
     registry oracle **byte-identical**; all ten bundles **+0.0%**.
 - **2026-07-29** — **Arc B brief written**
-  ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md)), arc
+  ([HANDOFF-command-arch-metadata.md](archive/HANDOFF-command-arch-metadata.md)), arc
   not started. Measured against main `973ee1c5`.
   - **The arc's own premise failed the queue's five-times-paid lesson.** "Score
     the rows already there" applies to motivations too: `@meta(config: MetaConfig)`
@@ -990,7 +990,7 @@ not the core abstractions.
     `EXTENSIONS` set and `TIER_COUNTS`.
 - **2026-07-29** — **Arc A CLOSED**, and its recommended follow-on (Finding 13,
   the 14 unreachable capability case labels) closed with it. Both records are in
-  [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md); the
+  [HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md); the
   queue rows above are updated to match.
   - **The arc's repeated lesson, which paid five times running: score the rows
     that are already classified, not only the gaps you were sent for.** 4.1
@@ -1013,7 +1013,7 @@ not the core abstractions.
     assertion with its morphlex import deleted. Assert what a command is *for*.
     This is the third costume of 4.1's `success: true` trap.
 - **2026-07-28** — **Arc A brief written**
-  ([HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), arc
+  ([HANDOFF-command-arch-manifest.md](archive/HANDOFF-command-arch-manifest.md)), arc
   not started. Five measurements, two of which changed the plan.
   - **The ghost gates do not carry the migration.** `capability-ghosts` and
     `command-tiers` both compute `list.filter(isGhost)` and assert `[]` — they
@@ -1096,7 +1096,7 @@ not the core abstractions.
   rows need no per-command change, because their sequence-path value is already
   upstream-correct and step 3's deletion converges them. Table in the brief.
 - **2026-07-28** — **Arc C brief written**
-  ([HANDOFF-command-arch-output-contract.md](./HANDOFF-command-arch-output-contract.md)),
+  ([HANDOFF-command-arch-output-contract.md](archive/HANDOFF-command-arch-output-contract.md)),
   arc not started. Two measurements changed the plan. (a) `it` is set by two
   independent mechanisms, and the queue described only one: commands
   self-assign `context.it` (copied back by the adapter at

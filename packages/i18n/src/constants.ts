@@ -48,7 +48,7 @@ export const ENGLISH_MODIFIER_ROLES: Readonly<Record<string, SemanticRole>> = {
  * having to pull in the whole semantic graph.
  *
  * @see packages/i18n/src/schema-alignment.test.ts
- * @see docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
+ * @see docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
  */
 export const COMMAND_PRIMARY_ROLES: Readonly<Record<string, SemanticRole>> = {
   set: 'destination',

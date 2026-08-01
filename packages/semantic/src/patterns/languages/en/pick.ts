@@ -54,7 +54,7 @@
  *    Arc 3 closed the qu gap with native-first `sanampa`. `inclusive`/
  *    `exclusive` likewise, for the 20 languages with a confident technical
  *    term; hi/qu/sw remain DEFERRED (uncertain vocab, not corpus-exercised)
- *    — see docs-internal/HANDOFF_pick-text-range-arc2.md.
+ *    — see docs-internal/archive/HANDOFF_pick-text-range-arc2.md.
  *  - `item`/`items` are DEFERRED entirely. Probe: adding `item` to a dict's
  *    `expressions` renames the loop variable in the corpus rows
  *    `repeat for item in .items …` (item → its translation), a non-pick-row

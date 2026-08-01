@@ -16,7 +16,7 @@
  * **no diagnostic at all** — a user writing code that cannot run on original
  * _hyperscript was told nothing. The audit that pins the partition in both
  * directions is `packages/core/src/runtime/__tests__/command-manifest-audit.test.ts`;
- * the arc brief is `docs-internal/HANDOFF-command-arch-manifest.md`.
+ * the arc brief is `docs-internal/archive/HANDOFF-command-arch-manifest.md`.
  *
  * ## The oracle, and how to re-run it
  *

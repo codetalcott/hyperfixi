@@ -7,7 +7,7 @@
  * word and DROPS the range entirely — every foreign corpus pick row rendered
  * `pick characters` (canonical-invalid EOF), the last 23 entries of the
  * foreign canonical-validity allowlist (arc 3,
- * docs-internal/HANDOFF_pick-text-range-arc3.md).
+ * docs-internal/archive/HANDOFF_pick-text-range-arc3.md).
  *
  * Invariants inherited from `pick-en-variant` (patterns/languages/en/pick.ts —
  * read its header for the render-selection reasoning):

@@ -104,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Gap note:** 2.6.0 through 2.7.2 shipped without entries in this file; their
 > details live in [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
-> Full notes for this release: `docs-internal/RELEASE_NOTES_v2.8.0-draft.md` (swapped
+> Full notes for this release: `docs-internal/archive/RELEASE_NOTES_v2.8.0-draft.md` (swapped
 > into the GitHub release on publish day).
 
 A size and correctness release: the full bundles shed a duplicated core+semantic copy (~534 → ~299 KB gz), the semantic parser closes out several multilingual correctness arcs, and the publish pipeline's gates are now honest end-to-end.

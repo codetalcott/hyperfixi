@@ -3,7 +3,7 @@
  *
  * Injection-based: domains import per-language grammar data (e.g. semantic's
  * `KNOWN_PROFILES`) and inject it into these builders; framework itself never
- * imports the semantic package. See `docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md`.
+ * imports the semantic package. See `docs-internal/archive/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md`.
  */
 
 export type {

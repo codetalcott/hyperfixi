@@ -8,7 +8,7 @@
  *   DOM action`. Not a component. When it needs an observer, a focus model, or an
  *   async pointer loop, it has left hyperfixi's lane.
  *
- * See docs-internal/BEHAVIORS_CONSOLIDATION_PLAN.md for the full rationale.
+ * See docs-internal/archive/BEHAVIORS_CONSOLIDATION_PLAN.md for the full rationale.
  */
 
 export type CurationStatus = 'curated' | 'optional' | 'experimental';

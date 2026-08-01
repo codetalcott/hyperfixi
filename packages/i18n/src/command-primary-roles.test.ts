@@ -13,7 +13,7 @@
  * the schemas, but tests don't ship in the bundle.
  *
  * @see packages/i18n/src/constants.ts
- * @see docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
+ * @see docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
  */
 
 import { describe, it, expect } from 'vitest';

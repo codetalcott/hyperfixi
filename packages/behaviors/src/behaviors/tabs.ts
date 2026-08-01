@@ -9,7 +9,7 @@
  * Compiled from its hyperscript `source` — the single source of truth shared with
  * the CDN resolver bundle and patterns-reference. This collapses Tabs onto the one
  * runtime path (no more imperative-installer fork between CDN and npm);
- * see docs-internal/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
+ * see docs-internal/archive/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
  */
 
 import { tabsSchema } from '../schemas/tabs.schema';

@@ -27,7 +27,7 @@
  * "RUNS" precisely because their check was vacuous, and an empty command list
  * throws nothing. Absence of an error is not evidence of a command.
  *
- * See `docs-internal/HANDOFF-command-arch-manifest.md`, Finding 13.
+ * See `docs-internal/archive/HANDOFF-command-arch-manifest.md`, Finding 13.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';

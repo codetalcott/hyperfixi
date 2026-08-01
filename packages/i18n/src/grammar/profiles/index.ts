@@ -49,7 +49,7 @@ export const englishProfile: LanguageProfile = {
 
 // =============================================================================
 // Shared SOV rule factory — fused `halt the event call fn()` heads (Family H,
-// docs-internal/HANDOFF_r1-deferred-tail.md)
+// docs-internal/archive/HANDOFF_r1-deferred-tail.md)
 // =============================================================================
 
 /**
@@ -130,7 +130,7 @@ function sovHaltCallFusedRule(cfg: {
 
 // =============================================================================
 // Shared SOV rule factory — pick range rows (`pick characters 0 to 5 of #note`,
-// docs-internal/HANDOFF_pick-text-range-arc3.md)
+// docs-internal/archive/HANDOFF_pick-text-range-arc3.md)
 // =============================================================================
 
 /**

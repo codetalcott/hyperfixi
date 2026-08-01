@@ -430,7 +430,7 @@ yields a 0 delta):
    The nine other rows this signal originally flagged (colon-qualified event names
    `draggable:start` split at the local-variable sigil by every non-en tokenizer, plus
    two masked co-causes) were fixed in the colon-event-names arc — history in
-   `docs-internal/HANDOFF_colon-event-names.md`.
+   `docs-internal/archive/HANDOFF_colon-event-names.md`.
 6. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
    (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
    verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
@@ -598,7 +598,7 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > before triaging a parse bug; several are already diagnosed with a written brief.
 > Two entries there are held by a gate that fails on its own (the `and` KNOWN GAP
 > tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
-> the doc exists. `docs-internal/PARSER_FIX_STATUS.md` is an **archived**
+> the doc exists. `docs-internal/archive/PARSER_FIX_STATUS.md` is an **archived**
 > single-defect report, not an index, despite its name.
 >
 > **Structural work on the command layer** — registration, metadata, output

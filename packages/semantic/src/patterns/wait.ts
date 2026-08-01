@@ -13,7 +13,7 @@
  * The root-cause fix has since landed in the transformer: it honours a command's
  * true primary role (`wait` → `duration`, which carries no zh marker), so it now
  * emits the grammatical `等待 1s` directly — matched by the generated pattern.
- * See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model).
+ * See docs-internal/archive/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model).
  *
  * This pattern is retained as a **defensive fallback**: it tolerates the optional
  * `把` before the duration (mirroring the `toggle-zh-ba` convention) so any

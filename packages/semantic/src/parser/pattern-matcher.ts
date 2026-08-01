@@ -982,7 +982,10 @@ export class PatternMatcher {
     // `expectedTypes` validation, so no type-compatibility or adoption decision
     // can move — the slot still admits both types, it just reports one.
     if (patternToken.valueShape === 'keyword' && value.type === 'expression') {
-      captured.set(patternToken.role, createLiteral(String((value as { raw?: unknown }).raw ?? '')));
+      captured.set(
+        patternToken.role,
+        createLiteral(String((value as { raw?: unknown }).raw ?? ''))
+      );
     } else {
       captured.set(patternToken.role, value);
     }
@@ -1384,7 +1387,7 @@ export class PatternMatcher {
    * untested input-tolerance alternate (the natural "up to/until" a native
    * writer might use — de `bis`, ru/uk `до`, th `ถึง`…). Don't build on the
    * alternates without probing them first.
-   * (docs-internal/HANDOFF_pick-text-range-arc3.md).
+   * (docs-internal/archive/HANDOFF_pick-text-range-arc3.md).
    */
   private static readonly PICK_RANGE_SEPARATORS_BY_LANG: Readonly<
     Record<string, ReadonlySet<string>>
