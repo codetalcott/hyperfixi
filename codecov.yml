@@ -33,6 +33,16 @@ flags:
     paths:
       - packages/i18n/src/**
     carryforward: true
+  # The nightly coverage job has uploaded a `language-server` flag since the
+  # step was added, but the flag was never declared here — so it got no
+  # `paths:` and no `carryforward`, and behaved differently from the three
+  # above. scripts/check-ci-job-lists.cjs now fails on either direction of the
+  # mismatch (an undeclared uploaded flag, or a declared flag nothing uploads —
+  # which `carryforward: true` would make serve its last report forever).
+  language-server:
+    paths:
+      - packages/language-server/src/**
+    carryforward: true
 
 comment:
   layout: 'header, diff, flags, components'
