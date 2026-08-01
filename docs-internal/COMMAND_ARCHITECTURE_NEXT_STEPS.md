@@ -444,8 +444,15 @@ caught each** — the sixth consecutive arc whose plan needed re-scoring:
   commands, not 24.** Comparing the blanket mapping against each true-fallback
   schema's own en markers: 12 are already correct, and only `scroll`
   (destination emits `on`, marker is `to`) and `open` (style emits `with`,
-  marker is `as`) are wrong. Step 4 is therefore a small targeted behavior fix,
-  still open, and wants its own PR with ratchet evidence.
+  marker is `as`) are wrong. Step 4 was therefore a small targeted behavior fix
+  rather than a sweep — and it is now **CLOSED**: `scroll` + `default` in #843,
+  `open` in #851. But note how the two re-scoping claims fared: "only 2 are
+  wrong" held, while "a small targeted fix" did not — `scroll` needed the
+  destination to become an ARG (re-keying the modifier would have fixed
+  nothing) and `open` took five coupled changes across the schema, the value
+  matcher, a ja marker override and the TRADITIONAL parser. **Counting the
+  wrong rows is not the same as sizing the fix.** Detail in "Open, filed rather
+  than folded in" below.
 
 **The parity oracle is the reusable artifact.**
 `packages/semantic/scripts/gen-mapper-parity.ts` records what all 47
@@ -472,8 +479,8 @@ not the core abstractions.
 
 ## Open, filed rather than folded in
 
-- **~~Arc F step 4~~ — `scroll` and `default` LANDED; `open` deferred with a
-  measured reason.** Arc F migrated 43 of 47 mappers to schema `ast`
+- **~~Arc F step 4~~ — CLOSED. All three landed: `scroll` + `default` (#843),
+  `open` (#851).** Arc F migrated 43 of 47 mappers to schema `ast`
   descriptors; the 24 actions with no mapper still fall through to
   `buildGenericCommand`'s blanket mapping (`destination`→`on`, `duration`→`for`,
   `source`→args, `method`→`via`, `style`→`with`, and `condition`/`event`/`goal`
@@ -490,22 +497,45 @@ not the core abstractions.
     `ast: { args: ['destination'], modifiers: { to: 'patient' } }`, matching
     DefaultCommand's `args[0]`-is-target / `modifiers.to`-is-value contract, and
     the exemption was pruned.
-  - **`open` — DEFERRED, and the one-line fix in this entry was wrong.** The
-    proposed `ast: { args: ['patient'], modifiers: { as: 'style' } }` is
-    **inert**: no en pattern binds `style` for the documented surface. Measured
-    2026-07-31 — `openSchema` gives `style` `svoPosition: 1` and `patient` `2`,
-    so the generated en pattern is `open [as {style}] [{patient}]` and only the
-    un-English `open as modal #dlg` binds the role; `open #dlg as non-modal`
-    (OpenCommand's own documented example) parses to `patient` alone, and
-    `translate(…, 'en', 'ja')` drops the variant from the rendered output too.
-    Making it live needs (a) the two positions swapped so the marker follows the
-    target — a 24-language pattern-shape change, so ratchet evidence — and
-    (b) the captured value to survive: `non-modal` tokenizes to the *expression*
-    `non - modal`, which `convertValue` routes through the expression parser
-    into a subtraction node, where `open.ts`'s `normalized === 'non-modal'`
-    string compare can never match. (a) without (b) turns a silent default into
-    a wrong value. **No corpus row exercises the `open` command**, so the
-    ratchet cannot be the evidence here — vitest behavior tests must be.
+  - **`open` — DONE (#851), after being deferred once with a measured reason.**
+    The one-line fix this entry originally proposed
+    (`ast: { args: ['patient'], modifiers: { as: 'style' } }`) was **inert**: no
+    en pattern bound `style` for the documented surface, because `openSchema`
+    gave `style` `svoPosition: 1` and `patient` `2`, generating
+    `open [as {style}] [{patient}]` — only the un-English `open as modal #dlg`
+    bound the role. `open #dlg as non-modal` (OpenCommand's own documented
+    example) parsed to `patient` alone, and `translate(…, 'en', L)` dropped the
+    variant in all 23 languages. Shipping it took **five** coupled changes, and
+    any one alone would have been worse than none:
+    1. positions swapped so the marker follows the target;
+    2. `tryMatchHyphenatedWord` in the value matcher — `non-modal` tokenizes as
+       three tokens that the operator run folded into the *expression*
+       `non - modal`, which `parseDialogMode`'s string compare can never match,
+       so (1) without (2) turns a silent default into a WRONG value. Subtraction
+       is told apart by the two vouchers `joinExpressionTokens`'s `.`/`!` glue
+       rules already use (adjacency + operand shape), so `count - 1` and
+       `count-1` both stay expressions;
+    3. the descriptor itself (`as` is style's own en marker, so the consistency
+       gate needed no exemption; `EXPECTED_MIGRATED` 44 → 45 and the parity
+       fixture gained a pure insertion);
+    4. **ja regressed at the moment the role started binding** — ja's style
+       marker is the instrumental `で`, which is ALSO its event marker, so
+       `modal で #dlg を 開く` read as an event-handler head and parsed as
+       `on modal`. Fixed with `markerOverride.ja: 'として'` (the word ja's
+       `fetch`/`as` already uses). ja ONLY — `ko`/`tr` were tried and reverted
+       because the probe showed every other language round-trips already;
+    5. **the traditional parser was broken differently** — it folds
+       `#dlg as non-modal` into one `asExpression` whose `targetType` carries
+       the mode, which `parseDialogMode` never read, so every traditionally
+       parsed `open … as non-modal` silently opened a MODAL.
+
+    **No corpus row exercises `open`**, so the ratchet could not be the evidence
+    (correctly predicted here). The gate is instead a committed 23-language
+    `translate(en→L)` → `parse(L)` table asserting target and variant, plus core
+    tests asserting the DIALOG METHOD called — `show()` vs `showModal()` — on
+    both execution paths. Mutation-verified four ways: reverting the position
+    swap (29 failures), the hyphen fold (27), the ja marker (1), the
+    `asExpression` branch (1).
   Caveat on the original measurement, now demonstrated rather than hypothetical:
   it only inspects roles a schema DECLARES, and says nothing about whether the
   parser ever BINDS them.
@@ -746,6 +776,23 @@ not the core abstractions.
   debug.
 
 ## History
+
+> This log stops at Arc B. Arcs **E** and **F** landed 2026-07-31 and their
+> record lives in their own sections above plus
+> [HANDOFF-command-arch-bundles.md](./HANDOFF-command-arch-bundles.md) and
+> [HANDOFF-command-arch-mappers.md](./HANDOFF-command-arch-mappers.md) — the
+> per-arc sections became the record, so the entry below is a pointer rather
+> than a backfill.
+
+- **2026-07-31** — **Arcs E and F landed, closing the queue's six-arc plan**
+  (E: #829/#830/#831/#832/#835/#836 · F: #838/#839/#840), followed by three
+  rounds of Arc F follow-ups (#843–#858, plan fully closed) that also closed
+  **Arc F step 4** — `scroll` + `default` in #843, `open` in #851. Step 4's
+  re-scoping is the lesson worth carrying: "only 2 of 24 are wrong" held, but
+  "therefore a small targeted fix" did not — `scroll` needed an ARG rather than
+  a re-keyed modifier, and `open` took five coupled changes reaching the value
+  matcher, a ja marker override and the traditional parser. **Counting the
+  wrong rows is not sizing the fix.**
 
 - **2026-07-29** — **Arc B step 4b landed, closing the arc.** The command-docs
   generator now covers all **59** commands (was 43), and the gate F-B3 said did
