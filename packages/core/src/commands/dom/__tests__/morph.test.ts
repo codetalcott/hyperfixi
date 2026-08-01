@@ -200,6 +200,36 @@ describe('MorphCommand (Standalone V2)', () => {
       expect(input.useViewTransition).toBe(true);
     });
 
+    it('honours a viewTransition modifier (the shape morphSchema\'s manner role emits)', async () => {
+      // The semantic path binds `using view transition` to morphSchema's
+      // `manner` role and delivers it as `modifiers.viewTransition` — the flat
+      // three-keyword args above are the TRADITIONAL parser's shape only.
+      // Before the modifier read, every semantic-path morph silently dropped
+      // the animation request (same gap SwapCommand closed in #870).
+      const element = createTestElement('<div id="animated">Original</div>');
+      testElements.push(element);
+      const context = createMockContext(element);
+
+      const targetNode = mockSelector('#animated');
+      const withNode = mockIdentifier('with');
+      const contentNode = mockLiteral('<div>Updated</div>');
+      const valueMap = new Map<ASTNode, unknown>([
+        [targetNode, '#animated'],
+        [contentNode, '<div>Updated</div>'],
+      ]);
+
+      const input = await command.parseInput(
+        {
+          args: [targetNode, withNode, contentNode],
+          modifiers: { viewTransition: mockLiteral('transition') as never },
+        },
+        inlineEvaluator(valueMap),
+        context
+      );
+
+      expect(input.useViewTransition).toBe(true);
+    });
+
     it('should fallback to positional args when no keywords present', async () => {
       const element = createTestElement('<div id="fallback">Original</div>');
       testElements.push(element);

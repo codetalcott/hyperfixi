@@ -200,9 +200,8 @@ export class SwapCommand implements DecoratedCommand {
     // it as `modifiers.viewTransition` — presence is the whole request (the
     // role's captured value is just the literal word `transition`). The
     // traditional parser leaves the three keywords in the arg list instead,
-    // which the scan below reads. MorphCommand has the same tail and the same
-    // arg scan, but morphSchema declares no `manner` role, so seeding it there
-    // too would be unreachable — filed in MULTILINGUAL_NEXT_STEPS.md.
+    // which the scan below reads. MorphCommand reads both the same way, off
+    // morphSchema's own `manner` role.
     let useViewTransition = raw.modifiers?.viewTransition !== undefined;
     if (usingIndex !== -1) {
       const afterUsing = argKeywords.slice(usingIndex + 1);
@@ -376,7 +375,11 @@ export class SwapCommand implements DecoratedCommand {
 export class MorphCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Morph content into target elements (intelligent diffing, preserves state)',
-    syntax: ['morph <target> with <content>', 'morph over <target> with <content>'],
+    syntax: [
+      'morph <target> with <content>',
+      'morph over <target> with <content>',
+      'morph <target> with <content> using view transition',
+    ],
     examples: ['morph #target with it', 'morph over #modal with fetchedContent'],
     sideEffects: ['dom-mutation'],
     category: 'dom',
@@ -416,8 +419,13 @@ export class MorphCommand implements DecoratedCommand {
     const overIndex = argKeywords.findIndex(k => k === 'over');
     const usingIndex = argKeywords.findIndex(k => k === 'using');
 
-    // Check for 'using view transition' modifier
-    let useViewTransition = false;
+    // Check for 'using view transition' modifier. Two arrival shapes, same as
+    // SwapCommand: the semantic path binds the tail to morphSchema's `manner`
+    // role and emits `modifiers.viewTransition` (presence is the whole
+    // request); the traditional parser — which owns English, morph being on
+    // SKIP_SEMANTIC_COMMANDS — leaves the three keywords in the arg list for
+    // the scan below.
+    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
     if (usingIndex !== -1) {
       const afterUsing = argKeywords.slice(usingIndex + 1);
       if (afterUsing.includes('view') && afterUsing.includes('transition')) {

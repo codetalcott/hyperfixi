@@ -999,6 +999,10 @@ morph <target> with <content>
 morph over <target> with <content>
 ```
 
+```hyperscript
+morph <target> with <content> using view transition
+```
+
 **Examples:**
 
 ```hyperscript

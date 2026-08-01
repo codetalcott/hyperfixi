@@ -3116,7 +3116,15 @@ export const morphSchema: CommandSchema = {
   primaryRole: 'patient',
   // `morph #list to it` → args [content], modifiers { on: element }.
   // Content is source or destination; the element being morphed is the patient.
-  ast: { args: [['source', 'destination']], modifiers: { on: 'patient' } },
+  //
+  // `manner` rides as `modifiers.viewTransition`, same as swap/process —
+  // MorphCommand.parseInput reads it for presence alongside its existing
+  // flat-args `using`/`view`/`transition` scan (the traditional-parser path,
+  // which owns English because morph sits on SKIP_SEMANTIC_COMMANDS).
+  ast: {
+    args: [['source', 'destination']],
+    modifiers: { on: 'patient', viewTransition: 'manner' },
+  },
   roles: [
     {
       role: 'patient',
@@ -3135,6 +3143,18 @@ export const morphSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 2,
       markerOverride: { en: 'to' }, // "morph #target to it"
+    },
+    {
+      // `morph #target to it using view transition` — the same tail as swap and
+      // process, closed here for the same reason (#870's third-schema filing):
+      // without the role the semantic parser matched morph at confidence 1.0
+      // and stranded the tail, so every semantic-only consumer (multilingual
+      // bundles, the bridge, `translate()`) silently dropped the animation
+      // request in all 24 languages. Morph has NO hand-written patterns in any
+      // language, so this schema role is the whole fix on the pattern side.
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 3,
+      sovPosition: 3,
     },
   ],
 };

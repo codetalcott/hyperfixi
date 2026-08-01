@@ -5050,7 +5050,7 @@
       ]
     },
     "morph": {
-      "roles": ["patient", "destination", "source"],
+      "roles": ["patient", "destination", "source", "manner"],
       "cases": [
         {
           "name": "no-roles",
@@ -5078,6 +5078,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5097,6 +5101,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -5136,6 +5144,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5148,7 +5160,13 @@
                 "selector": "#source-v",
                 "selectorType": "id"
               }
-            ]
+            ],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
           }
         },
         {
@@ -5185,6 +5203,10 @@
               "type": "selector",
               "value": "#source-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5204,6 +5226,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
@@ -5242,6 +5268,10 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
             }
           },
           "ast": {
@@ -5252,6 +5282,70 @@
                 "type": "selector",
                 "value": "#destination-v",
                 "selector": "#destination-v",
+                "selectorType": "id"
+              }
+            ],
+            "modifiers": {
+              "on": {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-manner",
+          "roles": {
+            "manner": {
+              "type": "literal",
+              "value": "manner-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "morph",
+            "args": [],
+            "modifiers": {
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-manner",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "source": {
+              "type": "selector",
+              "value": "#source-v",
+              "selectorKind": "id"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "morph",
+            "args": [
+              {
+                "type": "selector",
+                "value": "#source-v",
+                "selector": "#source-v",
                 "selectorType": "id"
               }
             ],
@@ -5342,6 +5436,10 @@
                 "value": ".patient-v",
                 "selector": ".patient-v",
                 "selectorType": "class"
+              },
+              "viewTransition": {
+                "type": "literal",
+                "value": "manner-v"
               }
             }
           }
