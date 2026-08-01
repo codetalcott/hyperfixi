@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { stripOptionalDiacritics } from '@lokascript/framework';
 import { isTypeCompatible } from './utils/type-validation';
+import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import {
@@ -1959,17 +1960,7 @@ export class PatternMatcher {
    * so this never blocks a genuine `my value` / `its style` possessive.
    */
   private isRoleMarkerConcept(normalized: string): boolean {
-    const markerConcepts = new Set([
-      'destination',
-      'source',
-      'patient',
-      'object',
-      'event',
-      'eventmarker',
-      'manner',
-      'instrument',
-    ]);
-    return markerConcepts.has(normalized.toLowerCase());
+    return ROLE_MARKER_CONCEPTS.has(normalized.toLowerCase());
   }
 
   /**
