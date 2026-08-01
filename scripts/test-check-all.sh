@@ -41,7 +41,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/intent-element" \
   "$REPO_ROOT/packages/mcp-multilingual-intent" \
   "$REPO_ROOT/packages/hyperscript-tools-i18n" \
-  "$REPO_ROOT/packages/htmx-adapter"
+  "$REPO_ROOT/packages/htmx-adapter" \
+  "$REPO_ROOT/packages/behaviors"
 
 PACKAGES=(
   # Core runtime & parsing

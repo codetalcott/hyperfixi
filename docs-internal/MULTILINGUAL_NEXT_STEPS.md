@@ -2964,6 +2964,38 @@ accepts a `viewTransition` MODIFIER as well as the flat-args form, so the
 semantic side can emit either shape without a further runtime change
 (`commands/dom/process-partials.ts`, `parseInput`).
 
+## `shipped-examples-execution` measures UNTRACKED examples/ (opened 2026-07-31)
+
+Found while enumerating testing-framework in CI for the first time (#862). The
+gate's docstring says it executes "every eligible `_="…"` handler shipped in
+`examples/**`" — but the walk takes whatever is on disk, and four `examples/`
+directories are **gitignored**: `experiments/`, `playground/`,
+`vite-plugin-test/`, `vite-plugin-multilingual/`. Nothing in them is shipped.
+
+Consequences, both measured (hide those four dirs locally and the CI failure
+reproduces exactly):
+
+- **The sanity floors are calibrated to the contaminated corpus.** The comment
+  cites current values `55 / 333 / 162 / 74`; on a clean checkout the real-match
+  count is **52**, against a floor of `> 60`. So the gate fails on any tree that
+  does not happen to have those local dirs — which is every CI runner and every
+  fresh clone.
+- **The allowlist has absorbed entries for files that were never shipped.**
+  On a clean checkout those keys are absent from `result.compared`, so assertion
+  3 ("no stale allowlist entries") reads them as converged and fails.
+
+This is why `testing-framework` is the sole entry in `INTENTIONALLY_UNGATED` in
+`scripts/check-ci-test-list.cjs` — the other 12 of its 13 files pass in the
+unit-tests-packages job and are ready to run the moment this is fixed.
+
+The fix, when taken: restrict the walk to git-tracked files (making the corpus
+identical everywhere, which is what the gate already claims to measure), then
+regenerate `baselines/shipped-examples-execution.json` and recalibrate the four
+floors against the tracked corpus. Prune the allowlist entries that point at
+untracked files. Ratchet recalibration, so it wants its own PR with the diff
+justified — and once it lands, delete the exemption (the guard's stale-exemption
+class will fail if you forget, and the ci.yml step is a two-line add).
+
 ## R3-discovered value-bug families (opened 2026-07-10, burned down 2026-07-10)
 
 The first R3 sweep surfaced 50 sub-1.0 instances across 18 patterns — all triaged

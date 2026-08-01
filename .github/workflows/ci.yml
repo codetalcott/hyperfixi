@@ -664,6 +664,14 @@ jobs:
       - name: Verify test:check package list
         run: node scripts/check-test-check-list.cjs
 
+      # Cheap guard: the same question asked of THIS file. The unit-test jobs
+      # below enumerate their packages by hand, and #857 found one that had
+      # been missing since the beginning — an express 4 → 5 major broke all 26
+      # of developer-tools' tests and CI stayed green. Fails if a package with
+      # a "test:check" script is in neither unit-test job.
+      - name: Verify CI unit-test package list
+        run: node scripts/check-ci-test-list.cjs
+
       # Cheap guard: zero-dep node script that fails if package versions have
       # drifted apart (the monorepo publishes uniformly).
       - name: Validate package versions
@@ -990,6 +998,44 @@ jobs:
       # gate, add it here too.
       - name: Test developer-tools
         run: npm test --prefix packages/developer-tools -- --run
+
+      # The rest of the #857 burn-down: nine more packages that were in the
+      # local test:check gate but had never been enumerated here, so CI ran
+      # none of their ~78 test files. `scripts/check-ci-test-list.cjs` now
+      # fails if a package with a "test:check" script is missing from this job.
+      # All nine add ~10s of test work; none needs setup beyond the build
+      # artifacts this job already downloads.
+      - name: Test framework
+        run: npm test --prefix packages/framework -- --run
+
+      - name: Test server-bridge
+        run: npm test --prefix packages/server-bridge -- --run
+
+      - name: Test behaviors
+        run: npm test --prefix packages/behaviors
+
+      - name: Test smart-bundling
+        run: npm test --prefix packages/smart-bundling -- --run
+
+      - name: Test intercept
+        run: npm test --prefix packages/intercept -- --run
+
+      - name: Test intent
+        run: npm test --prefix packages/intent
+
+      - name: Test intent-element
+        run: npm test --prefix packages/intent-element
+
+      - name: Test domain-toolkit
+        run: npm test --prefix packages/domain-toolkit -- --run
+
+      - name: Test planner
+        run: npm test --prefix packages/planner
+
+      # testing-framework is deliberately NOT here — see INTENTIONALLY_UNGATED
+      # in scripts/check-ci-test-list.cjs. 12 of its 13 files would pass; the
+      # 13th (shipped-examples-execution) is calibrated against gitignored
+      # examples/ dirs and fails on any clean checkout. Filed for its own PR.
 
   # ============================================
   # Job 5: Coverage Report (nightly / manual)
