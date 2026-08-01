@@ -1,0 +1,67 @@
+name: Language Reviewer Application
+description: Volunteer as a native-speaker reviewer for one of LokaScript's 24 languages
+title: '[reviewer]: '
+labels: ['community-review', 'reviewer-application']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        LokaScript lets developers write hyperscript in their own language. The machine
+        gates prove the translations are *structurally* faithful — the right commands,
+        the right roles — but nothing yet proves they are *natural*, and the maintainer
+        does not read most of the 24 languages. That gap is what reviewers close.
+
+        **What reviewers do:** read the generated vocabulary and pattern translations for
+        their language and say what a developer there would actually write. Corrections
+        land as ordinary pull requests; your judgment on naturalness is final — nobody
+        overrules it, because nobody else can.
+
+        **What reviewers get:** credit by name on lokascript.org, an honorarium, and —
+        for educators — free lokascript-learn classroom seats.
+
+        **Time:** a first pass over one language's core vocabulary is a couple of hours.
+        After that it is occasional, as new patterns land.
+
+        You do not need to apply to help. Anyone can file a
+        [Translation](?template=translation-suggestion.yml) or
+        [Vocabulary](?template=vocabulary-suggestion.yml) suggestion, or 👍 someone
+        else's. Apply if you would like to take a language on properly.
+
+  - type: input
+    id: langs
+    attributes:
+      label: Which language(s)?
+      description: |
+        Native or near-native only, please — this is a judgment call about idiom, not
+        about comprehension. Note the variety if it matters (pt-BR vs pt-PT, zh-Hans vs
+        zh-Hant).
+      placeholder: pt (Brazilian)
+    validations:
+      required: true
+
+  - type: input
+    id: github
+    attributes:
+      label: How should we credit you?
+      description: |
+        Name or handle as you would like it shown on the site. Leave blank to be
+        credited by your GitHub username, or write "anonymous" to skip credit.
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: |
+        Enough to show you write software in this language's ecosystem — where you work
+        or study, what you build, any localization or teaching experience. A couple of
+        sentences is plenty; no CV needed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Anything else?
+      description: |
+        What drew you to this, terms you already know are wrong, questions about the
+        program — whatever is useful.

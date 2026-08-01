@@ -1,0 +1,98 @@
+name: Vocabulary Suggestion
+description: Suggest a better word for a LokaScript keyword, role marker, or event name
+title: '[vocab]: '
+labels: ['community-review', 'vocabulary']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        LokaScript's vocabulary — the keyword for each command, the particles and
+        prepositions that mark roles, and the event names — is generated per language
+        and largely unreviewed by native speakers. One wrong word affects every pattern
+        that uses it, so this form is the highest-leverage kind of correction.
+
+        Browse the vocabulary at
+        [lokascript.org/community/vocabulary](https://lokascript.org/community/vocabulary/);
+        the per-row "suggest" link fills this form in for you.
+
+        For a sentence that reads wrong even though its words are right, use the
+        [Translation Suggestion](?template=translation-suggestion.yml) form instead.
+
+  - type: input
+    id: concept
+    attributes:
+      label: Concept
+      description: |
+        The English concept name from the vocabulary table — a command (`toggle`), a
+        role (`patient`), or an event (`click`).
+      placeholder: toggle
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lang
+    attributes:
+      label: Language
+      description: |
+        ISO code. ar Arabic · bn Bengali · de German · en English · es Spanish ·
+        fr French · he Hebrew · hi Hindi · id Indonesian · it Italian · ja Japanese ·
+        ko Korean · ms Malay · pl Polish · pt Portuguese · qu Quechua · ru Russian ·
+        sw Swahili · th Thai · tl Tagalog · tr Turkish · uk Ukrainian · vi Vietnamese ·
+        zh Chinese
+      options:
+        - ar
+        - bn
+        - de
+        - en
+        - es
+        - fr
+        - he
+        - hi
+        - id
+        - it
+        - ja
+        - ko
+        - ms
+        - pl
+        - pt
+        - qu
+        - ru
+        - sw
+        - th
+        - tl
+        - tr
+        - uk
+        - vi
+        - zh
+    validations:
+      required: true
+
+  - type: input
+    id: current
+    attributes:
+      label: Current form
+      description: |
+        The word we use today. Alternatives are shown as `primary (alt1|alt2)` — paste
+        the cell as-is if you like.
+      placeholder: 切り替え
+
+  - type: input
+    id: suggested
+    attributes:
+      label: Suggested form
+      description: |
+        The word that should be used. If several are acceptable, give the best one
+        first, separated by `|`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this better?
+      description: |
+        Is the current word a false friend, the wrong register, a noun where a verb is
+        needed, a rare synonym? Say what a developer in your language would actually
+        expect to type.
+    validations:
+      required: true

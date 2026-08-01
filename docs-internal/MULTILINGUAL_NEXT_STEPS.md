@@ -4018,15 +4018,47 @@ handler-head family.
 Re-baseline (`--save-baseline`) after each intentional fidelity change, regenerate against a
 freshly `populate`d DB, and commit only the dicts/profiles + baseline (not `patterns.db`).
 
-## Community review system (designed 2026-07-20, not yet built)
+## Community review — intake simplified to GitHub-native (decided 2026-08-01)
 
-The machine gates prove structure; naturalness/idiom needs native-speaker + LLM-agent
-review. The full design — tier model (anonymous flags → OAuth proposers → trusted
-per-language reviewers whose edits skip triage → founder merge), hash-pinned
-"verified by native speakers" badges that auto-invalidate on regeneration,
-git-committed ledgers under `packages/patterns-reference/data/review/`, agent
-sweep/triage harness, changeset fan-out across the five vocab surfaces, glossary =
-`vocab dump`, and a 3-stage rollout on the lokascript-docs site — lives in
-**[proposals/community-review-system.md](proposals/community-review-system.md)**.
-Targets the business plan's Days 46–90 `/community` window; builds on
-`apps/profile-editor` (apply path) and the vocab CLI (glossary/browser data).
+The machine gates prove structure; naturalness/idiom needs native-speaker review, and
+the maintainer does not read most of the 24 languages. The full design lives in
+**[proposals/community-review-system.md](proposals/community-review-system.md)**
+(2026-07-20).
+
+**Decision (2026-08-01): GitHub Issues replace the proposal's custom intake service.**
+Deleted from scope, not deferred: the Fly volume, `community.db`, hand-rolled GitHub
+OAuth + sessions, invite tokens, the write API, the admin triage UI, the NDJSON export
+cursor, and `pull.ts`. Structured intake is three issue forms on the public repo;
+endorsement is a 👍 reaction; the review queue is
+`is:open label:community-review`; spam, identity, and rate-limiting are GitHub's
+problem. The proposal's T0 anonymous category-flag tier is dropped outright — it was
+already scoped to counters-only as "founder-hours poison", and the audience has GitHub
+accounts. The trust invariant (§10) is unchanged and now enforced by construction:
+nothing reaches `main` except a maintainer-merged PR through the full CI gate.
+
+Shipped 2026-08-01 (verify: `ls .github/ISSUE_TEMPLATE/` — three `*-suggestion.yml` /
+`reviewer-application.yml` forms; `gh label list | grep community-review`):
+
+- `translation-suggestion.yml`, `vocabulary-suggestion.yml`, `reviewer-application.yml`,
+  each carrying the `community-review` label. **Their field `id`s are a public API** —
+  the docs site deep-links with `?template=X.yml&<id>=<value>` prefill, so renaming an
+  id silently breaks every generated link. The `lang` dropdown options are **bare ISO
+  codes** for the same reason (issue-form dropdown prefill is exact-match).
+- Labels `community-review` / `translations` / `vocabulary` / `reviewer-application`
+  created on the repo. GitHub silently drops template labels that do not exist, so
+  these are load-bearing, not decoration.
+
+Site side (separate repo `_hyper_min`, `sites/lokascript-docs`, ships on merge to its
+`main`; verify: `curl -sI https://lokascript.org/community/ | head -1`): `/community/`
+landing + reviewer CTA, `/community/vocabulary/{lang}/` browser generated from
+`vocab dump`, and translation provenance (`translation_method` · `confidence` ·
+"unverified") plus per-row suggest links on `/patterns/`. All build-time static — no
+auth, no runtime writes, no server routes.
+
+Still deferred, designs in the proposal and unchanged by this decision: hash-pinned
+"verified by native speakers" badges, the `verifications.json` / `vocab-verifications.json`
+ledgers under `packages/patterns-reference/data/review/`, `verified_native*` columns +
+the `sync-translations` ledger join, the shared text-hash util, the agent sweep/triage
+harness, changeset fan-out across the five vocab surfaces, and the per-language status
+ladder. The badge work is the natural next arc: it is what turns "unverified" on the
+site into a claim, and it needs a real inflow of reviewer sign-offs first.
