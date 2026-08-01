@@ -256,10 +256,6 @@
     "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — `fetch .. as json` consumes `as` as a handcrafted/generated pattern literal (matched by raw token.value, Batch 1 V4 probe mechanism), so parsing works; V2's parse-side union only sees roleMarkers/schema markers, not pattern literals."
   },
   {
-    "key": "V2|en|duration:for",
-    "reason": "Batch 4: schema-override↔render alignment queued (NEXT_STEPS) — duration `for` is consumed as a pattern literal (same mechanism as method:as); V2 cannot see pattern literals."
-  },
-  {
     "key": "V1|vi|reset",
     "reason": "V3c burn-down 2026-07-14: dictionary events.reset is deliberate English passthrough — the native đặt-lại hyphen-shatters on the parse side (round-trip probe re-parsed it as `put`), the broken-listener class. The profile verb stays native for command contexts; same profile-vs-events-passthrough class as the waived ar/sw/tl reset rows (Batch 3, blocked — no candidate round-trips)."
   },

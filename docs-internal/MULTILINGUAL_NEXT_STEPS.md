@@ -3116,10 +3116,19 @@ languages, added with the corpus row in #873.
 
 **Still open, deliberately** (both filed rather than folded in):
 
-- **`morph` has the identical tail and the identical gap.** `MorphCommand`
-  shares swap's arg scan and would work the same way, but `morphSchema` declares
-  no `manner` role, so seeding the modifier read there would be unreachable
-  code. Same fix, same size, one more schema.
+- ~~**`morph` has the identical tail and the identical gap.**~~ — **SHIPPED
+  (2026-08-01, #875).** `morphSchema` carries the shared
+  `VIEW_TRANSITION_MANNER_ROLE` (svo/sov 3) + `ast.modifiers.viewTransition`,
+  and `MorphCommand.parseInput` reads the modifier alongside its flat-args
+  scan. Simpler than swap was: morph has NO hand-written patterns in any
+  language, so the schema role is the whole pattern-side fix — 23/24 languages
+  round-trip byte-identically (`test/view-transition-manner.test.ts`). The one
+  deferral is **ms**, whose possessive fold eats `ia using` into a
+  property-path on the tail form only (plain form clean) — the same ms defect
+  family as its process deferral, pinned in the same file. Whole-corpus probe:
+  zero structural and zero confidence diffs (no corpus row carries the morph
+  tail). The mapper-parity fixture and the ast-shape exemption list both gained
+  their morph entries (intentional-AST-change branch of each oracle).
 - ~~**The corpus row + i18n rendering.**~~ — **SHIPPED (2026-08-01, #873).** The
   transformer masks the tail before any splitting/translation and re-appends it
   verbatim at the clause end (`maskViewTransitionTails`, the `maskCaretScopes`

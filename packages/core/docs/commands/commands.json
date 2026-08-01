@@ -383,7 +383,11 @@
     },
     "morph": {
       "description": "Morph content into target elements (intelligent diffing, preserves state)",
-      "syntax": ["morph <target> with <content>", "morph over <target> with <content>"],
+      "syntax": [
+        "morph <target> with <content>",
+        "morph over <target> with <content>",
+        "morph <target> with <content> using view transition"
+      ],
       "examples": ["morph #target with it", "morph over #modal with fetchedContent"],
       "sideEffects": ["dom-mutation"],
       "category": "dom",

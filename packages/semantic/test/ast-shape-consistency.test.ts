@@ -96,6 +96,13 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
       '`raw.modifiers?.viewTransition` for presence, while the manner role is marked by the ' +
       'phrase `using view` — marker and modifier name cannot coincide here',
   },
+  'morph.viewTransition': {
+    kind: 'contract',
+    reason:
+      'Same contract key as swap/process, third schema with the tail: MorphCommand.parseInput ' +
+      'reads `raw.modifiers?.viewTransition` for presence alongside its flat-args scan, while ' +
+      'the manner role is marked by the phrase `using view`',
+  },
 };
 
 /** All roles of a first-present-of chain (a bare role is a one-role chain). */

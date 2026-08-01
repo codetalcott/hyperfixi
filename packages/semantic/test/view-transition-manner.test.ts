@@ -77,8 +77,8 @@ function commandNode(source: string, lang: string, action: string): CommandSeman
   return hits[0] as unknown as CommandSemanticNode;
 }
 
-describe('both schemas declare the shape-anchored manner role', () => {
-  it.each(['swap', 'process'])('%s binds the tail to modifiers.viewTransition', action => {
+describe('all three schemas declare the shape-anchored manner role', () => {
+  it.each(['swap', 'process', 'morph'])('%s binds the tail to modifiers.viewTransition', action => {
     const schema = getSchema(action as never);
     const manner = schema?.roles.find(r => r.role === 'manner');
 
@@ -96,10 +96,10 @@ describe('both schemas declare the shape-anchored manner role', () => {
   });
 
   it('keeps the flag default-free — presence IS the request', () => {
-    // A default would emit `viewTransition` on every parse, so every swap and
-    // every process would animate. Same "absent means absent" rule #859 applied
-    // to take's source and #864 to its recipient.
-    for (const action of ['swap', 'process'] as const) {
+    // A default would emit `viewTransition` on every parse, so every swap,
+    // every process and every morph would animate. Same "absent means absent"
+    // rule #859 applied to take's source and #864 to its recipient.
+    for (const action of ['swap', 'process', 'morph'] as const) {
       expect(getSchema(action)?.roles.find(r => r.role === 'manner')?.default).toBeUndefined();
     }
   });
@@ -117,6 +117,7 @@ describe('both schemas declare the shape-anchored manner role', () => {
 describe('the English reference no longer drops the tail', () => {
   const EN_TAIL_FORMS: Array<[string, string]> = [
     ['process', 'process partials in it using view transition'],
+    ['morph', 'morph #list to it using view transition'],
     ['swap', 'swap #a with #b using view transition'],
     ['swap', 'swap innerHTML of #t with "<p>x</p>" using view transition'],
     ['swap', 'swap into #t with it using view transition'],
@@ -146,6 +147,7 @@ describe('the English reference no longer drops the tail', () => {
     for (const [plainSrc, tailSrc] of [
       ['process partials in it', 'process partials in it using view transition'],
       ['swap #a with #b', 'swap #a with #b using view transition'],
+      ['morph #list to it', 'morph #list to it using view transition'],
     ] as const) {
       const plain = buildAST(parse(plainSrc, 'en') as CommandSemanticNode).ast as any;
       const tail = buildAST(parse(tailSrc, 'en') as CommandSemanticNode).ast as any;
@@ -260,6 +262,28 @@ describe('the swap tail round-trips in 23 of 24 languages', () => {
   });
 });
 
+const MORPH_DEFERRED = new Set([
+  // ms folds `ia using` into a possessive property-path on the tail form only
+  // (destination becomes `its`, renders `morph #list to its using`); the plain
+  // form binds destination=it cleanly. The exact defect family as ms's process
+  // deferral above — the tail's own bug, not a pre-existing one.
+  'ms',
+]);
+
+describe('the morph tail round-trips in 23 of 24 languages', () => {
+  const enNode = parse('morph #list to it using view transition', 'en') as CommandSemanticNode;
+
+  it.each(LANGS.filter(l => !MORPH_DEFERRED.has(l)))('%s', lang => {
+    const surface = render(enNode, lang as never) as string;
+    const node = commandNode(surface, lang, 'morph');
+
+    expect(roleValue(node, 'patient'), `${lang}: "${surface}" patient`).toBe('#list');
+    expect(roleValue(node, 'destination'), `${lang}: "${surface}" destination`).toBe('it');
+    expect(roleValue(node, 'manner'), `${lang}: "${surface}" manner`).toBe('transition');
+    expect(unconsumedSpans(surface, lang), `${lang}: unconsumed`).toEqual([]);
+  });
+});
+
 describe('the process tail round-trips in 22 of 24 languages', () => {
   const enNode = parse('process partials in it using view transition', 'en') as CommandSemanticNode;
 
@@ -282,6 +306,16 @@ describe('the deferred rows, pinned as measured', () => {
 
   it('qu cannot parse the plain process form either — not this role', () => {
     expect(() => parse('chay partials in rurariy', 'qu')).toThrow();
+  });
+
+  it('ms morph: the plain form is clean; the tail form property-path-folds the destination', () => {
+    // Pinning the CURRENT state, not a desired one — if the ms possessive fold
+    // stops eating `ia using`, both rows flip and ms moves to CAPTURED above.
+    const plain = commandNode('ubah_bentuk #list ke ia', 'ms', 'morph');
+    expect(roleValue(plain, 'destination')).toBe('it');
+    const tail = commandNode('ubah_bentuk #list ke ia using view transition', 'ms', 'morph');
+    expect(tail.roles.get('destination' as never)?.type).toBe('property-path');
+    expect(tail.roles.has('manner' as never)).toBe(false);
   });
 });
 
