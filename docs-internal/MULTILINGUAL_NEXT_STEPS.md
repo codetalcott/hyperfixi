@@ -2964,7 +2964,21 @@ accepts a `viewTransition` MODIFIER as well as the flat-args form, so the
 semantic side can emit either shape without a further runtime change
 (`commands/dom/process-partials.ts`, `parseInput`).
 
-## `shipped-examples-execution` measures UNTRACKED examples/ (opened 2026-07-31)
+## ~~`shipped-examples-execution` measures UNTRACKED examples/~~ — SHIPPED (2026-08-01)
+
+Fixed in the PR after #862, same session it was filed. The walk is now
+`git ls-files` under `examples/` (git unavailable = throw, no disk-walk
+fallback); floors recalibrated to the tracked corpus (48/261/122/52, floors
+35/200/90/40); the 12 untracked-file allowlist entries pruned (33 remain,
+exactly equal to the measured diverging set); corpus stability verified with
+the untracked dirs present AND hidden. testing-framework is enumerated in
+`unit-tests-packages` and `INTENTIONALLY_UNGATED` is empty — CI 38/38 with
+the local gate. The sibling shipped-sources-validity gate keeps its disk walk
+deliberately (no corpus-calibrated floors or per-file keys; untracked files
+can only add false local failures, never mask shipped ones). Original filing
+kept below for the record.
+
+### Original filing (2026-07-31)
 
 Found while enumerating testing-framework in CI for the first time (#862). The
 gate's docstring says it executes "every eligible `_="…"` handler shipped in
