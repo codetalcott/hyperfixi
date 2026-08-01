@@ -86,13 +86,14 @@ export function command(config: CommandConfig) {
 // ============================================================================
 
 /**
- * Input accepted by {@link commandMeta}: `CommandMetadata` with `version`
- * optional, since it is a published constant rather than something an author
- * chooses per command.
+ * Input accepted by {@link commandMeta} — the canonical `CommandMetadata`.
+ *
+ * This used to re-declare `version` as optional, which was already true on
+ * `CommandMetadata`; the `Omit` had no effect once `commandMeta` stopped
+ * defaulting it. Kept as a named alias because it is the published name of
+ * `commandMeta`'s parameter type.
  */
-export type CommandMetaInput = Omit<CommandMetadata, 'version'> & {
-  readonly version?: string;
-};
+export type CommandMetaInput = CommandMetadata;
 
 /**
  * Declare a command's metadata as a **type-visible** static.
@@ -129,30 +130,33 @@ export type CommandMetaInput = Omit<CommandMetadata, 'version'> & {
  * excess-property and enum checking fire. Drop `const` and the arc trades
  * inference for checking instead of getting both.
  *
- * ## The defaults, and why they are here
+ * ## Why there are no longer any defaults
  *
- * Fills `isBlocking`/`hasBody`/`version` exactly as `@meta` did, so the 52
- * classes step 3 migrated keep byte-identical metadata. Step 1 shipped this as a
- * pure identity function and said the choice had to be made deliberately in step
- * 3 rather than by omission; this is that decision. The cost is that the three
- * `commandMeta` classes migrated in step 1 (`install`, `pseudo-command`,
- * `render`) now GAIN the three fields — a change their tests assert explicitly,
- * so it shows up as a moved row rather than as drift.
+ * This filled `isBlocking`/`hasBody`/`version` exactly as `@meta` did, so that
+ * Arc B's migration stayed byte-identical. That was a refactor-preserving
+ * choice, explicitly not an endorsement — and it published a falsehood: since
+ * NO command literal ever set them, every row of the generated
+ * `docs/commands/commands.json` carried `isBlocking: false`, `hasBody: false`,
+ * `version: '1.0.0'` with zero variance across all **59** commands. That says
+ * `wait`, `fetch`, `settle` and `transition` do not block, and that `if`,
+ * `repeat` and `tell` take no body. All false, and it got worse as the command
+ * set grew (it was 40/43 when the defect was filed).
  *
- * Spread order is load-bearing: the defaults come first, so a literal that
- * states `isBlocking: true` wins and still narrows to `true`.
+ * The queue framed the fix as authoring ~59 truthful booleans. Measured, that
+ * is the wrong end: the fields are **unauthored, unread, and unrendered** —
+ * nothing in production or in `REFERENCE.md` consumes them, and no gate pins
+ * them. Emitting them at all is the only thing that creates the false claim, so
+ * they are simply gone. `version` was meaningless per-command regardless (the
+ * JSON's document-level `version` is a separate, real field).
  *
- * **These three fields are unauthored and unread.** No command literal sets
- * them, nothing in production reads them, and every one of the 40 rows in the
- * shipped `docs/commands/commands.json` therefore says `isBlocking: false`,
- * `hasBody: false`, `version: '1.0.0'` — which is FALSE for `wait`, `fetch`,
- * `settle`, `transition` (they block) and for `if`, `repeat`, `tell` (they take
- * bodies). Preserving them here is deliberately a refactor-preserving choice,
- * not an endorsement; authoring them truthfully is filed as its own item in
- * `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`.
+ * They remain OPTIONAL on {@link CommandMetadata}: a command that genuinely
+ * needs to declare `isBlocking: true` still can, and now that declaration means
+ * something because absence no longer reads as a claim of `false`. If a
+ * consumer ever appears, prefer deriving over hand-authoring — `COMPOUND_COMMANDS`
+ * and the parser's `CommandNode.isBlocking` already encode much of it.
  */
 export function commandMeta<const T extends CommandMetaInput>(metadata: T) {
-  return { isBlocking: false, hasBody: false, version: '1.0.0', ...metadata };
+  return { ...metadata };
 }
 
 // ============================================================================

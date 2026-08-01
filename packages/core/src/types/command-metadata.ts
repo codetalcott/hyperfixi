@@ -267,19 +267,27 @@ export interface CommandMetadata {
 
   /**
    * Semantic version string
-   * @optional @default '1.0.0'
+   * @optional — no default; `commandMeta()` does not fill it
    */
   readonly version?: string;
 
   /**
-   * Whether this command is blocking (waits for completion)
-   * @optional @default false
+   * Whether this command is blocking (waits for completion).
+   *
+   * @optional — **absent means UNDECLARED, not `false`.** `commandMeta()`
+   * used to default this (and `hasBody`) to `false`, which published a claim
+   * no author had made: all 59 commands stated they do not block, including
+   * `wait`, `fetch`, `settle` and `transition`, which do. The default is gone,
+   * so setting this now carries meaning. Prefer deriving over hand-authoring —
+   * the parser's `CommandNode.isBlocking` already encodes much of it.
    */
   readonly isBlocking?: boolean;
 
   /**
-   * Whether this command accepts a body (commands between start and 'end')
-   * @optional @default false
+   * Whether this command accepts a body (commands between start and 'end').
+   *
+   * @optional — absent means UNDECLARED, not `false`; see {@link CommandMetadata.isBlocking}.
+   * `COMPOUND_COMMANDS` and the block-command set already encode much of this.
    */
   readonly hasBody?: boolean;
 
