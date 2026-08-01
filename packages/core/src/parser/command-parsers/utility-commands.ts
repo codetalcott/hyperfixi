@@ -723,6 +723,21 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
     throw new Error('tell command requires a target expression');
   }
 
+  // Optional `to` between target and body: `tell #modal to show`. Upstream
+  // REJECTS this form loudly (`Expected 'end' but found 'to'`), but hyperfixi
+  // cannot afford to throw here: inside a handler body,
+  // parseCommandWithErrorRecovery swallows any command-parser throw and the
+  // stranded body re-parses as top-level commands — so `on click tell #modal
+  // to show` parsed CLEAN with no tell node and `show` silently ran against
+  // the handler's `me` instead of #modal (the measured table in
+  // PARSER_NEXT_STEPS.md). Consuming the word honors the author's evident
+  // intent and is the only fix that cannot be silently un-fixed by the
+  // recovery machinery. Deliberate superset of upstream grammar, same as
+  // pick's legacy forms.
+  if (ctx.check(KEYWORDS.TO)) {
+    ctx.advance();
+  }
+
   // Parse the command(s) to execute on each target
   const commands: ASTNode[] = [];
 
@@ -757,16 +772,23 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
 
       // Check for control flow boundaries after parsing a command.
       //
-      // KNOWN GAP: breaking on `end` is all we do with it — `tell` never CONSUMES
-      // its terminator, so `tell #x add .a end` leaves the `end` in the stream for
-      // whatever encloses us (inside a handler it is taken as the handler's own
-      // `end`). Upstream REQUIRES the terminator: TellCommand.parse calls
-      // `requireToken("end")` unless it is already at a feature start, which means
-      // hyperfixi has no real `tell … end` block form, only this inline one.
-      // Closing that is a termination-semantics change, not a separator fix, so it
-      // was deliberately left out of the `then`-separator work above.
-      // Tracked in docs-internal/PARSER_NEXT_STEPS.md.
-      if (ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
+      // `else` belongs to an enclosing `if` — leave it. A directly-following
+      // `end` is tell's OWN terminator and is CONSUMED, matching upstream
+      // (TellCommand.parse calls `requireToken("end")` unless at a feature
+      // start). Merely breaking on it — the previous behavior — left the `end`
+      // for whatever enclosed us, which mis-attributed everything after it:
+      // `on click if true tell #modal show end log "x" end` gave the leftover
+      // `end` to the IF, so `log` escaped the conditional and ran
+      // unconditionally (upstream keeps it inside; same shape with `repeat`,
+      // where the trailing command ran once instead of per-iteration). At
+      // handler level the leftover was absorbed harmlessly, which is why the
+      // gap looked cosmetic when probed casually. Measured tables in
+      // docs-internal/PARSER_NEXT_STEPS.md.
+      if (ctx.check(KEYWORDS.ELSE)) {
+        break;
+      }
+      if (ctx.check(KEYWORDS.END)) {
+        ctx.advance();
         break;
       }
 
