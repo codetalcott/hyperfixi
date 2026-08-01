@@ -2100,18 +2100,29 @@ export class SemanticParserImpl implements ISemanticParser {
                 // "characters"), while the canonical pick variant pattern
                 // re-roles that word to `method` and captures the RANGE under
                 // `patient` (`0 to 5`). The unit word reappearing under
-                // `method` with the SAME literal value IS preservation — the
-                // role moved, nothing was lost. Without this the type check
-                // above (literal vs expression) vetoes the swap and the
-                // handler body truncates to `pick characters` (the arc-3
-                // foreign canonical-validity cluster).
+                // `method` with the SAME SURFACE is preservation — the role
+                // moved, nothing was lost. Without this the type check above
+                // (literal vs expression) vetoes the swap and the handler body
+                // truncates to `pick characters` (the arc-3 foreign
+                // canonical-validity cluster).
+                //
+                // The re-parsed `method` may be a literal or an EXPRESSION: the
+                // foreign pick patterns re-type unit words to the expression
+                // shape en produces (patterns/pick.ts). Compare surfaces, not
+                // types — a type check here would re-open the truncation
+                // cluster for all 13 verb-initial languages.
                 if (role === 'patient' && actionName === 'pick' && valType(val) === 'literal') {
                   const mv = (first as CommandSemanticNode).roles.get('method');
+                  const mvType = valType(mv);
+                  const mvSurface =
+                    mvType === 'literal'
+                      ? String((mv as { value?: unknown }).value)
+                      : mvType === 'expression'
+                        ? String((mv as { raw?: unknown }).raw)
+                        : undefined;
                   return (
-                    mv !== undefined &&
-                    valType(mv) === 'literal' &&
-                    String((mv as { value?: unknown }).value) ===
-                      String((val as { value?: unknown }).value)
+                    mvSurface !== undefined &&
+                    mvSurface === String((val as { value?: unknown }).value)
                   );
                 }
                 return false;
