@@ -25,10 +25,10 @@ ones, because the gate *is* the tracking mechanism.
 | Item | Severity | Gate | Detail |
 | ---- | -------- | ---- | ------ |
 | **Or-join filters have no per-event representation** | low — `on click or keypress[key=='Enter']` runs keypress unfiltered (upstream filters that leg); single-event filters ARE enforced | ✅ KNOWN GAP test | `packages/core/src/api/event-filter-execution.test.ts`; the runtime-side note at the `applicableCondition` site in `runtime-base.ts` |
-| **`tell` never consumes a terminating `end`** | medium — no real `tell … end` block form; upstream requires one | **none** | comment at `packages/core/src/parser/command-parsers/utility-commands.ts` (the `ELSE`/`END` break in `parseTellCommand`) |
-| **`tell <target> to <command>` drops the `tell` wrapper** | medium — **silent wrong target** on the form users actually write | **none** | see the measured table below; found by Arc A step 4.3 (Finding 14 in [HANDOFF-command-arch-manifest.md](./HANDOFF-command-arch-manifest.md)), re-verified 2026-07-29 |
+| ~~**`tell` never consumes a terminating `end`**~~ | **FIXED 2026-08-01** — tell consumes its own `end`; the real damage was nested (post-`end` commands escaped `if`/`repeat` bodies), not the filed "no block form" | ✅ `tell-to-and-end.test.ts` | history below |
+| ~~**`tell <target> to <command>` drops the `tell` wrapper**~~ | **FIXED 2026-08-01** — optional `to` consumed after the target (deliberate superset; upstream rejects the form, but hyperfixi's error recovery turned the throw into the silent retarget) | ✅ `tell-to-and-end.test.ts` (mutation-verified both halves) | history below |
 | **`set <idref> to <value>` / js property-path args no-op** | medium — silent no-effect on shipped pages | ✅ execution-gate allowlist entries | families 1/6 in [HANDOFF-shipped-examples-execution.md](HANDOFF-shipped-examples-execution.md) |
-| **`for <duration>` tail rejected on `toggle` / `wait`** | medium — two upstream-valid forms on shipped, documented commands; both are the command's OWN documented example | **none** | see the measured table below; found by the Arc B examples sweep ([HANDOFF-command-arch-metadata.md](./HANDOFF-command-arch-metadata.md) § F-B4a) |
+| ~~**`for <duration>` tail rejected on `toggle` / `wait`**~~ | **BOTH FIXED** — toggle via `parseTemporalTail` (2026-07-31); wait via #850's duration alternatives in the `for` loop (`wait for click or 1s` races event vs timeout) — **the table below still listed the wait half as open a day after it shipped** | ✅ `wait-event-or-duration.test.ts` + toggle temporal tests | history below |
 | ~~**`transition` rejects a POSSESSIVE property target**~~ | **FIXED 2026-07-31** — optional leading target in `parseTransitionCommand` (all four shapes), emitting the `[target, property]` args the runtime already discriminated on | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/transition-target.test.ts`; history below |
 | ~~**`process partials … using view transition` mis-parses**~~ | **FIXED 2026-07-31** — `parseProcessCommand` + dispatch case, runtime raw-keyword rewrite, `process` added to `skipSemanticParsing`; the same unconsumed tail was also fixed on `swap` | ✅ COMPOUND_COMMANDS coverage gate | `packages/core/src/parser/__tests__/compound-command-coverage.test.ts`; history below |
 | ~~**`take <class> from <source>` rejected**~~ | **FIXED 2026-07-31** — `parseTakeCommand` + runtime rewrite (upstream ownership-transfer semantics), `take` added to `skipSemanticParsing` with its toggle/add/remove siblings | e2e tests, both paths | `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`; history below |
@@ -54,10 +54,53 @@ ones, because the gate *is* the tracking mechanism.
   of BOTH legs; per-event condition representation flips both halves, so the
   fix is forced to be deliberate and visible.
 
-The ungated ones (both `tell` entries) have no such mechanism. **They are what
-this document is for.**
+The last ungated entries (both `tell` rows) closed 2026-08-01 with their own
+gate — and re-measuring the queue while closing them found the `wait for click
+or 1s` half of the `for <duration>` row had ALREADY shipped in #850 a day
+before, gated by `wait-event-or-duration.test.ts`, while this table still
+listed it as open. (Third stale filing caught this way; check `git log` on the
+parser file before costing any row here.) **Every row in the table above is
+now either FIXED or protected by a gate that fails on its own. This document
+currently tracks nothing — the next entry added here is what it is for.**
 
-### `tell <target> to <command>` — the measured shape
+### ~~`tell <target> to <command>` — the measured shape~~ — BOTH tell rows FIXED (2026-08-01)
+
+Both fixed in `parseTellCommand`, gated by
+`packages/core/src/parser/__tests__/tell-to-and-end.test.ts` (13 rows, both
+halves mutation-verified: reverting the `to` consumption reddens 6, reverting
+the `end` consumption reddens 3).
+
+- **The dropped wrapper**: parseTellCommand now consumes an optional `to`
+  after the target. Upstream REJECTS the form loudly (`Expected 'end' but
+  found 'to'` — measured on the real engine), but hyperfixi could not throw
+  its way to safety: `parseCommandWithErrorRecovery` swallows any
+  command-parser throw inside handler bodies and the stranded body re-parses
+  as top-level commands, which was the whole silent-retarget mechanism.
+  Consuming the word is the only fix the recovery machinery cannot un-fix,
+  and is a deliberate superset of upstream grammar (pick's legacy forms
+  precedent). The bare form went from a loud failure to working.
+- **The missing terminator**: tell now CONSUMES a directly-following `end`,
+  matching upstream's `requireToken("end")`. Re-measuring first showed the
+  filed severity was half-wrong in an interesting way: at handler level the
+  leftover `end` was absorbed harmlessly (every filed-adjacent row already
+  matched upstream structurally), but inside a block it mis-attributed
+  everything after it — `on click if true tell #modal show end log "x" end`
+  gave the leftover `end` to the IF, so `log` escaped the conditional and ran
+  unconditionally; the `repeat` twin ran its trailing command once instead of
+  per-iteration. Both nested rows measured VALID upstream with the command
+  INSIDE the block. One residue, deliberate: `if true tell #m show end log
+  "x"` (a single `end` where two closings are needed) now records a
+  recoverable "Expected 'end' after if block" diagnostic while building the
+  upstream-matching tree — stricter than upstream's silence, and arguably
+  more honest about the ambiguous source.
+
+`parseCommandWithErrorRecovery`'s throw-swallowing itself remains: ANY
+command parser that throws inside a handler body still degrades silently
+(tell was just its worst client). That is a general machinery question, not a
+tell defect, and is NOT tracked elsewhere — if another silent command-drop
+surfaces, start there.
+
+Original filing kept below for the record.
 
 Both `tell` rows are in `parseTellCommand`, but they are separate defects: the
 one above is a missing terminator, this one is a **dropped wrapper**, and this
@@ -83,7 +126,16 @@ Not fixed by Arc A, deliberately: it is a behavior change to the parser with its
 own tests, and folding it into a classification step would have buried that
 step's review artifact.
 
-### `for <duration>` on `toggle` / `wait` — the measured shape
+### ~~`for <duration>` on `toggle` / `wait` — the measured shape~~ — BOTH FIXED
+
+The wait half shipped in **#850** (`c74fb184`, 2026-07-31): the `for` loop's
+alternatives now accept a duration (time literal, bare number, parenthesized
+expression) alongside event names, so `wait for click or 1s` is the
+event-vs-timeout race upstream means, and `WaitCommand`'s `race` input already
+executed it. Gated by
+`packages/core/src/commands/async/__tests__/wait-event-or-duration.test.ts`.
+This table listed the half as open for a day after it shipped — re-measure
+before costing (the row below is the historical record).
 
 Measured 2026-07-29. Each source was parsed on hyperfixi and on the real
 `hyperscript.org` engine (`hs.parse(src).errors`, the loader at
@@ -95,7 +147,7 @@ shipped parser refuses:
 | Source | Upstream | hyperfixi |
 | ------ | -------- | --------- |
 | ~~`toggle .loading for 2s`~~ | accepts | **FIXED** — was `Expected variable name after "for"` |
-| `wait for click or 1s` | accepts | `Expected event name after "for"` |
+| ~~`wait for click or 1s`~~ | accepts | **FIXED (#850)** — was `Expected event name after "for"` |
 
 Both errors read as a `for`-tail being parsed as the start of a loop/event
 construct rather than as a duration modifier, but the two commands take different
