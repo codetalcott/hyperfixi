@@ -2584,8 +2584,18 @@ export class PatternMatcher {
   ): boolean {
     const mark = tokens.mark();
 
-    // Track which roles were captured before this group
-    const capturedBefore = new Set(captured.keys());
+    // Snapshot the captured roles' VALUES, not just their keys. Clearing only
+    // the newly-added keys leaves an OVERWRITE by a failed group in place.
+    //
+    // 90 shipped patterns bind one role in TWO optional groups — every
+    // `<cmd>-event-<lang>-sov` has a pre-verb `[{destination} <marker>]` and a
+    // post-verb one, because the transformer emits the to-phrase on either side
+    // depending on the command. When the trailing group speculatively captures
+    // the next token into that role and then fails on its marker, the token
+    // stream rolls back but the corrupted value survives: ja
+    // `クリック で #panel に .active を トグル ゴミ` returned
+    // `destination="ゴミ"` with the real `#panel` captured and discarded.
+    const capturedBefore = new Map(captured);
 
     const success = this.matchTokenSequence(
       tokens,
@@ -2596,10 +2606,16 @@ export class PatternMatcher {
 
     if (!success) {
       tokens.reset(mark);
-      // Clear any roles that were partially captured during the failed group match
+      // Restore the pre-group capture state exactly: drop roles the failed group
+      // added, and put back the values it overwrote.
       for (const role of captured.keys()) {
         if (!capturedBefore.has(role)) {
           captured.delete(role);
+        }
+      }
+      for (const [role, value] of capturedBefore) {
+        if (captured.get(role) !== value) {
+          captured.set(role, value);
         }
       }
       return patternToken.optional || false;

@@ -115,29 +115,87 @@ export function appendOptionalViewTransition(
   commandSchema: CommandSchema,
   languageCode: string
 ): void {
-  const mannerRole = commandSchema.roles.find(r => r.role === 'manner' && !r.required);
-  const marker = mannerRole?.markerOverride?.[languageCode];
-  if (!mannerRole || !marker) return;
+  appendOptionalTailRole(tokens, extraction, commandSchema, languageCode, 'manner', {
+    requireMarker: true,
+  });
+}
+
+/**
+ * Append an optional trailing `[{recipient}]` group to an event-handler pattern
+ * when the schema declares a non-required `recipient` role
+ * (`take .active from .tab-button for me`).
+ *
+ * Marker-LESS in 23 of 24 languages by design (`takeSchema.recipient` overrides
+ * only `en: 'for'`), because the i18n transformer renders the recipient as a
+ * BARE trailing pronoun everywhere — `… von .tab-button ich`, `… .tab-button
+ * থেকে আমি`. Safe as a marker-less trailing slot because the role is typed
+ * `['reference']` and shape-anchored on `'reference'`: only `me`/`you`/`it`/
+ * `result` can fill it, and the shape anchor keeps the uncaptured slot out of
+ * `scoreRoleCoverage`'s denominator.
+ *
+ * Without it, bn/hi/ja/ko/tr matched take at confidence 1.0 and reported
+ * `fused body walk left 1 token(s) unconsumed: "<pronoun>"` — five of the ten
+ * rows in the baseline's `roleLossyPatterns` for `take-class-from-siblings`.
+ * The other five were unrelated: it/ru/uk/vi had `get`'s hand-written pattern
+ * claiming take's verb (`patterns/get.ts`), and qu never matches a pattern at
+ * all.
+ */
+export function appendOptionalRecipient(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string
+): void {
+  appendOptionalTailRole(tokens, extraction, commandSchema, languageCode, 'recipient', {
+    requireMarker: false,
+  });
+}
+
+/**
+ * Shared body of the two appenders above: emit `[<marker words> {role}]` as a
+ * trailing optional group, with the marker (if any) and every type/shape knob
+ * read from the schema's own `RoleSpec`, so a generated event-handler pattern
+ * cannot drift from the command patterns' version of the same slot.
+ *
+ * `requireMarker` distinguishes the two cases: `manner` is reachable only
+ * behind its required `using view` literals and must not emit a bare slot,
+ * while `recipient` is marker-less in 23 languages and would never emit at all
+ * under that rule.
+ */
+function appendOptionalTailRole(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string,
+  role: SemanticRole,
+  opts: { requireMarker: boolean }
+): void {
+  const spec = commandSchema.roles.find(r => r.role === role && !r.required);
+  if (!spec) return;
+  const marker = spec.markerOverride?.[languageCode];
+  if (opts.requireMarker && !marker) return;
 
   tokens.push({
     type: 'group',
     optional: true,
     tokens: [
-      ...marker.split(/\s+/).map((word): PatternToken => ({ type: 'literal', value: word })),
+      ...(marker ? marker.split(/\s+/) : []).map(
+        (word): PatternToken => ({ type: 'literal', value: word })
+      ),
       {
         type: 'role',
-        role: 'manner',
+        role,
         optional: true,
-        expectedTypes: mannerRole.expectedTypes,
+        expectedTypes: spec.expectedTypes,
         // Load-bearing, same as on the generated command patterns: it exempts
-        // the trailing slot from the matcher's verb guard (`transition` is
-        // itself a command keyword) and normalizes the captured value type to
-        // the EN reference's `literal`.
-        ...(mannerRole.valueShape !== undefined ? { valueShape: mannerRole.valueShape } : {}),
+        // the trailing slot from the matcher's verb guard, keeps the uncaptured
+        // slot out of `scoreRoleCoverage`'s denominator, and (for `keyword`)
+        // normalizes the captured value type to the EN reference's `literal`.
+        ...(spec.valueShape !== undefined ? { valueShape: spec.valueShape } : {}),
       },
     ],
   });
-  extraction.manner = { fromRole: 'manner' };
+  extraction[role] = { fromRole: role };
 }
 
 /**
@@ -338,7 +396,10 @@ export function generateSOVPatientFirstEventHandlerPattern(
     ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
     ...eventHandlerSourceExtraction(commandSchema),
   };
-  // `using view transition` rides at the very end, after the with-marked operand.
+  // take's bare trailing pronoun, then `using view transition`, both at the very
+  // end — after the with-marked operand and after the source phrase, which is
+  // where the i18n transformer puts them in verb-final output.
+  appendOptionalRecipient(tokens, extraction, commandSchema, profile.code);
   appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
 
   return {

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-01T18:39:30.922Z",
-  "commit": "b935b352",
+  "timestamp": "2026-08-01T19:11:38.421Z",
+  "commit": "fa3a1890",
   "languages": {
     "ar": {
       "parseSuccess": 156,
@@ -17,7 +17,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -653,16 +653,14 @@
       "avgFidelity": 1,
       "avgPrecision": 0.997863247863248,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1305,7 +1303,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1938,7 +1936,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2581,7 +2579,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3224,7 +3222,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -3869,7 +3867,7 @@
       "roleLossyPatterns": [
         "set-attribute"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4505,16 +4503,14 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5161,7 +5157,7 @@
         "fetch-error-handling",
         "fetch-json"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -5797,16 +5793,14 @@
       "avgFidelity": 1,
       "avgPrecision": 0.997863247863248,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -6442,16 +6436,14 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7087,18 +7079,17 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.995483870967742,
+      "avgRoleFidelity": 0.9967741935483871,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [
-        "take-class-from-siblings",
         "when-multiple-changes",
         "when-value-changes"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -7743,7 +7734,7 @@
       "roleLossyPatterns": [
         "hide-with-transition"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -8388,7 +8379,7 @@
       "roleLossyPatterns": [
         "unless-condition"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9031,7 +9022,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -9678,7 +9669,7 @@
         "on-custom-event-receive",
         "take-class-from-siblings"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10314,16 +10305,14 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -10966,7 +10955,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11611,7 +11600,7 @@
       "roleLossyPatterns": [
         "toggle-aria-expanded"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12254,7 +12243,7 @@
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12890,16 +12879,14 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -13535,16 +13522,14 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9987096774193549,
+      "avgRoleFidelity": 1,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
-      "roleLossyPatterns": [
-        "take-class-from-siblings"
-      ],
-      "bundleSize": 559400,
+      "roleLossyPatterns": [],
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14180,17 +14165,16 @@
       "avgFidelity": 1,
       "avgPrecision": 1,
       "avgMultisetRecall": 1,
-      "avgRoleFidelity": 0.9974193548387098,
+      "avgRoleFidelity": 0.9987096774193549,
       "avgValueRecall": 1,
       "avgExecutionFidelity": 1,
       "executionFailures": [],
       "degeneratePasses": [],
       "lossyPasses": [],
       "roleLossyPatterns": [
-        "its-value-possessive-dot",
-        "take-class-from-siblings"
+        "its-value-possessive-dot"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14836,7 +14820,7 @@
         "repeat-forever",
         "repeat-until-event"
       ],
-      "bundleSize": 559400,
+      "bundleSize": 559592,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15467,7 +15451,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 559400,
+      "size": 559592,
       "languages": [
         "en",
         "es",
