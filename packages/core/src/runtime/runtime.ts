@@ -20,7 +20,7 @@
  */
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
-import { CommandRegistryV2 } from './command-adapter';
+import { CommandRegistryV2, type CommandWithParseInput } from './command-adapter';
 import { createFullExpressionRegistry } from '../expressions/index';
 import { COMMAND_MANIFEST } from '../commands/manifest';
 
@@ -134,7 +134,7 @@ import { createRenderCommand } from '../commands/templates/render';
  * manifest itself (Finding 9). It lives here because `runtime.ts` is the one
  * module that legitimately references every command implementation.
  */
-const COMMAND_FACTORIES: Readonly<Record<string, () => unknown>> = {
+const COMMAND_FACTORIES: Readonly<Record<string, () => CommandWithParseInput>> = {
   // DOM
   hide: createHideCommand,
   show: createShowCommand,

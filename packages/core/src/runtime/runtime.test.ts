@@ -421,14 +421,20 @@ describe('Runtime Audit Fixes', () => {
   });
 
   describe('CommandRegistryV2.register() validation', () => {
+    // These two pass DELIBERATELY malformed objects to exercise the runtime
+    // throw, which is what protects callers who reach `register` from
+    // JavaScript. `register` is typed since 2026-08-01, so they need the cast —
+    // the cast IS the point of the row, not a workaround around one.
     it('should throw descriptive error for commands with no name', () => {
       const registry = new CommandRegistryV2();
-      expect(() => registry.register({})).toThrow('Cannot register command: no name found');
+      expect(() => registry.register({} as never)).toThrow(
+        'Cannot register command: no name found'
+      );
     });
 
     it('should throw for undefined name and metadata', () => {
       const registry = new CommandRegistryV2();
-      expect(() => registry.register({ metadata: {} })).toThrow(
+      expect(() => registry.register({ metadata: {} } as never)).toThrow(
         'Cannot register command: no name found'
       );
     });
@@ -446,13 +452,60 @@ describe('Runtime Audit Fixes', () => {
 
     it('should accept commands with metadata.name', () => {
       const registry = new CommandRegistryV2();
+      // Cast: `CommandWithParseInput` requires a top-level `name`, but the
+      // runtime deliberately falls back to `metadata.name` and the error message
+      // promises that fallback. No in-tree command uses it — this row is the
+      // only thing keeping the branch honest.
       expect(() =>
         registry.register({
           metadata: { name: 'meta-test' },
           execute: async () => {},
-        })
+        } as never)
       ).not.toThrow();
       expect(registry.has('meta-test')).toBe(true);
+    });
+  });
+
+  describe('CommandRegistryV2.validateCommand() reports a well-formed result', () => {
+    // The adapter LIFTS a command's boolean type guard into `ValidationResult`.
+    // Until 2026-08-01 it passed the raw boolean straight through while its
+    // signature promised the struct, so `validateCommand()` returned `true` /
+    // `false` where callers would read `.isValid` — `undefined` either way, so
+    // an invalid input read as valid. Nothing caught it because the method has
+    // no callers; these rows are what make the wrap load-bearing.
+    const guardCommand = {
+      name: 'guard-test',
+      execute: async () => undefined,
+      validate: (input: unknown): boolean => typeof input === 'number',
+    };
+
+    it('wraps a passing guard', () => {
+      const registry = new CommandRegistryV2();
+      registry.register(guardCommand);
+      expect(registry.validateCommand('guard-test', 42)).toEqual({
+        isValid: true,
+        errors: [],
+        suggestions: [],
+      });
+    });
+
+    it('wraps a FAILING guard — the row that reads `false` as valid without the wrap', () => {
+      const registry = new CommandRegistryV2();
+      registry.register(guardCommand);
+      const result = registry.validateCommand('guard-test', 'not a number');
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('defaults to valid for a command that declares no guard', () => {
+      const registry = new CommandRegistryV2();
+      registry.register({ name: 'no-guard', execute: async () => undefined });
+      expect(registry.validateCommand('no-guard', {}).isValid).toBe(true);
+    });
+
+    it('reports an unknown command as invalid rather than throwing', () => {
+      const registry = new CommandRegistryV2();
+      expect(registry.validateCommand('nope', {}).isValid).toBe(false);
     });
   });
 

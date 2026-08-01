@@ -38,10 +38,21 @@ const canonicalEvaluator: ExpressionEvaluator = {
 export interface RuntimeCommand {
   name: string;
   execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown>;
+  /**
+   * The ADAPTER's outward contract — `CommandAdapterV2 implements RuntimeCommand`
+   * — so this legitimately stays a `ValidationResult`: it is what
+   * `CommandRegistryV2.validateCommand()` reports to a caller. Do NOT confuse it
+   * with {@link CommandWithParseInput.validate}, which is the boolean type guard
+   * a COMMAND writes and which the adapter lifts into this shape. The two look
+   * like twins and are opposites: one is the report, the other the predicate.
+   */
   validate?(input: unknown): ValidationResult<unknown>;
   metadata?: {
     description: string;
-    examples: string[];
+    // Readonly for the same reason as CommandMetadata's below: the adapter's
+    // getter forwards the command's own `commandMeta<const T>` tuple through.
+    examples: readonly string[];
+    // Already normalized by the getter — a `string[]` syntax is joined with ' | '.
     syntax: string;
   };
 }
@@ -53,9 +64,15 @@ export interface RuntimeCommand {
  */
 export interface CommandMetadata {
   description?: string;
-  examples?: string[];
-  syntax?: string | string[];
-  aliases?: string[];
+  // READONLY arrays, because `commandMeta<const T>` (commands/decorators) infers
+  // readonly tuples by design — the `const` type parameter is what gives it
+  // excess-property and enum checking. Declaring these mutable made every real
+  // command unassignable to this interface, which is the reason `register` could
+  // only ever have been typed `any`. The registry never mutates them; it reads
+  // `aliases` and nothing else.
+  examples?: readonly string[];
+  syntax?: string | readonly string[];
+  aliases?: readonly string[];
   [extra: string]: unknown;
 }
 
@@ -85,8 +102,30 @@ export interface CommandWithParseInput {
     evaluator: { evaluate(node: ASTNode, context: ExecutionContext): Promise<unknown> },
     context: ExecutionContext
   ): Promise<unknown>;
-  execute(input: unknown, context: TypedExecutionContext): Promise<unknown>;
-  validate?(input: unknown): ValidationResult<unknown>;
+  /**
+   * The return is `unknown`, not `Promise<unknown>`, because the adapter AWAITS
+   * it (`result = await this.impl.execute(...)`) and several commands are
+   * legitimately synchronous — `GetCommand.execute` returns `GetCommandOutput`
+   * and `RemoveCommand.execute` returns `void`, with `get.test.ts` asserting
+   * that synchronous return directly across eight rows. Declaring
+   * `Promise<unknown>` described neither the callee nor the caller; it merely
+   * went unchecked while `register` took `any`. The PARAMETER list is where this
+   * interface earns its keep — that is what catches a drifted signature.
+   */
+  execute(input: unknown, context: TypedExecutionContext): unknown;
+  /**
+   * Narrowing TYPE GUARD over this command's own input shape — every one of the
+   * 17 implementations is written `validate(input: unknown): input is XInput`,
+   * and 185 assertions across 21 test files pin the boolean result.
+   *
+   * This was declared as `ValidationResult<unknown>` until 2026-08-01, which no
+   * command has ever returned. `CommandAdapterV2.validate()` passed the raw
+   * boolean straight through under that type; the lie went unnoticed only
+   * because its sole consumer, `CommandRegistryV2.validateCommand()`, is called
+   * by nobody. The struct shape is still what the registry method REPORTS — the
+   * adapter wraps at that boundary — but it was never the command contract.
+   */
+  validate?(input: unknown): boolean;
   metadata?: CommandMetadata;
 }
 
@@ -218,7 +257,10 @@ export class CommandAdapterV2 implements RuntimeCommand {
     return {
       description: this.impl.metadata?.description || '',
       examples: this.impl.metadata?.examples || [],
-      syntax: Array.isArray(syntax) ? syntax.join(' | ') : syntax || '',
+      // `typeof`, not `Array.isArray`: the latter narrows to `any[]` and leaves
+      // `readonly string[]` in the else branch, so the getter's own return type
+      // stopped matching `RuntimeCommand.metadata.syntax: string`.
+      syntax: typeof syntax === 'string' ? syntax : syntax ? syntax.join(' | ') : '',
     };
   }
 
@@ -358,11 +400,16 @@ export class CommandAdapterV2 implements RuntimeCommand {
     }
   }
 
+  /**
+   * Lift a command's boolean type guard into the `ValidationResult` shape the
+   * registry reports. The wrap happens HERE, at the boundary, rather than in 17
+   * command bodies — the guard is what commands are written to return and what
+   * their tests assert. Before 2026-08-01 this passed the raw boolean straight
+   * through while promising a struct.
+   */
   validate(input: unknown): ValidationResult<unknown> {
-    if (this.impl.validate) {
-      return this.impl.validate(input);
-    }
-    return { isValid: true, errors: [], suggestions: [] };
+    const isValid = this.impl.validate ? this.impl.validate(input) : true;
+    return { isValid, errors: [], suggestions: [] };
   }
 }
 
@@ -413,12 +460,21 @@ export class CommandRegistryV2 {
   }
 
   /**
-   * Register a command (V1 or V2 format)
-   * Uses 'any' to accept all command implementations with compatible structure
-   * Also registers any aliases defined in metadata
+   * Register a command, and any aliases its metadata declares.
+   *
+   * Typed to the interface the registry actually stores. It took `any` until
+   * 2026-08-01, which meant all 55 manifest-driven registrations were unchecked
+   * end to end — a drifted `execute` signature compiled silently, and the
+   * `Map<string, CommandWithParseInput>` below asserted a shape nothing had
+   * verified. Typing it required fixing what the interface said, not what the
+   * commands do: readonly metadata tuples and a non-Promise `execute` return.
+   *
+   * The `metadata.name` fallback is kept because the error message promises it,
+   * but no in-tree command relies on it: `metadata` is index-signature typed, so
+   * that branch yields `unknown` and the runtime string check is what narrows.
    */
-  register(impl: any): void {
-    const rawName = impl.name || impl.metadata?.name;
+  register(impl: CommandWithParseInput): void {
+    const rawName: unknown = impl.name || impl.metadata?.name;
     if (!rawName || typeof rawName !== 'string') {
       throw new Error(
         `Cannot register command: no name found. ` +
