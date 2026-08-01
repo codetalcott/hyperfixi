@@ -242,6 +242,24 @@ When you add a new internal-dep relationship between workspace packages, add the
 
 [`npm run check:test-list`](scripts/check-test-check-list.cjs) now fails on either. It's a zero-dep node script, run in CI's `lint-typecheck` job and from the pre-commit hook when a workspace `package.json` or the gate script is staged. Deliberate exclusions go in its `INTENTIONALLY_UNGATED` map, with a reason.
 
+##### The six hand-maintained package lists, and what guards each
+
+CI addresses packages by name in six places, all hand-written. **Every one is now guarded** — the last four by [`npm run check:ci-job-lists`](scripts/check-ci-job-lists.cjs), and all six by zero-dep node scripts wired into `lint-typecheck` and the pre-commit hook.
+
+| List                                       | Guard                | Predicate ("must be listed iff…")                                             |
+| ------------------------------------------ | -------------------- | ----------------------------------------------------------------------------- |
+| `build` job step ORDER                     | `check:ci-order`     | a runtime dep is built before its consumer                                    |
+| `unit-tests` / `unit-tests-packages` steps | `check:ci-test-list` | the package has a `test:check` script                                         |
+| `scripts/test-check-all.sh`                | `check:test-list`    | same predicate, local gate                                                    |
+| `export-validation` args                   | `check:ci-job-lists` | published **and** declares an entry point **and** is built by the `build` job |
+| `lint-typecheck` typecheck lines           | `check:ci-job-lists` | the package has a `typecheck` script                                          |
+| nightly `coverage` job                     | `check:ci-job-lists` | its flag is declared in `codecov.yml` (both directions)                       |
+| root `lint:domains` loop                   | `check:ci-job-lists` | a `packages/domain-*` owning a `lint.test.ts`                                 |
+
+When the last four were guarded (2026-08-01), three had drifted: export-validation checked **8** of the 30 packages that qualify (its 9th argument, `aot-compiler`, is private, which the validator skips outright — an argument that had never done anything); the "Typecheck all packages" step ran **11** of 44; and the coverage job uploaded a `language-server` flag `codecov.yml` never declared. `lint:domains` was already correct at 9/9. Deliberate omissions go in the script's per-list `INTENTIONAL_OMISSIONS` maps, with a reason; all three start empty.
+
+**Adding a package to the typecheck list needs it to typecheck on a clean checkout**, not just in your tree. `packages/behaviors` was the trap: its `src/generated/` is gitignored, so `tsc` there fails on a fresh clone — it needs a `pretypecheck` hook, the same way it already had `prebuild`/`pretest`. This is the same "working tree ≠ clean checkout" class that cost #862/#863 two CI round-trips.
+
 > **Neither hook fires for direct `npx vitest` / `npx tsx` invocations.** That's
 > how the qu "unreproducible baseline" incident happened (roadmap §7g): a sweep
 > executed a stale `dist/` and scored code that differed from the checkout. The

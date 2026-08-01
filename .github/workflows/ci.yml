@@ -594,9 +594,24 @@ jobs:
           # (fixed in the 2026-07-20 pre-release audit). pipefail makes the
           # pipeline carry the validator's exit; the if-guard keeps the
           # summary parsing below reachable on failure.
+          #
+          # This list is GUARDED by scripts/check-ci-job-lists.cjs: every
+          # published package that declares an entry point and is built by the
+          # `build` job must appear. It used to name eight effective packages
+          # of the thirty that qualify, so twenty-two published packages could
+          # ship a dangling "exports" path with nothing to catch it — and a
+          # ninth argument, `aot-compiler`, was PRIVATE, which the validator
+          # skips outright, so it had always been a no-op.
           set -o pipefail
           status=0
-          if ! node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log; then
+          if ! node scripts/validate-exports.mjs \
+            behaviors compilation-service components core \
+            domain-bdd domain-behaviorspec domain-config domain-flow domain-jsx \
+            domain-learn domain-llm domain-sql domain-todo domain-voice \
+            framework htmx-adapter hyperscript-adapter i18n intent intent-element \
+            language-server mcp-server patterns-reference planner reactivity \
+            realtime semantic server-bridge speech vite-plugin \
+            --strict 2>&1 | tee /tmp/export-validation.log; then
             status=1
           fi
 
@@ -672,6 +687,15 @@ jobs:
       - name: Verify CI unit-test package list
         run: node scripts/check-ci-test-list.cjs
 
+      # Cheap guard: the same question asked of the FOUR remaining hand-written
+      # package enumerations — export-validation's arguments, the typecheck
+      # lines below, the nightly coverage job (cross-checked against
+      # codecov.yml's flags), and the root `lint:domains` loop. #862 guarded
+      # the unit-test lists and named these four as the follow-up; when it was
+      # written all four had drifted except lint:domains.
+      - name: Verify CI job package lists
+        run: node scripts/check-ci-job-lists.cjs
+
       # Cheap guard: zero-dep node script that fails if package versions have
       # drifted apart (the monorepo publishes uniformly).
       - name: Validate package versions
@@ -717,6 +741,18 @@ jobs:
       - name: Lint (oxlint)
         run: npm run lint
 
+      # "all packages" is now literally true. This step named eleven of the
+      # forty-four packages that declare a `typecheck` script, so a type error
+      # in any of the other thirty-three stayed green forever — including
+      # framework, semantic's own downstream domain packages, and every
+      # non-built package (testing-framework, the two vscode extensions).
+      # The list is GUARDED by scripts/check-ci-job-lists.cjs.
+      #
+      # Cost measured 2026-08-01 before expanding: all 44 take ~27s locally vs
+      # ~9s for the 11 — tsc is cheap on packages this size, and the gap was
+      # coverage nobody was paying for. The first eleven keep their original
+      # order (biggest first, so a break in core surfaces fastest); the rest
+      # are alphabetical.
       - name: Typecheck all packages
         run: |
           npm run typecheck --prefix packages/core
@@ -730,6 +766,39 @@ jobs:
           npm run typecheck --prefix packages/compilation-service
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
+          npm run typecheck --prefix packages/behaviors
+          npm run typecheck --prefix packages/components
+          npm run typecheck --prefix packages/developer-tools
+          npm run typecheck --prefix packages/domain-bdd
+          npm run typecheck --prefix packages/domain-behaviorspec
+          npm run typecheck --prefix packages/domain-config
+          npm run typecheck --prefix packages/domain-flow
+          npm run typecheck --prefix packages/domain-jsx
+          npm run typecheck --prefix packages/domain-learn
+          npm run typecheck --prefix packages/domain-llm
+          npm run typecheck --prefix packages/domain-sql
+          npm run typecheck --prefix packages/domain-todo
+          npm run typecheck --prefix packages/domain-toolkit
+          npm run typecheck --prefix packages/domain-voice
+          npm run typecheck --prefix packages/framework
+          npm run typecheck --prefix packages/hyperscript-tools-i18n
+          npm run typecheck --prefix packages/intent
+          npm run typecheck --prefix packages/intent-element
+          npm run typecheck --prefix packages/intercept
+          npm run typecheck --prefix packages/language-server-hyperscript
+          npm run typecheck --prefix packages/mcp-multilingual-intent
+          npm run typecheck --prefix packages/multilingual-hyperscript
+          npm run typecheck --prefix packages/planner
+          npm run typecheck --prefix packages/playground
+          npm run typecheck --prefix packages/reactivity
+          npm run typecheck --prefix packages/realtime
+          npm run typecheck --prefix packages/server-bridge
+          npm run typecheck --prefix packages/smart-bundling
+          npm run typecheck --prefix packages/speech
+          npm run typecheck --prefix packages/testing-framework
+          npm run typecheck --prefix packages/types-browser
+          npm run typecheck --prefix packages/vscode-extension
+          npm run typecheck --prefix packages/vscode-extension-hyperscript
 
       # The main tsconfig includes only src/**, so packages/core/scripts/ was
       # typechecked by nothing — that is how the doc generators kept importing

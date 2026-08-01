@@ -26,3 +26,12 @@ fi
 if git diff --cached --name-only | grep -qE '^(\.github/workflows/ci\.yml|packages/core/scripts/build-browser-bundles\.mjs)$'; then
   node scripts/check-bundle-shards.cjs || exit 1
 fi
+
+# Verify the four remaining hand-written package enumerations still match the
+# workspace: export-validation's arguments, lint-typecheck's typecheck lines,
+# the nightly coverage job (vs codecov.yml's flags), and the root lint:domains
+# loop. Fires on the four files that can drift them — note the ROOT
+# package.json is in scope here, unlike the guards above.
+if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|package\.json|codecov\.yml|\.github/workflows/ci\.yml)$'; then
+  node scripts/check-ci-job-lists.cjs || exit 1
+fi

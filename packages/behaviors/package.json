@@ -106,6 +106,7 @@
     "prebuild": "npm run generate",
     "build": "tsup",
     "build:watch": "tsup --watch",
+    "pretypecheck": "npm run generate",
     "typecheck": "tsc --noEmit",
     "pretest": "npm run generate",
     "test": "vitest run",

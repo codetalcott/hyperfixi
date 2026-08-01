@@ -48,6 +48,8 @@
     "check:test-list:test": "node --test scripts/check-test-check-list.test.cjs",
     "check:ci-test-list": "node scripts/check-ci-test-list.cjs",
     "check:ci-test-list:test": "node --test scripts/check-ci-test-list.test.cjs",
+    "check:ci-job-lists": "node scripts/check-ci-job-lists.cjs",
+    "check:ci-job-lists:test": "node --test scripts/check-ci-job-lists.test.cjs",
     "compatibility:monitor": "node scripts/compatibility-monitor.js",
     "compatibility:improve": "node scripts/improvement-workflow.js",
     "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",
