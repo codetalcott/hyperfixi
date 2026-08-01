@@ -48,6 +48,13 @@ describe('deriveEnglishSyntax', () => {
       ['patient', ''],
       ['source', 'from'],
     ]);
+    expect(derived.take).toEqual([
+      ['patient', ''],
+      ['source', 'from'],
+      // `take .active from .tab for me` — both ends of the transfer are named.
+      // The recipient is en-marked only; 23 languages render it unmarked.
+      ['recipient', 'for'],
+    ]);
   });
 
   it('derives content commands correctly', () => {

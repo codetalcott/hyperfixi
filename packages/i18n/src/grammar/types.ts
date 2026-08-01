@@ -66,6 +66,10 @@ export type SemanticRole =
   | 'source' // Origin (from #input, from URL)
   | 'destination' // Target location (into #output, to .class)
   | 'goal' // Target value/state (to 'red', to 100)
+  | 'recipient' // Who receives what the action transfers (take .active from .tab for me).
+  //              Declared for parity with the semantic union; NO i18n profile marks it yet
+  //              — en still maps `for` to duration lexically and suppresses the marker for
+  //              pronoun values (see insertMarkers below).
   | 'event' // Trigger (click, input, keydown)
   | 'condition' // Boolean expression (if x > 5)
   // Quantitative roles

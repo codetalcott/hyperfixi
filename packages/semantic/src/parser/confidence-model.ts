@@ -186,7 +186,8 @@ export class DefaultConfidenceModel implements ConfidenceModel {
     // .panel`, handing the same-priority `toggle-es-full` (0.82, destination
     // marker mismatch) the win and silently defaulting the destination to
     // `me` — the es/pl/vi aria regression the R1 role-set flip ratchet exists
-    // to catch.
+    // to catch. take's `recipient` (valueShape 'reference') rides the same
+    // lever for the same reason: its slot is marker-less in 23 languages.
     const schemaRoles = (commandSchemas as Record<string, CommandSchema | undefined>)[
       pattern.command
     ]?.roles;
