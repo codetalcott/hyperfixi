@@ -3011,7 +3011,65 @@ Still standing: `source` has **no** `default: me` and must not get one — bare
 `take .active` means "take from all current holders" (#859). Recipient is
 default-free for the mirror reason: the runtime supplies `me` itself.
 
-## `process` has no view-transition role — the tail is dropped (opened 2026-07-31)
+## ~~`process` has no view-transition role — the tail is dropped~~ — SHIPPED (2026-08-01)
+
+Both schemas took a shared `manner` role marked by the English phrase
+`using view` in all 24 languages (the `partials in` / `url` precedent), with the
+captured value being the trailing word `transition` itself. `swapSchema`'s
+descriptor and a new one on `processSchema` route it to
+`modifiers.viewTransition`, the key both `ProcessPartialsCommand.parseInput` and
+`SwapCommand.parseInput` read for PRESENCE. Measured with a whole-corpus probe
+(3960 stored rows, pre vs post): **zero diffs anywhere in the corpus**, exactly
+as predicted — no row exercises either command. The multilingual `--regression`
+gate is green with no baseline regeneration.
+
+**Three things the filing did not know, all of which the naive design got
+wrong:**
+
+1. **The role alone captures nothing.** The matcher has a trailing-slot verb
+   guard (added for `halt`'s optional patient, which swallowed the next
+   command's keyword) that skips a final optional slot whose token is a command
+   verb. The captured word here IS `transition`, a command verb — so the guard
+   silently skipped the slot and the tail stayed unconsumed. `valueShape` is now
+   carried onto the pattern token and the guard is exempted for the `'keyword'`
+   shape: the slot sits behind required `using view` literals, so the guard's
+   premise ("the verb starts the next command") is false there. That is the
+   third shape-anchor kind, after `'time'` (toggle duration) and `'reference'`
+   (take recipient), and it does double duty — confidence denominator AND
+   matcher reachability. Mutation-verified: deleting it drops
+   `process partials in it` from 1.0 to **0.5556** and reddens 29 rows.
+2. **`expectedTypes: ['literal']` captures in en and fr only.** `transition` is
+   a command KEYWORD in exactly the two languages whose verb it also is, and a
+   bare identifier in the other 22 — which types it `literal` vs `expression`.
+   The slot takes both. Safe because it is marker-guarded.
+3. **English swap patterns are hand-written and outrank the generated ones**
+   (110–140 vs 100), so all four in `patterns/languages/en/swap.ts` carry the
+   tail group explicitly. Only `en` has hand-crafted swap patterns; the other 23
+   get the group from the schema role.
+
+Round-trip coverage, MEASURED (`test/view-transition-manner.test.ts` pins each
+row): swap captures in **23 of 24** languages, process in **22 of 24**. The
+deferrals are pre-existing defects the tail merely rides on — `tl` loses swap's
+patient on the plain form too; `qu` cannot parse `process` at all, tail or no
+tail; `ms` mis-binds process's patient to a property-path on the tail form only.
+
+**Still open, deliberately** (both filed rather than folded in):
+
+- **`morph` has the identical tail and the identical gap.** `MorphCommand`
+  shares swap's arg scan and would work the same way, but `morphSchema` declares
+  no `manner` role, so seeding the modifier read there would be unreachable
+  code. Same fix, same size, one more schema.
+- **The corpus row + i18n rendering.** Adding
+  `swap #a with #b using view transition` to the corpus is one English line in
+  `patterns-reference/scripts/init-db.ts`, but `sync-translations.ts` runs the
+  i18n `GrammarTransformer` over it and the transformer has no handling for the
+  tail — `transition` is a translated dictionary keyword (es `transición`), so
+  all 23 stored surfaces would carry a mangled phrase. Making them faithful
+  means transformer work plus grammar tests, V2/V4, R4, and a mandatory baseline
+  regen — the same fan-out #864 measured and deferred for take's rendering half.
+  Until then the vitest rows above are the gate.
+
+### Original filing (2026-07-31)
 
 Found while fixing the core-side `process` mis-parse (PARSER_NEXT_STEPS.md §
 the process entry). `processSchema` is **patient-only** — it models

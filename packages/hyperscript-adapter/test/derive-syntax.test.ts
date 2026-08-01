@@ -66,6 +66,10 @@ describe('deriveEnglishSyntax', () => {
       ['method', ''],
       ['destination', 'of'],
       ['patient', 'with'],
+      // `swap #a with #b using view transition` — a flag, not a value: the
+      // marker is the two-word phrase and the captured word is `transition`
+      // itself. Same phrase on `process`; English in all 24 languages.
+      ['manner', 'using view'],
     ]);
   });
 
