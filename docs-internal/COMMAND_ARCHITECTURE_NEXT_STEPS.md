@@ -725,10 +725,50 @@ not the core abstractions.
   filing put it. **What the experiment DID find is bigger and is filed fresh
   below.**
 
-- **`CommandWithParseInput` describes no real command, and `register(impl: any)`
-  is what hides it.** (Opened 2026-08-01, out of the F-B1 measurement.) The
-  registry's own private map is `Map<string, CommandWithParseInput>`
-  (`command-adapter.ts:380`), and `COMMAND_FACTORIES` is
+- ~~**`CommandWithParseInput` describes no real command, and `register(impl: any)`
+  is what hides it.**~~ **FIXED 2026-08-01.** `register` takes
+  `CommandWithParseInput` and `COMMAND_FACTORIES` is
+  `Readonly<Record<string, () => CommandWithParseInput>>`, so the
+  manifest-driven registration path is checked end to end. Probed for vacuity
+  rather than assumed: drifting `execute`'s input parameter produces **64
+  compile errors** across the factory map, and 0 after restore.
+
+  **The owner decision the filing asked for was answered — and three of its four
+  measurements were wrong.** Each mattered:
+
+  1. **`validate` is the type guard**, confirmed: 17 implementations (not 59 —
+     most commands declare none), all `input is XInput`, plus **185 assertions
+     across 21 test files** already pinning the boolean. The interface says
+     `boolean` now; `CommandAdapterV2.validate()` LIFTS it into
+     `ValidationResult` at the boundary, which is where the struct was always
+     the right shape.
+  2. **`RuntimeCommand.validate` is NOT its twin — it is its opposite.**
+     `CommandAdapterV2 implements RuntimeCommand`, so that signature is the
+     ADAPTER's outward contract and correctly stays a `ValidationResult`; it is
+     what `validateCommand()` reports. The filing read the two identical
+     signatures as one drift; changing both would have deleted the wrap.
+  3. **The predicted "59 errors, all the same" never appeared.** After the
+     `validate` line was fixed the remaining 60 errors were an unrelated class:
+     `commandMeta<const T>` infers **readonly** tuples by design (the `const`
+     type parameter is what buys excess-property and enum checking), while
+     `CommandMetadata` declared mutable `string[]`. That, not `validate`, is why
+     `register` could only ever have been `any`. Also surfaced: `execute` was
+     declared `Promise<unknown>` though the adapter awaits it and `GetCommand` /
+     `RemoveCommand` are synchronous, with `get.test.ts` asserting the sync
+     return across eight rows — so the interface, not those commands, was the
+     thing mis-declared.
+
+  The `boolean | ValidationResult` prohibition below was respected: nothing was
+  widened, and no `category: 'server'` error appeared (those came from the
+  different shadow-`CommandMetadata` experiment, so F-B2 stayed pinned).
+  `validateCommand()` still has no production caller, but it is now covered by
+  four mutation-verified rows in `runtime.test.ts` — restoring the pass-through
+  reddens two of them.
+
+  Original filing follows.
+
+  The registry's own private map is `Map<string, CommandWithParseInput>`
+  (`command-adapter.ts:380`), and `COMMAND_FACTORIES` was
   `Readonly<Record<string, () => unknown>>` (`runtime.ts:137`) — so the
   manifest-driven registration of all 59 commands is unchecked end to end.
   Typing either one produces **59 errors, all the same**:

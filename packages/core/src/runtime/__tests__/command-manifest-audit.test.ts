@@ -218,7 +218,10 @@ describe('the registry', () => {
     expect(COMMANDS.has(name)).toBe(false);
 
     const registry = new Runtime().getRegistry();
-    registry.register({ name, metadata: { name, aliases: ['audit-synthetic-alias'] } });
+    // No `execute`: the row is about the `COMMANDS.add(name)` side effect, which
+    // fires before any execution could. `register` is typed since 2026-08-01, so
+    // the stub needs the cast.
+    registry.register({ name, metadata: { name, aliases: ['audit-synthetic-alias'] } } as never);
 
     expect(COMMANDS.has(name)).toBe(true);
     expect(COMMANDS.has('audit-synthetic-alias')).toBe(true);
