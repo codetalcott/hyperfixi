@@ -70,6 +70,9 @@ export type SemanticRole =
   //          Used by `set @attr to V on <scope>` where destination is the attribute
   //          and scope is the element set (`on .tab` / `on me`). See setSchema.
   | 'goal' // Target value/state (to 'red', to 100)
+  | 'recipient' // Who receives what the action transfers — `take .active from .tab for me`.
+  //              Distinct from destination: take's patient moves OFF the source and ONTO
+  //              the recipient, so both ends are named. See takeSchema.
   | 'event' // Trigger (click, input, keydown)
   | 'condition' // Boolean expression (if x > 5)
   // Quantitative roles

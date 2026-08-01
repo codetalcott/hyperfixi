@@ -788,6 +788,15 @@ const ROLE_CATALOG: Record<
     commands: ['remove', 'on', 'get', 'take', 'pick', 'repeat', 'for', 'measure', 'fetch'],
     explicitExample: '[fetch source:/api/data responseType:json]',
   },
+  recipient: {
+    name: 'recipient',
+    description: 'Who receives what the action transfers — the far end of a transfer.',
+    origin: 'Linguistic thematic role: the beneficiary/goal of a transfer.',
+    usage:
+      "The element a class moves ONTO in `take` (its patient moves OFF the source), so both ends are named. Marked with `for` in English; most languages render it as a bare trailing pronoun.",
+    commands: ['take'],
+    explicitExample: '[take patient:.active source:.tab-button recipient:me]',
+  },
   event: {
     name: 'event',
     description: 'The trigger event for an event handler.',
@@ -816,8 +825,8 @@ const ROLE_CATALOG: Record<
     name: 'duration',
     description: 'A time span for the action.',
     origin: 'Temporal adverbial role.',
-    usage: 'How long a transition takes.',
-    commands: ['transition'],
+    usage: 'How long a transition takes, or how long a toggled class stays on before reverting.',
+    commands: ['transition', 'toggle'],
     explicitExample: '[transition patient:opacity duration:500ms]',
   },
   goal: {

@@ -316,12 +316,15 @@ current holder when `from` is absent — then add to the recipient, default
 (bare `take .active` parsed as a near-no-op "take from me"). The non-class
 value-transfer forms keep hyperfixi's semantics. e2e both paths:
 `packages/core/src/commands/animation/__tests__/take-from-for.test.ts`.
+The semantic schema's `recipient` role SHIPPED 2026-07-31 (see
+MULTILINGUAL_NEXT_STEPS.md): the en reference for `take-class-from-siblings` no
+longer drops `for me`, and 14 of 24 languages capture it. `take` nonetheless
+STAYS on `skipSemanticParsing` — the semantic slot is reference-typed
+(`for me`), so upstream's element-EXPRESSION recipients still need the
+traditional parser.
 Still open, deliberately: upstream's `with <classRef>` / `giving <expr>`
-replacement forms (error rather than mis-parse), the `and put it on` tail
-(never parseable — pre-existing, programmatic-AST only), and the semantic
-schema's missing `recipient` role (queued in MULTILINGUAL_NEXT_STEPS.md — the
-en reference for `take-class-from-siblings` silently drops `for me`, the
-`unconsumed-input` warning at confidence 1.0 is the tell).
+replacement forms (error rather than mis-parse) and the `and put it on` tail
+(never parseable — pre-existing, programmatic-AST only).
 
 Two adjacent diagnostics found in the same sweep, both cosmetic and neither
 worth its own arc — fold them into whichever change touches this area:

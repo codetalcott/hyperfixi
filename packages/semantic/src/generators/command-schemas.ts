@@ -47,11 +47,17 @@ export interface RoleSpec {
   readonly markerOverride?: Record<string, string>;
   /**
    * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
-   * own (`'time'` = a unit-suffixed time literal — `2s`, `500ms`, `1.5s`), so
-   * the slot needs no marker to be safe. Enforced in the CONFIDENCE model
-   * (`scoreRoleCoverage`): a shape-anchored role counts toward a pattern's
-   * score only when captured, so an uncaptured optional slot carries no
-   * evidence against the pattern.
+   * own, so the slot needs no marker to be safe. Two kinds:
+   *
+   * - `'time'` — a unit-suffixed time literal (`2s`, `500ms`, `1.5s`).
+   * - `'reference'` — a CLOSED-CLASS context reference (`me`, `it`, `you` and
+   *   their per-language equivalents). Closed-class is the whole argument: the
+   *   tokenizer already classifies these as references, so a reference-typed
+   *   slot cannot swallow a selector or a literal.
+   *
+   * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
+   * role counts toward a pattern's score only when captured, so an uncaptured
+   * optional slot carries no evidence against the pattern.
    *
    * This is the lever that makes a MARKER-LESS optional slot safe. Without it,
    * toggle's trailing `[{duration}]` weighed into every toggle pattern's
@@ -69,7 +75,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time';
+  readonly valueShape?: 'time' | 'reference';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -421,7 +427,6 @@ export const toggleSchema: CommandSchema = {
   category: 'dom-class',
   primaryRole: 'patient',
   // `toggle .active on #btn for 2s` → args ['.active'], modifiers { on, for }.
-  // NOTE: `duration` is read here but not declared in `roles` below.
   ast: { args: ['patient'], modifiers: { on: 'destination', for: 'duration' } },
   roles: [
     {
@@ -1592,8 +1597,8 @@ export const takeSchema: CommandSchema = {
   description: 'Take content from a source element',
   category: 'dom-content',
   primaryRole: 'patient',
-  // `take .active from #parent` → args ['.active'], modifiers { from: '#parent' }.
-  ast: { args: ['patient'], modifiers: { from: 'source' } },
+  // `take .active from #parent for me` → args ['.active'], modifiers { from, for }.
+  ast: { args: ['patient'], modifiers: { from: 'source', for: 'recipient' } },
   roles: [
     {
       role: 'patient',
@@ -1616,6 +1621,38 @@ export const takeSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference'],
       svoPosition: 2,
       sovPosition: 1,
+    },
+    {
+      role: 'recipient',
+      description: 'The element the class moves ONTO (`take .active from .tab for me`)',
+      required: false,
+      // References only, deliberately. Upstream accepts an element expression,
+      // but the 23 non-en corpus surfaces carry the recipient as a BARE
+      // trailing pronoun (i18n renders `… von .tab-button ich`), so this slot
+      // is marker-less almost everywhere and a selector-typed slot would
+      // swallow the second selector of `take .active from .a .b`. English is
+      // unaffected: `take` is on the core parser's skipSemanticParsing list,
+      // so the traditional parser owns `for <anything>` there.
+      expectedTypes: ['reference'],
+      svoPosition: 3,
+      sovPosition: 3,
+      // NO default. The runtime already defaults the recipient to `me`
+      // (commands/animation/take.ts), and a schema default would emit an
+      // explicit `for me` modifier on every take — re-smuggling the exact
+      // "absent means absent" semantics #859 removed from `source`.
+      //
+      // Shape-anchored on `reference`: without it this optional slot weighs
+      // into every take pattern's denominator in `scoreRoleCoverage`, dropping
+      // plain `take .active from .tab-button` from 1.0 to ~0.69 — the toggle-es
+      // regression class the R1 role-set flip ratchet exists to catch.
+      valueShape: 'reference',
+      // en only. The other 23 languages render the recipient unmarked, so a
+      // marker there would never match their corpus rows; where the marker-less
+      // slot proves inert they stay uncaptured and the pattern lands in the
+      // baseline's `roleLossyPatterns` as named R1 burn-down tail. A language
+      // gets a real particle here ONLY if the empty slot perturbs its other
+      // parses (toggle's ja 間 / ko 동안 case).
+      markerOverride: { en: 'for' },
     },
   ],
 };

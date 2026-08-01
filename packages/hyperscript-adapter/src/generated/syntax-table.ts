@@ -65,7 +65,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   show: [['patient', ''], ['style', 'with']],
   socket: [],
   swap: [['method', ''], ['destination', 'of'], ['patient', 'with']],
-  take: [['patient', ''], ['source', 'from']],
+  take: [['patient', ''], ['source', 'from'], ['recipient', 'for']],
   tell: [['destination', '']],
   throw: [['patient', '']],
   toggle: [['patient', ''], ['destination', 'on'], ['duration', 'for']],

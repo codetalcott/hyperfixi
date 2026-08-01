@@ -2904,33 +2904,60 @@ The two headlines for this side:
   `for` was an unconsumed-tail artifact and the duration role removes it. The
   corpus row parses faithfully in all 24 and needs no allowlist entry.
 
-## `take` has no `recipient` role — the en reference drops `for me` (opened 2026-07-31)
+## ~~`take` has no `recipient` role — the en reference drops `for me`~~ — SHIPPED (2026-07-31), 10-language tail open
 
-Found while fixing the core-side `take` rejection (PARSER_NEXT_STEPS.md § the
-take table). `takeSchema` models `patient` + `source` only, so the semantic
-parser matches `take .active from .tab-button for me` at **confidence 1.0**
-while leaving `"for me"` unconsumed — the `unconsumed-input` warning
-diagnostic is the only tell. The corpus row `take-class-from-siblings` is
-EXACTLY this surface, which means:
+The en half is FIXED. `takeSchema` now declares a `recipient` role
+(`markerOverride: { en: 'for' }`, `expectedTypes: ['reference']`,
+`valueShape: 'reference'`) wired to `ast.modifiers.for`, which core's
+`TakeCommand.parseInput` has read since #859 — so no runtime change was
+needed. `take .active from .tab-button for me` now captures
+`recipient=me` at confidence 1.0 with **no `unconsumed-input` diagnostic**,
+and the en reference of `take-class-from-siblings` carries the role.
 
-- The **en reference parse itself drops the recipient**, so every language
-  matches the dropped reference and R0/R1/R3 all score a perfect 1.0 — the
-  documented en-reference blind spot, live on a real corpus row. No current
-  signal can see it (R3's firestorm inversion doesn't fire because the
-  recipient is `me`, not a language-invariant value).
-- Core-side this is now harmless in ENGLISH — `take` sits on
-  `skipSemanticParsing`, so the traditional parser handles the `for` tail —
-  but any consumer of the semantic parse alone (multilingual bundles, the
-  bridge, translate()) silently loses the recipient in all 24 languages.
+**The blind spot this closed**: the en reference parse itself dropped the
+recipient, so every language matched the dropped reference and R0/R1/R3 all
+scored a perfect 1.0. Nothing but the diagnostic could see it (R3's firestorm
+inversion does not fire — the recipient is `me`, not a language-invariant
+value). English execution was never affected; `take` remains on
+`skipSemanticParsing` because upstream also accepts element-EXPRESSION
+recipients, which the reference-typed semantic slot deliberately refuses.
 
-The work, when taken: a `recipient` role on `takeSchema` (upstream's `for`
-clause), per-language markers (the `for`-word history in the toggle-for brief
-above is directly relevant — `for` collides with the LOOP keyword in several
-languages; bn `জন্য` was measured particle-safe there), i18n transformer
-rendering, and a baseline regen. Until then the schema's `source` role also
-carries a warning: its `default: me` was REMOVED 2026-07-31 (bare
-`take .active` must mean "take from all current holders", not "take from me")
-— do not reinstate it when adding the recipient.
+**Two premises in the original filing were wrong, and measurement is why:**
+
+1. _"per-language markers"_ — not needed, and not possible from the stored
+   surfaces. All 23 non-en corpus rows render the recipient as a **bare
+   trailing pronoun** (`… von .tab-button ich`, `… から 私`, `… 从 .tab-button
+   我`) because i18n suppresses the marker for pronoun-valued `for` phrases
+   (`grammar/types.ts` `insertMarkers`). A marker would match nothing. Read the
+   STORED patterns.db rows, not `translate()` — the two renderers disagree, and
+   the retracted toggle-for marker table is the precedent.
+2. _"i18n transformer rendering"_ — deliberately NOT done. It would rewrite all
+   23 stored surfaces and fan out into grammar tests, V2/V4 vocab, R4 and every
+   other pronoun-carrying pattern. Deferred as per-language opt-in work.
+
+**Measured outcome** (whole-corpus probe, 3960 rows = every pattern × every
+language, pre vs post): **14 languages capture** the marker-less trailing
+pronoun — en ar de es fr he id ms pl pt sw th tl zh — and **10 do not**: bn hi
+it ja ko qu ru tr uk vi. **Zero diffs anywhere else in the corpus.** The 10 are
+"passive defer": the empty slot perturbs nothing, so no inert particle was
+needed (toggle's ja `間` / ko `동안` case did not recur). They are recorded in
+the baseline's `roleLossyPatterns` — the named R1 burn-down tail, each worth
+exactly 0.0013 of that language's avgRoleFidelity. Both the captured and
+deferred lists are pinned in `packages/semantic/test/take-recipient.test.ts`,
+so a language starting to capture is a visible test failure, not a silent
+drift: move it to CAPTURED and regenerate the baseline in the same change.
+
+`valueShape: 'reference'` is the second shape-anchor kind and it is
+load-bearing — **measured under mutation**: deleting it drops plain
+`take .active from .tab-button` from 1.0 to **0.6923**, below the 0.7
+adoption threshold, the same 1.0 → 0.69 number toggle's duration produced.
+(The first version of that test asserted through `parse(...).confidence`, which
+is `undefined`, and passed vacuously under the mutation — it now goes through
+`parseSemantic`.)
+
+Still standing: `source` has **no** `default: me` and must not get one — bare
+`take .active` means "take from all current holders" (#859). Recipient is
+default-free for the mirror reason: the runtime supplies `me` itself.
 
 ## `process` has no view-transition role — the tail is dropped (opened 2026-07-31)
 
