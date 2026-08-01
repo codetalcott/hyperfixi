@@ -3053,21 +3053,40 @@ deferrals are pre-existing defects the tail merely rides on — `tl` loses swap'
 patient on the plain form too; `qu` cannot parse `process` at all, tail or no
 tail; `ms` mis-binds process's patient to a property-path on the tail form only.
 
+Those round-trips use semantic's `render()`. The surfaces the multilingual gate
+actually scores come from the i18n `GrammarTransformer` and are a DIFFERENT
+shape (verb-MEDIAL event handlers no generated command pattern covers), so they
+are pinned separately — `the stored corpus surfaces` in the same file, all 24
+languages, added with the corpus row in #873.
+
 **Still open, deliberately** (both filed rather than folded in):
 
 - **`morph` has the identical tail and the identical gap.** `MorphCommand`
   shares swap's arg scan and would work the same way, but `morphSchema` declares
   no `manner` role, so seeding the modifier read there would be unreachable
   code. Same fix, same size, one more schema.
-- **The corpus row + i18n rendering.** Adding
-  `swap #a with #b using view transition` to the corpus is one English line in
-  `patterns-reference/scripts/init-db.ts`, but `sync-translations.ts` runs the
-  i18n `GrammarTransformer` over it and the transformer has no handling for the
-  tail — `transition` is a translated dictionary keyword (es `transición`), so
-  all 23 stored surfaces would carry a mangled phrase. Making them faithful
-  means transformer work plus grammar tests, V2/V4, R4, and a mandatory baseline
-  regen — the same fan-out #864 measured and deferred for take's rendering half.
-  Until then the vitest rows above are the gate.
+- ~~**The corpus row + i18n rendering.**~~ — **SHIPPED (2026-08-01, #873).** The
+  transformer masks the tail before any splitting/translation and re-appends it
+  verbatim at the clause end (`maskViewTransitionTails`, the `maskCaretScopes`
+  idiom); the corpus row `swap-view-transition` is live in all 24 languages.
+  **Two things this filing did not know**, both found by re-measuring it:
+  1. The tail is NOT self-contained. Rendering it correctly was necessary but
+     not sufficient: the SOV/VSO event-handler patterns are hand-built and had
+     no slot for it, so ar/bn/hi/ja/ko/qu/tl/tr matched `swap` at confidence 1.0
+     and reported `fused body walk left 3 token(s) unconsumed`. Fixed with
+     `appendOptionalViewTransition`, the `appendOptionalScope` twin.
+  2. `transition` types `literal` in en/fr and `expression` in the other 22 —
+     the #868 pick-unit-word class in mirror image, which would have put the new
+     row into 22 languages' `roleLossyPatterns`. The matcher now normalizes a
+     `valueShape: 'keyword'` capture to the en reference's shape.
+
+  A third defect surfaced on the way: an event-handler pattern's `command` is
+  the literal `'on'`, so `scoreRoleCoverage`'s shape-anchor exemption looked up
+  `commandSchemas['on']`, found nothing, and never applied there — the
+  toggle-es class, one pattern family over. It now reads the wrapped verb from
+  `extraction.action.value`. Whole-corpus probe (3960 rows pre, 3984 post):
+  diff is EXACTLY the 24 new rows, zero structural and zero confidence changes
+  elsewhere.
 
 ### Original filing (2026-07-31)
 

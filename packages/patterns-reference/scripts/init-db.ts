@@ -392,6 +392,14 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Swap two elements in the DOM',
     feature: 'dom-manipulation',
   },
+  {
+    id: 'swap-view-transition',
+    title: 'Swap Content With View Transition',
+    raw_code: 'on click swap #a with #b using view transition',
+    description:
+      'Swap two elements inside a document.startViewTransition() so the browser animates the change',
+    feature: 'dom-manipulation',
+  },
 
   // ==========================================================================
   // Visibility

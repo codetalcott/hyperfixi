@@ -16,7 +16,7 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
-import { appendOptionalScope } from './event-handlers-sov';
+import { appendOptionalScope, appendOptionalViewTransition } from './event-handlers-sov';
 import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
@@ -210,6 +210,18 @@ export function generateVSOVerbFirstEventHandlerPattern(
     }
   }
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [swapsOperands ? 'destination' : 'patient']: {
+      fromRole: swapsOperands ? 'destination' : 'patient',
+    },
+    ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...eventHandlerSourceExtraction(commandSchema),
+  };
+  // `using view transition` rides at the very end, after the with-marked operand.
+  appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso-verb-first`,
     language: profile.code,
@@ -219,15 +231,7 @@ export function generateVSOVerbFirstEventHandlerPattern(
       format: `${keyword.primary} {patient} ${destMarker?.primary || ''} {destination?} ${eventMarker.primary} {event}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      [swapsOperands ? 'destination' : 'patient']: {
-        fromRole: swapsOperands ? 'destination' : 'patient',
-      },
-      ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
-      ...eventHandlerSourceExtraction(commandSchema),
-    },
+    extraction,
   };
 }
 

@@ -92,8 +92,8 @@ After running `npm run populate`:
 
 | Table                | Rows  | Description                                    |
 | -------------------- | ----- | ---------------------------------------------- |
-| code_examples        | 164   | Patterns covering all hyperscript commands     |
-| pattern_translations | 3,936 | 164 patterns × 24 languages                    |
+| code_examples        | 166   | Patterns covering all hyperscript commands     |
+| pattern_translations | 3,984 | 166 patterns × 24 languages                    |
 | llm_examples         | ~600  | Few-shot examples with quality scores (varies) |
 
 ### Supported Languages (24)

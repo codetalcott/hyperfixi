@@ -2662,3 +2662,90 @@ describe('SOV if-blocks get a then-connective before a positional branch head (F
     expect(out).toContain('llulla "Invalid form" ta qillqakuy');
   });
 });
+
+// `swap #a with #b using view transition` — the tail the transformer had never
+// seen. `using` is in no dictionary and no role table, so it swept into whatever
+// role phrase was open; `transition` IS a translated command keyword in every
+// dictionary AND is in ENGLISH_COMMANDS, so splitOnCommandBoundaries cut the
+// clause there and the rejoin planted a phantom translated `transition` COMMAND
+// after the target's then-connective (`intercambiar #a con #b using view
+// entonces transición`). The phrase has no native form in any of the 24
+// languages — semantic matches the literal English `using view` marker
+// everywhere (USING_VIEW_MARKER_ALL_LANGS) — so it is masked before any
+// splitting/translation and re-appended verbatim at the clause tail, which is
+// where every word order's patterns admit it.
+describe('`using view transition` is a passthrough tail, not translated content', () => {
+  const SRC = 'on click swap #a with #b using view transition';
+
+  // One per word-order family: SVO Romance/Germanic/Slavic, V2, SOV
+  // particle/agglutinative, VSO, and the two object-marking SVO languages.
+  const TRANSLATED_TRANSITION: Array<[string, string]> = [
+    ['es', 'transición'],
+    ['fr', 'transition'], // fr's own verb form — the passthrough must not re-emit it as a command
+    ['de', 'übergang'],
+    ['ja', '遷移'],
+    ['ko', '전환'],
+    ['tr', 'geçiş'],
+    ['qu', 'pasay'],
+    ['bn', 'সংক্রমণ'],
+    ['hi', 'संक्रमण'],
+    ['ar', 'انتقال'],
+    ['zh', '过渡'],
+    ['he', 'מעבר'],
+    ['ru', 'анимировать'],
+    ['th', 'เปลี่ยนผ่าน'],
+    ['vi', 'chuyển tiếp'],
+    ['tl', 'transisyon'],
+  ];
+
+  for (const [lang, translated] of TRANSLATED_TRANSITION) {
+    it(`[${lang}] emits the English tail verbatim at the clause end`, () => {
+      const out = new GrammarTransformer('en', lang).transform(SRC);
+      expect(out).toMatch(/using view transition$/);
+      // No phantom then-connective, and no translated `transition` command.
+      if (translated !== 'transition') {
+        expect(out).not.toContain(translated);
+      }
+    });
+  }
+
+  it('the tail does not displace the clause it modifies (both operands survive)', () => {
+    for (const lang of ['es', 'ja', 'ar', 'tr', 'zh', 'qu']) {
+      const out = new GrammarTransformer('en', lang).transform(SRC);
+      expect(out, lang).toContain('#a');
+      expect(out, lang).toContain('#b');
+    }
+  });
+
+  it('`transition` as a real command keyword still translates (both-ways negative)', () => {
+    // The mask must be anchored on the literal `using view` phrase, not on the
+    // word `transition` — the standalone transition command has to keep its
+    // dictionary form or every animate row would render English.
+    const es = new GrammarTransformer('en', 'es').transform(
+      'on click transition opacity to 0 over 300ms'
+    );
+    expect(es).toContain('transición');
+    const ja = new GrammarTransformer('en', 'ja').transform(
+      'on click transition opacity to 0 over 300ms'
+    );
+    expect(ja).toContain('遷移');
+  });
+
+  it('a `then`-chained clause after the tail still splits (the tail never swallows a boundary)', () => {
+    const out = new GrammarTransformer('en', 'es').transform(
+      'on click swap #a with #b using view transition then log "done"'
+    );
+    expect(out).toContain('using view transition');
+    expect(out).toContain('entonces');
+    expect(out).toContain('"done"');
+  });
+
+  it('`process partials in it using view transition` keeps its tail too', () => {
+    for (const lang of ['es', 'ja', 'tr']) {
+      const out = new GrammarTransformer('en', lang).transform(
+        'process partials in it using view transition'
+      );
+      expect(out, lang).toMatch(/using view transition$/);
+    }
+  });
+});

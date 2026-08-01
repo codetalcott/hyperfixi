@@ -5,7 +5,7 @@
       "hyperscript": "upstream _hyperscript parse with zero recovered errors (extensions loaded: socket, worker, eventsource); parse-level only",
       "html": "HTML-markup patterns: each _= / script-tag snippet verified individually; hx-live/sse-*/ws-* attributes are hyperfixi-only and block the upstream claim"
     },
-    "lokascriptVersion": "2.9.1",
+    "lokascriptVersion": "2.9.4",
     "hyperscriptVersion": "0.9.93"
   },
   "engines": {
@@ -146,6 +146,7 @@
     "sse-multi-event": "lokascript",
     "stagger-animation": "lokascript",
     "swap-content": "both",
+    "swap-view-transition": "lokascript",
     "tabs-aria": "lokascript",
     "tabs-basic": "both",
     "tabs-content": "both",
@@ -157,6 +158,7 @@
     "toggle-aria-expanded": "both",
     "toggle-class-basic": "both",
     "toggle-class-on-other": "both",
+    "toggle-class-temporary": "both",
     "toggle-visibility": "both",
     "transition-color": "both",
     "transition-opacity": "both",
@@ -747,6 +749,11 @@
       "lokascript": true,
       "hyperscript": true
     },
+    "swap-view-transition": {
+      "lokascript": true,
+      "hyperscript": false,
+      "hyperscriptError": "Unexpected Token : using"
+    },
     "tabs-aria": {
       "lokascript": true,
       "hyperscript": false,
@@ -790,6 +797,10 @@
       "hyperscript": true
     },
     "toggle-class-on-other": {
+      "lokascript": true,
+      "hyperscript": true
+    },
+    "toggle-class-temporary": {
       "lokascript": true,
       "hyperscript": true
     },
