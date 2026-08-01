@@ -42,7 +42,41 @@
  * corpus rows (the i18n-renders-semantic-patterns-coevolve lesson).
  */
 
-import type { LanguagePattern, PatternToken } from '../types';
+import {
+  createLiteral,
+  type LanguagePattern,
+  type PatternToken,
+  type SemanticValue,
+} from '../types';
+
+/**
+ * The unit words `pick (item|character)s <range> of <root>` selects BY. Mirrors
+ * the range variants the en pattern and the pick AST mapper recognize.
+ */
+const PICK_UNIT_WORDS = new Set(['character', 'characters', 'item', 'items']);
+
+/**
+ * Re-type a captured unit word to the shape the EN reference produces.
+ *
+ * En deliberately keeps `characters` off its keyword list (see
+ * patterns/languages/en/pick.ts) so it rides the identifier path and lands on
+ * `method` as an EXPRESSION. All 22 foreign tokenizers register it as a
+ * keyword, so `tokenToSemanticValue` builds a LITERAL instead. Nothing about
+ * the parse differs but that type — and role fidelity is compared by
+ * `action.role:valueType`, so the divergence read as a dropped role in all 23
+ * non-en languages (`missing pick.method:expression / captured instead:
+ * pick.method:literal`), the entire remaining pick-text-range R1 miss.
+ *
+ * Conditional on purpose. `first`/`last`/`random` ride this same slot and are
+ * keywords in EN too, so re-typing them would manufacture the inverse
+ * divergence. A numeric raw (a degenerate non-corpus match) is rebuilt numeric
+ * because `applyExtractionRules` hands the transform a String.
+ */
+const retypePickUnitWord = (raw: string): SemanticValue => {
+  if (PICK_UNIT_WORDS.has(raw)) return { type: 'expression', raw };
+  const n = Number(raw);
+  return createLiteral(raw !== '' && !Number.isNaN(n) ? n : raw);
+};
 
 /** Per-language surface knobs for the verb-initial pick variant pattern. */
 interface PickVariantSpec {
@@ -101,7 +135,7 @@ function makePickVariantPattern(language: string, spec: PickVariantSpec): Langua
       tokens,
     },
     extraction: {
-      method: { position: 1 },
+      method: { position: 1, transform: retypePickUnitWord },
       patient: { position: 2 },
       source: {
         marker: spec.srcMarker,
@@ -175,7 +209,7 @@ function makePickVerbFinalPattern(language: string, spec: PickVerbFinalSpec): La
     },
     extraction: {
       source: { position: 0 },
-      method: { position: 2 },
+      method: { position: 2, transform: retypePickUnitWord },
       patient: { position: 3 },
     },
   };
