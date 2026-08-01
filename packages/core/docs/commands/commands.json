@@ -67,9 +67,6 @@
   ],
   "commands": {
     "add": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Add CSS classes, attributes, or styles to elements",
       "syntax": ["add <classes|@attr|{styles}> [to <target>]"],
       "examples": [
@@ -83,9 +80,6 @@
       "compatibility": "standard"
     },
     "append": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Add content to the end of a string, array, Set, or HTML element",
       "syntax": ["append <content>", "append <content> to <target>"],
       "examples": [
@@ -100,9 +94,6 @@
       "compatibility": "standard"
     },
     "async": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Execute commands asynchronously without blocking",
       "syntax": ["async <command> [<command> ...]"],
       "examples": [
@@ -115,9 +106,6 @@
       "compatibility": "lokascript-extension"
     },
     "beep": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Debug output for expressions with type information",
       "syntax": ["beep!", "beep! <expression>", "beep! <expression>, <expression>, ..."],
       "examples": ["beep!", "beep! myValue", "beep! me.id, me.className"],
@@ -126,9 +114,6 @@
       "compatibility": "lokascript-extension"
     },
     "blur": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Remove focus from an element (calls HTMLElement.blur())",
       "syntax": ["blur", "blur <target>", "blur on <target>"],
       "examples": ["blur", "blur #search", "blur on <input/>"],
@@ -137,9 +122,6 @@
       "compatibility": "standard"
     },
     "break": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Exit from the current loop (repeat, for, while, until)",
       "syntax": ["break"],
       "examples": [
@@ -152,9 +134,6 @@
       "compatibility": "standard"
     },
     "breakpoint": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Drop into the debugger (emits a debugger; statement)",
       "syntax": ["breakpoint"],
       "examples": ["breakpoint", "on click breakpoint"],
@@ -163,9 +142,6 @@
       "compatibility": "standard"
     },
     "call": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Evaluate an expression and store the result in the it variable",
       "syntax": ["call <expression>"],
       "examples": ["call myFunction()", "call fetch(\"/api/data\")", "call element.focus()"],
@@ -174,9 +150,6 @@
       "compatibility": "standard"
     },
     "clear": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Reset a variable to null or clear the value of a form field (<input>, <textarea>, <select>)",
       "syntax": ["clear <var>", "clear :var", "clear <target>"],
       "examples": ["clear :count", "clear myVar", "clear #search", "clear <textarea/>"],
@@ -185,9 +158,6 @@
       "compatibility": "standard"
     },
     "close": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Close a dialog, details element, or popover",
       "syntax": ["close", "close <target>"],
       "examples": ["close", "close #myDialog", "close #details", "close #popup"],
@@ -196,9 +166,6 @@
       "compatibility": "standard"
     },
     "continue": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Skip to the next iteration of the current loop",
       "syntax": ["continue"],
       "examples": [
@@ -211,9 +178,6 @@
       "compatibility": "standard"
     },
     "copy": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Copy text or element content to the clipboard",
       "syntax": ["copy <source>", "copy <source> to clipboard"],
       "examples": ["copy \"Hello World\"", "copy #code-snippet", "copy my textContent"],
@@ -222,9 +186,6 @@
       "compatibility": "lokascript-extension"
     },
     "decrement": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Modify a variable or property by a specified amount (default: 1)",
       "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
       "examples": [
@@ -239,9 +200,6 @@
       "compatibility": "standard"
     },
     "default": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Set a value only if it doesn't already exist",
       "syntax": ["default <expression> to <expression>"],
       "examples": [
@@ -254,9 +212,6 @@
       "compatibility": "standard"
     },
     "empty": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Remove all children from an element (sets innerHTML to empty)",
       "syntax": ["empty", "empty <target>", "empty the <target>"],
       "examples": ["empty me", "empty #list", "empty .results"],
@@ -265,9 +220,6 @@
       "compatibility": "standard"
     },
     "exit": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Immediately terminate execution of the current event handler or behavior",
       "syntax": ["exit"],
       "examples": ["exit", "if no draggedItem exit", "on click if disabled exit"],
@@ -276,9 +228,6 @@
       "compatibility": "standard"
     },
     "fetch": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Make HTTP requests with lifecycle event support",
       "syntax": ["fetch <url>", "fetch <url> as <type>", "fetch <url> with <options>"],
       "examples": [
@@ -291,9 +240,6 @@
       "compatibility": "standard"
     },
     "focus": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Focus an element (calls HTMLElement.focus())",
       "syntax": ["focus", "focus <target>", "focus on <target>"],
       "examples": ["focus", "focus #search", "focus on <input/>"],
@@ -302,9 +248,6 @@
       "compatibility": "standard"
     },
     "get": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Evaluate an expression and store the result in it",
       "syntax": ["get <expression>"],
       "examples": ["get #my-dialog", "get <button/>", "get me.parentElement"],
@@ -313,9 +256,6 @@
       "compatibility": "standard"
     },
     "go": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Navigation functionality including URL navigation, element scrolling, and browser history",
       "syntax": ["go back", "go to url <url> [in new window]", "go to [position] [of] <element>"],
       "examples": ["go back", "go to url \"https://example.com\"", "go to top of #header"],
@@ -324,9 +264,6 @@
       "compatibility": "standard"
     },
     "halt": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Stop command execution or prevent event defaults",
       "syntax": ["halt", "halt the event"],
       "examples": [
@@ -340,9 +277,6 @@
       "compatibility": "standard"
     },
     "hide": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Hide elements by setting display to none",
       "syntax": ["hide [<target>]"],
       "examples": ["hide me", "hide #modal", "hide .warnings", "hide <button/>"],
@@ -351,9 +285,6 @@
       "compatibility": "standard"
     },
     "if": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Conditional execution based on boolean expressions",
       "syntax": [
         "if <condition> then <commands>",
@@ -371,9 +302,6 @@
       "compatibility": "standard"
     },
     "increment": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Modify a variable or property by a specified amount (default: 1)",
       "syntax": ["increment <target> [by <number>]", "decrement <target> [by <number>]"],
       "examples": [
@@ -388,9 +316,6 @@
       "compatibility": "standard"
     },
     "install": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Install a behavior on an element with optional parameters",
       "syntax": [
         "install <BehaviorName>",
@@ -410,9 +335,6 @@
       "sideEffects": ["behavior-installation", "element-modification"]
     },
     "js": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Execute inline JavaScript code with access to hyperscript context",
       "syntax": ["js <code> end", "js(param1, param2) <code> end"],
       "examples": [
@@ -425,9 +347,6 @@
       "compatibility": "standard"
     },
     "log": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Log values to the console",
       "syntax": ["log [<values...>]"],
       "examples": ["log \"Hello World\"", "log me.value", "log x y z", "log \"Result:\" result"],
@@ -436,9 +355,6 @@
       "compatibility": "standard"
     },
     "make": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Create DOM elements or class instances",
       "syntax": [
         "make a <tag#id.class1.class2/>",
@@ -453,9 +369,6 @@
       "compatibility": "standard"
     },
     "measure": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Measure DOM element dimensions, positions, and properties",
       "syntax": ["measure", "measure <property>", "measure <target> <property>"],
       "examples": [
@@ -469,9 +382,6 @@
       "compatibility": "standard"
     },
     "morph": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Morph content into target elements (intelligent diffing, preserves state)",
       "syntax": ["morph <target> with <content>", "morph over <target> with <content>"],
       "examples": ["morph #target with it", "morph over #modal with fetchedContent"],
@@ -480,9 +390,6 @@
       "compatibility": "standard"
     },
     "open": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Open a dialog, details element, or popover",
       "syntax": ["open [<target>]", "open <dialog> as modal", "open <dialog> as non-modal"],
       "examples": ["open", "open #myDialog", "open #details", "open #popup as non-modal"],
@@ -491,9 +398,6 @@
       "compatibility": "standard"
     },
     "pick": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Select from a collection (first/last/random/range/regex match)",
       "syntax": [
         "pick first <count> of <expr>",
@@ -518,9 +422,6 @@
       "compatibility": "standard"
     },
     "prepend": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Add content to the start of a string, array, Set, or HTML element",
       "syntax": ["prepend <content>", "prepend <content> to <target>"],
       "examples": [
@@ -534,9 +435,6 @@
       "compatibility": "lokascript-extension"
     },
     "process": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Process <hx-partial> elements for multi-target swaps",
       "syntax": [
         "process partials in <content>",
@@ -552,9 +450,6 @@
       "compatibility": "lokascript-extension"
     },
     "pseudo-command": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Treat a method on an object as a top-level command",
       "syntax": ["<method>(<args>) [(to|on|with|into|from|at)] <expression>"],
       "examples": [
@@ -568,9 +463,6 @@
       "sideEffects": ["method-execution"]
     },
     "push": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Modify browser history URL without page reload",
       "syntax": [
         "push url <url>",
@@ -590,9 +482,6 @@
       "compatibility": "lokascript-extension"
     },
     "put": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Insert content into elements or properties",
       "syntax": [
         "put <value> into <target>",
@@ -609,9 +498,6 @@
       "compatibility": "standard"
     },
     "remove": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Remove CSS classes, attributes, styles, or elements from the DOM",
       "syntax": ["remove <classes|@attr|*prop|element> [from <target>]"],
       "examples": [
@@ -626,9 +512,6 @@
       "compatibility": "standard"
     },
     "render": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Render templates with @if, @else, and @repeat directives",
       "syntax": [
         "render <template>",
@@ -646,9 +529,6 @@
       "sideEffects": ["dom-creation", "template-execution"]
     },
     "repeat": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops",
       "syntax": [
         "repeat for <var> in <collection> { <commands> }",
@@ -663,9 +543,6 @@
       "compatibility": "standard"
     },
     "replace": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Modify browser history URL without page reload",
       "syntax": [
         "push url <url>",
@@ -685,9 +562,6 @@
       "compatibility": "lokascript-extension"
     },
     "reset": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Reset a <form> element to its default values (HTMLFormElement.reset())",
       "syntax": ["reset", "reset <target>"],
       "examples": ["reset", "reset #myForm", "reset <form/>"],
@@ -696,9 +570,6 @@
       "compatibility": "standard"
     },
     "return": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Return a value from a command sequence or function, terminating execution",
       "syntax": ["return", "return <value>"],
       "examples": ["return", "return 42", "return user.name", "if found then return result"],
@@ -707,9 +578,6 @@
       "compatibility": "standard"
     },
     "scroll": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Scroll an element into view (upstream _hyperscript 0.9.90)",
       "syntax": ["scroll to <target>", "scroll to top of <target>", "scroll to <target> smoothly"],
       "examples": ["scroll to #top", "scroll to bottom of #chat", "scroll to me smoothly"],
@@ -718,9 +586,6 @@
       "compatibility": "standard"
     },
     "select": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Select the contents of a text field, or select the contents of a DOM element",
       "syntax": ["select", "select <target>"],
       "examples": ["select #search", "select <textarea/>", "select me"],
@@ -729,9 +594,6 @@
       "compatibility": "standard"
     },
     "send": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Dispatch events on elements",
       "syntax": [
         "trigger <event> on <target>",
@@ -751,9 +613,6 @@
       "compatibility": "standard"
     },
     "set": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Set values to variables, attributes, or properties",
       "syntax": ["set <target> to <value>"],
       "examples": [
@@ -766,9 +625,6 @@
       "compatibility": "standard"
     },
     "settle": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Wait for CSS transitions and animations to complete",
       "syntax": ["settle [<target>] [for <timeout>]"],
       "examples": ["settle", "settle #animated-element", "settle for 3000"],
@@ -777,9 +633,6 @@
       "compatibility": "standard"
     },
     "show": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Show elements by restoring display property",
       "syntax": ["show [<target>]"],
       "examples": ["show me", "show #modal", "show .hidden", "show <button/>"],
@@ -788,9 +641,6 @@
       "compatibility": "standard"
     },
     "start": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Wrap a block of commands in document.startViewTransition()",
       "syntax": ["start view transition [using <type>] <body> end"],
       "examples": [
@@ -802,9 +652,6 @@
       "compatibility": "standard"
     },
     "swap": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Swap content into target elements with intelligent morphing support",
       "syntax": [
         "swap <target> with <content>",
@@ -825,9 +672,6 @@
       "compatibility": "standard"
     },
     "take": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Move classes, attributes, and properties from one element to another",
       "syntax": [
         "take <class> [from <source>] [for <recipient>]",
@@ -844,9 +688,6 @@
       "compatibility": "standard"
     },
     "tell": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Execute commands in the context of target elements",
       "syntax": ["tell <target> <command> [<command> ...]"],
       "examples": [
@@ -859,9 +700,6 @@
       "compatibility": "standard"
     },
     "throw": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Throw an error with a specified message",
       "syntax": ["throw <message>"],
       "examples": ["throw \"Invalid input\"", "if not valid then throw \"Validation failed\""],
@@ -870,9 +708,6 @@
       "compatibility": "standard"
     },
     "toggle": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Toggle classes, attributes, or interactive elements",
       "syntax": [
         "toggle <class> [on <target>]",
@@ -891,9 +726,6 @@
       "compatibility": "standard"
     },
     "transition": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Animate CSS properties using CSS transitions",
       "syntax": ["transition [<target>] <property> to <value> [over <duration>] [with <timing>]"],
       "examples": [
@@ -908,9 +740,6 @@
       "compatibility": "standard"
     },
     "trigger": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Dispatch events on elements",
       "syntax": [
         "trigger <event> on <target>",
@@ -930,9 +759,6 @@
       "compatibility": "standard"
     },
     "unless": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Conditional execution based on boolean expressions",
       "syntax": [
         "if <condition> then <commands>",
@@ -950,9 +776,6 @@
       "compatibility": "standard"
     },
     "wait": {
-      "isBlocking": false,
-      "hasBody": false,
-      "version": "1.0.0",
       "description": "Wait for time delay, event, or race condition",
       "syntax": ["wait <time>", "wait for <event>", "wait for <event> or <condition>"],
       "examples": [
