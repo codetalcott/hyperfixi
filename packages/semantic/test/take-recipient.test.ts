@@ -174,45 +174,64 @@ describe('the reference anchor: what the slot refuses', () => {
  * Every one renders the recipient as a BARE trailing pronoun; only English
  * marks it (`for`).
  *
- * The split below is MEASURED, not chosen: a whole-corpus probe (3960 rows,
- * every pattern × every language, pre vs post) showed 14 languages capture the
- * pronoun into the marker-less slot and 10 leave it uncaptured, with zero
- * diffs anywhere else in the corpus. The 10 are the named R1 burn-down tail —
- * they appear in the baseline's `roleLossyPatterns` for this pattern. Moving a
- * language from DEFERRED to CAPTURED is the follow-up work; moving one the
- * other way is a regression.
+ * 23 of 24 capture, as of #874 (qu is the exception — see 3 below). The 10 that did not were the named R1 burn-down
+ * tail, and the standing filing prescribed the expensive fix — retag the
+ * pronoun-valued duration phrase as `recipient` in the i18n transformer, then
+ * author a per-language marker particle and a `canonicalOrder` slot in each
+ * profile. **None of that was needed.** The rendering was already correct in
+ * all 23 languages; triage found three unrelated parse-side causes:
+ *
+ * 1. **it/ru/uk/vi** — `patterns/get.ts` listed the language's TAKE verb among
+ *    `get`'s alternatives (it `prendere`, ru `взять`, uk `взяти`, vi `lấy`), so
+ *    the standalone re-parse the fused event-handler swap performs came back as
+ *    a `get`, and an action flip vetoes the swap. STANDALONE, those four
+ *    returned the wrong command outright — a strictly larger bug than the role.
+ * 2. **bn/hi/ja/ko/tr** — `generateSOVPatientFirstEventHandlerPattern` had no
+ *    trailing recipient slot (`appendOptionalRecipient` now adds it, the
+ *    `appendOptionalScope` shape).
+ * 3. **qu** — NOT fixed, and deliberately so. Its canonical order fronts the
+ *    source phrase (`.active ta .tab-button manta ñitiy pi hapiy noqa`), a
+ *    shape no pattern covers, so qu matches nothing and the verb-anchoring
+ *    fallback binds the pronoun to `destination`. A source-fronted pattern
+ *    variant DOES fix it (measured: qu take + `event-from-elsewhere` both go
+ *    role-faithful, two more rows gain confidence), but it then wins on qu's
+ *    compound rows, where the flattened body loses its `then` connectives and
+ *    `tabs-basic`/`tabs-content` stop reproducing the en DOM effect — an R2
+ *    failure at tolerance 0. The blocker underneath is a renderer defect that
+ *    predates this work: qu's `add .active to me` renders as `add .active` in
+ *    both states, so the emitted English is only unambiguous while a `then`
+ *    separates it from the preceding command. Fix the dropped destination
+ *    first; the pattern variant is a few lines after that.
+ *
+ * Moving a language out of CAPTURED is a regression.
  */
 const CAPTURED: Array<[string, string]> = [
   ['en', 'on click take .active from .tab-button for me'],
   ['ar', 'خذ .active من .tab-button عند نقر أنا'],
+  ['bn', '.active কে ক্লিক এ নিন .tab-button থেকে আমি'],
   ['de', 'bei klick nehmen .active von .tab-button ich'],
   ['es', 'en clic tomar .active de .tab-button yo'],
   ['fr', 'sur clic prendre .active de .tab-button moi'],
   ['he', 'ב לחיצה קח את .active מ .tab-button אני'],
-  ['id', 'pada klik ambil .active dari .tab-button saya'],
-  ['ms', 'apabila click ambil .active dari .tab-button saya'],
-  ['pl', 'gdy kliknięcie weź .active z .tab-button ja'],
-  ['pt', 'em clique pegar .active de .tab-button eu'],
-  ['sw', 'kwenye bonyeza chukua .active kutoka .tab-button mimi'],
-  ['th', 'เมื่อ คลิก รับ .active จาก .tab-button ฉัน'],
-  ['tl', 'kumuha .active mula_sa .tab-button kapag click ako'],
-  ['zh', '当 点击 时 拿取 把 .active 从 .tab-button 我'],
-];
-
-const DEFERRED: Array<[string, string]> = [
-  ['bn', '.active কে ক্লিক এ নিন .tab-button থেকে আমি'],
   ['hi', '.active को क्लिक पर लें .tab-button से मैं'],
+  ['id', 'pada klik ambil .active dari .tab-button saya'],
   ['it', 'su clic prendere .active da .tab-button io'],
   ['ja', '.active を クリック で 取る .tab-button から 私'],
   ['ko', '.active 를 클릭 할 때 가져오다 .tab-button 에서 나'],
-  ['qu', '.active ta .tab-button manta ñitiy pi hapiy noqa'],
+  ['ms', 'apabila click ambil .active dari .tab-button saya'],
+  ['pl', 'gdy kliknięcie weź .active z .tab-button ja'],
+  ['pt', 'em clique pegar .active de .tab-button eu'],
   ['ru', 'при клик взять .active из .tab-button я'],
+  ['sw', 'kwenye bonyeza chukua .active kutoka .tab-button mimi'],
+  ['th', 'เมื่อ คลิก รับ .active จาก .tab-button ฉัน'],
+  ['tl', 'kumuha .active mula_sa .tab-button kapag click ako'],
   ['tr', '.active i tıklama de tut .tab-button den ben'],
   ['uk', 'при клік взяти .active з .tab-button я'],
   ['vi', 'khi nhấp lấy .active từ .tab-button tôi'],
+  ['zh', '当 点击 时 拿取 把 .active 从 .tab-button 我'],
 ];
 
-describe('the corpus row, in the 14 languages that capture the recipient', () => {
+describe('the corpus row, in the 23 languages that capture the recipient', () => {
   it.each(CAPTURED)('%s binds recipient=me on a single take', (lang, source) => {
     const commands = walkCommands(parse(source, lang));
     expect(
@@ -226,20 +245,60 @@ describe('the corpus row, in the 14 languages that capture the recipient', () =>
   });
 });
 
-describe('the corpus row, in the 10 languages still deferred (R1 burn-down tail)', () => {
-  /**
-   * These pin the CURRENT measured state, not a desired one. Each still parses
-   * the take with both other roles intact — the slot's presence perturbs
-   * nothing (that is what "passive defer" means and why no per-language marker
-   * particle was added). A language starting to capture here is progress:
-   * move it up to CAPTURED and regenerate the baseline in the same change.
-   */
-  it.each(DEFERRED)('%s parses patient + source, recipient uncaptured', (lang, source) => {
+describe('the three causes behind the 10, pinned directly', () => {
+  it.each([
+    ['it', 'prendere .active da .tab-button io'],
+    ['ru', 'взять .active из .tab-button я'],
+    ['uk', 'взяти .active з .tab-button я'],
+    ['vi', 'lấy .active từ .tab-button tôi'],
+  ])('[%s] the STANDALONE take is a take, not a get', (lang, source) => {
+    // The cause behind these four, and strictly bigger than the missing role:
+    // `get`'s hand-written pattern listed take's verb as an alternative, so this
+    // surface came back as `get` at confidence 1.00 — which also vetoed the
+    // fused event-handler re-parse swap (same-action gated) and dropped the
+    // recipient in the corpus row above.
     const commands = walkCommands(parse(source, lang));
     expect(commands.map(c => c.action), `${lang}: "${source}"`).toEqual(['take']);
-    const node = commands[0] as unknown as CommandSemanticNode;
-    expect(roleValue(node, 'patient'), `${lang}: patient`).toBe('.active');
-    expect(roleValue(node, 'source'), `${lang}: source`).toBe('.tab-button');
-    expect(node.roles.has('recipient' as never), `${lang}: recipient`).toBe(false);
+  });
+
+  it.each([
+    ['it', 'ottenere #input.value'],
+    ['ru', 'получить #input.value'],
+    ['uk', 'отримати #input.value'],
+    ['vi', 'lấy giá trị #input.value'],
+    ['bn', '#input.value কে পান'],
+  ])('[%s] the real get verb still parses as a get (both-ways negative)', (lang, source) => {
+    // The alternatives were removed, not renamed: every language's own `get`
+    // surface — what the i18n transformer actually renders — must keep working.
+    expect(walkCommands(parse(source, lang)).map(c => c.action), `${lang}`).toEqual(['get']);
+  });
+
+  it('qu still binds the pronoun to destination — the one language not fixed', () => {
+    // Pinning the CURRENT measured state and its cause, not a desired one: qu
+    // matches no pattern for this surface (its canonical order fronts the source
+    // phrase), so verb-anchoring assigns the trailing pronoun. See the header
+    // for why the pattern variant that fixes it is blocked on a renderer defect.
+    const node = walkCommands(
+      parse('.active ta .tab-button manta ñitiy pi hapiy noqa', 'qu')
+    )[0] as unknown as CommandSemanticNode;
+    expect(roleValue(node, 'patient')).toBe('.active');
+    expect(roleValue(node, 'source')).toBe('.tab-button');
+    expect(node.roles.has('recipient' as never)).toBe(false);
+    expect(roleValue(node, 'destination')).toBe('me');
+  });
+
+  it('a failed optional group cannot corrupt an already-captured role', () => {
+    // Not a take defect — a matcher one, found while probing qu and live in 90
+    // shipped patterns: every `<cmd>-event-<lang>-sov` binds `destination` in
+    // BOTH a pre-verb and a post-verb optional group. The trailing group
+    // speculatively captures the next token into that role, fails on its marker,
+    // and the rollback restored the captured KEY set but not overwritten VALUES.
+    // Mutation-verified: without the value restore this returns
+    // `destination="ゴミ"` — the junk tail — with the real `#panel` discarded.
+    const node = walkCommands(
+      parse('クリック で #panel に .active を トグル ゴミ', 'ja')
+    ).find(c => c.action === 'toggle') as unknown as CommandSemanticNode;
+    expect(roleValue(node, 'destination')).toBe('#panel');
+    expect(roleValue(node, 'patient')).toBe('.active');
   });
 });

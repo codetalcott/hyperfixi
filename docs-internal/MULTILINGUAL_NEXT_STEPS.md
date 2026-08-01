@@ -39,10 +39,15 @@
 >
 > Both were sized by a **whole-corpus pre/post probe** (3960 stored patterns.db
 > rows, 24 languages × the full pattern set) and both diffed to exactly their
-> target rows and nothing else. **Seven languages are now at avgRoleFidelity
-> 1.0000 — ar, de, es, fr, pt, sw, tl.** What remains: the 10
-> `take.recipient` rows (#864's named i18n-rendering follow-up) and 14
-> scattered singletons — the "thin and flat" headroom by design.
+> target rows and nothing else.
+>
+> **#874 then closed 9 of the 10 `take.recipient` rows** — and needed no
+> rendering change at all, which is the third time this arc's filed prescription
+> was falsified by triage. R1 tail **24 → 15**; **fourteen languages are now at
+> avgRoleFidelity 1.0000** — ar, bn, de, es, fr, hi, it, ja, pt, ru, sw, tl, tr,
+> uk. What remains: qu's `take.recipient` (blocked on a renderer defect, named
+> in that section) and 14 scattered singletons — the "thin and flat" headroom by
+> design.
 
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
@@ -2956,7 +2961,7 @@ The two headlines for this side:
   `for` was an unconsumed-tail artifact and the duration role removes it. The
   corpus row parses faithfully in all 24 and needs no allowlist entry.
 
-## ~~`take` has no `recipient` role — the en reference drops `for me`~~ — SHIPPED (2026-07-31), 10-language tail open
+## ~~`take` has no `recipient` role — the en reference drops `for me`~~ — SHIPPED (2026-07-31); the 10-language tail CLOSED to 1 (2026-08-01, #874)
 
 The en half is FIXED. `takeSchema` now declares a `recipient` role
 (`markerOverride: { en: 'for' }`, `expectedTypes: ['reference']`,
@@ -2998,6 +3003,56 @@ exactly 0.0013 of that language's avgRoleFidelity. Both the captured and
 deferred lists are pinned in `packages/semantic/test/take-recipient.test.ts`,
 so a language starting to capture is a visible test failure, not a silent
 drift: move it to CAPTURED and regenerate the baseline in the same change.
+
+### The 10-language tail — CLOSED to 1 (2026-08-01, #874)
+
+**The prescription this filing left behind was wrong in the same way its own
+two premises were.** The standing plan was per-language opt-in i18n rendering:
+retag the pronoun-valued `duration` phrase as `recipient` in the transformer,
+then author a marker particle and a `canonicalOrder` slot per opted-in profile,
+invert the `grammar.test.ts` assertions, and rewrite `ROLE_CATALOG`'s usage
+string. **None of that was needed. Not one line of rendering changed.** The
+surfaces were already right; triage found three unrelated PARSE-side causes,
+and the 10 were never one failure mode:
+
+| languages         | cause                                                                                     | fix                                  |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------ |
+| it, ru, uk, vi    | `patterns/get.ts` listed the language's TAKE verb among `get`'s alternatives                | remove the alternatives              |
+| bn, hi, ja, ko, tr | `generateSOVPatientFirstEventHandlerPattern` had no trailing recipient slot                | `appendOptionalRecipient`            |
+| qu                | canonical order fronts the source phrase — no pattern has that shape                       | deferred, see below                  |
+
+The first is much bigger than the role it was found through: `prendere .active
+da .tab-button io` (it), `взять …` (ru), `взяти …` (uk), `lấy …` (vi) returned a
+**`get`** at confidence 1.00. The tokenizers keep the two verbs distinct and the
+i18n transformer renders them distinctly, so those alternatives could never
+match a real `get` — they only shadowed `take`. The recipient loss was the
+downstream symptom: the fused event-handler swap re-parses
+`[verb..clause boundary]` standalone and swaps the richer result in only when it
+is the SAME action, so an action flip vetoed the swap.
+
+**qu is deferred, with its blocker named.** A source-fronted pattern variant
+fixes it — measured: qu's take row AND `event-from-elsewhere` both go
+role-faithful, two more rows gain confidence. But it then wins on qu's compound
+rows, where the flattened body loses its `then` connectives and
+`tabs-basic`/`tabs-content` stop reproducing the en DOM effect (**R2, tolerance
+0**). The blocker underneath predates this work: qu's `add .active to me`
+renders as `add .active` in both states — the destination is captured and then
+dropped by the renderer — so the emitted English is only unambiguous while a
+`then` separates it from the preceding command. **Fix the dropped destination
+first**; the pattern variant is a few lines after that.
+
+**A matcher defect found on the way, live in 90 shipped patterns.** Every
+`<cmd>-event-<lang>-sov` binds `destination` in BOTH a pre-verb and a post-verb
+optional group. `matchGroupToken`'s rollback restored the captured KEY set but
+not overwritten VALUES, so a trailing group that speculatively captured a token
+into an already-filled role and then failed its marker left the corruption
+behind: ja `クリック で #panel に .active を トグル ゴミ` returned
+`destination="ゴミ"` with the real `#panel` discarded. Fixed and pinned.
+
+Whole-corpus probe (3984 rows, pre vs post): **exactly the 9 take rows**, zero
+structural and zero confidence diffs elsewhere. Baseline: those 9 languages drop
+`take-class-from-siblings` from `roleLossyPatterns` and **seven reach
+avgRoleFidelity 1.0000** (bn, hi, it, ja, ru, tr, uk). R1 tail **24 → 15 rows**.
 
 `valueShape: 'reference'` is the second shape-anchor kind and it is
 load-bearing — **measured under mutation**: deleting it drops plain
