@@ -4056,15 +4056,17 @@ landing + reviewer CTA, `/community/vocabulary/{lang}/` browser generated from
 auth, no runtime writes, no server routes.
 
 **Reviewer incentives are UNSTATED on both public surfaces, deliberately (2026-08-01).**
-The proposal's §2 lists "credit, honorarium, free lokascript-learn classroom seats for
-educators" as already-defined and binding, citing
-`~/projects/ideas/lokascript-business-plan-2026-07.md` — **that file is not on disk**, so
-the honorarium and the seats are commitments no surviving document supports. Both were
-drafted onto the landing page and the application form and then removed before merge; the
-pages now promise only credit by name and final say on naturalness, and invite applicants
-to name what they would want. Do not re-add either from the proposal's wording alone —
-it is a citation to a missing source, not a decision record. Restore them if and only if
-the owner confirms.
+The proposal's §2 lists three as already-defined and binding — credit, an honorarium, and
+free seats in a sibling teaching product — citing
+`~/projects/ideas/lokascript-business-plan-2026-07.md`. **That file is not on disk**, so
+the latter two are commitments of money and product that no surviving document supports.
+Both were drafted onto the landing page and the application form and then removed before
+merge, on two separate grounds: the citation is missing, and the owner considers the
+teaching product not ready to be named publicly (2026-08-01). The pages now promise only
+credit by name and final say on naturalness, and invite applicants to name what they would
+want instead. Do not re-add either from the proposal's wording alone — it is a citation to
+a missing source, not a decision record. Restore only on the owner's word, and treat the
+teaching product as unannounced until they say otherwise.
 
 Still deferred, designs in the proposal and unchanged by this decision: hash-pinned
 "verified by native speakers" badges, the `verifications.json` / `vocab-verifications.json`
