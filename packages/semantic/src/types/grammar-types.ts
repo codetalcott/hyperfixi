@@ -82,8 +82,9 @@ export type SemanticRole =
   | 'responseType' // Response format (as json, as text, as html)
   | 'method' // HTTP method/technique (via POST, using GET)
   | 'style' // Visual/behavioral manner (with fade, smoothly)
-  | 'manner' // Reserved — not currently used in command schemas.
-  //            Swap uses 'method'; put handles position via destination markers.
+  | 'manner' // The `using view transition` tail on swap and process.
+  //            Swap uses 'method' for its strategy (innerHTML, delete, …); put
+  //            handles insertion position via destination markers.
   // Control flow roles
   | 'loopType' // Loop variant: forever, times, for, while, until, until-event
   // Structural roles (for parser control)

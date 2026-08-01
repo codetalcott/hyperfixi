@@ -752,6 +752,10 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
     role: roleSpec.role,
     optional: !roleSpec.required,
     expectedTypes: roleSpec.expectedTypes,
+    // The matcher reads this too — a `'keyword'`-shaped slot holds a fixed
+    // keyword phrase (`using view transition`) and must not be skipped by the
+    // trailing-slot verb guard.
+    ...(roleSpec.valueShape !== undefined ? { valueShape: roleSpec.valueShape } : {}),
   };
 
   // Required literal immediately before the role VALUE (rolePrefixLiteralVariants

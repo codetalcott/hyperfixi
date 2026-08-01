@@ -196,7 +196,14 @@ export class SwapCommand implements DecoratedCommand {
       }
     }
 
-    let useViewTransition = false;
+    // The semantic path binds the tail to swapSchema's `manner` role and emits
+    // it as `modifiers.viewTransition` — presence is the whole request (the
+    // role's captured value is just the literal word `transition`). The
+    // traditional parser leaves the three keywords in the arg list instead,
+    // which the scan below reads. MorphCommand has the same tail and the same
+    // arg scan, but morphSchema declares no `manner` role, so seeding it there
+    // too would be unreachable — filed in MULTILINGUAL_NEXT_STEPS.md.
+    let useViewTransition = raw.modifiers?.viewTransition !== undefined;
     if (usingIndex !== -1) {
       const afterUsing = argKeywords.slice(usingIndex + 1);
       if (afterUsing.includes('view') && afterUsing.includes('transition')) {

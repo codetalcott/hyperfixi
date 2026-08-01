@@ -77,10 +77,25 @@ const EXEMPTIONS: Record<string, { kind: ExemptionKind; reason: string }> = {
     reason: 'FetchCommand reads the request body from `body`; patient has no en marker',
   },
   // NOTE: `swap.on` and `swap.with` were the last two `drift` entries. The
-  // descriptor now emits NO modifiers at all — SwapCommand's contract is
-  // keyword-positional args and it never reads `raw.modifiers` — so both keys
-  // stopped existing and the orphan check below deleted them. The drift list is
-  // empty; see `descriptor-runtime-contract.test.ts` for what replaced them.
+  // descriptor then emitted NO modifiers at all — SwapCommand's contract is
+  // keyword-positional args — so both keys stopped existing and the orphan
+  // check below deleted them. The drift list is still empty; see
+  // `descriptor-runtime-contract.test.ts` for what replaced them. `manner` is
+  // the one modifier swap does emit, and it is a contract key, below.
+  'swap.viewTransition': {
+    kind: 'contract',
+    reason:
+      '`viewTransition` is the runtime contract key SwapCommand.parseInput tests for presence; ' +
+      "the role's en marker is the phrase `using view`, which is a grammar marker and not a " +
+      'modifier name — the captured value is the trailing word `transition` itself',
+  },
+  'process.viewTransition': {
+    kind: 'contract',
+    reason:
+      'Same contract key as swap: ProcessPartialsCommand.parseInput reads ' +
+      '`raw.modifiers?.viewTransition` for presence, while the manner role is marked by the ' +
+      'phrase `using view` — marker and modifier name cannot coincide here',
+  },
 };
 
 /** All roles of a first-present-of chain (a bare role is a one-role chain). */

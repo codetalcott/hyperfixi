@@ -616,11 +616,20 @@ export class PatternMatcher {
     // verb-anchoring fallback reclaims goal+duration; skipping instead lets the
     // sloppy pattern complete and strand the tail). Also away from
     // `event`/`action` roles, which carry their own bespoke guards above.
+    // EXCEPT when the slot is shape-anchored on `'keyword'`: its value IS a
+    // fixed keyword phrase sitting behind required marker literals that have
+    // already matched (`using view {manner}` — the word is `transition`, which
+    // is also a command). There the guard's premise is false: nothing can begin
+    // a new command in that position, because `using view` was consumed to get
+    // there. Without this exemption swap/process silently drop
+    // `using view transition` on the semantic path in all 24 languages, which
+    // is exactly the bug the manner role was added to fix.
     if (
       patternToken.optional &&
       nextPatternToken === undefined &&
       patternToken.role !== 'event' &&
       patternToken.role !== 'action' &&
+      patternToken.valueShape !== 'keyword' &&
       token.kind === 'keyword'
     ) {
       const verbNorm = (token.normalized ?? token.value).toLowerCase();

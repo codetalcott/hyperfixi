@@ -47,13 +47,18 @@ export interface RoleSpec {
   readonly markerOverride?: Record<string, string>;
   /**
    * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
-   * own, so the slot needs no marker to be safe. Two kinds:
+   * own, so the slot needs no marker to be safe. Three kinds:
    *
    * - `'time'` — a unit-suffixed time literal (`2s`, `500ms`, `1.5s`).
    * - `'reference'` — a CLOSED-CLASS context reference (`me`, `it`, `you` and
    *   their per-language equivalents). Closed-class is the whole argument: the
    *   tokenizer already classifies these as references, so a reference-typed
    *   slot cannot swallow a selector or a literal.
+   * - `'keyword'` — a FIXED keyword phrase behind a required multi-word marker
+   *   (`using view transition` on swap/process). The marker literals must all
+   *   match before the slot can capture anything, so the slot is guarded by
+   *   construction: nothing else in the grammar can land in it, and its absence
+   *   says only that the caller didn't ask for the flag.
    *
    * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
    * role counts toward a pattern's score only when captured, so an uncaptured
@@ -75,7 +80,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time' | 'reference';
+  readonly valueShape?: 'time' | 'reference' | 'keyword';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -2891,6 +2896,76 @@ export const measureSchema: CommandSchema = {
 // =============================================================================
 
 /**
+ * `using view` is the marker half of hyperscript's `using view transition`
+ * tail (swap/process). Like `partials in` and `url`, it is a
+ * hyperscript-specific phrase with no native translation, so all 24 languages
+ * use the English form. The multi-word marker is split into separate literal
+ * tokens by the pattern generator; the trailing `transition` is the role's
+ * captured value.
+ *
+ * (Defined here, above its first schema reference — `swapSchema` — to avoid TDZ.)
+ */
+const USING_VIEW_MARKER_ALL_LANGS: Record<string, string> = {
+  en: 'using view',
+  es: 'using view',
+  pt: 'using view',
+  fr: 'using view',
+  de: 'using view',
+  it: 'using view',
+  ja: 'using view',
+  ko: 'using view',
+  zh: 'using view',
+  ar: 'using view',
+  he: 'using view',
+  hi: 'using view',
+  bn: 'using view',
+  tr: 'using view',
+  ru: 'using view',
+  uk: 'using view',
+  pl: 'using view',
+  id: 'using view',
+  vi: 'using view',
+  th: 'using view',
+  ms: 'using view',
+  tl: 'using view',
+  sw: 'using view',
+  qu: 'using view',
+};
+
+/**
+ * The shared `manner` role behind `using view transition` (swap, process).
+ *
+ * The surface is a valueless FLAG in hyperfixi's tail form — the runtime tests
+ * only for presence (`raw.modifiers?.viewTransition !== undefined`), never the
+ * value. But a role with no value slot is not expressible: `buildRoleToken`
+ * always emits a value token after a marker. So the marker takes the first two
+ * words and the third, `transition`, is captured as the role's literal value.
+ *
+ * `valueShape: 'keyword'` is what makes the optional trailing slot free: without
+ * it an uncaptured slot weighs into `scoreRoleCoverage`'s denominator and drops
+ * plain `process partials in it` / `swap #a with #b` below the 0.7 adoption
+ * threshold — the toggle-es regression class (see {@link RoleSpec.valueShape}).
+ *
+ * NO default: the runtime treats presence as the request, so a default would
+ * turn every swap and every process into a view transition.
+ */
+const VIEW_TRANSITION_MANNER_ROLE: Omit<RoleSpec, 'svoPosition' | 'sovPosition'> = {
+  role: 'manner',
+  description: 'Run the swap inside a `document.startViewTransition()` (`using view transition`)',
+  required: false,
+  // Both types, because the SAME word tokenizes differently per language and
+  // the difference is an accident of vocabulary: `transition` is a command
+  // keyword in en/fr (it is also their verb) and a bare identifier everywhere
+  // else, which types it `literal` in the first group and `expression` in the
+  // second. Measured: with `['literal']` alone only en and fr captured the
+  // tail. Widening is safe precisely because the slot is marker-guarded —
+  // nothing reaches it until `using view` has matched.
+  expectedTypes: ['literal', 'expression'],
+  valueShape: 'keyword',
+  markerOverride: USING_VIEW_MARKER_ALL_LANGS,
+};
+
+/**
  * Swap command: swaps DOM content using various strategies.
  *
  * Patterns:
@@ -2918,7 +2993,11 @@ export const swapSchema: CommandSchema = {
   // work. Preserved verbatim by the Arc F migration (a faithful migration must
   // not change output) and pinned as two `drift` exemptions; this is the
   // behavior fix those entries were waiting for.
-  ast: { args: ['method', 'destination', 'patient'] },
+  //
+  // `manner` is the exception to "keyword-positional args": it rides as
+  // `modifiers.viewTransition`, which SwapCommand.parseInput reads for presence
+  // alongside its existing flat-args `using`/`view`/`transition` scan.
+  ast: { args: ['method', 'destination', 'patient'], modifiers: { viewTransition: 'manner' } },
   roles: [
     {
       role: 'method',
@@ -3008,6 +3087,11 @@ export const swapSchema: CommandSchema = {
         ar: 'بـ',
         tl: 'nang',
       },
+    },
+    {
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 4,
+      sovPosition: 4,
     },
   ],
 };
@@ -3328,6 +3412,7 @@ export const replaceSchema: CommandSchema = {
  *
  * Patterns:
  * - EN: process partials in it
+ * - EN: process partials in it using view transition
  *
  * Both `partials` and `in` are required marker keywords. The multi-word
  * marker is split into separate literal tokens by the pattern generator.
@@ -3337,6 +3422,13 @@ export const processSchema: CommandSchema = {
   description: 'Process hx-partial markup in HTML content',
   category: 'dom-content',
   primaryRole: 'patient',
+  // `process partials in it` → args ['it']; the optional tail rides as
+  // `modifiers.viewTransition`, which ProcessPartialsCommand.parseInput has
+  // read since #861 (`raw.modifiers?.viewTransition !== undefined`). Without a
+  // descriptor this schema fell through to `buildGenericCommand`, whose
+  // modifier list is fixed (destination/duration/method/style) and would have
+  // dropped a captured `manner` on the floor.
+  ast: { args: ['patient'], modifiers: { viewTransition: 'manner' } },
   roles: [
     {
       role: 'patient',
@@ -3346,6 +3438,11 @@ export const processSchema: CommandSchema = {
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: PARTIALS_IN_MARKER_ALL_LANGS,
+    },
+    {
+      ...VIEW_TRANSITION_MANNER_ROLE,
+      svoPosition: 2,
+      sovPosition: 2,
     },
   ],
 };

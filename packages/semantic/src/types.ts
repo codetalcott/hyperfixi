@@ -458,6 +458,15 @@ export interface RolePatternToken {
   readonly optional?: boolean;
   /** Expected value types (for validation) */
   readonly expectedTypes?: Array<ExpectedType>;
+  /**
+   * Mirrors the schema's `RoleSpec.valueShape` (see `generators/command-schemas.ts`):
+   * the slot's surface form is unambiguous on its own. Carried onto the pattern
+   * token because the MATCHER needs it too, not just the confidence model —
+   * `'keyword'` slots hold a fixed keyword phrase and are therefore exempt from
+   * the trailing-slot verb guard, which exists for marker-less slots that could
+   * swallow the next command's verb.
+   */
+  readonly valueShape?: 'time' | 'reference' | 'keyword';
 }
 
 export interface GroupPatternToken {

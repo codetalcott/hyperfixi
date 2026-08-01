@@ -295,9 +295,9 @@ export class ProcessPartialsCommand implements DecoratedCommand {
     }
 
     // `using view transition` arrives as three flat identifier args (the shape
-    // the parser emits and `SwapCommand` already reads). A semantic role for
-    // the tail does not exist yet — when one lands it will arrive as a
-    // modifier, so honour that shape too.
+    // the traditional parser emits and `SwapCommand` also reads), or as
+    // `modifiers.viewTransition` from the semantic path — processSchema's
+    // `manner` role binds the tail and its `ast` descriptor emits it there.
     let useViewTransition = raw.modifiers?.viewTransition !== undefined;
     const usingIndex = keywords.indexOf('using');
     if (usingIndex !== -1) {

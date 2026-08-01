@@ -86,11 +86,13 @@ describe('scroll — the destination must be an ARG, not a modifier', () => {
   });
 });
 
-describe('swap — the AST contract is keyword-positional args, never modifiers', () => {
+describe('swap — the AST contract is keyword-positional args, plus one flag modifier', () => {
   // packages/core/src/commands/dom/swap.ts parseInput takes `const args =
-  // raw.args` and reads NOTHING else — there is no `raw.modifiers` access in the
-  // function. It then scans the arg list for keyword tokens (`with`, `of`,
-  // `delete`, `using`, `into`, `over`) and, failing all of those, falls back to
+  // raw.args` and reads exactly ONE modifier — `viewTransition`, tested for
+  // PRESENCE, seeded from swapSchema's `manner` role (`using view transition`).
+  // Everything else is positional. It scans the arg list for keyword tokens
+  // (`with`, `of`, `delete`, `using`, `into`, `over`) and, failing all of those,
+  // falls back to
   //   targetNode  = args[args.length - 2]
   //   contentNode = args[args.length - 1]
   //   strategy    = STRATEGY_KEYWORDS[argKeywords[0]]  (when args[0] names one)
@@ -140,6 +142,18 @@ describe('swap — the AST contract is keyword-positional args, never modifiers'
     // so `swap #a with #b` reached the runtime as a single-arg node and
     // `swap delete #t` as a zero-arg one — both throw before doing any work.
     expect(astOf('swap delete #t').args.length).toBeGreaterThan(1);
+  });
+
+  it('emits `viewTransition` for the tail form, and leaves args untouched', () => {
+    // The one modifier the contract does carry. Args must stay exactly what the
+    // tail-less form produces — the three tail keywords are consumed by the
+    // pattern's optional group, not appended as positional args (which would
+    // shift `args[len-2]`/`args[len-1]` and break target/content selection).
+    const plain = astOf('swap #a with #b');
+    const withTail = astOf('swap #a with #b using view transition');
+
+    expect(withTail.modifiers?.viewTransition, 'presence is the whole request').toBeDefined();
+    expect(withTail.args).toEqual(plain.args);
   });
 });
 
