@@ -38,6 +38,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
+import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
 import { tryParseBlock, tryParseFeatureBlock, tryParseProgram } from './block-parser';
@@ -2065,11 +2066,33 @@ export class SemanticParserImpl implements ISemanticParser {
                 spec.expectedTypes.length > 0 && !spec.expectedTypes.includes(valType(val) as never)
               );
             };
+            // A fused capture is provably JUNK — a swallowed role MARKER, not an
+            // argument — when its literal value is a role-marker CONCEPT name.
+            // The fused event shape hardwires a required `{patient}` slot
+            // (`generators/event-handlers-vso.ts`), so on a schema that declares
+            // no patient role that slot lands on the destination MARKER of a
+            // corpus surface like `bei klick scrollen zu letzte <.message/> in
+            // #chat`; the marker keyword normalizes to its concept, and
+            // `tokenToSemanticValue` turns it into `literal="destination"`.
+            // No user ever writes a concept name as an argument, so this value
+            // can only be marker swallow — it must not veto the re-parse swap
+            // that recovers the real destination (`last <.message/> in #chat`).
+            // Scoped by the same no-real-`patient` condition as `mapRole`, so
+            // every genuine patient capture (increment, pick, the qu verb-final
+            // safety rail) keeps full superset protection.
+            const isMarkerConceptJunk = (role: string, val: unknown): boolean =>
+              role === 'patient' &&
+              !!schema &&
+              !schema.roles.some(r => r.role === 'patient') &&
+              valType(val) === 'literal' &&
+              ROLE_MARKER_CONCEPTS.has(
+                String((val as { value?: unknown }).value ?? '').toLowerCase()
+              );
             const preservesFused =
               !!first &&
               first.kind === 'command' &&
               Object.entries(roles).every(([role, val]) => {
-                if (isIgnorableFusedRole(role, val)) return true;
+                if (isIgnorableFusedRole(role, val) || isMarkerConceptJunk(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 if (rv !== undefined && valType(rv) === valType(val)) return true;
                 // Pick's fused patterns bind the unit/variant word under the
@@ -2116,7 +2139,13 @@ export class SemanticParserImpl implements ISemanticParser {
               first.action === actionName &&
               preservesFused &&
               headOnlyOk &&
-              (first as CommandSemanticNode).roles.size > Object.keys(roles).length
+              // Strictly-more: the re-parse must recover something the fused
+              // capture lacked. Junk marker captures are excluded from the
+              // count — a fused shape whose ONLY role is a swallowed marker
+              // (scroll: `destination:literal="destination"`) would otherwise
+              // tie 1 > 1 and veto its own repair.
+              (first as CommandSemanticNode).roles.size >
+                Object.entries(roles).filter(([r, v]) => !isMarkerConceptJunk(r, v)).length
             ) {
               commandNode = first as CommandSemanticNode;
               while (tokens.position() < clauseEnd) tokens.advance();

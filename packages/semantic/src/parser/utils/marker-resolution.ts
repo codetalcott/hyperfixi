@@ -171,3 +171,26 @@ export function getDefaultRoleMarker(
 ): RoleMarker | undefined {
   return profile.roleMarkers[role];
 }
+
+/**
+ * The role-concept names a marker token normalizes to.
+ *
+ * A language's role markers (de `zu`, ms `ke`, ja `に`) tokenize as keywords
+ * whose `normalized` form is the CONCEPT they mark — `destination`, `source`,
+ * … — not a word any user ever wrote. Two consumers need to recognize that:
+ * `PatternMatcher.isRoleMarkerConcept` (a possessive head normalizing to one is
+ * a mis-read) and the fused body-walk swap in `SemanticParser` (a capture whose
+ * literal value IS a concept name can only be a swallowed marker).
+ *
+ * Shared so the two cannot drift apart.
+ */
+export const ROLE_MARKER_CONCEPTS: ReadonlySet<string> = new Set([
+  'destination',
+  'source',
+  'patient',
+  'object',
+  'event',
+  'eventmarker',
+  'manner',
+  'instrument',
+]);
