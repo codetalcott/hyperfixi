@@ -45,6 +45,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -168,22 +169,33 @@ export function triggerEventOf(source: string): string | null {
   return m ? (m[1] ?? null) : null;
 }
 
-function walkHtml(dir: string, acc: string[] = []): string[] {
-  let entries: fs.Dirent[];
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return acc;
-  }
-  for (const entry of entries) {
-    if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name.startsWith('.')) {
-      continue;
-    }
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkHtml(full, acc);
-    else if (entry.name.endsWith('.html')) acc.push(full);
-  }
-  return acc;
+/**
+ * Git-TRACKED .html files under `root` (repo-relative), as absolute paths.
+ *
+ * Tracked, not on-disk, because the corpus must be the SHIPPED tree: four
+ * `examples/` dirs are gitignored (experiments/, playground/,
+ * vite-plugin-test/, vite-plugin-multilingual/), and the disk walk this
+ * replaced counted whatever happened to be on the machine. That is how the
+ * gate's sanity floors and allowlist got calibrated against handlers that
+ * were never shipped — and why it failed on every clean checkout the first
+ * time CI ran it (#862). `git ls-files` sees the same corpus everywhere.
+ *
+ * git being unavailable is a THROW, not a fallback to the disk walk — a
+ * silent fallback would resurrect the corpus drift this exists to kill.
+ * A tracked file missing from disk (an uncommitted local deletion) is
+ * skipped: the working tree is mid-edit, and in CI checkout == index.
+ */
+function trackedHtml(repoRoot: string, root: string): string[] {
+  const out = execFileSync('git', ['ls-files', '-z', '--', root], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return out
+    .split('\0')
+    .filter(rel => rel.endsWith('.html'))
+    .map(rel => path.join(repoRoot, rel))
+    .filter(full => fs.existsSync(full));
 }
 
 /** Extract the page's `[_]` handlers in document order. */
@@ -398,9 +410,9 @@ async function runHandlerOnEngine(
 }
 
 /**
- * The sweep: walk `examples/**`, extract handlers, apply the fair-denominator
- * filters (each skip reasoned), and execute every eligible handler on both
- * engines.
+ * The sweep: walk the git-tracked `examples/**` corpus, extract handlers,
+ * apply the fair-denominator filters (each skip reasoned), and execute every
+ * eligible handler on both engines.
  */
 export async function runShippedExamplesExecution(opts?: {
   roots?: string[];
@@ -417,7 +429,7 @@ export async function runShippedExamplesExecution(opts?: {
   let handlers = 0;
 
   for (const root of roots) {
-    for (const full of walkHtml(path.join(repoRoot, root))) {
+    for (const full of trackedHtml(repoRoot, root)) {
       const rel = path.relative(repoRoot, full);
       const html = fs.readFileSync(full, 'utf8');
       const pageHandlers = extractHandlers(rel, html);

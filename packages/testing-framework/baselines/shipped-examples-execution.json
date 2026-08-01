@@ -86,64 +86,6 @@
       "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
     },
     {
-      "key": "examples/experiments/01-polyglot-playground.html::6f9009e740::click",
-      "file": "examples/experiments/01-polyglot-playground.html",
-      "event": "click",
-      "excerpt": "on click decrement #count",
-      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[-1]"],
-      "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/experiments/01-polyglot-playground.html::7f5ebb38b0::click",
-      "file": "examples/experiments/01-polyglot-playground.html",
-      "event": "click",
-      "excerpt": "on click increment #count",
-      "hyperfixi": ["Δdiv:29#count cls[demo-counter] attr[id=count] style[] text[1]"],
-      "upstream": ["-div:29#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/experiments/02-multilingual-sync.html::227e004ae8::click",
-      "file": "examples/experiments/02-multilingual-sync.html",
-      "event": "click",
-      "excerpt": "on click decrement #shared-count then call window.logAction('decrement')",
-      "hyperfixi": [
-        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[-1]"
-      ],
-      "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/experiments/02-multilingual-sync.html::aeeb82b882::click",
-      "file": "examples/experiments/02-multilingual-sync.html",
-      "event": "click",
-      "excerpt": "on click increment #shared-count then call window.logAction('increment')",
-      "hyperfixi": [
-        "Δdiv:11#shared-count cls[shared-counter] attr[id=shared-count] style[] text[1]"
-      ],
-      "upstream": ["-div:11#shared-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/experiments/03-adaptive-rtl-ltr.html::f701a8b242::click",
-      "file": "examples/experiments/03-adaptive-rtl-ltr.html",
-      "event": "click",
-      "excerpt": "on click decrement #counter",
-      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[-1]"],
-      "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/experiments/03-adaptive-rtl-ltr.html::0d0a6b9a18::click",
-      "file": "examples/experiments/03-adaptive-rtl-ltr.html",
-      "event": "click",
-      "excerpt": "on click increment #counter",
-      "hyperfixi": ["Δdiv:35#counter cls[counter-value] attr[id=counter] style[] text[1]"],
-      "upstream": ["-div:35#counter"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
       "key": "examples/forms/form-validation.html::e85adbe538::input",
       "file": "examples/forms/form-validation.html",
       "event": "input",
@@ -441,64 +383,6 @@
         "Δbutton:131#prop-btn cls[demo-target] attr[disabled=undefined,id=prop-btn] style[] text[\n                    Another Target\n                ]"
       ],
       "reason": "boolean-attribute toggle representation differs between engines. Pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-multilingual/index.html::3fed702e4e::click",
-      "file": "examples/vite-plugin-multilingual/index.html",
-      "event": "click",
-      "excerpt": "on click show #en-content",
-      "hyperfixi": [
-        "Δdiv:40#en-content cls[show] attr[id=en-content] style[] text[English content that can be shown/hidden.]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-multilingual/index.html::b0b708a0c6::click",
-      "file": "examples/vite-plugin-multilingual/index.html",
-      "event": "click",
-      "excerpt": "on click decrement #en-count",
-      "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[-1]"],
-      "upstream": ["-span:43#en-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-multilingual/index.html::712d7ec0b1::click",
-      "file": "examples/vite-plugin-multilingual/index.html",
-      "event": "click",
-      "excerpt": "on click increment #en-count",
-      "hyperfixi": ["Δspan:43#en-count cls[counter] attr[id=en-count] style[] text[1]"],
-      "upstream": ["-span:43#en-count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-test/index.html::cbac0b8e43::click",
-      "file": "examples/vite-plugin-test/index.html",
-      "event": "click",
-      "excerpt": "on click show #content",
-      "hyperfixi": [
-        "Δdiv:7#content cls[show] attr[id=content] style[] text[This content can be shown/hidden.]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-test/index.html::6f9009e740::click",
-      "file": "examples/vite-plugin-test/index.html",
-      "event": "click",
-      "excerpt": "on click decrement #count",
-      "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[-1]"],
-      "upstream": ["-span:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
-    },
-    {
-      "key": "examples/vite-plugin-test/index.html::7f5ebb38b0::click",
-      "file": "examples/vite-plugin-test/index.html",
-      "event": "click",
-      "excerpt": "on click increment #count",
-      "hyperfixi": ["Δspan:14#count cls[counter] attr[id=count] style[] text[1]"],
-      "upstream": ["-span:14#count"],
-      "reason": "element-target write semantics: hyperfixi writes textContent in place; upstream replaces/removes the element under jsdom (`-key` diff). Family pending investigation"
     }
   ]
 }

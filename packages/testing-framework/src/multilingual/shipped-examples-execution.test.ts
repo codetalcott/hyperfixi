@@ -87,16 +87,21 @@ describe('shipped-examples execution gate', () => {
   }, 240_000);
 
   it('walks pages and compares handlers (sanity: extraction and both engines working)', () => {
-    // Floors well below current values (55 / 333 / 162 / 74) but far above
+    // Floors well below current values (48 / 261 / 122 / 52) but far above
     // zero: a broken walk, extractor, or engine bootstrap fails loudly here
     // instead of making assertions 2-3 vacuously pass.
-    expect(result.pages).toBeGreaterThan(40);
-    expect(result.handlers).toBeGreaterThan(250);
-    expect(result.compared.length).toBeGreaterThan(120);
+    //
+    // Calibrated against the git-TRACKED corpus — the sweep ignores untracked
+    // examples/ dirs, so these numbers are the same on every machine and in
+    // CI. (The original floors were measured on a working tree with four
+    // gitignored dirs present and failed every clean checkout — #862.)
+    expect(result.pages).toBeGreaterThan(35);
+    expect(result.handlers).toBeGreaterThan(200);
+    expect(result.compared.length).toBeGreaterThan(90);
     // Vacuous (empty-vs-empty) pairs are NOT parity evidence — the floor is on
     // real, non-empty signature matches.
     const realMatches = result.compared.filter(c => c.match && !c.vacuous).length;
-    expect(realMatches).toBeGreaterThan(60);
+    expect(realMatches).toBeGreaterThan(40);
   });
 
   it('has no NEW divergence from upstream outside the allowlist', () => {
