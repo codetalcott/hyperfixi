@@ -9,6 +9,41 @@
 > [BEHAVIORS_CONSOLIDATION_PLAN.md](BEHAVIORS_CONSOLIDATION_PLAN.md). Read this first,
 > then dive into those for the per-arc detail.
 
+---
+
+> **Update 2026-08-01 — the R1 burn-down tail went 52 → 24 rows in two PRs,
+> and BOTH were smaller than their filings claimed.**
+>
+> - **#867 · `last-in-collection` (5 rows: de/fr/ms/th/vi).** Not a schema gap.
+>   The generated fused event shape hardwires a required `{patient}` slot; on a
+>   schema with no patient role (`scroll`) it swallows the destination MARKER,
+>   whose keyword normalizes to its own role concept →
+>   `destination:literal="destination"` with the real destination left
+>   unconsumed. Which languages this hits is a **tokenizer accident**: the five
+>   have keyword-kind markers (capture succeeds, junk wins); it/id/pt/ru/uk have
+>   particle-kind markers (capture returns null, the fused pattern never
+>   matches); es's `a` is a particle AND an `ENGLISH_NOISE_WORD`. **The repair
+>   already existed** — the fused body-walk re-parse swap heals this identical
+>   junk for `go-url` — and was blocked by exactly two vetoes, both
+>   mutation-verified load-bearing: the `preservesFused` type check (junk
+>   `literal` vs the re-parse's `expression`; `go-url` passes only because its
+>   real destination is a literal too) and the strictly-more size gate (`1 > 1`
+>   for scroll's single junk role — the repair vetoed itself). Both now exempt
+>   captures whose literal value IS a role-concept name. **No matcher or
+>   generator change**, so every pattern's match outcome, priority and
+>   confidence is byte-identical.
+> - **#868 · `pick-text-range` (23 rows).** See the struck-through Family F
+>   deferral below — its cost estimate was stale, the realignment having landed
+>   in arcs 1–3. One valueType divergence, fixed via `ExtractionRule.transform`
+>   plus widening the fused-swap pick preservation clause.
+>
+> Both were sized by a **whole-corpus pre/post probe** (3960 stored patterns.db
+> rows, 24 languages × the full pattern set) and both diffed to exactly their
+> target rows and nothing else. **Seven languages are now at avgRoleFidelity
+> 1.0000 — ar, de, es, fr, pt, sw, tl.** What remains: the 10
+> `take.recipient` rows (#864's named i18n-rendering follow-up) and 14
+> scattered singletons — the "thin and flat" headroom by design.
+
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
@@ -206,13 +241,30 @@ fail CI.
 >
 > **Deferred, with reasons (the standing R1 tail):**
 >
-> - **pick-text-range (Family F, all six):** the en reference itself is
+> - ~~**pick-text-range (Family F, all six):** the en reference itself is
 >   degenerate (`pick.patient:expression="characters"` — the first WORD;
 >   pickSchema models no range/source roles), so chasing SOV parity buys
 >   nothing. The proper fix (pickSchema range roles + transformer render +
 >   SOV pattern variants) RAISES the en denominator for all 24 languages —
 >   the most expensive row in the tail for ×6 misses. Take it only if pick
->   matters for a demo; budget the full 24-language realignment.
+>   matters for a demo; budget the full 24-language realignment.~~
+>   **CLEARED 2026-08-01, PR #868 — and this deferral text was STALE when it
+>   was quoted back.** The 24-language realignment it budgets for had already
+>   been paid by arcs 1–3 (2026-07-20, three entries above): the en reference
+>   is not degenerate, `pickSchema` models the range via patterns, and all 24
+>   rows already round-tripped to byte-identical English. What remained was
+>   ONE valueType divergence, identical in all 23 non-en languages — `missing
+>   pick.method:expression / captured pick.method:literal` — because en keeps
+>   `characters` off its keyword list (identifier path → expression) while
+>   all 22 foreign tokenizers register it (keyword path → literal). Fixed in
+>   two halves: `ExtractionRule.transform` on the `method` slot of both pick
+>   factories (post-confidence, so no adoption score moved), plus widening the
+>   fused-swap pick preservation clause to compare `method` by SURFACE rather
+>   than type — without the second half the 13 fused-routing languages
+>   truncate to `pick characters` and the arc-3 R4 cluster re-opens. All 23
+>   languages left `roleLossyPatterns`; ar/es/pt/sw/tl reached R1 **1.0000**.
+>   **Lesson: a standing deferral's cost estimate ages with the arcs that land
+>   around it — re-measure the row before budgeting for the filing's scope.**
 > - **Reactive on.event rows (hi/ko when-value-changes +
 >   when-multiple-changes, hi window-resize, qu announce-screen-reader +
 >   on-custom-event-receive):** event-anchor guard machinery — the hottest
