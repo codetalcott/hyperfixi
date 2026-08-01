@@ -971,7 +971,21 @@ export class PatternMatcher {
       }
     }
 
-    captured.set(patternToken.role, value);
+    // A `keyword`-shaped slot holds a FIXED keyword phrase, so its value type is
+    // a property of the slot, not of the language's vocabulary. `using view
+    // {manner}` captures the word `transition`, which en/fr register as a command
+    // keyword (it is also their verb) and the other 22 tokenizers leave as a bare
+    // identifier — so the SAME word lands as `literal` in en and `expression`
+    // everywhere else. R1 compares `action.role:valueType`, so that asymmetry
+    // alone reads as a dropped role in 22 languages (the pick-unit-word class,
+    // #868, in mirror image). Normalize to the EN reference's shape. Placed after
+    // `expectedTypes` validation, so no type-compatibility or adoption decision
+    // can move — the slot still admits both types, it just reports one.
+    if (patternToken.valueShape === 'keyword' && value.type === 'expression') {
+      captured.set(patternToken.role, createLiteral(String((value as { raw?: unknown }).raw ?? '')));
+    } else {
+      captured.set(patternToken.role, value);
+    }
     tokens.advance();
 
     // Event-head tolerance: a bracket key-filter and/or a prepositional source

@@ -91,6 +91,56 @@ export function appendOptionalScope(
 }
 
 /**
+ * Append an optional trailing `[using view {manner}]` group to an event-handler
+ * pattern when the schema declares the view-transition `manner` role
+ * (`swap … using view transition`, `process … using view transition`).
+ *
+ * The tail is a passthrough phrase — the i18n transformer masks it and
+ * re-appends it verbatim at the CLAUSE END in every word order, because
+ * `using view` has no native form in any of the 24 languages
+ * (`USING_VIEW_MARKER_ALL_LANGS`). The generated command patterns get the slot
+ * from the schema role, but the SOV/VSO event-handler patterns are hand-built
+ * and had no slot, so all 8 of them (ar bn hi ja ko qu tl tr) dropped it as
+ * `fused body walk left 3 token(s) unconsumed` while still matching the command
+ * at confidence 1.0 — an R1 role loss invisible to every recall signal that
+ * scores only the actions.
+ *
+ * Marker words come from the role's own `markerOverride` so the group cannot
+ * drift from the schema. No-op for commands without the role, keeping every
+ * other pattern byte-identical.
+ */
+export function appendOptionalViewTransition(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  languageCode: string
+): void {
+  const mannerRole = commandSchema.roles.find(r => r.role === 'manner' && !r.required);
+  const marker = mannerRole?.markerOverride?.[languageCode];
+  if (!mannerRole || !marker) return;
+
+  tokens.push({
+    type: 'group',
+    optional: true,
+    tokens: [
+      ...marker.split(/\s+/).map((word): PatternToken => ({ type: 'literal', value: word })),
+      {
+        type: 'role',
+        role: 'manner',
+        optional: true,
+        expectedTypes: mannerRole.expectedTypes,
+        // Load-bearing, same as on the generated command patterns: it exempts
+        // the trailing slot from the matcher's verb guard (`transition` is
+        // itself a command keyword) and normalizes the captured value type to
+        // the EN reference's `literal`.
+        ...(mannerRole.valueShape !== undefined ? { valueShape: mannerRole.valueShape } : {}),
+      },
+    ],
+  });
+  extraction.manner = { fromRole: 'manner' };
+}
+
+/**
  * Generate SOV event handler pattern (Japanese, Korean, Turkish).
  */
 export function generateSOVEventHandlerPattern(
@@ -281,6 +331,16 @@ export function generateSOVPatientFirstEventHandlerPattern(
       : eventHandlerDestinationGroup(commandSchema, trailingMarker))
   );
 
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [frontedRole]: { fromRole: frontedRole },
+    ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...eventHandlerSourceExtraction(commandSchema),
+  };
+  // `using view transition` rides at the very end, after the with-marked operand.
+  appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
+
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
     language: profile.code,
@@ -290,13 +350,7 @@ export function generateSOVPatientFirstEventHandlerPattern(
       format: `{patient} ${patientMarker?.primary || ''} {event} ${eventMarker.primary} ${keyword.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action },
-      event: { fromRole: 'event' },
-      [frontedRole]: { fromRole: frontedRole },
-      ...(swapsOperands ? {} : eventHandlerDestinationExtraction(commandSchema)),
-      ...eventHandlerSourceExtraction(commandSchema),
-    },
+    extraction,
   };
 }
 

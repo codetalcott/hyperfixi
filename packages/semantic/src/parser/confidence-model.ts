@@ -188,8 +188,21 @@ export class DefaultConfidenceModel implements ConfidenceModel {
     // `me` — the es/pl/vi aria regression the R1 role-set flip ratchet exists
     // to catch. take's `recipient` (valueShape 'reference') rides the same
     // lever for the same reason: its slot is marker-less in 23 languages.
+    //
+    // An EVENT-HANDLER pattern's `command` is the literal `'on'`, not the verb
+    // it wraps, so looking the schema up by `pattern.command` alone found no
+    // roles at all and the exemption silently never applied there. The wrapped
+    // verb is recorded by every event-handler generator as
+    // `extraction.action.value`; read it so a fused `on click swap …` gets the
+    // same exemption its standalone twin already had. Measured: without this,
+    // adding the optional `[using view {manner}]` tail to the SOV/VSO
+    // event-handler patterns dropped `swap-content` from confidence 1.0 to 0.78
+    // in ar/ja/ko/tl/tr — the toggle-es class described above, one pattern
+    // family over.
+    const wrappedAction =
+      pattern.command === 'on' ? (pattern.extraction?.action?.value as string | undefined) : undefined;
     const schemaRoles = (commandSchemas as Record<string, CommandSchema | undefined>)[
-      pattern.command
+      wrappedAction ?? pattern.command
     ]?.roles;
     const isShapeAnchored = (role: SemanticRole): boolean =>
       schemaRoles?.find(r => r.role === role)?.valueShape !== undefined;

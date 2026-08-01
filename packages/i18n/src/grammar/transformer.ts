@@ -1779,6 +1779,59 @@ function restoreCaretScopes(input: string, scopes: string[]): string {
 }
 
 // =============================================================================
+// View-transition tail masking (`using view transition`)
+// =============================================================================
+
+/** Private-use sentinels bracketing a masked view-transition-tail index. */
+const VIEW_TAIL_OPEN = '\uE002';
+const VIEW_TAIL_CLOSE = '\uE003';
+
+/**
+ * Match `swap`/`process`'s trailing `using view transition` modifier.
+ *
+ * `using` is in no dictionary and in no role table, so it sweeps into whatever
+ * role phrase is open; `transition` IS a translated command keyword in every
+ * dictionary (es `transición`, de `übergang`, ja `遷移`) and is in
+ * `ENGLISH_COMMANDS`, so `splitOnCommandBoundaries` splits the clause there and
+ * the rejoin plants a phantom translated `transition` COMMAND after the target's
+ * `then`-connective (`intercambiar #a con #b using view entonces transición`).
+ *
+ * The phrase has no native form in any of the 24 languages — semantic's
+ * `USING_VIEW_MARKER_ALL_LANGS` matches the literal English `using view` marker
+ * everywhere — so it is a passthrough, matched on the English surface regardless
+ * of source locale. The value word is optional so a bare `using view` still
+ * masks rather than half-splitting; `then` is excluded so a clause boundary is
+ * never swallowed into the tail.
+ */
+const VIEW_TAIL_RE = /\busing\s+view\b(?:\s+(?!then\b)[A-Za-z][\w-]*)?/gi;
+
+/** Whether a token is a masked view-transition tail. */
+const VIEW_TAIL_TOKEN_RE = new RegExp(`^${VIEW_TAIL_OPEN}(\\d+)${VIEW_TAIL_CLOSE}$`);
+
+/**
+ * Mask every `using view <value>` tail behind an opaque token, so the phrase
+ * never reaches the splitter, the word translator, or the role parser. Returns
+ * null when there's nothing to mask.
+ */
+function maskViewTransitionTails(input: string): { masked: string; tails: string[] } | null {
+  const tails: string[] = [];
+  const masked = input.replace(VIEW_TAIL_RE, match => {
+    const idx = tails.length;
+    tails.push(match);
+    return `${VIEW_TAIL_OPEN}${idx}${VIEW_TAIL_CLOSE}`;
+  });
+  return tails.length > 0 ? { masked, tails } : null;
+}
+
+/** Restore masked view-transition tokens to their verbatim English phrase. */
+function restoreViewTransitionTails(input: string, tails: string[]): string {
+  return input.replace(
+    new RegExp(`${VIEW_TAIL_OPEN}(\\d+)${VIEW_TAIL_CLOSE}`, 'g'),
+    (_m, n: string) => tails[Number(n)] ?? ''
+  );
+}
+
+// =============================================================================
 // Main Transformer
 // =============================================================================
 
@@ -1813,6 +1866,17 @@ export class GrammarTransformer {
   }
 
   private transformInternal(input: string): string {
+    // `using view transition` is a passthrough phrase, not translatable content:
+    // `using` is in no dictionary and `transition` is a COMMAND keyword, so left
+    // in place the splitter tears the clause apart there and the tail renders as
+    // a phantom translated command. Mask it before any splitting/translation and
+    // restore it verbatim; transformSingle re-appends the opaque token at the
+    // clause tail so it lands after the reorder, not inside a role phrase.
+    const viewTails = maskViewTransitionTails(input);
+    if (viewTails) {
+      return restoreViewTransitionTails(this.transformInternal(viewTails.masked), viewTails.tails);
+    }
+
     // Caret-scoped variable reads (`^name on <selector>`) carry a second,
     // overloaded `on` that the splitter/event-parser would mistake for an event
     // or command boundary — mangling `put ^count on #host into me`. Mask the
@@ -1921,6 +1985,18 @@ export class GrammarTransformer {
       return setScope;
     }
 
+    // 0c. Masked `using view transition` tail (see maskViewTransitionTails):
+    //     strip the opaque token, transform the clause without it, and re-append
+    //     it at the clause tail. Left in the token stream it would be swept into
+    //     the open role's VALUE and rendered ahead of that role's marker
+    //     (ja `#b using view transition で` instead of `#b で using view
+    //     transition`) — the same failure mode transformWithTrailingEnd fixes
+    //     for a stranded `end`.
+    const viewTail = this.transformWithViewTransitionTail(input);
+    if (viewTail !== null) {
+      return viewTail;
+    }
+
     // 1. Parse into semantic roles
     const parsed = parseStatement(input, this.sourceProfile.code);
     if (!parsed) {
@@ -1961,6 +2037,36 @@ export class GrammarTransformer {
 
     // 7. Join without markers (still use joinTokens for consistency)
     return joinTokens(reordered.map(e => e.translated || e.value));
+  }
+
+  /**
+   * Clause carrying a masked `using view transition` tail: strip the opaque
+   * token, transform the clause alone, and re-append the token at the very end.
+   *
+   * The tail is a clause-final modifier in every word order the corpus emits:
+   * the semantic side matches it as the literal `using view` marker plus a value
+   * word, and the SOV/VSO event-handler patterns admit it as an optional
+   * TRAILING group (after the with-marked operand). So the target position is
+   * "end of the transformed clause" for all 24 languages — no per-profile
+   * placement decision, which is what makes this a passthrough rather than a
+   * role.
+   *
+   * Returns null when the clause carries no masked tail, or when the token is
+   * not clause-final (nothing to reposition — leaving it in place still restores
+   * verbatim English).
+   */
+  private transformWithViewTransitionTail(input: string): string | null {
+    const trimmed = input.trim();
+    const tokens = trimmed.split(/\s+/);
+    if (tokens.length < 2) {
+      return null;
+    }
+    if (!VIEW_TAIL_TOKEN_RE.test(tokens[tokens.length - 1])) {
+      return null;
+    }
+    const tail = tokens[tokens.length - 1];
+    const head = tokens.slice(0, -1).join(' ');
+    return `${this.transformSingle(head)} ${tail}`;
   }
 
   /**
