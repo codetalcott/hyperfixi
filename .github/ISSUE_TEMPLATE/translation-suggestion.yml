@@ -1,0 +1,92 @@
+name: Translation Suggestion
+description: Suggest a more natural translation for a hyperscript pattern
+title: '[i18n]: '
+labels: ['community-review', 'translations']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pattern translations are **generated** — by grammar transformation or keyword
+        substitution — and have not been reviewed by native speakers. If one reads
+        stiff, unidiomatic, or plain wrong, this form is where to say so.
+
+        Browse the patterns at [lokascript.org/patterns](https://lokascript.org/patterns/);
+        the "suggest a better translation" link there fills this form in for you.
+
+        For a wrong *word* rather than a wrong sentence, use the
+        [Vocabulary Suggestion](?template=vocabulary-suggestion.yml) form instead.
+
+  - type: input
+    id: pattern
+    attributes:
+      label: Pattern ID
+      description: Shown on the pattern card, e.g. `toggle-class-click`.
+      placeholder: toggle-class-click
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lang
+    attributes:
+      label: Language
+      description: |
+        ISO code of the translation. ar Arabic · bn Bengali · de German · en English ·
+        es Spanish · fr French · he Hebrew · hi Hindi · id Indonesian · it Italian ·
+        ja Japanese · ko Korean · ms Malay · pl Polish · pt Portuguese · qu Quechua ·
+        ru Russian · sw Swahili · th Thai · tl Tagalog · tr Turkish · uk Ukrainian ·
+        vi Vietnamese · zh Chinese
+      options:
+        - ar
+        - bn
+        - de
+        - en
+        - es
+        - fr
+        - he
+        - hi
+        - id
+        - it
+        - ja
+        - ko
+        - ms
+        - pl
+        - pt
+        - qu
+        - ru
+        - sw
+        - th
+        - tl
+        - tr
+        - uk
+        - vi
+        - zh
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current translation
+      description: What the site renders today.
+      render: text
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested translation
+      description: How it should read instead.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this better?
+      description: |
+        Register, idiom, word order, a mistranslated keyword — whatever makes the
+        current version wrong. This is the part we cannot work out for ourselves.
+      placeholder: |
+        「時」 here reads stiff for a UI label; 「で」 is what a developer would write.
+    validations:
+      required: true

@@ -6,6 +6,18 @@ commits to the reviewer program and "verified by native speakers" badges but spe
 UI, flows, or tiers — this document is that spec).
 **Date:** 2026-07-20.
 
+> **Update (2026-08-01) — intake simplified, read this first.** Owner decision: GitHub
+> Issues replace the custom intake service. **Superseded** — §3's auth/tier mechanics
+> (OAuth implementation, invite tokens, the T0 anonymous-flag tier), §4's `community.db`
+> on a Fly volume, §7's site-hosted queue/admin UI and `pull.ts` materialization, and
+> §11 Stage 2 in full. Suggestions are now issue forms
+> (`.github/ISSUE_TEMPLATE/{translation,vocabulary}-suggestion.yml`,
+> `reviewer-application.yml`), endorsement is a 👍 reaction, and the queue is
+> `label:community-review`. **Still the reference, unchanged:** §5 addressing/hashes,
+> §6 badges as a pure function of ledger × current render, §7b agent sweeps, §8
+> changeset fan-out, §9 the glossary gate and language ladder, §10 the trust invariant.
+> Decision record and current status: `MULTILINGUAL_NEXT_STEPS.md` § Community review.
+
 ## 1. Context & goals
 
 Multilingual pattern/vocab quality now depends on review the founder cannot do alone:
