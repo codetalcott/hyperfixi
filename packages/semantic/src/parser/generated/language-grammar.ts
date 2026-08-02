@@ -397,6 +397,8 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   décrémenter: ['fr'],
   default: ['en', 'tl'],
   défaut: ['fr'],
+  defilement: ['fr'],
+  défilement: ['fr'],
   défiler: ['fr'],
   defina: ['pt'],
   definieren: ['de'],
@@ -921,7 +923,9 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   'kawsay-pukyu': ['qu'],
   kaydet: ['tr'],
   kaydir: ['tr'],
+  kaydirma: ['tr'],
   kaydır: ['tr'],
+  kaydırma: ['tr'],
   kaykamaqa: ['qu'],
   kaypi: ['qu'],
   kazdy: ['pl'],
@@ -1201,6 +1205,8 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   ocultar: ['es', 'pt'],
   od: ['pl'],
   odak: ['tr'],
+  'odak kaybi': ['tr'],
+  'odak kaybı': ['tr'],
   odaklanma: ['tr'],
   odskup: ['pl'],
   oeffnen: ['de'],
@@ -1280,6 +1286,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   permutar: ['es'],
   permuter: ['fr'],
   peroleh: ['id'],
+  'perte de focus': ['fr'],
   phát: ['vi'],
   'phát-trực-tiếp': ['vi'],
   phawachiy: ['qu'],
@@ -1424,6 +1431,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   redefinir: ['pt'],
   redimensionamento: ['pt'],
   redimensionar: ['es', 'pt'],
+  redimensionnement: ['fr'],
   redimensionner: ['fr'],
   reemplazar: ['es'],
   registrar: ['es', 'pt'],
@@ -3502,7 +3510,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3300
+ * Total keywords: 3308
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 195
  */
