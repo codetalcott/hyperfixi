@@ -9,7 +9,7 @@
  *   - lse_to_hyperscript: validate/compile LSE from an LLM response → JS
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import { jsonResponse, errorResponse } from './utils.js';
 
 // =============================================================================

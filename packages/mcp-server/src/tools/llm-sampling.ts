@@ -12,8 +12,8 @@
  *   Natural language (8 languages) → domain-llm.compile() → LLMPromptSpec → sampling
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Tool } from '@modelcontextprotocol/server';
+import type { Server } from '@modelcontextprotocol/server';
 import type { DomainRegistry } from '@lokascript/framework';
 import type { LLMPromptSpec, LLMMessage } from '@lokascript/domain-llm';
 
@@ -25,7 +25,7 @@ export const samplingTools: Tool[] = [
   {
     name: 'ask_claude',
     description:
-      'Ask Claude a question with optional context. Uses MCP sampling — the client handles model selection and user approval.',
+      'Ask Claude a question with optional context. Uses MCP sampling — the client handles model selection and user approval. DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -53,7 +53,7 @@ export const samplingTools: Tool[] = [
   {
     name: 'summarize_content',
     description:
-      'Summarize text content using Claude. Uses MCP sampling — the client handles model selection and user approval.',
+      'Summarize text content using Claude. Uses MCP sampling — the client handles model selection and user approval. DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -81,7 +81,7 @@ export const samplingTools: Tool[] = [
   {
     name: 'analyze_content',
     description:
-      'Analyze text content for sentiment, entities, themes, or other qualities using Claude. Uses MCP sampling.',
+      'Analyze text content for sentiment, entities, themes, or other qualities using Claude. Uses MCP sampling. DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -105,7 +105,7 @@ export const samplingTools: Tool[] = [
   {
     name: 'translate_content',
     description:
-      'Translate text between natural languages using Claude. Uses MCP sampling — the client handles model selection and user approval.',
+      'Translate text between natural languages using Claude. Uses MCP sampling — the client handles model selection and user approval. DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -132,7 +132,7 @@ export const samplingTools: Tool[] = [
   {
     name: 'execute_llm',
     description:
-      'Execute an LLM command written in natural language (8 languages supported). Compiles via domain-llm then invokes Claude via MCP sampling. Examples: "ask what is 2+2", "summarize #article as bullets", "요약 이 문서를 글머리로" (Korean).',
+      'Execute an LLM command written in natural language (8 languages supported). Compiles via domain-llm then invokes Claude via MCP sampling. Examples: "ask what is 2+2", "summarize #article as bullets", "요약 이 문서를 글머리로" (Korean). DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -340,12 +340,36 @@ export async function handleSamplingTool(
  */
 async function executeSpec(spec: LLMPromptSpec, server: Server): Promise<ToolResponse> {
   const params = specToSamplingParams(spec);
-  const response = await server.createMessage(params);
+  // createMessage is a server→client push, which the stateless 2026-07-28
+  // protocol removed — it only works on legacy-era connections whose client
+  // advertises the sampling capability. Explain that instead of surfacing a
+  // bare protocol error.
+  let response: Awaited<ReturnType<Server['createMessage']>>;
+  try {
+    response = await server.createMessage(params);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            `Sampling unavailable: ${message}. This tool relies on MCP sampling ` +
+            `(deprecated in protocol revision 2026-07-28), which requires a ` +
+            `legacy-era connection and a client that advertises the sampling capability.`,
+        },
+      ],
+      isError: true,
+    };
+  }
 
+  // SDK v2 models CreateMessageResult.content as a single block OR an array of
+  // blocks; these tools expect a single text answer, so read the first block.
+  const block = Array.isArray(response.content) ? response.content[0] : response.content;
   const text =
-    response.content.type === 'text'
-      ? response.content.text
-      : `Received non-text response of type: ${response.content.type}`;
+    block?.type === 'text'
+      ? block.text
+      : `Received non-text response of type: ${block?.type ?? 'empty'}`;
 
   return { content: [{ type: 'text', text }] };
 }

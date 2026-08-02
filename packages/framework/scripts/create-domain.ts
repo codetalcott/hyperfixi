@@ -509,7 +509,7 @@ function genMcpTools(args: Args): string {
   return `/**
  * MCP tools for domain-${args.name}
  */
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // Lazy-loaded DSL instance
 let dslInstance: ReturnType<typeof import('@lokascript/domain-${args.name}').${dslFactory}> | null = null;

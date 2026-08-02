@@ -11,7 +11,7 @@
  * - Features/Symbols: static catalogs
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Semantic Package Import (module-level, following validation.ts pattern)
@@ -793,7 +793,7 @@ const ROLE_CATALOG: Record<
     description: 'Who receives what the action transfers — the far end of a transfer.',
     origin: 'Linguistic thematic role: the beneficiary/goal of a transfer.',
     usage:
-      "The element a class moves ONTO in `take` (its patient moves OFF the source), so both ends are named. Marked with `for` in English; most languages render it as a bare trailing pronoun.",
+      'The element a class moves ONTO in `take` (its patient moves OFF the source), so both ends are named. Marked with `for` in English; most languages render it as a bare trailing pronoun.',
     commands: ['take'],
     explicitExample: '[take patient:.active source:.tab-button recipient:me]',
   },

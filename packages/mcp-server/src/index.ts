@@ -7,8 +7,8 @@
  */
 
 import { createRequire } from 'node:module';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { Server, type Tool } from '@modelcontextprotocol/server';
+import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import {
   captureFreshnessBaseline,
   freshnessSummary,
@@ -16,14 +16,6 @@ import {
   staleSinceStartup,
   staleToolError,
 } from './freshness.js';
-import {
-  CallToolRequestSchema,
-  GetPromptRequestSchema,
-  ListPromptsRequestSchema,
-  ListResourcesRequestSchema,
-  ListToolsRequestSchema,
-  ReadResourceRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
 
 // Tool implementations
 import { analysisTools, handleAnalysisTool } from './tools/analysis.js';
@@ -100,285 +92,310 @@ const { version: pkgVersion } = createRequire(import.meta.url)('../package.json'
   version: string;
 };
 
-const server = new Server(
-  {
-    name: '@hyperfixi/mcp-server',
-    version: pkgVersion,
-  },
-  {
-    capabilities: {
-      tools: {},
-      resources: {},
-      prompts: {},
+// All list/read surfaces are static per process (tool/prompt/resource lists are
+// compile-time literals; resources are static docs). One hour rather than
+// "forever": a rebuild + restart may change them, and the freshness guard
+// refuses calls in the window where a cached list could mislead.
+const STATIC_SURFACE_CACHE = { ttlMs: 3_600_000, cacheScope: 'public' as const };
+
+// serveStdio may invoke this factory more than once per connection (a
+// server/discover probe instance is built optimistically and discarded when the
+// client falls back to legacy initialize), so it must stay side-effect-free:
+// registry construction and the freshness baseline live at module scope /
+// main(), which also keeps them describing the process rather than a
+// connection.
+function buildServer(): Server {
+  const server = new Server(
+    {
+      name: '@hyperfixi/mcp-server',
+      version: pkgVersion,
     },
-  }
-);
+    {
+      capabilities: {
+        tools: {},
+        resources: {},
+        prompts: {},
+      },
+      cacheHints: {
+        'tools/list': STATIC_SURFACE_CACHE,
+        'prompts/list': STATIC_SURFACE_CACHE,
+        'resources/list': STATIC_SURFACE_CACHE,
+        'resources/read': STATIC_SURFACE_CACHE,
+      },
+    }
+  );
 
-// =============================================================================
-// Tool Handlers
-// =============================================================================
+  // =============================================================================
+  // Tool Handlers
+  // =============================================================================
 
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      ...analysisTools,
-      ...patternTools,
-      ...validationTools,
-      ...lspBridgeTools,
-      ...languageDocsTools,
-      ...profileTools,
-      ...compilationTools,
-      ...routeTools,
-      ...registry.getToolDefinitions(),
-      ...samplingTools,
-      ...dispatcherTools,
-      ...irTools,
-      ...debugTools,
-      ...inventoryTools,
-      ...trainingDataTools,
-      ...feedbackTools,
-      ...lsePipelineTools,
-      ...grailTools,
-      ...lseCorrectionTools,
-    ],
-  };
-});
+  server.setRequestHandler('tools/list', async () => {
+    return {
+      tools: [
+        ...analysisTools,
+        ...patternTools,
+        ...validationTools,
+        ...lspBridgeTools,
+        ...languageDocsTools,
+        ...profileTools,
+        ...compilationTools,
+        ...routeTools,
+        // Cast: the framework's MCPToolDefinition types inputSchema.properties
+        // as Record<string, unknown>, wider than the SDK's JSONValue index —
+        // the values are plain JSON Schema literals at runtime.
+        ...(registry.getToolDefinitions() as unknown as Tool[]),
+        ...samplingTools,
+        ...dispatcherTools,
+        ...irTools,
+        ...debugTools,
+        ...inventoryTools,
+        ...trainingDataTools,
+        ...feedbackTools,
+        ...lsePipelineTools,
+        ...grailTools,
+        ...lseCorrectionTools,
+      ],
+    };
+  });
 
-server.setRequestHandler(CallToolRequestSchema, async request => {
-  const { name, arguments: args } = request.params;
+  server.setRequestHandler('tools/call', async request => {
+    const { name, arguments: args } = request.params;
 
-  // Freshness guard. This process resolved its workspace deps' dist/ at startup and Node
-  // cannot un-cache them, so a rebuild leaves every answer below reflecting the PRE-rebuild
-  // code — silently, which is this server's worst failure mode. Refuse instead, at the one
-  // choke point every tool call passes through. See ./freshness.ts for why detect-and-refuse
-  // rather than reload or bundle.
-  const stale = staleSinceStartup();
-  if (stale.length > 0) {
-    return staleToolError(stale);
-  }
-
-  // Analysis tools (from core/ast-utils)
-  if (name.startsWith('analyze_') || name === 'explain_code' || name === 'recognize_intent') {
-    return handleAnalysisTool(name, args as Record<string, unknown>);
-  }
-
-  // Pattern tools (from patterns-reference)
-  if (
-    name === 'search_patterns' ||
-    name === 'translate_hyperscript' ||
-    name === 'get_pattern_stats'
-  ) {
-    return handlePatternTool(name, args as Record<string, unknown>);
-  }
-
-  // Validation tools
-  if (
-    name === 'validate_hyperscript' ||
-    name === 'validate_schema' ||
-    name === 'suggest_command' ||
-    name === 'get_bundle_config' ||
-    name === 'parse_multilingual' ||
-    name === 'translate_to_english' ||
-    name === 'explain_in_language' ||
-    name === 'get_code_fixes'
-  ) {
-    return handleValidationTool(name, args as Record<string, unknown>);
-  }
-
-  // LSP Bridge tools
-  if (
-    name === 'get_diagnostics' ||
-    name === 'get_completions' ||
-    name === 'get_hover_info' ||
-    name === 'get_document_symbols'
-  ) {
-    return handleLspBridgeTool(name, args as Record<string, unknown>);
-  }
-
-  // Language documentation tools
-  if (
-    name === 'get_command_docs' ||
-    name === 'get_expression_docs' ||
-    name === 'search_language_elements' ||
-    name === 'suggest_best_practices'
-  ) {
-    return handleLanguageDocsTool(name, args as Record<string, unknown>);
-  }
-
-  // Profile inspection tools
-  if (
-    name === 'get_language_profile' ||
-    name === 'list_supported_languages' ||
-    name === 'get_keyword_translations' ||
-    name === 'get_role_markers' ||
-    name === 'compare_language_profiles'
-  ) {
-    return handleProfileTool(name, args as Record<string, unknown>);
-  }
-
-  // Compilation service tools
-  if (
-    name === 'compile_hyperscript' ||
-    name === 'validate_and_compile' ||
-    name === 'translate_code' ||
-    name === 'generate_tests' ||
-    name === 'generate_component' ||
-    name === 'diff_behaviors'
-  ) {
-    return handleCompilationTool(name, args as Record<string, unknown>);
-  }
-
-  // Cross-domain dispatcher tools
-  if (
-    name === 'detect_domain' ||
-    name === 'parse_composite' ||
-    name === 'compile_auto' ||
-    name === 'compile_composite'
-  ) {
-    return handleDispatcherTool(name, args as Record<string, unknown>, registry);
-  }
-
-  // IR conversion tools (explicit ↔ JSON, protocol validation, envelopes)
-  if (
-    name === 'convert_format' ||
-    name === 'validate_explicit' ||
-    name === 'validate_protocol' ||
-    name === 'to_envelope' ||
-    name === 'from_envelope'
-  ) {
-    return handleIRTool(name, args as Record<string, unknown>);
-  }
-
-  // Domain tools — registry handles standard operations,
-  // extras handle multi-step/multi-line extensions
-  if (registry.canHandle(name)) {
-    const typedArgs = args as Record<string, unknown>;
-
-    // Multi-step BDD scenarios (comma/newline-separated)
-    if (name.endsWith('_bdd') && isMultiStepBDD(typedArgs)) {
-      return handleBDDMultiStep(name, typedArgs) as any;
+    // Freshness guard. This process resolved its workspace deps' dist/ at startup and Node
+    // cannot un-cache them, so a rebuild leaves every answer below reflecting the PRE-rebuild
+    // code — silently, which is this server's worst failure mode. Refuse instead, at the one
+    // choke point every tool call passes through. See ./freshness.ts for why detect-and-refuse
+    // rather than reload or bundle.
+    const stale = staleSinceStartup();
+    if (stale.length > 0) {
+      return staleToolError(stale);
     }
 
-    // Multi-line BehaviorSpec scenarios (indented test blocks)
-    if (name.endsWith('_behaviorspec') && isMultiLineBehaviorSpec(typedArgs)) {
-      return handleBehaviorSpecMultiLine(name, typedArgs) as any;
+    // Analysis tools (from core/ast-utils)
+    if (name.startsWith('analyze_') || name === 'explain_code' || name === 'recognize_intent') {
+      return handleAnalysisTool(name, args as Record<string, unknown>);
     }
 
-    // Standard single-step: registry handles parse/compile/validate/translate
-    // Cast needed: MCPToolResponse uses readonly props vs SDK's mutable types
-    const result = await registry.handleToolCall(name, typedArgs);
-    if (result) return result as any;
-  }
+    // Pattern tools (from patterns-reference)
+    if (
+      name === 'search_patterns' ||
+      name === 'translate_hyperscript' ||
+      name === 'get_pattern_stats'
+    ) {
+      return handlePatternTool(name, args as Record<string, unknown>);
+    }
 
-  // ServerBridge route tools
-  if (name === 'extract_routes' || name === 'generate_server_routes') {
-    return handleRouteTool(name, args as Record<string, unknown>);
-  }
+    // Validation tools
+    if (
+      name === 'validate_hyperscript' ||
+      name === 'validate_schema' ||
+      name === 'suggest_command' ||
+      name === 'get_bundle_config' ||
+      name === 'parse_multilingual' ||
+      name === 'translate_to_english' ||
+      name === 'explain_in_language' ||
+      name === 'get_code_fixes'
+    ) {
+      return handleValidationTool(name, args as Record<string, unknown>);
+    }
 
-  // MCP Sampling tools (Layer 3 — invoke Claude via client)
-  if (
-    name === 'ask_claude' ||
-    name === 'summarize_content' ||
-    name === 'analyze_content' ||
-    name === 'translate_content' ||
-    name === 'execute_llm'
-  ) {
-    return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
-  }
+    // LSP Bridge tools
+    if (
+      name === 'get_diagnostics' ||
+      name === 'get_completions' ||
+      name === 'get_hover_info' ||
+      name === 'get_document_symbols'
+    ) {
+      return handleLspBridgeTool(name, args as Record<string, unknown>);
+    }
 
-  // Debug tools (AI-assisted debugging)
-  if (name.startsWith('debug_')) {
-    return handleDebugTool(name, args as Record<string, unknown>);
-  }
+    // Language documentation tools
+    if (
+      name === 'get_command_docs' ||
+      name === 'get_expression_docs' ||
+      name === 'search_language_elements' ||
+      name === 'suggest_best_practices'
+    ) {
+      return handleLanguageDocsTool(name, args as Record<string, unknown>);
+    }
 
-  // Template inventory tools
-  if (name === 'scan_inventory' || name === 'query_inventory') {
-    return handleInventoryTool(name, args as Record<string, unknown>);
-  }
+    // Profile inspection tools
+    if (
+      name === 'get_language_profile' ||
+      name === 'list_supported_languages' ||
+      name === 'get_keyword_translations' ||
+      name === 'get_role_markers' ||
+      name === 'compare_language_profiles'
+    ) {
+      return handleProfileTool(name, args as Record<string, unknown>);
+    }
 
-  // Training data tools (LLM ↔ LSE)
-  if (name === 'generate_training_data') {
-    return handleTrainingDataTool(name, args as Record<string, unknown>);
-  }
+    // Compilation service tools
+    if (
+      name === 'compile_hyperscript' ||
+      name === 'validate_and_compile' ||
+      name === 'translate_code' ||
+      name === 'generate_tests' ||
+      name === 'generate_component' ||
+      name === 'diff_behaviors'
+    ) {
+      return handleCompilationTool(name, args as Record<string, unknown>);
+    }
 
-  // Feedback loop tools (LLM ↔ LSE)
-  if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
-    return handleFeedbackTool(name, args as Record<string, unknown>);
-  }
+    // Cross-domain dispatcher tools
+    if (
+      name === 'detect_domain' ||
+      name === 'parse_composite' ||
+      name === 'compile_auto' ||
+      name === 'compile_composite'
+    ) {
+      return handleDispatcherTool(name, args as Record<string, unknown>, registry);
+    }
 
-  // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE, plus the LSE 2.0
-  // LLM-native tools — all five are defined in lsePipelineTools and handled by
-  // handleLsePipelineTool; the last three were advertised but unrouted here.)
-  if (
-    name === 'lse_from_hyperscript' ||
-    name === 'lse_to_hyperscript' ||
-    name === 'execute_lse' ||
-    name === 'validate_lse' ||
-    name === 'translate_lse'
-  ) {
-    return handleLsePipelineTool(name, args as Record<string, unknown>);
-  }
+    // IR conversion tools (explicit ↔ JSON, protocol validation, envelopes)
+    if (
+      name === 'convert_format' ||
+      name === 'validate_explicit' ||
+      name === 'validate_protocol' ||
+      name === 'to_envelope' ||
+      name === 'from_envelope'
+    ) {
+      return handleIRTool(name, args as Record<string, unknown>);
+    }
 
-  // GRAIL tools (condition/affordance workflow)
-  if (name.startsWith('grail_')) {
-    return handleGrailTool(name, args as Record<string, unknown>);
-  }
+    // Domain tools — registry handles standard operations,
+    // extras handle multi-step/multi-line extensions
+    if (registry.canHandle(name)) {
+      const typedArgs = args as Record<string, unknown>;
 
-  // LSE correction tool (stateless generation + self-correction loop)
-  if (name === 'lse_generate_with_correction') {
-    return handleLseCorrectionTool(name, args as Record<string, unknown>);
-  }
+      // Multi-step BDD scenarios (comma/newline-separated)
+      if (name.endsWith('_bdd') && isMultiStepBDD(typedArgs)) {
+        return handleBDDMultiStep(name, typedArgs) as any;
+      }
 
-  // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
-  if (name.startsWith('get_')) {
-    return handlePatternTool(name, args as Record<string, unknown>);
-  }
+      // Multi-line BehaviorSpec scenarios (indented test blocks)
+      if (name.endsWith('_behaviorspec') && isMultiLineBehaviorSpec(typedArgs)) {
+        return handleBehaviorSpecMultiLine(name, typedArgs) as any;
+      }
 
-  return {
-    content: [{ type: 'text', text: `Unknown tool: ${name}` }],
-    isError: true,
-  };
-});
+      // Standard single-step: registry handles parse/compile/validate/translate
+      // Cast needed: MCPToolResponse uses readonly props vs SDK's mutable types
+      const result = await registry.handleToolCall(name, typedArgs);
+      if (result) return result as any;
+    }
 
-// =============================================================================
-// Prompt Handlers (Layer 2)
-// =============================================================================
+    // ServerBridge route tools
+    if (name === 'extract_routes' || name === 'generate_server_routes') {
+      return handleRouteTool(name, args as Record<string, unknown>);
+    }
 
-server.setRequestHandler(ListPromptsRequestSchema, async () => {
-  return {
-    prompts: [
-      ...getLLMPromptDefinitions(),
-      ...getDebugPromptDefinitions(),
-      ...getLSEPromptDefinitions(),
-    ],
-  };
-});
+    // MCP Sampling tools (Layer 3 — invoke Claude via client)
+    if (
+      name === 'ask_claude' ||
+      name === 'summarize_content' ||
+      name === 'analyze_content' ||
+      name === 'translate_content' ||
+      name === 'execute_llm'
+    ) {
+      return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
+    }
 
-server.setRequestHandler(GetPromptRequestSchema, async request => {
-  const { name, arguments: promptArgs } = request.params;
-  const typedArgs = (promptArgs ?? {}) as Record<string, string>;
+    // Debug tools (AI-assisted debugging)
+    if (name.startsWith('debug_')) {
+      return handleDebugTool(name, args as Record<string, unknown>);
+    }
 
-  if (isDebugPrompt(name)) {
-    return renderDebugPrompt(name, typedArgs);
-  }
-  if (isLSEPrompt(name)) {
-    return renderLSEPrompt(name, typedArgs);
-  }
-  return renderLLMPrompt(name, typedArgs);
-});
+    // Template inventory tools
+    if (name === 'scan_inventory' || name === 'query_inventory') {
+      return handleInventoryTool(name, args as Record<string, unknown>);
+    }
 
-// =============================================================================
-// Resource Handlers
-// =============================================================================
+    // Training data tools (LLM ↔ LSE)
+    if (name === 'generate_training_data') {
+      return handleTrainingDataTool(name, args as Record<string, unknown>);
+    }
 
-server.setRequestHandler(ListResourcesRequestSchema, async () => {
-  return { resources: listResources() };
-});
+    // Feedback loop tools (LLM ↔ LSE)
+    if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
+      return handleFeedbackTool(name, args as Record<string, unknown>);
+    }
 
-server.setRequestHandler(ReadResourceRequestSchema, async request => {
-  const { uri } = request.params;
-  return readResource(uri);
-});
+    // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE, plus the LSE 2.0
+    // LLM-native tools — all five are defined in lsePipelineTools and handled by
+    // handleLsePipelineTool; the last three were advertised but unrouted here.)
+    if (
+      name === 'lse_from_hyperscript' ||
+      name === 'lse_to_hyperscript' ||
+      name === 'execute_lse' ||
+      name === 'validate_lse' ||
+      name === 'translate_lse'
+    ) {
+      return handleLsePipelineTool(name, args as Record<string, unknown>);
+    }
+
+    // GRAIL tools (condition/affordance workflow)
+    if (name.startsWith('grail_')) {
+      return handleGrailTool(name, args as Record<string, unknown>);
+    }
+
+    // LSE correction tool (stateless generation + self-correction loop)
+    if (name === 'lse_generate_with_correction') {
+      return handleLseCorrectionTool(name, args as Record<string, unknown>);
+    }
+
+    // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
+    if (name.startsWith('get_')) {
+      return handlePatternTool(name, args as Record<string, unknown>);
+    }
+
+    return {
+      content: [{ type: 'text', text: `Unknown tool: ${name}` }],
+      isError: true,
+    };
+  });
+
+  // =============================================================================
+  // Prompt Handlers (Layer 2)
+  // =============================================================================
+
+  server.setRequestHandler('prompts/list', async () => {
+    return {
+      prompts: [
+        ...getLLMPromptDefinitions(),
+        ...getDebugPromptDefinitions(),
+        ...getLSEPromptDefinitions(),
+      ],
+    };
+  });
+
+  server.setRequestHandler('prompts/get', async request => {
+    const { name, arguments: promptArgs } = request.params;
+    const typedArgs = (promptArgs ?? {}) as Record<string, string>;
+
+    if (isDebugPrompt(name)) {
+      return renderDebugPrompt(name, typedArgs);
+    }
+    if (isLSEPrompt(name)) {
+      return renderLSEPrompt(name, typedArgs);
+    }
+    return renderLLMPrompt(name, typedArgs);
+  });
+
+  // =============================================================================
+  // Resource Handlers
+  // =============================================================================
+
+  server.setRequestHandler('resources/list', async () => {
+    return { resources: listResources() };
+  });
+
+  server.setRequestHandler('resources/read', async request => {
+    const { uri } = request.params;
+    return readResource(uri);
+  });
+
+  return server;
+}
 
 // =============================================================================
 // Server Startup
@@ -404,8 +421,12 @@ async function main() {
     );
   }
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  // serveStdio serves both protocol eras per connection: the stateless
+  // 2026-07-28 revision (server/discover, no handshake) and the legacy
+  // initialize dialect — legacy stays at its default 'serve' because current
+  // clients (including Claude Code) still connect via initialize, and the
+  // sampling tools only work on that era.
+  serveStdio(() => buildServer());
   console.error(`HyperFixi MCP server started (${freshnessSummary()})`);
 }
 

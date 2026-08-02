@@ -43,7 +43,7 @@
     "@lokascript/framework": "^2.10.0",
     "@lokascript/planner": "^2.10.0",
     "@lokascript/semantic": "^2.10.0",
-    "@modelcontextprotocol/sdk": "^1.25.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "yaml": "^2.8.3"
   },
   "peerDependencies": {

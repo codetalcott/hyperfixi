@@ -6,7 +6,7 @@
  * suggest appropriate breakpoint placements.
  */
 
-import type { Prompt, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Prompt, GetPromptResult } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Prompt Definitions

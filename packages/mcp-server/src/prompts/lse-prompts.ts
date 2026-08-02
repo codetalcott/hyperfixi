@@ -6,7 +6,7 @@
  * - lse_fix: Fix invalid LSE given diagnostics
  */
 
-import type { Prompt, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Prompt, GetPromptResult } from '@modelcontextprotocol/server';
 
 // =============================================================================
 // Prompt Definitions

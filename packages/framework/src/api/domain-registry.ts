@@ -117,7 +117,7 @@ export interface DomainDescriptor {
 }
 
 // =============================================================================
-// MCP Tool Types (minimal — compatible with @modelcontextprotocol/sdk)
+// MCP Tool Types (minimal — compatible with @modelcontextprotocol/server)
 // =============================================================================
 
 /**
