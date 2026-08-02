@@ -5,7 +5,7 @@
  * Compile, validate, translate, generate tests, and generate components.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // Lazy-import compilation service (resolved at first call)
 let servicePromise: Promise<any> | null = null;

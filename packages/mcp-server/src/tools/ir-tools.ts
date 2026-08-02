@@ -5,7 +5,7 @@
  * protocol JSON without full compilation. Uses @lokascript/framework/ir directly.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import type { SemanticNode } from '@lokascript/framework';
 import {
   parseExplicit,

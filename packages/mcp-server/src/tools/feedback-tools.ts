@@ -5,7 +5,7 @@
  * Provides LSE validation with structured feedback and pattern statistics.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import type { SchemaLookup, Diagnostic, CommandSchema } from '@lokascript/framework';
 
 export const feedbackTools: Tool[] = [

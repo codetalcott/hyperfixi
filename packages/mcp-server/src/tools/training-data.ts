@@ -5,7 +5,7 @@
  * Generates (natural_language, LSE) pairs from domain schemas.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 export const trainingDataTools: Tool[] = [
   {

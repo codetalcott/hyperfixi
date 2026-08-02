@@ -5,7 +5,7 @@
  * Supports 21 languages via @lokascript/semantic for multilingual assistance.
  */
 
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, Tool } from '@modelcontextprotocol/server';
 
 // Try to import ast-utils from core
 let astToolkit: any = null;
@@ -115,7 +115,7 @@ function getSemanticAnalyzer(): typeof cachedAnalyzer {
 // LSP Bridge Tool Definitions
 // ============================================================================
 
-export const lspBridgeTools = [
+export const lspBridgeTools: Tool[] = [
   {
     name: 'get_diagnostics',
     description:

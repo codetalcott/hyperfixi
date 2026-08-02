@@ -2,6 +2,15 @@
 
 MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **107 tools**, **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling, AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
+## Protocol Support
+
+Built on the MCP TypeScript SDK v2 (`@modelcontextprotocol/server`) and serves **both protocol eras** on every stdio connection:
+
+- **`2026-07-28` (stateless):** `server/discover` answered cold, `resultType` on every result, and cache hints (`ttlMs: 3600000`, `cacheScope: "public"`) on `tools/list`, `prompts/list`, `resources/list`, and `resources/read`.
+- **Legacy (`initialize` handshake):** current clients (Claude Code, Claude Desktop) connect this way; nothing changes for them.
+
+The five sampling tools (`ask_claude`, `summarize_content`, `analyze_content`, `translate_content`, `execute_llm`) depend on MCP sampling, which revision `2026-07-28` deprecates — they work on legacy-era connections whose client advertises the sampling capability and return a clear error elsewhere.
+
 ## Installation
 
 ### From Source

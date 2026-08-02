@@ -7,7 +7,7 @@
  * Wire-compatible with grail-domains (GRAIL spec §7).
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 import { jsonResponse, errorResponse, getString, getBoolean } from './utils.js';
 import { loadGrailConfig, findGrailYaml } from './grail-yaml-loader.js';
 import { GrailRegistry } from './grail-registry.js';

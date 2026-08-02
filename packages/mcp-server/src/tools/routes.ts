@@ -6,6 +6,7 @@
  * for Express, Hono, OpenAPI, Django, and FastAPI targets.
  */
 
+import type { Tool } from '@modelcontextprotocol/server';
 import { validateRequired, getString, getBoolean, jsonResponse, errorResponse } from './utils.js';
 
 // Lazy-loaded ServerBridge modules
@@ -37,7 +38,7 @@ async function getScanRoutes() {
 // Tool Definitions
 // =============================================================================
 
-export const routeTools = [
+export const routeTools: Tool[] = [
   {
     name: 'extract_routes',
     description:

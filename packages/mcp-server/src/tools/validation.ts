@@ -5,7 +5,7 @@
  * Supports 21 languages via @lokascript/semantic for multilingual validation.
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/server';
 
 // Import error fixes registry
 import {
