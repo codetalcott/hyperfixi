@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-jsx",
-  "version": "2.9.4",
+  "version": "2.10.0",
   "description": "Multilingual JSX DSL built on @lokascript/framework - proof of cross-domain generality",
   "type": "module",
   "sideEffects": false,
@@ -24,11 +24,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.9.4",
-    "@lokascript/semantic": "^2.9.4"
+    "@lokascript/framework": "^2.10.0",
+    "@lokascript/semantic": "^2.10.0"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.9.4",
+    "@lokascript/domain-toolkit": "^2.10.0",
     "@types/node": "^26.1.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
