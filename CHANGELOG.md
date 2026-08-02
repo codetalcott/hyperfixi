@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-08-01
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v2.10.0).
+
+Highlights: `swap`/`process`/`morph … using view transition` across all 24
+languages (#870, #873, #875), typed command registration (#869, #871),
+`tell`/`process` parser fixes (#861, #872), the R1 role-fidelity burn-down
+(#864, #867, #868, #874, #878), and guards for the remaining hand-maintained
+CI package lists (#862, #865).
+
+## [2.9.0] - 2026-07-25
+
+> **Gap note:** 2.9.1 through 2.9.4 shipped without entries in this file; their
+> details live in [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+
 ### ⚠ BREAKING (types)
 
 - **Domain renderers return `string | null`.** `renderSQL`, `renderJSX`, `renderTodo`,
@@ -379,7 +394,12 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/codetalcott/hyperfixi/compare/v2.9.0...v2.10.0
+[2.9.0]: https://github.com/codetalcott/hyperfixi/compare/v2.8.0...v2.9.0
+[2.8.0]: https://github.com/codetalcott/hyperfixi/compare/v2.5.1...v2.8.0
+[2.5.1]: https://github.com/codetalcott/hyperfixi/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/codetalcott/hyperfixi/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/codetalcott/hyperfixi/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/codetalcott/hyperfixi/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/codetalcott/hyperfixi/compare/v2.2.1...v2.3.0
