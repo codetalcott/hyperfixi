@@ -31,6 +31,7 @@ import type { RuntimeHooks } from '../types/hooks';
 import type { SemanticAnalyzerInterface } from '../parser/types';
 import { createSemanticAdapter } from '../parser/semantic-integration';
 import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
+import { VERSION } from '../version';
 import {
   parseSemantic,
   isLanguageRegistered,
@@ -782,11 +783,13 @@ function createRuntimeInstance(options?: RuntimeOptions): Runtime {
 }
 
 /**
- * Get the current version of hyperfixi
+ * Get the current version of hyperfixi.
+ *
+ * Sourced from the generated `src/version.ts`, which `scripts/set-version.cjs`
+ * rewrites on every release bump.
  */
 function getVersion(): string {
-  // TODO: Inject during build via rollup replace plugin
-  return '2.0.0';
+  return VERSION;
 }
 
 // ============================================================================
