@@ -1,3 +1,0 @@
-// @lokascript/developer-tools has been renamed to @hyperfixi/developer-tools
-// This package is a backward-compatibility stub. Install @hyperfixi/developer-tools directly.
-module.exports = require('@hyperfixi/developer-tools');
