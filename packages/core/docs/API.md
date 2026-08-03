@@ -27,7 +27,7 @@ Complete API documentation for LokaScript.
 The main LokaScript API object providing all core functionality.
 
 ```typescript
-import { hyperscript } from 'lokascript';
+import { hyperscript } from '@hyperfixi/core';
 ```
 
 ### API v2 Methods (Recommended)

@@ -275,7 +275,7 @@ Update your imports to include new v2 types:
 **v1:**
 
 ```typescript
-import { hyperscript, type CompilationResult, type ExecutionContext } from 'lokascript';
+import { hyperscript, type CompilationResult, type ExecutionContext } from '@hyperfixi/core';
 ```
 
 **v2:**
@@ -290,7 +290,7 @@ import {
   type ExecutionContext,
   // Legacy types still available for gradual migration
   type CompilationResult,
-} from 'lokascript';
+} from '@hyperfixi/core';
 ```
 
 ## Deprecation Timeline

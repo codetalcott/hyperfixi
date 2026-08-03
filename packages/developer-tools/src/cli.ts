@@ -18,13 +18,16 @@ import { startDevServer } from './dev-server';
 import { buildProject } from './builder';
 import { InventoryServer, extractSnippetsFromProject } from './inventory';
 import type { ScaffoldOptions, ProjectConfig } from './types';
+import { VERSION } from './version';
 
 const program = new Command();
 
 /**
- * CLI version and info
+ * CLI version and info. `VERSION` comes from the generated `src/version.ts`,
+ * which `scripts/set-version.cjs` rewrites on every release bump — the literal
+ * that used to sit here read '0.1.0' against a published 2.10.0.
  */
-program.name('hyperfixi').alias('hfx').description('HyperFixi Developer Tools').version('0.1.0');
+program.name('hyperfixi').alias('hfx').description('HyperFixi Developer Tools').version(VERSION);
 
 /**
  * Create new project command
