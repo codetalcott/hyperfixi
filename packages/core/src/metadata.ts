@@ -17,6 +17,7 @@
  */
 
 import { COMMAND_NAMES } from './commands/manifest';
+import { VERSION } from './version';
 
 /**
  * The number of commands the default runtime registers — derived, never typed.
@@ -44,9 +45,11 @@ const FULL_RUNTIME_COMMAND_COUNT = COMMAND_NAMES.length;
  */
 export const packageInfo = {
   name: '@hyperfixi/core',
-  // Keep in sync with package.json manually — set-version.cjs does not touch
-  // this file (post-release queue: derive from package.json at build time).
-  version: '2.7.2',
+  // Derived, never typed — `set-version.cjs` rewrites `src/version.ts` on every
+  // release bump. This was hand-maintained until 2026-08-03 and had drifted
+  // three minors (2.7.2 vs a published 2.10.0); nothing read it, so nothing
+  // caught it.
+  version: VERSION,
   description: 'Modern hyperscript engine with fixi/htmx integration',
   compatibility: '~85% official _hyperscript',
   languages: 24,

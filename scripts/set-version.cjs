@@ -100,6 +100,39 @@ try {
   errors++;
 }
 
+// Regenerate the single source of truth for each RUNTIME-reported version.
+// Without this, `hyperscript.version` / `lokascript.version` /
+// `packageInfo.version` / `hyperfixi --version` are hand-maintained literals
+// that drift silently — before this step existed they reported 2.0.0, 2.7.2 and
+// 0.1.0 respectively, against a published 2.10.0.
+//
+// Adding a package here needs a matching `src/version.ts` with a single
+// `export const VERSION = '...';` line; the replace below is anchored to that
+// exact shape and fails loudly rather than silently no-op'ing if it moves.
+const GENERATED_VERSION_FILES = [
+  'packages/core/src/version.ts',
+  'packages/developer-tools/src/version.ts',
+];
+
+GENERATED_VERSION_FILES.forEach(relPath => {
+  const versionTsPath = path.join(__dirname, '..', relPath);
+  try {
+    const existing = fs.readFileSync(versionTsPath, 'utf8');
+    const next = existing.replace(
+      /^export const VERSION = '[^']*';$/m,
+      `export const VERSION = '${version}';`
+    );
+    if (next === existing && !existing.includes(`export const VERSION = '${version}';`)) {
+      throw new Error(`VERSION export not found — did ${relPath} change shape?`);
+    }
+    fs.writeFileSync(versionTsPath, next);
+    console.log(`✅ ${relPath}: → ${version}`);
+  } catch (err) {
+    console.error(`❌ ${relPath}: ${err.message}`);
+    errors++;
+  }
+});
+
 // Keep lerna.json in sync (fixed-mode lerna). Skip while it is still on
 // "independent" — that flip is a deliberate one-time change, not ours to make.
 const lernaPath = path.join(__dirname, '../lerna.json');
