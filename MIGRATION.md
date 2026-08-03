@@ -173,9 +173,11 @@ window.lokascript.execute(...)  // Shows deprecation warning
 window.hyperfixi.execute(...)   // No warning
 ```
 
-### npm Stub Packages
+### npm Stub Packages — retracted (2026-08-03)
 
-The old `@lokascript/*` engine package names will be published as v2.0.0 stubs that re-export from the new `@hyperfixi/*` packages. If you install `@lokascript/core@2`, you'll get a thin wrapper around `@hyperfixi/core`.
+Earlier revisions of this guide promised the old `@lokascript/*` engine package names would be republished as v2.0.0 stubs re-exporting from `@hyperfixi/*`. **That will not happen.** By the time the stubs could ship, the migration window had closed — the stranded names see only registry-scanner background traffic (~30 downloads/month, uniform across names) versus thousands on the `@hyperfixi/*` homes — and a silently-working wrapper would keep dead names accumulating new code forever, while forwarding only the main entry (none of `@hyperfixi/core`'s dozens of subpath exports).
+
+Instead, the four `@lokascript/*` engine names that were ever published (`core`, `vite-plugin`, `mcp-server`, `patterns-reference`) are deprecated on npm with pointer messages naming their `@hyperfixi/*` replacement. If you still depend on one, switch the package name — the API at the time of the rename was identical. Full rationale: `stubs/README.md`.
 
 ## Why the Rename?
 
