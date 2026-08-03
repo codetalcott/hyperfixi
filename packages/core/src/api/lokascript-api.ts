@@ -4,7 +4,7 @@
  * This is the PRIMARY PUBLIC API for LokaScript's multilingual scripting language.
  *
  * Etymology: "loka" (Sanskrit/Indo-European: "world/realm/universe")
- * Reflects the multilingual scope - a scripting language that adapts to 23 different
+ * Reflects the multilingual scope - a scripting language that adapts to 24 different
  * linguistic structures (SOV, VSO, SVO word orders).
  *
  * ARCHITECTURE NOTE:
@@ -28,7 +28,7 @@ import type { HyperscriptAPI } from './hyperscript-api.js';
  * Main lokascript API
  *
  * Provides a clean, type-safe public interface for lokascript compilation and execution
- * across 23 languages with SOV/VSO/SVO grammar transformation.
+ * across 24 languages with SOV/VSO/SVO grammar transformation.
  */
 export const lokascript = hyperscript;
 

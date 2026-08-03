@@ -4,7 +4,21 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { hyperscript } from './hyperscript-api';
+import { lokascript } from './lokascript-api';
+import { packageInfo } from '../metadata';
+
+// Anchored to this file, not to `process.cwd()`, so the check holds however the
+// suite is invoked. Two traps here:
+//   - `fileURLToPath(new URL(rel, import.meta.url))` throws
+//     ERR_INVALID_URL_SCHEME under happy-dom, whose `URL` shim is not the Node
+//     URL that fileURLToPath expects — so convert the string first, then join.
+//   - importing `../../package.json` instead trips TS6307, since package.json
+//     sits outside this project's `include` (["src/**/*", "vitest.config.ts"]).
+const CORE_PACKAGE_JSON = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
 describe('Hyperscript Public API', () => {
   let mockElement: HTMLElement;
@@ -31,8 +45,19 @@ describe('Hyperscript Public API', () => {
       expect(typeof hyperscript.createRuntime).toBe('function');
     });
 
-    it('should have a version string', () => {
-      expect(hyperscript.version).toMatch(/^\d+\.\d+\.\d+/);
+    // This assertion is deliberately an EQUALITY check, not a shape check.
+    // It used to be `toMatch(/^\d+\.\d+\.\d+/)`, which a stale hardcoded literal
+    // satisfies forever — and did, for five minor releases: `getVersion()`
+    // returned '2.0.0' against a published 2.10.0, and `packageInfo.version`
+    // sat three minors behind at '2.7.2'. A shape check on a version string
+    // tests nothing; the value is the whole point.
+    it('reports the real package version on every surface that exposes one', () => {
+      const declared = JSON.parse(readFileSync(CORE_PACKAGE_JSON, 'utf8')).version as string;
+
+      expect(declared).toMatch(/^\d+\.\d+\.\d+/);
+      expect(hyperscript.version).toBe(declared);
+      expect(lokascript.version).toBe(declared);
+      expect(packageInfo.version).toBe(declared);
     });
 
     it('exposes getDefaultRuntime as an idempotent forcing constructor', () => {
