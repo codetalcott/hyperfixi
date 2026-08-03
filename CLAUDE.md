@@ -837,7 +837,7 @@ hyperfixi.semanticDebug.getStats(); // { totalParses, semanticSuccesses, semanti
 ### API v2 (Recommended)
 
 ```javascript
-import { hyperscript } from 'hyperfixi';
+import { hyperscript } from '@hyperfixi/core';
 
 const result = hyperscript.compileSync('toggle .active'); // CompileResult { ok, errors, meta }
 await hyperscript.eval('add .clicked to me', element); // compile + execute

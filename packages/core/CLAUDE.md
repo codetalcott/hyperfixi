@@ -118,7 +118,7 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 ## API v2 (Recommended)
 
 ```javascript
-import { hyperscript } from 'hyperfixi';
+import { hyperscript } from '@hyperfixi/core';
 
 // Compile (sync)
 const result = hyperscript.compileSync('toggle .active');
