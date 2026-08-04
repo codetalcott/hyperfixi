@@ -52,18 +52,18 @@
   "dependencies": {
     "@hyperfixi/core": "^2.10.0",
     "@rollup/plugin-terser": "^1.0.0",
-    "acorn": "^8.17.0",
+    "acorn": "^8.18.0",
     "acorn-walk": "^8.2.0",
     "esbuild": "^0.28.0",
-    "fs-extra": "^11.3.6",
+    "fs-extra": "^11.4.0",
     "glob": "^13.0.6",
-    "happy-dom": "^20.10.6",
+    "happy-dom": "^20.11.1",
     "magic-string": "^1.1.0",
-    "rollup": "^4.62.2",
+    "rollup": "^4.62.3",
     "semver": "^7.8.5",
-    "source-map": "^0.7.4",
+    "source-map": "^0.8.0",
     "terser": "^5.49.0",
-    "vite": "^8.1.4"
+    "vite": "^8.2.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.0",
