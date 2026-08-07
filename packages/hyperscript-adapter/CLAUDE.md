@@ -17,8 +17,9 @@ src/
 ├── browser-lite.ts       # Lite browser entry — expects external semantic global
 ├── plugin.ts             # _hyperscript.use() plugin factory + standalone preprocess()
 ├── slim-plugin.ts        # Slim plugin factory (imports from semantic/core)
-├── preprocessor.ts       # Semantic translation with confidence gating (full)
-├── slim-preprocessor.ts  # Slim preprocessor (imports from semantic/core + custom renderer)
+├── preprocessor-core.ts  # Shared skeleton: strategies, then-splitting, prefix-stripping
+├── preprocessor.ts       # Full path: parseSemantic + render('en') + translate() rescue
+├── slim-preprocessor.ts  # Slim path: parseWithConfidence + custom renderer (semantic/core)
 ├── hyperscript-renderer.ts  # Custom English renderer — no English lang data needed
 ├── attribute-translator.ts  # The runtime seam: addBeforeProcessHook installer
 ├── language-resolver.ts  # Lang cascade: data-* overrides → closest [lang] → document (matches htmx-adapter's langOf)
@@ -38,6 +39,10 @@ test/
 ├── language-resolver.test.ts  # DOM attribute resolution
 ├── plugin.test.ts             # Plugin registration, warn-once, serialize→reparse behavior
 ├── attribute-translator.test.ts  # Hook seam: WeakSet idempotency, zero DOM mutation
+├── parity-harness.ts          # Shared parity corpus (no preprocessor imports — see file doc)
+├── preprocessor-parity.full.test.ts  # Full path vs committed snapshot
+├── preprocessor-parity.slim.test.ts  # Slim path vs committed snapshot (own module graph)
+├── fixtures/preprocessor-parity.json # Snapshot: both paths' outputs + divergence set
 ├── derive-syntax.test.ts      # Drift gate: generated syntax-table vs schemas
 └── browser/                   # Playwright e2e against the REAL _hyperscript runtime
     ├── adapter.spec.ts        # Localized toggles/add/put/remove across 8 languages + inheritance
@@ -51,7 +56,7 @@ demo/
 
 ```bash
 npm run typecheck          # TypeScript validation
-npm run test:run           # Vitest (221 tests, jsdom environment)
+npm run test:run           # Vitest (316 tests, jsdom environment)
 npm run test:browser       # Playwright e2e vs real vendored _hyperscript (build dist first)
 npm run build              # ESM + CJS + browser IIFEs (prebuild regenerates syntax-table)
 npm run generate:syntax    # Regenerate src/generated/syntax-table.ts after schema changes
@@ -65,7 +70,7 @@ The e2e suite serves the repo root on port **3010** (core's Playwright uses
 
 - **Preprocessor, not AST mapping**: \_hyperscript AST nodes are closure objects tightly coupled to the parser — reproducing them from semantic data would mean reimplementing every command parser
 - **Custom English renderer**: Per-language bundles use `hyperscript-renderer.ts` to render SemanticNodes to English \_hyperscript strings without needing English language data (tokenizer, profile, patterns), saving ~26 KB per bundle
-- **Two preprocessor paths**: `preprocessor.ts` (full, imports `@lokascript/semantic`) for the all-language bundle; `slim-preprocessor.ts` (imports `@lokascript/semantic/core` + custom renderer) for per-language bundles. Known divergence risk: the two paths render through different renderers and share no parity test yet
+- **Two preprocessor paths, one skeleton**: the strategy/split/strip logic lives once in `preprocessor-core.ts`; `preprocessor.ts` (full, `@lokascript/semantic`) and `slim-preprocessor.ts` (`…/core` + custom renderer) inject only their parse/render hooks. The paths still legitimately differ — full has the rich handcrafted-pattern builder and a `translate()` rescue; slim's schema-only generator currently loses 5 corpus rows (zh `切换` toggle, `set` in es/zh) — and that divergence set is COMMITTED DATA in the parity ratchet (`test/preprocessor-parity.*.test.ts` + `fixtures/preprocessor-parity.json`, regenerated via `scripts/generate-parity-fixture.ts`). Two test FILES on purpose: the paths wire different pattern generators into the registry, and under vitest's shared-src aliases one file = one module graph = one registry, so importing both chains together lets whichever wires last silently reconfigure the other (measured — the full path lost exactly the handcrafted rows)
 - **Confidence gating**: semantic analysis below threshold falls through to original text, avoiding bad translations. This also makes re-processing safe: already-translated English fed back through translation is an identity no-op
 - **WeakSet idempotency, zero DOM mutation**: the attribute translator tracks processed elements in a module-level `WeakSet` instead of stamping a marker attribute — devtools/serialization show exactly what the author wrote. A serialize→reparse round-trip produces new elements that are re-processed, which the confidence gate makes harmless (tested)
 - **Warn once per language**: an unchanged translation is often legitimate (canonical-English hyperscript under a non-en lang scope), so the full plugin warns once per language per page load (mirroring htmx-adapter's `warnMissingLangOnce`); `{ debug: true }` gives per-element detail. `resetTranslationWarnings()` resets the once-state (mainly for tests)
