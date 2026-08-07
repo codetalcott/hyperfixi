@@ -266,5 +266,13 @@
   {
     "key": "V4|ja|として",
     "reason": "Arc F round 2 / Phase F: `として` (\"as/qua\") is `open.style`'s ja markerOverride — the same word `fetch.responseType` already ships for ja, and it becomes reportable only because `open` is now a second site. Same mechanism class as every other V4 waiver here: pattern literals are consumed by raw token.value before kind, so the identifier classification does not stop the capture. Unlike most of them this one is not probe-only — `packages/semantic/test/hyphenated-word-values.test.ts` runs `translate(en→ja)` → `parse(ja)` for both `modal` and `non-modal` and asserts the action, the target AND the variant; removing the marker fails it (measured: ja renders `modal で #dlg を 開く`, whose `で` is also ja's EVENT marker, and the line parses as `on modal`)."
+  },
+  {
+    "key": "V4|zh|為",
+    "reason": "Adapter-residuals Item A probe: set.patient markerVariants zh — traditional spelling of 为, accepted by handcrafted set-zh-full for years; pattern literals match by raw token.value (kind-independent), and `设置 x 為 5` captures destination=x patient=5 on the schema-generated pattern (probed on the slim chain)."
+  },
+  {
+    "key": "V4|zh|成",
+    "reason": "Adapter-residuals Item A probe: set.patient markerVariants zh — resultative value marker, accepted by handcrafted set-zh-full for years; `设置 x 成 5` captures destination=x patient=5 on the schema-generated pattern (probed on the slim chain)."
   }
 ]

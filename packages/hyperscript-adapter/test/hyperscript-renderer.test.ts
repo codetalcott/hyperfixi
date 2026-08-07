@@ -203,6 +203,46 @@ describe('renderToHyperscript', () => {
       expect(renderToHyperscript(node)).toBe('on click toggle .active');
     });
 
+    // The slim parser produces event literals WITH dataType: 'string'
+    // (`{type:'literal', value:'click', dataType:'string'}`), which
+    // renderValue would wrap in quotes — and `on "click"` is a hard parse
+    // error on the real engine ("Expected event name"). Event names are
+    // identifiers, never quoted; colon-qualified names included.
+    it('renders a string-typed event literal bare, not quoted', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        action: 'on' as any,
+        roles: new Map([['event', lit('click', 'string')]]) as any,
+        body: [cmd('toggle', [['patient', sel('.active')]])],
+      } as EventHandlerSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('on click toggle .active');
+    });
+
+    it('renders a colon-qualified string-typed event name bare', () => {
+      const node: EventHandlerSemanticNode = {
+        kind: 'event-handler',
+        action: 'on' as any,
+        roles: new Map([['event', lit('draggable:start', 'string')]]) as any,
+        body: [cmd('add', [['patient', sel('.dragging')]])],
+      } as EventHandlerSemanticNode;
+
+      expect(renderToHyperscript(node)).toBe('on draggable:start add .dragging');
+    });
+
+    // NOTE the string-content exception semantic's renderer carries
+    // (`add "<p>Line</p>" to me` keeps the destination) is deliberately NOT
+    // mirrored yet — see the KNOWN GAP comment at the suppression site in
+    // hyperscript-renderer.ts: alone, it converts the es repeat parity row
+    // from a safe host-validate fallback into a committed infinite loop.
+    it('still suppresses `to me` for a class patient', () => {
+      const node = cmd('add', [
+        ['patient', sel('.active')],
+        ['destination', { type: 'reference', value: 'me' } as SemanticValue],
+      ]);
+      expect(renderToHyperscript(node)).toBe('add .active');
+    });
+
     it('renders on click with source', () => {
       const node: EventHandlerSemanticNode = {
         kind: 'event-handler',

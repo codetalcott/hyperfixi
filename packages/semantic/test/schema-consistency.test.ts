@@ -83,7 +83,7 @@ describe('Schema Consistency', () => {
     const EXPECTED: Record<string, { languages: string[]; methodCarrier: string | null }> = {
       // synonyms — merged as alternatives
       'toggle.destination': { languages: ['ko'], methodCarrier: null },
-      'set.patient': { languages: ['tr'], methodCarrier: null },
+      'set.patient': { languages: ['tr', 'zh'], methodCarrier: null },
       'trigger.event': { languages: ['bn', 'hi', 'qu'], methodCarrier: null },
       'go.destination': { languages: ['zh'], methodCarrier: null },
       // meaning-bearing — held OUT of the merge; `into|before|after` → `method`

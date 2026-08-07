@@ -133,19 +133,23 @@ export function loadFixture(): FixtureRow[] {
   );
 }
 
-/** The rows where the two paths are KNOWN to disagree today: the slim
- *  path's schema-only pattern generator lacks the handcrafted patterns
- *  that cover zh `切换` toggle and the `set` command (bare and under event
- *  prefixes), and on the `repeat` row it also quotes the event name and
- *  drops the loop quantity + `to me` (`on "click" repeat add "<p>Line</p>"`
- *  — the only output in this corpus the real engine still rejects). Burn
- *  these down by closing the slim generator gap, then regenerate the
- *  fixture in the same change. */
+/** The rows where the two paths are KNOWN to disagree today. Five of the
+ *  original six (zh `切换` toggle, `set` in es/zh, bare and under event
+ *  prefixes) were burned down by fixing the set/toggle schema marker data
+ *  for es/zh — the generated patterns carried mandatory markers no real
+ *  input has (`establecer en x a 5`, `设置 在 x 把 5`, `切换 把`-only).
+ *
+ *  The one left is the es `repeat` row: the schema-generated event pattern
+ *  drops the loop quantity (`3 times`) and the slim SYNTAX render of
+ *  repeat is also wrong (renders only `quantity`/`condition`), so the slim
+ *  output is `on click repeat add "<p>Line</p>"` — engine-INVALID, which
+ *  the host-validate gate (#900) safely converts to a fallback. That
+ *  invalidity is currently a SAFETY property: a bare `repeat` is FOREVER,
+ *  so partially repairing the render (e.g. mirroring semantic's
+ *  string-content `to me` exception) without fixing quantity capture
+ *  would commit a valid infinite loop. The slim parity test pins the
+ *  row's output staying engine-invalid until the repeat surface is fixed
+ *  whole (capture + SYNTAX render + me-suppression exception together). */
 export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
-  ['zh', '切换 .active'],
-  ['es', 'establecer x a 5'],
-  ['zh', '设置 x 为 5'],
   ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
-  ['es', 'on every keyup establecer x a 5'],
-  ['es', "on keyup[key=='Enter'] establecer x a 1"],
 ];
