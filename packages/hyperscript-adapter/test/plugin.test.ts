@@ -1,5 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { hyperscriptI18n, preprocess } from '../src/plugin';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { hyperscriptI18n, preprocess, resetTranslationWarnings } from '../src/plugin';
+
+beforeEach(() => resetTranslationWarnings());
 
 // Mocks the _hyperscript.org host surface this plugin actually depends on:
 // addBeforeProcessHook (public), not internals.runtime.getScript — that's a
@@ -129,6 +131,100 @@ describe('hyperscriptI18n plugin', () => {
     hs.process(document.body);
     expect(elt.getAttribute('_')).toBe('toggle .active');
     elt.remove();
+  });
+
+  it('leaves no marker attribute on the DOM — the element reads as authored', () => {
+    const hs = createMockHyperscript();
+    hyperscriptI18n()(hs);
+
+    const elt = document.createElement('button');
+    elt.setAttribute('_', 'alternar .active');
+    elt.setAttribute('data-lang', 'es');
+    document.body.appendChild(elt);
+
+    hs.process(document.body);
+    expect(elt.getAttribute('_')).toBe('toggle .active');
+    expect(elt.getAttributeNames().sort()).toEqual(['_', 'data-lang']);
+    elt.remove();
+  });
+
+  it('stays correct after a serialize→reparse round-trip loses processed-set membership', () => {
+    const hs = createMockHyperscript();
+    hyperscriptI18n()(hs);
+
+    const container = document.createElement('div');
+    container.innerHTML = '<button _="alternar .active" data-lang="es"></button>';
+    document.body.appendChild(container);
+
+    hs.process(container);
+    expect(container.querySelector('button')!.getAttribute('_')).toBe('toggle .active');
+
+    // Serialize and reparse (as an hx-boost-style morph or template clone
+    // would): the WeakSet no longer knows the new element. Re-processing it
+    // feeds already-English text back through translation under lang="es" —
+    // which must be an identity no-op, not a mangle.
+    container.innerHTML = container.innerHTML;
+    hs.process(container);
+    expect(container.querySelector('button')!.getAttribute('_')).toBe('toggle .active');
+    container.remove();
+  });
+});
+
+describe('unchanged-translation warnings', () => {
+  // Garbled inputs at threshold 1.0 reliably produce unchanged output
+  // (same technique as preprocessor.test.ts's confidence-fallback case).
+  const OPTS = { confidenceThreshold: 1.0 };
+
+  function addGarbage(lang: string, src: string): Element {
+    const elt = document.createElement('button');
+    elt.setAttribute('_', src);
+    elt.setAttribute('data-lang', lang);
+    document.body.appendChild(elt);
+    return elt;
+  }
+
+  it('warns once per language, not per element', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const hs = createMockHyperscript();
+    hyperscriptI18n(OPTS)(hs);
+
+    const a = addGarbage('es', 'xyz abc 123');
+    const b = addGarbage('es', 'qrs tuv 789');
+    hs.process(document.body);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('lang="es"'));
+
+    // A different language still gets its own (single) warning.
+    const c = addGarbage('ja', 'xyz abc 123');
+    hs.process(document.body);
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenLastCalledWith(expect.stringContaining('lang="ja"'));
+
+    warnSpy.mockRestore();
+    a.remove();
+    b.remove();
+    c.remove();
+  });
+
+  it('debug mode logs per element and never warns', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const hs = createMockHyperscript();
+    hyperscriptI18n({ ...OPTS, debug: true })(hs);
+
+    const a = addGarbage('es', 'xyz abc 123');
+    const b = addGarbage('es', 'qrs tuv 789');
+    hs.process(document.body);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    const unchangedLogs = logSpy.mock.calls.filter(c => String(c[0]).includes('unchanged'));
+    expect(unchangedLogs).toHaveLength(2);
+
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
+    a.remove();
+    b.remove();
   });
 });
 

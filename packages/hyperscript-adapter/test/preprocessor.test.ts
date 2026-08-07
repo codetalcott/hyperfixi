@@ -150,6 +150,17 @@ describe('preprocessToEnglish', () => {
       });
       expect(result).toBe('xyz abc 123');
     });
+
+    it('falls back to the original even with fallbackToOriginal: false (deprecated, inert)', () => {
+      // The option never did anything — the string contract leaves nothing
+      // else to return on failure. Pin that so removing the dead branch is
+      // provably behavior-preserving, and so the deprecation stays honest.
+      const result = preprocessToEnglish('xyz abc 123', 'es', {
+        confidenceThreshold: 1.0,
+        fallbackToOriginal: false,
+      });
+      expect(result).toBe('xyz abc 123');
+    });
   });
 
   describe('all-languages smoke test', () => {

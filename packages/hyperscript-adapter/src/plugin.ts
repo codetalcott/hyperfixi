@@ -18,6 +18,30 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
   debug?: boolean;
 }
 
+/** Languages already warned about an unchanged translation this page load.
+ *  Unchanged output is common and often legitimate (canonical-English
+ *  hyperscript under a non-en lang scope), so warning per element per
+ *  processNode was pure noise — mirror htmx-adapter's warn-once-per-lang
+ *  convention and leave per-element detail to `debug: true`. */
+const warnedUnchangedLang = new Set<string>();
+
+/** Reset the warn-once state. Mainly for tests. */
+export function resetTranslationWarnings(): void {
+  warnedUnchangedLang.clear();
+}
+
+function warnUnchangedOnce(lang: string, src: string): void {
+  if (warnedUnchangedLang.has(lang)) return;
+  warnedUnchangedLang.add(lang);
+  console.warn(
+    `[hyperscript-i18n] Translation unchanged for lang="${lang}": "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
+      'This is fine if the source is already canonical English; otherwise the input may not match ' +
+      'any known pattern, or the language may not be registered. Original text is passed to ' +
+      '_hyperscript as-is. Further elements in this language stay quiet — enable { debug: true } ' +
+      'for per-element detail.'
+  );
+}
+
 /**
  * Create a _hyperscript plugin that enables multilingual hyperscript.
  *
@@ -49,13 +73,10 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
         if (options.debug) {
           console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
         }
+      } else if (options.debug) {
+        console.log(`[hyperscript-i18n] ${lang}: unchanged "${src}"`);
       } else {
-        // Translation produced no change — likely a failure
-        console.warn(
-          `[hyperscript-i18n] Translation unchanged for lang="${lang}": "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
-            'The input may not match any known pattern, or the language may not be registered. ' +
-            'Original text will be passed to _hyperscript as-is.'
-        );
+        warnUnchangedOnce(lang, src);
       }
 
       return english;

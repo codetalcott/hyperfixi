@@ -25,7 +25,6 @@ const DEFAULT_THRESHOLD = 0.5;
 const DEFAULT_CONFIG: PreprocessorConfig = {
   confidenceThreshold: DEFAULT_THRESHOLD,
   strategy: 'semantic',
-  fallbackToOriginal: true,
 };
 
 function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {

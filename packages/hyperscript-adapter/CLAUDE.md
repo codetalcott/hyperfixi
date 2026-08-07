@@ -36,7 +36,8 @@ test/
 ├── slim-preprocessor.test.ts  # Per-language bundle path integration
 ├── hyperscript-renderer.test.ts  # Custom renderer unit tests
 ├── language-resolver.test.ts  # DOM attribute resolution
-├── plugin.test.ts             # Plugin registration and behavior
+├── plugin.test.ts             # Plugin registration, warn-once, serialize→reparse behavior
+├── attribute-translator.test.ts  # Hook seam: WeakSet idempotency, zero DOM mutation
 ├── derive-syntax.test.ts      # Drift gate: generated syntax-table vs schemas
 └── browser/                   # Playwright e2e against the REAL _hyperscript runtime
     ├── adapter.spec.ts        # Localized toggles/add/put/remove across 8 languages + inheritance
@@ -50,7 +51,7 @@ demo/
 
 ```bash
 npm run typecheck          # TypeScript validation
-npm run test:run           # Vitest (209 tests, jsdom environment)
+npm run test:run           # Vitest (221 tests, jsdom environment)
 npm run test:browser       # Playwright e2e vs real vendored _hyperscript (build dist first)
 npm run build              # ESM + CJS + browser IIFEs (prebuild regenerates syntax-table)
 npm run generate:syntax    # Regenerate src/generated/syntax-table.ts after schema changes
@@ -65,7 +66,10 @@ The e2e suite serves the repo root on port **3010** (core's Playwright uses
 - **Preprocessor, not AST mapping**: \_hyperscript AST nodes are closure objects tightly coupled to the parser — reproducing them from semantic data would mean reimplementing every command parser
 - **Custom English renderer**: Per-language bundles use `hyperscript-renderer.ts` to render SemanticNodes to English \_hyperscript strings without needing English language data (tokenizer, profile, patterns), saving ~26 KB per bundle
 - **Two preprocessor paths**: `preprocessor.ts` (full, imports `@lokascript/semantic`) for the all-language bundle; `slim-preprocessor.ts` (imports `@lokascript/semantic/core` + custom renderer) for per-language bundles. Known divergence risk: the two paths render through different renderers and share no parity test yet
-- **Confidence gating**: semantic analysis below threshold falls through to original text, avoiding bad translations
+- **Confidence gating**: semantic analysis below threshold falls through to original text, avoiding bad translations. This also makes re-processing safe: already-translated English fed back through translation is an identity no-op
+- **WeakSet idempotency, zero DOM mutation**: the attribute translator tracks processed elements in a module-level `WeakSet` instead of stamping a marker attribute — devtools/serialization show exactly what the author wrote. A serialize→reparse round-trip produces new elements that are re-processed, which the confidence gate makes harmless (tested)
+- **Warn once per language**: an unchanged translation is often legitimate (canonical-English hyperscript under a non-en lang scope), so the full plugin warns once per language per page load (mirroring htmx-adapter's `warnMissingLangOnce`); `{ debug: true }` gives per-element detail. `resetTranslationWarnings()` resets the once-state (mainly for tests)
+- **`fallbackToOriginal` is deprecated and inert**: it never did anything — the preprocessor's string contract always returns the original source on failure. Kept in the type for compile compatibility; ignored at runtime
 - **Generated SYNTAX table**: `src/generated/syntax-table.ts` derives from semantic's command schemas (`derive-syntax.test.ts` is the drift gate). Trap: the file is tracked but matches `.gitignore`, so restaging needs `git add -f` and that commit `--no-verify` (root CLAUDE.md, gate #2)
 - **Bundle sizes (2026-08-06, minified/gzipped)**: full ~975/197 KB, per-language ~250–270/~68 KB, lite ~3/1.3 KB (expects an external semantic global)
 
