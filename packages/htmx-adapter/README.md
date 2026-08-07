@@ -61,9 +61,13 @@ Guarantees, mirroring loka-js where the mechanism allows:
   the author wrote. Two documented exceptions: an author-written canonical
   `hx-trigger` whose _value_ uses localized event names (`hx-trigger="clic"`)
   is translated in place (idempotently), since there is no separate canonical
-  target; and canonical-named `hx-on:*` attrs are removed in opt-in executor
-  mode (see below), since htmx would otherwise JS-eval their hyperscript
-  bodies.
+  target; and in opt-in executor mode on htmx **v2**, canonical-named
+  `hx-on:*` attrs are removed, since htmx would otherwise JS-eval their
+  hyperscript bodies. On htmx **v4** even that exception disappears: the
+  extension cancels the node's `htmx:before:on:init` instead, so claimed
+  `hx-on:*` attrs stay authored-verbatim (the removal survives only as a
+  per-node fallback when the element also carries the legacy composite
+  `hx-on="…"` or a `data-hx-on*` spelling, which only htmx can bind).
 - **An existing canonical attribute always wins** — `hx-get` is never
   overwritten by `hx-obtener`.
 - **No vocab loaded → no-op.** Stock htmx pages pay nothing.
@@ -141,10 +145,16 @@ reliable detection):
   unchanged.
 - **Localized-named attrs** (`hx-en:clic`) stay verbatim in the DOM and get
   no canonical sibling — htmx never recognized them anyway.
-- **Canonical-named attrs** (`hx-on:click`) are **removed** after claiming —
-  the second (and last) documented exception to the never-mutate rule: left
-  in place, htmx would eval the hyperscript body as JS, giving a console
-  error plus a double-execution attempt on every fire.
+- **Canonical-named attrs** (`hx-on:click`) must be kept away from htmx's own
+  binder — left bound, htmx would eval the hyperscript body as JS, giving a
+  console error plus a double-execution attempt on every fire. On htmx **v4**
+  this costs no mutation: the extension cancels the node's cancelable
+  `htmx:before:on:init` hook and the authored attribute stays in the DOM. On
+  htmx **v2** (no such hook) the attr is **removed** after claiming — the
+  second documented exception to the never-mutate rule. The removal also
+  remains as a v4 per-node fallback when the element mixes claimed colon-form
+  attrs with the legacy composite `hx-on="event -> code"` (or `data-hx-on*`)
+  forms, which the adapter never claims and htmx must still bind.
 - The `hx-on::after-swap` shorthand maps to the `htmx:` event namespace and
   works unchanged (the listener hears htmx's real CustomEvents).
 - Re-sweeps never stack duplicate listeners (claims are keyed per element by

@@ -20,13 +20,25 @@
   </head>
   <body>
     <!-- English hyperscript body under a canonical name, in an explicit
-         en scope (the page is lang="es"): executor mode must claim it
-         (attribute removed) or htmx v4 evals it as JS — and must NOT
-         route an en-scope body through the translator. -->
+         en scope (the page is lang="es"): executor mode must claim it and
+         keep htmx v4 from JS-evaling it — on v4 via the cancelable
+         before:on:init hook, with the authored attribute PRESERVED — and
+         must NOT route an en-scope body through the translator. -->
     <div data-hyperfixi-lang="en">
       <button id="canonical" hx-on:click="toggle .marcado on me">canonical</button>
     </div>
     <!-- Localized name + localized hyperscript body: listener + translator. -->
     <button id="localizado" hx-en:clic="alternar .activo">localizado</button>
+    <!-- Mixed node: a claimed colon-form PLUS the legacy composite form,
+         which only htmx can bind. The adapter must fall back to removing
+         the claimed attr on this node so htmx still binds the composite
+         (per-node cancellation would kill both). -->
+    <button
+      id="mixto"
+      hx-on:click="toggle .marcado on me"
+      hx-on="blur -> event.target.classList.add('js-blur')"
+    >
+      mixto
+    </button>
   </body>
 </html>

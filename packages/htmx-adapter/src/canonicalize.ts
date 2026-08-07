@@ -38,30 +38,36 @@ import { isResolverMode } from './resolver.js';
 const NS_RE = /^(?:hx|sse|ws)-/;
 
 /**
+ * Byte-mirror of htmx v4's `HCON.split` top-level-comma regex (vendored
+ * 4.0.0, `HCON.split`). Spec boundaries must match core's grammar:
+ * commas inside `[filters]`, `(calls)`, and quoted strings — e.g.
+ * `from:".a, .b"` — are NOT separators.
+ */
+const TOP_LEVEL_COMMA_RE = /,(?![^\[]*\])(?![^(]*\))(?![^<]*\/>)(?=(?:[^"']|"[^"]*"|'[^']*')*$)/;
+
+/**
  * Translate localized event names inside an `hx-trigger` value.
  *
  * hx-trigger grammar: comma-separated specs, each `eventName[filter]
  * modifier…`. Only the leading event token of each spec is translated
- * (preserving an attached `[...]` filter); modifiers like `delay:500ms`,
- * `from:body`, `once` are language-invariant and left alone. Unknown
- * tokens pass through untouched, which also makes translation idempotent
- * (the maps are localized → canonical only).
+ * (an attached `[...]` filter, all modifiers like `delay:500ms` /
+ * `from:body` / `once`, and the authored spacing stay byte-identical).
+ * When nothing translates, the original string is returned verbatim, so
+ * an all-canonical value is never rewritten. Unknown tokens pass
+ * through untouched, which also makes translation idempotent (the maps
+ * are localized → canonical only).
  */
 export function translateTriggerValue(value: string, events: Record<string, string>): string {
-  return value
-    .split(',')
-    .map(spec => {
-      const trimmed = spec.trim();
-      if (!trimmed) return trimmed;
-      const parts = trimmed.split(/\s+/);
-      const m = parts[0].match(/^([^[\s]+)(\[.*)?$/);
-      if (m) {
-        const translated = events[m[1]];
-        if (translated) parts[0] = translated + (m[2] ?? '');
-      }
-      return parts.join(' ');
+  let changed = false;
+  const specs = value.split(TOP_LEVEL_COMMA_RE).map(spec =>
+    spec.replace(/^(\s*)([^[\s]+)/, (whole, ws: string, evt: string) => {
+      const translated = events[evt];
+      if (!translated) return whole;
+      changed = true;
+      return ws + translated;
     })
-    .join(', ');
+  );
+  return changed ? specs.join(',') : value;
 }
 
 /**
@@ -114,8 +120,14 @@ export function canonicalizeElement(elt: Element): boolean {
     // Exact match: hx-obtener → hx-get.
     let canonical = attrs[name];
 
-    // Colon family (hx-on:*): hx-en:clic → hx-on:click. The base is
-    // looked up in attrs, the event suffix in events.
+    // Colon family: the base is looked up in attrs; what the suffix
+    // means depends on the base. For hx-on the suffix is an EVENT name
+    // (hx-en:clic → hx-on:click) and translates through events. For
+    // every other attribute a colon suffix is an htmx v4 MODIFIER
+    // (`:inherited` / `:append` — #attributeValue reads name+":inherited"
+    // etc.), never an event name: pass it through verbatim so e.g.
+    // hx-objetivo:inherited → hx-target:inherited, and an events-map
+    // collision can never corrupt the modifier.
     let colonBase: string | undefined;
     if (!canonical) {
       const colon = name.indexOf(':');
@@ -123,7 +135,10 @@ export function canonicalizeElement(elt: Element): boolean {
         colonBase = attrs[name.slice(0, colon)];
         if (colonBase) {
           const suffix = name.slice(colon + 1);
-          canonical = `${colonBase}:${events[suffix] ?? suffix}`;
+          canonical =
+            colonBase === 'hx-on'
+              ? `${colonBase}:${events[suffix] ?? suffix}`
+              : `${colonBase}:${suffix}`;
         }
       }
     }
@@ -141,20 +156,27 @@ export function canonicalizeElement(elt: Element): boolean {
     if (canonical === name || elt.hasAttribute(canonical)) continue;
 
     let value = attr.value;
-    if (canonical === 'hx-trigger') value = translateTriggerValue(value, events);
+    // hx-trigger and its modifier forms (hx-trigger:inherited etc.)
+    // carry event names in the VALUE — translate on the way over.
+    if (canonical === 'hx-trigger' || canonical.startsWith('hx-trigger:')) {
+      value = translateTriggerValue(value, events);
+    }
     elt.setAttribute(canonical, value);
     changed = true;
   }
 
-  // Author-written canonical hx-trigger with localized event values
+  // Author-written canonical hx-trigger (including modifier forms like
+  // hx-trigger:inherited) with localized event values
   // (`hx-trigger="clic"`). Translated in place — the only mutation of an
   // authored attribute, because there is no separate canonical target.
-  const trigger = elt.getAttribute('hx-trigger');
-  if (trigger !== null && Object.keys(events).length > 0) {
-    const translated = translateTriggerValue(trigger, events);
-    if (translated !== trigger) {
-      elt.setAttribute('hx-trigger', translated);
-      changed = true;
+  if (Object.keys(events).length > 0) {
+    for (const attr of Array.from(elt.attributes)) {
+      if (attr.name !== 'hx-trigger' && !attr.name.startsWith('hx-trigger:')) continue;
+      const translated = translateTriggerValue(attr.value, events);
+      if (translated !== attr.value) {
+        elt.setAttribute(attr.name, translated);
+        changed = true;
+      }
     }
   }
 

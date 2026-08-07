@@ -19,11 +19,14 @@
  * - Localized-named attrs (`hx-en:clic`) stay verbatim in the DOM — htmx
  *   never recognized them anyway — and NO canonical `hx-on:*` sibling is
  *   created.
- * - Canonical-named attrs (`hx-on:click`) are REMOVED after claiming.
- *   This is the one place the adapter deletes an authored attribute: if
- *   it stayed, htmx would eval the hyperscript body as JS — a console
- *   error plus a double-execution attempt on every fire. Documented as
- *   the executor-mode exception in the README.
+ * - Canonical-named attrs (`hx-on:click`) must be kept away from htmx's
+ *   own binder: if htmx bound them, it would eval the hyperscript body
+ *   as JS — a console error plus a double-execution attempt on every
+ *   fire. HOW they are kept away depends on the claim mode below: on
+ *   htmx v4 the extension cancels the node's `htmx:before:on:init` and
+ *   the authored attribute stays ('preserve'); everywhere else the
+ *   attribute is removed after claiming ('remove', the default) —
+ *   documented as the executor-mode exception in the README.
  *
  * With no executor set (the default), none of this runs and bodies keep
  * upstream JS semantics — the behavior-preservation invariant.
@@ -54,6 +57,31 @@ const hookChangeListeners = new Set<() => void>();
  * DOM attribute order decides which body wins.
  */
 let claimed = new WeakMap<Element, Set<string>>();
+
+/**
+ * What happens to a canonical-named `hx-on:*` attribute when claimed.
+ *
+ * - `'remove'` (default): delete it, so htmx can never JS-eval the
+ *   hyperscript body. The only guard available on htmx v2 / unknown
+ *   runtimes, at the cost of mutating an authored attribute.
+ * - `'preserve'`: leave the authored attribute in the DOM. Correct ONLY
+ *   when the v4 extension is registered — its cancelable
+ *   `htmx:before:on:init` hook stops htmx from binding the node instead
+ *   (see extension.ts). registerWith() selects the mode from which htmx
+ *   API accepted the extension, before any claims happen in the
+ *   recommended load order.
+ */
+export type CanonicalClaimMode = 'remove' | 'preserve';
+
+let claimMode: CanonicalClaimMode = 'remove';
+
+export function setCanonicalClaimMode(mode: CanonicalClaimMode): void {
+  claimMode = mode;
+}
+
+export function canonicalClaimMode(): CanonicalClaimMode {
+  return claimMode;
+}
 
 /** Configure the body executor. Setting/clearing it notifies subscribers. */
 export function setBodyExecutor(fn: BodyExecutor | null): void {
@@ -115,10 +143,11 @@ export function claimHxOnAttribute(
   const eventName = eventNameForSuffix(attrName.slice(colon + 1), events);
   const already = claimed.get(elt);
   if (already?.has(eventName)) {
-    // Duplicate claim for an already-claimed event — no second listener,
-    // but canonical-named attrs still get neutralized so htmx never
-    // JS-evals them.
-    if (attrName.startsWith('hx-on:') && elt.hasAttribute(attrName)) {
+    // Duplicate claim for an already-claimed event — no second listener.
+    // In 'remove' mode canonical-named attrs still get neutralized so
+    // htmx never JS-evals them; in 'preserve' mode the v4
+    // before:on:init cancellation is the guard and the attribute stays.
+    if (claimMode === 'remove' && attrName.startsWith('hx-on:') && elt.hasAttribute(attrName)) {
       elt.removeAttribute(attrName);
       return true;
     }
@@ -144,10 +173,12 @@ export function claimHxOnAttribute(
     }
   });
 
-  // Canonical-named claims are removed so htmx never JS-evals the
-  // hyperscript body (double-execution guard). Localized names are
-  // invisible to htmx and stay verbatim.
-  if (attrName.startsWith('hx-on:')) elt.removeAttribute(attrName);
+  // In 'remove' mode canonical-named claims are deleted so htmx never
+  // JS-evals the hyperscript body (double-execution guard); in
+  // 'preserve' mode (v4) the attribute stays and the extension cancels
+  // htmx's binding instead. Localized names are invisible to htmx and
+  // always stay verbatim.
+  if (claimMode === 'remove' && attrName.startsWith('hx-on:')) elt.removeAttribute(attrName);
 
   if (already) {
     already.add(eventName);
@@ -194,4 +225,5 @@ export function resetBodyHooks(): void {
   translator = null;
   hookChangeListeners.clear();
   claimed = new WeakMap();
+  claimMode = 'remove';
 }
