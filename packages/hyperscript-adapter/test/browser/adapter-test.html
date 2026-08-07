@@ -76,8 +76,9 @@
 </section>
 
 <!-- Load scripts -->
-<!-- 1. Original _hyperscript runtime -->
-<script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
+<!-- 1. Original _hyperscript runtime (vendored — see vendor/README.md; the
+     adapter requires addBeforeProcessHook, absent before 0.9.9x) -->
+<script src="vendor/_hyperscript-0.9.93.min.js"></script>
 
 <!-- 2. Adapter plugin (full bundle with all 24 languages) -->
 <script src="../../dist/hyperscript-i18n.global.js"></script>
