@@ -1,0 +1,269 @@
+/**
+ * Preprocessor core — the shared skeleton of the full and slim
+ * preprocessors.
+ *
+ * Everything that is NOT genuinely different between the two paths lives
+ * here exactly once: config defaults/threshold resolution, strategy
+ * ordering (semantic → optional i18n), compound splitting on localized
+ * `then` keywords and newlines, event-prefix stripping, and the
+ * return-original fallback. The two real differences stay with each path,
+ * injected as hooks:
+ *
+ *   - HOW one statement is parsed and rendered to English
+ *     (`translateSingle`): the full path uses semantic's parseSemantic +
+ *     render + a translate() rescue for confident-but-nodeless parses;
+ *     the slim path uses parseWithConfidence + the custom
+ *     hyperscript-renderer (no English language data).
+ *   - WHERE registry/profile lookups come from (`isLanguageRegistered`,
+ *     `tryGetProfile`): `@lokascript/semantic` vs `…/core` — under tsup's
+ *     split dist these are separate registry instances, so each path must
+ *     bring its own.
+ *
+ * Behavior is pinned by the parity ratchet
+ * (test/preprocessor-parity.*.test.ts + the committed fixture): both paths
+ * are byte-identical to their pre-extraction outputs over the corpus.
+ */
+
+export interface PreprocessorConfig {
+  /**
+   * Minimum confidence threshold for semantic parsing (0-1). Default: 0.5.
+   * Can be a single number (applies to all languages) or a per-language map.
+   * Per-language thresholds are useful because SOV languages (ja, ko, tr) produce
+   * inherently lower confidence scores than SVO languages (es, fr, de).
+   *
+   * @example
+   * // Single threshold
+   * { confidenceThreshold: 0.5 }
+   *
+   * @example
+   * // Per-language thresholds
+   * { confidenceThreshold: { es: 0.7, ja: 0.1, ko: 0.05, '*': 0.5 } }
+   */
+  confidenceThreshold: number | Record<string, number>;
+  /** Strategy: 'semantic' (default), 'i18n', or 'auto' (semantic then i18n) */
+  strategy: 'semantic' | 'i18n' | 'auto';
+  /**
+   * @deprecated Never implemented — `preprocessToEnglish` always returns a
+   * string, and on translation failure that string is the original source
+   * (there is nothing else it could return). The option has had no effect in
+   * any released version and is ignored; it will be removed in a future major.
+   */
+  fallbackToOriginal?: boolean;
+  /** Optional i18n toEnglish function (loaded dynamically if available) */
+  i18nToEnglish?: (input: string, locale: string) => string;
+}
+
+/** Minimal profile shape the skeleton needs (then-keyword lookup). */
+export interface ThenProfile {
+  keywords?: {
+    then?: { primary?: string; alternatives?: string[] };
+  };
+}
+
+/** The per-path seam — see module doc. */
+export interface PreprocessorHooks {
+  isLanguageRegistered(lang: string): boolean;
+  tryGetProfile(lang: string): ThenProfile | null | undefined;
+  /**
+   * Parse ONE statement in `lang` and render it to English. Return null
+   * when it cannot be translated (below-threshold confidence, no node, …);
+   * the skeleton then tries the remaining strategies / falls back.
+   */
+  translateSingle(src: string, lang: string, threshold: number): string | null;
+}
+
+const DEFAULT_THRESHOLD = 0.5;
+
+const DEFAULT_CONFIG: PreprocessorConfig = {
+  confidenceThreshold: DEFAULT_THRESHOLD,
+  strategy: 'semantic',
+};
+
+/**
+ * Resolve the confidence threshold for a specific language.
+ * Supports both a single number and a per-language map with '*' as default.
+ */
+function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {
+  if (typeof threshold === 'number') return threshold;
+  return threshold[lang] ?? threshold['*'] ?? DEFAULT_THRESHOLD;
+}
+
+/**
+ * Match _hyperscript event handler prefix: "on [every] <event>[filter][.modifiers] "
+ *
+ * Examples:
+ *   "on click toggle .active"            → prefix: "on click ", commands: "toggle .active"
+ *   "on every click toggle .active"      → prefix: "on every click ", commands: "toggle .active"
+ *   "on click.debounce(300) toggle .x"   → prefix: "on click.debounce(300) ", commands: "toggle .x"
+ *   "on keyup[key=='Enter'] set x to 1"  → prefix: "on keyup[key=='Enter'] ", commands: "set x to 1"
+ *   "on click from body toggle .active"  → prefix: "on click from body ", commands: "toggle .active"
+ */
+const EVENT_PREFIX_RE =
+  /^(on\s+(?:every\s+)?[\w-]+(?:\[.*?\])?(?:\.[\w-]+(?:\([^)]*\))?)*(?:\s+from\s+\S+)?(?:\s+queue\s+\w+)?\s+)/;
+
+function stripEventPrefix(src: string): { prefix: string; commands: string } | null {
+  const match = src.match(EVENT_PREFIX_RE);
+  if (!match) return null;
+  const prefix = match[1];
+  const commands = src.slice(prefix.length);
+  if (!commands) return null;
+  return { prefix, commands };
+}
+
+/**
+ * Build a `preprocessToEnglish` function from the per-path hooks.
+ *
+ * Handles _hyperscript feature prefixes (e.g. "on click", "on every keyup")
+ * by stripping them, translating only the command portion, then reassembling.
+ */
+export function createPreprocessToEnglish(
+  hooks: PreprocessorHooks
+): (src: string, lang: string, config?: Partial<PreprocessorConfig>) => string {
+  /**
+   * Get all "then" keyword forms for a language (primary + alternatives).
+   * Falls back to English "then" if profile is unavailable.
+   */
+  function getThenKeywords(lang: string): string[] {
+    const keywords = ['then']; // Always include English
+    const profile = hooks.tryGetProfile(lang);
+    if (profile?.keywords?.then) {
+      const kw = profile.keywords.then;
+      if (kw.primary && kw.primary !== 'then') keywords.push(kw.primary);
+      if (kw.alternatives) {
+        for (const alt of kw.alternatives) {
+          if (!keywords.includes(alt)) keywords.push(alt);
+        }
+      }
+    }
+    return keywords;
+  }
+
+  /**
+   * Split a hyperscript source string into individual statements.
+   * Splits on language-specific "then" keywords and newlines.
+   */
+  function splitStatements(src: string, lang: string): string[] {
+    const thenWords = getThenKeywords(lang);
+    // Escape regex special chars and build pattern
+    const escaped = thenWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const pattern = new RegExp(`\\s+(?:${escaped.join('|')})\\s+`, 'i');
+
+    // Split on newlines first
+    const lines = src
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+    const result: string[] = [];
+    for (const line of lines) {
+      const parts = line.split(pattern);
+      result.push(...parts);
+    }
+    return result;
+  }
+
+  /**
+   * Try semantic translation: parse in source language, render to English.
+   * Returns null if confidence is below threshold.
+   */
+  function trySemanticTranslation(src: string, lang: string, threshold: number): string | null {
+    try {
+      // Handle compound statements (split on "then" boundaries and newlines)
+      const statements = splitStatements(src, lang);
+      if (statements.length > 1) {
+        return translateCompound(statements, lang, threshold);
+      }
+
+      // Check if the semantic parser can handle this
+      if (!hooks.isLanguageRegistered(lang)) return null;
+
+      return hooks.translateSingle(src, lang, threshold);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Translate compound statements individually and rejoin with " then ".
+   */
+  function translateCompound(statements: string[], lang: string, threshold: number): string | null {
+    const translated: string[] = [];
+    for (const stmt of statements) {
+      const result = trySemanticTranslation(stmt.trim(), lang, threshold);
+      if (result === null) return null; // If any part fails, fail the whole compound
+      translated.push(result);
+    }
+    return translated.join(' then ');
+  }
+
+  /**
+   * Try i18n grammar transformation to English.
+   * Returns null if the result is identical to input (no translation happened).
+   */
+  function tryI18nTranslation(
+    src: string,
+    lang: string,
+    toEnglish: (input: string, locale: string) => string
+  ): string | null {
+    try {
+      const result = toEnglish(src, lang);
+      return result !== src ? result : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Try all configured translation strategies on the input.
+   * Returns null if none succeed.
+   */
+  function tryTranslateWithStrategies(
+    src: string,
+    lang: string,
+    cfg: PreprocessorConfig
+  ): string | null {
+    // Strategy: semantic-only
+    if (cfg.strategy === 'semantic' || cfg.strategy === 'auto') {
+      const threshold = resolveThreshold(cfg.confidenceThreshold, lang);
+      const result = trySemanticTranslation(src, lang, threshold);
+      if (result !== null) return result;
+    }
+
+    // Strategy: i18n fallback (auto mode or i18n-only)
+    if ((cfg.strategy === 'auto' || cfg.strategy === 'i18n') && cfg.i18nToEnglish) {
+      const result = tryI18nTranslation(src, lang, cfg.i18nToEnglish);
+      if (result !== null) return result;
+    }
+
+    return null;
+  }
+
+  return function preprocessToEnglish(
+    src: string,
+    lang: string,
+    config: Partial<PreprocessorConfig> = {}
+  ): string {
+    // English→English is identity; skip semantic parsing which may mangle
+    // the input. (Historically full-path only — the slim path gained it in
+    // the shared-skeleton extraction, deliberately: it is a mangle guard.)
+    if (lang === 'en') return src;
+
+    const cfg = { ...DEFAULT_CONFIG, ...config };
+
+    // Try translating the full string first
+    const fullResult = tryTranslateWithStrategies(src, lang, cfg);
+    if (fullResult !== null) return fullResult;
+
+    // If full translation failed, try stripping event/feature prefix.
+    // _hyperscript attributes often contain "on <event> <commands>" — the semantic
+    // parser only understands command syntax, not event declarations.
+    const stripped = stripEventPrefix(src);
+    if (stripped) {
+      const translated = tryTranslateWithStrategies(stripped.commands, lang, cfg);
+      if (translated !== null) return stripped.prefix + translated;
+    }
+
+    // Fallback: return original (unconditional — see fallbackToOriginal's
+    // deprecation note; the string contract leaves nothing else to return)
+    return src;
+  };
+}
