@@ -21,9 +21,10 @@
  *
  * The corpus deliberately reaches every branch of the preprocessors'
  * shared skeleton: single commands across word orders (SVO/SOV/VSO),
- * compound splitting (localized + English `then`, newlines), event-prefix
- * stripping (plain, `every`, modifier, filter, `from`), confidence-gated
- * fallback, English identity, and unregistered languages.
+ * compound statements (localized + English `then`, newlines — handled by
+ * the whole-string parse), event-prefix stripping (plain, `every`,
+ * modifier, filter, `from`), confidence-gated fallback, English identity,
+ * and unregistered languages.
  */
 
 import { readFileSync } from 'fs';
@@ -79,11 +80,26 @@ export const PARITY_CORPUS: ParityRow[] = [
   { lang: 'ar', input: 'أظهر #modal' },
   { lang: 'ar', input: 'أخفِ #tooltip' },
 
-  // ── Compound statements: then-splitting in both languages ────────
+  // ── Compound statements: localized/English `then` and newlines ───
   { lang: 'es', input: 'alternar .active entonces poner "ok" en #msg' },
   { lang: 'es', input: 'alternar .active then mostrar #modal' },
   { lang: 'es', input: 'alternar .active\nmostrar #modal' },
   { lang: 'ja', input: '.active を 切り替え それから #modal を 表示' },
+
+  // ── String literals containing then-keywords ─────────────────────
+  // The deleted split-statement fallback was string-literal-blind (it
+  // would split `'now then later'` inside the quotes). These rows pin
+  // that the whole-string parse treats literals atomically — including a
+  // literal that is nothing but a whitespace-padded then-keyword — and
+  // that long chains stay on the whole-string arm.
+  { lang: 'es', input: 'poner "hola entonces adios" en #msg' },
+  { lang: 'es', input: "poner 'ahora entonces luego' en #msg" },
+  { lang: 'es', input: 'poner "  entonces  " en #msg\nmostrar #a' },
+  {
+    lang: 'es',
+    input:
+      'alternar .a entonces alternar .b entonces alternar .c entonces alternar .d entonces alternar .e',
+  },
 
   // ── Block bodies: the rows the whole-string-first reorder repairs ─
   // A localized `then` inside a loop/tell body, or between consecutive
