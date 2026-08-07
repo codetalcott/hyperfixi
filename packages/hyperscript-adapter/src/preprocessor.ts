@@ -31,8 +31,13 @@ export interface PreprocessorConfig {
   confidenceThreshold: number | Record<string, number>;
   /** Strategy: 'semantic' (default), 'i18n', or 'auto' (semantic then i18n) */
   strategy: 'semantic' | 'i18n' | 'auto';
-  /** Whether to return original text on failure. Default: true */
-  fallbackToOriginal: boolean;
+  /**
+   * @deprecated Never implemented — `preprocessToEnglish` always returns a
+   * string, and on translation failure that string is the original source
+   * (there is nothing else it could return). The option has had no effect in
+   * any released version and is ignored; it will be removed in a future major.
+   */
+  fallbackToOriginal?: boolean;
   /** Optional i18n toEnglish function (loaded dynamically if available) */
   i18nToEnglish?: (input: string, locale: string) => string;
 }
@@ -42,7 +47,6 @@ const DEFAULT_THRESHOLD = 0.5;
 const DEFAULT_CONFIG: PreprocessorConfig = {
   confidenceThreshold: DEFAULT_THRESHOLD,
   strategy: 'semantic',
-  fallbackToOriginal: true,
 };
 
 /**
@@ -86,8 +90,9 @@ export function preprocessToEnglish(
     if (translated !== null) return stripped.prefix + translated;
   }
 
-  // Fallback: return original
-  return cfg.fallbackToOriginal ? src : src;
+  // Fallback: return original (unconditional — see fallbackToOriginal's
+  // deprecation note; the string contract leaves nothing else to return)
+  return src;
 }
 
 /**
