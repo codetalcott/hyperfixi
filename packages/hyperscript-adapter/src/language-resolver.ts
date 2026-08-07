@@ -11,8 +11,16 @@
  * Resolution order:
  * 1. `data-lang` attribute on the element itself
  * 2. `data-hyperscript-lang` attribute on the element or closest ancestor
- * 3. `lang` attribute on `<html>` element
- * 4. null (assume English, no preprocessing needed)
+ * 3. `lang` attribute on the element or closest ancestor (the HTML-standard
+ *    cascade — a `<section lang="es">` localizes everything inside it, and a
+ *    nested `lang="en"` opts back out). This is how the paired htmx-adapter
+ *    (`langOf()`) and loka-js resolve language, so `hx-*` and `_` attributes
+ *    on the same element agree.
+ * 4. `lang` on `<html>` via `document.documentElement` — only reachable when
+ *    the element is DETACHED (step 3's ancestor walk covers `<html>` for
+ *    attached elements): a hook processing a not-yet-inserted fragment still
+ *    picks up the page default.
+ * 5. null (assume English, no preprocessing needed)
  */
 export function resolveLanguage(elt: Element): string | null {
   // 1. Explicit per-element
@@ -25,7 +33,11 @@ export function resolveLanguage(elt: Element): string | null {
     elt.closest?.('[data-hyperscript-lang]')?.getAttribute('data-hyperscript-lang');
   if (hsLang) return normalizeLangCode(hsLang);
 
-  // 3. Document-level lang
+  // 3. Standard lang cascade (nearest ancestor wins)
+  const closestLang = elt.closest?.('[lang]')?.getAttribute('lang');
+  if (closestLang) return normalizeLangCode(closestLang);
+
+  // 4. Document-level lang (detached elements only — see doc comment)
   const htmlLang = typeof document !== 'undefined' ? document.documentElement?.lang : null;
   if (htmlLang && htmlLang !== 'en') return normalizeLangCode(htmlLang);
 
