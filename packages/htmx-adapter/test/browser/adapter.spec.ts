@@ -74,10 +74,13 @@ test.describe('htmx v4 (4.0.0-beta5)', () => {
   }) => {
     await page.goto(`${FIXTURES}/v4-hx-on.html`);
 
-    // Canonical-named claim: attribute removed (htmx must not JS-eval it),
-    // body executed by _hyperscript with `me` = the button.
+    // Canonical-named claim on v4: the authored attribute is PRESERVED —
+    // the cancelable before:on:init hook keeps htmx from JS-evaling it,
+    // so no mutation is needed. Body executed by _hyperscript with
+    // `me` = the button; the toggle-on/toggle-off pair below doubles as
+    // the double-execution probe (two executions would cancel out).
     const canonical = page.locator('#canonical');
-    await expect(canonical).not.toHaveAttribute('hx-on:click', /./);
+    await expect(canonical).toHaveAttribute('hx-on:click', 'toggle .marcado on me');
     await canonical.click();
     await expect(canonical).toHaveClass(/marcado/);
     await canonical.click();
@@ -102,6 +105,27 @@ test.describe('htmx v4 (4.0.0-beta5)', () => {
     page.on('pageerror', err => errors.push(String(err)));
     await canonical.click();
     expect(errors).toEqual([]);
+  });
+
+  test('executor mode: mixed node — composite hx-on stays with htmx, colon form with the executor', async ({
+    page,
+  }) => {
+    await page.goto(`${FIXTURES}/v4-hx-on.html`);
+    const mixed = page.locator('#mixto');
+
+    // On a node that also carries the legacy composite form, per-node
+    // cancellation would kill htmx's composite binding too — so the
+    // adapter falls back to removing the claimed colon-form attr and
+    // lets htmx proceed.
+    await expect(mixed).not.toHaveAttribute('hx-on:click', /./);
+    await expect(mixed).toHaveAttribute('hx-on', /blur/);
+
+    await mixed.click(); // executor path (claimed body)
+    await expect(mixed).toHaveClass(/marcado/);
+
+    await mixed.focus();
+    await mixed.blur(); // htmx's own JS path (composite body)
+    await expect(mixed).toHaveClass(/js-blur/);
   });
 });
 

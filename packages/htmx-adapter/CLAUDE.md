@@ -64,14 +64,31 @@ npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
   flips the hx-on family into executor mode — the adapter claims every
   hx-on attr (listener install; claims deduped per element by resolved
   event name), suppresses canonical-sibling creation for localized names,
-  and REMOVES canonical-named `hx-on:*` attrs so htmx never JS-evals a
-  hyperscript body. Bodies translate lazily (first fire, memoized) via
+  and keeps htmx from JS-evaling canonical-named `hx-on:*` bodies. HOW
+  depends on the claim mode (`registerWith` selects it): on v4
+  (`'preserve'`) the extension cancels the node's `htmx:before:on:init`
+  and the authored attr stays; on v2/unknown (`'remove'`, default) the
+  attr is removed after claiming. Removal survives on v4 only as a
+  per-node fallback for elements mixing claimed colon-forms with the
+  legacy composite `hx-on="…"` / `data-hx-on*` forms htmx must still
+  bind. Bodies translate lazily (first fire, memoized) via
   `setBodyTranslator()` (auto-detected from `HyperscriptI18n.preprocess`).
-- **Two authored-attribute mutations, both documented**: `hx-trigger`
-  in-place value translation (localized event values in a canonical attr
-  have no separate canonical target; idempotent by construction), and
-  executor-mode removal of canonical-named `hx-on:*` (double-execution
-  guard).
+- **Authored-attribute mutations, all documented**: `hx-trigger` in-place
+  value translation (localized event values in a canonical attr have no
+  separate canonical target; idempotent by construction — covers the
+  `hx-trigger:inherited`/`:append` modifier forms too), plus the
+  executor-mode removal cases above (v2 always; v4 mixed nodes only).
+- **Trigger-spec grammar mirrors core**: `translateTriggerValue` splits
+  specs with a byte-mirror of htmx v4's `HCON.split` top-level-comma
+  regex (commas inside `[filters]`, `(calls)`, and quoted strings are
+  not separators), and returns the input verbatim when nothing
+  translates. Non-`hx-on` colon suffixes (`:inherited`/`:append`) pass
+  through as modifiers — never through the events map.
+- **No extension `init(internalAPI)`, deliberately**: `parseTriggerSpecs`
+  is parse-only (no serializer — round-tripping would couple us to a
+  hand-written htmx-spec serializer) and `attributeValue`'s
+  inheritance-aware reads buy nothing for a sweep that must visit every
+  element anyway. Rationale recorded in extension.ts.
 - **Zero workspace deps** — builds standalone anywhere in CI's build order.
 
 ## Load order (matters)

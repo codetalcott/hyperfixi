@@ -11,7 +11,10 @@
  * init or hx-on binding, so canonicalizing in `htmx_before_process`
  * covers everything htmx will read. `htmx_before_process_node` is kept
  * as a defensive alias for other v4 prereleases that used per-node
- * naming; an unmatched key is inert.
+ * naming; an unmatched key is inert. The cancelable
+ * `htmx_before_on_init` hook (fires per hx-on-carrying node, after
+ * before:process) lets executor mode keep claimed `hx-on:*` attributes
+ * in the DOM instead of removing them — see createExtension.
  *
  * A v2 fallback (`htmx.defineExtension` + `onEvent('htmx:beforeProcessNode')`)
  * is included because the localized attribute names are version-agnostic
@@ -27,7 +30,8 @@
 
 import { canonicalizeTree } from './canonicalize.js';
 import { onVocabUpdate } from './registry.js';
-import { onBodyHooksChanged } from './hx-on.js';
+import { hasBodyExecutor, onBodyHooksChanged, setCanonicalClaimMode } from './hx-on.js';
+import { isResolverMode } from './resolver.js';
 
 export const EXTENSION_NAME = 'lokascript-i18n';
 
@@ -42,6 +46,15 @@ export interface HtmxLike {
 /**
  * Build the extension object. v4 hooks and the v2 `onEvent` callback are
  * both present — each API only reads the members it knows about.
+ *
+ * Deliberately NO `init(internalAPI)`: the members v4 passes there were
+ * each evaluated and rejected. `parseTriggerSpecs` is parse-only (no
+ * serializer), so translating `hx-trigger` values through it would mean
+ * writing our own htmx-spec serializer — worse coupling than mirroring
+ * core's top-level-split grammar in canonicalize.ts. `attributeValue`
+ * adds inheritance-aware reads, but the sweep must canonicalize every
+ * element (ancestors included) regardless of inheritance, so it buys
+ * nothing. Re-evaluate if v4 ever passes a write/interception surface.
  */
 export function createExtension(): object {
   return {
@@ -53,6 +66,32 @@ export function createExtension(): object {
     // Defensive alias for v4 prereleases with per-node hook naming.
     htmx_before_process_node(elt: Element): void {
       canonicalizeTree(elt);
+    },
+    // htmx v4 (verified on 4.0.0-beta5): fires per node carrying an
+    // hx-on-family attribute, cancelable — returning false makes htmx
+    // skip JS-binding that node entirely. In executor mode this is the
+    // zero-mutation double-execution guard: claimed `hx-on:*` bodies
+    // stay authored-verbatim in the DOM and htmx simply never binds
+    // them. (`registerWith` flips the claim mode to 'preserve' on v4 so
+    // claims stop removing the attribute.)
+    htmx_before_on_init(elt: Element): boolean | undefined {
+      if (!hasBodyExecutor() || isResolverMode()) return undefined;
+      const names = elt.getAttributeNames();
+      // v4 also binds forms the adapter never claims: the legacy
+      // composite `hx-on="event -> code"` and every `data-hx-on*`
+      // spelling. On such mixed nodes fall back to removing the claimed
+      // colon-form attrs so htmx still binds the unclaimed forms
+      // without JS-evaling a hyperscript body.
+      if (names.some(n => n === 'hx-on' || n.startsWith('data-hx-on'))) {
+        for (const n of names) {
+          if (n.startsWith('hx-on:')) elt.removeAttribute(n);
+        }
+        return undefined;
+      }
+      // Every htmx-bindable hx-on attr on this node is the claimed
+      // colon form — cancel htmx's binding outright.
+      if (names.some(n => n.startsWith('hx-on:'))) return false;
+      return undefined;
     },
     // htmx v1/v2 fallback: single event dispatcher.
     onEvent(name: string, evt: CustomEvent & { target?: EventTarget | null }): void {
@@ -73,10 +112,18 @@ export function registerWith(htmx: HtmxLike | undefined | null): 'v4' | 'v2' | n
   const ext = createExtension();
   if (typeof htmx.registerExtension === 'function') {
     htmx.registerExtension(EXTENSION_NAME, ext);
+    // v4's cancelable before:on:init hook is the double-execution
+    // guard, so executor-mode claims can leave canonical hx-on:* attrs
+    // authored-verbatim. In browser.ts both registration paths (sync
+    // and the DOMContentLoaded retry) run before the first sweep, so
+    // the mode is set before any claim happens.
+    setCanonicalClaimMode('preserve');
     return 'v4';
   }
   if (typeof htmx.defineExtension === 'function') {
     htmx.defineExtension(EXTENSION_NAME, ext);
+    // v2 has no cancelable per-node hx-on hook — removal stays the guard.
+    setCanonicalClaimMode('remove');
     return 'v2';
   }
   return null;
