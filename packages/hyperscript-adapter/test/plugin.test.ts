@@ -8,10 +8,13 @@ beforeEach(() => resetTranslationWarnings());
 // private class field (`#getScript`) in current _hyperscript.org builds, so
 // monkey-patching `internals.runtime.getScript` silently no-ops against the
 // real runtime. See attribute-translator.ts for the full explanation.
-function createMockHyperscript() {
+// An optional `parse` makes the mock a validity-gate host too (F8); hosts
+// without it exercise the gate's feature-detected no-op path.
+function createMockHyperscript(parse?: (src: string) => { errors?: unknown[] }) {
   const hooks: Array<(elt: Element) => void> = [];
   return {
     config: {},
+    ...(parse ? { parse } : {}),
     addBeforeProcessHook: vi.fn((fn: (elt: Element) => void) => {
       hooks.push(fn);
     }),
@@ -22,6 +25,9 @@ function createMockHyperscript() {
     },
   };
 }
+
+/** A host parser that rejects everything — the gate must keep the original. */
+const rejectAll = () => ({ errors: [{ message: 'nope' }] });
 
 describe('hyperscriptI18n plugin', () => {
   it('registers without error', () => {
@@ -167,6 +173,104 @@ describe('hyperscriptI18n plugin', () => {
     hs.process(container);
     expect(container.querySelector('button')!.getAttribute('_')).toBe('toggle .active');
     container.remove();
+  });
+});
+
+describe('host-parser validity gate (validateWithHost)', () => {
+  function addSpanish(src: string): Element {
+    const elt = document.createElement('button');
+    elt.setAttribute('_', src);
+    elt.setAttribute('data-lang', 'es');
+    document.body.appendChild(elt);
+    return elt;
+  }
+
+  it('falls back to the original text when the host parser rejects the rewrite', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const hs = createMockHyperscript(rejectAll);
+    hyperscriptI18n()(hs);
+
+    const elt = addSpanish('alternar .active');
+    hs.process(document.body);
+
+    // Translation happened ('toggle .active') but the host rejected it —
+    // the author's text must survive untouched.
+    expect(elt.getAttribute('_')).toBe('alternar .active');
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain('rejects');
+    warnSpy.mockRestore();
+    elt.remove();
+  });
+
+  it('warns once per language, not per element', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const hs = createMockHyperscript(rejectAll);
+    hyperscriptI18n()(hs);
+
+    const a = addSpanish('alternar .active');
+    const b = addSpanish('mostrar #modal');
+    hs.process(document.body);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    warnSpy.mockRestore();
+    a.remove();
+    b.remove();
+  });
+
+  it('validateWithHost: false commits the rewrite even when the host rejects it', () => {
+    const hs = createMockHyperscript(rejectAll);
+    hyperscriptI18n({ validateWithHost: false })(hs);
+
+    const elt = addSpanish('alternar .active');
+    hs.process(document.body);
+
+    expect(elt.getAttribute('_')).toBe('toggle .active');
+    elt.remove();
+  });
+
+  it('accepting hosts commit the rewrite through the gate', () => {
+    const parse = vi.fn(() => ({ errors: [] }));
+    const hs = createMockHyperscript(parse);
+    hyperscriptI18n()(hs);
+
+    const elt = addSpanish('alternar .active');
+    hs.process(document.body);
+
+    expect(elt.getAttribute('_')).toBe('toggle .active');
+    // The gate consulted the host about the RENDERED English.
+    expect(parse).toHaveBeenCalledWith('toggle .active');
+    elt.remove();
+  });
+
+  it('only changed translations pay the parse — passthrough never hits the gate', () => {
+    const parse = vi.fn(() => ({ errors: [] }));
+    const hs = createMockHyperscript(parse);
+    hyperscriptI18n()(hs);
+
+    const elt = document.createElement('button');
+    elt.setAttribute('_', 'toggle .active'); // English, no data-lang
+    document.body.appendChild(elt);
+    hs.process(document.body);
+
+    expect(parse).not.toHaveBeenCalled();
+    elt.remove();
+  });
+
+  it('debug mode logs the rejection, still falls back, and never warns', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const hs = createMockHyperscript(rejectAll);
+    hyperscriptI18n({ debug: true })(hs);
+
+    const elt = addSpanish('alternar .active');
+    hs.process(document.body);
+
+    expect(elt.getAttribute('_')).toBe('alternar .active');
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(logSpy.mock.calls.some(c => String(c[0]).includes('host rejected'))).toBe(true);
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
+    elt.remove();
   });
 });
 
