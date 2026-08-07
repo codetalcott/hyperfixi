@@ -442,6 +442,12 @@ export const toggleSchema: CommandSchema = {
       selectorKinds: ['class', 'attribute'],
       svoPosition: 1,
       sovPosition: 2,
+      // zh: the transformer emits `切换 把 .active` (the profile's 把 patient
+      // marker), but natural zh writes `切换 .active` bare — the handcrafted
+      // patterns' form. Optional accepts both; without it the generated
+      // pattern REQUIRED 把 and the slim bundles could not parse the bare
+      // form at all. Same treatment as go's destination.
+      markerOptional: { zh: true },
     },
     {
       role: 'destination',
@@ -807,6 +813,7 @@ export const setSchema: CommandSchema = {
       // Arabic (VSO): no marker before variable
       markerOverride: {
         en: '', // No marker before destination in English: "set :x to 5"
+        es: '', // "establecer x a 5" - no marker before variable (profile default `en` matched nothing)
         ja: 'を', // "x を 10 に 設定" - variable gets object marker
         ko: '를', // "x 를 10 에 설정" - variable gets object marker
         tr: 'i', // "x i 10 e ayarla" - variable gets accusative marker
@@ -822,7 +829,17 @@ export const setSchema: CommandSchema = {
         // corpus, so the whole hi set-family (set-text/inner-html/style/attribute)
         // fell to the bare-event fallback (S6 set-trio).
         hi: 'को', // target (destination) gets को
+        // zh: the transformer emits the verb-first BA form `设置 把 X 到 V`
+        // (把 before the variable), while natural zh writes `设置 X 为 V`
+        // (unmarked). 把 as the marker, optional below, accepts both. The
+        // profile default 在 matched neither form, so the generated zh set
+        // patterns were dead weight and the slim bundles (schema-generated
+        // patterns only) could not parse set at all.
+        zh: '把',
       },
+      // Accept the unmarked natural form alongside the transformer's 把 form
+      // (same treatment as go's destination).
+      markerOptional: { zh: true },
     },
     {
       role: 'patient',
@@ -852,6 +869,12 @@ export const setSchema: CommandSchema = {
         bn: 'তে', // "x কে 10 তে সেট" - destination marker on value
         qu: 'man', // "x ta 10 man churay" - destination marker on value
         hi: 'में', // value (patient) gets में — see the destination note above
+        // zh: the transformer/corpus form marks the value with 到 (`设置 把 X
+        // 到 V`); natural zh uses 为 (`设置 X 为 V`). 到 is the override,
+        // the 为-family rides along as variants (all merged as alternatives
+        // by schemaMarkerAlternatives). Profile default 把 was the PATIENT
+        // marker, which never precedes set's value in either form.
+        zh: '到',
       },
       // Turkish dative is allomorphic under vowel harmony: the i18n transformer
       // emits `e` for quoted-string values (`"red" e`) but `-ya` for a value
@@ -865,6 +888,10 @@ export const setSchema: CommandSchema = {
       // ayarla` did. See STRUCTURAL_ARCS_ROADMAP.md (tr set-attribute).
       markerVariants: {
         tr: ['e', 'a', 'ye', 'ya'],
+        // Natural zh value markers (`设置 X 为 V`), simplified + traditional +
+        // resultative — the handcrafted set-zh-full alternatives, kept parseable
+        // alongside the transformer's 到 override above.
+        zh: ['为', '為', '成'],
       },
     },
     {

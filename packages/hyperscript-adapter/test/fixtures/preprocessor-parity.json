@@ -21,7 +21,7 @@
     "lang": "zh",
     "input": "切换 .active",
     "full": "toggle .active",
-    "slim": "切换 .active"
+    "slim": "toggle .active"
   },
   {
     "lang": "fr",
@@ -117,7 +117,7 @@
     "lang": "es",
     "input": "establecer x a 5",
     "full": "set x to 5",
-    "slim": "establecer x a 5"
+    "slim": "set x to 5"
   },
   {
     "lang": "ja",
@@ -129,7 +129,7 @@
     "lang": "zh",
     "input": "设置 x 为 5",
     "full": "set x to 5",
-    "slim": "设置 x 为 5"
+    "slim": "set x to 5"
   },
   {
     "lang": "es",
@@ -219,7 +219,7 @@
     "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
     "full": "on click repeat 3 times add \"<p>Line</p>\" to me",
-    "slim": "on \"click\" repeat add \"<p>Line</p>\""
+    "slim": "on click repeat add \"<p>Line</p>\""
   },
   {
     "lang": "ja",
@@ -243,7 +243,7 @@
     "lang": "es",
     "input": "on every keyup establecer x a 5",
     "full": "on every keyup set x to 5",
-    "slim": "on every keyup establecer x a 5"
+    "slim": "on every keyup set x to 5"
   },
   {
     "lang": "es",
@@ -255,7 +255,7 @@
     "lang": "es",
     "input": "on keyup[key=='Enter'] establecer x a 1",
     "full": "on keyup[key=='Enter'] set x to 1",
-    "slim": "on keyup[key=='Enter'] establecer x a 1"
+    "slim": "on keyup[key=='Enter'] set x to 1"
   },
   {
     "lang": "es",
