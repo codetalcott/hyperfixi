@@ -193,6 +193,24 @@
   },
   {
     "lang": "es",
+    "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
+    "full": "on click repeat 3 times add \"<p>Line</p>\" to me",
+    "slim": "on \"click\" repeat add \"<p>Line</p>\""
+  },
+  {
+    "lang": "ja",
+    "input": "#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加",
+    "full": "on click tell #panel add .open wait 200ms add .visible",
+    "slim": "on click tell #panel add .open wait 200ms add .visible"
+  },
+  {
+    "lang": "fr",
+    "input": "bind $name à #input-a alors bind $name à #input-b",
+    "full": "bind $name to #input-a bind $name to #input-b",
+    "slim": "bind $name to #input-a bind $name to #input-b"
+  },
+  {
+    "lang": "es",
     "input": "on click alternar .active",
     "full": "on click toggle .active",
     "slim": "on click toggle .active"

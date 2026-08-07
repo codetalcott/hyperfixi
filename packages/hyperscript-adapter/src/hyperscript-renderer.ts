@@ -29,6 +29,27 @@ import { SYNTAX } from './generated/syntax-table';
 export { SYNTAX };
 
 // ---------------------------------------------------------------------------
+// Statement-join rules. Mirrors the semantic package's renderer
+// (explicit/renderer.ts) — the slim path has to reach the same English, and a
+// chain word in the wrong seam is a hard parse error on the real engine, not a
+// style difference.
+// ---------------------------------------------------------------------------
+
+/**
+ * Block-header commands: their body follows the header DIRECTLY. `repeat 3
+ * times then add …` is rejected ("Expected 'end' but found 'then'"), as is
+ * `tell #panel then add …`.
+ */
+const BLOCK_HEADER_ACTIONS = new Set(['repeat', 'for', 'while', 'tell']);
+
+/**
+ * Commands whose captured body is an open-ended block that must be closed by an
+ * explicit `end` when a sibling follows: `js foo() then add …` otherwise bleeds
+ * the following hyperscript into the JavaScript body.
+ */
+const BLOCK_NEEDS_TRAILING_END = new Set(['js']);
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -65,10 +86,13 @@ function renderEventHandler(node: EventHandlerSemanticNode): string {
     parts.push('from', renderValue(source));
   }
 
-  // Body commands
+  // Body commands. Space-joined, matching the semantic renderer: the chain word
+  // between sibling body commands is optional in canonical hyperscript, and
+  // joining with ` then ` unconditionally injected one after a block header
+  // (`on click tell #panel then add .open` — rejected by the real engine).
   if (node.body && node.body.length > 0) {
     const bodyParts = node.body.map(renderToHyperscript);
-    parts.push(bodyParts.join(' then '));
+    parts.push(bodyParts.join(' '));
   }
 
   return parts.join(' ');
@@ -76,7 +100,26 @@ function renderEventHandler(node: EventHandlerSemanticNode): string {
 
 function renderCompound(node: CompoundSemanticNode): string {
   const chainWord = node.chainType === 'async' ? 'async' : node.chainType;
-  return node.statements.map(renderToHyperscript).join(` ${chainWord} `);
+  const rendered = node.statements.map(renderToHyperscript);
+  let out = rendered[0] ?? '';
+  for (let i = 1; i < rendered.length; i++) {
+    const prev = node.statements[i - 1];
+    const cur = node.statements[i];
+    const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
+    // Consecutive top-level `bind` features are separate reactive features, not
+    // a then-chain: `bind $x to #a then bind $x to #b` is rejected ("Unexpected
+    // Token : then" between features).
+    const betweenBindFeatures =
+      prev.kind === 'command' &&
+      prev.action === 'bind' &&
+      cur.kind === 'command' &&
+      cur.action === 'bind';
+    if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
+      out += ' end';
+    }
+    out += (afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `) + rendered[i];
+  }
+  return out;
 }
 
 function renderCommand(node: SemanticNode): string {

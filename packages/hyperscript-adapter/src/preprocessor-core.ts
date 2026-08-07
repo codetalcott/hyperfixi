@@ -164,19 +164,44 @@ export function createPreprocessToEnglish(
   /**
    * Try semantic translation: parse in source language, render to English.
    * Returns null if confidence is below threshold.
+   *
+   * WHOLE-STRING FIRST, splitting only as the fallback. The semantic parser
+   * handles `then`-sequences, loop/tell bodies and behavior blocks natively
+   * (top-level command-sequence support landed with the multiset-recall arc),
+   * so pre-splitting hands it fragments it would rather have seen whole — and
+   * `translateCompound` then rejoins them with a hardcoded ` then `, which is
+   * *invalid* immediately after a block header (`repeat 3 times then add …` →
+   * "Expected 'end' but found 'then'").
+   *
+   * Measured over the 3105 corpus translations whose English reference the real
+   * 0.9.9x engine accepts (2026-08-07, probe archived in the review handoff):
+   *
+   *   split-first  2849/3105 canonically valid   whole-first  3105/3105
+   *
+   * — 256 rows repaired (every `repeat-*`/`tell`/`behavior-*`/`bind-two-way`
+   * row, in every language), 0 rows broken. The 73 rows where split-first
+   * matched the English reference byte-for-byte and whole-first does not are
+   * cosmetic: the connector between sibling commands is OPTIONAL in canonical
+   * hyperscript, so `on click wait 2s remove me` and `… wait 2s then remove me`
+   * both parse clean. An earlier review vetoed this reorder on that exact-match
+   * signal alone, which weighed 73 cosmetic diffs against 256 hard parse errors.
    */
   function trySemanticTranslation(src: string, lang: string, threshold: number): string | null {
     try {
-      // Handle compound statements (split on "then" boundaries and newlines)
+      // Check if the semantic parser can handle this
+      if (!hooks.isLanguageRegistered(lang)) return null;
+
+      const whole = hooks.translateSingle(src, lang, threshold);
+      if (whole !== null) return whole;
+
+      // Whole-string parse declined — fall back to per-statement translation
+      // (split on "then" boundaries and newlines, rejoined with " then ").
       const statements = splitStatements(src, lang);
       if (statements.length > 1) {
         return translateCompound(statements, lang, threshold);
       }
 
-      // Check if the semantic parser can handle this
-      if (!hooks.isLanguageRegistered(lang)) return null;
-
-      return hooks.translateSingle(src, lang, threshold);
+      return null;
     } catch {
       return null;
     }

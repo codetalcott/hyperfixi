@@ -85,6 +85,16 @@ export const PARITY_CORPUS: ParityRow[] = [
   { lang: 'es', input: 'alternar .active\nmostrar #modal' },
   { lang: 'ja', input: '.active を 切り替え それから #modal を 表示' },
 
+  // ── Block bodies: the rows the whole-string-first reorder repairs ─
+  // A localized `then` inside a loop/tell body, or between consecutive
+  // `bind` features, is NOT a statement separator — splitting there and
+  // rejoining with ` then ` emits English the real engine rejects. Pinned
+  // here so the ratchet covers the class; validity itself is asserted
+  // against the vendored engine in whole-string-first.test.ts.
+  { lang: 'es', input: 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo' },
+  { lang: 'ja', input: '#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加' },
+  { lang: 'fr', input: 'bind $name à #input-a alors bind $name à #input-b' },
+
   // ── Event-prefix stripping ───────────────────────────────────────
   { lang: 'es', input: 'on click alternar .active' },
   { lang: 'es', input: 'on every keyup establecer x a 5' },
@@ -110,12 +120,16 @@ export function loadFixture(): FixtureRow[] {
 /** The rows where the two paths are KNOWN to disagree today: the slim
  *  path's schema-only pattern generator lacks the handcrafted patterns
  *  that cover zh `切换` toggle and the `set` command (bare and under event
- *  prefixes). Burn these down by closing the slim generator gap, then
- *  regenerate the fixture in the same change. */
+ *  prefixes), and on the `repeat` row it also quotes the event name and
+ *  drops the loop quantity + `to me` (`on "click" repeat add "<p>Line</p>"`
+ *  — the only output in this corpus the real engine still rejects). Burn
+ *  these down by closing the slim generator gap, then regenerate the
+ *  fixture in the same change. */
 export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
   ['zh', '切换 .active'],
   ['es', 'establecer x a 5'],
   ['zh', '设置 x 为 5'],
+  ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
   ['es', 'on every keyup establecer x a 5'],
   ['es', "on keyup[key=='Enter'] establecer x a 1"],
 ];

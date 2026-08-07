@@ -165,14 +165,20 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
-   * Join a statement list the way a block body reads: ` then ` between siblings,
-   * but a single space immediately after a loop/tell block header (whose body
-   * follows directly). Shared by renderConditional's branches; renderCompound
-   * keeps its own copy because it also handles the multi-handler and bind-feature
-   * cases.
+   * Join a statement list the way a block body reads: the target language's `then`
+   * between siblings, but a single space immediately after a loop/tell block header
+   * (whose body follows directly). Used by renderConditional's branches;
+   * renderCompound keeps its own copy because it also handles the multi-handler
+   * and bind-feature cases.
+   *
+   * The chain word is localized (`this.keyword(language, 'then')`) for the same
+   * reason renderCompound localizes it: a hardcoded English `then` leaks into every
+   * non-en block body (`もし … 削除 then 追加`), which no target-language tokenizer
+   * recognizes as a connector.
    */
   private joinStatements(statements: readonly SemanticNode[], language: string): string {
     const rendered = statements.map(s => this.render(s, language));
+    const thenKw = this.keyword(language, 'then');
     let out = rendered[0] ?? '';
     for (let i = 1; i < rendered.length; i++) {
       const prev = statements[i - 1];
@@ -180,7 +186,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
         out += ` ${this.keyword(language, 'end')}`;
       }
-      out += (afterBlockHeader ? ' ' : ' then ') + rendered[i];
+      out += (afterBlockHeader ? ' ' : ` ${thenKw} `) + rendered[i];
     }
     return out;
   }
@@ -365,7 +371,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       }
     }
 
-    // Handle event handler body (render separately after pattern)
+    // Handle event handler body (render separately after pattern).
+    //
+    // Space-joined, NOT via joinStatements: a chain word between sibling body
+    // commands is optional in canonical hyperscript (`on click wait 2s remove me`
+    // and `… wait 2s then remove me` both parse clean on the 0.9.9x engine), and a
+    // multi-element body only ever arises from a FOREIGN parse — the en parse folds
+    // its body into a single compound node, which renderCompound already joins with
+    // the chain word. Routing this through joinStatements was measured over the
+    // 3744-row corpus (2026-08-07): canonical validity −2 (both on an already-broken
+    // row), round-trip action fidelity unchanged at 0.95566, and 167 rows moved AWAY
+    // from their English reference, which omits the optional `then`. So the join
+    // stays as-is; see the F5 note in the hyperscript-adapter handoff.
     if (node.kind === 'event-handler') {
       const eventNode = node as EventHandlerSemanticNode;
       if (eventNode.body && eventNode.body.length > 0) {
