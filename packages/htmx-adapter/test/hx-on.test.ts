@@ -8,6 +8,8 @@ import {
   hasBodyTranslator,
   autoDetectBodyHooks,
   resetBodyHooks,
+  setCanonicalClaimMode,
+  canonicalClaimMode,
 } from '../src/hx-on.js';
 import { installAutoSweep } from '../src/extension.js';
 
@@ -139,6 +141,48 @@ describe('executor mode: canonical-named hx-on', () => {
     btn.dispatchEvent(new Event('change'));
     expect(executor).toHaveBeenCalledTimes(2);
     expect(executor.mock.calls.map(c => c[0]).sort()).toEqual(['a', 'b']);
+  });
+});
+
+describe("executor mode: 'preserve' claim mode (htmx v4)", () => {
+  it('claims WITHOUT removing the canonical attribute; listener still fires once', () => {
+    setCanonicalClaimMode('preserve');
+    const executor = vi.fn();
+    setBodyExecutor(executor);
+    document.body.innerHTML = `<button hx-on:click="toggle .active"></button>`;
+    const btn = document.querySelector('button')!;
+
+    expect(canonicalizeElement(btn)).toBe(true);
+    expect(btn.getAttribute('hx-on:click')).toBe('toggle .active'); // authored-verbatim
+
+    canonicalizeElement(btn); // re-sweep: dedupe path must not remove either
+    expect(btn.getAttribute('hx-on:click')).toBe('toggle .active');
+
+    click(btn);
+    expect(executor).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps BOTH authored attrs when localized and canonical name the same event', () => {
+    register('es', ES);
+    setCanonicalClaimMode('preserve');
+    const executor = vi.fn();
+    setBodyExecutor(executor);
+    document.body.innerHTML = `<section lang="es"><button hx-en:clic="a" hx-on:click="b"></button></section>`;
+    const btn = document.querySelector('button')!;
+
+    canonicalizeElement(btn);
+    expect(btn.getAttribute('hx-en:clic')).toBe('a');
+    expect(btn.getAttribute('hx-on:click')).toBe('b');
+
+    click(btn);
+    expect(executor).toHaveBeenCalledTimes(1); // DOM attribute order decides the winner
+    expect(executor).toHaveBeenCalledWith('a', btn, expect.any(Event));
+  });
+
+  it('resetBodyHooks restores the remove default', () => {
+    setCanonicalClaimMode('preserve');
+    resetBodyHooks();
+    expect(canonicalClaimMode()).toBe('remove');
   });
 });
 
