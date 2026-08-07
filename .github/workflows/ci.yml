@@ -1309,6 +1309,10 @@ jobs:
         run: npx playwright test
         working-directory: packages/htmx-adapter
 
+      - name: Run hyperscript-adapter e2e (real _hyperscript, vendored)
+        run: npx playwright test
+        working-directory: packages/hyperscript-adapter
+
       # NOTE: paths are relative to the repo root, NOT this job's
       # working-directory. The report/traces are written under
       # packages/core/ (the Playwright cwd), so the path must be
