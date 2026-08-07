@@ -193,6 +193,30 @@
   },
   {
     "lang": "es",
+    "input": "poner \"hola entonces adios\" en #msg",
+    "full": "put \"hola entonces adios\" into #msg",
+    "slim": "put \"hola entonces adios\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "poner 'ahora entonces luego' en #msg",
+    "full": "put \"ahora entonces luego\" into #msg",
+    "slim": "put \"ahora entonces luego\" into #msg"
+  },
+  {
+    "lang": "es",
+    "input": "poner \"  entonces  \" en #msg\nmostrar #a",
+    "full": "put \"  entonces  \" into #msg then show #a",
+    "slim": "put \"  entonces  \" into #msg then show #a"
+  },
+  {
+    "lang": "es",
+    "input": "alternar .a entonces alternar .b entonces alternar .c entonces alternar .d entonces alternar .e",
+    "full": "toggle .a then toggle .b then toggle .c then toggle .d then toggle .e",
+    "slim": "toggle .a then toggle .b then toggle .c then toggle .d then toggle .e"
+  },
+  {
+    "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
     "full": "on click repeat 3 times add \"<p>Line</p>\" to me",
     "slim": "on \"click\" repeat add \"<p>Line</p>\""

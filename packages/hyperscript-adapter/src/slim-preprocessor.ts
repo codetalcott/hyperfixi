@@ -13,11 +13,7 @@
 
 // Import from /core — does NOT trigger all-language registration.
 // Languages are registered separately via side-effect imports in bundle entries.
-import {
-  parseWithConfidence,
-  isLanguageRegistered,
-  tryGetProfile,
-} from '@lokascript/semantic/core';
+import { parseWithConfidence, isLanguageRegistered } from '@lokascript/semantic/core';
 
 import { renderToHyperscript } from './hyperscript-renderer';
 import { createPreprocessToEnglish, type PreprocessorConfig } from './preprocessor-core';
@@ -29,7 +25,6 @@ export type { PreprocessorConfig };
  */
 export const preprocessToEnglish = createPreprocessToEnglish({
   isLanguageRegistered,
-  tryGetProfile,
   translateSingle(src, lang, threshold) {
     const result = parseWithConfidence(src, lang);
     if (result.confidence < threshold || !result.node) return null;

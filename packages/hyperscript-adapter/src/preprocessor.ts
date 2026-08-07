@@ -10,13 +10,7 @@
  * translate() rescue when the parse is confident but yields no node.
  */
 
-import {
-  translate,
-  render,
-  parseSemantic,
-  isLanguageRegistered,
-  tryGetProfile,
-} from '@lokascript/semantic';
+import { translate, render, parseSemantic, isLanguageRegistered } from '@lokascript/semantic';
 
 import { createPreprocessToEnglish, type PreprocessorConfig } from './preprocessor-core';
 
@@ -30,7 +24,6 @@ export type { PreprocessorConfig };
  */
 export const preprocessToEnglish = createPreprocessToEnglish({
   isLanguageRegistered,
-  tryGetProfile,
   translateSingle(src, lang, threshold) {
     const result = parseSemantic(src, lang);
     if (result.confidence < threshold || !result.node) {
