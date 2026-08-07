@@ -135,4 +135,22 @@ test.describe('Hyperscript Adapter - Browser Tests', () => {
     await btn.click();
     await expect(btn).toHaveClass(/highlight/);
   });
+
+  test('standard lang cascade: <section lang="es"> localizes _ inside it @quick', async ({
+    page,
+  }) => {
+    const btn = page.locator('#btn-lang-es');
+    await expect(btn).not.toHaveClass(/active/);
+    await btn.click();
+    await expect(btn).toHaveClass(/active/);
+    await btn.click();
+    await expect(btn).not.toHaveClass(/active/);
+  });
+
+  test('nested lang="en" opts back out of an es scope @quick', async ({ page }) => {
+    const btn = page.locator('#btn-lang-nested-en');
+    await expect(btn).not.toHaveClass(/highlight/);
+    await btn.click();
+    await expect(btn).toHaveClass(/highlight/);
+  });
 });
