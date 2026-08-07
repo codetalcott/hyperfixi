@@ -8,6 +8,12 @@
 import { resolveLanguage } from './language-resolver';
 import { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
+import {
+  acceptedByHost,
+  warnRejectedOnce,
+  resetHostValidationWarnings,
+  type HyperscriptParseHost,
+} from './host-validate';
 
 export interface PluginOptions extends Partial<PreprocessorConfig> {
   /** Default language for all elements (overridable per-element). */
@@ -16,6 +22,13 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
   languageAttribute?: string;
   /** Enable debug logging to console. Default: false */
   debug?: boolean;
+  /**
+   * Validate rendered English on the HOST parser before committing the
+   * rewrite; on rejection, fall back to the original text (so parse errors
+   * name the author's code, not generated English). Default: true.
+   * No-op on host builds that expose no `parse()`.
+   */
+  validateWithHost?: boolean;
 }
 
 /** Languages already warned about an unchanged translation this page load.
@@ -25,9 +38,10 @@ export interface PluginOptions extends Partial<PreprocessorConfig> {
  *  convention and leave per-element detail to `debug: true`. */
 const warnedUnchangedLang = new Set<string>();
 
-/** Reset the warn-once state. Mainly for tests. */
+/** Reset the warn-once state (unchanged + host-rejected). Mainly for tests. */
 export function resetTranslationWarnings(): void {
   warnedUnchangedLang.clear();
+  resetHostValidationWarnings();
 }
 
 function warnUnchangedOnce(lang: string, src: string): void {
@@ -59,7 +73,8 @@ function warnUnchangedOnce(lang: string, src: string): void {
  */
 export function hyperscriptI18n(options: PluginOptions = {}) {
   return function plugin(hs: unknown): void {
-    installAttributeTranslator(hs as HyperscriptHost, (src, elt) => {
+    const host = hs as HyperscriptHost & HyperscriptParseHost;
+    installAttributeTranslator(host, (src, elt) => {
       // Resolve language
       const lang = resolveLanguageWithOptions(elt, options);
 
@@ -70,6 +85,20 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       const english = preprocessToEnglish(src, lang, options);
 
       if (english !== src) {
+        // Validity gate: the host parser is the consumer of this rewrite —
+        // if it rejects the English, committing it would only trade a
+        // translation gap for a parse error naming code the author never
+        // wrote. Fall back to the original text instead.
+        if (options.validateWithHost !== false && !acceptedByHost(host, english)) {
+          if (options.debug) {
+            console.log(
+              `[hyperscript-i18n] ${lang}: host rejected "${english}" — keeping "${src}"`
+            );
+          } else {
+            warnRejectedOnce(lang, src, english);
+          }
+          return src;
+        }
         if (options.debug) {
           console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
         }

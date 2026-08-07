@@ -112,21 +112,26 @@ The plugin resolves language in this order:
 
 1. `data-lang` attribute on the element
 2. `data-hyperscript-lang` on the element or closest ancestor
-3. `<html lang="...">` on the document
-4. `defaultLanguage` option (if configured)
+3. `lang` attribute on the element or closest ancestor (the standard HTML
+   cascade — a `<section lang="es">` localizes everything inside it, and a
+   nested `lang="en"` opts back out)
+4. `<html lang="...">` on the document (reached via step 3 for attached
+   elements; still applies to detached fragments)
+5. `defaultLanguage` option (if configured)
 
 English (`en`) and unresolved languages pass through without translation.
 
 ## Options
 
-| Option                | Type                               | Default       | Description                                                   |
-| --------------------- | ---------------------------------- | ------------- | ------------------------------------------------------------- |
-| `defaultLanguage`     | `string`                           | —             | Default language for all elements                             |
-| `languageAttribute`   | `string`                           | `"data-lang"` | Custom attribute name for per-element language                |
-| `confidenceThreshold` | `number \| Record<string, number>` | `0.5`         | Min confidence (0–1). Per-language map supported (see below). |
-| `strategy`            | `'semantic' \| 'i18n' \| 'auto'`   | `'semantic'`  | Translation strategy                                          |
-| `debug`               | `boolean`                          | `false`       | Log translations to console                                   |
-| `i18nToEnglish`       | `function`                         | —             | Optional `@lokascript/i18n` `toEnglish` function for fallback |
+| Option                | Type                               | Default       | Description                                                                                                        |
+| --------------------- | ---------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `defaultLanguage`     | `string`                           | —             | Default language for all elements                                                                                  |
+| `languageAttribute`   | `string`                           | `"data-lang"` | Custom attribute name for per-element language                                                                     |
+| `confidenceThreshold` | `number \| Record<string, number>` | `0.5`         | Min confidence (0–1). Per-language map supported (see below).                                                      |
+| `strategy`            | `'semantic' \| 'i18n' \| 'auto'`   | `'semantic'`  | Translation strategy                                                                                               |
+| `debug`               | `boolean`                          | `false`       | Log translations to console                                                                                        |
+| `i18nToEnglish`       | `function`                         | —             | Optional `@lokascript/i18n` `toEnglish` function for fallback                                                      |
+| `validateWithHost`    | `boolean`                          | `true`        | Check rendered English on the host parser; on rejection keep the original text (no-op on builds without `parse()`) |
 
 ### Per-language confidence thresholds
 
@@ -147,7 +152,7 @@ _hyperscript.use(
 
 ## How It Works
 
-The plugin overrides `runtime.getScript()` — the method \_hyperscript calls to read `_="..."` attributes. Non-English input is translated to English via the `@lokascript/semantic` parser before reaching the lexer. No changes to \_hyperscript internals.
+The plugin registers an `addBeforeProcessHook` callback — \_hyperscript's supported public extension point, which fires before the runtime reads `_="..."` attributes (or `<script type="text/hyperscript">` bodies). Non-English input is rewritten to English in place via the `@lokascript/semantic` parser before the runtime's own scan reaches it, and the rendered English is checked on the host's own parser before it is committed (see `validateWithHost`). No \_hyperscript internals are patched. Requires a \_hyperscript build that exposes `addBeforeProcessHook` (0.9.9x era).
 
 ## Limitations
 
