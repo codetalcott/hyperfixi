@@ -1698,7 +1698,7 @@ export class RuntimeBase {
       // self-assignment, and what it uniquely contributed was ~21 internal
       // wrapper objects leaking into `it` plus an array collapse that took the
       // first element of `toggle`/`put`'s element list. See
-      // docs-internal/HANDOFF-command-arch-output-contract.md.
+      // docs-internal/archive/handoffs/HANDOFF-command-arch-output-contract.md.
       const runCommands = async (toRun: ASTNode[]): Promise<void> => {
         for (const command of toRun) {
           try {

@@ -14,7 +14,7 @@
  * fixes both production paths at once (foreign→English transpile AND
  * foreign→AST→execute), which is why the normalization happens at PARSE time
  * (see the foreign→English canonical-validity burndown,
- * docs-internal/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md).
+ * docs-internal/archive/scopes/EXPRESSION_INTERNAL_TRANSLATION_SCOPE.md).
  *
  * Covers possessive property NAMES, expression CONNECTIVES, and the positional
  * LOCATIVE, plus `joinExpressionTokens` — the single seam every raw-expression

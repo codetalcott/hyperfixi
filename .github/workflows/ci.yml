@@ -281,7 +281,7 @@ jobs:
       - name: Build language-server package
         run: npm run build --prefix packages/language-server
 
-      # Plugin packages — reactivity before components (components depends on reactivity); both depend on core
+      # Plugin packages — depend on core
       - name: Build reactivity package
         run: npm run build --prefix packages/reactivity
 
@@ -289,12 +289,6 @@ jobs:
       # bundles (browser-bundle.ts inlines reactivity + realtime dists)
       - name: Build realtime package
         run: npm run build --prefix packages/realtime
-
-      - name: Build components package
-        run: npm run build --prefix packages/components
-
-      - name: Build speech package
-        run: npm run build --prefix packages/speech
 
       # intent-element depends on @lokascript/intent (built above) + @hyperfixi/core
       - name: Build intent-element package
@@ -354,8 +348,6 @@ jobs:
             packages/language-server/dist/
             packages/reactivity/dist/
             packages/realtime/dist/
-            packages/components/dist/
-            packages/speech/dist/
             packages/intent-element/dist/
           retention-days: 3
 
@@ -605,12 +597,12 @@ jobs:
           set -o pipefail
           status=0
           if ! node scripts/validate-exports.mjs \
-            behaviors compilation-service components core \
+            behaviors compilation-service core \
             domain-bdd domain-behaviorspec domain-config domain-flow domain-jsx \
             domain-learn domain-llm domain-sql domain-todo domain-voice \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
             language-server mcp-server patterns-reference planner reactivity \
-            realtime semantic server-bridge speech vite-plugin \
+            realtime semantic server-bridge vite-plugin \
             --strict 2>&1 | tee /tmp/export-validation.log; then
             status=1
           fi
@@ -767,7 +759,6 @@ jobs:
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
           npm run typecheck --prefix packages/behaviors
-          npm run typecheck --prefix packages/components
           npm run typecheck --prefix packages/developer-tools
           npm run typecheck --prefix packages/domain-bdd
           npm run typecheck --prefix packages/domain-behaviorspec
@@ -784,17 +775,14 @@ jobs:
           npm run typecheck --prefix packages/hyperscript-tools-i18n
           npm run typecheck --prefix packages/intent
           npm run typecheck --prefix packages/intent-element
-          npm run typecheck --prefix packages/intercept
           npm run typecheck --prefix packages/language-server-hyperscript
           npm run typecheck --prefix packages/mcp-multilingual-intent
           npm run typecheck --prefix packages/multilingual-hyperscript
           npm run typecheck --prefix packages/planner
-          npm run typecheck --prefix packages/playground
           npm run typecheck --prefix packages/reactivity
           npm run typecheck --prefix packages/realtime
           npm run typecheck --prefix packages/server-bridge
           npm run typecheck --prefix packages/smart-bundling
-          npm run typecheck --prefix packages/speech
           npm run typecheck --prefix packages/testing-framework
           npm run typecheck --prefix packages/types-browser
           npm run typecheck --prefix packages/vscode-extension
@@ -1053,12 +1041,6 @@ jobs:
       - name: Test realtime
         run: npm test --prefix packages/realtime -- --run
 
-      - name: Test speech
-        run: npm test --prefix packages/speech -- --run
-
-      - name: Test components
-        run: npm test --prefix packages/components -- --run
-
       # In the local test:check gate (scripts/test-check-all.sh) since the
       # beginning, but never enumerated here — so the express 4 → 5 major broke
       # all 26 dev-server tests (`'*.html'` is not a valid path-to-regexp v8
@@ -1085,9 +1067,6 @@ jobs:
 
       - name: Test smart-bundling
         run: npm test --prefix packages/smart-bundling -- --run
-
-      - name: Test intercept
-        run: npm test --prefix packages/intercept -- --run
 
       - name: Test intent
         run: npm test --prefix packages/intent
@@ -1378,7 +1357,7 @@ jobs:
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
 
-      # Vocab cross-surface consistency (Arc A — docs-internal/HANDOFF_vocab-consistency.md).
+      # Vocab cross-surface consistency (Arc A — docs-internal/archive/handoffs/HANDOFF_vocab-consistency.md).
       # GATING since Batch 4 (release bar item 1): exits 1 on any unwaived
       # error-tier finding. Waivers (probe-cited) live in
       # packages/testing-framework/vocab-waivers.json.
@@ -1751,7 +1730,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lang: [typescript, python, go, rust]
+        lang: [typescript, go]
 
     steps:
       - uses: actions/checkout@v7
@@ -1769,18 +1748,6 @@ jobs:
           npm run typecheck
           npm test
 
-      - name: Setup Python
-        if: matrix.lang == 'python'
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Python conformance
-        if: matrix.lang == 'python'
-        working-directory: protocol/python
-        run: |
-          pip install -e ".[dev]"
-          pytest -q
-
       - name: Setup Go
         if: matrix.lang == 'go'
         uses: actions/setup-go@v6
@@ -1790,14 +1757,6 @@ jobs:
         if: matrix.lang == 'go'
         working-directory: protocol/go
         run: go test ./...
-
-      - name: Setup Rust
-        if: matrix.lang == 'rust'
-        uses: dtolnay/rust-toolchain@stable
-      - name: Rust conformance
-        if: matrix.lang == 'rust'
-        working-directory: protocol/rust
-        run: cargo test
 
   # ============================================
   # Job 10.5: Go client build + test

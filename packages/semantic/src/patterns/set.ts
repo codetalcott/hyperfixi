@@ -817,7 +817,7 @@ function getSetPatternsHe(): LanguagePattern[] {
       // in he). `את` is required: the transformer always fronts the accusative for
       // set, and keeping it required (rather than an optional group) avoids the
       // matcher producing an empty partial match on unrelated `…את…` inputs.
-      // See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#2 sweep — per-language set marking).
+      // See docs-internal/archive/scopes/ZH_BLOCK_BODY_SCOPE.md (#2 sweep — per-language set marking).
       id: 'set-he-full',
       language: 'he',
       command: 'set',

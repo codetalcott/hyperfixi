@@ -123,7 +123,7 @@ npm run version:bump -- 1.5.0
 2. Validate: `npm run changelog:validate`
 3. Push: `git push && git push --tags`
 
-**See**: [scripts/bump-version.cjs](scripts/bump-version.cjs)
+**See**: [scripts/bump-version.cjs](../scripts/bump-version.cjs)
 
 ## Changelog Management
 
@@ -345,8 +345,8 @@ npm run typecheck
 ### Core Documentation
 
 - **[README.md](README.md)** - Project overview
-- **[CLAUDE.md](CLAUDE.md)** - Claude Code context
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
+- **[CLAUDE.md](../CLAUDE.md)** - Claude Code context
+- **[CHANGELOG.md](../CHANGELOG.md)** - Version history
 
 ### Workflow Documentation
 
@@ -362,16 +362,16 @@ npm run typecheck
 
 ### Package Documentation
 
-- **[packages/core/README.md](packages/core/README.md)** - Core runtime
-- **[packages/semantic/README.md](packages/semantic/README.md)** - Semantic parser
-- **[packages/i18n/README.md](packages/i18n/README.md)** - Grammar transformation
-- **[packages/vite-plugin/README.md](packages/vite-plugin/README.md)** - Vite integration
+- **[packages/core/README.md](../packages/core/README.md)** - Core runtime
+- **[packages/semantic/README.md](../packages/semantic/README.md)** - Semantic parser
+- **[packages/i18n/README.md](../packages/i18n/README.md)** - Grammar transformation
+- **[packages/vite-plugin/README.md](../packages/vite-plugin/README.md)** - Vite integration
 
 ### Technical Documentation
 
-- **[packages/core/docs/API.md](packages/core/docs/API.md)** - API reference
-- **[packages/behaviors/AUTHORING.md](packages/behaviors/AUTHORING.md)** - Behavior system: authoring & installing
-- **[packages/core/TREE_SHAKING_GUIDE.md](packages/core/TREE_SHAKING_GUIDE.md)** - Bundle optimization
+- **[packages/core/docs/API.md](../packages/core/docs/API.md)** - API reference
+- **[packages/behaviors/AUTHORING.md](../packages/behaviors/AUTHORING.md)** - Behavior system: authoring & installing
+- **[packages/core/TREE_SHAKING_GUIDE.md](../packages/core/TREE_SHAKING_GUIDE.md)** - Bundle optimization
 
 ## Troubleshooting
 

@@ -43,7 +43,7 @@
  *     (から / 에서), and the block at the bottom locks the agreement.
  * Both, plus the finding that `renderLearn`'s output re-parses in only 75 of
  * 150 cases, are written up in
- * `docs-internal/DOMAIN-LEARN-PARITY-FINDINGS.md`.
+ * `docs-internal/archive/plans/DOMAIN-LEARN-PARITY-FINDINGS.md`.
  */
 
 import { describe, it, expect } from 'vitest';

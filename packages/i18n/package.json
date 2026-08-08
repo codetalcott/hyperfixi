@@ -63,22 +63,19 @@
     "url": "https://github.com/codetalcott/hyperfixi/issues"
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/i18n#readme",
-  "dependencies": {
-    "@hyperfixi/core": "^2.10.0",
-    "@lokascript/semantic": "^2.10.0",
-    "esbuild": "^0.28.0",
-    "happy-dom": "^20.10.6",
-    "vite": "^8.1.4"
-  },
   "devDependencies": {
+    "@lokascript/semantic": "^2.10.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.0.0",
+    "esbuild": "^0.28.0",
+    "happy-dom": "^20.10.6",
     "rollup": "^4.62.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
+    "vite": "^8.1.4",
     "vitest": "^4.1.5"
   },
   "files": [
@@ -91,5 +88,20 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "peerDependencies": {
+    "@lokascript/semantic": "^2.10.0",
+    "node-html-parser": "^6.1.0 || ^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@lokascript/semantic": {
+      "optional": true
+    },
+    "node-html-parser": {
+      "optional": true
+    }
   }
 }

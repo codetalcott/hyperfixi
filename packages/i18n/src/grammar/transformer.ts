@@ -1327,7 +1327,7 @@ function parseCommand(tokens: string[], profile: LanguageProfile): ParsedStateme
  * Must run *before* `translateElements`, while the `action` value is still the
  * source-language (English) keyword, so the schema lookup resolves.
  *
- * @see docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
+ * @see docs-internal/archive/scopes/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
  */
 const LITERAL_PRIMARY_ROLES: ReadonlySet<SemanticRole> = new Set<SemanticRole>([
   'duration',

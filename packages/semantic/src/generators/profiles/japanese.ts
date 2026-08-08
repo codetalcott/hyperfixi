@@ -157,7 +157,7 @@ export const japaneseProfile: LanguageProfile = {
     // NOT win against the particle extractor. `ない限り` starts with `な` (not a
     // particle), so it tokenizes as a single `unless` token (the same reason else
     // `そうでなければ` tokenizes clean), and the trailing-`unless` guard recovers the
-    // clause. See docs-internal/HANDOFF-unless-condition-tokenizer.md.
+    // clause. See docs-internal/archive/handoffs/HANDOFF-unless-condition-tokenizer.md.
     unless: { primary: 'ない限り', normalized: 'unless' },
     repeat: { primary: '繰り返し', alternatives: ['繰り返す', 'リピート'], normalized: 'repeat' },
     for: { primary: 'ために', alternatives: ['各'], normalized: 'for' },

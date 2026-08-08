@@ -6,7 +6,7 @@
  * ---------------------------------------------------------------------------
  *
  * Arc E exists because the same executor was hand-copied into five places and
- * the copies silently disagreed (`docs-internal/HANDOFF-command-arch-bundles.md`
+ * the copies silently disagreed (`docs-internal/archive/handoffs/HANDOFF-command-arch-bundles.md`
  * § "The premise, corrected"). Step 4 removes one of those copies by GENERATING
  * hybrid-complete's switch bodies from `templates.ts` — the same source
  * `generateBundleCode()` already emits from.

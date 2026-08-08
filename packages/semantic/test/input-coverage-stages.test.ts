@@ -5,7 +5,7 @@
  * plain-command path: the event-handler, compound, and SOV/VSO stages
  * re-tokenize sub-segments and dropped tokens with ZERO diagnostics (the
  * "0/3696 is a floor, not a total" blind spot —
- * docs-internal/HANDOFF_arc-c-input-coverage.md). These are the red→green
+ * docs-internal/archive/handoffs/HANDOFF_arc-c-input-coverage.md). These are the red→green
  * probes from that handoff, locked: each construct was verified silently
  * dropped (probe log 2026-07-13) and must now fire with the dropped span in
  * the message.

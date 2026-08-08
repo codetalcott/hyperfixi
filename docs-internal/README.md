@@ -1,55 +1,42 @@
-# LokaScript Documentation
+# docs-internal
 
-Welcome to the LokaScript documentation directory.
+Working documentation for maintainers. Public-facing docs live in
+[docs/](../docs/) and per-package `docs/` directories; this tree is the internal
+record — active work queues at the top level, everything shipped or superseded
+under [archive/](./archive/).
 
-## Documentation Structure
+## Active queues (the files that matter)
 
-### Core Documentation
+| File | Track |
+| --- | --- |
+| [MULTILINGUAL_NEXT_STEPS.md](./MULTILINGUAL_NEXT_STEPS.md) | **The** multilingual fidelity queue — R1 tail, R3 residuals, per-arc history pointers |
+| [PARSER_NEXT_STEPS.md](./PARSER_NEXT_STEPS.md) | Core-parser defects (`packages/core/src/parser/`) — check before triaging a parse bug |
+| [COMMAND_ARCHITECTURE_NEXT_STEPS.md](./COMMAND_ARCHITECTURE_NEXT_STEPS.md) | Command-layer structural work — read before touching a command surface |
+| [HYPERSCRIPT_TOOLS_NEXT_STEPS.md](./HYPERSCRIPT_TOOLS_NEXT_STEPS.md) | The upstream-\_hyperscript tooling family (adapter, tools-i18n, …) |
+| [MAINTENANCE.md](./MAINTENANCE.md) | Rebuild workflows, changelog discipline, operational how-tos |
 
-- **[API Reference](../packages/core/docs/API.md)** - Complete API documentation
-- **[Examples](../packages/core/docs/EXAMPLES.md)** - Real-world usage examples
-- **[Coverage](../packages/core/docs/COVERAGE.md)** - Feature support matrix
+A queue entry's linked brief is authoritative; the queue line is just the index.
 
-### Package Documentation
+## Live subdirectories
 
-- **[@lokascript/core](../packages/core/README.md)** - Pure hyperscript engine
-- **[@lokascript/i18n](../packages/i18n/README.md)** - 13-language internationalization
-- **[@lokascript/semantic](../packages/semantic/README.md)** - Semantic-first parsing
+- **[analysis/](./analysis/)** — design docs still referenced by code and CLAUDE.md (e.g. `TYPE_SAFETY_DESIGN.md`)
+- **[build/](./build/)** — changelog guidelines (wired into `scripts/bump-version.cjs`), git hooks, rebuild guides
+- **[release/](./release/)** — release + npm publishing guides
+- **[proposals/](./proposals/)** — open feature proposals
+- **[multilingual/](./multilingual/)** — multilingual reference material
+- **[hyperscript-org-offer/](./hyperscript-org-offer/)** — upstream-relationship material
 
-### Development Documentation
+## archive/
 
-- **[Roadmap](../roadmap/)** - Project planning and development roadmap
-- **[CLAUDE.md](../CLAUDE.md)** - AI development context and guidelines
+Shipped arcs and cold material, kept as the written record (the HANDOFFs are how
+the fidelity ratchet's design decisions are documented):
 
-### Internal Documentation
+- **[archive/handoffs/](./archive/handoffs/)** — per-arc HANDOFF briefs (~50). Each is the
+  full record of one shipped arc: diagnosis, measurements, what was deliberately deferred.
+- **[archive/scopes/](./archive/scopes/)** — scoping documents for the SOV/block-body arcs
+- **[archive/plans/](./archive/plans/)** — completed plans, roadmaps, and one-off findings
+  (including `MULTILINGUAL_ROADMAP.md`, the #492–#506 burn-down history)
+- **[archive/2026-h1/](./archive/2026-h1/)** — early-2026 assessment/exploration/investigation/session notes
 
-- **[release/](./release/)** - Release guides, NPM publishing, publication plans
-- **[analysis/](./analysis/)** - Bundle audits, type safety design, implementation summaries
-- **[build/](./build/)** - Rebuild workflows, git hooks, changelog guidelines
-- **[investigations/](./investigations/)** - Technical investigations and findings
-- **[proposals/](./proposals/)** - Feature proposals
-- **[sessions/](./sessions/)** - Development session summaries
-
-## Quick Links
-
-### Getting Started
-
-- [Installation & Setup](../README.md#quick-start)
-- [Examples Gallery](../examples/)
-- [Basic Examples](../packages/core/docs/EXAMPLES.md#basic-dom-manipulation)
-
-### API Reference
-
-- [Main API](../packages/core/docs/API.md#main-api)
-- [Expression Types](../packages/core/docs/API.md#types)
-- [Error Handling](../packages/core/docs/API.md#error-handling)
-
-### Advanced Usage
-
-- [Performance Patterns](../packages/core/docs/EXAMPLES.md#performance-patterns)
-- [Integration Patterns](../packages/core/docs/EXAMPLES.md#state-management)
-- [Internationalization](../packages/i18n/README.md)
-
-## Contributing
-
-See the main [README](../README.md#contributing) for contribution guidelines.
+Deleted (not archived) docs are recoverable via git history; repo-level deletions
+are indexed in [ARCHIVE.md](../ARCHIVE.md) at the root.

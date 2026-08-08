@@ -3,7 +3,7 @@
  * Do the bundle SHELLS agree on what a HyperFixi bundle's public API is?
  *
  * ---------------------------------------------------------------------------
- * WHY THIS EXISTS (Arc E step 3 — `docs-internal/HANDOFF-command-arch-bundles.md`)
+ * WHY THIS EXISTS (Arc E step 3 — `docs-internal/archive/handoffs/HANDOFF-command-arch-bundles.md`)
  * ---------------------------------------------------------------------------
  *
  * The same boot shell — the `[_]` scan, the `api` literal, the `window.<global>`

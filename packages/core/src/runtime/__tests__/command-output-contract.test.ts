@@ -2,7 +2,7 @@
  * The command output contract — Arc C's audit
  *
  * Arc C of `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md`; the brief is
- * `docs-internal/HANDOFF-command-arch-output-contract.md`. Landed as step 1 (the
+ * `docs-internal/archive/handoffs/HANDOFF-command-arch-output-contract.md`. Landed as step 1 (the
  * inventory) and ratcheted down by step 3 (the deletion).
  *
  * ## What it pins

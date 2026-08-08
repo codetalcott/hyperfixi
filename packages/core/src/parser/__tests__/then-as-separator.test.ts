@@ -253,7 +253,7 @@ describe('`then` as a command separator in if/unless bodies', () => {
  * The behavioural half is in `src/api/if-body-then-execution.test.ts`.
  *
  * Every source below is accepted by upstream `hyperscript.org`.
- * See docs-internal/HANDOFF-implicit-multiline-if.md.
+ * See docs-internal/archive/handoffs/HANDOFF-implicit-multiline-if.md.
  */
 describe('a single-line if does not swallow the following line', () => {
   it('leaves the next line a SIBLING of the if (minimal repro)', () => {
@@ -388,7 +388,7 @@ describe('a single-line if does not swallow the following line', () => {
  * `if x is set then …`) and evicted same-line then-joined bodies (`if c add .a
  * then add .b` — upstream: BOTH conditional), regressing five upstream-valid
  * shapes that the guards below now pin. See
- * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ * docs-internal/archive/handoffs/HANDOFF-command-word-in-if-condition.md.
  */
 describe('a body `then` on a later line does not make a single-line if multi-line', () => {
   it('leaves the following `then`-joined line a SIBLING of the if', () => {
@@ -479,7 +479,7 @@ describe('a body `then` on a later line does not make a single-line if multi-lin
  *   2. a token right after an operator is an operand (`if x is set …`).
  *
  * Every source here is accepted by upstream `hyperscript.org`. See
- * docs-internal/HANDOFF-command-word-in-if-condition.md.
+ * docs-internal/archive/handoffs/HANDOFF-command-word-in-if-condition.md.
  */
 describe('a command-name word in the condition does not break the if', () => {
   it('parses a condition that STARTS with a command word (single-line)', () => {

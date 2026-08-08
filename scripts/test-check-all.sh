@@ -36,7 +36,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/domain-learn" \
   "$REPO_ROOT/packages/domain-config" \
   "$REPO_ROOT/packages/planner" \
-  "$REPO_ROOT/packages/intercept" \
   "$REPO_ROOT/packages/realtime" \
   "$REPO_ROOT/packages/intent-element" \
   "$REPO_ROOT/packages/mcp-multilingual-intent" \
@@ -81,11 +80,8 @@ PACKAGES=(
   "smart-bundling:Smart Bundling"
   "htmx-adapter:htmx Adapter"
 
-  # Runtime plugins (HyperfixiPlugin) — reactivity before components (dep order)
+  # Runtime plugins (HyperfixiPlugin)
   "reactivity:Reactivity"
-  "components:Components"
-  "speech:Speech"
-  "intercept:Intercept"
   "realtime:Realtime"
   "intent-element:Intent Element"
 

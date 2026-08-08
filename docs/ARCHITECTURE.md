@@ -2,10 +2,12 @@
 
 HyperFixi is organized as a monorepo with two npm scopes:
 
-- **`@hyperfixi/*`** -- Core engine: runtime, parser, commands, bundling, tooling
-- **`@lokascript/*`** -- Multilingual layer: semantic parser, grammar transformation, domain DSLs
+- **`@lokascript/*`** -- The multilingual engine: semantic parser, grammar transformation, DSL framework, domain DSLs
+- **`@hyperfixi/*`** -- The hyperscript substrate: runtime, parser, commands, bundling, tooling
 
-Use `@hyperfixi/*` packages by default. Add `@lokascript/*` packages only if you need multilingual support.
+The multilingual runtime chain is `semantic → framework → intent` — it does not
+depend on `@hyperfixi/core`; `core` depends on `semantic` and `intent`, not the
+reverse. Projects that only need English hyperscript use `@hyperfixi/*` alone.
 
 ## Package Map
 
@@ -37,7 +39,7 @@ packages/
 ├── framework/          # @lokascript/framework — Generic DSL framework
 │                       # (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 │
-├── domain-sql/         # @lokascript/domain-sql — SQL DSL (8 languages)
+├── domain-sql/         # @lokascript/domain-sql — SQL DSL (11 languages)
 ├── domain-bdd/         # @lokascript/domain-bdd — BDD/Gherkin DSL (8 languages)
 ├── domain-behaviorspec/# @lokascript/domain-behaviorspec — Interaction testing DSL
 ├── domain-jsx/         # @lokascript/domain-jsx — JSX/React DSL
@@ -67,20 +69,20 @@ packages/
 | ---------------------------- | ----------- | ------------------------------------------- |
 | hyperfixi-lite.js            | 1.9 KB      | Minimal (8 commands, regex parser)          |
 | hyperfixi-lite-plus.js       | 2.6 KB      | More commands + i18n aliases                |
-| hyperfixi-hybrid-complete.js | 7.7 KB      | **Recommended** (~85% hyperscript coverage) |
+| hyperfixi-hybrid-complete.js | 11.1 KB     | **Recommended** (~85% hyperscript coverage) |
 | hyperfixi-hx.js              | 21.5 KB     | hybrid-complete + htmx/fixi support         |
-| hyperfixi-minimal.js         | 76 KB       | Full parser + 30 commands                   |
-| hyperfixi.js                 | ~299 KB     | Everything + reactivity/realtime plugins    |
+| hyperfixi-minimal.js         | 71.5 KB     | Full parser + 30 commands                   |
+| hyperfixi.js                 | ~310 KB     | Everything + reactivity/realtime plugins    |
 
 **Semantic bundles** (optional, for multilingual support):
 
-| Bundle                                  | Size  | Languages          |
-| --------------------------------------- | ----- | ------------------ |
-| browser-en.en.global.js                 | 20 KB | English only       |
-| browser-western.western.global.js       | 30 KB | en, es, pt, fr, de |
-| browser-east-asian.east-asian.global.js | 24 KB | ja, zh, ko         |
-| browser-priority.priority.global.js     | 48 KB | 11 priority        |
-| browser.global.js                       | 90 KB | All 24 languages   |
+| Bundle                                  | Size (gzip) | Languages          |
+| --------------------------------------- | ----------- | ------------------ |
+| browser-en.en.global.js                 | 75 KB       | English only       |
+| browser-western.western.global.js       | 89 KB       | en, es, pt, fr, de |
+| browser-east-asian.east-asian.global.js | 70 KB       | ja, zh, ko         |
+| browser-priority.priority.global.js     | 107 KB      | 11 priority        |
+| browser.global.js                       | 195 KB      | All 24 languages   |
 
 See [packages/core/bundle-configs/README.md](../packages/core/bundle-configs/README.md) for custom bundle generation.
 

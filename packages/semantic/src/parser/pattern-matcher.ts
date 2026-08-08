@@ -499,7 +499,7 @@ export class PatternMatcher {
     // token). Reject non-event-shaped tokens for the `event` role so the input
     // falls through to the command stage (or the per-command SOV event pattern
     // whose patient role legitimately captures it). See
-    // docs-internal/HANDOFF-sov-event-anchor.md.
+    // docs-internal/archive/handoffs/HANDOFF-sov-event-anchor.md.
     if (patternToken.role === 'event' && this.currentPatternCommand === 'on') {
       if (!PatternMatcher.tokenLooksLikeEvent(token)) {
         return patternToken.optional || false;
@@ -982,7 +982,10 @@ export class PatternMatcher {
     // `expectedTypes` validation, so no type-compatibility or adoption decision
     // can move — the slot still admits both types, it just reports one.
     if (patternToken.valueShape === 'keyword' && value.type === 'expression') {
-      captured.set(patternToken.role, createLiteral(String((value as { raw?: unknown }).raw ?? '')));
+      captured.set(
+        patternToken.role,
+        createLiteral(String((value as { raw?: unknown }).raw ?? ''))
+      );
     } else {
       captured.set(patternToken.role, value);
     }
@@ -1384,7 +1387,7 @@ export class PatternMatcher {
    * untested input-tolerance alternate (the natural "up to/until" a native
    * writer might use — de `bis`, ru/uk `до`, th `ถึง`…). Don't build on the
    * alternates without probing them first.
-   * (docs-internal/HANDOFF_pick-text-range-arc3.md).
+   * (docs-internal/archive/handoffs/HANDOFF_pick-text-range-arc3.md).
    */
   private static readonly PICK_RANGE_SEPARATORS_BY_LANG: Readonly<
     Record<string, ReadonlySet<string>>
@@ -1992,7 +1995,7 @@ export class PatternMatcher {
    * selectors, URLs, method calls (`fn()`), or string/number literals.
    * Value-based so it works for any language's native event words (no special
    * chars). See the event-anchor guard in matchRoleToken and
-   * docs-internal/HANDOFF-sov-event-anchor.md.
+   * docs-internal/archive/handoffs/HANDOFF-sov-event-anchor.md.
    */
   private static tokenLooksLikeEvent(token: LanguageToken): boolean {
     // Selectors (.class/#id/<tag/>/[attr]) and URLs are never events.
