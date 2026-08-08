@@ -539,6 +539,23 @@ function evaluateLiteral(node: LiteralNode): unknown {
 async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContext): Promise<any> {
   const name = node.name;
 
+  // Reactive dependency tracking for global reads happens HERE, before any
+  // presence check, because a read of an *unset* global is still a read: an
+  // effect that renders `$count` must re-run when `$count` is first assigned.
+  // Firing only inside the `globals.has(name)` branches below made a `live`
+  // block subscribe to nothing on its first pass (the common case — the var
+  // usually doesn't exist yet), so the block never re-rendered, or re-rendered
+  // one write late once some other path created the variable.
+  //
+  // Only unambiguously-global forms qualify: `$name` and the explicit-global
+  // `::name` (scope: 'global'). A bare identifier may resolve to a local, a
+  // context property or a JS built-in, and must not register a global dep.
+  if (name.startsWith('$')) {
+    notifyGlobalRead(name.slice(1), context);
+  } else if ((node as { scope?: string }).scope === 'global') {
+    notifyGlobalRead(name, context);
+  }
+
   // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
   // you, `its` → it. Matches `_hyperscript/src/core/runtime.js:resolveSymbol`.
   if (name === 'me' || name === 'my' || name === 'I') {
@@ -567,7 +584,7 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   // bare, so we pass it through unchanged. Falls through to the normal lookups
   // (incl. globalThis) when the global isn't present in context.
   if ((node as { scope?: string }).scope === 'global' && context.globals?.has(name)) {
-    notifyGlobalRead(name, context);
+    // read hook already fired at the top of this function
     return context.globals.get(name);
   }
   // Element-scoped `:name` (parser tags these `scope: 'element'`). Reads from the
@@ -581,14 +598,12 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
     return context.locals.get(name);
   }
   if (context.globals && context.globals.has(name)) {
-    if (name.startsWith('$')) notifyGlobalRead(name.slice(1), context);
     return context.globals.get(name);
   }
   if (name.startsWith('$') && context.globals && context.globals.has(name.slice(1))) {
     // Hyperscript convention: `$name` identifiers look up `name` in globals
     // (matches how setVariableValue stores them). Covers both legacy parse
     // paths (identifier with `$` prefix) and the newer `globalVariable` path.
-    notifyGlobalRead(name.slice(1), context);
     return context.globals.get(name.slice(1));
   }
   if ((context as any)[name] !== undefined) {
