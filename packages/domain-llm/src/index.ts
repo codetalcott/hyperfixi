@@ -2,7 +2,7 @@
  * @lokascript/domain-llm — Multilingual LLM Prompt DSL
  *
  * A natural language interface for LLM interactions built on @lokascript/framework.
- * Parses commands written in 8 languages and generates LLMPromptSpec objects
+ * Parses commands written in 11 languages and generates LLMPromptSpec objects
  * compatible with MCP sampling/createMessage.
  *
  * @example

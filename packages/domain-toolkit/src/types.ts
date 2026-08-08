@@ -49,12 +49,27 @@ export interface LintWaiver {
   readonly matches?: Record<string, string | number | boolean>;
 }
 
+/**
+ * Opt-in input for R11 (doc-claims): prose files whose "N languages"
+ * statements must match the domain's true language count.
+ *
+ * `languageCount` is deliberately separate from `profiles.length` — several
+ * domains lint a partial profile set (the pre-expansion 8) while the DSL
+ * registers more. Pass the authoritative number, e.g.
+ * `createXDSL().getSupportedLanguages().length`.
+ */
+export interface DocClaims {
+  readonly languageCount: number;
+  readonly texts: readonly { readonly path: string; readonly content: string }[];
+}
+
 export interface DomainLintInput {
   readonly name: string;
   readonly schemas: readonly CommandSchema[];
   readonly profiles: readonly PatternGenLanguageProfile[];
   readonly tokenizers: Readonly<Record<string, LanguageTokenizer>>;
   readonly renderer?: RendererTables;
+  readonly docs?: DocClaims;
   readonly waivers?: readonly LintWaiver[];
 }
 

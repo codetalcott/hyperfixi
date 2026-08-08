@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { createLLMDSL } from '../index';
 import { lintDomain, formatResult } from '@lokascript/domain-toolkit';
 import type { DomainLintInput } from '@lokascript/domain-toolkit';
 
@@ -59,5 +62,21 @@ describe('domain-llm: lint', () => {
       console.log(formatResult(result));
     }
     expect(result.errorCount).toBe(0);
+  });
+
+  it('doc language-count claims match the DSL (R11 doc-claims)', () => {
+    const root = new URL('../..', import.meta.url);
+    const read = (p: string) => ({
+      path: p,
+      content: readFileSync(fileURLToPath(new URL(p, root)), 'utf8'),
+    });
+    const result = lintDomain({
+      ...buildInput(),
+      docs: {
+        languageCount: createLLMDSL().getSupportedLanguages().length,
+        texts: [read('package.json'), read('README.md'), read('src/index.ts')],
+      },
+    });
+    expect(result.findings.filter(f => f.rule === 'doc-claims')).toEqual([]);
   });
 });

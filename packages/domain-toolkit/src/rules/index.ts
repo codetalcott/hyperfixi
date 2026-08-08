@@ -10,6 +10,7 @@ import { markerTokenizationRule } from './marker-tokenization';
 import { extractorCoverageRule } from './extractor-coverage';
 import { positionOrderingRule } from './position-ordering';
 import { rendererCoherenceRule } from './renderer-coherence';
+import { docClaimsRule } from './doc-claims';
 
 /**
  * All rules in execution order.
@@ -17,6 +18,7 @@ import { rendererCoherenceRule } from './renderer-coherence';
  *   Phase 2: keyword coverage + keyword classification + marker tokenization
  *   Phase 3: extractor coverage + position ordering (warnings only)
  *   Phase 3b: renderer coherence (opt-in via DomainLintInput.renderer)
+ *   Phase 3c: doc claims (opt-in via DomainLintInput.docs)
  */
 export const ALL_RULES: readonly LintRule[] = [
   schemaStructureRule,
@@ -26,6 +28,7 @@ export const ALL_RULES: readonly LintRule[] = [
   extractorCoverageRule,
   positionOrderingRule,
   rendererCoherenceRule,
+  docClaimsRule,
 ];
 
 export function runRules(input: DomainLintInput): LintFinding[] {
