@@ -36,18 +36,18 @@ Hand-writing `[toggle patient:.active destination:#button]` in a codebase is an 
 
 1. Read "[What is LSE?](#what-is-lse)" below to understand the two-layer model
 2. Pick or design a vocabulary — see [docs/vocabularies.md](docs/vocabularies.md) for the catalog of existing ones and [docs/defining-vocabularies.md](docs/defining-vocabularies.md) for guidance on reusing vs. inventing role names
-3. Use one of the four reference parsers (or `createMultilingualDSL()` from `@lokascript/framework` if you're building on the hyperfixi stack)
+3. Use one of the reference parsers (or `createMultilingualDSL()` from `@lokascript/framework` if you're building on the hyperfixi stack)
 4. Validate against the conformance fixtures in [test-fixtures/](test-fixtures/)
 
 ### Cross-language parser implementers / spec contributors
 
-**Read:** the ABNF grammar ([spec/lokascript-explicit-syntax.abnf](spec/lokascript-explicit-syntax.abnf)), wire format ([spec/wire-format.md](spec/wire-format.md)), and conformance fixtures ([test-fixtures/](test-fixtures/)). Look at the four existing implementations ([typescript/](typescript/), [python/](python/), [go/](go/), [rust/](rust/)) for reference patterns.
+**Read:** the ABNF grammar ([spec/lokascript-explicit-syntax.abnf](spec/lokascript-explicit-syntax.abnf)), wire format ([spec/wire-format.md](spec/wire-format.md)), and conformance fixtures ([test-fixtures/](test-fixtures/)). Look at the two in-repo implementations ([typescript/](typescript/), [go/](go/)) for reference patterns. (Python and Rust reference parsers were archived 2026-08-07 — tag `archived/peripheral-2026h1`.)
 
 ## What is LSE?
 
 LSE is a **two-layer protocol** for representing imperative commands.
 
-**Layer A — Universal infrastructure.** A formal grammar, JSON wire format, and tree structure that work across any imperative command DSL. Every LSE implementation supports this layer, and every LSE-conformant document uses it. Layer A is fully specified, versioned, and conformance-tested across four reference parsers (TypeScript, Python, Go, Rust).
+**Layer A — Universal infrastructure.** A formal grammar, JSON wire format, and tree structure that work across any imperative command DSL. Every LSE implementation supports this layer, and every LSE-conformant document uses it. Layer A is fully specified, versioned, and conformance-tested across the reference parsers (TypeScript, Go).
 
 **Layer B — Pluggable domain vocabularies.** A set of action and role names that describe a specific domain. Different DSLs use different vocabularies. The UI-behavior vocabulary (derived from Fillmore's case grammar) is the reference vocabulary used by the hyperscript DSL, but it is not the only vocabulary and LSE does not require it. SQL DSLs use a SQL vocabulary. JSX DSLs use a JSX vocabulary. BDD DSLs use a testing vocabulary. All of them share Layer A.
 
@@ -79,16 +79,14 @@ LSE is used as the interchange format for [LokaScript](https://github.com/codeta
 
 ## Contents
 
-> **Status:** The four reference parsers and the conformance fixtures live in this repository as in-repo implementations. They are **not currently published** to npm, PyPI, or crates.io. To use them, clone this repository and work from source (see "Building from source" below). A publishing decision is tracked separately.
+> **Status:** The reference parsers and the conformance fixtures live in this repository as in-repo implementations. They are **not currently published** to npm, PyPI, or crates.io. To use them, clone this repository and work from source (see "Building from source" below). A publishing decision is tracked separately.
 
 | Directory                        | Package name                  | Status          | Description                                            |
 | -------------------------------- | ----------------------------- | --------------- | ------------------------------------------------------ |
 | [spec/](spec/)                   | —                             | —               | Formal ABNF grammar, wire format, streaming convention |
 | [test-fixtures/](test-fixtures/) | `@lokascript/lse-conformance` | in-repo, v2.0.0 | 142 language-independent conformance test cases        |
 | [typescript/](typescript/)       | `@lokascript/explicit-syntax` | in-repo, v2.0.0 | TypeScript reference parser                            |
-| [python/](python/)               | `lokascript-explicit`         | in-repo, v2.0.0 | Python reference parser                                |
 | [go/](go/)                       | (in-repo, see note)           | in-repo         | Go reference parser                                    |
-| [rust/](rust/)                   | `lokascript-explicit`         | in-repo, v2.0.0 | Rust reference parser                                  |
 
 > **Go module note:** the Go `go.mod` declares the module path `github.com/lokascript/explicit-syntax-go`, but the code lives at `github.com/codetalcott/hyperfixi/protocol/go`. This path mismatch will be corrected when the protocol reaches a publishing decision.
 
@@ -117,25 +115,6 @@ const text = renderExplicit(node);
 console.log(text); // "[toggle patient:.active destination:#button]"
 ```
 
-### Python
-
-```bash
-git clone https://github.com/codetalcott/hyperfixi
-cd hyperfixi/protocol/python
-pip install -e .
-```
-
-```python
-from lokascript_explicit import parse_explicit, render_explicit
-
-node = parse_explicit('[toggle patient:.active destination:#button]')
-print(node.action)  # "toggle"
-print(node.roles['patient'].value)  # ".active"
-
-text = render_explicit(node)
-print(text)  # "[toggle patient:.active destination:#button]"
-```
-
 ### Go
 
 ```go
@@ -150,35 +129,6 @@ fmt.Println(node.Roles["patient"].StringValue()) // ".active"
 
 text := lse.RenderExplicit(node)
 fmt.Println(text) // "[toggle patient:.active destination:#button]"
-```
-
-### Rust
-
-```bash
-git clone https://github.com/codetalcott/hyperfixi
-# Add to your Cargo.toml:
-#   lokascript-explicit = { path = "/path/to/hyperfixi/protocol/rust" }
-```
-
-```rust
-use lokascript_explicit::*;
-
-let node = parse_explicit("[toggle patient:.active destination:#button]", None).unwrap();
-assert_eq!(node.action, "toggle");
-
-let rendered = render_explicit(&node);
-// "[toggle patient:.active destination:#button]"
-```
-
-### CLI
-
-```bash
-# After installing the Python package from source:
-echo '[toggle patient:.active]' | python -m lokascript_explicit parse
-# {"kind": "command", "action": "toggle", "roles": {"patient": {"type": "selector", "value": ".active"}}}
-
-echo '{"kind":"command","action":"toggle","roles":{"patient":{"type":"selector","value":".active"}}}' | python -m lokascript_explicit render
-# [toggle patient:.active]
 ```
 
 ## Conformance Testing

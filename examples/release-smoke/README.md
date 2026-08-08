@@ -20,9 +20,8 @@ the in-repo test suites structurally cannot — because vitest aliases
    a `toggle`/`put` round-trip on the full bundle, and an `hx-live` reactive
    update on the hx-v4 bundle.
 
-`@hyperfixi/core` and `@hyperfixi/components` reference browser globals at
-module scope and can't be imported in bare Node — they're covered by the
-browser stage, not the Node stage.
+`@hyperfixi/core` is Node-safe (dom-globals shim, since 2.7.2) and is checked
+in the Node stage; browser-only behavior is covered by the browser stage.
 
 ## Usage
 

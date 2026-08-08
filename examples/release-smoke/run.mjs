@@ -62,9 +62,7 @@ const PACKAGES = [
   '@lokascript/semantic',
   '@lokascript/i18n',
   '@hyperfixi/vite-plugin',
-  '@hyperfixi/speech',
   '@hyperfixi/reactivity',
-  '@hyperfixi/components',
   '@hyperfixi/mcp-server',
   '@hyperfixi/behaviors',
 ];

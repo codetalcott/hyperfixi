@@ -121,11 +121,9 @@ jobs:
           npm run build --prefix packages/server-bridge
           npm run build --prefix packages/vite-plugin
           npm run build --prefix packages/language-server
-          # Plugin packages (HyperfixiPlugin) — reactivity before components (components depends on reactivity)
+          # Plugin packages (HyperfixiPlugin)
           npm run build --prefix packages/reactivity
           npm run build --prefix packages/realtime
-          npm run build --prefix packages/components
-          npm run build --prefix packages/speech
           # intent-element depends on @lokascript/intent + @hyperfixi/core (both built above)
           npm run build --prefix packages/intent-element
           npm run build --prefix packages/types-browser
