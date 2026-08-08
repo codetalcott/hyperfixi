@@ -39,7 +39,7 @@ const selectSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 1,
-      markerOverride: { en: 'from' },
+      markerOverride: { en: 'from', es: 'de' },
     }),
   ],
 });
@@ -99,6 +99,62 @@ const englishProfile = {
   },
   roleMarkers: {},
 };
+
+class SpanishTestTokenizer extends BaseTokenizer {
+  readonly language = 'es';
+  readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.registerExtractors(getDefaultExtractors());
+  }
+
+  classifyToken(token: string): 'keyword' | 'identifier' | 'literal' | 'operator' {
+    const keywords = ['seleccionar', 'insertar', 'de', 'en'];
+    if (keywords.includes(token.toLowerCase())) return 'keyword';
+    return 'identifier';
+  }
+}
+
+const spanishProfile = {
+  code: 'es',
+  name: 'Spanish',
+  nativeName: 'Español',
+  wordOrder: 'SVO' as const,
+  direction: 'ltr' as const,
+  caseMarking: 'preposition' as const,
+  keywords: {
+    select: { primary: 'seleccionar', aliases: [] },
+    insert: { primary: 'insertar', aliases: [] },
+    from: { primary: 'de', aliases: [] },
+    into: { primary: 'en', aliases: [] },
+  },
+  roleMarkers: {},
+};
+
+/** Two languages, NO grammarProfile on either — the nine-domains shape. */
+function createBilingualTestDSL() {
+  return createMultilingualDSL({
+    name: 'TestSQL-bilingual',
+    schemas: [selectSchema, insertSchema],
+    languages: [
+      {
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        tokenizer: new EnglishTestTokenizer(),
+        patternProfile: englishProfile,
+      },
+      {
+        code: 'es',
+        name: 'Spanish',
+        nativeName: 'Español',
+        tokenizer: new SpanishTestTokenizer(),
+        patternProfile: spanishProfile,
+      },
+    ],
+  });
+}
 
 function createTestDSL() {
   return createMultilingualDSL({
@@ -273,21 +329,47 @@ describe('MultilingualDSL: Explicit Syntax Support', () => {
   // translate
   // ---------------------------------------------------------------------------
 
-  describe('translate', () => {
+  describe('translate (parse→render)', () => {
     it('returns explicit syntax unchanged', () => {
       const dsl = createTestDSL();
       const result = dsl.translate('[select columns:name source:users]', 'en', 'ja');
       expect(result).toBe('[select columns:name source:users]');
     });
 
-    // The test DSL configures no `grammarProfile`, which is legal for
-    // parse/validate/compile but not for translate. The error must name the
+    it('translates between configured languages with NO grammar profiles (the nine-domains shape)', () => {
+      const dsl = createBilingualTestDSL();
+      const result = dsl.translate('select name from users', 'en', 'es');
+      expect(result).toContain('seleccionar');
+      expect(result).toContain('name');
+      expect(result).toContain('users');
+      // The rendered Spanish is real DSL surface — it re-parses.
+      expect(dsl.validate(result, 'es').valid).toBe(true);
+    });
+
+    it('round-trips to the source language through the schema renderer', () => {
+      const dsl = createTestDSL();
+      const result = dsl.translate('select name from users', 'en', 'en');
+      expect(result.toLowerCase()).toContain('select');
+      expect(result).toContain('name');
+      expect(result).toContain('users');
+      expect(dsl.validate(result, 'en').valid).toBe(true);
+    });
+
+    // No renderer coverage for 'ja' (not a configured language) and no
+    // grammarProfile for the transformer fallback: the error must name the
     // field to set rather than leaving the caller with "No profile found".
-    it('throws an error naming grammarProfile when the profile is missing', () => {
+    it('throws an error naming grammarProfile when render cannot cover the target', () => {
       const dsl = createTestDSL();
       expect(() => dsl.translate('select name from users', 'en', 'ja')).toThrow(/grammarProfile/);
       expect(() => dsl.translate('select name from users', 'en', 'ja')).toThrow(
         /parse\/validate\/compile do not need it/
+      );
+    });
+
+    it('propagates the parse error for unparseable input when no fallback exists', () => {
+      const dsl = createTestDSL();
+      expect(() => dsl.translate('gibberish matching nothing', 'en', 'en')).toThrow(
+        /No pattern matched/
       );
     });
   });

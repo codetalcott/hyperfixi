@@ -35,8 +35,10 @@ export interface LanguageConfig {
   /**
    * Language profile for grammar transformation.
    *
-   * Optional for `parse()`, `validate()` and `compile()`, but **required for
-   * `translate()`** — omitting it makes `translate()` throw for this language.
+   * Optional everywhere: `translate()` primarily works parse→render through
+   * the schema-driven renderer, which needs no grammar profile. Configure this
+   * only to enable the whole-string GrammarTransformer FALLBACK for input the
+   * pattern matcher cannot parse (or actions render() cannot cover).
    */
   readonly grammarProfile?: GrammarProfile;
 }
@@ -407,23 +409,47 @@ class MultilingualDSLImpl implements MultilingualDSL {
     // Explicit syntax is language-agnostic — return unchanged
     if (isExplicitSyntax(input)) return input;
 
-    // translate() is the only path that needs grammar profiles; parse/validate/
-    // compile work without them. `grammarProfile` is optional on LanguageConfig,
-    // so omitting it fails here rather than at construction — name the missing
-    // field instead of leaving the transformer's bare "No profile found".
-    for (const language of [fromLanguage, toLanguage]) {
-      if (!this.profileProvider.getProfile(language)) {
-        throw new Error(
-          `translate() requires a grammar profile for language "${language}", but none is ` +
-            `configured. Set 'grammarProfile' on the LanguageConfig for "${language}" in ` +
-            `createMultilingualDSL() (parse/validate/compile do not need it), or inject a ` +
-            `custom 'profileProvider'.`
-        );
+    // Primary route: parse in the source language, render in the target — the
+    // same parse→render path DomainRegistry.translate uses. The schema-driven
+    // renderer covers every configured language, so this needs NO grammar
+    // profiles (before 2026-08 translate() required them and therefore threw
+    // for every domain in the family — none configures one).
+    let node: SemanticNode;
+    try {
+      node = this.parseWithConfidence(input, fromLanguage).node;
+    } catch (parseError) {
+      // Whole-string grammar transformation can sometimes translate input the
+      // pattern matcher cannot parse — but only when profiles are configured.
+      if (this.hasGrammarProfile(fromLanguage) && this.hasGrammarProfile(toLanguage)) {
+        return this.transformer.transform(input, fromLanguage, toLanguage);
       }
+      throw parseError;
     }
 
-    // Use injected grammar transformer
-    return this.transformer.transform(input, fromLanguage, toLanguage);
+    // Only consult render() for a CONFIGURED target language — the schema
+    // renderer's lookup tables fall back to raw action/marker names for
+    // unknown languages, which would silently return wrong-language output.
+    const rendered = this.registry.getSupportedLanguages().includes(toLanguage)
+      ? this.render(node, toLanguage)
+      : null;
+    if (rendered != null) return rendered;
+
+    // render() covered nothing for this action/language pair; fall back to the
+    // grammar transformer when profiles exist, otherwise name both remedies.
+    if (this.hasGrammarProfile(fromLanguage) && this.hasGrammarProfile(toLanguage)) {
+      return this.transformer.transform(input, fromLanguage, toLanguage);
+    }
+    throw new Error(
+      `translate() could not render action "${node.action}" in language "${toLanguage}": no ` +
+        `custom renderer, domain renderer, or schema pattern covers it, and no grammar ` +
+        `profile is configured for the transformer fallback. Either add "${toLanguage}" to ` +
+        `the DSL's languages/renderer, or set 'grammarProfile' on its LanguageConfig in ` +
+        `createMultilingualDSL() (parse/validate/compile do not need it).`
+    );
+  }
+
+  private hasGrammarProfile(language: string): boolean {
+    return this.profileProvider.getProfile(language) != null;
   }
 
   compile(input: string, language: string): CompileResult {
