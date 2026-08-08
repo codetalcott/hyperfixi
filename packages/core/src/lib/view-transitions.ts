@@ -33,8 +33,12 @@ type StartViewTransitionFn = (cb: () => void | Promise<void>) => ViewTransitionL
 
 function getStartViewTransition(): StartViewTransitionFn | undefined {
   if (typeof document === 'undefined') return undefined;
-  return (document as unknown as { startViewTransition?: StartViewTransitionFn })
+  const fn = (document as unknown as { startViewTransition?: StartViewTransitionFn })
     .startViewTransition;
+  // Bind, or the native method is invoked detached and real browsers throw
+  // "Illegal invocation" — while API-less environments (happy-dom, Firefox)
+  // take the fallback path and hide the bug from tests.
+  return typeof fn === 'function' ? fn.bind(document) : undefined;
 }
 
 export function isViewTransitionsSupported(): boolean {
