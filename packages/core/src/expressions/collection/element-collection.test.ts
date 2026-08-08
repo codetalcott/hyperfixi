@@ -250,6 +250,43 @@ describe('Element collections — sorted by / where / mapped to over live DOM re
     });
   });
 
+  describe('command surface — put element-array write-back (the sort emission)', () => {
+    it('put <tr/> in me sorted by … at end of me reorders the live rows in place', async () => {
+      // Mark state that must survive: a focused-adjacent input value.
+      const qty = row('r-server').querySelector('input') as HTMLInputElement;
+      qty.value = 'survives';
+      const before = DOC_ORDER.map(row);
+
+      const context = hyperscript.createContext(tbody());
+      await hyperscript.eval(
+        'put <tr/> in me sorted by its @data-price as Number desc at end of me',
+        context
+      );
+
+      // Reordered in place: same tbody, same five nodes, new order.
+      const after = Array.from(tbody().querySelectorAll('tr'));
+      expect(after.map(el => el.id)).toEqual([
+        'r-server',
+        'r-drill',
+        'r-board',
+        'r-cable',
+        'r-mouse',
+      ]);
+      for (const el of after) expect(before).toContain(el); // identity preserved
+      expect((row('r-server').querySelector('input') as HTMLInputElement).value).toBe('survives');
+    });
+
+    it('put a filtered subset at start of me moves just those rows to the top, in order', async () => {
+      const context = hyperscript.createContext(tbody());
+      await hyperscript.eval(
+        'put <tr/> in me where its @data-category is "tools" at start of me',
+        context
+      );
+      const after = Array.from(tbody().querySelectorAll('tr')).map(el => el.id);
+      expect(after).toEqual(['r-board', 'r-drill', 'r-mouse', 'r-cable', 'r-server']);
+    });
+  });
+
   describe('command surface — @hidden filtering (the filter/reset emissions)', () => {
     it('add @hidden to <tr/> in me where … targets exactly the matching rows', async () => {
       const context = hyperscript.createContext(tbody());

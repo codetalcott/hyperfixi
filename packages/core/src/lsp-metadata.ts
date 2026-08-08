@@ -316,8 +316,10 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   put: {
     title: 'put',
-    description: 'Sets the content of an element.',
-    example: 'put "Hello" into #message\nput response into #results',
+    description:
+      'Sets the content of an element. An array of elements is moved in order (an in-place reorder when they are already children of the target).',
+    example:
+      'put "Hello" into #message\nput response into #results\nput <tr/> in me sorted by its @data-price as Number at end of me',
     category: 'command',
   },
   set: {

@@ -100,10 +100,19 @@ export const commands: Record<string, CommandRef> = {
   put: {
     name: 'put',
     description: 'Set content or values',
-    syntax: 'put value into target',
+    syntax: 'put value into|before|after|at start of|at end of target',
     category: 'dom',
     availability: 'lite',
-    examples: ['put "Hello" into #output', 'put it into me', "put '<p>New</p>' into #container"],
+    // The element-array form MOVES the live nodes in order (an in-place
+    // reorder when they are already the target's children) — deliberately the
+    // anti-morph: nothing is serialized, so focus and input state survive.
+    // Full-runtime bundles only (the hybrid parser has no collection ops).
+    examples: [
+      'put "Hello" into #output',
+      'put it into me',
+      "put '<p>New</p>' into #container",
+      'put <tr/> in me sorted by its @data-price as Number at end of me',
+    ],
   },
   make: {
     name: 'make',
