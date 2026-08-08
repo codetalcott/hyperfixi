@@ -6,7 +6,7 @@
  *
  * ---------------------------------------------------------------------------
  * WHAT "AVAILABLE" MEANS HERE, AND WHERE THE FACT ACTUALLY LIVES
- * (Arc A step 4.2 — `docs-internal/HANDOFF-command-arch-manifest.md`)
+ * (Arc A step 4.2 — `docs-internal/archive/handoffs/HANDOFF-command-arch-manifest.md`)
  * ---------------------------------------------------------------------------
  *
  * These lists answer ONE question: *can the bundle generator emit this command

@@ -346,6 +346,6 @@ After merge, monitor these metrics:
 
 See:
 
-- [WORKFLOW_ANALYSIS.md](../../docs-internal/WORKFLOW_ANALYSIS.md) - Detailed analysis
+- `WORKFLOW_ANALYSIS.md` - Detailed analysis (deleted 2026-08-07; recover via git history)
 - [.github/workflows/archive/README.md](archive/README.md) - Archived workflow info
 - [CLAUDE.md](../../CLAUDE.md#cicd-workflows) - CI/CD documentation

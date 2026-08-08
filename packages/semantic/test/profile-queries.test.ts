@@ -1,6 +1,6 @@
 /**
  * Tests for the profile-query helpers (public API for mcp-server/LSP/domain
- * bridges — see docs-internal/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md, Phase 1
+ * bridges — see docs-internal/archive/plans/FRAMEWORK_SEMANTIC_BRIDGE_PLAN.md, Phase 1
  * riding item).
  */
 

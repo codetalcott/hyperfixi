@@ -1378,7 +1378,7 @@ jobs:
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
 
-      # Vocab cross-surface consistency (Arc A — docs-internal/HANDOFF_vocab-consistency.md).
+      # Vocab cross-surface consistency (Arc A — docs-internal/archive/handoffs/HANDOFF_vocab-consistency.md).
       # GATING since Batch 4 (release bar item 1): exits 1 on any unwaived
       # error-tier finding. Waivers (probe-cited) live in
       # packages/testing-framework/vocab-waivers.json.

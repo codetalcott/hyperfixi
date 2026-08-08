@@ -11,7 +11,7 @@
  * to the ordinary single-statement engine. The results are re-assembled into a
  * `BehaviorSemanticNode` / `DefSemanticNode`.
  *
- * See docs-internal/MULTILINGUAL_BEHAVIORS_PLAN.md Phase 3.
+ * See docs-internal/archive/plans/MULTILINGUAL_BEHAVIORS_PLAN.md Phase 3.
  */
 
 import type {

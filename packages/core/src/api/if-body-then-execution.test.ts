@@ -100,7 +100,7 @@ describe('an if body joined by `then` obeys its condition', () => {
  * "Expected 'end' after if block".
  *
  * These assert the DOM, because that is the only place the damage was visible.
- * See docs-internal/HANDOFF-implicit-multiline-if.md.
+ * See docs-internal/archive/handoffs/HANDOFF-implicit-multiline-if.md.
  */
 describe('a command after a single-line if runs regardless of the condition', () => {
   beforeEach(() => {
@@ -183,7 +183,7 @@ describe('a command after a single-line if runs regardless of the condition', ()
  * add .b`) briefly had its second command evicted as an unconditional sibling by
  * the first-command bound. Both are the same failure the rest of this file
  * exists for: a command running, or not running, against its condition.
- * See docs-internal/HANDOFF-command-word-in-if-condition.md.
+ * See docs-internal/archive/handoffs/HANDOFF-command-word-in-if-condition.md.
  */
 describe('a command-word condition and a same-line then-joined body obey the condition', () => {
   beforeEach(() => {

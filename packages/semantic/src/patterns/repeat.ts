@@ -126,7 +126,7 @@ const SOV_REPEAT_TIMES: Array<[string, string, string]> = [
 
 // =============================================================================
 // R1 cluster D — `repeat for X in Y` / `repeat while C` / `repeat until event E
-// [from S]` loop-HEAD patterns (docs-internal/HANDOFF-r1-residual.md).
+// [from S]` loop-HEAD patterns (docs-internal/archive/handoffs/HANDOFF-r1-residual.md).
 //
 // Before these heads, only the en `-times`/`forever`/`until event` variants had
 // HEAD-ONLY patterns; every other repeat head fell to the GENERATED positional

@@ -3,7 +3,7 @@
  *
  * Regression guards for the structural parser work that cleared the
  * `last-in-collection`, `set-color-variable`, and `input-clear` failures in
- * ar+tl (see docs-internal/MULTILINGUAL_ROADMAP.md). Each fails even in English
+ * ar+tl (see docs-internal/archive/plans/MULTILINGUAL_ROADMAP.md). Each fails even in English
  * at the bare-command level today, so these tests assert genuine parsing rather
  * than the degenerate event-handler match.
  */

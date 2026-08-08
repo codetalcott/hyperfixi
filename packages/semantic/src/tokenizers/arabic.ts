@@ -147,7 +147,7 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   // (`ضغط`/`تمرير الفأرة`), so the dict's `فأرة أسفل`/`فأرة أعلى` tokenized as two bare
   // identifiers, the `عند <event>` handler never anchored, and the whole handler dropped
   // (repeat-until-event ar: `on` lost, fid 0.75). The BaseTokenizer multi-word matcher
-  // catches these longest-first. See docs-internal/HANDOFF-lossy-tail.md (repeat-until-event).
+  // catches these longest-first. See docs-internal/archive/handoffs/HANDOFF-lossy-tail.md (repeat-until-event).
   { native: 'فأرة أسفل', normalized: 'mousedown' },
   { native: 'فأرة أعلى', normalized: 'mouseup' },
   { native: 'فأرة دخول', normalized: 'mouseenter' },

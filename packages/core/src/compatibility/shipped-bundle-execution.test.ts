@@ -5,7 +5,7 @@
  *
  * ---------------------------------------------------------------------------
  * WHY THIS EXISTS — the gap between the two gates that came before it
- * (Arc E step 1 — `docs-internal/HANDOFF-command-arch-bundles.md`)
+ * (Arc E step 1 — `docs-internal/archive/handoffs/HANDOFF-command-arch-bundles.md`)
  * ---------------------------------------------------------------------------
  *
  * Two gates already ask a version of this question, and neither can answer it

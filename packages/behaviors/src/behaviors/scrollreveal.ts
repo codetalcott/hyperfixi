@@ -8,7 +8,7 @@
  * Compiled from its hyperscript `source` — the single source of truth shared with
  * the CDN resolver bundle and patterns-reference. This collapses ScrollReveal onto
  * the one runtime path (no more imperative-installer fork between CDN and npm);
- * see docs-internal/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
+ * see docs-internal/archive/plans/BEHAVIORS_CONSOLIDATION_PLAN.md §3d.
  */
 
 import { scrollRevealSchema } from '../schemas/scrollreveal.schema';

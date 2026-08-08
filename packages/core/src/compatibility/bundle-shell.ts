@@ -3,7 +3,7 @@
  * API *is*, for every bundle that has one.
  *
  * ---------------------------------------------------------------------------
- * WHY (Arc E step 3 — `docs-internal/HANDOFF-command-arch-bundles.md`)
+ * WHY (Arc E step 3 — `docs-internal/archive/handoffs/HANDOFF-command-arch-bundles.md`)
  * ---------------------------------------------------------------------------
  *
  * Before this module, the same ~40 lines — `processElements`, the `api` object

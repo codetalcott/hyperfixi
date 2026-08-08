@@ -85,7 +85,7 @@ export class SwahiliKeywordExtractor implements ContextAwareExtractor {
     // sw, fid 0.75). When `_` follows, read the full `_`-joined run and adopt it ONLY
     // if it resolves to a REGISTERED keyword — so arbitrary snake_case identifiers and
     // unregistered dict forms (the blur `poteza_macho`) stay split exactly as before.
-    // See docs-internal/HANDOFF-lossy-tail.md (repeat-until-event).
+    // See docs-internal/archive/handoffs/HANDOFF-lossy-tail.md (repeat-until-event).
     if (this.context && pos < input.length && input[pos] === '_') {
       let extPos = pos;
       let ext = word;

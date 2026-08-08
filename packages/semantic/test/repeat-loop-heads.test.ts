@@ -1,6 +1,6 @@
 /**
  * R1 cluster D — repeat loop-HEAD canonicalization guards
- * (docs-internal/HANDOFF-r1-residual.md, cluster D).
+ * (docs-internal/archive/handoffs/HANDOFF-r1-residual.md, cluster D).
  *
  * Before the `for-in` / `while-head` / `until-head` patterns
  * (patterns/repeat.ts), every non-`times`/`forever`/`until event` repeat head

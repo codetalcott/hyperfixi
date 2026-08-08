@@ -1,5 +1,5 @@
 /**
- * Vocab-consistency CLI (Arc A — docs-internal/HANDOFF_vocab-consistency.md).
+ * Vocab-consistency CLI (Arc A — docs-internal/archive/handoffs/HANDOFF_vocab-consistency.md).
  *
  *   npx tsx src/vocab/cli.ts validate [--language xx[,yy]] [--check V1,V4]
  *                                     [--json [path]] [--waivers path] [--warn-only]

@@ -5,7 +5,7 @@
  * scan used to cut `/api/search?q=${my value}` at the space inside the
  * interpolation, truncating the en reference for event-debounce and junking
  * every SOV parse of the same row (R1 deferred-tail Family E,
- * docs-internal/HANDOFF_r1-deferred-tail.md). A `${` that opens inside a URL
+ * docs-internal/archive/handoffs/HANDOFF_r1-deferred-tail.md). A `${` that opens inside a URL
  * candidate is consumed through its matching `}` — whitespace and balanced
  * inner braces included — before the plain scan resumes. An UNCLOSED `${`
  * carries no span and keeps the legacy stop-at-whitespace behavior.

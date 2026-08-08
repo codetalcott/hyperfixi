@@ -2,7 +2,7 @@
  * Does a bundle this plugin emits claim a global it has no right to?
  *
  * ---------------------------------------------------------------------------
- * WHY THIS EXISTS (Arc E step 3 — `docs-internal/HANDOFF-command-arch-bundles.md`)
+ * WHY THIS EXISTS (Arc E step 3 — `docs-internal/archive/handoffs/HANDOFF-command-arch-bundles.md`)
  * ---------------------------------------------------------------------------
  *
  * The boot shell is emitted from THREE sites in this package — `generator.ts`'s

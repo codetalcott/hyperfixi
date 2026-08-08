@@ -2,7 +2,7 @@
  * Multilingual roadmap — property-path patient (Tier 2).
  *
  * Regression guard for the property-path patient feature that cleared
- * `announce-screen-reader` (he+sw) — see docs-internal/MULTILINGUAL_ROADMAP.md.
+ * `announce-screen-reader` (he+sw) — see docs-internal/archive/plans/MULTILINGUAL_ROADMAP.md.
  *
  * `put event.detail.message into #x` fails even in English at the bare-command
  * level: the tokenizer fuses the dotted path into a base token + `.`-prefixed

@@ -133,7 +133,7 @@ export class SettleCommand implements DecoratedCommand {
     // add .done to #x`, or `tell #x`). The self-assign this replaces was a
     // silent divergence: hyperfixi-only chains like `settle #x then … it` would
     // break on the canonical engine. Decided in Arc C's close-out — see
-    // docs-internal/HANDOFF-command-arch-output-contract.md.
+    // docs-internal/archive/handoffs/HANDOFF-command-arch-output-contract.md.
     return { element: targetElement, settled: result.completed, timeout, duration };
   }
 }

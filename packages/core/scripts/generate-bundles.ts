@@ -21,7 +21,7 @@
  * weight in every one of those bundles.
  *
  * The two rejected fixes are recorded in
- * `docs-internal/HANDOFF-command-arch-manifest.md` § Finding 17: split the
+ * `docs-internal/archive/handoffs/HANDOFF-command-arch-manifest.md` § Finding 17: split the
  * parser, or hand-add eleven cases. The second is a FIFTH hand-maintained copy
  * of the executor, which is the thing Arc E exists to delete.
  *

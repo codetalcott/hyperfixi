@@ -379,7 +379,7 @@ the committed baseline:
 - **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. **0.**
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
-  history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
+  history in `docs-internal/archive/plans/MULTILINGUAL_ROADMAP.md`.)
 - **faithful** (fid = 1.0). **3696 / 3696.** Cross-language `avgFidelity` = 1.000,
   `avgPrecision` ≈ 0.9997, `avgRoleFidelity` ≈ 0.992, `avgMultisetRecall` = 1.000,
   `avgValueRecall` ≈ 0.997 (the SOV six sit ≥ 0.991 on R1 after #637/#638; the
@@ -430,7 +430,7 @@ yields a 0 delta):
    The nine other rows this signal originally flagged (colon-qualified event names
    `draggable:start` split at the local-variable sigil by every non-en tokenizer, plus
    two masked co-causes) were fixed in the colon-event-names arc — history in
-   `docs-internal/HANDOFF_colon-event-names.md`.
+   `docs-internal/archive/handoffs/HANDOFF_colon-event-names.md`.
 6. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
    (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
    verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
@@ -598,8 +598,7 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > before triaging a parse bug; several are already diagnosed with a written brief.
 > Two entries there are held by a gate that fails on its own (the `and` KNOWN GAP
 > tests, the shipped-sources allowlist ratchet) — the rest have no gate and are why
-> the doc exists. `docs-internal/PARSER_FIX_STATUS.md` is an **archived**
-> single-defect report, not an index, despite its name.
+> the doc exists.
 >
 > **Structural work on the command layer** — registration, metadata, output
 > contracts, bundle executors — has its own queue in
@@ -675,8 +674,8 @@ Six categories in `packages/core/src/expressions/`:
 The parser uses dependency injection via `ParserContext` interface:
 
 - 48 methods exposed through `.bind(this)` delegation
-- Command parsers in `packages/core/src/parser/commands/` are pure functions
-- AST helpers in `packages/core/src/parser/ast-helpers.ts`
+- Command parsers in `packages/core/src/parser/command-parsers/` are pure functions
+- AST helpers in `packages/core/src/parser/helpers/ast-helpers.ts`
 
 ## Key Patterns
 
@@ -850,12 +849,12 @@ Legacy methods (`compile()`, `run()`, `evaluate()`) still work but log deprecati
 
 ## Type Safety: Environment-Specific Conditional Types
 
-Zero-cost conditional types keep browser and server code honest: browser code uses
-`BrowserEventPayload` (`@hyperfixi/core/registry/browser` — target must be Element,
-nativeEvent must be Event); server code uses `ServerEventPayload`
-(`@lokascript/server-integration` — no `nativeEvent`, using it is a type error);
-code for both uses `UniversalEventPayload` (`@hyperfixi/core/registry/universal`)
-and narrows with `instanceof`. See
+Zero-cost conditional types keep environment-specific code honest: browser code uses
+`BrowserEventPayload` (`packages/core/src/registry/browser-types.ts` — target must be
+Element, nativeEvent must be Event); code for both environments uses
+`UniversalEventPayload` (`packages/core/src/registry/universal-types.ts`) and narrows
+with `instanceof`. The server-side half (`ServerEventPayload`, a `server-integration`
+package) exists only as a design — see
 [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md).
 
 ## Important Files
@@ -869,7 +868,6 @@ and narrows with `instanceof`. See
 | `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
 | `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
 | `packages/core/docs/API.md`                              | API documentation                            |
-| `packages/server-integration/src/types/`                 | Server-specific types                        |
 | `packages/i18n/src/grammar/transformer.ts`               | GrammarTransformer class                     |
 | `packages/i18n/src/browser.ts`                           | Browser bundle exports                       |
 | `packages/semantic/src/parser/semantic-parser.ts`        | Semantic parser                              |
