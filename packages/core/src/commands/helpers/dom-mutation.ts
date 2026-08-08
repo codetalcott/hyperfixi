@@ -10,7 +10,7 @@
  * - Safe DOM manipulation utilities
  */
 
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isInsertableNode } from '../../utils/element-check';
 
 /**
  * Extended insert positions (standard DOM InsertPosition plus 'replace')
@@ -98,7 +98,7 @@ export function looksLikeHTML(str: string): boolean {
  */
 export function insertContent(
   target: HTMLElement,
-  content: string | HTMLElement,
+  content: string | Node,
   position: ContentInsertPosition
 ): void {
   if (position === 'replace') {
@@ -106,10 +106,13 @@ export function insertContent(
     return;
   }
 
-  if (isHTMLElement(content)) {
+  // Any insertable Node — Element, Text, or the DocumentFragment that
+  // `fetch … as html` produces — goes through the node path. Only strings
+  // are parsed/escaped as markup.
+  if (isInsertableNode(content)) {
     insertElement(target, content, position);
   } else {
-    insertText(target, content, position);
+    insertText(target, content as string, position);
   }
 }
 
@@ -122,7 +125,7 @@ export function insertContent(
  */
 export function insertContentSemantic(
   target: HTMLElement,
-  content: string | HTMLElement,
+  content: string | Node,
   position: SemanticPosition
 ): void {
   insertContent(target, content, toInsertPosition(position));
@@ -134,8 +137,8 @@ export function insertContentSemantic(
  * @param target - Target element
  * @param content - New content
  */
-function insertReplace(target: HTMLElement, content: string | HTMLElement): void {
-  if (isHTMLElement(content)) {
+function insertReplace(target: HTMLElement, content: string | Node): void {
+  if (isInsertableNode(content)) {
     target.innerHTML = '';
     target.appendChild(content);
   } else {
@@ -154,11 +157,7 @@ function insertReplace(target: HTMLElement, content: string | HTMLElement): void
  * @param element - Element to insert
  * @param position - Insert position
  */
-function insertElement(
-  target: HTMLElement,
-  element: HTMLElement,
-  position: ContentInsertPosition
-): void {
+function insertElement(target: HTMLElement, element: Node, position: ContentInsertPosition): void {
   switch (position) {
     case 'beforebegin':
       target.parentElement?.insertBefore(element, target);

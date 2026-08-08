@@ -15,7 +15,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isInsertableNode } from '../../utils/element-check';
 import {
   isPropertyTargetString,
   resolveAnyPropertyTarget,
@@ -300,6 +300,15 @@ export class PutCommand implements DecoratedCommand {
     if (Array.isArray(v) && v.length > 0 && v.every(isHTMLElement)) {
       return v as HTMLElement[];
     }
+    // `fetch … as html` resolves to a DocumentFragment (see FetchCommand's
+    // parseHTML), and the htmx-compat layer's whole swap path is
+    // `fetch … as html then put it into <target>`. Without this branch the
+    // fragment fell to String(v) and every such swap inserted the literal
+    // text "[object DocumentFragment]". Insertion helpers accept any Node —
+    // insertBefore/appendChild splice a fragment's children in place — so
+    // pass it straight through. Checked after the Element and array cases,
+    // which have their own handling.
+    if (isInsertableNode(v)) return v as unknown as HTMLElement;
     return v == null ? '' : String(v);
   }
 

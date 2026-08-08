@@ -83,6 +83,27 @@ export function isElement(value: unknown): value is Element {
 }
 
 /**
+ * Cross-realm safe check for a Node the DOM insertion methods accept.
+ *
+ * Covers Element (1), Text (3) and DocumentFragment (11) — the node kinds
+ * `insertBefore`/`appendChild` splice into a parent. Notably a
+ * DocumentFragment is what `fetch … as html` resolves to, so commands that
+ * insert content must accept it rather than stringifying to
+ * "[object DocumentFragment]".
+ *
+ * Deliberately excludes Document (9) and DocumentType (10), which cannot be
+ * inserted into an element.
+ *
+ * @param value - Value to check
+ * @returns True if value is a Node that can be inserted into an element
+ */
+export function isInsertableNode(value: unknown): value is Node {
+  if (value === null || typeof value !== 'object') return false;
+  const nodeType = (value as { nodeType?: unknown }).nodeType;
+  return nodeType === 1 || nodeType === 3 || nodeType === 11;
+}
+
+/**
  * Cross-realm safe EventTarget check using duck-typing.
  *
  * @param value - Value to check
