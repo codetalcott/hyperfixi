@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sortable Table - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        table.products {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        .products th, .products td {
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .products th {
+            background: #f8fafc;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .products th:hover { background: #eef2f7; }
+        /* Direction indicator driven by the same attributes the handler sets */
+        .products th[aria-sort="ascending"]::after  { content: " ▲"; }
+        .products th[aria-sort="descending"]::after { content: " ▼"; }
+        .products td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Tables & Data</strong> / Sortable Table
+        </div>
+
+        <h1>Sortable Table</h1>
+
+        <div class="description">
+            <strong>Reorder server-rendered rows in place — nothing is serialized</strong><br>
+            Clicking a header moves the actual <code>&lt;tr&gt;</code> nodes into sorted order.
+            No client row model, no templates, no re-render: type in a quantity box, sort,
+            and the value (and your focus) survives, because the nodes <em>move</em>.
+        </div>
+
+        <div>
+            <span class="tag">sorted by</span>
+            <span class="tag">put … at end of</span>
+            <span class="tag">view transitions</span>
+            <span class="tag">aria-sort</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <table id="products" class="products">
+                <thead>
+                    <tr>
+                        <th data-dir="asc"
+                            _="on click
+                                 remove @aria-sort from <th/> in #products
+                                 if my @data-dir is 'asc'
+                                   set my @data-dir to 'desc'
+                                   set @aria-sort to 'descending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-name desc at end of #product-rows
+                                   end
+                                 else
+                                   set my @data-dir to 'asc'
+                                   set @aria-sort to 'ascending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-name at end of #product-rows
+                                   end
+                                 end">Product</th>
+                        <th data-dir="asc"
+                            _="on click
+                                 remove @aria-sort from <th/> in #products
+                                 if my @data-dir is 'asc'
+                                   set my @data-dir to 'desc'
+                                   set @aria-sort to 'descending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-price as Number desc at end of #product-rows
+                                   end
+                                 else
+                                   set my @data-dir to 'asc'
+                                   set @aria-sort to 'ascending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-price as Number at end of #product-rows
+                                   end
+                                 end">Price</th>
+                        <th data-dir="asc"
+                            _="on click
+                                 remove @aria-sort from <th/> in #products
+                                 if my @data-dir is 'asc'
+                                   set my @data-dir to 'desc'
+                                   set @aria-sort to 'descending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-stock as Number desc at end of #product-rows
+                                   end
+                                 else
+                                   set my @data-dir to 'asc'
+                                   set @aria-sort to 'ascending' on me
+                                   start view transition
+                                     put <tr/> in #product-rows sorted by its @data-stock as Number at end of #product-rows
+                                   end
+                                 end">Stock</th>
+                        <th>Qty</th>
+                    </tr>
+                </thead>
+                <!-- Stands in for server-rendered output: stable row ids (morph's
+                     reconciliation key), data-* mirrors of sortable values, and a
+                     view-transition-name per row so reorders animate (FLIP-style)
+                     in browsers with the View Transitions API. -->
+                <tbody id="product-rows">
+                    <tr id="p-mouse"  data-name="wireless mouse" data-price="9"   data-stock="12" style="view-transition-name: p-mouse"><td>Wireless Mouse</td><td class="num">$9</td><td class="num">12</td><td><input type="number" value="0" min="0" style="width:4em"></td></tr>
+                    <tr id="p-cable"  data-name="usb-c cable"    data-price="21"  data-stock="0"  style="view-transition-name: p-cable"><td>USB-C Cable</td><td class="num">$21</td><td class="num">0</td><td><input type="number" value="0" min="0" style="width:4em"></td></tr>
+                    <tr id="p-board"  data-name="breadboard kit" data-price="30"  data-stock="5"  style="view-transition-name: p-board"><td>Breadboard Kit</td><td class="num">$30</td><td class="num">5</td><td><input type="number" value="0" min="0" style="width:4em"></td></tr>
+                    <tr id="p-drill"  data-name="precision drill" data-price="45" data-stock="0"  style="view-transition-name: p-drill"><td>Precision Drill</td><td class="num">$45</td><td class="num">0</td><td><input type="number" value="0" min="0" style="width:4em"></td></tr>
+                    <tr id="p-server" data-name="mini server"    data-price="100" data-stock="3"  style="view-transition-name: p-server"><td>Mini Server</td><td class="num">$100</td><td class="num">3</td><td><input type="number" value="0" min="0" style="width:4em"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;th <span class="keyword">data-dir</span>=<span class="string">"asc"</span>
+    <span class="keyword">_</span>=<span class="string">"on click
+         remove @aria-sort from &lt;th/&gt; in #products
+         if my @data-dir is 'asc'
+           set my @data-dir to 'desc'
+           set @aria-sort to 'descending' on me
+           start view transition
+             put &lt;tr/&gt; in #product-rows
+               sorted by its @data-price as Number desc
+               at end of #product-rows
+           end
+         else
+           …ascending variant…
+         end"</span>&gt;Price&lt;/th&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>&lt;tr/&gt; in #product-rows sorted by its @data-price as Number</code> — sorts
+                    the <em>live row elements</em> by an attribute key. <code>as Number</code> matters:
+                    attribute reads are strings, and <code>"100"</code> sorts before <code>"9"</code> lexically.</li>
+                <li><code>put … at end of #product-rows</code> — appending an existing child <em>moves</em> it,
+                    so putting the full sorted set back is an in-place reorder. Focus and input values
+                    survive; nothing is serialized or re-rendered.</li>
+                <li><code>start view transition … end</code> — wraps the reorder so rows animate to their
+                    new positions in browsers with the View Transitions API (each row carries a unique
+                    <code>view-transition-name</code>). Elsewhere it just reorders instantly.</li>
+                <li><code>aria-sort</code> — the handler maintains the real accessibility attribute, and the
+                    CSS direction arrows key off it (<code>th[aria-sort="descending"]::after</code>) —
+                    one source of truth for state, semantics, and style.</li>
+            </ul>
+
+            <h3>The hypermedia stance</h3>
+            <p>
+                The server rendered these rows once; the client only rearranges what already exists.
+                The same markup conventions (stable row <code>id</code>s, <code>data-*</code> value mirrors)
+                are exactly what lets a server round-trip (<code>fetch … then morph</code>) reconcile
+                rows without losing state — client sort and server sort are two rungs of one ladder.
+            </p>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+</body>
+</html>

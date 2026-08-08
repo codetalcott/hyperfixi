@@ -287,6 +287,62 @@ describe('Element collections — sorted by / where / mapped to over live DOM re
     });
   });
 
+  describe('example-page contract strings (examples/tables-and-data/sortable-table.html)', () => {
+    it('the th click handler: toggle direction, set aria-sort, reorder inside a view transition', async () => {
+      // Rebuild the fixture with a thead in one parse — happy-dom's fragment
+      // parser drops a <thead> handed to insertAdjacentHTML on a <table>.
+      document.body.innerHTML = `
+        <table id="products">
+          <thead><tr><th id="th-price" data-dir="asc">Price</th></tr></thead>
+          <tbody id="rows">
+            <tr id="r-mouse"  data-price="9"><td>Mouse</td></tr>
+            <tr id="r-cable"  data-price="21"><td>Cable</td></tr>
+            <tr id="r-board"  data-price="30"><td>Board</td></tr>
+            <tr id="r-drill"  data-price="45"><td>Drill</td></tr>
+            <tr id="r-server" data-price="100"><td>Server</td></tr>
+          </tbody>
+        </table>`;
+      const th = document.getElementById('th-price') as HTMLElement;
+      const context = hyperscript.createContext(th);
+      const handler = `remove @aria-sort from <th/> in #products
+       if my @data-dir is 'asc'
+         set my @data-dir to 'desc'
+         set @aria-sort to 'descending' on me
+         start view transition
+           put <tr/> in #rows sorted by its @data-price as Number desc at end of #rows
+         end
+       else
+         set my @data-dir to 'asc'
+         set @aria-sort to 'ascending' on me
+         start view transition
+           put <tr/> in #rows sorted by its @data-price as Number at end of #rows
+         end
+       end`;
+
+      await hyperscript.eval(handler, context);
+      expect(Array.from(tbody().querySelectorAll('tr')).map(el => el.id)).toEqual([
+        'r-server',
+        'r-drill',
+        'r-board',
+        'r-cable',
+        'r-mouse',
+      ]);
+      expect(th.getAttribute('data-dir')).toBe('desc');
+      expect(th.getAttribute('aria-sort')).toBe('descending');
+
+      // Second click toggles back to ascending.
+      await hyperscript.eval(handler, context);
+      expect(Array.from(tbody().querySelectorAll('tr')).map(el => el.id)).toEqual([
+        'r-mouse',
+        'r-cable',
+        'r-board',
+        'r-drill',
+        'r-server',
+      ]);
+      expect(th.getAttribute('aria-sort')).toBe('ascending');
+    });
+  });
+
   describe('command surface — @hidden filtering (the filter/reset emissions)', () => {
     it('add @hidden to <tr/> in me where … targets exactly the matching rows', async () => {
       const context = hyperscript.createContext(tbody());
