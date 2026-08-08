@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
+**HyperFixi** is a multilingual programming-language engine: semantic-first parsing and SOV/VSO/V2 grammar transformation across 24 languages, gated by a structural-fidelity ratchet — proven against a complete \_hyperscript runtime that every translation must survive execution on. **The multilingual engine (`semantic` + `i18n` + `framework` + `intent` + `patterns-reference` + the ratchet in `testing-framework`) is the product; the `@hyperfixi/*` engine is the substrate that proves it.** Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
 
 - **14,000+ tests** passing across all suites (core ~7000, semantic ~6500, i18n ~900, plus per-package suites)
 - **~310 KB** full browser bundle (gzipped); slim bundles from **1.9 KB** (lite) to **21.5 KB** (hybrid-hx) — sizes re-measured 2026-07-24 (post-dedupe; the 2.7.x ~534 KB figure was a duplicate core+semantic copy, since removed — growth from ~299 is semantic-content growth from the July pick/vocab arcs plus the 2.9.0 `markerLegacy` data, single-copy verified). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` reads ~2 KB lower on the full bundles. `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
@@ -75,7 +75,7 @@ packages/
 ├── vscode-extension/            # VSCode extension for LokaScript
 ├── vscode-extension-hyperscript/ # VSCode extension for original _hyperscript
 │
-└── [other packages: smart-bundling, developer-tools, testing-framework, ast-toolkit, etc.]
+└── [other packages: smart-bundling, developer-tools, testing-framework, etc.]
 
 examples/
 ├── multilingual/   # Live grammar transformation demo
