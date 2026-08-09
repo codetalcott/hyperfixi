@@ -112,5 +112,9 @@ export function extractApiSurface(pkgRoot: string): string {
     }
   }
 
-  return lines.join('\n');
+  // Prettier-idempotent output (the repo's lint-staged hook formats committed
+  // markdown): exactly one trailing newline, no trailing blank line — a
+  // formatter pass over the committed snapshot must be a no-op or the test
+  // compares against a file the generator can no longer reproduce.
+  return lines.join('\n').replace(/\n+$/, '');
 }
