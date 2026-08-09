@@ -179,9 +179,10 @@ function appendOptionalTailRole(
     type: 'group',
     optional: true,
     tokens: [
-      ...(marker ? marker.split(/\s+/) : []).map(
-        (word): PatternToken => ({ type: 'literal', value: word })
-      ),
+      ...(marker ? marker.split(/\s+/) : []).map((word): PatternToken => ({
+        type: 'literal',
+        value: word,
+      })),
       {
         type: 'role',
         role,
@@ -409,6 +410,112 @@ export function generateSOVPatientFirstEventHandlerPattern(
     priority: (config.basePriority ?? 100) + 45,
     template: {
       format: `{patient} ${patientMarker?.primary || ''} {event} ${eventMarker.primary} ${keyword.primary}`,
+      tokens,
+    },
+    extraction,
+  };
+}
+
+/**
+ * Source-fronted patient-first SOV variant: the SOURCE phrase sits between the
+ * patient and the event, pre-verb —
+ *
+ *   [patient] [patMarker] [source] [srcMarker] [event] [eventMarker] [verb] [recipient?] [manner?]
+ *
+ * qu's canonical order fronts the source phrase for source-carrying commands:
+ * take `.active ta .tab-button manta ñitiy pi hapiy noqa`, remove
+ * `.open ta noqa manta ñitiy pi qichuy`. No other generated pattern covers the
+ * shape, so qu matched nothing and the verb-anchoring fallback bound the
+ * trailing pronoun to `destination` (#874's deferred third cause).
+ *
+ * The source slot is REQUIRED, marker and all: optional, this pattern is the
+ * plain patient-first pattern plus greedy-match ambiguity (the trap the
+ * WithDest variant documents); required, it competes only when a marked source
+ * phrase truly sits between patient and event. Not generated for `swap`
+ * (no source role, and its fronted slot binds `destination`).
+ */
+export function generateSOVPatientFirstSourceFrontedEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern | null {
+  const sourceSpec = commandSchema.roles.find(r => r.role === 'source');
+  if (!sourceSpec) return null;
+  const { marker: sourceMarker, alternatives: sourceAlts } = resolveRoleMarker(sourceSpec, profile);
+  const patientMarker = profile.roleMarkers.patient;
+  // A marked source slot is the variant's whole anchor — without a marker, or
+  // with one colliding with the event/patient markers, the shape is ambiguous.
+  if (!sourceMarker) return null;
+  if (sourceMarker === eventMarker.primary || sourceMarker === patientMarker?.primary) return null;
+
+  const tokens: PatternToken[] = [];
+
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+  if (patientMarker) {
+    tokens.push(
+      patientMarker.alternatives
+        ? {
+            type: 'literal',
+            value: patientMarker.primary,
+            alternatives: patientMarker.alternatives,
+          }
+        : { type: 'literal', value: patientMarker.primary }
+    );
+  }
+
+  tokens.push({
+    type: 'role',
+    role: 'source',
+    optional: false,
+    ...(sourceSpec.expectedTypes ? { expectedTypes: sourceSpec.expectedTypes } : {}),
+    ...(sourceSpec.valueShape !== undefined ? { valueShape: sourceSpec.valueShape } : {}),
+  });
+  for (const word of sourceMarker.split(/\s+/)) {
+    tokens.push(
+      sourceAlts && sourceMarker.split(/\s+/).length === 1
+        ? { type: 'literal', value: word, alternatives: sourceAlts }
+        : { type: 'literal', value: word }
+    );
+  }
+
+  tokens.push({ type: 'role', role: 'event', optional: false });
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) tokens.push({ type: 'literal', value: word });
+    } else {
+      tokens.push(
+        eventMarker.alternatives
+          ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+          : { type: 'literal', value: eventMarker.primary }
+      );
+    }
+  }
+
+  tokens.push(
+    keyword.alternatives
+      ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+      : { type: 'literal', value: keyword.primary }
+  );
+
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    patient: { fromRole: 'patient' },
+    source: { fromRole: 'source' },
+  };
+  appendOptionalRecipient(tokens, extraction, commandSchema, profile.code);
+  appendOptionalViewTransition(tokens, extraction, commandSchema, profile.code);
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-source-fronted`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 48,
+    template: {
+      format: `{patient} ${patientMarker?.primary || ''} {source} ${sourceMarker} {event} ${eventMarker.primary} ${keyword.primary}`,
       tokens,
     },
     extraction,

@@ -585,7 +585,7 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       for (const spec of schema.roles) {
         if (spec.default !== undefined && !roles.has(spec.role)) {
-          roles.set(spec.role, { ...spec.default } as SemanticValue);
+          roles.set(spec.role, { ...spec.default, implicit: true } as SemanticValue);
         }
       }
     }
@@ -1692,19 +1692,22 @@ export class SemanticParserImpl implements ISemanticParser {
     // builder already declare for exactly this meaning; until now nothing
     // ever populated it.
     // Gated to patterns whose id declares a handler-head source group
-    // (event-en-source and kin): the fused generated patterns also bind a
-    // `source` group — as a DEFAULT-filled reference `me`, or worse, by
-    // swallowing a BODY command's from-phrase (`remove .active from all
-    // .tab` → source=.tab) — and threading those turns a formerly-harmless
-    // dropped mis-capture into a live delegation filter (the tabs-basic /
-    // tabs-content / remove-class-from-all R2 regression, 59 curated rows,
-    // caught by the execution ratchet mid-arc). Translated window-resize
-    // renders get their from via reclaimDanglingFromTail instead, which
-    // never routes through here.
+    // (event-en-source and kin — all of them END in `-source`): the fused
+    // generated patterns also bind a `source` group — as a DEFAULT-filled
+    // reference `me`, or worse, by swallowing a BODY command's from-phrase
+    // (`remove .active from all .tab` → source=.tab) — and threading those
+    // turns a formerly-harmless dropped mis-capture into a live delegation
+    // filter (the tabs-basic / tabs-content / remove-class-from-all R2
+    // regression, 59 curated rows, caught by the execution ratchet mid-arc;
+    // then again via `-sov-source-fronted`, whose mid-id `source` satisfied
+    // the old includes() check and delegated qu's tabs handlers to `.tab` —
+    // that source is the BODY command's, hence endsWith). Translated
+    // window-resize renders get their from via reclaimDanglingFromTail
+    // instead, which never routes through here.
     const sourceValue = match.captured.get('source');
     if (
       sourceValue &&
-      match.pattern.id.includes('source') &&
+      match.pattern.id.endsWith('source') &&
       !(sourceValue.type === 'reference' && sourceValue.value === 'me')
     ) {
       eventModifiers = { ...(eventModifiers ?? {}), from: sourceValue };

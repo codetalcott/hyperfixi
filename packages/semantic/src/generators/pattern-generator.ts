@@ -19,6 +19,7 @@ import { resolveMarkerForRole, schemaMarkerAlternatives } from '../parser/utils/
 import {
   generateSOVEventHandlerPattern,
   generateSOVPatientFirstEventHandlerPattern,
+  generateSOVPatientFirstSourceFrontedEventHandlerPattern,
   generateSOVPatientFirstWithDestEventHandlerPattern,
   generateSOVCompactEventHandlerPattern,
   generateSOVSimpleEventHandlerPattern,
@@ -492,6 +493,19 @@ export function generateEventHandlerPatterns(
           config
         )
       );
+
+      // Variant 1b: Source-fronted (source phrase between patient and event,
+      // both required) — qu's canonical order for source-carrying commands
+      // (take/remove). Self-gates: null unless the schema has a source role
+      // with a usable marker distinct from the event/patient markers.
+      const sourceFronted = generateSOVPatientFirstSourceFrontedEventHandlerPattern(
+        commandSchema,
+        profile,
+        keyword,
+        eventMarker,
+        config
+      );
+      if (sourceFronted) patterns.push(sourceFronted);
 
       // Variant 2: With destination (required, not optional) — lower priority
       // Only add if destination marker differs from event marker to avoid collision

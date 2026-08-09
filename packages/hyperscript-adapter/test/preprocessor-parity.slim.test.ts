@@ -79,7 +79,11 @@ describe('remaining divergence stays behind the host-validate gate', () => {
       ._hyperscript;
     if (!hs?.parse) throw new Error('vendored _hyperscript did not expose parse()');
 
-    const [lang, input] = KNOWN_DIVERGENCES[0];
+    // Addressed by content, not index: KNOWN_DIVERGENCES is corpus-ordered and
+    // has since gained the authored-`from me` rows ahead of this one.
+    const repeatRow = KNOWN_DIVERGENCES.find(([, i]) => i.includes('repetir'));
+    if (!repeatRow) throw new Error('es repeat divergence row missing from KNOWN_DIVERGENCES');
+    const [lang, input] = repeatRow;
     const slimOut = preprocessToEnglish(input, lang, {});
     expect(slimOut).not.toBe(input); // the slim path DOES commit a translation…
     let errors: unknown[];
