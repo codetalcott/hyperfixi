@@ -641,6 +641,59 @@ describe('PutCommand', () => {
     });
   });
 
+  describe('Execution - DocumentFragment content', () => {
+    // `fetch … as html` resolves to a DocumentFragment, and the htmx-compat
+    // layer's entire swap path is `fetch … as html then put it into <target>`.
+    // Before this was handled, every such swap inserted the literal string
+    // "[object DocumentFragment]".
+    function fragmentOf(html: string): DocumentFragment {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = html;
+      const frag = document.createDocumentFragment();
+      Array.from(tpl.content.childNodes).forEach(n => frag.appendChild(n));
+      return frag;
+    }
+
+    it("inserts a fragment's children rather than stringifying it", async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+
+      await command.execute(
+        { value: fragmentOf('<p>Fetched: /api/users</p>'), targets: [target], position: 'into' },
+        context
+      );
+
+      expect(target.textContent).toBe('Fetched: /api/users');
+      expect(target.querySelector('p')).not.toBeNull();
+      expect(target.textContent).not.toContain('DocumentFragment');
+    });
+
+    it('appends fragment children at a position', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+      target.innerHTML = '<span>first</span>';
+
+      await command.execute(
+        { value: fragmentOf('<span>second</span>'), targets: [target], position: 'append' },
+        context
+      );
+
+      expect(target.textContent).toBe('firstsecond');
+    });
+
+    it('inserts a bare text node without stringifying', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+
+      await command.execute(
+        { value: document.createTextNode('plain text'), targets: [target], position: 'into' },
+        context
+      );
+
+      expect(target.textContent).toBe('plain text');
+    });
+  });
+
   describe('Execution - Property Setting', () => {
     it('should set element property via memberPath', async () => {
       const context = createMockContext();

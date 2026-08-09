@@ -162,6 +162,12 @@ interface DomHandler {
 
 export class Reactive {
   private currentEffect: Effect | null = null;
+  /**
+   * Tail of the effect-evaluation chain. `_runWithEffect` links onto this so
+   * only one effect owns the `currentEffect` slot at a time — see the comment
+   * there for why concurrent async effects otherwise lose their dependencies.
+   */
+  private trackingQueue: Promise<void> = Promise.resolve();
   private pending = new Set<Effect>();
   private scheduled = false;
 
@@ -189,17 +195,40 @@ export class Reactive {
    * which effect to subscribe.
    */
   async _runWithEffect(e: Effect, fn: () => unknown | Promise<unknown>): Promise<unknown> {
-    const prev = this.currentEffect;
-    this.currentEffect = e;
-    // Unsubscribe from previous deps before re-running. The expression will
-    // re-record whatever it actually reads this time, avoiding stale subs.
-    this._unsubscribeEffect(e);
-    e.dependencies.clear();
-    try {
-      return await fn();
-    } finally {
-      this.currentEffect = prev;
-    }
+    // Dependency capture keys off ONE `currentEffect` slot, but effect
+    // expressions are async (a `live` body awaits each command). Two effects
+    // evaluating concurrently would interleave across their await points and
+    // attribute each other's reads — or, once the inner one restored `prev`,
+    // leave the outer one tracking nothing at all. Three `live` blocks on a
+    // page (they all start in the same tick) reliably lost their
+    // subscriptions that way and froze.
+    //
+    // Serialize instead: each run waits for the previous one to finish, so
+    // the slot belongs to exactly one effect for the whole of its evaluation.
+    // Effect bodies are short DOM updates, and this only orders effect
+    // evaluation — it does not block the page.
+    const runExclusive = async (): Promise<unknown> => {
+      const prev = this.currentEffect;
+      this.currentEffect = e;
+      // Unsubscribe from previous deps before re-running. The expression will
+      // re-record whatever it actually reads this time, avoiding stale subs.
+      this._unsubscribeEffect(e);
+      e.dependencies.clear();
+      try {
+        return await fn();
+      } finally {
+        this.currentEffect = prev;
+      }
+    };
+
+    // Chain onto the tail of the queue, and keep the queue alive whether this
+    // run resolves or throws (callers already swallow effect errors).
+    const result = this.trackingQueue.then(runExclusive, runExclusive);
+    this.trackingQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
   }
 
   // ---------------------------------------------------------------------------
