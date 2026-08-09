@@ -24,22 +24,10 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/compilation-service" \
   "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent" \
-  "$REPO_ROOT/packages/domain-toolkit" \
-  "$REPO_ROOT/packages/domain-sql" \
-  "$REPO_ROOT/packages/domain-bdd" \
-  "$REPO_ROOT/packages/domain-behaviorspec" \
-  "$REPO_ROOT/packages/domain-jsx" \
-  "$REPO_ROOT/packages/domain-todo" \
-  "$REPO_ROOT/packages/domain-llm" \
-  "$REPO_ROOT/packages/domain-flow" \
-  "$REPO_ROOT/packages/domain-voice" \
-  "$REPO_ROOT/packages/domain-learn" \
-  "$REPO_ROOT/packages/domain-config" \
   "$REPO_ROOT/packages/planner" \
   "$REPO_ROOT/packages/intercept" \
   "$REPO_ROOT/packages/realtime" \
   "$REPO_ROOT/packages/intent-element" \
-  "$REPO_ROOT/packages/mcp-multilingual-intent" \
   "$REPO_ROOT/packages/hyperscript-tools-i18n" \
   "$REPO_ROOT/packages/htmx-adapter" \
   "$REPO_ROOT/packages/behaviors"
@@ -59,21 +47,9 @@ PACKAGES=(
   "server-bridge:Server Bridge"
 
   # Domain DSLs (+ shared registry wiring)
-  "domain-bdd:BDD"
-  "domain-behaviorspec:BehaviorSpec"
-  "domain-flow:Flow"
-  "domain-jsx:JSX"
-  "domain-learn:Learn"
-  "domain-llm:LLM"
-  "domain-sql:SQL"
-  "domain-todo:Todo"
-  "domain-voice:Voice"
-  "domain-config:Domain Config"
-  "domain-toolkit:Domain Toolkit"
 
   # MCP & Language Servers
   "mcp-server:MCP Server"
-  "mcp-multilingual-intent:MCP Multilingual Intent"
   "language-server:Language Server"
 
   # Plugin & bundling

@@ -5,7 +5,7 @@
 #
 #   pull_request — the authoritative gate. Runs the fast required checks
 #   (build, export-validation, lint-typecheck, unit-tests) ALWAYS, plus the
-#   heavy jobs (browser-tests, multilingual-validation, bundle-size, mcp-demos)
+#   heavy jobs (browser-tests, multilingual-validation, bundle-size)
 #   only when `changes.code == 'true'` (i.e. non-doc files changed). A doc-only
 #   PR therefore runs just the fast required checks → reports green → mergeable,
 #   while skipping the expensive jobs.
@@ -203,39 +203,6 @@ jobs:
       - name: Verify semantic bundle output
         run: bash scripts/verify-semantic-bundle.sh
 
-      - name: Build domain-bdd package
-        run: npm run build --prefix packages/domain-bdd
-
-      - name: Build domain-sql package
-        run: npm run build --prefix packages/domain-sql
-
-      - name: Build domain-jsx package
-        run: npm run build --prefix packages/domain-jsx
-
-      - name: Build domain-todo package
-        run: npm run build --prefix packages/domain-todo
-
-      - name: Build domain-behaviorspec package
-        run: npm run build --prefix packages/domain-behaviorspec
-
-      - name: Build domain-llm package
-        run: npm run build --prefix packages/domain-llm
-
-      - name: Build domain-flow package
-        run: npm run build --prefix packages/domain-flow
-
-      - name: Build domain-voice package
-        run: npm run build --prefix packages/domain-voice
-
-      - name: Build domain-learn package
-        run: npm run build --prefix packages/domain-learn
-
-      - name: Build domain-toolkit package
-        run: npm run build --prefix packages/domain-toolkit
-
-      - name: Build domain-config package
-        run: npm run build --prefix packages/domain-config
-
       - name: Build behaviors package
         run: npm run build --prefix packages/behaviors
 
@@ -265,9 +232,6 @@ jobs:
 
       - name: Build mcp-server package
         run: npm run build --prefix packages/mcp-server
-
-      - name: Build mcp-multilingual-intent package
-        run: npm run build --prefix packages/mcp-multilingual-intent
 
       - name: Build developer-tools package
         run: npm run build --prefix packages/developer-tools
@@ -325,17 +289,6 @@ jobs:
           path: |
             packages/intent/dist/
             packages/framework/dist/
-            packages/domain-bdd/dist/
-            packages/domain-sql/dist/
-            packages/domain-jsx/dist/
-            packages/domain-todo/dist/
-            packages/domain-behaviorspec/dist/
-            packages/domain-llm/dist/
-            packages/domain-flow/dist/
-            packages/domain-voice/dist/
-            packages/domain-learn/dist/
-            packages/domain-toolkit/dist/
-            packages/domain-config/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
@@ -347,7 +300,6 @@ jobs:
             packages/compilation-service/dist/
             packages/planner/dist/
             packages/mcp-server/dist/
-            packages/mcp-multilingual-intent/dist/
             packages/developer-tools/dist/
             packages/server-bridge/dist/
             packages/vite-plugin/dist/
@@ -606,8 +558,6 @@ jobs:
           status=0
           if ! node scripts/validate-exports.mjs \
             behaviors compilation-service components core \
-            domain-bdd domain-behaviorspec domain-config domain-flow domain-jsx \
-            domain-learn domain-llm domain-sql domain-todo domain-voice \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
             language-server mcp-server patterns-reference planner reactivity \
             realtime semantic server-bridge speech vite-plugin \
@@ -687,12 +637,13 @@ jobs:
       - name: Verify CI unit-test package list
         run: node scripts/check-ci-test-list.cjs
 
-      # Cheap guard: the same question asked of the FOUR remaining hand-written
+      # Cheap guard: the same question asked of the remaining hand-written
       # package enumerations — export-validation's arguments, the typecheck
-      # lines below, the nightly coverage job (cross-checked against
-      # codecov.yml's flags), and the root `lint:domains` loop. #862 guarded
-      # the unit-test lists and named these four as the follow-up; when it was
-      # written all four had drifted except lint:domains.
+      # lines below, and the nightly coverage job (cross-checked against
+      # codecov.yml's flags). #862 guarded the unit-test lists and named these
+      # as the follow-up; when it was written all had drifted. (The former
+      # fourth list, the root `lint:domains` loop, left with the domain
+      # packages — they live in lokascript-domains now.)
       - name: Verify CI job package lists
         run: node scripts/check-ci-job-lists.cjs
 
@@ -769,24 +720,12 @@ jobs:
           npm run typecheck --prefix packages/behaviors
           npm run typecheck --prefix packages/components
           npm run typecheck --prefix packages/developer-tools
-          npm run typecheck --prefix packages/domain-bdd
-          npm run typecheck --prefix packages/domain-behaviorspec
-          npm run typecheck --prefix packages/domain-config
-          npm run typecheck --prefix packages/domain-flow
-          npm run typecheck --prefix packages/domain-jsx
-          npm run typecheck --prefix packages/domain-learn
-          npm run typecheck --prefix packages/domain-llm
-          npm run typecheck --prefix packages/domain-sql
-          npm run typecheck --prefix packages/domain-todo
-          npm run typecheck --prefix packages/domain-toolkit
-          npm run typecheck --prefix packages/domain-voice
           npm run typecheck --prefix packages/framework
           npm run typecheck --prefix packages/hyperscript-tools-i18n
           npm run typecheck --prefix packages/intent
           npm run typecheck --prefix packages/intent-element
           npm run typecheck --prefix packages/intercept
           npm run typecheck --prefix packages/language-server-hyperscript
-          npm run typecheck --prefix packages/mcp-multilingual-intent
           npm run typecheck --prefix packages/multilingual-hyperscript
           npm run typecheck --prefix packages/planner
           npm run typecheck --prefix packages/playground
@@ -843,14 +782,6 @@ jobs:
 
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
-
-      # NOTE: `npm run lint:domains` deliberately does NOT run here. It is
-      # `npm test --prefix packages/domain-<x> -- --run lint`, i.e. vitest, and
-      # each domain's vitest include is `src/**/*.test.ts` — which already
-      # contains src/__test__/lint.test.ts. The unit-tests job therefore runs all
-      # nine domain lint suites; invoking them here too paid for nine extra
-      # vitest boots and nine ensure-fresh passes for zero additional coverage.
-      # The root script is kept for local use.
 
   # ============================================
   # Job 4: Unit Tests
@@ -1011,39 +942,6 @@ jobs:
       - name: Test mcp-server
         run: npm test --prefix packages/mcp-server
 
-      - name: Test mcp-multilingual-intent
-        run: npm test --prefix packages/mcp-multilingual-intent -- --run
-
-      - name: Test domain-bdd
-        run: npm test --prefix packages/domain-bdd
-
-      - name: Test domain-sql
-        run: npm test --prefix packages/domain-sql
-
-      - name: Test domain-jsx
-        run: npm test --prefix packages/domain-jsx
-
-      - name: Test domain-todo
-        run: npm test --prefix packages/domain-todo
-
-      - name: Test domain-behaviorspec
-        run: npm test --prefix packages/domain-behaviorspec
-
-      - name: Test domain-llm
-        run: npm test --prefix packages/domain-llm
-
-      - name: Test domain-flow
-        run: npm test --prefix packages/domain-flow
-
-      - name: Test domain-voice
-        run: npm test --prefix packages/domain-voice
-
-      - name: Test domain-learn
-        run: npm test --prefix packages/domain-learn
-
-      - name: Test domain-config
-        run: npm test --prefix packages/domain-config
-
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run
 
@@ -1094,9 +992,6 @@ jobs:
 
       - name: Test intent-element
         run: npm test --prefix packages/intent-element
-
-      - name: Test domain-toolkit
-        run: npm test --prefix packages/domain-toolkit -- --run
 
       - name: Test planner
         run: npm test --prefix packages/planner
@@ -1649,100 +1544,6 @@ jobs:
           exit $failed
 
   # ============================================
-  # Job 9: MCP Multilingual Intent — demos + compat test
-  # ============================================
-  # Starts the Hono Siren API in background, runs the Siren-compat test
-  # and the three IDE integration demos (EN ≡ JA/AR/KO schema equivalence).
-  # Captures demo output as an artifact so the landing page can embed it.
-  # Reuses build artifacts from Job 1 — no rebuild cost.
-  #
-  # Slim post-merge: PR-only. The committed `demo-output.txt` staleness
-  # check is what matters here, and it already ran on the PR. Re-running
-  # against the merged code produces the same output (deterministic
-  # demos against the same build artifacts).
-  mcp-demos:
-    name: MCP Multilingual Demos
-    runs-on: ubuntu-latest
-    needs: [build, changes]
-    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
-    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts
-          path: packages
-
-      - name: Rebuild workspace links
-        run: |
-          rm -rf node_modules/@hyperfixi node_modules/@lokascript
-          npm install
-
-      - name: Start Hono Siren server
-        working-directory: packages/mcp-multilingual-intent
-        run: |
-          nohup npm run dev > /tmp/mcp-server.log 2>&1 &
-          echo $! > /tmp/mcp-server.pid
-          # Wait up to ~15s for /health to return 200
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3030/health > /dev/null 2>&1; then
-              echo "server up after ${i} tries"
-              break
-            fi
-            sleep 0.5
-          done
-          curl -fsS http://localhost:3030/health || {
-            echo "server failed to start"; cat /tmp/mcp-server.log; exit 1;
-          }
-
-      - name: Run Siren compatibility test
-        run: npm run mcp:test --prefix packages/mcp-multilingual-intent
-
-      - name: Run IDE integration demos (capture output)
-        run: npm run demos:capture --prefix packages/mcp-multilingual-intent
-
-      - name: Check committed demo-output.txt is up to date
-        run: |
-          # Fail the job if the committed landing-page artifact drifts from
-          # what the demos actually produce. To fix: run
-          # `npm run demos:capture --prefix packages/mcp-multilingual-intent`
-          # locally and commit the updated file.
-          if ! git diff --exit-code --stat \
-            packages/mcp-multilingual-intent/landing/demo-output.txt; then
-            echo "::error::demo-output.txt is out of date. Run 'npm run demos:capture --prefix packages/mcp-multilingual-intent' and commit the result."
-            exit 1
-          fi
-
-      - name: Stop server
-        if: always()
-        run: |
-          if [ -f /tmp/mcp-server.pid ]; then
-            kill "$(cat /tmp/mcp-server.pid)" 2>/dev/null || true
-          fi
-
-      - name: Upload demo output
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: mcp-demo-output
-          path: packages/mcp-multilingual-intent/landing/demo-output.txt
-          retention-days: 7
-
-  # ============================================
   # Job 10: LSE protocol conformance (4 reference parsers)
   #
   # protocol/ lives outside the npm workspaces, so `build` and `unit-tests` never
@@ -1974,7 +1775,6 @@ jobs:
       - browser-tests
       - multilingual-validation
       - bundle-size
-      - mcp-demos
       - protocol-conformance
       - go-client
 

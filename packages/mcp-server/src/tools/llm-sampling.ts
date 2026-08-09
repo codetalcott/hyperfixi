@@ -15,7 +15,7 @@
 import type { Tool } from '@modelcontextprotocol/server';
 import type { Server } from '@modelcontextprotocol/server';
 import type { DomainRegistry } from '@lokascript/framework';
-import type { LLMPromptSpec, LLMMessage } from '@lokascript/domain-llm';
+import type { LLMPromptSpec, LLMMessage } from '@lokascript/domains/llm';
 
 // =============================================================================
 // Tool Definitions

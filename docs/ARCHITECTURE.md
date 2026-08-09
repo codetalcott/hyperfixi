@@ -37,16 +37,6 @@ packages/
 ├── framework/          # @lokascript/framework — Generic DSL framework
 │                       # (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 │
-├── domain-sql/         # @lokascript/domain-sql — SQL DSL (8 languages)
-├── domain-bdd/         # @lokascript/domain-bdd — BDD/Gherkin DSL (8 languages)
-├── domain-behaviorspec/# @lokascript/domain-behaviorspec — Interaction testing DSL
-├── domain-jsx/         # @lokascript/domain-jsx — JSX/React DSL
-├── domain-llm/         # @lokascript/domain-llm — LLM prompt DSL
-├── domain-todo/        # @lokascript/domain-todo — Todo management DSL
-├── domain-flow/        # @lokascript/domain-flow — Reactive data flow DSL
-├── domain-voice/       # @lokascript/domain-voice — Voice/accessibility DSL
-├── domain-learn/       # @lokascript/domain-learn — Language learning DSL
-│
 ├── compilation-service/# @lokascript/compilation-service — Multi-target codegen
 ├── hyperscript-adapter/# @lokascript/hyperscript-adapter — Plugin for original _hyperscript
 ├── language-server/    # @lokascript/language-server — LSP implementation (21 languages)

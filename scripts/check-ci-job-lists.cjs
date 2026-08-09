@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /**
- * check-ci-job-lists — the four remaining hand-maintained package enumerations
+ * check-ci-job-lists — the remaining hand-maintained package enumerations
  *
  * #862 guarded ci.yml's unit-test enumeration (scripts/check-ci-test-list.cjs)
  * and noted that FOUR more hand-written package lists were left unguarded. This
  * is that follow-up. Each list answers a different question, so each gets its
- * own predicate — but the failure shape is identical in all four: a package
+ * own predicate — but the failure shape is identical in all of them: a package
  * silently drops out of (or never joins) a gate, and the gate stays green.
  *
  *   1. export-validation  the positional args of `scripts/validate-exports.mjs`
  *   2. typecheck          the `npm run typecheck --prefix …` lines in lint-typecheck
  *   3. coverage           the nightly job's packages, cross-checked with codecov.yml
- *   4. lint:domains       the nine-domain shell loop in the ROOT package.json
+ *
+ * (A fourth list, the root `lint:domains` loop, was guarded here until the
+ * domain packages moved to lokascript-domains — the loop left with them.)
  *
  * Measured drift when this was written (2026-08-01), all four in one run:
  *
@@ -23,18 +25,17 @@
  *     the gap was cost-free coverage nobody had claimed.
  *   • the coverage job uploads a `language-server` flag that codecov.yml never
  *     declares, so it gets neither `paths:` nor `carryforward: true`.
- *   • lint:domains was already correct at 9/9 — that class is pure prevention.
  *
- * Why one script and not four: the four lists are the same question asked of
+ * Why one script and not several: the lists are the same question asked of
  * two files, they share every parse primitive, and the pre-commit hook pays one
- * node boot instead of four. Each class is independently testable and reports
- * independently, so a failure still names exactly one list.
+ * node boot instead of several. Each class is independently testable and
+ * reports independently, so a failure still names exactly one list.
  *
  * `sliceJob` is imported from the sibling rather than copied. It is a parse
  * PRIMITIVE (cut one job's body out of the workflow), not a parse TARGET — the
  * decoupling the sibling's header argues for is about not letting one guard's
  * notion of "which packages count" leak into another's, which still holds here:
- * all four predicates below are derived from disk, independently.
+ * all predicates below are derived from disk, independently.
  *
  * Zero runtime deps — node built-ins only, so it stays cheap enough for both
  * the pre-commit hook and the CI lint-typecheck step.
@@ -51,7 +52,6 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(REPO_ROOT, 'packages');
 const CI_WORKFLOW = path.join(REPO_ROOT, '.github', 'workflows', 'ci.yml');
 const CODECOV_CONFIG = path.join(REPO_ROOT, 'codecov.yml');
-const ROOT_PACKAGE_JSON = path.join(REPO_ROOT, 'package.json');
 
 /**
  * Fields validate-exports.mjs actually checks. A package declaring ANY of them
@@ -76,41 +76,14 @@ const INTENTIONAL_OMISSIONS = {
   typecheck: new Map([
     // e.g. ['some-package', 'needs a codegen step CI does not run'],
   ]),
-  'lint:domains': new Map([
-    // e.g. ['domain-x', 'lint suite is quarantined pending the vocab arc'],
-  ]),
 };
 
 // ---------------------------------------------------------------------------
 // Loaders
 // ---------------------------------------------------------------------------
 
-/** Does packages/<dir>/src contain a `lint.test.ts` anywhere? */
-function hasLintSuite(dir) {
-  const srcDir = path.join(PACKAGES_DIR, dir, 'src');
-  const stack = [srcDir];
-  while (stack.length > 0) {
-    const current = stack.pop();
-    let entries;
-    try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch {
-      continue; // no src/, or unreadable — not a lint-suite owner
-    }
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        if (entry.name === 'node_modules' || entry.name === 'dist') continue;
-        stack.push(path.join(current, entry.name));
-      } else if (entry.name === 'lint.test.ts') {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 /**
- * Read every packages/*\/package.json into the facts the four predicates need.
+ * Read every packages/*\/package.json into the facts the predicates need.
  * Keyed by DIRECTORY, because every list under guard addresses packages by
  * directory (`--prefix packages/<dir>`, `packages/<dir>/coverage/lcov.info`).
  */
@@ -140,7 +113,6 @@ function loadWorkspaces() {
       hasEntryPoint: ENTRY_POINT_FIELDS.some(field => pkg[field]),
       hasTypecheck: Boolean(scripts.typecheck),
       hasTest: Boolean(scripts.test),
-      hasLintSuite: dirent.name.startsWith('domain-') && hasLintSuite(dirent.name),
     });
   }
 
@@ -367,43 +339,6 @@ function loadCodecovFlags(text) {
     flags.set(flagName, { paths, carryforward: /carryforward:[ \t]*true/.test(flagBody) });
   }
   return flags;
-}
-
-/** The domain suffixes of the root `lint:domains` shell loop. */
-function loadLintDomains(text) {
-  if (text === undefined) {
-    try {
-      text = fs.readFileSync(ROOT_PACKAGE_JSON, 'utf8');
-    } catch (err) {
-      throw new Error(`check-ci-job-lists: cannot read ${ROOT_PACKAGE_JSON}: ${err.message}`);
-    }
-  }
-
-  let script;
-  try {
-    script = (JSON.parse(text).scripts || {})['lint:domains'];
-  } catch {
-    throw new Error(`check-ci-job-lists: invalid JSON in ${ROOT_PACKAGE_JSON}`);
-  }
-  if (!script) {
-    throw new Error(
-      `check-ci-job-lists: the root package.json has no "lint:domains" script. ` +
-        `If it was renamed or removed, update loadLintDomains() in ` +
-        `scripts/check-ci-job-lists.cjs.`
-    );
-  }
-
-  const m = /for\s+pkg\s+in\s+([^;]+);/.exec(script);
-  if (!m || !/packages\/domain-\$pkg/.test(script)) {
-    throw new Error(
-      `check-ci-job-lists: cannot parse "lint:domains" — expected a ` +
-        `\`for pkg in <suffixes>; do … packages/domain-$pkg …\` loop, got:\n` +
-        `    ${script}\n` +
-        `  Update loadLintDomains() in scripts/check-ci-job-lists.cjs to match.`
-    );
-  }
-
-  return m[1].trim().split(/\s+/).filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -696,78 +631,12 @@ function checkCoverage(byDir, coverage, codecovFlags) {
 }
 
 /**
- * (4) root `lint:domains`.
- *
- * Qualifies = a `packages/domain-*` package that owns a `lint.test.ts`. The
- * loop is local-only (ci.yml deliberately does not run it — the unit-test job
- * already executes each domain's lint suite as part of its vitest run), so
- * drift here costs a local convenience gate, not a CI one.
- */
-function checkLintDomains(byDir, suffixes, omissions) {
-  const failures = [];
-  const seen = new Set();
-
-  for (const suffix of suffixes) {
-    const dir = `domain-${suffix}`;
-    if (seen.has(suffix)) {
-      failures.push(`the root "lint:domains" loop lists "${suffix}" twice. Remove the duplicate.`);
-      continue;
-    }
-    seen.add(suffix);
-
-    const pkg = byDir.get(dir);
-    if (!pkg) {
-      failures.push(
-        `the root "lint:domains" loop lists "${suffix}", but packages/${dir} does ` +
-          `not exist — the loop exits 1 on a healthy tree. Remove it from the ` +
-          `"lint:domains" script in package.json.`
-      );
-      continue;
-    }
-    if (!pkg.hasLintSuite) {
-      failures.push(
-        `the root "lint:domains" loop lists "${suffix}", but packages/${dir} has no ` +
-          `lint.test.ts under src/ — \`vitest --run lint\` matches no test file ` +
-          `there. Remove it from the "lint:domains" script in package.json.`
-      );
-    }
-  }
-
-  for (const [dir, pkg] of byDir) {
-    if (!pkg.hasLintSuite) continue;
-    const suffix = dir.slice('domain-'.length);
-    if (seen.has(suffix)) continue;
-    if (omissions.has(dir)) continue;
-    failures.push(
-      `${pkg.name} (packages/${dir}) owns a lint.test.ts but is not in the root ` +
-        `"lint:domains" loop, so \`npm run lint:domains\` silently skips it. Add ` +
-        `"${suffix}" to the \`for pkg in …\` list in package.json. If skipping is ` +
-        `deliberate, add "${dir}" to INTENTIONAL_OMISSIONS["lint:domains"] with a ` +
-        `reason.`
-    );
-  }
-
-  failures.push(
-    ...checkStaleOmissions(
-      'lint:domains',
-      omissions,
-      byDir,
-      dir => seen.has(dir.slice('domain-'.length)),
-      (dir, pkg) => pkg.hasLintSuite
-    )
-  );
-
-  return failures;
-}
-
-/**
- * Run all four. Returns Map<listName, failures[]> so the reporter can group by
- * list — four independent questions should not read as one undifferentiated
+ * Run all checks. Returns Map<listName, failures[]> so the reporter can group by
+ * list — independent questions should not read as one undifferentiated
  * wall of text.
  */
 function check(input, omissions = INTENTIONAL_OMISSIONS) {
-  const { byDir, builtInCi, exportArgs, typecheckDirs, coverage, codecovFlags, lintDomains } =
-    input;
+  const { byDir, builtInCi, exportArgs, typecheckDirs, coverage, codecovFlags } = input;
 
   return new Map([
     [
@@ -781,7 +650,6 @@ function check(input, omissions = INTENTIONAL_OMISSIONS) {
     ],
     ['typecheck', checkTypecheck(byDir, typecheckDirs, omissions.typecheck ?? new Map())],
     ['coverage', checkCoverage(byDir, coverage, codecovFlags)],
-    ['lint:domains', checkLintDomains(byDir, lintDomains, omissions['lint:domains'] ?? new Map())],
   ]);
 }
 
@@ -794,7 +662,6 @@ function loadAll() {
     typecheckDirs: loadTypecheckDirs(ci),
     coverage: loadCoverageSteps(ci),
     codecovFlags: loadCodecovFlags(),
-    lintDomains: loadLintDomains(),
   };
 }
 
@@ -814,8 +681,7 @@ function main() {
     // Keep success output minimal so the pre-commit hook feels invisible.
     process.stdout.write(
       `check-ci-job-lists: OK (${input.exportArgs.length} export-validated, ` +
-        `${input.typecheckDirs.length} typechecked, ${input.codecovFlags.size} coverage flags, ` +
-        `${input.lintDomains.length} lint domains)\n`
+        `${input.typecheckDirs.length} typechecked, ${input.codecovFlags.size} coverage flags)\n`
     );
     process.exit(0);
   }
@@ -840,7 +706,6 @@ module.exports = {
   check,
   checkCoverage,
   checkExportValidation,
-  checkLintDomains,
   checkTypecheck,
   joinContinuedLine,
   loadAll,
@@ -848,7 +713,6 @@ module.exports = {
   loadCodecovFlags,
   loadCoverageSteps,
   loadExportValidationArgs,
-  loadLintDomains,
   loadTypecheckDirs,
   loadWorkspaces,
 };
