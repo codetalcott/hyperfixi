@@ -339,7 +339,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 3    | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                 |
 | 4    | `unit-tests`              | ✓   | —                 | —       | Vitest tests on Node 24 (27 packages)                      |
 | 5    | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)   |
-| 6    | `browser-tests`           | ✓   | —                 | —       | Playwright `--project=quick`; PR-only                      |
+| 6    | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only              |
 | 7    | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only          |
 | 8    | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                     |
 | 9    | `mcp-demos`               | ✓   | —                 | —       | Demo capture + drift check; PR-only                        |
@@ -350,6 +350,20 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only `build`. For the reasoning see the job comments in `.github/workflows/ci.yml`.
 
 `coverage` and `benchmarks` moved off push-to-main on **2026-07-29**: under `strict` protection the post-merge tree is the tree the PR validated, so `coverage` was re-executing the full core + semantic + i18n + language-server suites (430 files) a second time per merge purely for a Codecov datapoint. Neither is a required check (required = Build All Packages, Lint & Typecheck, Unit Tests, Export Validation, Multilingual Validation, Browser Tests), so nightly costs no gate strength. Same change fixed `benchmarks`, which ran `bench:run` (writes no file) and uploaded from a nonexistent `./core/benchmark-results/` — its output had always been discarded; it now runs `bench:ci` and uploads `packages/core/benchmark-results/`.
+
+`browser-tests` runs the `comprehensive` Playwright project alongside `quick` as of
+**2026-08-08**, and deliberately NOT on a schedule. Before that, `quick` was the only
+project CI ever invoked, so the 122 `@comprehensive` specs ran nowhere — `npm run
+test:comprehensive` had been failing on `main` with **four** real bugs behind it (a
+detached `startViewTransition`, untracked reads of unset globals, concurrent effects
+clobbering dependency capture, and `put` stringifying DocumentFragments, which silently
+broke the htmx-compat swap path — #904/#905). The job is already gated on
+`changes.outputs.code`, so the tier runs exactly when something that could break it
+changes and never on a quiet tree; both projects together take ~26s on a job that is not
+on the critical path (`build` is). A nightly was considered and rejected: the only thing a
+time-based run adds is drift from _outside_ the repo, and Playwright pins its browser
+binaries — so a Chromium change arrives via a `@playwright/test` bump, which is a code PR
+this gate already covers.
 
 **Triggers:**
 
