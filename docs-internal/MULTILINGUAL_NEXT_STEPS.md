@@ -45,9 +45,20 @@
 > rendering change at all, which is the third time this arc's filed prescription
 > was falsified by triage. R1 tail **24 → 15**; **fourteen languages are now at
 > avgRoleFidelity 1.0000** — ar, bn, de, es, fr, hi, it, ja, pt, ru, sw, tl, tr,
-> uk. What remains: qu's `take.recipient` (blocked on a renderer defect, named
-> in that section) and 14 scattered singletons — the "thin and flat" headroom by
+> uk. What remains: ~~qu's `take.recipient` (blocked on a renderer defect, named
+> in that section)~~ and 14 scattered singletons — the "thin and flat" headroom by
 > design.
+>
+> **Update 2026-08-09 — the qu row is closed too (R1 tail 15 → 14; every
+> `take.recipient` row is now faithful).** Both halves of the named blocker
+> shipped: implicit-default tagging so the renderer suppresses only
+> matcher-injected `me` (authored `noqa man` / `to me` survives round-trips),
+> plus the `-sov-source-fronted` event-handler variant for qu's canonical
+> order. The R2 tabs flattening the deferral predicted did fire — via the
+> `includes('source')` delegation-threading gate matching the new pattern id,
+> now `endsWith('source')` — and was caught by the execution ratchet exactly as
+> designed. Detail in the take section's Resolution paragraph below. What
+> remains of the R1 tail is the 14 singletons only.
 
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
@@ -3030,7 +3041,8 @@ downstream symptom: the fused event-handler swap re-parses
 `[verb..clause boundary]` standalone and swaps the richer result in only when it
 is the SAME action, so an action flip vetoed the swap.
 
-**qu is deferred, with its blocker named.** A source-fronted pattern variant
+~~**qu is deferred, with its blocker named.**~~ **SHIPPED (2026-08-09).** A
+source-fronted pattern variant
 fixes it — measured: qu's take row AND `event-from-elsewhere` both go
 role-faithful, two more rows gain confidence. But it then wins on qu's compound
 rows, where the flattened body loses its `then` connectives and
@@ -3040,6 +3052,35 @@ renders as `add .active` in both states — the destination is captured and then
 dropped by the renderer — so the emitted English is only unambiguous while a
 `then` separates it from the preceding command. **Fix the dropped destination
 first**; the pattern variant is a few lines after that.
+
+**Resolution, in the filed order.** (1) The dropped destination was the
+renderer's blanket `me`-suppression compensating for matcher-materialized
+schema defaults — it could not tell authored `noqa man`/`to me` from injected
+`destination: me`. Injected defaults now carry `implicit: true` (SemanticValue
+`ImplicitTaggable`); the renderer suppresses ONLY those, so authored phrases
+survive round-trips (`translate('add .active to me','en','en')` is now a fixed
+point; the string-content carve-out was this same conflation patched narrowly
+and still stands for implicit values). (2) The
+`generateSOVPatientFirstSourceFrontedEventHandlerPattern` variant (required
+marked source slot between patient and event; self-gates on a source role +
+marker distinct from event/patient markers) covers qu's canonical order. The
+R2 flattening the deferral measured DID recur, via a different mechanism than
+the flattened-body ambiguity: the handler-level `source` threading gate was
+`id.includes('source')`, which the variant's mid-id `source` satisfied,
+delegating qu's tabs handlers to `.tab` — now `endsWith('source')`
+(handler-head patterns all end in `-source`), mutation-verified both ways.
+Whole-corpus probe (4150 rows incl. en): exactly 7 qu rows changed — take +
+event-from-elsewhere role-faithful, 5 compound/confidence gains, zero diffs
+elsewhere (signature includes eventModifiers). Full 11-signal gate green;
+baseline regenerated (qu drops `take-class-from-siblings` from
+`roleLossyPatterns` → **R1 tail 15 → 14, all take.recipient rows closed**; the
+regen also records pre-existing main-vs-baseline confidence drift: es
+set-family ×16 at 0.789 and qu remove-class rows, verified identical on a
+clean main worktree — not this change's doing). Downstream: the
+hyperscript-adapter full path now renders authored `from me` (4 corpus rows),
+a KNOWN, runtime-equivalent full-vs-slim divergence (slim has no
+authored/implicit distinction); the slim repeat-surface safety pin is now
+content-addressed instead of `KNOWN_DIVERGENCES[0]`.
 
 **A matcher defect found on the way, live in 90 shipped patterns.** Every
 `<cmd>-event-<lang>-sov` binds `destination` in BOTH a pre-verb and a post-verb

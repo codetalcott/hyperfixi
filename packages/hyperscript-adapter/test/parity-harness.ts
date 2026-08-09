@@ -151,5 +151,14 @@ export function loadFixture(): FixtureRow[] {
  *  row's output staying engine-invalid until the repeat surface is fixed
  *  whole (capture + SYNTAX render + me-suppression exception together). */
 export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
+  // The full path keeps an AUTHORED `from me` (implicit-default tagging in
+  // @lokascript/semantic: only matcher-injected defaults are suppressed on
+  // render); the slim path has no parse-side authored/implicit distinction and
+  // still drops the phrase. Runtime-equivalent — upstream `remove .hidden`
+  // defaults its source to `me` — so slim's shorter form stays valid.
+  ['es', 'quitar .hidden de yo'],
+  ['ja', '自分 から .hidden を 削除'],
+  ['ko', '나 에서 .hidden 을 제거'],
+  ['fr', 'supprimer .hidden de moi'],
   ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
 ];

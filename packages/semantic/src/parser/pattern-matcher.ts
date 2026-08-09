@@ -982,7 +982,10 @@ export class PatternMatcher {
     // `expectedTypes` validation, so no type-compatibility or adoption decision
     // can move — the slot still admits both types, it just reports one.
     if (patternToken.valueShape === 'keyword' && value.type === 'expression') {
-      captured.set(patternToken.role, createLiteral(String((value as { raw?: unknown }).raw ?? '')));
+      captured.set(
+        patternToken.role,
+        createLiteral(String((value as { raw?: unknown }).raw ?? ''))
+      );
     } else {
       captured.set(patternToken.role, value);
     }
@@ -2808,7 +2811,10 @@ export class PatternMatcher {
         // Static value extraction (e.g., action: { value: "toggle" })
         captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
       } else if (rule.default) {
-        captured.set(role as SemanticRole, rule.default);
+        // Copied, never aliased (the rule's default object is shared across
+        // parses), and tagged implicit: materialized from the default, not
+        // captured from source text — renderers suppress implicit values only.
+        captured.set(role as SemanticRole, { ...rule.default, implicit: true });
       }
     }
   }

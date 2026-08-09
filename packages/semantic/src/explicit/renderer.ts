@@ -476,6 +476,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             if (!roleToken) continue;
             const roleValue = node.roles.get(roleName);
             if (roleValue?.type !== 'reference' || roleValue.value !== 'me') continue;
+            // Only the matcher-materialized default is redundant. An AUTHORED
+            // `to me` / `from me` (qu `noqa man`, zh `给 我`) must survive the
+            // round-trip — dropping it made `add .active to me` and bare
+            // `add .active` render identically (#874's qu deferral blocker).
+            if (!roleValue.implicit) continue;
             // Keep an explicit destination when the patient is string content —
             // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
             // alone is rejected: `add` expects a class/attribute reference). A

@@ -132,36 +132,46 @@ export type SemanticValue =
   LiteralValue | SelectorValue | ReferenceValue | PropertyPathValue | ExpressionValue | FlagValue;
 
 /**
+ * Set on a value the parser injected from a schema/extraction-rule `default`
+ * rather than captured from the source text. Renderers suppress implicit
+ * values (they were never written); authored values must survive round-trips
+ * — `add .active to me` renders its `to me`, bare `add .active` stays bare.
+ */
+export interface ImplicitTaggable {
+  readonly implicit?: true;
+}
+
+/**
  * Expected value types for role tokens.
  * Shared between RoleSpec (command-schemas) and RolePatternToken.
  */
 export type ExpectedType = SemanticValue['type'];
 
-export interface LiteralValue {
+export interface LiteralValue extends ImplicitTaggable {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
 }
 
-export interface SelectorValue {
+export interface SelectorValue extends ImplicitTaggable {
   readonly type: 'selector';
   readonly value: string; // The CSS selector: #id, .class, [attr], etc.
   readonly selectorKind: 'id' | 'class' | 'attribute' | 'element' | 'complex';
 }
 
-export interface ReferenceValue {
+export interface ReferenceValue extends ImplicitTaggable {
   readonly type: 'reference';
   readonly value:
     'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body' | 'document' | 'window' | 'detail';
 }
 
-export interface PropertyPathValue {
+export interface PropertyPathValue extends ImplicitTaggable {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
 }
 
-export interface ExpressionValue {
+export interface ExpressionValue extends ImplicitTaggable {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
@@ -171,7 +181,7 @@ export interface ExpressionValue {
  * A boolean flag value — present (+flag) or negated (~flag).
  * Used in declarative domains for no-value attributes like primary-key, not-null.
  */
-export interface FlagValue {
+export interface FlagValue extends ImplicitTaggable {
   readonly type: 'flag';
   readonly name: string;
   readonly enabled: boolean;
