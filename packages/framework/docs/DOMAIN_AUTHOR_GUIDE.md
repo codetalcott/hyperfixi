@@ -2,6 +2,17 @@
 
 Build a multilingual DSL in ~500 lines using `@lokascript/framework`.
 
+> **Stable contract.** The surface this guide teaches — `createMultilingualDSL`,
+> `defineCommand`/`defineRole`, `DomainDescriptor`, `MultilingualDSL`,
+> `DomainExtension`, and `DomainRegistry.register` — is pinned by a snapshot
+> test ([docs/API_SURFACE.md](API_SURFACE.md), asserted by
+> `src/__tests__/api-surface.test.ts`). Domain packages live outside this repo
+> (the [lokascript-domains](https://github.com/codetalcott/lokascript-domains)
+> family, published as `@lokascript/domains`), so nothing in-tree breaks at
+> build time when this surface changes — the snapshot is what makes an
+> accidental change fail loudly. Deliberate changes regenerate the snapshot
+> (`npx tsx scripts/api-surface-report.ts`) and get a note here.
+
 ## What You Get
 
 When you create a domain on the framework, you automatically get:
@@ -599,7 +610,7 @@ and the language profiles.
 
 ```typescript
 import { defineCommand, defineRole, type DomainExtension } from '@lokascript/framework';
-import { createLLMDSL } from '@lokascript/domain-llm';
+import { createLLMDSL } from '@lokascript/domains/llm';
 
 const research: DomainExtension = {
   schema: defineCommand({

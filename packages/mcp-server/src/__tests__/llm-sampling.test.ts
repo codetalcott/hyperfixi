@@ -5,7 +5,7 @@ import {
   argsToSpec,
   handleSamplingTool,
 } from '../tools/llm-sampling.js';
-import type { LLMPromptSpec } from '@lokascript/domain-llm';
+import type { LLMPromptSpec } from '@lokascript/domains/llm';
 import { createDomainRegistry } from '../tools/domain-registry-setup.js';
 
 // =============================================================================

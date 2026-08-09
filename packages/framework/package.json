@@ -99,6 +99,7 @@
     "@lokascript/intent": "^2.10.0"
   },
   "devDependencies": {
+    "@lokascript/domains": "^2.11.1",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",
