@@ -1301,8 +1301,19 @@ jobs:
           echo "=== i18n bundle check ==="
           ls -la packages/i18n/dist/lokascript-i18n.min.js || echo "MISSING: lokascript-i18n.min.js"
 
+      # `comprehensive` runs here rather than on a schedule: this job is already
+      # gated on `changes.outputs.code`, so the tier runs exactly when something
+      # that could break it changes and never on a quiet tree. It costs ~20s
+      # (122 specs) on a job that is not on the critical path.
+      #
+      # It was previously unrun ANYWHERE — `quick` is the only project CI
+      # invoked — and four real bugs shipped behind that gap: a detached
+      # `startViewTransition` (broken in every browser that has the API),
+      # untracked reads of unset globals, concurrent effects clobbering
+      # dependency capture, and `put` stringifying DocumentFragments (which
+      # silently broke the htmx-compat swap path). See #904 / #905.
       - name: Run Playwright tests
-        run: npx playwright test --project=quick
+        run: npx playwright test --project=quick --project=comprehensive
         working-directory: packages/core
 
       - name: Run htmx-adapter e2e (real htmx v4/v2 + _hyperscript)
