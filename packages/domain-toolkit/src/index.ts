@@ -28,6 +28,7 @@ import type { DomainLintInput, LintFinding, LintResult, LintWaiver } from './typ
 
 export type {
   DomainLintInput,
+  DocClaims,
   LintResult,
   LintFinding,
   LintRule,

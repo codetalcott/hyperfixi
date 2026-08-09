@@ -1,7 +1,7 @@
 # @lokascript/domain-llm
 
 Multilingual LLM-prompt DSL built on `@lokascript/framework`. Write LLM commands —
-`ask`, `summarize`, `analyze`, `translate` — in 8 natural languages and compile them
+`ask`, `summarize`, `analyze`, `translate` — in 11 natural languages and compile them
 to a provider-neutral `LLMPromptSpec`, designed to drop straight into MCP
 `sampling/createMessage`.
 
@@ -126,14 +126,14 @@ LLM_LANGUAGE_CODES; // ['en','es','ja','ar','ko','zh','tr','fr']
 `LLMPromptSpec` maps directly onto MCP `sampling/createMessage`: system messages
 become `systemPrompt`, user messages become `messages`, and `metadata.modelPreferences`
 passes through. The HyperFixi MCP server exposes this end-to-end via the `execute_llm`
-tool — natural language in any of the 8 languages → `domain-llm` compile → Claude via
+tool — natural language in any of the 11 languages → `domain-llm` compile → Claude via
 sampling. See `packages/mcp-server/src/tools/llm-sampling.ts`.
 
 ## API
 
 ### `createLLMDSL(): MultilingualDSL`
 
-Create a DSL instance with all 8 languages. Provides `parse`, `validate`, `compile`,
+Create a DSL instance with all 11 languages. Provides `parse`, `validate`, `compile`,
 and `translate`.
 
 ### `describeCommands(): CommandDescription[]`

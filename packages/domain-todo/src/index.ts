@@ -2,7 +2,7 @@
  * @lokascript/domain-todo — Multilingual Todo DSL
  *
  * An example domain built on @lokascript/framework demonstrating
- * natural-language todo management in 8 languages covering SVO, SOV,
+ * natural-language todo management in 11 languages covering SVO, SOV,
  * and VSO word orders.
  *
  * @example

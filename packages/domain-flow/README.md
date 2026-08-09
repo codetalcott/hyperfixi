@@ -1,6 +1,6 @@
 # @lokascript/domain-flow
 
-Multilingual reactive data flow DSL built on `@lokascript/framework`. Describe fetch, polling, streaming, form submission, and data transformation pipelines in 8 natural languages and compile to vanilla JS or HTMX attributes.
+Multilingual reactive data flow DSL built on `@lokascript/framework`. Describe fetch, polling, streaming, form submission, and data transformation pipelines in 11 natural languages and compile to vanilla JS or HTMX attributes.
 
 ## Supported Languages
 
@@ -93,7 +93,7 @@ renderFlow(node, 'es'); // → obtener /api/users como json en #list
 
 ### `createFlowDSL(): MultilingualDSL`
 
-Create a DSL instance with all 8 languages.
+Create a DSL instance with all 11 languages.
 
 ### `toFlowSpec(node, language): FlowSpec`
 

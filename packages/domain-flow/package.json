@@ -28,6 +28,7 @@
     "@lokascript/semantic": "^2.10.0"
   },
   "devDependencies": {
+    "@hyperfixi/server-bridge": "^2.10.0",
     "@lokascript/domain-toolkit": "^2.10.0",
     "@types/node": "^26.1.2",
     "tsup": "^8.0.0",

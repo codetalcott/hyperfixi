@@ -2,7 +2,7 @@
  * @lokascript/domain-voice — Multilingual Voice/Accessibility Commands
  *
  * A domain built on @lokascript/framework providing 14 voice/accessibility
- * commands in 8 languages covering SVO, SOV, and VSO word orders.
+ * commands in 11 languages covering SVO, SOV, and VSO word orders.
  * Commands compile to executable JavaScript for DOM manipulation,
  * navigation, and accessibility actions.
  *

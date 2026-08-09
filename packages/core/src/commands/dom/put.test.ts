@@ -540,6 +540,107 @@ describe('PutCommand', () => {
     });
   });
 
+  describe('Execution - Element Arrays (ordered move, never serialized)', () => {
+    /** A ul with three li children, appended to body. */
+    function createList(): { list: HTMLElement; items: HTMLElement[] } {
+      const list = document.createElement('ul');
+      list.id = 'list';
+      const items = ['a', 'b', 'c'].map(key => {
+        const li = document.createElement('li');
+        li.id = `li-${key}`;
+        li.textContent = key;
+        list.appendChild(li);
+        return li;
+      });
+      document.body.appendChild(list);
+      return { list, items };
+    }
+
+    it('appends a reordered child array in order — an in-place reorder', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, a, b],
+        targets: [list],
+        position: 'append',
+      };
+      await command.execute(input, context);
+
+      expect(Array.from(list.children)).toEqual([c, a, b]);
+      expect(list.children).toHaveLength(3); // moved, not duplicated
+    });
+
+    it('prepends an array preserving array order', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, b],
+        targets: [list],
+        position: 'prepend',
+      };
+      await command.execute(input, context);
+
+      expect(Array.from(list.children)).toEqual([c, b, a]);
+    });
+
+    it('inserts an array before / after a sibling target, in order', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, b, c] = items;
+
+      await command.execute(
+        { value: [b, c], targets: [a], position: 'before' } as PutCommandInput,
+        context
+      );
+      expect(Array.from(list.children)).toEqual([b, c, a]);
+
+      await command.execute(
+        { value: [b], targets: [c], position: 'after' } as PutCommandInput,
+        context
+      );
+      expect(Array.from(list.children)).toEqual([c, b, a]);
+    });
+
+    it('into is destructive: target is cleared, array members survive by reference', async () => {
+      const context = createMockContext();
+      const { list, items } = createList();
+      const [a, , c] = items;
+
+      const input: PutCommandInput = {
+        value: [c, a],
+        targets: [list],
+        position: 'into',
+      };
+      await command.execute(input, context);
+
+      // b was not in the array — replaced away, like any `put … into`.
+      expect(Array.from(list.children)).toEqual([c, a]);
+      expect(document.getElementById('li-b')).toBeNull();
+    });
+
+    it('a mixed array still stringifies (only homogeneous element arrays move)', async () => {
+      const context = createMockContext();
+      const target = createMockElement('target');
+      const el = document.createElement('span');
+
+      const input: PutCommandInput = {
+        value: [el, 'not-an-element'],
+        targets: [target],
+        position: 'into',
+      };
+      await command.execute(input, context);
+
+      // Stringified (environment-dependent flavor), NOT the ordered-move path:
+      // whatever landed in the target, it is not the original element moved in.
+      expect(el.parentElement).toBeNull();
+      expect(target.textContent).toContain('not-an-element');
+    });
+  });
+
   describe('Execution - Property Setting', () => {
     it('should set element property via memberPath', async () => {
       const context = createMockContext();

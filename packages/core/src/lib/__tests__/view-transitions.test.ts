@@ -45,6 +45,28 @@ describe('withViewTransition', () => {
     expect(mockStartViewTransition).toHaveBeenCalledOnce();
   });
 
+  it('invokes startViewTransition bound to document (native methods throw when detached)', async () => {
+    // Regression: real Chrome's startViewTransition is `this`-sensitive; an
+    // unbound call throws "Illegal invocation". The plain-function mock above
+    // can't see that, so pin it with a this-checking mock.
+    (document as unknown as Record<string, unknown>).startViewTransition = function (
+      this: unknown,
+      callback: () => void | Promise<void>
+    ) {
+      if (this !== document) {
+        throw new TypeError('Illegal invocation');
+      }
+      return {
+        finished: Promise.resolve()
+          .then(() => callback())
+          .then(() => undefined),
+      };
+    };
+    const cb = vi.fn();
+    await withViewTransition(cb);
+    expect(cb).toHaveBeenCalledOnce();
+  });
+
   it('falls back to direct execution when the API is missing', async () => {
     delete (document as unknown as Record<string, unknown>).startViewTransition;
     const cb = vi.fn();

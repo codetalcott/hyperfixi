@@ -2,15 +2,21 @@
  * Route Extractor
  *
  * Extracts server route descriptors from parsed FlowScript commands.
- * Each fetch/poll/stream/submit URL becomes a RouteDescriptor that can
- * be fed into server-bridge for server-side code generation.
+ * Each fetch/poll/stream/submit URL becomes a FlowRouteDescriptor.
+ *
+ * NOT directly feedable to server-bridge: its `RouteDescriptor` additionally
+ * requires `source` (file/line provenance) and `notes`, and does not accept
+ * `responseFormat: 'sse'`. Conversion is the consumer's job — supply those
+ * two fields and exclude SSE routes. That adapter is pinned as a compile-time
+ * assignability test in `__test__/route-descriptor-compat.test.ts`, so shape
+ * drift between the two packages fails a build instead of rotting a comment.
+ * There is deliberately no runtime dependency in either direction.
  */
 
 import type { FlowSpec } from '../types.js';
 
 /**
- * Lightweight route descriptor — compatible with server-bridge's RouteDescriptor
- * but self-contained to avoid a hard dependency on the server-bridge package.
+ * Lightweight route descriptor, self-contained by design (see header).
  */
 export interface FlowRouteDescriptor {
   /** URL path (e.g., /api/users, /api/user/{id}) */

@@ -23,6 +23,8 @@ import {
 } from '../helpers/property-target';
 import {
   insertContentSemantic,
+  insertElementsInOrder,
+  toInsertPosition,
   type ContentInsertPosition,
   type SemanticPosition,
 } from '../helpers/dom-mutation';
@@ -250,7 +252,14 @@ export class PutCommand implements DecoratedCommand {
         const content = this.parseValue(value);
         // NOTE: an Element value can only exist in one place, so across multiple
         // targets it MOVES and ends up inside the last one. Strings are copied.
-        insertContentSemantic(t, content, position);
+        // A homogeneous element ARRAY moves the same way, order preserved —
+        // `put <tr/> in me sorted by … at end of me` is an in-place reorder
+        // (state-preserving; the anti-morph — nothing is serialized).
+        if (Array.isArray(content)) {
+          insertElementsInOrder(t, content, toInsertPosition(position));
+        } else {
+          insertContentSemantic(t, content, position);
+        }
       }
     }
     return targets;
@@ -283,8 +292,14 @@ export class PutCommand implements DecoratedCommand {
     return queryTargetElements(sel);
   }
 
-  private parseValue(v: any): string | HTMLElement {
+  private parseValue(v: any): string | HTMLElement | HTMLElement[] {
     if (isHTMLElement(v)) return v as HTMLElement;
+    // A non-empty homogeneous element array passes through for ordered
+    // insertion. Mixed or empty arrays keep the string fallback (previously
+    // "[object HTMLElement],…" — output nothing could have relied on).
+    if (Array.isArray(v) && v.length > 0 && v.every(isHTMLElement)) {
+      return v as HTMLElement[];
+    }
     return v == null ? '' : String(v);
   }
 

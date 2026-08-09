@@ -191,8 +191,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-hx-v4',
     name: 'Hybrid HX v4',
     filename: 'hyperfixi-hx-v4.js',
-    gzipSize: '320.9 KB',
-    rawSize: '1490 KB',
+    gzipSize: '322.4 KB',
+    rawSize: '1501 KB',
     // Re-exports `browser-bundle.ts`, so it inherits the full registry.
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
@@ -209,8 +209,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'minimal',
     name: 'Minimal',
     filename: 'hyperfixi-minimal.js',
-    gzipSize: '71.5 KB',
-    rawSize: '289 KB',
+    gzipSize: '71.9 KB',
+    rawSize: '292 KB',
     // Was 30, ungated and wrong by 20. `browser-bundle-minimal-v2.ts`
     // advertises 10 in its own `commands: [...]` array, which is what this
     // mirrors. Note it REGISTERS 11: `createSendCommand` also registers the
@@ -232,8 +232,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'standard',
     name: 'Standard',
     filename: 'hyperfixi-standard.js',
-    gzipSize: '78.3 KB',
-    rawSize: '317 KB',
+    gzipSize: '78.8 KB',
+    rawSize: '321 KB',
     // Was 35, ungated and wrong by 10. `browser-bundle-standard-v2.ts`
     // registers 25, matching its own published `commands: [...]` array exactly.
     commandCount: 25,
@@ -251,8 +251,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'browser',
     name: 'Full Browser',
     filename: 'hyperfixi.js',
-    gzipSize: '309.1 KB',
-    rawSize: '1453 KB',
+    gzipSize: '310.8 KB',
+    rawSize: '1464 KB',
     // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
     // gaps and no extras vs the manifest).
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
@@ -270,8 +270,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'multilingual',
     name: 'Multilingual',
     filename: 'hyperfixi-multilingual.js',
-    gzipSize: '93.4 KB',
-    rawSize: '380 KB',
+    gzipSize: '94.5 KB',
+    rawSize: '388 KB',
     // NOT a full-runtime bundle, despite the old 59. It hand-picks 52 via
     // `createTreeShakeableRuntime`; missing vs the manifest are `morph`,
     // `process`, `push`, `replace`, `scroll`, `start`, `swap`. Whether it

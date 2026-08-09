@@ -2,9 +2,9 @@
  * @lokascript/domain-jsx — Multilingual JSX DSL
  *
  * A proof-of-generality JSX/React domain built on @lokascript/framework.
- * Parses JSX component descriptions written in 8 languages (EN, ES, JA, AR,
- * KO, ZH, TR, FR), demonstrating that the framework supports SVO, SOV, and
- * VSO word orders for UI component DSLs.
+ * Parses JSX component descriptions written in 11 languages (EN, ES, JA, AR,
+ * KO, ZH, TR, FR, DE, PT, RU), demonstrating that the framework supports SVO,
+ * SOV, and VSO word orders for UI component DSLs.
  *
  * @example
  * ```typescript

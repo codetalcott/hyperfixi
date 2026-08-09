@@ -1,6 +1,6 @@
 # @lokascript/domain-jsx
 
-Multilingual JSX/React DSL built on `@lokascript/framework`. Describe React components in 8 natural languages and compile to standard JSX code.
+Multilingual JSX/React DSL built on `@lokascript/framework`. Describe React components in 11 natural languages and compile to standard JSX code.
 
 ## Supported Languages
 
@@ -120,7 +120,7 @@ jsx.compile('effect fetchData on count userId', 'en');
 
 ### `createJSXDSL(): MultilingualDSL`
 
-Create a DSL instance with all 8 languages.
+Create a DSL instance with all 11 languages.
 
 ### `createJSXCodeGenerator(options?): CodeGenerator`
 
