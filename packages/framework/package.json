@@ -100,7 +100,7 @@
   },
   "devDependencies": {
     "@lokascript/domains": "^2.11.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
