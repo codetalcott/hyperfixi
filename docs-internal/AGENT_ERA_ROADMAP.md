@@ -106,8 +106,32 @@ copy. Original deliverables:
 
 ## Arc 3 — Eval the loop like an agent product
 
-**Status: not started.** The claim "constrained DSL + validate/repair loop
-beats free-form generation" needs a number. Build a small benchmark:
+**Status: harness landed 2026-08-24; the A/B number is deliberately NOT
+claimed yet** — see [HANDOFF-agent-era-arc3.md](./HANDOFF-agent-era-arc3.md)
+and `packages/testing-framework/src/agent-bench/`.
+
+What shipped: 20 natural-language tasks with verified reference
+implementations, a scorer that separates *parses* from *behaves* (jsdom effect
+signature vs the reference, sharing R2's effect-signature primitives), an
+agent-driven A/B protocol, and a deterministic plausible-phrasing probe that
+needs no generator. The probe is baselined and ratcheted both directions at
+tolerance 0.
+
+**The finding reframes the arc — and Arc 1's premise.** Of 37 plausible
+phrasings: **97% parse, 49% behave correctly, and exactly one failure produced
+a diagnostic.** Half the phrasings parse clean at confidence 1.0 and misbehave
+(10 of them do nothing at all). The validate/repair loop cannot move any of
+those rows — it is never told anything is wrong. So the loop's ceiling is set
+not by how good the repair guidance is but by how much of the failure mass is
+*visible*, and today most of it is not. The highest-value next work is
+therefore **making these failures loud** (an unconsumed-token / no-op-command
+diagnostic), not further loop polish — see the new Arc 3b below.
+
+**Why no A/B number is committed:** the tasks and references were authored in
+the same session that would have generated the candidates, so a one-shot score
+from it would measure recall of just-written answers. A harness with no number
+beats a flattering number with a caveat. `score` is implemented and ready for a
+generator that has not seen the directory. Original work items:
 
 - N natural-language UI tasks (seed from the gallery examples and the
   patterns corpus — both already have known-good references).
@@ -121,6 +145,28 @@ beats free-form generation" needs a number. Build a small benchmark:
 - Keep it cheap and reproducible: a script under `packages/testing-framework`
   (or a sibling), runnable with any MCP-capable agent; **not** a CI gate
   (LLM-in-the-loop = nondeterministic; this repo's gates stay deterministic).
+
+## Arc 3b — Make the silent failures loud
+
+**Status: not started; promoted out of Arc 3's findings, and now the highest-value
+item in this queue.** Arc 3 measured that ~half of plausible phrasings misbehave
+*without any diagnostic*, which bounds every loop-based story. Each family below
+is a candidate diagnostic; the benchmark's ratcheted baseline is the acceptance
+test (rows should migrate from the ☠ band to `rejected`, which the loop already
+handles well):
+
+- **Unconsumed-token diagnostic.** `add .x #el` silently rebinds the destination
+  to `me` instead of reporting that `#el` was never consumed. Likely the single
+  highest-yield fix — it covers the omitted-marker and plural-emphasis families
+  (`to all .y`, `to every .y`) at once.
+- **No-op-command diagnostic.** A command that parses to a shape which provably
+  cannot affect anything (`set @attr of #el`, `set the innerHTML of #el`,
+  `remove .x from all .y`, `remove element #el`, `if #el has class .x`) should
+  warn rather than execute to nothing.
+- **Attribute-write spelling convergence.** Three spellings, one works. Either
+  accept `of`/`on` forms or reject them — silently no-op'ing is the worst option.
+- Fold in Arc 1's residue here: the agent-optimized-errors audit (does every
+  coded error path name its fix?) is the same work seen from the other end.
 
 ## Arc 4 — Extract the verification harness as a standalone package
 
@@ -179,6 +225,9 @@ Arcs 1–4 show traction**:
 
 Arcs 1 + 2 first (small, compound everything), Arc 3 as soon as 1 stabilizes
 (its number feeds Arc 2's docs), Arc 4 second wave (the differentiator),
-Arcs 5–6 as traction dictates. Nothing here blocks the standing
+Arcs 5–6 as traction dictates. **Revised after Arc 3 landed:** Arc 3b jumps
+the queue ahead of Arc 4 — a verification harness sold on catching silent
+meaning-drops is undercut by a primary agent surface that produces them
+undiagnosed, and Arc 3b's fixes are small and locally testable. Nothing here blocks the standing
 correctness queues — they continue on their own merits and this track free-rides
 on every fidelity improvement they land.
