@@ -148,7 +148,7 @@ generator that has not seen the directory. Original work items:
 
 ## Arc 3b — Make the silent failures loud
 
-**Status: first diagnostic landed 2026-08-24** — see
+**Status: COMPLETE for the diagnosable set, 2026-08-24 (two slices)** — see
 [HANDOFF-agent-era-arc3b.md](./HANDOFF-agent-era-arc3b.md). The unconsumed-token
 family turned out to be a **propagation bug, not a parser gap**: the semantic
 parser had flagged dropped tokens all along (warning-severity `unconsumed-input`
@@ -156,10 +156,20 @@ on the node, hoisted from any depth) and `CompilationService.normalize()` never
 read node diagnostics. Lifting them into the response (as `UNCONSUMED_INPUT`
 with a repair suggestion) moved **11 of the 18 silent rows into the visible
 band** — silent share 49% → 19% — with zero parser change, so the multilingual
-ratchets are untouched. Remaining ☠ 7: five real gaps (`to all .y` — note
-`every` warns but `all` doesn't — `from all .y`, `the text of`, `has class`,
-`<body/>`; a no-op-command diagnostic covers most) and two that are valid code
-with different intent, catchable only by IR-vs-intent review (Arc 4's case).
+ratchets are untouched. **Slice 2 (same day) closed the remaining five real
+gaps** via Gate 4 of the compilation-service validation pipeline
+(`validation/inert-shapes.ts`): four narrow fingerprint checks
+(`INERT_QUANTIFIER_TARGET`, `HALF_PARSED_CONDITION`,
+`UNSUPPORTED_QUERY_LITERAL`, `INERT_PROPERTY_WRITE`), warnings only, still no
+parser change — the filed "will touch parser/builder territory" caution was
+falsified a second time: every fingerprint is visible in the IR the parse
+already produces. Probe: silent band 49% → 19% → **5%**, and the remaining two
+rows are valid-code-different-intent (`add .hidden to #menu`, `on mouseover`)
+— by design not diagnosable; **the parser-gap silent band is zero**. What
+remains of this arc is upstream polish, not gaps: the underlying tokenizer
+quirks (`all` consumed as identifier while `every` is dropped; `has`
+mis-tokenized as a class) could be fixed at the source someday, but with
+warnings in place that is PARSER_NEXT_STEPS material, not agent-era work.
 Original queue (promoted out of Arc 3's findings): Arc 3 measured that ~half of plausible phrasings misbehave
 *without any diagnostic*, which bounds every loop-based story. Each family below
 is a candidate diagnostic; the benchmark's ratcheted baseline is the acceptance

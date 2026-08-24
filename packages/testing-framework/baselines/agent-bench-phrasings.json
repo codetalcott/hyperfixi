@@ -4,9 +4,9 @@
     "phrasings": 37,
     "parse": 36,
     "behaveCorrectly": 18,
-    "warnedWrong": 11,
-    "silentBand": 7,
-    "silentNoop": 5
+    "warnedWrong": 16,
+    "silentBand": 2,
+    "silentNoop": 1
   },
   "phrasings": [
     {
@@ -27,7 +27,7 @@
     {
       "taskId": "add-class-multiple",
       "code": "on click add .done to all .todo",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "add-class-multiple",
@@ -52,7 +52,7 @@
     {
       "taskId": "add-to-body",
       "code": "on click add .modal-open to <body/>",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "add-to-body",
@@ -82,7 +82,7 @@
     {
       "taskId": "conditional-class",
       "code": "on click if #box has class .danger add .warned to #box end",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "conditional-class",
@@ -107,7 +107,7 @@
     {
       "taskId": "remove-class-all",
       "code": "on click remove .active from all .row",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "remove-element",
@@ -152,7 +152,7 @@
     {
       "taskId": "put-text",
       "code": "on click set the text of #output to \"Saved\"",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "show-element",

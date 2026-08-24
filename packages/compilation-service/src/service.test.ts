@@ -323,6 +323,46 @@ describe('CompilationService', () => {
       expect(clean.diagnostics.filter(d => d.code === 'UNCONSUMED_INPUT')).toHaveLength(0);
     });
 
+    it('flags inert shapes that consume every token (arc 3b gate 4)', () => {
+      // Each of these parses at confidence 1.0 with everything consumed, and
+      // is provably useless at runtime. The gate warns; it never blocks.
+      const expectWarning = (code: string, warningCode: string) => {
+        const r = service.validate({ code, language: 'en' });
+        expect(r.ok, code).toBe(true);
+        const w = r.diagnostics.find(d => d.code === warningCode);
+        expect(w, `${code} should carry ${warningCode}`).toBeDefined();
+        expect(w?.severity).toBe('warning');
+        expect(w?.suggestion).toBeTruthy();
+      };
+      expectWarning('on click add .done to all .todo', 'INERT_QUANTIFIER_TARGET');
+      expectWarning('on click remove .active from all .row', 'INERT_QUANTIFIER_TARGET');
+      expectWarning('on click set the text of #output to "Saved"', 'INERT_PROPERTY_WRITE');
+      expectWarning(
+        'on click if #box has class .danger add .warned to #box end',
+        'HALF_PARSED_CONDITION'
+      );
+      expectWarning('on click add .modal-open to <body/>', 'UNSUPPORTED_QUERY_LITERAL');
+    });
+
+    it('inert-shape gate stays quiet on correct phrasings', () => {
+      // False positives teach agents to distrust warnings; these must be clean.
+      for (const code of [
+        'on click add .done to .todo',
+        'on click set the textContent of #output to "Saved"',
+        'on click set #output\'s innerHTML to "Done"',
+        'on click if #box matches .danger add .warned to #box end',
+        'on click add .modal-open to body',
+        'on click add .is-active to #item', // .is-* utility classes must not trip HALF_PARSED_CONDITION
+      ]) {
+        const r = service.validate({ code, language: 'en' });
+        expect(r.ok, code).toBe(true);
+        expect(
+          r.diagnostics.filter(d => d.severity === 'warning'),
+          `${code} should be warning-free`
+        ).toHaveLength(0);
+      }
+    });
+
     it('returns errors for invalid input', () => {
       const result = service.validate({
         code: '',

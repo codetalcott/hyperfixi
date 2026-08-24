@@ -6,6 +6,7 @@
  */
 
 import type { Diagnostic } from '../types.js';
+import { checkInertShapes } from './inert-shapes.js';
 
 // =============================================================================
 // Dynamic imports
@@ -112,6 +113,12 @@ export function runValidationGates(
       }
     }
   }
+
+  // Gate 4: inert-shape heuristics (arc 3b). Warnings only — a parse that
+  // consumed everything at full confidence can still be provably useless at
+  // runtime, and without a diagnostic the validate/repair loop never hears
+  // about it. Never affects pass/confidence.
+  diagnostics.push(...checkInertShapes(node));
 
   return { pass: true, diagnostics, adjustedConfidence };
 }

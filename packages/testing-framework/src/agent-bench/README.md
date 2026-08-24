@@ -127,6 +127,29 @@ The remaining ☠ 7 split honestly in two:
   these; they are exactly what IR-vs-intent review (and Arc 4's equivalence
   checking) is for.
 
+### Arc 3b, second diagnostic (inert-shape gate)
+
+The five remaining real gaps all parsed fully-consumed at confidence 1.0 but
+left distinctive fingerprints in the IR: `all .todo` becomes a property access
+on the undefined identifier `all`; `has class` mis-tokenizes the predicate as a
+class selector (`#box .has class .danger`) so the condition is always falsy;
+`<body/>` survives as a raw non-CSS selector that `querySelector` rejects; and
+`the text of #el` becomes an invisible expando write. Gate 4 of the
+compilation-service validation pipeline (`validation/inert-shapes.ts`) matches
+those fingerprints and warns (`INERT_QUANTIFIER_TARGET`,
+`HALF_PARSED_CONDITION`, `UNSUPPORTED_QUERY_LITERAL`, `INERT_PROPERTY_WRITE`)
+— warnings only, still no parser change.
+
+|                                       | pre-3b      | after slice 1 | after slice 2          |
+| ------------------------------------- | ----------- | ------------- | ---------------------- |
+| wrong but **warned** (loop can react) | 1/37        | 12/37         | **17/37** (16 ⚠ + 1 ✗) |
+| wrong and **silent**                  | 18/37 (49%) | 7/37 (19%)    | **2/37 (5%)**          |
+
+The two remaining ☠ rows are the valid-code-different-intent pair
+(`add .hidden to #menu`, `on mouseover`) — by design not diagnosable, and the
+standing case for IR-vs-intent review and Arc 4's behavioral equivalence. **The
+parser-gap silent band is now zero.**
+
 Bands are computed by `harness.bandOf` — one function shared by the probe, the
 committed baseline, and the ratchet test, so they cannot drift apart.
 
