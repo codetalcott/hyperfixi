@@ -14,8 +14,11 @@ Hyperscript is a compact DSL for DOM behavior (`on click toggle .active on
 #panel`) that lives in an HTML attribute. For an agent, the interesting property
 is not brevity — it's **checkability**:
 
-- A snippet either compiles or fails **with structured diagnostics**, checked by
-  a real parser — deterministic, instant, no LLM in the loop.
+- A snippet is checked by a **real parser**, not a model — deterministic,
+  instant, and it either compiles or fails with structured diagnostics.
+  (Caveat worth knowing up front: the parser degrades rather than failing, so
+  "compiles" is not the same as "correct" — see [Known silent
+  traps](#known-silent-traps) below, which is why the next bullet matters.)
 - The parse comes back as a **semantic IR** (action + roles + trigger) you can
   compare against your intent before anything ships.
 - `diff_behaviors` can prove two snippets **behaviorally equivalent** — useful
@@ -114,13 +117,43 @@ the roles say `me`. Repair and re-validate:
 - **Ahead-of-time** — `packages/aot-compiler` compiles hyperscript to plain JS
   at build time if you don't want the runtime at all.
 
+## Known silent traps
+
+Validation is necessary but **not sufficient**. The parser degrades rather than
+failing, so several natural phrasings come back `ok: true` at confidence 1.0
+with zero diagnostics and still do the wrong thing. A measured probe of 37
+plausible phrasings found 97% parsed but only 49% behaved correctly — and only
+one of the failures produced a diagnostic
+([benchmark + full findings](./packages/testing-framework/src/agent-bench/README.md)).
+
+Until these are given diagnostics, check the returned IR — and prefer the
+right-hand column:
+
+| Phrasing that silently misbehaves                         | Use instead                          |
+| --------------------------------------------------------- | ------------------------------------ |
+| `add .x #el` / `toggle .x #el` (no marker) — acts on `me` | `add .x to #el` / `toggle .x on #el` |
+| `set @attr of #el to "v"` — does nothing                  | `set #el's @attr to "v"`             |
+| `set @attr on #el to "v"` — does nothing                  | `set #el's @attr to "v"`             |
+| `add @attr="v" to #el` — empty value, wrong element       | `set #el's @attr to "v"`             |
+| `toggle @attr of #el` — acts on `me`                      | `toggle @attr on #el`                |
+| `add .x to all .y` / `to every .y` — acts on `me`         | `add .x to .y`                       |
+| `remove .x from all .y` — does nothing                    | `remove .x from .y`                  |
+| `set the innerHTML of #el to "v"` — does nothing          | `set #el's innerHTML to "v"`         |
+| `if #el has class .x` — does nothing                      | `if #el matches .x`                  |
+| `remove element #el` — does nothing                       | `remove #el`                         |
+
+These work fine, for what it's worth: `then` / `and` / comma between commands,
+stray articles (`the #menu`, `the closest .card`), `this` as a synonym for `me`,
+and `put … in` as well as `into`.
+
 ## Ground rules for generated code
 
 - Prefer the smallest bundle that covers what you emit
   ([docs/BROWSER_BUNDLES.md](./docs/BROWSER_BUNDLES.md)); with Vite, use
   `@hyperfixi/vite-plugin` and don't think about bundles at all.
 - Validate before you present. A snippet you didn't run through
-  `validate_and_compile` is a guess.
+  `validate_and_compile` is a guess — but read the IR it returns, not just the
+  ok flag (see the silent traps above).
 - When the user's language isn't English, show them `translate_code` output in
   their language alongside the English source — the translation is
   deterministic and fidelity-checked, so the two never drift.
