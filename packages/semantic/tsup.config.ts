@@ -9,6 +9,15 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
       },
+  // Fidelity scorers (CJS + ESM) — pure functions over parsed node trees.
+  // Output: dist/fidelity.js / dist/fidelity.cjs (+ dist/fidelity.d.ts via build:types)
+  // Usage: import { computeFidelity } from '@lokascript/semantic/fidelity'
+  {
+    entry: ['src/fidelity.ts'],
+    format: ['cjs', 'esm'],
+    splitting: false,
+    sourcemap: true,
+  },
   // Core ESM entry (no language data) - for tree-shaking in Vite/Rollup
   // Output: dist/core.js, dist/core.d.ts
   // Usage: import { createSemanticAnalyzer, buildAST } from '@lokascript/semantic/core'

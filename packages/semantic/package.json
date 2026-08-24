@@ -17,6 +17,11 @@
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
     },
+    "./fidelity": {
+      "types": "./dist/fidelity.d.ts",
+      "import": "./dist/fidelity.js",
+      "require": "./dist/fidelity.cjs"
+    },
     "./browser": {
       "types": "./dist/index.d.ts",
       "default": "./dist/browser.global.js"

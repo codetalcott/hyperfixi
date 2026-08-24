@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **107 tools**, **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **108 tools**, **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -10,7 +10,7 @@ The headline use case: an LLM agent emitting hyperscript instead of free-form Ja
 2. **Repair** — apply the diagnostics and re-validate. `get_code_fixes` maps coded errors to concrete fixes; `get_command_docs` / `search_patterns` show correct usage. Failed results carry a next-step hint block.
 3. **`compile_hyperscript`** — once valid, emit JavaScript (or stop at valid hyperscript for an `_="..."` attribute).
 
-To present code to a human, `translate_code` renders it in any of 24 languages via deterministic grammar transformation, and `diff_behaviors` proves two snippets behaviorally equivalent. See the repo-root [AGENTS.md](../../AGENTS.md) for a worked end-to-end example.
+To present code to a human, `translate_code` renders it in any of 24 languages via deterministic grammar transformation, `diff_behaviors` proves two snippets behaviorally equivalent, and `score_fidelity` scores a candidate against a reference — including across languages — naming exactly what is missing or hallucinated. See the repo-root [AGENTS.md](../../AGENTS.md) for a worked end-to-end example.
 
 ## Protocol Support
 
@@ -80,7 +80,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **102** tools below, plus the **5** GRAIL tools above, total **107**.
+The **103** tools below, plus the **5** GRAIL tools above, total **108**.
 
 ### Validation & Semantic Tools (8)
 
@@ -95,7 +95,7 @@ The **102** tools below, plus the **5** GRAIL tools above, total **107**.
 | `explain_in_language`  | Explain code with grammar rules, roles, and translations         |
 | `get_code_fixes`       | Get auto-fixes for specific error codes                          |
 
-### Compilation & Code Generation (6)
+### Compilation & Code Generation (7)
 
 | Tool                   | Description                                                                 |
 | ---------------------- | --------------------------------------------------------------------------- |
@@ -104,6 +104,7 @@ The **102** tools below, plus the **5** GRAIL tools above, total **107**.
 | `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation           |
 | `generate_tests`       | Generate Playwright behavior tests from hyperscript                         |
 | `generate_component`   | Generate React, Vue, or Svelte component from hyperscript                   |
+| `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals  |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence                                 |
 
 ### Analysis (4)

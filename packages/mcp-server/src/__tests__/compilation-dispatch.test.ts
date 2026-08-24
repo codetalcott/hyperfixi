@@ -23,6 +23,7 @@ describe('Tool definition contracts', () => {
     'translate_code',
     'generate_tests',
     'generate_component',
+    'score_fidelity',
     'diff_behaviors',
   ];
 

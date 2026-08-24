@@ -189,29 +189,43 @@ handles well):
 - Fold in Arc 1's residue here: the agent-optimized-errors audit (does every
   coded error path name its fix?) is the same work seen from the other end.
 
-## Arc 4 — Extract the verification harness as a standalone package
+## Arc 4 — Extract the verification harness (no new package)
 
-**Status: not started.** The largest build in this queue. Today the fidelity
-scorers live inside `packages/testing-framework`, coupled to the multilingual
-CLI, the corpus, and patterns.db provenance. Carve out a package (working name
-`@lokascript/fidelity`) exposing the primitives with a clean API:
+**Status: landed 2026-08-24** — see
+[HANDOFF-agent-era-arc4.md](./HANDOFF-agent-era-arc4.md). **Reshaped before
+starting, at the owner's direction:** the original plan was a standalone
+`@lokascript/fidelity` package; with 27 packages already published across
+three scopes (and twelve just deleted in #909), a 28th for a not-yet-existing
+external audience would add list-maintenance cost and install-time confusion
+for no present consumer. The extraction happened *without* a package:
 
-- **Inputs**: two code strings — reference + candidate, each in any supported
-  language (or an intent structure via `packages/intent`).
-- **Outputs**: a scored, explainable report — action recall/precision (R0),
-  role fidelity (R1), value recall (R3), multiset recall, optional execution
-  equivalence (R2, jsdom) and canonical validity (R4, round-trip).
-- **Constraints from day one**: no patterns.db dependency for the two-string
-  path; deterministic; documented blind spots (the en-reference caveat from
-  FIDELITY.md carries over — say so, don't hide it).
-- **Expose through MCP** as `score_fidelity` / `verify_equivalence` — "did the
-  agent's edit preserve behavior?" answered cheaply and deterministically is a
-  question every agent harness wants.
-- The internal CI gate then consumes the package (testing-framework becomes a
-  consumer, not the home), which is also the forcing function that keeps the
-  public API honest.
-- **Prereq check**: how much of `fidelity.ts` assumes the corpus/baseline
-  shape? Write the HANDOFF brief with that measurement before starting.
+- **Scorers → `@lokascript/semantic/fidelity`** (subpath export, flat entry
+  like `./core`; CJS+ESM+d.ts). Moved verbatim from testing-framework, which
+  now re-exports through a shim — so the ratchet suite exercises the extracted
+  module and the two cannot drift. Pure functions over parsed node trees: no
+  corpus, no baseline, no DOM.
+- **Pairwise API → `CompilationService.scoreFidelity()`** beside `diff()`:
+  normalize reference + candidate (any input format, sides may be in
+  different languages), score with the extracted primitives. Returns
+  actionRecall / multisetRecall / precision / roleFidelity / valueRecall plus
+  the exact missing/spurious actions, missing role signatures, and lost
+  invariant values (`toggle.destination=#panel`), and a `faithful` flag.
+- **Agent surface → `score_fidelity` MCP tool** beside `diff_behaviors`,
+  named in the server's MCP instructions and AGENTS.md: diff answers
+  identical-or-not, scoring answers how-faithful-and-what-drifted — including
+  for the intent-mismatch residue Arc 3b's diagnostics cannot see.
+
+**A standalone package is deferred until a named external consumer exists.**
+The subpath boundary makes later promotion mechanical; the reverse (retiring
+a published package with dependents) is not. Execution equivalence (the
+R2-style jsdom check) deliberately stays in testing-framework where jsdom
+already lives — production consumers should not inherit browser-automation
+dependencies for structural scoring.
+
+Not done from the original filing, by choice: the two-string path already
+needs no patterns.db (confirmed — the scorers never did); publishing
+methodology docs beyond FIDELITY.md's new import pointer is positioning work,
+not extraction work.
 
 ## Arc 5 — The review surface (human-in-the-loop)
 

@@ -286,6 +286,84 @@ describe('CompilationService', () => {
   // Validation Only
   // ---------------------------------------------------------------------------
 
+  describe('scoreFidelity()', () => {
+    it('scores an identical pair as faithful 1.0 across all signals', () => {
+      const input = {
+        code: 'on click add .busy to me then put "Loading" into #output',
+        language: 'en',
+      };
+      const r = service.scoreFidelity({ reference: input, candidate: input });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(true);
+      expect(r.scores).toEqual({
+        actionRecall: 1,
+        multisetRecall: 1,
+        precision: 1,
+        roleFidelity: 1,
+        valueRecall: 1,
+      });
+    });
+
+    it('names a dropped command and its lost invariant value', () => {
+      const r = service.scoreFidelity({
+        reference: {
+          code: 'on click add .busy to me then put "Loading" into #output',
+          language: 'en',
+        },
+        candidate: { code: 'on click add .busy to me', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(false);
+      expect(r.missingActions).toContain('put');
+      expect(r.missingValues).toContain('put.destination=#output');
+      expect(r.scores?.precision).toBe(1); // nothing hallucinated
+    });
+
+    it('names a hallucinated command via precision', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'on click add .busy to me', language: 'en' },
+        candidate: { code: 'on click add .busy to me then toggle .x on me', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.spuriousActions).toContain('toggle');
+      expect(r.scores?.actionRecall).toBe(1); // recall alone cannot see this
+      expect(r.scores?.precision).toBeLessThan(1);
+    });
+
+    it('catches a silently rewritten target that every other signal misses', () => {
+      // Same action, same roles, same types — only the invariant VALUE differs.
+      const r = service.scoreFidelity({
+        reference: { code: 'on click toggle .active on #panel', language: 'en' },
+        candidate: { code: 'on click toggle .active on #other', language: 'en' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(false);
+      expect(r.scores?.actionRecall).toBe(1);
+      expect(r.scores?.roleFidelity).toBe(1);
+      expect(r.scores?.valueRecall).toBeLessThan(1);
+      expect(r.missingValues).toContain('toggle.destination=#panel');
+    });
+
+    it('scores a faithful cross-language pair as faithful (ko vs en)', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'toggle .active', language: 'en' },
+        candidate: { code: '토글 .active', language: 'ko' },
+      });
+      expect(r.ok).toBe(true);
+      expect(r.faithful).toBe(true);
+    });
+
+    it('returns ok:false with side-tagged diagnostics when a side fails to parse', () => {
+      const r = service.scoreFidelity({
+        reference: { code: 'toggle .active', language: 'en' },
+        candidate: { code: 'frobnicate the wibble', language: 'en' },
+      });
+      expect(r.ok).toBe(false);
+      expect(r.scores).toBeUndefined();
+      expect(r.diagnostics.some(d => d.message.startsWith('[candidate]'))).toBe(true);
+    });
+  });
+
   describe('validate()', () => {
     it('validates without compiling', () => {
       const result = service.validate({

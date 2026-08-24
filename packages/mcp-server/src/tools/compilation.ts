@@ -136,6 +136,38 @@ export const compilationTools: Tool[] = [
     },
   },
   {
+    name: 'score_fidelity',
+    description:
+      "Score a candidate hyperscript snippet against a reference for structural fidelity — the multilingual CI ratchet's deterministic scorers applied to one pair. Returns actionRecall/multisetRecall/precision/roleFidelity/valueRecall (each 0–1), plus the exact missing/spurious actions and lost invariant values (e.g. a silently rewritten target: toggle.destination=#panel). Sides accept any input format and may be in DIFFERENT languages, so it also verifies a translation preserved meaning. Use after editing or translating code to prove the result faithful; diff_behaviors answers identical-or-not, this answers how-faithful-and-what-drifted.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        reference: {
+          type: 'object',
+          description: 'The trusted side (code/explicit/semantic + language)',
+          properties: {
+            code: { type: 'string' },
+            explicit: { type: 'string' },
+            semantic: { type: 'object' },
+            language: { type: 'string' },
+          },
+        },
+        candidate: {
+          type: 'object',
+          description: 'The side being checked (same shape as reference)',
+          properties: {
+            code: { type: 'string' },
+            explicit: { type: 'string' },
+            semantic: { type: 'object' },
+            language: { type: 'string' },
+          },
+        },
+        confidence: { type: 'number', description: 'Minimum confidence threshold' },
+      },
+      required: ['reference', 'candidate'],
+    },
+  },
+  {
     name: 'diff_behaviors',
     description:
       'Compare two hyperscript inputs at the behavior level. Returns whether they are semantically identical, trigger diffs, and per-operation diffs. Works across languages and input formats.',
@@ -261,6 +293,18 @@ export async function handleCompilationTool(
           componentName: args.componentName as string | undefined,
           typescript: args.typescript as boolean | undefined,
           framework: args.framework as string | undefined,
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.ok,
+        };
+      }
+
+      case 'score_fidelity': {
+        const result = service.scoreFidelity({
+          reference: args.reference as any,
+          candidate: args.candidate as any,
+          confidence: args.confidence as number | undefined,
         });
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
