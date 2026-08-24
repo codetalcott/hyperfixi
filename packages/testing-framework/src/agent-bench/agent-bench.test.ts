@@ -29,7 +29,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TASKS, taskById } from './tasks.js';
 import { VARIANTS } from './variants.js';
-import { executeCandidate, initialize, scoreCandidate, validateCandidate } from './harness.js';
+import {
+  bandOf,
+  executeCandidate,
+  initialize,
+  scoreCandidate,
+  validateCandidate,
+} from './harness.js';
 
 const BASELINE_PATH = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -94,13 +100,7 @@ describe('agent-bench: plausible-phrasing ratchet', () => {
       const task = taskById(entry.taskId);
       expect(task, `baseline names unknown task ${entry.taskId}`).toBeDefined();
       const s = await scoreCandidate(task!, entry.code);
-      const band = s.behaviorMatch
-        ? 'correct'
-        : s.parsed
-          ? s.execution.effects.length === 0
-            ? 'silent-noop'
-            : 'silent-wrong'
-          : 'rejected';
+      const band = bandOf(s);
       if (band !== entry.band) drift.push(`${entry.code}\n    ${entry.band} → ${band}`);
     }
     expect(

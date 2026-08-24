@@ -82,50 +82,53 @@ implemented and ready for that run.
 Not a CI gate: LLM-in-the-loop is nondeterministic and this repo's gates stay
 deterministic. Half 1 **is** gated, because it has no generator in it.
 
-## Findings — first probe, 2026-08-24
+## Findings
 
-37 plausible phrasings, 20 tasks:
+### First probe, 2026-08-24 (pre-3b)
 
-|                             | count |         |
-| --------------------------- | ----- | ------- |
-| parse                       | 36/37 | **97%** |
-| behave correctly            | 18/37 | **49%** |
-| parse clean but misbehave   | 18/37 | **49%** |
-| …of which do nothing at all | 10/37 | 27%     |
+37 plausible phrasings, 20 tasks: **97% parse, 49% behave correctly, 49% parse
+clean but misbehave** — and exactly one of the failures produced a diagnostic.
+Iterating `validate → fix → re-validate` could not move a single ☠ row, because
+the loop was never told anything was wrong. The actionable conclusion was not
+"polish the loop" but **make these failures loud** — which became Arc 3b.
 
-**The loop's ceiling is lower than the pitch implies.** Exactly one of the 37
-was caught by validation. Everything else that was wrong was wrong _silently_ —
-no diagnostic, no error, nothing for an agent to react to and nothing for a
-repair step to repair. Iterating `validate → fix → re-validate` cannot move a
-single row in the ☠ band, because the loop is never told anything is wrong.
+### Arc 3b, first diagnostic (unconsumed-input propagation)
 
-Families found, each a candidate diagnostic:
+The parser had been flagging dropped tokens all along — a `warning`-severity
+`unconsumed-input` diagnostic on the node, hoisted from any depth, with a
+confidence dock — and `CompilationService.normalize()` simply never read node
+diagnostics, so `validate()` reported `ok` with an empty diagnostics array. The
+fix is pure plumbing (no parser change, so the multilingual ratchets are
+untouched): lift warning/error-severity node diagnostics into the response, as
+`UNCONSUMED_INPUT` with a repair suggestion.
 
-- **Omitted destination marker rebinds to `me`.** `add .highlight #item` and
-  `toggle .open #panel` parse at confidence 1.0 and act on the button. The
-  destination role silently defaults instead of reporting an unconsumed token.
-- **Attribute writes have three spellings and only one works.**
-  `set #panel's @aria-expanded to "true"` is correct; `set @aria-expanded of
-#panel to …` and `… on #panel to …` are **silent no-ops**; `add
-@aria-expanded="true" to #panel` writes an _empty_ value to the _wrong_
-  element. The `of` form is the phrasing the style-property docs teach.
-- **Plural emphasis breaks multi-target.** `add .done to all .todo` and `to
-every .todo` hit the button instead of the matched set; `remove .active from
-all .row` no-ops. Bare `.todo` / `.row` works — so the natural English
-  intensifier is what breaks it.
-- **`the X of Y` property phrasing no-ops.** `set the innerHTML of #output to …`
-  parses and does nothing, while `#output.innerHTML` and the possessive both
-  work.
-- **Near-miss vocabulary no-ops silently:** `if #box has class .danger`,
-  `remove element #item`, `on mouseover` (for a mouseenter trigger), and
-  `add .modal-open to <body/>`.
+|                                       | pre-3b      | post-3b                |
+| ------------------------------------- | ----------- | ---------------------- |
+| parse                                 | 36/37 (97%) | 36/37 (97%)            |
+| behave correctly                      | 18/37 (49%) | 18/37 (49%)            |
+| wrong but **warned** (loop can react) | 1/37        | **12/37** (11 ⚠ + 1 ✗) |
+| wrong and **silent**                  | 18/37 (49%) | **7/37 (19%)**         |
 
-Encouraging: `then`/`and`/comma sequencing, stray articles (`the #menu`,
-`the closest .card`), `this` for `me`, and `put … in` vs `into` all work.
+One plumbing fix moved 11 of the 18 silent rows into the visible band: the
+omitted-marker family, the whole attribute-write family, `to every .y`,
+`the X of Y` properties, and `remove element`. Behavior is unchanged — these
+phrasings are still wrong — but the loop can now see and repair them.
 
-The actionable conclusion is not "polish the loop" but **make these failures
-loud** — an unconsumed-token or no-op-command diagnostic would convert most of
-the ☠ band into the band the loop already handles well.
+The remaining ☠ 7 split honestly in two:
+
+- **Real diagnostic gaps (5)** — parses that consume everything yet provably
+  do nothing or bind the wrong target with no trace: `add .x to all .y` /
+  `remove .x from all .y` (note the asymmetry: `every` warns, `all` doesn't),
+  `set the text of #el`, `if #el has class .x`, `add .x to <body/>`. These are
+  the next 3b targets (a no-op-command diagnostic covers most).
+- **Valid code, different intent (2)** — `add .hidden to #menu` (adds a class
+  named "hidden"; only wrong versus the _hide_ reference) and `on mouseover`
+  (a real handler for a neighbouring event). No parser diagnostic can catch
+  these; they are exactly what IR-vs-intent review (and Arc 4's equivalence
+  checking) is for.
+
+Bands are computed by `harness.bandOf` — one function shared by the probe, the
+committed baseline, and the ratchet test, so they cannot drift apart.
 
 ## Adding a task
 

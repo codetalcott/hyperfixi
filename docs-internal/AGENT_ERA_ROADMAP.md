@@ -148,8 +148,19 @@ generator that has not seen the directory. Original work items:
 
 ## Arc 3b — Make the silent failures loud
 
-**Status: not started; promoted out of Arc 3's findings, and now the highest-value
-item in this queue.** Arc 3 measured that ~half of plausible phrasings misbehave
+**Status: first diagnostic landed 2026-08-24** — see
+[HANDOFF-agent-era-arc3b.md](./HANDOFF-agent-era-arc3b.md). The unconsumed-token
+family turned out to be a **propagation bug, not a parser gap**: the semantic
+parser had flagged dropped tokens all along (warning-severity `unconsumed-input`
+on the node, hoisted from any depth) and `CompilationService.normalize()` never
+read node diagnostics. Lifting them into the response (as `UNCONSUMED_INPUT`
+with a repair suggestion) moved **11 of the 18 silent rows into the visible
+band** — silent share 49% → 19% — with zero parser change, so the multilingual
+ratchets are untouched. Remaining ☠ 7: five real gaps (`to all .y` — note
+`every` warns but `all` doesn't — `from all .y`, `the text of`, `has class`,
+`<body/>`; a no-op-command diagnostic covers most) and two that are valid code
+with different intent, catchable only by IR-vs-intent review (Arc 4's case).
+Original queue (promoted out of Arc 3's findings): Arc 3 measured that ~half of plausible phrasings misbehave
 *without any diagnostic*, which bounds every loop-based story. Each family below
 is a candidate diagnostic; the benchmark's ratcheted baseline is the acceptance
 test (rows should migrate from the ☠ band to `rejected`, which the loop already
