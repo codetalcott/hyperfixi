@@ -240,7 +240,19 @@ description now tells agents to present it alongside translations shown to a
 user. This is the differentiator named in the original filing: LLM translation
 cannot make this claim; ours is measured per call.
 
-**Slice 2 — the editor command — not started, design noted:** the VSCode
+**Slice 2 — the editor command — landed 2026-08-24 (same PR series):**
+the design below shipped as filed. `lokascript/translateWithVerification` on
+the language server (handler probes the possibly-shimmed semantic package and
+degrades cleanly in hyperscript-mode builds; 5 unit tests), the
+`LokaScript: Show in My Language` command in `lokascript-vscode` (selection or
+current line → QuickPick of the 24 languages or the `lokascript.reviewLanguage`
+setting → Markdown preview beside the editor with the fidelity badge), and
+`scoreNodes` relocated into `@lokascript/semantic/fidelity` so the service and
+the server share one scorer. Both extension server-bundles needed a
+longest-match alias for the fidelity subpath (the root `@lokascript/semantic`
+alias/shim was swallowing it). Editor-host (integration) testing remains a
+gap by repo-wide precedent — the handler is unit-tested; the command layer is
+typecheck+bundle-verified. Original design note: the VSCode
 extension is an LSP client (language features come from
 `@lokascript/language-server`), and the server has no translation surface
 today. "Show this handler in my language" therefore means: a custom LSP

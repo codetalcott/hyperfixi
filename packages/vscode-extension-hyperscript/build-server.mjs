@@ -70,6 +70,11 @@ await build({
     js: "import {createRequire} from 'module';const require=createRequire(import.meta.url);",
   },
   alias: {
+    // The fidelity subpath is pure scorer functions (zero deps, no language
+    // data) — bundle the real module so the translate-with-verification
+    // handler stays well-formed; its runtime probe still degrades cleanly
+    // because the ROOT semantic shim below exposes no translate/parseSemantic.
+    '@lokascript/semantic/fidelity': resolve(__dirname, '../semantic/src/fidelity.ts'),
     '@lokascript/semantic': resolve(shimDir, 'lokascript-semantic.ts'),
     '@lokascript/framework': resolve(shimDir, 'lokascript-framework.ts'),
     '@hyperfixi/core': resolve(shimDir, 'hyperfixi-core.ts'),
