@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@hyperfixi/core.svg)](https://www.npmjs.com/package/@hyperfixi/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readable UI behaviors from 1.9 KB.
+A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readable UI behaviors from 1.9 KB — and a **verifiable target for LLM agents**: generated code that compiles or fails with structured diagnostics, checked by a real parser, renderable into 24 human languages for review.
 
 ## Try It
 
@@ -67,13 +67,20 @@ export default { plugins: [hyperfixi()] };
 
 The plugin scans your files for `_="..."` attributes and generates a minimal bundle with only the commands you use.
 
+## For LLM Agents
+
+An agent emitting hyperscript instead of free-form JavaScript gets properties JS can't offer: every candidate **compiles or fails with structured diagnostics** (a real parser, no LLM in the checker), the parse comes back as a **semantic IR** to check against intent, `diff_behaviors` proves two snippets **behaviorally equivalent**, and the result renders **deterministically into 24 languages** so a human can review the agent's work in their own language — with a [structural-fidelity guarantee](docs/FIDELITY.md) behind the translation.
+
+The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `validate_and_compile` → repair from diagnostics → `compile_hyperscript`. See **[AGENTS.md](./AGENTS.md)** for the worked example and ground rules.
+
 ## What You Get
 
 - **43 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
 - **\_hyperscript compatible** -- existing hyperscript code works as-is
 - **Tree-shakeable** -- ship only the commands you use (1.9 KB lite to ~299 KB full)
 - **TypeScript types** -- full type safety with comprehensive definitions
-- **Optional multilingual** -- write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
+- **Agent-ready** -- MCP server with a deterministic validate/repair/compile loop ([AGENTS.md](./AGENTS.md))
+- **Optional multilingual** -- read and write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
 - **Optional htmx compat** -- htmx-like attributes via the `hyperfixi-hx.js` bundle
 - **8100+ tests** across all packages
 
@@ -109,6 +116,7 @@ translation preserved meaning rather than merely "parsed". Two writeups go deep:
 
 **Going deeper:**
 
+- [AGENTS.md](./AGENTS.md) -- emitting hyperscript from an LLM agent: the validate/repair/compile loop
 - [Architecture](./docs/ARCHITECTURE.md) -- monorepo structure, package map, bundle tiers
 - [DSL framework](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) -- build your own multilingual DSL
 - [About this project](./docs/ABOUT.md) -- motivation, experiment notes, current gaps
