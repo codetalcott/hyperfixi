@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/mcp-server",
-  "version": "2.10.0",
+  "version": "2.11.0",
   "description": "Model Context Protocol server for HyperFixi hyperscript development",
   "type": "module",
   "main": "dist/index.js",
@@ -37,22 +37,22 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/patterns-reference": "^2.10.0",
-    "@lokascript/compilation-service": "^2.10.0",
+    "@hyperfixi/patterns-reference": "^2.11.0",
+    "@lokascript/compilation-service": "^2.11.0",
     "@lokascript/domains": "^2.11.1",
-    "@lokascript/framework": "^2.10.0",
-    "@lokascript/planner": "^2.10.0",
-    "@lokascript/semantic": "^2.10.0",
+    "@lokascript/framework": "^2.11.0",
+    "@lokascript/planner": "^2.11.0",
+    "@lokascript/semantic": "^2.11.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "yaml": "^2.8.3"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^2.10.0",
-    "@hyperfixi/patterns-reference": "^2.10.0",
-    "@hyperfixi/server-bridge": "^2.10.0",
-    "@lokascript/compilation-service": "^2.10.0",
-    "@lokascript/framework": "^2.10.0",
-    "@lokascript/semantic": "^2.10.0"
+    "@hyperfixi/core": "^2.11.0",
+    "@hyperfixi/patterns-reference": "^2.11.0",
+    "@hyperfixi/server-bridge": "^2.11.0",
+    "@lokascript/compilation-service": "^2.11.0",
+    "@lokascript/framework": "^2.11.0",
+    "@lokascript/semantic": "^2.11.0"
   },
   "peerDependenciesMeta": {
     "@lokascript/compilation-service": {
@@ -75,12 +75,12 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "^2.10.0",
-    "@hyperfixi/patterns-reference": "^2.10.0",
-    "@hyperfixi/server-bridge": "^2.10.0",
-    "@lokascript/compilation-service": "^2.10.0",
-    "@lokascript/framework": "^2.10.0",
-    "@lokascript/semantic": "^2.10.0",
+    "@hyperfixi/core": "^2.11.0",
+    "@hyperfixi/patterns-reference": "^2.11.0",
+    "@hyperfixi/server-bridge": "^2.11.0",
+    "@lokascript/compilation-service": "^2.11.0",
+    "@lokascript/framework": "^2.11.0",
+    "@lokascript/semantic": "^2.11.0",
     "@types/node": "^26.1.2",
     "tsup": "^8.0.0",
     "tsx": "^4.23.1",
