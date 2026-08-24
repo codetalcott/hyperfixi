@@ -65,7 +65,10 @@ destination:#btn]`), or semantic JSON.
    hyperscript in a `_="..."` attribute is a complete deliverable (the runtime
    compiles it in the browser).
 5. **Present** — `translate_code` renders your result in the user's language
-   for review; `explain_in_language` produces a role-by-role explanation.
+   for review, and every result carries a `verification` report scored against
+   the source: show the user `verification.faithful` alongside the translation
+   ("this rendering is structurally exact"). `explain_in_language` produces a
+   role-by-role explanation.
 
 ### Worked example
 

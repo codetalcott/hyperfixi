@@ -44,6 +44,8 @@ export interface TranslateRequest {
   from: string;
   /** Target language */
   to: string;
+  /** Verify the translation against the source via scoreFidelity (default true). */
+  verify?: boolean;
 }
 
 // =============================================================================
@@ -106,6 +108,16 @@ export interface TranslateResponse {
   ok: boolean;
   /** Translated code */
   code?: string;
+  /**
+   * Fidelity verification of the translation against its source (arc 5's
+   * verified-translation badge): the output scored as candidate against the
+   * input as reference via scoreFidelity(). ADVISORY — a verification that
+   * fails to parse never flips `ok`, and its diagnostics stay inside this
+   * object. `verification.faithful === true` is the claim "this rendering is
+   * structurally exact"; absent when the caller passed `verify: false` or
+   * translation itself failed.
+   */
+  verification?: import('./scoring/score.js').ScoreResponse;
   /** Diagnostics */
   diagnostics: Diagnostic[];
 }
