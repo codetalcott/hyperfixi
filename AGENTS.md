@@ -119,37 +119,26 @@ the roles say `me`. Repair and re-validate:
 
 ## Known silent traps
 
-Validation is necessary but **not sufficient**. The parser degrades rather than
-failing, so some natural phrasings come back `ok: true` at confidence 1.0 and
-still do the wrong thing. A measured probe of 37 plausible phrasings found 97%
-parsed but only 49% behaved correctly
+Validation is necessary but **not sufficient** — but the gap has been mostly
+closed. The parser degrades rather than failing, so some natural phrasings come
+back `ok: true` at confidence 1.0 and still do the wrong thing. A measured
+probe of 37 plausible phrasings found 97% parsed but only 49% behaved correctly
 ([benchmark + full findings](./packages/testing-framework/src/agent-bench/README.md)).
 
-**Most wrong phrasings now warn.** Since arc 3b, a parse that drops tokens
-carries a `warning`-severity `UNCONSUMED_INPUT` diagnostic naming the dropped
-text — treat it as a failure and repair, exactly like an error. That covers 11
-of the 19 wrong phrasings in the probe. Warns since arc 3b:
+**Wrong phrasings now warn.** A parse that drops tokens carries
+`UNCONSUMED_INPUT`; a parse that consumes everything into a provably inert
+shape carries one of `INERT_QUANTIFIER_TARGET` (`add .x to all .y`),
+`HALF_PARSED_CONDITION` (`if #el has class .x`), `UNSUPPORTED_QUERY_LITERAL`
+(`add .x to <body/>`), or `INERT_PROPERTY_WRITE` (`set the text of #el`). All
+are `warning` severity with a concrete suggestion — **treat any warning as a
+failure and repair**, exactly like an error. In the probe, 16 of the 19 wrong
+phrasings now warn and 1 is rejected outright.
 
-| Phrasing that misbehaves — now WARNS                         | Use instead                          |
-| ------------------------------------------------------------ | ------------------------------------ |
-| `add .x #el` / `toggle .x #el` (no marker) — acts on `me`    | `add .x to #el` / `toggle .x on #el` |
-| `set @attr of #el to "v"` / `… on #el to "v"` — does nothing | `set #el's @attr to "v"`             |
-| `add @attr="v" to #el` — empty value, wrong element          | `set #el's @attr to "v"`             |
-| `toggle @attr of #el` — acts on `me`                         | `toggle @attr on #el`                |
-| `add .x to every .y` — acts on `me`                          | `add .x to .y`                       |
-| `set the innerHTML of #el to "v"` — does nothing             | `set #el's innerHTML to "v"`         |
-| `remove element #el` — does nothing                          | `remove #el`                         |
-
-A few traps are **still silent** — no diagnostic yet, so only checking the
-returned IR against your intent catches them:
-
-| Still-silent phrasing                       | Use instead         |
-| ------------------------------------------- | ------------------- |
-| `add .x to all .y` — acts on `me`           | `add .x to .y`      |
-| `remove .x from all .y` — does nothing      | `remove .x from .y` |
-| `set the text of #el to "v"` — does nothing | `put "v" into #el`  |
-| `if #el has class .x` — does nothing        | `if #el matches .x` |
-| `add .x to <body/>` — does nothing          | `add .x to body`    |
+The residue no diagnostic can catch is code that is _valid but does something
+other than what you meant_ — e.g. `add .hidden to #menu` (adds a class named
+"hidden"; only hides if CSS defines it) or `on mouseover` when the design
+called for `mouseenter`. That is why the loop's step 2 says **check the
+returned IR against your intent**, and why `diff_behaviors` exists.
 
 These work fine, for what it's worth: `then` / `and` / comma between commands,
 stray articles (`the #menu`, `the closest .card`), `this` as a synonym for `me`,
@@ -161,9 +150,8 @@ and `put … in` as well as `into`.
   ([docs/BROWSER_BUNDLES.md](./docs/BROWSER_BUNDLES.md)); with Vite, use
   `@hyperfixi/vite-plugin` and don't think about bundles at all.
 - Validate before you present. A snippet you didn't run through
-  `validate_and_compile` is a guess. Treat any `UNCONSUMED_INPUT` warning as a
-  failure to repair, and read the IR it returns, not just the ok flag (see the
-  still-silent traps above).
+  `validate_and_compile` is a guess. Treat any warning as a failure to repair,
+  and read the IR it returns, not just the ok flag (see the traps above).
 - When the user's language isn't English, show them `translate_code` output in
   their language alongside the English source — the translation is
   deterministic and fidelity-checked, so the two never drift.

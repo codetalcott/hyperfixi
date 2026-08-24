@@ -56,7 +56,35 @@ success, confidence, roles: all byte-identical — only the diagnostics array
 grew, which is why the blast radius is small (multilingual gates call
 `parseSemantic` directly and never touched compilation-service).
 
-## Remaining ☠ 7, for the next slice
+## Slice 2 (same day): the inert-shape gate
+
+The "will touch parser/builder territory" prediction below was falsified, the
+same way slice 1's was: every one of the five remaining gaps leaves a
+distinctive fingerprint in the IR the parse already produces, so detection
+lives entirely in compilation-service — Gate 4 of the validation pipeline,
+`src/validation/inert-shapes.ts`, warnings only, zero parser change:
+
+| Phrasing | IR fingerprint | Warning |
+| --- | --- | --- |
+| `add .done to all .todo` / `remove … from all .row` | destination/source `expression "all.todo"` — property access on undefined identifier | `INERT_QUANTIFIER_TARGET` |
+| `if #box has class .danger` | condition `"#box .has class .danger"` — predicate word tokenized as a class selector, always falsy | `HALF_PARSED_CONDITION` |
+| `add .modal-open to <body/>` | selector `"<body/>"` — query-literal syntax, invalid CSS at runtime | `UNSUPPORTED_QUERY_LITERAL` |
+| `set the text of #output to "…"` | property-path with `property: "text"` — invisible expando write | `INERT_PROPERTY_WRITE` |
+
+Checks are deliberately narrow fingerprints, not a general inertness theory —
+a false warning teaches an agent to distrust warnings. The predicate regex
+requires the word to stand alone, so utility classes like `.is-active` do not
+trip it (covered by a stays-quiet test). Probe: silent band 7/37 → **2/37
+(5%)**; warned 12/37 → 17/37. The two remaining ☠ rows are the
+valid-code-different-intent pair — the parser-gap silent band is now **zero**.
+
+Slice-2 verification: compilation-service 331/331 (two new tests: all five
+warn with suggestions; six correct phrasings stay warning-free), mcp-server
+428/428, testing-framework 304 + ratchet 24/24 against the regenerated
+baseline. Still no semantic-package change ⇒ multilingual gate inputs
+untouched.
+
+## Remaining ☠ 7, for the next slice (slice-1 notes; superseded by slice 2 above)
 
 - **Five real gaps** — full-consume parses that provably do nothing or bind
   the wrong target with no trace: `add .x to all .y` (asymmetry: `every`
