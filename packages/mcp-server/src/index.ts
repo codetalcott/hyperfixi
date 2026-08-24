@@ -92,6 +92,29 @@ const { version: pkgVersion } = createRequire(import.meta.url)('../package.json'
   version: string;
 };
 
+// The five MCP-sampling tools (ask_claude, summarize_content, analyze_content,
+// translate_content, execute_llm) are generic LLM calls, not hyperscript
+// tooling: a connected agent can already do all of them itself, they depend on
+// a protocol feature deprecated in revision 2026-07-28, and listing them
+// dilutes the server's actual offer (deterministic validate/compile/translate).
+// Opt back in with LOKASCRIPT_MCP_LLM_TOOLS=1. Read once at module scope: the
+// surface must not differ between the discover-probe and legacy instances
+// serveStdio builds for one connection.
+const LLM_SAMPLING_ENABLED = process.env.LOKASCRIPT_MCP_LLM_TOOLS === '1';
+
+// Served as MCP `instructions` so every connected agent gets the loop without
+// reading any docs. Keep in sync with AGENTS.md at the repo root.
+const SERVER_INSTRUCTIONS = `Deterministic tooling for hyperscript (a compact DOM-behavior DSL) in 24 human languages. No tool here calls an LLM — every check is a real parser/compiler you can trust.
+
+The core loop for GENERATING hyperscript:
+1. validate_and_compile — parse your candidate into semantic IR with diagnostics; check the returned action/roles/trigger against your intent.
+2. On failure: apply the diagnostics and re-validate. get_code_fixes maps error codes to concrete fixes; get_command_docs and search_patterns show correct usage.
+3. compile_hyperscript — once valid, emit JavaScript. Or stop at valid hyperscript for an _="..." attribute.
+
+To PRESENT code to a user, translate_code renders it in any of 24 languages via deterministic grammar transformation (word-order faithful, not LLM translation); translate_to_english normalizes foreign input. diff_behaviors checks two snippets for behavioral equivalence.
+
+Prefer natural language input (code + language) for simple cases; use explicit bracket syntax ([toggle patient:.active]) or semantic JSON when you need unambiguous role control.`;
+
 // All list/read surfaces are static per process (tool/prompt/resource lists are
 // compile-time literals; resources are static docs). One hour rather than
 // "forever": a rebuild + restart may change them, and the freshness guard
@@ -116,6 +139,7 @@ function buildServer(): Server {
         resources: {},
         prompts: {},
       },
+      instructions: SERVER_INSTRUCTIONS,
       cacheHints: {
         'tools/list': STATIC_SURFACE_CACHE,
         'prompts/list': STATIC_SURFACE_CACHE,
@@ -144,7 +168,7 @@ function buildServer(): Server {
         // as Record<string, unknown>, wider than the SDK's JSONValue index —
         // the values are plain JSON Schema literals at runtime.
         ...(registry.getToolDefinitions() as unknown as Tool[]),
-        ...samplingTools,
+        ...(LLM_SAMPLING_ENABLED ? samplingTools : []),
         ...dispatcherTools,
         ...irTools,
         ...debugTools,
@@ -289,7 +313,8 @@ function buildServer(): Server {
       return handleRouteTool(name, args as Record<string, unknown>);
     }
 
-    // MCP Sampling tools (Layer 3 — invoke Claude via client)
+    // MCP Sampling tools (Layer 3 — invoke Claude via client). Off by default:
+    // see LLM_SAMPLING_ENABLED above.
     if (
       name === 'ask_claude' ||
       name === 'summarize_content' ||
@@ -297,6 +322,21 @@ function buildServer(): Server {
       name === 'translate_content' ||
       name === 'execute_llm'
     ) {
+      if (!LLM_SAMPLING_ENABLED) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text:
+                `${name} is disabled: the MCP-sampling tools are opt-in (set LOKASCRIPT_MCP_LLM_TOOLS=1 ` +
+                `in the server's environment and restart). They invoke a generic LLM, which a connected ` +
+                `agent can do itself. For hyperscript work use validate_and_compile / compile_hyperscript; ` +
+                `for natural-language translation of CODE, use translate_code (deterministic, not an LLM).`,
+            },
+          ],
+          isError: true,
+        };
+      }
       return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
     }
 

@@ -324,10 +324,17 @@ describe('Error wrapping consistency', () => {
       // Empty args — service.compile({}) should produce diagnostics, not crash
     });
 
-    // Whether it fails or succeeds, the response should be well-formed
+    // Whether it fails or succeeds, the response should be well-formed:
+    // content[0] is the JSON result; failed compile/validate results append a
+    // repair-hint block after it, so length is 1 or 2, never more.
     expect(result.content).toBeDefined();
-    expect(result.content).toHaveLength(1);
+    expect(result.content.length).toBeGreaterThanOrEqual(1);
+    expect(result.content.length).toBeLessThanOrEqual(2);
     expect(result.content[0].type).toBe('text');
+    if (result.content.length === 2) {
+      expect(result.isError).toBe(true);
+      expect(result.content[1].text).toContain('validate_and_compile');
+    }
 
     // Text should be valid JSON (wrapped response or error message)
     const text = result.content[0].text;

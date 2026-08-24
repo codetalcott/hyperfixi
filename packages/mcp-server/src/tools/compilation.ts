@@ -27,7 +27,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'compile_hyperscript',
     description:
-      'Compile hyperscript to optimized JavaScript. Accepts natural language (code + language), explicit syntax (explicit), or LLM JSON (semantic). Common roles: patient (what to act on), destination (where to), source (where from). Use get_command_docs for per-command roles. Examples: explicit="[toggle patient:.active destination:#btn]", semantic={ action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }',
+      'Compile hyperscript to optimized JavaScript — the FINAL step of the agent loop (generate → validate_and_compile → repair → compile_hyperscript). Validate first: this tool reports the same failures but returns JavaScript only on success. Accepts natural language (code + language), explicit syntax (explicit), or LLM JSON (semantic). Common roles: patient (what to act on), destination (where to), source (where from). Use get_command_docs for per-command roles. Examples: explicit="[toggle patient:.active destination:#btn]", semantic={ action: "toggle", roles: { patient: { type: "selector", value: ".active" } } }',
     inputSchema: {
       type: 'object',
       properties: {
@@ -62,7 +62,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'validate_and_compile',
     description:
-      'Parse hyperscript into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript.',
+      'START HERE when generating hyperscript: parse into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript. On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, call compile_hyperscript for JavaScript. This validate → repair → compile loop is deterministic — no LLM in the checker.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -77,7 +77,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'translate_code',
     description:
-      'Translate hyperscript between any of 24 languages via full semantic parsing. Higher fidelity than translate_hyperscript — handles SVO/SOV/VSO grammar transformation. Preferred for production translations.',
+      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Higher fidelity than translate_hyperscript; preferred for production translations. Use to present generated code to a user in their own language for review.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -173,6 +173,27 @@ export const compilationTools: Tool[] = [
 // Tool Handler
 // =============================================================================
 
+// Appended as a second content block on failed compile/validate results so an
+// agent's next step is always named in the result itself, not just implied by
+// the tool descriptions. Kept out of content[0], which stays pure JSON.
+const REPAIR_HINT =
+  'Next step: apply the diagnostics above and re-run validate_and_compile. ' +
+  'If an error names a code (e.g. MISSING.ARGUMENT), get_code_fixes returns concrete fixes for it; ' +
+  'get_command_docs lists the roles each command accepts.';
+
+function compileResult(result: { ok: boolean }): {
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+} {
+  const content: Array<{ type: string; text: string }> = [
+    { type: 'text', text: JSON.stringify(result, null, 2) },
+  ];
+  if (!result.ok) {
+    content.push({ type: 'text', text: REPAIR_HINT });
+  }
+  return { content, isError: !result.ok };
+}
+
 export async function handleCompilationTool(
   name: string,
   args: Record<string, unknown>
@@ -189,10 +210,7 @@ export async function handleCompilationTool(
           language: args.language as string | undefined,
           confidence: args.confidence as number | undefined,
         });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
+        return compileResult(result);
       }
 
       case 'validate_and_compile': {
@@ -203,10 +221,7 @@ export async function handleCompilationTool(
           language: args.language as string | undefined,
           confidence: args.confidence as number | undefined,
         });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
+        return compileResult(result);
       }
 
       case 'translate_code': {

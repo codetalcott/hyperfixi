@@ -264,7 +264,7 @@ export const validationTools: Tool[] = [
   {
     name: 'get_code_fixes',
     description:
-      'Get available auto-fixes for a specific error code or diagnostic. Returns LSP-compatible CodeFix suggestions that can be applied to fix common errors. Useful for LLMs to suggest corrections without running full diagnostics.',
+      'Get available auto-fixes for a specific error code or diagnostic — the repair half of the agent loop. When validate_and_compile or validate_hyperscript reports a coded error, this returns LSP-compatible CodeFix suggestions to apply before re-validating.',
     inputSchema: {
       type: 'object',
       properties: {

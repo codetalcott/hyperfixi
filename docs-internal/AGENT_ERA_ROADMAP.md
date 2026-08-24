@@ -61,10 +61,14 @@ not the product itself.
 
 ## Arc 1 — Sharpen the agent-facing MCP surface
 
-**Status: not started.** The MCP server was built as "all tools for
-everything" (~30 tools: hyperscript, IR, debug, LSP bridge, LLM sampling,
-grail). An agent integrating today faces an undifferentiated list with no
-narrative. Work items:
+**Status: landed 2026-08-24** (PR #914) — see
+[HANDOFF-agent-era-arc1-2.md](./HANDOFF-agent-era-arc1-2.md). Server-level MCP
+`instructions` carry the loop; loop-tool descriptions cross-reference each
+other; failed compile/validate results append a repair hint; the five
+MCP-sampling tools are opt-in behind `LOKASCRIPT_MCP_LLM_TOOLS=1`. **Residue:**
+the full agent-optimized-errors audit (does every coded error path name its
+fix?) — folded into Arc 3, whose benchmark measures exactly this. Original
+work items:
 
 - **Curate a minimal "agent loop" profile**: the generate → `validate_and_compile`
   → structured-feedback → repair → `translate_hyperscript`/render cycle,
@@ -82,8 +86,12 @@ narrative. Work items:
 
 ## Arc 2 — `AGENTS.md` / agent-integration docs as the front door
 
-**Status: not started.** Neither `AGENTS.md` nor `llms.txt` exists at the repo
-root, and no doc shows an end-to-end agent loop. Deliverables:
+**Status: landed 2026-08-24** (PR #914) — see
+[HANDOFF-agent-era-arc1-2.md](./HANDOFF-agent-era-arc1-2.md). Root `AGENTS.md`
+(loop + worked repair example + ground rules; routes contributor agents to
+CLAUDE.md), README "For LLM Agents" section and subtitle, mcp-server README
+headline. The separate `docs/AGENTS.md` was dropped as a would-drift third
+copy. Original deliverables:
 
 - Root **`AGENTS.md`** (the convention agents actually read): what the DSL is,
   why an agent should emit it instead of JS, the MCP loop with a complete

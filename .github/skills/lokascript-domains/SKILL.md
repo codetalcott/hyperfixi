@@ -96,6 +96,10 @@ Every domain generates 4 tools following the pattern `{operation}_{domain}`:
 
 ### LLM Sampling
 
+Opt-in: hidden and refused unless the MCP server is started with
+`LOKASCRIPT_MCP_LLM_TOOLS=1` (they invoke a generic LLM, which a connected
+agent can do itself).
+
 | Tool                | When to Use                                    |
 | ------------------- | ---------------------------------------------- |
 | `execute_llm`       | Compile LLM command + execute via MCP sampling |
