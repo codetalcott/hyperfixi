@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../patterns-reference ../core",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../patterns-reference ../core ../aot-compiler ../compilation-service",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -59,6 +59,7 @@
   "dependencies": {
     "@hyperfixi/core": "^2.10.0",
     "@hyperfixi/patterns-reference": "^2.10.0",
+    "@lokascript/compilation-service": "^2.10.0",
     "@lokascript/i18n": "^2.10.0",
     "@lokascript/semantic": "^2.10.0",
     "diff": "^8.0.3",

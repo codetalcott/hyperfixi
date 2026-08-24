@@ -297,6 +297,32 @@ describe('CompilationService', () => {
       expect(result.semantic?.action).toBe('toggle');
     });
 
+    it("surfaces the parser's unconsumed-input warning (arc 3b)", () => {
+      // `add .highlight #item` drops `#item` — the destination silently
+      // defaults to `me`. The parser flags this on the node (severity warning,
+      // code unconsumed-input, hoisted from any depth); normalize must lift it
+      // into the response, or the validate/repair loop has nothing to react to.
+      const result = service.validate({
+        code: 'on click add .highlight #item',
+        language: 'en',
+      });
+
+      expect(result.ok).toBe(true); // lenient parse still succeeds — a warning, not an error
+      const warning = result.diagnostics.find(d => d.code === 'UNCONSUMED_INPUT');
+      expect(warning).toBeDefined();
+      expect(warning?.severity).toBe('warning');
+      expect(warning?.message).toContain('#item');
+      expect(warning?.suggestion).toContain('marker');
+
+      // And the well-formed phrasing stays warning-free.
+      const clean = service.validate({
+        code: 'on click add .highlight to #item',
+        language: 'en',
+      });
+      expect(clean.ok).toBe(true);
+      expect(clean.diagnostics.filter(d => d.code === 'UNCONSUMED_INPUT')).toHaveLength(0);
+    });
+
     it('returns errors for invalid input', () => {
       const result = service.validate({
         code: '',

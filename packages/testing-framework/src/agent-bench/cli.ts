@@ -23,10 +23,12 @@ import { readFileSync } from 'node:fs';
 import { TASKS, taskById } from './tasks.js';
 import { VARIANTS } from './variants.js';
 import {
+  bandOf,
   executeCandidate,
   scoreCandidate,
   scoreCondition,
   validateCandidate,
+  type Band,
   type ConditionScore,
 } from './harness.js';
 
@@ -191,16 +193,18 @@ async function score(): Promise<number> {
  * Score the plausible-phrasing catalogue. Needs no generator: each row is a
  * fixed string, so the result is a reproducible property of the parser.
  *
- * The headline is the SILENT band — phrasings that parse clean and misbehave.
- * Those are invisible to the validate/repair loop by construction, so they
- * bound how much the loop can ever deliver.
+ * The headline is the SILENT band — phrasings that parse clean, carry no
+ * warning, and misbehave. Those are invisible to the validate/repair loop by
+ * construction, so they bound how much the loop can ever deliver. Arc 3b work
+ * moves rows out of it into `warned-wrong` (wrong but visible), which the loop
+ * handles.
  */
 async function probeVariants(): Promise<number> {
   const rows: Array<{
     v: (typeof VARIANTS)[number];
     parsed: boolean;
     behaved: boolean;
-    silent: boolean;
+    band: Band;
     detail: string;
   }> = [];
 
@@ -211,20 +215,18 @@ async function probeVariants(): Promise<number> {
       return 2;
     }
     const s = await scoreCandidate(task, v.code);
-    const detail = s.behaviorMatch
-      ? 'ok'
-      : s.parsed
-        ? s.execution.effects.length === 0
-          ? 'SILENT NO-OP'
-          : `WRONG EFFECT ${JSON.stringify(s.execution.effects)}`
-        : 'rejected';
-    rows.push({
-      v,
-      parsed: s.parsed,
-      behaved: s.behaviorMatch,
-      silent: s.silentlyWrong,
-      detail,
-    });
+    const band = bandOf(s);
+    const detail =
+      band === 'correct'
+        ? 'ok'
+        : band === 'rejected'
+          ? 'rejected'
+          : band === 'warned-wrong'
+            ? `WARNED (${s.validation.diagnostics.find(d => d.severity !== 'info')?.code ?? '?'}) — wrong, but the loop can see it`
+            : band === 'silent-noop'
+              ? 'SILENT NO-OP'
+              : `WRONG EFFECT ${JSON.stringify(s.execution.effects)}`;
+    rows.push({ v, parsed: s.parsed, behaved: s.behaviorMatch, band, detail });
   }
 
   const n = rows.length;
@@ -232,15 +234,8 @@ async function probeVariants(): Promise<number> {
   if (process.argv.includes('--json')) {
     // Baseline shape: sorted by code so the file is diff-stable, and carrying
     // only the deterministic verdict (never timings) so regeneration on another
-    // machine produces a byte-identical file.
-    const band = (r: (typeof rows)[number]): string =>
-      r.behaved
-        ? 'correct'
-        : r.silent
-          ? r.detail === 'SILENT NO-OP'
-            ? 'silent-noop'
-            : 'silent-wrong'
-          : 'rejected';
+    // machine produces a byte-identical file. Bands come from harness.bandOf —
+    // the same function the ratchet test recomputes with.
     console.log(
       JSON.stringify(
         {
@@ -251,11 +246,12 @@ async function probeVariants(): Promise<number> {
             phrasings: n,
             parse: rows.filter(r => r.parsed).length,
             behaveCorrectly: rows.filter(r => r.behaved).length,
-            silentBand: rows.filter(r => r.silent).length,
-            silentNoop: rows.filter(r => r.silent && r.detail === 'SILENT NO-OP').length,
+            warnedWrong: rows.filter(r => r.band === 'warned-wrong').length,
+            silentBand: rows.filter(r => r.band.startsWith('silent')).length,
+            silentNoop: rows.filter(r => r.band === 'silent-noop').length,
           },
           phrasings: rows
-            .map(r => ({ taskId: r.v.taskId, code: r.v.code, band: band(r) }))
+            .map(r => ({ taskId: r.v.taskId, code: r.v.code, band: r.band }))
             .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0)),
         },
         null,
@@ -266,20 +262,28 @@ async function probeVariants(): Promise<number> {
   }
 
   for (const r of rows) {
-    const mark = r.behaved ? '✓' : r.silent ? '☠' : '✗';
+    const mark = r.behaved
+      ? '✓'
+      : r.band === 'warned-wrong'
+        ? '⚠'
+        : r.band === 'rejected'
+          ? '✗'
+          : '☠';
     console.log(`${mark} ${r.v.taskId.padEnd(20)} ${r.v.code}`);
     if (!r.behaved) console.log(`    ${r.detail}  — ${r.v.rationale}`);
   }
 
   const parsed = rows.filter(r => r.parsed).length;
   const behaved = rows.filter(r => r.behaved).length;
-  const silent = rows.filter(r => r.silent).length;
-  const noop = rows.filter(r => r.silent && r.detail === 'SILENT NO-OP').length;
+  const warned = rows.filter(r => r.band === 'warned-wrong').length;
+  const silent = rows.filter(r => r.band.startsWith('silent')).length;
+  const noop = rows.filter(r => r.band === 'silent-noop').length;
   console.log(
     `\n  ${n} plausible phrasings` +
       `\n  parse            ${parsed}/${n} (${pct(parsed / n)})` +
       `\n  behave correctly ${behaved}/${n} (${pct(behaved / n)})` +
-      `\n  ☠ parse clean but misbehave: ${silent}/${n} (${pct(silent / n)}) — of which ${noop} do NOTHING at all` +
+      `\n  ⚠ wrong but WARNED (loop can react): ${warned}/${n}` +
+      `\n  ☠ wrong and SILENT: ${silent}/${n} (${pct(silent / n)}) — of which ${noop} do NOTHING at all` +
       `\n\n  The ☠ band is what the validate/repair loop cannot see: no diagnostic,` +
       `\n  no error, nothing for an agent to react to.`
   );

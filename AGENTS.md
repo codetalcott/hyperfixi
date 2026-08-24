@@ -120,27 +120,36 @@ the roles say `me`. Repair and re-validate:
 ## Known silent traps
 
 Validation is necessary but **not sufficient**. The parser degrades rather than
-failing, so several natural phrasings come back `ok: true` at confidence 1.0
-with zero diagnostics and still do the wrong thing. A measured probe of 37
-plausible phrasings found 97% parsed but only 49% behaved correctly — and only
-one of the failures produced a diagnostic
+failing, so some natural phrasings come back `ok: true` at confidence 1.0 and
+still do the wrong thing. A measured probe of 37 plausible phrasings found 97%
+parsed but only 49% behaved correctly
 ([benchmark + full findings](./packages/testing-framework/src/agent-bench/README.md)).
 
-Until these are given diagnostics, check the returned IR — and prefer the
-right-hand column:
+**Most wrong phrasings now warn.** Since arc 3b, a parse that drops tokens
+carries a `warning`-severity `UNCONSUMED_INPUT` diagnostic naming the dropped
+text — treat it as a failure and repair, exactly like an error. That covers 11
+of the 19 wrong phrasings in the probe. Warns since arc 3b:
 
-| Phrasing that silently misbehaves                         | Use instead                          |
-| --------------------------------------------------------- | ------------------------------------ |
-| `add .x #el` / `toggle .x #el` (no marker) — acts on `me` | `add .x to #el` / `toggle .x on #el` |
-| `set @attr of #el to "v"` — does nothing                  | `set #el's @attr to "v"`             |
-| `set @attr on #el to "v"` — does nothing                  | `set #el's @attr to "v"`             |
-| `add @attr="v" to #el` — empty value, wrong element       | `set #el's @attr to "v"`             |
-| `toggle @attr of #el` — acts on `me`                      | `toggle @attr on #el`                |
-| `add .x to all .y` / `to every .y` — acts on `me`         | `add .x to .y`                       |
-| `remove .x from all .y` — does nothing                    | `remove .x from .y`                  |
-| `set the innerHTML of #el to "v"` — does nothing          | `set #el's innerHTML to "v"`         |
-| `if #el has class .x` — does nothing                      | `if #el matches .x`                  |
-| `remove element #el` — does nothing                       | `remove #el`                         |
+| Phrasing that misbehaves — now WARNS                         | Use instead                          |
+| ------------------------------------------------------------ | ------------------------------------ |
+| `add .x #el` / `toggle .x #el` (no marker) — acts on `me`    | `add .x to #el` / `toggle .x on #el` |
+| `set @attr of #el to "v"` / `… on #el to "v"` — does nothing | `set #el's @attr to "v"`             |
+| `add @attr="v" to #el` — empty value, wrong element          | `set #el's @attr to "v"`             |
+| `toggle @attr of #el` — acts on `me`                         | `toggle @attr on #el`                |
+| `add .x to every .y` — acts on `me`                          | `add .x to .y`                       |
+| `set the innerHTML of #el to "v"` — does nothing             | `set #el's innerHTML to "v"`         |
+| `remove element #el` — does nothing                          | `remove #el`                         |
+
+A few traps are **still silent** — no diagnostic yet, so only checking the
+returned IR against your intent catches them:
+
+| Still-silent phrasing                       | Use instead         |
+| ------------------------------------------- | ------------------- |
+| `add .x to all .y` — acts on `me`           | `add .x to .y`      |
+| `remove .x from all .y` — does nothing      | `remove .x from .y` |
+| `set the text of #el to "v"` — does nothing | `put "v" into #el`  |
+| `if #el has class .x` — does nothing        | `if #el matches .x` |
+| `add .x to <body/>` — does nothing          | `add .x to body`    |
 
 These work fine, for what it's worth: `then` / `and` / comma between commands,
 stray articles (`the #menu`, `the closest .card`), `this` as a synonym for `me`,
@@ -152,8 +161,9 @@ and `put … in` as well as `into`.
   ([docs/BROWSER_BUNDLES.md](./docs/BROWSER_BUNDLES.md)); with Vite, use
   `@hyperfixi/vite-plugin` and don't think about bundles at all.
 - Validate before you present. A snippet you didn't run through
-  `validate_and_compile` is a guess — but read the IR it returns, not just the
-  ok flag (see the silent traps above).
+  `validate_and_compile` is a guess. Treat any `UNCONSUMED_INPUT` warning as a
+  failure to repair, and read the IR it returns, not just the ok flag (see the
+  still-silent traps above).
 - When the user's language isn't English, show them `translate_code` output in
   their language alongside the English source — the translation is
   deterministic and fidelity-checked, so the two never drift.

@@ -4,8 +4,9 @@
     "phrasings": 37,
     "parse": 36,
     "behaveCorrectly": 18,
-    "silentBand": 18,
-    "silentNoop": 10
+    "warnedWrong": 11,
+    "silentBand": 7,
+    "silentNoop": 5
   },
   "phrasings": [
     {
@@ -31,7 +32,7 @@
     {
       "taskId": "add-class-multiple",
       "code": "on click add .done to every .todo",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "hide-element",
@@ -41,7 +42,7 @@
     {
       "taskId": "add-class-other",
       "code": "on click add .highlight #item",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "add-class-other",
@@ -71,7 +72,7 @@
     {
       "taskId": "set-attribute",
       "code": "on click add @aria-expanded=\"true\" to #panel",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "hide-element",
@@ -111,7 +112,7 @@
     {
       "taskId": "remove-element",
       "code": "on click remove element #item",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "remove-element",
@@ -131,22 +132,22 @@
     {
       "taskId": "set-attribute",
       "code": "on click set @aria-expanded of #panel to \"true\"",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "set-attribute",
       "code": "on click set @aria-expanded on #panel to \"true\"",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "set-inner-html",
       "code": "on click set the innerHTML of #output to \"Done\"",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "set-style",
       "code": "on click set the style.backgroundColor of #swatch to \"red\"",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "put-text",
@@ -171,17 +172,17 @@
     {
       "taskId": "toggle-other-class",
       "code": "on click toggle .open #panel",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "toggle-other-class",
       "code": "on click toggle .open in #panel",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "toggle-attribute",
       "code": "on click toggle @hidden of #message",
-      "band": "silent-wrong"
+      "band": "warned-wrong"
     },
     {
       "taskId": "toggle-self-class",

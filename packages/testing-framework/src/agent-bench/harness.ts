@@ -61,11 +61,34 @@ export interface TaskScore {
   parsed: boolean;
   /** Effect signature identical to the reference's. */
   behaviorMatch: boolean;
-  /** parsed && !behaviorMatch — the silent-wrong band. */
+  /** parsed && !behaviorMatch && no visible diagnostic — the band the loop cannot see. */
   silentlyWrong: boolean;
   validation: ValidationOutcome;
   execution: ExecutionOutcome;
   referenceEffects: string[];
+}
+
+/**
+ * The five outcome bands, ordered best → worst. One function, used by the
+ * probe, the JSON baseline, and the ratchet test alike — a fork between them
+ * would let the ratchet pass against a baseline the probe can no longer
+ * produce.
+ *
+ * `warned-*`: wrong behavior, but validation carried a warning/error-severity
+ * diagnostic — VISIBLE to the loop, which can react (arc 3b's unconsumed-input
+ * propagation moves rows from silent-* to here). `silent-*`: wrong behavior
+ * and nothing to react to; the band that bounds the loop's ceiling.
+ */
+export type Band = 'correct' | 'rejected' | 'warned-wrong' | 'silent-wrong' | 'silent-noop';
+
+export function bandOf(score: TaskScore): Band {
+  if (score.behaviorMatch) return 'correct';
+  if (!score.parsed) return 'rejected';
+  const visible = score.validation.diagnostics.some(
+    d => d.severity === 'warning' || d.severity === 'error'
+  );
+  if (visible) return 'warned-wrong';
+  return score.execution.effects.length === 0 ? 'silent-noop' : 'silent-wrong';
 }
 
 export interface ConditionScore {
@@ -265,16 +288,18 @@ export async function scoreCandidate(task: BenchTask, code: string): Promise<Tas
   const execution = await executeCandidate(task, code);
   const behaviorMatch =
     referenceEffects.length > 0 && sameEffects(execution.effects, referenceEffects);
-  return {
+  const score: TaskScore = {
     taskId: task.id,
     code,
     parsed: validation.ok,
     behaviorMatch,
-    silentlyWrong: validation.ok && !behaviorMatch,
+    silentlyWrong: false,
     validation,
     execution,
     referenceEffects,
   };
+  score.silentlyWrong = bandOf(score).startsWith('silent');
+  return score;
 }
 
 export async function scoreCondition(
