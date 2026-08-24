@@ -229,8 +229,27 @@ not extraction work.
 
 ## Arc 5 — The review surface (human-in-the-loop)
 
-**Status: not started.** Package the existing translate/explain tools into
-something a reviewer touches:
+**Status: slice 1 (the verified-translation badge) landed 2026-08-24** — see
+[HANDOFF-agent-era-arc5.md](./HANDOFF-agent-era-arc5.md).
+`CompilationService.translate()` now scores every rendering against its source
+via `scoreFidelity()` (cross-language) and attaches the report as
+`verification` — advisory, opt-out via `verify: false`, never flips `ok`.
+`verification.faithful === true` is the claim "this rendering is structurally
+exact", carried automatically by the `translate_code` MCP tool, whose
+description now tells agents to present it alongside translations shown to a
+user. This is the differentiator named in the original filing: LLM translation
+cannot make this claim; ours is measured per call.
+
+**Slice 2 — the editor command — not started, design noted:** the VSCode
+extension is an LSP client (language features come from
+`@lokascript/language-server`), and the server has no translation surface
+today. "Show this handler in my language" therefore means: a custom LSP
+request (working name `lokascript/translateWithVerification`) on the language
+server backed by the same service call, an extension command rendering the
+translation + badge (hover or virtual document), and editor-host testing this
+repo does not yet have. A real multi-package feature — slice it when the
+editor surface is the priority, don't half-ship it from the data layer.
+Original deliverables:
 
 - **"Show this in my language"** as a first-class flow: a VSCode extension
   command (`packages/vscode-extension`), and an MCP tool agents call to
@@ -255,6 +274,27 @@ Arcs 1–4 show traction**:
 - One compelling non-UI example domain, built in public.
 
 ---
+
+## Standing deferrals (each with a named trigger)
+
+Deliberately not done, so they don't rot as vague intentions. Each waits on a
+concrete trigger, not a mood:
+
+- **The A/B benchmark run** (Arc 3): implemented end to end, no number
+  committed — the tasks/references were authored by the same session that
+  would have generated candidates. **Trigger:** a generator that has not seen
+  `src/agent-bench/`.
+- **Standalone `@lokascript/fidelity` package** (Arc 4): the
+  `@lokascript/semantic/fidelity` subpath is the promotion-ready seam.
+  **Trigger:** a named external consumer.
+- **Remote/HTTP transport for mcp-server** — the one salvageable idea from
+  `@lokascript/mcp-multilingual-intent` (private, moved out with the domain
+  family in #909, tag `moved/domain-family`; its five tools are all subsumed
+  by today's mcp-server and its Siren-bridge architecture is obsolete now
+  that MCP has native streamable HTTP). A hosted endpoint would let agent
+  platforms connect without spawning a local stdio process — as a transport
+  option on the EXISTING server, never a second server package.
+  **Trigger:** demand for a hosted endpoint (e.g. on hyperfixi.org).
 
 ## Sequencing
 

@@ -286,6 +286,30 @@ describe('CompilationService', () => {
   // Validation Only
   // ---------------------------------------------------------------------------
 
+  describe('translate() verification (arc 5)', () => {
+    it('attaches a faithful verification to a clean cross-language translation', () => {
+      const r = service.translate({ code: 'toggle .active on #panel', from: 'en', to: 'ko' });
+      expect(r.ok).toBe(true);
+      expect(r.code).toBeTruthy();
+      expect(r.verification?.ok).toBe(true);
+      expect(r.verification?.faithful).toBe(true);
+      // The invariant value survived translation verbatim.
+      expect(r.verification?.scores?.valueRecall).toBe(1);
+    });
+
+    it('omits verification when verify:false', () => {
+      const r = service.translate({ code: 'toggle .active', from: 'en', to: 'ko', verify: false });
+      expect(r.ok).toBe(true);
+      expect(r.verification).toBeUndefined();
+    });
+
+    it('verification is advisory — its diagnostics never leak into the translate response', () => {
+      const r = service.translate({ code: 'toggle .active on #panel', from: 'en', to: 'ja' });
+      expect(r.ok).toBe(true);
+      expect(r.diagnostics).toEqual([]);
+    });
+  });
+
   describe('scoreFidelity()', () => {
     it('scores an identical pair as faithful 1.0 across all signals', () => {
       const input = {

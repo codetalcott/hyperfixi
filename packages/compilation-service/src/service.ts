@@ -279,9 +279,22 @@ export class CompilationService {
 
     try {
       const result = this.translateFn(request.code, request.from, request.to);
+
+      // Arc 5's verified-translation badge: score the rendering against its
+      // source (cross-language scoreFidelity). Advisory — verification can
+      // fail to parse without flipping ok, and its diagnostics stay inside it.
+      let verification: ScoreResponse | undefined;
+      if (request.verify !== false) {
+        verification = this.scoreFidelity({
+          reference: { code: request.code, language: request.from },
+          candidate: { code: result, language: request.to },
+        });
+      }
+
       return {
         ok: true,
         code: result,
+        ...(verification !== undefined ? { verification } : {}),
         diagnostics: [],
       };
     } catch (error) {
