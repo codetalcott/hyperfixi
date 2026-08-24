@@ -21,8 +21,12 @@ is not brevity — it's **checkability**:
   traps](#known-silent-traps) below, which is why the next bullet matters.)
 - The parse comes back as a **semantic IR** (action + roles + trigger) you can
   compare against your intent before anything ships.
-- `diff_behaviors` can prove two snippets **behaviorally equivalent** — useful
-  when refactoring or verifying your own edit preserved behavior.
+- `diff_behaviors` can prove two snippets **behaviorally equivalent**, and
+  `score_fidelity` scores a candidate against a reference — recall, precision,
+  role and invariant-value signals, each naming exactly what was dropped or
+  hallucinated (`missingValues: ["toggle.destination=#panel"]`). Works across
+  languages, so it also proves a translation preserved meaning. Use either
+  when refactoring or verifying your own edit.
 - The same code renders **deterministically into 24 human languages** (real
   word-order transformation, not string substitution), so you can show your
   work to a user in their language for review — with a structural-fidelity

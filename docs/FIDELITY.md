@@ -13,9 +13,12 @@ it back semantically). The transform is only trustworthy if you can _prove_ the
 Japanese or Quechua rendering of `on click toggle .active` still means the same
 thing. That proof is the artifact described here.
 
-The implementation lives in
-[`packages/testing-framework/src/multilingual/fidelity.ts`](../packages/testing-framework/src/multilingual/fidelity.ts)
-(signatures + metrics) and
+The scorers are importable as **`@lokascript/semantic/fidelity`** (pure
+functions over parsed node trees — no corpus, no DOM; extracted in agent-era
+arc 4), surfaced pairwise via `CompilationService.scoreFidelity()` and the
+`score_fidelity` MCP tool. The ratchet-side implementation lives in
+[`packages/semantic/src/fidelity.ts`](../packages/semantic/src/fidelity.ts)
+(signatures + metrics, re-exported by the testing framework) and
 [`packages/testing-framework/src/multilingual/cli.ts`](../packages/testing-framework/src/multilingual/cli.ts)
 (the `--regression` gate). The committed scoreboard is
 [`packages/testing-framework/baselines/multilingual-priority.json`](../packages/testing-framework/baselines/multilingual-priority.json).

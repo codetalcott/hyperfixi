@@ -12,8 +12,8 @@ import { compilationTools, handleCompilationTool } from '../tools/compilation.js
 // =============================================================================
 
 describe('compilationTools', () => {
-  it('exports 6 tools', () => {
-    expect(compilationTools).toHaveLength(6);
+  it('exports 7 tools', () => {
+    expect(compilationTools).toHaveLength(7);
   });
 
   it('has compile_hyperscript tool', () => {
@@ -43,6 +43,13 @@ describe('compilationTools', () => {
   it('has generate_component tool', () => {
     const tool = compilationTools.find(t => t.name === 'generate_component');
     expect(tool).toBeDefined();
+  });
+
+  it('has score_fidelity tool with required params', () => {
+    const tool = compilationTools.find(t => t.name === 'score_fidelity');
+    expect(tool).toBeDefined();
+    expect(tool?.inputSchema.required).toContain('reference');
+    expect(tool?.inputSchema.required).toContain('candidate');
   });
 
   it('has diff_behaviors tool with required params', () => {
