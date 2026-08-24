@@ -74,6 +74,10 @@
     ],
     "commands": [
       {
+        "command": "lokascript.showInMyLanguage",
+        "title": "LokaScript: Show in My Language"
+      },
+      {
         "command": "lokascript.restartServer",
         "title": "LokaScript: Restart Language Server"
       },
@@ -166,6 +170,11 @@
           "type": "number",
           "default": 4200,
           "description": "Port for the Template Inventory server"
+        },
+        "lokascript.reviewLanguage": {
+          "type": "string",
+          "default": "",
+          "description": "Language code for 'Show in My Language' (e.g. ko, ja, es). Empty = ask each time."
         }
       }
     },
@@ -234,7 +243,7 @@
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
     "generate:grammar": "npx tsx scripts/generate-grammar.ts",
-    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@hyperfixi/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --alias:@lokascript/semantic/fidelity=../../packages/semantic/src/fidelity.ts --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@hyperfixi/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
     "package": "npx --yes @vscode/vsce@^3.9.1 package --no-dependencies",
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },

@@ -61,6 +61,10 @@ import { getCommandDescription } from './localized-descriptions.js';
 // Semantic package is bundled into the server for multilingual LSP support.
 // Static import ensures all 25 languages are registered at startup.
 import * as semanticImport from '@lokascript/semantic';
+import {
+  translateWithVerification,
+  type TranslateWithVerificationParams,
+} from './translate-with-verification.js';
 const semanticPackage: any = semanticImport;
 
 /**
@@ -441,6 +445,14 @@ const envDefaultMode = process.env.HYPERSCRIPT_LS_DEFAULT_MODE as ServerMode | u
 // =============================================================================
 
 const connection = createConnection(ProposedFeatures.all);
+
+// Custom request behind the editor's "show this handler in my language"
+// command (arc 5 slice 2). Probes the (possibly shimmed) semantic package per
+// call and degrades to a clean error in hyperscript-mode builds.
+connection.onRequest(
+  'lokascript/translateWithVerification',
+  (params: TranslateWithVerificationParams) => translateWithVerification(params, semanticPackage)
+);
 const documents = new TextDocuments(TextDocument);
 
 // Cached semantic analyzer (adapter wrapping the new parseSemantic primitives).

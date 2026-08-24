@@ -384,3 +384,73 @@ function walkRoleValues(node: unknown, acc: string[], depth: number): void {
     }
   }
 }
+
+// =============================================================================
+// Pairwise scoring (agent-era arcs 4–5)
+// =============================================================================
+
+export interface FidelityScores {
+  actionRecall: number | undefined;
+  multisetRecall: number | undefined;
+  precision: number | undefined;
+  roleFidelity: number | undefined;
+  valueRecall: number | undefined;
+}
+
+export interface FidelityReport {
+  scores: FidelityScores;
+  /** Reference actions absent from the candidate (multiset difference). */
+  missingActions: string[];
+  /** Candidate actions the reference never had (multiset difference). */
+  spuriousActions: string[];
+  /** Reference role signatures absent from the candidate. */
+  missingRoles: string[];
+  /** Reference invariant values absent from the candidate. */
+  missingValues: string[];
+  /** Every defined score is exactly 1.0. */
+  faithful: boolean;
+}
+
+/** Recall misses of `reference` entries within `candidate`, as a set. */
+function setRecallMisses(reference: string[], candidate: string[]): string[] {
+  const cand = new Set(candidate);
+  return reference.filter(r => !cand.has(r)).sort();
+}
+
+/**
+ * Score two parsed semantic nodes pairwise — the ratchet's scorers applied to
+ * one reference/candidate pair. Pure: parsing is the caller's job. Lives here
+ * (rather than in the compilation service, its original arc-4 home) so every
+ * consumer — the service's scoreFidelity(), the language server's
+ * translate-with-verification request, external harnesses — shares ONE
+ * implementation; the service re-exports it.
+ */
+export function scoreNodes(referenceNode: unknown, candidateNode: unknown): FidelityReport {
+  const refSet = collectActions(referenceNode);
+  const candSet = collectActions(candidateNode);
+  const refMulti = collectActionsMultiset(referenceNode);
+  const candMulti = collectActionsMultiset(candidateNode);
+  const refRoles = collectRoleSignature(referenceNode);
+  const candRoles = collectRoleSignature(candidateNode);
+  const refValues = collectRoleValueSignature(referenceNode);
+  const candValues = collectRoleValueSignature(candidateNode);
+
+  const scores: FidelityScores = {
+    actionRecall: computeFidelity(refSet, candSet),
+    multisetRecall: computeMultisetRecall(refMulti, candMulti),
+    precision: computePrecision(refMulti, candMulti),
+    roleFidelity: computeFidelity(refRoles, candRoles),
+    valueRecall: refValues.length === 0 ? undefined : computeFidelity(refValues, candValues),
+  };
+
+  const defined = Object.values(scores).filter((s): s is number => s !== undefined);
+  return {
+    scores,
+    // Multiset difference reference→candidate: what got dropped.
+    missingActions: spuriousActions(candMulti, refMulti),
+    spuriousActions: spuriousActions(refMulti, candMulti),
+    missingRoles: setRecallMisses(refRoles, candRoles),
+    missingValues: setRecallMisses(refValues, candValues),
+    faithful: defined.length > 0 && defined.every(s => s === 1),
+  };
+}

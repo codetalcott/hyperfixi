@@ -42,6 +42,43 @@ data-layer flag:
 - Until then, the review surface exists through MCP: an agent presenting code
   to a user calls `translate_code` and shows the badge.
 
+## Slice 2 (same day): the editor command
+
+Shipped as designed, three layers:
+
+1. **`scoreNodes` moved to `@lokascript/semantic/fidelity`** (from
+   compilation-service's `scoring/score.ts`, which now re-exports it) so the
+   language server and the service share one scorer — the same no-drift move
+   as the arc-4 shim.
+2. **`lokascript/translateWithVerification`** custom LSP request
+   (`packages/language-server/src/translate-with-verification.ts` +
+   registration in server.ts after the connection is created — the first
+   attempt registered before the `const connection` declaration, a TDZ trap).
+   The semantic namespace is a handler PARAMETER, mirroring `resolveMode()`'s
+   probe pattern: hyperscript-mode bundles shim `@lokascript/semantic` to an
+   empty module, and the handler returns a clean "hyperscript mode" error
+   there. Verification is advisory, exactly as in slice 1. Five unit tests,
+   including the shimmed-away and unparseable-rendering paths.
+3. **`LokaScript: Show in My Language`** command in `lokascript-vscode`:
+   selection (or current line) → target language from the new
+   `lokascript.reviewLanguage` setting or a QuickPick over the 24 languages →
+   Markdown preview beside the editor: rendered code, then the badge
+   (✓ verified structurally exact / ⚠ not fully faithful with the exact
+   missing/spurious lists / ⚠ unverified), then the source line.
+
+**The bundling trap, twice:** both extensions bundle the language server from
+source with an alias on `@lokascript/semantic`, and esbuild applies a package
+alias to subpaths — so `@lokascript/semantic/fidelity` was remapped under the
+alias target and failed to resolve. Fixed with a longest-match alias in each:
+`lokascript-vscode` maps the subpath to the real `semantic/src/fidelity.ts`;
+`vscode-extension-hyperscript`'s shim build maps it to the real file too
+(pure, zero-dep, no language data — harmless in a hyperscript-only build,
+and the root shim still makes the handler degrade).
+
+**Known gap:** no editor-host integration tests (none exist in the repo for
+either extension); the handler is unit-tested, the command layer is
+typecheck- and bundle-verified.
+
 ## Also in this PR
 
 The roadmap gained a **Standing deferrals** section consolidating the three
