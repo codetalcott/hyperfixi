@@ -106,9 +106,10 @@ copy. Original deliverables:
 
 ## Arc 3 — Eval the loop like an agent product
 
-**Status: harness landed 2026-08-24; the A/B number is deliberately NOT
-claimed yet** — see [HANDOFF-agent-era-arc3.md](./HANDOFF-agent-era-arc3.md)
-and `packages/testing-framework/src/agent-bench/`.
+**Status: harness landed 2026-08-24; A/B run landed 2026-08-25
+(90% → 100% behavior rate)** — see
+[HANDOFF-agent-era-arc3.md](./HANDOFF-agent-era-arc3.md) and
+`packages/testing-framework/src/agent-bench/`.
 
 What shipped: 20 natural-language tasks with verified reference
 implementations, a scorer that separates *parses* from *behaves* (jsdom effect
@@ -127,11 +128,18 @@ not by how good the repair guidance is but by how much of the failure mass is
 therefore **making these failures loud** (an unconsumed-token / no-op-command
 diagnostic), not further loop polish — see the new Arc 3b below.
 
-**Why no A/B number is committed:** the tasks and references were authored in
-the same session that would have generated the candidates, so a one-shot score
-from it would measure recall of just-written answers. A harness with no number
-beats a flattering number with a caveat. `score` is implemented and ready for a
-generator that has not seen the directory. Original work items:
+**The A/B number, 2026-08-25** (`runs/ab-2026-08-25.json`): with a generator
+that had never seen the directory — nor the project docs, which quote this
+benchmark's own findings — one-shot scored **100% parse / 90% behavior** and
+the loop **100% / 100%**. Both one-shot failures were the same shape
+(`set <prop> of <target> to <value>`, which returns `ok: true` at confidence
+1.0 with an *empty handler* and no DOM effect), and both were repairable only
+because Arc 3b's `UNCONSUMED_INPUT` made them visible — pre-3b they were
+silent and the delta would have been 0. Measured, not asserted: **the loop is
+worth what the diagnostics are worth.** Read it as n=1 / 20 tasks / 2 tasks
+moved, with an *undocumented* one-shot arm; the durable claim is the
+mechanism, which the probe half measures deterministically. Original work
+items:
 
 - N natural-language UI tasks (seed from the gallery examples and the
   patterns corpus — both already have known-good references).
@@ -292,10 +300,11 @@ Arcs 1–4 show traction**:
 Deliberately not done, so they don't rot as vague intentions. Each waits on a
 concrete trigger, not a mood:
 
-- **The A/B benchmark run** (Arc 3): implemented end to end, no number
-  committed — the tasks/references were authored by the same session that
-  would have generated candidates. **Trigger:** a generator that has not seen
-  `src/agent-bench/`.
+- ~~**The A/B benchmark run** (Arc 3)~~ — **discharged 2026-08-25.** The
+  trigger (a generator that had not seen `src/agent-bench/`) was met with an
+  isolated subagent; isolation was enforced by a locked one-shot file and
+  audited from its transcript. Result and caveats in the
+  [bench README](../packages/testing-framework/src/agent-bench/README.md#the-ab-run-2026-08-25).
 - **Standalone `@lokascript/fidelity` package** (Arc 4): the
   `@lokascript/semantic/fidelity` subpath is the promotion-ready seam.
   **Trigger:** a named external consumer.
