@@ -43,7 +43,7 @@
   "devDependencies": {
     "@hyperfixi/core": "^2.11.1",
     "@lokascript/semantic": "^2.11.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "commander": "^15.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
