@@ -18,4 +18,4 @@
  * version') is what keeps this honest; it compares against `package.json` at
  * test time and fails if the two ever diverge.
  */
-export const VERSION = '2.10.0';
+export const VERSION = '2.11.0';
