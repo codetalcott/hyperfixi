@@ -82,6 +82,46 @@ jobs:
           # bumps.
           npm ci
 
+      # Version calculation + sync run BEFORE the build, not after.
+      # They used to sit after it, which meant every tarball was built
+      # from the PREVIOUS version's sources: set-version.cjs rewrites two
+      # generated files (packages/core/src/version.ts and
+      # packages/developer-tools/src/version.ts), so a build that ran
+      # first baked the stale literal into dist. v2.11.0 shipped to npm
+      # with package.json 2.11.0 and dist reporting version:"2.10.0".
+      # Building after the sync also means the test + export-validation
+      # steps below now run against the bumped tree, so the version
+      # equality assertions become a release-time gate rather than
+      # something only PR CI notices afterwards.
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT=$(node -p "require('./packages/core/package.json').version")
+          echo "Current version: $CURRENT"
+          VERSION_TYPE="${{ github.event.inputs.version-type }}"
+
+          if [ "$VERSION_TYPE" = "current" ]; then
+            NEW="$CURRENT"
+          else
+            cd packages/core
+            npm version "$VERSION_TYPE" --no-git-tag-version > /dev/null 2>&1
+            NEW=$(node -p "require('./package.json').version")
+            cd ../..
+            git checkout packages/core/package.json
+          fi
+
+          echo "New version: $NEW"
+          echo "version=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Sync all package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
+          # set-version.cjs bumps every package + root + lerna.json AND rewrites
+          # internal workspace dep ranges to ^VERSION — so published tarballs
+          # carry accurate constraints (npm has no workspace: protocol).
+          node scripts/set-version.cjs "$VERSION"
+
       - name: Build all packages
         run: |
           # Build order mirrors .github/workflows/ci.yml (which is known-green).
@@ -153,35 +193,6 @@ jobs:
         run: |
           node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict
           node scripts/check-node-import.mjs
-
-      - name: Calculate new version
-        id: version
-        run: |
-          CURRENT=$(node -p "require('./packages/core/package.json').version")
-          echo "Current version: $CURRENT"
-          VERSION_TYPE="${{ github.event.inputs.version-type }}"
-
-          if [ "$VERSION_TYPE" = "current" ]; then
-            NEW="$CURRENT"
-          else
-            cd packages/core
-            npm version "$VERSION_TYPE" --no-git-tag-version > /dev/null 2>&1
-            NEW=$(node -p "require('./package.json').version")
-            cd ../..
-            git checkout packages/core/package.json
-          fi
-
-          echo "New version: $NEW"
-          echo "version=$NEW" >> $GITHUB_OUTPUT
-
-      - name: Sync all package versions
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
-          # set-version.cjs bumps every package + root + lerna.json AND rewrites
-          # internal workspace dep ranges to ^VERSION — so published tarballs
-          # carry accurate constraints (npm has no workspace: protocol).
-          node scripts/set-version.cjs "$VERSION"
 
       - name: Stage CHANGELOG into each package
         run: |
@@ -369,7 +380,13 @@ jobs:
           # already satisfied by the existing lockfile are kept.
           npm install --package-lock-only
 
-          git add packages/*/package.json package.json lerna.json package-lock.json 2>/dev/null || true
+          # packages/*/src/version.ts: set-version.cjs rewrites these GENERATED
+          # sources alongside the manifests, and they were missing here — so the
+          # v2.11.0 bump was written on the runner and never committed, leaving
+          # main with package.json at 2.11.0 and VERSION at '2.10.0' and every
+          # subsequent PR red on the equality assertions. Add a path here for any
+          # new file set-version.cjs learns to rewrite.
+          git add packages/*/package.json packages/*/src/version.ts package.json lerna.json package-lock.json 2>/dev/null || true
 
           # `git commit || echo "No changes to commit"` masked two very different
           # things: a legitimately empty diff, and a commit that actually failed.
