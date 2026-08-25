@@ -34,6 +34,7 @@ import type { HyperfixiPlugin, HyperfixiPluginContext } from '@hyperfixi/core';
 import { parseSocketFeature, makeEvaluateSocketFeature } from './socket';
 import { parseEventSourceFeature, makeEvaluateEventSourceFeature } from './eventsource';
 import { parseWorkerFeature, makeEvaluateWorkerFeature } from './worker';
+import { VERSION } from './version.js';
 
 export { configureRealtime, realtime } from './connections';
 export { SocketConnection } from './socket';
@@ -58,7 +59,7 @@ export type { RealtimeConfig, BackoffOptions } from './connections';
  */
 export const realtimePlugin: HyperfixiPlugin & { version: string } = {
   name: '@hyperfixi/realtime',
-  version: '2.6.0',
+  version: VERSION,
   install(ctx: HyperfixiPluginContext) {
     const { parserExtensions, runtime } = ctx;
 
