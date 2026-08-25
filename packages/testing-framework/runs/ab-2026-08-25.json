@@ -1,0 +1,54 @@
+{
+  "generator": {
+    "model": "claude-opus-5",
+    "date": "2026-08-25",
+    "context": "Isolated subagent. Received only the 20 task prompts inline. No access to any file under the repo (verified: zero Read/Glob/Grep calls, all 48 Bash calls were the two permitted wrapper scripts, zero commands referencing the repo path). Had NOT seen src/agent-bench/, its tasks/references/variants, or the project docs. One-shot answers were written and chmod-444 locked before the first feedback call, so the loop phase could not revise them.",
+    "protocol": "within-subjects: one generator, one-shot phase then loop phase, 47 feedback calls"
+  },
+  "conditions": {
+    "one-shot": {
+      "toggle-self-class": "on click toggle .active on me",
+      "toggle-other-class": "on click toggle .open on #panel",
+      "add-class-other": "on click add .highlight to #item",
+      "remove-class-all": "on click remove .active from .row",
+      "put-text": "on click put 'Saved' into #output",
+      "hide-element": "on click hide #menu",
+      "show-element": "on click show #modal",
+      "two-commands": "on click add .busy to me then put 'Loading' into #output",
+      "closest-ancestor": "on click add .selected to closest .card",
+      "remove-element": "on click remove #item",
+      "toggle-attribute": "on click toggle @hidden on #message",
+      "set-attribute": "on click set @aria-expanded of #panel to 'true'",
+      "set-style": "on click set *background-color of #swatch to 'red'",
+      "set-inner-html": "on click set innerHTML of #output to 'Done'",
+      "add-class-multiple": "on click add .done to .todo",
+      "mouseenter-hover": "on mouseenter add .hover to me",
+      "tabs-switch": "on click remove .active from .tab then add .active to #tab2",
+      "conditional-class": "on click if #box matches .danger add .warned to #box end",
+      "custom-event": "on refresh put 'Refreshed' into #output",
+      "add-to-body": "on click add .modal-open to body"
+    },
+    "loop": {
+      "toggle-self-class": "on click toggle .active on me",
+      "toggle-other-class": "on click toggle .open on #panel",
+      "add-class-other": "on click add .highlight to #item",
+      "remove-class-all": "on click remove .active from .row",
+      "put-text": "on click put \"Saved\" into #output",
+      "hide-element": "on click hide #menu",
+      "show-element": "on click show #modal",
+      "two-commands": "on click add .busy to me then put \"Loading\" into #output",
+      "closest-ancestor": "on click add .selected to closest .card",
+      "remove-element": "on click remove #item",
+      "toggle-attribute": "on click toggle @hidden on #message",
+      "set-attribute": "on click set #panel's @aria-expanded to \"true\"",
+      "set-style": "on click set #swatch's *background-color to \"red\"",
+      "set-inner-html": "on click set #output's innerHTML to \"Done\"",
+      "add-class-multiple": "on click add .done to .todo",
+      "mouseenter-hover": "on mouseenter add .hover to me",
+      "tabs-switch": "on click remove .active from .tab then add .active to #tab2",
+      "conditional-class": "on click if #box matches .danger then add .warned to #box end",
+      "custom-event": "on refresh put \"Refreshed\" into #output",
+      "add-to-body": "on click add .modal-open to body"
+    }
+  }
+}
