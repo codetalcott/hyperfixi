@@ -146,6 +146,42 @@ event names, URLs) **verbatim** against the English reference, as an
 itself_ corrupts a value, every language flags at once — a 24-language R3
 firestorm on one pattern means "suspect the en parse first."
 
+### Render fidelity (RF): the direction the other signals never look at
+
+Every signal above scores the **stored** corpus — the `pattern_translations`
+rows, which `@lokascript/i18n`'s `GrammarTransformer` writes. R4's en-side leg
+is en→en and its foreign leg is foreign→en. So none of them ever call
+`render(node, L)` for a non-English `L`.
+
+That is the direction a reader actually sees: MCP `translate_code`,
+`hyperfixi.translate`, `getAllTranslations`, core's `MultilingualHyperscript`,
+and the editor's "Show in my language" badge all render English into a target
+language with `@lokascript/semantic`, not with the transformer that wrote the
+corpus. Measured for the first time on **2026-08-26**, that path was **73.3%**
+structurally clean against the English reference where the corpus was 97.0% —
+a gap nothing could see, because nothing looked.
+
+RF closes the hole. It renders every corpus pattern into all 23 languages,
+parses it back, and requires that no action and no role from the English
+reference went missing, ratcheting against
+`baselines/render-fidelity.json` in both directions (a new failure fails; an
+allowlisted pair that starts passing also fails, so the list only shrinks).
+It is seeded at the level measured when it landed rather than at zero — an
+honest floor with the residual enumerated, not a clean bill of health.
+
+Two properties worth knowing:
+
+- It scores with `collectRoleSignatureStrict`, which ignores roles the matcher
+  injected as schema defaults. The lenient walker the corpus ratchet uses
+  cannot tell a renderer that dropped `to me` from a parser that put
+  `destination: me` back, so a role-dropping render scores as faithful there.
+- It needs no populated database (it renders `rawCode`, which is stable), so
+  unlike R4's foreign leg it runs in the ordinary test suite.
+
+**Read the numbers accordingly.** `avgFidelity 1.000` and friends describe the
+i18n-written corpus. The renderer behind the public tools is a separate
+measurement, published separately, and currently lower.
+
 ### Canonical validity (R4): the does-the-real-engine-accept-it detector
 
 A parse can be role-faithful and value-faithful yet render English the

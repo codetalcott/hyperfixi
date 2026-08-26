@@ -29,8 +29,13 @@ is not brevity — it's **checkability**:
   when refactoring or verifying your own edit.
 - The same code renders **deterministically into 24 human languages** (real
   word-order transformation, not string substitution), so you can show your
-  work to a user in their language for review — with a structural-fidelity
-  guarantee behind it ([docs/FIDELITY.md](./docs/FIDELITY.md)).
+  work to a user in their language for review. Fidelity in that direction is
+  **measured, not guaranteed**: ~76% of corpus patterns round-trip with no
+  action or role lost, and the rest are enumerated in
+  `packages/testing-framework/baselines/render-fidelity.json`
+  ([docs/FIDELITY.md](./docs/FIDELITY.md)). Prefer `translate_code`, whose
+  `verification.faithful` scores the actual rendering, over presenting a
+  translation unchecked.
 
 Free-form JavaScript gives you none of these: it fails at runtime, in
 unbounded ways, invisible to the human who has to approve your work.
