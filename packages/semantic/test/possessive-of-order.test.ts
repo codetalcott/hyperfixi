@@ -148,10 +148,13 @@ describe('reference owners are untouched', () => {
     expect(node!.roles.has('patient' as never), `${language}: ${rendered}`).toBe(true);
   });
 
-  it('qu keeps its after-object marker on a reference owner', () => {
-    // `noqa-pa *opacity`: dropping this cost four qu rows their set.destination.
+  it('qu renders a reference owner with its own possessive word', () => {
+    // Was `noqa-pa *opacity`; now `ñuqapa *opacity`, the form qu's own
+    // `possessive.keywords` declares. What this guards is unchanged — a
+    // reference owner must not take the selector rule and render property-first.
     const rendered = translate('set my *opacity to 0.5', 'en', 'qu');
-    expect(rendered).toContain('-pa');
+    expect(rendered).toContain('ñuqapa');
+    expect(rendered.indexOf('ñuqapa')).toBeLessThan(rendered.indexOf('*opacity'));
   });
 });
 

@@ -804,8 +804,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const objectRef = value.object.type === 'reference' ? value.object.value : null;
 
     // Check for special possessive forms (e.g., me → my, it → its)
-    if (profile?.possessive?.specialForms && objectRef) {
-      const specialForm = profile.possessive.specialForms[objectRef];
+    if (profile?.possessive && objectRef) {
+      const specialForm =
+        profile.possessive.specialForms?.[objectRef] ??
+        possessiveAdjectiveFor(profile.possessive.keywords, objectRef);
       if (specialForm) {
         // The possessive ADJECTIVE precedes the property in every language that
         // has one — es `mi valor`, de `mein wert`, ko `내 값`, sw `yangu thamani`.
@@ -906,6 +908,34 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // Generic fallback
     return `${objectStr} ${property}`;
   }
+}
+
+/**
+ * The possessive adjective for a reference, derived from the profile's own
+ * `possessive.keywords` when it declares no `specialForms`.
+ *
+ * `keywords` is the PARSE direction — `{ 私の: 'me', その: 'it' }` — and only 3
+ * of 23 profiles carry the render-direction `specialForms` alongside it. Without
+ * a fallback, bn/hi/ja fell through to the marker construction and emitted
+ * `আমি` + `র` = `আমির`, `मैं` + `का` = `मैंका`, `自分の` — none of which their own
+ * parser accepts, even respaced. Their `keywords` already hold the right words
+ * (`আমার`, `मेरा`, `私の`), which are exactly what the i18n corpus emits, so
+ * inverting that map is a derivation rather than new data — and it keeps ONE
+ * authoring site instead of a parallel table that can drift from it.
+ *
+ * First declaration wins where several map to the same reference (hi lists
+ * मेरा/मेरी/मेरे for `me`); the profiles list the citation form first, which is
+ * the form the corpus uses.
+ */
+function possessiveAdjectiveFor(
+  keywords: Record<string, string> | undefined,
+  reference: string
+): string | undefined {
+  if (!keywords) return undefined;
+  for (const [native, mapped] of Object.entries(keywords)) {
+    if (mapped === reference) return native;
+  }
+  return undefined;
 }
 
 // =============================================================================
