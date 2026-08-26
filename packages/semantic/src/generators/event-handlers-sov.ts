@@ -17,7 +17,7 @@ import {
   eventHandlerSourceExtraction,
   eventHandlerSourceGroup,
 } from './command-schemas';
-import type { GeneratorConfig } from './pattern-generator';
+import { buildRoleToken, type GeneratorConfig } from './pattern-generator';
 import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
@@ -200,6 +200,130 @@ function appendOptionalTailRole(
 }
 
 /**
+ * The role a fused event-handler pattern binds in its bare argument slot.
+ *
+ * `patient` for the commands that declare one; otherwise the schema's own
+ * primary required role — `fetch`/`get` bind `source`, `tell` binds
+ * `destination`, `repeat` binds `loopType`.
+ *
+ * Fourteen of the seventy schemas declare no `patient` role at all, and the
+ * fused generators bound their argument to `patient` regardless: bn
+ * `ক্লিক তে "/api/data" আনুন` produced a fetch whose URL sat in a role
+ * `fetchSchema` does not have, leaving the required `source` unbound and the
+ * profile's `from`-group free to swallow the NEXT phrase instead (pl's `z`
+ * marks both `source` and `style`, so `z {method:"POST"}` bound as the source
+ * and the style vanished).
+ *
+ * `event` is excluded because the fused pattern already owns an `event` slot
+ * for the TRIGGER (`on click send foo`), so a wrapped command whose own primary
+ * role is `event` (send/trigger/on) keeps the legacy `patient` binding.
+ */
+export function fusedBoundRole(commandSchema: CommandSchema): SemanticRole {
+  if (commandSchema.roles.some(r => r.role === 'patient')) return 'patient';
+  const required = commandSchema.roles.filter(r => r.required);
+  const primary = required.find(r => r.role === commandSchema.primaryRole) ?? required[0];
+  if (!primary || primary.role === 'event') return 'patient';
+  return primary.role;
+}
+
+/**
+ * Tokens for the fused pattern's required argument slot.
+ *
+ * `patient` is rendered bare by every fused surface, so it keeps the bare
+ * token it always had. A schema whose primary role is `source`/`destination`
+ * (fetch, get, tell, go, scroll) renders that role WITH its marker in some
+ * languages and without it in others — pl `pobierz "/api/form"` versus ms
+ * `dapatkan dari #input.value` — so the marker goes in an OPTIONAL group while
+ * the role itself stays required. Requiring the marker cost `go`/`scroll`/
+ * `tell` four languages each when it was tried; omitting it cost the same four.
+ */
+export function fusedBoundRoleTokens(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  role: SemanticRole
+): PatternToken[] {
+  const spec = commandSchema.roles.find(r => r.role === role);
+  if (!spec || role === 'patient') return [{ type: 'role', role, optional: false }];
+
+  const { marker, alternatives } = resolveRoleMarker(spec, profile);
+  // Deliberately NO `expectedTypes`: the slot this replaces was an untyped
+  // `{patient}`, and the defect being fixed is its NAME, not its permissiveness.
+  // Narrowing it to the schema's declared types stopped `unless`'s condition
+  // binding `I match .disabled` in pl/it/ru/uk/th, which is a matcher
+  // type-inference gap rather than anything this function should adjudicate.
+  const roleToken: PatternToken = {
+    type: 'role',
+    role,
+    optional: false,
+    ...(spec.valueShape !== undefined ? { valueShape: spec.valueShape } : {}),
+  };
+  if (!marker) return [roleToken];
+
+  const markerWords = marker.split(/\s+/).filter(Boolean);
+  const markerGroup: PatternToken = {
+    type: 'group',
+    optional: true,
+    tokens: markerWords.map((word): PatternToken => ({
+      type: 'literal',
+      value: word,
+      ...(markerWords.length === 1 && alternatives?.length ? { alternatives } : {}),
+    })),
+  };
+  const position = profile.roleMarkers[role]?.position ?? 'before';
+  return position === 'after' ? [roleToken, markerGroup] : [markerGroup, roleToken];
+}
+
+/**
+ * Append a trailing optional slot for every optional role the fused pattern
+ * does not already carry.
+ *
+ * The primary fused generators were hardcoded to `event + verb + patient +
+ * [destination] + [source]` and never read `commandSchema.roles`, so NO
+ * optional role could appear in any `<cmd>-event-{L}-*` pattern — and a fused
+ * pattern outranks the standalone one (basePriority + 50) whenever its verb
+ * matches. `fetch … with {style}` and `tell … to {destination}` therefore
+ * round-tripped through the fused pattern with the role silently dropped, at
+ * confidence 1.0, in every SOV/VSO language.
+ *
+ * `appendOptionalScope`/`appendOptionalViewTransition`/`appendOptionalRecipient`
+ * above are the three one-role ancestors of this function, each added by an
+ * arc that hit the same wall for a single role; they stay because they are
+ * wired into the SECONDARY generators, which keep their hand-built shapes.
+ *
+ * Slots are built by the SAME `buildRoleToken` the standalone command patterns
+ * use, so the fused slot and its standalone twin cannot drift — marker
+ * resolution (`markerOverride → profile.roleMarkers`, plus `markerLegacy ∪
+ * markerVariants` alternatives), `markerOptional`, `renderSuppress`,
+ * `expectedTypes` and `valueShape` all come along.
+ *
+ * A role with NEITHER a marker in this language NOR a `valueShape` is skipped:
+ * a bare, unanchored trailing slot has nothing to guard it and would capture
+ * whatever follows. That excludes exactly `fetch.method`, `repeat.quantity` and
+ * `repeat.event` — their surface markers live in handcrafted patterns rather
+ * than in the schema or the profile, so giving them a fused slot is authoring
+ * work, not generator work.
+ */
+export function appendRemainingOptionalRoles(
+  tokens: PatternToken[],
+  extraction: Record<string, ExtractionRule>,
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  alreadyEmitted: ReadonlySet<string>
+): void {
+  for (const spec of commandSchema.roles) {
+    if (spec.required) continue;
+    if (alreadyEmitted.has(spec.role)) continue;
+    if (extraction[spec.role]) continue;
+    const marker = spec.markerOverride?.[profile.code] ?? profile.roleMarkers[spec.role]?.primary;
+    if (!marker && spec.valueShape === undefined) continue;
+    tokens.push({ type: 'group', optional: true, tokens: buildRoleToken(spec, profile) });
+    extraction[spec.role] = spec.default
+      ? { fromRole: spec.role, default: spec.default }
+      : { fromRole: spec.role };
+  }
+}
+
+/**
  * Generate SOV event handler pattern (Japanese, Korean, Turkish).
  */
 export function generateSOVEventHandlerPattern(
@@ -232,9 +356,21 @@ export function generateSOVEventHandlerPattern(
     }
   }
 
+  // The wrapped command's bare argument slot: `patient` for the commands that
+  // declare one, otherwise the schema's own primary required role.
+  const boundRole = fusedBoundRole(commandSchema);
+
   // Optional destination with its marker
   const destMarker = profile.roleMarkers.destination;
-  if (destMarker) {
+  // Gated on the SCHEMA, not on the profile alone: an unconditional destination
+  // group fabricated a slot for commands that have no destination role, and the
+  // marker then ate a phrase belonging to a role that does exist — ru
+  // `увеличить #score на 10` bound `на 10` as increment's (nonexistent)
+  // destination, so the quantity was dropped. Same contract as
+  // eventHandlerDestinationGroup/eventHandlerSourceGroup, which have always
+  // self-gated this way.
+  const schemaHasDestination = commandSchema.roles.some(r => r.role === 'destination');
+  if (destMarker && schemaHasDestination && boundRole !== 'destination') {
     tokens.push({
       type: 'group',
       optional: true,
@@ -247,12 +383,11 @@ export function generateSOVEventHandlerPattern(
     });
   }
 
-  // Patient role
-  tokens.push({ type: 'role', role: 'patient', optional: false });
+  tokens.push(...fusedBoundRoleTokens(commandSchema, profile, boundRole));
 
   // Patient marker (postposition/particle after patient)
   const patientMarker = profile.roleMarkers.patient;
-  if (patientMarker) {
+  if (patientMarker && boundRole === 'patient') {
     const patMarkerToken: PatternToken = patientMarker.alternatives
       ? { type: 'literal', value: patientMarker.primary, alternatives: patientMarker.alternatives }
       : { type: 'literal', value: patientMarker.primary };
@@ -267,8 +402,27 @@ export function generateSOVEventHandlerPattern(
 
   // Optional trailing source phrase (post-verb, where the transformer
   // emits `remove X from Y`'s from-phrase in SOV output)
-  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
-  tokens.push(...eventHandlerDestinationGroup(commandSchema, profile.roleMarkers.destination));
+  if (boundRole !== 'source') {
+    tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+  }
+  if (boundRole !== 'destination') {
+    tokens.push(...eventHandlerDestinationGroup(commandSchema, profile.roleMarkers.destination));
+  }
+
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [boundRole]: { fromRole: boundRole },
+    ...(boundRole === 'destination' ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...(boundRole === 'source' ? {} : eventHandlerSourceExtraction(commandSchema)),
+  };
+  appendRemainingOptionalRoles(
+    tokens,
+    extraction,
+    commandSchema,
+    profile,
+    new Set(['event', boundRole, 'destination', 'source'])
+  );
 
   return {
     id: `${commandSchema.action}-event-${profile.code}-sov`,
@@ -276,16 +430,10 @@ export function generateSOVEventHandlerPattern(
     command: 'on', // This is an event handler pattern
     priority: (config.basePriority ?? 100) + 50, // Higher priority than simple commands
     template: {
-      format: `{event} ${eventMarker.primary} {destination?} {patient} ${patientMarker?.primary || ''} ${keyword.primary}`,
+      format: `{event} ${eventMarker.primary} {destination?} {${boundRole}} ${patientMarker?.primary || ''} ${keyword.primary}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action }, // Extract the wrapped command
-      event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      ...eventHandlerDestinationExtraction(commandSchema),
-      ...eventHandlerSourceExtraction(commandSchema),
-    },
+    extraction,
   };
 }
 

@@ -3425,9 +3425,17 @@ export class SemanticParserImpl implements ISemanticParser {
         const refolded = foldNakedNamedArgsRaw(stream, existing.raw);
         if (refolded) {
           roles.set('style', { type: 'expression', raw: refolded } as SemanticValue);
-          this.tryAttachResponseTypeAfterStyle(stream, command, language);
         }
       }
+      // The trailing as-phrase is stranded whenever the style run ended without
+      // one — which now includes a style the PATTERN captured, since the fused
+      // event-handler patterns gained a `[with {style}]` slot from the schema.
+      // Before that they always left the whole run to the reclaim above, so
+      // this call only ever ran on the refold path and id's `sebagai JSON`
+      // silently lost its responseType the moment the slot started matching.
+      // Self-gating (already-captured role, schema must declare it), so
+      // reaching it from the pattern path adds no new capture surface.
+      this.tryAttachResponseTypeAfterStyle(stream, command, language);
       return;
     }
 

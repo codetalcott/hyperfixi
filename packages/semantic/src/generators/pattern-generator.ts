@@ -745,8 +745,13 @@ function buildRoleTokens(schema: CommandSchema, profile: LanguageProfile): Patte
 
 /**
  * Build token(s) for a single role.
+ *
+ * Exported so the fused event-handler generators can build a wrapped command's
+ * optional-role slots from the very same code the standalone command patterns
+ * use — a hand-rolled copy there is what let the two drift apart in the first
+ * place (see `appendRemainingOptionalRoles` in event-handlers-sov.ts).
  */
-function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternToken[] {
+export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
   // Check for command-specific marker override first
