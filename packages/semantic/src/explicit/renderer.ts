@@ -456,6 +456,27 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       case 'role': {
         const value = node.roles.get(token.role);
         if (!value) {
+          // `wait` has ONE slot in its schema — `duration`, described as
+          // "Duration or event to wait for" — and the parser re-types a known
+          // event name out of it into `event` (normalizeCommandRoles, gated on
+          // WAITABLE_EVENT_WORDS) so the waitMapper can emit the runtime's
+          // `modifiers.for` wait. Only the English `wait-en-for-event` head
+          // declares an `event` slot, so in the other 23 languages the
+          // generated `wait {duration}` pattern found nothing to put in its one
+          // slot and the event vanished: `wait for transitionend` rendered as
+          // bare `esperar` / `待つ` / `ждать`, which does not even re-parse.
+          //
+          // Route it back through the duration slot — the exact inverse of the
+          // parse-side relabel, which is why the round trip closes: every
+          // target parser recovers `wait.event` from the marker-less surface
+          // (`esperar transitionend`), including a LOCALIZED name, since
+          // eventNameTranslations normalizes `carga` / `ロード` back to `load`
+          // before the relabel runs. en is untouched — its `event`-slotted head
+          // outscores this pattern and never reaches here.
+          if (token.role === 'duration' && node.action === 'wait') {
+            const event = node.roles.get('event');
+            if (event) return this.renderEventName(event, language);
+          }
           if (token.optional) return null;
           // Use default if available
           return null;
