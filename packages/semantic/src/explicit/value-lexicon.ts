@@ -54,7 +54,7 @@ const MASK_TOKEN = /\uE010(\d+)\uE011/g;
  * conservative — `my.value` and `#id` are handled by their own renderers, and a
  * one-letter token is far more likely a variable than a keyword.
  */
-const WORD = /(^|[^\w$.#@*:-])([A-Za-z][A-Za-z-]+)(?![\w$.-])/g;
+const WORD = /(^|[^\w$.#@*:-])([A-Za-z][A-Za-z-]+)(?![\w$.:-])/g;
 
 export interface ValueLexicon {
   /** English word (lowercased) → the form to render in this language. */
