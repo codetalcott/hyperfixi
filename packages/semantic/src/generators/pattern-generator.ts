@@ -259,6 +259,27 @@ export function generatePatternVariants(
     });
   }
 
+  // Widened-type variants: an EXTRA pattern per entry whose named role accepts a
+  // wider set of value types. Deliberately BELOW every command pattern, so it is
+  // inert on any span a real command can claim — see the schema field's doc for
+  // the ko `transition opacity to 0` collision that rules out widening the main
+  // pattern in place.
+  for (const widen of schema.widenTypeVariants ?? []) {
+    if (widen.excludeLanguages?.includes(profile.code)) continue;
+    const cloneSchema: CommandSchema = {
+      ...schema,
+      roles: schema.roles.map(r =>
+        r.role === widen.role ? { ...r, expectedTypes: [...widen.types] } : r
+      ),
+    };
+    const main = generatePattern(cloneSchema, profile, config);
+    patterns.push({
+      ...main,
+      id: `${schema.action}-${profile.code}-generated-${widen.idSuffix}`,
+      priority: (config.basePriority ?? 100) - (widen.priorityDelta ?? 15),
+    });
+  }
+
   // Verb-first fallback for SOV languages (lower priority than the above).
   if (config.generateVerbFirstVariants !== false) {
     const verbFirst = generateVerbFirstPattern(schema, profile, config);
