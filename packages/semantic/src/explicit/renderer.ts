@@ -456,6 +456,27 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       case 'role': {
         const value = node.roles.get(token.role);
         if (!value) {
+          // `wait` has ONE slot in its schema — `duration`, described as
+          // "Duration or event to wait for" — and the parser re-types a known
+          // event name out of it into `event` (normalizeCommandRoles, gated on
+          // WAITABLE_EVENT_WORDS) so the waitMapper can emit the runtime's
+          // `modifiers.for` wait. Only the English `wait-en-for-event` head
+          // declares an `event` slot, so in the other 23 languages the
+          // generated `wait {duration}` pattern found nothing to put in its one
+          // slot and the event vanished: `wait for transitionend` rendered as
+          // bare `esperar` / `待つ` / `ждать`, which does not even re-parse.
+          //
+          // Route it back through the duration slot — the exact inverse of the
+          // parse-side relabel, which is why the round trip closes: every
+          // target parser recovers `wait.event` from the marker-less surface
+          // (`esperar transitionend`), including a LOCALIZED name, since
+          // eventNameTranslations normalizes `carga` / `ロード` back to `load`
+          // before the relabel runs. en is untouched — its `event`-slotted head
+          // outscores this pattern and never reaches here.
+          if (token.role === 'duration' && node.action === 'wait') {
+            const event = node.roles.get('event');
+            if (event) return this.renderEventName(event, language);
+          }
           if (token.optional) return null;
           // Use default if available
           return null;
@@ -667,6 +688,41 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
+   * The base of a DOT access — the part before the first `.`.
+   *
+   * A selector is code and renders verbatim. A REFERENCE is the interesting
+   * case, and it is not simply "localize it": the parser's dot path gates on
+   * `isValidReference(base)`, an English-word test, so the plain localized
+   * pronoun is exactly the form that CANNOT be read back. Measured across the
+   * corpus: `it.name` rendered as es `ello.name`, pt `ele.name`, zh `它.name`,
+   * de `es.error`, fr `il.error`, vi `nó.data` — every one of them fails to
+   * parse, and the role is lost.
+   *
+   * The POSSESSIVE form does parse (es `su.name`, de `sein.error`, pt
+   * `seu.name`, it `suo.name`), and it is what the i18n corpus renders, so it
+   * is preferred where the profile has one. Eight languages have no possessive
+   * form for `it` and NO language has one for `event`, and a multi-word form
+   * (vi `của nó`) cannot carry a dot chain — in those cases the English
+   * reference is kept, which parses everywhere precisely because the dot path
+   * is English-gated. Less localized, but the role survives, and a lost role is
+   * the worse outcome.
+   */
+  private renderDotBase(
+    object: SemanticValue,
+    language: string,
+    profile: ReturnType<typeof tryGetProfile>
+  ): string {
+    if (object.type !== 'reference') {
+      return this.valueToNaturalString(object, language);
+    }
+    const possessive = profile?.possessive?.specialForms?.[object.value];
+    if (possessive && !/\s/.test(possessive)) return possessive;
+    // English base: language-invariant, and the only form the dot path accepts
+    // when the language offers no single-word possessive.
+    return object.value;
+  }
+
+  /**
    * Render a property-path value (possessive expression) in the target language.
    *
    * Examples by language:
@@ -678,6 +734,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private renderPropertyPath(value: PropertyPathValue, language: string): string {
     const profile = tryGetProfile(language);
+
+    // A DOT access is a JS/DOM member expression, and its surface is
+    // language-invariant: `#input.value` is written that way in every language,
+    // which is exactly why every tokenizer can read it back. Applying the
+    // target language's POSSESSIVE construction to it instead — `#input de
+    // valor`, `#input wert`, `#input قيمة` — produces a surface no target
+    // parser binds as a property path, so the role was lost (and in de/ar the
+    // whole `set` died with it).
+    //
+    // The object still localizes, because it is a reference the language does
+    // translate (`its.name` -> es `su.name`); the property never does, because
+    // it names a real DOM member. A property already beginning with `.` or `?.`
+    // carries its own connector (`my?.dataset?.customValue`), so it is glued
+    // rather than given a second dot.
+    if (value.access === 'dot') {
+      const object = this.renderDotBase(value.object, language, profile);
+      const property = value.property;
+      return /^[.?]/.test(property) ? `${object}${property}` : `${object}.${property}`;
+    }
+
     // A BARE property word is vocabulary and localizes (`my value` -> `mi valor`,
     // `私の 値`); a DOTTED path is a JS/DOM member expression and must not
     // (`#output.innerText`, `my value.length` stay verbatim in every language).

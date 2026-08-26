@@ -169,6 +169,23 @@ export interface PropertyPathValue extends ImplicitTaggable {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
+  /**
+   * Which SURFACE the author wrote, when the parser knows it.
+   *
+   * `#input.value` and `#input's value` are the same access semantically and
+   * were the same value structurally, so the renderer had to guess — and it
+   * guessed possessive for both, turning `#input.value` into es `#input de
+   * valor`, which no target parser binds back as a property path.
+   *
+   * A renderer-side heuristic cannot recover this: `its.name` (dot) and `my
+   * value` (possessive) both have `reference` objects, so the object's type
+   * does not discriminate. Recording it at the one place that knows — the
+   * matcher, which matched a specific surface — is the only honest fix.
+   *
+   * Optional: absent means "not recorded", and the renderer keeps its existing
+   * possessive construction, so values built anywhere else are unaffected.
+   */
+  readonly access?: 'dot' | 'possessive';
 }
 
 export interface ExpressionValue extends ImplicitTaggable {
@@ -727,9 +744,21 @@ export function createReference(value: ReferenceValue['value']): ReferenceValue 
 
 /**
  * Create a property path semantic value.
+ *
+ * `access` records which surface was matched (`#input.value` vs `#input's
+ * value`) so the renderer can reproduce it instead of guessing; see
+ * `PropertyPathValue.access`. Omit it when the caller genuinely does not know —
+ * the renderer then falls back to the possessive construction it has always
+ * used.
  */
-export function createPropertyPath(object: SemanticValue, property: string): PropertyPathValue {
-  return { type: 'property-path', object, property };
+export function createPropertyPath(
+  object: SemanticValue,
+  property: string,
+  access?: PropertyPathValue['access']
+): PropertyPathValue {
+  return access
+    ? { type: 'property-path', object, property, access }
+    : { type: 'property-path', object, property };
 }
 
 /**
