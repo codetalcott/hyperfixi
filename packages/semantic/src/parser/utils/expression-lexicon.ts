@@ -141,6 +141,34 @@ const OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
  * a property head sits before it and a selector after, so it never shadows a
  * real source role.
  */
+/**
+ * The of-marker to EMIT when rendering a prepositional possessive.
+ *
+ * The renderer previously built this construction from
+ * `profile.possessive.marker`, which disagrees with what the parser accepts in
+ * two ways at once. That table is EMPTY for de/ar/id/pl/ru/sw/uk/ms, so those
+ * languages skipped the marker switch entirely and fell through to the English
+ * `'s` default — which is why corpus rows read `#picker's wartość`. And where it
+ * was non-empty the operands were emitted object-first, while the parser's
+ * of-possessive matcher wants the property first.
+ *
+ * Reading {@link OF_POSSESSIVE_MARKERS} here is the point: its own contract is
+ * that "the possessive matchers and the raw-expression join cannot disagree
+ * about what an of-marker is", and the renderer is a third party to that
+ * agreement. Languages absent from the table are the ones whose marker
+ * tokenizes to a `source` normalized form (es `de`, de `von`, fr/pt `de`, id
+ * `dari`, ru `из`), so their source marker IS the of-marker.
+ */
+export function getOfPossessiveMarker(profile: LanguageProfile | undefined): string | undefined {
+  if (!profile?.code) return undefined;
+  const table = OF_POSSESSIVE_MARKERS[profile.code];
+  if (table) {
+    const [first] = table;
+    if (first) return first;
+  }
+  return profile.roleMarkers?.source?.primary;
+}
+
 export function isOfPossessiveMarker(
   profile: LanguageProfile | undefined,
   token: LanguageToken
