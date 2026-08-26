@@ -14,6 +14,7 @@ import type {
   ConditionalSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
+  FeatureSemanticNode,
   SemanticValue,
   SemanticRenderer as ISemanticRenderer,
   LanguagePattern,
@@ -68,6 +69,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     if (node.kind === 'def') {
       return this.renderDef(node as DefSemanticNode, language);
+    }
+    // A block FEATURE (`live` / `socket` / `eventsource` / `worker` /
+    // `intercept`) carries its statements in `body`, never in roles — so without
+    // a case here it fell to the pattern path, which rendered the bare keyword
+    // and dropped the name and the entire body: `socket ChatSocket … on message
+    // put it into #chat end` became es `socket`, ja `ソケット`, de `arbeiter`.
+    // Every command inside was lost, which is why these five corpus patterns
+    // reported ACTION loss in all 23 languages at once.
+    if (node.kind === 'feature') {
+      return this.renderFeature(node as FeatureSemanticNode, language);
     }
     // A conditional carries its branches in thenBranch/elseBranch, never in roles.
     // Without this the pattern path renders the head only (`if <cond>`) and drops
@@ -240,6 +251,32 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     ];
     for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
     lines.push(this.keyword(language, 'end'));
+    return lines.join('\n');
+  }
+
+  /**
+   * Render a block feature to target-language source:
+   * `<keyword> [name]` + body + closing `end`.
+   *
+   * Mirrors {@link renderBehavior}, including its handling of event-handler
+   * children: a handler carries its own body and needs its own `end`, so it
+   * closes before the feature's does. `live` and `intercept` declare no name and
+   * emit the keyword alone as their header.
+   *
+   * `intercept` always parses with an empty body (opaque by design), so it
+   * renders as a bare `<keyword> … end` — correct, and the reason the loop
+   * tolerates an empty body rather than asserting one.
+   */
+  private renderFeature(node: FeatureSemanticNode, language: string): string {
+    const endKw = this.keyword(language, 'end');
+    const keyword = this.keyword(language, node.action);
+    const lines = [node.name ? `${keyword} ${node.name}` : keyword];
+    for (const child of node.body) {
+      lines.push(`  ${this.render(child, language)}`);
+      // An event handler opens a block of its own; close it before the feature.
+      if (child.kind === 'event-handler') lines.push(`  ${endKw}`);
+    }
+    lines.push(endKw);
     return lines.join('\n');
   }
 
