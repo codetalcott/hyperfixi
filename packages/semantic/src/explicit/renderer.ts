@@ -807,16 +807,20 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (profile?.possessive?.specialForms && objectRef) {
       const specialForm = profile.possessive.specialForms[objectRef];
       if (specialForm) {
-        const { markerPosition, usePossessiveAdjectives } = profile.possessive;
-
-        // Handle different word orders based on marker position
-        if (usePossessiveAdjectives && markerPosition === 'after-object') {
-          // Languages like Arabic, Indonesian: "value لي", "value saya"
-          // Possessive pronoun comes after the property
-          return `${property} ${specialForm}`;
-        }
-        // Languages like Spanish, German, French, Korean: "mi value", "mein value", "내 value"
-        // Possessive pronoun comes before the property
+        // The possessive ADJECTIVE precedes the property in every language that
+        // has one — es `mi valor`, de `mein wert`, ko `내 값`, sw `yangu thamani`.
+        //
+        // This used to branch on `markerPosition === 'after-object'` and emit it
+        // AFTER for ar/id/pl/ru/sw/uk (`قيمة لي`, `nilai saya`, `thamani yangu`),
+        // an order that does not parse back. Measured in all four sampled
+        // languages: `weka thamani yangu kwa #out` returns NULL in sw/ar/id and
+        // mis-types the patient as `expression` in pl, while
+        // `weka yangu thamani kwa #out` parses as a property-path.
+        //
+        // The mistake was reading one field for two questions. `markerPosition`
+        // says where a MARKER sits relative to the OWNER; it says nothing about
+        // where an ADJECTIVE sits relative to the PROPERTY. Marker-based owners
+        // still consult it, in the switch further down.
         return `${specialForm} ${property}`;
       }
     }
@@ -829,12 +833,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const { marker, markerPosition, usePossessiveAdjectives } = profile.possessive;
 
       // Languages that use possessive adjectives without explicit object reference
+      // Same rule as the special-form branch above: the adjective precedes the
+      // property. `saya nilai`, not `nilai saya`.
       if (usePossessiveAdjectives && objectRef) {
-        // Fall back to generic construction if no special form
-        // e.g., Indonesian: "value saya" (property + possessor)
-        if (markerPosition === 'after-object') {
-          return `${property} ${objectStr}`;
-        }
+        return `${objectStr} ${property}`;
       }
 
       // Particle/marker-based languages, OBJECT-first. Only `between` belongs
