@@ -18,19 +18,19 @@ function getSetPatternsBn(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: '{destination} কে {patient} এ সেট করুন',
+        format: '{destination} কে {patient} তে সেট করুন',
         tokens: [
           { type: 'role', role: 'destination' },
           { type: 'literal', value: 'কে' },
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'এ', alternatives: ['তে'] },
+          { type: 'literal', value: 'তে', alternatives: ['এ'] },
           { type: 'literal', value: 'সেট', alternatives: ['নির্ধারণ'] },
           { type: 'literal', value: 'করুন' },
         ],
       },
       extraction: {
         destination: { position: 0 },
-        patient: { marker: 'এ', position: 2 },
+        patient: { marker: 'তে', position: 2 },
       },
     },
     // Simple pattern: সেট :x 5
