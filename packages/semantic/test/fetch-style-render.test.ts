@@ -25,9 +25,10 @@
  *
  * Measured: +67 pairs, zero regressions (81.41% → 83.28%).
  *
- * KNOWN RESIDUAL, pinned at the bottom rather than hidden: five languages render
- * the style correctly but cannot read it back *inside an event handler* — a
- * handler-body composition defect, not a fetch one.
+ * The file's last known residual — five languages rendering the style correctly
+ * but unable to read it back *inside an event handler* — cleared when the fused
+ * `<cmd>-event-{L}` generators became schema-driven, and its failing-when-fixed
+ * pin has been promoted to a positive ×23 assertion at the bottom.
  *
  * (A second residual lived here — six languages losing `responseType` — and this
  * file's failing-when-fixed test is what reported it cleared when `sovFetch`
@@ -117,27 +118,28 @@ describe('a fetch with NO options is unchanged', () => {
   });
 });
 
-describe('KNOWN RESIDUALS — failing-when-fixed, delete as they clear', () => {
-  // Pinned rather than skipped so they stay visible and so the test asks to be
-  // updated the moment the underlying defect is fixed.
-
-  it('five languages lose the style INSIDE an event handler', () => {
-    // Not a fetch defect: the bare command parses correctly in all five (asserted
-    // above). Inside a handler, pl/ru/uk bind the object literal to `patient` and
-    // he/id drop it — a handler-body composition problem in the parser.
-    const stillBroken: string[] = [];
-    for (const language of ['pl', 'ru', 'uk', 'he', 'id']) {
-      const rendered = translate(`on click ${WITH_OPTIONS}`, 'en', language);
-      const node = parse(rendered, language) as EventHandlerSemanticNode | null;
-      const fetchNode = node?.body?.find(b => (b as CommandSemanticNode).action === 'fetch') as
-        | CommandSemanticNode
-        | undefined;
-      if (fetchNode?.roles.has('style' as never)) stillBroken.push(language);
-    }
+describe('the options object survives INSIDE an event handler', () => {
+  // This was the file's last known residual, pinned failing-when-fixed for
+  // pl/ru/uk/he/id: the bare command parsed correctly in all five while the
+  // handler form bound the object literal to `patient` (pl/ru/uk) or dropped it
+  // (he/id). The cause was the fused `fetch-event-{L}` pattern, hardcoded to
+  // `event + verb + patient + [destination] + [source]` and blind to
+  // `commandSchema.roles`, so it had no style slot at all and — because it has
+  // no patient role either — bound the URL to `patient`, leaving the profile's
+  // `from`-marked group free to take the options run instead (pl `z` marks both).
+  //
+  // Promoted to a positive assertion over ALL 23 languages, since that is what
+  // it now measures.
+  it.each(LANGUAGES)('%s keeps the style inside `on click fetch … with …`', language => {
+    const rendered = translate(`on click ${WITH_OPTIONS}`, 'en', language);
+    const node = parse(rendered, language) as EventHandlerSemanticNode | null;
+    const fetchNode = node?.body?.find(b => (b as CommandSemanticNode).action === 'fetch') as
+      | CommandSemanticNode
+      | undefined;
+    expect(fetchNode, `${language}: the handler-wrapped fetch did not re-parse`).toBeDefined();
     expect(
-      stillBroken,
-      `these now keep style inside a handler — remove them from this list: ${stillBroken.join(', ')}`
-    ).toEqual([]);
+      fetchNode!.roles.has('style' as never),
+      `${language} lost the style inside a handler: ${rendered}`
+    ).toBe(true);
   });
-
 });

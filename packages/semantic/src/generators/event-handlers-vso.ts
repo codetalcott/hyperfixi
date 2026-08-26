@@ -16,7 +16,13 @@ import {
   eventHandlerSourceGroup,
 } from './command-schemas';
 import type { GeneratorConfig } from './pattern-generator';
-import { appendOptionalScope, appendOptionalViewTransition } from './event-handlers-sov';
+import {
+  appendOptionalScope,
+  appendOptionalViewTransition,
+  appendRemainingOptionalRoles,
+  fusedBoundRole,
+  fusedBoundRoleTokens,
+} from './event-handlers-sov';
 import { schemaMarkerAlternatives } from '../parser/utils/marker-resolution';
 
 /**
@@ -68,12 +74,22 @@ export function generateVSOEventHandlerPattern(
     : { type: 'literal', value: keyword.primary };
   tokens.push(verbToken);
 
-  // Patient role
-  tokens.push({ type: 'role', role: 'patient', optional: false });
+  // The wrapped command's bare argument slot: `patient` for the commands that
+  // declare one, otherwise the schema's own primary required role.
+  const boundRole = fusedBoundRole(commandSchema);
+  tokens.push(...fusedBoundRoleTokens(commandSchema, profile, boundRole));
 
   // Optional destination with preposition
   const destMarker = profile.roleMarkers.destination;
-  if (destMarker) {
+  // Gated on the SCHEMA, not on the profile alone: an unconditional destination
+  // group fabricated a slot for commands that have no destination role, and the
+  // marker then ate a phrase belonging to a role that does exist — ru
+  // `увеличить #score на 10` bound `на 10` as increment's (nonexistent)
+  // destination, so the quantity was dropped. Same contract as
+  // eventHandlerDestinationGroup/eventHandlerSourceGroup, which have always
+  // self-gated this way.
+  const schemaHasDestination = commandSchema.roles.some(r => r.role === 'destination');
+  if (destMarker && schemaHasDestination && boundRole !== 'destination') {
     tokens.push({
       type: 'group',
       optional: true,
@@ -88,7 +104,24 @@ export function generateVSOEventHandlerPattern(
 
   // Optional source phrase (`de .items`) for wrapped commands with a
   // source role (remove/take): previously dropped, breaking remove-from
-  tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+  if (boundRole !== 'source') {
+    tokens.push(...eventHandlerSourceGroup(commandSchema, profile.roleMarkers.source));
+  }
+
+  const extraction: Record<string, ExtractionRule> = {
+    action: { value: commandSchema.action },
+    event: { fromRole: 'event' },
+    [boundRole]: { fromRole: boundRole },
+    ...(boundRole === 'destination' ? {} : eventHandlerDestinationExtraction(commandSchema)),
+    ...(boundRole === 'source' ? {} : eventHandlerSourceExtraction(commandSchema)),
+  };
+  appendRemainingOptionalRoles(
+    tokens,
+    extraction,
+    commandSchema,
+    profile,
+    new Set(['event', boundRole, 'destination', 'source'])
+  );
 
   return {
     id: `${commandSchema.action}-event-${profile.code}-vso`,
@@ -96,16 +129,10 @@ export function generateVSOEventHandlerPattern(
     command: 'on', // This is an event handler pattern
     priority: (config.basePriority ?? 100) + 50, // Higher priority than simple commands
     template: {
-      format: `${eventMarker.primary} {event} ${keyword.primary} {patient} ${destMarker?.primary || ''} {destination?}`,
+      format: `${eventMarker.primary} {event} ${keyword.primary} {${boundRole}} ${destMarker?.primary || ''} {destination?}`,
       tokens,
     },
-    extraction: {
-      action: { value: commandSchema.action }, // Extract the wrapped command
-      event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      ...eventHandlerDestinationExtraction(commandSchema),
-      ...eventHandlerSourceExtraction(commandSchema),
-    },
+    extraction,
   };
 }
 
