@@ -44,6 +44,7 @@ const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
+import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 // =============================================================================
@@ -569,10 +570,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private valueToNaturalString(value: SemanticValue, language: string = 'en'): string {
     switch (value.type) {
       case 'literal':
+        // A quoted string is author text and is emitted verbatim; a bare literal
+        // is vocabulary (`true`, `null`) and localizes like any other value word.
         if (typeof value.value === 'string' && value.dataType === 'string') {
           return `"${value.value}"`;
         }
-        return String(value.value);
+        return this.localizeValue(String(value.value), language);
 
       case 'selector':
         return value.value;
@@ -584,11 +587,25 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         return this.renderPropertyPath(value, language);
 
       case 'expression':
-        return value.raw;
+        // `raw` is the English source of the expression. Emitting it unchanged
+        // is what made the target-language parser drop the role — it could not
+        // bind an English interior. Localize the vocabulary inside it; strings,
+        // selectors and unknown identifiers are left alone by the localizer.
+        return this.localizeValue(value.raw, language);
 
       case 'flag':
-        return value.name;
+        return this.localizeValue(value.name, language);
     }
+  }
+
+  /**
+   * Localize the vocabulary inside a value, when the target profile carries a
+   * lexicon. English is a no-op, and a profile without a lexicon degrades to
+   * the previous behaviour (English interior) rather than failing.
+   */
+  private localizeValue(raw: string, language: string): string {
+    if (language === 'en') return raw;
+    return localizeValueInterior(raw, tryGetProfile(language));
   }
 
   /**
@@ -614,7 +631,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private renderPropertyPath(value: PropertyPathValue, language: string): string {
     const profile = tryGetProfile(language);
-    const property = value.property;
+    // A BARE property word is vocabulary and localizes (`my value` -> `mi valor`,
+    // `私の 値`); a DOTTED path is a JS/DOM member expression and must not
+    // (`#output.innerText`, `my value.length` stay verbatim in every language).
+    // The localizer's word rule already refuses dot-attached tokens, so this is
+    // one call rather than a special case — and it matches what the corpus has
+    // rendered all along.
+    const property = this.localizeValue(value.property, language);
 
     // Get the object reference
     const objectRef = value.object.type === 'reference' ? value.object.value : null;
