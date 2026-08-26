@@ -19,5 +19,6 @@ export {
   computePrecision,
   spuriousActions,
   collectRoleSignature,
+  collectRoleSignatureStrict,
   collectRoleValueSignature,
 } from '@lokascript/semantic/fidelity';
