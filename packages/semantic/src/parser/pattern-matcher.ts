@@ -1649,7 +1649,12 @@ export class PatternMatcher {
     tokens.advance();
 
     // "X of #y" means the X property of #y → property-path(object: #y, property: X).
-    return createPropertyPath(createSelector(owner.value), this.toEnglishProperty(property.value));
+    // An `of`-phrase is a POSSESSIVE surface, not a member access.
+    return createPropertyPath(
+      createSelector(owner.value),
+      this.toEnglishProperty(property.value),
+      'possessive'
+    );
   }
 
   /**
@@ -1841,7 +1846,11 @@ export class PatternMatcher {
 
       // Create property-path: my value -> { object: me, property: 'value' }
       // baseRef from getPossessiveReference is always a valid reference ('me', 'you', 'it', etc.)
-      return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
+      return createPropertyPath(
+        createReference(baseRef as ReferenceValue['value']),
+        chainedProps,
+        'possessive'
+      );
     }
 
     // Not a valid property, revert
@@ -1927,7 +1936,11 @@ export class PatternMatcher {
     }
     tokens.advance();
 
-    return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
+    return createPropertyPath(
+      createReference(baseRef as ReferenceValue['value']),
+      chainedProps,
+      'possessive'
+    );
   }
 
   /**
@@ -2284,7 +2297,7 @@ export class PatternMatcher {
         fusedProps.length > 0 &&
         isValidReference(baseLower)
       ) {
-        return createPropertyPath(createReference(baseLower), fusedProps.join('.'));
+        return createPropertyPath(createReference(baseLower), fusedProps.join('.'), 'dot');
       }
       if (fusedIsMethodCall) {
         // Consume the balanced call parens into the expression. Left in the
@@ -2413,7 +2426,7 @@ export class PatternMatcher {
     const opBaseLower = token.value.toLowerCase();
     if (allowPropertyPath && isValidReference(opBaseLower)) {
       const opProps = chain.split('.').slice(1).join('.');
-      return createPropertyPath(createReference(opBaseLower), opProps);
+      return createPropertyPath(createReference(opBaseLower), opProps, 'dot');
     }
     // Create expression value: userData.name
     return {
@@ -2523,7 +2536,8 @@ export class PatternMatcher {
     // `#picker's 値`/`giá trị` → `#picker's value`).
     return createPropertyPath(
       createSelector(token.value),
-      this.toEnglishProperty(propertyToken.value)
+      this.toEnglishProperty(propertyToken.value),
+      'possessive'
     );
   }
 
@@ -2573,7 +2587,7 @@ export class PatternMatcher {
     // Extract property name without the leading dot
     const propertyName = propertyToken.value.slice(1);
 
-    return createPropertyPath(createSelector(token.value), propertyName);
+    return createPropertyPath(createSelector(token.value), propertyName, 'dot');
   }
 
   /**
