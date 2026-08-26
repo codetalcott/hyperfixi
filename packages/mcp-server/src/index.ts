@@ -102,6 +102,15 @@ const { version: pkgVersion } = createRequire(import.meta.url)('../package.json'
 // serveStdio builds for one connection.
 const LLM_SAMPLING_ENABLED = process.env.LOKASCRIPT_MCP_LLM_TOOLS === '1';
 
+// Derived from samplingTools rather than hand-listed: `analyze_content` is a
+// sampling tool whose name also matches the `analyze_` prefix guard that routes
+// analysis tools further up this dispatch chain. That guard returns
+// unconditionally, so the sampling branch below was unreachable for it and the
+// tool answered "Unknown analysis tool: analyze_content" instead of sampling
+// (or, since the opt-in gate landed, instead of its disabled-tool message).
+// Deriving the set keeps the two in sync if the sampling surface ever changes.
+const SAMPLING_TOOL_NAMES = new Set(samplingTools.map(t => t.name));
+
 // Served as MCP `instructions` so every connected agent gets the loop without
 // reading any docs. Keep in sync with AGENTS.md at the repo root.
 const SERVER_INSTRUCTIONS = `Deterministic tooling for hyperscript (a compact DOM-behavior DSL) in 24 human languages. No tool here calls an LLM — every check is a real parser/compiler you can trust.
@@ -195,8 +204,13 @@ function buildServer(): Server {
       return staleToolError(stale);
     }
 
-    // Analysis tools (from core/ast-utils)
-    if (name.startsWith('analyze_') || name === 'explain_code' || name === 'recognize_intent') {
+    // Analysis tools (from core/ast-utils). The prefix guard must not swallow
+    // `analyze_content`, which is a sampling tool handled further down.
+    if (
+      (name.startsWith('analyze_') && !SAMPLING_TOOL_NAMES.has(name)) ||
+      name === 'explain_code' ||
+      name === 'recognize_intent'
+    ) {
       return handleAnalysisTool(name, args as Record<string, unknown>);
     }
 
@@ -316,13 +330,7 @@ function buildServer(): Server {
 
     // MCP Sampling tools (Layer 3 — invoke Claude via client). Off by default:
     // see LLM_SAMPLING_ENABLED above.
-    if (
-      name === 'ask_claude' ||
-      name === 'summarize_content' ||
-      name === 'analyze_content' ||
-      name === 'translate_content' ||
-      name === 'execute_llm'
-    ) {
+    if (SAMPLING_TOOL_NAMES.has(name)) {
       if (!LLM_SAMPLING_ENABLED) {
         return {
           content: [

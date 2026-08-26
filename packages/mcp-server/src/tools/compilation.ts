@@ -213,7 +213,20 @@ const REPAIR_HINT =
   'If an error names a code (e.g. MISSING.ARGUMENT), get_code_fixes returns concrete fixes for it; ' +
   'get_command_docs lists the roles each command accepts.';
 
-function compileResult(result: { ok: boolean }): {
+// A parse can succeed while silently dropping part of the input — the parser
+// degrades rather than failing (UNCONSUMED_INPUT, inert shapes), so the result
+// is `ok` with a warning and no error status. That is the likeliest way an
+// agent ships something wrong, and REPAIR_HINT does not fire for it because the
+// call did not fail. This block is the same affordance for the warning band.
+// Deliberately NOT an error: the parse did succeed, so `isError` stays false.
+const REVIEW_HINT =
+  'This parsed, but the diagnostics above are non-empty. A warning such as ' +
+  'UNCONSUMED_INPUT means tokens were parsed but bound to no role, so a role may have ' +
+  'fallen back to a default (often `me`) — the result can look valid while doing something ' +
+  'other than you intended. Compare the returned action/roles/trigger against your intent ' +
+  'before compiling; score_fidelity can prove a rewrite kept the original meaning.';
+
+function compileResult(result: { ok: boolean; diagnostics?: Array<{ severity?: string }> }): {
   content: Array<{ type: string; text: string }>;
   isError?: boolean;
 } {
@@ -222,6 +235,8 @@ function compileResult(result: { ok: boolean }): {
   ];
   if (!result.ok) {
     content.push({ type: 'text', text: REPAIR_HINT });
+  } else if (result.diagnostics?.some(d => d.severity === 'warning')) {
+    content.push({ type: 'text', text: REVIEW_HINT });
   }
   return { content, isError: !result.ok };
 }
