@@ -44,6 +44,7 @@ const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
+import { getOfPossessiveMarker } from '../parser/utils/expression-lexicon';
 import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
@@ -799,21 +800,53 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         }
       }
 
-      // Particle/marker-based languages
+      // Particle/marker-based languages, OBJECT-first. Only `between` belongs
+      // here: ja `#pickerの 値`, zh `#picker的 值`, ko/bn/hi/th alike, which is
+      // what both the corpus and the of-possessive matcher expect.
+      if (marker && markerPosition === 'between') {
+        return profile.usesSpaces
+          ? `${objectStr}${marker} ${property}`
+          : `${objectStr}${marker}${property}`;
+      }
+
+      // Everything else is PROPERTY-first: es `valor de #picker`, de `wert von
+      // #picker`, ar `قيمة لـ #picker`, id `nilai dari #picker`. That is what the
+      // i18n corpus emits and — the part that actually broke — the only order
+      // the parser's of-possessive matcher accepts. Measured: es
+      // `valor de #picker` parses back as property-path, `#picker de valor` as a
+      // bare selector, and the property is lost.
+      //
+      // The marker comes from the shared of-marker table rather than
+      // `possessive.marker`, which is EMPTY for de/ar/id/pl/ru/sw/uk/ms — those
+      // languages skipped the switch below entirely and fell through to the
+      // English `'s`, which is why corpus rows read `#picker's wartość`.
+      //
+      // SELECTOR objects only. A REFERENCE object (`my value`) reaches here when
+      // the language has no possessive special form, and rewriting it as
+      // `nilai daripada saya` was measured to BREAK ms/others that render it
+      // fine today — the of-possessive matcher is gated on a selector following
+      // the marker, so a pronoun there is not the construction it recognizes.
+      // NOT English: en has its own `#picker's value` construction (the default
+      // below), and R4 renders foreign->English — changing en output here would
+      // move a gate that has nothing to do with this fix. Measured: without this
+      // guard, en emitted `value from #picker`.
+      const ofMarker =
+        language !== 'en' && value.object.type === 'selector'
+          ? getOfPossessiveMarker(profile)
+          : undefined;
+      if (ofMarker) {
+        return `${property} ${ofMarker} ${objectStr}`;
+      }
+
+      // A REFERENCE owner keeps the construction it always had. qu
+      // `noqa-pa *opacity` is the case that proves this must stay: dropping the
+      // after-object marker cost four qu rows their `set.destination`.
       if (marker) {
         switch (markerPosition) {
-          case 'between':
-            // Japanese: "自分の value", Chinese: "我的 value", Korean: "나의 value"
-            return profile.usesSpaces
-              ? `${objectStr}${marker} ${property}`
-              : `${objectStr}${marker}${property}`;
-
           case 'after-object':
             // Quechua: "ñuqapa value"
             return `${objectStr}${marker} ${property}`;
-
           case 'before-property':
-            // Spanish (with de): "value de yo" (rarely used, usually special forms)
             return `${objectStr} ${marker} ${property}`;
         }
       }
