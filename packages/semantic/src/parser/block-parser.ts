@@ -802,6 +802,34 @@ function sourceClauseLength(tokens: readonly LanguageToken[], i: number, languag
 }
 
 /**
+ * Every surface a handler inside a feature block can OPEN with, in this language.
+ *
+ * `keywords.on` alone is too narrow, because it is not where the renderer gets
+ * the head word: `findBestPattern` picks the language's own event-handler
+ * pattern, and in de/fr/id/qu that is the temporal conjunction (`wenn`, `quand`,
+ * `ketika`, `maykama` — all normalized to `when`), while zh emits the
+ * correlative `一 … 就`. A head the scan does not recognize is not a parse
+ * error: the body simply comes back EMPTY, so `eventsource`/`socket` blocks lost
+ * their whole handler in silence in six languages.
+ *
+ * The profile's own `eventHandler` block is the authority for these — its
+ * `eventMarker` and `temporalMarkers` are the surfaces the generated and
+ * handcrafted handler patterns are built from — plus the normalized `when`,
+ * which is how the four conjunction languages tokenize.
+ */
+function eventHandlerHeadForms(language: string): Set<string> {
+  const forms = keywordForms(language, 'on');
+  forms.add('when');
+  const eventHandler = tryGetProfile(language)?.eventHandler;
+  if (eventHandler?.keyword) {
+    forms.add(eventHandler.keyword.primary.toLowerCase());
+    for (const alt of eventHandler.keyword.alternatives ?? []) forms.add(alt.toLowerCase());
+  }
+  for (const marker of eventHandler?.temporalMarkers ?? []) forms.add(marker.toLowerCase());
+  return forms;
+}
+
+/**
  * Token index where the feature's body begins, or -1 when the head is malformed.
  * `blockEnd` bounds the head scan (-1 when the block is unterminated).
  *
@@ -842,10 +870,27 @@ function featureBodyStart(
   if (nameIdx < 0) return -1;
   if (action === 'worker') return nameIdx + 1;
 
-  const onForms = keywordForms(language, 'on');
+  const onForms = eventHandlerHeadForms(language);
+  const eventForms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.event);
   const limit = blockEnd >= 0 ? blockEnd : tokens.length;
   for (let j = nameIdx + 1; j < limit; j++) {
-    if (tokenMatches(tokens[j], onForms) && looksLikeEvent(tokens[j + 1])) return j;
+    if (!tokenMatches(tokens[j], onForms)) continue;
+    // Prepositional: `<on> <event>` (en `on message`, de `wenn message`).
+    if (looksLikeEvent(tokens[j + 1])) return j;
+    // Postpositional with a separate EVENT-role marker between the two
+    // (ko `message 을 에`, the SOV trigger signature). Checked BEFORE the plain
+    // postpositional case: a bare particle satisfies `looksLikeEvent`, so the
+    // shorter rule would otherwise claim the marker itself as the event.
+    if (
+      j > nameIdx + 2 &&
+      eventForms.size > 0 &&
+      tokenMatches(tokens[j - 1], eventForms) &&
+      looksLikeEvent(tokens[j - 2])
+    ) {
+      return j - 2;
+    }
+    // Postpositional: `<event> <on>` (hi `message पर`, bn `message তে`).
+    if (j > nameIdx + 1 && looksLikeEvent(tokens[j - 1])) return j - 1;
   }
   return limit;
 }

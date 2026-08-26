@@ -191,6 +191,10 @@ export const chineseProfile: LanguageProfile = {
     // Pattern: 当 [event] [verb] [patient] 在 [destination?]
     // Example: 当 点击 切换 .active 在 #button
     eventMarker: { primary: '当', alternatives: ['在'], position: 'before' },
-    temporalMarkers: ['当', '在...时'], // temporal conjunctions (when)
+    // `一 X 就 Y` ("as soon as X, then Y") is zh's correlative handler head, and
+    // it is what the renderer emits (`event-zh-immediate`). Listed here rather
+    // than in `keywords.on` because `一` is also the numeral one: it opens a
+    // handler only where a handler head is already expected.
+    temporalMarkers: ['当', '在...时', '一'], // temporal conjunctions (when)
   },
 };
