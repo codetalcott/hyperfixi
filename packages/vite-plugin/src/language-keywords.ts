@@ -112,6 +112,11 @@ export const JAPANESE_KEYWORDS = new Set([
   '待機',
   'の間',
   '間',
+  '結果',
+  '最初',
+  '最後',
+  '次',
+  '前',
 ]);
 
 /**
@@ -141,6 +146,11 @@ export const KOREAN_KEYWORDS = new Set([
   '반복',
   '대기',
   '동안',
+  '결과',
+  '첫번째',
+  '마지막',
+  '다음',
+  '이전',
 ]);
 
 /**
@@ -168,6 +178,11 @@ export const CHINESE_KEYWORDS = new Set([
   '重复',
   '等待',
   '持续',
+  '结果',
+  '第一个',
+  '最后一个',
+  '下一个',
+  '上一个',
 ]);
 
 /**
@@ -210,6 +225,11 @@ export const ARABIC_KEYWORDS = new Set([
   'كرر',
   'انتظر',
   'بينما',
+  'نتيجة',
+  'أول',
+  'آخر',
+  'التالي',
+  'السابق',
 ]);
 
 /**
@@ -244,6 +264,8 @@ export const HE_KEYWORDS = new Set([
   'המתן',
   'כל עוד',
   'בזמן',
+  'תוצאה',
+  'אחרון',
 ]);
 
 /**
@@ -283,6 +305,7 @@ export const SPANISH_KEYWORDS = new Set([
   'repetir',
   'esperar',
   'mientras',
+  'resultado',
   'primero',
   'primera',
   'último',
@@ -324,6 +347,11 @@ export const PORTUGUESE_KEYWORDS = new Set([
   'esperar',
   'aguardar',
   'enquanto',
+  'resultado',
+  'primeiro',
+  'último',
+  'próximo',
+  'anterior',
 ]);
 
 /**
@@ -357,6 +385,11 @@ export const FRENCH_KEYWORDS = new Set([
   'répéter',
   'attendre',
   'pendant',
+  'résultat',
+  'premier',
+  'dernier',
+  'suivant',
+  'précédent',
 ]);
 
 /**
@@ -389,6 +422,11 @@ export const GERMAN_KEYWORDS = new Set([
   'warten',
   'solange',
   'während',
+  'ergebnis',
+  'erste',
+  'letzte',
+  'nächste',
+  'vorherige',
 ]);
 
 /**
@@ -414,6 +452,11 @@ export const TURKISH_KEYWORDS = new Set([
   'tekrarla',
   'bekle',
   'süresince',
+  'sonuç',
+  'ilk',
+  'sonuncu',
+  'sonraki',
+  'önceki',
 ]);
 
 /**
@@ -449,6 +492,11 @@ export const INDONESIAN_KEYWORDS = new Set([
   'ulangi',
   'tunggu',
   'selama',
+  'hasil',
+  'pertama',
+  'terakhir',
+  'berikutnya',
+  'sebelumnya',
 ]);
 
 /**
@@ -478,6 +526,11 @@ export const MS_KEYWORDS = new Set([
   'tunggu',
   'selagi',
   'semasa',
+  'hasil',
+  'pertama',
+  'terakhir',
+  'seterusnya',
+  'sebelumnya',
 ]);
 
 /**
@@ -507,6 +560,11 @@ export const SWAHILI_KEYWORDS = new Set([
   'subiri',
   'ngoja',
   'kadri',
+  'matokeo',
+  'kwanza',
+  'wamwisho',
+  'ijayo',
+  'iliyopita',
 ]);
 
 /**
@@ -540,6 +598,11 @@ export const QUECHUA_KEYWORDS = new Set([
   'muyu',
   'suyay',
   'kaykamaqa',
+  'lluqsiy',
+  'ñawpaq',
+  'qhipa',
+  'qhipantin',
+  'ñawpaqnin',
 ]);
 
 /**
@@ -572,6 +635,11 @@ export const ITALIAN_KEYWORDS = new Set([
   'aspettare',
   'attendere',
   'mentre',
+  'risultato',
+  'primo',
+  'ultimo',
+  'prossimo',
+  'precedente',
 ]);
 
 /**
@@ -609,6 +677,11 @@ export const VIETNAMESE_KEYWORDS = new Set([
   'đợi',
   'chờ đợi',
   'trong khi',
+  'kết quả',
+  'đầu tiên',
+  'cuối cùng',
+  'tiếp theo',
+  'trước đó',
 ]);
 
 /**
@@ -652,6 +725,11 @@ export const POLISH_KEYWORDS = new Set([
   'dopóki',
   'dopoki',
   'podczas',
+  'wynik',
+  'pierwszy',
+  'ostatni',
+  'następny',
+  'poprzedni',
 ]);
 
 /**
@@ -694,6 +772,11 @@ export const RUSSIAN_KEYWORDS = new Set([
   'жди',
   'подожди',
   'пока',
+  'результат',
+  'первый',
+  'последний',
+  'следующий',
+  'предыдущий',
 ]);
 
 /**
@@ -736,6 +819,11 @@ export const UKRAINIAN_KEYWORDS = new Set([
   'чекай',
   'зачекай',
   'поки',
+  'результат',
+  'перший',
+  'останній',
+  'наступний',
+  'попередній',
 ]);
 
 /**
@@ -773,6 +861,11 @@ export const HINDI_KEYWORDS = new Set([
   'प्रतीक्षा',
   'रुकें',
   'जब तक',
+  'परिणाम',
+  'पहला',
+  'अंतिम',
+  'अगला',
+  'पिछला',
 ]);
 
 /**
@@ -806,6 +899,11 @@ export const BENGALI_KEYWORDS = new Set([
   'বার বার',
   'অপেক্ষা',
   'যতক্ষণ',
+  'ফলাফল',
+  'প্রথম',
+  'শেষ',
+  'পরবর্তী',
+  'আগের',
 ]);
 
 /**
@@ -832,6 +930,11 @@ export const THAI_KEYWORDS = new Set([
   'ทำซ้ำ',
   'รอ',
   'ในขณะที่',
+  'ผลลัพธ์',
+  'แรก',
+  'สุดท้าย',
+  'ถัดไป',
+  'ก่อนหน้า',
 ]);
 
 /**
@@ -868,6 +971,11 @@ export const TL_KEYWORDS = new Set([
   'maghintay',
   'hintay',
   'habang',
+  'resulta',
+  'una',
+  'huli',
+  'susunod',
+  'nakaraan',
 ]);
 
 /**
