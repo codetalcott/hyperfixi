@@ -25,11 +25,14 @@
  *
  * Measured: +67 pairs, zero regressions (81.41% → 83.28%).
  *
- * KNOWN RESIDUALS, pinned at the bottom rather than hidden: five languages
- * render the style correctly but cannot read it back *inside an event handler*
- * (a handler-body composition defect, not a fetch one), and six still lose
- * `responseType` (its marker is declared in only 2 of 24 languages — the A2
- * half of this arc).
+ * KNOWN RESIDUAL, pinned at the bottom rather than hidden: five languages render
+ * the style correctly but cannot read it back *inside an event handler* — a
+ * handler-body composition defect, not a fetch one.
+ *
+ * (A second residual lived here — six languages losing `responseType` — and this
+ * file's failing-when-fixed test is what reported it cleared when `sovFetch`
+ * gained a trailing slot. `sov-fetch-responsetype.test.ts` now covers that
+ * ground positively.)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -137,22 +140,4 @@ describe('KNOWN RESIDUALS — failing-when-fixed, delete as they clear', () => {
     ).toEqual([]);
   });
 
-  it('six languages still lose responseType (the A2 half of this arc)', () => {
-    // `responseType.markerOverride` is declared in only 2 of 24 languages, and
-    // the SOV languages need particle disambiguation on top.
-    //
-    // This list is the SOV six, not the eight the corpus reports: he and id fail
-    // in the corpus only in handler/style-combined rows, and keep responseType
-    // on the bare command, so listing them here would have been a false pin.
-    const stillBroken: string[] = [];
-    for (const language of ['bn', 'hi', 'ja', 'ko', 'qu', 'tr']) {
-      const rendered = translate('fetch /api/user as json', 'en', language);
-      const node = parse(rendered, language) as CommandSemanticNode | null;
-      if (node?.roles.has('responseType' as never)) stillBroken.push(language);
-    }
-    expect(
-      stillBroken,
-      `these now keep responseType — remove them from this list: ${stillBroken.join(', ')}`
-    ).toEqual([]);
-  });
 });

@@ -1,8 +1,8 @@
 {
   "description": "Allowlist for the ENGLISH->foreign render-fidelity gate (src/multilingual/render-fidelity.test.ts). Each entry is a corpus pattern id mapped to the languages whose rendered surface loses an action or a role from the English reference when parsed back. A NEW failing (pattern,language) pair outside this list, or an allowlisted pair that now passes, both fail the gate. Shrinks only: deleting an entry is how a renderer fix is completed. Regenerate with tools/regen-render-fidelity-baseline.ts.",
   "checked": 3588,
-  "clean": 2988,
-  "cleanPct": 83.28,
+  "clean": 3014,
+  "cleanPct": 84,
   "allowedFailures": {
     "accordion-exclusive": ["bn", "ja", "ko", "tr"],
     "accordion-toggle": ["bn", "ja", "ko", "tr", "vi", "zh"],
@@ -55,7 +55,7 @@
     "default-value": ["bn", "hi", "ja", "qu", "th", "tl"],
     "dropdown-close-outside": ["bn"],
     "dropdown-toggle": ["bn", "ja", "ko", "tr", "vi", "zh"],
-    "event-debounce": ["bn", "he", "hi", "id", "ja", "ko", "qu", "tr"],
+    "event-debounce": ["bn", "he", "id"],
     "event-from-elsewhere": ["bn"],
     "eventsource-basic": [
       "ar",
@@ -84,12 +84,12 @@
     ],
     "fade-out-remove": ["bn", "tr"],
     "fetch-basic": ["bn"],
-    "fetch-do-not-throw": ["bn", "he", "hi", "id", "ja", "ko", "qu", "tr"],
-    "fetch-error-handling": ["bn", "he", "hi", "id", "ja", "ko", "qu", "tr"],
+    "fetch-do-not-throw": ["bn", "he", "id"],
+    "fetch-error-handling": ["bn", "he", "id"],
     "fetch-formdata": ["bn", "he", "id", "pl", "ru", "uk"],
-    "fetch-json": ["bn", "he", "hi", "id", "ja", "ko", "qu", "tr"],
+    "fetch-json": ["bn", "he", "id"],
     "fetch-loading-state": ["th"],
-    "fetch-with-headers": ["bn", "he", "hi", "id", "ja", "ko", "qu", "tr"],
+    "fetch-with-headers": ["he", "id"],
     "fetch-with-method": ["bn", "he", "id", "pl", "ru", "uk"],
     "fetch-with-method-body": ["he", "id", "pl", "ru", "uk"],
     "get-attribute-possessive-dot": [
