@@ -160,37 +160,23 @@ export interface LanguageProfile {
    * Format TBD — currently the i18n package defines its own GrammarRule type.
    */
   readonly grammarRules?: readonly GrammarRuleRef[];
-  /**
-   * Non-command vocabulary: the words that appear INSIDE role values rather
-   * than as the command verb or a role marker.
-   *
-   * `keywords` covers command verbs; `roleMarkers` covers the particles that
-   * frame a role. Neither covers the interior of a value — the `true` in
-   * `set @disabled to true`, the `value` in `put my value into #out`, the
-   * `seconds` in `wait 2 seconds`. Without this block the renderer emits those
-   * words in English, and the target-language parser cannot bind them back,
-   * so the role is silently dropped (measured 2026-08-26: en→foreign render was
-   * 73.3% structurally clean against the English reference, versus 97.0% for the
-   * i18n corpus, and 99.6% of the loss is attributable to five value types).
-   *
-   * The parse side has always had this vocabulary — in the i18n dictionaries and
-   * in each tokenizer's EXTRAS (`spanish.ts` knows `verdadero → true`). This block
-   * is what makes it reachable from the RENDER side, so `translate('set @disabled
-   * to true', 'en', 'es')` can emit `verdadero` rather than `true`.
-   *
-   * Category names mirror `Dictionary` in @lokascript/i18n so the derivation is
-   * mechanical. `primary` is the form to RENDER; `alternatives` are additional
-   * surfaces to ACCEPT when parsing.
-   */
-  readonly lexicon?: LanguageLexicon;
 }
 
 /**
- * Non-command vocabulary, grouped the way the i18n `Dictionary` groups it.
+ * Non-command vocabulary: the words that appear INSIDE role values rather than
+ * as the command verb or a role marker — the `true` in `set @disabled to true`,
+ * the `value` in `put my value into #out`, the `seconds` in `wait 2 seconds`.
  *
- * Every category is optional: a language that lacks an entry renders that word
- * in English, which is exactly today's behaviour, so partial coverage is safe
- * and additive. (Hebrew ships 30 entries where most languages ship ~110.)
+ * Deliberately NOT a field on `LanguageProfile`. It lives in `lexicons/{code}.ts`
+ * and reaches the renderer through `lexicon-registry.ts`, because a bundler
+ * cannot drop an unused property of an exported object literal — as a profile
+ * field it was charged to every parse-only consumer. See lexicon-registry.ts.
+ *
+ * Categories mirror the i18n `Dictionary` so the derivation stays mechanical.
+ * `primary` is the form to RENDER; `alternatives` are extra surfaces to ACCEPT
+ * when parsing. Every category is optional: a missing entry renders in English,
+ * which is the pre-lexicon behaviour, so partial coverage is safe and additive.
+ * (Hebrew ships 30 entries where most languages ship ~110.)
  */
 export interface LanguageLexicon {
   /** DOM event names: click → クリック. A `render: false` entry parses but never renders. */

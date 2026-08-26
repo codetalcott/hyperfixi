@@ -27,7 +27,8 @@
  * A word is rewritten only when the profile vouches for it, so an unknown token
  * is always left alone rather than guessed at.
  */
-import type { LanguageProfile } from '../generators/profiles/types';
+import type { LanguageLexicon, LanguageProfile } from '../generators/profiles/types';
+import { getLexicon } from '../lexicon-registry';
 
 /** Category order matters: first hit wins, mirroring i18n's DICTIONARY_CATEGORIES. */
 const LEXICON_CATEGORIES = ['values', 'expressions', 'logical', 'temporal', 'attributes'] as const;
@@ -60,7 +61,7 @@ export interface ValueLexicon {
   readonly words: ReadonlyMap<string, string>;
 }
 
-const cache = new WeakMap<LanguageProfile, ValueLexicon>();
+const cache = new WeakMap<LanguageLexicon, ValueLexicon>();
 
 /**
  * Build the flat English→native map for a profile, merging `lexicon` categories
@@ -72,8 +73,8 @@ const cache = new WeakMap<LanguageProfile, ValueLexicon>();
  * events that must stay English to round-trip; localizing them a second time
  * here would bypass that decision.
  */
-export function getValueLexicon(profile: LanguageProfile): ValueLexicon {
-  const cached = cache.get(profile);
+export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProfile): ValueLexicon {
+  const cached = cache.get(lexicon);
   if (cached) return cached;
 
   const words = new Map<string, string>();
@@ -84,22 +85,20 @@ export function getValueLexicon(profile: LanguageProfile): ValueLexicon {
     if (!words.has(key) && native !== english) words.set(key, native);
   };
 
-  const lexicon = profile.lexicon;
-  if (lexicon) {
-    for (const category of LEXICON_CATEGORIES) {
-      const entries = lexicon[category];
-      if (!entries) continue;
-      for (const [english, translation] of Object.entries(entries)) {
-        add(english, translation.primary);
-      }
+  for (const category of LEXICON_CATEGORIES) {
+    const entries = lexicon[category];
+    if (!entries) continue;
+    for (const [english, translation] of Object.entries(entries)) {
+      add(english, translation.primary);
     }
   }
-  for (const [english, native] of Object.entries(profile.references ?? {})) {
+  // References (me/it/you) live on the profile and are needed inside values too.
+  for (const [english, native] of Object.entries(profile?.references ?? {})) {
     add(english, native);
   }
 
   const built: ValueLexicon = { words };
-  cache.set(profile, built);
+  cache.set(lexicon, built);
   return built;
 }
 
@@ -109,9 +108,17 @@ export function getValueLexicon(profile: LanguageProfile): ValueLexicon {
  * Returns the input unchanged when the language has no lexicon, so a language
  * that has not been populated degrades to English exactly as it does today.
  */
-export function localizeValueInterior(raw: string, profile: LanguageProfile | undefined): string {
-  if (!profile || !raw) return raw;
-  const { words } = getValueLexicon(profile);
+export function localizeValueInterior(
+  raw: string,
+  language: string,
+  profile?: LanguageProfile
+): string {
+  if (!raw) return raw;
+  // No registered lexicon means the language's `lexicons/{code}` module was not
+  // imported — render the interior in English, the pre-lexicon behaviour.
+  const lexicon = getLexicon(language);
+  if (!lexicon) return raw;
+  const { words } = getValueLexicon(lexicon, profile);
   if (words.size === 0) return raw;
 
   const spans: string[] = [];

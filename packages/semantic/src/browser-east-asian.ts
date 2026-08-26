@@ -26,6 +26,11 @@
 import './languages/ja';
 import './languages/zh';
 import './languages/ko';
+// Render vocabulary for the same set (separate modules so parse-only
+// consumers can drop them — see ./lexicon-registry.ts).
+import './lexicons/ja';
+import './lexicons/zh';
+import './lexicons/ko';
 
 // =============================================================================
 // Version

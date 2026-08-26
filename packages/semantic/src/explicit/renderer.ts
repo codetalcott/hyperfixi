@@ -652,7 +652,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private localizeValue(raw: string, language: string): string {
     if (language === 'en') return raw;
-    return localizeValueInterior(raw, tryGetProfile(language));
+    return localizeValueInterior(raw, language, tryGetProfile(language));
   }
 
   /**

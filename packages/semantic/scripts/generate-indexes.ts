@@ -119,6 +119,14 @@ function generateLanguagesAll(): void {
 
   const imports = files.map(f => `import './${f}';`).join('\n');
   const exports = files.map(f => `export * from './${f}';`).join('\n');
+  // Render vocabulary is deliberately NOT imported by the per-language modules:
+  // as a profile field it could not be tree-shaken, so a parse-only consumer paid
+  // for every language's render words. `_all` is the "everything" entry, so it
+  // takes both halves (see src/lexicon-registry.ts).
+  const lexiconImports = files
+    .filter(f => fs.existsSync(path.join(SEMANTIC_SRC, 'lexicons', `${f}.ts`)))
+    .map(f => `import '../lexicons/${f}';`)
+    .join('\n');
 
   const content = `/**
  * All Languages Module
@@ -138,6 +146,10 @@ function generateLanguagesAll(): void {
 
 // Import all language modules to trigger registration
 ${imports}
+
+// Render vocabulary for all of them (separate modules so parse-only consumers
+// can drop it — see ../lexicon-registry.ts)
+${lexiconImports}
 
 // Re-export everything for convenience
 ${exports}

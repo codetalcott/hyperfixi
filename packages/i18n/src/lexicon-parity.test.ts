@@ -22,8 +22,12 @@
  */
 import { describe, it, expect } from 'vitest';
 import { dictionaries } from './dictionaries';
-import { KNOWN_PROFILES } from '@lokascript/semantic';
+import { KNOWN_PROFILES, getLexicon } from '@lokascript/semantic';
 import type { LanguageProfile } from '@lokascript/semantic';
+// The lexicons are separate modules so a parse-only consumer can drop them; the
+// package's main entry pulls all 24 in (via `languages/_all`), which is what the
+// import above already gives us. A consumer taking only `core` + `languages/{code}`
+// would get none — that is the point of the split.
 
 const CATEGORIES = [
   'events',
@@ -44,13 +48,10 @@ describe('profile.lexicon ↔ i18n dictionary parity', () => {
 
   describe.each(codes)('%s', code => {
     const dict = dictionaries[code] as unknown as Record<string, Record<string, string>>;
-    const lexicon = (profiles[code].lexicon ?? {}) as Record<
-      string,
-      Record<string, { primary: string }>
-    >;
+    const lexicon = (getLexicon(code) ?? {}) as Record<string, Record<string, { primary: string }>>;
 
-    it('has a lexicon block', () => {
-      expect(profiles[code].lexicon, `${code} profile is missing lexicon`).toBeDefined();
+    it('has registered render vocabulary', () => {
+      expect(getLexicon(code), `${code} has no registered lexicon`).toBeDefined();
     });
 
     for (const category of CATEGORIES) {

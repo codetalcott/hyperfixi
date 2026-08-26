@@ -104,6 +104,8 @@ export type {
 
 // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
 export { KNOWN_PROFILES } from './generators/known-profiles';
+export { registerLexicon, getLexicon, getRegisteredLexicons } from './lexicon-registry';
+export type { LanguageLexicon } from './generators/profiles/types';
 
 // =============================================================================
 // Core Types
