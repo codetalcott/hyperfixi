@@ -342,8 +342,25 @@ jobs:
           # first run; 24000 restores roughly the ~2 KB of headroom the old
           # ceiling had. Mirrored in ci.yml and pre-publish-check.yml.
           MAX_HYBRID=24000        # 24 KB  (hybrid-hx actual ~22.0 KB gz)
-          MAX_BROWSER=340000      # 340 KB (hyperfixi.js actual ~299 KB gz post-dedupe)
-          MAX_HXV4=350000         # 350 KB (hyperfixi-hx-v4.js actual ~311 KB gz post-dedupe)
+          # Raised 340000 -> 355000 / 350000 -> 368000 on 2026-08-26 (PR #931,
+          # per-language render vocabulary). Both bundles expose translate /
+          # getAllTranslations for 24 languages, so they carry the new
+          # lexicons/{code} data: measured +19 KB gz each (browser 310.8 ->
+          # 330.3, hx-v4 322.4 -> 350.9), which put hx-v4 925 B over the old
+          # ceiling.
+          # These ceilings exist to catch RE-duplication, so before raising them
+          # the growth was checked against exactly that: the all-24 lexicon costs
+          # ~19 KB gz as ONE copy, and both bundles grew by ~19 KB, not ~38 KB.
+          # Spot-checks that first looked like doubling were not: `atributos` x2
+          # is es + pt (which share the word), and the extra `desenfocar` /
+          # `dobleclic` hits are the pre-existing eventNameTranslations table and
+          # tokenizer EXTRAS, which are different structures, not copies.
+          # The lexicon is also absent from minimal/standard/classic, which parse
+          # without rendering — it tree-shakes, so only these two pay.
+          # New numbers keep ~5% headroom, matching the intent of the Arc E
+          # ceiling bump. Mirrored in ci.yml and pre-publish-check.yml.
+          MAX_BROWSER=355000      # 355 KB (hyperfixi.js actual ~330 KB gz with lexicons)
+          MAX_HXV4=368000         # 368 KB (hyperfixi-hx-v4.js actual ~351 KB gz with lexicons)
 
           failed=0
 
