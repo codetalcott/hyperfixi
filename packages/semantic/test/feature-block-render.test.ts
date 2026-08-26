@@ -24,6 +24,11 @@
  * before the feature closes.
  *
  * Measured: +91 pairs, zero regressions.
+ *
+ * The handler CHILD of a `socket`/`eventsource` was a second, parse-side layer
+ * of the same corpus rows, and it is covered below rather than in a residual
+ * pin: see `feature-block-handler-heads.test.ts` and
+ * `custom-event-name-handler.test.ts`.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -161,17 +166,19 @@ describe('KNOWN RESIDUALS — render is correct, re-parse is not', () => {
     ).toBe(false);
   });
 
-  // The feature header and `end` render correctly; the event-handler CHILD does
-  // not re-parse in these two. Pinned failing-when-fixed rather than omitted, so
-  // it reports the moment it clears. `live` and `worker` bodies round-trip in ja
-  // fine, so this is the handler path, not the feature path.
-  it.each(['ja'] as const)('%s still loses the socket handler body', language => {
+});
+
+describe("a socket's event-handler CHILD round-trips too", () => {
+  // Promoted from a failing-when-fixed pin that named ja. The feature header and
+  // `end` always rendered correctly; the handler inside did not re-parse, in ja
+  // and (unpinned) in ar/tr/ko/bn/de/fr/hi/id/qu/zh. Two independent causes, both
+  // in the parser rather than the renderer: `featureBodyStart` recognized only
+  // `keywords.on` as a handler head, and the schema typed a handler's event as
+  // `literal` only, so a CUSTOM event name — an identifier — bound nothing.
+  it.each(LANGUAGES)('%s keeps socket + the handler body', language => {
     const rendered = translate(SOCKET, 'en', language);
     const got = actions(parse(rendered, language));
     expect(got.has('socket'), `${language} lost the feature itself: ${rendered}`).toBe(true);
-    expect(
-      got.has('put'),
-      `${language} now keeps the handler body — remove this pin:\n${rendered}`
-    ).toBe(false);
+    expect(got.has('put'), `${language} lost the handler body:\n${rendered}`).toBe(true);
   });
 });

@@ -249,6 +249,39 @@ export interface CommandSchema {
    */
   readonly omitRoleVariants?: ReadonlyArray<SemanticRole>;
   /**
+   * Generate an EXTRA, LOWER-priority pattern variant whose named role accepts a
+   * wider set of value types than the schema declares.
+   *
+   * `onSchema.event` is the case: a handler's event is `literal` for the ~60
+   * names the dictionaries localize (`click` → `クリック`, a keyword token), but a
+   * CUSTOM event passes through untranslated and tokenizes as an identifier, so
+   * `on message …` bound nothing in ar/ja/ko/tr — the three whose handler
+   * patterns come from this generator rather than from a handcrafted head.
+   *
+   * Widening the MAIN pattern instead was measured and rejected: ko renders
+   * `transition opacity to 0` as `opacity 을 에 0`, the same `<x> 을 에` shape as
+   * its handler head, so at equal priority the widened `on` pattern claimed the
+   * transition and three corpus rows flipped. A lower-priority variant is inert
+   * wherever a real command pattern can match the span.
+   */
+  readonly widenTypeVariants?: ReadonlyArray<{
+    readonly role: SemanticRole;
+    readonly types: ReadonlyArray<ExpectedType>;
+    readonly idSuffix: string;
+    /** Subtracted from `basePriority`. Default 15 — below every command pattern. */
+    readonly priorityDelta?: number;
+    /**
+     * Languages that do NOT get the variant, with the measured reason. ko is the
+     * one: its on-marker `에` is also its destination marker, and its event-role
+     * marker `을` is also its patient marker, so `<x> 을 에 <value>` is BOTH a
+     * handler head and the shape ko renders `transition opacity to 0` in
+     * (`opacity 을 에 0 300ms 트랜지션`). With the variant, that bare transition
+     * reads as a handler named `opacity`. No other language has both collisions
+     * — ja's on-marker is `で` while its transition marks the goal with `に`.
+     */
+    readonly excludeLanguages?: ReadonlyArray<string>;
+  }>;
+  /**
    * Generate an EXTRA, higher-priority pattern variant per entry, with a
    * REQUIRED literal keyword inserted immediately before the named role's
    * value token (`go [to] url {destination}` beside `go [to] {destination}`).
@@ -1236,6 +1269,10 @@ export const onSchema: CommandSchema = {
       role: 'event',
       description: 'The event to handle',
       required: true,
+      // `literal` covers the localized event names (a keyword token). A CUSTOM
+      // event name passes through untranslated and tokenizes as an identifier —
+      // see `widenTypeVariants` below, which carries that case in a separate,
+      // lower-priority pattern rather than here.
       expectedTypes: ['literal'],
       svoPosition: 1,
       sovPosition: 2,
@@ -1248,6 +1285,14 @@ export const onSchema: CommandSchema = {
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
+    },
+  ],
+  widenTypeVariants: [
+    {
+      role: 'event',
+      types: ['literal', 'expression'],
+      idSuffix: 'expr-event',
+      excludeLanguages: ['ko'],
     },
   ],
 };

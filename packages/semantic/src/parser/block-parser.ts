@@ -493,10 +493,14 @@ export function tryParseProgram(
     if (!parsed || parsed.kind !== 'event-handler') return null;
     const handler = parsed as EventHandlerSemanticNode;
     handlers.push(handler);
-    // An empty handler body means the sub-parse silently dropped its commands —
-    // don't inherit a misleadingly high confidence (mirrors parseBehaviorBlock).
-    const bodyEmpty = !handler.body || handler.body.length === 0;
-    confidences.push(bodyEmpty ? 0.2 : (handler.metadata?.confidence ?? 0.75));
+    // A handler with NO commands is not a handler in a chain — it is the tell of
+    // a mis-split. ko renders `transition opacity to 0` as `opacity 을 에 0`,
+    // which carries the same `<x> <event-marker> <on-marker>` signature the SOV
+    // split keys on, and splitting there leaves a bodiless `클릭 을 에` ahead of
+    // it. Reject rather than merely distrust: the single-statement path parses
+    // the line correctly, so a low-confidence compound is strictly worse.
+    if (!handler.body || handler.body.length === 0) return null;
+    confidences.push(handler.metadata?.confidence ?? 0.75);
   }
 
   return createCompoundNode(handlers, 'then', {
