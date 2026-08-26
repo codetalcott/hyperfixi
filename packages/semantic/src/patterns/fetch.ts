@@ -18,9 +18,59 @@
  * covered by the generated pattern.
  */
 
-import type { LanguagePattern } from '../types';
+import type {
+  LanguagePattern,
+  PatternToken,
+  ExtractionRule,
+  LiteralPatternToken,
+  RolePatternToken,
+} from '../types';
+import { tryGetProfile } from '../registry';
+
+/**
+ * The optional `with {options}` group, built from the profile's own `style`
+ * marker.
+ *
+ * Every hand-written fetch pattern here sits at priority 105 and exists to
+ * recover a surface the generated pattern cannot anchor. But none of them
+ * carried a `style` slot, and priority is what `findBestPattern` reads first —
+ * so `fetch /api with {method:"POST"}` selected a pattern with nowhere to put
+ * the options object and dropped it. `fetch.style` was the single largest role
+ * loss in the whole en->foreign residual (92 pairs), and `responseType` (40)
+ * rode along with it.
+ *
+ * The marker comes from `profile.roleMarkers.style`, which every one of the 23
+ * profiles defines — so this stays one source of truth rather than a 23-entry
+ * table, and its `position` decides the order: SVO marks before the value
+ * (es `con {…}`), SOV after it (ja `{…} で`).
+ */
+function styleGroup(language: string): { token: PatternToken; extraction: ExtractionRule } | null {
+  const marker = tryGetProfile(language)?.roleMarkers?.style;
+  if (!marker?.primary) return null;
+  const literal: LiteralPatternToken = {
+    type: 'literal',
+    value: marker.primary,
+    ...(marker.alternatives?.length ? { alternatives: marker.alternatives } : {}),
+  };
+  // `style` is expression-ONLY by schema: the matcher routes a `{ … }` run in an
+  // expression-only slot through its object-literal fold, which is what lets the
+  // expression parser rebuild a real objectLiteral rather than a token soup.
+  const role: RolePatternToken = { type: 'role', role: 'style', expectedTypes: ['expression'] };
+  return {
+    token: {
+      type: 'group',
+      optional: true,
+      tokens: marker.position === 'after' ? [role, literal] : [literal, role],
+    },
+    extraction: {
+      marker: marker.primary,
+      ...(marker.alternatives?.length ? { markerAlternatives: marker.alternatives } : {}),
+    },
+  };
+}
 
 function getFetchPatternsZh(): LanguagePattern[] {
+  const zhStyle = styleGroup('zh');
   return [
     {
       id: 'fetch-zh-ba',
@@ -43,6 +93,7 @@ function getFetchPatternsZh(): LanguagePattern[] {
           },
           { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
           // Optional "as <responseType>": transformer emits 的; 作为 is the natural form.
+          ...(zhStyle ? [zhStyle.token] : []),
           {
             type: 'group',
             optional: true,
@@ -55,6 +106,7 @@ function getFetchPatternsZh(): LanguagePattern[] {
       },
       extraction: {
         source: { marker: '把', markerAlternatives: ['从', '由'] },
+        ...(zhStyle ? { style: zhStyle.extraction } : {}),
         responseType: { marker: '的', markerAlternatives: ['作为', '当作'] },
       },
     },
@@ -62,6 +114,7 @@ function getFetchPatternsZh(): LanguagePattern[] {
 }
 
 function getFetchPatternsMs(): LanguagePattern[] {
+  const msStyle = styleGroup('ms');
   return [
     {
       // Malay fetch. The transformer emits `ambil_dari {source}` for `fetch <url>`
@@ -84,6 +137,7 @@ function getFetchPatternsMs(): LanguagePattern[] {
             tokens: [{ type: 'literal', value: 'dari' }],
           },
           { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          ...(msStyle ? [msStyle.token] : []),
           {
             type: 'group',
             optional: true,
@@ -96,6 +150,7 @@ function getFetchPatternsMs(): LanguagePattern[] {
       },
       extraction: {
         source: { marker: 'dari' },
+        ...(msStyle ? { style: msStyle.extraction } : {}),
         responseType: { marker: 'sebagai', markerAlternatives: ['sbg'] },
       },
     },
@@ -103,6 +158,7 @@ function getFetchPatternsMs(): LanguagePattern[] {
 }
 
 function getFetchPatternsFr(): LanguagePattern[] {
+  const frStyle = styleGroup('fr');
   return [
     {
       // French fetch. For `fetch <url>` (no `from`) the i18n transformer emits a
@@ -127,6 +183,7 @@ function getFetchPatternsFr(): LanguagePattern[] {
             tokens: [{ type: 'literal', value: 'de' }],
           },
           { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          ...(frStyle ? [frStyle.token] : []),
           {
             type: 'group',
             optional: true,
@@ -140,12 +197,14 @@ function getFetchPatternsFr(): LanguagePattern[] {
       extraction: {
         source: { marker: 'de' },
         responseType: { marker: 'comme' },
+        ...(frStyle ? { style: frStyle.extraction } : {}),
       },
     },
   ];
 }
 
 function getFetchPatternsPt(): LanguagePattern[] {
+  const ptStyle = styleGroup('pt');
   return [
     {
       // Portuguese fetch — same marker-less-transform shape as French (above).
@@ -166,6 +225,7 @@ function getFetchPatternsPt(): LanguagePattern[] {
             tokens: [{ type: 'literal', value: 'de' }],
           },
           { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          ...(ptStyle ? [ptStyle.token] : []),
           {
             type: 'group',
             optional: true,
@@ -179,6 +239,7 @@ function getFetchPatternsPt(): LanguagePattern[] {
       extraction: {
         source: { marker: 'de' },
         responseType: { marker: 'como' },
+        ...(ptStyle ? { style: ptStyle.extraction } : {}),
       },
     },
   ];
@@ -199,6 +260,7 @@ function markerlessFetch(
   fromMarkerAlternatives?: string[],
   asMarkerAlternatives?: string[]
 ): LanguagePattern {
+  const style = styleGroup(language);
   return {
     id,
     language,
@@ -224,6 +286,7 @@ function markerlessFetch(
           ],
         },
         { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+        ...(style ? [style.token] : []),
         {
           type: 'group',
           optional: true,
@@ -243,6 +306,7 @@ function markerlessFetch(
         marker: fromMarker,
         ...(fromMarkerAlternatives ? { markerAlternatives: fromMarkerAlternatives } : {}),
       },
+      ...(style ? { style: style.extraction } : {}),
       responseType: {
         marker: asMarker,
         ...(asMarkerAlternatives ? { markerAlternatives: asMarkerAlternatives } : {}),
@@ -272,6 +336,7 @@ function sovFetch(
   verbAlternatives?: string[],
   patientMarkerAlternatives?: string[]
 ): LanguagePattern {
+  const style = styleGroup(language);
   return {
     id,
     language,
@@ -292,6 +357,7 @@ function sovFetch(
             },
           ],
         },
+        ...(style ? [style.token] : []),
         {
           type: 'literal',
           value: verb,
@@ -304,6 +370,7 @@ function sovFetch(
         marker: patientMarker,
         ...(patientMarkerAlternatives ? { markerAlternatives: patientMarkerAlternatives } : {}),
       },
+      ...(style ? { style: style.extraction } : {}),
     },
   };
 }
