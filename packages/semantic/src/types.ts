@@ -493,7 +493,7 @@ export interface RolePatternToken {
    * the trailing-slot verb guard, which exists for marker-less slots that could
    * swallow the next command's verb.
    */
-  readonly valueShape?: 'time' | 'reference' | 'keyword';
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object';
 }
 
 export interface GroupPatternToken {

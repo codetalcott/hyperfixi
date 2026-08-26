@@ -80,7 +80,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time' | 'reference' | 'keyword';
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -1349,6 +1349,24 @@ export const fetchSchema: CommandSchema = {
       // source text so the expression parser can build a real objectLiteral.
       // `style` is the role whose marker is `with` in every language profile.
       expectedTypes: ['expression'],
+      // Shape-anchored, so an UNCAPTURED style slot carries no evidence against
+      // the pattern. This is the same lever toggle's `[{duration}]` and swap's
+      // `[using view {manner}]` needed, and for the same reason: giving the 23
+      // hand-written fetch recovery patterns a `[with {style}]` group weighted an
+      // unfilled slot into every plain fetch's denominator, dropping es
+      // `buscar '/x' como json` from confidence 1.0 to 0.692 — under the 0.7 bar
+      // at which core keeps the semantic parse, so a correct parse would have
+      // been thrown away for the traditional fallback.
+      //
+      // It qualifies on the documented criterion: the slot is marker-guarded in
+      // every pattern (`con {…}`), and expression-only with an object-literal
+      // fold, so nothing else in the grammar can land in it and its absence says
+      // only that the caller passed no options. `'object'` rather than reusing
+      // `'keyword'` because the two matcher branches that read the VALUE
+      // (pattern-matcher.ts:632, :984) are keyword-specific; only the confidence
+      // model reads shape-anchoring generically, which is exactly the effect
+      // wanted here.
+      valueShape: 'object',
       svoPosition: 2,
       sovPosition: 2,
     },
