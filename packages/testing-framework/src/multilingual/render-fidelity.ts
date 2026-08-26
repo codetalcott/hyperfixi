@@ -28,9 +28,13 @@
  * lands green and every later improvement is a deletion from it. It is a
  * record of what is known-broken, not a target.
  *
- * NO DB DEPENDENCY. This scores `rawCode` (English, stable) and renders it
- * live, so unlike the foreign gate it needs no freshly populated
- * `patterns.db` and always runs — a stale checkout cannot make it falsely red.
+ * DB DEPENDENCY. The rendered text comes from `rawCode`, which is stable, but
+ * the SET of rows is not: `populate` re-runs `discoverPatterns` and finds
+ * examples the committed (frozen) patterns.db lacks. Measured 2026-08-26:
+ * 3588 pairs against a fresh DB, 3542 against the committed one — enough to
+ * move the clean rate (75.89% vs 75.97%) and fail the ratchet spuriously. So
+ * this gate needs a freshly populated DB, exactly like the foreign one, and
+ * its test carries the matching guard.
  *
  * STRICT ROLE SIGNATURES. Scoring uses `collectRoleSignatureStrict`, which
  * ignores roles the matcher injected as schema defaults. Without that, a

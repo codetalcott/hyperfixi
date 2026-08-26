@@ -191,8 +191,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'hybrid-hx-v4',
     name: 'Hybrid HX v4',
     filename: 'hyperfixi-hx-v4.js',
-    gzipSize: '322.4 KB',
-    rawSize: '1501 KB',
+    gzipSize: '341.6 KB',
+    rawSize: '1598 KB',
     // Re-exports `browser-bundle.ts`, so it inherits the full registry.
     commandCount: FULL_RUNTIME_COMMAND_COUNT,
     parser: 'full',
@@ -251,8 +251,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'browser',
     name: 'Full Browser',
     filename: 'hyperfixi.js',
-    gzipSize: '310.8 KB',
-    rawSize: '1464 KB',
+    gzipSize: '330.0 KB',
+    rawSize: '1561 KB',
     // Constructs `Runtime`, which seeds the whole registry (measured: 59, no
     // gaps and no extras vs the manifest).
     commandCount: FULL_RUNTIME_COMMAND_COUNT,

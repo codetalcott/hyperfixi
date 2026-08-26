@@ -13,10 +13,18 @@
  * landed — so it starts green. It is a record of what is known-broken, not a
  * target: completing a renderer fix means deleting entries from it.
  *
- * No DB freshness dependency: this scores `rawCode` (English, stable) and
- * renders live, so it always runs. Regenerate after an intentional renderer
- * change with `npx tsx tools/regen-render-fidelity-baseline.ts` and commit the
- * result alongside the change.
+ * DB DEPENDENCY — corrected 2026-08-26 after CI disagreed with local.
+ * The gate renders `rawCode`, and that text is stable, but the SET of rows is
+ * not: `populate` re-runs `discoverPatterns` and finds examples the committed
+ * (frozen) patterns.db lacks — 3588 pairs against a fresh DB versus 3542
+ * against the committed one, which moved the clean rate 75.89% vs 75.97% and
+ * failed this gate on its own first CI run. So it carries the same guard as the
+ * foreign gate: it runs only when the caller asserts a fresh populate, and the
+ * baseline is seeded from that state.
+ *
+ * Regenerate after an intentional renderer change with
+ * `npm run populate --prefix packages/patterns-reference` followed by
+ * `npx tsx tools/regen-render-fidelity-baseline.ts`, and commit the result.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +53,12 @@ const allowed = new Set(
   Object.entries(allowlist.allowedFailures).flatMap(([id, langs]) => langs.map(l => key(id, l)))
 );
 
-describe('english→foreign render-fidelity gate', () => {
+// Same contract as the foreign gate: a plain `vitest run` on a stale checkout
+// skips rather than reporting phantom drift. `npm run test:canonical` and the CI
+// multilingual job both set this, after populating.
+const DB_FRESHLY_POPULATED = process.env.FOREIGN_CANONICAL_VALIDITY === '1';
+
+describe.skipIf(!DB_FRESHLY_POPULATED)('english→foreign render-fidelity gate', () => {
   let result: RenderFidelityResult;
 
   beforeAll(async () => {
