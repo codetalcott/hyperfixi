@@ -40,6 +40,33 @@ import './uk';
 import './vi';
 import './zh';
 
+// Render vocabulary for all of them (separate modules so parse-only consumers
+// can drop it — see ../lexicon-registry.ts)
+import '../lexicons/ar';
+import '../lexicons/bn';
+import '../lexicons/de';
+import '../lexicons/en';
+import '../lexicons/es';
+import '../lexicons/fr';
+import '../lexicons/he';
+import '../lexicons/hi';
+import '../lexicons/id';
+import '../lexicons/it';
+import '../lexicons/ja';
+import '../lexicons/ko';
+import '../lexicons/ms';
+import '../lexicons/pl';
+import '../lexicons/pt';
+import '../lexicons/qu';
+import '../lexicons/ru';
+import '../lexicons/sw';
+import '../lexicons/th';
+import '../lexicons/tl';
+import '../lexicons/tr';
+import '../lexicons/uk';
+import '../lexicons/vi';
+import '../lexicons/zh';
+
 // Re-export everything for convenience
 export * from './ar';
 export * from './bn';

@@ -69,7 +69,7 @@ The plugin scans your files for `_="..."` attributes and generates a minimal bun
 
 ## For LLM Agents
 
-An agent emitting hyperscript instead of free-form JavaScript gets properties JS can't offer: every candidate **compiles or fails with structured diagnostics** (a real parser, no LLM in the checker), the parse comes back as a **semantic IR** to check against intent, `diff_behaviors` proves two snippets **behaviorally equivalent**, and the result renders **deterministically into 24 languages** so a human can review the agent's work in their own language — with a [structural-fidelity guarantee](docs/FIDELITY.md) behind the translation.
+An agent emitting hyperscript instead of free-form JavaScript gets properties JS can't offer: every candidate **compiles or fails with structured diagnostics** (a real parser, no LLM in the checker), the parse comes back as a **semantic IR** to check against intent, `diff_behaviors` proves two snippets **behaviorally equivalent**, and the result renders **deterministically into 24 languages** so a human can review the agent's work in their own language — [measured, with the residual published](docs/FIDELITY.md).
 
 The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `validate_and_compile` → repair from diagnostics → `compile_hyperscript`. See **[AGENTS.md](./AGENTS.md)** for the worked example and ground rules.
 

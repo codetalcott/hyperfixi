@@ -44,6 +44,7 @@ const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
+import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
 // =============================================================================
@@ -299,6 +300,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       if (triggers.length > 0) candidates = triggers;
     }
 
+    // Which literal values does the candidate set pin, per role? A value that is
+    // pinned by SOME candidate is a real alternative the pattern set distinguishes
+    // (put's manner: before / after / at end of), so choosing a pattern pinned to a
+    // different one would silently change meaning. A value nothing pins is not an
+    // alternative — it is just the value that came out of the parse — and must not
+    // disqualify anything. That distinction is what keeps `repeat until event X`
+    // renderable: a zh parse yields loopType `until` while the English pattern that
+    // carries the event pins `until-event`, and nothing pins bare `until`.
+    const pinnedValues = new Map<string, Set<string>>();
+    for (const pattern of candidates) {
+      for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
+        const pinned = rule?.default;
+        if (!pinned || pinned.type !== 'literal') continue;
+        const key = String(pinned.value).trim().toLowerCase();
+        const set = pinnedValues.get(role) ?? new Set<string>();
+        set.add(key);
+        pinnedValues.set(role, set);
+      }
+    }
+
     // Score patterns by how well they match our roles
     const scored = candidates.map(pattern => {
       let score = pattern.priority;
@@ -317,19 +338,46 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         }
       }
 
-      // Positional variants (`put X at end of Y`, `at start of`, `before`/`after`)
-      // are handcrafted for PARSING that specific surface form; they carry the
-      // position as baked-in literals, not a role, so role scoring can't distinguish
-      // them from the canonical `put X into Y`. Several carry a higher parse priority
-      // (e.g. `put-bn-at-end` at 110, the SOV `put-{ja,ko,hi,bn,tr,qu}-before/after`
-      // at 105/106 — needed so the matcher prefers them over the into-form / the SOV
-      // verb-anchoring fallback when the position word IS present) and would
-      // otherwise win render selection, emitting the verbose positional form (or a
-      // literal `before`/`after`) for every plain put. Penalize them for rendering
-      // only — parsing is priority-ordered in the matcher, not here, so positional
-      // INPUT still matches its pattern via the literals.
-      if (/-at-end|-at-start|-before$|-after$/i.test(pattern.id)) {
-        score -= 30;
+      // Value-pinned variants. A positional pattern (`put X before Y`, `at end
+      // of`, `after`) carries its position as a baked-in literal plus an
+      // extraction default that records which value it means:
+      //   put-es-before -> extraction.manner.default = 'before'
+      //   put-es-at-end -> extraction.manner.default = 'at end of'
+      // while the neutral `put-es-full` pins nothing. So the pattern set already
+      // says which surface each value selects; scoring just has to read it.
+      //
+      // The rule: a pattern that pins a role to a literal may be chosen ONLY when
+      // the node carries that exact value. Matching is a strong preference (the
+      // pinned form is the whole reason the value exists); mismatching — or the
+      // node not carrying the role at all — disqualifies it, so a plain
+      // `put X into Y` can never render as `poner X en fin de Y`.
+      //
+      // This replaces an id-regex that penalized every `-at-end|-before|-after`
+      // pattern unconditionally. That kept plain puts safe but made the positional
+      // forms unreachable: `put "<p>" before me` rendered with the into-pattern in
+      // all 23 languages, losing the distinction the source drew.
+      for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
+        const pinned = rule?.default;
+        if (!pinned || pinned.type !== 'literal') continue;
+        const pinnedKey = String(pinned.value).trim().toLowerCase();
+        const actual = node.roles.get(role as SemanticRole);
+        const actualKey =
+          actual?.type === 'literal' ? String(actual.value).trim().toLowerCase() : undefined;
+
+        if (actualKey === pinnedKey) {
+          // The pinned form is the whole reason this value exists — prefer it
+          // decisively over the neutral pattern, whatever the parse priorities say.
+          score += 60;
+        } else if (actualKey === undefined || pinnedValues.get(role)?.has(actualKey)) {
+          // Either the node has no such value (so this pattern would invent one:
+          // a plain `put X into Y` must never render as `put X at end of Y`), or it
+          // has a DIFFERENT value that the pattern set treats as an alternative.
+          // Both are wrong surfaces; disqualify.
+          score -= 200;
+        }
+        // Otherwise the node's value is not one of the pinned alternatives, so this
+        // pattern is still the best available carrier for it — leave the score alone
+        // and let priority and role coverage decide.
       }
 
       // For English rendering, prefer "standard" patterns over "native idiom" patterns
@@ -569,10 +617,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private valueToNaturalString(value: SemanticValue, language: string = 'en'): string {
     switch (value.type) {
       case 'literal':
+        // A quoted string is author text and is emitted verbatim; a bare literal
+        // is vocabulary (`true`, `null`) and localizes like any other value word.
         if (typeof value.value === 'string' && value.dataType === 'string') {
           return `"${value.value}"`;
         }
-        return String(value.value);
+        return this.localizeValue(String(value.value), language);
 
       case 'selector':
         return value.value;
@@ -584,11 +634,25 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         return this.renderPropertyPath(value, language);
 
       case 'expression':
-        return value.raw;
+        // `raw` is the English source of the expression. Emitting it unchanged
+        // is what made the target-language parser drop the role — it could not
+        // bind an English interior. Localize the vocabulary inside it; strings,
+        // selectors and unknown identifiers are left alone by the localizer.
+        return this.localizeValue(value.raw, language);
 
       case 'flag':
-        return value.name;
+        return this.localizeValue(value.name, language);
     }
+  }
+
+  /**
+   * Localize the vocabulary inside a value, when the target profile carries a
+   * lexicon. English is a no-op, and a profile without a lexicon degrades to
+   * the previous behaviour (English interior) rather than failing.
+   */
+  private localizeValue(raw: string, language: string): string {
+    if (language === 'en') return raw;
+    return localizeValueInterior(raw, language, tryGetProfile(language));
   }
 
   /**
@@ -614,7 +678,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private renderPropertyPath(value: PropertyPathValue, language: string): string {
     const profile = tryGetProfile(language);
-    const property = value.property;
+    // A BARE property word is vocabulary and localizes (`my value` -> `mi valor`,
+    // `私の 値`); a DOTTED path is a JS/DOM member expression and must not
+    // (`#output.innerText`, `my value.length` stay verbatim in every language).
+    // The localizer's word rule already refuses dot-attached tokens, so this is
+    // one call rather than a special case — and it matches what the corpus has
+    // rendered all along.
+    const property = this.localizeValue(value.property, language);
 
     // Get the object reference
     const objectRef = value.object.type === 'reference' ? value.object.value : null;

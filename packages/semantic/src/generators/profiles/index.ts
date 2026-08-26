@@ -11,6 +11,7 @@
 // Types
 export type {
   LanguageProfile,
+  LanguageLexicon,
   WordOrder,
   MarkingStrategy,
   RoleMarker,

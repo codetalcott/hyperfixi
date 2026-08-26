@@ -32,6 +32,11 @@ const __dirname = path.dirname(__filename);
 // =============================================================================
 
 const SEMANTIC_PROFILES_DIR = path.resolve(__dirname, '../../semantic/src/generators/profiles');
+// Render vocabulary lives alongside the profiles rather than inside them, so it
+// can be tree-shaken out of parse-only bundles (see semantic/src/lexicon-registry.ts).
+// Detection still wants those words — `resultado`/`最初`/`первый` mark a file as
+// non-English just as well as a command verb does — so both files are scraped.
+const SEMANTIC_LEXICONS_DIR = path.resolve(__dirname, '../../semantic/src/lexicons');
 const KEYWORDS_FILE = path.resolve(__dirname, '../src/language-keywords.ts');
 
 // Keywords to extract for detection (most distinctive for language detection)
@@ -123,7 +128,13 @@ function extractKeywordsFromProfile(profilePath: string): Set<string> | null {
     return null;
   }
 
-  const content = fs.readFileSync(profilePath, 'utf-8');
+  // The lexicon module for the same language, when present, is scraped as part
+  // of the profile: the two together are what used to be one file.
+  const code = path.basename(profilePath, '.ts');
+  const lexiconPath = path.join(SEMANTIC_LEXICONS_DIR, `${FILENAME_TO_ISO[code] ?? code}.ts`);
+  const content =
+    fs.readFileSync(profilePath, 'utf-8') +
+    (fs.existsSync(lexiconPath) ? `\n${fs.readFileSync(lexiconPath, 'utf-8')}` : '');
   const keywords = new Set<string>();
 
   // Non-distinctive values (English command names or TODO stubs) that must not

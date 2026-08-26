@@ -163,6 +163,37 @@ export interface LanguageProfile {
 }
 
 /**
+ * Non-command vocabulary: the words that appear INSIDE role values rather than
+ * as the command verb or a role marker — the `true` in `set @disabled to true`,
+ * the `value` in `put my value into #out`, the `seconds` in `wait 2 seconds`.
+ *
+ * Deliberately NOT a field on `LanguageProfile`. It lives in `lexicons/{code}.ts`
+ * and reaches the renderer through `lexicon-registry.ts`, because a bundler
+ * cannot drop an unused property of an exported object literal — as a profile
+ * field it was charged to every parse-only consumer. See lexicon-registry.ts.
+ *
+ * Categories mirror the i18n `Dictionary` so the derivation stays mechanical.
+ * `primary` is the form to RENDER; `alternatives` are extra surfaces to ACCEPT
+ * when parsing. Every category is optional: a missing entry renders in English,
+ * which is the pre-lexicon behaviour, so partial coverage is safe and additive.
+ * (Hebrew ships 30 entries where most languages ship ~110.)
+ */
+export interface LanguageLexicon {
+  /** DOM event names: click → クリック. A `render: false` entry parses but never renders. */
+  readonly events?: Record<string, KeywordTranslation>;
+  /** Boolean/comparison/connective words: and, or, not, is, then, else, end. */
+  readonly logical?: Record<string, KeywordTranslation>;
+  /** Time units and loop words: seconds, ms, times, forever, until. */
+  readonly temporal?: Record<string, KeywordTranslation>;
+  /** Literals and globals: true, false, null, window, document, value. */
+  readonly values?: Record<string, KeywordTranslation>;
+  /** Attribute-ish nouns: class, style, attribute, property (+ localized hx-* names). */
+  readonly attributes?: Record<string, KeywordTranslation>;
+  /** Expression-leaf words: first, last, next, closest, at, starts with. */
+  readonly expressions?: Record<string, KeywordTranslation>;
+}
+
+/**
  * Reference to a grammar transformation rule (Phase 4.1).
  * Lightweight pointer — full rule definitions live in the i18n package.
  */

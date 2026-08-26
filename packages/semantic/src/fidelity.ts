@@ -232,7 +232,36 @@ export function collectRoleSignature(node: unknown): string[] {
   return [...acc].sort();
 }
 
-function walkRoles(node: unknown, acc: Set<string>, depth: number): void {
+/**
+ * Like {@link collectRoleSignature}, but ignoring roles the MATCHER injected
+ * rather than the source supplying (`SemanticValue.implicit`).
+ *
+ * Why a second function instead of a flag on the first: the corpus ratchet (R1)
+ * scores with the lenient signature and its committed baseline is calibrated to
+ * it, so changing that walker would force a re-baseline. This variant exists for
+ * callers that are asking a stricter question — "did the RENDER carry this role,
+ * or did the parser put it back?" — where an injected default is exactly the
+ * thing being hidden.
+ *
+ * It matters because the two are indistinguishable downstream: a renderer that
+ * drops `to me` and a parser that re-injects `destination: me` as a schema
+ * default produce the same lenient signature, so a role-dropping render scores
+ * as faithful. Filtering both sides keeps that honest — a role implicit in the
+ * reference AND in the candidate cancels out, while one the source stated and
+ * the render lost is reported.
+ */
+export function collectRoleSignatureStrict(node: unknown): string[] {
+  const acc = new Set<string>();
+  walkRoles(node, acc, 0, true);
+  return [...acc].sort();
+}
+
+function walkRoles(
+  node: unknown,
+  acc: Set<string>,
+  depth: number,
+  skipImplicit: boolean = false
+): void {
   if (depth > 64 || node === null || typeof node !== 'object') return;
 
   const rec = node as Record<string, unknown>;
@@ -247,6 +276,13 @@ function walkRoles(node: unknown, acc: Set<string>, depth: number): void {
           : [];
     for (const [role, value] of entries) {
       if (value === undefined || value === null) continue;
+      if (
+        skipImplicit &&
+        typeof value === 'object' &&
+        (value as { implicit?: unknown }).implicit === true
+      ) {
+        continue;
+      }
       const kind =
         typeof value === 'object' && typeof (value as { type?: unknown }).type === 'string'
           ? (value as { type: string }).type
@@ -258,9 +294,9 @@ function walkRoles(node: unknown, acc: Set<string>, depth: number): void {
   for (const field of CHILD_FIELDS) {
     const child = rec[field];
     if (Array.isArray(child)) {
-      for (const c of child) walkRoles(c, acc, depth + 1);
+      for (const c of child) walkRoles(c, acc, depth + 1, skipImplicit);
     } else if (child && typeof child === 'object') {
-      walkRoles(child, acc, depth + 1);
+      walkRoles(child, acc, depth + 1, skipImplicit);
     }
   }
 }
