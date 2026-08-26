@@ -334,9 +334,31 @@ function sovFetch(
   verb: string,
   patientMarker: string,
   verbAlternatives?: string[],
-  patientMarkerAlternatives?: string[]
+  patientMarkerAlternatives?: string[],
+  asMarker?: string,
+  asMarkerAlternatives?: string[]
 ): LanguagePattern {
   const style = styleGroup(language);
+  // Trailing `as {responseType}`, which the six SOV languages put AFTER the
+  // verb-final verb — the one thing that made this a group of its own rather
+  // than another pre-verb slot. bn and ja emit no marker at all, so the slot is
+  // bare there; see the call sites for the surfaces each language actually
+  // produces.
+  const responseTypeTokens: PatternToken[] = [
+    { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+  ];
+  if (asMarker) {
+    responseTypeTokens.push({
+      type: 'literal',
+      value: asMarker,
+      ...(asMarkerAlternatives ? { alternatives: asMarkerAlternatives } : {}),
+    });
+  }
+  const responseTypeGroup: PatternToken = {
+    type: 'group',
+    optional: true,
+    tokens: responseTypeTokens,
+  };
   return {
     id,
     language,
@@ -363,6 +385,7 @@ function sovFetch(
           value: verb,
           ...(verbAlternatives ? { alternatives: verbAlternatives } : {}),
         },
+        responseTypeGroup,
       ],
     },
     extraction: {
@@ -371,6 +394,12 @@ function sovFetch(
         ...(patientMarkerAlternatives ? { markerAlternatives: patientMarkerAlternatives } : {}),
       },
       ...(style ? { style: style.extraction } : {}),
+      responseType: asMarker
+        ? {
+            marker: asMarker,
+            ...(asMarkerAlternatives ? { markerAlternatives: asMarkerAlternatives } : {}),
+          }
+        : {},
     },
   };
 }
@@ -433,26 +462,44 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
     // Verbs/markers from each profile (the transformer may emit a keyword
     // *alternative*, e.g. ko 가져오기, so both primary + alternatives are listed).
     case 'ja':
+      // ja emits `フェッチ json` with NO as-marker — the schema's `として`
+      // markerOverride is not what the transformer produces here — so the slot
+      // is bare and positional.
       return [sovFetch('fetch-ja-sov', 'ja', 'フェッチ', 'を', ['取得'])];
     case 'ko':
-      return [sovFetch('fetch-ko-sov', 'ko', '패치', '을', ['가져오기'], ['를'])];
+      // ko emits `가져오기 json 로`. NOTE `로` is ALSO ko's style marker, so the
+      // two groups are told apart by position (style precedes the verb, this
+      // trails it) rather than by the marker itself.
+      return [sovFetch('fetch-ko-sov', 'ko', '패치', '을', ['가져오기'], ['를'], '로', ['으로'])];
     case 'tr':
       return [
-        sovFetch('fetch-tr-sov', 'tr', 'getir', 'i', undefined, [
-          'ı',
-          'u',
-          'ü',
-          'yi',
-          'yı',
-          'yu',
-          'yü',
-        ]),
+        // tr emits `getir json olarak`.
+        sovFetch(
+          'fetch-tr-sov',
+          'tr',
+          'getir',
+          'i',
+          undefined,
+          ['ı', 'u', 'ü', 'yi', 'yı', 'yu', 'yü'],
+          'olarak'
+        ),
       ];
     case 'hi':
+      // hi emits `लाएं json के रूप में`, but the marker is deliberately OMITTED
+      // here: a multi-token literal does not match in this trailing position
+      // (`के रूप में`, `रूप में` and `के रूप` were each measured — all three
+      // leave the group unmatched, so the optional group is skipped and the role
+      // never binds). A bare slot captures `json` and leaves the postposition as
+      // trailing unconsumed tokens, which means it parses BOTH the rendered
+      // surface and the i18n corpus surface. The cost is that the rendered hi
+      // reads `लाएं json` rather than the fuller `लाएं json के रूप में` — less
+      // idiomatic, but the role survives, and a lost role is the worse outcome.
       return [sovFetch('fetch-hi-sov', 'hi', 'लाएं', 'को')];
     case 'qu':
-      return [sovFetch('fetch-qu-sov', 'qu', 'apamuy', 'ta', ['taripakaramuy'])];
+      // qu emits `apamuy json hina`.
+      return [sovFetch('fetch-qu-sov', 'qu', 'apamuy', 'ta', ['taripakaramuy'], undefined, 'hina')];
     case 'bn':
+      // bn emits `আনুন json` — like ja, no as-marker.
       return [sovFetch('fetch-bn-sov', 'bn', 'আনুন', 'কে')];
     default:
       return [];
