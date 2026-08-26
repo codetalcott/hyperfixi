@@ -94,11 +94,20 @@ describe('marker-based owners are untouched', () => {
   // `markerPosition` still governs these. qu is the proof: it is `after-object`
   // WITHOUT possessive adjectives, so it takes the marker switch, and four
   // `set.destination` rows depend on that marker surviving.
-  it('qu keeps its after-object marker', () => {
-    expect(translate('set my *opacity to 0.5', 'en', 'qu')).toContain('-pa');
+  it('qu renders a reference owner with its own possessive word', () => {
+    // Was `noqa-pa *opacity` (pronoun + after-object marker). Now `ñuqapa
+    // *opacity`, the form qu's OWN `possessive.keywords` declares — which is why
+    // the derivation cleared 12 qu rows. The point of the assertion is unchanged:
+    // a reference owner must not be rewritten property-first.
+    const rendered = translate('set my *opacity to 0.5', 'en', 'qu');
+    expect(rendered).toContain('ñuqapa');
+    expect(rendered.indexOf('ñuqapa')).toBeLessThan(rendered.indexOf('*opacity'));
   });
 
-  it.each(['ko', 'zh'] as const)('%s keeps its between-marker', language => {
+  // bn/hi/ja joined this list when the possessive adjective became derivable
+  // from `possessive.keywords` — they used to glue pronoun+marker (`আমির`,
+  // `मैंका`, `自分の`) and now emit the declared `আমার` / `मेरा` / `私の`.
+  it.each(['bn', 'hi', 'ja', 'ko', 'zh'] as const)('%s keeps its between-marker', language => {
     // `between` languages glue the marker: ko `내값`, zh `我的值`. They take the
     // marker switch, not the adjective branch, so this fix does not touch them.
     const rendered = translate(SOURCE, 'en', language);
@@ -106,21 +115,6 @@ describe('marker-based owners are untouched', () => {
     expect(role, `${language}: ${rendered}`).toBeDefined();
   });
 
-  it.each(['bn', 'hi', 'ja'] as const)(
-    '%s does NOT round-trip a reference owner (pre-existing)',
-    language => {
-      // Also `between`, also untouched — but their glued form does not re-parse:
-      // bn `আমির মান` and ja `自分の値` make `parse` THROW, hi `मैंका मान` yields an
-      // `on` node with no patient. Pre-existing: the corpus measured zero
-      // regressions from this change, and these take the same marker switch ko
-      // and zh do. Pinned failing-when-fixed rather than quietly excluded.
-      const rendered = translate(SOURCE, 'en', language);
-      expect(
-        patient(rendered, language),
-        `${language} now round-trips — move it up and delete this: ${rendered}`
-      ).toBeUndefined();
-    }
-  );
 });
 
 describe('selector owners keep #935 behaviour', () => {
