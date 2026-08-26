@@ -198,6 +198,7 @@ function generateProfilesIndex(): void {
 // Types
 export type {
   LanguageProfile,
+  LanguageLexicon,
   WordOrder,
   MarkingStrategy,
   RoleMarker,
@@ -269,6 +270,7 @@ function generateLanguageProfiles(): void {
 // Re-export types
 export type {
   LanguageProfile,
+  LanguageLexicon,
   WordOrder,
   MarkingStrategy,
   RoleMarker,
