@@ -31,6 +31,7 @@ import { parseCaretPrefix, makeEvaluateCaretVar, makeWriteCaretVar } from './car
 import { parseLiveFeature, makeEvaluateLiveFeature } from './live';
 import { parseWhenFeature, makeEvaluateWhenFeature } from './when';
 import { parseBindFeature, makeEvaluateBindFeature } from './bind';
+import { VERSION } from './version.js';
 
 export { reactive } from './signals';
 export type { CaretVarNode } from './caret-var';
@@ -57,7 +58,7 @@ export type { BindFeatureNode } from './bind';
  */
 export const reactivityPlugin: HyperfixiPlugin & { version: string } = {
   name: '@hyperfixi/reactivity',
-  version: '2.3.1',
+  version: VERSION,
   install(ctx: HyperfixiPluginContext) {
     const { parserExtensions, runtime } = ctx;
 
