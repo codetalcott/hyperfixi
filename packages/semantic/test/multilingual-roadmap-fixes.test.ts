@@ -14207,3 +14207,56 @@ describe('Foreign-validity Phase 11: zh JS执行 split-verb reassembly (js-inlin
     expect(out).toContain('执行');
   });
 });
+
+describe('en→foreign render residual: unless round trips (SOV compound shape + bn keyword)', () => {
+  // The renderer emits en's flat compound shape — `unless(cond)` in its own
+  // clause, the guarded command in the NEXT one (`I ない限り それから .selected
+  // を 切り替え`) — so the trailing-unless guard in parseClause found a fronted
+  // condition but NO body command in the same clause and dropped both. It now
+  // emits the guard node alone (condition-only clause), mirroring en's
+  // [unless, toggle] sibling order. bn additionally had NO unless keyword at
+  // all — the only profile without one — so render fell to the explicit
+  // `[unless condition:…]` placeholder; it now renders `যদি না`.
+  const collectActions = (node: unknown, acc = new Set<string>()): Set<string> => {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, any>;
+    if (typeof rec.action === 'string') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => collectActions(x, acc));
+      else if (c && typeof c === 'object') collectActions(c, acc);
+    }
+    return acc;
+  };
+
+  for (const lang of ['ja', 'ko', 'tr', 'qu', 'bn']) {
+    it(`[${lang}] wrapped unless-condition round-trips both actions`, () => {
+      const ref = parse('on click unless I match .disabled toggle .selected', 'en');
+      const out = render(ref, lang);
+      const back = parse(out, lang);
+      const actions = collectActions(back);
+      expect(actions.has('unless')).toBe(true);
+      expect(actions.has('toggle')).toBe(true);
+      // The guard carries a real condition expression, not a dropped run.
+      const find = (n: any): any => {
+        if (!n || typeof n !== 'object') return null;
+        if (n.action === 'unless') return n;
+        for (const f of ['body', 'statements']) {
+          for (const c of n[f] ?? []) { const hit = find(c); if (hit) return hit; }
+        }
+        return null;
+      };
+      const guard = find(back);
+      const cond = guard?.roles instanceof Map ? guard.roles.get('condition') : guard?.roles?.condition;
+      expect(cond).toMatchObject({ type: 'expression' });
+    });
+  }
+
+  it('[bn] bare unless renders যদি না and parses back as unless', () => {
+    const ref = parse('unless I match .disabled toggle .selected', 'en');
+    const out = render(ref, 'bn');
+    expect(out).toContain('যদি না');
+    const back = parse(out, 'bn') as Record<string, any>;
+    expect(collectActions(back).has('unless')).toBe(true);
+  });
+});

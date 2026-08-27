@@ -3330,10 +3330,28 @@ export class SemanticParserImpl implements ISemanticParser {
       // Mirror en's flat `[unless(cond), toggle]` order: guard first, then body.
       return [guardNode, ...bodyCommands];
     }
-    // A claimed fronted condition that never re-attached to a guard node (no
-    // body command parsed) is dropped with the trailing marker — record it.
+    // A condition-only clause: the RENDERER emits en's flat compound shape —
+    // `unless(cond)` in its own clause, the guarded command in the NEXT one
+    // (`I ない限り それから .selected を 切り替え`) — so at this point the whole
+    // clause was the fronted condition plus the trailing marker, and there is
+    // no body command to anchor on. Emit the guard alone; the following clause
+    // parses its command as a sibling, exactly the en reference's `[unless,
+    // toggle]` action set. Still precision-safe: a real condition run was
+    // captured (a bare trailing marker with nothing ahead of it stays
+    // unparsed), so no phantom `unless` can appear on a clause that never
+    // carried one.
     if (trailingGuard && cond && cond.length > 0 && bodyCommands.length === 0) {
-      this.recordDroppedTokens(cond, language, 'body clause');
+      return [
+        createCommandNode(
+          trailingGuard,
+          { condition: { type: 'expression', raw: this.joinTokenText(cond, language) } },
+          {
+            sourceLanguage: language,
+            patternId: `${trailingGuard}-${language}-trailing-guard`,
+            confidence: 0.85,
+          }
+        ),
+      ];
     }
 
     return bodyCommands;

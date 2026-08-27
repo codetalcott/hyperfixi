@@ -2913,6 +2913,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   যখন: ['bn'],
   যতক্ষণ: ['bn'],
   যদি: ['bn'],
+  'যদি না': ['bn'],
   যাও: ['bn'],
   যান: ['bn'],
   যুক্ত: ['bn'],
@@ -3510,7 +3511,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3308
+ * Total keywords: 3309
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 195
  */
