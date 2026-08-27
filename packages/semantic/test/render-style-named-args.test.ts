@@ -29,8 +29,15 @@ const LANGUAGES = [
   'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh',
 ] as const;
 
-/** The five that recovered. bn is held out — see the pin at the bottom. */
-const SOV_WITH_PHRASE = ['hi', 'ja', 'ko', 'qu', 'tr'] as const;
+/**
+ * All six SOV languages. bn was held out until the fused-handler body rewind
+ * landed: it rendered and parsed the with-phrase correctly as a BARE command
+ * and lost it only inside a handler, because `event-handler-bn-sov`'s trailing
+ * `{action}` slot swallowed the body's leading named-argument run and the body
+ * parse resumed after it. The pin that guarded that residual is now the second
+ * assertion below.
+ */
+const SOV_WITH_PHRASE = ['bn', 'hi', 'ja', 'ko', 'qu', 'tr'] as const;
 
 function find(node: SemanticNode | null, action: string): CommandSemanticNode | null {
   if (!node) return null;
@@ -85,25 +92,22 @@ describe('a render with NO variables is unchanged', () => {
   });
 });
 
-describe('KNOWN RESIDUAL — failing-when-fixed', () => {
-  // bn renders the with-phrase correctly and parses it correctly as a BARE
-  // command; only inside an event handler does it break, and for an unrelated
-  // reason: bn's generic `event-handler-bn-sov` extracts its body by token
-  // POSITION, and that path mangles any body whose first clause is a
-  // named-argument run. Same path, same shape as the bn `set` defect fixed
-  // earlier. Pinned rather than hidden, so it reports the moment it clears.
+describe('bn keeps the with-phrase inside a handler (was the held-out residual)', () => {
+  // The bare form always worked; the handler form did not, and the difference
+  // was the fused handler body rewind — kept as its own case so a regression
+  // reports as "bn lost it again inside a handler" rather than as one row of
+  // the parameterised sweep above.
   it('bn parses the with-phrase as a bare command', () => {
     const rendered = translate('render #user-list with users: $data', 'en', 'bn');
     const node = find(parse(rendered, 'bn'), 'render');
     expect(style(node)?.type).toBe('expression');
   });
 
-  it('bn still loses it inside a handler', () => {
+  it('bn keeps it inside a handler too', () => {
     const rendered = translate('on click render #user-list with users: $data', 'en', 'bn');
     const node = find(parse(rendered, 'bn'), 'render');
-    expect(
-      style(node),
-      `bn now keeps the style inside a handler — remove this pin:\n${rendered}`
-    ).toBeUndefined();
+    expect(style(node)?.type, `bn lost the style inside a handler:\n${rendered}`).toBe(
+      'expression'
+    );
   });
 });

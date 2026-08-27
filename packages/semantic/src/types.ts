@@ -626,6 +626,14 @@ export interface PatternMatchResult {
   readonly captured: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly consumedTokens: number;
   readonly confidence: number; // 0-1, how well the pattern matched
+  /**
+   * Stream index at which each captured role's value STARTED, for callers that
+   * need to re-read a slot's own span rather than the tail after it. Populated
+   * on the same success path as `captured`, so it has exactly the same fidelity
+   * (a role left behind by a rolled-back group survives in both maps or in
+   * neither). Consumed by the fused-handler body rewind in `semantic-parser`.
+   */
+  readonly roleStarts?: ReadonlyMap<SemanticRole, number>;
 }
 
 /**

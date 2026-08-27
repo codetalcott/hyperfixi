@@ -78,6 +78,12 @@ export class PatternMatcher {
    * Cleared before each top-level matchBest() call.
    */
   private matchCache = new Map<string, PatternMatchResult | null>();
+  /**
+   * Stream index where each role's capture began, for the current
+   * `matchPattern` call. Rebuilt per call, written on the same success path as
+   * `captured` — see `PatternMatchResult.roleStarts`.
+   */
+  private roleStarts = new Map<SemanticRole, number>();
 
   constructor(confidenceModel?: ConfidenceModel) {
     this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
@@ -98,6 +104,7 @@ export class PatternMatcher {
     // Reset match counters for this pattern
     this.stemMatchCount = 0;
     this.totalKeywordMatches = 0;
+    this.roleStarts = new Map();
 
     const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
 
@@ -123,6 +130,7 @@ export class PatternMatcher {
       captured,
       consumedTokens: tokens.position() - mark.position,
       confidence,
+      roleStarts: this.roleStarts,
     };
   }
 
@@ -309,8 +317,17 @@ export class PatternMatcher {
       case 'literal':
         return this.matchLiteralToken(tokens, patternToken);
 
-      case 'role':
-        return this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
+      case 'role': {
+        // Record where this slot's own span begins, but only once it actually
+        // captured — an optional role that matched nothing must not claim a
+        // position. See `PatternMatchResult.roleStarts`.
+        const roleStart = tokens.position();
+        const matchedRole = this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
+        if (matchedRole && captured.has(patternToken.role)) {
+          this.roleStarts.set(patternToken.role, roleStart);
+        }
+        return matchedRole;
+      }
 
       case 'group':
         return this.matchGroupToken(tokens, patternToken, captured, nextPatternToken);
