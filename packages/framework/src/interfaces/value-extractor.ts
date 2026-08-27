@@ -85,6 +85,16 @@ export class StringLiteralExtractor implements ValueExtractor {
 
   canExtract(input: string, position: number): boolean {
     const char = input[position];
+    // An ASCII apostrophe glued to the END of a word is the possessive marker
+    // (`#price's value`, `my's` never occurs but `it's`/`#qty's` do), not a
+    // string opener. Reading it as a quote paired it with the NEXT possessive:
+    // `(#price's value * #qty's value)` lexed `'s value * #qty'` as one string
+    // literal, which swallowed the operator and hid the property noun from
+    // translation in every language that renders `'s`. A quote that opens a
+    // string always follows whitespace, punctuation, or the start of input.
+    if (char === "'" && position > 0 && /[\p{L}\p{N}_)\]]/u.test(input[position - 1])) {
+      return false;
+    }
     return (
       char === '"' ||
       char === "'" ||

@@ -1166,26 +1166,22 @@ function locateReactiveWhenHead(tokens: readonly LanguageToken[], language: stri
  * The watched expression as a `condition` value.
  *
  * English source is kept BYTE-FAITHFUL by slicing the input between the head
- * word and the `changes` word: `raw` is what the core runtime evaluates, and a
- * token re-join would mangle e.g. the possessive `(#price's value * #qty's
- * value)`, which the English tokenizer lexes with a stray quote. A foreign
- * surface is re-joined from the tokens' NORMALIZED forms instead (the same
- * seam the conditional fold uses), with the or-conjunction normalized by
- * surface where the tokenizer leaves it a bare identifier (de `oder`, fr `ou`,
- * …) — so a ja/de/fr head renders back to the canonical `$a or $b`, which the
- * real engine accepts, rather than `$a oder $b`, which it rejects.
+ * word and the `changes` word: `raw` is what the core runtime evaluates. Every
+ * other language is re-joined from the tokens' NORMALIZED forms (the same seam
+ * the conditional fold uses) — the or-conjunction normalized by surface where
+ * the tokenizer leaves it a bare identifier (de `oder`, fr `ou`), genitives
+ * rewritten to English (`#priceの 値` / `valor de #price` → `value of #price`,
+ * `#price's wartość` → `#price's value`) — so the head renders back to English
+ * the real engine accepts. The decision is by LANGUAGE, not by "did any token
+ * normalize": a foreign span of bare particles and nouns (`(#priceর মান * …)`)
+ * normalizes nothing and still needs every one of those rewrites.
  */
 function watchedExpressionValue(
   input: string,
   span: readonly LanguageToken[],
   language: string
 ): SemanticValue {
-  const foreign = span.some(
-    tok =>
-      (tok.normalized !== undefined && tok.normalized.toLowerCase() !== tok.value.toLowerCase()) ||
-      (isOrWordToken(tok) && tok.value.toLowerCase() !== 'or')
-  );
-  if (!foreign) {
+  if (language === 'en') {
     const first = span[0];
     const last = span[span.length - 1];
     return { type: 'expression', raw: input.slice(first.position.start, last.position.end).trim() };

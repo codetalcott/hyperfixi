@@ -132,7 +132,9 @@ const OF_POSSESSIVE_MARKERS: Record<string, ReadonlySet<string>> = {
   bn: new Set(['র']),
   hi: new Set(['का']),
   qu: new Set(['pa']),
-  tr: new Set(['nin']),
+  // Genitive suffix with 4-way vowel harmony, buffered `n` after a vowel; the
+  // profile renders `ın` for every owner, so all eight forms must read back.
+  tr: new Set(['nin', 'nın', 'nun', 'nün', 'in', 'ın', 'un', 'ün']),
 };
 
 /**
@@ -741,6 +743,32 @@ export function joinExpressionTokens(
     const reference = profile ? possessiveReferenceOf(profile, token) : undefined;
 
     const next = tokens[i + 1];
+
+    // English `'s` possessive, tokenized as `'` + `s` glued to its owner
+    // (`#price` `'` `s` `wartość`) — the shape every language that renders the
+    // `'s` fallback produces (hi/pl/ru/uk/th/vi/it/ms/tl/he). Glue the marker
+    // back onto the owner and translate the property noun through the lexicon,
+    // so `#price's wartość` comes back as `#price's value` rather than a
+    // non-ASCII identifier the canonical parser rejects ("Unknown token: ś").
+    // A lone `'` token can only be this marker: a quoted string is one token.
+    if (
+      token.value === "'" &&
+      previous !== undefined &&
+      next?.value === 's' &&
+      token.position?.end !== undefined &&
+      next.position?.start === token.position.end
+    ) {
+      out += "'s";
+      previous = next;
+      const prop = tokens[i + 2];
+      if (prop && translatePropertyName(languageCode, prop.value) !== prop.value) {
+        append(translatePropertyName(languageCode, prop.value), prop);
+        i += 2;
+      } else {
+        i += 1;
+      }
+      continue;
+    }
     if (reference !== undefined && next) {
       // A possessor may be separated from its property by a CONNECTOR: id
       // `saya punya nilai` = "I have value" = "my value" (`punya` = "have/own").
@@ -824,6 +852,29 @@ export function joinExpressionTokens(
       append(translatePropertyName(languageCode, token.value), token);
       append('of', next);
       append(owner.value, owner);
+      i += 2;
+      continue;
+    }
+
+    // OWNER-FIRST genitive — `<selector> <genitive> <property>` → `value of
+    // #price` — the shape every suffix/particle-genitive language renders
+    // (ja `#priceの 値`, ko `#price의 값`, zh `#price的 值`, bn `#priceর মান`,
+    // qu `#price pa chanin`, tr `#price ın değer`). The branch above reads the
+    // prepositional order only, so these leaked verbatim and the canonical
+    // parser threw on the particle ("Unknown token: の"). Same marker table,
+    // same property lexicon; gated on the property head being one the lexicon
+    // knows, so `#modal に 表示` (a dative marker before a verb) is untouched.
+    if (
+      token.kind === 'selector' &&
+      next &&
+      owner &&
+      isOfPossessiveMarker(profile, next) &&
+      isPropertyHeadCandidate(owner, languageCode) &&
+      translatePropertyName(languageCode, owner.value) !== owner.value
+    ) {
+      append(translatePropertyName(languageCode, owner.value), owner);
+      append('of', next);
+      append(token.value, token);
       i += 2;
       continue;
     }

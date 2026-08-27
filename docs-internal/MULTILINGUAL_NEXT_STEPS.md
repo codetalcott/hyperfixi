@@ -132,6 +132,41 @@
 >   excluded). Whole-corpus diff for that change alone: **zero rows moved**;
 >   the two pl pairs cleared; the `feature-block-render` pl pin promoted.
 
+> **Update 2026-08-27b — `when` is canonical-only in English, and
+> `when-value-changes` is engine-portable in all 24 languages (follow-up to the
+> reactive-when arc).**
+>
+> - **English `when` handler heads removed.** Upstream 0.9.93 has NO temporal
+>   `when <event>`: `when click toggle .active` fails "Cannot watch local
+>   variable 'click'" — `when` is the reactive observer plus the trailing
+>   command guard (`show .x when <cond>`). `event-en-when` /
+>   `event-en-when-source` were an invention, and the thing that had claimed
+>   every reactive head. English now REJECTS the form like the engine
+>   (`canParse` false). Scope is English-only, on purpose: the foreign
+>   when-heads (es `cuando`, de `wenn`, fr `quand`, id `ketika`, qu `maykama`,
+>   bn `যখন`, hi `जब`, ja `とき`, tr `iken`, ar `عندما`, he `כאשר`, zh `每当`/`当…时`)
+>   are translations of `on` — claims about our translation layer, not about
+>   English — and stay (measured: only zh's circumfix matches any corpus row;
+>   the rest are parse-side leniency). The `english-idioms` and README
+>   "recommended `when clicked`" claims are corrected.
+> - **`when-value-changes` corrected to `put "$" + it into me`** (`` `$${it}` `` is
+>   an upstream lexer limitation) — and the 19 foreign translations that
+>   correcting it exposed to R4 (2026-08-27 block above) are FIXED, not
+>   allowlisted, three causes: (1) the i18n transformer split a parenthesized
+>   group across a prepositional possessive (`valor de ( #price * valor ) de
+>   #qty`) — parens now ride outside the rewrite; (2) the English join read
+>   only the prepositional genitive order, so `#priceの 値` / `#price ın değer`
+>   leaked their particle — an owner-first branch (`<selector> <genitive>
+>   <property>` → `value of #price`) plus tr's eight vowel-harmony genitives;
+>   (3) the framework string extractor paired the two `'s` apostrophes into
+>   ONE string literal (`'s wartość * #qty'`), hiding the noun from the
+>   property lexicon — a word-glued apostrophe is a possessive marker now, and
+>   the join glues `'s` back and translates the noun. Also: a foreign watched
+>   span is ALWAYS re-joined (the old "only if some token normalized" rule let
+>   bn/ja/hi/pl/… spans of bare particles/nouns through verbatim). Measured:
+>   foreign→en engine validity **5/24 → 24/24**; `engine-verification.json`
+>   flips the row to `both`; whole-corpus parse diff for every one of these
+>   changes: **0 rows**; R4 green with the pattern now INSIDE its denominator.
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)

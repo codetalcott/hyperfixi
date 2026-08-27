@@ -1668,12 +1668,22 @@ function translateMultiWordValue(
       // Check if it's a prepositional possessive that needs reordering
       const prepMatch = possessiveResult.match(/^__POSS__(.+)__(.+)__POSS__$/);
       if (prepMatch && i + 1 < words.length) {
-        // Prepositional: "X's Y" → "Y marker X" (e.g., "textContent de #button")
+        // Prepositional: "X's Y" → "Y marker X" (e.g., "textContent de #button").
+        // Parentheses ride OUTSIDE the rewrite: an owner that opens a group
+        // (`(#price's`) and a property that closes one (`value)`) keep their
+        // parens on the outside — `(valor de #price`, `valor de #qty)` — never
+        // `valor de (#price` / `valor) de #qty`, which split the group across
+        // the possessive and left every prepositional language's
+        // `(#price's value * #qty's value)` unparseable on the way back.
         const marker = prepMatch[1];
-        const owner = prepMatch[2];
-        const property = words[i + 1];
+        const ownerRaw = prepMatch[2];
+        const propertyRaw = words[i + 1];
+        const openParens = ownerRaw.match(/^\(+/)?.[0] ?? '';
+        const owner = ownerRaw.slice(openParens.length);
+        const closeParens = propertyRaw.match(/\)+$/)?.[0] ?? '';
+        const property = propertyRaw.slice(0, propertyRaw.length - closeParens.length);
         const translatedProperty = translateWord(property, sourceLocale, targetLocale);
-        translated.push(`${translatedProperty} ${marker} ${owner}`);
+        translated.push(`${openParens}${translatedProperty} ${marker} ${owner}${closeParens}`);
         i += 2; // Skip property since we consumed it
         continue;
       } else if (prepMatch) {
