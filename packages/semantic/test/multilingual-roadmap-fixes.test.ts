@@ -14303,3 +14303,34 @@ describe('trigger renders its event ACCUSATIVELY in bn/hi (render residual: trig
     expect(back.roles.get('event')).toMatchObject({ value: 'init' });
   });
 });
+
+describe('a duration-typed literal in transition.goal re-roles to duration (slide-toggle hi)', () => {
+  // A goal-less transition (`transition *max-height over 300ms`) reaches
+  // hi's generated-simple pattern, whose REQUIRED {goal} slot swallowed the
+  // time literal — goal:literal dataType=duration with the duration slot
+  // empty. normalizeCommandRoles now shifts it (tell/fetch relabel
+  // precedent); a transition with a REAL goal keeps both roles.
+  const roleOf = (n: any, r: string) => n?.roles?.get?.(r);
+  const findT = (n: any): any => {
+    if (!n) return null;
+    if (n.action === 'transition') return n;
+    for (const f of ['body', 'statements']) {
+      for (const c of n[f] ?? []) { const hit = findT(c); if (hit) return hit; }
+    }
+    return null;
+  };
+
+  it('[hi] `*max-height को 300ms संक्रमण` yields duration, not a goal', () => {
+    const t = findT(parse('*max-height को 300ms संक्रमण', 'hi'));
+    expect(t).toBeTruthy();
+    expect(roleOf(t, 'duration')).toMatchObject({ value: '300ms' });
+    expect(roleOf(t, 'goal')).toBeUndefined();
+  });
+
+  it('[hi] a transition WITH a goal keeps both goal and duration', () => {
+    const t = findT(parse(render(parse('transition opacity to 0 over 300ms', 'en'), 'hi'), 'hi'));
+    expect(t).toBeTruthy();
+    expect(roleOf(t, 'goal')).toMatchObject({ value: 0 });
+    expect(roleOf(t, 'duration')).toMatchObject({ value: '300ms' });
+  });
+});
