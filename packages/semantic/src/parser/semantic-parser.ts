@@ -626,6 +626,9 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
 }
 
 export class SemanticParserImpl implements ISemanticParser {
+  /** Source text the current token stream's positions index into. */
+  private positionSource: string | undefined;
+
   /**
    * Parse input in the specified language to a semantic node, then apply the R1
    * role-fidelity normalization (see {@link normalizeCommandRoles}) once on the
@@ -925,6 +928,30 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Tokenize the input
     const tokens = tokenizeInternal(parseInput, language);
+    // The text these tokens' `position` offsets index into. `consumeJsBlock`
+    // slices it to recover a js body's ORIGINAL spacing; every other consumer
+    // reads token values, so this is the only reason the parser keeps it.
+    // Guarded there against a stale value (a nested `this.parse` of a sub-block
+    // overwrites it), so it can never produce text the tokens do not support.
+    this.positionSource = parseInput;
+
+    // Stage 0.2: a BARE `js … end` block. `consumeJsBlock` is otherwise only
+    // reached from the clause walk, so a js block inside a handler was opaque
+    // while the same block on its own fell to the per-language `js` PATTERN —
+    // which re-spaces the JavaScript and, in zh, splits the `JS执行` compound
+    // verb and returns `js 执行`, losing the body outright. Head-form ONLY: the
+    // verb-final variant scans forward for its keyword, and at this stage the
+    // event-handler head has not been consumed yet, so it would swallow it
+    // (`クリック を で … を JS実行 終わり` → one js command whose body is the whole
+    // handler). It runs in the clause walk, where the head is already gone.
+    // Gated on the block consuming the WHOLE input, so every other parse is
+    // byte-identical.
+    {
+      const mark = tokens.mark();
+      const bareJs = this.consumeJsBlock(tokens, language);
+      if (bareJs && tokens.isAtEnd()) return withDiagnostics(bareJs, diagnostics);
+      tokens.reset(mark);
+    }
 
     // Get patterns for this language
     const patterns = getPatternsForLanguage(language);
@@ -2728,7 +2755,8 @@ export class SemanticParserImpl implements ISemanticParser {
         // first `end` — and parse it as one unit, so matchBest matches the single
         // `js` command (as it already does for a standalone block) and the JS body
         // never reaches the command patterns.
-        const jsNode = this.consumeJsBlock(tokens, language);
+        const jsNode =
+          this.consumeJsBlock(tokens, language) ?? this.consumeVerbFinalJsBlock(tokens, language);
         if (jsNode) {
           clauses.push(jsNode);
           continue;
@@ -3186,6 +3214,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Create a TokenStream from the (guard-stripped) clause tokens
     const clauseStream = new TokenStreamImpl(bodyTokens, language);
+
     const commands: SemanticNode[] = [];
 
     // Coverage mark for this clause: if the whole-clause verb-anchoring
@@ -5704,6 +5733,125 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * Whether a token is the language's own PATIENT role marker, by surface.
+   * Homonym particles carry no `normalized` (zh `把` tokenizes as a bare
+   * particle), so the profile's declared forms are what identify it.
+   */
+  private isPatientMarker(token: LanguageToken, language: string): boolean {
+    const spec = (
+      tryGetProfile(language)?.roleMarkers as
+        Record<string, { primary?: string; alternatives?: string[] } | undefined> | undefined
+    )?.patient;
+    if (!spec?.primary) return false;
+    const value = token.value.toLowerCase();
+    if (spec.primary.toLowerCase() === value) return true;
+    return !!spec.alternatives?.some(a => a.toLowerCase() === value);
+  }
+
+  /**
+   * The terminator of a js BLOCK, which is looser than {@link isEndKeyword}.
+   *
+   * A curated language's end set deliberately omits surfaces that double as the
+   * positional word `last` — bn `শেষ`, ar `آخر` — because a role-value guard
+   * must not read `last` as a terminator. But `শেষ` IS what the renderer emits
+   * for bn's `end`, so inside a js block that exclusion means the block has no
+   * recognizable close at all: `consumeJsBlock` walks past it and the JavaScript
+   * is handed to the command patterns (bn `js(me) if (…) return "cancel";` came
+   * back as `js ;`). The homonym cannot bite here — the span being scanned is
+   * raw JavaScript, which is ASCII, so a Bengali positional `last` cannot occur
+   * inside it — so the profile's own `end` word is accepted alongside the
+   * curated set.
+   */
+  private isJsBlockTerminator(value: string, language: string): boolean {
+    return (
+      this.isEndKeyword(value, language) ||
+      this.profileKeywordMatches(language, 'end', value.toLowerCase())
+    );
+  }
+
+  /**
+   * The verb-FINAL shape of the same block: `<body> <marker> <js> <end>`.
+   *
+   * SOV and agglutinative renders put the command word last — bn `console.log("x")
+   * কে জেএস শেষ`, ja `console.log("x") を JS実行 終わり`, tr `console.log("x") i js
+   * son` — so the head of the clause is the JavaScript, not the keyword, and
+   * `consumeJsBlock`'s head test never fires. The body then reached the command
+   * patterns, which is how a js body containing `if (…) return …;` produced
+   * phantom `if`/`return` commands in bn and a bare `js ;` in ja/tr (the
+   * behavior-removable action-drop rows).
+   *
+   * Gated hard, so it can only add parses: the js keyword must be followed
+   * immediately by `end` (that is what makes it verb-FINAL rather than a `js`
+   * command with a body after it), there must be at least one token before it,
+   * and the scan stops at a conjunction so it can never reach across a clause
+   * boundary into a later `js … end`.
+   */
+  private consumeVerbFinalJsBlock(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    language: string
+  ): SemanticNode | null {
+    const startMark = tokens.mark();
+
+    let offset = 0;
+    let jsAt = -1;
+    for (;;) {
+      const token = tokens.peek(offset);
+      if (!token) break;
+      if (
+        this.isThenKeyword(token.value, language) ||
+        this.isJsBlockTerminator(token.value, language)
+      ) {
+        break;
+      }
+      if (this.isJsKeyword(token)) {
+        // The verb may be an ASCII+CJK compound the tokenizer split (zh `JS执行`,
+        // ja `JS実行`) — see the same allowance in consumeJsBlock.
+        const tail = tokens.peek(offset + 1);
+        const tailIsVerb =
+          !!tail &&
+          token.position?.end !== undefined &&
+          token.position.end === tail.position?.start &&
+          this.profileKeywordMatches(language, 'js', `${token.value}${tail.value}`.toLowerCase());
+        const closer = tokens.peek(offset + (tailIsVerb ? 2 : 1));
+        if (offset > 0 && closer && this.isJsBlockTerminator(closer.value, language)) {
+          jsAt = offset;
+          break;
+        }
+      }
+      offset++;
+    }
+    if (jsAt <= 0) return null;
+
+    const bodyTokens: LanguageToken[] = [];
+    for (let i = 0; i < jsAt; i++) {
+      const token = tokens.peek(i);
+      if (token) bodyTokens.push(token);
+    }
+    // Drop a POST-posed patient marker: it belongs to the command, not the code
+    // (bn কে, ja を, ko 을, tr i, qu ta).
+    const last = bodyTokens[bodyTokens.length - 1];
+    if (last && this.isPatientMarker(last, language)) bodyTokens.pop();
+    if (bodyTokens.length === 0) {
+      tokens.reset(startMark);
+      return null;
+    }
+
+    const raw = this.rawJsBody(bodyTokens);
+    for (let i = 0; i < jsAt; i++) tokens.advance();
+    // Consume the verb (plus a split compound tail) and its closing `end`.
+    tokens.advance();
+    const afterVerb = tokens.peek();
+    if (afterVerb && !this.isJsBlockTerminator(afterVerb.value, language)) tokens.advance();
+    tokens.advance();
+
+    return createCommandNode(
+      'js' as ActionType,
+      { patient: { type: 'expression', raw: raw || '()' } },
+      { sourceLanguage: language, patternId: `js-opaque-final-${language}`, confidence: 1 }
+    );
+  }
+
+  /**
    * Consume a `js(…) … end` block from the stream as one opaque unit and return a
    * single `js` command node. The FIRST `end` after the `js` keyword closes the
    * block — the same heuristic the i18n transformer's js-masking uses (raw JS never
@@ -5747,12 +5895,21 @@ export class SemanticParserImpl implements ISemanticParser {
       tokens.advance();
     }
 
+    // A PRE-posed patient marker belongs to the command, not to the JavaScript.
+    // he renders `js את console.log(…)` and zh `JS执行 把 console.log(…)`; without
+    // this the particle is swallowed into the opaque body and comes back as
+    // `js את console.log ( … )`. Languages whose patient marker FOLLOWS the body
+    // (ja を, ko 을, bn কে, tr i, qu ta) are unaffected: the marker is never at the
+    // head, and the body walk stops at `end` before reaching it.
+    const marker = tokens.peek();
+    if (marker && this.isPatientMarker(marker, language)) tokens.advance();
+
     let sawEnd = false;
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
       tokens.advance();
-      if (this.isEndKeyword(t.value, language)) {
+      if (this.isJsBlockTerminator(t.value, language)) {
         sawEnd = true;
         break;
       }
@@ -5764,15 +5921,57 @@ export class SemanticParserImpl implements ISemanticParser {
       return null;
     }
 
-    const raw = bodyTokens
-      .map(t => t.value)
-      .join(' ')
-      .trim();
+    const raw = this.rawJsBody(bodyTokens);
     return createCommandNode(
       'js' as ActionType,
       { patient: { type: 'expression', raw: raw || '()' } },
       { sourceLanguage: language, patternId: `js-opaque-${language}`, confidence: 1 }
     );
+  }
+
+  /**
+   * Recover a js block's body EXACTLY as it was written.
+   *
+   * It used to be `bodyTokens.map(t => t.value).join(' ')`, which re-spaces the
+   * JavaScript around every token boundary: `console.log("from js")` came back
+   * as `console .log ( "from js" )`. That is not cosmetic — the js body is the
+   * one role whose value is code in another language, so re-spacing it makes
+   * the rendered surface differ from the reference's own English (the round-trip
+   * veto that kept js-inline on the i18n renderer in ar/tl/zh) and, on a body
+   * carrying a `//` comment or an ASI-sensitive line break, changes what the
+   * JavaScript MEANS.
+   *
+   * The token positions index into `positionSource`, so the body is a slice of
+   * it. The slice is verified against the token values with whitespace removed
+   * before it is trusted: a nested `this.parse` of a sub-block overwrites
+   * `positionSource`, and a re-tokenized sub-stream's offsets would then index
+   * the wrong text. When it does not hold, fall back to joining on token
+   * ADJACENCY — `position.start === previous.position.end` means the two were
+   * written with nothing between them — which reproduces the original for every
+   * single-line body and is never worse than the old unconditional space.
+   */
+  private rawJsBody(bodyTokens: readonly LanguageToken[]): string {
+    if (bodyTokens.length === 0) return '';
+
+    const start = bodyTokens[0].position?.start;
+    const end = bodyTokens[bodyTokens.length - 1].position?.end;
+    const source = this.positionSource;
+    if (source !== undefined && start !== undefined && end !== undefined) {
+      const slice = source.slice(start, end);
+      const bare = (text: string): string => text.replace(/\s+/g, '');
+      if (bare(slice) === bare(bodyTokens.map(t => t.value).join(''))) return slice.trim();
+    }
+
+    let out = '';
+    for (let i = 0; i < bodyTokens.length; i++) {
+      const previous = bodyTokens[i - 1];
+      const adjacent =
+        previous?.position?.end !== undefined &&
+        bodyTokens[i].position?.start === previous.position.end;
+      if (i > 0 && !adjacent) out += ' ';
+      out += bodyTokens[i].value;
+    }
+    return out.trim();
   }
 
   /**
