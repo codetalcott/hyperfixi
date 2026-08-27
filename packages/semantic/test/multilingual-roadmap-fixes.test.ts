@@ -16,6 +16,27 @@
 import { describe, it, expect } from 'vitest';
 import { parse, canParse, getTokenizer, fillSchemaDefaults, render } from '../src';
 
+
+/**
+ * The COMMANDS of a handler body, looking through the `compound` wrapper.
+ *
+ * A multi-command handler body has always been a then-compound in English
+ * (`parseBodyWithClauses` wraps >1 clause), and as of 2026-08-27 the FUSED
+ * foreign path agrees — see `buildEventHandler`'s fold. So a body that used to
+ * read `[make, put]` in a language whose fused pattern wins now reads
+ * `[compound{make, put}]`, exactly as the English reference always did.
+ * These assertions are about WHICH commands and roles survive, not about that
+ * wrapper, so they look through it.
+ */
+function handlerCommands<T>(body: T[] | undefined): T[] {
+  const list = body ?? [];
+  if (list.length === 1) {
+    const only = list[0] as unknown as { kind?: string; statements?: T[] };
+    if (only?.kind === 'compound' && Array.isArray(only.statements)) return only.statements;
+  }
+  return list;
+}
+
 describe('Korean fetch keyword alignment (가져오기)', () => {
   // Corpus-shaped event handlers from the multilingual baseline.
   const cases = [
@@ -6826,7 +6847,7 @@ describe('ms put-with-`ia` — marker keyword after a pronoun (S2 — make-eleme
     const n = parse('apabila click buat a <div.card/> kemudian letak ia ke #container', 'ms') as {
       body?: Array<{ action?: string }>;
     };
-    expect((n.body ?? []).map(c => c.action)).toEqual(['make', 'put']);
+    expect(handlerCommands(n.body).map(c => c.action)).toEqual(['make', 'put']);
   });
 
   it('[en] a genuine possessive property head is still read as a property-path (no regression)', () => {
@@ -6950,7 +6971,7 @@ describe('hi verb-medial put in fused event bodies (S6 — make-element/make-toa
     const n = parse(code, 'hi') as {
       body?: Array<{ action?: string; roles?: Map<string, { type?: string; value?: unknown }> }>;
     };
-    return n.body ?? [];
+    return handlerCommands(n.body);
   };
 
   it('[hi] make-element: put it→#container (was patient=#container, dest=me)', () => {
@@ -6989,7 +7010,7 @@ describe('qu reference alignment to dict surface forms (qu tokenizer arc, wave 1
         roles?: Map<string, { type?: string; value?: unknown; raw?: string }>;
       }>;
     };
-    return n.body ?? [];
+    return handlerCommands(n.body);
   };
 
   it('[qu] put-content: `noqa man` resolves the destination to me', () => {
@@ -7074,7 +7095,7 @@ describe('qu make-toast: single-quote strings + fused-body at-end (qu arc wave 3
     ) as {
       body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
     };
-    const body = n.body ?? [];
+    const body = handlerCommands(n.body);
     expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
     // The single-quoted literal now tokenizes whole (was `'Saved`+`!`+`'`); the
     // put captures it as an expression whose raw carries the Saved! text.
@@ -7115,7 +7136,7 @@ describe('uk make-toast: apostrophe-as-letter no longer eats string quotes (R2 t
     ) as {
       body?: Array<{ action?: string; roles?: Map<string, { value?: unknown; raw?: string }> }>;
     };
-    const body = n.body ?? [];
+    const body = handlerCommands(n.body);
     expect(body.map(c => c.action)).toEqual(['make', 'put', 'put']);
     const p1 = body[1]?.roles?.get('patient');
     expect(String(p1?.raw ?? p1?.value)).toContain('Saved!');
@@ -9988,7 +10009,7 @@ describe('SOV/marker-swallowed fetch responseType reclaim (R1 handoff cluster B)
         body?: Array<{ action?: string; roles?: Map<string, { type: string; raw?: unknown }> }>;
       };
       expect(node.kind).toBe('event-handler');
-      const fetch = node.body?.find(c => c.action === 'fetch');
+      const fetch = handlerCommands(node.body).find(c => c.action === 'fetch');
       expect(fetch).toBeTruthy();
       const rt = fetch!.roles?.get('responseType');
       expect(rt?.type).toBe('expression');
@@ -10155,7 +10176,7 @@ describe('sw `as` marker is kuwa, not the if-homonym kama (phantom-if family)', 
       'sw'
     ) as { kind: string; body?: Array<{ action?: string }> };
     expect(node.kind).toBe('event-handler');
-    const actions = (node.body ?? []).map(c => c.action);
+    const actions = handlerCommands(node.body).map(c => c.action);
     expect(actions).toContain('fetch');
     expect(actions).toContain('put');
     expect(actions).not.toContain('if');

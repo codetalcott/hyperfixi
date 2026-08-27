@@ -2643,7 +2643,30 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
-    return createEventHandler(resolvedEventValue, body, eventModifiers, {
+    // A multi-command handler body is a THEN-CHAIN, whichever path built it.
+    //
+    // `parseBodyWithClauses` (the clause path, and English always) wraps >1
+    // clause in a compound with chainType 'then' — that is why the en reference
+    // for `on click fetch X then put Y` is body=[compound{fetch,put}], and why
+    // rendering it back to English re-emits `then`. The FUSED path above builds
+    // its body by hand (`[commandNode, ...reparsedTail, ...remainingCommands]`)
+    // and left it flat, so the same handler parsed in a language whose fused
+    // `<command>-event-*` pattern wins came back as body=[fetch, put] — no
+    // compound, no chainType, and the English re-render silently dropped every
+    // `then`. Measured 2026-08-27 across the corpus: FIFTEEN languages (bn, es,
+    // he, hi, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) lost the chain this
+    // way, while the eight whose trigger pattern wins (ar, de, fr, ja, ko, qu,
+    // tr, zh) kept it. No recall metric can see it — `then` is neither an action
+    // nor a role — so only the English round trip does.
+    //
+    // Folding here rather than re-parsing: the commands are already correct, and
+    // this is purely the shape the two paths disagreed on. A body that already
+    // came from parseBodyWithClauses is length 1 (the compound), so it never
+    // double-wraps.
+    const foldedBody =
+      body.length > 1 ? [createCompoundNode(body, 'then', { sourceLanguage: language })] : body;
+
+    return createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
       confidence: match.confidence,

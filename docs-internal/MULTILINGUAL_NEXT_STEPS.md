@@ -60,6 +60,64 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27i — fourth burn-down, and the he cluster was never a he
+> bug: a fused handler body lost its THEN-CHAIN in 15 languages. 134 → 102.**
+>
+> The five he rows from the canonical queue all had one cause, and it was not
+> he-specific. English has always produced `body: [compound{…, chainType:
+> 'then'}]` for a handler with more than one command (`parseBodyWithClauses`
+> wraps >1 clause), and the renderer re-emits `then` from that wrapper. The
+> FUSED path in `buildEventHandler` — taken whenever a `<command>-event-*`
+> pattern wins the parse — builds its body by hand and left it FLAT:
+>
+> ```
+> en    on click fetch "/api/data" then put it into #result
+> he    ב click הבא "/api/data" אז שים את זה ב #result
+> he →  on click fetch "/api/data" put it into #result        ← `then` gone
+> ```
+>
+> The he render is CORRECT (`אז` is `then`); the he PARSE dropped the chain.
+> Measured across the corpus: **fifteen** languages lost it (bn, es, he, hi, id,
+> it, ms, pl, pt, ru, sw, th, tl, uk, vi); the eight whose pure trigger pattern
+> wins (ar, de, fr, ja, ko, qu, tr, zh) already kept it. Only he shows up in the
+> kept-row ratchet because for the other fourteen the i18n row loses the chain
+> too, so semantic wins the tie anyway.
+>
+> No recall metric can see this — `then` is neither an action nor a role, and
+> both sides carry the same commands. Only the English round trip does, which is
+> why it took the `best` writer's round-trip veto (#973) to surface it; the
+> BARE body chains correctly in all 23 languages, so it is invisible outside a
+> handler too.
+>
+> Fix: `buildEventHandler` folds a multi-command body into the same
+> `compound`/`then` node the clause path already produces. A single-command body
+> is untouched (pinned by test), and a body that came from
+> `parseBodyWithClauses` is already length 1, so it never double-wraps.
+>
+> **Kept rows 134 → 102 — 32 cleared, zero newly kept** — 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,209, core 7,972, adapter 366, mcp-server 441,
+> compilation-service 340, vocab + R2 lock green.
+>
+> **Sixteen existing assertions changed shape, deliberately.** They compared
+> top-level body actions (`['make','put']`) and now see `['compound']`; their
+> INTENT (which commands, which roles) is untouched and still asserted through a
+> `handlerCommands()` unwrap helper. One is an AST assertion — the builder now
+> emits the `CommandSequence` that a then-chain has always produced in English.
+> Two more live downstream, in `hyperscript-adapter`, and are worth reading:
+>
+> - the parity fixture's ja `tell` row now reads `tell #panel add .open then
+>   wait 200ms then add .visible` (regenerated per its own header's
+>   instructions);
+> - `whole-string-first`'s "never emits a chain word directly after a block
+>   header" invariant listed `tell` alongside `repeat|for|while`. **Measured on
+>   the real engine:** `repeat 3 times then add …` is REJECTED ("Expected 'end'
+>   but found 'then'") but `tell #panel add .open then wait …` is VALID — `tell`
+>   without `end` runs to the end of the feature, so a chain word between its
+>   commands is just a separator, and it is exactly what English renders. `tell`
+>   came out of that regex; the engine-validity of those rows is still asserted
+>   by the sibling "translates to English the real engine accepts" row, which is
+>   the property the regex was standing in for.
+
 > **Update 2026-08-27h — third burn-down, first from the canonical queue:
 > `put X before/after Y` was rendering as "at end of" in ar and tl. 138 → 134.**
 >

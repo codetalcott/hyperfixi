@@ -24,6 +24,27 @@ import { describe, it, expect } from 'vitest';
 import { parseSemantic, translate } from '../src/index';
 import { buildAST } from '../src/ast-builder/index';
 
+
+/**
+ * The COMMANDS of a handler body, looking through the `compound` wrapper.
+ *
+ * A multi-command handler body has always been a then-compound in English
+ * (`parseBodyWithClauses` wraps >1 clause), and as of 2026-08-27 the FUSED
+ * foreign path agrees — see `buildEventHandler`'s fold. So a body that used to
+ * read `[make, put]` in a language whose fused pattern wins now reads
+ * `[compound{make, put}]`, exactly as the English reference always did.
+ * These assertions are about WHICH commands and roles survive, not about that
+ * wrapper, so they look through it.
+ */
+function handlerCommands<T>(body: T[] | undefined): T[] {
+  const list = body ?? [];
+  if (list.length === 1) {
+    const only = list[0] as unknown as { kind?: string; statements?: T[] };
+    if (only?.kind === 'compound' && Array.isArray(only.statements)) return only.statements;
+  }
+  return list;
+}
+
 describe('authored vs implicit me — render round-trips are fixed points', () => {
   it.each([
     ['add .active', 'add .active'],
@@ -64,9 +85,10 @@ describe('qu source-fronted fused variant — body source is not delegation', ()
       body?: Array<{ action: string; roles: Map<string, { value?: unknown }> }>;
       eventModifiers?: { from?: unknown };
     };
-    expect(handler.body?.map(c => c.action)).toEqual(['remove', 'add']);
+    const commands = handlerCommands(handler.body);
+    expect(commands.map(c => c.action)).toEqual(['remove', 'add']);
     // The remove's from-phrase stays ON the remove…
-    expect(handler.body?.[0].roles.get('source')?.value).toBe('.tab');
+    expect(commands[0].roles.get('source')?.value).toBe('.tab');
     // …and never becomes the handler's delegation filter. endsWith('source')
     // is the load-bearing check: includes() re-reddens this line.
     expect(handler.eventModifiers?.from).toBeUndefined();
@@ -75,10 +97,18 @@ describe('qu source-fronted fused variant — body source is not delegation', ()
   it('builds an eventHandler AST with no delegation target', () => {
     const p = parseSemantic(TABS_BASIC, 'qu');
     const built = buildAST(p.node!);
-    const ast = built.ast as { selector?: string; target?: string; commands?: unknown[] };
+    const ast = built.ast as {
+      selector?: string;
+      target?: string;
+      commands?: Array<{ type?: string; commands?: unknown[] }>;
+    };
     expect(ast.selector).toBeUndefined();
     expect(ast.target).toBeUndefined();
-    expect(ast.commands).toHaveLength(2);
+    // The two body commands now arrive inside the CommandSequence that a
+    // then-chain has always produced in English (see handlerCommands above).
+    expect(ast.commands).toHaveLength(1);
+    expect(ast.commands?.[0].type).toBe('CommandSequence');
+    expect(ast.commands?.[0].commands).toHaveLength(2);
   });
 
   it('handler-head source patterns still thread delegation (negative control)', () => {
