@@ -716,3 +716,45 @@ describe('Thai Integration Tests', () => {
     });
   });
 });
+
+// =============================================================================
+// Marked-phrase capture on BARE commands (en→foreign render residual, th rows)
+// =============================================================================
+
+describe('Thai bare commands keep their marked phrase', () => {
+  // The handcrafted `-simple` th patterns sat at priority 100 — a dead tie
+  // with the generated patterns that carry the optional `[จาก {source}]` /
+  // `[ใน {destination}] [{duration}]` groups — and registration order made the
+  // bare form win, silently dropping the marked phrase. Every th row of the
+  // bare-render allowlist (remove.source ×5, toggle.destination ×7,
+  // toggle.duration) was this one tie. `-simple` now sits at 90, the same
+  // layering bn uses. Each case fails at priority 100.
+  const role = (n: Record<string, any>, r: string) =>
+    n.roles instanceof Map ? n.roles.get(r) : n.roles?.[r];
+
+  it('ลบ {patient} จาก {source} binds source on the bare command', () => {
+    const node = parse('ลบ .highlight จาก ฉัน', 'th') as Record<string, any>;
+    expect(node.action).toBe('remove');
+    expect(role(node, 'patient')).toMatchObject({ type: 'selector', value: '.highlight' });
+    expect(role(node, 'source')).toMatchObject({ type: 'reference', value: 'me' });
+  });
+
+  it('สลับ {patient} ใน {destination} binds destination on the bare command', () => {
+    const node = parse('สลับ .open ใน #menu', 'th') as Record<string, any>;
+    expect(node.action).toBe('toggle');
+    expect(role(node, 'patient')).toMatchObject({ type: 'selector', value: '.open' });
+    expect(role(node, 'destination')).toMatchObject({ type: 'selector', value: '#menu' });
+  });
+
+  it('สลับ {patient} {duration} keeps the trailing duration', () => {
+    const node = parse('สลับ .loading 2s', 'th') as Record<string, any>;
+    expect(node.action).toBe('toggle');
+    expect(role(node, 'duration')).toMatchObject({ type: 'literal', value: '2s' });
+  });
+
+  it('a positional destination (ใกล้สุด .card) survives too', () => {
+    const node = parse('สลับ .expanded ใน ใกล้สุด .card', 'th') as Record<string, any>;
+    expect(node.action).toBe('toggle');
+    expect(role(node, 'destination')).toBeTruthy();
+  });
+});
