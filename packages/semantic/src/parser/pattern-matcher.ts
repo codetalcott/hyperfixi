@@ -641,17 +641,31 @@ export class PatternMatcher {
     // there. Without this exemption swap/process silently drop
     // `using view transition` on the semantic path in all 24 languages, which
     // is exactly the bug the manner role was added to fix.
+    // The second admissible case is a MID-pattern optional slot whose very next
+    // pattern token is a LITERAL the verb itself satisfies. A generated slot
+    // carries a marker only where the profile has one — ja's duration group is
+    // `[間 {duration}]`, tr's is a bare `[{duration}]` — and a bare slot sitting
+    // immediately before the verb literal takes the verb: `.card e .expanded i
+    // değiştir` bound `duration:literal="toggle"`, so the trailing `değiştir`
+    // literal had nothing left, `toggle-tr-generated` FAILED, and the fallback
+    // `-simple` dropped the destination. The premise of the final-slot scoping
+    // above — that a mid-pattern capture must fail so a richer fallback can
+    // reclaim the tail — does not hold when the pattern's own next literal is
+    // waiting for this exact token: skipping the slot lets the SAME pattern
+    // complete with more roles, not fewer.
     if (
       patternToken.optional &&
-      nextPatternToken === undefined &&
       patternToken.role !== 'event' &&
       patternToken.role !== 'action' &&
       patternToken.valueShape !== 'keyword' &&
       token.kind === 'keyword'
     ) {
       const verbNorm = (token.normalized ?? token.value).toLowerCase();
-      if (verbNorm in commandSchemas) {
-        return true; // skip the optional slot; the verb starts the next command
+      if (
+        verbNorm in commandSchemas &&
+        (nextPatternToken === undefined || this.patternTokenWouldMatch(nextPatternToken, token))
+      ) {
+        return true; // skip the optional slot; the verb is not its value
       }
     }
 
