@@ -60,6 +60,36 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27o — tenth burn-down: bn's `empty` PREDICATE was rendered
+> as bn's `empty` COMMAND. 61 → 59.**
+>
+> hyperscript spells both with the same English word — `empty #list` is the
+> command, `if my value is empty` is the state predicate — and Bengali does not:
+> `খালি-করুন` is the imperative "empty it!", `খালি` is the adjective. The bn
+> lexicon carried the imperative in its `expressions` table, so a condition
+> rendered `… হয় খালি-করুন` and the re-parse split the verbal suffix off and
+> leaked it into the English:
+>
+> ```
+> en   on blur if my value is empty add .error to me end
+> bn   ঝাপসা তে যদি আমার মান হয় খালি-করুন আমি তে .error কে যোগ শেষ
+> bn → on blur if my value is empty - করুন add .error to me end
+> ```
+>
+> Every fidelity score is 1.0 — the stray `- করুন` is neither an action nor a
+> role — so only the English round-trip sees it. The `empty` COMMAND keeps the
+> imperative; it comes from the profile's `keywords`, untouched.
+>
+> **Kept rows 61 → 59 — 2 cleared, ZERO newly kept** (bn if-empty,
+> input-validation). The i18n dictionary needed the same edit — `lexicon-parity`
+> is a real gate and caught the divergence on the first whole-monorepo run.
+>
+> **Named residual from the same probe:** six languages (ar, hi, id, ms, qu, tr)
+> render the `empty` predicate with a word that re-parses as **`null`** — their
+> `empty` and `null` lexicon entries collide (`فارغ`, `खाली`, `kosong`, `chusaq`,
+> `boş`). None is a kept row, so no gate sees it; it is a lexicon-collision
+> family for whoever works the value-lexicon track.
+
 > **Update 2026-08-27n — ninth burn-down: a handler's event was typed
 > `literal` unconditionally outside English. 63 → 61.**
 >

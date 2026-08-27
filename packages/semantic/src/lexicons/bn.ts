@@ -86,7 +86,13 @@ export const bengaliLexicon: LanguageLexicon = {
     characters: { primary: 'অক্ষর' },
     children: { primary: 'সন্তান' },
     closest: { primary: 'নিকটতম' },
-    empty: { primary: 'খালি-করুন' },
+    // The EXPRESSION `empty` is the state predicate (`if my value is empty`),
+    // not the command — `খালি-করুন` is the imperative "empty it!" the profile
+    // keywords already carry for the `empty` COMMAND. Rendering the imperative
+    // in a condition emitted `… হয় খালি-করুন`, whose re-parse split the suffix
+    // off and leaked it into the English (`is empty - করুন add .error …`) —
+    // bn if-empty and input-validation.
+    empty: { primary: 'খালি' },
     'ends with': { primary: 'দিয়ে_শেষ' },
     exclusive: { primary: 'বাদ' },
     first: { primary: 'প্রথম' },
