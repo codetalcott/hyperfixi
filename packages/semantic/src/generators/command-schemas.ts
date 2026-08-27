@@ -866,6 +866,16 @@ export const setSchema: CommandSchema = {
         ar: '', // "عيّن x إلى 10" - no marker before variable
         sw: '', // "seti x kwenye 10" - no marker before variable
         tl: '', // "itakda x sa 10" - no marker before variable
+        // th: like every other SVO profile here, the variable is UNMARKED and
+        // the value takes the destination preposition (see the patient override
+        // below). Absent from both maps, th fell to its profile defaults —
+        // destination `ใน`, patient `''` — which put the marker on the wrong
+        // operand and left the value bare: `ตั้ง ใน @disabled จริง` for `set
+        // @disabled to true`, against the transformer's `ตั้ง @disabled ใน จริง`.
+        // Every th `set` row in the corpus carried that inversion; the one it
+        // actually broke is set-color-variable, whose property-path destination
+        // then swallowed `ของ` as the value inside a handler.
+        th: '',
         bn: 'কে', // "x কে 10 তে সেট" - patient marker on variable
         qu: 'ta', // "x ta 10 man churay" - patient marker on variable
         // hi: the transformer marks the TARGET with को and the VALUE with में
@@ -912,6 +922,7 @@ export const setSchema: CommandSchema = {
         ar: 'إلى', // "عيّن x إلى 10" - value gets preposition "to"
         sw: 'kwenye', // "seti x kwenye 10" - destination prep before value
         tl: 'sa', // "itakda x sa 10" - destination prep before value
+        th: 'ใน', // "ตั้ง x ใน 10" - th's own destination preposition, on the value
         bn: 'তে', // "x কে 10 তে সেট" - destination marker on value
         qu: 'man', // "x ta 10 man churay" - destination marker on value
         hi: 'में', // value (patient) gets में — see the destination note above
