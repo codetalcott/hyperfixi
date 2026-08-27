@@ -94,15 +94,13 @@ describe('a clitic marker stays glued — the change is scoped by the profile', 
 describe('KNOWN RESIDUAL — failing-when-fixed', () => {
   // Same family, two causes this does NOT address. Pinned so they report the
   // moment they clear rather than sitting untracked.
-  it('th still glues an all-Thai possessive', () => {
-    // No script boundary to split on, and th is a character-boundary language
-    // so the spacing rule above does not reach it: `ของค่า` stays one token.
+  it('th renders its possessive property-FIRST and round-trips (former pin)', () => {
+    // Was pinned as glued/unrecoverable. The renderer now emits th's genitive
+    // in its true direction — `ค่า ของ #picker` ("value of #picker"), spaced —
+    // which the of-possessive matcher reads back exactly.
     const rendered = translate("bind $color to #picker's value", 'en', 'th');
-    expect(rendered).toBe('ผูก $color ใน #pickerของค่า');
-    expect(
-      source(find(parse(rendered, 'th'), 'bind'))?.type,
-      `th now recovers an all-Thai possessive — remove this pin:\n${rendered}`
-    ).not.toBe('property-path');
+    expect(rendered).toContain('ค่า ของ #picker');
+    expect(source(find(parse(rendered, 'th'), 'bind'))?.type).toBe('property-path');
   });
 
   it('vi still loses a possessive whose property is a KEYWORD', () => {

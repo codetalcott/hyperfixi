@@ -31,6 +31,13 @@ export const hebrewLexicon: LanguageLexicon = {
   values: {
     body: { primary: 'גוף' },
     event: { primary: 'אירוע' },
+    // The tokenizer has carried אמת/שקר → true/false for years (HEBREW_EXTRAS);
+    // without the render-side twin, `set @disabled to true` emitted the English
+    // word, which lexes as a bare identifier and came back patient:expression
+    // instead of the reference's patient:literal (set-attribute he, both
+    // render allowlists).
+    false: { primary: 'שקר' },
+    true: { primary: 'אמת' },
     it: { primary: 'זה' },
     its: { primary: 'שלו' },
     me: { primary: 'אני' },
