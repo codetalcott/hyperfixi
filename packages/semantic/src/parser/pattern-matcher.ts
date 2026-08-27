@@ -232,6 +232,60 @@ export class PatternMatcher {
         this.tryConsumeEventSourceClause(tokens, captured, patternToken);
       }
 
+      // Marker-less optional slot about to eat a command VERB, mid-pattern.
+      //
+      // The guard in matchRoleToken skips such a slot only when the pattern's
+      // very next token is a literal the verb itself satisfies. Where an
+      // OPTIONAL group sits between the slot and the verb literal
+      // (`[{method}] [using view {manner}] 交換`) that test looks at the
+      // group's first token, sees no match, and lets the slot swallow the verb
+      // — so `swap #a with #b` rendered SOV (`#a に #b を 交換`) did not parse
+      // at all in bn/hi/ja/ko/qu/tr.
+      //
+      // Widening that test to look THROUGH skippable groups was measured to
+      // work and to BREAK the ja goal-reclaim lock: the no-goal transition
+      // variant's mid-pattern slot must keep capturing 遷移 and failing, so the
+      // verb-anchoring fallback can reclaim goal+duration. Both shapes are
+      // structurally identical at the slot, so no per-slot test can separate
+      // them.
+      //
+      // What separates them is the OUTCOME. Skipping the slot lets swap's
+      // pattern consume its clause ENTIRELY (`#a に #b を 交換` → end), while
+      // the ja no-goal variant completes having eaten only `opacity を 遷移`
+      // and STRANDS `0 に 300ms` — the sloppy match the lock exists to prevent.
+      // So: speculatively skip, match the rest of THIS pattern, and adopt the
+      // skip only when it consumes the whole clause. A stranded tail falls
+      // through to the capture-and-fail below, unchanged.
+      //
+      // Bounded: fires only on an optional marker-less role slot facing a
+      // command-verb keyword the next pattern token does not want, and recurses
+      // on a strictly shorter token list — never a re-run of other patterns
+      // (the abandoned last-resort retry in matchBest, which compounded).
+      if (
+        this.shouldTrySkippingVerbSlot(
+          patternToken,
+          tokens,
+          patternTokens[i + 1] ?? nextAfterSequence
+        )
+      ) {
+        const skipMark = tokens.mark();
+        const speculative = new Map(captured);
+        if (
+          this.matchTokenSequence(
+            tokens,
+            patternTokens.slice(i + 1),
+            speculative,
+            nextAfterSequence
+          ) &&
+          this.atClauseEnd(tokens)
+        ) {
+          captured.clear();
+          for (const [role, value] of speculative) captured.set(role, value);
+          return true;
+        }
+        tokens.reset(skipMark);
+      }
+
       const matched = this.matchPatternToken(
         tokens,
         patternToken,
@@ -1092,6 +1146,69 @@ export class PatternMatcher {
    * match the given stream token. Used to keep the event-head source-clause
    * consumption from stealing a marker the pattern explicitly expects.
    */
+  /**
+   * Is this pattern token an optional, marker-less role slot staring at a
+   * command VERB that the pattern's next token does not want? That is the
+   * shape whose capture would fail the pattern (see the call site).
+   *
+   * Deliberately mirrors the matchRoleToken guard's exclusions — `event` and
+   * `action` carry their own bespoke guards, and a `'keyword'`-shaped slot's
+   * value legitimately IS a command word (`using view transition`). The
+   * `nextPatternToken` clauses are the complement of that guard's: where it
+   * already fires, this must not.
+   */
+  private shouldTrySkippingVerbSlot(
+    patternToken: PatternToken,
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): boolean {
+    // The generator emits a marker-less slot as a bare role token in some
+    // languages and as a single-role GROUP in others (`[{method}]`), so unwrap
+    // the group form — the skip decision is identical. A group carrying any
+    // LITERAL is marker-BEARING (`[{patient} を]`, `[using view {manner}]`):
+    // its marker is what anchors it, it cannot silently eat a verb, and it is
+    // excluded here.
+    const slot =
+      patternToken.type === 'group' && patternToken.optional
+        ? patternToken.tokens.every(t => t.type === 'role')
+          ? patternToken.tokens[0]
+          : undefined
+        : patternToken;
+    if (!slot || slot.type !== 'role' || !slot.optional) return false;
+    if (slot.role === 'event' || slot.role === 'action') return false;
+    if (slot.valueShape === 'keyword') return false;
+    const token = tokens.peek();
+    if (!token || token.kind !== 'keyword') return false;
+    // Where the existing per-slot guard already skips, leave it to it: it
+    // handles the final slot outright, and a verb the next token wants.
+    if (nextPatternToken === undefined) return false;
+    const wouldMatch = this.patternTokenWouldMatch(nextPatternToken, token);
+    if ((token.normalized ?? token.value).toLowerCase() in commandSchemas) return !wouldMatch;
+    // Not a command verb, so the existing guard never looks at it — but the
+    // pattern's very NEXT literal is waiting for this exact token, which no
+    // marker-less slot may spend. tl's verb-first swap is
+    // `palitan_pwesto [{method}] sa {destination} …`, and the bare `[{method}]`
+    // ate the `sa` its own pattern owes, so the whole pattern failed and the
+    // `-simple` fallback dropped the patient. Outcome-gated like the verb case:
+    // adopted only if skipping lets the pattern consume its whole clause.
+    return wouldMatch;
+  }
+
+  /**
+   * Is the stream out of clause? Either genuinely at the end, or facing a
+   * boundary token that belongs to the NEXT clause rather than this pattern
+   * (a conjunction, or a `then`/`end`-class keyword).
+   */
+  private atClauseEnd(tokens: TokenStream): boolean {
+    const next = tokens.peek();
+    if (!next) return true;
+    if (next.kind === 'conjunction') return true;
+    if (next.kind !== 'keyword') return false;
+    const norm = (next.normalized ?? next.value).toLowerCase();
+    if (norm === 'then' || norm === 'end') return true;
+    return isCuratedEndKeyword(next.value, this.currentProfile?.code ?? '');
+  }
+
   private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
     if (!pt) return false;
     if (pt.type === 'literal') {

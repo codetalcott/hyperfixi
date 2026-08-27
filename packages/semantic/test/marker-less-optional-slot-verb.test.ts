@@ -142,3 +142,52 @@ describe('render pattern selection ignores an implicit reference role', () => {
     expect(rendered).toContain('forever');
   });
 });
+
+describe('a marker-less slot yields only when skipping consumes the whole clause', () => {
+  // The per-slot guard above skips a marker-less optional slot when the
+  // pattern's very next token is a literal the verb satisfies. Where an
+  // OPTIONAL GROUP sits between the slot and that literal
+  // (`[{method}] [using view {manner}] 交換`) the test looks at the group's
+  // first token, sees no match, and lets the slot swallow the verb — so a bare
+  // `swap #a with #b` did not parse AT ALL in bn/hi/ja/ko/qu/tr.
+  //
+  // Widening the per-slot test to look THROUGH skippable groups was measured to
+  // work AND to break the ja goal-reclaim lock, because both shapes are
+  // identical at the slot. What separates them is the OUTCOME: skipping lets
+  // swap consume its clause entirely, while the ja no-goal transition variant
+  // completes having eaten only `opacity を 遷移` and STRANDS `0 に 300ms`.
+  // So the skip is speculative and adopted only when the clause is consumed.
+  const SOV = ['ja', 'bn', 'hi', 'ko', 'qu', 'tr'] as const;
+
+  it.each(SOV)('%s parses the bare `swap #a with #b`', language => {
+    const rendered = translate('swap #a with #b', 'en', language);
+    const node = find(parse(rendered, language), 'swap');
+    expect(node, `${language}: bare swap did not parse: ${rendered}`).not.toBeNull();
+    expect(role(node, 'destination')?.value, `${language} lost the destination`).toBe('#a');
+    expect(role(node, 'patient')?.value, `${language} lost the patient`).toBe('#b');
+  });
+
+  it('tl (verb-FIRST) keeps the patient its own `sa` marker was eating', () => {
+    // Not a verb at all: tl's `palitan_pwesto [{method}] sa {destination} …`
+    // had the bare `[{method}]` spend the `sa` the pattern itself owes.
+    const node = find(parse('palitan_pwesto sa #a nang #b', 'tl'), 'swap');
+    expect(node).not.toBeNull();
+    expect(role(node, 'destination')?.value).toBe('#a');
+    expect(role(node, 'patient')?.value).toBe('#b');
+  });
+
+  it('the ja goal-reclaim lock still holds — a STRANDED tail is not adopted', () => {
+    // The control. Skipping ja's `[{duration}]` slot lets the no-goal variant
+    // complete on `opacity を 遷移` while leaving `0 に 300ms` unconsumed; the
+    // clause-end gate refuses it, the pattern fails as before, and the
+    // verb-anchoring fallback reclaims both roles.
+    const node = parse(
+      'クリック で 私 から もし effect である "fade" opacity を 遷移 0 に 300ms 終わり',
+      'ja'
+    );
+    const transition = find(node, 'transition');
+    expect(transition).not.toBeNull();
+    expect(String(role(transition, 'goal')?.value)).toBe('0');
+    expect(role(transition, 'duration')?.value).toBe('300ms');
+  });
+});
