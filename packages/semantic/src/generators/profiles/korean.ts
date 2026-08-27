@@ -140,6 +140,11 @@ export const koreanProfile: LanguageProfile = {
     // Control flow
     if: { primary: '만약', normalized: 'if' },
     when: { primary: '때', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: '변경되면', normalized: 'changes' },
     where: { primary: '어디', normalized: 'where' },
     else: { primary: '아니면', normalized: 'else' },
     // `아니라면` ("if it isn't"), deliberately distinct from else `아니면`. The

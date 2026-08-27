@@ -305,20 +305,81 @@ Based on the deep research audit:
 
 ---
 
+## Reactive `when … changes` trigger word — all 24 languages ⚠️ (August 2026)
+
+`when <expr> [or <expr>]* changes <body> [end]` is canonical \_hyperscript (0.9.93
+verified: `or` is the only separator, `changes` is a REQUIRED literal, `end` is
+optional, and the engine has **no** temporal `when <event>` form). Until August
+2026 no semantic profile declared a `changes` keyword, so the temporal
+`when {event}` handler patterns claimed the reactive head and kept only the
+first token of the watched expression — in English too, so every language
+scored "clean" by reproducing the truncation.
+
+The parse side now reads the word from `profile.keywords.changes`, and the
+renderer emits it. **The 24 words were not chosen here** — they were synced
+VERBATIM from the `@lokascript/i18n` dictionaries (`logical.changes`), which is
+what wrote every stored corpus row, and the V1 vocab gate requires the two
+surfaces to agree. They were authored for the dictionaries without a native
+pass, so each is ⚠️ until a native reviewer signs it off. The idiom being asked
+for is a reactive-dependency trigger ("whenever this value changes"), **not**
+the everyday verb, and not the `change` DOM event.
+
+| Lang | `changes` word | Notes for the reviewer                                                                                                                                                                                                                           |
+| ---- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ar   | يتغير          | imperfect "it changes"                                                                                                                                                                                                                           |
+| bn   | পরিবর্তিত হলে  | two words ("when changed"); matched whole by the multi-word keyword walk                                                                                                                                                                         |
+| de   | ändert         | conjugated; `ändern` is the `change` event lemma                                                                                                                                                                                                 |
+| es   | cambia         | 3sg; event is `cambiar`/`cambio`                                                                                                                                                                                                                 |
+| fr   | change         | **doubles as the English `change` event fallback** — `sur change …` (mixed-language `on change`) now reads as the reactive word; `sur changement` is unaffected. Consider `change de valeur` / `est modifié` if the reviewer wants the two apart |
+| he   | משתנה          | previously shattered by the proclitic splitter (`מ`+`ש`+`תנה`); whole keyword now                                                                                                                                                                |
+| hi   | बदलने पर       | "on changing"; spaced, never register bare `बदलने` (stem collides with the toggle verb)                                                                                                                                                          |
+| id   | berubah        | **same surface as the profile's `change` EVENT primary** (`berubah`); the event entry keeps the normalized form, the reactive head matches by surface                                                                                            |
+| it   | cambia         |                                                                                                                                                                                                                                                  |
+| ja   | 変わったら     | conditional -たら; prefix head `とき $a または $b 変わったら` follows the corpus rows — a native may prefer `$a または $b が変わったら`                                                                                                          |
+| ko   | 변경되면       | -면 conditional; same prefix-head caveat as ja                                                                                                                                                                                                   |
+| ms   | berubah        |                                                                                                                                                                                                                                                  |
+| pl   | zmienia        | 3sg (`zmienia się` would be the reflexive)                                                                                                                                                                                                       |
+| pt   | muda           |                                                                                                                                                                                                                                                  |
+| qu   | tukurikun      |                                                                                                                                                                                                                                                  |
+| ru   | изменяется     |                                                                                                                                                                                                                                                  |
+| sw   | inabadilika    |                                                                                                                                                                                                                                                  |
+| th   | เปลี่ยน        | **same surface as the profile's `change` EVENT primary**; declared ahead of it so the event reading wins (last-writer-wins keyword map)                                                                                                          |
+| tl   | nagbabago      |                                                                                                                                                                                                                                                  |
+| tr   | değiştiğinde   | "when it changes" (-diğinde); same prefix-head caveat as ja                                                                                                                                                                                      |
+| uk   | змінюється     |                                                                                                                                                                                                                                                  |
+| vi   | thay đổi       | two words                                                                                                                                                                                                                                        |
+| zh   | 改变时         | 改变 + 时 ("at the time of changing"); the natural head is the 当…时 circumfix — see below                                                                                                                                                       |
+
+**The HEAD word is a second, separate question.** The renderer emits the
+profile's `when` primary, which in six languages is NOT the dictionary word the
+corpus rows use (the `V1|*|when` waiver): ja `とき` vs `時`, zh `何时` vs `当`,
+th `ขณะที่` vs `เมื่อ`, tl `tuwing` vs `kapag`, ms `bila` vs `apabila`, vi `lúc`
+vs `khi`. Both parse (the head is discriminated by the `changes` word, not by its
+first token), but zh `何时` is interrogative "when?" and a reviewer will likely
+want `当 … 改变时`. Reconciling the six `when` primaries with the dictionary is
+the Arc B table-alignment item, not something to do per-construct.
+
+**Word order.** The head is prefix — `<when> <expr> <changes>` — in every
+language, SOV ones included, because that is the order the i18n transformer
+wrote all 48 corpus rows in and the order the structural parser reads. A native
+SOV reviewer may prefer the expression-first shape (`$a または $b が変わったら …`);
+that would be a renderer change plus a second accepted head shape.
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still
 benefit from a human native reviewer where marked):
 
-| Item                                | Verdict                                                                                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ar لمّا (lamma)                     | ✅ keep parse-side only; never render (MSA prefers عندما, past-tense-only)                                                                                   |
-| ar كلما / بمجرد                     | ⚠️ hold — كلما needs paired past-tense clauses; prefer حالما if an "as soon as" marker is ever added                                                         |
-| pt "em clique"                      | ✅ resolved — profile renders `ao` (ao clicar); `no`/`em` stay parse-side                                                                                    |
-| tr vowel harmony                    | ✅ implemented (harmony-aware normalizer, cliticized `ile` forms in style marker)                                                                            |
-| tr while-word                       | ⚠️ `süresince` works; native reviewer to judge adding `sürece` as alternative                                                                                |
-| bn unless                           | ✅ added `যদি না` ("if not"), the standard Bengali negated conditional — bn was the only profile with no unless keyword (#958)                               |
-| htmx-v4 `live`/`connect` vocabulary | ✅ landed in all 24 profiles (Phase 8c); per-language choices (`ao-vivo`, `en-direct`, `실시간`, `实时`, `canlı`, …) still open for Phase 8d native sign-off |
+| Item                                | Verdict                                                                                                                                                                                             |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ar لمّا (lamma)                     | ✅ keep parse-side only; never render (MSA prefers عندما, past-tense-only)                                                                                                                          |
+| ar كلما / بمجرد                     | ⚠️ hold — كلما needs paired past-tense clauses; prefer حالما if an "as soon as" marker is ever added                                                                                                |
+| pt "em clique"                      | ✅ resolved — profile renders `ao` (ao clicar); `no`/`em` stay parse-side                                                                                                                           |
+| tr vowel harmony                    | ✅ implemented (harmony-aware normalizer, cliticized `ile` forms in style marker)                                                                                                                   |
+| tr while-word                       | ⚠️ `süresince` works; native reviewer to judge adding `sürece` as alternative                                                                                                                       |
+| bn unless                           | ✅ added `যদি না` ("if not"), the standard Bengali negated conditional — bn was the only profile with no unless keyword (#958)                                                                      |
+| htmx-v4 `live`/`connect` vocabulary | ✅ landed in all 24 profiles (Phase 8c); per-language choices (`ao-vivo`, `en-direct`, `실시간`, `实时`, `canlı`, …) still open for Phase 8d native sign-off                                        |
+| reactive `when … changes` word      | ⚠️ synced from the i18n dictionaries into all 24 profiles (parse + render); native sign-off pending per the table above — fr `change` / id `berubah` / th `เปลี่ยน` double as change-event surfaces |
 
 ### Additional sources (August 2026)
 

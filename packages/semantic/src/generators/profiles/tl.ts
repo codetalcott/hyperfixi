@@ -119,6 +119,11 @@ export const tagalogProfile: LanguageProfile = {
     if: { primary: 'kung', normalized: 'if' },
     unless: { primary: 'maliban_kung', normalized: 'unless' },
     when: { primary: 'tuwing', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'nagbabago', normalized: 'changes' },
     where: { primary: 'kung_saan', normalized: 'where' },
     else: { primary: 'kung_hindi', alternatives: ['kundi'], normalized: 'else' },
     repeat: { primary: 'ulitin', alternatives: ['paulit-ulit'], normalized: 'repeat' },

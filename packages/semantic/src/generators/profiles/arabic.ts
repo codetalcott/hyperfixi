@@ -116,6 +116,11 @@ export const arabicProfile: LanguageProfile = {
     if: { primary: 'إذا', normalized: 'if' },
     unless: { primary: 'إلا', normalized: 'unless' },
     when: { primary: 'عندما', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'يتغير', normalized: 'changes' },
     where: { primary: 'أين', normalized: 'where' },
     else: { primary: 'وإلا', alternatives: ['خلاف ذلك'], normalized: 'else' },
     repeat: { primary: 'كرر', normalized: 'repeat' },

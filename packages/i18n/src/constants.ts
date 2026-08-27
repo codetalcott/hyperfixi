@@ -61,6 +61,7 @@ export const COMMAND_PRIMARY_ROLES: Readonly<Record<string, SemanticRole>> = {
   if: 'condition',
   unless: 'condition',
   while: 'condition',
+  when: 'condition', // reactive `when <expr> changes` — the watched expression
   repeat: 'loopType',
   go: 'destination',
   scroll: 'destination',

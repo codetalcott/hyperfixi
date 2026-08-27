@@ -97,12 +97,10 @@ const HINDI_EXTRAS: KeywordEntry[] = [
   // occurrence leaked verbatim (when-multiple-changes). Phantom-safe: `or` is
   // neither an ActionType nor a command schema.
   { native: 'या', normalized: 'or' },
-  // `बदलने पर` (changes / "on changing") — dict hi.ts `changes`, SPACED whole
-  // phrase via the multi-word keyword walk (`के साथ` precedent above). NEVER
-  // register bare `बदलने`: the stem `बदल` is a registered toggle-verb
-  // alternative (patterns/toggle.ts) and the morphological normalizer strips
-  // conjugations — a bare entry re-opens the आकार_बदलें phantom-toggle class.
-  { native: 'बदलने पर', normalized: 'changes' },
+  // `बदलने पर` (changes) now lives in the profile's `changes` keyword — every
+  // language declares one for the reactive `when … changes` head — and reaches
+  // the multi-word keyword walk from there. Its "never register bare `बदलने`"
+  // warning moved with it.
   { native: 'अक्षर', normalized: 'characters' },
   { native: 'यादृच्छिक', normalized: 'random' },
 ];

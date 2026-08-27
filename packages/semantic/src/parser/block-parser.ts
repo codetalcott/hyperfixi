@@ -9,7 +9,8 @@
  * depth-aware `end` matching, slices each sub-block's ORIGINAL source text by
  * token position (so it works for space-less scripts like ja/zh), and feeds each
  * to the ordinary single-statement engine. The results are re-assembled into a
- * `BehaviorSemanticNode` / `DefSemanticNode`.
+ * `BehaviorSemanticNode` / `DefSemanticNode` (or a `FeatureSemanticNode` for the
+ * feature blocks, including the reactive `when <expr> changes … end`).
  *
  * See docs-internal/MULTILINGUAL_BEHAVIORS_PLAN.md Phase 3.
  */
@@ -17,6 +18,7 @@
 import type {
   LanguageToken,
   SemanticNode,
+  SemanticValue,
   EventHandlerSemanticNode,
   DefSemanticNode,
   FeatureAction,
@@ -24,6 +26,9 @@ import type {
 import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
+import { commandSchemas } from '../generators/command-schemas';
+import { joinExpressionTokens } from './utils/expression-lexicon';
+import { isOrWordToken } from './utils/or-words';
 
 /**
  * NESTED block-opening keywords balanced by a matching `end`. Deliberately
@@ -929,9 +934,11 @@ export function tryParseFeatureBlock(
   if (!tryGetProfile(language)) return null;
 
   // Cheap pre-guard: skip the tokenize on the overwhelming majority of parses.
+  // The reactive `when` is gated on its `changes` word, not its head word: the
+  // head is the corpus-hot handler connective in several languages.
   const lower = input.toLowerCase();
   let might = false;
-  for (const action of FEATURE_ACTIONS) {
+  for (const action of [...FEATURE_ACTIONS, 'changes']) {
     for (const form of keywordForms(language, action)) {
       if (form && lower.includes(form)) {
         might = true;
@@ -944,6 +951,11 @@ export function tryParseFeatureBlock(
 
   const tokens = tokenize(input, language).tokens as readonly LanguageToken[];
   if (tokens.length < 2) return null;
+
+  const changesIdx = locateReactiveWhenHead(tokens, language);
+  if (changesIdx >= 0) {
+    return parseReactiveWhenBlock(input, language, tokens, parsers, changesIdx);
+  }
 
   const located = locateFeatureKeyword(tokens, language);
   if (!located) return null;
@@ -1069,6 +1081,169 @@ function parseFeatureBlock(
   const base = sawClosingEnd ? 1 : 0.8;
   const confidence = confidences.length > 0 ? base * meanConfidence(confidences) : base;
   return createFeatureNode(action, children, name, meta(confidence));
+}
+
+// =============================================================================
+// Reactive `when <expr> changes … end` blocks
+// =============================================================================
+
+/**
+ * Command verbs and clause connectives, by NORMALIZED form. A would-be watched
+ * expression that contains one of these is not a reactive head — it is a
+ * handler body that happens to contain a `changes` word later on
+ * (`on click set x to changes`), and must fall through untouched.
+ */
+const WATCHED_EXPRESSION_STOP_WORDS: ReadonlySet<string> = new Set([
+  ...Object.keys(commandSchemas),
+  'then',
+  'else',
+]);
+
+/**
+ * Every surface a reactive `when` can OPEN with in this language.
+ *
+ * The profile's `when` keyword alone is not enough: the corpus rows were
+ * written by the i18n transformer from its OWN dictionary's when-word, which in
+ * ar/ja/ms/th/tl/vi/zh is the language's handler-opener connective and
+ * tokenizes as `on` (ja `時`, zh `当`, vi `khi`, …). That is exactly the set
+ * {@link eventHandlerHeadForms} already computes for the feature-body scan, so
+ * reuse it. Accepting a handler opener here is safe because the head is
+ * DISCRIMINATED by its `changes` word, never by its first token — see
+ * {@link locateReactiveWhenHead}.
+ */
+function reactiveWhenHeadForms(language: string): Set<string> {
+  const forms = keywordForms(language, 'when');
+  for (const form of eventHandlerHeadForms(language)) forms.add(form);
+  return forms;
+}
+
+/**
+ * Locate a reactive-`when` head — `<when-word> <expr…> <changes-word>` — and
+ * return the index of its `changes` token, or -1.
+ *
+ * WHY THIS EXISTS. `when <expr> [or <expr>]* changes <body> [end]` is canonical
+ * _hyperscript (0.9.93 verified): `or` is the only separator, `changes` is a
+ * REQUIRED literal, `end` optional. Before this layer nothing modelled it. The
+ * temporal `when {event} {body}` handler patterns (`event-en-when` and its 8
+ * translations) claimed it instead and kept the FIRST token as the event:
+ *
+ *   when $firstName or $lastName changes put … end  -> on { event: $firstName }
+ *   when (#price's value * #qty's value) changes …  -> on { event: "(" }
+ *
+ * — the rest of the watched expression and the `changes` word silently gone,
+ * in English first. Because all 24 languages are scored against the English
+ * reference, every translation then scored CLEAN by reproducing that
+ * truncation.
+ *
+ * The `changes` literal is the discriminator, in both directions: a `when` head
+ * with no `changes` word is the temporal handler (untouched here), and a head
+ * whose expression span contains a command verb or clause connective is a
+ * handler body that merely mentions the word (`on click set x to changes`).
+ * String literals never count as the word (`put "changes" into me`), nor does
+ * anything after an `end`. Matched by SURFACE as well as by normalized form,
+ * because in several languages the dictionary's changes-word also reads as the
+ * `change` event (id/ms `berubah`, vi `thay đổi`, fr `change`).
+ */
+function locateReactiveWhenHead(tokens: readonly LanguageToken[], language: string): number {
+  if (tokens.length < 3) return -1;
+  if (!tokenMatches(tokens[0], reactiveWhenHeadForms(language))) return -1;
+  const changesForms = keywordForms(language, 'changes');
+  const endForms = keywordForms(language, 'end');
+  // From index 2: the watched expression is never empty (`when changes …` is
+  // not a reactive head).
+  for (let j = 2; j < tokens.length; j++) {
+    const tok = tokens[j];
+    if (tok.kind === 'literal') continue;
+    if (tokenMatches(tok, changesForms)) return j;
+    if (tokenMatches(tok, endForms)) return -1;
+    const norm = (tok.normalized ?? tok.value).toLowerCase();
+    if (tok.kind === 'keyword' && WATCHED_EXPRESSION_STOP_WORDS.has(norm)) return -1;
+  }
+  return -1;
+}
+
+/**
+ * The watched expression as a `condition` value.
+ *
+ * English source is kept BYTE-FAITHFUL by slicing the input between the head
+ * word and the `changes` word: `raw` is what the core runtime evaluates, and a
+ * token re-join would mangle e.g. the possessive `(#price's value * #qty's
+ * value)`, which the English tokenizer lexes with a stray quote. A foreign
+ * surface is re-joined from the tokens' NORMALIZED forms instead (the same
+ * seam the conditional fold uses), with the or-conjunction normalized by
+ * surface where the tokenizer leaves it a bare identifier (de `oder`, fr `ou`,
+ * …) — so a ja/de/fr head renders back to the canonical `$a or $b`, which the
+ * real engine accepts, rather than `$a oder $b`, which it rejects.
+ */
+function watchedExpressionValue(
+  input: string,
+  span: readonly LanguageToken[],
+  language: string
+): SemanticValue {
+  const foreign = span.some(
+    tok =>
+      (tok.normalized !== undefined && tok.normalized.toLowerCase() !== tok.value.toLowerCase()) ||
+      (isOrWordToken(tok) && tok.value.toLowerCase() !== 'or')
+  );
+  if (!foreign) {
+    const first = span[0];
+    const last = span[span.length - 1];
+    return { type: 'expression', raw: input.slice(first.position.start, last.position.end).trim() };
+  }
+  const normalized = span.map(tok =>
+    isOrWordToken(tok) ? { ...tok, kind: 'keyword' as const, normalized: 'or' } : tok
+  );
+  return { type: 'expression', raw: joinExpressionTokens(normalized, tryGetProfile(language)) };
+}
+
+/**
+ * Parse a located reactive `when` block into a `when` feature node: the
+ * watched expression in `roles.condition`, the body (everything after the
+ * `changes` word up to the matching depth-0 `end`, or end of input — `end` is
+ * optional on the engine) parsed as a flat statement list exactly as `live`'s
+ * is. Declines — leaving the previous parse untouched — when the body is
+ * empty, unparseable, or when content trails the closing `end` (the block is
+ * then not self-contained, and consuming it would drop the remainder).
+ */
+function parseReactiveWhenBlock(
+  input: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  parsers: BlockParsers,
+  changesIdx: number
+): SemanticNode | null {
+  const endForms = keywordForms(language, 'end');
+  const openerSets = OPENER_ACTIONS.map(a => keywordForms(language, a));
+  const isOpener = (tok: LanguageToken): boolean => isBlockOpener(tok, openerSets);
+  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+
+  const bodyStart = changesIdx + 1;
+  if (bodyStart >= tokens.length) return null;
+  const endIdx = findBlockEnd(tokens, bodyStart, isEnd, isOpener);
+  const sawClosingEnd = endIdx >= 0;
+  if (sawClosingEnd && endIdx !== tokens.length - 1) return null;
+  const bodyEnd = sawClosingEnd ? tokens[endIdx].position.start : input.length;
+  const bodyText = input.slice(tokens[bodyStart].position.start, bodyEnd).trim();
+  if (!bodyText) return null;
+
+  let children: SemanticNode[];
+  try {
+    children = flattenStatements(parsers.body(bodyText, language));
+  } catch {
+    return null;
+  }
+  if (children.length === 0) return null;
+
+  const condition = watchedExpressionValue(input, tokens.slice(1, changesIdx), language);
+  const base = sawClosingEnd ? 1 : 0.8;
+  const confidence = base * meanConfidence(children.map(c => c.metadata?.confidence ?? 0.75));
+  return createFeatureNode(
+    'when',
+    children,
+    undefined,
+    { sourceLanguage: language, confidence, sourceText: input },
+    new Map([['condition', condition]])
+  );
 }
 
 /**

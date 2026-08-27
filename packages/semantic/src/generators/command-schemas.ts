@@ -239,6 +239,19 @@ export interface CommandSchema {
    */
   readonly bareKeyword?: boolean;
   /**
+   * Parsed by the structural feature-block layer (`tryParseFeatureBlock`), never
+   * by a generated pattern: excluded from `getDefinedSchemas`, so no command
+   * pattern and no fused event-handler pattern is emitted for it in any
+   * language. For a head whose shape the generator cannot express — the reactive
+   * `when <expr> changes`, where the REQUIRED trailing `changes` literal is what
+   * bounds the multi-token watched expression and what keeps the reactive head
+   * apart from the temporal `when {event}` handler patterns (a generated `when
+   * {condition}` command pattern would collide with them in every language that
+   * has one). Registered all the same so the schema stays the documented role
+   * contract: the R1 reference, the adapter's syntax table, the validators.
+   */
+  readonly structuralOnly?: boolean;
+  /**
    * Generate an EXTRA, lower-priority pattern variant per listed role with
    * that role (and its marker phrase) omitted entirely. For a REQUIRED role
    * whose phrase is legitimately absent in valid hyperscript (`transition
@@ -1129,6 +1142,51 @@ export const liveSchema: CommandSchema = {
   hasBody: true,
   bareKeyword: true,
   roles: [],
+};
+
+/**
+ * When command: the reactive OBSERVER block —
+ * `when <expr> [or <expr>]* changes <body> [end]` — whose body re-runs when any
+ * watched expression's value changes (`it` is the new value).
+ *
+ * Verified against the vendored _hyperscript 0.9.93 engine: `or` is the only
+ * separator (a comma is rejected — "Expected 'changes' but found ','"),
+ * `changes` is a REQUIRED literal, `end` is optional, and the watched expression
+ * may be a variable, an `or`-run, arithmetic, a parenthesized expression, a
+ * property path or a selector. The engine has NO temporal `when <event>` form
+ * (`when click …` fails with "Cannot watch local variable 'click'").
+ *
+ * Patterns:
+ * - EN: when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end
+ * - JA: とき $firstName または $lastName 変わったら `…` を #full-name に 置く 終わり
+ *
+ * The reactive sibling of `live`, but WITH a head: the watched expression is
+ * carried in the `condition` role — the role the `if`/`unless`/`while` heads and
+ * the i18n transformer's `BlockStructure.prefixExpr` already use, so the
+ * renderer and the R1 role scorer know it. `structuralOnly`: the head is
+ * `<when-word> {condition} <changes-word>` with the trailing literal bounding a
+ * multi-token capture, which no generated pattern expresses — and the temporal
+ * `when {event}` handler patterns must keep winning for `when click …`.
+ * `tryParseFeatureBlock` parses the head; the body follows the `live` path.
+ */
+export const whenSchema: CommandSchema = {
+  action: 'when',
+  description: 'Reactive observer: re-run the body when a watched expression changes',
+  category: 'control-flow',
+  primaryRole: 'condition',
+  // Bare-command form only — the real path is ASTBuilder.buildFeature.
+  ast: { args: ['condition'] },
+  hasBody: true,
+  structuralOnly: true,
+  roles: [
+    {
+      role: 'condition',
+      description: 'The watched expression (`or`-separated expressions watch each)',
+      required: true,
+      expectedTypes: ['expression', 'reference', 'selector'],
+      svoPosition: 1,
+    },
+  ],
 };
 
 /**
@@ -3682,6 +3740,7 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   // Reactivity
   bind: bindSchema,
   live: liveSchema,
+  when: whenSchema,
   // Realtime / streaming + service workers
   eventsource: eventsourceSchema,
   socket: socketSchema,
@@ -3716,7 +3775,9 @@ export function getSchemasByCategory(category: CommandCategory): CommandSchema[]
  * Get all fully-defined schemas (with roles).
  */
 export function getDefinedSchemas(): CommandSchema[] {
-  return Object.values(commandSchemas).filter(s => s.roles.length > 0 || s.bareKeyword === true);
+  return Object.values(commandSchemas).filter(
+    s => s.structuralOnly !== true && (s.roles.length > 0 || s.bareKeyword === true)
+  );
 }
 
 // =============================================================================

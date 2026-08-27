@@ -123,6 +123,11 @@ export const italianProfile: LanguageProfile = {
     if: { primary: 'se', normalized: 'if' },
     unless: { primary: 'salvo', normalized: 'unless' },
     when: { primary: 'quando', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'cambia', normalized: 'changes' },
     where: { primary: 'dove', normalized: 'where' },
     else: { primary: 'altrimenti', normalized: 'else' },
     repeat: { primary: 'ripetere', normalized: 'repeat' },

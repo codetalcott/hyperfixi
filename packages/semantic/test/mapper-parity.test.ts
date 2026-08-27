@@ -46,7 +46,9 @@ const ALWAYS_HAND_WRITTEN = ['go', 'pick', 'put', 'wait'];
  * red test go green. It exists so an accidental un-migration (a descriptor
  * deleted, a mapper re-registered) fails loudly even though parity still holds.
  */
-const EXPECTED_MIGRATED = 46;
+// 47 since the reactive `when` gained a schema (`ast: { args: ['condition'] }`,
+// the `if` shape) — see command-schemas `whenSchema`.
+const EXPECTED_MIGRATED = 47;
 
 function emit(action: ActionType, roles: Record<string, SemanticValue>): unknown {
   const mapper = resolveCommandMapper(action);

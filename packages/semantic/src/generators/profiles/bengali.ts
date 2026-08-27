@@ -120,6 +120,11 @@ export const bengaliProfile: LanguageProfile = {
     // `[unless condition:…]` placeholder, which nothing parses back.
     unless: { primary: 'যদি না', normalized: 'unless' },
     when: { primary: 'যখন', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'পরিবর্তিত হলে', normalized: 'changes' },
     where: { primary: 'কোথায়', normalized: 'where' },
     else: { primary: 'নতুবা', alternatives: ['না হলে'], normalized: 'else' },
     repeat: { primary: 'পুনরাবৃত্তি', alternatives: ['বার বার'], normalized: 'repeat' },

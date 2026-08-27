@@ -526,10 +526,35 @@ export interface KeywordCollisionResult {
 }
 
 /**
+ * Concept pairs allowed to share a surface form. The collision check exists
+ * because two COMMAND verbs on one word make one of them unreachable (the
+ * pattern matcher takes the first registered match). These pairs are not that:
+ *
+ * - `change` (the DOM EVENT name) / `changes` (the reactive `when … changes`
+ *   trigger word). The i18n dictionaries — the source the profile `changes`
+ *   words are synced from — use the change-verb for both in id (`berubah`),
+ *   th (`เปลี่ยน`) and vi (`thay đổi`). Neither concept has a generated
+ *   pattern: the event is consumed by the handler patterns, and the reactive
+ *   head is parsed structurally, matching its trigger word by SURFACE
+ *   (block-parser `locateReactiveWhenHead`) precisely so it does not depend on
+ *   which of the two the tokenizer's last-writer-wins keyword map normalizes
+ *   the word to. The profiles declare `changes` ahead of `change` so the event
+ *   reading wins for `on change`.
+ */
+const ALLOWED_HOMOGRAPH_PAIRS: ReadonlyArray<readonly [string, string]> = [['change', 'changes']];
+
+function isAllowedHomograph(commands: readonly string[]): boolean {
+  if (commands.length !== 2) return false;
+  const [a, b] = [...commands].sort();
+  return ALLOWED_HOMOGRAPH_PAIRS.some(([x, y]) => x === a && y === b);
+}
+
+/**
  * Validate a language profile for keyword collisions.
  *
  * Checks both primary keywords and alternatives. Any keyword string that
- * appears in two or more commands (in any position) is reported as a collision.
+ * appears in two or more commands (in any position) is reported as a collision,
+ * except the documented {@link ALLOWED_HOMOGRAPH_PAIRS}.
  *
  * @param profile - Language profile to validate
  * @returns Validation result with all collisions found
@@ -567,6 +592,7 @@ export function validateKeywordCollisions(profile: LanguageProfile): KeywordColl
     // Get unique commands
     const uniqueCommands = [...new Set(usages.map(u => u.command))];
     if (uniqueCommands.length <= 1) continue;
+    if (isAllowedHomograph(uniqueCommands)) continue;
 
     // Determine collision type
     const primaryCount = usages.filter(u => u.isPrimary).length;

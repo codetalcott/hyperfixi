@@ -369,7 +369,7 @@ this gate already covers.
 **Known Issues:**
 
 - Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (lowest are now th 0.9845 / ms / de / fr; corpus mean ≈ 0.992). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, the reactive `on.event` rows, swap F6) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (lowest are now th 0.9845 / ms / de / fr; corpus mean ≈ 0.992). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -526,8 +526,8 @@ degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
 run-to-run jitter — don't read a green gate as "within noise." The per-pattern
 signals (lossy, R2, R4, R5) are all at 0: a binary flip has no such noise to
 absorb, and the lossy cushion was measured swallowing a real regression. The remaining
-fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, reactive
-`on.event` rows, swap F6) and the R3 residual rows — current queue in
+fidelity headroom is the thin R1 tail (named deferrals: pick range-roles, swap F6,
+the non-`when` reactive `on.event` rows) and the R3 residual rows — current queue in
 `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 #### Running the multilingual `--regression` gate locally

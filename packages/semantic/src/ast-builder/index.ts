@@ -225,12 +225,18 @@ export class ASTBuilder {
    * validator, whose curated subset excludes all of these. Emitting the genuine
    * feature nodes belongs with the work that adds them to that subset. What this
    * DOES guarantee is that the body survives into the AST rather than being
-   * silently dropped.
+   * silently dropped — and, for the reactive `when`, that the watched
+   * expression leads the args (`[condition, block]`, the `buildConditional`
+   * shape), so `when $a or $b changes …` no longer loses what it watches.
    */
   private buildFeature(node: FeatureSemanticNode): CommandNode {
     const args: ExpressionNode[] = [];
     if (node.name !== undefined) {
       args.push({ type: 'literal', value: node.name } as unknown as ExpressionNode);
+    }
+    const watched = node.roles.get('condition');
+    if (watched) {
+      args.push(convertValue(watched));
     }
     args.push({
       type: 'block',
