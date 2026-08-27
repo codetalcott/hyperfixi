@@ -604,6 +604,27 @@ export class PatternMatcher {
       if (isCuratedEndKeyword(token.value, this.currentProfile?.code ?? '')) {
         return patternToken.optional || false;
       }
+      // A COMMAND VERB is never a loop/count QUANTITY — nor the generated
+      // repeat's own [{event}] slot. The trailing marker-less optional slots
+      // of `repeat-<lang>-generated` otherwise swallow the NEXT command's
+      // verb: de `wiederholen forever umschalten .pulse` captured
+      // `quantity:literal="toggle"` (and with quantity guarded, the [{event}]
+      // slot behind it swallowed the verb instead), the toggle never formed,
+      // and `.pulse` dropped as junk (repeat-forever ar/de/fr/zh — the
+      // languages whose handler body reaches the generated repeat instead of
+      // a fused event pattern). The event half is scoped to `repeat`: on
+      // trigger/send a keyword event name is a legitimate custom event, and
+      // the handler-head guards above already police `on`. Same
+      // skip-don't-fail contract as the connective guard above.
+      if (
+        patternToken.role === 'quantity' ||
+        (patternToken.role === 'event' && this.currentPatternCommand === 'repeat')
+      ) {
+        const qNorm = (token.normalized ?? token.value).toLowerCase();
+        if (qNorm in commandSchemas) {
+          return patternToken.optional || false;
+        }
+      }
     }
 
     // A `duration` slot is never a positional/scope keyword. The temporal

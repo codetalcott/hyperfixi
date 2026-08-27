@@ -275,3 +275,32 @@ describe('SOV render while-heads (en→foreign render residual, repeat-while row
     expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
   });
 });
+
+describe('repeat-forever round trips (render residual: verb-swallow + zh forever)', () => {
+  // The generated repeat's trailing marker-less optional slots swallowed the
+  // NEXT command's verb inside a rendered handler body: de `wiederholen
+  // forever umschalten .pulse` captured quantity:literal="toggle" (and with
+  // quantity guarded, the [{event}] slot behind it swallowed the verb
+  // instead) — the toggle never formed in ar/de/fr/zh. And zh had no
+  // `forever` keyword at all, so the renderer's own bare `重复 forever` did
+  // not parse back. Both guards + the zh keyword close the loop.
+  const en = 'on load repeat forever toggle .pulse wait 1s end';
+  for (const lang of ['ar', 'de', 'fr', 'zh'] as const) {
+    it(`[${lang}] wrapped repeat-forever keeps the toggle body`, () => {
+      const ref = parse(en, 'en');
+      const out = render(ref, lang);
+      const back = parse(out, lang);
+      const actions = collectActions(back);
+      expect(actions.has('repeat'), `${lang}: repeat lost in ${out}`).toBe(true);
+      expect(actions.has('toggle'), `${lang}: toggle lost in ${out}`).toBe(true);
+      expect(actions.has('wait'), `${lang}: wait lost in ${out}`).toBe(true);
+    });
+  }
+
+  it('[zh] bare `repeat forever` renders and parses back', () => {
+    const ref = parse('repeat forever toggle .pulse wait 1s end', 'en');
+    const out = render(ref, 'zh');
+    const back = parse(out, 'zh');
+    expect(collectActions(back).has('repeat'), `zh: ${out}`).toBe(true);
+  });
+});

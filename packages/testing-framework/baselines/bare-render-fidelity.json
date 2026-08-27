@@ -1,8 +1,8 @@
 {
   "description": "Allowlist for the BARE-surface English->foreign render-fidelity gate (src/multilingual/bare-render-fidelity.test.ts). Same scoring as the wrapped gate, applied to each corpus pattern with its event-handler head STRIPPED — the surface no other gate covers, because every corpus row that exercises a command wraps it in a handler. Each entry is a corpus pattern id mapped to the languages whose bare rendered surface loses an action or a role from the English reference when parsed back. A NEW failing (pattern,language) pair outside this list, or an allowlisted pair that now passes, both fail the gate. Shrinks only. Regenerate with tools/regen-bare-render-fidelity-baseline.ts.",
   "checked": 2990,
-  "clean": 2954,
-  "cleanPct": 98.8,
+  "clean": 2955,
+  "cleanPct": 98.83,
   "allowedFailures": {
     "announce-screen-reader": ["hi"],
     "fetch-with-headers": ["ja"],
@@ -17,7 +17,6 @@
     "put-after": ["uk"],
     "put-before": ["uk"],
     "render-template-with-data": ["ja"],
-    "repeat-forever": ["zh"],
     "repeat-until-event": ["qu"],
     "set-attribute": ["he"],
     "set-color-variable": ["hi"],
