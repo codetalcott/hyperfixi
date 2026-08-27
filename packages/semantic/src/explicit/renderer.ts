@@ -34,12 +34,22 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>(['repeat', 'for', 'while', 'tel
 
 /**
  * Commands whose captured body is an open-ended block that must be closed by an
- * explicit `end` when a sibling command follows it. `js` captures its raw
- * JavaScript body as an expression; without a closing `end` the following
- * hyperscript (`js foo() then add …`) bleeds into the JS body and the canonical
- * `js` command's `new Function(...)` throws. A `js` that ends a sequence needs no
- * `end` (its body runs to the end of the enclosing block). Shared by renderCompound
- * and joinStatements.
+ * explicit `end`. `js` captures its raw JavaScript body as an expression;
+ * without a closing `end` the following hyperscript (`js foo() then add …`)
+ * bleeds into the JS body and the canonical `js` command's `new Function(...)`
+ * throws.
+ *
+ * The `end` used to be emitted only when a sibling FOLLOWED — a trailing `js`
+ * was left open, on the grounds that its body runs to the end of the enclosing
+ * block anyway. That is true of execution and false of round-tripping: an
+ * unterminated block is not a block the parser can claim, so `consumeJsBlock`
+ * (which needs the closing `end` to know where the opaque span stops) declined
+ * and the per-language `js` PATTERN took over — which re-spaces the JavaScript
+ * and, in zh, splits the `JS执行` compound verb and swallows the rest of the
+ * body. `js … end` is the canonical form, the engine accepts it in every
+ * position, and it is what the reference source itself is written as; so it is
+ * now emitted unconditionally, by `render` itself rather than by the two
+ * statement-joining paths.
  */
 const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
@@ -110,7 +120,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       return this.renderExplicit(node);
     }
 
-    return this.renderWithPattern(node, bestPattern);
+    const rendered = this.renderWithPattern(node, bestPattern);
+    return BLOCK_NEEDS_TRAILING_END.has(node.action)
+      ? `${rendered} ${this.keyword(language, 'end')}`
+      : rendered;
   }
 
   /**
@@ -157,9 +170,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         cur.action === 'bind';
       // A `js` (or other open-body) block that is FOLLOWED by a command must close
       // with `end` first, so its body doesn't swallow the sibling.
-      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
-        out += ` ${this.keyword(language, 'end')}`;
-      }
       const sep = afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `;
       out += sep + renderedStatements[i];
     }
@@ -205,9 +215,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     for (let i = 1; i < rendered.length; i++) {
       const prev = statements[i - 1];
       const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
-      if (prev.kind === 'command' && BLOCK_NEEDS_TRAILING_END.has(prev.action)) {
-        out += ` ${this.keyword(language, 'end')}`;
-      }
       out += (afterBlockHeader ? ' ' : ` ${thenKw} `) + rendered[i];
     }
     return out;
@@ -623,6 +630,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
             return raw.slice(1, -1).trim();
           }
         }
+        // A `js` body is raw JavaScript, not vocabulary. `localizeValueInterior`
+        // rewrites the words it recognizes, which inside a js block means the
+        // CODE gets translated: `js(me) …` came out as de `js (ich) …`, tr
+        // `js (ben) …` — the argument list renamed, and any `window`/`true`/…
+        // in the body with it. That is the one role whose value must survive a
+        // translation untouched, and it is why every non-English
+        // behavior-removable row differed from its own English round-trip while
+        // scoring 1.0 on every fidelity metric.
+        if (node.action === 'js' && value.type === 'expression') return value.raw;
         return this.valueToNaturalString(value, language);
       }
 

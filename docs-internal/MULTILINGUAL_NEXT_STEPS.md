@@ -60,6 +60,68 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27m — eighth burn-down: a `js … end` block was lossy five
+> different ways, and none of them was visible to any fidelity metric. 82 → 63.**
+>
+> The `js()` opaque-body item filed in `PARSER_NEXT_STEPS.md`, and it turned out
+> the opaque-span mechanism already existed (`consumeJsBlock`, added for the
+> phantom-`return` cluster) — what was missing was everything around it. The
+> body is ONE `expression` role whose TEXT no metric compares, so every fault
+> below scored 1.0 on R0/R1/R3 and was visible only to the English round-trip.
+>
+> 1. **Spacing.** The body was rebuilt as `bodyTokens.map(t => t.value).join(' ')`,
+>    so `console.log("from js")` came back as `console .log ( "from js" )`. Not
+>    cosmetic: a `//` comment or an ASI-sensitive break means something else once
+>    re-spaced. It is now recovered as a SLICE of the text the tokens' positions
+>    index into, verified against the token values before it is trusted, with an
+>    adjacency-based rebuild as the fallback.
+> 2. **The missing `end`.** The renderer emitted `end` only when a sibling
+>    FOLLOWED the js — fine for execution, fatal for round-tripping, because with
+>    no closing `end` there is no block for `consumeJsBlock` to claim and the
+>    per-language `js` PATTERN took over. It is now emitted unconditionally, by
+>    `render` itself rather than by the two statement-joining paths. Verified on
+>    the real engine: `js … end` is valid in every position, chained or trailing.
+> 3. **A pre-posed patient marker.** he `js את console.log(…)`, zh `JS执行 把
+>    console.log(…)` — the particle was swallowed into the opaque body. Skipped
+>    at the head of the block now; the post-posed markers (ja を, ko 을, bn কে,
+>    tr i, qu ta) were never at risk.
+> 4. **The verb-FINAL shape.** SOV renders put the command word last (`<body>
+>    <marker> <js> <end>`), so the head of the clause is the JavaScript and the
+>    head-form test never fired — bn/hi/ja/ko/qu/tr walked the raw JS with
+>    `matchBest` and produced phantom `if`/`return` commands. A verb-final
+>    variant now claims it, gated on the keyword being immediately followed by a
+>    terminator and on the scan stopping at a conjunction.
+> 5. **The body was TRANSLATED.** `localizeValueInterior` rewrites the words it
+>    recognizes, and inside a js block that means the CODE: `js(me) …` came out
+>    as de `js (ich) …`, tr `js (ben) …`. That is the one role whose value must
+>    survive a translation untouched, and it is the whole reason every non-English
+>    `behavior-removable` row differed from its own English round-trip.
+>
+> Plus a sixth, which only the BARE gate could see: bn's curated end set omits
+> `শেষ` on purpose (it doubles as the positional word `last`), but `শেষ` is what
+> the renderer emits for bn's `end` — so a bn js block had no recognizable close
+> at all. The block's terminator test now also accepts the profile's own `end`
+> word; the homonym cannot bite inside a js body, which is ASCII.
+>
+> **Kept rows 82 → 63 — 19 cleared, ZERO newly kept**: js-inline (ar/tl/zh, the
+> canonical three) and behavior-removable in sixteen languages. Wrapped render
+> 3566/3588 (99.39%), bare 2977/2990 (99.57%), both allowlists shrunk.
+> 11-signal gate green, `test:canonical` 5/5, semantic 9,346 + 79 new, adapter
+> 366, vocab green, whole-monorepo `test:check` green.
+>
+> **Method note.** Seven of the eight edits redden the new test file under
+> mutation; the eighth — a js entry in the FUSED SOV body walk — reddened
+> nothing, and re-measuring the corpus with it removed moved no row. It was
+> redundant with the clause-level entry and is not in the change. Drop-one
+> mutation is what found that; the fix looked necessary while it was being
+> written.
+>
+> **Residual, named:** `js(args) … end` still stops at the `(` in twelve
+> languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — a head-form
+> body-walk defect that predates this change and is pinned as an exclusion list
+> in `js-block-round-trip.test.ts`. The six remaining behavior-removable rows
+> (bn, hi, ja, ko, qu, tr) are the action-drop class and need their own triage.
+
 > **Update 2026-08-27l — seventh burn-down: th marked `set`'s TARGET instead of
 > its value, in every th `set` row in the corpus. 83 → 82.**
 >
