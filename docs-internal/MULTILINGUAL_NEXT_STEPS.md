@@ -60,6 +60,113 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27c — the corpus flip is DECIDED and measured: flip the
+> writer to `best` (semantic-first, i18n kept only where it scores strictly
+> better), not to raw `semantic`. i18n retirement stays gated on the kept-row
+> count reaching zero. (branch `feat/render-flip-probe`)**
+>
+> The architecture record (`~/.claude/plans/please-think-about-the-compiled-iverson.md`)
+> deferred two steps behind a trigger — "reopen the corpus flip to
+> `semantic.translate` and retiring i18n's transformer when the renderer passes
+> **97.0%** (i18n's own clean rate)". The renderer passed it around #952
+> (97.91%) and sits at 99.33% wrapped / 99.5% bare, but the trigger was an
+> ad-hoc probe nobody committed, so nothing reported it. Now committed as
+> `packages/testing-framework/tools/probe-render-flip.ts`: for every corpus
+> pattern × language it scores the STORED i18n row and the live
+> `render(parse_en(en), L)` against the same English reference under every
+> gate's own metric (strict render signature; scoreNodes R0/R1/R3; R5 parse;
+> the English ROUND-TRIP as the R2 proxy; `--canonical` for R4) and lists the
+> LOSSES a flip would cause and the GAINS it would bring. Whole corpus, fresh
+> populate, 3588 pairs:
+>
+> | signal | i18n (stored) | semantic (render) | flip LOSES | flip GAINS |
+> |---|---|---|---|---|
+> | R5 parse | 100.00% | 99.94% | 2 | 0 |
+> | R0 faithful | 100.00% | 99.64% | 13 | 0 |
+> | R1 role-set (non-strict, what `roleLossyPatterns` counts) | 97.77% | 98.22% | 28 | 44 |
+> | R3 value | 99.36% | 99.39% | 11 | 12 |
+> | strict (the render gate) | 98.66% | **99.33%** | 22 | 46 |
+> | English round-trip (≈R2) | 70.82% | 79.29% | 87 | 391 |
+> | R4 engine-valid | 91.03% | 90.16% | 32 | 1 |
+>
+> **Semantic out-renders i18n on every average — and a raw flip still fails.**
+> A corpus written by `sync-translations --renderer semantic` (3588 rows
+> semantic, 115 fallbacks for the 5 patterns whose English does not parse) was
+> run through the REAL 11-signal `--regression` gate: ✗ R5 ×2 (ko
+> `on-custom-event-receive`, zh `behavior-draggable`), ✗ faithful→lossy ×11
+> (`behavior-removable` ×5, the zh behaviors, qu worker/until, pl pick, ko
+> announce), ✗ R1 role-set flips ×22, ✗ **R2 execution ×7** (ar/tl
+> `put-before`/`put-after`, bn tabs-aria, ko announce, tl swap — role-identical,
+> execution-different: a `before` re-rendered as `into`, which no recall metric
+> can see), ✗ R4 ×30 (`behavior-removable` ×16 js bodies, `set-color-variable`
+> ×7, bn if-empty/input-validation, …). Averages hide binary flips at
+> tolerance 0 — the exact "re-baseline hazard" the record predicted.
+>
+> **`--renderer best` is the flip that is an upgrade.** Per row it renders with
+> BOTH, parses each back, and stores the semantic row unless the i18n row beats
+> it on any signal: scoreNodes (R0, multiset, precision, R1, R3) + the English
+> round-trip (`render(parse_L(row), 'en') === render(reference, 'en')`, the
+> proxy that catches the put-before class) + the real engine's verdict on that
+> English (R4; `hyperscript.org` loaded headlessly as the canonical gate does).
+> Ties go to semantic — the renderer every runtime surface already uses.
+> Measured through every gate, all 24 languages: **11-signal ratchet ✓ zero
+> regressions**, `test:canonical` ✓ (the round-trip veto alone cleared R2 and
+> most of R4; consulting the engine cleared the last 4 — `behavior-removable`/ms,
+> bn `if-empty` + `input-validation` whose bn `empty` lexicon renders the
+> imperative `খালি-করুন`, qu `when-value-changes`). **3474 of 3703 rows
+> (93.8%) are semantic-rendered; 229 stay on i18n** — and that list is the
+> burn-down, by construction. Baseline effect: regenerating `multilingual-priority.json` on a `best` corpus clears **13 of the 14** remaining role-lossy rows (he `set-attribute`; id `fetch-*` ×3; ko `when-*` ×2; ms `hide-with-transition`; qu `announce-screen-reader` + `on-custom-event-receive`; th `toggle-aria-expanded`; vi `its-value-possessive-dot`; zh `repeat-*` ×2 — only pl `pick-text-range` stays), avgRoleFidelity 0.9992 → 0.9999, avgPrecision 0.9998 → 1.0000, avgConfidence 0.839 → 0.919, lossy 0 → 0.
+> The default (`i18n`) writer is byte-identical after the refactor (7038 rows
+> diffed), so nothing moves until the default is flipped. The renderer choice
+> is folded into the DB provenance stamp (`PATTERNS_RENDERER`), so a `best` DB
+> reads STALE to a default gate run — no cross-variant phantom regressions.
+>
+> - **To make it the default:** `sync-translations` default → `best`; CI's
+>   populate needs no change; regenerate `multilingual-priority.json` (gains
+>   only) and **add a downward-only ratchet on the i18n-kept row count** (229
+>   today) so the residual can only shrink. That ratchet IS the i18n retirement
+>   schedule for the corpus path.
+> - **The 229 kept rows, by family** (from the probe's loss lists; overlaps):
+>   `behavior-removable` 16 + `js-inline` 3 (the `js()` opaque-body PARSER gap —
+>   filed in `PARSER_NEXT_STEPS.md` at last, three handoffs pointed there without
+>   writing it), `behavior-resizable` 15 + `behavior-sortable` 13 (round-trip
+>   drift on long bodies), `set-color-variable` 8, ar/tl `put-before`/`put-after`
+>   4 (variant selection), pl/ru/uk `tabs-aria` + `template-literal-list-build`
+>   6, he `fetch`/`morph` 5, bn/hi `repeat-while` 2, the bn/de/qu implicit-role
+>   asymmetries (a `toggle .active` whose qu/bn re-parse no longer injects the
+>   default `destination: me` the en parse carries; de `increment` losing the
+>   implicit `quantity`), and singletons.
+> - **Two probe columns are not what they look like.** `role` here is the
+>   NON-strict signature (implicit roles counted) — 80 i18n misses, not the
+>   baseline's 14, because the gate re-injects defaults on the L side the same
+>   way on both; the probe's absolute counts are for A/B only, the gate decides.
+>   And the round-trip is coarse (i18n 70.8%): it is a VETO in the chooser, never
+>   a score.
+>
+> **i18n retirement — considered, not started; the sequencing is now measurable.**
+> Runtime surfaces are already single-renderer (MCP `translate_code` AND
+> `translate_hyperscript`, core `MultilingualHyperscript`, the framework's
+> `createMultilingualDSL().translate()` — parse→render, its own 159-line DI
+> transformer is a fallback). What still sits on i18n's 2,747-line
+> `GrammarTransformer`: the corpus writer (229 rows after the flip),
+> `@hyperscript-tools/i18n` (published; re-exports `translate/toLocale/
+> toEnglish/GrammarTransformer` for build-time HTML translation — a behaviour
+> change for its users when migrated), core's `hyperfixi-classic-i18n.js`
+> bundle (ships the transformer behind the `LokaScriptI18n` global; size-tracked,
+> its own CI shard), the vite plugin's `grammarEnabled` codegen (emits an
+> `@lokascript/i18n` import), and 8 example pages on `lokascript-i18n.min.js`.
+> Dictionary-only consumers (developer-tools prism, testing-framework vocab V1)
+> are unaffected: the dictionaries are GENERATED from semantic profiles
+> (`generate:language-assets`) and semantic's render lexicon is parity-tested
+> against them (`lexicon-parity.test.ts`), so that duplication is already
+> derived, not authored. The thin-v3 cut the record sketched is therefore:
+> delete `i18n/src/grammar/` (5.4k lines + 249 tests) once the kept-row ratchet
+> reads 0; keep dictionaries (6.1k, generated), keyword providers (1.2k),
+> runtime/SSR/plugins/pluralization (3.7k, 165 tests); point
+> `@hyperscript-tools/i18n` and the classic bundle at `semantic.translate`.
+> **Not before:** every kept row is a case the semantic renderer still loses,
+> and the gates forbid trading one for a lossier corpus at tolerance 0.
+
 > **Update 2026-08-27 — reactive `when … changes` has a real parse in all 24
 > languages: the SECOND en-reference truncation, after #970's `unless`.**
 >

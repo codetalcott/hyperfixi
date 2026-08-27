@@ -74,6 +74,10 @@ export function computeDbInputHash(dbPath: string): string {
   const root = repoRootFromDbPath(dbPath);
   const files = dbInputFiles(dbPath);
   const h = createHash('sha256');
+  // The renderer that wrote the foreign rows is a DB input too: the same source
+  // produces a different corpus under PATTERNS_RENDERER=semantic, and a gate run
+  // expecting the default must see that DB as stale, not fresh.
+  h.update(`renderer=${process.env.PATTERNS_RENDERER || 'i18n'}\n`);
   h.update(`files:${files.length}\0`);
   for (const f of files) {
     h.update(relative(root, f).split(sep).join('/'));
