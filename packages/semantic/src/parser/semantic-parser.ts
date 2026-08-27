@@ -3238,6 +3238,7 @@ export class SemanticParserImpl implements ISemanticParser {
         this.tryAttachTrailingRole(clauseStream, cmd, language);
         this.tryAttachTrailingStyle(clauseStream, cmd, language);
         this.tryAttachTrailingExpressionRole(clauseStream, cmd, language);
+        this.tryAttachTrailingDuration(clauseStream, cmd);
       } else {
         // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
         // binder keyword in transit (the i18n transformer emits `repeat <var> in
@@ -3342,6 +3343,35 @@ export class SemanticParserImpl implements ISemanticParser {
    * would mis-capture a source phrase as a destination. The shipped `source`
    * reclaim keeps its broader primary+alternatives+normalized match.
    */
+  /**
+   * Reclaim a post-verb bare TIME literal as `duration`.
+   *
+   * A verb-final language can emit the duration AFTER the verb, where no
+   * pattern reaches it — qu's stored corpus surface is
+   * `*background-color ta "blue" man ñitiy pi pasay 500ms`, and
+   * `transition-qu-generated-simple` matches everything up to `pasay` leaving
+   * `500ms` unconsumed. That was the blocker filed against the SOV marker-side
+   * fix: it makes the standalone pattern match this shape at all, and without
+   * this reclaim the duration is then silently dropped on five qu rows (the R1
+   * role-set flip and the R3 value ratchet both catch it).
+   *
+   * The sibling of the trailing BARE-literal quantity reclaim on the fused
+   * path, and gated the same way: an OPTIONAL `duration` role the schema
+   * declares and the parse did not fill, and a next token that is literally a
+   * time literal. A selector, a `then`/`end` keyword or a bare number never
+   * matches, so nothing else can be captured by accident.
+   */
+  private tryAttachTrailingDuration(stream: TokenStream, command: CommandSemanticNode): void {
+    const roles = command.roles as Map<SemanticRole, SemanticValue>;
+    if (roles.has('duration' as SemanticRole)) return;
+    const schema = getSchema(command.action as ActionType);
+    if (!schema?.roles.some(r => r.role === 'duration' && !r.required)) return;
+    const next = stream.peek();
+    if (!next || !/^\d+(?:\.\d+)?(?:ms|s|m|h)$/.test(next.value)) return;
+    roles.set('duration' as SemanticRole, createLiteral(next.value, 'duration'));
+    stream.advance();
+  }
+
   private tryAttachTrailingRole(
     stream: TokenStream,
     command: CommandSemanticNode,

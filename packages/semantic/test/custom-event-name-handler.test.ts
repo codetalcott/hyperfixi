@@ -100,13 +100,23 @@ describe('a LOCALIZED event name is unchanged', () => {
 describe('ko is excluded from the widened variant, and why', () => {
   // ko's on-marker `에` is ALSO its destination marker, and its event-role marker
   // `을` is also its patient marker. `<x> 을 에 <value>` is therefore both a
-  // handler head and the exact shape ko renders `transition opacity to 0` in.
-  // With the variant, that bare transition read as a handler named `opacity` —
-  // a regression NO gate would have caught, because every corpus transition row
-  // is inside a handler and the widened variant loses that race to the fused
-  // pattern. No other language has both collisions: ja's on-marker is `で` while
-  // its transition marks the goal with `に`.
-  const KO_BARE_TRANSITION = 'opacity 을 에 0 300ms 트랜지션';
+  // handler head and, at the time the exclusion landed, the exact shape ko
+  // rendered `transition opacity to 0` in. With the variant, that bare
+  // transition read as a handler named `opacity` — a regression NO gate would
+  // have caught, because every corpus transition row is inside a handler and the
+  // widened variant loses that race to the fused pattern.
+  //
+  // The RENDER half of that collision is now gone: the SOV override-marker side
+  // fix emits `opacity 을 0 에 300ms 트랜지션`, so `을 에` are no longer adjacent
+  // and the surface is no longer ambiguous with a handler head. The exclusion
+  // itself is left in place — whether it can be dropped is a separate question
+  // that needs its own corpus measurement, and the `을`/`에` overloading it
+  // describes is still real for other surfaces.
+  const KO_BARE_TRANSITION = 'opacity 을 0 에 300ms 트랜지션';
+
+  it('the rendered surface no longer puts the two colliding markers adjacent', () => {
+    expect(KO_BARE_TRANSITION).not.toContain('을 에');
+  });
 
   it('ko reads its rendered bare transition as a transition', () => {
     const node = parse(KO_BARE_TRANSITION, 'ko') as

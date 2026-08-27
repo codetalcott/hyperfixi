@@ -816,7 +816,20 @@ export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): Pa
     // in an optional group (`go to /page` and `go back` both parse — the
     // render side drops the preposition, so the parse side can't require it).
     const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
-    const position = defaultMarker?.position ?? 'before';
+    // Where the profile carries no RoleMarker for this role there is nothing to
+    // take a side from, and 'before' is wrong in a verb-final language: ja
+    // rendered `opacity を に 0` and bn `opacity কে তে 0`, the override marker
+    // stranded AHEAD of its own value. Default to 'after' for SOV.
+    //
+    // EXEMPT a PASSTHROUGH override — one whose marker is the same string en
+    // uses (`scope`, `manner`). Those are English words carried verbatim into
+    // every language, so they keep English's prepositional side; without the
+    // exemption ja/ko/qu lose `set`'s scope.
+    const isPassthroughOverride =
+      overrideMarker !== undefined && overrideMarker === roleSpec.markerOverride?.en;
+    const position =
+      defaultMarker?.position ??
+      (profile.wordOrder === 'SOV' && !isPassthroughOverride ? 'after' : 'before');
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
     // Single-word overrides also accept every schema-declared alternative
     // (markerLegacy ∪ markerVariants), so correcting an override's marker does
