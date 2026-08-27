@@ -22,6 +22,11 @@
  *   round-trip   — every score is 1.0 and the re-rendered English still differs
  *                  (the R2 proxy — `put … before` re-rendering as `put … into`)
  *
+ * `--diff` skips the triage and answers the only question a burn-down PR has to
+ * answer before it commits: which baseline rows the change CLEARED, and whether
+ * it newly kept any (the second list must be empty — that is the claim the PR
+ * makes). `regen-…-baseline.ts --dry-run` reports counts only.
+ *
  * `--canonical-only` keeps the rows the owner's priority calls canonical:
  * `code_examples.engine = 'both'` (engine-verified by `verify-engines.ts`) and
  * not one of our own showcase behaviors.
@@ -31,8 +36,10 @@
  *
  * Usage: npx tsx tools/triage-i18n-kept-rows.ts [--canonical-only] [--summary]
  *                                               [--pattern <id>] [--language <code>]
+ *        npx tsx tools/triage-i18n-kept-rows.ts --diff
  */
 import { getAllPatterns, getTranslationsByLanguage } from '@hyperfixi/patterns-reference';
+import { checkI18nKeptRows, groupKeptByPattern } from '../src/multilingual/i18n-kept-rows';
 import { parseSemantic, render, type SemanticNode } from '@lokascript/semantic';
 import { scoreNodes } from '@lokascript/semantic/fidelity';
 import { collectActions } from '../src/multilingual/fidelity';
@@ -71,7 +78,26 @@ function safeRender(node: SemanticNode, language: string): string | null {
 
 const oneLine = (s: string | null | undefined): string => (s ?? '—').replace(/\n\s*/g, ' ⏎ ');
 
+/** Which baseline rows the working tree cleared, and which it newly kept. */
+async function diffAgainstBaseline(): Promise<void> {
+  const live = groupKeptByPattern((await checkI18nKeptRows()).kept);
+  const flatten = (grouped: Record<string, string[]>): Set<string> =>
+    new Set(Object.entries(grouped).flatMap(([id, ls]) => ls.map(l => `${id}[${l}]`)));
+  const before = flatten(baseline.allowedKept as Record<string, string[]>);
+  const after = flatten(live);
+
+  const cleared = [...before].filter(row => !after.has(row)).sort();
+  const added = [...after].filter(row => !before.has(row)).sort();
+
+  console.log(`CLEARED (${cleared.length}):`);
+  for (const row of cleared) console.log(`  - ${row}`);
+  console.log(`NEWLY KEPT (${added.length}) — must be empty:`);
+  for (const row of added) console.log(`  + ${row}`);
+  console.log(`kept ${before.size} → ${after.size}`);
+}
+
 async function main(): Promise<void> {
+  if (process.argv.includes('--diff')) return diffAgainstBaseline();
   const canonicalOnly = process.argv.includes('--canonical-only');
   const summaryOnly = process.argv.includes('--summary');
   const onlyPattern = arg('--pattern');
@@ -122,7 +148,8 @@ async function main(): Promise<void> {
       let signal: Signal = 'ok';
       if (!reparsed) signal = 'no-reparse';
       else if (missingActions.length > 0) signal = 'action-drop';
-      else if (scores?.roleFidelity !== undefined && scores.roleFidelity !== 1) signal = 'role-drop';
+      else if (scores?.roleFidelity !== undefined && scores.roleFidelity !== 1)
+        signal = 'role-drop';
       else if (scores?.valueRecall !== undefined && scores.valueRecall !== 1) signal = 'value-drop';
       else if (candidateEn !== referenceEn) signal = 'round-trip';
 
@@ -142,7 +169,8 @@ async function main(): Promise<void> {
           `  scores  : R0=${scores.actionRecall} multiset=${scores.multisetRecall} P=${scores.precision} R1=${scores.roleFidelity} R3=${scores.valueRecall}`
         );
       if (missingActions.length) console.log(`  -actions: ${missingActions.join(', ')}`);
-      if (report?.missingRoles?.length) console.log(`  -roles  : ${report.missingRoles.join(', ')}`);
+      if (report?.missingRoles?.length)
+        console.log(`  -roles  : ${report.missingRoles.join(', ')}`);
     }
   }
 

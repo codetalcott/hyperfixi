@@ -60,6 +60,65 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27k — sixth burn-down: a `*`-sigil property read the
+> possessive BACKWARDS in seven languages. 90 → 83.**
+>
+> The largest canonical family left after 27j, and the whole of it was one
+> tokenizer accident. `OF_POSSESSIVE_MARKERS` lists the head-final genitive
+> clitics (ja `の`, ko `의`, zh `的`, bn `র`, hi `का`, tl `ng`, vi `của`)
+> alongside the genuine prepositional "of" linkers, because the i18n transformer
+> emitted property-FIRST in every language and `tryMatchOfPossessiveExpression`
+> was built to read that surface. In a clitic language the same marker means the
+> opposite — `A の B` is "A's B" — so on the semantic renderer's (correct)
+> owner-first surface that matcher folded the pair INVERTED:
+>
+> ```
+> en    set the *background-color of #theme to "#ff6600"
+> ja    #themeの*background-color を "#ff6600" に 設定      ← a correct render…
+> ja →  set *background-color's #theme to "#ff6600"        ← read back backwards
+> ```
+>
+> Every fidelity score is 1.0 on that — same action, same role, same value
+> types. Only the English round-trip sees it, which is why `possessive-of-order`
+> already covered these languages (`BETWEEN = bn/hi/ja/ko/tl/zh`) and passed:
+> **it asserted `role.type === 'property-path'`, and an inverted fold is still a
+> property-path.**
+>
+> Why the of-matcher got the chance at all: `tryMatchPossessiveSelectorExpression`
+> — the owner-first matcher — demands an `identifier` property on a profile
+> marker, to stop `#button の .active` ("toggle .active on #button") folding.
+> `*background-color` tokenizes as a `selector`, so the correct matcher declined
+> and the inverted one took it.
+>
+> Two guards, both keyed on the SIGIL rather than on a new per-language
+> direction table (which would have to be authored for 24 languages and kept
+> true):
+>
+> - the owner-first matcher accepts a `*`-sigil token as the property — a style
+>   property is not the class-selector shape the gate was protecting against;
+> - the of-matcher refuses a `*`/`@` sigil as the OWNER, so the property-first
+>   i18n surface (`*background-color ของ #theme`) still folds there while the
+>   owner-first surface falls through to the matcher that reads it correctly.
+>
+> Both are individually load-bearing: removing the owner guard reddens 10 of the
+> new file's 49 assertions, removing the property widening reddens 14.
+>
+> **Kept rows 90 → 83 — 7 cleared, ZERO newly kept** (set-color-variable in bn,
+> hi, ja, ko, tl, vi, zh). Both render gates shrank with it — wrapped
+> 3564 → 3565/3588 (99.33 → 99.36%), bare 2975 → 2976/2990 (99.50 → 99.53%),
+> one allowlist pair each. 11-signal gate green, `test:canonical` 5/5 after
+> regenerating the three shrunk baselines, semantic 9,224 + 49 new, adapter 366,
+> vocab green, whole-monorepo `test:check` green.
+>
+> **`set-color-variable[th]` is the one row left in the family, and it is a
+> different bug** — a render-order defect that only appears inside a handler:
+> `on click set the *background-color of #theme to "#ff6600"` renders
+> `เมื่อ click ตั้ง ใน *background-color ของ #theme "#ff6600"`, with the patient's
+> `ใน` marker emitted ahead of the property path and the literal stranded at the
+> end (and `click` left unlocalized, where the i18n row has `คลิก`). The BARE
+> form round-trips correctly, so this is squarely the "render the construct
+> outside its corpus wrapper" class.
+
 > **Update 2026-08-27j — fifth burn-down, and cluster A was one line: the
 > hand-crafted patterns never inherited the schema's role DEFAULTS. 102 → 90.**
 >

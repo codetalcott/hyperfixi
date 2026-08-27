@@ -60,6 +60,17 @@ const BAREKEYWORD_BLOCK_ACTIONS: ReadonlySet<string> = new Set(
 // Pattern Matcher
 // =============================================================================
 
+/**
+ * A hyperscript SIGIL property — `*background-color` (style) or `@aria-expanded`
+ * (attribute). Both tokenize as `selector`, and neither can ever be the OWNER of
+ * a possessive, which is what tells an owner-first clitic surface
+ * (`#themeの*background-color`) apart from the property-first "of" surface the
+ * i18n transformer emitted (`*background-color ของ #theme`).
+ */
+function isSigilProperty(value: string): boolean {
+  return value.startsWith('*') || value.startsWith('@');
+}
+
 export class PatternMatcher {
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
@@ -1830,7 +1841,7 @@ export class PatternMatcher {
     tokens.advance();
 
     const owner = tokens.peek();
-    if (!owner || owner.kind !== 'selector') {
+    if (!owner || owner.kind !== 'selector' || isSigilProperty(owner.value)) {
       tokens.reset(mark);
       return null;
     }
@@ -1838,6 +1849,17 @@ export class PatternMatcher {
 
     // "X of #y" means the X property of #y → property-path(object: #y, property: X).
     // An `of`-phrase is a POSSESSIVE surface, not a member access.
+    //
+    // The owner guard above is what keeps that reading honest. OF_POSSESSIVE_MARKERS
+    // lists the head-final clitics (ja の, ko 의, zh 的, bn র, hi का) alongside the
+    // genuine "of" linkers, because the i18n transformer emitted property-first in
+    // every language and this matcher was built to read that. In a clitic language
+    // `A の B` actually means "A's B", so on the semantic renderer's (correct)
+    // owner-first surface this matcher folds the pair INVERTED. A `*`/`@` sigil can
+    // never be an OWNER, so refusing one there is enough to tell the two apart:
+    // `*background-color ของ #theme` (i18n, property-first) still folds here, while
+    // `#themeの*background-color` falls through to the selector-possessive matcher,
+    // which reads it owner-first and correctly.
     return createPropertyPath(
       createSelector(owner.value),
       this.toEnglishProperty(property.value),
@@ -2725,8 +2747,18 @@ export class PatternMatcher {
     // identifier (vi `value` → `giá trị`, a single keyword token), so without this
     // the English-possessive `#picker's giá trị` lost its property and fell back to a
     // bare `#picker` selector — mismatching the en reference's property-path.
+    // A `*`-sigil token is hyperscript's STYLE property and can only ever be a
+    // property, so it is safe on a profile marker too — and it is exactly what
+    // the danger case above is not. Without it `#themeの*background-color`
+    // (ja/ko/zh/bn) and `#theme ng *background-color` (tl/vi) fell through to
+    // the of-possessive matcher, which reads `X <marker> Y` as "X of Y" and so
+    // folded the pair INVERTED — `set *background-color's #theme`, at every
+    // fidelity score 1.0 (set-color-variable, six kept rows).
+    const propertyIsStyleSigil =
+      propertyToken.kind === 'selector' && propertyToken.value.startsWith('*');
     const propertyOk =
       propertyToken.kind === 'identifier' ||
+      propertyIsStyleSigil ||
       ((isEnglishPossessive || splitEnglishPossessive) &&
         (propertyToken.kind === 'selector' || propertyToken.kind === 'keyword'));
     if (!propertyOk) {
