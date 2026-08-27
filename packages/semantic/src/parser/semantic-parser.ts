@@ -1825,7 +1825,11 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
-    if (actionValue && actionValue.type === 'literal') {
+    if (
+      actionValue &&
+      actionValue.type === 'literal' &&
+      getSchema(String(actionValue.value) as ActionType) !== undefined
+    ) {
       // Create a command node directly from captured roles
       const actionName = actionValue.value as string;
       const roles: Record<string, SemanticValue> = {};
@@ -1913,6 +1917,10 @@ export class SemanticParserImpl implements ISemanticParser {
         confidence: match.confidence,
       });
       this.registerBoundIdentifiers(commandNode);
+      // Body commands recovered by the head-only re-parse below, which sees the
+      // whole clause and so parses the loop body along with the head. Spliced in
+      // after `commandNode` wherever the body is assembled.
+      let reparsedTail: SemanticNode[] = [];
 
       // A fused event pattern captures the wrapped command's VERB + (at most) its
       // PRIMARY arg, leaving every SECONDARY role clause unconsumed: `su {event}
@@ -2146,8 +2154,21 @@ export class SemanticParserImpl implements ISemanticParser {
               // the swap can never swallow a body command. The body-swallowing
               // generated repeat matches none of these ids.
               /^repeat-.*-(times|for-in|while-head|until-head)$/.test(reparsePid);
+            // A HEAD-ONLY re-parse legitimately returns MORE than one command:
+            // the head stops after its count word, and `parseClause` carries on
+            // to the loop body in the same clause (`repetir 3 times agregar
+            // "<p>Line</p>" a yo` → [repeat, add]). Requiring exactly one
+            // vetoed every counted loop inside a handler — 13 languages, one
+            // corpus row each — even though every other condition held. The
+            // extra commands ARE the body, so keep them (spliced in below)
+            // rather than dropping them with the clause. Only the four
+            // head-only families qualify, so #530's body-swallowing generated
+            // repeat is still excluded by `headOnlyOk`.
+            const headOnlyPattern = /^repeat-.*-(times|for-in|while-head|until-head)$/.test(
+              reparsePid
+            );
             if (
-              reparsed.length === 1 &&
+              (reparsed.length === 1 || (headOnlyPattern && reparsed.length > 1)) &&
               first &&
               first.kind === 'command' &&
               first.action === actionName &&
@@ -2162,6 +2183,7 @@ export class SemanticParserImpl implements ISemanticParser {
                 Object.entries(roles).filter(([r, v]) => !isMarkerConceptJunk(r, v)).length
             ) {
               commandNode = first as CommandSemanticNode;
+              reparsedTail = reparsed.slice(1);
               while (tokens.position() < clauseEnd) tokens.advance();
             } else {
               // Re-parse rejected — discard its speculative coverage records
@@ -2443,12 +2465,12 @@ export class SemanticParserImpl implements ISemanticParser {
 
         if (remainingCommands.length > 0) {
           // Combine first command with remaining commands
-          body = [commandNode, ...remainingCommands];
+          body = [commandNode, ...reparsedTail, ...remainingCommands];
         } else {
-          body = [commandNode];
+          body = [commandNode, ...reparsedTail];
         }
       } else {
-        body = [commandNode];
+        body = [commandNode, ...reparsedTail];
         // No trailing-body walk ran (next token is an `end` or the stream is
         // exhausted) — anything left past here is dropped. The residue filter
         // silences the bare block terminator(s), so only real content fires.
