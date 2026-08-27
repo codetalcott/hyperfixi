@@ -32,6 +32,12 @@ import {
   resolveRenderer,
   type CandidateScore,
 } from '../src/sync/renderer-choice';
+import {
+  findHyperscriptAttributes,
+  isMarkupRow,
+  reRenderPreservesContent,
+  spliceHyperscriptAttributes,
+} from '../src/sync/markup-attributes';
 import { GrammarTransformer, getProfile as getGrammarProfile } from '@lokascript/i18n';
 import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
 import { writeDbStamp } from '../src/sync/db-stamp';
@@ -90,6 +96,10 @@ let semanticFallbacks = 0;
 let bestKeptI18n = 0;
 /** `best` only: rows with no semantic reference at all (English does not parse). */
 let bestNoReference = 0;
+/** Markup rows whose `_=` bodies were all carried by the semantic renderer. */
+let markupSemantic = 0;
+/** Markup rows where at least one `_=` body had to stay on the i18n path. */
+let markupKept = 0;
 /** Why the last `best` row went the way it did — read by the method label. */
 let lastBestChoice: 'semantic' | 'i18n-outscored' | 'i18n-no-reference' = 'semantic';
 
@@ -288,6 +298,22 @@ function translateHyperscript(code: string, language: string): string {
   if (language === 'en') {
     return code;
   }
+  // HTML-markup rows are not hyperscript: the whole-string path hands the markup
+  // to a hyperscript renderer, which is why every one of them fell back to i18n
+  // (and i18n only re-indents them). Translate the `_=` bodies instead and leave
+  // every other byte alone. Not for `--renderer i18n`: that mode exists to
+  // reproduce the pre-flip corpus byte for byte, whitespace included.
+  if (renderer !== 'i18n' && isMarkupRow(code)) {
+    return translateMarkupRow(code, language);
+  }
+  return translateBody(code, language);
+}
+
+/**
+ * Translate one hyperscript body — a whole row, or one `_=` attribute value.
+ * The renderer modes live here; `translateHyperscript` decides what a body is.
+ */
+function translateBody(code: string, language: string): string {
   if (renderer === 'best') {
     const reference = safeParseNode(code, 'en');
     const referenceEn = reference ? safeRenderEn(reference) : null;
@@ -338,6 +364,55 @@ function translateHyperscript(code: string, language: string): string {
     semanticFallbacks++;
   }
   return i18nTranslate(code, language);
+}
+
+/**
+ * Translate the hyperscript inside an HTML-markup row, byte-preserving.
+ *
+ * Each `_="…"` body goes through the same renderer choice as a standalone row,
+ * behind one extra guard: the body is replaced only if the ENGLISH parse carries
+ * its whole content (`reRenderPreservesContent`). A truncating parse — `set
+ * ^user to attrs.data as JSON`, whose `as JSON` lands in no role and therefore
+ * scores "faithful" against its own truncation in all 23 languages — leaves the
+ * body in English rather than shipping the truncation into every language.
+ * The row counts as semantic only when EVERY body was carried.
+ */
+function translateMarkupRow(code: string, language: string): string {
+  const spans = findHyperscriptAttributes(code);
+  if (spans.length === 0) {
+    // Markup with no hyperscript at all: nothing to translate, in any language.
+    // (The corpus flags such rows non-translatable, so this is belt-and-braces —
+    // it keeps the row verbatim rather than handing markup to a renderer.)
+    markupKept++;
+    lastBestChoice = 'i18n-no-reference';
+    return code;
+  }
+
+  let allSemantic = true;
+  const replacements = spans.map(span => {
+    const body = span.body;
+    const reference = safeParseNode(body, 'en');
+    const referenceEn = reference ? safeRenderEn(reference) : null;
+    if (!reference || referenceEn === null || !reRenderPreservesContent(body, referenceEn)) {
+      allSemantic = false;
+      if (verbose) {
+        console.log(`  [markup→verbatim] ${language}: "${body}" (parse drops content)`);
+      }
+      return body;
+    }
+    const before = semanticRendered;
+    const translated = translateBody(body, language);
+    if (semanticRendered === before) allSemantic = false;
+    return translated;
+  });
+
+  if (allSemantic) markupSemantic++;
+  else markupKept++;
+  // `i18n-outscored` covers "at least one body stayed English" — either i18n
+  // rendered it better, or the English parse dropped content and the guard
+  // refused to translate it at all.
+  lastBestChoice = allSemantic ? 'semantic' : 'i18n-outscored';
+  return spliceHyperscriptAttributes(code, spans, replacements);
 }
 
 /** The historical writer: GrammarTransformer over the masked surface. */
@@ -471,11 +546,23 @@ async function syncTranslations() {
       const isTranslatable = example.translatable !== 0;
 
       for (const [langCode, langInfo] of Object.entries(LANGUAGES)) {
-        const before = semanticRendered;
+        const beforeSemantic = semanticRendered;
+        const beforeMarkupSemantic = markupSemantic;
         const translated = isTranslatable
           ? translateHyperscript(example.raw_code, langCode)
           : example.raw_code;
-        const semanticSurface = semanticRendered > before ? translated : null;
+        // A whole-row semantic render returns the semantic surface itself. A
+        // markup row is a splice of N bodies, and `translateBody` advances the
+        // body counter for each carried one — so for markup the ONLY honest row
+        // verdict is `markupSemantic`, which rises only when EVERY body was
+        // carried. Mixing the two labelled a partially-carried row semantic.
+        const rowIsMarkup = isTranslatable && renderer !== 'i18n' && isMarkupRow(example.raw_code);
+        const markupWasSemantic = markupSemantic > beforeMarkupSemantic;
+        const semanticSurface = rowIsMarkup
+          ? null
+          : semanticRendered > beforeSemantic
+            ? translated
+            : null;
         const confidence = isTranslatable
           ? getConfidence(langCode, translated)
           : langCode === 'en'
@@ -498,7 +585,8 @@ async function syncTranslations() {
           ? 'non-translatable-identity'
           : langCode === 'en'
             ? 'original'
-            : (renderer === 'semantic' || renderer === 'best') && translated === semanticSurface
+            : (renderer === 'semantic' || renderer === 'best') &&
+                (rowIsMarkup ? markupWasSemantic : translated === semanticSurface)
               ? 'semantic-render'
               : renderer === 'best' && lastBestChoice === 'i18n-no-reference'
                 ? 'grammar-transform-no-reference'
@@ -568,6 +656,8 @@ async function syncTranslations() {
       console.log(
         `  - i18n rows kept (no semantic reference — English does not parse): ${bestNoReference}`
       );
+      console.log(`  - markup rows with every \`_=\` body carried by semantic: ${markupSemantic}`);
+      console.log(`  - markup rows keeping ≥1 body verbatim/i18n: ${markupKept}`);
     }
     console.log(`  - Keyword substitutes: ${keywordUsed}`);
 

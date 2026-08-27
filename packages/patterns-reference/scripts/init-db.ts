@@ -1653,6 +1653,9 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Define a custom element via a hyperscript-template script tag',
     feature: 'components',
     engine: 'both',
+    translatable: false,
+    non_translatable_reason:
+      'HTML markup with NO hyperscript — a component template whose body is static markup; there is nothing to translate in any language',
   },
   {
     id: 'component-click-counter',
@@ -1689,6 +1692,9 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Component with default and named slots for content projection',
     feature: 'components',
     engine: 'both',
+    translatable: false,
+    non_translatable_reason:
+      'HTML markup with NO hyperscript — slot layout only; there is nothing to translate in any language',
   },
 
   // ==========================================================================
