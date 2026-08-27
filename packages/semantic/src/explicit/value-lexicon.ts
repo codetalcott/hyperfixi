@@ -22,6 +22,14 @@
  *
  * WHAT IS NEVER TOUCHED — the reason this is safe to run over a raw expression:
  *   - anything inside quotes, backticks, or a template interpolation (user text)
+ *   - anything inside a BRACE GROUP (`{name: 'Demo', admin: true}`, `.{cls}`):
+ *     an object literal is data the runtime evaluates as JS, not prose. Measured
+ *     2026-08-27: `true` inside one was localized on render (`admin: verdadero`)
+ *     and never reversed on parse — the interior is captured as one opaque
+ *     literal — so the round trip lost the value in all 23 languages AND a
+ *     localized source would have evaluated an undefined identifier at runtime.
+ *     A BARE `true` is unaffected: it round-trips, because the parse side does
+ *     de-localize a standalone literal.
  *   - selectors, urls, numbers, and sigil-attached tokens (`@attr`, `#id`, `$var`)
  *   - identifiers the lexicon has no entry for (they pass through unchanged)
  * A word is rewritten only when the profile vouches for it, so an unknown token
@@ -103,6 +111,57 @@ export function getValueLexicon(lexicon: LanguageLexicon, profile?: LanguageProf
 }
 
 /**
+ * Mask every balanced `{...}` group, outermost first, so a brace group's
+ * interior survives verbatim.
+ *
+ * Runs AFTER string masking, so a brace group containing a string
+ * (`headers:{Authorization:\`Bearer \${$token}\`}`) holds that string's mask
+ * token, and the restore pass below unwraps both layers. A scanner rather than
+ * a regex because brace groups nest; an unbalanced `{` is left alone.
+ */
+function maskBraceGroups(text: string, spans: string[]): string {
+  let out = '';
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf('{', index);
+    if (open === -1) {
+      out += text.slice(index);
+      break;
+    }
+    let depth = 0;
+    let close = -1;
+    for (let i = open; i < text.length; i++) {
+      if (text[i] === '{') depth++;
+      else if (text[i] === '}' && --depth === 0) {
+        close = i;
+        break;
+      }
+    }
+    if (close === -1) {
+      // Unbalanced — not a literal we can reason about; leave the rest as is.
+      out += text.slice(index);
+      break;
+    }
+    spans.push(text.slice(open, close + 1));
+    out += text.slice(index, open) + `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+    index = close + 1;
+  }
+  return out;
+}
+
+/**
+ * Restore masked spans, repeatedly: a brace-group span can itself contain a
+ * string span's mask token, so one pass is not enough.
+ */
+function restoreSpans(text: string, spans: readonly string[]): string {
+  let out = text;
+  for (let pass = 0; pass < 8 && out.includes(MASK_OPEN); pass++) {
+    out = out.replace(MASK_TOKEN, (_, index: string) => spans[Number(index)] ?? '');
+  }
+  return out;
+}
+
+/**
  * Localize the interior of a value string.
  *
  * Returns the input unchanged when the language has no lexicon, so a language
@@ -122,15 +181,16 @@ export function localizeValueInterior(
   if (words.size === 0) return raw;
 
   const spans: string[] = [];
-  const masked = raw.replace(PROTECTED_SPAN, match => {
+  const stringsMasked = raw.replace(PROTECTED_SPAN, match => {
     spans.push(match);
     return `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
   });
+  const masked = maskBraceGroups(stringsMasked, spans);
 
   const localized = masked.replace(WORD, (whole, lead: string, word: string) => {
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;
   });
 
-  return localized.replace(MASK_TOKEN, (_, index: string) => spans[Number(index)] ?? '');
+  return restoreSpans(localized, spans);
 }

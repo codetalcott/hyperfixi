@@ -80,20 +80,44 @@ describe('object-literal keys survive localization', () => {
   });
 });
 
-describe('the VALUE side still localizes — this is not a blanket opt-out', () => {
+describe('the VALUE side still localizes OUTSIDE a brace group', () => {
   // The point is a key/value distinction, not "stop translating". If these
   // start passing through unchanged, the lookahead has been widened too far.
-  it('es localizes the value while keeping the key', () => {
-    expect(localize('{body: my value}', 'es')).toBe('{body: mi valor}');
+  //
+  // SUPERSEDED FOR BRACE INTERIORS, 2026-08-27. The three assertions that used
+  // to live here (`{body: my value}` -> `{body: mi valor}`, and the same for ja
+  // and de) asserted a behaviour that is broken on the real render path:
+  //
+  //   render(parse('set $x to {body: my value}', 'en'), 'es')
+  //     -> "establecer $x a { cuerpo : mi valor }"     <- the KEY is translated
+  //
+  // Two independent defects, both measured:
+  //   1. the key guard keys on a word IMMEDIATELY followed by `:`, and the
+  //      renderer re-spaces the literal to `body :` before this localizer runs,
+  //      so the guard stopped applying exactly where it matters — while still
+  //      passing at this unit level, where the raw text has no space;
+  //   2. no brace interior round-trips in ANY language: the parse side captures
+  //      the literal opaquely and never de-localizes it, so `{admin: true}`
+  //      comes home as `{admin: verdadero}` — which would also evaluate an
+  //      undefined identifier at runtime, since an object literal is data.
+  //
+  // Until the object literal gets a STRUCTURED renderer (localize values,
+  // preserve keys, reverse both on parse — filed in MULTILINGUAL_NEXT_STEPS.md),
+  // a brace interior is left verbatim: English inside the braces is
+  // cosmetically poorer, but it round-trips exactly and cannot corrupt a
+  // runtime contract key. The value-side rule itself is unchanged, and these
+  // assertions pin it outside braces. See value-lexicon-braces.test.ts.
+  it('es localizes a value that is not inside braces', () => {
+    expect(localize('my value', 'es')).toBe('mi valor');
   });
 
-  it('ja localizes the value while keeping the key', () => {
-    expect(localize('{body: my value}', 'ja')).toBe('{body: 私の 値}');
+  it('ja localizes a value that is not inside braces', () => {
+    expect(localize('my value', 'ja')).toBe('私の 値');
   });
 
-  it('de localizes an interior expression while keeping the key', () => {
-    expect(localize('{method:"POST", body:(closest <form/> as FormData)}', 'de')).toBe(
-      '{method:"POST", body:(nächstgelegene <form/> as FormData)}'
+  it('de localizes an interior expression that is not inside braces', () => {
+    expect(localize('(closest <form/> as FormData)', 'de')).toBe(
+      '(nächstgelegene <form/> as FormData)'
     );
   });
 });
