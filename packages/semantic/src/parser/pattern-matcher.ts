@@ -2085,6 +2085,13 @@ export class PatternMatcher {
     // Rejecting it lets the `live`/`socket` command pattern win at Stage 2.
     const norm = token.normalized?.toLowerCase();
     if (norm && BAREKEYWORD_BLOCK_ACTIONS.has(norm)) return false;
+    // A personal REFERENCE (me/it/you) is never an event name. The renderer
+    // fronts a command's reference destination in the postpositional languages
+    // (`add .highlight to me` → bn `আমি তে .highlight কে যোগ`), and the
+    // event-stage `{event} <marker>` pattern otherwise reads `আমি তে` as
+    // `on me` — the junk handler swallows the real destination and the command
+    // re-defaults it to an implicit `me` the strict scorers rightly ignore.
+    if (norm === 'me' || norm === 'it' || norm === 'you') return false;
     return true;
   }
 
