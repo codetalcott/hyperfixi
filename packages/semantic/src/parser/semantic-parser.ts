@@ -2099,10 +2099,34 @@ export class SemanticParserImpl implements ISemanticParser {
               ROLE_MARKER_CONCEPTS.has(
                 String((val as { value?: unknown }).value ?? '').toLowerCase()
               );
+            // A role the MATCHER defaulted (`applyExtractionRules` marks it
+            // `implicit`) is not a capture at all — it is the absence of one.
+            // `toggle-event-vi-vso` is `khi {event} chuyển đổi {patient} vào
+            // {destination?}` while the renderer emits the destination marker
+            // `trên`, so the group never fires and the pattern defaults
+            // `destination:reference=me(implicit)`. Counting that as something
+            // the re-parse must "preserve" made the real `destination:selector=
+            // #menu` a TYPE MISMATCH and vetoed its own repair. Implicit
+            // defaults are therefore exempt from the superset requirement, and
+            // discounted from the FUSED side of the role count — otherwise a
+            // swap that replaces a default with a real value ties 2 > 2 and is
+            // rejected anyway. Only the fused side: on the RE-PARSE side an
+            // implicit role is the canonical reading and does count (the
+            // counted-loop head's `loopType:"times"` is implicit, and
+            // discounting it there ties 1 > 1 and re-breaks every counted loop
+            // — measured, 12 languages). The qu verb-final safety rail is
+            // untouched: it guards against the RE-PARSE inventing a default,
+            // which `preservesFused` still catches by type, and a real fused
+            // capture is never implicit.
+            const isImplicit = (val: unknown): boolean =>
+              val !== null &&
+              typeof val === 'object' &&
+              (val as { implicit?: unknown }).implicit === true;
             const preservesFused =
               !!first &&
               first.kind === 'command' &&
               Object.entries(roles).every(([role, val]) => {
+                if (isImplicit(val)) return true;
                 if (isIgnorableFusedRole(role, val) || isMarkerConceptJunk(role, val)) return true;
                 const rv = (first as CommandSemanticNode).roles.get(mapRole(role));
                 if (rv !== undefined && valType(rv) === valType(val)) return true;
@@ -2179,8 +2203,30 @@ export class SemanticParserImpl implements ISemanticParser {
               // count — a fused shape whose ONLY role is a swallowed marker
               // (scroll: `destination:literal="destination"`) would otherwise
               // tie 1 > 1 and veto its own repair.
-              (first as CommandSemanticNode).roles.size >
-                Object.entries(roles).filter(([r, v]) => !isMarkerConceptJunk(r, v)).length
+              // The re-parse must GAIN something. Two ways, and the union is
+              // what keeps all three measured cases right:
+              //   (i) it binds MORE roles than the fused capture — the original
+              //       test, unchanged. The counted-loop head lands here (it adds
+              //       `quantity`, which the fused shape has no slot for) even
+              //       though its own `loopType` is implicit.
+              //   (ii) it binds more REAL roles — an upgrade from a default to
+              //       an actual value, which is vi's `destination:me(implicit)`
+              //       becoming `destination:selector=#menu` at an unchanged
+              //       role count.
+              // Neither fires when the re-parse merely re-defaults what the
+              // fused capture already defaulted: SOV `add @disabled to <button/>
+              // in me` keeps a fused `destination:me(implicit)` whose real value
+              // is postposed OUTSIDE the [verb..boundary] slice, so the re-parse
+              // defaults it too. Swapping there would consume the clause and rob
+              // the trailing DESTINATION/SOURCE reclaim that does recover it
+              // (measured: ja/ko/hi form-disable-on-submit).
+              ((first as CommandSemanticNode).roles.size >
+                Object.entries(roles).filter(([r, v]) => !isMarkerConceptJunk(r, v)).length ||
+                [...(first as CommandSemanticNode).roles.values()].filter(v => !isImplicit(v))
+                  .length >
+                  Object.entries(roles).filter(
+                    ([r, v]) => !isMarkerConceptJunk(r, v) && !isImplicit(v)
+                  ).length)
             ) {
               commandNode = first as CommandSemanticNode;
               reparsedTail = reparsed.slice(1);
