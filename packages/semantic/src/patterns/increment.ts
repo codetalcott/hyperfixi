@@ -338,7 +338,12 @@ function getIncrementPatternsTh(): LanguagePattern[] {
       id: 'increment-th-simple',
       language: 'th',
       command: 'increment',
-      priority: 100,
+      // 90, not 100: the GENERATED th pattern carries the optional
+      // `[{quantity}]` slot this bare form lacks; at a 100/100 tie
+      // registration order made this one win and silently drop the amount
+      // (`increment #score by 10` -> `เพิ่มค่า #score 10`, quantity gone).
+      // Same layering fix as th's remove/toggle -simple in #957.
+      priority: 90,
       template: {
         format: 'เพิ่มค่า {patient}',
         tokens: [

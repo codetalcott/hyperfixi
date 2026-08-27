@@ -207,11 +207,12 @@ describe('the keyword anchor: what the tail-less forms cost', () => {
  * shape — pinned separately below (`the stored corpus surfaces`), because the
  * two renderers disagree and only the stored one is graded.
  */
-const SWAP_DEFERRED = new Set([
-  // tl already loses the PATIENT on the plain form `palitan_pwesto sa #a nang #b`
-  // (pre-existing, unrelated to the tail), so the tail has nothing to attach to.
-  'tl',
-]);
+// Empty since the marker-less-slot outcome gate landed: tl used to lose the
+// PATIENT on the plain form `palitan_pwesto sa #a nang #b`, because its
+// verb-first `palitan_pwesto [{method}] sa {destination} [nang {patient}]`
+// pattern let the bare `[{method}]` slot eat the `sa` the pattern itself owes.
+// All 24 languages now round-trip the swap tail.
+const SWAP_DEFERRED = new Set<string>([]);
 
 const PROCESS_DEFERRED = new Set([
   // ms mis-binds the patient to a property-path on the tail form; the plain form
@@ -297,11 +298,14 @@ describe('the process tail round-trips in 22 of 24 languages', () => {
 });
 
 describe('the deferred rows, pinned as measured', () => {
-  it('tl loses the swap patient with or without the tail — pre-existing', () => {
-    // Pinning the CURRENT state, not a desired one. If tl starts binding the
-    // patient, both rows below flip and tl moves to CAPTURED above.
+  it('tl now binds the swap patient on the plain form — pin PROMOTED', () => {
+    // Was pinned as "loses the patient, pre-existing", with the instruction
+    // that tl moves to the round-trip group above if it ever starts binding.
+    // The marker-less-slot outcome gate did exactly that, so this asserts the
+    // fix instead of the defect; tl is no longer in SWAP_DEFERRED.
     const plain = commandNode('palitan_pwesto sa #a nang #b', 'tl', 'swap');
-    expect(plain.roles.has('patient' as never)).toBe(false);
+    expect(roleValue(plain, 'destination')).toBe('#a');
+    expect(roleValue(plain, 'patient')).toBe('#b');
   });
 
   it('qu cannot parse the plain process form either — not this role', () => {
