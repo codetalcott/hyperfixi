@@ -1481,7 +1481,12 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'when-value-changes',
     title: 'When Computed Value Changes',
-    raw_code: "when (#price's value * #qty's value) changes put `$${it}` into me end",
+    // `"$" + it`, not `` `$${it}` ``: a `$` immediately before `${…}` inside a
+    // template literal is rejected by the upstream _hyperscript 0.9.93 lexer
+    // ("Unexpected value: $") — verified on the engine; `"$" + it` and
+    // `` `USD ${it}` `` are both VALID. The row claims `engine: 'both'`, so its
+    // code must be portable.
+    raw_code: 'when (#price\'s value * #qty\'s value) changes put "$" + it into me end',
     description: 'React to changes in a computed expression; `it` is the new value',
     feature: 'reactivity',
     engine: 'both',

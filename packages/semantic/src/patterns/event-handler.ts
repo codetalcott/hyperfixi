@@ -733,43 +733,28 @@ function getEventHandlerPatternsDe(): LanguagePattern[] {
   ];
 }
 
+/**
+ * English event-handler heads: `on {event} [from {source}] {body}` only.
+ *
+ * There is deliberately NO `when {event}` head. In _hyperscript (0.9.93
+ * verified) `when` is never a handler opener: it is the reactive observer
+ * (`when <expr> changes … end`, parsed structurally by the block layer) and the
+ * trailing command guard (`show .x when <cond>`). `when click toggle .active`
+ * fails on the real engine ("Cannot watch local variable 'click'"). The
+ * `event-en-when` / `event-en-when-source` patterns that used to live here were
+ * an invention — and the thing that silently claimed every reactive head and
+ * truncated it to `on <first token>` in the English REFERENCE, so all 24
+ * languages scored against the truncation. English now rejects the form, as
+ * the engine does.
+ *
+ * The foreign "when" heads (es `cuando`, de `wenn`, fr `quand`, id `ketika`,
+ * qu `maykama`, bn `যখন`, hi `जब`, ja `とき`, tr `iken`, ar `عندما`, he `כאשר`,
+ * zh `每当` / `当 … 时`) are a different thing: translations of `on` in
+ * languages whose natural handler opener IS their when-word. They make claims
+ * about our translation layer, not about English syntax, and stay.
+ */
 function getEventHandlerPatternsEn(): LanguagePattern[] {
   return [
-    {
-      id: 'event-en-when-source',
-      language: 'en',
-      command: 'on',
-      priority: 115,
-      template: {
-        format: 'when {event} from {source} {body}',
-        tokens: [
-          { type: 'literal', value: 'when' },
-          { type: 'role', role: 'event' },
-          { type: 'literal', value: 'from' },
-          { type: 'role', role: 'source' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-        source: { marker: 'from' },
-      },
-    },
-    {
-      id: 'event-en-when',
-      language: 'en',
-      command: 'on',
-      priority: 105,
-      template: {
-        format: 'when {event} {body}',
-        tokens: [
-          { type: 'literal', value: 'when' },
-          { type: 'role', role: 'event' },
-        ],
-      },
-      extraction: {
-        event: { position: 1 },
-      },
-    },
     {
       id: 'event-en-source',
       language: 'en',
@@ -1112,14 +1097,15 @@ function getEventHandlerPatternsHi(): LanguagePattern[] {
         event: { marker: 'से', position: 2 },
       },
     },
-    // Prefix reactive `when` — the hi member of the ja/tr/ar/he when-family
-    // below (`जब $firstName या $lastName बदलने पर …`). Without it,
-    // `event-hi-bare` captured the जब token itself as the event (render
-    // `on when put …`) and dropped the subject list; en's `event-en-when`
-    // captures the first subject as the event. The event role is
-    // type-constrained so the `जब तक` while/until compound (repeat-while,
-    // unless-condition) never matches — तक lexes as a keyword/literal and
-    // declines, falling through to the repeat patterns unchanged.
+    // Prefix `जब {event}` handler head — the hi member of the ja/tr/ar/he
+    // when-family below: native "when <event>" idiom, a translation of `on`.
+    // (It once also caught the reactive `जब $a या $b बदलने पर …` rows as
+    // handlers — the truncation the English reference shared; the reactive
+    // head is parsed structurally now, block-parser `locateReactiveWhenHead`,
+    // and never reaches this pattern.) The event role is type-constrained so
+    // the `जब तक` while/until compound (repeat-while, unless-condition) never
+    // matches — तक lexes as a keyword/literal and declines, falling through to
+    // the repeat patterns unchanged.
     {
       id: 'event-hi-when',
       language: 'hi',
@@ -2184,14 +2170,18 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
 }
 
 /**
- * `when <condition> changes <body> end` reactive blocks for languages that
- * otherwise have no hand-crafted event-handler patterns. The grammar
- * transformer emits the dictionary `when` form as a leading conjunction
- * (ja `とき`, tr `iken`, ar `عندما`, he `כאשר`), so a prefix `{when} {event}
- * {body}` pattern — mirroring the es `cuando {event} {body}` shape — captures
- * the condition as the event and delegates the trailing command to the body
- * parser. Scoped to the `when` literal, so it never shadows `on <event>`
- * handlers (which start with the event word, not the conjunction).
+ * Prefix `{when} {event} {body}` handler heads for languages that otherwise
+ * have no hand-crafted event-handler patterns (ja `とき`, tr `iken`, ar
+ * `عندما`, he `כאשר`) — the native "when <event>" idiom, mirroring the es
+ * `cuando {event} {body}` shape: a translation of `on`, not a claim about
+ * English (which has no such head — see getEventHandlerPatternsEn). Scoped to
+ * the when-literal, so it never shadows `on <event>` handlers (which start with
+ * the event word, not the conjunction).
+ *
+ * These once doubled as the catch for the reactive `when <expr> changes` rows
+ * (`とき $a または $b 変わったら …`), truncating them to `on $a` exactly as the
+ * English reference did. The reactive head is parsed structurally now
+ * (block-parser `locateReactiveWhenHead`) and never reaches them.
  */
 function getEventHandlerPatternsJa(): LanguagePattern[] {
   return [

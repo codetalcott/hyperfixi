@@ -28,29 +28,26 @@ function getTokens(input: string, language: string = 'en') {
 // =============================================================================
 
 describe('English Event Handler Idioms', () => {
-  describe('"when" event handler', () => {
-    it('should parse "when clicked toggle .active"', () => {
-      const result = parse('when clicked toggle .active', 'en');
-      expect(result).not.toBeNull();
-      expect(result?.action).toBe('on');
+  describe('"when" is NOT an event-handler head', () => {
+    // In _hyperscript (0.9.93 verified) `when` is never a handler opener: it is
+    // the reactive observer (`when <expr> changes … end`) and the trailing
+    // command guard (`show .x when <cond>`). `when click toggle .active` fails on
+    // the real engine ("Cannot watch local variable 'click'"). The `when
+    // {event}` idiom this block used to pin was an invention — and the thing
+    // that silently claimed every reactive head and truncated it to `on <first
+    // token>` in the English reference. The semantic parser now rejects it too.
+    it.each([
+      'when clicked toggle .active',
+      'when click toggle .active',
+      'when clicked from #button toggle .active',
+    ])('rejects %s like the engine does', source => {
+      expect(canParse(source, 'en')).toBe(false);
+      expect(() => parse(source, 'en')).toThrow();
     });
 
-    it('should parse "when click toggle .active" (base form)', () => {
-      const result = parse('when click toggle .active', 'en');
-      expect(result).not.toBeNull();
-      expect(result?.action).toBe('on');
-    });
-
-    it('should parse "when clicked from #button toggle .active"', () => {
-      const result = parse('when clicked from #button toggle .active', 'en');
-      expect(result).not.toBeNull();
-      expect(result?.action).toBe('on');
-      // Note: source role extraction is optional for idiom patterns
-      // The core parsing works correctly
-    });
-
-    it('should report canParse for "when clicked"', () => {
-      expect(canParse('when clicked toggle .active', 'en')).toBe(true);
+    it('still parses the reactive observer', () => {
+      const result = parse('when $count changes put "x" into me end', 'en');
+      expect(result?.action).toBe('when');
     });
   });
 
@@ -370,14 +367,15 @@ describe('English British Spelling Aliases', () => {
 // =============================================================================
 
 describe('English Combined Idioms', () => {
-  it('should parse "when clicked flip the .active class"', () => {
-    const result = parse('when clicked flip the .active class', 'en');
+  it('should parse "on click flip the .active class"', () => {
+    // `when clicked` was the invented handler head — see the "when" block above.
+    const result = parse('on click flip the .active class', 'en');
     expect(result).not.toBeNull();
     expect(result?.action).toBe('on');
   });
 
-  it('should parse "when clicked increase #counter"', () => {
-    const result = parse('when clicked increase #counter', 'en');
+  it('should parse "on click increase #counter"', () => {
+    const result = parse('on click increase #counter', 'en');
     expect(result).not.toBeNull();
     expect(result?.action).toBe('on');
   });

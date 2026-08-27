@@ -1465,6 +1465,35 @@ describe('Has/Have Operator Translations', () => {
 // Possessive Dot Notation Translation Tests
 // =============================================================================
 
+describe('Possessive inside parentheses (when-value-changes)', () => {
+  // `(#price's value * #qty's value)` — the prepositional rewrite `X's Y` →
+  // `Y de X` used to carry the owner's opening paren INTO the rewrite
+  // (`valor de (#price`) and the property's closing paren before the marker
+  // (`valor) de #qty`), splitting the group across the possessive:
+  // `valor de (#price * valor) de #qty`, which no parser reads as a product of
+  // two values. Parens ride outside: `(valor de #price * valor de #qty)`.
+  it.each([
+    ['es', '(valor de #price * valor de #qty)'],
+    ['fr', '(valeur de #price * valeur de #qty)'],
+    ['de', '(wert von #price * wert von #qty)'],
+    ['pt', '(valor de #price * valor de #qty)'],
+  ])('%s keeps the group intact around both possessives', (target, expected) => {
+    const transformer = new GrammarTransformer('en', target);
+    const result = transformer.transform(
+      'when (#price\'s value * #qty\'s value) changes put "$" + it into me end'
+    );
+    expect(result).toContain(expected);
+  });
+
+  it('ja (suffix genitive) was never split and is unchanged', () => {
+    const transformer = new GrammarTransformer('en', 'ja');
+    const result = transformer.transform(
+      'when (#price\'s value * #qty\'s value) changes put "$" + it into me end'
+    );
+    expect(result).toContain('(#priceの 値 * #qtyの 値)');
+  });
+});
+
 describe('Possessive Dot Notation Translation', () => {
   describe('my.property patterns across languages', () => {
     it('should translate my.textContent to Spanish', () => {

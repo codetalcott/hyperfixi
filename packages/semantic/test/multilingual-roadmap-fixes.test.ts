@@ -14396,23 +14396,25 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
   });
 
   it('hi when-value-changes row renders the en reference head, whole watched expression kept', () => {
-    // Both used to capture `(` as the event on this en-invalid row (hi once
-    // diverged further, `on when …`). Both now fold the whole parenthesized
-    // expression into the reactive head. The ONE remaining difference is the
-    // property noun: the `'s` inside the parens lexes as a string-quote in both
-    // tokenizers (`'s मान * #qty'` is one literal token), so the hi noun rides
-    // through untranslated — the en raw is a byte-faithful source slice by
-    // design (block-parser watchedExpressionValue). Byte-strict otherwise.
+    // Both used to capture `(` as the event on this row (hi once diverged
+    // further, `on when …`). Both now fold the whole parenthesized expression
+    // into the reactive head, and hi's property noun comes back as `value`: the
+    // tokenizer no longer pairs the two `'s` apostrophes into a string, so the
+    // join glues `'s` to its owner and translates `मान` through the property
+    // lexicon. The en raw is a byte-faithful source slice; the foreign join
+    // spaces the parens (`( … )`) — the only difference left, and cosmetic.
     const enOut = render(
-      parse("when (#price's value * #qty's value) changes put `$${it}` into me end", 'en'),
+      parse('when (#price\'s value * #qty\'s value) changes put "$" + it into me end', 'en'),
       'en'
     );
     const hiOut = render(
-      parse("जब (#price's मान * #qty's मान) बदलने पर `$${it}` को मैं में रखें समाप्त", 'hi'),
+      parse('जब (#price\'s मान * #qty\'s मान) बदलने पर "$" + यह को मैं में रखें समाप्त', 'hi'),
       'en'
     );
-    expect(enOut).toBe("when (#price's value * #qty's value) changes\n  put `$${it}` into me\nend");
-    expect(hiOut.replace(/मान/g, 'value')).toBe(enOut);
+    expect(enOut).toBe(
+      'when (#price\'s value * #qty\'s value) changes\n  put "$" + it into me\nend'
+    );
+    expect(hiOut.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')')).toBe(enOut);
   });
 
   it('hi event-adjacent or path stays byte-identical (multiple-events row)', () => {

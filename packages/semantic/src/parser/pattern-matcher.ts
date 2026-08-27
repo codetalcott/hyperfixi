@@ -2209,10 +2209,11 @@ export class PatternMatcher {
     // → SOV `/api/data को लाएं`, where the bare-event pattern (priority 80, Stage 1)
     // would otherwise anchor `/api/data` as the event before the command-stage
     // fetch pattern (Stage 2) runs. Rejecting it lets the fetch command pattern win.
-    // Parens are deliberately NOT rejected: the `when (<expr>) changes` reactive
-    // patterns capture a watched EXPRESSION in the `event` role whose first token is
-    // `(` (when-value-changes), and a fronted `myFunction()` mis-anchor is already
-    // outranked by the per-command patient-first pattern (priority 145 > 80).
+    // Parens are deliberately NOT rejected: a fronted `myFunction()` mis-anchor is
+    // already outranked by the per-command patient-first pattern (priority 145 >
+    // 80). (The reactive `when (<expr>) changes` head, which once relied on this
+    // to capture its expression in the `event` role, is parsed structurally now —
+    // block-parser `locateReactiveWhenHead` — and never reaches this guard.)
     if (/[/#@*]/.test(v)) return false;
     if (v.startsWith('"') || v.startsWith("'") || v.startsWith('`')) return false;
     // A body-bearing block keyword fronting the input (`live`/`socket`/… → SOV

@@ -87,9 +87,14 @@ describe('reactive when — English reference', () => {
 });
 
 describe('reactive when — what must NOT fold', () => {
+  it('`when click …` is rejected, as the engine rejects it', () => {
+    // No `changes` word and no reactive expression: upstream has no temporal
+    // `when <event>` ("Cannot watch local variable 'click'"), and the invented
+    // `event-en-when` handler head that used to claim this is gone.
+    expect(() => parse('when click toggle .active', 'en')).toThrow();
+  });
+
   it.each([
-    // No `changes` word: the temporal handler patterns keep it.
-    ['when click toggle .active', 'on'],
     // The `change` EVENT is not the `changes` word.
     ['on change put me into me', 'on'],
     // A string literal is never the word.
