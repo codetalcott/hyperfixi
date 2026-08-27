@@ -1886,12 +1886,17 @@ export const sendSchema: CommandSchema = {
         es: 'a',
         ko: '에게',
         zh: '到',
-        tr: '-e',
+        // No leading hyphen: that is i18n's INTERNAL attachment convention
+        // (`#count-ta` → `#countta`), not a surface form. The corpus the
+        // transformer writes is spaced — tr `gönder #widget e`, qu
+        // `#widget man ñitiy pi kachay` — so a hyphenated marker matched
+        // nothing and rendered a stray `-e` / `-man` token.
+        tr: 'e',
         pt: 'para',
         fr: 'à',
         de: 'an',
         id: 'ke',
-        qu: '-man',
+        qu: 'man',
         sw: 'kwa',
       },
     },
