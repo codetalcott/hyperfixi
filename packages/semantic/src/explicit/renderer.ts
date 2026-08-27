@@ -909,6 +909,20 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // neither surface is even well-formed in those languages, where the
       // marker is a free word rather than a clitic. Space it there.
       if (marker && markerPosition === 'between') {
+        // th's between-marker is a genitive "of" linker whose direction is
+        // the REVERSE of the ja/zh/ko/bn/hi clitic: `X ของ Y` means "X of Y"
+        // (Y owns X), so the property comes FIRST. Rendering it object-first
+        // emitted `#themeของ*background-color` — which the of-possessive
+        // matcher (correctly) read back INVERTED, object and property swapped
+        // (set-color-variable th, bind-explicit-property th). vi's `của` has
+        // the same direction, but its parser cannot yet read the
+        // property-first surface (`giá trị của #picker` returns no parse), so
+        // vi keeps the old order until that is fixed — flipping only the
+        // render would trade a wrong-order surface that parses for a
+        // right-order one that does not.
+        if (language === 'th') {
+          return `${property} ${marker} ${objectStr}`;
+        }
         const tokenizerSplitsParticles = profile.tokenization !== undefined;
         if (profile.usesSpaces && !tokenizerSplitsParticles) {
           return `${objectStr} ${marker} ${property}`;

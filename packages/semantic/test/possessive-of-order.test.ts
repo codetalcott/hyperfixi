@@ -53,15 +53,18 @@ import type { CommandSemanticNode } from '../src/types';
 const BETWEEN = ['bn', 'hi', 'ja', 'ko', 'tl', 'zh'] as const;
 
 /**
- * Still lose the property, for two causes the spacing fix does not reach:
- *   th — a character-boundary language, so it stays glued and an all-Thai
- *        `#pickerของค่า` is one token with nothing to split on.
+ * Still loses the property, for a cause the spacing fix does not reach:
  *   vi — spaced now, but this row's property `value` translates to the KEYWORD
  *        `giá trị`, and the property slot takes an identifier. vi's
  *        `textContent` row, whose property is untranslated, does round-trip.
+ *        (Flipping vi's render order alone was measured to trade a wrong-order
+ *        surface that parses for a right-order one that does not.)
+ * th left this list when the renderer learned its `ของ` is property-FIRST
+ * (`ค่า ของ #picker`) — the spaced, correctly-ordered surface round-trips, so
+ * th sits in PREPOSITIONAL now.
  * Pinned below rather than omitted.
  */
-const GLUED_RESIDUAL = ['th', 'vi'] as const;
+const GLUED_RESIDUAL = ['vi'] as const;
 
 /** Selector-owner possessive languages the fix targets. */
 const PREPOSITIONAL = [
@@ -78,6 +81,7 @@ const PREPOSITIONAL = [
   'qu',
   'ru',
   'sw',
+  'th',
   'tr',
   'uk',
 ] as const;
