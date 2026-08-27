@@ -115,15 +115,16 @@ describe('a selector dot survives into every language', () => {
     expect(path!.property).toBe('innerText');
   });
 
-  it('vi is the one language whose `get` still loses a dotted source', () => {
-    // Pinned as a KNOWN residual rather than skipped, so it is visible and so
-    // this test fails — asking to be deleted — when vi is fixed. Unrelated to
-    // the dot: vi's generated `get` pattern renders the word `giá trị` (value)
-    // into the surface, and the source then binds as a literal.
+  it('vi `get` keeps a dotted source (former KNOWN residual)', () => {
+    // Was pinned as failing: `get-vi-full`'s UNTYPED trailing role ate the
+    // `từ` marker at a 100/100 priority tie with the generated pattern, and
+    // the real property-path dropped. The full pattern now sits at 92, so
+    // the typed `lấy giá trị từ {source}` claims the surface.
     const rendered = translate('get #input.value', 'en', 'vi');
     expect(rendered).toContain('#input.value');
     const path = findPropertyPath(parse(rendered, 'vi'));
-    expect(path, 'vi `get` now keeps the property-path — delete this test').toBeNull();
+    expect(path, 'vi `get` lost the property-path again').not.toBeNull();
+    expect(path!.property).toBe('value');
   });
 });
 
@@ -193,5 +194,36 @@ describe('an optional chain keeps its own connector', () => {
   it.each(['es', 'de', 'zh'] as const)('%s does not inject a second connector', language => {
     const rendered = translate('log it?.dataset?.customValue', 'en', language);
     expect(rendered).not.toContain('.?.');
+  });
+});
+
+describe('get-value round trips (render residual: ja fetch homonym + uk put positions)', () => {
+  it('ja `#input.value を 取得` parses as GET, not fetch', () => {
+    // `取得` is ja's GET verb; it was also listed as a fetch-ja-sov verb
+    // alternative (priority 105), so the get surface mis-parsed as fetch —
+    // the zh `获得` bug, one language over. The alternative is removed; the
+    // real fetch word フェッチ is untouched.
+    const node = parse('#input.value を 取得', 'ja') as Record<string, any>;
+    expect(node.action).toBe('get');
+    const src = node.roles.get('source');
+    expect(src).toMatchObject({ type: 'property-path', property: 'value' });
+  });
+
+  it('ja fetch still parses with its own verb', () => {
+    const node = parse('"/api/data" を フェッチ', 'ja') as Record<string, any>;
+    expect(node.action).toBe('fetch');
+  });
+
+  it('uk positional put keeps its destination (before/after outrank full)', () => {
+    for (const [en, manner] of [
+      ['put "<p>New</p>" before me', 'before'],
+      ['put "<p>New</p>" after me', 'after'],
+    ] as const) {
+      const rendered = translate(en, 'en', 'uk');
+      const node = parse(rendered, 'uk') as Record<string, any>;
+      expect(node.action, `uk: ${rendered}`).toBe('put');
+      expect(node.roles.get('destination')).toMatchObject({ type: 'reference', value: 'me' });
+      expect(node.roles.get('manner')).toMatchObject({ value: manner });
+    }
   });
 });

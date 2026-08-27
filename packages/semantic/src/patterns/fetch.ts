@@ -465,7 +465,11 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       // ja emits `フェッチ json` with NO as-marker — the schema's `として`
       // markerOverride is not what the transformer produces here — so the slot
       // is bare and positional.
-      return [sovFetch('fetch-ja-sov', 'ja', 'フェッチ', 'を', ['取得'])];
+      // `取得` removed from the alternatives: it is ja's GET verb (profile get
+      // primary; the ja i18n dict's fetch word is フェッチ), so listing it here
+      // made `#input.value を 取得` mis-parse as fetch at priority 105 — the
+      // exact zh `获得` bug above (get-value ja, both render allowlists).
+      return [sovFetch('fetch-ja-sov', 'ja', 'フェッチ', 'を')];
     case 'ko':
       // ko emits `가져오기 json 로`. NOTE `로` is ALSO ko's style marker, so the
       // two groups are told apart by position (style precedes the verb, this

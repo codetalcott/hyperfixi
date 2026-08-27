@@ -845,7 +845,12 @@ function getPutPatternsUk(): LanguagePattern[] {
       id: 'put-uk-before',
       language: 'uk',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-uk-full (100) —
+      // the same layering ru/pl already use. At 95, put-uk-full's partial
+      // match (patient only, conf 0.56) out-prioritized this pattern's full
+      // match (conf 1.0) and the положення destination dropped (put-before/
+      // put-after uk on the render allowlists).
+      priority: 105,
       template: {
         format: 'покласти {patient} перед {destination}',
         tokens: [
@@ -865,7 +870,12 @@ function getPutPatternsUk(): LanguagePattern[] {
       id: 'put-uk-after',
       language: 'uk',
       command: 'put',
-      priority: 95,
+      // 105 (not 95) so the position clause out-ranks put-uk-full (100) —
+      // the same layering ru/pl already use. At 95, put-uk-full's partial
+      // match (patient only, conf 0.56) out-prioritized this pattern's full
+      // match (conf 1.0) and the положення destination dropped (put-before/
+      // put-after uk on the render allowlists).
+      priority: 105,
       template: {
         format: 'покласти {patient} після {destination}',
         tokens: [
