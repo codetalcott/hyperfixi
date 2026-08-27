@@ -866,11 +866,23 @@ export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): Pa
       };
     };
     const pushMarker = (marker: PatternToken): void => {
-      tokens.push(
-        profile.markersOptional || roleSpec.markerOptional?.[profile.code]
-          ? { type: 'group', optional: true, tokens: [marker] }
-          : marker
-      );
+      if (!profile.markersOptional && !roleSpec.markerOptional?.[profile.code]) {
+        tokens.push(marker);
+        return;
+      }
+      // A profile-wide `markersOptional` says the marker may be DROPPED
+      // colloquially, not that it is absent from canonical output — so the group
+      // still renders. A per-role `markerOptional` is the opposite: the render
+      // side genuinely omits that marker (`go to /page` vs `go back`), so it
+      // stays render-optional too.
+      tokens.push({
+        type: 'group',
+        optional: true,
+        ...(profile.markersOptional && !roleSpec.markerOptional?.[profile.code]
+          ? { renderRequired: true }
+          : {}),
+        tokens: [marker],
+      });
     };
     if (defaultMarker.position === 'before') {
       // Preposition: "on #button"

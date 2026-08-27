@@ -1,12 +1,11 @@
 {
   "description": "Allowlist for the ENGLISH->foreign render-fidelity gate (src/multilingual/render-fidelity.test.ts). Each entry is a corpus pattern id mapped to the languages whose rendered surface loses an action or a role from the English reference when parsed back. A NEW failing (pattern,language) pair outside this list, or an allowlisted pair that now passes, both fail the gate. Shrinks only: deleting an entry is how a renderer fix is completed. Regenerate with tools/regen-render-fidelity-baseline.ts.",
   "checked": 3588,
-  "clean": 3400,
-  "cleanPct": 94.76,
+  "clean": 3405,
+  "cleanPct": 94.9,
   "allowedFailures": {
     "accordion-exclusive": ["bn", "ja", "ko", "tr"],
     "accordion-toggle": ["bn", "ja", "ko", "tr", "vi", "zh"],
-    "add-class-to-other": ["tr"],
     "announce-screen-reader": ["ko"],
     "behavior-draggable": ["zh"],
     "behavior-removable": ["hi", "ja", "ko", "qu", "tr"],
@@ -44,7 +43,7 @@
     "remove-class-basic": ["bn"],
     "remove-class-from-all": ["bn"],
     "render-template-with-data": ["bn"],
-    "repeat-for-each": ["bn", "it", "th", "tr"],
+    "repeat-for-each": ["bn", "it", "th"],
     "repeat-forever": ["ar", "de", "fr"],
     "repeat-times": ["bn", "es", "id", "it", "ms", "pl", "pt", "ru", "sw", "th", "tl", "uk", "vi"],
     "repeat-until-event": ["it", "qu", "th"],
@@ -57,7 +56,7 @@
     "slide-toggle": ["bn", "hi", "ja", "ko", "tr", "vi", "zh"],
     "socket-basic": ["ko"],
     "socket-send": ["bn", "qu", "tr"],
-    "stagger-animation": ["bn", "it", "th", "tr"],
+    "stagger-animation": ["bn", "it", "th"],
     "swap-content": ["bn", "hi", "qu", "tl", "tr"],
     "swap-view-transition": ["bn", "tl"],
     "tabs-aria": ["bn"],
@@ -66,7 +65,7 @@
     "take-class-from-siblings": ["bn"],
     "toggle-aria-expanded": ["bn", "ja", "ko", "th", "tr", "vi", "zh"],
     "toggle-class-on-other": ["tr", "vi"],
-    "toggle-class-temporary": ["bn", "hi", "qu", "tr"],
+    "toggle-class-temporary": ["bn", "hi", "qu"],
     "toggle-visibility": ["tr", "vi"],
     "transition-color": ["bn", "tr"],
     "transition-opacity": ["bn", "tr"],
@@ -74,7 +73,6 @@
     "unless-condition": ["bn", "ja", "ko", "pl", "qu", "tr"],
     "when-multiple-changes": ["ar", "ja", "ko", "tr"],
     "when-value-changes": ["ko"],
-    "window-scroll": ["tr"],
     "worker-basic": ["qu"]
   }
 }
