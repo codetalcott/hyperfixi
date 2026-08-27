@@ -515,10 +515,14 @@ call) and `@lokascript/i18n`'s `GrammarTransformer`, parsed back, and the semant
 row is stored unless the i18n row beats it on a ratchet signal (`scoreNodes`
 R0/R1/R3, the English round-trip — the R2 proxy — or the real engine's verdict on
 its English). So the corpus is never worse than the old i18n-written one on any
-signal, and the rows i18n still wins (229 of 3703 at the flip) are the exact list
-the semantic renderer still loses — 114 rendered worse (`grammar-transform`) plus
-115 where semantic cannot parse the ENGLISH at all (`grammar-transform-no-reference`:
-the five `component-*` patterns × 23, a parser-coverage gap). That list is ratcheted **shrink-only** by
+signal, and the rows i18n still wins are the exact list the semantic renderer
+still loses (229 of 3703 at the flip; **161 of 3657** after the first burn-down,
+which reclassified the `component-*` family — HTML-markup rows, not a parser gap
+— and gave the writer a byte-preserving path that translates the `_="…"` bodies
+inside markup). A body is translated only when its own English re-render
+preserves its content, so a truncating parse (`set ^user to attrs.data as JSON`,
+whose `as JSON` lands in no role and therefore scores "faithful" against its own
+truncation) stays English rather than shipping the truncation to 23 languages. That list is ratcheted **shrink-only** by
 `packages/testing-framework/src/multilingual/i18n-kept-rows.test.ts` against
 `baselines/i18n-kept-rows.json` (part of `test:canonical`): a new kept row fails,
 and a baselined row semantic now wins must be deleted

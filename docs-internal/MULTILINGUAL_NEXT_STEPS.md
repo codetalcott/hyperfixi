@@ -60,6 +60,53 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27e — first ratchet burn-down: 229 → 161 kept rows, and the
+> `component-*` family was misdiagnosed (it is markup, not a parser gap).**
+>
+> The 2026-08-27d entry called the 115 `component-*` rows "a parser-coverage
+> gap — semantic cannot parse the English". Measured: the English is
+> `<script type="text/hyperscript-template" component="…" _="…">…</script>` —
+> **HTML markup**, which no renderer was ever going to parse as hyperscript.
+> The corpus already had a category for exactly this (five `hx-live`/`sse-`/`ws-`
+> rows carry `translatable: false`), and i18n's "translation" of the component
+> rows was the English markup with its indentation changed. Three findings:
+>
+> - **Two rows have no hyperscript at all** (`component-hello-world`,
+>   `component-with-slots`) → `translatable: false` with a reason, matching the
+>   five existing markup rows. 46 rows leave the ratchet's denominator honestly.
+> - **Three rows carry `_="…"` bodies nobody translated.** The writer now has a
+>   byte-preserving markup path (`src/sync/markup-attributes.ts`): find each
+>   `_=` value, translate the BODY through the same renderer choice, splice it
+>   back by offset so indentation, quote style, inner text and every other
+>   attribute are untouched (a jsdom round-trip would reserialize all of that).
+>   `component-click-counter` is now semantic-rendered in **22 of 23** languages
+>   — the first rows this corpus has ever had with translated component
+>   hyperscript.
+> - **The guard that keeps a truncating parse out of the corpus.**
+>   `set ^user to attrs.data as JSON` parses, and `as JSON` lands in NO role — so
+>   it scores "faithful" against its own truncation in all 23 languages (the
+>   fifth vacuous-reference case, after #970 `unless` and #971 `when … changes`;
+>   now filed in `PARSER_NEXT_STEPS.md`). A body is translated only if its own
+>   English re-render preserves its content, so `component-with-attrs` stays
+>   English in 23 languages instead of shipping the truncation.
+>
+> **Kept rows 229 → 161** (denominator 3703 → 3657). Two of my own bugs were
+> caught by the ratchet's own numbers rather than by review, and both are now
+> regression-tested: the attribute regex excluded BOTH quote characters from a
+> value, so every attribute containing a hyperscript string literal was silently
+> skipped (`component-with-conditional`, 23 languages); and a markup row with one
+> carried body and one verbatim body was labelled `semantic-render`, because
+> `translateBody` advances the per-body counter — a markup row's verdict must
+> come from "every body carried", never from the counter.
+>
+> **What still keeps `component-*` rows on i18n** (46 of the 161): 23
+> `component-with-attrs` (the `as JSON` truncation above — parser track) and 23
+> `component-with-conditional`, where semantic localizes the boolean INSIDE the
+> object literal (`{name: 'Demo', admin: verdadero}`) and that does not
+> round-trip back to English, so i18n's version legitimately wins the chooser.
+> The latter is a real render-track item: a localized literal inside an object
+> literal needs to round-trip, or must not be localized there.
+
 > **Update 2026-08-27d — SHIPPED: the corpus writer defaults to `best`, and
 > the rows it leaves to i18n are a shrink-only ratchet (#973, same PR as the
 > decision below).**
