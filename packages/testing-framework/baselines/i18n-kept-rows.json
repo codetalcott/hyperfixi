@@ -1,10 +1,9 @@
 {
   "description": "Shrink-only baseline for the i18n-kept-rows ratchet (src/multilingual/i18n-kept-rows.test.ts). Each entry is a corpus pattern id mapped to the languages whose stored row the `best` corpus writer still takes from @lokascript/i18n's GrammarTransformer, because the semantic render lost to it on some ratchet signal (scoreNodes R0/R1/R3, the English round-trip, or engine validity). A NEW kept pair outside this list, or a listed pair that semantic now wins, both fail the gate. Deleting the last entry is the i18n retirement trigger. Regenerate with tools/regen-i18n-kept-rows-baseline.ts.",
   "checked": 3657,
-  "kept": 102,
-  "keptPct": 2.79,
+  "kept": 90,
+  "keptPct": 2.46,
   "allowedKept": {
-    "accordion-toggle": ["bn"],
     "announce-screen-reader": ["ko"],
     "behavior-draggable": ["zh"],
     "behavior-removable": [
@@ -49,8 +48,6 @@
       "zh"
     ],
     "bind-explicit-property": ["vi"],
-    "caret-var-increment": ["de"],
-    "component-click-counter": ["de"],
     "component-with-attrs": [
       "ar",
       "bn",
@@ -76,30 +73,21 @@
       "vi",
       "zh"
     ],
-    "decrement-counter": ["de"],
     "eventsource-basic": ["ko"],
     "go-back": ["qu"],
-    "halt-propagation": ["bn"],
     "if-empty": ["bn"],
-    "if-matches": ["bn"],
     "increment-by-amount": ["pl"],
-    "increment-counter": ["de"],
     "input-validation": ["bn"],
     "js-inline": ["ar", "tl", "zh"],
-    "multiple-events": ["qu"],
     "on-custom-event-receive": ["ko"],
     "pick-text-range": ["pl"],
     "previous-element": ["bn"],
-    "remove-element": ["qu"],
-    "repeat-forever": ["bn"],
     "repeat-until-event": ["qu"],
     "set-color-variable": ["bn", "hi", "ja", "ko", "th", "tl", "vi", "zh"],
-    "settle-animations": ["qu"],
     "socket-basic": ["ko"],
     "swap-content": ["tl"],
     "swap-view-transition": ["tl"],
     "tabs-aria": ["bn"],
-    "toggle-class-basic": ["qu"],
     "unless-condition": ["tl"],
     "when-value-changes": ["qu"],
     "worker-basic": ["qu"]

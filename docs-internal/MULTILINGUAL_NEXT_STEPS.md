@@ -60,6 +60,69 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27j — fifth burn-down, and cluster A was one line: the
+> hand-crafted patterns never inherited the schema's role DEFAULTS. 102 → 90.**
+>
+> The eleven canonical rows the 27g triage split across two buckets
+> ("implicit-role only" ×8 and the de "value-drop" ×3) were **one mechanism**,
+> and the hypothesis in the handoff was right: the defaults live on the SCHEMA
+> and only the GENERATED patterns were carrying them. `generatePattern` runs
+> every optional role that declares a `default` through
+> `buildExtractionRulesWithDefaults`; the hand-crafted patterns in
+> `src/patterns/*.ts` hand-write their `extraction` maps and had never been
+> given those defaults. So **which pattern won a match decided whether the
+> implicit role existed**:
+>
+> ```
+> .active কে টগল        → toggle-bn-generated → destination: me (implicit)
+> .active কে টগল করুন   → toggle-bn-full      → destination MISSING
+> ```
+>
+> Both render back to byte-identical English, which is why this survived every
+> gate: the round-trip cannot see it, and it is only an R1 role-SET difference
+> against the English reference. Scope, measured over all 6,193 registered
+> patterns: **56 slots across six languages** — bn/de/hi/qu/th/zh × toggle,
+> add, remove, increment, decrement. (Plus `on.source`, which 2,803 patterns
+> lack — including four of English's seven — and which is therefore left alone
+> behind a named exclusion. Inheriting it would materialize an implicit
+> `source: me` corpus-wide with nothing asking for it, and the asymmetry is
+> symmetric across languages, so it costs no fidelity signal.)
+>
+> Fix: `buildPatternsForLanguage` applies the generated path's rule to every
+> pattern it hands out. It never overrides — a rule that already declares a
+> `default` or a static `value` keeps it, and `applyExtractionRules` consults
+> `default` only when nothing was captured, so a role the pattern actually
+> captures is untouched.
+>
+> **Kept rows 102 → 90 — 12 cleared, ZERO newly kept.** The eleven canonical
+> targets (accordion-toggle bn, halt-propagation bn, if-matches bn,
+> repeat-forever bn, increment-counter de, decrement-counter de,
+> caret-var-increment de, multiple-events qu, remove-element qu,
+> settle-animations qu, toggle-class-basic qu) plus component-click-counter de.
+> 11-signal gate green, `test:canonical` 5/5, semantic 9,209 + 15 new, core
+> 7,972, adapter 366, vocab + R2 lock green, whole-monorepo `test:check` green.
+>
+> **Correction to 27g's classification: the canonical queue is 25 rows, not 16.**
+> 27g shelved `set-color-variable` (8 rows) under "lokascript extensions", but
+> `engine-verification.json` has had it at `both` all along; `when-value-changes`
+> (qu) became `both` at #972. So clearing 11 of 27 leaves 16 from the old list
+> plus those 9. The triage that produced the split is now committed as
+> `testing-framework/tools/triage-i18n-kept-rows.ts` (`--canonical-only
+> --summary` reproduces the table), so the next split is re-derived from the DB
+> rather than transcribed:
+>
+> | first failing signal | canonical rows |
+> | --- | --- |
+> | round-trip | if-empty(bn), increment-by-amount(pl), input-validation(bn), js-inline(ar/tl/zh), set-color-variable(bn/ja/ko/tl/vi/zh), when-value-changes(qu) |
+> | role-drop | bind-explicit-property(vi), eventsource-basic(ko), go-back(qu), previous-element(bn), set-color-variable(hi/th), socket-basic(ko), swap-content(tl) |
+> | action-drop | pick-text-range(pl), repeat-until-event(qu), worker-basic(qu) |
+> | no-reparse | on-custom-event-receive(ko) |
+>
+> `set-color-variable` is a possessive-order bug and is the largest canonical
+> family left: `set the *background-color of #theme to "…"` renders to a surface
+> whose re-parse swaps the possessor and the possessed
+> (`set *background-color's #theme to …`) in eight languages, at every score 1.0.
+
 > **Update 2026-08-27i — fourth burn-down, and the he cluster was never a he
 > bug: a fused handler body lost its THEN-CHAIN in 15 languages. 134 → 102.**
 >
