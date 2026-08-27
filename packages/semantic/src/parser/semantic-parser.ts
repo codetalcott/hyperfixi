@@ -402,6 +402,28 @@ function normalizeCommandRoles(node: SemanticNode, boundIdentifiers?: Set<string
       }
     }
 
+    // transition: a goal-less surface (`transition *max-height over 300ms` →
+    // hi `*max-height को 300ms संक्रमण`) reaches the generated-simple pattern,
+    // whose REQUIRED {goal} slot swallows the time literal — goal:literal
+    // dataType=duration with the duration role empty. No legitimate
+    // transition has a duration-typed goal while its own duration slot is
+    // vacant (a real goal is a CSS value; the schema's duration slot is where
+    // a time literal belongs), so shift goal→duration
+    // (tell/fetch relabel precedent above; slide-toggle hi, both allowlists).
+    if (node.action === 'transition') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const goal = roles.get('goal') as { type?: string; dataType?: string } | undefined;
+      if (
+        goal &&
+        goal.type === 'literal' &&
+        goal.dataType === 'duration' &&
+        !roles.has('duration')
+      ) {
+        roles.delete('goal');
+        roles.set('duration', goal as SemanticValue);
+      }
+    }
+
     // fetch: the Slavic with/from preposition collision (pl `z`, ru `с`, uk
     // `з` — the profile's source AND style markers share a surface). The
     // fused generic VSO event pattern (fetch-event-{pl,ru,uk}-vso) binds the
