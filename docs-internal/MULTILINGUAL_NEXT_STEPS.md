@@ -60,6 +60,73 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27g — the kept-row queue, prioritized by CANONICAL syntax; and
+> the qu event-head swap measured as ZERO-SUM (attempted, reverted).**
+>
+> Owner priority (2026-08-27): **fix what is standard hyperscript first.** Our own
+> showcase behaviors (`behavior-removable`, `-sortable`, `-resizable`) are not
+> canonical examples, so their row count should not drive the queue. The corpus
+> already carries the discriminator — `code_examples.engine`, verified by running
+> the real hyperscript.org engine — so the 138 kept rows split:
+>
+> | class | rows | patterns |
+> | --- | --- | --- |
+> | `engine: both`, NOT our behaviors — **canonical, the priority** | **43** | 36 |
+> | `engine: both`, our showcase behaviors (removable 22, sortable 14, draggable 1) | 37 | 3 |
+> | `engine: lokascript` (our extensions: components 24, resizable 15, set-color-variable 8, tabs-aria 4, …) | 57 | 10 |
+>
+> The 43 canonical rows, triaged by first failing signal (`tools/` probe in the
+> render-flip session):
+>
+> - **21 round-trip only** — scores clean (actions, roles, values all 1.0), but
+>   the English re-render differs: he ×5 (`fetch /api/x` comes back
+>   `fetch "/api/x"`, plus a dropped `then`), ar/tl `put-after`/`put-before` ×4
+>   (variant selection), `js-inline` ×3, `template-literal-list-build` ×3
+>   (pl/ru/uk), bn `if-empty` + `input-validation`, tl form ×2, pl
+>   `increment-by-amount`, bn `repeat-while`.
+> - **8 implicit-role only** — bn ×4 (`accordion-toggle`, `halt-propagation`,
+>   `if-matches`, `repeat-forever`) and qu ×4 (`toggle-class-basic`,
+>   `remove-element`, `multiple-events`, `settle-animations`). The rendered
+>   surface round-trips to identical English; only the schema's implicit `me`
+>   is missing from the re-parse, and the non-strict R1 signature counts it.
+> - **6 value-drop** (de ×3 = the implicit `increment` quantity, bn, hi, tl) ·
+>   **4 role-drop** (ko ×2, vi, qu) · **3 action-drop** (pl `pick-text-range`,
+>   qu `repeat-until-event`, qu `worker-basic`) · **1 no-reparse**
+>   (ko `on-custom-event-receive`).
+>
+> **Attempted and REVERTED — the qu head swap.** The qu half of the implicit-role
+> class has one cause: the renderer picks `event-qu-maykama` (priority 115), a
+> pattern whose own comment says it exists to PARSE what the i18n transformer
+> emits (`maykama` = the dictionary's `when`). Its body re-parses WITHOUT the
+> toggle's implicit `me`; the canonical `{event} pi {body}`
+> (`event-qu-standard`, 100) injects it. A `render: 'canonical' | 'parse-only'`
+> flag on `LanguagePattern` (the mechanism the architecture record asked for)
+> plus marking the tolerance parse-only makes qu render `click pi .active ta
+> t'ikray` with the implicit role intact.
+>
+> **It is exactly zero-sum, measured twice.** Falling through to `kaqtin` (105)
+> and to `pi` (100) give the SAME result: the four rows above clear, and four
+> other qu rows take their place — `announce-screen-reader`,
+> `behavior-resizable`, `repeat-while`, `template-literal-list-build` — one of
+> which (`announce-screen-reader`) is a tolerance-0 **R1 role-set regression**
+> in the 11-signal gate, and the head change also falsifies the characterization
+> in `test/feature-block-handler-heads.test.ts` (which documents, for four
+> languages, that the renderer emits the temporal conjunction rather than
+> `keywords.on` — it exists to prove the feature-block body-finder copes with
+> whatever head is chosen, so it would need re-characterizing, not deleting).
+>
+> So the qu head is not the unit of work: whichever head wins, some constructs
+> need the other. The next attempt should first make the four
+> `maykama`-dependent rows work under the canonical head, and only then swap —
+> at which point it is +4 canonical rows with no regression. The parse-only flag
+> is not committed (it would be dead code until then); re-adding it is ~15 lines
+> in `types.ts` + the `candidates` filter in `explicit/renderer.ts`.
+>
+> **Cheapest canonical wins, in order:** the ar/tl `put-before`/`put-after`
+> variant-selection pair (4 rows, one known family), the he round-trip cluster
+> (5 rows, one language, likely one URL/`then` cause), and the de implicit
+> `increment` quantity (3 rows). None needs a native speaker.
+
 > **Update 2026-08-27f — second burn-down: 161 → 138 kept rows. A brace group's
 > interior is DATA, and localizing it corrupted both halves.**
 >
