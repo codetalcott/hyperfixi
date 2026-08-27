@@ -18,6 +18,7 @@ import type {
   SemanticValue,
   SemanticRenderer as ISemanticRenderer,
   LanguagePattern,
+  PatternToken,
   ReferenceValue,
   PropertyPathValue,
 } from '../types';
@@ -48,6 +49,14 @@ import { localizeEventName } from '../patterns/event-handler';
 import { getOfPossessiveMarker } from '../parser/utils/expression-lexicon';
 import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
+
+/**
+ * Score a role slot nested inside an OPTIONAL group. Lower than the top-level
+ * bonus on purpose: it must break a tie between two patterns that are otherwise
+ * equal (the handcrafted `toggle-{L}-full` versus the generated pattern that
+ * also carries `[{duration}]`) without ever outweighing a top-level difference.
+ */
+const NESTED_ROLE_BONUS = 5;
 
 // =============================================================================
 // Semantic Renderer Implementation
@@ -362,19 +371,40 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const scored = candidates.map(pattern => {
       let score = pattern.priority;
 
-      // Check each role token in the pattern
-      for (const token of pattern.template.tokens) {
-        if (token.type === 'role') {
-          if (node.roles.has(token.role)) {
-            // Bonus for patterns that use roles we have
-            score += 10;
-          } else if (!token.optional) {
-            // Heavy penalty for patterns that require roles we DON'T have
-            // This prevents selecting "source" patterns when there's no source
-            score -= 50;
+      // Check each role token in the pattern, INCLUDING the ones nested inside
+      // optional groups. Scoring only the top level made a slot the pattern
+      // really has invisible: every `[for {duration}]` / `[with {style}]` group
+      // lives one level down, so a handcrafted pattern without the slot tied
+      // with the generated one that has it and won on order — `toggle .loading
+      // for 2s` rendered as `alternar .loading` in es/it/pl/ru/uk/vi/zh, the
+      // duration dropped in silence.
+      //
+      // A role inside a group is scored as PRESENT-only: its absence is what
+      // "optional" means, and the group's own role tokens are not consistently
+      // flagged `optional` (a handcrafted `[en {destination}]` writes the role
+      // bare), so reading the flag there would apply the missing-role penalty to
+      // a slot that is optional by construction.
+      const scoreTokens = (tokens: readonly PatternToken[], inGroup: boolean): void => {
+        for (const token of tokens) {
+          if (token.type === 'group') {
+            scoreTokens(token.tokens, true);
+          } else if (token.type === 'role') {
+            if (node.roles.has(token.role)) {
+              // Bonus for patterns that use roles we have. A nested slot scores
+              // LESS than a top-level one, so carrying an extra optional slot
+              // breaks a tie without ever outweighing a top-level difference —
+              // measured: at equal weight it also re-ordered the pl behavior
+              // handler and three qu positional rows.
+              score += inGroup ? NESTED_ROLE_BONUS : 10;
+            } else if (!inGroup && !token.optional) {
+              // Heavy penalty for patterns that require roles we DON'T have
+              // This prevents selecting "source" patterns when there's no source
+              score -= 50;
+            }
           }
         }
-      }
+      };
+      scoreTokens(pattern.template.tokens, false);
 
       // Value-pinned variants. A positional pattern (`put X before Y`, `at end
       // of`, `after`) carries its position as a baked-in literal plus an
