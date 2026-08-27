@@ -1,8 +1,8 @@
 {
   "description": "Allowlist for the ENGLISH->foreign render-fidelity gate (src/multilingual/render-fidelity.test.ts). Each entry is a corpus pattern id mapped to the languages whose rendered surface loses an action or a role from the English reference when parsed back. A NEW failing (pattern,language) pair outside this list, or an allowlisted pair that now passes, both fail the gate. Shrinks only: deleting an entry is how a renderer fix is completed. Regenerate with tools/regen-render-fidelity-baseline.ts.",
   "checked": 3588,
-  "clean": 3521,
-  "cleanPct": 98.13,
+  "clean": 3529,
+  "cleanPct": 98.36,
   "allowedFailures": {
     "announce-screen-reader": ["ko"],
     "behavior-draggable": ["zh"],
@@ -11,7 +11,6 @@
     "behavior-sortable": ["zh"],
     "bind-explicit-property": ["th", "vi"],
     "eventsource-basic": ["ko"],
-    "fade-out-remove": ["bn", "tr"],
     "fetch-loading-state": ["th"],
     "get-value": ["ja"],
     "go-back": ["qu"],
@@ -34,9 +33,6 @@
     "tabs-aria": ["bn"],
     "toggle-aria-expanded": ["th"],
     "toggle-class-temporary": ["hi", "qu"],
-    "transition-color": ["bn", "tr"],
-    "transition-opacity": ["bn", "tr"],
-    "transition-transform": ["bn", "tr"],
     "unless-condition": ["bn", "ja", "ko", "pl", "qu", "tr"],
     "when-multiple-changes": ["ar", "ja", "ko", "tr"],
     "when-value-changes": ["ko"],
