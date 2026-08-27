@@ -43,16 +43,25 @@ import { describe, it, expect } from 'vitest';
 import { parse, translate } from '../src/index';
 import type { CommandSemanticNode } from '../src/types';
 
-/** Languages whose possessive is object-first by construction — untouched here. */
-const BETWEEN = ['bn', 'hi', 'ja', 'ko', 'zh'] as const;
+/**
+ * Languages whose possessive is object-first by construction — untouched by the
+ * of-order fix this file is about. `tl` joined them once the marker stopped
+ * being glued to the owner: it declares no `tokenization` block, so
+ * `#pickerng` came back as one selector token, and spacing the free-word marker
+ * (plus accepting an identifier-kind marker in the matcher) made it round-trip.
+ */
+const BETWEEN = ['bn', 'hi', 'ja', 'ko', 'tl', 'zh'] as const;
 
 /**
- * Glue their of-marker directly onto the owner — tl `#pickerng halaga`,
- * vi `#pickercủa giá trị`, th `#pickerของค่า` — and do not round-trip. Failing
- * BEFORE this change too (the corpus measured zero regressions), so they are
- * pre-existing residuals, not fallout. Pinned below rather than omitted.
+ * Still lose the property, for two causes the spacing fix does not reach:
+ *   th — a character-boundary language, so it stays glued and an all-Thai
+ *        `#pickerของค่า` is one token with nothing to split on.
+ *   vi — spaced now, but this row's property `value` translates to the KEYWORD
+ *        `giá trị`, and the property slot takes an identifier. vi's
+ *        `textContent` row, whose property is untranslated, does round-trip.
+ * Pinned below rather than omitted.
  */
-const GLUED_RESIDUAL = ['th', 'tl', 'vi'] as const;
+const GLUED_RESIDUAL = ['th', 'vi'] as const;
 
 /** Selector-owner possessive languages the fix targets. */
 const PREPOSITIONAL = [
@@ -167,7 +176,7 @@ describe('English is unchanged', () => {
   });
 });
 
-describe('KNOWN RESIDUAL — glued of-markers, failing-when-fixed', () => {
+describe('KNOWN RESIDUAL — failing-when-fixed', () => {
   it.each(GLUED_RESIDUAL)('%s still loses the property', language => {
     const rendered = translate(SOURCE, 'en', language);
     const role = sourceRole(rendered, language);
