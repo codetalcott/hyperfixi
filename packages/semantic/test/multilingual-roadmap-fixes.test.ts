@@ -14284,3 +14284,22 @@ describe('a fronted personal reference is never an event head (bn/hi destination
     expect(node.kind).toBe('event-handler');
   });
 });
+
+describe('trigger renders its event ACCUSATIVELY in bn/hi (render residual: trigger-event rows)', () => {
+  // The renderer emitted the profile-wide event marker (bn তে / hi पर), which
+  // doubles as the on-HANDLER head marker — `init তে ট্রিগার` read back as
+  // `on init` and the trigger's event dropped. triggerSchema's event slot now
+  // carries markerOverride { bn: 'কে', hi: 'को' }, the accusative form the
+  // corpus has always used (its parse-side markerVariants twin was already
+  // there); the profile-wide marker is untouched for the `on` command.
+  it.each([
+    ['bn', 'কে'],
+    ['hi', 'को'],
+  ] as const)('[%s] bare `trigger init` round-trips', (lang, marker) => {
+    const out = render(parse('trigger init', 'en'), lang);
+    expect(out).toContain(marker);
+    const back = parse(out, lang) as Record<string, any>;
+    expect(back.action).toBe('trigger');
+    expect(back.roles.get('event')).toMatchObject({ value: 'init' });
+  });
+});

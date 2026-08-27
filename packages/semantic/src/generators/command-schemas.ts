@@ -1324,6 +1324,14 @@ export const triggerSchema: CommandSchema = {
       // or failed outright (qu/bn). ja/ko were immune only because their event
       // marker IS the object particle (を / 을·를). #588 markerVariants machinery.
       markerVariants: { hi: ['को'], qu: ['ta'], bn: ['কে'] },
+      // …and the RENDER side of the same fact: without an override the
+      // renderer emitted the profile-wide event marker (bn তে / hi पर), which
+      // doubles as the on-HANDLER head marker — `init তে ট্রিগার` read back as
+      // `on init` and the trigger's event dropped (trigger-event bn/hi, bare
+      // render allowlist). Rendering the accusative form matches the corpus
+      // and cannot re-anchor as a handler. Scoped to this slot: the
+      // profile-wide marker stays for the `on` command's own patterns.
+      markerOverride: { bn: 'কে', hi: 'को' },
     },
     {
       role: 'destination',
