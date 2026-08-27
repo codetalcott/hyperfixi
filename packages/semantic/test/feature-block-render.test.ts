@@ -142,12 +142,11 @@ describe('English is unchanged', () => {
 });
 
 describe('KNOWN RESIDUALS — render is correct, re-parse is not', () => {
-  // Both of these RENDER correctly — qu emits
-  // `llamk'aq Calculator / def add(a, b) / + ta kutichiy / tukukuy / tukukuy`
-  // and pl emits `na-żywo / umieść … do ja / koniec`. It is the target parser
-  // that drops a piece on the way back, so they are parse-side residuals, not
-  // gaps in this fix. They match the corpus exactly: 22 of 23 languages cleared,
-  // not 23.
+  // qu RENDERS correctly — `llamk'aq Calculator / def add(a, b) / + ta kutichiy
+  // / tukukuy / tukukuy` — and it is the target parser that drops a piece on
+  // the way back, so it is a parse-side residual, not a gap in this fix. (pl's
+  // `na-żywo / umieść … do ja / koniec` was the other member until the
+  // hyphenated-keyword walk landed with the reactive-when arc — promoted below.)
   it('qu renders the worker body but loses `return` on re-parse', () => {
     const rendered = translate(WORKER, 'en', 'qu');
     expect(rendered, 'qu no longer renders the body — this pin is stale').toContain('kutichiy');
@@ -157,15 +156,19 @@ describe('KNOWN RESIDUALS — render is correct, re-parse is not', () => {
     ).toBe(false);
   });
 
-  it('pl renders the live body but loses `live` on re-parse', () => {
+  it('pl round-trips `live` — PROMOTED from a failing-when-fixed pin', () => {
+    // The pin recorded the defect precisely: pl renders `na-żywo`, the profile
+    // primary (also the surface behind the localized `hx-na-żywo` attribute, so
+    // it cannot be swapped for the dictionary's `żywy`), and the word walk split
+    // it at the hyphen into `na`(→destination) + `-` + `żywo` — a handler head.
+    // The base tokenizer's multi-word walk now takes hyphen-joined profile
+    // keywords whole (framework base-tokenizer `isHyphenatedWord`), so the
+    // render reads back as `live`. Whole-corpus diff: zero rows moved.
     const rendered = translate(LIVE, 'en', 'pl');
-    expect(rendered, 'pl no longer renders the body — this pin is stale').toContain('$count');
-    expect(
-      actions(parse(rendered, 'pl')).has('live'),
-      `pl now round-trips \`live\` — remove this pin:\n${rendered}`
-    ).toBe(false);
+    expect(rendered).toContain('na-żywo');
+    expect(actions(parse(rendered, 'pl')).has('live')).toBe(true);
+    expect(actions(parse(rendered, 'pl')).has('on')).toBe(false);
   });
-
 });
 
 describe("a socket's event-handler CHILD round-trips too", () => {
