@@ -500,6 +500,17 @@ export interface GroupPatternToken {
   readonly type: 'group';
   readonly tokens: PatternToken[];
   readonly optional?: boolean;
+  /**
+   * The group is optional for PARSING but belongs in canonical output.
+   *
+   * Set on the marker-only groups `profile.markersOptional` produces (tr, whose
+   * case suffixes may be dropped colloquially, so the parse side must accept
+   * both forms). Without it the renderer drops them with every other role-less
+   * optional group, and tr rendered `add .selected to #item` as
+   * `#item .selected ekle` — no case markers at all, where the corpus has
+   * `#item e .selected i ekle`.
+   */
+  readonly renderRequired?: boolean;
 }
 
 /**

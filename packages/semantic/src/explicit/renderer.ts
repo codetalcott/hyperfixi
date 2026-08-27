@@ -660,10 +660,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           }
         }
 
-        // Don't emit an optional group that has only literals (markers) but no
-        // actual role values — e.g. don't emit a dangling "with" when the
-        // style role is absent from "hide #output".
-        if (token.optional && !hasRoleValue) return null;
+        // Don't emit an optional group that DECLARES a role slot and did not
+        // fill it — e.g. don't emit a dangling "with" when the style role is
+        // absent from "hide #output".
+        //
+        // …unless the group is `renderRequired`: a MARKER wrapped on its own by
+        // `profile.markersOptional` (tr, where the case suffix may be dropped
+        // colloquially, so the parse side has to accept both forms). Dropping
+        // those cost tr every role marker in every rendered command —
+        // `add .selected to #item` came out `#item .selected ekle` where the
+        // corpus has `#item e .selected i ekle`, and the marker-less surface
+        // re-parses as a one-role `add` with the destination defaulted to `me`.
+        if (token.optional && !hasRoleValue && !token.renderRequired) return null;
 
         return groupParts.length > 0 ? groupParts.join(' ') : null;
       }
