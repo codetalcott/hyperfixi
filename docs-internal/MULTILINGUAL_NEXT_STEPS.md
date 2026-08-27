@@ -60,6 +60,51 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27f — second burn-down: 161 → 138 kept rows. A brace group's
+> interior is DATA, and localizing it corrupted both halves.**
+>
+> `component-with-conditional` stayed on i18n because semantic rendered
+> `{name: 'Demo', admin: true}` as `{name: 'Demo', admin: verdadero}` and the
+> parse side never reverses it — the interior is captured as one opaque literal.
+> Chasing that found the behaviour is broken in BOTH directions, and much wider
+> than booleans:
+>
+> - **Nothing inside a brace group round-trips, in any language.** Measured:
+>   `set $x to {body: my value}` → es `establecer $x a { cuerpo : mi valor }` →
+>   back to English as `{ cuerpo : mi valor }`. Not just the value — **the KEY
+>   was translated too**.
+> - **The key guard was silently not applying on the path that matters.** It
+>   protects a word IMMEDIATELY followed by `:` (`value-lexicon-keys.test.ts`),
+>   but the renderer re-spaces a literal to `body :` before the localizer runs,
+>   so the guard stopped matching. It still passed at the unit level, where the
+>   raw text has no space — a gate that tested the mechanism but not the path.
+> - **And a localized data literal would break at RUNTIME**, not just in the
+>   round trip: an object literal is evaluated as data, so `{admin: verdadero}`
+>   evaluates an undefined identifier.
+>
+> Fix: `localizeValueInterior` masks balanced brace groups (a scanner, not a
+> regex — they nest, and a brace group can contain an already-masked string, so
+> the restore pass repeats). English inside the braces is cosmetically poorer
+> and correct: it round-trips exactly and cannot corrupt a runtime contract key.
+> **Three assertions in `value-lexicon-keys.test.ts` asserted the old behaviour
+> and were superseded, with the measurement written into the file** — the
+> value-side rule itself is unchanged and is now pinned OUTSIDE braces; the
+> brace rule has its own gate (`value-lexicon-braces.test.ts`, 6 languages ×
+> object literal / nested group / dynamic class selector / string-inside-brace,
+> plus the end-to-end round trip).
+>
+> **Kept rows 161 → 138**; markup rows fully carried by semantic 22 → 45.
+> 11-signal gate green, `test:canonical` green, semantic suite 9,123 green.
+>
+> **Filed, not fixed — the structured object-literal renderer.** The right end
+> state is: localize option VALUES (they are hyperscript expressions the
+> localized parser will read), preserve KEYS (runtime contracts), and reverse
+> both on parse. That needs the object literal to be parsed structurally rather
+> than captured as one opaque literal, which is a parser-track change. Until
+> then the interior stays English. The cosmetic cost is real and named: a
+> Spanish `fetch … with {method:"POST", body:(closest <form/> as FormData)}`
+> shows English `closest` inside the braces.
+
 > **Update 2026-08-27e — first ratchet burn-down: 229 → 161 kept rows, and the
 > `component-*` family was misdiagnosed (it is markup, not a parser gap).**
 >
