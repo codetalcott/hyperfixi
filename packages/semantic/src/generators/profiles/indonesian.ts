@@ -122,6 +122,16 @@ export const indonesianProfile: LanguageProfile = {
     if: { primary: 'jika', alternatives: ['kalau', 'bila'], normalized: 'if' },
     unless: { primary: 'kecuali', normalized: 'unless' },
     when: { primary: 'ketika', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    // Declared BEFORE `change` (below) on purpose: the dictionary's changes-word
+    // is the same surface as the `change` EVENT primary, and the tokenizer's
+    // keyword map is last-writer-wins per surface — so `berubah` keeps reading
+    // as the event (`ketika berubah …` = on change) while the reactive head
+    // still matches it by SURFACE (block-parser locateReactiveWhenHead).
+    changes: { primary: 'berubah', normalized: 'changes' },
     where: { primary: 'di_mana', normalized: 'where' },
     else: { primary: 'selainnya', alternatives: ['lainnya'], normalized: 'else' }, // lainnya = the i18n dict's emitted else word (corpus-canonical)
     repeat: { primary: 'ulangi', normalized: 'repeat' },

@@ -5558,8 +5558,7 @@ describe('Possessive-dot passthrough heads assemble property-paths (R2 id/ms/vi)
       expect(cmd.action).toBe('set');
       const roles = rolesOf(cmd);
       const dest = roles.get('destination') as
-        | { type?: string; object?: { value?: string }; property?: string }
-        | undefined;
+        { type?: string; object?: { value?: string }; property?: string } | undefined;
       expect(dest?.type).toBe('property-path');
       expect(dest?.object?.value).toBe('me');
       expect(dest?.property).toBe('textContent');
@@ -6018,8 +6017,7 @@ describe('body reference dict↔profile alignment (R2 wave 6)', () => {
       'id'
     ) as { body?: Array<Record<string, unknown>> };
     const conditional = node.body?.find(n => n.kind === 'conditional') as
-      | { thenBranch?: unknown[]; elseBranch?: unknown[] }
-      | undefined;
+      { thenBranch?: unknown[]; elseBranch?: unknown[] } | undefined;
     expect(conditional).toBeDefined();
     expect(conditional!.thenBranch?.length).toBe(1); // show #modal only
     expect(conditional!.elseBranch?.length).toBe(2); // make + put, NOT flattened into then
@@ -9951,8 +9949,7 @@ describe('SOV/th trailing bare quantity reclaim (increment-by-amount R2 blocker)
     const inc = (node.body ?? [])
       .flatMap(s => [s, ...(s.statements ?? [])])
       .find(c => (c as { action?: string }).action === 'increment') as
-      | { roles?: Map<string, unknown> }
-      | undefined;
+      { roles?: Map<string, unknown> } | undefined;
     expect(inc?.roles?.has('quantity')).toBe(false);
   });
 });
@@ -12781,43 +12778,86 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     // a non-positional `end`) as a role value; the schema/extraction default
     // fills instead (quantity=1), byte-aligned with en.
     const INCREMENT_LINES: Array<[string, string]> = [
-      ['it', 'su clic ripetere mentre #counter.innerText < 10 allora incrementare #counter allora aspettare 200ms fine'],
-      ['ms', 'apabila click ulang selagi #counter.innerText < 10 kemudian tambah_satu #counter kemudian tunggu 200ms tamat'],
-      ['pl', 'gdy kliknięcie powtórz dopóki #counter.innerText < 10 wtedy zwiększ #counter wtedy czekaj 200ms koniec'],
-      ['ru', 'при клик повторить пока #counter.innerText < 10 затем увеличить #counter затем ждать 200ms конец'],
-      ['uk', 'при клік повторити поки #counter.innerText < 10 тоді збільшити #counter тоді чекати 200ms кінець'],
-      ['vi', 'khi nhấp lặp lại trong khi #counter.innerText < 10 rồi tăng #counter rồi chờ 200ms kết thúc'],
+      [
+        'it',
+        'su clic ripetere mentre #counter.innerText < 10 allora incrementare #counter allora aspettare 200ms fine',
+      ],
+      [
+        'ms',
+        'apabila click ulang selagi #counter.innerText < 10 kemudian tambah_satu #counter kemudian tunggu 200ms tamat',
+      ],
+      [
+        'pl',
+        'gdy kliknięcie powtórz dopóki #counter.innerText < 10 wtedy zwiększ #counter wtedy czekaj 200ms koniec',
+      ],
+      [
+        'ru',
+        'при клик повторить пока #counter.innerText < 10 затем увеличить #counter затем ждать 200ms конец',
+      ],
+      [
+        'uk',
+        'при клік повторити поки #counter.innerText < 10 тоді збільшити #counter тоді чекати 200ms кінець',
+      ],
+      [
+        'vi',
+        'khi nhấp lặp lại trong khi #counter.innerText < 10 rồi tăng #counter rồi chờ 200ms kết thúc',
+      ],
       ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
-      ['tl', 'kapag mousedown ulitin hanggang pangyayari mouseup pagkatapos dagdagan #counter pagkatapos maghintay 100ms wakas'],
+      [
+        'tl',
+        'kapag mousedown ulitin hanggang pangyayari mouseup pagkatapos dagdagan #counter pagkatapos maghintay 100ms wakas',
+      ],
     ];
 
-    it.each(INCREMENT_LINES)('[%s] repeat body: increment quantity defaults to 1, never "then"', (lang, line) => {
-      const nodes = collect(parse(line, lang));
-      const inc = first(nodes, 'increment');
-      expect(role(inc, 'patient')?.value, `${lang} increment patient`).toBe('#counter');
-      const q = role(inc, 'quantity')?.value;
-      // The generated pattern's extraction default fills 1; a hand pattern may
-      // leave it absent for fillSchemaDefaults — either way, never the connective.
-      if (q !== undefined) expect(q, `${lang} increment quantity`).toBe(1);
-      const wait = first(nodes, 'wait');
-      expect(role(wait, 'duration')?.value, `${lang} wait duration`).toMatch(/^\d+ms$/);
-    });
+    it.each(INCREMENT_LINES)(
+      '[%s] repeat body: increment quantity defaults to 1, never "then"',
+      (lang, line) => {
+        const nodes = collect(parse(line, lang));
+        const inc = first(nodes, 'increment');
+        expect(role(inc, 'patient')?.value, `${lang} increment patient`).toBe('#counter');
+        const q = role(inc, 'quantity')?.value;
+        // The generated pattern's extraction default fills 1; a hand pattern may
+        // leave it absent for fillSchemaDefaults — either way, never the connective.
+        if (q !== undefined) expect(q, `${lang} increment quantity`).toBe(1);
+        const wait = first(nodes, 'wait');
+        expect(role(wait, 'duration')?.value, `${lang} wait duration`).toMatch(/^\d+ms$/);
+      }
+    );
 
     // The five bn wait rows the handoff filed under F2: same mechanism, the
     // verb-first wait duration slot capturing তারপর (then) / শেষ (end).
     const BN_WAIT_LINES: Array<[string, string, string]> = [
-      ['copy-to-clipboard', 'navigator.clipboard.writeText(#code.innerText) কে ক্লিক এ কল তারপর "Copied!" কে আমি তে রাখুন তারপর 2s কে অপেক্ষা তারপর "Copy" কে আমি তে রাখুন', '2s'],
+      [
+        'copy-to-clipboard',
+        'navigator.clipboard.writeText(#code.innerText) কে ক্লিক এ কল তারপর "Copied!" কে আমি তে রাখুন তারপর 2s কে অপেক্ষা তারপর "Copy" কে আমি তে রাখুন',
+        '2s',
+      ],
       ['repeat-forever', 'লোড এ পুনরাবৃত্তি চিরকাল .pulse কে টগল তারপর 1s কে অপেক্ষা শেষ', '1s'],
-      ['repeat-until-event', 'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
-      ['stagger-animation', 'লোড এ পুনরাবৃত্তি item এ .item কে জন্য সূচক দিয়ে তারপর .visible কে যোগ item তে তারপর 100ms কে অপেক্ষা শেষ', '100ms'],
-      ['tell-other-element', '#panel কে ক্লিক এ বলুন তারপর .open কে যোগ তারপর 200ms কে অপেক্ষা তারপর .visible কে যোগ', '200ms'],
+      [
+        'repeat-until-event',
+        'mousedown এ পুনরাবৃত্তি ঘটনা mouseup কে পর্যন্ত তারপর #counter কে বৃদ্ধি তারপর 100ms কে অপেক্ষা শেষ',
+        '100ms',
+      ],
+      [
+        'stagger-animation',
+        'লোড এ পুনরাবৃত্তি item এ .item কে জন্য সূচক দিয়ে তারপর .visible কে যোগ item তে তারপর 100ms কে অপেক্ষা শেষ',
+        '100ms',
+      ],
+      [
+        'tell-other-element',
+        '#panel কে ক্লিক এ বলুন তারপর .open কে যোগ তারপর 200ms কে অপেক্ষা তারপর .visible কে যোগ',
+        '200ms',
+      ],
     ];
 
-    it.each(BN_WAIT_LINES)('[bn] %s: wait duration is the real time literal', (_pattern, line, duration) => {
-      const nodes = collect(parse(line, 'bn'));
-      const wait = first(nodes, 'wait');
-      expect(role(wait, 'duration')?.value).toBe(duration);
-    });
+    it.each(BN_WAIT_LINES)(
+      '[bn] %s: wait duration is the real time literal',
+      (_pattern, line, duration) => {
+        const nodes = collect(parse(line, 'bn'));
+        const wait = first(nodes, 'wait');
+        expect(role(wait, 'duration')?.value).toBe(duration);
+      }
+    );
 
     it('both-ways locks: explicit quantities survive the guard', () => {
       const en = first(collect(parse('increment #counter by 5', 'en')), 'increment');
@@ -12879,22 +12919,40 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     //      DESTINATION/SOURCE reclaim on the fused path.
     const FORM_DISABLE: Array<[string, string]> = [
       ['en', 'on submit add @disabled to <button/> in me put "Submitting..." into <button/> in me'],
-      ['ja', '@disabled を 送信 で 追加 <button/> in me に それから "Submitting..." を <button/> in me に 置く'],
-      ['ko', '@disabled 를 제출 할 때 추가 <button/> in me 에 그러면 "Submitting..." 를 <button/> in me 에 넣다'],
-      ['hi', '@disabled को जमा पर जोड़ें <button/> in me में फिर "Submitting..." को <button/> in me में रखें'],
-      ['bn', '@disabled কে জমা এ যোগ <button/> in me তে তারপর "Submitting..." কে <button/> in me তে রাখুন'],
-      ['qu', '@disabled ta <button/> in me man kachay pi yapay chayqa "Submitting..." ta <button/> in me man churay'],
+      [
+        'ja',
+        '@disabled を 送信 で 追加 <button/> in me に それから "Submitting..." を <button/> in me に 置く',
+      ],
+      [
+        'ko',
+        '@disabled 를 제출 할 때 추가 <button/> in me 에 그러면 "Submitting..." 를 <button/> in me 에 넣다',
+      ],
+      [
+        'hi',
+        '@disabled को जमा पर जोड़ें <button/> in me में फिर "Submitting..." को <button/> in me में रखें',
+      ],
+      [
+        'bn',
+        '@disabled কে জমা এ যোগ <button/> in me তে তারপর "Submitting..." কে <button/> in me তে রাখুন',
+      ],
+      [
+        'qu',
+        '@disabled ta <button/> in me man kachay pi yapay chayqa "Submitting..." ta <button/> in me man churay',
+      ],
     ];
 
-    it.each(FORM_DISABLE)('[%s] add AND put destination is the bare <button/> selector', (lang, line) => {
-      const nodes = collect(parse(line, lang));
-      const add = first(nodes, 'add');
-      const put = first(nodes, 'put');
-      expect(role(add, 'destination')?.value, `${lang} add destination`).toBe('<button/>');
-      expect(role(add, 'patient')?.value, `${lang} add patient`).toBe('@disabled');
-      expect(role(put, 'destination')?.value, `${lang} put destination`).toBe('<button/>');
-      expect(role(put, 'patient')?.value, `${lang} put patient`).toBe('Submitting...');
-    });
+    it.each(FORM_DISABLE)(
+      '[%s] add AND put destination is the bare <button/> selector',
+      (lang, line) => {
+        const nodes = collect(parse(line, lang));
+        const add = first(nodes, 'add');
+        const put = first(nodes, 'put');
+        expect(role(add, 'destination')?.value, `${lang} add destination`).toBe('<button/>');
+        expect(role(add, 'patient')?.value, `${lang} add patient`).toBe('@disabled');
+        expect(role(put, 'destination')?.value, `${lang} put destination`).toBe('<button/>');
+        expect(role(put, 'patient')?.value, `${lang} put patient`).toBe('Submitting...');
+      }
+    );
 
     it('[en] positional phrase control: `first <li/> in me` is not truncated', () => {
       // The truncation is gated to selector-LED groups; a positional keyword
@@ -12916,26 +12974,79 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     // shape: source=<URL>, style=<options-head>.
     const FETCH_LINES: Array<[string, string, string, string, string]> = [
       // [lang, pattern, corpus line, expected source, expected style head]
-      ['pl', 'fetch-with-method', 'gdy wyślij pobierz /api/form z method:"POST" body:form', '/api/form', 'method'],
-      ['ru', 'fetch-with-method', 'при отправка загрузить /api/form с method:"POST" body:form', '/api/form', 'method'],
-      ['uk', 'fetch-with-method', 'при надсилання завантажити /api/form з method:"POST" body:form', '/api/form', 'method'],
-      ['pl', 'fetch-with-headers', 'gdy kliknięcie pobierz /api/me z headers:{Authorization:`Bearer ${$token}`} jako JSON wtedy umieść jego.name do ja', '/api/me', 'headers'],
-      ['pl', 'fetch-with-method-body', 'gdy kliknięcie pobierz /api/users z method:"POST", body:"name=Joe"', '/api/users', 'method'],
-      ['pl', 'fetch-formdata', 'gdy wyślij pobierz /api/submit z method:"POST", body:(closest <form/> jako FormData)', '/api/submit', 'method'],
-      ['ru', 'fetch-formdata', 'при отправка загрузить /api/submit с method:"POST", body:(closest <form/> как FormData)', '/api/submit', 'method'],
-      ['uk', 'fetch-formdata', 'при надсилання завантажити /api/submit з method:"POST", body:(closest <form/> як FormData)', '/api/submit', 'method'],
+      [
+        'pl',
+        'fetch-with-method',
+        'gdy wyślij pobierz /api/form z method:"POST" body:form',
+        '/api/form',
+        'method',
+      ],
+      [
+        'ru',
+        'fetch-with-method',
+        'при отправка загрузить /api/form с method:"POST" body:form',
+        '/api/form',
+        'method',
+      ],
+      [
+        'uk',
+        'fetch-with-method',
+        'при надсилання завантажити /api/form з method:"POST" body:form',
+        '/api/form',
+        'method',
+      ],
+      [
+        'pl',
+        'fetch-with-headers',
+        'gdy kliknięcie pobierz /api/me z headers:{Authorization:`Bearer ${$token}`} jako JSON wtedy umieść jego.name do ja',
+        '/api/me',
+        'headers',
+      ],
+      [
+        'pl',
+        'fetch-with-method-body',
+        'gdy kliknięcie pobierz /api/users z method:"POST", body:"name=Joe"',
+        '/api/users',
+        'method',
+      ],
+      [
+        'pl',
+        'fetch-formdata',
+        'gdy wyślij pobierz /api/submit z method:"POST", body:(closest <form/> jako FormData)',
+        '/api/submit',
+        'method',
+      ],
+      [
+        'ru',
+        'fetch-formdata',
+        'при отправка загрузить /api/submit с method:"POST", body:(closest <form/> как FormData)',
+        '/api/submit',
+        'method',
+      ],
+      [
+        'uk',
+        'fetch-formdata',
+        'при надсилання завантажити /api/submit з method:"POST", body:(closest <form/> як FormData)',
+        '/api/submit',
+        'method',
+      ],
     ];
 
-    it.each(FETCH_LINES)('[%s] %s: URL is source, options head is style', (lang, _pattern, line, url, styleHead) => {
-      const nodes = collect(parse(line, lang));
-      const f = first(nodes, 'fetch');
-      expect(role(f, 'source')?.value).toBe(url);
-      expect(String(role(f, 'style')?.raw ?? role(f, 'style')?.value)).toContain(styleHead);
-      expect(role(f, 'patient')).toBeUndefined();
-    });
+    it.each(FETCH_LINES)(
+      '[%s] %s: URL is source, options head is style',
+      (lang, _pattern, line, url, styleHead) => {
+        const nodes = collect(parse(line, lang));
+        const f = first(nodes, 'fetch');
+        expect(role(f, 'source')?.value).toBe(url);
+        expect(String(role(f, 'style')?.raw ?? role(f, 'style')?.value)).toContain(styleHead);
+        expect(role(f, 'patient')).toBeUndefined();
+      }
+    );
 
     it('[pl] fetch-basic control: the plain-source path is untouched', () => {
-      const nodes = collect(parse('gdy kliknięcie pobierz /api/data wtedy umieść to do #result', 'pl'));
+      const nodes = collect(
+        parse('gdy kliknięcie pobierz /api/data wtedy umieść to do #result', 'pl')
+      );
       const f = first(nodes, 'fetch');
       expect(role(f, 'source')?.value).toBe('/api/data');
       expect(role(f, 'style')).toBeUndefined();
@@ -12950,21 +13061,41 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     // TIME-shaped literal directly follows it.
     const HI_LINES: Array<[string, string, string, unknown]> = [
       // [pattern, corpus line, expected duration, expected goal]
-      ['transition-opacity', 'opacity को क्लिक पर संक्रमण 0 में 500ms फिर मैं को हटाएं', '500ms', 0],
-      ['transition-transform', 'transform को क्लिक पर संक्रमण "scale(1.2)" में 300ms', '300ms', 'scale(1.2)'],
-      ['transition-color', '*background-color को क्लिक पर संक्रमण "blue" में 500ms', '500ms', 'blue'],
+      [
+        'transition-opacity',
+        'opacity को क्लिक पर संक्रमण 0 में 500ms फिर मैं को हटाएं',
+        '500ms',
+        0,
+      ],
+      [
+        'transition-transform',
+        'transform को क्लिक पर संक्रमण "scale(1.2)" में 300ms',
+        '300ms',
+        'scale(1.2)',
+      ],
+      [
+        'transition-color',
+        '*background-color को क्लिक पर संक्रमण "blue" में 500ms',
+        '500ms',
+        'blue',
+      ],
       ['fade-out-remove', 'opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', '300ms', 0],
     ];
 
-    it.each(HI_LINES)('[hi] %s: duration reclaimed through में', (_pattern, line, duration, goal) => {
-      const nodes = collect(parse(line, 'hi'));
-      const tr = first(nodes, 'transition');
-      expect(role(tr, 'duration')?.value).toBe(duration);
-      expect(role(tr, 'goal')?.value).toBe(goal);
-    });
+    it.each(HI_LINES)(
+      '[hi] %s: duration reclaimed through में',
+      (_pattern, line, duration, goal) => {
+        const nodes = collect(parse(line, 'hi'));
+        const tr = first(nodes, 'transition');
+        expect(role(tr, 'duration')?.value).toBe(duration);
+        expect(role(tr, 'goal')?.value).toBe(goal);
+      }
+    );
 
     it('[hi] fade-out-remove: the trailing remove survives the reclaim', () => {
-      const nodes = collect(parse('opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', 'hi'));
+      const nodes = collect(
+        parse('opacity को क्लिक पर संक्रमण 0 में 300ms फिर मैं को हटाएं', 'hi')
+      );
       const rm = first(nodes, 'remove');
       expect(role(rm, 'patient')?.value).toBe('me');
     });
@@ -13060,7 +13191,9 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
     ).join('\n');
 
     const triggerValues = (nodes: Record<string, any>[]): string[] =>
-      nodes.filter(n => n.action === 'trigger').map(n => String(role(n, 'event')?.raw ?? role(n, 'event')?.value ?? '?'));
+      nodes
+        .filter(n => n.action === 'trigger')
+        .map(n => String(role(n, 'event')?.raw ?? role(n, 'event')?.value ?? '?'));
 
     it('[qu] behavior-sortable: all three trigger events by VALUE', () => {
       const nodes = collect(parse(QU_SORTABLE, 'qu'));
@@ -13103,7 +13236,10 @@ describe('R3 value-bug families (docs-internal/HANDOFF_value-bug-families.md)', 
 
     it('[qu/tr] behavior-sortable: command-level actions all survive', () => {
       const enActions = collect(parse(TR_SORTABLE, 'tr')).map(n => n.action);
-      for (const [lang, src] of [['qu', QU_SORTABLE], ['tr', TR_SORTABLE]] as const) {
+      for (const [lang, src] of [
+        ['qu', QU_SORTABLE],
+        ['tr', TR_SORTABLE],
+      ] as const) {
         const acts = collect(parse(src, lang)).map(n => n.action);
         expect(acts.filter(a => a === 'trigger').length, `${lang} trigger count`).toBe(3);
         expect(acts, `${lang} has remove`).toContain('remove');
@@ -13195,7 +13331,10 @@ describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render 
       ['ja', '#user-list を クリック で 描画 users: $data で それから それ を #container に 置く'],
       ['ko', '#user-list 를 클릭 할 때 렌더링 users: $data 로 그러면 그것 를 #container 에 넣다'],
       ['tr', '#user-list i tıklama de render users: $data ile ardından o i #container e koy'],
-      ['qu', '#user-list ta ñitiy pi rikurichiy users: $data wan chayqa chay ta #container man churay'],
+      [
+        'qu',
+        '#user-list ta ñitiy pi rikurichiy users: $data wan chayqa chay ta #container man churay',
+      ],
     ];
     for (const [lang, src] of ROWS) {
       it(`[${lang}] captures style as expression; patient + trailing put intact`, () => {
@@ -13214,7 +13353,10 @@ describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render 
 
   it('[ko] fetch-formdata: an as-marker 로 INSIDE the parenthesized body does not close the run (depth tracking)', () => {
     const nodes = collect(
-      parse('/api/submit 를 제출 할 때 가져오기 method:"POST", body:(closest <form/> 로 FormData) 로', 'ko')
+      parse(
+        '/api/submit 를 제출 할 때 가져오기 method:"POST", body:(closest <form/> 로 FormData) 로',
+        'ko'
+      )
     );
     const f = first(nodes, 'fetch');
     expect(role(f, 'style')?.type).toBe('expression');
@@ -13223,7 +13365,9 @@ describe('R1 Family A: trailing SOV with-options blob reclaimed as fetch/render 
 
   it('[ja] a fetch WITHOUT a with-phrase gains no phantom style', () => {
     // fetch-loading-state shape: nothing between the verb and the then-chain.
-    const nodes = collect(parse('/api/data を クリック で フェッチ それから それ を 私 に 置く', 'ja'));
+    const nodes = collect(
+      parse('/api/data を クリック で フェッチ それから それ を 私 に 置く', 'ja')
+    );
     const f = first(nodes, 'fetch');
     expect(f).toBeDefined();
     expect(role(f, 'style')).toBeUndefined();
@@ -13316,7 +13460,9 @@ describe('R1 Family B: qu set — oblique manta source + whole backtick template
   });
 
   it('[qu] template-literal-interpolation: backtick template survives as one token', () => {
-    const nodes = collect(parse('noqaq innerHTML ta `<li>${$item.name}</li>` man ñitiy pi churanay', 'qu'));
+    const nodes = collect(
+      parse('noqaq innerHTML ta `<li>${$item.name}</li>` man ñitiy pi churanay', 'qu')
+    );
     const s = first(nodes, 'set');
     expect(role(s, 'destination')?.type).toBe('property-path');
     expect(role(s, 'patient')?.type).toBe('expression');
@@ -13379,10 +13525,25 @@ describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (do
     const walk = (n: any): any => {
       if (!n || typeof n !== 'object') return undefined;
       if (n.action === 'wait' && n.roles instanceof Map) return n.roles.get(role);
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'branches',
+        'eventHandlers',
+        'initBlock',
+      ]) {
         const c = n[f];
-        if (Array.isArray(c)) for (const x of c) { const r = walk(x); if (r !== undefined) return r; }
-        else if (c && typeof c === 'object') { const r = walk(c); if (r !== undefined) return r; }
+        if (Array.isArray(c))
+          for (const x of c) {
+            const r = walk(x);
+            if (r !== undefined) return r;
+          }
+        else if (c && typeof c === 'object') {
+          const r = walk(c);
+          if (r !== undefined) return r;
+        }
       }
       return undefined;
     };
@@ -13393,7 +13554,15 @@ describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (do
     const walk = (x: any): void => {
       if (!x || typeof x !== 'object') return;
       if (x.action === 'wait') n++;
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+      for (const f of [
+        'body',
+        'statements',
+        'thenBranch',
+        'elseBranch',
+        'branches',
+        'eventHandlers',
+        'initBlock',
+      ]) {
         const c = x[f];
         if (Array.isArray(c)) c.forEach(walk);
         else if (c && typeof c === 'object') walk(c);
@@ -13406,8 +13575,16 @@ describe('R1 Family C: tr/qu verb-final or-run wait captures the first event (do
   const ROWS: Array<[string, string, string]> = [
     ['tr', 'sortable (1-arg)', 'belge den pointermove(clientY) veya pointerup(clientY) bekle'],
     ['qu', 'sortable (1-arg)', 'qillqa manta pointermove(clientY) utaq pointerup(clientY) suyay'],
-    ['tr', 'resizable (2-arg)', 'belge den pointermove(clientX, clientY) veya pointerup(clientX, clientY) bekle'],
-    ['qu', 'resizable (2-arg)', 'qillqa manta pointermove(clientX, clientY) utaq pointerup(clientX, clientY) suyay'],
+    [
+      'tr',
+      'resizable (2-arg)',
+      'belge den pointermove(clientX, clientY) veya pointerup(clientX, clientY) bekle',
+    ],
+    [
+      'qu',
+      'resizable (2-arg)',
+      'qillqa manta pointermove(clientX, clientY) utaq pointerup(clientX, clientY) suyay',
+    ],
   ];
   for (const [lang, label, src] of ROWS) {
     it(`[${lang}] ${label}: first event captured as event:literal, single wait`, () => {
@@ -13508,7 +13685,10 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
     // — js to the clause boundary, go/scroll to the postpositional
     // destination marker — typed expression like the en reference.
     it('[ja] js-inline: code run reclaimed, verb fragment 実行 trimmed', () => {
-      const j = first(collect(parse('クリック で JS実行 console.log("from js") 終わり', 'ja')), 'js');
+      const j = first(
+        collect(parse('クリック で JS実行 console.log("from js") 終わり', 'ja')),
+        'js'
+      );
       expect(role(j, 'patient')?.type).toBe('expression');
       expect(role(j, 'patient')?.raw).toContain('console');
       expect(role(j, 'patient')?.raw).not.toContain('実行');
@@ -13604,12 +13784,30 @@ describe('R1 Family D: SOV fallback value-typing increments (docs-internal/HANDO
     // path in qu/bn/hi (the transformer-rendering arc's full-body-probe
     // discipline); R1 scores the in-body shape, so that is what locks.
     const ROWS: Array<[string, string]> = [
-      ['ja', '$html を "" に 設定 クリック で それから item の中 $items を ために それから $html を $html + `<li>${item.name}</li>` に 設定 終わり それから #list.innerHTML を $html に 設定'],
-      ['ko', '$html 를 "" 에 설정 클릭 할 때 그러면 item 안에 $items 를 각각 그러면 $html 를 $html + `<li>${item.name}</li>` 에 설정 끝 그러면 #list.innerHTML 를 $html 에 설정'],
-      ['tr', '$html i "" e ayarla tıklama de ardından item içinde $items i için ardından $html i $html + `<li>${item.name}</li>` e ayarla son ardından #list.innerHTML i $html e ayarla'],
-      ['qu', '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay'],
-      ['bn', '$html কে "" তে সেট ক্লিক এ তারপর item এ $items কে জন্য তারপর $html কে $html + `<li>${item.name}</li>` তে সেট শেষ তারপর #list.innerHTML কে $html তে সেট'],
-      ['hi', '$html को "" में सेट क्लिक पर फिर item में $items को हेतु फिर $html को $html + `<li>${item.name}</li>` में सेट समाप्त फिर #list.innerHTML को $html में सेट'],
+      [
+        'ja',
+        '$html を "" に 設定 クリック で それから item の中 $items を ために それから $html を $html + `<li>${item.name}</li>` に 設定 終わり それから #list.innerHTML を $html に 設定',
+      ],
+      [
+        'ko',
+        '$html 를 "" 에 설정 클릭 할 때 그러면 item 안에 $items 를 각각 그러면 $html 를 $html + `<li>${item.name}</li>` 에 설정 끝 그러면 #list.innerHTML 를 $html 에 설정',
+      ],
+      [
+        'tr',
+        '$html i "" e ayarla tıklama de ardından item içinde $items i için ardından $html i $html + `<li>${item.name}</li>` e ayarla son ardından #list.innerHTML i $html e ayarla',
+      ],
+      [
+        'qu',
+        '$html ta "" man ñitiy pi churanay chayqa item ukupi $items ta sapankaq chayqa $html ta $html + `<li>${item.name}</li>` man churanay tukuy chayqa #list.innerHTML ta $html man churanay',
+      ],
+      [
+        'bn',
+        '$html কে "" তে সেট ক্লিক এ তারপর item এ $items কে জন্য তারপর $html কে $html + `<li>${item.name}</li>` তে সেট শেষ তারপর #list.innerHTML কে $html তে সেট',
+      ],
+      [
+        'hi',
+        '$html को "" में सेट क्लिक पर फिर item में $items को हेतु फिर $html को $html + `<li>${item.name}</li>` में सेट समाप्त फिर #list.innerHTML को $html में सेट',
+      ],
     ];
     for (const [lang, src] of ROWS) {
       it(`[${lang}] for-head: patient:expression + source:reference, like en`, () => {
@@ -13656,13 +13854,34 @@ describe('R1 deferred-tail Family E: URL extractor carries ${…} spans (docs-in
 
   const URL = '/api/search?q=${my value}';
   const ROWS: Array<[string, string]> = [
-    ['en', 'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results'],
-    ['ja', 'debounced at 300ms /api/search?q=${my value} を 入力 で フェッチ json それから それ を #results に 置く'],
-    ['ko', 'debounced at 300ms /api/search?q=${my value} 를 입력 할 때 가져오기 json 로 그러면 그것 를 #results 에 넣다'],
-    ['tr', 'debounced at 300ms /api/search?q=${my value} i giriş de getir json olarak ardından o i #results e koy'],
-    ['bn', 'debounced at 300ms /api/search?q=${my value} কে ইনপুট এ আনুন json তারপর এটি কে #results তে রাখুন'],
-    ['hi', 'debounced at 300ms /api/search?q=${my value} को इनपुट पर लाएं json के रूप में फिर यह को #results में रखें'],
-    ['qu', 'debounced at 300ms /api/search?q=${my value} ta yaykuchiy pi apamuy json hina chayqa chay ta #results man churay'],
+    [
+      'en',
+      'on input debounced at 300ms fetch /api/search?q=${my value} as json then put it into #results',
+    ],
+    [
+      'ja',
+      'debounced at 300ms /api/search?q=${my value} を 入力 で フェッチ json それから それ を #results に 置く',
+    ],
+    [
+      'ko',
+      'debounced at 300ms /api/search?q=${my value} 를 입력 할 때 가져오기 json 로 그러면 그것 를 #results 에 넣다',
+    ],
+    [
+      'tr',
+      'debounced at 300ms /api/search?q=${my value} i giriş de getir json olarak ardından o i #results e koy',
+    ],
+    [
+      'bn',
+      'debounced at 300ms /api/search?q=${my value} কে ইনপুট এ আনুন json তারপর এটি কে #results তে রাখুন',
+    ],
+    [
+      'hi',
+      'debounced at 300ms /api/search?q=${my value} को इनपुट पर लाएं json के रूप में फिर यह को #results में रखें',
+    ],
+    [
+      'qu',
+      'debounced at 300ms /api/search?q=${my value} ta yaykuchiy pi apamuy json hina chayqa chay ta #results man churay',
+    ],
   ];
   for (const [lang, src] of ROWS) {
     it(`[${lang}] event-debounce captures the WHOLE interpolated URL as source:literal`, () => {
@@ -13714,12 +13933,30 @@ describe('R1 deferred-tail Family H: fused halt+call renders verb-final and pars
     n && n.roles instanceof Map ? n.roles.get(r) : undefined;
 
   const ROWS: Array<[string, string]> = [
-    ['ja', 'the イベント を 送信 で 停止 それから validateForm() を 呼び出し もし 結果 である 偽 "Invalid form" を 記録 終わり'],
-    ['ko', 'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출 만약 결과 이다 거짓 "Invalid form" 를 로그 끝'],
-    ['tr', 'the olay i gönder de durdur ardından validateForm() i çağır eğer sonuç dir yanlış "Invalid form" i kaydet son'],
-    ['bn', 'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল যদি ফলাফল হয় মিথ্যা "Invalid form" কে লগ শেষ'],
-    ['hi', 'the घटना को जमा पर रोकें फिर validateForm() को कॉल अगर परिणाम है झूठ "Invalid form" को लॉग समाप्त'],
-    ['qu', 'the ruway ta kachay pi sayay chayqa validateForm() ta qayay sichus lluqsiy kanqa llulla "Invalid form" ta qillqakuy tukuy'],
+    [
+      'ja',
+      'the イベント を 送信 で 停止 それから validateForm() を 呼び出し もし 結果 である 偽 "Invalid form" を 記録 終わり',
+    ],
+    [
+      'ko',
+      'the 이벤트 를 제출 할 때 정지 그러면 validateForm() 를 호출 만약 결과 이다 거짓 "Invalid form" 를 로그 끝',
+    ],
+    [
+      'tr',
+      'the olay i gönder de durdur ardından validateForm() i çağır eğer sonuç dir yanlış "Invalid form" i kaydet son',
+    ],
+    [
+      'bn',
+      'the ঘটনা কে জমা এ থামুন তারপর validateForm() কে কল যদি ফলাফল হয় মিথ্যা "Invalid form" কে লগ শেষ',
+    ],
+    [
+      'hi',
+      'the घटना को जमा पर रोकें फिर validateForm() को कॉल अगर परिणाम है झूठ "Invalid form" को लॉग समाप्त',
+    ],
+    [
+      'qu',
+      'the ruway ta kachay pi sayay chayqa validateForm() ta qayay sichus lluqsiy kanqa llulla "Invalid form" ta qillqakuy tukuy',
+    ],
   ];
   for (const [lang, src] of ROWS) {
     it(`[${lang}] form-submit-prevent: halt.patient:reference + call.patient:expression, if/log intact`, () => {
@@ -13778,12 +14015,30 @@ describe('R1 deferred-tail Family G: SOV focus-trap branch operand survives the 
     n && n.roles instanceof Map ? n.roles.get(r) : undefined;
 
   const ROWS: Array<[string, string]> = [
-    ['ja', 'keydown[key=="Tab"] で .modal から もし 対象 一致する 最後 <button/> の中 .modal それから 最初 <button/> の中 .modal を フォーカス それから 停止 終わり'],
-    ['ko', 'keydown[key=="Tab"] 할 때 .modal 에서 만약 대상 일치 마지막 <button/> 안에 .modal 그러면 첫번째 <button/> 안에 .modal 를 포커스 그러면 정지 끝'],
-    ['qu', '.modal manta keydown[key=="Tab"] pi sichus punta tupan qhipa <button/> ukupi .modal chayqa ñawpaq <button/> ukupi .modal ta qhaway chayqa sayay tukuy'],
-    ['tr', 'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ardından ilk <button/> içinde .modal i odak ardından durdur son'],
-    ['bn', 'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ'],
-    ['hi', 'keydown[key=="Tab"] पर .modal से अगर लक्ष्य मेल खाता अंतिम <button/> में .modal फिर पहला <button/> में .modal को फोकस फिर रोकें समाप्त'],
+    [
+      'ja',
+      'keydown[key=="Tab"] で .modal から もし 対象 一致する 最後 <button/> の中 .modal それから 最初 <button/> の中 .modal を フォーカス それから 停止 終わり',
+    ],
+    [
+      'ko',
+      'keydown[key=="Tab"] 할 때 .modal 에서 만약 대상 일치 마지막 <button/> 안에 .modal 그러면 첫번째 <button/> 안에 .modal 를 포커스 그러면 정지 끝',
+    ],
+    [
+      'qu',
+      '.modal manta keydown[key=="Tab"] pi sichus punta tupan qhipa <button/> ukupi .modal chayqa ñawpaq <button/> ukupi .modal ta qhaway chayqa sayay tukuy',
+    ],
+    [
+      'tr',
+      'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ardından ilk <button/> içinde .modal i odak ardından durdur son',
+    ],
+    [
+      'bn',
+      'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal তারপর প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ',
+    ],
+    [
+      'hi',
+      'keydown[key=="Tab"] पर .modal से अगर लक्ष्य मेल खाता अंतिम <button/> में .modal फिर पहला <button/> में .modal को फोकस फिर रोकें समाप्त',
+    ],
   ];
   for (const [lang, src] of ROWS) {
     it(`[${lang}] focus-trap: focus.patient:expression captured, if/halt intact`, () => {
@@ -14098,6 +14353,13 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
   // is a registered toggle-verb alternative), and add the hi member of the
   // ja/tr/ar/he prefix-when family so the first subject becomes the event,
   // exactly like en's event-en-when.
+  //
+  // 2026-08-27: the reactive-when arc replaced "the first subject becomes the
+  // event" — that WAS the en reference's own truncation — with a real
+  // `when <expr> changes` fold in all 24 languages (test/when-reactive.test.ts).
+  // The byte-identity target stands; the target string is now the canonical
+  // reactive head, and `बदलने पर` reaches the tokenizer from the profile's
+  // `changes` keyword rather than a tokenizer extra.
   it('hi when-multiple-changes row renders byte-identical to the en reference render', () => {
     const enOut = render(
       parse(
@@ -14114,7 +14376,9 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
       'en'
     );
     expect(hiOut).toBe(enOut);
-    expect(hiOut).toBe('on $firstName put `${$firstName} ${$lastName}` into #full-name');
+    expect(hiOut).toBe(
+      'when $firstName or $lastName changes\n  put `${$firstName} ${$lastName}` into #full-name\nend'
+    );
   });
 
   it('hi जब-तक while/until compound never matches the when-head (repeat-while guard)', () => {
@@ -14131,9 +14395,14 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
     expect(out).not.toContain('on when');
   });
 
-  it('hi when-value-changes row shares the en reference degradation (paren-expr event)', () => {
-    // Both en and hi capture `(` as the event on this en-invalid row; hi used
-    // to diverge (`on when …`). Byte-equality with en is the fidelity target.
+  it('hi when-value-changes row renders the en reference head, whole watched expression kept', () => {
+    // Both used to capture `(` as the event on this en-invalid row (hi once
+    // diverged further, `on when …`). Both now fold the whole parenthesized
+    // expression into the reactive head. The ONE remaining difference is the
+    // property noun: the `'s` inside the parens lexes as a string-quote in both
+    // tokenizers (`'s मान * #qty'` is one literal token), so the hi noun rides
+    // through untranslated — the en raw is a byte-faithful source slice by
+    // design (block-parser watchedExpressionValue). Byte-strict otherwise.
     const enOut = render(
       parse("when (#price's value * #qty's value) changes put `$${it}` into me end", 'en'),
       'en'
@@ -14142,7 +14411,8 @@ describe('Foreign-validity Phase 11: hi या→or + बदलने पर→c
       parse("जब (#price's मान * #qty's मान) बदलने पर `$${it}` को मैं में रखें समाप्त", 'hi'),
       'en'
     );
-    expect(hiOut).toBe(enOut);
+    expect(enOut).toBe("when (#price's value * #qty's value) changes\n  put `$${it}` into me\nend");
+    expect(hiOut.replace(/मान/g, 'value')).toBe(enOut);
   });
 
   it('hi event-adjacent or path stays byte-identical (multiple-events row)', () => {
@@ -14178,7 +14448,10 @@ describe('Foreign-validity Phase 11: window-keydown fused-if event excision (ar/
 
   it('en window-keydown reference shape is the convergence target', () => {
     const en = render(
-      parse('on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument()', 'en'),
+      parse(
+        'on keydown[key=="s"] from window if event.ctrlKey halt then call saveDocument()',
+        'en'
+      ),
       'en'
     );
     const tl = render(parse(cases[0][1], 'tl'), 'en');
@@ -14242,12 +14515,16 @@ describe('en→foreign render residual: unless round trips (SOV compound shape +
         if (!n || typeof n !== 'object') return null;
         if (n.action === 'unless') return n;
         for (const f of ['body', 'statements']) {
-          for (const c of n[f] ?? []) { const hit = find(c); if (hit) return hit; }
+          for (const c of n[f] ?? []) {
+            const hit = find(c);
+            if (hit) return hit;
+          }
         }
         return null;
       };
       const guard = find(back);
-      const cond = guard?.roles instanceof Map ? guard.roles.get('condition') : guard?.roles?.condition;
+      const cond =
+        guard?.roles instanceof Map ? guard.roles.get('condition') : guard?.roles?.condition;
       expect(cond).toMatchObject({ type: 'expression' });
     });
   }
@@ -14315,7 +14592,10 @@ describe('a duration-typed literal in transition.goal re-roles to duration (slid
     if (!n) return null;
     if (n.action === 'transition') return n;
     for (const f of ['body', 'statements']) {
-      for (const c of n[f] ?? []) { const hit = findT(c); if (hit) return hit; }
+      for (const c of n[f] ?? []) {
+        const hit = findT(c);
+        if (hit) return hit;
+      }
     }
     return null;
   };

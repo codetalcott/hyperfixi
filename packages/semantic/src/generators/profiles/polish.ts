@@ -227,6 +227,11 @@ export const polishProfile: LanguageProfile = {
     if: { primary: 'jeśli', alternatives: ['jesli', 'jeżeli', 'jezeli'], normalized: 'if' },
     unless: { primary: 'chyba', normalized: 'unless' },
     when: { primary: 'kiedy', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'zmienia', normalized: 'changes' },
     where: { primary: 'gdzie', normalized: 'where' },
     else: { primary: 'inaczej', alternatives: ['wpp'], normalized: 'else' },
     repeat: {

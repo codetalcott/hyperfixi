@@ -227,6 +227,11 @@ export const spanishProfile: LanguageProfile = {
     if: { primary: 'si', normalized: 'if' },
     unless: { primary: 'menos', alternatives: ['a menos que', 'salvo'], normalized: 'unless' },
     when: { primary: 'cuando', normalized: 'when' },
+    // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
+    // dictionary (`changes`), which is what wrote every stored corpus row; the V1
+    // vocab gate requires the two surfaces to agree. Native review pending — see
+    // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
+    changes: { primary: 'cambia', normalized: 'changes' },
     where: { primary: 'donde', normalized: 'where' },
     else: { primary: 'sino', alternatives: ['de lo contrario'], normalized: 'else' },
     repeat: { primary: 'repetir', normalized: 'repeat' },

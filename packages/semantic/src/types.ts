@@ -111,6 +111,7 @@ export type ActionType =
   // Reactivity
   | 'bind'
   | 'live'
+  | 'when'
   // Realtime / streaming
   | 'eventsource'
   | 'socket'
@@ -376,7 +377,7 @@ export interface DefSemanticNode extends SemanticNode {
 }
 
 /** Block-structured feature actions — see {@link FeatureSemanticNode}. */
-export type FeatureAction = 'live' | 'eventsource' | 'socket' | 'worker' | 'intercept';
+export type FeatureAction = 'live' | 'when' | 'eventsource' | 'socket' | 'worker' | 'intercept';
 
 // (kept in the union above so `FeatureSemanticNode.action` covers every feature
 // the fold handles; `worker`'s body is `def` sub-blocks rather than handlers.)
@@ -387,12 +388,22 @@ export type FeatureAction = 'live' | 'eventsource' | 'socket' | 'worker' | 'inte
  * … end end`, `socket Name url … end`, `worker Name … end end`, `intercept …
  * end`).
  *
- * These five declare `roles: []` + `bareKeyword: true` in their command schema,
- * so the generated pattern is a lone keyword literal. Before the structural
- * layer learned about them they matched that bare-keyword pattern at Stage 2 and
- * their entire body was dropped — at a vacuous confidence 1.0, because
- * `scoreRoleCoverage` returns 1 when a pattern declares no roles. This node kind
- * is what the fold produces instead; confidence is derived from the body.
+ * Five of them declare `roles: []` + `bareKeyword: true` in their command
+ * schema, so the generated pattern is a lone keyword literal. Before the
+ * structural layer learned about them they matched that bare-keyword pattern at
+ * Stage 2 and their entire body was dropped — at a vacuous confidence 1.0,
+ * because `scoreRoleCoverage` returns 1 when a pattern declares no roles. This
+ * node kind is what the fold produces instead; confidence is derived from the
+ * body.
+ *
+ * The reactive observer `when <expr> changes … end` is the one feature WITH a
+ * head role: the watched expression lives in `roles.condition` (the same role
+ * the `if`/`unless`/`while` heads use). Its schema is `structuralOnly` — no
+ * pattern is generated for it, because the REQUIRED trailing `changes` literal
+ * is what bounds the multi-token expression and what keeps the reactive head
+ * apart from the temporal `when {event}` handler patterns. Before the fold
+ * learned it, those handler patterns claimed it and kept only the FIRST token
+ * of the expression as the "event" (`when $a or $b changes` → `on $a`).
  *
  * `intercept` is the odd one out: its body is a configuration DSL (`precache …`,
  * `on /api/* use network-first`, `offline fallback …`), not hyperscript commands,
@@ -895,12 +906,14 @@ export function createFeatureNode(
   action: FeatureAction,
   body: SemanticNode[],
   name?: string,
-  metadata?: SemanticMetadata
+  metadata?: SemanticMetadata,
+  /** Head roles — only the reactive `when` carries one (`condition`). */
+  roles?: ReadonlyMap<SemanticRole, SemanticValue>
 ): FeatureSemanticNode {
   const node: FeatureSemanticNode = {
     kind: 'feature',
     action,
-    roles: new Map(),
+    roles: roles ?? new Map(),
     body,
   };
   if (name !== undefined) {

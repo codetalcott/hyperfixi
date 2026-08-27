@@ -270,7 +270,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Mirrors {@link renderBehavior}, including its handling of event-handler
    * children: a handler carries its own body and needs its own `end`, so it
    * closes before the feature's does. `live` and `intercept` declare no name and
-   * emit the keyword alone as their header.
+   * emit the keyword alone as their header; the reactive `when` emits its
+   * watched expression between the head word and the `changes` word — see
+   * {@link featureHeader}.
    *
    * `intercept` always parses with an empty body (opaque by design), so it
    * renders as a bare `<keyword> … end` — correct, and the reason the loop
@@ -278,8 +280,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private renderFeature(node: FeatureSemanticNode, language: string): string {
     const endKw = this.keyword(language, 'end');
-    const keyword = this.keyword(language, node.action);
-    const lines = [node.name ? `${keyword} ${node.name}` : keyword];
+    const lines = [this.featureHeader(node, language)];
     for (const child of node.body) {
       lines.push(`  ${this.render(child, language)}`);
       // An event handler opens a block of its own; close it before the feature.
@@ -287,6 +288,26 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     lines.push(endKw);
     return lines.join('\n');
+  }
+
+  /**
+   * A feature's header line. `<keyword> [name]` for the named features; for the
+   * reactive observer, `<when-word> <expr> <changes-word>` — the watched
+   * expression rides in `condition`, and the REQUIRED trailing `changes` literal
+   * is what the parser bounds it with (and what keeps the head apart from the
+   * temporal `when {event}` handler patterns, which is why it can never be
+   * dropped). Head-first in every language: it is the order the i18n
+   * transformer wrote the corpus rows in, and the one the structural parser
+   * reads. The expression is localized like a conditional's (`or` → `または`).
+   */
+  private featureHeader(node: FeatureSemanticNode, language: string): string {
+    const keyword = this.keyword(language, node.action);
+    if (node.action === 'when') {
+      const watched = node.roles.get('condition' as SemanticRole);
+      const expr = watched ? this.valueToNaturalString(watched, language) : '';
+      return [keyword, expr, this.keyword(language, 'changes')].filter(Boolean).join(' ');
+    }
+    return node.name ? `${keyword} ${node.name}` : keyword;
   }
 
   /**

@@ -60,6 +60,78 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27 — reactive `when … changes` has a real parse in all 24
+> languages: the SECOND en-reference truncation, after #970's `unless`.**
+>
+> `when <expr> [or <expr>]* changes <body> [end]` is canonical _hyperscript
+> (0.9.93 verified: `or` is the only separator — a comma is rejected —
+> `changes` is a REQUIRED literal, `end` is optional; and the engine has NO
+> temporal `when <event>` at all: `when click …` fails with "Cannot watch local
+> variable 'click'"). Nothing modelled it. No pattern in any language carried a
+> `changes` literal, so the temporal `when {event}` handler patterns claimed
+> the head and kept its FIRST token as the event — `when $a or $b changes` →
+> `on $a`, `when (#p's value * #q's value) changes` → event `(` — in English
+> too, so every language scored clean by reproducing the truncation (measured:
+> all 48 stored rows parsed `on,put | on.event:reference`, identical to en).
+>
+> - **The vocabulary was not invented.** The handoff filed this as 24-language
+>   authoring; measured, the `@lokascript/i18n` dictionaries already carried
+>   `logical.changes` in all 24 — they are what wrote the rows — and the V1
+>   vocab gate demands the profile agree with them. Synced verbatim into
+>   `profile.keywords.changes`; ⚠️ native review is filed per word in
+>   `NATIVE_REVIEW_NEEDED.md`, with the fr `change` / id `berubah` / th
+>   `เปลี่ยน` change-event homographs and the six dictionary-vs-profile `when`
+>   head words (the `V1|*|when` waiver's list) called out.
+> - **Parse is structural** (Stage 0.1, `block-parser.ts`
+>   `locateReactiveWhenHead` / `parseReactiveWhenBlock`): the head is
+>   discriminated by the `changes` word — matched by surface as well as
+>   normalized form, because in three languages it IS the `change` event's
+>   surface — with the expression span guarded against command verbs,
+>   `then`/`end`, and string literals (`on click set x to changes` stays a
+>   handler); the body follows the `live` path. `whenSchema` carries a new
+>   `structuralOnly` flag: registered (R1 contract, syntax table, validators)
+>   but NO generated pattern, so the temporal patterns keep winning for
+>   `when click …`. The watched expression rides in `condition`; en `raw` is
+>   the byte-faithful source slice (the tokenizers lex the possessive inside
+>   parens with a stray quote), a foreign span is re-joined from normalized
+>   tokens with the or-word normalized by surface (`parser/utils/or-words.ts`,
+>   the parser's ex-private `OR_KEYWORDS`) — `$a oder $b` is what the engine
+>   rejects.
+> - **Render** emits `<when-word> <expr> <changes-word>` (`featureHeader`); the
+>   AST builder emits `[condition, block]`.
+> - **Measured:** whole-corpus pre/post diff = exactly the 48 target rows, zero
+>   collateral (3984 rows). Wrapped render gate 3557 → **3562 / 3588 (99.28%)**
+>   — the five allowlisted pairs cleared, zero new; bare unchanged. The
+>   11-signal `--regression` gate is GREEN against the stricter reference (the
+>   #970 shape again: every language re-scored, none below tolerance); both
+>   canonical gates green.
+> - **Still open, named:** `when-value-changes`'s en raw is engine-INVALID —
+>   `` `$${it}` `` is an upstream lexer limitation (`"$" + it` and
+>   `` `USD ${it}` `` are valid) — so it is outside R4's denominator and
+>   `engine-verification.json` already records `hyperscript: false` against
+>   the row's `engine: 'both'` claim. **Correcting the row was tried and
+>   REVERTED, measured:** with `put "$" + it into me` the en side is valid
+>   (engines → `both`), which pulls the pattern INTO R4's denominator and
+>   exposes **19 of 23** foreign translations as engine-invalid — the i18n
+>   transformer's possessive-inside-parens rendering (`valor de ( #price *
+>   valor ) de #qty`, ja `(#priceの 値 * #qtyの 値)`, tr `( #price ın değer …`);
+>   only he/it/ms/tl survive, and only because they leave `'s` in place. That
+>   is a tolerance-0 allowlist growing by 19 — an owner decision, and an
+>   **i18n** arc (render `X's value` inside parens faithfully), not this one.
+>   The SOV prefix-head order and zh `何时` are native-review questions, not
+>   parser ones.
+> - **Fixed in the same arc — pl `live` (`na-żywo`).** Same block-keyword
+>   family, different mechanism: a tokenizer defect. Hyphen-joined profile
+>   keywords split at `-` in EVERY language (es `en-vivo` → `en`+`-`+`vivo`
+>   survived only because `vivo` is a `live` alternative; pl's `na` is its
+>   destination marker, so the render re-parsed as a handler). The primary
+>   cannot be swapped for the dictionary's `żywy` — it is the surface behind
+>   the localized `hx-na-żywo` attribute — so the framework base tokenizer's
+>   multi-word walk now takes hyphen-joined keywords whole
+>   (`isHyphenatedWord`; leading-hyphen suffix alternatives like qu `-kama`
+>   excluded). Whole-corpus diff for that change alone: **zero rows moved**;
+>   the two pl pairs cleared; the `feature-block-render` pl pin promoted.
+
 ## Where we are (2026-07-20 baseline `82fb5827` · post pick-text-range arc 3 · `browser-priority`)
 
 > ## 🎉 THE LAUNCH BAR IS COMPLETE (session 14 / L7)
@@ -2786,7 +2858,7 @@ Most map to families this file had already named:
 | positional/range qualifier tails (`0 to 5 of #note`, `in closest <form/>`, `for me`) | 70 | pick-text-range ×23, take-class-from-siblings ×23, first-in-parent ×17, last-in-collection ×6, toggle-aria-expanded ×1 | pick = named R1 deferral (Family F); rest NEW |
 | loop-head condition/keyword tails (`< 10`, `with index`, zh `forever`, id `_`-compound split) | 51 | repeat-while ×24, stagger-animation ×24, repeat-until-event ×2, repeat-forever ×1 | NEW — named here |
 | SOV/en trailing in-me destination glue | 51 | form-disable-on-submit ×19 (en-symmetric!), input-validation ×6, fetch-loading-state ×6, tabs-basic ×5, tabs-content ×5, if-empty ×5, repeat-times ×5 | = named R3 family (§ value-bug families) |
-| reactive `when … changes` heads | 48 | when-value-changes ×24, when-multiple-changes ×24 | = named reactive `on.event` deferral |
+| reactive `when … changes` heads | ~~48~~ **0** | when-value-changes ×24, when-multiple-changes ×24 | **RESOLVED — reactive-when arc (2026-08-27)**: a real `when` fold in all 24 languages; was the named reactive `on.event` deferral's `when` half |
 | set source-qualifier tails (`from #firstName` on bind rows) | 44 | two-way-binding ×22, computed-value ×22 | NEW — named here |
 | show/hide style-capture (`with *opacity`) | 38 | show-with-transition ×19, hide-with-transition ×19 | = named Batch-3 leftover |
 | go-url destination (`"/page"`) | ~~18~~ | go-url ×18 | **RESOLVED — #680** (semantic go-url capture, x24; snapshot predates #680, resweep to zero the count). Traditional/interchange sibling resolved 2026-07-14, `HANDOFF_go-interchange-inference.md` |
@@ -3418,7 +3490,8 @@ value-bug families"), F6 **wontfix** (documented), F7 **re-filed**:
    **≥ 0.9907** — they no longer trail the SVO languages (lowest are th 0.9845 / ms / de / fr).
 6. ~~**The convergent next arc — SOV bare-command / event-anchor disambiguation.**~~ **DONE**
    (increment note below, 2026-06-17). The follow-on R1 work continued through #637/#638;
-   the last standing R1 deferral is the reactive `on.event` rows — pick range-role modeling
+   the last standing R1 deferral is the reactive `on.event` rows (its `when … changes` half
+   cleared 2026-08-27; hi window-resize + qu announce/on-custom-event remain) — pick range-role modeling
    (Family F) was cleared by pick-text-range arc 3, 2026-07-20 (see the post-launch track
    at the top of this doc).
 

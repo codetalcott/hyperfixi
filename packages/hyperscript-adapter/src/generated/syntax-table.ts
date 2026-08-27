@@ -73,6 +73,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   trigger: [['event', ''], ['destination', 'on']],
   unless: [['condition', '']],
   wait: [['duration', '']],
+  when: [['condition', '']],
   while: [['condition', '']],
   worker: [],
 };

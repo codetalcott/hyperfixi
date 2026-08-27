@@ -39,6 +39,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
+import { OR_WORDS } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
@@ -1074,10 +1075,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const t = arr[i];
         const surface = t.value;
         const norm = (t.normalized ?? t.value).toLowerCase();
-        const isOr =
-          norm === 'or' ||
-          SemanticParserImpl.OR_KEYWORDS.has(surface) ||
-          SemanticParserImpl.OR_KEYWORDS.has(norm);
+        const isOr = norm === 'or' || OR_WORDS.has(surface) || OR_WORDS.has(norm);
         if (!isOr) continue;
         const evTok = arr[i + 1];
         const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
@@ -6265,32 +6263,6 @@ export class SemanticParserImpl implements ISemanticParser {
    * "Or" conjunction keywords across languages for multiple events.
    * Maps lowercase keyword → true. Used to detect "click or keydown" patterns.
    */
-  private static readonly OR_KEYWORDS = new Set([
-    'or', // EN
-    'أو', // AR
-    'o', // ES, TL
-    'ou', // PT, FR
-    'oder', // DE
-    'atau', // ID
-    'atau', // MS (same as ID)
-    '或', // ZH
-    'または', // JA
-    '또는', // KO
-    'veya', // TR
-    'অথবা', // BN
-    'utaq', // QU
-    'au', // SW
-    'або', // UK
-    'или', // RU
-    'hoặc', // VI
-    'lub', // PL
-    'או', // HE
-    'หรือ', // TH
-    'o', // IT
-    'या', // HI (tokenizes as a bare identifier; matched here by surface form)
-    'অথবা', // BN (idem)
-  ]);
-
   /**
    * Extract standalone event modifiers from the beginning of input.
    * Returns the modifiers (if any) and the remaining input string.
@@ -6770,7 +6742,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (!orToken) break;
 
       const orLower = (orToken.normalized || orToken.value).toLowerCase();
-      if (!SemanticParserImpl.OR_KEYWORDS.has(orLower)) {
+      if (!OR_WORDS.has(orLower)) {
         tokens.reset(mark);
         break;
       }
