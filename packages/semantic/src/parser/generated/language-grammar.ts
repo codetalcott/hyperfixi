@@ -628,6 +628,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
     'de',
     'it',
     'ja',
+    'zh',
     'ko',
     'ar',
     'tr',

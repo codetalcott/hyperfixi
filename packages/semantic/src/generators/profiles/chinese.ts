@@ -131,6 +131,11 @@ export const chineseProfile: LanguageProfile = {
     // the comparison operator — no non-operator collision (cf. §7r ko/ru/uk).
     matches: { primary: '匹配', normalized: 'matches' },
     repeat: { primary: '重复', normalized: 'repeat' },
+    // `repeat forever` loop keyword — same as de/fr/ar/es: the corpus leaves
+    // `forever` English, and without the keyword the bare `重复 forever`
+    // (exactly what the renderer emits) did not parse at all — zh was the
+    // only bare repeat-forever row left on the bare-render allowlist.
+    forever: { primary: 'forever', normalized: 'forever' },
     for: { primary: '为', normalized: 'for' },
     while: { primary: '持续', normalized: 'while' },
     continue: { primary: '继续', normalized: 'continue' },
