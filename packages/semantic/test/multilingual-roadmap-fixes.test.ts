@@ -14260,3 +14260,27 @@ describe('en→foreign render residual: unless round trips (SOV compound shape +
     expect(collectActions(back).has('unless')).toBe(true);
   });
 });
+
+describe('a fronted personal reference is never an event head (bn/hi destination rows)', () => {
+  // The renderer fronts a command's reference destination in postpositional
+  // languages (`add .highlight to me` → bn `আমি তে .highlight কে যোগ`), and the
+  // event stage's `{event} <marker>` pattern read `আমি তে` as `on me`: the junk
+  // handler swallowed the real destination and the command re-defaulted it to
+  // an implicit `me` the strict scorers rightly ignore. tokenLooksLikeEvent
+  // now rejects me/it/you for the event role.
+  const roleOf = (n: any, r: string) => (n?.roles instanceof Map ? n.roles.get(r) : undefined);
+
+  it('[bn] bare `add .highlight to me` keeps its REAL destination', () => {
+    const node = parse('আমি তে .highlight কে যোগ', 'bn') as any;
+    expect(node.kind).toBe('command');
+    expect(node.action).toBe('add');
+    const dest = roleOf(node, 'destination');
+    expect(dest).toMatchObject({ type: 'reference', value: 'me' });
+    expect((dest as { implicit?: boolean }).implicit).not.toBe(true);
+  });
+
+  it('[bn] a real event head still parses as a handler', () => {
+    const node = parse('ক্লিক তে .highlight কে যোগ', 'bn') as any;
+    expect(node.kind).toBe('event-handler');
+  });
+});
