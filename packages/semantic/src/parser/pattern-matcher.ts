@@ -1107,7 +1107,18 @@ export class PatternMatcher {
    * so each language's rendered keyword (ja もし, tr eğer, …) is covered.
    * `init` is deliberately absent — `trigger init` is a real corpus event.
    */
-  private static readonly STRUCTURAL_NEVER_EVENT = new Set(['if', 'unless', 'else', 'end', 'then']);
+  private static readonly STRUCTURAL_NEVER_EVENT = new Set([
+    'if',
+    'unless',
+    'else',
+    'end',
+    'then',
+    // A loop's while-word is a clause head, never an event name: hi's fused
+    // `जब तक` normalizes to `while`, and without this row `event-hi-bare`
+    // captured it as the handler event, hiding the SOV repeat-while head
+    // (`जब तक {condition} दोहराएं`) it introduces.
+    'while',
+  ]);
 
   /**
    * Reference bases that can lead a fused-dot property access (`it.value`,
