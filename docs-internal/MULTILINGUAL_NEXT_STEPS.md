@@ -60,6 +60,49 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27l — seventh burn-down: th marked `set`'s TARGET instead of
+> its value, in every th `set` row in the corpus. 83 → 82.**
+>
+> `setSchema` is the one command whose operands are inverted — the destination
+> (the thing being written) is positional and the patient (the value) takes the
+> `to` modifier — so every language declares the arrangement explicitly in
+> `markerOverride`. **th was absent from both maps** and fell to its profile
+> defaults (`destination: 'ใน'`, `patient: ''`), which put the preposition on the
+> wrong operand and left the value bare:
+>
+> ```
+> en    set @disabled to true
+> th    ตั้ง ใน @disabled จริง      ← marker on the target, value unmarked
+> i18n  ตั้ง @disabled ใน จริง      ← the transformer's own form
+> ```
+>
+> Every th `set` row in the corpus carried that — set-attribute, set-style,
+> set-opacity, set-transform, set-text-basic, tabs-aria, breakpoint-command,
+> input-char-count, input-clear, the three behaviors. Most survived it, because
+> the parse recovers a bare target and a bare value; the one it broke is
+> `set-color-variable`, whose destination is a property PATH — inside an event
+> handler the fused parse took `ของ` (the genitive linker) as the value and
+> dropped the path (`set *background-color to ของ`). That is the last row of the
+> family 27k opened.
+>
+> The override reuses th's own `ใน`, the destination preposition its profile
+> already declares, moved onto the value — exactly as ja/ko/bn/qu/tl already do
+> ("value gets destination marker"). Nothing was authored; the i18n dictionary
+> and the th profile both already had it.
+>
+> **Kept rows 83 → 82 — 1 cleared, ZERO newly kept**; `set-color-variable` is
+> gone from the ratchet and from the wrapped render allowlist entirely (3565 →
+> 3566/3588, 99.36 → 99.39%). No syntax-table drift. 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,273 + 13 new, adapter 366, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **Named residual, found by the same probe and NOT fixed here:** it, pl, ru and
+> uk have the identical missing-override inversion — `impostare in @disabled
+> vero`, `ustaw do @disabled prawda`, `установить в @disabled истина`. They
+> ROUND-TRIP, so no gate sees them and none is a kept row; it is a native-idiom
+> defect on the surface only, and the four belong to whoever next works the
+> bare-render idiom track rather than this ratchet.
+
 > **Update 2026-08-27k — sixth burn-down: a `*`-sigil property read the
 > possessive BACKWARDS in seven languages. 90 → 83.**
 >
