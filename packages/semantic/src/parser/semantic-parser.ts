@@ -4922,6 +4922,31 @@ export class SemanticParserImpl implements ISemanticParser {
   /**
    * Known event names for detection (common DOM events).
    */
+
+  /**
+   * Whether the ENGLISH tokenizer classifies `word` as a keyword — which is
+   * exactly how English decides a handler event is a `literal` rather than an
+   * `expression` (see buildEventHandler). Memoized: this runs once per handler
+   * built, and the answer is a property of the word alone.
+   */
+  private static readonly enEventKeywordCache = new Map<string, boolean>();
+
+  private static isEnEventKeyword(word: unknown): boolean {
+    if (typeof word !== 'string') return false;
+    const key = word.toLowerCase();
+    const cached = SemanticParserImpl.enEventKeywordCache.get(key);
+    if (cached !== undefined) return cached;
+    let isKeyword = false;
+    try {
+      const tokens = tokenizeInternal(key, 'en').tokens;
+      isKeyword = tokens.length === 1 && tokens[0]?.kind === 'keyword';
+    } catch {
+      isKeyword = false;
+    }
+    SemanticParserImpl.enEventKeywordCache.set(key, isKeyword);
+    return isKeyword;
+  }
+
   private static readonly KNOWN_EVENTS = new Set([
     'click',
     'dblclick',
@@ -5598,7 +5623,14 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     return createEventHandler(
-      { type: 'literal', value: eventName },
+      // Typed the way English types a handler event — by the token KIND of its
+      // name. See `isEnEventKeyword` and the alignment in buildEventHandler:
+      // this extraction is a separate construction site and had the same
+      // unconditional-literal bug (ko eventsource-basic / socket-basic, whose
+      // `message` head is an identifier in English and so an EXPRESSION there).
+      SemanticParserImpl.isEnEventKeyword(eventName)
+        ? { type: 'literal', value: eventName }
+        : { type: 'expression', raw: eventName },
       body,
       undefined,
       metadata,

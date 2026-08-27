@@ -60,6 +60,49 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27n — ninth burn-down: a handler's event was typed
+> `literal` unconditionally outside English. 63 → 61.**
+>
+> English types `on.event` by the TOKEN KIND of the event name: a word its
+> tokenizer knows (`click`, `mousemove`, `keydown`, `pointerdown`) is a keyword
+> and becomes a `literal`; anything else (`message`, `hello`, `transitionend`,
+> `success`) is an identifier and becomes an `expression`.
+> `trySOVEventExtraction` bound its event as a literal unconditionally, so every
+> non-keyword event name came back one type off the reference it is scored
+> against:
+>
+> ```
+> en   eventsource ChatStream from /events / on message / put it into #messages
+> ko   eventsource ChatStream / message 을 에 그것 을 #messages 에 넣다
+> ko → eventsource ChatStream / on message put it into #messages   ← identical…
+>      ref roles : on.event:expression
+>      got roles : on.event:literal                                ← one type off
+> ```
+>
+> Every other signal reads 1.0 on that — same actions, same values, and the
+> English round-trip matches byte for byte. Only R1, which compares
+> `action.role:type`, sees it.
+>
+> **Keyed on the EN TOKENIZER, not on `KNOWN_EVENTS`** — and that distinction was
+> measured, not assumed. The curated set omits `mousemove` and `pointerdown`,
+> which English's own tokenizer calls keywords, so keying the rule on it re-typed
+> events English itself calls literals: **12 failures**, including the en-side
+> `on-handler event params` pin and four `analysis` rows. The tokenizer is the
+> thing English actually consults.
+>
+> **Kept rows 63 → 61 — 2 cleared, ZERO newly kept** (eventsource-basic ko,
+> socket-basic ko; both are a handler head inside a FEATURE block, which reaches
+> the SOV extraction rather than the pattern path). Wrapped render 3568/3588
+> (99.44%). 11-signal gate green, `test:canonical` 5/5, semantic 9,402 + 37 new,
+> vocab green, whole-monorepo `test:check` green.
+>
+> **Second redundant-edit catch this session.** The same alignment was written
+> into `buildEventHandler` first; it reddened NOTHING under mutation and moved no
+> corpus row when removed, because the pattern path already types those events
+> correctly. Only the SOV extraction had the bug. Same lesson as 27m's fused-walk
+> entry: write the fix, then drop each piece and re-measure — a plausible-looking
+> edit next to a real one is invisible until you do.
+
 > **Update 2026-08-27m — eighth burn-down: a `js … end` block was lossy five
 > different ways, and none of them was visible to any fidelity metric. 82 → 63.**
 >
