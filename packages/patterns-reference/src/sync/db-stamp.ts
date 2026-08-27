@@ -16,6 +16,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { resolveRenderer } from './renderer-choice';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
@@ -74,6 +75,10 @@ export function computeDbInputHash(dbPath: string): string {
   const root = repoRootFromDbPath(dbPath);
   const files = dbInputFiles(dbPath);
   const h = createHash('sha256');
+  // The renderer that wrote the foreign rows is a DB input too: the same source
+  // produces a different corpus under PATTERNS_RENDERER=semantic, and a gate run
+  // expecting the default must see that DB as stale, not fresh.
+  h.update(`renderer=${resolveRenderer(process.env.PATTERNS_RENDERER)}\n`);
   h.update(`files:${files.length}\0`);
   for (const f of files) {
     h.update(relative(root, f).split(sep).join('/'));

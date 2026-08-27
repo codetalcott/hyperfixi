@@ -1344,7 +1344,7 @@ jobs:
       #     `hyperfixi.translate` and the VS Code badge are routinely handed — was
       #     covered by nothing. 37 of its 69 known failures are invisible to the
       #     wrapped gate, and four of those do not parse back at all.
-      # All four self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
+      # All five self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
       # `test:canonical` sets — after the populate step above.
       - name: Canonical-validity + render-fidelity gates (en, foreign→en, en→foreign, bare)
         run: npm run test:canonical --prefix packages/testing-framework

@@ -15,16 +15,24 @@
 
 import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { dirname, join, resolve } from 'path';
+import { pathToFileURL } from 'node:url';
 import {
   KNOWN_PROFILES,
   calculateTranslationConfidence,
+  parseSemantic,
+  render as semanticRender,
+  translate as semanticTranslate,
   type LanguageProfile,
 } from '@lokascript/semantic';
+import { scoreNodes } from '@lokascript/semantic/fidelity';
 import {
-  GrammarTransformer,
-  getProfile as getGrammarProfile,
-} from '@lokascript/i18n';
+  DEFAULT_RENDERER,
+  noWorseThan,
+  resolveRenderer,
+  type CandidateScore,
+} from '../src/sync/renderer-choice';
+import { GrammarTransformer, getProfile as getGrammarProfile } from '@lokascript/i18n';
 import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
 import { writeDbStamp } from '../src/sync/db-stamp';
 
@@ -40,6 +48,50 @@ const dryRun = args.includes('--dry-run');
 const verbose = args.includes('--verbose');
 const dbPathIndex = args.indexOf('--db-path');
 const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1] : DEFAULT_DB_PATH;
+
+/**
+ * Which renderer writes the foreign rows.
+ *
+ *   i18n     — @lokascript/i18n GrammarTransformer over the masked English
+ *              surface (the historical writer; the default until 2026-08-27).
+ *   semantic — @lokascript/semantic `translate()` = render(parse_en(en), L),
+ *              the function every runtime surface (MCP translate_code,
+ *              hyperfixi.translate, core's MultilingualHyperscript) already uses.
+ *              Falls back to the i18n path for a row it cannot render.
+ *   best     — render with BOTH, parse each back in L, score each against the
+ *              English reference, and store the semantic row unless the i18n
+ *              row beats it on some signal. Signals: the ratchet's own scorers
+ *              (scoreNodes — R0 action recall, multiset recall, precision, R1
+ *              role fidelity, R3 value recall) plus the English ROUND-TRIP
+ *              (render(parse_L(row), 'en') equal to the reference's own
+ *              English render), which is what catches a `put … before` that
+ *              re-renders as `put … into` — role-identical, execution-different,
+ *              the R2 class the scorers cannot see — and R4: the candidate's
+ *              English render must parse on the real hyperscript.org engine
+ *              whenever the i18n row's does. Ties go to semantic, the renderer
+ *              the runtime uses. By construction a `best` corpus is never worse
+ *              than the i18n one on any ratchet signal; the gates still decide.
+ *
+ * Read from PATTERNS_RENDERER (env) or --renderer <name>. The choice is folded
+ * into the DB provenance stamp (src/sync/db-stamp.ts), so a DB written by one
+ * renderer is reported STALE to a gate run expecting the other.
+ */
+const rendererIndex = args.indexOf('--renderer');
+const renderer = resolveRenderer(
+  (rendererIndex >= 0 && args[rendererIndex + 1]) ||
+    process.env.PATTERNS_RENDERER ||
+    DEFAULT_RENDERER
+);
+// The stamp reads the env, so a `--renderer` flag must be visible to it too.
+process.env.PATTERNS_RENDERER = renderer;
+let semanticRendered = 0;
+let semanticFallbacks = 0;
+/** `best` only: rows where the i18n surface out-scored the semantic one. */
+let bestKeptI18n = 0;
+/** `best` only: rows with no semantic reference at all (English does not parse). */
+let bestNoReference = 0;
+/** Why the last `best` row went the way it did — read by the method label. */
+let lastBestChoice: 'semantic' | 'i18n-outscored' | 'i18n-no-reference' = 'semantic';
 
 // =============================================================================
 // Derive language data from @lokascript/semantic profiles
@@ -75,12 +127,16 @@ const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.from
     // Extract possessive adjective translations (my, its, your)
     // Needed for dot notation patterns like my.textContent → mi.textContent
     const englishPossessives: Record<string, string> = {
-      me: 'my', it: 'its', you: 'your',
+      me: 'my',
+      it: 'its',
+      you: 'your',
     };
 
     // specialForms maps ref → target possessive adj (e.g., Spanish: { me: 'mi' })
     if ((profile as any).possessive?.specialForms) {
-      for (const [ref, targetPossessive] of Object.entries((profile as any).possessive.specialForms)) {
+      for (const [ref, targetPossessive] of Object.entries(
+        (profile as any).possessive.specialForms
+      )) {
         const enPoss = englishPossessives[ref];
         if (enPoss && typeof targetPossessive === 'string' && !targetPossessive.includes(' ')) {
           keywords[enPoss] = targetPossessive;
@@ -159,6 +215,70 @@ function keywordSubstitute(code: string, language: string): string {
   return translated;
 }
 
+// =============================================================================
+// `best` renderer: pick per row by the ratchet's own scorers + English round-trip
+// =============================================================================
+
+type EngineValidate = (src: string) => string[];
+let engineValidate: EngineValidate | null = null;
+
+/**
+ * Load the real `hyperscript.org` parser headlessly — the same recipe as
+ * testing-framework's `loadCanonicalParser` (prebuilt ESM by file URL, no DOM
+ * shim). Grammar errors come back in `parse().errors`; tokenizer throws (an
+ * unknown non-ASCII character) and `js` bodies throw — both fold into one array.
+ */
+async function loadEngineValidator(): Promise<EngineValidate | null> {
+  try {
+    const dir = dirname(require.resolve('hyperscript.org')); // …/hyperscript.org/dist
+    const hs = (await import(pathToFileURL(join(dir, '_hyperscript.esm.js')).href)).default;
+    return (src: string) => {
+      try {
+        return (hs.parse(src)?.errors ?? []).map((e: { message: string }) => e.message);
+      } catch (e) {
+        return ['threw: ' + (e as Error).message.split('\n')[0]];
+      }
+    };
+  } catch (error) {
+    console.warn(`  [best] hyperscript.org engine unavailable — R4 not consulted (${error})`);
+    return null;
+  }
+}
+
+function safeParseNode(code: string, language: string): unknown | null {
+  try {
+    return parseSemantic(code, language)?.node ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeRenderEn(node: unknown): string | null {
+  try {
+    return semanticRender(node as Parameters<typeof semanticRender>[0], 'en');
+  } catch {
+    return null;
+  }
+}
+
+/** Score a foreign surface against the parsed English reference; null = no parse. */
+function scoreSurface(
+  reference: unknown,
+  referenceEn: string | null,
+  surface: string,
+  language: string
+): CandidateScore | null {
+  const node = safeParseNode(surface, language);
+  if (!node) return null;
+  const back = safeRenderEn(node);
+  return {
+    scores: scoreNodes(reference, node).scores,
+    roundTrip: referenceEn !== null && back !== null && back === referenceEn,
+    engineValid:
+      engineValidate === null ? undefined : back !== null && engineValidate(back).length === 0,
+  };
+}
+
 /**
  * Generate a translated version of hyperscript code for a given language.
  * Uses GrammarTransformer for proper word order (SOV/VSO) when available,
@@ -168,7 +288,60 @@ function translateHyperscript(code: string, language: string): string {
   if (language === 'en') {
     return code;
   }
+  if (renderer === 'best') {
+    const reference = safeParseNode(code, 'en');
+    const referenceEn = reference ? safeRenderEn(reference) : null;
+    let semanticSurface: string | null = null;
+    try {
+      const rendered = semanticTranslate(code, 'en', language);
+      if (rendered && rendered.trim().length > 0) semanticSurface = rendered;
+    } catch {
+      semanticSurface = null;
+    }
+    const i18nSurface = i18nTranslate(code, language);
+    if (!reference) {
+      // Semantic cannot parse the ENGLISH — a parser-coverage gap, not a
+      // rendering loss. Labelled apart so the kept-row ratchet's burn-down can
+      // tell the two classes apart (the five `component-*` patterns at the flip).
+      bestNoReference++;
+      lastBestChoice = 'i18n-no-reference';
+      return i18nSurface;
+    }
+    if (semanticSurface !== null) {
+      const semScore = scoreSurface(reference, referenceEn, semanticSurface, language);
+      const i18nScore = scoreSurface(reference, referenceEn, i18nSurface, language);
+      if (noWorseThan(semScore, i18nScore)) {
+        semanticRendered++;
+        lastBestChoice = 'semantic';
+        if (verbose) console.log(`  [best→semantic] ${language}: "${semanticSurface}"`);
+        return semanticSurface;
+      }
+      if (verbose) console.log(`  [best→i18n] ${language}: "${i18nSurface}"`);
+    }
+    bestKeptI18n++;
+    lastBestChoice = 'i18n-outscored';
+    return i18nSurface;
+  }
+  if (renderer === 'semantic') {
+    // Unmasked on purpose: the semantic parser keeps string literals, URLs and
+    // selectors typed, and the render-fidelity gate scores exactly this call.
+    try {
+      const rendered = semanticTranslate(code, 'en', language);
+      if (rendered && rendered.trim().length > 0) {
+        semanticRendered++;
+        if (verbose) console.log(`  [semantic] ${language}: "${code}" -> "${rendered}"`);
+        return rendered;
+      }
+    } catch (error) {
+      if (verbose) console.log(`  [semantic-fallback] ${language}: ${error}`);
+    }
+    semanticFallbacks++;
+  }
+  return i18nTranslate(code, language);
+}
 
+/** The historical writer: GrammarTransformer over the masked surface. */
+function i18nTranslate(code: string, language: string): string {
   // Mask non-translatable spans (string literals, URLs, HTML inner text,
   // bracket expressions, component directives) before handing the surface
   // to the transformer or keyword substituter. Both treat input as a flat
@@ -191,7 +364,9 @@ function translateHyperscript(code: string, language: string): string {
     } catch (error) {
       // Fall back to keyword substitution if transformation fails
       if (verbose) {
-        console.log(`  [fallback] ${language}: grammar transform failed (${error}), using keywords`);
+        console.log(
+          `  [fallback] ${language}: grammar transform failed (${error}), using keywords`
+        );
       }
       return unmaskSpans(keywordSubstitute(masked, language), spans);
     }
@@ -214,7 +389,9 @@ function getConfidence(language: string, translatedCode: string): number {
     // Use actual confidence if parsing succeeded, minimum 0.5 otherwise
     const confidence = result.parseSuccess ? result.confidence : 0.5;
     if (verbose) {
-      console.log(`  [confidence] ${language}: ${confidence.toFixed(2)} (parse: ${result.parseSuccess})`);
+      console.log(
+        `  [confidence] ${language}: ${confidence.toFixed(2)} (parse: ${result.parseSuccess})`
+      );
     }
     return confidence;
   } catch (error) {
@@ -230,7 +407,7 @@ function getConfidence(language: string, translatedCode: string): number {
 // =============================================================================
 
 async function syncTranslations() {
-  console.log('Syncing translations with grammar transformation...');
+  console.log(`Syncing translations with the ${renderer} renderer...`);
   console.log(`Database path: ${dbPath}`);
   if (dryRun) {
     console.log('DRY RUN - no changes will be made\n');
@@ -244,6 +421,13 @@ async function syncTranslations() {
     console.error(`Database not found: ${dbPath}`);
     console.error('Run: npx tsx scripts/init-db.ts --force');
     process.exit(1);
+  }
+
+  if (renderer === 'best') {
+    engineValidate = await loadEngineValidator();
+    console.log(
+      `  [best] hyperscript.org engine: ${engineValidate ? 'loaded (R4 consulted)' : 'unavailable'}`
+    );
   }
 
   const db = new Database(dbPath);
@@ -287,12 +471,16 @@ async function syncTranslations() {
       const isTranslatable = example.translatable !== 0;
 
       for (const [langCode, langInfo] of Object.entries(LANGUAGES)) {
+        const before = semanticRendered;
         const translated = isTranslatable
           ? translateHyperscript(example.raw_code, langCode)
           : example.raw_code;
+        const semanticSurface = semanticRendered > before ? translated : null;
         const confidence = isTranslatable
           ? getConfidence(langCode, translated)
-          : (langCode === 'en' ? 1.0 : 0.5);
+          : langCode === 'en'
+            ? 1.0
+            : 0.5;
         const verifiedParses = langCode === 'en' ? 1 : 0;
 
         // Track which method was used
@@ -310,9 +498,13 @@ async function syncTranslations() {
           ? 'non-translatable-identity'
           : langCode === 'en'
             ? 'original'
-            : hasGrammarProfile
-              ? 'grammar-transform'
-              : 'keyword-substitute';
+            : (renderer === 'semantic' || renderer === 'best') && translated === semanticSurface
+              ? 'semantic-render'
+              : renderer === 'best' && lastBestChoice === 'i18n-no-reference'
+                ? 'grammar-transform-no-reference'
+                : hasGrammarProfile
+                  ? 'grammar-transform'
+                  : 'keyword-substitute';
 
         // Check if translation exists
         const existing = checkExists.get(example.id, langCode) as { id: number } | undefined;
@@ -366,6 +558,17 @@ async function syncTranslations() {
     console.log(`  - Skipped: ${skipped}`);
     console.log(`  - Orphan language rows deleted: ${orphansDeleted}`);
     console.log(`  - Grammar transforms: ${grammarUsed}`);
+    if (renderer === 'semantic') {
+      console.log(`  - Semantic renders: ${semanticRendered}`);
+      console.log(`  - Semantic fallbacks to i18n: ${semanticFallbacks}`);
+    }
+    if (renderer === 'best') {
+      console.log(`  - Semantic renders chosen: ${semanticRendered}`);
+      console.log(`  - i18n rows kept (i18n out-scored semantic): ${bestKeptI18n}`);
+      console.log(
+        `  - i18n rows kept (no semantic reference — English does not parse): ${bestNoReference}`
+      );
+    }
     console.log(`  - Keyword substitutes: ${keywordUsed}`);
 
     // Print stats

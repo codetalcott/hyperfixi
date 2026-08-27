@@ -43,7 +43,18 @@ npm run populate
 
 # Individual steps
 npm run db:init:force      # Initialize with 53 patterns
-npm run sync:translations  # Generate 689 translations
+npm run sync:translations  # Regenerate every foreign row (default writer: `best`)
+
+# Which renderer writes the foreign rows (PATTERNS_RENDERER env, or --renderer on
+# sync-translations). `best` is the default: semantic's render(parse_en(en), L)
+# unless @lokascript/i18n's GrammarTransformer beats it on a ratchet signal
+# (scoreNodes R0/R1/R3, the English round-trip, engine validity); `i18n` and
+# `semantic` force one writer. The choice is folded into the DB provenance stamp,
+# so a DB written by one renderer reads STALE to a gate run expecting another.
+# Rows the `best` writer leaves to i18n are labelled `grammar-transform` and are
+# ratcheted shrink-only by testing-framework's `i18n-kept-rows` gate.
+PATTERNS_RENDERER=i18n npm run populate       # the pre-2026-08-27 corpus, for A/B
+npx tsx ../testing-framework/tools/probe-render-flip.ts --canonical   # both renderers vs the en reference
 npm run seed:llm           # Generate 212 LLM examples
 npm run validate:fix       # Validate and update verified_parses
 npm run verify:engines     # Re-verify the engine column (see below)

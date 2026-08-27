@@ -72,6 +72,29 @@ describe('db-stamp provenance guard', () => {
     expect(computeDbInputHash(dbPath)).not.toBe(h1);
   });
 
+  it('folds the renderer choice in: a PATTERNS_RENDERER=i18n DB is stale to a default (best) gate run', () => {
+    const { root, dbPath } = makeFakeRepo();
+    roots.push(root);
+    const prev = process.env.PATTERNS_RENDERER;
+    try {
+      delete process.env.PATTERNS_RENDERER;
+      const h1 = computeDbInputHash(dbPath);
+      process.env.PATTERNS_RENDERER = 'best';
+      expect(computeDbInputHash(dbPath)).toBe(h1); // the default, spelled out
+      process.env.PATTERNS_RENDERER = 'i18n';
+      writeDbStamp(dbPath); // what a `PATTERNS_RENDERER=i18n npm run populate` leaves behind
+      expect(computeDbInputHash(dbPath)).not.toBe(h1);
+      expect(checkDbStamp(dbPath).status).toBe('ok'); // same variant → fresh
+      delete process.env.PATTERNS_RENDERER;
+      expect(checkDbStamp(dbPath).status).toBe('stale'); // default gate run → refused
+      process.env.PATTERNS_RENDERER = 'bogus';
+      expect(() => computeDbInputHash(dbPath)).toThrow(/Unknown renderer/);
+    } finally {
+      if (prev === undefined) delete process.env.PATTERNS_RENDERER;
+      else process.env.PATTERNS_RENDERER = prev;
+    }
+  });
+
   it('ignores .test.ts / .d.ts files (test churn must not flip freshness)', () => {
     const { root, dbPath } = makeFakeRepo();
     roots.push(root);
