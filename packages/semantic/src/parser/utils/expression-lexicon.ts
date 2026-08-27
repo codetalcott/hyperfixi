@@ -354,7 +354,14 @@ export interface PositionalRun {
 export function matchPositionalRun(
   tokens: readonly LanguageToken[],
   start: number,
-  profile: LanguageProfile | undefined
+  profile: LanguageProfile | undefined,
+  /**
+   * "The enclosing pattern requires this exact token next." Supplied by the role
+   * capture, which knows the pattern token following the slot it is filling; the
+   * raw-expression join has no pattern context and omits it. See the source
+   * clause below for what it disambiguates.
+   */
+  isMarkerOwedByPattern?: (token: LanguageToken | undefined) => boolean
 ): PositionalRun | null {
   const head = tokens[start];
   if (!head) return null;
@@ -420,7 +427,28 @@ export function matchPositionalRun(
     // (`hide closest .modal remove .modal-open from body`) the next clause's verb
     // (`remove`) would otherwise be swallowed as the source marker and the
     // following command lost.
-    !COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
+    !COMMAND_ACTION_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase()) &&
+    // Nor is it the marker the enclosing pattern is about to REQUIRE and would
+    // then be unable to find. A verb-final clause puts the positional phrase in
+    // a MARKED role, so the run's own `<marker> <selector>` window lands on the
+    // role marker that TERMINATES the run plus the NEXT role's value: bn
+    // `নিকটতম .card তে .expanded কে টগল` ("toggle .expanded on closest .card")
+    // read `তে .expanded` as "in .expanded", so `toggle-event-bn-sov`'s
+    // `[{destination} তে]` group lost its marker, the whole run fell into
+    // `{patient}`, and BOTH roles vanished — the same shape in ja/ko/tr/zh
+    // across the toggle/add/remove positional rows.
+    //
+    // Membership in LOCATIVE_SURFACES cannot decide this: 17 of 22 languages
+    // spell a role marker and their own locative alike, so gating on the table
+    // fixes ja and not ko. Ownership can, and the second half is what keeps it
+    // exact. tr's destination marker `e` lists `in` among its suffix
+    // alternatives, so in `sonuncu <.message/> in #chat e kaydırma` the run's
+    // English `in` LOOKS owed — but the real `e` sits right after `#chat`, so
+    // the pattern loses nothing by letting the run have its source clause.
+    // Refuse only when the marker is owed AND nothing after the source selector
+    // could satisfy the same requirement, which is precisely the case where
+    // consuming it strands the enclosing pattern.
+    !(isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(tokens[i + 2]) !== true)
   ) {
     // Marker is a locative keyword/particle (`in`/`from`/في/から) the English
     // runtime reads — normalize it; the source selector is code. Role markers
