@@ -1975,12 +1975,27 @@ export class SemanticParserImpl implements ISemanticParser {
           t.kind === 'conjunction' ||
           (t.kind === 'keyword' &&
             (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        // The scan-back below identifies the verb by its NORMALIZED form. That
+        // misses whenever the language's verb normalizes to something other
+        // than the action name: id `muat` normalizes to `load` (a synonym) and
+        // he `הבא` to `next` (an outright homograph — the word means both
+        // "next" and "fetch"). `verbIdx` stayed -1, no re-parse ran at all, and
+        // the `as {responseType}` tail this whole retry exists to reclaim was
+        // dropped from every he/id fetch row. The profile already carries the
+        // verb surface per command, so ask it rather than trusting the
+        // normalizer to agree with the schema's action name.
+        const verbSurfaces = new Set<string>();
+        {
+          const kw = tryGetProfile(language)?.keywords?.[actionName];
+          if (kw?.primary) verbSurfaces.add(kw.primary.toLowerCase());
+          for (const alt of kw?.alternatives ?? []) verbSurfaces.add(alt.toLowerCase());
+        }
         let verbIdx = -1;
         for (let k = pos - 1; k >= 0; k--) {
           const t = all[k];
           if (isClauseBoundary(t)) break; // don't cross into a previous clause
           const tn = ((t as { normalized?: string }).normalized ?? t.value).toLowerCase();
-          if (tn === actionName) {
+          if (tn === actionName || verbSurfaces.has(t.value.toLowerCase())) {
             verbIdx = k;
             break;
           }
