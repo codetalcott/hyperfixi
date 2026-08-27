@@ -882,7 +882,21 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // Particle/marker-based languages, OBJECT-first. Only `between` belongs
       // here: ja `#pickerの 値`, zh `#picker的 值`, ko/bn/hi/th alike, which is
       // what both the corpus and the of-possessive matcher expect.
+      //
+      // Gluing the marker onto the owner is only safe where the tokenizer can
+      // take it back off. ko/bn/hi/ja/zh split a trailing particle from the
+      // preceding word, so `#pickerর মান` tokenizes as `#picker` + `র` + `মান`.
+      // tl and vi declare NO `tokenization` block at all — no particle
+      // extraction of any kind — so the glued marker fused INTO the selector
+      // token: tl `#pickerng` came back as one selector, and vi split the
+      // marker itself, `#pickerc` + `ủa`. The possessive was unrecoverable, and
+      // neither surface is even well-formed in those languages, where the
+      // marker is a free word rather than a clitic. Space it there.
       if (marker && markerPosition === 'between') {
+        const tokenizerSplitsParticles = profile.tokenization !== undefined;
+        if (profile.usesSpaces && !tokenizerSplitsParticles) {
+          return `${objectStr} ${marker} ${property}`;
+        }
         return profile.usesSpaces
           ? `${objectStr}${marker} ${property}`
           : `${objectStr}${marker}${property}`;

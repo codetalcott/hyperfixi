@@ -2537,7 +2537,14 @@ export class PatternMatcher {
       !!profileMarker &&
       profileMarker !== "'s" &&
       possessiveToken.value === profileMarker &&
-      (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation') &&
+      // `identifier` belongs here alongside the clitic kinds: a language whose
+      // possessive marker is a FREE WORD (tl `ng`, vi `của`) tokenizes it as a
+      // plain identifier, not a particle, so the exact-value check above is the
+      // only thing that identifies it — and it is exact, against this profile's
+      // own declared marker.
+      (possessiveToken.kind === 'particle' ||
+        possessiveToken.kind === 'punctuation' ||
+        possessiveToken.kind === 'identifier') &&
       !markerRoleCollision;
     if (!isEnglishPossessive && !isProfilePossessive && !splitEnglishPossessive) {
       tokens.reset(mark);
