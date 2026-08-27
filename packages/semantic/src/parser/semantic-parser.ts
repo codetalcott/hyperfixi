@@ -1967,7 +1967,21 @@ export class SemanticParserImpl implements ISemanticParser {
       // `loopType:literal="times"` (which the fused capture mistypes as the number
       // under `loopType`) WITHOUT a body — gated below on the re-parse matching a
       // `-times` HEAD pattern, which the body-swallowing generated repeat never is.
-      if (!BLOCK_BODY_ACTIONS.has(actionName) || actionName === 'repeat') {
+      // `while` joins `repeat` in the block-body exception for one shape: the
+      // fused `while-event-<lang>-sov-simple` patterns (`{event} पर जब तक`)
+      // have no condition slot, so a rendered `on click जब तक {condition}
+      // {repeat-verb} …` handler captures a bare `while` with an implicit
+      // default and drops the condition. The clause re-parses through the
+      // HEAD-ONLY `repeat-<lang>-while-head` (the while-word IS the repeat
+      // head's first literal), which stops before the loop body — same
+      // no-body-swallow contract as the counted-loop heads. The swap below is
+      // gated on exactly that pattern id, so every other `while` shape keeps
+      // the #530 exclusion.
+      if (
+        !BLOCK_BODY_ACTIONS.has(actionName) ||
+        actionName === 'repeat' ||
+        actionName === 'while'
+      ) {
         const isVerbFirst = match.pattern.id.includes('verb-first');
         const all = tokens.tokens;
         const pos = tokens.position();
@@ -2210,7 +2224,17 @@ export class SemanticParserImpl implements ISemanticParser {
               (reparsed.length === 1 || (headOnlyPattern && reparsed.length > 1)) &&
               first &&
               first.kind === 'command' &&
-              first.action === actionName &&
+              // Same action — or the one sanctioned upgrade: a fused `while`
+              // whose clause re-parses as the head-only repeat while-head.
+              // The while-word is the head's first literal, so the same
+              // surface that fused as a bare `while` IS a `repeat while
+              // {condition}` — the canonical reading the en reference has.
+              (first.action === actionName ||
+                (actionName === 'while' &&
+                  first.action === 'repeat' &&
+                  /-while-head$/.test(
+                    (first as { metadata?: { patternId?: string } }).metadata?.patternId ?? ''
+                  ))) &&
               preservesFused &&
               headOnlyOk &&
               // Strictly-more: the re-parse must recover something the fused

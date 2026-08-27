@@ -270,6 +270,53 @@ function repeatWhileHead(
   };
 }
 
+/**
+ * Conditional loop HEAD, SOV order: `{while-word} {condition} {repeat-verb}` —
+ * the verb-final twin of {@link repeatWhileHead}. The SOV six had NO while
+ * head at all (the comment above deliberately scoped them out for the PARSE
+ * side, where the corpus's fronted while-phrase is captured by the event
+ * stage), which left the RENDER side without any pattern carrying a
+ * `condition` slot: `render(repeat-while, ja)` picked the generated repeat
+ * and emitted `while 繰り返し` — loopType leaked verbatim, condition dropped,
+ * in all six languages (the repeat-while rows of the render-fidelity and
+ * bare-render allowlists). Literal tokens carry the NATIVE surfaces (the
+ * tokenizers map each back to `while`/`repeat`), so the render is fully
+ * native and the round trip closes on exact-match alone.
+ */
+function repeatWhileHeadSOV(
+  language: string,
+  spec: { whileWord: string; verb: string }
+): LanguagePattern {
+  return {
+    id: `repeat-${language}-while-head`,
+    language,
+    command: 'repeat',
+    priority: 110,
+    template: {
+      format: `${spec.whileWord} {condition} ${spec.verb}`,
+      tokens: [
+        { type: 'literal', value: spec.whileWord },
+        { type: 'role', role: 'condition', expectedTypes: ['property-path', 'expression'] },
+        { type: 'literal', value: spec.verb },
+      ],
+    },
+    extraction: {
+      loopType: { default: { type: 'literal', value: 'while' } },
+    },
+  };
+}
+
+// While-word and repeat-verb surfaces match the i18n dictionaries' `while`
+// entries and the profiles' repeat verbs (the words the corpus rows carry).
+const SOV_WHILE_HEADS: Array<[string, { whileWord: string; verb: string }]> = [
+  ['ja', { whileWord: 'の間', verb: '繰り返し' }],
+  ['ko', { whileWord: '동안', verb: '반복' }],
+  ['tr', { whileWord: 'süresince', verb: 'tekrarla' }],
+  ['hi', { whileWord: 'जब तक', verb: 'दोहराएं' }],
+  ['bn', { whileWord: 'যতক্ষণ', verb: 'পুনরাবৃত্তি' }],
+  ['qu', { whileWord: 'kaykamaqa', verb: 'kutipay' }],
+];
+
 const WHILE_HEADS: Array<[string, { pre?: string[]; whileWord: string }]> = [
   ['en', { whileWord: 'while' }],
   ['es', { whileWord: 'mientras' }],
@@ -606,6 +653,9 @@ for (const [lang, spec] of SOV_FOR_BINDING_HEADS) {
 }
 for (const [lang, spec] of WHILE_HEADS) {
   addPattern(lang, repeatWhileHead(lang, spec));
+}
+for (const [lang, spec] of SOV_WHILE_HEADS) {
+  addPattern(lang, repeatWhileHeadSOV(lang, spec));
 }
 for (const [lang, spec] of VERB_FIRST_UNTIL_HEADS) {
   addPattern(lang, repeatUntilHeadVerbFirst(lang, spec));

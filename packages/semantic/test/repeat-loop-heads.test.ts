@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse } from '../src';
+import { parse, render } from '../src';
 
 type AnyNode = Record<string, any>;
 
@@ -221,5 +221,57 @@ describe('SOV fronted repeat-while fold (R1 post-cluster residue item 2)', () =>
     const node = parse('동안 #counter.innerText < 10 를 클릭 할 때 #counter 를 증가', 'ko') as AnyNode;
     expect(findRepeat(node)).toBeNull();
     expect(collectActions(node).has('increment')).toBe(true);
+  });
+});
+
+describe('SOV render while-heads (en→foreign render residual, repeat-while rows)', () => {
+  // The six SOV languages had NO while head at all — deliberately scoped out
+  // of WHILE_HEADS for the PARSE side (the corpus's fronted while-phrase is
+  // captured by the event stage) — which left the RENDER side with no pattern
+  // carrying a `condition` slot: `render(repeat-while, ja)` picked the
+  // generated repeat and emitted `while 繰り返し`, loopType leaked verbatim and
+  // the condition dropped, in all six languages (the repeat-while rows of the
+  // render-fidelity and bare-render allowlists). `repeatWhileHeadSOV`
+  // (patterns/repeat.ts) closes the round trip; each case fails without it.
+  const langs = ['ja', 'ko', 'tr', 'hi', 'bn', 'qu'];
+  const bareEn = 'repeat while #counter.innerText < 10 increment #counter wait 200ms end';
+
+  for (const lang of langs) {
+    it(`[${lang}] bare render carries the condition and parses back as repeat`, () => {
+      const ref = parse(bareEn, 'en') as AnyNode;
+      const out = render(ref as never, lang);
+      const back = parse(out, lang) as AnyNode;
+      const repeat = findRepeat(back);
+      expect(repeat).toBeTruthy();
+      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      expect(role(repeat!, 'loopType')).toMatchObject({ type: 'literal', value: 'while' });
+    });
+  }
+
+  for (const lang of langs) {
+    it(`[${lang}] wrapped render round-trips repeat + condition inside the handler`, () => {
+      const ref = parse(`on click ${bareEn}`, 'en') as AnyNode;
+      const out = render(ref as never, lang);
+      const back = parse(out, lang) as AnyNode;
+      expect(back?.kind).toBe('event-handler');
+      const repeat = findRepeat(back);
+      expect(repeat).toBeTruthy();
+      expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
+      // The fused `while-event-*-sov-simple` capture must not survive as a
+      // standalone junk `while` node (the bn/hi failure mode before the
+      // fused-while→repeat-while-head re-parse swap).
+      expect(collectActions(back).has('while')).toBe(false);
+    });
+  }
+
+  it('[hi] the fused while-word is never captured as a bare event', () => {
+    // `जब तक` normalizes to `while`; before it joined STRUCTURAL_NEVER_EVENT,
+    // `event-hi-bare` swallowed it as the handler event and the repeat head
+    // below never matched.
+    const node = parse('जब तक #counter.innerText दोहराएं', 'hi') as AnyNode;
+    expect(node.kind).not.toBe('event-handler');
+    const repeat = findRepeat(node);
+    expect(repeat).toBeTruthy();
+    expect(role(repeat!, 'condition')).toMatchObject({ type: 'property-path' });
   });
 });
