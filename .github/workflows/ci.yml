@@ -996,16 +996,16 @@ jobs:
       - name: Test planner
         run: npm test --prefix packages/planner
 
-      # Ten of testing-framework's thirteen files ran in NO job. The three
-      # that did are invoked by id elsewhere — shipped-sources-validity in the
-      # `shipped-sources` job, canonical-validity + foreign-canonical-validity
-      # in `multilingual-validation` — so the package's own suite (assertions,
-      # runner, fidelity, vocab, the R2 execution-validator lock) was never
-      # run. Safe without a populate step: the one DB-dependent gate
-      # self-skips unless FOREIGN_CANONICAL_VALIDITY=1, which only
-      # `test:canonical` sets, after populating. The shipped-examples gate
-      # walks the git-TRACKED examples/ corpus, so it sees the same tree here
-      # as on any dev machine.
+      # Ten of testing-framework's files ran in NO job. The ones that did are
+      # invoked by id elsewhere — shipped-sources-validity in the
+      # `shipped-sources` job, and the four DB-dependent gates (canonical-validity,
+      # foreign-canonical-validity, render-fidelity, bare-render-fidelity) via
+      # `test:canonical` in `multilingual-validation` — so the package's own suite
+      # (assertions, runner, fidelity, vocab, the R2 execution-validator lock) was
+      # never run. Safe without a populate step here: those four self-skip unless
+      # FOREIGN_CANONICAL_VALIDITY=1, which only `test:canonical` sets, after
+      # populating. The shipped-examples gate walks the git-TRACKED examples/
+      # corpus, so it sees the same tree here as on any dev machine.
       - name: Test testing-framework
         run: npm test --prefix packages/testing-framework
 
@@ -1329,14 +1329,24 @@ jobs:
           cd packages/testing-framework
           npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
-      # Canonical-validity gates: render every corpus EN reference (canonical-validity)
-      # AND every authored foreign translation (foreign-canonical-validity) to English,
-      # then parse the result on the real hyperscript.org engine — failing on any
-      # invalid render outside the committed allowlists. These are testing-framework
-      # vitest tests, so they run HERE (not in unit-tests, which never runs
-      # testing-framework vitest) because the foreign gate needs the populated
-      # translations table (populated above).
-      - name: Canonical-validity gates (en-render + foreign→English)
+      # Four DB-dependent gates, all of them testing-framework vitest files, so
+      # they run HERE (not in unit-tests, which never runs testing-framework
+      # vitest) because each needs the populated translations table:
+      #   canonical-validity        — every corpus EN reference rendered to English
+      #   foreign-canonical-validity— every authored foreign translation to English
+      #     ...both then parsed on the real hyperscript.org engine, failing on any
+      #     invalid render outside the committed allowlists.
+      #   render-fidelity           — en→foreign: render each corpus row into every
+      #     language and parse it back, failing on a lost action or role.
+      #   bare-render-fidelity      — the same, over each row's HANDLER-STRIPPED
+      #     body. Not redundant: every corpus row that exercises a command wraps it
+      #     in a handler, so the plain form — which MCP `translate_code`,
+      #     `hyperfixi.translate` and the VS Code badge are routinely handed — was
+      #     covered by nothing. 37 of its 69 known failures are invisible to the
+      #     wrapped gate, and four of those do not parse back at all.
+      # All four self-skip unless FOREIGN_CANONICAL_VALIDITY=1, which only
+      # `test:canonical` sets — after the populate step above.
+      - name: Canonical-validity + render-fidelity gates (en, foreign→en, en→foreign, bare)
         run: npm run test:canonical --prefix packages/testing-framework
 
       - name: Upload test results
