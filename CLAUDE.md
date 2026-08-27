@@ -508,6 +508,27 @@ yields a 0 delta):
     noise to absorb. Reads the per-pattern `patterns` map the baseline already
     records, so no format change and no retro-flagging.
 
+**The corpus writer is `best` (since 2026-08-27, #973).** Every foreign row is
+rendered by BOTH `@lokascript/semantic` (`render(parse_en(en), L)` — what MCP
+`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript`
+call) and `@lokascript/i18n`'s `GrammarTransformer`, parsed back, and the semantic
+row is stored unless the i18n row beats it on a ratchet signal (`scoreNodes`
+R0/R1/R3, the English round-trip — the R2 proxy — or the real engine's verdict on
+its English). So the corpus is never worse than the old i18n-written one on any
+signal, and the rows i18n still wins (229 of 3703 at the flip) are the exact list
+the semantic renderer still loses — 114 rendered worse (`grammar-transform`) plus
+115 where semantic cannot parse the ENGLISH at all (`grammar-transform-no-reference`:
+the five `component-*` patterns × 23, a parser-coverage gap). That list is ratcheted **shrink-only** by
+`packages/testing-framework/src/multilingual/i18n-kept-rows.test.ts` against
+`baselines/i18n-kept-rows.json` (part of `test:canonical`): a new kept row fails,
+and a baselined row semantic now wins must be deleted
+(`tools/regen-i18n-kept-rows-baseline.ts`). An empty baseline is the trigger for
+retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c). The
+renderer choice is folded into the DB provenance stamp, so a
+`PATTERNS_RENDERER=i18n` (or `semantic`) DB reads STALE to a default gate run.
+The A/B probe behind the decision is committed:
+`tools/probe-render-flip.ts`.
+
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language
 identically (as the top-level-sequence bug did) moves nothing. Only tests catch that.

@@ -26,7 +26,12 @@ import {
   type LanguageProfile,
 } from '@lokascript/semantic';
 import { scoreNodes } from '@lokascript/semantic/fidelity';
-import { noWorseThan, type CandidateScore } from '../src/sync/renderer-choice';
+import {
+  DEFAULT_RENDERER,
+  noWorseThan,
+  resolveRenderer,
+  type CandidateScore,
+} from '../src/sync/renderer-choice';
 import { GrammarTransformer, getProfile as getGrammarProfile } from '@lokascript/i18n';
 import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
 import { writeDbStamp } from '../src/sync/db-stamp';
@@ -48,7 +53,7 @@ const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1]
  * Which renderer writes the foreign rows.
  *
  *   i18n     — @lokascript/i18n GrammarTransformer over the masked English
- *              surface (the historical writer; the default).
+ *              surface (the historical writer; the default until 2026-08-27).
  *   semantic — @lokascript/semantic `translate()` = render(parse_en(en), L),
  *              the function every runtime surface (MCP translate_code,
  *              hyperfixi.translate, core's MultilingualHyperscript) already uses.
@@ -72,17 +77,21 @@ const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1]
  * renderer is reported STALE to a gate run expecting the other.
  */
 const rendererIndex = args.indexOf('--renderer');
-const renderer =
-  (rendererIndex >= 0 && args[rendererIndex + 1]) || process.env.PATTERNS_RENDERER || 'i18n';
-if (renderer !== 'i18n' && renderer !== 'semantic' && renderer !== 'best') {
-  console.error(`Unknown --renderer "${renderer}" (expected i18n | semantic | best)`);
-  process.exit(1);
-}
-if (rendererIndex >= 0) process.env.PATTERNS_RENDERER = renderer;
+const renderer = resolveRenderer(
+  (rendererIndex >= 0 && args[rendererIndex + 1]) ||
+    process.env.PATTERNS_RENDERER ||
+    DEFAULT_RENDERER
+);
+// The stamp reads the env, so a `--renderer` flag must be visible to it too.
+process.env.PATTERNS_RENDERER = renderer;
 let semanticRendered = 0;
 let semanticFallbacks = 0;
 /** `best` only: rows where the i18n surface out-scored the semantic one. */
 let bestKeptI18n = 0;
+/** `best` only: rows with no semantic reference at all (English does not parse). */
+let bestNoReference = 0;
+/** Why the last `best` row went the way it did — read by the method label. */
+let lastBestChoice: 'semantic' | 'i18n-outscored' | 'i18n-no-reference' = 'semantic';
 
 // =============================================================================
 // Derive language data from @lokascript/semantic profiles
@@ -290,17 +299,27 @@ function translateHyperscript(code: string, language: string): string {
       semanticSurface = null;
     }
     const i18nSurface = i18nTranslate(code, language);
-    if (reference && semanticSurface !== null) {
+    if (!reference) {
+      // Semantic cannot parse the ENGLISH — a parser-coverage gap, not a
+      // rendering loss. Labelled apart so the kept-row ratchet's burn-down can
+      // tell the two classes apart (the five `component-*` patterns at the flip).
+      bestNoReference++;
+      lastBestChoice = 'i18n-no-reference';
+      return i18nSurface;
+    }
+    if (semanticSurface !== null) {
       const semScore = scoreSurface(reference, referenceEn, semanticSurface, language);
       const i18nScore = scoreSurface(reference, referenceEn, i18nSurface, language);
       if (noWorseThan(semScore, i18nScore)) {
         semanticRendered++;
+        lastBestChoice = 'semantic';
         if (verbose) console.log(`  [best→semantic] ${language}: "${semanticSurface}"`);
         return semanticSurface;
       }
       if (verbose) console.log(`  [best→i18n] ${language}: "${i18nSurface}"`);
     }
     bestKeptI18n++;
+    lastBestChoice = 'i18n-outscored';
     return i18nSurface;
   }
   if (renderer === 'semantic') {
@@ -481,9 +500,11 @@ async function syncTranslations() {
             ? 'original'
             : (renderer === 'semantic' || renderer === 'best') && translated === semanticSurface
               ? 'semantic-render'
-              : hasGrammarProfile
-                ? 'grammar-transform'
-                : 'keyword-substitute';
+              : renderer === 'best' && lastBestChoice === 'i18n-no-reference'
+                ? 'grammar-transform-no-reference'
+                : hasGrammarProfile
+                  ? 'grammar-transform'
+                  : 'keyword-substitute';
 
         // Check if translation exists
         const existing = checkExists.get(example.id, langCode) as { id: number } | undefined;
@@ -543,7 +564,10 @@ async function syncTranslations() {
     }
     if (renderer === 'best') {
       console.log(`  - Semantic renders chosen: ${semanticRendered}`);
-      console.log(`  - i18n rows kept (out-scored semantic, or no reference): ${bestKeptI18n}`);
+      console.log(`  - i18n rows kept (i18n out-scored semantic): ${bestKeptI18n}`);
+      console.log(
+        `  - i18n rows kept (no semantic reference — English does not parse): ${bestNoReference}`
+      );
     }
     console.log(`  - Keyword substitutes: ${keywordUsed}`);
 

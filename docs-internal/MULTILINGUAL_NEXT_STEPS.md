@@ -60,6 +60,43 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27d — SHIPPED: the corpus writer defaults to `best`, and
+> the rows it leaves to i18n are a shrink-only ratchet (#973, same PR as the
+> decision below).**
+>
+> - `sync-translations` default → `best` (`DEFAULT_RENDERER` in
+>   `patterns-reference/src/sync/renderer-choice.ts`; `PATTERNS_RENDERER=i18n`
+>   reproduces the old corpus for A/B). The 18 `fix-translations.sql` pins are
+>   scoped to rows i18n still owns — a pin over a semantic-won row would make
+>   the method label lie. `TranslationMethod` now types the labels the writer
+>   actually writes.
+> - `multilingual-priority.json` regenerated on the `best` corpus — gains only
+>   (role-lossy rows 14 → 1 (cleared 13: he/set-attribute, id/fetch-do-not-throw, id/fetch-error-handling, id/fetch-json, ko/when-multiple-changes, ko/when-value-changes, ms/hide-with-transition, qu/announce-screen-reader, qu/on-custom-event-receive, th/toggle-aria-expanded, vi/its-value-possessive-dot, zh/repeat-forever, zh/repeat-until-event; remaining pl/unless-condition; added 0), lossy 0 → 0, avgRoleFidelity 0.9992 → 0.9999, avgPrecision 0.9998 → 1.0000, avgValueRecall 1.0000 → 1.0000, avgConfidence 0.839 → 0.919).
+> - **New gate: `i18n-kept-rows`** (`src/multilingual/i18n-kept-rows.test.ts`,
+>   baseline `baselines/i18n-kept-rows.json`, in `test:canonical` beside the
+>   four canonical/render gates). Seeded at **229 rows / 53
+>   patterns**; a new kept row fails, a baselined row semantic now wins must be
+>   deleted (`tools/regen-i18n-kept-rows-baseline.ts`), and it refuses a DB with
+>   no semantic rows so it cannot pass vacuously against an i18n-written corpus.
+>   **This baseline is the i18n retirement schedule**, and it is TWO classes,
+>   labelled apart in `translation_method`: **115 rows are
+>   `grammar-transform-no-reference`** — the five `component-*` patterns
+>   (`component-hello-world`, `-click-counter`, `-with-attrs`,
+>   `-with-conditional`, `-with-slots`) × 23 languages, whose ENGLISH the
+>   semantic parser cannot parse at all (component directives are a parser
+>   coverage gap, not a render loss — the render gates skip them for the same
+>   reason); **114 are `grammar-transform`** — semantic parsed but rendered
+>   worse. Burn-down order by family (largest first): the component-* parser
+>   gap (115 in one fix), `behavior-removable` 22 + `js-inline` 3 (the `js()`
+>   opaque-body tokenizer gap — `PARSER_NEXT_STEPS.md`), `behavior-resizable`
+>   15 + `behavior-sortable` 14 (round-trip drift on long bodies),
+>   `set-color-variable` 8, pl/ru/uk `tabs-aria` + `template-literal-list-build`
+>   7, he `fetch`/`morph`, ar/tl `put-before`/`put-after` (variant selection),
+>   then the implicit-role singletons. Heaviest languages: bn 17, tl 17, qu 15,
+>   he 14. To close a row: fix the renderer, `npm run populate`, run
+>   `npm run test:canonical` — the stale-entry assertion names the row — then
+>   regenerate and commit the baseline in the same change.
+
 > **Update 2026-08-27c — the corpus flip is DECIDED and measured: flip the
 > writer to `best` (semantic-first, i18n kept only where it scores strictly
 > better), not to raw `semantic`. i18n retirement stays gated on the kept-row
@@ -126,7 +163,10 @@
 >   only) and **add a downward-only ratchet on the i18n-kept row count** (229
 >   today) so the residual can only shrink. That ratchet IS the i18n retirement
 >   schedule for the corpus path.
-> - **The 229 kept rows, by family** (from the probe's loss lists; overlaps):
+> - **The 229 kept rows, by family** (from the probe's loss lists; overlaps —
+>   and NOTE the probe skips the five `component-*` patterns whose English does
+>   not parse: those 115 rows are kept too, as a parser-coverage class, see
+>   2026-08-27d):
 >   `behavior-removable` 16 + `js-inline` 3 (the `js()` opaque-body PARSER gap —
 >   filed in `PARSER_NEXT_STEPS.md` at last, three handoffs pointed there without
 >   writing it), `behavior-resizable` 15 + `behavior-sortable` 13 (round-trip

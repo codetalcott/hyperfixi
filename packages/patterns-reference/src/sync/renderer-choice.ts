@@ -17,6 +17,25 @@
  */
 import type { FidelityScores } from '@lokascript/semantic/fidelity';
 
+/** The corpus writers `scripts/sync-translations.ts --renderer` accepts. */
+export type RendererName = 'i18n' | 'semantic' | 'best';
+
+/**
+ * The writer `npm run populate` uses when PATTERNS_RENDERER is unset. `best`
+ * since 2026-08-27 (MULTILINGUAL_NEXT_STEPS.md 2026-08-27c/d): it is never
+ * worse than the i18n writer on any ratchet signal by construction, and the
+ * rows it still leaves to i18n are ratcheted by the testing-framework's
+ * `i18n-kept-rows` gate. Folded into the DB provenance stamp, so a DB written
+ * by another renderer reads STALE to a default gate run.
+ */
+export const DEFAULT_RENDERER: RendererName = 'best';
+
+export function resolveRenderer(value: string | undefined): RendererName {
+  if (value === undefined || value === '') return DEFAULT_RENDERER;
+  if (value === 'i18n' || value === 'semantic' || value === 'best') return value;
+  throw new Error(`Unknown renderer "${value}" (expected i18n | semantic | best)`);
+}
+
 export const SCORE_KEYS: ReadonlyArray<keyof FidelityScores> = [
   'actionRecall',
   'multisetRecall',
