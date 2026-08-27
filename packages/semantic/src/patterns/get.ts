@@ -343,7 +343,13 @@ function getGetPatternsVi(): LanguagePattern[] {
       id: 'get-vi-full',
       language: 'vi',
       command: 'get',
-      priority: 100,
+      // 92, not 100: at a 100/100 tie with get-vi-generated, registration
+      // order made this pattern win on `lấy giá trị từ #input.value` — its
+      // UNTYPED trailing role then ate the `từ` marker itself (normalized
+      // `source`) and the real property-path dropped (get-value vi, bare
+      // render allowlist). Above get-vi-simple (90); its own `của` surface
+      // still reaches it (the generated pattern requires `từ` and fails).
+      priority: 92,
       template: {
         format: 'lấy giá trị của {target}',
         tokens: [
