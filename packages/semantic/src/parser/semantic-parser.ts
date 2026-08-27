@@ -9,6 +9,7 @@ import type {
   SemanticNode,
   CommandSemanticNode,
   CompoundSemanticNode,
+  ConditionalSemanticNode,
   EventHandlerSemanticNode,
   SemanticParser as ISemanticParser,
   SemanticValue,
@@ -1283,6 +1284,25 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // Stage 2: Try command patterns
     const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
+
+    // A leading `unless` guard, STANDALONE (no handler around it). The clause
+    // paths reach tryParseUnlessGuard on their own; a bare `unless <cond> <cmd>`
+    // arrives here instead, where the flat `unless {condition}` pattern would
+    // capture one value and truncate the guard. Same splitter, same flat shape —
+    // see tryParseUnlessGuard. Returns null (stream reset) for anything that is
+    // not a usable leading unless, so every other input is byte-identical.
+    const standaloneUnless = this.tryParseUnlessGuard(tokens, commandPatterns, language);
+    if (standaloneUnless && standaloneUnless.length > 0) {
+      const unlessResult =
+        standaloneUnless.length === 1
+          ? standaloneUnless[0]
+          : createCompoundNode(standaloneUnless, 'then', {
+              sourceLanguage: language,
+              confidence: 1,
+            });
+      return withDiagnostics(unlessResult, diagnostics);
+    }
+
     const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
 
     if (commandMatch) {
@@ -2696,6 +2716,13 @@ export class SemanticParserImpl implements ISemanticParser {
         const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
         if (conditional) {
           clauses.push(conditional);
+          continue;
+        }
+
+        // Leading `unless` — same splitter, flat shape (see tryParseUnlessGuard).
+        const unlessGuard = this.tryParseUnlessGuard(tokens, commandPatterns, language);
+        if (unlessGuard) {
+          clauses.push(...unlessGuard);
           continue;
         }
       }
@@ -5836,6 +5863,73 @@ export class SemanticParserImpl implements ISemanticParser {
    * through to the existing per-clause path untouched.
    */
   /**
+   * Parse a LEADING `unless` guard, reusing the conditional block's condition
+   * splitter but emitting the FLAT `[unless(condition), …body]` shape.
+   *
+   * WHY THIS EXISTS. `unless` is deliberately never folded into a conditional
+   * node (that would relabel its action `unless`→`if` and desync the
+   * cross-language action-set comparison), so it always fell to the flat
+   * `unless {condition}` command pattern — whose role capture takes ONE value
+   * and stops. The en REFERENCE therefore truncated its own condition:
+   *
+   *   unless I match .disabled toggle .selected
+   *     -> condition: expression "I"        <- `match .disabled` silently gone
+   *
+   * That is a correctness bug in English before it is a fidelity one: the guard
+   * the runtime evaluates is not the guard the author wrote. It also poisons
+   * every multilingual signal, because all 24 languages are scored against this
+   * reference — a translation "matches" by reproducing the truncation.
+   *
+   * The block path already splits a condition correctly (operator-aware,
+   * copula-guarded, SOV verb-medial aware), so this reuses it verbatim and then
+   * FLATTENS: the conditional's condition becomes the guard's, and its
+   * then-branch becomes the guard's following siblings. Action set is unchanged
+   * (`unless` + the body commands, exactly as before); only the condition value
+   * gains the rest of the expression.
+   *
+   * Declines — leaving the previous flat parse untouched — when the block form
+   * carries an `else`, which the flat shape cannot represent faithfully.
+   */
+  private tryParseUnlessGuard(
+    tokens: ReturnType<typeof tokenizeInternal>,
+    commandPatterns: LanguagePattern[],
+    language: string
+  ): SemanticNode[] | null {
+    const head = tokens.peek();
+    if (!head) return null;
+    if (!this.isUnlessKeyword((head.normalized ?? head.value).toLowerCase(), language)) return null;
+
+    const mark = tokens.mark();
+    const folded = this.tryParseConditionalBlock(tokens, commandPatterns, language, true);
+    if (!folded || folded.kind !== 'conditional') {
+      tokens.reset(mark);
+      return null;
+    }
+    const conditional = folded as ConditionalSemanticNode;
+    // An else-branch has no flat equivalent; keep the old parse rather than
+    // invent one.
+    if (conditional.elseBranch && conditional.elseBranch.length > 0) {
+      tokens.reset(mark);
+      return null;
+    }
+    const condition = conditional.roles.get('condition');
+    if (!condition) {
+      tokens.reset(mark);
+      return null;
+    }
+    const guard = createCommandNode(
+      'unless' as ActionType,
+      { condition },
+      {
+        sourceLanguage: language,
+        patternId: `unless-${language}-guard`,
+        confidence: 1,
+      }
+    );
+    return [guard, ...conditional.thenBranch];
+  }
+
+  /**
    * Block-terminator check for the conditional fold, by surface OR normalized
    * form. bn renders `end` as শেষ, which the curated {@link isEndKeyword} set
    * cannot list by value (শেষ is ALSO bn's positional `last` — the ar آخر
@@ -5863,7 +5957,10 @@ export class SemanticParserImpl implements ISemanticParser {
   private tryParseConditionalBlock(
     tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
-    language: string
+    language: string,
+    // Set only by tryParseUnlessGuard, which flattens the result back to the
+    // `unless` action rather than emitting a conditional node — see there.
+    allowUnless = false
   ): SemanticNode | null {
     const head = tokens.peek();
     if (!head) return null;
@@ -5875,7 +5972,12 @@ export class SemanticParserImpl implements ISemanticParser {
     // dropped the conditional). Folding `if` keeps the same `if` action the flat
     // parse already produced, so no action set changes — only the nesting and the
     // (previously truncated) condition do.
-    if (!this.isIfKeyword(headVal, language)) return null;
+    if (
+      !this.isIfKeyword(headVal, language) &&
+      !(allowUnless && this.isUnlessKeyword(headVal, language))
+    ) {
+      return null;
+    }
 
     const startMark = tokens.mark();
     // Speculative: a failed fold rewinds the stream, so any coverage records
