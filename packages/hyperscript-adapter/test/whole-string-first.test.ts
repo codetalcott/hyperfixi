@@ -82,8 +82,20 @@ describe('whole-string-first translation', () => {
   it('never emits a chain word directly after a block header', () => {
     for (const row of REPAIRED) {
       const english = preprocessToEnglish(row.input, row.lang);
-      // `repeat … then`, `tell … then` — the exact shape the rejoin produced.
-      expect(english).not.toMatch(/\b(?:repeat|tell|for|while)\b[^\n]*?\bthen\s+(?:add|put|wait|bind)\b/);
+      // `repeat … then` — the exact shape the rejoin produced, and the one the
+      // ENGINE rejects: `on click repeat 3 times then add "<p>Line</p>" to me`
+      // fails with "Expected 'end' but found 'then'", because those headers open
+      // a block that must be closed.
+      //
+      // `tell` was in this list and came out 2026-08-27, measured on the engine:
+      // `on click tell #panel add .open then wait 200ms then add .visible` is
+      // VALID (tell without `end` runs to the end of the feature, so a chain word
+      // between its commands is just a separator), and it is what ENGLISH itself
+      // renders for that handler. Keeping tell here would have pinned the ja/es
+      // rows to a shape English does not produce. Their engine-validity is still
+      // asserted by the `translates to English the real engine accepts` row above,
+      // which is the property this regex was standing in for.
+      expect(english).not.toMatch(/\b(?:repeat|for|while)\b[^\n]*?\bthen\s+(?:add|put|wait|bind)\b/);
     }
   });
 

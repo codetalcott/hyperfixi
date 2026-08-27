@@ -224,8 +224,8 @@
   {
     "lang": "ja",
     "input": "#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加",
-    "full": "on click tell #panel add .open wait 200ms add .visible",
-    "slim": "on click tell #panel add .open wait 200ms add .visible"
+    "full": "on click tell #panel add .open then wait 200ms then add .visible",
+    "slim": "on click tell #panel add .open then wait 200ms then add .visible"
   },
   {
     "lang": "fr",
