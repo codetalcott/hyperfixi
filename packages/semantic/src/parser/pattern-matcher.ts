@@ -658,7 +658,7 @@ export class PatternMatcher {
     // Check for a positional query expression (e.g., 'last <.message/> in #chat',
     // 'first <button/> in .modal'). Triggered only when the role starts with a
     // positional keyword, so non-positional roles are unaffected.
-    const positionalValue = this.tryMatchPositionalExpression(tokens);
+    const positionalValue = this.tryMatchPositionalExpression(tokens, nextPatternToken);
     if (positionalValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
         if (!isTypeCompatible(positionalValue.type, patternToken.expectedTypes)) {
@@ -1148,12 +1148,20 @@ export class PatternMatcher {
    * `<marker> <selector>` pair, which is safe because positional queries are
    * terminal in their role (e.g. scroll's only role is the destination).
    */
-  private tryMatchPositionalExpression(tokens: TokenStream): SemanticValue | null {
+  private tryMatchPositionalExpression(
+    tokens: TokenStream,
+    nextPatternToken?: PatternToken
+  ): SemanticValue | null {
     // Recognizer lives in expression-lexicon so the raw-expression join shares it
     // — a condition and a then-branch carrying the SAME run (focus-trap authors
     // `last <button/> in .modal` in both) can no longer disagree about `in`.
     // Joins with a plain space here, which is this seam's pre-existing rule.
-    const run = matchPositionalRun(tokens.tokens, tokens.position(), this.currentProfile);
+    //
+    // `nextPatternToken` tells the run which marker the enclosing pattern is
+    // about to require, so it cannot spend the role marker that terminates it.
+    const run = matchPositionalRun(tokens.tokens, tokens.position(), this.currentProfile, t =>
+      t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
+    );
     if (!run) return null;
     for (let n = 0; n < run.consumed; n++) tokens.advance();
     return { type: 'expression', raw: run.parts.map(p => p.text).join(' ') } as SemanticValue;
