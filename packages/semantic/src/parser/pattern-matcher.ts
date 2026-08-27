@@ -2671,12 +2671,41 @@ export class PatternMatcher {
     // `destination="ゴミ"` with the real `#panel` captured and discarded.
     const capturedBefore = new Map(captured);
 
-    const success = this.matchTokenSequence(
-      tokens,
-      patternToken.tokens,
-      captured,
-      nextPatternToken
-    );
+    let success = this.matchTokenSequence(tokens, patternToken.tokens, captured, nextPatternToken);
+
+    // A postpositional marker group ([{destination} [e]]) can "succeed" by
+    // capturing ONLY the role: the role is optional-in-group, the trailing
+    // marker sub-group is optional too, so `.loading i 2s değiştir` binds
+    // `.loading` as the DESTINATION and the pattern then dies on `patient` —
+    // with no backtracking, the whole (correct) parse is lost. A role captured
+    // without its own marker is indistinguishable from the next slot's value,
+    // so require the marker: if this group added a role capture but none of
+    // the tokens it consumed matched a `renderRequired` marker sub-group's
+    // literal, fail the group and roll back — the value stays available for
+    // the slot that really owns it. Scoped to groups that carry a
+    // renderRequired literal-only sub-group (the generated postpositional
+    // shape); prepositional groups ([จาก {source}]) fail fast on their leading
+    // literal and never reach this.
+    if (success) {
+      const markerLiterals: string[] = [];
+      for (const inner of patternToken.tokens) {
+        if (inner.type === 'group' && (inner as { renderRequired?: boolean }).renderRequired) {
+          for (const t of inner.tokens) {
+            if (t.type === 'literal') markerLiterals.push(t.value, ...(t.alternatives ?? []));
+          }
+        }
+      }
+      if (markerLiterals.length > 0) {
+        const addedRole = [...captured.keys()].some(role => !capturedBefore.has(role));
+        if (addedRole) {
+          const consumed = tokens.tokens.slice(mark.position, tokens.position()) as LanguageToken[];
+          const markerSeen = consumed.some(tok =>
+            markerLiterals.some(lit => this.getMatchType(tok, lit) !== 'none')
+          );
+          if (!markerSeen) success = false;
+        }
+      }
+    }
 
     if (!success) {
       tokens.reset(mark);

@@ -384,12 +384,28 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // flagged `optional` (a handcrafted `[en {destination}]` writes the role
       // bare), so reading the flag there would apply the missing-role penalty to
       // a slot that is optional by construction.
+      // An implicit REFERENCE role (`destination: me, implicit: true`) is a
+      // matcher-injected default, not something the author wrote — scoring it
+      // as present picked hi's `{patient} को {destination} पर टॉगल` for a node
+      // whose only real roles were patient + duration, and the duration
+      // dropped in silence (toggle-class-temporary hi/qu). Treat it as absent
+      // for selection; a pattern that REQUIRES the role then takes the
+      // missing-role penalty, exactly as if the parse had never injected the
+      // default. Scoped to reference values: an implicit LITERAL (repeat's
+      // `loopType:"forever"`) is structural — the loop variant the surface
+      // means — and discounting it un-selects every pattern that renders the
+      // loop word (measured: repeat-forever went unparseable in 22 languages).
+      const hasRealRole = (role: string): boolean => {
+        const val = node.roles.get(role as SemanticRole) as
+          { implicit?: unknown; type?: string } | undefined;
+        return val !== undefined && !(val.implicit === true && val.type === 'reference');
+      };
       const scoreTokens = (tokens: readonly PatternToken[], inGroup: boolean): void => {
         for (const token of tokens) {
           if (token.type === 'group') {
             scoreTokens(token.tokens, true);
           } else if (token.type === 'role') {
-            if (node.roles.has(token.role)) {
+            if (hasRealRole(token.role)) {
               // Bonus for patterns that use roles we have. A nested slot scores
               // LESS than a top-level one, so carrying an extra optional slot
               // breaks a tie without ever outweighing a top-level difference —

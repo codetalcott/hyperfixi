@@ -89,22 +89,56 @@ describe('a real duration still binds — the slot is skipped, not removed', () 
   });
 });
 
-describe('KNOWN RESIDUAL — failing-when-fixed', () => {
-  // Found by the bare-surface sweep, unrelated to the slot above and unchanged
-  // by it: tr's `[{destination} [e]]` group binds the destination role even
-  // when its own marker is absent, so on `.loading i 2s değiştir` the leading
-  // `.loading` is taken as the DESTINATION and the required `{patient}` then
-  // faces the particle `i` and fails. The marker sub-group carries
-  // `renderRequired: true` but is optional for parsing, which is what lets the
-  // role escape without it. No corpus row reaches this (every corpus toggle is
-  // inside a handler, and `toggle-class-temporary` fails in hi/qu for a
-  // different reason), so nothing else would report it.
-  it('tr still cannot parse a bare `toggle .loading for 2s`', () => {
+describe('the postpositional destination group requires its own marker', () => {
+  // The former KNOWN RESIDUAL pin, now fixed: tr's `[{destination} [e]]` group
+  // could bind the destination role WITHOUT its marker (the sub-group carries
+  // `renderRequired: true` but was optional for parsing), so on
+  // `.loading i 2s değiştir` the leading `.loading` was taken as the
+  // DESTINATION and the required `{patient}` then faced the particle `i` and
+  // failed — the whole parse died. The matcher now fails a group that captured
+  // a role but consumed no token matching its renderRequired marker sub-group,
+  // rolling the value back to the slot that owns it.
+  it('tr parses the bare `toggle .loading for 2s`', () => {
     const rendered = translate('toggle .loading for 2s', 'en', 'tr');
     expect(rendered).toBe('.loading i 2s değiştir');
-    expect(
-      () => parse(rendered, 'tr'),
-      `tr now parses the bare duration form — remove this pin:\n${rendered}`
-    ).toThrow();
+    const node = find(parse(rendered, 'tr'), 'toggle');
+    expect(node).not.toBeNull();
+    expect(role(node, 'patient')?.value).toBe('.loading');
+    expect(role(node, 'duration')?.value).toBe('2s');
+  });
+
+  it('tr parses the bare transition forms the same shape broke', () => {
+    const node = find(parse('*background-color i "blue" e 500ms geçiş', 'tr'), 'transition');
+    expect(node).not.toBeNull();
+    expect(role(node, 'goal')?.value).toBe('blue');
+    expect(role(node, 'duration')?.value).toBe('500ms');
+  });
+
+  it('an explicit marked destination still binds through the same group', () => {
+    const node = find(parse('#panel e .loading i 2s değiştir', 'tr'), 'toggle');
+    expect(node).not.toBeNull();
+    expect(role(node, 'destination')?.value).toBe('#panel');
+    expect(role(node, 'patient')?.value).toBe('.loading');
+    expect(role(node, 'duration')?.value).toBe('2s');
+  });
+});
+
+describe('render pattern selection ignores an implicit reference role', () => {
+  // The en parse of `toggle .loading for 2s` carries a matcher-injected
+  // `destination: me (implicit)`. Scoring that as a real role picked hi's
+  // `{patient} को {destination} पर टॉगल` — no duration slot — and `for 2s`
+  // dropped in silence (toggle-class-temporary hi/qu, wrapped and bare).
+  // Implicit REFERENCE roles now score as absent; implicit literals (repeat's
+  // loopType) still count, or every loop word would stop rendering.
+  it.each(['hi', 'qu'] as const)('%s keeps `for 2s` through the round trip', language => {
+    const rendered = translate('toggle .loading for 2s', 'en', language);
+    const node = find(parse(rendered, language), 'toggle');
+    expect(node, `${language}: did not re-parse: ${rendered}`).not.toBeNull();
+    expect(role(node, 'duration')?.value, `${language} lost the duration`).toBe('2s');
+  });
+
+  it('repeat-forever still renders its loop word (implicit literal counts)', () => {
+    const rendered = translate('repeat forever toggle .pulse wait 1s end', 'en', 'es');
+    expect(rendered).toContain('forever');
   });
 });
