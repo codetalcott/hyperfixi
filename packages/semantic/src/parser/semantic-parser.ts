@@ -2466,8 +2466,34 @@ export class SemanticParserImpl implements ISemanticParser {
         .filter(p => p.command !== 'on')
         .sort((a, b) => b.priority - a.priority);
 
-      // Use parseBodyWithClauses() to properly handle multi-clause then-chains
-      body = this.parseBodyWithClauses(tokens, commandPatterns, language);
+      // A generic fused handler's trailing `{action}` slot is meant to capture
+      // the body's VERB, and the body is then parsed from the tail AFTER it.
+      // In a verb-FINAL language the verb is the last token of the body, so the
+      // slot instead lands on the body's leading ARGUMENT and consumes it —
+      // `event-handler-bn-sov` (`{event} তে {action}`) captures `আমি` out of
+      // `ক্লিক তে আমি থেকে .highlight কে সরান` as `action:reference="me"`, the
+      // tail parse starts at the stranded `থেকে`, and `remove.source` silently
+      // falls back to its schema default (`me`, implicit — so the strict role
+      // signature scores it as MISSING). The capture is not a literal here, so
+      // it names no command and nothing downstream can use it.
+      //
+      // Rewind to where the slot started and parse the whole body from there,
+      // the same move the `if` fold above makes for the conditional head. Only
+      // when the slot really did swallow body text: a literal action goes down
+      // the flat path above, and a handler that captured no action at all has
+      // no recorded start, so both keep their existing token-identical parse.
+      const actionStart = actionValue ? match.roleStarts?.get('action') : undefined;
+      if (actionStart !== undefined && actionStart < tokens.position()) {
+        const bodyStream = new TokenStreamImpl(
+          (tokens.tokens as LanguageToken[]).slice(actionStart),
+          language
+        );
+        body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
+        while (!tokens.isAtEnd()) tokens.advance();
+      } else {
+        // Use parseBodyWithClauses() to properly handle multi-clause then-chains
+        body = this.parseBodyWithClauses(tokens, commandPatterns, language);
+      }
     }
 
     return createEventHandler(resolvedEventValue, body, eventModifiers, {
