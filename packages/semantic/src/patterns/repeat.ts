@@ -507,6 +507,46 @@ function repeatUntilHeadSOVVerbFinal(
  * longer match. Both variants are HEAD-ONLY (id ends in `-until-head` for the
  * re-parse allowlist).
  */
+/**
+ * qu until-head the RENDERER can use. Both variants below carry junk-prefix
+ * tolerances (`hayk _ a` / a required source group) shaped for PARSING the
+ * corpus emission — selected for rendering they emit their tolerance literals
+ * verbatim (`hayk _ a until event mouseup ta manta repeat`), which nothing
+ * parses back (repeat-until-event qu, both render allowlists). This one is
+ * well-formed in both directions: `kama ruway {event} ta [{source} manta]
+ * kutipay`, native surfaces, source optional. At 111 it outranks the junk
+ * variants for rendering and for a clean position-0 parse; the corpus's
+ * `hayk_akama …` surface still falls to the prefixed variant (its shattered
+ * `hayk` head cannot match this pattern's leading `kama`).
+ */
+const repeatUntilHeadQuCanonical: LanguagePattern = {
+  id: 'repeat-qu-canonical-until-head',
+  language: 'qu',
+  command: 'repeat',
+  priority: 111,
+  template: {
+    format: 'kama ruway {event} ta [{source} manta] kutipay',
+    tokens: [
+      { type: 'literal', value: 'kama' },
+      { type: 'literal', value: 'ruway' },
+      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'literal', value: 'ta' },
+      {
+        type: 'group',
+        optional: true,
+        tokens: [
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'literal', value: 'manta' },
+        ],
+      },
+      { type: 'literal', value: 'kutipay' },
+    ],
+  },
+  extraction: {
+    loopType: { default: { type: 'literal', value: 'until-event' } },
+  },
+};
+
 const repeatUntilHeadQuMidClause: LanguagePattern = {
   id: 'repeat-qu-midclause-until-head',
   language: 'qu',
@@ -670,6 +710,7 @@ for (const [lang, spec] of SOV_UNTIL_HEADS) {
   }
 }
 addPattern('qu', repeatUntilHeadQu);
+addPattern('qu', repeatUntilHeadQuCanonical);
 addPattern('qu', repeatUntilHeadQuMidClause);
 
 /**

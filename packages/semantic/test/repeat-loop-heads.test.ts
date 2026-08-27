@@ -304,3 +304,36 @@ describe('repeat-forever round trips (render residual: verb-swallow + zh forever
     expect(collectActions(back).has('repeat'), `zh: ${out}`).toBe(true);
   });
 });
+
+describe('qu repeat-until-event round trips (render residual: junk-prefix heads)', () => {
+  // Both existing qu until-heads carry junk-prefix tolerances shaped for
+  // PARSING the corpus emission; selected for RENDERING they emitted their
+  // tolerance literals verbatim (`hayk _ a until event mouseup ta manta
+  // repeat`), which nothing parses back. The canonical head renders
+  // `kama ruway {event} ta [{source} manta] kutipay` and closes the loop;
+  // the corpus's `hayk_akama …` surface still parses via the prefixed head.
+  it('bare render parses back with the event', () => {
+    const ref = parse('repeat until event mouseup increment #counter wait 100ms end', 'en');
+    const out = render(ref, 'qu');
+    const back = parse(out, 'qu') as AnyNode;
+    const rep = findRepeat(back);
+    expect(rep, `qu: ${out}`).not.toBeNull();
+    expect(role(rep!, 'event')).toMatchObject({ value: 'mouseup' });
+  });
+
+  it('wrapped render keeps repeat + body', () => {
+    const ref = parse('on mousedown repeat until event mouseup increment #counter wait 100ms end', 'en');
+    const out = render(ref, 'qu');
+    const actions = collectActions(parse(out, 'qu'));
+    expect(actions.has('repeat'), out).toBe(true);
+    expect(actions.has('increment'), out).toBe(true);
+  });
+
+  it('the corpus junk-prefix surface still parses via the prefixed head', () => {
+    const node = parse('hayk_akama ruway pointerup ta qillqa manta kutipay', 'qu') as AnyNode;
+    const rep = findRepeat(node);
+    expect(rep).not.toBeNull();
+    expect(role(rep!, 'event')).toMatchObject({ value: 'pointerup' });
+    expect(role(rep!, 'source')).toBeTruthy();
+  });
+});
