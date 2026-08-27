@@ -60,6 +60,47 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27h — third burn-down, first from the canonical queue:
+> `put X before/after Y` was rendering as "at end of" in ar and tl. 138 → 134.**
+>
+> The cheapest canonical win named in 27g, and it was a two-line data gap plus a
+> priority. `PUT_POSITIONAL` (patterns/put.ts) generates `put-{lang}-before` /
+> `-after` from a spec table; its own comment says it exists for "the languages
+> that had none" and lists eight. **ar and tl were missed.** With no pattern
+> pinning `before`/`after` in those languages, the renderer's pinned-value guard
+> has nothing to compare against, so the highest-priority candidate wins —
+> `put-{lang}-at-end` (110, manner pinned to `at end of`):
+>
+> ```
+> en   put "<p>New</p>" before me
+> ar   ضع "<p>New</p>" عند النهاية من أنا      → "put … AT END OF me"
+> tl   ilagay "<p>New</p>" sa wakas ng ako     → "put … AT END OF me"
+> ```
+>
+> Both `before` AND `after` collapsed to the same wrong position. Role-identical,
+> execution-different, and **every recall metric scores it 1.0** — `manner` is a
+> literal the scorers never compare, so only the English round trip sees it.
+> That is why it was invisible until the `best` writer stored semantic's own
+> render (#973): before that, these rows were i18n-written.
+>
+> - **No vocabulary was authored.** ar `قبل`/`بعد` and tl `bago`/`matapos`
+>   already exist in the profiles AND agree with the i18n dictionaries.
+> - **tl needed a second half.** Its profile lists `bago`/`matapos` among the
+>   destination marker's ALTERNATIVES — a deliberate parse-side tolerance added
+>   before positional patterns existed ("Without them the generated put pattern
+>   can't match a before/after target"), which meant the generated into-pattern
+>   at priority 100 matched the positional surface and dropped the manner. The
+>   positional patterns now sit at **105**, the precedent already written out on
+>   `put-it-before` ("must out-rank put-it-full"). They still sit under
+>   `put-{lang}-at-end` (110), and that form still parses — pinned by test.
+> - **Measured:** kept rows **138 → 134**, exactly the four target rows cleared,
+>   **zero newly kept**; 11-signal gate green; `test:canonical` 5/5; semantic
+>   9,123 green. All ten positional-spec languages now round-trip both forms
+>   (`test/put-positional-round-trip.test.ts`, 38 assertions).
+>
+> Canonical queue after this: **39 rows** — next cheapest are the he round-trip
+> cluster (5 rows, one language) and the de implicit `increment` quantity (3).
+
 > **Update 2026-08-27g — the kept-row queue, prioritized by CANONICAL syntax; and
 > the qu event-head swap measured as ZERO-SUM (attempted, reverted).**
 >

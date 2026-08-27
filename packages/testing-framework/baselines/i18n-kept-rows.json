@@ -1,8 +1,8 @@
 {
   "description": "Shrink-only baseline for the i18n-kept-rows ratchet (src/multilingual/i18n-kept-rows.test.ts). Each entry is a corpus pattern id mapped to the languages whose stored row the `best` corpus writer still takes from @lokascript/i18n's GrammarTransformer, because the semantic render lost to it on some ratchet signal (scoreNodes R0/R1/R3, the English round-trip, or engine validity). A NEW kept pair outside this list, or a listed pair that semantic now wins, both fail the gate. Deleting the last entry is the i18n retirement trigger. Regenerate with tools/regen-i18n-kept-rows-baseline.ts.",
   "checked": 3657,
-  "kept": 138,
-  "keptPct": 3.77,
+  "kept": 134,
+  "keptPct": 3.66,
   "allowedKept": {
     "accordion-toggle": ["bn"],
     "announce-screen-reader": ["ko"],
@@ -115,8 +115,6 @@
     "on-custom-event-receive": ["ko"],
     "pick-text-range": ["pl"],
     "previous-element": ["bn"],
-    "put-after": ["ar", "tl"],
-    "put-before": ["ar", "tl"],
     "remove-element": ["qu"],
     "repeat-forever": ["bn"],
     "repeat-until-event": ["qu"],
