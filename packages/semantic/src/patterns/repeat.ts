@@ -669,6 +669,53 @@ for (const [lang, spec] of SOV_UNTIL_HEADS) {
     addPattern(lang, repeatUntilHeadSOVVerbFinal(lang, spec));
   }
 }
+/**
+ * qu's RENDERABLE until-head, in its own words: `kama ruway {event} ta repeat
+ * [{source} manta]`, the same shape the other SOV five get from
+ * `repeatUntilHeadSOV`.
+ *
+ * The two heads below it exist to READ the i18n transformer's
+ * `hayk_akama … kutipay` output and carry that junk prefix IN-PATTERN — so the
+ * renderer, choosing among the patterns registered for the command, emitted the
+ * junk as a surface: `hayk _ a until event mouseup ta manta repeat`. That is not
+ * Quechua, and qu was the only language whose repeat-until row could not read
+ * itself back (repeat-until-event qu). The words are the ones those tolerances
+ * already normalize to (kama→until, ruway→event, manta→from).
+ *
+ * It cannot reuse `repeatUntilHeadSOV`: that builder derives the id
+ * `repeat-{lang}-until-head`, which is exactly `repeatUntilHeadQu`'s id, and the
+ * registration would silently REPLACE the tolerance (measured: the i18n form
+ * then failed to parse at all).
+ */
+const repeatUntilHeadQuCanonical: LanguagePattern = {
+  id: 'repeat-qu-canonical-until-head',
+  language: 'qu',
+  command: 'repeat',
+  priority: 110,
+  template: {
+    format: 'kama ruway {event} ta repeat [{source} manta]',
+    tokens: [
+      { type: 'literal', value: 'kama' },
+      { type: 'literal', value: 'ruway' },
+      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'literal', value: 'ta' },
+      { type: 'literal', value: 'repeat' },
+      {
+        type: 'group',
+        optional: true,
+        tokens: [
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'literal', value: 'manta' },
+        ],
+      },
+    ],
+  },
+  extraction: {
+    loopType: { default: { type: 'literal', value: 'until-event' } },
+  },
+};
+
+addPattern('qu', repeatUntilHeadQuCanonical);
 addPattern('qu', repeatUntilHeadQu);
 addPattern('qu', repeatUntilHeadQuMidClause);
 

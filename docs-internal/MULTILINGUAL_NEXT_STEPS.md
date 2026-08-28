@@ -60,6 +60,68 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27v — qu had a repeat-until head it could READ but not
+> RENDER. 50 → 49.**
+>
+> Two qu heads exist to read the i18n transformer's `hayk_akama ruway <event> ta
+> <source> manta kutipay`, and they carry that junk prefix IN-PATTERN
+> (`hayk_akama` tokenizes as `hayk _ a kama`, so the prefix is matched
+> literally). The renderer chooses among the patterns registered for a command —
+> so it picked one of those and emitted the junk as a SURFACE:
+>
+> ```
+> qu   maykama mousedown hayk _ a until event mouseup ta manta repeat …
+> ```
+>
+> Not Quechua, and it does not re-parse. The other SOV five have a proper head
+> from `repeatUntilHeadSOV`; qu now has the same shape in its own words
+> (`kama ruway {event} ta repeat [{source} manta]`), registered ahead of the
+> tolerances, which keep working.
+>
+> **The id collision is the trap worth recording.** `repeatUntilHeadSOV` derives
+> `repeat-{lang}-until-head`, which is exactly the tolerance's id — adding qu to
+> `SOV_UNTIL_HEADS` silently REPLACED it and the i18n form stopped parsing
+> altogether. Caught by an existing pin; the canonical head has its own id.
+>
+> **This is the third pattern in the arc whose only job was reading i18n output
+> and which the renderer then emitted** (after `go-qu-url-dest` in 27r and the
+> `event-qu-maykama` head in the standing dead-end note). The pattern-selection
+> layer does not distinguish "written to parse" from "fit to render"; a
+> `render: 'canonical' | 'parse-only'` flag was proposed in #976 and remains
+> uncommitted. Every instance so far has been cheaper to fix by giving the
+> language a renderable head than by adding the flag — but three is a trend.
+>
+> **Kept rows 50 → 49 — repeat-until-event(qu), ZERO newly kept.** Wrapped render
+> 3576/3588 (99.67%), bare 2981/2990 (99.70%). 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,607 + 3 new, whole-monorepo `test:check` green.
+>
+> **One canonical row left: on-custom-event-receive(ko), and it now has TWO
+> measured dead ends.**
+>
+> ko renders a handler head as `<event> 을 에`. The first pass of
+> `trySOVEventExtraction` anchors only on a KNOWN event name, and the custom-event
+> second pass anchors only on `할 때` (the i18n form) or an identifier immediately
+> before a command verb — so `hello 을 에 …` finds no head at all, while
+> `message 을 에 …` works because `message` is in `WAITABLE_EVENT_WORDS`.
+>
+> - **Dead end 1 (re-confirmed, was #942's).** Adding `['을','에']` to
+>   `SOV_EVENT_MARKER_PHRASES.ko` does fix the row — and `opacity 을 에 0 300ms
+>   트랜지션`, a BARE transition, then re-parses as a handler named `opacity`.
+>   `을 에` is also ko's patient+destination marker pair. Measured again here.
+> - **Dead end 2 (new).** Making ko RENDER the unambiguous `할 때` head instead —
+>   swapping the profile's `on` primary with its existing `할 때` alternative, plus
+>   an `onSchema.event` markerOverride of `''` for ko, since `클릭 을 할 때` is not
+>   Korean — fixes the row AND `클릭 할 때` round-trips at top level. But the
+>   FEATURE-BLOCK body parser does not recognize it: `eventsource ChatStream /
+>   message 할 때 …` loses the handler, and `positional-run-owed-marker`'s two ko
+>   rows go with it. **8 failures across 4 files**, including
+>   `feature-block-handler-heads`, which exists to document exactly how each
+>   language's head is found. Reverted.
+>
+> The row needs the feature-block head finder to learn ko's phrase marker first —
+> `SOV_EVENT_MARKERS.ko` is an empty set by construction (ko's marker is two
+> tokens), and that is the seam both dead ends run into.
+
 > **Update 2026-08-27u — an English possessive inside an EXPRESSION is syntax,
 > not vocabulary, and 23 languages were emitting it verbatim. 51 → 50.**
 >
