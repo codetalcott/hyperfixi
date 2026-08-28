@@ -22,7 +22,7 @@
  * by construction. Retiring i18n's grammar half is the separate, larger job of
  * migrating its three remaining runtime consumers (`@hyperscript-tools/i18n`,
  * core's `browser-bundle-classic-i18n`, `vite-plugin/semantic-integration`) off
- * `GrammarTransformer`.
+ * `GrammarTransformer` (5 files: 3,823 lines of source + a 2,780-line suite).
  *
  * WHAT IT READS
  * -------------

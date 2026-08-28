@@ -530,10 +530,12 @@ and a baselined row semantic now wins must be deleted
 retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c), and it is
 **empty now** — the gate pins that state directly, so re-admitting a kept row
 needs a deliberate edit to the test. Retiring the transformer is a separate,
-larger job: `packages/i18n/src/grammar/` is ~8,160 lines and three runtime
-consumers still import `GrammarTransformer` outside the corpus writer
-(`@hyperscript-tools/i18n`, core's `browser-bundle-classic-i18n`,
-`vite-plugin/semantic-integration`). The
+larger job: `packages/i18n/src/grammar/` is 5 files — 3,823 lines of source plus
+a 2,780-line suite — and three runtime consumers still import
+`GrammarTransformer` outside the corpus writer
+(`packages/hyperscript-tools-i18n/src/index.ts:9`, core's
+`browser-bundle-classic-i18n.ts:159`, `vite-plugin/semantic-integration.ts:700`).
+`packages/framework` exports its OWN `GrammarTransformer` — not i18n's. The
 renderer choice is folded into the DB provenance stamp, so a
 `PATTERNS_RENDERER=i18n` (or `semantic`) DB reads STALE to a default gate run.
 The A/B probe behind the decision is committed:
