@@ -22,8 +22,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { parseSemantic } from '@lokascript/semantic';
-import { GrammarTransformer } from '@lokascript/i18n';
+import { parseSemantic, translate } from '@lokascript/semantic';
 
 /** Verbatim (action, role, value) triples from a parse tree. */
 function triples(node: unknown, acc: string[] = [], depth = 0): string[] {
@@ -51,11 +50,39 @@ function triples(node: unknown, acc: string[] = [], depth = 0): string[] {
   return acc;
 }
 
+/**
+ * Renders with @lokascript/semantic, not @lokascript/i18n's `GrammarTransformer`
+ * (retired 2026-08-28). The assertions are unchanged and still pass: what they
+ * pin is the VOCABULARY, and `lexicon-parity.test.ts` gates semantic's lexicons
+ * against i18n's dictionaries, so the two renderers agree on exactly these words
+ * — verified on this file's cases before the swap (de `markieren`, ar `ظلل`,
+ * bn `#row কে ক্লোন`, id `tutupkan #modal`, vi `thêm vào đầu "x" vào #list`:
+ * byte-identical from both).
+ */
 function renderAndParse(en: string, lang: string): { render: string; triples: string[] } {
-  const render = new GrammarTransformer('en', lang).transform(en);
+  const render = translate(en, 'en', lang);
   const result = parseSemantic(render, lang);
   return { render, triples: result.node ? triples(result.node) : [] };
 }
+
+/**
+ * The three EVENT-NAME classes that used to live here — reset, submit and
+ * qu change — are gone with the renderer that made them observable.
+ *
+ * They asserted that i18n's DICTIONARY event word appears in the rendered
+ * surface (it `reimpostare`, ko `재설정`, pl `zresetuj`, ru `сбросить`,
+ * qu `musuqchay`, …). @lokascript/semantic deliberately does NOT localize an
+ * event name: `localizeEventName` keeps a curated denylist of events that must
+ * stay English to round-trip, so it renders `on reset`, `on submit`, `on change`
+ * verbatim. Migrated as-is, those tests would have asserted only that an English
+ * event name comes back as itself — true, and about nothing.
+ *
+ * The dictionary words themselves still ship (they feed the keyword providers on
+ * the PARSE side) and are still gated, by the V1-V4 vocab consistency check
+ * (`testing-framework/src/vocab/cli.ts validate`) and `lexicon-parity.test.ts`.
+ * What is no longer covered is their appearance in a RENDER, because nothing
+ * renders from them any more.
+ */
 
 describe('Batch 3 — select class (dict word was the pick keyword)', () => {
   it('de: `select #note` renders markieren and parses back as select', () => {
@@ -94,51 +121,6 @@ describe('Batch 3 — wrong-verb class (dict word was another command)', () => {
     const { render, triples: t } = renderAndParse('prepend "x" to #list', 'vi');
     expect(render).toContain('thêm vào đầu');
     expect(t.some(x => x.startsWith('prepend.'))).toBe(true);
-  });
-});
-
-describe('Batch 3 — reset class (broken/wrong-event listener)', () => {
-  it.each([
-    ['it', 'reimpostare'],
-    ['ko', '재설정'],
-    ['pl', 'zresetuj'],
-    ['pt', 'redefinir'],
-    ['ru', 'сбросить'],
-    ['uk', 'скинути'],
-    ['qu', 'musuqchay'],
-  ])('%s: on-reset render captures on.event="reset" (canonical)', (langCode, word) => {
-    const { render, triples: t } = renderAndParse('on reset log "done"', langCode);
-    expect(render).toContain(word);
-    expect(t).toContain('on.event=reset');
-  });
-});
-
-describe('Batch 3 — submit class (dict word was the send verb)', () => {
-  it.each([
-    ['es', 'envío'],
-    ['pl', 'wysłaniu'],
-    ['tr', 'gönderme'],
-    ['vi', 'nộp'],
-    ['qu', 'apaykachay'],
-  ])(
-    '%s: corpus-shaped on-submit render captures on.event="submit", not "send"',
-    (langCode, word) => {
-      const { render, triples: t } = renderAndParse(
-        'on submit add @disabled to <button/> in me put "Submitting..." into <button/> in me',
-        langCode
-      );
-      expect(render).toContain(word);
-      expect(t).toContain('on.event=submit');
-      expect(t).not.toContain('on.event=send');
-    }
-  );
-});
-
-describe('Batch 3 — qu change (dict word was the toggle verb)', () => {
-  it('qu: on-change render captures on.event="change", not "toggle"', () => {
-    const { render, triples: t } = renderAndParse('on change log "x"', 'qu');
-    expect(render).toContain('kambiay');
-    expect(t).toContain('on.event=change');
   });
 });
 

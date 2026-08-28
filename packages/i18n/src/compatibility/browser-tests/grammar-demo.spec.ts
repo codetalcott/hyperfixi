@@ -6,6 +6,11 @@
  */
 import { test, expect } from '@playwright/test';
 
+// NOTE (2026-08-28): no `playwright.config` in this package points at this
+// directory — core's config has `testDir: './src/compatibility/browser-tests'`,
+// which is core's own tree — so CI does not run this file. It is kept correct
+// rather than deleted, but do not read a green CI as evidence it passes.
+
 test.describe('Grammar Transformation Demo', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://127.0.0.1:3000/examples/multilingual/index.html');
@@ -13,17 +18,26 @@ test.describe('Grammar Transformation Demo', () => {
     await page.waitForFunction(() => window.LokaScriptI18n !== undefined, { timeout: 5000 });
   });
 
-  test('should load LokaScriptI18n bundle with GrammarTransformer', async ({ page }) => {
+  test('the i18n bundle exposes vocabulary and profiles, not a translator', async ({ page }) => {
+    // Was `should load LokaScriptI18n bundle with GrammarTransformer`. That
+    // bundle no longer carries a translator: the grammar transformer was retired
+    // 2026-08-28 (4/24 canonical-valid on an en -> L -> en round trip against the
+    // real hyperscript.org parser, where semantic measures 24/24). The demo page
+    // translates through `hyperfixi.translate`, which IS semantic's.
     const hasI18n = await page.evaluate(() => !!window.LokaScriptI18n);
     expect(hasI18n).toBe(true);
 
-    const hasTransformer = await page.evaluate(() => !!window.LokaScriptI18n.GrammarTransformer);
-    expect(hasTransformer).toBe(true);
-
-    const hasTranslate = await page.evaluate(
-      () => typeof window.LokaScriptI18n.translate === 'function'
-    );
-    expect(hasTranslate).toBe(true);
+    const surface = await page.evaluate(() => ({
+      transformer: typeof (window.LokaScriptI18n as Record<string, unknown>).GrammarTransformer,
+      translate: typeof (window.LokaScriptI18n as Record<string, unknown>).translate,
+      getProfile: typeof (window.LokaScriptI18n as Record<string, unknown>).getProfile,
+      hyperfixiTranslate: typeof (window as unknown as { hyperfixi?: Record<string, unknown> })
+        .hyperfixi?.translate,
+    }));
+    expect(surface.transformer).toBe('undefined');
+    expect(surface.translate).toBe('undefined');
+    expect(surface.getProfile).toBe('function');
+    expect(surface.hyperfixiTranslate).toBe('function');
   });
 
   test('should have profile functions available', async ({ page }) => {

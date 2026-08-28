@@ -59,12 +59,18 @@ export {
   getSupportedDirectPairs,
 } from './direct-mappings';
 
-// Transformer
-export {
-  GrammarTransformer,
-  parseStatement,
-  toLocale,
-  toEnglish,
-  translate,
-  examples,
-} from './transformer';
+// Transformer — RETIRED 2026-08-28.
+//
+// `transformer.ts` (2,747 lines) exported `GrammarTransformer`, `parseStatement`,
+// `toLocale`, `toEnglish`, `translate` and `examples`. Every consumer has moved to
+// @lokascript/semantic, which is what the 3,657-row corpus is written by and what
+// every runtime surface in this repo already called: `@hyperscript-tools/i18n`
+// (#999), the vite-plugin's generated bundle (#997), and the classic-i18n browser
+// bundle, which dropped the four helpers rather than pay +173 KB gzipped to keep
+// them (#998).
+//
+// The rest of this directory STAYS and is not part of that retirement: `profiles/`
+// is imported by i18n's own `runtime.ts` and re-exported to the classic-i18n
+// bundle; `types.ts` backs `constants.ts` and the role helpers above;
+// `direct-mappings.ts` is part of the browser API (`types-browser/i18n-api.ts`
+// declares it). This was never "delete the grammar directory".

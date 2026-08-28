@@ -22,9 +22,9 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
-├── i18n/           # Internationalization (24 languages + grammar transformation)
+├── i18n/           # Per-language VOCABULARY (24 languages) — no longer translates
 │   ├── src/
-│   │   ├── grammar/          # SOV/VSO word order transformation
+│   │   ├── grammar/          # SOV/VSO word-order PROFILES (transformer retired 2026-08-28)
 │   │   ├── dictionaries/     # Per-language keyword dictionaries
 │   │   └── parser/           # Multilingual keyword providers
 │   └── dist/                 # Built bundles (lokascript-i18n.min.js)
@@ -534,6 +534,19 @@ Two things survive from that machinery and are worth knowing:
   reported loudly at the end of a `populate` run. It is a floor, not a fallback:
   0 rows take it today, and a row that does is a translation the corpus is
   MISSING rather than a worse one it settled for.
+
+**What "retired" deleted, precisely** (#1001): `grammar/transformer.ts` (2,747
+lines) and the transformer half of `grammar.test.ts`. The rest of
+`packages/i18n/src/grammar/` — 8,160 lines across 6 files — stays and always was
+going to: `profiles/index.ts` (1,557) and `types.ts` (655) back i18n's own
+`runtime.ts` and `constants.ts`, and `direct-mappings.ts` (351) is part of the
+browser API. It was never "delete the directory". Seven consumers moved first,
+not the three originally listed: `@hyperscript-tools/i18n` (#999) and the
+vite-plugin's generated bundle (#997) to `semantic.translate`; the classic-i18n
+browser bundle DROPPED its four helpers rather than pay a measured +173 KB
+gzipped to keep them (#998); the corpus writer (#1000); and a vocab test, the
+`examples/multilingual/index.html` demo, and an orphaned Playwright spec (#1001).
+`packages/framework` exports its OWN `GrammarTransformer` — unrelated, untouched.
 
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language

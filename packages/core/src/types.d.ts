@@ -31,13 +31,8 @@ declare module '@lokascript/i18n/browser' {
     getAvailable(): string[];
   };
   export function detectBrowserLocale(): string;
-  export class GrammarTransformer {
-    constructor(sourceLocale: string, targetLocale: string);
-    transform(code: string): string;
-  }
-  export function toLocale(code: string, locale: string): string;
-  export function toEnglish(code: string, locale: string): string;
-  export function translate(code: string, sourceLocale: string, targetLocale: string): string;
+  // The transformer half of `@lokascript/i18n/grammar` is retired; the profiles
+  // half is what this bundle imports. See browser-bundle-classic-i18n.ts.
   export const profiles: Record<string, any>;
   export function getProfile(locale: string): any;
   export function getSupportedLocales(): string[];
