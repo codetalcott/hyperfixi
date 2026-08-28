@@ -508,42 +508,32 @@ yields a 0 delta):
     noise to absorb. Reads the per-pattern `patterns` map the baseline already
     records, so no format change and no retro-flagging.
 
-**The corpus writer is `best` (since 2026-08-27, #973).** Every foreign row is
-rendered by BOTH `@lokascript/semantic` (`render(parse_en(en), L)` — what MCP
-`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript`
-call) and `@lokascript/i18n`'s `GrammarTransformer`, parsed back, and the semantic
-row is stored unless the i18n row beats it on a ratchet signal (`scoreNodes`
-R0/R1/R3, the English round-trip — the R2 proxy — or the real engine's verdict on
-its English). So the corpus is never worse than the old i18n-written one on any
-signal, and the rows i18n still wins are the exact list the semantic renderer
-still loses (229 of 3703 at the flip; **0 of 3657 as of 2026-08-28** — the
-burn-down is complete and `best` now stores a semantic render for every foreign
-row, which is what "switch the corpus to semantic-only" meant: there is no
-separate switch, and `best` degenerates to semantic-only by construction). A body is translated only when its own English re-render
-preserves its content, so a truncating parse (`set ^user to attrs.data as JSON`,
-whose `as JSON` lands in no role and therefore scores "faithful" against its own
-truncation) stays English rather than shipping the truncation to 23 languages. That list is ratcheted **shrink-only** by
-`packages/testing-framework/src/multilingual/i18n-kept-rows.test.ts` against
-`baselines/i18n-kept-rows.json` (part of `test:canonical`): a new kept row fails,
-and a baselined row semantic now wins must be deleted
-(`tools/regen-i18n-kept-rows-baseline.ts`). An empty baseline is the trigger for
-retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c), and it is
-**empty now** — the gate pins that state directly, so re-admitting a kept row
-needs a deliberate edit to the test. Retiring the transformer is a separate,
-larger job, and it is **not** "delete the directory": `packages/i18n/src/grammar/`
-is 8,160 lines across 6 files, and only `transformer.ts` (2,747) plus the
-transformer half of `grammar.test.ts` (2,780) actually retires. `profiles/index.ts`
-(1,557) and `types.ts` (655) are imported by i18n's own `runtime.ts` and
-`constants.ts`, and `direct-mappings.ts` (351) is part of the browser API
-(`types-browser/src/i18n-api.ts` declares it). Three runtime consumers still
-import `GrammarTransformer` outside the corpus writer
-(`packages/hyperscript-tools-i18n/src/index.ts:9`, core's
-`browser-bundle-classic-i18n.ts:159`, `vite-plugin/semantic-integration.ts:700`).
-`packages/framework` exports its OWN `GrammarTransformer` — not i18n's. The
-renderer choice is folded into the DB provenance stamp, so a
-`PATTERNS_RENDERER=i18n` (or `semantic`) DB reads STALE to a default gate run.
-The A/B probe behind the decision is committed:
-`tools/probe-render-flip.ts`.
+**The corpus writer is SEMANTIC-ONLY (since 2026-08-28).** Every foreign row is
+`@lokascript/semantic`'s `render(parse_en(en), L)` — the same call MCP
+`translate_code`, `hyperfixi.translate` and core's `MultilingualHyperscript` make.
+
+It used to have three modes, because there used to be two renderers. `best`
+(#973) rendered each row with BOTH semantic and `@lokascript/i18n`'s
+`GrammarTransformer` and stored the semantic one unless i18n beat it on a ratchet
+signal; the rows i18n won were a committed shrink-only baseline, ratcheted by an
+`i18n-kept-rows` gate. **That baseline reached zero on 2026-08-28** (229 of 3703
+at the flip → 0 of 3657), the transformer was retired on the strength of it, and
+a per-row chooser with one renderer is not a chooser — so the modes, the
+`PATTERNS_RENDERER` env, the `--renderer` flag, the kept-rows gate and its
+baseline/tools all went with it. `test:canonical` is four gates now, not five.
+
+Two things survive from that machinery and are worth knowing:
+
+- **A markup row's `_=` body is translated only when its own English re-render
+  preserves its content** (`src/sync/markup-attributes.ts`). A truncating parse —
+  `set ^user to attrs.data as JSON`, whose `as JSON` landed in no role and
+  therefore scored "faithful" against its own truncation — would otherwise ship
+  the truncation into 23 languages. That guard is what FOUND the `as JSON` bug
+  (#991) when eleven ratchet signals could not.
+- **A row the renderer cannot render keeps its ENGLISH**, is counted, and is
+  reported loudly at the end of a `populate` run. It is a floor, not a fallback:
+  0 rows take it today, and a row that does is a translation the corpus is
+  MISSING rather than a worse one it settled for.
 
 None of the recall-based signals can see a regression in the **English reference
 itself** — en defines the reference, so a parser change that truncates every language

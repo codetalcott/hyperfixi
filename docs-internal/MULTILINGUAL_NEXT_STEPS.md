@@ -60,6 +60,45 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28f — the corpus writer is semantic-only, and the kept-rows
+> gate is deleted.**
+>
+> Retiring `@lokascript/i18n`'s transformer turned out to cascade further than the
+> three named consumers: **`patterns-reference/scripts/sync-translations.ts` — the
+> corpus writer itself — imports it**, because `best` renders every row with BOTH
+> engines by definition. A per-row chooser with one renderer is not a chooser, so
+> the whole apparatus goes together:
+>
+> - the three renderer modes, `PATTERNS_RENDERER`, `--renderer`, and the
+>   `noWorseThan` chooser (`src/sync/renderer-choice.ts`);
+> - the renderer term in the DB provenance stamp — one renderer means the source
+>   files alone determine the corpus, and a stray env value must not become a
+>   freshness tripwire (the stamp test now asserts exactly that, where it used to
+>   assert the opposite);
+> - `i18n-kept-rows.{ts,test.ts}`, its baseline, `regen-i18n-kept-rows-baseline.ts`,
+>   `triage-i18n-kept-rows.ts`, and `probe-render-flip.ts` — every one of which
+>   exists only to compare two renderers. **`test:canonical` is four gates now.**
+>
+> **What is lost, stated plainly:** the ratchet that caught a rendering
+> regression by noticing i18n would have done better. Nothing replaces that
+> comparison, because there is nothing left to compare against. What remains
+> scores the semantic renderer directly and is unaffected: `render-fidelity`
+> (100%, allowlist empty), `bare-render-fidelity`, `canonical-validity`,
+> `foreign-canonical-validity`, and the 11-signal `--regression` gate.
+>
+> **What replaced the fallback.** Every mode ended in `i18nTranslate`. Now a row
+> the renderer cannot render keeps its ENGLISH, is counted, and is printed loudly
+> at the end of `populate`. Measured on the flip: **0 English fallbacks** across
+> 3,657 translatable non-English rows, 3,680 semantic renders (markup rows carry
+> several `_=` bodies each), 69 markup rows with every body carried, 0 partial. A
+> row that ever takes that path is a translation the corpus is MISSING, not a
+> worse one it settled for.
+>
+> Two pieces of the `best` machinery survive because they earned their keep
+> independently: `markup-attributes.ts`'s `reRenderPreservesContent` guard (the
+> thing that actually found the `as JSON` truncation) and the English-reference
+> helpers it needs.
+
 > **Update 2026-08-28e — ZERO. The `i18n-kept-rows` ratchet is empty, and the
 > wrapped render gate is at 100%.**
 >
