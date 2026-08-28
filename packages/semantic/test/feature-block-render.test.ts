@@ -141,19 +141,18 @@ describe('English is unchanged', () => {
   });
 });
 
-describe('KNOWN RESIDUALS — render is correct, re-parse is not', () => {
-  // qu RENDERS correctly — `llamk'aq Calculator / def add(a, b) / + ta kutichiy
-  // / tukukuy / tukukuy` — and it is the target parser that drops a piece on
-  // the way back, so it is a parse-side residual, not a gap in this fix. (pl's
-  // `na-żywo / umieść … do ja / koniec` was the other member until the
-  // hyphenated-keyword walk landed with the reactive-when arc — promoted below.)
-  it('qu renders the worker body but loses `return` on re-parse', () => {
+describe('FORMER RESIDUALS — both now round-trip', () => {
+  // qu always RENDERED correctly; the word it rendered was the problem.
+  // `kutichiy` is also an accepted surface for TOGGLE (`toggle-qu-*` list it
+  // beside `t'ikray`) and toggle won the match, so `return a + b` came back as
+  // `toggle +`. The profile now renders `kutimuy` — its own alternative, and the
+  // surface the i18n corpus has always emitted — which nothing else claims.
+  // (pl's `na-żywo / umieść … do ja / koniec` was the other member until the
+  // hyphenated-keyword walk landed with the reactive-when arc.)
+  it('qu round-trips `return` in a worker body — PROMOTED from a pin', () => {
     const rendered = translate(WORKER, 'en', 'qu');
-    expect(rendered, 'qu no longer renders the body — this pin is stale').toContain('kutichiy');
-    expect(
-      actions(parse(rendered, 'qu')).has('return'),
-      `qu now round-trips \`return\` — remove this pin:\n${rendered}`
-    ).toBe(false);
+    expect(rendered).toContain('kutimuy');
+    expect(actions(parse(rendered, 'qu')).has('return')).toBe(true);
   });
 
   it('pl round-trips `live` — PROMOTED from a failing-when-fixed pin', () => {

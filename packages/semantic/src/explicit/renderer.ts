@@ -57,6 +57,7 @@ import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
 import { getOfPossessiveMarker } from '../parser/utils/expression-lexicon';
+import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
 
@@ -639,6 +640,17 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // behavior-removable row differed from its own English round-trip while
         // scoring 1.0 on every fidelity metric.
         if (node.action === 'js' && value.type === 'expression') return value.raw;
+        // `pick characters 0 to 5 of #note` captures its range as ONE canonical
+        // English expression, and the renderer emitted it verbatim — so the
+        // separator stayed English while every other word localized. The parser
+        // wants the language's OWN joiner (`PICK_RANGE_SEPARATORS_BY_LANG`);
+        // twenty-two languages happened to accept English `to` as well, but pl's
+        // `to` tokenizes as the PRONOUN `it`, so the range and the source were
+        // both lost and the whole `pick` action dropped (pl pick-text-range).
+        if (node.action === 'pick' && token.role === 'patient' && value.type === 'expression') {
+          const separator = PatternMatcher.rangeSeparatorFor(language);
+          if (separator) return value.raw.replace(/(?<=\s)to(?=\s)/g, separator);
+        }
         return this.valueToNaturalString(value, language);
       }
 
