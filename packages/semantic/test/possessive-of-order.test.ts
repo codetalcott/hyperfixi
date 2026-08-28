@@ -50,21 +50,15 @@ import type { CommandSemanticNode } from '../src/types';
  * `#pickerng` came back as one selector token, and spacing the free-word marker
  * (plus accepting an identifier-kind marker in the matcher) made it round-trip.
  */
-const BETWEEN = ['bn', 'hi', 'ja', 'ko', 'tl', 'zh'] as const;
+const BETWEEN = ['bn', 'hi', 'ja', 'ko', 'tl', 'vi', 'zh'] as const;
 
 /**
- * Still loses the property, for a cause the spacing fix does not reach:
- *   vi — spaced now, but this row's property `value` translates to the KEYWORD
- *        `giá trị`, and the property slot takes an identifier. vi's
- *        `textContent` row, whose property is untranslated, does round-trip.
- *        (Flipping vi's render order alone was measured to trade a wrong-order
- *        surface that parses for a right-order one that does not.)
- * th left this list when the renderer learned its `ของ` is property-FIRST
- * (`ค่า ของ #picker`) — the spaced, correctly-ordered surface round-trips, so
- * th sits in PREPOSITIONAL now.
- * Pinned below rather than omitted.
+ * Both former residents have cleared. th left when the renderer learned its
+ * `ของ` is property-FIRST (`ค่า ของ #picker`), and vi left when the property
+ * slot learned to accept a KEYWORD its own property table vouches for — vi's
+ * `value` translates to `giá trị`, one keyword token, which the slot used to
+ * reject. th sits in PREPOSITIONAL now, vi in BETWEEN.
  */
-const GLUED_RESIDUAL = ['vi'] as const;
 
 /** Selector-owner possessive languages the fix targets. */
 const PREPOSITIONAL = [
@@ -106,6 +100,13 @@ describe('a selector-owned possessive round-trips', () => {
     const role = sourceRole(rendered, language);
     expect(role, `${language}: source lost re-parsing ${rendered}`).toBeDefined();
     expect(role!.type).toBe('property-path');
+    // Which OPERAND is the owner, not just that a property-path came back: an
+    // inverted fold is still a property-path and scores 1.0 on every metric,
+    // which is how the `*`-sigil direction bug survived this file for months.
+    expect(
+      (role as { object?: { value?: string } }).object,
+      `${language}: ${rendered}`
+    ).toMatchObject({ value: '#picker' });
   });
 });
 
@@ -124,7 +125,9 @@ describe('the emitted order is property-first, not object-first', () => {
     const objectIndex = rendered.indexOf('#picker');
     expect(propertyIndex, `${language}: no localized property in ${rendered}`).toBeGreaterThan(-1);
     expect(objectIndex, `${language}: no #picker in ${rendered}`).toBeGreaterThan(-1);
-    expect(propertyIndex, `${language} put the object first: ${rendered}`).toBeLessThan(objectIndex);
+    expect(propertyIndex, `${language} put the object first: ${rendered}`).toBeLessThan(
+      objectIndex
+    );
     expect(rendered).toContain(` ${marker} `);
   });
 
@@ -177,16 +180,5 @@ describe('English is unchanged', () => {
   // change moves a gate unrelated to this fix.
   it('renders the possessive it was given', () => {
     expect(translate(SOURCE, 'en', 'en')).toContain("#picker's value");
-  });
-});
-
-describe('KNOWN RESIDUAL — failing-when-fixed', () => {
-  it.each(GLUED_RESIDUAL)('%s still loses the property', language => {
-    const rendered = translate(SOURCE, 'en', language);
-    const role = sourceRole(rendered, language);
-    expect(
-      role?.type,
-      `${language} now round-trips (${rendered}) — move it into PREPOSITIONAL and delete this`
-    ).not.toBe('property-path');
   });
 });

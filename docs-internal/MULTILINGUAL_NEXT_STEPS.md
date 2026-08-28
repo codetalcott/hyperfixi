@@ -60,6 +60,29 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27p — eleventh burn-down: a possessive property that
+> translates to a KEYWORD was refused. 59 → 58.**
+>
+> `tryMatchPossessiveSelectorExpression` accepts an `identifier` property on a
+> profile marker (and, since 27k, a `*`-sigil one). vi's `value` translates to
+> `giá trị` — a single KEYWORD token — so `#picker của giá trị` matched neither
+> this matcher nor the of-matcher (whose owner slot then held a keyword, not a
+> selector), and `bind.source` was lost outright. Every other language's property
+> is either untranslated (`textContent`) or an identifier, which is why vi was
+> the only one.
+>
+> The language's own `PROPERTY_NAME_LEXICON` is the voucher: a keyword is
+> admitted only when that table names it a property, so a command verb after the
+> marker (`#button の 切り替え`) is still refused. New predicate
+> `isKnownPropertySurface`.
+>
+> **Kept rows 59 → 58 — 1 cleared, ZERO newly kept** (bind-explicit-property vi).
+> Wrapped render 3569/3588 (99.47%). Two failing-when-fixed pins flipped to
+> positive rows (`possessive-marker-attachment`, `possessive-of-order`), vi moved
+> from `GLUED_RESIDUAL` into `BETWEEN`, and that file's BETWEEN assertion now
+> checks WHICH OPERAND is the owner rather than only that a property-path came
+> back — the blind spot 27k's `*`-sigil direction bug lived in.
+
 > **Update 2026-08-27o — tenth burn-down: bn's `empty` PREDICATE was rendered
 > as bn's `empty` COMMAND. 61 → 59.**
 >
