@@ -12,7 +12,7 @@
  * existing callers see no behaviour change.
  */
 
-import { translate } from '@lokascript/i18n';
+import { translate } from './translate.js';
 import { formatParseCheckReport, warnInvalidOnce } from './validate.js';
 import type { CanonicalValidate, ParseCheckReport } from './validate.js';
 
