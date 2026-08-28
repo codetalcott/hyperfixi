@@ -11,6 +11,7 @@ import type {
   SemanticRole,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  CommandSemanticNode,
   ConditionalSemanticNode,
   BehaviorSemanticNode,
   DefSemanticNode,
@@ -185,7 +186,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const sep = afterBlockHeader || betweenBindFeatures ? ' ' : ` ${chainWord} `;
       out += sep + renderedStatements[i];
     }
-    return out;
+    return this.closeBlockHeaders(out, node.statements, language);
   }
 
   /**
@@ -229,7 +230,45 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const afterBlockHeader = prev.kind === 'command' && BLOCK_HEADER_ACTIONS.has(prev.action);
       out += (afterBlockHeader ? ' ' : ` ${thenKw} `) + rendered[i];
     }
-    return out;
+    return this.closeBlockHeaders(out, statements, language);
+  }
+
+  /**
+   * Close every block header in a flattened statement list with an explicit `end`.
+   *
+   * A loop/tell block reaches the renderer FLATTENED — the parser emits
+   * `[repeat-header, stmt, stmt, …]` with no body attachment (`LoopSemanticNode`
+   * exists in the type model and nothing constructs one), so the header's extent
+   * is, as far as the model is concerned, "everything after it". Rendering that
+   * without a closing `end` produced a surface the structural layer cannot
+   * segment: `block-parser.ts` counts `repeat`/`for`/`while` as depth OPENERS, so
+   * the enclosing handler's own `end` was consumed closing the loop and the next
+   * feature was swallowed into the handler body. That is what merged the `init`
+   * block into the `on pointerdown` handler of `behavior-sortable` in 13
+   * languages, and it is why the round-trip — every fidelity score at 1.0 —
+   * was the only signal that saw it.
+   *
+   * Emitting the `end` is also the canonical form: `repeat … end` is required by
+   * the engine, so the unterminated render was invalid English as well as
+   * unparseable input.
+   *
+   * One `end` per header, appended at the end: the flat model cannot express a
+   * header whose body STOPS before the list does, so closing them all at the tail
+   * is the only rendering faithful to what the parser actually captured. Restoring
+   * the true extent needs the parser to build a real loop node with a body — the
+   * separate arc noted in docs-internal/PARSER_NEXT_STEPS.md.
+   */
+  private closeBlockHeaders(
+    rendered: string,
+    statements: readonly SemanticNode[],
+    language: string
+  ): string {
+    const headers = statements.filter(
+      s => s.kind === 'command' && BLOCK_HEADER_ACTIONS.has((s as CommandSemanticNode).action)
+    ).length;
+    if (headers === 0) return rendered;
+    const endKw = this.keyword(language, 'end');
+    return `${rendered}${` ${endKw}`.repeat(headers)}`;
   }
 
   /**

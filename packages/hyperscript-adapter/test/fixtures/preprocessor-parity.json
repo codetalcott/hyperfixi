@@ -218,13 +218,13 @@
   {
     "lang": "es",
     "input": "en clic repetir 3 times entonces agregar \"<p>Line</p>\" a yo",
-    "full": "on click repeat 3 times add \"<p>Line</p>\" to me",
+    "full": "on click repeat 3 times add \"<p>Line</p>\" to me end",
     "slim": "on click repeat add \"<p>Line</p>\""
   },
   {
     "lang": "ja",
     "input": "#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加",
-    "full": "on click tell #panel add .open then wait 200ms then add .visible",
+    "full": "on click tell #panel add .open then wait 200ms then add .visible end",
     "slim": "on click tell #panel add .open then wait 200ms then add .visible"
   },
   {

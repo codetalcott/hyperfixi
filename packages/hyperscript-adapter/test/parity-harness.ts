@@ -161,4 +161,15 @@ export const KNOWN_DIVERGENCES: Array<[lang: string, input: string]> = [
   ['ko', '나 에서 .hidden 을 제거'],
   ['fr', 'supprimer .hidden de moi'],
   ['es', 'en clic repetir 3 times entonces agregar "<p>Line</p>" a yo'],
+  // The full path closes a flattened loop/tell block header with `end`
+  // (@lokascript/semantic's renderer, 2026-08-28) — `tell #panel … end` is the
+  // canonical form and the only one whose extent survives a re-parse. The slim
+  // path deliberately does NOT mirror it: the SAME close applied to the es
+  // `repeat` row above would turn its output from engine-INVALID (host-validate
+  // rejects it, the author's text stays) into a VALID `repeat … end`, and since
+  // slim still drops the `3 times` quantity a bare `repeat` is FOREVER — the
+  // committed infinite loop the slim safety pin exists to prevent. So slim gets
+  // the close only when the repeat surface is fixed whole; see the pin in
+  // preprocessor-parity.slim.test.ts.
+  ['ja', '#panel を クリック で 伝える それから .open を 追加 それから 待つ 200ms それから .visible を 追加'],
 ];

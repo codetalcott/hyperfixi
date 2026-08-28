@@ -444,6 +444,33 @@ worth its own arc — fold them into whichever change touches this area:
   (delete a case) has to FAIL the gate, and `swap` proves a label-derived check
   would have passed while the command was broken.
 
+### The semantic parser never builds a loop node (2026-08-28)
+
+`LoopSemanticNode` is declared in `packages/semantic/src/types.ts`, `createLoopNode`
+exports it, `ast-builder/index.ts` has a `case 'loop'`, the package CLAUDE.md
+documents it — and **nothing constructs one**. `repeat … end`, `for … end`,
+`while … end` and `tell … end` all reach the renderer as a FLAT compound:
+`[repeat-header, stmt, stmt, …]`, with the block's extent gone.
+
+Two consequences, both measured:
+
+- **The body is unrecoverable.** A statement after the loop's `end` is
+  indistinguishable from one inside it. `repeat until event X … end` followed by
+  `remove .x from me` parses to one flat chain, and the English re-render puts the
+  `remove` inside the loop.
+- **At the TOP level the body is dropped entirely.** `repeat until event pointerup
+  from document / trigger m on me / end / remove .x from me` re-renders as just
+  `repeat until event pointerup from document`. Handler-wrapped input keeps the
+  body (the compound path), so no corpus row exposes this — every corpus row is
+  handler-wrapped.
+
+The renderer now closes each header with an `end` (#992), which makes the
+round-trip stable and the output canonical, but it closes them all at the TAIL —
+the only rendering faithful to what the parser actually captured. Restoring the
+true extent means building a real loop node with a body, mirroring
+`tryParseConditionalBlock` → `createConditionalNode`. That is the fix; this entry
+is the brief.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
