@@ -530,9 +530,13 @@ and a baselined row semantic now wins must be deleted
 retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c), and it is
 **empty now** — the gate pins that state directly, so re-admitting a kept row
 needs a deliberate edit to the test. Retiring the transformer is a separate,
-larger job: `packages/i18n/src/grammar/` is 5 files — 3,823 lines of source plus
-a 2,780-line suite — and three runtime consumers still import
-`GrammarTransformer` outside the corpus writer
+larger job, and it is **not** "delete the directory": `packages/i18n/src/grammar/`
+is 8,160 lines across 6 files, and only `transformer.ts` (2,747) plus the
+transformer half of `grammar.test.ts` (2,780) actually retires. `profiles/index.ts`
+(1,557) and `types.ts` (655) are imported by i18n's own `runtime.ts` and
+`constants.ts`, and `direct-mappings.ts` (351) is part of the browser API
+(`types-browser/src/i18n-api.ts` declares it). Three runtime consumers still
+import `GrammarTransformer` outside the corpus writer
 (`packages/hyperscript-tools-i18n/src/index.ts:9`, core's
 `browser-bundle-classic-i18n.ts:159`, `vite-plugin/semantic-integration.ts:700`).
 `packages/framework` exports its OWN `GrammarTransformer` — not i18n's. The

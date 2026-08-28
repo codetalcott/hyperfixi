@@ -335,7 +335,13 @@ describe('generateSemanticIntegrationCode', () => {
     expect(code).toContain("import '@lokascript/semantic/languages/hi'");
   });
 
-  it('includes grammar imports when grammar is enabled', () => {
+  it('takes its translator from the SAME module as its parser', () => {
+    // This assertion used to read `toContain("from '@lokascript/i18n'")` and
+    // `toContain('GrammarTransformer')`. Both passed on generated code that
+    // could not be imported: `new GrammarTransformer()` supplies no
+    // `targetLocale`, and the constructor throws `Unknown target locale:
+    // undefined` at module scope — so `grammar: true` produced a bundle that
+    // failed on load, and a string check on the generated text could not see it.
     const config: SemanticConfig = {
       enabled: true,
       bundleType: 'en',
@@ -343,8 +349,26 @@ describe('generateSemanticIntegrationCode', () => {
       grammarEnabled: true,
     };
     const code = generateSemanticIntegrationCode(config);
-    expect(code).toContain("from '@lokascript/i18n'");
-    expect(code).toContain('GrammarTransformer');
+    expect(code).toContain("import { translate } from '@lokascript/semantic/core';");
+    expect(code, 'a second translation stack in the same bundle').not.toContain('@lokascript/i18n');
+    expect(code, 'the construction that threw on import').not.toContain('new GrammarTransformer');
+  });
+
+  it('degrades to the source instead of throwing', () => {
+    // The semantic translator throws on input it cannot parse and on a target
+    // language this bundle never registered; the i18n one it replaced never
+    // threw, it substituted words — turning unparseable input into plausible
+    // nonsense. Returning the source is the honest degradation, and the
+    // generated wrapper is the only place it can be applied.
+    const config: SemanticConfig = {
+      enabled: true,
+      bundleType: 'en',
+      languages: new Set(['en'] as SupportedLanguage[]),
+      grammarEnabled: true,
+    };
+    const code = generateSemanticIntegrationCode(config);
+    expect(code).toMatch(/function translateHyperscript\(code, fromLang, toLang\) \{\s*try \{/);
+    expect(code).toMatch(/\} catch \{\s*return code;/);
   });
 });
 
@@ -451,6 +475,8 @@ describe('getSemanticExports', () => {
     const exports = getSemanticExports(config);
     expect(exports).toContain('parseWithSemantic');
     expect(exports).toContain('translateHyperscript');
-    expect(exports).toContain('grammarTransformer');
+    // `grammarTransformer` is gone. It was exported and never used, and the
+    // object it named could not be constructed — see the import test above.
+    expect(exports).not.toContain('grammarTransformer');
   });
 });

@@ -696,10 +696,19 @@ import {
   }
 
   if (config.grammarEnabled) {
+    // `translate` comes from the SAME module the parser above does. It used to be
+    // `import { GrammarTransformer, translate } from '@lokascript/i18n'` — a second
+    // translation stack in a bundle already carrying the semantic one, and one the
+    // consumer had to install separately (this plugin depends on neither i18n nor
+    // semantic directly; the generated code's imports are the user's to resolve).
+    //
+    // The i18n form was also DEAD ON ARRIVAL: `new GrammarTransformer()` passes no
+    // `targetLocale`, and the constructor throws `Unknown target locale: undefined`
+    // at module scope — so a `grammar: true` bundle failed on import. Nothing
+    // caught it because the only test asserted `code).toContain('GrammarTransformer')`,
+    // a string check on the generated text. The object was exported and never used.
     code += `
-import { GrammarTransformer, translate } from '@lokascript/i18n';
-
-const grammarTransformer = new GrammarTransformer();
+import { translate } from '@lokascript/semantic/core';
 `;
   }
 
@@ -764,9 +773,19 @@ function parseWithSemantic(code, lang = null) {
     code += `
 /**
  * Translate hyperscript between languages.
+ *
+ * Returns the input UNCHANGED when it cannot be parsed in \`fromLang\`, or when
+ * \`toLang\` is not one of the languages this bundle registered. The semantic
+ * translator throws in both cases; the i18n one this replaced never did — it
+ * degraded to word substitution, which turned unparseable input into plausible
+ * nonsense. Returning the source is the honest degradation.
  */
 function translateHyperscript(code, fromLang, toLang) {
-  return translate(code, fromLang, toLang);
+  try {
+    return translate(code, fromLang, toLang);
+  } catch {
+    return code;
+  }
 }
 `;
   }
@@ -787,7 +806,6 @@ export function getSemanticExports(config: SemanticConfig): string[] {
 
   if (config.grammarEnabled) {
     exports.push('translateHyperscript');
-    exports.push('grammarTransformer');
   }
 
   return exports;

@@ -119,9 +119,12 @@
 > reason.
 >
 > **Retiring i18n's grammar half is a separate, larger job.**
-> `packages/i18n/src/grammar/` is 5 files — 3,823 lines of source plus a
-> 2,780-line suite (`grammar.test.ts`) — and three runtime consumers still import
-> `GrammarTransformer` outside the corpus writer:
+> `packages/i18n/src/grammar/` is **8,160 lines across 6 files**, and the retirement
+> is not "delete the directory" — only `transformer.ts` (2,747) and the transformer
+> half of `grammar.test.ts` (2,780) go. `profiles/index.ts` (1,557) and `types.ts`
+> (655) are imported by i18n's own `runtime.ts` and `constants.ts`;
+> `direct-mappings.ts` (351) is part of the browser API. Three runtime consumers
+> still import `GrammarTransformer` outside the corpus writer:
 >
 > - `@hyperscript-tools/i18n` — re-exports it publicly
 > - `packages/core/src/compatibility/browser-bundle-classic-i18n.ts`
