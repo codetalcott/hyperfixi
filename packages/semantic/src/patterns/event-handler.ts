@@ -561,6 +561,69 @@ export function localizeEventName(englishEvent: string, language: string): strin
 // Per-Language Event Handler Patterns
 // =============================================================================
 
+function getEventHandlerPatternsKo(): LanguagePattern[] {
+  return [
+    // ko's handler head is `<event> 할 때`. Its GENERATED trigger patterns are
+    // `[{source} 에서] {event} 을 에` — the event-role marker `을` (also the
+    // patient marker) plus the on-marker `에` (also the destination marker) —
+    // and that is what the renderer emitted, though `할 때` is what the profile
+    // declares (`eventHandler.eventMarker.primary`), what the i18n corpus writes,
+    // and the only form a CUSTOM event name round-trips in.
+    //
+    // The two-marker form parses a KNOWN event (`클릭 을 에 …`) and nothing else:
+    // `{event}` is `literal`-only, because ko is the one language excluded from
+    // onSchema's `expr-event` widening — with it, ko's own rendering of
+    // `transition opacity to 0` (`opacity 을 에 0 300ms 트랜지션`) reads as a
+    // handler named `opacity`. So a custom event (`hello`, `success`) had no
+    // pattern at all: `hello 을 에 …` did not re-parse in any form
+    // (on-custom-event-receive, announce-screen-reader).
+    //
+    // `할 때` has neither collision — it is not a role marker in ko — so this
+    // pattern can take `expression` for the event without re-opening the one the
+    // exclusion protects against. The generated pair stays for input tolerance;
+    // this outranks them so it is what the renderer picks.
+    {
+      id: 'event-handler-ko-sov',
+      language: 'ko',
+      command: 'on',
+      priority: 110,
+      template: {
+        format: '{event} 할 때',
+        tokens: [
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'literal', value: '할' },
+          { type: 'literal', value: '때' },
+        ],
+      },
+      extraction: {
+        event: { position: 0 },
+        source: { default: { type: 'reference', value: 'me' } },
+      },
+    },
+    // With source: `#button 에서 클릭 할 때 …`.
+    {
+      id: 'event-handler-ko-with-source',
+      language: 'ko',
+      command: 'on',
+      priority: 108,
+      template: {
+        format: '{source} 에서 {event} 할 때',
+        tokens: [
+          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference'] },
+          { type: 'literal', value: '에서' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'literal', value: '할' },
+          { type: 'literal', value: '때' },
+        ],
+      },
+      extraction: {
+        source: { position: 0 },
+        event: { position: 2 },
+      },
+    },
+  ];
+}
+
 function getEventHandlerPatternsBn(): LanguagePattern[] {
   return [
     // SOV pattern: ক্লিক তে .active কে টগল করুন
@@ -2278,6 +2341,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
   switch (language) {
     case 'bn':
       return getEventHandlerPatternsBn();
+    case 'ko':
+      return getEventHandlerPatternsKo();
     case 'de':
       return getEventHandlerPatternsDe();
     case 'en':

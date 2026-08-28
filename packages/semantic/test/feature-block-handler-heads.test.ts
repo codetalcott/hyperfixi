@@ -100,13 +100,30 @@ describe('the head forms come from the profile, not from a hardcoded list', () =
   // The homonym that made the forward scan pick a false head: the same surface
   // marks the handler AND, later in the clause, the put's destination. Pinned so
   // a profile edit that separates them shows up here.
-  it.each([
-    ['bn', 'তে', 'এ'],
-    ['ko', '에', '에'],
-  ] as const)('%s reuses its on-marker later in the same clause', (language, head, reused) => {
-    const rendered = translate(EVENTSOURCE, 'en', language);
-    expect(rendered).toContain(head);
-    expect(rendered.split(reused).length - 1).toBeGreaterThanOrEqual(2);
+  //
+  // ko used to be listed here on `에`/`에`, and no longer is — not because the
+  // homonym went away but because ko stopped RENDERING its handler head with it.
+  // The generated trigger `{event} 을 에` is the two-marker form that made a
+  // custom event name unparseable; ko now emits the profile's own `할 때`
+  // (`event-handler-ko-sov`), which is not a role marker in ko at all. Its head
+  // is pinned in the multi-word case below instead.
+  it.each([['bn', 'তে', 'এ']] as const)(
+    '%s reuses its on-marker later in the same clause',
+    (language, head, reused) => {
+      const rendered = translate(EVENTSOURCE, 'en', language);
+      expect(rendered).toContain(head);
+      expect(rendered.split(reused).length - 1).toBeGreaterThanOrEqual(2);
+    }
+  );
+
+  it('ko renders a MULTI-WORD head, which the per-token scan sees only at its last word', () => {
+    // `message 할 때`. The head-form set is matched one token at a time, so the
+    // scan lands on `때` and the single-token postpositional rule would claim
+    // `할` — the phrase's own first word — as the event. `multiWordHeadFormLength`
+    // is what steps back over the whole phrase.
+    const rendered = translate(EVENTSOURCE, 'en', 'ko');
+    expect(rendered).toContain('할 때');
+    expect(rendered, 'the two-marker trigger is what broke custom events').not.toContain('을 에');
   });
 
   it.each(HEADS)('%s renders its handler head as `%s`', (language, head) => {

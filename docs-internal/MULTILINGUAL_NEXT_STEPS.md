@@ -60,6 +60,78 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28e — ZERO. The `i18n-kept-rows` ratchet is empty, and the
+> wrapped render gate is at 100%.**
+>
+> The last two rows were both ko, and both the same defect. ko's generated
+> trigger patterns are `[{source} 에서] {event} 을 에` — the event-role marker `을`
+> (also the patient marker) plus the on-marker `에` (also the destination marker)
+> — and that two-marker form is what the renderer emitted, though `할 때` is what
+> the profile declares (`eventHandler.eventMarker.primary`) and what the i18n
+> corpus writes.
+>
+> The two-marker form parses a KNOWN event and nothing else. Its `{event}` slot is
+> `literal`-only because ko is the one language `onSchema.widenTypeVariants`
+> EXCLUDES — and that exclusion is right for the surface it protects: with the
+> widening, ko's own rendering of `transition opacity to 0`
+> (`opacity 을 에 0 300ms 트랜지션`) reads as a handler named `opacity`. So a custom
+> event had no pattern at all: `hello 을 에 …` did not re-parse in any form.
+>
+> `할 때` has neither collision — it is not a role marker in ko — so the new
+> handcrafted `event-handler-ko-sov` takes `expression` for its event without
+> re-opening the case the exclusion protects. The generated pair stays registered
+> for input tolerance; only what we EMIT changed.
+>
+> **This is the standing dead end from the handoff, and it was the RENDER half
+> that mattered.** The filing's two attempts were both parser-side: adding
+> `['을','에']` to `SOV_EVENT_MARKER_PHRASES.ko` (which makes a bare transition
+> re-parse as a handler named `opacity` — the same collision, from the other
+> direction), and "rendering `할 때` breaks the feature-block body parser, 8
+> failures across 4 files". The second was accurate and NOT a dead end: those 8
+> were one off-by-one, in one function.
+>
+> `eventHandlerHeadForms` is a set of whole strings matched one token at a time,
+> so a two-word phrase only ever matches on its LAST word. The scan lands on `때`
+> and the single-token postpositional rule then claims `할` — the phrase's own
+> first word — as the event, which silently emptied the body of every ko
+> `socket`/`eventsource`. `multiWordHeadFormLength` steps back over the whole
+> phrase, and returns 1 when nothing multi-word matches, so every language
+> without such a phrase is byte-identical.
+>
+> **Kept rows 2 → 0** (announce-screen-reader[ko], on-custom-event-receive[ko]).
+> **Wrapped render 3586 → 3588/3588 — 100%.** Bare unchanged at 2981/2990.
+>
+> ---
+>
+> ### What zero means, and what it does not
+>
+> `best` stores the semantic render unless the i18n row beats it on a ratchet
+> signal. At zero kept rows it stores a semantic render for **every** foreign row,
+> which is exactly what "switch the corpus to semantic-only" meant — there was
+> never a separate switch to throw, and `best` degenerates to semantic-only by
+> construction. The burn-down WAS the switch.
+>
+> The gate now pins the empty state directly (`the baseline is EMPTY — the
+> retirement trigger, and it stays fired`), asserted on the BASELINE rather than
+> only on the live result: every other assertion in that file is satisfied by two
+> empty lists, so without it a future `--save-baseline` could quietly ratchet back
+> up. Re-admitting a kept row now requires a deliberate edit to the test, with a
+> reason.
+>
+> **Retiring i18n's grammar half is a separate, larger job.**
+> `packages/i18n/src/grammar/` is ~8,160 lines across 6 files plus its own suite,
+> and three runtime consumers still import `GrammarTransformer` outside the corpus
+> writer:
+>
+> - `@hyperscript-tools/i18n` — re-exports it publicly
+> - `packages/core/src/compatibility/browser-bundle-classic-i18n.ts`
+> - `packages/vite-plugin/src/semantic-integration.ts`
+>
+> (`packages/framework/src/index.ts` exports its OWN `./grammar/transformer`, not
+> i18n's — not a consumer.) Each needs migrating to `semantic.translate` before
+> the delete. The generated dictionaries/providers/runtime stay either way; only
+> the grammar half retires.
+
 > **Update 2026-08-28d — two fused slots that stopped one token short. Kept
 > rows 4 → 2.**
 >

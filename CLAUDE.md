@@ -516,10 +516,10 @@ row is stored unless the i18n row beats it on a ratchet signal (`scoreNodes`
 R0/R1/R3, the English round-trip — the R2 proxy — or the real engine's verdict on
 its English). So the corpus is never worse than the old i18n-written one on any
 signal, and the rows i18n still wins are the exact list the semantic renderer
-still loses (229 of 3703 at the flip; **161 of 3657** after the first burn-down,
-which reclassified the `component-*` family — HTML-markup rows, not a parser gap
-— and gave the writer a byte-preserving path that translates the `_="…"` bodies
-inside markup). A body is translated only when its own English re-render
+still loses (229 of 3703 at the flip; **0 of 3657 as of 2026-08-28** — the
+burn-down is complete and `best` now stores a semantic render for every foreign
+row, which is what "switch the corpus to semantic-only" meant: there is no
+separate switch, and `best` degenerates to semantic-only by construction). A body is translated only when its own English re-render
 preserves its content, so a truncating parse (`set ^user to attrs.data as JSON`,
 whose `as JSON` lands in no role and therefore scores "faithful" against its own
 truncation) stays English rather than shipping the truncation to 23 languages. That list is ratcheted **shrink-only** by
@@ -527,7 +527,13 @@ truncation) stays English rather than shipping the truncation to 23 languages. T
 `baselines/i18n-kept-rows.json` (part of `test:canonical`): a new kept row fails,
 and a baselined row semantic now wins must be deleted
 (`tools/regen-i18n-kept-rows-baseline.ts`). An empty baseline is the trigger for
-retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c). The
+retiring i18n's transformer (`MULTILINGUAL_NEXT_STEPS.md` 2026-08-27c), and it is
+**empty now** — the gate pins that state directly, so re-admitting a kept row
+needs a deliberate edit to the test. Retiring the transformer is a separate,
+larger job: `packages/i18n/src/grammar/` is ~8,160 lines and three runtime
+consumers still import `GrammarTransformer` outside the corpus writer
+(`@hyperscript-tools/i18n`, core's `browser-bundle-classic-i18n`,
+`vite-plugin/semantic-integration`). The
 renderer choice is folded into the DB provenance stamp, so a
 `PATTERNS_RENDERER=i18n` (or `semantic`) DB reads STALE to a default gate run.
 The A/B probe behind the decision is committed:
