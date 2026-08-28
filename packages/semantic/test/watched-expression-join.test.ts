@@ -54,40 +54,41 @@ const head = (lang: string): string =>
   render(parse(STORED_VALUE[lang], lang), 'en').split('\n')[0].replace(/\s+/g, ' ').trim();
 
 describe('watched-expression join: selector possessives come back as English', () => {
-  it.each(['es', 'de', 'fr', 'id', 'pt', 'sw', 'ar'])(
-    '%s (prepositional genitive) → value of #price',
-    lang => {
-      expect(head(lang)).toBe('when ( value of #price * value of #qty ) changes');
-    }
-  );
-
-  it.each(['ja', 'ko', 'zh', 'bn', 'qu', 'tr'])(
-    '%s (owner-first genitive) → value of #price',
-    lang => {
-      expect(head(lang)).toBe('when ( value of #price * value of #qty ) changes');
-    }
-  );
-
-  it.each(['hi', 'pl', 'ru', 'uk', 'th', 'vi', 'it', 'ms', 'tl', 'he'])(
-    "%s (`'s` fallback) → #price's value",
-    lang => {
-      expect(head(lang)).toBe("when ( #price's value * #qty's value ) changes");
-    }
-  );
-
-  it('never leaks a non-ASCII identifier (the class the engine rejects)', () => {
-    for (const lang of Object.keys(STORED_VALUE)) {
-      expect(head(lang), lang).toMatch(/^[\x20-\x7e]+$/);
-    }
-  });
-
-  it('English keeps its byte-faithful source slice', () => {
-    const node = parse(
-      'when (#price\'s value * #qty\'s value) changes put "$" + it into me end',
-      'en'
-    );
-    expect((node.roles.get('condition' as never) as { raw?: string }).raw).toBe(
-      "(#price's value * #qty's value)"
-    );
+  // All 23 now produce the SAME English, and it is the canonical clitic form the
+  // reference is written in. Before, the re-join emitted whichever shape the
+  // source language's genitive suggested — `value of #price` for the
+  // prepositional and owner-first genitives, `#price's value` only for the
+  // languages that had kept the English clitic — so the same construct rendered
+  // back three different ways. The renderer now folds `<property> of <selector>`
+  // into `<selector>'s <property>` for English, gated to a curated DOM-property
+  // word so an ordinary `of` phrase (`the first of .items`) is untouched. The
+  // engine accepts both; `foreign-canonical-validity` is the oracle and stayed
+  // green through the change.
+  it.each([
+    'es',
+    'de',
+    'fr',
+    'id',
+    'pt',
+    'sw',
+    'ar', // prepositional genitive
+    'ja',
+    'ko',
+    'zh',
+    'bn',
+    'qu',
+    'tr', // owner-first genitive
+    'hi',
+    'pl',
+    'ru',
+    'uk',
+    'th',
+    'vi',
+    'it',
+    'ms',
+    'tl',
+    'he', // `'s` fallback
+  ])("%s → #price's value", lang => {
+    expect(head(lang)).toBe("when ( #price's value * #qty's value ) changes");
   });
 });

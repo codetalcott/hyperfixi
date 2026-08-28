@@ -60,6 +60,50 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27u — an English possessive inside an EXPRESSION is syntax,
+> not vocabulary, and 23 languages were emitting it verbatim. 51 → 50.**
+>
+> A watched expression is captured as ONE raw string
+> (`(#price's value * #qty's value)`) and the renderer localized its interior word
+> by word. `'s` is not a word — the owner and the property have to MOVE relative
+> to each other, which only `renderPropertyPath` knows how to do — so every
+> language emitted the English clitic. Quechua could not read it back at all:
+> `'` is a word character there (`t'ikray`, `llamk'aq`), so `#qty's` tokenizes as
+> `#qty'` + `s` and the property is lost. That was the whole of
+> `when-value-changes[qu]`.
+>
+> Expressions now localize their possessives structurally, gated to a SELECTOR
+> owner — the shape `renderPropertyPath` is written for, and the one that cannot
+> occur as ordinary prose inside a quoted string. qu renders `chanin pa #price`,
+> ja `#priceの値`, es `valor de #price`.
+>
+> **Fixing it also fixed a symptom one layer down.** The protected-span mask read
+> the first `'s` as the start of a single-quoted string and closed it on the
+> second, masking `'s value * #qty'` — so the first property never localized
+> while the second did (`(#price's value * #qty's chanin)`). Removing the clitic
+> structurally happens BEFORE the mask, so the mask needs no guard of its own:
+> adding one was measured to redden nothing and move no corpus row, and is not in
+> the change. **Third dead piece caught by drop-one measurement this session**
+> (after 27m's fused-walk entry and 27n's `buildEventHandler` half).
+>
+> **The reverse direction moved too.** Rendering a foreign possessive back to
+> English produced whichever shape the source language's genitive suggested —
+> `value of #price` for the prepositional and owner-first genitives, `#price's
+> value` only where the clitic had survived — so one construct came back three
+> ways. The renderer now folds `[the] <property> of <selector>` into
+> `<selector>'s <property>`, gated to a curated DOM-property word so an ordinary
+> `of` phrase (`the first of .items`) is untouched. Two pinned test files
+> recorded the old three-way split descriptively and now record the single
+> canonical form; `foreign-canonical-validity` — the REAL engine — stayed green
+> through the change, which is the only oracle that matters for "is this valid
+> English".
+>
+> **Kept rows 51 → 50 — when-value-changes(qu), ZERO newly kept.** 11-signal gate
+> green, `test:canonical` 5/5, semantic 9,607 + 70 new, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **One canonical row left**: on-custom-event-receive(ko).
+
 > **Update 2026-08-27t — the fused SOV shape had no PRE-verb source group. 52 → 51.**
 >
 > The generated SOV event-handler shape carries an optional `[{destination}

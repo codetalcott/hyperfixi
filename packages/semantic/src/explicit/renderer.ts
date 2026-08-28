@@ -22,6 +22,7 @@ import type {
   ReferenceValue,
   PropertyPathValue,
 } from '../types';
+import { createSelector } from '../types';
 
 /**
  * Loop/tell block-header commands: their body follows the header directly, with no
@@ -56,7 +57,7 @@ const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 import { localizeEventName } from '../patterns/event-handler';
-import { getOfPossessiveMarker } from '../parser/utils/expression-lexicon';
+import { getOfPossessiveMarker, PROPERTY_NAME_LEXICON } from '../parser/utils/expression-lexicon';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior } from './value-lexicon';
 import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
@@ -68,6 +69,16 @@ import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
  * also carries `[{duration}]`) without ever outweighing a top-level difference.
  */
 const NESTED_ROLE_BONUS = 5;
+
+/**
+ * The English DOM-property words a possessive can name, taken from the same
+ * table the parser's property matchers consult. Used to keep the English
+ * `<prop> of <selector>` → `<selector>'s <prop>` fold off ordinary `of` phrases
+ * (`the first of .items`).
+ */
+const EN_PROPERTY_WORDS: ReadonlySet<string> = new Set(
+  Object.values(PROPERTY_NAME_LEXICON).flatMap(map => Object.values(map))
+);
 
 // =============================================================================
 // Semantic Renderer Implementation
@@ -800,7 +811,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // is what made the target-language parser drop the role — it could not
         // bind an English interior. Localize the vocabulary inside it; strings,
         // selectors and unknown identifiers are left alone by the localizer.
-        return this.localizeValue(value.raw, language);
+        // A POSSESSIVE inside the expression is localized first, structurally:
+        // `'s` is English syntax, not vocabulary, and the word-level localizer
+        // cannot touch it.
+        return this.localizeValue(this.localizeInteriorPossessives(value.raw, language), language);
 
       case 'flag':
         return this.localizeValue(value.name, language);
@@ -861,6 +875,52 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // English base: language-invariant, and the only form the dot path accepts
     // when the language offers no single-word possessive.
     return object.value;
+  }
+
+  /**
+   * Rewrite an English possessive inside an expression into the target
+   * language's own construction: `#price's value` → qu `#price pa chanin`, ja
+   * `#priceの値`, es `valor de #price`.
+   *
+   * The word-level localizer cannot do this — `'s` is SYNTAX, and the owner and
+   * the property have to move relative to each other. Left alone, a watched
+   * expression came out as `(#price's value * #qty's chanin)`: half English, and
+   * unreadable to any language whose tokenizer does not split the English
+   * clitic. Quechua is the case that forces it — `'` is a word character there
+   * (`t'ikray`, `llamk'aq`), so `#qty's` tokenizes as `#qty'` + `s` and the
+   * property is lost (qu when-value-changes).
+   *
+   * Gated to a SELECTOR owner (`#`/`.`-prefixed): that is the shape
+   * `renderPropertyPath` is written for, and it is the one that cannot occur as
+   * ordinary prose inside a quoted string. English is a no-op.
+   */
+  private localizeInteriorPossessives(raw: string, language: string): string {
+    // English is the OTHER direction: a foreign possessive re-parses into a raw
+    // expression whose join emits the English locative (`value of #price`), so
+    // rendering that back to English has to fold it into the clitic form the
+    // reference is written in. Gated to a curated DOM-property word, so an
+    // ordinary `of` phrase (`the first of .items`) is untouched.
+    if (language === 'en') {
+      return raw.replace(
+        /\b(?:the\s+)?([A-Za-z][\w-]*)\s+of\s+([#.][\w-]+)/g,
+        (whole, property: string, owner: string) =>
+          EN_PROPERTY_WORDS.has(property.toLowerCase()) ? `${owner}'s ${property}` : whole
+      );
+    }
+    if (!raw.includes("'s")) return raw;
+    return raw.replace(
+      /([#.][\w-]+)'s\s+([A-Za-z][\w-]*)/g,
+      (whole, owner: string, property: string) =>
+        this.renderPropertyPath(
+          {
+            type: 'property-path',
+            object: createSelector(owner),
+            property,
+            access: 'possessive',
+          } as PropertyPathValue,
+          language
+        ) || whole
+    );
   }
 
   /**

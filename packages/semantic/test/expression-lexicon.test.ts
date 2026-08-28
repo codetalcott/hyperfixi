@@ -11,10 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse, render } from '../src';
-import {
-  translateConnective,
-  translatePropertyName,
-} from '../src/parser/utils/expression-lexicon';
+import { translateConnective, translatePropertyName } from '../src/parser/utils/expression-lexicon';
 import { getEnglishPossessiveAdjective } from '../src/parser/utils/possessive-keywords';
 
 type Node = { roles?: unknown };
@@ -80,9 +77,7 @@ describe('possessive property head normalizes to English at parse time', () => {
   }
 
   it('renders canonical English (no leaked foreign property surface)', () => {
-    expect(render(parse('私の 値 を #preview に 置く 入力 で', 'ja'), 'en')).toContain(
-      'my value'
-    );
+    expect(render(parse('私の 値 を #preview に 置く 入力 で', 'ja'), 'en')).toContain('my value');
     expect(render(parse('اربط $color إلى قيمة لـ #picker', 'ar'), 'en')).toContain(
       "#picker's value"
     );
@@ -152,7 +147,10 @@ describe('possessives inside raw expressions render English (Phase 1b)', () => {
   // the property leaked AND the pronoun was the wrong part of speech.
   it('es: condition possessive renders "my value", not "me valor"', () => {
     const english = render(
-      parse('al desenfoque si mi valor es vacío agregar .error a yo sino quitar .error de yo fin', 'es'),
+      parse(
+        'al desenfoque si mi valor es vacío agregar .error a yo sino quitar .error de yo fin',
+        'es'
+      ),
       'en'
     );
     expect(english).toContain('if my value is empty');
@@ -169,7 +167,10 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    expect(es).toContain('the value of #price as Number');
+    // Folded to the canonical clitic form: `the value of #price` → `#price's
+    // value`. Same change as watched-expression-join; the article goes with it,
+    // since `the #price's value` is not English.
+    expect(es).toContain("#price's value as Number");
     expect(es).toContain('my value as Number');
   });
 
@@ -187,7 +188,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    expect(zh).toContain('the value of #price as Number');
+    expect(zh).toContain("#price's value as Number");
     expect(zh).toContain('my value as Number');
     expect(zh).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });
@@ -200,7 +201,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
       ),
       'en'
     );
-    expect(hi).toContain('the value of #price as Number');
+    expect(hi).toContain("#price's value as Number");
     expect(hi).toContain('my value as Number');
     expect(hi).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });
@@ -346,9 +347,9 @@ describe('raw-expression translation is anchored, never blanket', () => {
   it('leaves a bare word with no possessive in front of it alone', () => {
     // `valor` here is a user variable, not the DOM property — nothing vouches
     // for it as a property head, so it must pass through untouched.
-    expect(render(parse('al entrada establecer #g de innerText a valor + 1', 'es'), 'en')).toContain(
-      'valor + 1'
-    );
+    expect(
+      render(parse('al entrada establecer #g de innerText a valor + 1', 'es'), 'en')
+    ).toContain('valor + 1');
   });
 
   it('leaves selectors and sigil refs alone', () => {
@@ -362,8 +363,14 @@ describe('raw-expression translation is anchored, never blanket', () => {
   // `if its`, breaking `fetch-do-not-throw` in both languages. A possessive is
   // only a possessive when a property actually follows it.
   const bareReference: Array<[string, string]> = [
-    ['ms', 'apabila click ambil_dari /api/users sebagai JSON do bukan lempar kemudian jika ia tetapkan $users ke ia tamat'],
-    ['qu', '/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy'],
+    [
+      'ms',
+      'apabila click ambil_dari /api/users sebagai JSON do bukan lempar kemudian jika ia tetapkan $users ke ia tamat',
+    ],
+    [
+      'qu',
+      '/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy',
+    ],
   ];
   for (const [lang, code] of bareReference) {
     it(`${lang}: a possessive surface used as a BARE reference stays \`it\``, () => {
@@ -398,7 +405,10 @@ describe('connector-joined dot-member possessive in raw expressions (Phase 10)',
   // surface is a class selector in a comparison, not a member access.
   it('qu: spaced dot token after `chay` is not rewritten into a possessive', () => {
     const english = render(
-      parse('/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy', 'qu'),
+      parse(
+        '/api/users ta ñitiy pi apamuy JSON do mana wikchuy chayqa hina sichus chay $users ta chay man churanay tukuy',
+        'qu'
+      ),
       'en'
     );
     expect(english).toContain('if it');
@@ -548,7 +558,6 @@ const TL_DRAGGABLE = `ugali Draggable(dragHandle)
     wakas
 wakas`;
 
-
 describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-context gates)', () => {
   // Each word here was a deliberately-blocked ambiguous exclusion (copula
   // it/is, is/as, is/has; no/not/without; exists/has; the ja ç©º phantom). The
@@ -577,10 +586,7 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
 
   it('ar: it-sense هو before a verb/marker stays `it`', () => {
     const out = render(
-      parse(
-        'احضر /api/users عند نقر كـJSON do ليس ارم ثم إذا هو اضبط $users إلى هو النهاية',
-        'ar'
-      ),
+      parse('احضر /api/users عند نقر كـJSON do ليس ارم ثم إذا هو اضبط $users إلى هو النهاية', 'ar'),
       'en'
     );
     expect(out).toContain('if it set $users to it');
@@ -658,9 +664,18 @@ describe('Phase 12: ambiguous-sense anchor (blocked dual-sense words, local-cont
   });
 
   const existsRows: Array<[string, string]> = [
-    ['bn', 'ক্লিক এ যদি #modal আছে #modal কে দেখান নতুবা a <div#modal/> কে তৈরি করুন তারপর এটি কে বডি তে রাখুন শেষ'],
-    ['tl', 'kapag click kung #modal may ipakita #modal kung_hindi gumawa a <div#modal/> pagkatapos ilagay ito sa katawan wakas'],
-    ['tr', 'tıklama de eğer #modal var #modal i göster yoksa a <div#modal/> i yap ardından o i gövde e koy son'],
+    [
+      'bn',
+      'ক্লিক এ যদি #modal আছে #modal কে দেখান নতুবা a <div#modal/> কে তৈরি করুন তারপর এটি কে বডি তে রাখুন শেষ',
+    ],
+    [
+      'tl',
+      'kapag click kung #modal may ipakita #modal kung_hindi gumawa a <div#modal/> pagkatapos ilagay ito sa katawan wakas',
+    ],
+    [
+      'tr',
+      'tıklama de eğer #modal var #modal i göster yoksa a <div#modal/> i yap ardından o i gövde e koy son',
+    ],
   ];
   for (const [lang, code] of existsRows) {
     it(`${lang}: exists-word after a selector subject renders \`exists\``, () => {
