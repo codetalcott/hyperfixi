@@ -1892,9 +1892,18 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // `js` never takes this path. Its one role is not a value but an opaque span
+    // of raw JavaScript running to the block's `end`, so building the command
+    // from CAPTURED roles hands the body to the pattern matcher, which tokenizes
+    // and re-spaces it (`console.log("x")` → `console .log ( "x" )`). Falling
+    // through to the flat path rewinds to the action's own start and re-parses
+    // through `parseBodyWithClauses`, whose `consumeJsBlock` claims the span
+    // whole. bn was the language where it showed — `ক্লিক তে জেএস …` is the one
+    // handler head whose `{action}` slot lands exactly on the js verb.
     if (
       actionValue &&
       actionValue.type === 'literal' &&
+      String(actionValue.value) !== 'js' &&
       getSchema(String(actionValue.value) as ActionType) !== undefined
     ) {
       // Create a command node directly from captured roles

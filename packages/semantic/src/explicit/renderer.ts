@@ -119,6 +119,36 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       return this.renderConditional(node as ConditionalSemanticNode, language);
     }
 
+    // `js` renders VERB-INITIAL in the SOV six, against their own word order.
+    //
+    // Its body is raw JavaScript — an opaque span, not natural language — so the
+    // generated SOV pattern's verb-final order (`<body> を JS実行 終わり`) puts an
+    // unbounded foreign-code span BEFORE the only token that identifies the
+    // clause. Nothing preceding it can then be attributed: rendering
+    // `if confirmRemoval js(me) … end` gave ja
+    // `もし confirmRemoval (me) ⏎ <body> を JS実行 終わり`, where `(me)` opens the
+    // js clause and only the trailing verb says so. The conditional head was
+    // swallowed into the body, the `end` count went off by one, and every command
+    // AFTER the conditional was dropped — behavior-removable in bn/hi/ja/ko/qu/tr.
+    //
+    // Verb-initial is also what the corpus and the engine already use: the i18n
+    // transformer leaves `js(me) … end` verbatim in every language, canonical
+    // hyperscript has no other form, and `consumeJsBlock` (head-anchored) parses
+    // it in all 23. `consumeVerbFinalJsBlock` stays for INPUT tolerance — this
+    // changes what we emit, not what we accept.
+    //
+    // SOV-gated deliberately: he and zh render verb-initial already, WITH their
+    // pre-posed patient marker (`js את …`, `JS执行 把 …`), which the head-form
+    // walk strips back off. Routing them through here would drop a marker they
+    // legitimately carry.
+    if (node.action === 'js' && tryGetProfile(language)?.wordOrder === 'SOV') {
+      const body = node.roles.get('patient' as SemanticRole);
+      const raw = body && body.type === 'expression' ? body.raw : '';
+      const head = this.keyword(language, 'js');
+      const end = this.keyword(language, 'end');
+      return raw ? `${head} ${raw} ${end}` : `${head} ${end}`;
+    }
+
     const patterns = getPatternsForLanguageAndCommand(language, node.action);
 
     if (patterns.length === 0) {

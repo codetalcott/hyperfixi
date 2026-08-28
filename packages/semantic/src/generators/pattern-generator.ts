@@ -452,6 +452,23 @@ export function generateEventHandlerPatterns(
     return [];
   }
 
+  // `js` is never fused either, for the opposite reason: its one role is not a
+  // value, it is an opaque span of raw JavaScript that runs to the block's `end`.
+  // No pattern slot can capture that — the matcher tokenizes and re-spaces it,
+  // and `console.log("x")` comes back as `console .log ( "x" )`. The clause walk
+  // has the two purpose-built consumers (`consumeJsBlock` /
+  // `consumeVerbFinalJsBlock`), and a fused pattern's only effect is to reach the
+  // verb FIRST and strand the body.
+  //
+  // It bit exactly where the marker shapes happened to line up: bn `ক্লিক তে জেএস`
+  // and hi `click पर जेएस` match `{event} <marker> <verb>` outright, while ja
+  // `クリック を で JS実行` and ko `클릭 을 에 JS실행` carry a second marker that
+  // makes the same pattern miss — so ja/ko/tr/qu already took the clause walk and
+  // bn/hi did not. That is a coincidence of surface, not a design.
+  if (commandSchema.action === 'js') {
+    return [];
+  }
+
   // Check if this is a two-role command (like put, set)
   const requiredRoles = commandSchema.roles.filter(r => r.required);
   const hasTwoRequiredRoles = requiredRoles.length === 2;

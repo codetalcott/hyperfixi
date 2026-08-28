@@ -168,23 +168,61 @@ describe('the `js(args) … end` form', () => {
 });
 
 describe('a VERB-FINAL block is claimed whole', () => {
-  // SOV and agglutinative renders put the command word last (`<body> <marker>
+  // SOV and agglutinative source puts the command word last (`<body> <marker>
   // <js> <end>`), so the head of the clause is the JavaScript and the head-form
-  // walk never fired. The body then reached the command patterns — which is how
-  // bn/ja/ko/tr/qu/hi lost it. Asserted on the ARGS body, where nothing else
-  // rescues these six.
-  const WITH_ARGS = 'on click js(me) if (!window.confirm("x")) return "cancel"; end';
+  // walk never fires. The body then reached the command patterns — which is how
+  // bn/ja/ko/tr/qu/hi lost it.
+  //
+  // These surfaces are written out rather than produced by `render`, because the
+  // renderer no longer EMITS this shape: a verb-final js block puts an unbounded
+  // opaque span before the only token that identifies the clause, so anything
+  // preceding it (a conditional head, in behavior-removable) was swallowed. The
+  // renderer emits verb-initial in the SOV six now; this describe is the INPUT
+  // tolerance for hand-written source, and it must keep working on its own.
+  const HANDLER_HEAD: Record<string, string> = {
+    bn: 'ক্লিক তে',
+    hi: 'click पर',
+    ja: 'クリック を で',
+    ko: '클릭 을 에',
+    qu: 'maykama click',
+    tr: 'tıklama i üzerinde',
+  };
+  /** `<patient-marker> <js-verb> <end>`, in each language's own words. */
+  const VERB_FINAL_TAIL: Record<string, string> = {
+    bn: 'কে জেএস শেষ',
+    hi: 'को जेएस समाप्त',
+    ja: 'を JS実行 終わり',
+    ko: '을 JS실행 끝',
+    qu: 'ta js tukukuy',
+    tr: 'i js son',
+  };
+  const JS_BODY = '(me) if (!window.confirm("x")) return "cancel";';
 
   it.each(['bn', 'hi', 'ja', 'ko', 'qu', 'tr'])('%s', language => {
-    const reference = parseSemantic(WITH_ARGS, 'en')!.node!;
-    const rendered = render(reference, language);
-    const parsed = parseSemantic(rendered, language)?.node as
+    const source = `${HANDLER_HEAD[language]} ${JS_BODY} ${VERB_FINAL_TAIL[language]}`;
+    const parsed = parseSemantic(source, language)?.node as
       | { body?: Array<{ metadata?: { patternId?: string }; roles?: Map<string, unknown> }> }
       | undefined;
-    expect(parsed?.body?.[0]?.metadata?.patternId).toBe(`js-opaque-final-${language}`);
-    expect(parsed?.body?.[0]?.roles?.get('patient')).toMatchObject({
-      raw: '(me) if (!window.confirm("x")) return "cancel";',
-    });
+    expect(parsed?.body?.[0]?.metadata?.patternId, source).toBe(`js-opaque-final-${language}`);
+    expect(parsed?.body?.[0]?.roles?.get('patient')).toMatchObject({ raw: JS_BODY });
+  });
+
+  /** Each language's own js command word — what the verb-initial render leads with. */
+  const JS_VERB: Record<string, string> = {
+    bn: 'জেএস',
+    hi: 'जेएस',
+    ja: 'JS実行',
+    ko: 'JS실행',
+    qu: 'js',
+    tr: 'js',
+  };
+
+  it.each(['bn', 'hi', 'ja', 'ko', 'qu', 'tr'])('%s emits the verb-INITIAL form', language => {
+    // The other half of the same fact: accepted on input, never emitted.
+    const reference = parseSemantic('on click js(me) return 1; end', 'en')!.node!;
+    const rendered = render(reference, language);
+    const head = rendered.slice(HANDLER_HEAD[language].length).trim();
+    expect(head.startsWith(JS_VERB[language]), `${language} renders: ${rendered}`).toBe(true);
   });
 
   it("bn's `শেষ` closes a js block, though it is not a curated `end`", () => {

@@ -60,6 +60,52 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28c — a verb-FINAL `js` block puts opaque foreign code in
+> front of the only token that identifies its clause. Kept rows 10 → 4.**
+>
+> A `js … end` body is raw JavaScript: an opaque span running to the block's
+> `end`. The generated SOV pattern rendered it verb-final —
+> `<body> を JS実行 終わり` — which means nothing BEFORE the body can be
+> attributed, because the clause is not identifiable until its last token.
+>
+> Rendering `if confirmRemoval js(me) … end` gave ja
+> `もし confirmRemoval (me) ⏎ <body> を JS実行 終わり`. The backward body walk
+> swallowed `もし confirmRemoval`, the conditional vanished, the `end` count went
+> off by one, and **every command after the conditional was dropped** —
+> `behavior-removable` in all six SOV languages (bn/hi/ja/ko/qu/tr).
+>
+> The renderer now emits js verb-INITIALLY in the SOV six, against their own word
+> order. That is what the corpus and the engine already use (the i18n transformer
+> leaves `js(me) … end` verbatim in every language; canonical hyperscript has no
+> other form) and what `consumeJsBlock` parses in all 23.
+> `consumeVerbFinalJsBlock` stays for INPUT tolerance — this changes what we
+> emit, not what we accept, and `js-block-round-trip.test.ts` now writes those
+> verb-final surfaces out by hand rather than getting them from `render`.
+>
+> Two exclusions were needed to make the verb-initial surface actually reach that
+> consumer, and both were found by the languages they broke:
+>
+> - **`js` is no longer FUSED into an event-handler pattern** (`pattern-generator.ts`).
+>   Its one role is not a value; a pattern slot tokenizes and re-spaces the body
+>   (`console.log("x")` → `console .log ( "x" )`). It bit exactly where the marker
+>   shapes lined up: bn `ক্লিক তে জেএস` and hi `click पर जेएस` match
+>   `{event} <marker> <verb>` outright, while ja `クリック を で JS実行` carries a
+>   second marker that makes the same pattern miss. ja/ko/tr/qu were taking the
+>   clause walk by **coincidence of surface**, not by design.
+> - **`js` never takes `buildEventHandler`'s fused-action path** — same reason,
+>   one level down; it rewinds to the action's own start so
+>   `parseBodyWithClauses` can claim the span whole. This is what bn needed after
+>   the generator exclusion fixed hi.
+>
+> **Dropped from the change after measuring:** a guard stopping the verb-final
+> body walk at the language's own `if`/`unless` word. It was the first repair
+> tried, it made the conditional survive — and once the render went verb-initial
+> it moved no row and reddened no test. A partial repair whose completion was the
+> render change; deleted rather than shipped unexercised.
+>
+> Kept rows 10 → 4, zero newly kept. Wrapped render 3579 → **3584/3588
+> (99.89%)**; bare unchanged at 2981/2990.
+
 > **Update 2026-08-28b — `为` IS zh's `for` keyword, and one `set` was fine
 > while two collapsed the whole behavior. Kept rows 13 → 10.**
 >
