@@ -60,7 +60,7 @@ Round-trip `en → translate(lang) → foreign → translate(en) → en′`, the
 
 | Engine | Canonical-valid | Exact round-trip |
 | --- | --- | --- |
-| **i18n `GrammarTransformer`** _(what today's `@hyperscript-tools/i18n` uses)_ | **8/30** | 8/30 |
+| **i18n `GrammarTransformer`** _(what `@hyperscript-tools/i18n` used until 2026-08-28)_ | **8/30** | 8/30 |
 | **semantic** _(what the adapter uses)_ | **24/30** | 18/30 |
 
 The i18n engine is badly broken in reverse (dropped commands, unstripped particles `할`/`把`, `into`→`to`,
@@ -68,7 +68,31 @@ scrambled order). The semantic engine's 6 failures are two **identifiable, known
 `add … to me` destination role dropped, and `fetch`'s URL literal quoted/`from`-inserted.
 
 **→ A build-time transpiler must wrap the SEMANTIC engine (`parseSemantic → render`), NOT the i18n
-`GrammarTransformer`.** The current `@hyperscript-tools/i18n` wraps the weak engine.
+`GrammarTransformer`.**
+
+#### Re-run 2026-08-28, after the render arc and the kept-rows burn-down
+
+Same protocol, five canonical snippets × ja/ko/tr/ar/es/zh, validated on the same headless
+`hyperscript.org` loader the corpus gates use:
+
+| Engine | Canonical-valid | Exact round-trip |
+| --- | --- | --- |
+| i18n `GrammarTransformer` | **4/30** | 4/30 |
+| semantic | **24/30** | **30/30** |
+
+Two things moved, in opposite directions. Semantic's exact round-trip went 18/30 → **30/30** — every one
+of the thirty comes back byte-identical. And all six of its "invalid" rows are the SAME snippet
+(`on click set @disabled to "true" on #btn`) in all six languages: that English is **not canonical** —
+the upstream engine rejects it with `Expected event name` — so under the fair-denominator rule the corpus
+gates already use, semantic is **24/24 valid, 30/30 exact** and i18n is **4/24**.
+
+The i18n number fell because the snippets differ from the 2026-07-15 set, not because the engine
+regressed; its failure modes are unchanged and visible in the output (`ko .active click 할 when then
+toggle #panel then on`, `zh on click h .active to #panel`). Either way the finding is the same one,
+larger.
+
+**Shipped 2026-08-28:** `@hyperscript-tools/i18n` now wraps the semantic engine
+(`src/translate.ts`). `GrammarTransformer` is no longer re-exported.
 
 ## 4. Fidelity & validity findings
 
@@ -96,7 +120,12 @@ Section 2 items (publish provenance, version reset, docs deploy).
   same headless-spike discipline proven for the mcp-server and re-proven for i18n this session.
 - **package.json hygiene** for the extracted package: drop phantom `@hyperfixi/core`, move
   esbuild/happy-dom/vite/semantic to devDependencies, declare `zod` + `node-html-parser`.
-- **Wrap `parseSemantic → render`** for build-time English→foreign and foreign→English translation.
+- ~~**Wrap `parseSemantic → render`** for build-time English→foreign and foreign→English translation.~~
+  **DONE 2026-08-28** — `src/translate.ts`; `@lokascript/i18n` is no longer a dependency. The behavioural
+  consequence is that the translator now THROWS on unparseable input where the transformer silently
+  word-substituted, which is what makes `translateHtml`'s `lenient` option mean something: both of its
+  branches were unreachable before, and its "strict mode propagates errors" test asserted
+  `doesNotThrow`.
 - **Bake a canonical-validity gate into CI** — every emitted output must parse on `hyperscript.org`
   (productionize the spike, or literally call `@hyperscript-tools/mcp-server`'s `validate_hyperscript`).
   This is the general gate the fork's ratchet lacks, and it's engine-agnostic.

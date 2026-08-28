@@ -47,21 +47,33 @@ test('translateHtml is a no-op when from === to', () => {
   assert.equal(out, html);
 });
 
-test('translateHtml lenient mode (default) preserves bad snippets', () => {
-  // Deliberately malformed hyperscript-ish; underlying translator may throw or
-  // return unchanged. Either way, lenient mode must not throw.
+test('translateHtml lenient mode (default) keeps the original body', () => {
+  // Not just "does not throw": the body must come back BYTE-IDENTICAL. Under the
+  // old i18n transformer this input did not throw at all — it word-substituted
+  // and returned something — so neither branch of `lenient` was reachable and
+  // both of these assertions were vacuous.
   const html = '<button _="@@@nonsense @@@">x</button>';
   assert.doesNotThrow(() => translateHtml(html, 'ja'));
+  assert.equal(translateHtml(html, 'ja'), html, 'unparseable body must survive verbatim');
 });
 
 test('translateHtml strict mode propagates errors', () => {
-  // Strict only throws when the translator throws on a given input. Some
-  // transformer paths swallow errors and return the input unchanged, so we
-  // can't assert throws unconditionally — the contract is "if it throws in
-  // lenient, strict propagates". We verify the strict path runs without
-  // surprise side effects, leaving the deeper invariant to the i18n suite.
+  // `lenient: false` now means what it says. The semantic translator throws
+  // `SemanticParseError` on input it cannot parse; the i18n transformer it
+  // replaced never threw, which is why this test used to assert `doesNotThrow`
+  // and leave "the deeper invariant to the i18n suite".
   const html = '<button _="@@@nonsense @@@">x</button>';
-  assert.doesNotThrow(() => translateHtml(html, 'ja', { lenient: false }));
+  assert.throws(() => translateHtml(html, 'ja', { lenient: false }));
+});
+
+test('a VALID snippet is unaffected by lenient mode either way', () => {
+  // The guard on the change above: strict mode must not have become
+  // throw-happy. Same input, both modes, same output.
+  const html = '<button _="toggle .active">x</button>';
+  const lenient = translateHtml(html, 'es');
+  const strict = translateHtml(html, 'es', { lenient: false });
+  assert.equal(lenient, strict);
+  assert.match(lenient, /alternar/);
 });
 
 test('translateHtmlToManyLangs returns one entry per requested lang', () => {

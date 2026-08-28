@@ -27,7 +27,7 @@
  * simply activates once the parser finishes loading.
  */
 
-import { translate } from '@lokascript/i18n';
+import { translate } from './translate.js';
 import { translateHtml, translateHtmlToManyLangs } from './html.js';
 import type { LangCode, TranslateHtmlOptions } from './html.js';
 import { loadValidator, warnInvalidOnce, formatParseCheckReport } from './validate.js';
