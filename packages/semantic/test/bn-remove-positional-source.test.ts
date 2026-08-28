@@ -14,12 +14,11 @@
  * correctly. The bn source marker `থেকে` came out untranslated in the English,
  * which is the visible symptom.
  *
- * KNOWN RESIDUAL: the corpus row is a HANDLER, and the fused
- * `remove-event-bn-sov` pattern has the same untyped patient slot with no
- * pre-verb source group (the generated SOV shape only offers a POST-verb one).
- * So `previous-element` still sits on the kept-row ratchet; what this clears is
- * the BARE surface, which the bare-render gate does measure. Pinned below so the
- * two halves stay visible apart.
+ * The HANDLER half was a second, separate gap, pinned here failing-when-fixed
+ * until it cleared: the fused SOV shape offered only a POST-verb source group,
+ * because that is where the i18n transformer emits a from-phrase, while the
+ * semantic renderer emits it BEFORE the patient. The generator now adds the
+ * pre-verb source group as the twin of the destination one it already had.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -52,18 +51,16 @@ describe('the bare surface binds both roles', () => {
   });
 });
 
-describe('KNOWN RESIDUAL — failing-when-fixed', () => {
-  it('the HANDLER form still loses the source', () => {
-    // The fused `remove-event-bn-sov` slot has the same untyped patient and only
-    // a POST-verb source group, so the renderer's source-first body is not a
-    // shape it covers. When this flips, `previous-element[bn]` leaves the
-    // kept-row baseline — delete the pin and say so.
+describe('the HANDLER form binds them too — PROMOTED from a pin', () => {
+  // The fused SOV shape had only a POST-verb source group, because that is where
+  // the i18n transformer emits a from-phrase; the semantic renderer emits it
+  // BEFORE the patient, a shape no fused pattern covered. The generator now adds
+  // the pre-verb source group as the twin of the destination one it already had.
+  it.each(['bn', 'hi', 'ja', 'ko', 'qu', 'tr', 'th', 'zh', 'de', 'es'])('%s', language => {
     const reference = parseSemantic('on click remove .highlight from previous <li/>', 'en')!.node!;
-    const rendered = render(reference, 'bn');
-    const reparsed = parseSemantic(rendered, 'bn')?.node;
-    expect(
-      reparsed ? render(reparsed, 'en') : null,
-      `bn now round-trips the handler (${rendered}) — remove this pin`
-    ).not.toBe(render(reference, 'en'));
+    const rendered = render(reference, language);
+    const reparsed = parseSemantic(rendered, language)?.node;
+    expect(reparsed, `${language} did not re-parse: ${rendered}`).toBeTruthy();
+    expect(render(reparsed!, 'en')).toBe(render(reference, 'en'));
   });
 });

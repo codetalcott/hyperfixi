@@ -383,6 +383,35 @@ export function generateSOVEventHandlerPattern(
     });
   }
 
+  // Optional SOURCE with its marker, the pre-verb twin of the destination group
+  // above. Only the POST-verb source group existed, because that is where the
+  // i18n transformer emits a from-phrase — but the semantic renderer emits it
+  // BEFORE the patient (`আগের <li/> থেকে .highlight কে সরান`), a shape no fused
+  // pattern covered. The untyped `{patient}` slot then swallowed the whole run
+  // including the source marker, and `remove.source` was lost inside every
+  // handler (bn previous-element). Gated on the SCHEMA exactly like the
+  // destination group: an unconditional group fabricates a slot for commands
+  // with no source role, and its marker then eats a phrase belonging to a role
+  // that does exist.
+  const srcMarkerPre = profile.roleMarkers.source;
+  const schemaHasSource = commandSchema.roles.some(r => r.role === 'source');
+  if (srcMarkerPre && schemaHasSource && boundRole !== 'source') {
+    tokens.push({
+      type: 'group',
+      optional: true,
+      tokens: [
+        { type: 'role', role: 'source', optional: true },
+        srcMarkerPre.alternatives
+          ? {
+              type: 'literal',
+              value: srcMarkerPre.primary,
+              alternatives: srcMarkerPre.alternatives,
+            }
+          : { type: 'literal', value: srcMarkerPre.primary },
+      ],
+    });
+  }
+
   tokens.push(...fusedBoundRoleTokens(commandSchema, profile, boundRole));
 
   // Patient marker (postposition/particle after patient)
