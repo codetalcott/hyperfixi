@@ -3210,6 +3210,14 @@ export const swapSchema: CommandSchema = {
         vi: '',
         he: 'את', // "החלף את #a עם #b" — direct-object particle
         zh: '把', // "交换 把 #a 用 #b" — BA object marker
+        // tl was the one language with a patient with-word (`nang`, below) and
+        // no destination entry, so it fell to its profile destination marker and
+        // rendered `palitan_pwesto sa #a nang #b`. `sa` there is read as the
+        // role marker it is, both selectors bind to the wrong slots, and the
+        // parse came back `swap with destination` — both roles gone
+        // (tl swap-content). The i18n row is unmarked, like every other SVO/VSO
+        // language here.
+        tl: '',
       },
     },
     {
