@@ -60,6 +60,42 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27q — twelfth burn-down: four vocabulary/homonym repairs, and
+> one of them was leaving the verb untranslated in ALL 23 languages. 58 → 55.**
+>
+> - **The `pick` verb was hardcoded English.** Both variant patterns opened with
+>   `{ type: 'literal', value: 'pick' }`, so every language rendered `pick znaki
+>   0 to 5 z #note`. Twenty-two got away with it because the pattern's own
+>   literal matched on the way back; pl did not. Now the profile's own word, with
+>   English riding as an alternative so existing surfaces still parse.
+> - **The pick RANGE SEPARATOR too.** The range is captured as one canonical
+>   English expression (`0 to 5`) and was emitted verbatim, so the joiner stayed
+>   English while every other word localized. The parser wants the language's own
+>   joiner (`PICK_RANGE_SEPARATORS_BY_LANG` — every language has one); 22 also
+>   accept English `to`, but pl's `to` tokenizes as the PRONOUN `it`, so the
+>   range AND the source were lost and the whole `pick` action dropped. The
+>   surface is now fully localized in all 23: `0 إلى 5`, `0 から 5`, `0 do 5`.
+> - **`o` is not always `or`.** `OR_WORDS` matched by SURFACE across all
+>   languages, and `o` is the or-word in es/it/tl and the BY-marker in pl —
+>   `zwiększ #score o 10` had its `o 10` swallowed into the event name
+>   (`on click or 10 increment #score by 10`). The table is now keyed BY
+>   LANGUAGE, with a language-blind form kept for the seams that have no language
+>   in hand; three call sites now pass one.
+> - **qu's `return` rendered a word TOGGLE also owns.** `kutichiy` is listed
+>   beside `t'ikray` in the `toggle-qu-*` patterns and toggle won the match, so
+>   `return a + b` came back as `toggle +`. The profile renders `kutimuy` now —
+>   its own alternative, and the surface the i18n corpus has always emitted.
+>
+> **Kept rows 58 → 55 — 3 cleared, ZERO newly kept** (increment-by-amount pl,
+> pick-text-range pl, worker-basic qu). Wrapped render 3571/3588 (99.53%), bare
+> 2978/2990 (99.60%). 11-signal gate green, `test:canonical` 5/5, semantic 9,406
+> + 50 new, adapter 366, vocab green, whole-monorepo `test:check` green. One
+> failing-when-fixed pin promoted (`feature-block-render`, the qu worker row).
+>
+> **Batched deliberately.** Four independent one-line data/table repairs, each
+> mutation-verified against its own assertions, is cheaper to review as one PR
+> than four — and none of them touches a shared heuristic.
+
 > **Update 2026-08-27p — eleventh burn-down: a possessive property that
 > translates to a KEYWORD was refused. 59 → 58.**
 >

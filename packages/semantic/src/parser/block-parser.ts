@@ -1187,7 +1187,7 @@ function watchedExpressionValue(
     return { type: 'expression', raw: input.slice(first.position.start, last.position.end).trim() };
   }
   const normalized = span.map(tok =>
-    isOrWordToken(tok) ? { ...tok, kind: 'keyword' as const, normalized: 'or' } : tok
+    isOrWordToken(tok, language) ? { ...tok, kind: 'keyword' as const, normalized: 'or' } : tok
   );
   return { type: 'expression', raw: joinExpressionTokens(normalized, tryGetProfile(language)) };
 }

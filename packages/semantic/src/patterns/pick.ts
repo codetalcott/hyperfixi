@@ -48,6 +48,29 @@ import {
   type PatternToken,
   type SemanticValue,
 } from '../types';
+import { tryGetProfile } from '../registry';
+
+/**
+ * The language's own `pick` verb, with the English literal riding as an
+ * alternative.
+ *
+ * Both variant patterns hardcoded the ENGLISH `pick`, so every language rendered
+ * `pick znaki 0 to 5 z #note` / `pick 文字 0 to 5 …` — the verb untranslated in
+ * the one slot that names the command. The i18n corpus rows carry the localized
+ * word (pl `wybierz`), which is why the ratchet saw it: pl `pick-text-range`
+ * dropped the whole `pick` action on re-parse. English stays an alternative so a
+ * surface written with it still parses.
+ */
+function pickVerbToken(language: string): PatternToken {
+  const keyword = (
+    tryGetProfile(language)?.keywords as
+      Record<string, { primary?: string; alternatives?: string[] } | undefined> | undefined
+  )?.pick;
+  const primary = keyword?.primary;
+  if (!primary || primary.toLowerCase() === 'pick') return { type: 'literal', value: 'pick' };
+  const alternatives = [...(keyword?.alternatives ?? []), 'pick'];
+  return { type: 'literal', value: primary, alternatives };
+}
 
 /**
  * The unit words `pick (item|character)s <range> of <root>` selects BY. Mirrors
@@ -97,7 +120,7 @@ interface PickVariantSpec {
  * word-order-correct; only the parse-back was missing.
  */
 function makePickVariantPattern(language: string, spec: PickVariantSpec): LanguagePattern {
-  const tokens: PatternToken[] = [{ type: 'literal', value: 'pick' }];
+  const tokens: PatternToken[] = [pickVerbToken(language)];
   if (spec.objectMarkers?.length) {
     tokens.push({
       type: 'group',
@@ -204,7 +227,7 @@ function makePickVerbFinalPattern(language: string, spec: PickVerbFinalSpec): La
           optional: true,
           tokens: [{ type: 'literal', value: spec.patientMarker }],
         },
-        { type: 'literal', value: 'pick' },
+        pickVerbToken(language),
       ],
     },
     extraction: {

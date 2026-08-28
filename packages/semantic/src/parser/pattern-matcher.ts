@@ -1617,6 +1617,12 @@ export class PatternMatcher {
     zh: new Set(['到']),
   };
 
+  /** The word this language joins two pick-range endpoints with. */
+  static rangeSeparatorFor(language: string): string | undefined {
+    const [first] = PatternMatcher.PICK_RANGE_SEPARATORS_BY_LANG[language] ?? [];
+    return first;
+  }
+
   /**
    * Is this token the range separator between two pick-range endpoints?
    * English `to` matches by normalized form (it tokenizes as a keyword in

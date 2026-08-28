@@ -148,7 +148,13 @@ export const quechuaProfile: LanguageProfile = {
     halt: { primary: 'sayay', alternatives: [], normalized: 'halt' },
     throw: { primary: 'chanqay', normalized: 'throw' },
     call: { primary: 'waqyay', alternatives: ['qayay'], normalized: 'call' },
-    return: { primary: 'kutichiy', alternatives: ['kutimuy'], normalized: 'return' },
+    // `kutichiy` is ALSO an accepted surface for toggle (`toggle-qu-*` list it
+    // beside `t'ikray`), and toggle wins the match — so rendering it here made
+    // `return a + b` re-parse as `toggle +` and the return action vanished
+    // (qu worker-basic). `kutimuy` is unambiguous, and is the surface the i18n
+    // corpus has always emitted; `kutichiy` stays an alternative so either form
+    // still parses where nothing else claims it.
+    return: { primary: 'kutimuy', alternatives: ['kutichiy'], normalized: 'return' },
     then: { primary: 'chaymantataq', alternatives: ['hinaspa', 'chaymanta'], normalized: 'then' },
     and: { primary: 'hinallataq', alternatives: ['ima', 'chaymantawan'], normalized: 'and' },
     // Comparison operator (`target matches .x`). Without this keyword the surface

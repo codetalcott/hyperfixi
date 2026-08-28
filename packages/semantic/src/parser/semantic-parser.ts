@@ -39,7 +39,7 @@ import {
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
-import { OR_WORDS } from './utils/or-words';
+import { isOrWordToken } from './utils/or-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { curatedEndKeywordSet } from './end-keywords';
@@ -1100,10 +1100,10 @@ export class SemanticParserImpl implements ISemanticParser {
       const arr = tokens.tokens as LanguageToken[];
       for (let i = 1; i < arr.length - 1; i++) {
         const t = arr[i];
-        const surface = t.value;
-        const norm = (t.normalized ?? t.value).toLowerCase();
-        const isOr = norm === 'or' || OR_WORDS.has(surface) || OR_WORDS.has(norm);
-        if (!isOr) continue;
+        // Language-scoped: `o` is the or-word in es/it/tl and the BY-marker in
+        // pl, so a language-blind surface match reads `zwiększ #score o 10` as a
+        // conjunction.
+        if (!isOrWordToken(t, language)) continue;
         const evTok = arr[i + 1];
         const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
         if (!SemanticParserImpl.KNOWN_EVENTS.has(evNorm)) break;
@@ -6995,8 +6995,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const orToken = tokens.peek();
       if (!orToken) break;
 
-      const orLower = (orToken.normalized || orToken.value).toLowerCase();
-      if (!OR_WORDS.has(orLower)) {
+      if (!isOrWordToken(orToken, _language)) {
         tokens.reset(mark);
         break;
       }
