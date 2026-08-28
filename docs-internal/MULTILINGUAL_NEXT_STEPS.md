@@ -60,6 +60,54 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27t — the fused SOV shape had no PRE-verb source group. 52 → 51.**
+>
+> The generated SOV event-handler shape carries an optional `[{destination}
+> <marker>]` group BEFORE the bound role and another AFTER the verb. The source
+> role had only the post-verb one, because that is where the i18n transformer
+> emits a from-phrase — but the semantic renderer emits it BEFORE the patient
+> (`ক্লিক তে আগের <li/> থেকে .highlight কে সরান`), a shape no fused pattern
+> covered. The untyped `{patient}` slot swallowed the whole run, marker and all,
+> and `remove.source` was lost inside every handler.
+>
+> Added as the exact twin of the destination group, gated on the SCHEMA the same
+> way — an unconditional group fabricates a slot for commands with no source
+> role, and its marker then eats a phrase belonging to a role that does exist
+> (the failure the destination gate's own comment records).
+>
+> **Kept rows 52 → 51 — previous-element(bn), ZERO newly kept.** Wrapped render
+> 3575/3588 (99.64%). Despite touching every SOV language and every command with
+> a source role, the corpus diff is exactly that one row and the mutation reddens
+> exactly bn — the other languages already parsed their own emission order. No
+> syntax-table drift. 11-signal gate green, `test:canonical` 5/5, semantic 9,530
+> + 13, adapter 366, vocab green, whole-monorepo `test:check` green.
+>
+> **Two canonical rows left**: when-value-changes(qu) and
+> on-custom-event-receive(ko), both written up above.
+
+> **Update 2026-08-27s — a second hand-crafted pattern that had outlived its
+> generated sibling, and was wrong in the meantime. Bare render 2979 → 2980.**
+>
+> `remove-bn-full` (`{patient} কে সরান`, priority 100) carried the same tokens as
+> `remove-bn-generated-simple`, minus a verb alternative and minus the TYPED
+> patient slot. Untyped, that leading role takes an EXPRESSION, so on
+> `আগের <li/> থেকে .highlight কে সরান` it swallowed the positional run AND the
+> source clause behind it — patient `previous <li/> থেকে .highlight` — then found
+> its own `কে` and won the priority tie against `remove-bn-generated`, which had
+> bound both roles correctly. The bn source marker came out untranslated in the
+> English, which is the visible symptom. Removed; the plain form it existed for
+> still parses through the generated sibling.
+>
+> **This clears the BARE surface only** (bare render 2979 → 2980/2990, 99.67%);
+> `previous-element` stays on the kept-row ratchet because the corpus row is a
+> HANDLER and the fused `remove-event-bn-sov` pattern has the same untyped
+> patient slot with no PRE-verb source group — the generated SOV shape offers
+> only a post-verb one, and the renderer emits the source first. Pinned
+> failing-when-fixed in `bn-remove-positional-source.test.ts` so the two halves
+> stay visible apart, and so the handler half reports the moment it clears.
+>
+> That fused-shape gap was the next step, and it is now closed — see 27t.
+
 > **Update 2026-08-27r — thirteenth burn-down: a missing marker override and a
 > hand-crafted pattern that had outlived its purpose. 55 → 52.**
 >
