@@ -43,18 +43,14 @@ npm run populate
 
 # Individual steps
 npm run db:init:force      # Initialize with 53 patterns
-npm run sync:translations  # Regenerate every foreign row (default writer: `best`)
+npm run sync:translations  # Regenerate every foreign row (semantic renderer)
 
-# Which renderer writes the foreign rows (PATTERNS_RENDERER env, or --renderer on
-# sync-translations). `best` is the default: semantic's render(parse_en(en), L)
-# unless @lokascript/i18n's GrammarTransformer beats it on a ratchet signal
-# (scoreNodes R0/R1/R3, the English round-trip, engine validity); `i18n` and
-# `semantic` force one writer. The choice is folded into the DB provenance stamp,
-# so a DB written by one renderer reads STALE to a gate run expecting another.
-# Rows the `best` writer leaves to i18n are labelled `grammar-transform` and are
-# ratcheted shrink-only by testing-framework's `i18n-kept-rows` gate.
-PATTERNS_RENDERER=i18n npm run populate       # the pre-2026-08-27 corpus, for A/B
-npx tsx ../testing-framework/tools/probe-render-flip.ts --canonical   # both renderers vs the en reference
+# There is ONE renderer: @lokascript/semantic's render(parse_en(en), L). The
+# `PATTERNS_RENDERER` env, the `--renderer` flag and the three modes
+# (i18n | semantic | best) were retired with @lokascript/i18n's GrammarTransformer
+# on 2026-08-28, after the `i18n-kept-rows` baseline they existed to burn down
+# reached zero. A row the renderer cannot render keeps its ENGLISH and is reported
+# as an "English fallback" at the end of the run — that count must stay 0.
 npm run seed:llm           # Generate 212 LLM examples
 npm run validate:fix       # Validate and update verified_parses
 npm run verify:engines     # Re-verify the engine column (see below)

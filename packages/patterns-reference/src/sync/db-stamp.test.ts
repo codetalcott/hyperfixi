@@ -72,23 +72,25 @@ describe('db-stamp provenance guard', () => {
     expect(computeDbInputHash(dbPath)).not.toBe(h1);
   });
 
-  it('folds the renderer choice in: a PATTERNS_RENDERER=i18n DB is stale to a default (best) gate run', () => {
+  it('does NOT vary with PATTERNS_RENDERER — there is one renderer', () => {
+    // This used to assert the opposite: the renderer choice was hashed into the
+    // stamp, so a `PATTERNS_RENDERER=i18n` DB read STALE to a default gate run.
+    // The env var is gone with the i18n writer (2026-08-28); a stray value left
+    // in a shell must not change the hash, or an unrelated variable becomes a
+    // freshness tripwire.
     const { root, dbPath } = makeFakeRepo();
     roots.push(root);
     const prev = process.env.PATTERNS_RENDERER;
     try {
       delete process.env.PATTERNS_RENDERER;
       const h1 = computeDbInputHash(dbPath);
-      process.env.PATTERNS_RENDERER = 'best';
-      expect(computeDbInputHash(dbPath)).toBe(h1); // the default, spelled out
       process.env.PATTERNS_RENDERER = 'i18n';
-      writeDbStamp(dbPath); // what a `PATTERNS_RENDERER=i18n npm run populate` leaves behind
-      expect(computeDbInputHash(dbPath)).not.toBe(h1);
-      expect(checkDbStamp(dbPath).status).toBe('ok'); // same variant → fresh
-      delete process.env.PATTERNS_RENDERER;
-      expect(checkDbStamp(dbPath).status).toBe('stale'); // default gate run → refused
+      expect(computeDbInputHash(dbPath)).toBe(h1);
       process.env.PATTERNS_RENDERER = 'bogus';
-      expect(() => computeDbInputHash(dbPath)).toThrow(/Unknown renderer/);
+      expect(computeDbInputHash(dbPath)).toBe(h1);
+      writeDbStamp(dbPath);
+      delete process.env.PATTERNS_RENDERER;
+      expect(checkDbStamp(dbPath).status).toBe('ok');
     } finally {
       if (prev === undefined) delete process.env.PATTERNS_RENDERER;
       else process.env.PATTERNS_RENDERER = prev;
