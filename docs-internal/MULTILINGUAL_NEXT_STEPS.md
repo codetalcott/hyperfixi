@@ -60,6 +60,48 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27r — thirteenth burn-down: a missing marker override and a
+> hand-crafted pattern that had outlived its purpose. 55 → 52.**
+>
+> - **tl was the one language with a `swap` PATIENT with-word and no DESTINATION
+>   entry.** `swapSchema`'s destination map sets `''` for every SVO/VSO language
+>   (the i18n emission is unmarked); tl was absent, so it fell to its profile
+>   destination marker and rendered `palitan_pwesto sa #a nang #b`. `sa` there is
+>   read as the role marker it is, both selectors bind to the wrong slots, and
+>   the parse came back `swap with destination` — BOTH roles gone. Third
+>   instance of this exact shape in the arc (th `set` in 27l, and the same
+>   diagnosis in the it/pl/ru/uk residual named there).
+> - **`go-qu-url-dest` was doing harm, not nothing.** A hand-crafted pattern
+>   (priority 105) for qu's fronted `url <dest> man riy` phrase, whose extraction
+>   re-typed the capture through `transform` — and on the fused handler path that
+>   transform does not run. The pattern still won at 105 and bound `back` as a
+>   string LITERAL where English, and every other language via the generated
+>   `go-{lang}-generated-url` shape, produces an EXPRESSION: `on click go back`
+>   came back as `go url "back"`. Removed. Measured: the quoted-URL row it was
+>   written for still parses identically through the generated pattern, `go-back`
+>   is repaired, and no other corpus row moves. The loader stays as the seam,
+>   returning `[]`.
+>
+> **Kept rows 55 → 52 — 3 cleared, ZERO newly kept**: go-back(qu),
+> swap-content(tl), and swap-view-transition(tl) as a bonus. Wrapped render
+> 3574/3588 (99.61%), bare 2979/2990 (99.63%). 11-signal gate green,
+> `test:canonical` 5/5, semantic 9,456 + 70 new, adapter 366, vocab green,
+> whole-monorepo `test:check` green.
+>
+> **Three canonical rows left**: previous-element(bn), when-value-changes(qu),
+> on-custom-event-receive(ko).
+>
+> **Named residual — the watched expression keeps an English possessive.**
+> `when (#price's value * #qty's value) changes` renders with the FIRST
+> `#price's value` untranslated and only the second property localized, in ALL 23
+> languages (`#qty's chanin` / `#qty's valor` / `#qty's 値`). Twenty-two round-trip
+> anyway because the localized property maps back; qu does not, because `'` is a
+> word character in Quechua (`t'ikray`, `llamk'aq`) so its tokenizer cannot split
+> the English `'s` clitic. The i18n row uses qu's own genitive throughout
+> (`#price pa chanin * #qty pa chanin`). That is a render defect in the
+> watched-expression join, not a qu one — and it is what keeps
+> when-value-changes(qu) on the ratchet.
+
 > **Update 2026-08-27q — twelfth burn-down: four vocabulary/homonym repairs, and
 > one of them was leaving the verb untranslated in ALL 23 languages. 58 → 55.**
 >
