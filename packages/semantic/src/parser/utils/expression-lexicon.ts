@@ -492,6 +492,21 @@ export function translatePropertyName(languageCode: string, surface: string): st
 }
 
 /**
+ * Whether the language's own table names this surface as a DOM property.
+ *
+ * Unlike {@link translatePropertyName}, which is consulted at a slot already
+ * known to be a property head and so may pass anything through, this is a
+ * VOUCHER: it is what lets the possessive matcher accept a `keyword` token as
+ * the property. A bare `identifier` after a possessive marker can only be a
+ * property, but a keyword could equally be a command verb (`#button の
+ * 切り替え`), so it is admitted only when the table says the word is a property
+ * name — vi `giá trị`, th `ค่า`, tl `halaga`.
+ */
+export function isKnownPropertySurface(languageCode: string, surface: string): boolean {
+  return PROPERTY_NAME_LEXICON[languageCode]?.[surface.toLowerCase()] !== undefined;
+}
+
+/**
  * Read a token as a possessive, by BOTH its native surface and its normalized
  * form. Profiles key `possessive.keywords` by the native word (en `my`, ar `لي`,
  * ko `내`), but most non-English tokenizers normalize that word before it gets

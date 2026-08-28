@@ -44,8 +44,7 @@ function find(node: SemanticNode | null, action: string): CommandSemanticNode | 
 
 function source(node: CommandSemanticNode | null) {
   return node?.roles.get('source' as never) as
-    | { type?: string; object?: { value?: string }; property?: string }
-    | undefined;
+    { type?: string; object?: { value?: string }; property?: string } | undefined;
 }
 
 const EN = "bind $message to #status's textContent";
@@ -92,8 +91,8 @@ describe('a clitic marker stays glued — the change is scoped by the profile', 
 });
 
 describe('KNOWN RESIDUAL — failing-when-fixed', () => {
-  // Same family, two causes this does NOT address. Pinned so they report the
-  // moment they clear rather than sitting untracked.
+  // Same family, two causes this did NOT address when it landed. Both have since
+  // cleared — kept here as positive rows so the behaviour stays pinned.
   it('th renders its possessive property-FIRST and round-trips (former pin)', () => {
     // Was pinned as glued/unrecoverable. The renderer now emits th's genitive
     // in its true direction — `ค่า ของ #picker` ("value of #picker"), spaced —
@@ -103,15 +102,14 @@ describe('KNOWN RESIDUAL — failing-when-fixed', () => {
     expect(source(find(parse(rendered, 'th'), 'bind'))?.type).toBe('property-path');
   });
 
-  it('vi still loses a possessive whose property is a KEYWORD', () => {
+  it('vi keeps a possessive whose property is a KEYWORD (former pin)', () => {
     // `giá trị` is vi's translation of `value`, so it tokenizes as
-    // `keyword/value` rather than an identifier and the property slot rejects
-    // it. `textContent` is untranslated, which is why that row passes above.
+    // `keyword/value` rather than an identifier and the property slot used to
+    // reject it — the row was pinned failing-when-fixed. The slot now admits a
+    // keyword the language's own property table vouches for, so vi joins the
+    // languages whose property is untranslated (`textContent`) and passes above.
     const rendered = translate("bind $color to #picker's value", 'en', 'vi');
     expect(rendered).toBe('ràng buộc $color vào #picker của giá trị');
-    expect(
-      source(find(parse(rendered, 'vi'), 'bind'))?.type,
-      `vi now accepts a keyword property — remove this pin:\n${rendered}`
-    ).not.toBe('property-path');
+    expect(source(find(parse(rendered, 'vi'), 'bind'))?.type).toBe('property-path');
   });
 });

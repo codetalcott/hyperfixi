@@ -33,6 +33,7 @@ import {
   joinExpressionTokens,
   matchPositionalRun,
   translatePropertyName,
+  isKnownPropertySurface,
 } from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -2756,9 +2757,23 @@ export class PatternMatcher {
     // fidelity score 1.0 (set-color-variable, six kept rows).
     const propertyIsStyleSigil =
       propertyToken.kind === 'selector' && propertyToken.value.startsWith('*');
+    // A property name that translates to a profile KEYWORD rather than a bare
+    // identifier (vi `value` → `giá trị`, one keyword token) was accepted for
+    // the English `'s` and refused for a profile marker, so vi's own possessive
+    // (`#picker của giá trị`) matched neither this matcher nor the of-matcher —
+    // whose owner slot then held a keyword, not a selector — and `bind.source`
+    // was lost outright (vi bind-explicit-property). The language's property
+    // table is the voucher: a keyword is admitted only when the table names it
+    // a property, so a command verb after the marker (`#button の 切り替え`) is
+    // still refused.
+    const propertyIsNamedProperty =
+      propertyToken.kind === 'keyword' &&
+      !!this.currentProfile &&
+      isKnownPropertySurface(this.currentProfile.code, propertyToken.value);
     const propertyOk =
       propertyToken.kind === 'identifier' ||
       propertyIsStyleSigil ||
+      propertyIsNamedProperty ||
       ((isEnglishPossessive || splitEnglishPossessive) &&
         (propertyToken.kind === 'selector' || propertyToken.kind === 'keyword'));
     if (!propertyOk) {
