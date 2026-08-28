@@ -60,6 +60,52 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28g — the transformer is deleted. i18n keeps the words.**
+>
+> `grammar/transformer.ts` (2,747 lines) is gone, with the transformer half of
+> `grammar.test.ts`; the ~400 lines that tested PROFILES and the role helpers
+> moved to `grammar/profiles.test.ts`. i18n's suite goes 1,142 → 843.
+>
+> **It was never "delete the directory."** `grammar/profiles/index.ts` (1,557) is
+> imported by i18n's own `runtime.ts` and re-exported to the classic-i18n browser
+> bundle; `grammar/types.ts` (655) backs `constants.ts` and the
+> `reorderRoles`/`insertMarkers`/`joinTokens` helpers; `direct-mappings.ts` (351)
+> is part of the browser API. My own "recount" in #997 had globbed `*.ts` at the
+> top level and missed `profiles/`, which is how a correction can be wrong in the
+> same way as the thing it corrects.
+>
+> **Four consumers, not three.** The fourth surfaced only because the sweep that
+> found the first three had filtered out `.test.` files:
+> `testing-framework/src/vocab/batch3-roundtrip.test.ts` rendered with
+> `new GrammarTransformer('en', lang).transform(en)` to prove i18n's DICTIONARY
+> words were fixed. Eleven of its 24 cases do not survive the swap to
+> `semantic.translate`, and correctly so: they asserted a localized EVENT name
+> (`재설정`, `zresetuj`, `сбросить`) appears in the render, and semantic
+> deliberately keeps event names English (`localizeEventName`'s round-trip
+> denylist). Migrated as-is they would have asserted that `reset` comes back as
+> `reset`. The three event-name classes are deleted with that reasoning written
+> at the top of the file; the four VERB classes migrate unchanged and still pass.
+>
+> **The measurement that justified each move**, re-run today on five canonical
+> snippets × ja/ko/tr/ar/es/zh against the real `hyperscript.org` parser:
+>
+> ```
+> i18n GrammarTransformer   canonical-valid  4/30   exact round-trip  4/30
+> semantic                  canonical-valid 24/30   exact round-trip 30/30
+> ```
+>
+> All six of semantic's "invalid" rows are the same snippet in all six languages,
+> and that snippet's ENGLISH is not canonical either (`Expected event name`) — so
+> on the fair denominator the corpus gates already use it reads 24/24 vs 4/24.
+>
+> **The one place the retirement cost something:** the classic-i18n browser bundle
+> exposed four helpers over the transformer. Re-implementing them on semantic was
+> measured at **+173 KB gzipped** (138.9 → 312.1), and 269.2 KB even importing
+> `semantic/core` plus only the twelve locales it registers — a 2× bundle to serve
+> three display helpers. They were removed instead, which took the bundle DOWN to
+> 131.0 KB; nothing in it called them internally, and the multilingual PARSING it
+> exists for runs through the keyword providers. Recorded in the two-sided
+> bundle-size baseline, since a −4.6% improvement was itself near the ±5% limit.
 > **Update 2026-08-28f — the corpus writer is semantic-only, and the kept-rows
 > gate is deleted.**
 >

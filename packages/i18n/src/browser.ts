@@ -137,11 +137,4 @@ export {
   getDirectMapping,
   translateWordDirect,
   getSupportedDirectPairs,
-  // Transformer
-  GrammarTransformer,
-  parseStatement,
-  toLocale,
-  toEnglish,
-  translate,
-  examples as grammarExamples,
 } from './grammar';
