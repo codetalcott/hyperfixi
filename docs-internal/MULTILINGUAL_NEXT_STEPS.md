@@ -60,6 +60,49 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28b — `为` IS zh's `for` keyword, and one `set` was fine
+> while two collapsed the whole behavior. Kept rows 13 → 10.**
+>
+> The handcrafted `set-zh-full` rendered `设置 {destination} 为 {patient}`. The
+> zh tokenizer normalizes `为` to **`for`** — a block OPENER — so
+> `block-parser.ts`'s depth counter treated every rendered zh `set` as opening a
+> nested block. With ONE `set` the arithmetic still let a segment out; with TWO,
+> depth never returned to 0 at a segment boundary, `parseBehaviorBlock` produced
+> no segment at all, and the entire `behavior`/`on` structure collapsed to a bare
+> command chain.
+>
+> That threshold is the whole reason this survived: every smaller probe passed,
+> and only the three multi-`set` showcase behaviors (draggable, resizable,
+> sortable) crossed it.
+>
+> This is the pt `para` family — the same collision the `isBlockOpener` comment
+> already documents — but its mitigation ("trust the normalized form; the
+> tokenizer resolved the ambiguity") cannot reach zh, because zh's tokenizer
+> normalizes `为` TO `for`. There is no resolution to trust.
+>
+> The schema had already named the fix: `setSchema.patient.markerOverride.zh` is
+> **`到`**, with `为`/`為`/`成` as `markerVariants` — "the transformer/corpus form
+> marks the value with 到; natural zh uses 为". The handcrafted pattern was the
+> outlier, rendering the ambiguous member of its own alternatives list. `为` is
+> still parsed; it is no longer what we emit.
+>
+> **Second fix in the same change, worth zero corpus rows:** `trigger-zh-ba` had
+> no destination slot. Written to READ the transformer's `触发 把 init`, it
+> outranks both generated patterns (priority 105), so the RENDERER picked it too
+> and dropped an authored `on #panel` from every zh trigger — `send-zh-ba`, its
+> exact twin, has carried the group all along. This is the **fourth** pattern in
+> the arc written only to read i18n output that became the surface the renderer
+> emits (after go-qu-url-dest #987, remove-bn-full #988, repeat-qu #990).
+>
+> It moves no row because every corpus `trigger` targets `me`, which round-trips
+> through the default either way; the loss shows only on a non-`me` target. Kept
+> deliberately, with `zh-marker-homograph.test.ts` as the only thing holding it —
+> mutation-verified (reverting both fixes reddens 7 of its 10 cases; reverting
+> only the trigger half reddens 2).
+>
+> Kept rows 13 → 10, zero newly kept. Wrapped render 3576 → **3579/3588
+> (99.75%)**; bare unchanged at 2981/2990.
+
 > **Update 2026-08-28a — a flattened loop header was never closed, so the
 > enclosing handler's `end` was spent on it. Kept rows 26 → 13.**
 >

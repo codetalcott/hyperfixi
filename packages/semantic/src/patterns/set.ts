@@ -934,7 +934,18 @@ function getSetPatternsZh(): LanguagePattern[] {
       command: 'set',
       priority: 100,
       template: {
-        format: '设置 {destination} 为 {patient}',
+        // RENDERS 到, not the natural 为. `为` IS zh's `for` keyword — the
+        // tokenizer normalizes it to `for`, a block OPENER — so a rendered
+        // `设置 X 为 V` made the block parser's depth counter treat every set as
+        // opening a nested block. A behavior with TWO of them never balanced:
+        // parseBehaviorBlock produced no segment and the whole behavior/on
+        // structure collapsed to a bare command chain (draggable, resizable,
+        // sortable in zh). ONE set was fine, which is why nothing smaller caught
+        // it. The schema already named the unambiguous form —
+        // setSchema.patient.markerOverride.zh is 到, with 为/為/成 as
+        // markerVariants — so this pattern was the outlier, emitting the
+        // ambiguous member of its own alternatives list. 为 still PARSES.
+        format: '设置 {destination} 到 {patient}',
         tokens: [
           { type: 'literal', value: '设置', alternatives: ['設置', '设定', '設定'] },
           {
@@ -942,13 +953,13 @@ function getSetPatternsZh(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'literal', value: '为', alternatives: ['為', '到', '成'] },
+          { type: 'literal', value: '到', alternatives: ['为', '為', '成'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
       extraction: {
         destination: { position: 1 },
-        patient: { marker: '为', markerAlternatives: ['為', '到', '成'] },
+        patient: { marker: '到', markerAlternatives: ['为', '為', '成'] },
       },
     },
     {
