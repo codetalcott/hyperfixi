@@ -127,7 +127,7 @@
     "@lokascript/hyperscript-adapter": "^2.11.1"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.3.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0"
   },
