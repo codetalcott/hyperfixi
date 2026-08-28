@@ -60,6 +60,59 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28a — a flattened loop header was never closed, so the
+> enclosing handler's `end` was spent on it. Kept rows 26 → 13.**
+>
+> `repeat … end` reaches the renderer FLATTENED. The parser emits
+> `[repeat-header, stmt, stmt, …]` and attaches no body — `LoopSemanticNode`
+> exists in the type model, the AST builder handles it, and **nothing
+> constructs one**. The renderer then emitted the header and its siblings with
+> no closing `end`.
+>
+> That produced a surface the structural layer cannot segment.
+> `block-parser.ts` counts `repeat`/`for`/`while` as depth OPENERS, so the
+> enclosing handler's own `end` went to closing the loop and the NEXT feature
+> was swallowed into the handler body:
+>
+> ```
+> es  al pointerdown repeat … quitar .{dragClass} de yo
+>     fin                 ← consumed by the repeat
+>     inicio              ← now inside the handler
+> ```
+>
+> That is what merged `behavior-sortable`'s `init` block into its `on
+> pointerdown` handler in **13 languages**. Every fidelity score was 1.0 — same
+> commands, same roles, same values, wrong block — so the English round-trip
+> was the only signal of the eleven that could see it. Same family as the
+> `as JSON` drop above: a structural loss that every recall metric is
+> constitutionally unable to notice.
+>
+> The fix closes each block header with an explicit `end`, on both statement
+> paths (`renderCompound` and `joinStatements` — mutation-verified separately;
+> the second is what closes a loop inside an if-branch, `… end end then …`).
+> One `end` per header, appended at the tail, because the flat model cannot
+> express a header whose body STOPS before the list does. Restoring the true
+> extent needs the parser to build a real loop node with a body — a separate
+> arc, now filed in PARSER_NEXT_STEPS.md.
+>
+> The `end` is also the canonical form: the engine requires `repeat … end`, so
+> the unterminated render was invalid English as well as unparseable input.
+>
+> **The slim adapter path deliberately does NOT mirror this.** The same close
+> applied to its es `repeat` row turns an engine-INVALID output (host-validate
+> rejects it, the author's text stays) into a VALID `repeat … end` — and slim
+> still drops the `3 times`, so a bare `repeat` is FOREVER. That is the exact
+> committed infinite loop the slim safety pin exists to prevent (#902). Slim
+> gets the close when the repeat surface is fixed whole; the ja `tell` row is
+> recorded in `KNOWN_DIVERGENCES` with that reasoning.
+>
+> Kept rows 26 → 13, zero newly kept. Render/bare-render allowlists unchanged.
+>
+> **Residual found on the way, not fixed here:** zh drops `trigger`'s
+> destination on render — `trigger m on me` → `触发 把 m` → `trigger m`. That
+> is what keeps `behavior-sortable`/`draggable`/`resizable`[zh] on i18n, and it
+> is 3 of the 13 remaining rows.
+
 > **Update 2026-08-27w — `as JSON` was silently dropped from every value in
 > every language, and no gate could see it. Kept rows 49 → 26.**
 >
