@@ -571,7 +571,102 @@ export class PatternMatcher {
     const startIdx = tokens.position();
     if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
     this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
+    this.absorbTrailingConditionOperand(tokens, patternToken, captured, nextPatternToken, startIdx);
     return true;
+  }
+
+  /**
+   * Condition operator words — the mirror of the parser's own
+   * `CONDITION_OPERATORS`, which the condition SCAN uses to know it has not
+   * reached the then-branch yet.
+   *
+   * Matched by NORMALIZED form as well as surface, but in practice it is the
+   * surface that hits: `match`/`matches`/`contains`/`includes`/`equals` are
+   * emitted verbatim in every language (the renderer has no lexicon entry for
+   * them). `has` and `exists` DO localize (de `hat`, ja `ある`, ms `ada`) and
+   * their profiles do not normalize the native form back, so
+   * `unless me has .off` still truncates its condition in those languages —
+   * pre-existing, unchanged by this fold, and the natural next step here.
+   */
+  private static readonly CONDITION_OPERATOR_WORDS: ReadonlySet<string> = new Set([
+    'matches',
+    'match',
+    'contains',
+    'exists',
+    'has',
+    'have',
+    'equals',
+    'includes',
+  ]);
+
+  /**
+   * Extend a `{condition}` capture with a trailing `<operator> [operand]`.
+   *
+   * A fused event pattern ends in a bare `{condition}` slot — tl
+   * `kapag {event} maliban_kung {condition}` — and the slot captures ONE token.
+   * `unless I match .disabled toggle .selected` therefore bound `condition: I`
+   * and left `match .disabled` unconsumed, so the guard tested the element
+   * itself and the class it was supposed to check vanished. Nine languages
+   * (ms/pl/pt/ru/sw/th/tl/uk/vi) render this shape; English escapes only because
+   * its handler pattern hands the whole body to the clause walk, whose condition
+   * scan already knows these words.
+   *
+   * One operator and at most one operand, and the operand must not be a command
+   * verb: `unless #x exists toggle .y` has to leave `toggle` for the body. A
+   * keyword-kind token is never taken, which covers the localized verbs, and
+   * `COMMAND_ACTION_KEYWORDS` covers the ones a tokenizer classifies as
+   * identifiers.
+   */
+  private absorbTrailingConditionOperand(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken: PatternToken | undefined,
+    startIdx: number
+  ): void {
+    if (patternToken.role !== 'condition') return;
+    if (!captured.has('condition')) return;
+    if (tokens.position() <= startIdx) return;
+    // Only the TRAILING condition slot of a FUSED EVENT pattern. Elsewhere the
+    // condition is followed by its own branches, and the clause walk's condition
+    // scan — which already knows these operator words — is what delimits it.
+    // Measured: without this gate the fold fires on the bare `if #modal exists
+    // show #modal else … end`, whose en parse then collapses to `if #modal
+    // exists` with both branches gone (bn/tl/tr on the bare-render gate).
+    if (nextPatternToken !== undefined || this.currentPatternCommand !== 'on') return;
+
+    const op = tokens.peek();
+    if (!op) return;
+    const words = PatternMatcher.CONDITION_OPERATOR_WORDS;
+    if (!words.has((op.normalized ?? '').toLowerCase()) && !words.has(op.value.toLowerCase())) {
+      return;
+    }
+    if (this.patternTokenWouldMatch(nextPatternToken, op)) return;
+
+    tokens.advance(); // the operator
+    const operand = tokens.peek();
+    if (
+      operand &&
+      (operand.kind === 'selector' ||
+        operand.kind === 'identifier' ||
+        operand.kind === 'literal') &&
+      !COMMAND_ACTION_KEYWORDS.has((operand.normalized ?? operand.value).toLowerCase())
+    ) {
+      tokens.advance();
+    }
+
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    captured.set(
+      'condition' as SemanticRole,
+      {
+        type: 'expression',
+        raw,
+        value: raw,
+      } as SemanticValue
+    );
   }
 
   /**

@@ -60,6 +60,53 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-28d — two fused slots that stopped one token short. Kept
+> rows 4 → 2.**
+>
+> A fused event pattern binds the body's roles directly, so whatever a slot does
+> not take is simply left unconsumed. The parse succeeds, every action is
+> present, and what goes missing is a ROLE or part of one — both rows below
+> scored 1.0 on action recall and were caught by the English round-trip alone.
+>
+> - **A `{condition}` slot takes ONE token.** tl's
+>   `kapag {event} maliban_kung {condition}` bound `condition: I` out of
+>   `unless I match .disabled toggle .selected` and left `match .disabled`, so
+>   the guard tested the element itself and the class it was meant to check
+>   disappeared. The fold now absorbs `<operator> [operand]` — one operator, at
+>   most one operand, never a command verb (`unless #x exists toggle .y` must
+>   leave `toggle` for the body). Fixes the shape in 22 languages.
+>
+>   **Gated to the TRAILING slot of a FUSED EVENT pattern**, and that gate was
+>   measured, not assumed: ungated, the fold fires on the bare `if #modal exists
+>   show #modal else … end`, whose en parse then collapses to `if #modal exists`
+>   with BOTH branches gone — three new bare-render failures (bn/tl/tr) on a
+>   gate the wrapped corpus could not have shown. Everywhere else the condition
+>   is followed by its own branches, and the clause walk's condition scan (which
+>   already knows these operator words) is what delimits it.
+>
+>   Residual, unchanged by this and now written down: `match`/`matches`/
+>   `contains`/`includes`/`equals` are emitted verbatim in every language, but
+>   `has` and `exists` DO localize (de `hat`, ja `ある`, ms `ada`) and their
+>   profiles do not normalize the native form back — so `unless me has .off`
+>   still truncates its condition there.
+>
+> - **bn's `set-bn-full` rendered a TWO-token verb, `সেট করুন`.** The
+>   schema-generated fused pattern uses the profile's verb, which is `সেট` alone,
+>   so it matched through `সেট` and stranded `করুন on .tab` — the trailing scope
+>   was unreachable and silently defaulted to `me` (`tabs-aria`). `করুন` is the
+>   polite imperative suffix; the i18n corpus and every other bn surface use the
+>   bare stem, so the pattern was the outlier. It is now an OPTIONAL group, so
+>   authored `সেট করুন` still parses.
+>
+> **Dropped after measuring:** a `scope` entry in `tryAttachTrailingRole` with a
+> synthetic literal-`on` marker. It was written first, on the theory that the
+> trailing `on .tab` needed reclaiming — and once the `করুন` fix let the fused
+> verb match, it moved no row and reddened no test. The trailing-body walk was
+> already handling the phrase.
+>
+> Kept rows 4 → 2, zero newly kept. Wrapped render 3584 → **3586/3588 (99.94%)**;
+> bare unchanged at 2981/2990.
+
 > **Update 2026-08-28c — a verb-FINAL `js` block puts opaque foreign code in
 > front of the only token that identifies its clause. Kept rows 10 → 4.**
 >
