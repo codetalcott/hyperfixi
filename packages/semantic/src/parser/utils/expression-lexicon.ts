@@ -628,8 +628,9 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
 const SENSE_PREDICATE_NORMALIZED = new Set(['empty', 'null', 'undefined', 'true', 'false']);
 
 /** Canonical `as` conversion targets (both `json` casings occur: `fetch … as
-    json` and `… as JSON`). */
-const CONVERSION_TYPE_NAMES = new Set([
+    json` and `… as JSON`). Exported for the pattern matcher's trailing-`as`
+    fold, which must agree with this list about what a conversion type is. */
+export const CONVERSION_TYPE_NAMES = new Set([
   'Number',
   'Int',
   'Float',
