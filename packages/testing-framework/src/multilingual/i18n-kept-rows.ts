@@ -15,6 +15,15 @@
  * When the list is empty, i18n's transformer has left the corpus path and the
  * package's grammar half can be retired (MULTILINGUAL_NEXT_STEPS.md 2026-08-27c).
  *
+ * **It is empty as of 2026-08-28** — 229 kept rows at the flip, then 102, then 49
+ * at the start of the final burn-down, now 0 of 3,657. `best` therefore stores a
+ * semantic render for every foreign row, which is what "switch the corpus to
+ * semantic-only" meant: there is no separate switch, and `best` degenerates to it
+ * by construction. Retiring i18n's grammar half is the separate, larger job of
+ * migrating its three remaining runtime consumers (`@hyperscript-tools/i18n`,
+ * core's `browser-bundle-classic-i18n`, `vite-plugin/semantic-integration`) off
+ * `GrammarTransformer` (5 files: 3,823 lines of source + a 2,780-line suite).
+ *
  * WHAT IT READS
  * -------------
  * `pattern_translations.translation_method` for every non-English, translatable

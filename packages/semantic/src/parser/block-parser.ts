@@ -839,6 +839,41 @@ function eventHandlerHeadForms(language: string): Set<string> {
 }
 
 /**
+ * Length, in tokens, of a MULTI-WORD handler head form whose last word is at
+ * `endIdx` — ko's `할 때`, and any other phrase a profile declares.
+ *
+ * `eventHandlerHeadForms` is a set of whole strings matched one token at a time,
+ * so a two-word phrase only ever matches on its LAST word. That is enough to
+ * FIND the head, and not enough to know where it starts: the single-token
+ * postpositional rule then claims the phrase's first word (`할`) as the event.
+ * Returns 1 when nothing multi-word matches, so the caller's arithmetic is
+ * unchanged for every language that has no such phrase.
+ */
+function multiWordHeadFormLength(
+  tokens: readonly LanguageToken[],
+  endIdx: number,
+  language: string
+): number {
+  const eventHandler = tryGetProfile(language)?.eventHandler;
+  const phrases = [
+    eventHandler?.eventMarker?.primary,
+    ...(eventHandler?.eventMarker?.alternatives ?? []),
+    ...(eventHandler?.temporalMarkers ?? []),
+  ].filter((p): p is string => !!p && /\s/.test(p));
+
+  let best = 1;
+  for (const phrase of phrases) {
+    const words = phrase.toLowerCase().split(/\s+/);
+    const start = endIdx - words.length + 1;
+    if (start < 0) continue;
+    if (words.every((w, k) => tokens[start + k]?.value.toLowerCase() === w)) {
+      best = Math.max(best, words.length);
+    }
+  }
+  return best;
+}
+
+/**
  * Token index where the feature's body begins, or -1 when the head is malformed.
  * `blockEnd` bounds the head scan (-1 when the block is unterminated).
  *
@@ -897,6 +932,13 @@ function featureBodyStart(
       looksLikeEvent(tokens[j - 2])
     ) {
       return j - 2;
+    }
+    // Postpositional MULTI-WORD marker: ko `message 할 때`. Checked before the
+    // single-token rule, which would otherwise claim the phrase's own first word
+    // (`할`) as the event — a bare identifier satisfies `looksLikeEvent`.
+    const phraseLen = multiWordHeadFormLength(tokens, j, language);
+    if (phraseLen > 1 && j - phraseLen > nameIdx && looksLikeEvent(tokens[j - phraseLen])) {
+      return j - phraseLen;
     }
     // Postpositional: `<event> <on>` (hi `message पर`, bn `message তে`).
     if (j > nameIdx + 1 && looksLikeEvent(tokens[j - 1])) return j - 1;

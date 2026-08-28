@@ -8,7 +8,9 @@
  *   2. no NEW kept pair appears outside the committed baseline;
  *   3. no baselined pair has silently flipped to semantic (a stale entry must be
  *      deleted — that deletion is how a renderer fix is completed);
- *   4. the headline kept count does not grow.
+ *   4. the headline kept count does not grow;
+ *   5. the baseline is still EMPTY — it reached 0 on 2026-08-28, and (5) is what
+ *      keeps it there, since (1)–(4) are all satisfied by two empty lists.
  *
  * Regenerate after an intentional renderer change with
  * `npm run populate --prefix packages/patterns-reference` followed by
@@ -74,6 +76,20 @@ describe.skipIf(!DB_FRESHLY_POPULATED)('i18n-kept-rows ratchet (corpus writer = 
 
   it('does not grow the kept count', () => {
     expect(result.kept.length).toBeLessThanOrEqual(baseline.kept);
+  });
+
+  it('the baseline is EMPTY — the retirement trigger, and it stays fired', () => {
+    // Reached 0 on 2026-08-28: the semantic renderer wins all 3,657 rows, so no
+    // corpus row is written by @lokascript/i18n's GrammarTransformer any more.
+    //
+    // Asserted on the BASELINE rather than only on the live result, so a future
+    // regeneration cannot quietly ratchet back up: a `--save-baseline` run that
+    // re-admits a kept row fails here, and re-admitting one has to be a
+    // deliberate edit to this test with a reason. Every other assertion in this
+    // file is satisfied by an empty list on both sides, which is exactly why
+    // this one is needed.
+    expect(baseline.kept, 'a kept row was re-admitted to the baseline').toBe(0);
+    expect(Object.keys(baseline.allowedKept)).toEqual([]);
   });
 
   it('keeps the committed grouping in sync with the live set', () => {
