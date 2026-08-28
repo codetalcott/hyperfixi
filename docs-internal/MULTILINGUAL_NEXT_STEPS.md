@@ -60,6 +60,33 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27s — a second hand-crafted pattern that had outlived its
+> generated sibling, and was wrong in the meantime. Bare render 2979 → 2980.**
+>
+> `remove-bn-full` (`{patient} কে সরান`, priority 100) carried the same tokens as
+> `remove-bn-generated-simple`, minus a verb alternative and minus the TYPED
+> patient slot. Untyped, that leading role takes an EXPRESSION, so on
+> `আগের <li/> থেকে .highlight কে সরান` it swallowed the positional run AND the
+> source clause behind it — patient `previous <li/> থেকে .highlight` — then found
+> its own `কে` and won the priority tie against `remove-bn-generated`, which had
+> bound both roles correctly. The bn source marker came out untranslated in the
+> English, which is the visible symptom. Removed; the plain form it existed for
+> still parses through the generated sibling.
+>
+> **This clears the BARE surface only** (bare render 2979 → 2980/2990, 99.67%);
+> `previous-element` stays on the kept-row ratchet because the corpus row is a
+> HANDLER and the fused `remove-event-bn-sov` pattern has the same untyped
+> patient slot with no PRE-verb source group — the generated SOV shape offers
+> only a post-verb one, and the renderer emits the source first. Pinned
+> failing-when-fixed in `bn-remove-positional-source.test.ts` so the two halves
+> stay visible apart, and so the handler half reports the moment it clears.
+>
+> That fused-shape gap is the next step for this row: `eventHandlerSourceGroup`
+> is pushed only after the verb (`event-handlers-sov.ts` ~line 403), while the
+> destination role has both a pre- and a post-verb group. Adding the pre-verb
+> source group is a GENERATOR change across every SOV language and command, so it
+> wants its own measurement.
+
 > **Update 2026-08-27r — thirteenth burn-down: a missing marker override and a
 > hand-crafted pattern that had outlived its purpose. 55 → 52.**
 >
