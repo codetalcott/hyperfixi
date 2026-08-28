@@ -60,6 +60,54 @@
 > designed. Detail in the take section's Resolution paragraph below. What
 > remains of the R1 tail is the 14 singletons only.
 
+> **Update 2026-08-27w — `as JSON` was silently dropped from every value in
+> every language, and no gate could see it. Kept rows 49 → 26.**
+>
+> `as` is an EXPRESSION operator in hyperscript — `attrs.data as JSON` is one
+> value — but every role capture stopped at the value and left ` as JSON`
+> unconsumed. The pattern matched anyway (trailing tokens are dropped), so
+> `set ^user to attrs.data as JSON` re-rendered as `set ^user to attrs.data`.
+>
+> **Why eleven ratchet signals and ~9,600 semantic unit tests were blind to it:**
+> the conversion lands in no role, so every recall metric compared two equally
+> truncated things and scored a perfect 1.0. Same shape as the `bind-two-way`
+> duplicate-command blind spot, one level down — this time in the value, not the
+> command list.
+>
+> What did see it was the corpus writer's `reRenderPreservesContent` guard
+> (`patterns-reference/src/sync/markup-attributes.ts`), added when the `best`
+> writer landed precisely to keep a truncating parse out of the corpus. Its
+> response was to refuse to translate the body at all, which is why
+> `component-with-attrs` was a kept i18n row in **all 23 languages** — 47% of
+> the whole remaining ratchet. The guard was doing its job; the parse under it
+> was wrong.
+>
+> The fix folds a trailing `as <ConversionType>` into the captured value's raw —
+> the same lever `tryMatchOperatorRunExpression` uses for `"Hello, " + my value`.
+> One seam (`matchRoleToken` wraps `matchRoleTokenCore`), so it applies to every
+> role of every command in every language, not just the corpus row.
+>
+> Two halves that have to stay true together, and the second is the regression
+> the fold could cause:
+>
+> - a conversion is CARRIED — `set … as JSON`, `set x to y as Int`, `put it as
+>   JSON into #out` (which did not parse AT ALL before: confidence 0.00);
+> - `fetch … as json` still binds its real `responseType` role. Its marker IS
+>   `as`, so `patternTokenWouldMatch(nextPatternToken, …)` declines the fold.
+>   **Mutation-verified:** with that guard disabled, `fetch /api as json` matches
+>   `fetch-en-simple` with `source: "/api as json"` — one role instead of two,
+>   and the URL corrupted.
+>
+> The conversion word itself stays English in the rendered surface (no profile
+> has an `as` lexicon entry, and none is needed): what has to work is that a
+> foreign surface carrying `as JSON` re-parses as ONE value, and it does in all
+> 23 languages.
+>
+> Kept rows 49 → 26, zero newly kept. Wrapped render 3576/3588 (99.67%), bare
+> 2981/2990 (99.70%) — both unchanged, since a markup row is in neither gate's
+> denominator. That is the residual worth noting: **markup rows are scored by
+> the corpus writer and by nothing else.**
+
 > **Update 2026-08-27v — qu had a repeat-until head it could READ but not
 > RENDER. 50 → 49.**
 >

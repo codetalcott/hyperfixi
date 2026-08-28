@@ -34,6 +34,7 @@ import {
   matchPositionalRun,
   translatePropertyName,
   isKnownPropertySurface,
+  CONVERSION_TYPE_NAMES,
 } from './utils/expression-lexicon';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
@@ -539,13 +540,90 @@ export class PatternMatcher {
   }
 
   /**
+   * Match a role pattern token, then absorb a trailing `as <Type>` conversion
+   * into whatever it captured.
+   *
+   * `as` is an EXPRESSION operator in hyperscript, not a command role — `attrs.data
+   * as JSON` is one value — but every role capture below stops at the value and
+   * leaves ` as JSON` unconsumed. The pattern then matched anyway (the trailing
+   * tokens are simply dropped) and the conversion vanished: `set ^user to
+   * attrs.data as JSON` re-rendered as `set ^user to attrs.data` in English and
+   * in all 23 languages. Nothing caught it — the conversion lands in no role, so
+   * every recall metric compared two equally truncated things and scored 1.0. The
+   * corpus writer's `reRenderPreservesContent` guard is what finally saw it, and
+   * it responded by refusing to translate the body at all, which is why
+   * `component-with-attrs` was kept from i18n in all 23 languages.
+   *
+   * Folding the conversion into the captured value's raw is the same lever
+   * `tryMatchOperatorRunExpression` uses for `"Hello, " + my value`: one
+   * expression value carrying the whole surface, rendered back verbatim.
+   *
+   * `fetch … as json` is untouched — it has a real `responseType` role whose
+   * marker IS `as`, so the pattern's next token wants that token and
+   * `patternTokenWouldMatch` declines the fold.
+   */
+  private matchRoleToken(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken?: PatternToken
+  ): boolean {
+    const startIdx = tokens.position();
+    if (!this.matchRoleTokenCore(tokens, patternToken, captured, nextPatternToken)) return false;
+    this.absorbTrailingConversion(tokens, patternToken, captured, nextPatternToken, startIdx);
+    return true;
+  }
+
+  /**
+   * Is the stream sitting on `as <ConversionType>`? Matched by VALUE as well as
+   * normalized form: the renderer emits the conversion verbatim inside the
+   * value's raw (no profile has an `as` lexicon entry), so a foreign surface
+   * carries the English word — which is what has to re-parse.
+   */
+  private conversionRunLength(tokens: TokenStream): number {
+    const asToken = tokens.peek();
+    if (!asToken) return 0;
+    const asWord = (asToken.normalized ?? asToken.value).toLowerCase();
+    if (asWord !== 'as' && asToken.value.toLowerCase() !== 'as') return 0;
+    const typeToken = tokens.peek(1);
+    if (!typeToken || !CONVERSION_TYPE_NAMES.has(typeToken.value)) return 0;
+    return 2;
+  }
+
+  /** Extend `patternToken.role`'s captured value with a trailing `as <Type>`. */
+  private absorbTrailingConversion(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' },
+    captured: Map<SemanticRole, SemanticValue>,
+    nextPatternToken: PatternToken | undefined,
+    startIdx: number
+  ): void {
+    // An event name is never an operand of a conversion, and an {action} slot
+    // captures a verb.
+    if (patternToken.role === 'event' || patternToken.role === 'action') return;
+    if (!captured.has(patternToken.role)) return;
+    if (tokens.position() <= startIdx) return;
+    if (this.conversionRunLength(tokens) !== 2) return;
+    // The pattern itself wants this token (fetch's `as {responseType}`) — leave it.
+    if (this.patternTokenWouldMatch(nextPatternToken, tokens.peek()!)) return;
+
+    tokens.advance(); // `as`
+    tokens.advance(); // the type name
+    const raw = joinExpressionTokens(
+      tokens.tokens.slice(startIdx, tokens.position()),
+      this.currentProfile
+    );
+    captured.set(patternToken.role, { type: 'expression', raw, value: raw } as SemanticValue);
+  }
+
+  /**
    * Match a role pattern token (captures a semantic value).
    * Handles multi-token expressions like:
    * - 'my value' (possessive keyword + property)
    * - '#dialog.showModal()' (method call)
    * - "#element's *opacity" (possessive selector + property)
    */
-  private matchRoleToken(
+  private matchRoleTokenCore(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'role' },
     captured: Map<SemanticRole, SemanticValue>,
