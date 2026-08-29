@@ -40,7 +40,7 @@ npm run typecheck --prefix packages/i18n
 
 ```
 src/
-├── dictionaries/       # Language keyword translations (23 languages)
+├── dictionaries/       # Language keyword translations (24 languages)
 │   ├── en.ts          # English (base)
 │   ├── ja.ts          # Japanese
 │   ├── ko.ts          # Korean

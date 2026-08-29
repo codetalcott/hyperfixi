@@ -20,58 +20,55 @@ HyperFixi uses **different build tools for different packages** based on their s
 # Install dependencies
 npm install
 
-# Build all packages
-npm run build --workspaces
-
-# Run tests
-npm test --workspaces
+# Run the test gate — rebuilds any stale package first, then reports per package
+npm run test:check
 
 # Clean test outputs (coverage, reports)
 npm run clean:test
 ```
 
+`npm run build --workspaces` is **not** dependency-ordered — it builds in
+`package.json` declaration order, so it fails on a cold tree. `test:check`
+rebuilds what it needs; for a manual build of the multilingual stack use
+`npm run test:multilingual:build-deps`.
+
+## Improving an Existing Language
+
+**[lokascript.org/community](https://lokascript.org/community/)** — Flag a bad
+translation, fix vocabulary words, or apply as a language reviewer. Vocabulary is
+best-effort for most languages, so native-speaker corrections are the
+highest-value contribution we get. All you need is a GitHub account.
+
 ## Adding a New Language
 
-HyperFixi has two systems for multilingual support. Most contributions will use the semantic package.
-
-### Semantic Parsing (Recommended)
-
-The semantic package supports 23 languages with keyword-based parsing. Use the CLI to scaffold a new language:
+Scaffold the new language with the CLI:
 
 ```bash
 cd packages/semantic
-
-# Scaffold the language
 npm run add-language -- --code=xx --name=LanguageName --native=NativeName \
   --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true
 ```
 
-**Options:**
+| Option         | Values                                    |
+| -------------- | ----------------------------------------- |
+| `--code`       | ISO 639-1 (`es`, `ja`, `ar`)              |
+| `--wordOrder`  | `SVO`, `SOV`, `VSO`                       |
+| `--direction`  | `ltr`, `rtl`                              |
+| `--marking`    | `preposition`, `postposition`, `particle` |
+| `--usesSpaces` | `false` for CJK                           |
 
-- `--code`: ISO 639-1 language code (e.g., `es`, `ja`, `ar`)
-- `--wordOrder`: `SVO`, `SOV`, or `VSO`
-- `--direction`: `ltr` or `rtl`
-- `--marking`: `preposition`, `postposition`, or `particle`
-- `--usesSpaces`: `true` for space-delimited languages, `false` for CJK
+The CLI writes the semantic profile, the tokenizer, the i18n dictionary and the
+vite-plugin keyword stub, registers all of them, and then **prints the remaining
+steps**. Follow that output rather than a copy of it kept here — the copy is what
+goes stale.
 
-**After scaffolding:**
+Two things it does not print:
 
-1. Fill in keyword translations in `src/generators/profiles/{code}.ts`
-2. For non-Latin scripts, add character classification in `src/tokenizers/{code}.ts`
-3. Sync keywords to vite-plugin: `npm run sync-keywords --prefix packages/vite-plugin`
-4. Run tests: `npm test --prefix packages/semantic`
-
-### Grammar Transformation (i18n)
-
-The i18n package supports 13 languages with word order transformation (SVO->SOV, SVO->VSO). This requires more work:
-
-1. Create dictionary in `packages/i18n/src/dictionaries/{code}.ts`
-2. Add language profile in `packages/i18n/src/grammar/profiles/index.ts`
-3. Define markers (particles, prepositions) and word order rules
-4. Export from `packages/i18n/src/dictionaries/index.ts`
-5. Run tests: `npm test --prefix packages/i18n`
-
-See existing dictionaries (e.g., `ja.ts`, `ar.ts`) for examples.
+- **Vocabulary consistency** is a required CI check that a new language will very
+  likely trip:
+  `cd packages/testing-framework && npx tsx src/vocab/cli.ts validate`
+- **Native-speaker verification** — name your reviewer in the PR, or mark the
+  vocabulary best-effort so it joins the community review queue above.
 
 ## Testing Requirements
 
@@ -85,7 +82,7 @@ See existing dictionaries (e.g., `ja.ts`, `ar.ts`) for examples.
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/add-language-xx`)
 3. Make changes with comprehensive tests
-4. Run `npm test --workspaces` to verify all tests pass
+4. Run `npm run test:check` to verify all tests pass
 5. Submit PR with description of changes
 6. For language contributions: include native speaker verification if possible
 
