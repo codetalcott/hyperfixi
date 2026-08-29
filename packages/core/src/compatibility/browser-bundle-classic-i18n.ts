@@ -6,7 +6,7 @@
  * - 12 language keyword providers (es, ja, fr, de, ar, ko, zh, tr, id, pt, qu, sw)
  * - Automatic browser locale detection
  * - Runtime locale switching
- * - Grammar transformation for native word order display
+ * - Grammar profiles (word order, role markers); the transformer itself is retired
  *
  * Usage:
  * ```html

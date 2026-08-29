@@ -1,7 +1,7 @@
 {
   "name": "@lokascript/i18n",
   "version": "2.11.1",
-  "description": "Grammar transformation and keyword translation for hyperscript",
+  "description": "Keyword dictionaries, keyword providers and grammar profiles for hyperscript",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",

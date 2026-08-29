@@ -499,7 +499,7 @@ export const ecosystem = {
   },
   i18n: {
     name: '@lokascript/i18n',
-    description: 'Grammar transformation and keyword translation',
+    description: 'Keyword dictionaries, keyword providers and grammar profiles',
     npm: 'https://www.npmjs.com/package/@lokascript/i18n',
   },
   vitePlugin: {
