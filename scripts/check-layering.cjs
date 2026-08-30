@@ -102,8 +102,6 @@ const LAYERS = new Map(
     reference: 5,
     'bundle-generator': 5,
     features: 5,
-    context: 5,
-    experimental: 5,
 
     // 6-8 — the public API, the shipped bundles, and the library entry.
     api: 6,

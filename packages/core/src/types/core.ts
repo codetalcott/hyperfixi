@@ -123,89 +123,13 @@ export interface StatementNode extends ASTNode {
 // Runtime Types
 // ============================================================================
 
-export interface Runtime {
-  /** Execute a command in the given context */
-  executeCommand(command: CommandNode, context: ExecutionContext): Promise<unknown>;
-
-  /** Evaluate an expression in the given context */
-  evaluateExpression(expression: ExpressionNode, context: ExecutionContext): Promise<unknown>;
-
-  /** Create a new execution context */
-  createContext(parent?: ExecutionContext): ExecutionContext;
-
-  /** Register a command implementation */
-  registerCommand(name: string, implementation: BaseCommandImplementation): void;
-
-  /** Register an expression implementation */
-  registerExpression(name: string, implementation: ExpressionImplementation): void;
-
-  /** Register a feature implementation */
-  registerFeature(name: string, implementation: FeatureImplementation): void;
-}
-
 // ============================================================================
 // Implementation Types
 // ============================================================================
 
-/**
- * Base command implementation interface (non-generic)
- * Used for runtime command registry and code generation
- */
-export interface BaseCommandImplementation {
-  name: string;
-  syntax: string;
-  execute: (context: ExecutionContext, ...args: unknown[]) => Promise<unknown>;
-  isBlocking: boolean;
-  hasBody: boolean;
-  implicitTarget?: string;
-  implicitResult?: 'it' | 'result' | 'none';
-  validate?: (args: unknown[]) => string | null;
-}
-
 // ============================================================================
 // Enhanced Command Types (Using Unified Base Types)
 // ============================================================================
-
-/**
- * Legacy ValidationResult interface for backward compatibility
- * Maps to the unified ValidationResult from base-types.ts
- */
-export interface LegacyValidationResult<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: import('./base-types').ValidationError;
-}
-
-/**
- * @deprecated Use TypedCommandImplementation from enhanced-core.ts instead.
- * This legacy interface is kept for backward compatibility only.
- *
- * Key differences from modern interface:
- * - Legacy: execute(input, context) → Promise<TOutput>
- * - Modern: execute(context, ...args) → Promise<TypedResult<TOutput>>
- * - Legacy: metadata is plain object
- * - Modern: metadata is CommandMetadata type with additional fields
- */
-export interface CommandImplementation<
-  TInput = unknown,
-  TOutput = unknown,
-  TContext = import('./base-types').ExecutionContext,
-> {
-  metadata: {
-    name: string;
-    description: string;
-    examples: string[];
-    syntax: string;
-    category: string;
-    version: string;
-  };
-
-  validation: {
-    validate(input: unknown): import('./base-types').ValidationResult<TInput>;
-  };
-
-  execute(input: TInput, context: TContext): Promise<TOutput>;
-}
 
 // TypedExecutionContext is now exported from base-types.ts above
 
@@ -229,14 +153,6 @@ export interface ExpressionImplementation {
   associativity?: Associativity;
   operators?: string[];
   validate?: (args: unknown[]) => string | null;
-}
-
-export interface FeatureImplementation {
-  name: string;
-  trigger?: string;
-  install: (runtime: Runtime) => void;
-  uninstall?: (runtime: Runtime) => void;
-  scope: 'global' | 'local' | 'behavior';
 }
 
 // ============================================================================
@@ -382,37 +298,3 @@ export interface HyperscriptEvent extends CustomEvent {
 // ============================================================================
 // Configuration Types
 // ============================================================================
-
-export interface HyperscriptConfig {
-  /** Enable strict mode with enhanced type checking */
-  strict?: boolean;
-
-  /** Debug mode with detailed logging */
-  debug?: boolean;
-
-  /** Custom command implementations */
-  commands?: Record<string, BaseCommandImplementation>;
-
-  /** Custom expression implementations */
-  expressions?: Record<string, ExpressionImplementation>;
-
-  /** Custom feature implementations */
-  features?: Record<string, FeatureImplementation>;
-
-  /** Global variables */
-  globals?: Record<string, unknown>;
-
-  /** Event handling configuration */
-  events?: {
-    bubbling?: boolean;
-    delegation?: boolean;
-    passive?: boolean;
-  };
-
-  /** Performance options */
-  performance?: {
-    cacheParsing?: boolean;
-    lazyLoading?: boolean;
-    bundleOptimization?: boolean;
-  };
-}

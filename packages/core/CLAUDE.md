@@ -68,13 +68,18 @@ src/
 
 ## Command Pattern
 
-All commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>` via the `@command`/`@meta` decorators:
+All commands implement `DecoratedCommand` via the `@command` decorator plus a type-visible `commandMeta` static:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts
-@meta({ description: '...', syntax: [...], examples: [...], sideEffects: [...] })
-@command({ name: 'increment', category: 'data' })
+@command({ name: 'increment' })
 export class IncrementCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({
+    description: '...', syntax: [...], examples: [...], sideEffects: [...], category: 'data',
+  });
+  get metadata() { return IncrementCommand.metadata; }
+  declare readonly name: string;
+
   async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
 }

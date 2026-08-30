@@ -370,9 +370,12 @@ Delete what nothing imports and nothing exports, so Arc 2 does not type it:
   no compiled output).
 - `src/experimental/`.
 - `src/registry/examples/` — 0 non-test downstream importers (measured 2026-08-30; the only hits are `dist/` artifacts). `src/registry/multilingual/` is the same shape, but Arc 1 may claim it as front-end code — decide there before deleting here.
-- `parser/types.ts`'s PascalCase node kinds (`'Literal'`,
-  `'BinaryExpression'`, …): unused; keep the `Token`/`ParserOptions`/
-  `SemanticAnalyzerInterface` halves of the file.
+- ~~`parser/types.ts`'s PascalCase node kinds~~ — **measured false, 2026-08-30.**
+  Stripping the block makes `tsc` fail: `parser.ts` imports `ParseError` from
+  it, and `__test-utils__/parser-helpers.ts` imports `CommandNode`, `ASTNode`
+  and `ParseError`. So the engine's own parser holds one `ParseError` while
+  everything else uses `types/base-types`'s — a real finding, and **Arc 2's**
+  problem (two definitions to collapse) rather than a deletion.
 - The three zero-implementer command interfaces (`CommandImplementation`,
   `BaseCommandImplementation`, `TypedCommandImplementation`) — after a ghost
   test proves 0 `implements` and 0 type-position uses outside `types/`.
@@ -793,3 +796,30 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   contrast row was originally `log`, which writes to stdout, and the I/O
   dominated so completely that the "cheap" command benchmarked **9.6x slower**
   than the expensive one.
+- **2026-08-30** — **Arc 6a** (delete unexported dead code) landed.
+  **5,801 lines gone**, every deletion measured rather than assumed:
+  `src/context/` (2,543 — excluded from all THREE tsconfigs, so it had not
+  compiled in any configuration for as long as those excludes existed),
+  `src/experimental/` (2,696), and seven dead interfaces (144) —
+  `CommandImplementation`, `BaseCommandImplementation`, `LegacyValidationResult`,
+  `FeatureImplementation`, `Runtime`, `HyperscriptConfig` from `types/core.ts`
+  plus `TypedCommandImplementation` from `command-types.ts`. Zero implementers,
+  zero type-position references, none in the public export surface — so no
+  major was needed. `Runtime` and `HyperscriptConfig` each had a LIVE namesake
+  elsewhere; it was the `types/core.ts` declarations that were dead.
+
+  **Two documentation claims that were already false** went with them: both
+  CLAUDE.md files said "all commands use `CommandImplementation<TInput, TOutput,
+  TypedExecutionContext>`". They never did — they implement `DecoratedCommand` —
+  and the named interface had zero implementers. The core one also still
+  documented the `@meta` decorator that Arc B deleted in #827.
+
+  **The plan's own list was wrong about one item**, caught by testing rather
+  than trusting: see the struck-through `parser/types.ts` row in Arc 6a above.
+  `registry/examples/` also stays — its only reference is inside a
+  documentation template literal, and Arc 1 may claim that tree as front-end
+  code.
+
+  Ratchets regenerated: type escapes **1,285 → 1,231**, layering conforming
+  imports 893 → 873, all 14 upward edges and their reasons intact. Suite
+  7,972 → **7,915** passing (the 57 were the deleted trees' own tests).
