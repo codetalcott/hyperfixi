@@ -17,6 +17,17 @@
  *   src/index.ts, src/schemas/index.ts, src/profiles/index.ts,
  *   src/tokenizers/index.ts, src/generators/{name}-generator.ts,
  *   src/__test__/{name}-domain.test.ts
+ *
+ * WHERE THE OUTPUT BELONGS: the first-party domain family left this monorepo in
+ * v2.11.0 and now ships as the `@lokascript/domains` aggregate, one subpath per
+ * domain, from the lokascript-domains repository. So `--output` should point at
+ * that repo's `packages/`, not at `hyperfixi/packages/` — nothing here builds,
+ * tests, or publishes a `domain-*` directory any more. The `@lokascript/domain-*`
+ * package names this script generates are also the deprecated ones: the ten that
+ * were published under that convention are all marked deprecated on npm, each
+ * pointing at its `@lokascript/domains/<name>` replacement. Pick a name
+ * accordingly — either add the domain to the aggregate, or scope it to yourself
+ * — and adjust the generated `package.json` rather than taking the default.
  */
 
 import * as fs from 'node:fs';

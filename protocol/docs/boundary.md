@@ -30,7 +30,11 @@ This document describes the boundary between the **LSE protocol layer** (this di
 - `@hyperfixi/intent-element` — `<lse-intent>` custom element that accepts protocol JSON and executes it via the hyperfixi runtime.
 - `@lokascript/framework` — multilingual DSL framework built on LSE. Provides `createMultilingualDSL()` for authoring new DSLs.
 - `@hyperfixi/core` — hyperscript runtime and the 43 command implementations. Defines the UI-behavior vocabulary.
-- `@lokascript/domain-*` — nine in-repo DSLs (SQL, BDD, JSX, flow, voice, etc.) built on the framework. Each defines its own vocabulary.
+- `@lokascript/domains` — the domain-DSL family (SQL, BDD, JSX, flow, voice, etc.) built on the framework, one
+  subpath export per domain (`@lokascript/domains/sql`, `/flow`, …). Each defines its own vocabulary. Split out of
+  this monorepo in v2.11.0 into the [lokascript-domains](https://github.com/codetalcott/lokascript-domains)
+  repository and consumed here as an npm dependency; the former per-domain `@lokascript/domain-*` packages are
+  deprecated on npm and point at the corresponding subpath.
 - `@lokascript/compilation-service` — generates React/Vue/Svelte components from LSE.
 - `@lokascript/mcp-server` — MCP tools (`execute_lse`, `validate_lse`, `translate_lse`, ...) for LLM integration.
 
@@ -38,7 +42,7 @@ This document describes the boundary between the **LSE protocol layer** (this di
 
 **Provides:**
 
-- Layer B vocabularies (UI-behavior from `@hyperfixi/core`, plus 8 domain vocabularies from `domain-*`)
+- Layer B vocabularies (UI-behavior from `@hyperfixi/core`, plus the domain vocabularies from `@lokascript/domains`)
 - DOM execution (`evalLSENode`, runtime, command implementations)
 - Multilingual authoring (`createMultilingualDSL`, 24-language tokenizers)
 - Application integration (custom element, MCP server, compilation service, language server)
@@ -64,11 +68,11 @@ If you find yourself tempted to put execution logic or framework glue into a ref
 
 **Layer A (universal infrastructure) is in the protocol layer.** It is vocabulary-agnostic — the grammar and wire format accept any role name.
 
-**Layer B (domain vocabularies) is in the hyperfixi layer.** The UI-behavior vocabulary is defined by `@hyperfixi/core`'s command implementations. SQL, BDD, JSX, etc. vocabularies are defined by `@lokascript/domain-*` packages. The protocol layer only _documents_ vocabularies (in `vocabularies.md`) for reference — it does not implement or enforce them.
+**Layer B (domain vocabularies) is in the hyperfixi layer.** The UI-behavior vocabulary is defined by `@hyperfixi/core`'s command implementations. SQL, BDD, JSX, etc. vocabularies are defined by the `@lokascript/domains` subpath exports. The protocol layer only _documents_ vocabularies (in `vocabularies.md`) for reference — it does not implement or enforce them.
 
 This means:
 
-- **Adding a new vocabulary is a hyperfixi-layer change.** You add a new `domain-*` package, define its schemas, register it with the framework. No protocol-layer changes needed.
+- **Adding a new vocabulary is a hyperfixi-layer change.** You add a domain to `@lokascript/domains` — or any package built on `@lokascript/framework` — define its schemas, and register it with the framework. No protocol-layer changes needed.
 - **Conformance fixtures test structure, not vocabulary.** The 121 fixtures in `test-fixtures/` verify Layer A (node kinds, value shapes, tree structure). They do not verify that a command uses a "correct" role name, because there is no correct set — vocabularies are per-domain.
 
 ### Rule 3: Protocol changes must be validated by all four reference parsers
