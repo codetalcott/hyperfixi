@@ -425,10 +425,37 @@ and the parser loop that assumes it.
    moves to the multilingual module. Consumers: `mcp-server/lsp-bridge`,
    `language-server/server.ts`, `aot-compiler/core-parser-adapter.ts` — each
    already depends on semantic and passes the default.
-5. **Measure semantic-first for English.** Because `config.semantic` defaults
-   `true`, every en `compile()` runs the analyzer for 32 commands before the
-   core parser. Diff the AST-equivalence corpus with semantic-first on vs off.
-   Three outcomes, each with its own step 6:
+5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
+   the three anticipated outcomes was the answer.** Measured over the 233-source
+   corpus: **same 107 · differ 105 · traditional-only 2 · semantic-only 2 ·
+   both-fail 17.** Semantic-first produces a *materially different* English AST
+   for **105 of the 214** sources both paths parse — different node kinds
+   (`contextReference` vs `identifier`), an added `semanticRoles` field, zeroed
+   positions, an injected implicit `me` target, and prepositions kept out of
+   `args` rather than left in them. So step 6 is **not** a free deletion, and
+   the plan's original framing below understated it badly.
+
+   Two concrete findings, each recorded where it belongs:
+
+   - **A live shipped bug**, filed in `PARSER_NEXT_STEPS.md`:
+     `hyperscript.compileSync('on click log 1 and 2')` FAILS in the default
+     configuration (`Unexpected token: 2`) while `{ traditional: true }`
+     parses it. Any `and` in the arguments of a command absent from the
+     27-entry `skipSemanticParsing` list, inside a handler. The semantic match
+     consumes a prefix, `skipToCommandBoundary()` stops at the `and`, and the
+     rest re-parses as a fresh command. **This is step 6's concrete motivating
+     case** — and the cheap interim fix is to reject a semantic match that
+     leaves input unconsumed, a diagnostic the analyzer already emits and
+     `trySemanticParse` ignores.
+   - **Semantic-first is better on two rows and worse on two.** It rescues
+     `render … with (…)` (two of the fifteen parser gaps filed from Arc 0) and
+     breaks `log [1, 2] and {a: 1}` plus `log 5 is between 1 and 10`.
+
+   The 105 differing rows are the real cost of step 6 and must be reviewed as a
+   diff, not asserted as a refactor. The original three-outcome framing is kept
+   below for the record.
+
+   > Superseded framing: three outcomes, each with its own step 6:
    - **identical** → step 6 deletes the in-loop attempt and the
      `skipSemanticParsing` list outright;
    - **differs only where the core parser is worse** (semantic parses en
@@ -905,3 +932,13 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   import the front-end **nowhere**. The coupling is confined to the api, the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
+
+  **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
+  the 233-source corpus, semantic-first vs traditional for English:
+  **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail
+  17.** None of step 5's three anticipated outcomes was the answer — the two
+  paths produce materially different English ASTs for **half the corpus**, so
+  step 6 is a reviewed behavioural change, not a deletion. It also surfaced a
+  **live shipped bug** (`on click log 1 and 2` fails in the default config),
+  filed in `PARSER_NEXT_STEPS.md` and now step 6's motivating case. Detail is
+  on the step itself.

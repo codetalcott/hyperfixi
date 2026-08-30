@@ -37,6 +37,73 @@ ones, because the gate *is* the tracking mechanism.
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 | **15 documented command examples are syntax the parser rejects** | medium — every one is advertised by the command's own `metadata.examples`, so it reaches the LSP, the generated docs and `commands.json`. Four more rows in the same sweep are documentation defects, not parser gaps (see below). | ✅ pinned in both directions by `ast-vocabulary.test.ts` | this file, next section. Found 2026-08-30 by ENGINE_MIGRATION_PLAN Arc 0 step 3. |
+| **Semantic-first parsing breaks `and` in a command's arguments inside a handler** | **high — a live defect in the DEFAULT configuration.** `hyperscript.compileSync('on click log 1 and 2')` fails with `Unexpected token: 2`; the same source parses with `{ traditional: true }`, and the same expression parses fine outside a handler. Hits any command NOT on `parseCommandCore`'s 27-entry `skipSemanticParsing` list. | ⚠️ NONE. No suite compiles a handler-wrapped command with `and` in its args through the default config. | this file, next section. Found 2026-08-30 by ENGINE_MIGRATION_PLAN Arc 1 step 5. |
+
+### `and` in a semantically-parsed command's arguments (2026-08-30)
+
+**Live in the shipped default configuration** (`config.semantic === true`).
+Found by ENGINE_MIGRATION_PLAN Arc 1 step 5, which diffed every corpus source
+parsed with semantic-first against the same source parsed traditionally.
+
+```text
+hyperscript.compileSync('on click log 1 and 2')
+  -> ok: false, "Unexpected token: 2"
+hyperscript.compileSync('on click log 1 and 2', { traditional: true })
+  -> ok: true
+```
+
+Measured shape:
+
+| Source | Result |
+| ------ | ------ |
+| `on click log 1 and 2` | **FAIL** `Unexpected token: 2` |
+| `on click log "a" and "b"` | **FAIL** `Unexpected token: "b"` |
+| `on click log 5 is between 1 and 10` | **FAIL** `Unexpected token: 10` |
+| `log 5 is between 1 and 10` (no handler) | ok |
+| `on click if 5 is between 1 and 10 then add .x end` | ok |
+| `on click log 5 is between 1 and 10 then log "x"` | ok |
+| `on click toggle .a and .b` | ok — `toggle` is on the skip list |
+| `on click set x to 1 and 2` | ok — `set` is on the skip list |
+
+So it is **not** about `between`, and not about any one command. The mechanism:
+
+1. `parseCommandCore` tries the semantic analyzer first for every command NOT
+   in its 27-entry `skipSemanticParsing` list.
+2. The analyzer matches a PREFIX of the argument (`log 1`) and reports success.
+   Its `unconsumed-input` diagnostic — which `multilingual/bridge.ts` already
+   knows to read — is not consulted here.
+3. `skipToCommandBoundary()` then advances the token stream until it hits one of
+   `then`/`and`/`else`/`end`. It stops at the `and`.
+4. The handler's statement loop resumes there and tries to parse `2` as a new
+   command.
+
+The three passing rows are the same mechanism seen from the other side: the
+skip-list commands never enter step 1, and `… then log "x"` gives step 4
+something it can parse.
+
+**Blast radius** is the 28 generic-loop commands plus every other command absent
+from the skip list — `log`, `call`, `get`, `append`, `prepend`, `throw`,
+`return`, `beep` among them.
+
+**Why nothing caught it.** The multilingual gates all run through
+`patterns.db` rows, whose English side is authored to parse; the core suite
+tests handlers and tests `and`, but never a handler-wrapped, semantically-parsed
+command with `and` in its arguments. It needed a differential measurement of
+the two parse paths over one corpus, which is what Arc 1 step 5 is.
+
+**Do not band-aid this by adding `log` to `skipSemanticParsing`.** That list is
+already 27 entries of the same avoidance, and the next command with an `and`
+argument would need entry 29. The principled fixes, cheapest first:
+
+1. **Reject a semantic match that leaves input unconsumed.** The diagnostic
+   already exists (`unconsumed-input`); `trySemanticParse` ignores it. Smallest
+   change, and it fixes the class rather than the instance.
+2. **ENGINE_MIGRATION_PLAN Arc 1 step 6** — delete the in-loop semantic attempt
+   and `skipToCommandBoundary` entirely, making the front-end fall back
+   whole-program rather than mid-token-stream. That is the real fix, and this
+   defect is now its concrete motivating case. Note step 5 also measured that
+   this step is NOT free: semantic-first currently produces a different English
+   AST for **105 of 214** corpus sources that both paths parse.
 
 ### Documented command examples the parser rejects (2026-08-30)
 
