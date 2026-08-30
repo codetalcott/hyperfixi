@@ -410,6 +410,11 @@ step 2 deletes; each deletion is its own PR. Tag the tree
 
 ### Arc 1 — Engine / front-end boundary (medium)
 
+> **Brief: [HANDOFF-engine-arc1.md](./HANDOFF-engine-arc1.md)** (2026-08-30).
+> Steps 1 and 5 are done; it carries the measured state, the open decision step
+> 5 surfaced, and the recommended order for the rest. Read it before starting
+> step 2, 3, 4 or 6.
+
 The semantic package becomes a front-end the engine does not know about.
 The seam is already there; the arc is about the one call site that ignores it
 and the parser loop that assumes it.
@@ -446,9 +451,20 @@ and the parser loop that assumes it.
    `language-server/server.ts`, `aot-compiler/core-parser-adapter.ts` — each
    already depends on semantic and passes the default.
 5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
-   the three anticipated outcomes was the answer.** Measured over the 233-source
-   corpus: **same 107 · differ 105 · traditional-only 2 · semantic-only 2 ·
-   both-fail 17.** Semantic-first produces a *materially different* English AST
+   the three anticipated outcomes was the answer.** Measured over the 233-source corpus, **and then RE-measured after the `and`
+   fix below landed, which moved it**:
+
+   | | same | differ | trad-only | sem-only | both-fail |
+   | - | - | - | - | - | - |
+   | before the `and` fix | 107 | 105 | **2** | 2 | 17 |
+   | after (current `main`) | 107 | **107** | **0** | 2 | 17 |
+
+   The two traditional-only rows WERE the `and` cases; fixing that moved them
+   into `differ`. So **semantic-first is now a strict superset in
+   parseability** — it parses everything traditional does, plus the two
+   `render … with (…)` forms — while still producing a different AST for
+   **107 of the 216** sources both paths parse. Re-run this before costing
+   step 6; it has already moved once. Semantic-first produces a *materially different* English AST
    for **105 of the 214** sources both paths parse — different node kinds
    (`contextReference` vs `identifier`), an added `semanticRoles` field, zeroed
    positions, an injected implicit `me` target, and prepositions kept out of
