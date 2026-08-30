@@ -36,6 +36,78 @@ ones, because the gate *is* the tracking mechanism.
 | ~~**`js(...) … end` bodies are not lexed as an OPAQUE span**~~ | **FIXED 2026-08-27** — and NOT in the base tokenizer: the opaque-span mechanism already existed (`consumeJsBlock`), and the filing's prescription would have duplicated it. What was missing was everything around it — the body was re-spaced by a `join(' ')` rebuild, the closing `end` was only emitted when a sibling followed, a pre-posed patient marker (he `את`, zh `把`) was swallowed into the body, the verb-FINAL SOV shape was never recognized, and the body was run through `localizeValueInterior`, i.e. the JavaScript itself was translated. Cleared 19 kept rows (js-inline ×3 + behavior-removable ×16), zero newly kept. | ✅ `js-block-round-trip.test.ts` (79 assertions), plus the two render allowlists and the kept-row ratchet | `MULTILINGUAL_NEXT_STEPS.md` 2026-08-27m. **Residual:** `js(args) … end` still stops at the `(` in twelve languages (es, id, it, ms, pl, pt, ru, sw, th, tl, uk, vi) — pinned as an exclusion list in that test file. |
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
+| **15 documented command examples are syntax the parser rejects** | medium — every one is advertised by the command's own `metadata.examples`, so it reaches the LSP, the generated docs and `commands.json`. Four more rows in the same sweep are documentation defects, not parser gaps (see below). | ✅ pinned in both directions by `ast-vocabulary.test.ts` | this file, next section. Found 2026-08-30 by ENGINE_MIGRATION_PLAN Arc 0 step 3. |
+
+### Documented command examples the parser rejects (2026-08-30)
+
+Found by `packages/core/src/parser/__tests__/ast-vocabulary.test.ts`
+(ENGINE_MIGRATION_PLAN Arc 0 step 3), which parses every registered command's
+own `metadata.examples` to build its corpus and therefore had to account for
+the ones that do not parse. **19 rows, 18 unique sources**, pinned in that test
+in both directions — a newly-broken example fails it, and so does one fixed
+without pruning its row.
+
+Nothing else looks at this. `verify:reference` checks that examples EXIST and
+that counts are derived; `docs:commands:check` checks the generated
+`commands.json` matches the metadata. Neither parses the example. So these have
+been shipping into the LSP's completions, `docs/commands/commands.json` and the
+generated command docs as advertised syntax.
+
+**Four are documentation defects, not parser gaps** — hyperscript has never had
+C-style block braces, so these examples are simply wrong and the fix is to
+rewrite them:
+
+```text
+break     | repeat for item in items { if item == target then break }
+continue  | repeat for item in items { if item.skip then continue; process item }
+repeat    | repeat 5 times { log "hello" }
+repeat    | repeat for item in items { log item }
+```
+
+**The other fifteen are parser gaps.** Each is syntax a command's own metadata
+advertises and the parser rejects; several look upstream-valid and want
+measuring against the real engine (`loadCanonicalParser()`) before being
+treated as ours to fix:
+
+```text
+if        | unless user.isLoggedIn showLoginForm          (same source, two commands)
+unless    | unless user.isLoggedIn showLoginForm
+install   | install Draggable on #box
+install   | install Sortable(axis: "y") on .list
+pseudo-command | foo() on me
+pseudo-command | getElementById("d1") from the document
+pseudo-command | reload() the location of the window
+pseudo-command | setAttribute("foo", "bar") on me
+render    | render myTemplate with (name: "Alice")
+render    | render "<template>Hello ${name}!</template>" with (name: "World")
+render    | render template with (items: data)
+settle    | settle for 3000
+start     | start view transition using "slide" then put result into #panel end
+take      | take @data-value from <.source/> and put it on <#target/>
+tell      | tell closest <form/> submit
+```
+
+Groups worth triaging together, in rough order of how much they look like one
+defect each:
+
+- **`pseudo-command` (4 rows)** — every one of its documented forms fails, all
+  with the same shape: `Unexpected token: <preposition>`. The command exists to
+  support `method() on target`, so the parser and the metadata disagree about
+  the command's entire surface. Start here.
+- **`render … with (…)` (3 rows)** — all three fail at `Expected ')' after
+  arguments`, i.e. the named-argument block is unparsed. One defect.
+- **`install … on <target>` (2 rows)** — `on` is being taken as an event
+  handler (`Expected event name after 'on'`). Upstream `_hyperscript` accepts
+  `install Behavior on <expr>`; measure before assuming.
+- **`unless <cond> <command>` (2 rows, 1 source)** — the single-line form
+  reports `Expected command after if condition in single-line form`. Note the
+  bare `unless` single-line form is ALSO the shape whose body was silently a
+  no-op until Arc C (`HANDOFF-command-arch-output-contract.md`), so tread
+  carefully: this is a third bug in the same construct.
+- **The four singletons** (`settle for 3000`, `start view transition … end`,
+  `take … from <.source/>`, `tell closest <form/> submit`) — the last two use
+  the `<selector/>` query-literal form, which suggests one shared cause rather
+  than two.
 
 ### Why the gated entries need no doc to survive
 
@@ -62,8 +134,9 @@ or 1s` half of the `for <duration>` row had ALREADY shipped in #850 a day
 before, gated by `wait-event-or-duration.test.ts`, while this table still
 listed it as open. (Third stale filing caught this way; check `git log` on the
 parser file before costing any row here.) **Every row in the table above is
-now either FIXED or protected by a gate that fails on its own. This document
-currently tracks nothing — the next entry added here is what it is for.**
+either FIXED or protected by a gate that fails on its own.** The document went
+from tracking nothing to tracking one row on 2026-08-30, which is what it is
+for.
 
 ### ~~`tell <target> to <command>` — the measured shape~~ — BOTH tell rows FIXED (2026-08-01)
 
