@@ -732,3 +732,28 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   type-argument `any` — `Map<string, any>`, 144 occurrences — which the four
   grep patterns structurally cannot see (no colon). Leaving that pattern out
   would have made the ratchet dodgeable by writing the hatch in a generic.
+- **2026-08-30** — **Arc 0 step 2** (layering ratchet) landed.
+  `scripts/check-layering.cjs` + `packages/core/baselines/layering.json`, same
+  wiring and 25 self-tests. Every `packages/core/src` unit now carries a layer
+  (an unclassified one is a hard failure, so a new directory must be placed
+  deliberately); root modules are layered individually, because lumping
+  `version.ts` in with `index.ts` turned eleven leaf imports into a phantom
+  `compatibility -> .` violation.
+
+  **Measured: 893 conforming imports, 14 upward edges, 38 upward imports —
+  but only 22 of those are VALUE imports.** The type/value split was added
+  after measuring, and it reorders the debt: the biggest edge,
+  `types -> validation` (10), is mostly `import type`, while
+  `parser -> expressions` (5, all value) is the real one. Ten of the fourteen
+  edges are barrel `export type` rows that erase at build time.
+
+  Two findings the measurement produced, both recorded in the baseline's
+  per-edge reasons:
+
+  - **`parser/runtime.ts` is not a parser.** It is the 1,967-line canonical
+    evaluator filed under `parser/`, and it alone accounts for all five
+    `parser -> expressions` imports plus two of the three `parser -> commands`
+    — **7 of the 22 value edges move with one file**.
+  - **`parser/regex-parser.ts` imports the lite BUNDLE it is a component of**
+    (`compatibility/browser-bundle-lite`), inverting the whole stack in one
+    line. The single most backwards edge in the graph; Arc 5 repairs it.
