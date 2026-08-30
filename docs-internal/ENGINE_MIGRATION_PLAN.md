@@ -680,11 +680,36 @@ removed from it.
 
 Runs in parallel with Arc 3.
 
-1. **Measure**: bundle-size delta of removing the per-expression `metadata` /
-   `documentation` / `inputSchema` objects from the seven category modules
-   (`logical/index.ts` is 1,033 lines; the executable core is a few dozen).
-   Who reads them at runtime? (2026-08-30 guess: `command-pattern-validator`
-   and the LSP data generators — verify.)
+1. ~~**Measure**~~ — ✅ **DONE 2026-08-30, and it rescopes the arc.** The premise
+   was that the seven category modules are mostly per-expression `metadata` /
+   `documentation` prose. They are not:
+
+   | Measured | |
+   | -------- | - |
+   | `expressions/` non-test lines | 7,385 |
+   | `metadata` + `documentation` prose in all of it | **224 (3.0%)** |
+   | …of which, in `logical/index.ts` | **224 — all of it** |
+   | expressions in `logical/index.ts` carrying those blocks | **3 of 25** |
+   | `trackEvaluation` call sites, whole tree | **31 — all in `logical/index.ts`** |
+   | `matchesWithCache` call sites | **2** |
+
+   So **Arc 7's entire surface is one file.** The prose is 21.7% of
+   `logical/index.ts`, not "the rest" of it — that file is ~810 lines of real
+   code for 25 expressions — and only three of those 25 carry the blocks at all.
+   The review's claim that the executable core is "a few dozen" lines was simply
+   wrong, and it was the claim this step existed to check.
+
+   What that changes: the pattern is not a convention to be generated from, it
+   is a **half-applied convention with three stragglers**. Deleting it is at
+   least as defensible as extracting it to JSON, and either way the payoff is
+   224 lines in one file rather than a sweep across seven modules. Re-cost the
+   arc before starting it; it may be worth folding into Arc 2 instead of
+   standing alone.
+
+   `documentation` has **zero runtime readers** anywhere. `inputSchema` is read
+   at runtime in exactly one place (`expressions/special/index.ts`, two
+   `safeParse` calls) — the other readers are in `features/`, which Arc 6b
+   deletes.
 2. **Move docs to generated JSON** beside `commands.json`, produced by the same
    generator with the same `--check` gate. The runtime objects keep `name`,
    `evaluate`, `precedence`, `operators`.
