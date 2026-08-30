@@ -25,11 +25,5 @@
 
   "include": ["scripts/**/*.ts", "src/**/*"],
 
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/legacy/**/*",
-    "src/context/**/*",
-    "src/test-helpers/**/*"
-  ]
+  "exclude": ["node_modules", "dist", "src/legacy/**/*", "src/test-helpers/**/*"]
 }

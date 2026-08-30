@@ -663,15 +663,27 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 
 ### Command Pattern
 
-All 59 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
+All 59 commands implement `DecoratedCommand` (`commands/decorators`), pairing a
+`@command` class decorator with a type-visible `commandMeta` static:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts
-export class IncrementCommand implements CommandImplementation<IncrementInput, void, TypedExecutionContext> {
-  parseInput(node: CommandNode, ctx: TypedExecutionContext): IncrementInput { ... }
+@command({ name: 'increment' })
+export class IncrementCommand implements DecoratedCommand {
+  static readonly metadata = commandMeta({ description: '...', syntax: [...], examples: [...] });
+  get metadata() { return IncrementCommand.metadata; }
+  declare readonly name: string;
+
+  async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
 }
+
+export const createIncrementCommand = createFactory(IncrementCommand);
 ```
+
+(The `CommandImplementation<TInput, TOutput, TContext>` interface this section
+used to name had **zero** implementers and was deleted 2026-08-30 with the rest
+of the dead type surface — see `docs-internal/ENGINE_MIGRATION_PLAN.md` Arc 6a.)
 
 ### Grammar Transformation (i18n)
 

@@ -1,5 +1,5 @@
 {
-  "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself \u2014 known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
+  "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself — known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
   "generated": "2026-08-30",
   "totalUpwardImports": 38,
   "totalValueImports": 22,
@@ -14,7 +14,7 @@
       "count": 1,
       "valueImports": 1,
       "typeOnlyImports": 0,
-      "reason": "core/context.ts imports setGlobal / notifyLocalRead / notifyLocalWrite from parser/extensions \u2014 the PROCESS-GLOBAL registry that also carries the reactivity plugin's dependency hooks. Arc 4c moves those hooks onto Runtime, which is what removes this."
+      "reason": "core/context.ts imports setGlobal / notifyLocalRead / notifyLocalWrite from parser/extensions — the PROCESS-GLOBAL registry that also carries the reactivity plugin's dependency hooks. Arc 4c moves those hooks onto Runtime, which is what removes this."
     },
     "dom -> api": {
       "count": 2,
@@ -38,7 +38,7 @@
       "count": 3,
       "valueImports": 3,
       "typeOnlyImports": 0,
-      "reason": "TWO different problems sharing an edge. parser-constants.ts -> commands/manifest is DELIBERATE (Arc A's derive-don't-trust: the COMMANDS set is seeded from the manifest, not re-typed) and inverts in Arc 3, when a command registers its own grammar. parser/runtime.ts -> commands/helpers/{variable-access,target-elements} is the evaluator reaching sideways, and leaves with the file \u2014 see `parser -> expressions`."
+      "reason": "TWO different problems sharing an edge. parser-constants.ts -> commands/manifest is DELIBERATE (Arc A's derive-don't-trust: the COMMANDS set is seeded from the manifest, not re-typed) and inverts in Arc 3, when a command registers its own grammar. parser/runtime.ts -> commands/helpers/{variable-access,target-elements} is the evaluator reaching sideways, and leaves with the file — see `parser -> expressions`."
     },
     "parser -> compatibility": {
       "count": 1,
@@ -50,19 +50,19 @@
       "count": 5,
       "valueImports": 5,
       "typeOnlyImports": 0,
-      "reason": "All five are parser/runtime.ts, which is not a parser: it is the 1,967-line canonical EVALUATOR, filed under parser/ for historical reasons. Relocating that one file to the runtime layer removes these five AND two of the three `parser -> commands` imports \u2014 7 of the 22 value edges in this file. Arc 2 types it; Arc 4 moves it."
+      "reason": "All five are parser/runtime.ts, which is not a parser: it is the 1,967-line canonical EVALUATOR, filed under parser/ for historical reasons. Relocating that one file to the runtime layer removes these five AND two of the three `parser -> commands` imports — 7 of the 22 value edges in this file. Arc 2 types it; Arc 4 moves it."
     },
     "root:metadata -> commands": {
       "count": 1,
       "valueImports": 1,
       "typeOnlyImports": 0,
-      "reason": "metadata.ts reads COMMAND_NAMES from the data-only manifest so packageInfo.commands is derived rather than hand-typed (Arc A step 4.4 \u2014 the hand-typed version had rotted three minors). Deliberate and worth keeping; resolvable later by placing the data-only manifest at layer 0, which is what it already is in spirit."
+      "reason": "metadata.ts reads COMMAND_NAMES from the data-only manifest so packageInfo.commands is derived rather than hand-typed (Arc A step 4.4 — the hand-typed version had rotted three minors). Deliberate and worth keeping; resolvable later by placing the data-only manifest at layer 0, which is what it already is in spirit."
     },
     "runtime -> registry": {
       "count": 1,
       "valueImports": 1,
       "typeOnlyImports": 0,
-      "reason": "runtime-base.ts imports RegistryIntegration for enhanceContext \u2014 the Proxy that wraps every handler context. Arc 4c deletes it (measured 2026-08-30: no package outside src/registry/ registers a context provider)."
+      "reason": "runtime-base.ts imports RegistryIntegration for enhanceContext — the Proxy that wraps every handler context. Arc 4c deletes it (measured 2026-08-30: no package outside src/registry/ registers a context provider)."
     },
     "types -> behaviors": {
       "count": 2,
