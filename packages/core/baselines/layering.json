@@ -1,0 +1,92 @@
+{
+  "$comment": "Upward-import allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. Each row is a module importing a HIGHER layer than itself \u2014 known debt that Arcs 1-4 unwind. The list ratchets DOWN only: a new edge, a grown edge, and a stale row all fail scripts/check-layering.cjs. Regenerate with `npm run check:layering:update` and give every new row a real reason.",
+  "generated": "2026-08-30",
+  "totalUpwardImports": 38,
+  "totalValueImports": 22,
+  "upwardEdges": {
+    "commands -> validation": {
+      "count": 3,
+      "valueImports": 2,
+      "typeOnlyImports": 1,
+      "reason": "process-partials.ts calls the partial-template validator, formatter and its types. Arc 3: when the command gets a compile(), the validator arrives by injection instead of by import."
+    },
+    "core -> parser": {
+      "count": 1,
+      "valueImports": 1,
+      "typeOnlyImports": 0,
+      "reason": "core/context.ts imports setGlobal / notifyLocalRead / notifyLocalWrite from parser/extensions \u2014 the PROCESS-GLOBAL registry that also carries the reactivity plugin's dependency hooks. Arc 4c moves those hooks onto Runtime, which is what removes this."
+    },
+    "dom -> api": {
+      "count": 2,
+      "valueImports": 1,
+      "typeOnlyImports": 1,
+      "reason": "attribute-processor.ts imports hyperscript + config from the API it is supposed to sit under. One of three DOM processors; the 4b follow-up named in the plan's risk 6 collapses them onto the Program cache."
+    },
+    "expressions -> performance": {
+      "count": 1,
+      "valueImports": 1,
+      "typeOnlyImports": 0,
+      "reason": "logical/index.ts imports matchesWithCache. Arc 7 makes per-evaluation caching and tracking an opt-in devtools wrapper rather than a hot-path dependency."
+    },
+    "expressions -> validation": {
+      "count": 4,
+      "valueImports": 2,
+      "typeOnlyImports": 2,
+      "reason": "base-expression / logical / special import the lightweight-validators zod clone for their `inputSchema` fields. Arc 7 deletes those fields (nothing reads them at runtime); the clone itself goes in Arc 6a."
+    },
+    "parser -> commands": {
+      "count": 3,
+      "valueImports": 3,
+      "typeOnlyImports": 0,
+      "reason": "TWO different problems sharing an edge. parser-constants.ts -> commands/manifest is DELIBERATE (Arc A's derive-don't-trust: the COMMANDS set is seeded from the manifest, not re-typed) and inverts in Arc 3, when a command registers its own grammar. parser/runtime.ts -> commands/helpers/{variable-access,target-elements} is the evaluator reaching sideways, and leaves with the file \u2014 see `parser -> expressions`."
+    },
+    "parser -> compatibility": {
+      "count": 1,
+      "valueImports": 1,
+      "typeOnlyImports": 0,
+      "reason": "parser/regex-parser.ts imports the lite BUNDLE it is meant to be a component of, inverting the whole stack in one line. Arc 5 (parser tiers) is where this is repaired; until then it is the single most backwards edge in the graph."
+    },
+    "parser -> expressions": {
+      "count": 5,
+      "valueImports": 5,
+      "typeOnlyImports": 0,
+      "reason": "All five are parser/runtime.ts, which is not a parser: it is the 1,967-line canonical EVALUATOR, filed under parser/ for historical reasons. Relocating that one file to the runtime layer removes these five AND two of the three `parser -> commands` imports \u2014 7 of the 22 value edges in this file. Arc 2 types it; Arc 4 moves it."
+    },
+    "root:metadata -> commands": {
+      "count": 1,
+      "valueImports": 1,
+      "typeOnlyImports": 0,
+      "reason": "metadata.ts reads COMMAND_NAMES from the data-only manifest so packageInfo.commands is derived rather than hand-typed (Arc A step 4.4 \u2014 the hand-typed version had rotted three minors). Deliberate and worth keeping; resolvable later by placing the data-only manifest at layer 0, which is what it already is in spirit."
+    },
+    "runtime -> registry": {
+      "count": 1,
+      "valueImports": 1,
+      "typeOnlyImports": 0,
+      "reason": "runtime-base.ts imports RegistryIntegration for enhanceContext \u2014 the Proxy that wraps every handler context. Arc 4c deletes it (measured 2026-08-30: no package outside src/registry/ registers a context provider)."
+    },
+    "types -> behaviors": {
+      "count": 2,
+      "valueImports": 0,
+      "typeOnlyImports": 2,
+      "reason": "types/index.ts re-exports behavior config types. Type-only, so it erases at build time and creates no runtime cycle; it is barrel convenience, not coupling."
+    },
+    "types -> commands": {
+      "count": 3,
+      "valueImports": 0,
+      "typeOnlyImports": 3,
+      "reason": "types/index.ts re-exports three command input types (swap, push-url, replace-url). Type-only. Arc 3 gives these a home in the per-command node types, and the barrel rows go with them."
+    },
+    "types -> core": {
+      "count": 1,
+      "valueImports": 0,
+      "typeOnlyImports": 1,
+      "reason": "base-types.ts imports the ExpressionRegistry TYPE for ExecutionContext.registry. Type-only, and it disappears in Arc 7 when the registry becomes Pratt-table entries."
+    },
+    "types -> validation": {
+      "count": 10,
+      "valueImports": 4,
+      "typeOnlyImports": 6,
+      "reason": "The zod clone. Ten imports across seven type modules, four of them VALUE imports of `v`/`z` for schemas that types/context-types.ts already documents as any-typed and unused. Arc 6a deletes the schemas; the clone itself has no other consumer once features/ and context/ go."
+    }
+  }
+}

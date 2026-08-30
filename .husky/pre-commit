@@ -42,4 +42,5 @@ fi
 # `npm run check:type-escapes:update` and stage the baseline.
 if git diff --cached --name-only | grep -qE '^packages/core/src/.*\.ts$'; then
   node scripts/check-type-escapes.cjs || exit 1
+  node scripts/check-layering.cjs || exit 1
 fi

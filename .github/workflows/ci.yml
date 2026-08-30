@@ -666,6 +666,18 @@ jobs:
       - name: Test the type-escape ratchet
         run: node --test scripts/check-type-escapes.test.cjs
 
+      # Import-direction ratchet, the type-escape ratchet's sibling (Arc 0 of
+      # ENGINE_MIGRATION_PLAN.md). Every packages/core/src unit has a layer;
+      # a module importing a HIGHER layer than itself is upward debt. Today's
+      # 14 upward edges are allowlisted with a reason each and the list can
+      # only shrink: a new edge, a grown edge, a type-only edge that hardens
+      # into a value one, and a STALE row all fail.
+      - name: Verify layering ratchet
+        run: node scripts/check-layering.cjs
+
+      - name: Test the layering ratchet
+        run: node --test scripts/check-layering.test.cjs
+
       - name: Install dependencies
         run: npm ci
 
