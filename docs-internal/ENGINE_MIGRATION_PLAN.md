@@ -437,16 +437,13 @@ and the parser loop that assumes it.
 
    Two concrete findings, each recorded where it belongs:
 
-   - **A live shipped bug**, filed in `PARSER_NEXT_STEPS.md`:
+   - **A live shipped bug, found and FIXED** (filed in `PARSER_NEXT_STEPS.md`):
      `hyperscript.compileSync('on click log 1 and 2')` FAILS in the default
      configuration (`Unexpected token: 2`) while `{ traditional: true }`
      parses it. Any `and` in the arguments of a command absent from the
      27-entry `skipSemanticParsing` list, inside a handler. The semantic match
      consumes a prefix, `skipToCommandBoundary()` stops at the `and`, and the
-     rest re-parses as a fresh command. **This is step 6's concrete motivating
-     case** — and the cheap interim fix is to reject a semantic match that
-     leaves input unconsumed, a diagnostic the analyzer already emits and
-     `trySemanticParse` ignores.
+     rest re-parses as a fresh command. **Fixed the same day, and by neither of the fixes first proposed**: `and` had no business in that boundary list at all — it is not a command separator anywhere in this engine, a fact `then-as-separator.test.ts` already pins. The analyzer had been reporting `tokensConsumed: 4` at confidence 1 the whole time. One word deleted; 14-assertion gate, mutation-verified; the multilingual `--regression` gate run locally with no regression and confidence UP in several languages. It stays step 6's motivating case: step 6 removes the resync heuristic entirely rather than tuning its keyword list.
    - **Semantic-first is better on two rows and worse on two.** It rescues
      `render … with (…)` (two of the fifteen parser gaps filed from Arc 0) and
      breaks `log [1, 2] and {a: 1}` plus `log 5 is between 1 and 10`.

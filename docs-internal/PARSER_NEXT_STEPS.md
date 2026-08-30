@@ -37,9 +37,9 @@ ones, because the gate *is* the tracking mechanism.
 | `and` is not a command separator anywhere | low — consistent everywhere, so no surprise | ✅ 2 `KNOWN GAP` tests | `packages/core/src/parser/__tests__/then-as-separator.test.ts` |
 | `sortable-list.html` recovers with errors | low — one shipped example | ✅ allowlist ratchet | `packages/testing-framework/baselines/shipped-sources-validity.json` |
 | **15 documented command examples are syntax the parser rejects** | medium — every one is advertised by the command's own `metadata.examples`, so it reaches the LSP, the generated docs and `commands.json`. Four more rows in the same sweep are documentation defects, not parser gaps (see below). | ✅ pinned in both directions by `ast-vocabulary.test.ts` | this file, next section. Found 2026-08-30 by ENGINE_MIGRATION_PLAN Arc 0 step 3. |
-| **Semantic-first parsing breaks `and` in a command's arguments inside a handler** | **high — a live defect in the DEFAULT configuration.** `hyperscript.compileSync('on click log 1 and 2')` fails with `Unexpected token: 2`; the same source parses with `{ traditional: true }`, and the same expression parses fine outside a handler. Hits any command NOT on `parseCommandCore`'s 27-entry `skipSemanticParsing` list. | ⚠️ NONE. No suite compiles a handler-wrapped command with `and` in its args through the default config. | this file, next section. Found 2026-08-30 by ENGINE_MIGRATION_PLAN Arc 1 step 5. |
+| ~~**Semantic-first parsing breaks `and` in a command's arguments inside a handler**~~ | **FIXED 2026-08-30** — one word. `and` was in `skipToCommandBoundary()`'s boundary list and is not a command separator anywhere in this engine. The analyzer had already reported `tokensConsumed: 4` at confidence 1 for `log 1 and 2`; the resync stopped at the `and` anyway. | ✅ `packages/core/src/parser/__tests__/semantic-resync-and.test.ts` (14 assertions, mutation-verified: restoring the word reddens 8) | section below |
 
-### `and` in a semantically-parsed command's arguments (2026-08-30)
+### ~~`and` in a semantically-parsed command's arguments~~ — FIXED (2026-08-30)
 
 **Live in the shipped default configuration** (`config.semantic === true`).
 Found by ENGINE_MIGRATION_PLAN Arc 1 step 5, which diffed every corpus source
@@ -91,9 +91,29 @@ tests handlers and tests `and`, but never a handler-wrapped, semantically-parsed
 command with `and` in its arguments. It needed a differential measurement of
 the two parse paths over one corpus, which is what Arc 1 step 5 is.
 
+**FIXED the same day — and by neither of the two fixes proposed below.**
+
+`and` had no business in `skipToCommandBoundary()`'s boundary list in the first
+place: it is not a command separator anywhere in this engine, which
+`then-as-separator.test.ts` already pins as a KNOWN GAP. The analyzer had been
+telling the truth all along — `tokensConsumed: 4` at confidence 1 for
+`log 1 and 2` — and the resync stopped at the `and` regardless. Deleting the
+word is the entire fix.
+
+Verified: a 14-assertion regression gate (mutation-verified — restoring the word
+reddens 8 of 14), the full core suite, the multilingual `--regression` gate run
+locally across all eleven signals with **no regression** and average confidence
+UP in several languages, plus the testing-framework and hyperscript-adapter
+suites.
+
+The reasoning is recorded because it is reusable: both proposed fixes below were
+sound, and both were unnecessary, because neither had asked whether the boundary
+list itself was right. The band-aid warning stands regardless.
+
 **Do not band-aid this by adding `log` to `skipSemanticParsing`.** That list is
 already 27 entries of the same avoidance, and the next command with an `and`
-argument would need entry 29. The principled fixes, cheapest first:
+argument would need entry 29. The fixes considered before the real cause was
+found, cheapest first:
 
 1. **Reject a semantic match that leaves input unconsumed.** The diagnostic
    already exists (`unconsumed-input`); `trySemanticParse` ignores it. Smallest
