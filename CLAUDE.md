@@ -654,6 +654,12 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > removing, or restructuring a command surface: the command set is currently
 > described in ~20 hand-maintained places and executed in 4 implementations, and
 > that doc holds the staged plan for collapsing both.
+>
+> **Cross-layer engine migration** — one typed AST, commands as grammar + op,
+> compile-to-closures, the engine/front-end boundary — is planned in
+> `docs-internal/ENGINE_MIGRATION_PLAN.md` (written 2026-08-30, no arc
+> started). Read it before moving a boundary between `parser/`, `runtime/`,
+> `commands/`, `expressions/`, or the semantic front-end.
 
 ### Command Pattern
 
