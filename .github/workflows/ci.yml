@@ -678,6 +678,19 @@ jobs:
       - name: Test the layering ratchet
         run: node --test scripts/check-layering.test.cjs
 
+      # Engine/front-end boundary ratchet (Arc 1 of ENGINE_MIGRATION_PLAN.md).
+      # @hyperfixi/core is the engine; @lokascript/semantic is a front-end that
+      # produces its AST. The dependency is supposed to run one way. This
+      # records every place it does not, per file AND per import kind — a
+      # static-value import is real bundled debt, a type-only one erases — and
+      # fails on a new file, a risen count, a cheap import hardening into an
+      # eager one, or a stale row.
+      - name: Verify engine/front-end boundary
+        run: node scripts/check-semantic-boundary.cjs
+
+      - name: Test the engine/front-end boundary ratchet
+        run: node --test scripts/check-semantic-boundary.test.cjs
+
       - name: Install dependencies
         run: npm ci
 

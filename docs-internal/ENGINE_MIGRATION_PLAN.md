@@ -82,6 +82,21 @@ this plan needs:
 
 ## Verified state (measured 2026-08-30 on `e3b3e34a`)
 
+> **This section is a stamped SNAPSHOT, and arcs have since landed against it.**
+> Rows the work has overtaken are struck through in place rather than deleted —
+> a plan whose starting measurements quietly change is a plan nobody can audit,
+> and three separate filings in this repo have already cost a session by being
+> read as current. Where a number now lives in a committed baseline, that
+> baseline is authoritative and is named:
+>
+> | Fact | Live source |
+> | ---- | ----------- |
+> | type-escape counts | `packages/core/baselines/type-escapes.json` |
+> | import-direction debt | `packages/core/baselines/layering.json` |
+> | front-end coupling | `packages/core/baselines/semantic-boundary.json` |
+> | per-source parse shapes | `packages/core/baselines/ast-equivalence.json` |
+> | node-kind vocabularies | `packages/core/src/parser/__tests__/ast-vocabulary.test.ts` |
+
 Baseline: **7,972 passing, 106 skipped, 312 files** (`npm run test:check
 --prefix packages/core`). Non-test core source: **114,763 lines**; the test
 tree is 114 k lines across 316 files. Upstream `_hyperscript/src` is 15,318
@@ -153,7 +168,12 @@ lines for comparison.
 ### The semantic coupling — narrower than it looks
 
 `grep -l '@lokascript/semantic'` returns 15 core files, but most are comments.
-The **load-bearing static imports** are exactly:
+~~The **load-bearing static imports** are exactly:~~ — **superseded 2026-08-30
+by Arc 1 step 1's gate**, which measured **eight** static-value imports across
+nine files, not five. This hand-read table was comment-blind in both directions.
+`packages/core/baselines/semantic-boundary.json` is authoritative, and splits
+each file by import KIND — the distinction that matters, and one this table does
+not make. Kept for the shape it describes:
 
 | File                                        | Imports                                                                                    | Nature                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
@@ -200,12 +220,12 @@ engine, so it is a regression detector for every arc here.
 | Tree                                  | Lines  | Status                                                                                                                                                       |
 | ------------------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/features/`                       | 10,572 | zero production callers; imported only by `index.ts`, which re-exports six `Typed*FeatureImplementation` families as public API, already `@deprecated` |
-| `src/context/`                        |  2,543 | excluded from BOTH `tsconfig.json` and `tsconfig.build.json`; imported by nothing                                                                           |
+| ~~`src/context/`~~ **DELETED (Arc 6a)**  |  2,543 | was excluded from ALL THREE tsconfigs (`.json`, `.build.json`, `.scripts.json`), so it had not compiled in any configuration; imported by nothing                                                                           |
 | `src/registry/examples/`, `registry/multilingual/` | ~1,800 | no non-test downstream importer of either (the only hits are `dist/` artifacts) — ghost-test before deleting                                                                  |
-| `src/experimental/`                   |  2,217 | imported by nothing                                                                                                                                          |
+| ~~`src/experimental/`~~ **DELETED (Arc 6a)** |  2,696 | imported by nothing (the 2,217 here counted only `.ts`; the tree was 2,696)                                                                                                                                          |
 | `src/tokenizer.ts` (root)             |    —   | a second tokenizer, "compatible with `_hyperscript` tokenizer API", exported as `Lexer, Tokens`; the parser uses `parser/tokenizer.ts`                       |
 | `validation/lightweight-validators.ts`|    833 | a zod clone; consumed by `features/`, `context/`, the `types/*` files, and three expression modules' `inputSchema` fields                                     |
-| `types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation` | — | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files) |
+| ~~`types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation`~~ **DELETED (Arc 6a)** | 144 | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files). Arc 6a deleted these plus four more in the same dead chain — `LegacyValidationResult`, `FeatureImplementation`, and the `types/core.ts` `Runtime`/`HyperscriptConfig` (each of which had a LIVE namesake elsewhere) |
 | `src/types.d.ts`                      |    —   | `any`-typed module declarations for `@lokascript/i18n/browser`                                                                                               |
 | `api/dom-processor.ts` + `dom/attribute-processor.ts` + `dom/minimal-attribute-processor.ts` | — | three DOM processors; the first two both wire `compileSync`/runtime |
 
@@ -425,10 +445,34 @@ and the parser loop that assumes it.
    moves to the multilingual module. Consumers: `mcp-server/lsp-bridge`,
    `language-server/server.ts`, `aot-compiler/core-parser-adapter.ts` — each
    already depends on semantic and passes the default.
-5. **Measure semantic-first for English.** Because `config.semantic` defaults
-   `true`, every en `compile()` runs the analyzer for 32 commands before the
-   core parser. Diff the AST-equivalence corpus with semantic-first on vs off.
-   Three outcomes, each with its own step 6:
+5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
+   the three anticipated outcomes was the answer.** Measured over the 233-source
+   corpus: **same 107 · differ 105 · traditional-only 2 · semantic-only 2 ·
+   both-fail 17.** Semantic-first produces a *materially different* English AST
+   for **105 of the 214** sources both paths parse — different node kinds
+   (`contextReference` vs `identifier`), an added `semanticRoles` field, zeroed
+   positions, an injected implicit `me` target, and prepositions kept out of
+   `args` rather than left in them. So step 6 is **not** a free deletion, and
+   the plan's original framing below understated it badly.
+
+   Two concrete findings, each recorded where it belongs:
+
+   - **A live shipped bug, found and FIXED** (filed in `PARSER_NEXT_STEPS.md`):
+     `hyperscript.compileSync('on click log 1 and 2')` FAILS in the default
+     configuration (`Unexpected token: 2`) while `{ traditional: true }`
+     parses it. Any `and` in the arguments of a command absent from the
+     27-entry `skipSemanticParsing` list, inside a handler. The semantic match
+     consumes a prefix, `skipToCommandBoundary()` stops at the `and`, and the
+     rest re-parses as a fresh command. **Fixed the same day, and by neither of the fixes first proposed**: `and` had no business in that boundary list at all — it is not a command separator anywhere in this engine, a fact `then-as-separator.test.ts` already pins. The analyzer had been reporting `tokensConsumed: 4` at confidence 1 the whole time. One word deleted; 14-assertion gate, mutation-verified; the multilingual `--regression` gate run locally with no regression and confidence UP in several languages. It stays step 6's motivating case: step 6 removes the resync heuristic entirely rather than tuning its keyword list.
+   - **Semantic-first is better on two rows and worse on two.** It rescues
+     `render … with (…)` (two of the fifteen parser gaps filed from Arc 0) and
+     breaks `log [1, 2] and {a: 1}` plus `log 5 is between 1 and 10`.
+
+   The 105 differing rows are the real cost of step 6 and must be reviewed as a
+   diff, not asserted as a refactor. The original three-outcome framing is kept
+   below for the record.
+
+   > Superseded framing: three outcomes, each with its own step 6:
    - **identical** → step 6 deletes the in-loop attempt and the
      `skipSemanticParsing` list outright;
    - **differs only where the core parser is worse** (semantic parses en
@@ -867,3 +911,51 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   Also fixed in passing: `__tests__` helper files were emitting `.d.ts` into the
   published `dist/` (`add-standalone-helpers.d.ts` had been shipping). Excluded
   from `tsconfig.build.json`.
+- **2026-08-30** — **Arc 1 step 1** (the boundary audit-as-gate) landed.
+  `scripts/check-semantic-boundary.cjs` records every `packages/core/src` file
+  importing `@lokascript/semantic`, `/intent` or `/i18n`, **per file and per
+  import KIND**, ratcheting each kind down independently.
+
+  **Measured: 9 files — 8 static-value, 3 dynamic, 2 static-type, 2
+  typeof-import.** The kind split is the finding, and it reorders the debt:
+  only `static-value` is an eager bundled dependency; `static-type` and
+  `typeof-import` erase at build time and `dynamic` already defers. So
+  `multilingual/bridge.ts`, with the most rows of any file (4), is nearly
+  target-shape already, while `api/hyperscript-api.ts`'s single static import
+  is the one that pulls the semantic stack into every Node consumer.
+
+  Two corrections the measurement forced:
+
+  - The Verified-state section above says "five load-bearing static imports".
+    It is **eight** — and a first, comment-blind count said **thirteen**,
+    because five of those were example `import` lines inside docblocks. This
+    gate strips comments but KEEPS string contents (the specifier IS a string),
+    the mirror image of what the type-escape ratchet needs, which is why it
+    carries its own stripper.
+  - **Four of the nine rows are target-state and terminal**, not debt — the
+    three multilingual browser bundles and the classic-i18n bundle import the
+    front-end because that is what those bundles ARE. Recorded as such, so the
+    list is not later read as nine things to fix.
+
+  Step 1's other half also landed: `DEFAULT_CONFIDENCE_THRESHOLD` was defined
+  identically (0.5) in both `parser/semantic-integration.ts` and
+  `@lokascript/semantic`, and `multilingual/bridge.ts` imported the front-end's.
+  It now imports core's — this is the engine deciding when to trust a
+  front-end's parse, so the policy belongs on the engine side.
+  **static-value 8 → 7.**
+
+  A separate assertion guards the property most worth keeping, which is already
+  TRUE: `parser/`, `runtime/`, `commands/`, `expressions/`, `types/` and `core/`
+  import the front-end **nowhere**. The coupling is confined to the api, the
+  bundles and the multilingual module — so Arc 1's remaining steps are a handful
+  of files, not a sweep.
+
+  **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
+  the 233-source corpus, semantic-first vs traditional for English:
+  **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail
+  17.** None of step 5's three anticipated outcomes was the answer — the two
+  paths produce materially different English ASTs for **half the corpus**, so
+  step 6 is a reviewed behavioural change, not a deletion. It also surfaced a
+  **live shipped bug** (`on click log 1 and 2` fails in the default config),
+  filed in `PARSER_NEXT_STEPS.md` and now step 6's motivating case. Detail is
+  on the step itself.

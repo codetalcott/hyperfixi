@@ -3369,7 +3369,23 @@ export class Parser {
    * A command boundary is: then, and, else, end, or end of input.
    */
   private skipToCommandBoundary(): void {
-    const boundaryKeywords = ['then', 'and', 'else', 'end'];
+    // `and` is deliberately NOT a boundary, though it was until 2026-08-30.
+    //
+    // It is not a command separator anywhere in this engine — the pratt parser
+    // absorbs it as a binary operator, which `then-as-separator.test.ts` pins as
+    // a KNOWN GAP. So a semantic match that legitimately consumed `log 1 and 2`
+    // (the analyzer reports tokensConsumed 4 at confidence 1) had its resync
+    // stopped at the `and`, and the handler's statement loop then tried to parse
+    // `2` as a fresh command: `Unexpected token: 2`, in the SHIPPED default
+    // configuration, while `{ traditional: true }` parsed the same source fine.
+    //
+    // It hit every command absent from `skipSemanticParsing` below — log, call,
+    // get, append, prepend, throw, return, beep and the rest of the 28 that take
+    // the generic argument loop. Found by ENGINE_MIGRATION_PLAN Arc 1 step 5,
+    // which diffed the two parse paths over one corpus; no suite had ever
+    // compiled a handler-wrapped, semantically-parsed command with `and` in its
+    // arguments.
+    const boundaryKeywords = ['then', 'else', 'end'];
     while (!this.isAtEnd()) {
       const token = this.peek();
       const value = token.value.toLowerCase();
