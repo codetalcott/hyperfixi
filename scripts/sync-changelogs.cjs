@@ -8,9 +8,20 @@
  * downstream (an audit asserting a capability was blocked when the exports had
  * been there all along).
  *
- * Packages that maintain their own CHANGELOG.md (core, semantic, i18n, …) keep
- * it; the rest receive a copy of the root one. Every publishable package lists
- * "CHANGELOG.md" in its `files` array, so npm picks it up from here.
+ * Packages with their own CHANGELOG.md (core, semantic, i18n, language-server,
+ * mcp-server, vite-plugin) keep it; the rest receive a copy of the root one.
+ * Every publishable package lists "CHANGELOG.md" in its `files` array, so npm
+ * picks it up from here.
+ *
+ * None of those six actually maintains its file any more — they stopped between
+ * Jan 2025 and May 2026, on a per-package numbering no published version ever
+ * matched, while every package publishes in lockstep at the root version. The
+ * i18n one was the sharpest case: its newest entry headlined the grammar
+ * transformer as a feature, in a tarball shipped after that transformer was
+ * deleted. Rather than drop the files (they carry real migration recipes), each
+ * now opens with a block pointing at the root changelog. So this exemption means
+ * "has history worth keeping", not "is kept current" — if you add a package
+ * here, give it the same pointer.
  *
  * The copies are build artifacts, not sources: they are gitignored, and the
  * release commit in .github/workflows/publish.yml adds explicit paths only.

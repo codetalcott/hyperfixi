@@ -5,6 +5,19 @@ All notable changes to @lokascript/i18n will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Superseded by the root changelog.** Every package in this monorepo publishes
+> in lockstep at the root version, and the entries below use an older
+> per-package numbering that no published version ever matched. They are kept
+> for the migration notes they carry; they are not a record of recent releases.
+> **For anything since, see
+> [the monorepo CHANGELOG](https://github.com/codetalcott/hyperfixi/blob/main/CHANGELOG.md)**
+> and [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases).
+>
+> In particular, the 1.0.0 entry below headlines a "grammar transformation
+> engine". **That engine was removed in 3.0.0.** This package is per-language
+> vocabulary now — dictionaries, locale detection and grammar profiles;
+> `translate` lives in `@lokascript/semantic`.
+
 ## [1.0.0] - 2025-01-19
 
 ### Added

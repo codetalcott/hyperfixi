@@ -7,6 +7,216 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-30
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v3.0.0).
+
+`@lokascript/i18n`'s grammar transformer is gone. The whole release is the arc
+that made removing it possible: teaching `@lokascript/semantic` to _render_ as
+well as it parses, proving it had overtaken the transformer on every row of the
+translation corpus, and then deleting the loser.
+
+### ⚠ BREAKING
+
+- **`@lokascript/i18n` no longer translates** (#1001). `translate()`,
+  `toLocale()`, `toEnglish()` and the `GrammarTransformer` class are deleted,
+  along with the `createTransformer` factory — 2,747 lines of transformer and
+  2,780 lines of its tests. The package is now what the rest of it always was:
+  per-language vocabulary — keyword dictionaries, locale detection, and the
+  grammar profiles (`getProfile`, `getSupportedLocales`) that describe each
+  language's word order and role markers. Those stay. "Delete the grammar
+  directory" was never the plan; `profiles/` and `types.ts` back i18n's own
+  runtime, and `direct-mappings.ts` is part of the browser API.
+
+  _Migration:_ `import { translate } from '@lokascript/semantic'` — same
+  `(code, fromLang, toLang)` signature. One behavioural difference to plan for:
+  **semantic throws** (`SemanticParseError`) where the transformer never did.
+  The transformer substituted keywords without parsing, so it always returned
+  _something_; semantic parses first, so unparseable input is an error rather
+  than plausible-looking nonsense. Wrap the call if you were relying on the old
+  silence.
+
+  The transformer had to go because it lost. The corpus writer spent #973–#996
+  rendering every row **both** ways and keeping whichever won on the ratchet
+  signals; the count of rows where i18n still won went 229 → **0**, and a
+  per-row chooser with one surviving renderer is not a chooser.
+
+- **The classic-i18n browser bundle drops four helpers** (#998).
+  `hyperfixi-classic-i18n.js`'s `i18nApi` no longer exposes `toLocale`,
+  `toEnglish`, `translate` or `GrammarTransformer`. Nothing in the bundle
+  called them, and the multilingual _parsing_ it exists for runs through the
+  keyword providers, which are untouched — `getProfile` and `setLocale` still
+  work. Re-implementing the four on `@lokascript/semantic` was measured and
+  rejected: pulling in semantic's full index takes the bundle to **312.1 KB
+  gzip (+173)**, and a trimmed `semantic/core` build carrying only the twelve
+  registered locales still lands at 269.2 KB (+130) — a 2× bundle to serve
+  three display helpers. Removing them instead took it **down** 16,436 bytes
+  raw / 6,508 gzip (−2.9% / −4.6%), to 134,193 gzip.
+
+  _Migration:_ load a semantic browser bundle alongside and call
+  `LokaScriptSemantic.translate`, or use `hyperfixi.translate` from the
+  multilingual bundle.
+
+- **`@hyperscript-tools/i18n` translates on the semantic engine** (#999). Its
+  `translate` / `toLocale` / `toEnglish` keep their signatures but now parse.
+  In strict mode an untranslatable snippet **throws** instead of returning a
+  word-substituted approximation; in lenient mode the body is passed through
+  byte-identical rather than mangled. `GrammarTransformer` is no longer
+  re-exported. The package's dependency moved from `@lokascript/i18n` to
+  `@lokascript/semantic`.
+
+- **`@lokascript/types-browser` drops the transformer members.**
+  `LokaScriptI18nAPI` no longer declares `translate` or `createTransformer`
+  (nor the `GrammarTransformer` / `TransformerOptions` interfaces they
+  referenced). `isHyperFixiI18nAvailable` re-keys from `obj.translate` to
+  `obj.getProfile`, since the former is no longer a member of the shape it
+  detects.
+
+- **The patterns corpus writer is semantic-only** (#1000). The `best` /
+  `semantic` / `i18n` renderer modes, the `PATTERNS_RENDERER` environment
+  variable, the `--renderer` flag, the `i18n-kept-rows` gate and its baseline
+  and tools are all removed; `test:canonical` is four gates now, not five. A
+  row the renderer cannot render keeps its **English**, is counted, and is
+  reported loudly — a floor, not a fallback. Today **0 rows take it**, across
+  3,657 translatable non-English rows.
+
+### Added
+
+- **`hyperfixi.js` and `hyperfixi-hx-v4.js` grew ~97 KB raw / ~19 KB gzip
+  each** (#931) to carry the new per-language render vocabulary
+  (`lexicons/{code}`). Both expose `translate` / `getAllTranslations` for 24
+  languages, so they legitimately pay for it. The other eight bundles are
+  unaffected — the slim ones never pull the semantic language stack, and the
+  rest parse without rendering, so the lexicon tree-shakes out.
+
+- **A gate on the bare render surface** (#953). Every corpus row wraps its
+  command in an event handler, so the plain form — `toggle .active on #panel`
+  with no `on click` — was invisible to all eleven ratchet signals _and_ to the
+  wrapped render gate. Stripping the handler head found languages that could
+  not parse their own rendered output at all. Now ratcheted at **2981/2990
+  (99.7%)** with 9 allowlisted pairs.
+
+### Fixed
+
+- **The English→foreign render direction, which no gate had ever covered**
+  (#931–#996). Every ratchet signal scored _parsing_ foreign
+  surfaces; nothing scored the surfaces the renderer _emitted_. The corpus's
+  clean-render rate went **73.3% → 100%**. Against the committed baseline, all
+  24 languages now sit at:
+
+  | Signal                           | Mean        | Min           |
+  | -------------------------------- | ----------- | ------------- |
+  | parse rate                       | 3744 / 3744 | 0 failures    |
+  | R0 recall / precision / multiset | 1.000000    | 1.000000      |
+  | R1 role fidelity                 | 0.999944    | 0.998710 (pl) |
+  | R2 execution                     | 1.000000    | 1.000000      |
+  | R3 value recall                  | 1.000000    | 1.000000      |
+
+  R1 was ≈0.992 and R3 ≈0.997 with named residual families at 2.10.0. Both
+  canonical-validity allowlists are now **empty** — 134/134 English references
+  and **3105/3105** foreign renders parse on the real `hyperscript.org`
+  engine — as is the wrapped render-fidelity allowlist, at **3588/3588**.
+
+  The arc is too granular to itemize; the shapes it closed were fused
+  event-handler bodies losing their then-chains (#978) or their body heads
+  (#949, #947), possessives rendering backwards or property-last (#980, #935,
+  #937, #938), optional slots eating the next command's verb (#950, #961,
+  #948), markers rendered on the wrong side of their value in SOV (#955),
+  brace-group interiors being localized as if they were code (#975), value
+  interiors not being localized at all (#931), and a long tail of per-language
+  vocabulary and homonym repairs.
+
+- **`as JSON` is part of the value, not a dropped tail** (#991). A conversion
+  suffix landed in no role and therefore scored "faithful" against its own
+  truncation — the one bug eleven ratchet signals could not see. It was caught
+  by the markup-row guard, which only translates an attribute body when its own
+  English re-render preserves its content.
+
+- **The semantic parser closes a flattened loop header** (#992), so a handler's
+  `end` is its own rather than the loop's.
+
+- **The reactivity and realtime plugins report their real versions** (#926)
+  instead of frozen constants.
+
+- **`analyze_content` is unshadowed in the MCP server** (#927), and its
+  next-step hint extends to the warning band.
+
+- **Three high-severity Dependabot alerts, plus a fourth `npm audit` found**
+  (#929).
+
+- **The `domain-flow` → `server-bridge` route-descriptor contract is pinned
+  again** (#1004), and actually checked this time. The pin dropped by the
+  domain-family move had lived in a directory the tsconfig excluded, so `tsc`
+  never compiled its `satisfies` and vitest stripped it — it had never
+  enforced anything. It is ordinary typechecked source now.
+
+### Changed
+
+- **Deprecated `@lokascript/domain-*` references repointed** to the
+  `@lokascript/domains` subpaths (#1004) in the framework's docstring
+  examples and `protocol/docs/boundary.md`.
+
+## [2.11.1] - 2026-08-25
+
+Patch release. Fixes the release workflow itself: the build now runs **after**
+the version sync, so a published tarball carries its own version rather than
+the previous one, and `version.ts` is committed (#925). Also lands the
+agent-loop A/B benchmark with an isolated generator (#924).
+
+## [2.11.0] - 2026-08-24
+
+Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v2.11.0).
+
+### Changed
+
+- **The domain-DSL family moved out** (#909). Twelve packages left this
+  monorepo: the ten publishable `@lokascript/domain-*` packages (bdd,
+  behaviorspec, config, flow, jsx, learn, llm, sql, todo, voice) plus the
+  private `domain-toolkit` and `mcp-multilingual-intent`. They now ship as
+  **`@lokascript/domains`**, one subpath export per domain, from the
+  [lokascript-domains](https://github.com/codetalcott/lokascript-domains)
+  repository.
+
+  All ten published names are **deprecated on npm**, each naming its
+  replacement subpath (`@lokascript/domain-sql` → "import from
+  `@lokascript/domains/sql`"). Existing installs keep working — deprecation is
+  a warning, not a removal — they simply stop receiving updates. The
+  pre-deletion tree is preserved at the `moved/domain-family` tag.
+
+  _Migration:_ replace nine dependencies with one, and change
+  `from '@lokascript/domain-x'` to `from '@lokascript/domains/x'`. The root
+  entry absorbed `domain-config` and exports `createDomainRegistry`,
+  `registerAllDomains` and `DOMAIN_PRIORITY`.
+
+### Added
+
+- **"Show in My Language"** — LSP request plus VSCode command (#921).
+- **Verified-translation badge** in the compilation service (#920).
+- **`scoreFidelity` / `@lokascript/semantic/fidelity`** (#919).
+- **Inert-shape warnings** (#918) and surfaced unconsumed-input warnings (#916)
+  in the compilation service.
+- **The agent-loop benchmark** and the silent-failure finding it produced
+  (#915), and the MCP server's agent-era roadmap (#914).
+- **Element-collection write-back** for hypermedia tables, with gallery
+  examples and four system fixes (#904).
+- **The comprehensive Playwright tier now runs in CI** (#908) alongside
+  `quick`. It had never run: 122 specs, hiding four real bugs — a detached
+  `startViewTransition`, untracked reads of unset globals, concurrent effects
+  clobbering dependency capture, and `put` stringifying DocumentFragments
+  (#905).
+
+### Fixed
+
+- **The `hyperscript-adapter` review arc** (#895–#902): whole-string
+  translation first, taking canonical validity from 2849/3105 to **3105/3105**
+  (#899); a host-parser validity gate so an invalid render falls back to the
+  author's text (#900); the dead split-statement fallback deleted after
+  measuring 0 outputs (#901); and the slim divergence set burned 6 → 1 via
+  schema marker data, repairing 39 body-dropping corpus rows (#902).
+- **`qu take.recipient`** — the R1 tail's last `take` row (#910).
+- **The release workflows** no longer reference the moved-out domain family
+  (#922).
+
 ## [2.10.0] - 2026-08-01
 
 Full notes: [GitHub Releases](https://github.com/codetalcott/hyperfixi/releases/tag/v2.10.0).
