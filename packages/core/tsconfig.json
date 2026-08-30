@@ -46,7 +46,12 @@
     "composite": true
   },
 
-  "include": ["src/**/*", "vitest.config.ts"],
+  // `baselines/` holds the engine-migration gate data
+  // (docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0). ast-equivalence.test.ts
+  // imports its baseline as a module, so tsc must know the file exists;
+  // tsconfig.build.json narrows `include` back to src/, so none of it is
+  // emitted or published.
+  "include": ["src/**/*", "vitest.config.ts", "baselines/*.json"],
 
   "exclude": [
     "node_modules",

@@ -823,3 +823,47 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   Ratchets regenerated: type escapes **1,285 → 1,231**, layering conforming
   imports 893 → 873, all 14 upward edges and their reasons intact. Suite
   7,972 → **7,915** passing (the 57 were the deleted trees' own tests).
+- **2026-08-30** — **Arc 0 steps 3 and 5** (AST-vocabulary snapshot +
+  equivalence corpus) landed together, because both read one corpus and
+  splitting them would have duplicated it.
+  `packages/core/src/parser/__tests__/engine-corpus.ts` derives the corpus from
+  every registered command's `metadata.examples` plus 28 hand-written feature
+  sources (no command example is a handler, a behavior or a `def`, so the whole
+  statement half of the AST would otherwise sit outside both gates).
+  **233 sources, 218 unique.**
+
+  Three findings, each now pinned:
+
+  - **The two in-core producers share only FOUR spellings** — `command`,
+    `identifier`, `literal`, `selector`. Everything else that both emit they
+    spell differently (`binaryExpression`/`binary`, `memberExpression`/`member`,
+    `eventHandler`/`event`, `possessiveExpression`/`possessive`,
+    `callExpression`/`call`, `arrayLiteral`/`array`, `objectLiteral`/`object`) —
+    seven rename pairs, which is exactly why `runtime-base.ts` needs its
+    `case 'event'` / `case 'sequence'` adapter arms.
+  - **`Program`/`CommandSequence` are the only PascalCase kinds**, each with a
+    camelCase twin the evaluator also accepts; and the full parser emits both
+    `callExpression` and `functionCall` for one concept. `functionCall` is
+    emitted only by `parseTriggerCommand` and read only by `trigger.ts`'s
+    `parseInput` — command-local, never evaluated, and precisely the thing Arc 3
+    turns into a typed per-command node.
+  - **19 documented command examples do not parse** (18 unique sources). Four
+    are documentation defects (`repeat … { … }` — hyperscript has never had
+    C-style block braces); the other fifteen are parser gaps in syntax the
+    command's own metadata advertises, including `install Draggable on #box`,
+    `settle for 3000`, `tell closest <form/> submit` and all four
+    `pseudo-command` forms. **These belong in `PARSER_NEXT_STEPS.md`** and are
+    pinned here in both directions meanwhile, because the vocabulary snapshot is
+    built from the sources that parse — so an example silently starting or
+    stopping to parse would move the vocabulary underneath it.
+
+  The equivalence gate records a hash of each source's canonicalized parse
+  (keys sorted, `undefined` dropped, so mechanical edits do not cry wolf).
+  Mutation-verified in both directions: a comment-only parser edit moves
+  nothing, flipping `CommandNodeBuilder`'s `isBlocking` default moves **134**
+  fingerprints. Arcs 1 and 2 must leave this file untouched; Arc 3 regenerates
+  it per command and the diff is the review artifact.
+
+  Also fixed in passing: `__tests__` helper files were emitting `.d.ts` into the
+  published `dist/` (`add-standalone-helpers.d.ts` had been shipping). Excluded
+  from `tsconfig.build.json`.
