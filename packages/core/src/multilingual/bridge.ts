@@ -12,7 +12,13 @@
  */
 
 import type { SemanticNode, ASTNode } from '@lokascript/semantic';
-import { DEFAULT_CONFIDENCE_THRESHOLD } from '@lokascript/semantic';
+// Core's OWN threshold, not `@lokascript/semantic`'s — the two are both 0.5 and
+// were duplicated (ENGINE_MIGRATION_PLAN Arc 1 step 1). Which copy survives is
+// not arbitrary: this is the engine deciding when to trust a front-end's parse,
+// so the policy belongs on the engine side of the boundary. Importing it from
+// the front-end made the value a thing the front-end could change under us, and
+// cost a static-value import across a line Arc 1 exists to erase.
+import { DEFAULT_CONFIDENCE_THRESHOLD } from '../parser/semantic-integration';
 import { debug } from '../utils/debug';
 
 // =============================================================================

@@ -867,3 +867,41 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   Also fixed in passing: `__tests__` helper files were emitting `.d.ts` into the
   published `dist/` (`add-standalone-helpers.d.ts` had been shipping). Excluded
   from `tsconfig.build.json`.
+- **2026-08-30** — **Arc 1 step 1** (the boundary audit-as-gate) landed.
+  `scripts/check-semantic-boundary.cjs` records every `packages/core/src` file
+  importing `@lokascript/semantic`, `/intent` or `/i18n`, **per file and per
+  import KIND**, ratcheting each kind down independently.
+
+  **Measured: 9 files — 8 static-value, 3 dynamic, 2 static-type, 2
+  typeof-import.** The kind split is the finding, and it reorders the debt:
+  only `static-value` is an eager bundled dependency; `static-type` and
+  `typeof-import` erase at build time and `dynamic` already defers. So
+  `multilingual/bridge.ts`, with the most rows of any file (4), is nearly
+  target-shape already, while `api/hyperscript-api.ts`'s single static import
+  is the one that pulls the semantic stack into every Node consumer.
+
+  Two corrections the measurement forced:
+
+  - The Verified-state section above says "five load-bearing static imports".
+    It is **eight** — and a first, comment-blind count said **thirteen**,
+    because five of those were example `import` lines inside docblocks. This
+    gate strips comments but KEEPS string contents (the specifier IS a string),
+    the mirror image of what the type-escape ratchet needs, which is why it
+    carries its own stripper.
+  - **Four of the nine rows are target-state and terminal**, not debt — the
+    three multilingual browser bundles and the classic-i18n bundle import the
+    front-end because that is what those bundles ARE. Recorded as such, so the
+    list is not later read as nine things to fix.
+
+  Step 1's other half also landed: `DEFAULT_CONFIDENCE_THRESHOLD` was defined
+  identically (0.5) in both `parser/semantic-integration.ts` and
+  `@lokascript/semantic`, and `multilingual/bridge.ts` imported the front-end's.
+  It now imports core's — this is the engine deciding when to trust a
+  front-end's parse, so the policy belongs on the engine side.
+  **static-value 8 → 7.**
+
+  A separate assertion guards the property most worth keeping, which is already
+  TRUE: `parser/`, `runtime/`, `commands/`, `expressions/`, `types/` and `core/`
+  import the front-end **nowhere**. The coupling is confined to the api, the
+  bundles and the multilingual module — so Arc 1's remaining steps are a handful
+  of files, not a sweep.
