@@ -506,8 +506,15 @@ type (vite-plugin, developer-tools). Keep the alias for a release. The hybrid
 The core of the migration. Each command's `parseInput` is split: syntax
 decisions move into that command's parser; value work stays as expression
 slots the runtime evaluates. At the end of the arc `parseInput` receives a
-typed node and does nothing but evaluate slots — which is what Arc 4 turns
-into `compile`.
+typed node and does nothing but evaluate slots — which is what Arc 4 turns into `compile`.
+
+> **Argue this arc on maintainability, not speed.** Arc 0 step 4 measured the
+> per-execution `parseInput` cost directly: `toggle` (242-line `parseInput`)
+> against `add` (66), doing comparable DOM work, came out at **1.03-1.05x —
+> noise**, because most of those 242 lines are branches a given call never
+> enters. The win is that the grammar stops being re-derived at runtime in ~50
+> hand-written places, not that pages get faster. Re-measure after the first few
+> commands land; do not promise a speedup.
 
 1. **Audit-as-gate.** For each of the 51 `parseInput`s, a table (in a test)
    classifying every branch as **S** (syntax discrimination — `between`,
@@ -592,9 +599,16 @@ parseInput(node, evaluator, scope), scope)` — per-execution, exactly today's
 behaviour — and a migrated command's `compile` binds once. The API's
 `ASTCache` becomes a Program cache with the same key (`lang\0trad\0code`). The
 `_runtimeExecute` channel is replaced by `compile` handing block-body `Op`s to
-`if`/`repeat`/`tell`/`start-view-transition` (four commands). Gate: Arc 0's
-benchmark improves and the number is recorded; `command-output-contract`
-collapses to one path.
+`if`/`repeat`/`tell`/`start-view-transition` (four commands).
+
+Gate: `command-output-contract` collapses to one path. **Not** "Arc 0's
+benchmark improves" — step 4 measured that the `ASTCache` already makes
+warm-path compilation free (`compile + execute` ≈ `execute only`, within
+noise), so binding once buys nothing on the parse side, and the per-execution
+`parseInput` cost it would remove measured as noise too. Treat the benchmark as
+a REGRESSION guard here — closures must not make execution slower — and take
+the arc's justification from what it DELETES: the `ContextBridge` per-command
+copy, the `_runtimeExecute` channel, and the dual execution paths.
 
 **4c — `Scope`.** Replace `ExecutionContext` with the typed `Scope` from the
 target design: `ContextBridge.toTyped/fromTyped` and the per-command copy are deleted (the typed extras have no reader outside `trackEvaluation`, which Arc 7 makes opt-in); the three flag sets collapse to none (control
@@ -757,3 +771,25 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   - **`parser/regex-parser.ts` imports the lite BUNDLE it is a component of**
     (`compatibility/browser-bundle-lite`), inverting the whole stack in one
     line. The single most backwards edge in the graph; Arc 5 repairs it.
+- **2026-08-30** — **Arc 0 step 4** (hot-path benchmark) landed, and it
+  **falsified the performance framing of two later arcs**.
+  `bench/hot-path.bench.ts` is the first benchmark here that compiles OUTSIDE
+  the measured body; every row in `execution.bench.ts` calls `compile()` inside
+  it, so nothing had ever measured execution alone.
+
+  - **`compile + execute` and `execute only` are within noise (1.00-1.06x
+    across runs).** `compile()` on a repeated source is an `ASTCache` hit — a
+    Map lookup — so both rows were really measuring execution. **On the warm
+    path the engine already pays no parse cost**, so Arc 4b's win cannot come
+    from "compile once" in the parsing sense. It has to come from the runtime
+    side: `parseInput` running per execution.
+  - **`parseInput` SIZE does not predict execution cost: 1.03-1.05x** between
+    `toggle` (242-line `parseInput`, the largest in the set) and `add` (66),
+    doing comparable DOM work. Most of those 242 lines are branches a given
+    call never enters. **Arc 3's case is maintainability, not speed, and should
+    be argued that way** — noted on the arc itself.
+
+  One measurement artifact worth recording because it nearly shipped: the
+  contrast row was originally `log`, which writes to stdout, and the I/O
+  dominated so completely that the "cheap" command benchmarked **9.6x slower**
+  than the expensive one.
