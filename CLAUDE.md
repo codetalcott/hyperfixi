@@ -369,7 +369,7 @@ this gate already covers.
 **Known Issues:**
 
 - Experimental behaviors (Draggable, Sortable, Resizable) still run imperative JS installers; migration to the compiled hyperscript `source` path is in progress. Curated (5) + optional (3) behaviors already run the source-compiled path and are fully tested (behaviors suite green).
-- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (lowest are now th 0.9845 / ms / de / fr; corpus mean ≈ 0.992). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+- **Role fidelity (R1) headroom is now thin and flat** — the SOV six (hi, qu, ko, tr, ja, bn) were burned down to ≥ 0.9907 by the R1 arcs (#637/#638) and no longer trail the SVO languages (corpus mean 0.99994, lowest pl 0.99871 — the en→foreign render arc, #931–#996, closed nearly all of it). Every pattern parses faithfully at the command level in all 24 priority languages. Remaining R1 deferrals are named (pick range-role modeling, swap F6, and the non-`when` half of the reactive `on.event` rows — hi window-resize, qu announce-screen-reader / on-custom-event-receive; the `when … changes` rows were cleared 2026-08-27 by the reactive-when arc) — tracked by the multilingual fidelity ratchet (not `continue-on-error`); queue in `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
@@ -388,13 +388,12 @@ the committed baseline:
 - **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
   command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
   history in `docs-internal/MULTILINGUAL_ROADMAP.md`.)
-- **faithful** (fid = 1.0). **3696 / 3696.** Cross-language `avgFidelity` = 1.000,
-  `avgPrecision` ≈ 0.9997, `avgRoleFidelity` ≈ 0.992, `avgMultisetRecall` = 1.000,
-  `avgValueRecall` ≈ 0.997 (the SOV six sit ≥ 0.991 on R1 after #637/#638; the
-  lowest R1 languages are now th/ms/de/fr ≈ 0.985 — the remaining headroom is
-  thin and flat).
+- **faithful** (fid = 1.0). **3744 / 3744.** Cross-language `avgFidelity` = 1.000,
+  `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
+  `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 0.99994 (min pl 0.99871).
+  R1 is the only signal not at 1.000, and its headroom is thin and flat.
 
-> **Figures snapshot:** as of the **2026-07-27** baseline (`77f9c2bc`). They drift as work lands
+> **Figures snapshot:** as of the **2026-08-27** baseline (`3a19218a`). They drift as work lands
 > — the **authoritative** numbers always live in the committed baseline,
 > `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
 > and `commit` fields stamp each regeneration). Treat the prose here as orientation,
@@ -470,11 +469,11 @@ yields a 0 delta):
    Blind-spot inversion: if the **en reference itself** corrupts a value, every
    language flags at once — a 24-language R3 firestorm on one pattern means
    "suspect the en parse first" (useful signal, unlike R0 where en corruption moves
-   nothing). Known sub-1.0 rows (all triaged, tracked in
-   `docs-internal/MULTILINGUAL_NEXT_STEPS.md` § "R3-discovered value-bug families"):
-   symmetric `swap` role-binding flips, connective-swallowed `increment.quantity`,
-   bn duration-glue, SOV `in me` qualifier glue, pl/ru/uk `fetch` URL mis-role,
-   hi `transition` duration drop, bn/qu/tr behavior trigger events.
+   nothing). **All 24 languages are at 1.000** as of the 2026-08-27 baseline; the
+   families that used to sit sub-1.0 (symmetric `swap` role-binding flips,
+   connective-swallowed `increment.quantity`, bn duration-glue, SOV `in me`
+   qualifier glue, pl/ru/uk `fetch` URL mis-role, hi `transition` duration drop,
+   bn/qu/tr behavior trigger events) were cleared by the en→foreign render arc.
 
 9. **canonical-validity ratchet (R4)** — every authored foreign translation is rendered
    to English and parsed on the real `hyperscript.org` engine; the invalid
@@ -487,9 +486,9 @@ yields a 0 delta):
    parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
    triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
    standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
-   disagree; the en-side twin (`canonical-validity.test.ts`) remains vitest-only, and
-   its allowlist is now **empty** — 134/134 corpus references render canonically
-   valid. (It formerly held one entry, `pick-text-range`.)
+   disagree. **Both allowlists are now empty** — 3105/3105 foreign renders parse on
+   the engine, and the en-side twin (`canonical-validity.test.ts`, vitest-only) is at
+   134/134. (It formerly held one entry, `pick-text-range`.)
 
 10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
     longer parses at all, at **tolerance 0**. Not redundant with signal 1: every
