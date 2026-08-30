@@ -82,6 +82,21 @@ this plan needs:
 
 ## Verified state (measured 2026-08-30 on `e3b3e34a`)
 
+> **This section is a stamped SNAPSHOT, and arcs have since landed against it.**
+> Rows the work has overtaken are struck through in place rather than deleted —
+> a plan whose starting measurements quietly change is a plan nobody can audit,
+> and three separate filings in this repo have already cost a session by being
+> read as current. Where a number now lives in a committed baseline, that
+> baseline is authoritative and is named:
+>
+> | Fact | Live source |
+> | ---- | ----------- |
+> | type-escape counts | `packages/core/baselines/type-escapes.json` |
+> | import-direction debt | `packages/core/baselines/layering.json` |
+> | front-end coupling | `packages/core/baselines/semantic-boundary.json` |
+> | per-source parse shapes | `packages/core/baselines/ast-equivalence.json` |
+> | node-kind vocabularies | `packages/core/src/parser/__tests__/ast-vocabulary.test.ts` |
+
 Baseline: **7,972 passing, 106 skipped, 312 files** (`npm run test:check
 --prefix packages/core`). Non-test core source: **114,763 lines**; the test
 tree is 114 k lines across 316 files. Upstream `_hyperscript/src` is 15,318
@@ -153,7 +168,12 @@ lines for comparison.
 ### The semantic coupling — narrower than it looks
 
 `grep -l '@lokascript/semantic'` returns 15 core files, but most are comments.
-The **load-bearing static imports** are exactly:
+~~The **load-bearing static imports** are exactly:~~ — **superseded 2026-08-30
+by Arc 1 step 1's gate**, which measured **eight** static-value imports across
+nine files, not five. This hand-read table was comment-blind in both directions.
+`packages/core/baselines/semantic-boundary.json` is authoritative, and splits
+each file by import KIND — the distinction that matters, and one this table does
+not make. Kept for the shape it describes:
 
 | File                                        | Imports                                                                                    | Nature                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
@@ -200,12 +220,12 @@ engine, so it is a regression detector for every arc here.
 | Tree                                  | Lines  | Status                                                                                                                                                       |
 | ------------------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/features/`                       | 10,572 | zero production callers; imported only by `index.ts`, which re-exports six `Typed*FeatureImplementation` families as public API, already `@deprecated` |
-| `src/context/`                        |  2,543 | excluded from BOTH `tsconfig.json` and `tsconfig.build.json`; imported by nothing                                                                           |
+| ~~`src/context/`~~ **DELETED (Arc 6a)**  |  2,543 | was excluded from ALL THREE tsconfigs (`.json`, `.build.json`, `.scripts.json`), so it had not compiled in any configuration; imported by nothing                                                                           |
 | `src/registry/examples/`, `registry/multilingual/` | ~1,800 | no non-test downstream importer of either (the only hits are `dist/` artifacts) — ghost-test before deleting                                                                  |
-| `src/experimental/`                   |  2,217 | imported by nothing                                                                                                                                          |
+| ~~`src/experimental/`~~ **DELETED (Arc 6a)** |  2,696 | imported by nothing (the 2,217 here counted only `.ts`; the tree was 2,696)                                                                                                                                          |
 | `src/tokenizer.ts` (root)             |    —   | a second tokenizer, "compatible with `_hyperscript` tokenizer API", exported as `Lexer, Tokens`; the parser uses `parser/tokenizer.ts`                       |
 | `validation/lightweight-validators.ts`|    833 | a zod clone; consumed by `features/`, `context/`, the `types/*` files, and three expression modules' `inputSchema` fields                                     |
-| `types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation` | — | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files) |
+| ~~`types/core.ts` `CommandImplementation`, `BaseCommandImplementation`; `command-types.ts` `TypedCommandImplementation`~~ **DELETED (Arc 6a)** | 144 | **0 implementers** each; the only implemented command interface is `DecoratedCommand` (46 files). Arc 6a deleted these plus four more in the same dead chain — `LegacyValidationResult`, `FeatureImplementation`, and the `types/core.ts` `Runtime`/`HyperscriptConfig` (each of which had a LIVE namesake elsewhere) |
 | `src/types.d.ts`                      |    —   | `any`-typed module declarations for `@lokascript/i18n/browser`                                                                                               |
 | `api/dom-processor.ts` + `dom/attribute-processor.ts` + `dom/minimal-attribute-processor.ts` | — | three DOM processors; the first two both wire `compileSync`/runtime |
 
