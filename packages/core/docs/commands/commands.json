@@ -278,8 +278,14 @@
     },
     "hide": {
       "description": "Hide elements by setting display to none",
-      "syntax": ["hide [<target>]"],
-      "examples": ["hide me", "hide #modal", "hide .warnings", "hide <button/>"],
+      "syntax": ["hide [<target>] [when <condition>]"],
+      "examples": [
+        "hide me",
+        "hide #modal",
+        "hide .warnings",
+        "hide <button/>",
+        "hide <li/> when its textContent is empty"
+      ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
       "compatibility": "standard"
@@ -638,8 +644,14 @@
     },
     "show": {
       "description": "Show elements by restoring display property",
-      "syntax": ["show [<target>]"],
-      "examples": ["show me", "show #modal", "show .hidden", "show <button/>"],
+      "syntax": ["show [<target>] [when <condition>]"],
+      "examples": [
+        "show me",
+        "show #modal",
+        "show .hidden",
+        "show <button/>",
+        "show <li/> when its textContent contains my value"
+      ],
       "sideEffects": ["dom-mutation"],
       "category": "dom",
       "compatibility": "standard"

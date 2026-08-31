@@ -22,6 +22,23 @@ import {
 } from '../helpers/parsing-helpers';
 
 /**
+ * A `literal` node in the slot `withModifiers` types as `ExpressionNode`.
+ *
+ * `ExpressionNode` is pinned to `type: 'expression'`, so no literal is
+ * assignable to it and every modifier carrying a plain string needs the same
+ * hatch. One helper rather than one cast per site: this is the only place in
+ * this module that asserts the shape, and the assertion is honest — the
+ * builder's parameter type is narrower than what the AST actually holds in
+ * `modifiers`, which is a `types/base-types.ts` question, not a parser one.
+ *
+ * Literal rather than identifier because the runtime EVALUATES these modifiers:
+ * an identifier node would be looked up as a variable and come back undefined.
+ */
+function literalModifier(value: string): ExpressionNode {
+  return { type: 'literal', value, raw: value } as unknown as ExpressionNode;
+}
+
+/**
  * Consume `toggle`'s optional temporal tail into MODIFIERS.
  *
  * `for <duration>` and `until <event> [from <target>]` are both accepted by the
@@ -67,11 +84,7 @@ function parseTemporalTail(ctx: ParserContext): Record<string, ExpressionNode> {
   // A literal, not an identifier node: ToggleCommand EVALUATES `modifiers.until`
   // and wants the event NAME, where an identifier would resolve as a variable
   // lookup and come back undefined.
-  modifiers['until'] = {
-    type: 'literal',
-    value: eventName,
-    raw: eventName,
-  } as unknown as ExpressionNode;
+  modifiers['until'] = literalModifier(eventName);
 
   // `until <event> from <target>` — upstream reverts on the event reaching
   // another element. ToggleCommand's `setupEventReversion` listens on the
@@ -624,4 +637,90 @@ export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierN
     .withArgs(...args)
     .endingAt(ctx.getPosition())
     .build();
+}
+
+/**
+ * Parse show/hide.
+ *
+ * Syntax: `show|hide [<target>] [with <strategy>] [when|where <condition>]`
+ *
+ * Both are `COMPOUND_COMMANDS` members that had **no case in
+ * `parseCompoundCommand`**, so they fell to `parseRegularCommand` — a loop of
+ * `parsePrimary()` calls, which parses one operand and cannot see an operator.
+ * Three consequences, all measured on `main`:
+ *
+ *   - `show <blockquote/> in the next <div/>` kept only `<blockquote/>`. The
+ *     `in` scope operator is a perfectly ordinary binary expression here — the
+ *     identical `log <blockquote/> in the next <div/>` parses it — but
+ *     `parsePrimary` stops before the operator, so the scope was dropped.
+ *   - `show <target> when <cond>` swallowed the bare word `when` as an
+ *     ARGUMENT, which hid the trailing guard from `Parser.parseCommand`'s
+ *     central `when`/`where` capture and dropped the condition with it.
+ *   - `show #modal with *opacity` dropped the strategy the same way.
+ *
+ * The shipped `examples/behaviors/recipes.html` search filter is the first two
+ * together: `show <blockquote/> in the next <div/> when its textContent
+ * contains my value` shows EVERY blockquote where `hyperscript.org` — which
+ * accepts this source — filters them.
+ *
+ * The target is therefore a full `parseExpression()`, and the tail keywords are
+ * consumed explicitly so nothing is left for the statement loop to discard.
+ * `when`/`where` is left in the stream on purpose: `Parser.parseCommand`
+ * attaches it as `modifiers.when` for every command centrally, and duplicating
+ * that here would be a second mechanism for one shape.
+ *
+ * `with <strategy>` is CONSUMED but not yet honoured — upstream's
+ * display/visibility/opacity strategies are a separate, filed gap
+ * (`docs-internal/MULTILINGUAL_NEXT_STEPS.md`: "show/hide style role is
+ * uncaptured in EVERY language including en"). Consuming it is not optional
+ * cosmetics: since #1026 the parser REPORTS what it cannot place, so leaving
+ * the tail would turn a silent drop into a diagnostic on every
+ * `show … with …` source. The name is stored as a LITERAL with any leading
+ * `*` stripped, exactly as upstream stores it, rather than as the selector
+ * node `*opacity` tokenizes to.
+ */
+export function parseShowHideCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
+  const args: ASTNode[] = [];
+  const modifiers: Record<string, ExpressionNode> = {};
+
+  // A bare `show` / `show when <cond>` / `show with <strategy>` has no target;
+  // the runtime defaults to `me`. No implicit node is forged here — a runtime
+  // default does not need an AST representation (ENGINE_MIGRATION_PLAN.md).
+  if (
+    !isCommandBoundary(ctx, ['catch', 'finally']) &&
+    !ctx.check(KEYWORDS.WHEN) &&
+    !ctx.check('where') &&
+    !ctx.check(KEYWORDS.WITH)
+  ) {
+    const target = ctx.parseExpression();
+    if (target) args.push(target);
+  }
+
+  if (consumeOptionalKeyword(ctx, KEYWORDS.WITH)) {
+    const strategy = ctx.parseExpression();
+    const name = strategyName(strategy);
+    if (name !== null) {
+      modifiers['with'] = literalModifier(name);
+    }
+  }
+
+  const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .endingAt(ctx.getPosition());
+  if (Object.keys(modifiers).length > 0) builder.withModifiers(modifiers);
+  return builder.build();
+}
+
+/**
+ * The strategy NAME behind whatever node `with <strategy>` parsed to.
+ *
+ * `*opacity` tokenizes as a style-ref selector and a bare `opacity` as an
+ * identifier, so both shapes have to be read; upstream strips the leading `*`
+ * and keeps the name.
+ */
+function strategyName(node: ASTNode | null | undefined): string | null {
+  if (!node) return null;
+  const raw =
+    typeof node.name === 'string' ? node.name : typeof node.value === 'string' ? node.value : null;
+  return raw === null ? null : raw.replace(/^\*/, '');
 }

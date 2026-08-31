@@ -86,6 +86,9 @@ export function parseCompoundCommand(
     case 'swap':
     case 'morph':
       return domCommands.parseSwapCommand(ctx, identifierNode);
+    case 'show':
+    case 'hide':
+      return domCommands.parseShowHideCommand(ctx, identifierNode);
     case 'process':
       // Falls back for non-`partials` input so the runtime keeps reporting its
       // own keyword error rather than a parse error.

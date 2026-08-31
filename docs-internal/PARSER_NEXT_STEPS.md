@@ -1216,6 +1216,81 @@ Two worth acting on beyond the docs:
   the docs defect the 2026-07-29 sweep recorded as "being fixed in the arc's own
   diff" (see History) — **it was not fixed**; that claim is stale.
 
+### ~~`show`/`hide` drop an `in <scope>` qualifier and a `when` filter~~ — FIXED (2026-08-31)
+
+Upstream `hyperscript.org` ACCEPTS
+`show <blockquote/> in the next <div/> when its textContent contains my value`.
+hyperfixi kept the `show` and discarded BOTH clauses, so the shipped
+`examples/behaviors/recipes.html` search box showed **every** blockquote where
+upstream filters them. Allowlisted in `shipped-sources-validity.json` since
+#1026 made the drop visible; that entry is now gone.
+
+**Cause: the third `COMPOUND_COMMANDS`-member-with-no-dispatch-case**, after
+`take` (#859) and `process`. `show` and `hide` fell through
+`parseCompoundCommand`'s `default:` to `parseRegularCommand`, whose argument
+loop is a sequence of `parsePrimary()` calls — one operand each, no operators.
+Three drops followed from the one cause:
+
+| source | kept | dropped |
+| ------ | ---- | ------- |
+| `show <blockquote/> in the next <div/>` | `<blockquote/>` | the whole `in` scope operator — and `log <blockquote/> in the next <div/>` parses it correctly, because `log` reaches `parseCommandCore`'s `parseExpression()` loop |
+| `show <li/> when <cond>` | `<li/>`, plus the bare word `when` as an ARGUMENT | the condition — and swallowing `when` is what hid it from `Parser.parseCommand`'s central `when`/`where` capture |
+| `show #modal with *opacity` | `#modal` | the strategy |
+
+Fix: `parseShowHideCommand` (dom-commands.ts) parses the target with
+`parseExpression()` and consumes the `with <strategy>` tail; `when`/`where` is
+deliberately LEFT for the central capture rather than re-implemented locally.
+Strategies are carried (`modifiers.with`, the name with any `*` stripped, as
+upstream stores it) but still not honoured — that is the separate filed
+"show/hide style role is uncaptured in EVERY language including en" gap.
+
+**The runtime half is not optional, and it is where the semantics differ.**
+`when` on show/hide is a per-element FILTER: upstream's `implicitLoopWhen` shows
+what matches and HIDES the rest, binding each element to `it`/`its` while it
+tests. `CommandAdapterV2`'s generic `when` guard is the opposite — one
+evaluation, skip the command if falsy — so routing the modifier through it would
+have left a correct-looking AST and a page that still never filters. The command
+now declares `ownsConditionalModifier` and the adapter defers.
+
+Measured against the real engine with the input pre-filled (which the
+shipped-examples gate cannot do — it dispatches the page as shipped, and the
+shipped input is empty): for `code`, `zzz` and `programmer` hyperfixi's hide set
+is **byte-identical to upstream's**. The only residual divergence is hyperfixi's
+`show` marker class on the elements it shows, which is that gate's existing
+show/hide-strategy family (30+ entries) and is pinned by four assertions in
+`show.test.ts`.
+
+**Gate lesson, mutation-measured.** Adding the shipped source to
+`compound-command-coverage.test.ts`'s probes did NOT redden it when the dispatch
+case was deleted: a dropped TAIL still yields exactly one correctly-named
+command WITH payload, so every assertion the gate had passed. The gate now also
+re-compiles each probe wrapped in `on click …`, because the parser only REPORTS
+unplaced input from inside a handler body (#1026 wired the five sites there) —
+bare, the same source reports nothing. With that check the mutation fails four
+rows. **The payload assertion added by the `hide <button/>` fix above was one
+generation too weak, and only mutation testing said so.**
+
+### `show` restores a cleared display as `block`, where upstream removes the property (2026-08-31)
+
+Found while adding the `when` filter above, which makes it reachable on a
+shipped page for the first time: a `show … when <search>` re-run un-hides
+whatever started matching again.
+
+`hideElement` memoises `data-original-display` as `''` for an element with no
+inline display; `showElement` then restores `originalDisplay || defaultDisplay`,
+so the `''` falls through to `'block'`. Upstream's display strategy does
+`element.style.removeProperty('display')` in that case. For a `<blockquote>`
+the two are visually identical; for an inline element hyperfixi's version
+changes the layout.
+
+**Not a stray — it is explicitly pinned**, by `show.test.ts`'s "should use
+defaultDisplay when originalDisplay is empty string". Measured: changing
+`showElement` to remove the property reddens that ONE test and nothing else in
+the 7,990-test core suite. So it is a one-line fix behind a deliberate
+assertion, which is an owner decision rather than a papercut — left alone, and
+asserted as-is in `show-hide-when.test.ts` so the behaviour is at least
+recorded where the filter lives.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

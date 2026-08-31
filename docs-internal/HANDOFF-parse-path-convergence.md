@@ -46,14 +46,36 @@
 > of opening `both-fail`; items 3–5 are the original convergence thread. The
 > first thread is live user-visible defects and is worth more per hour.
 >
-> 1. **`examples/behaviors/recipes.html` — upstream ACCEPTS, we drop.**
->    `show <blockquote/> in the next <div/> when <cond>` parses on
->    hyperscript.org; we keep the `show` and discard BOTH the `in <scope>`
->    qualifier and the `when` filter, so the shipped example shows every
->    blockquote instead of filtering. The single highest-value fix on the board:
->    a real parser gap, with an oracle, on a shipped page. Allowlisted in
->    `shipped-sources-validity.json` with its measured verdict.
-> 2. **The `recovered` false positive, which BLOCKS strengthening the new gate.**
+> 1. ~~**`examples/behaviors/recipes.html` — upstream ACCEPTS, we drop.**~~ —
+>    **DONE.** `show`/`hide` were the THIRD `COMPOUND_COMMANDS` member with no
+>    case in `parseCompoundCommand` (after `take` #859 and `process`), so they
+>    took `parseRegularCommand`'s `parsePrimary()` loop, which parses one
+>    operand and can see no operator: the `in` scope, the `when` filter and the
+>    `with` strategy all fell off. Both halves were needed — the runtime treats
+>    `when` on show/hide as a per-element FILTER (upstream `implicitLoopWhen`:
+>    show the matches, HIDE the rest), NOT as `CommandAdapterV2`'s generic
+>    one-shot guard, which would have left a correct AST and a page that still
+>    never filters. Measured against the real engine with the input pre-filled:
+>    hide set byte-identical to upstream for three search terms. Both shipped
+>    gates moved the right way (`shipped-sources` allowlist 5 → 4; the execution
+>    gate's `compared` 122 → 123, the handler returning to it exactly as its own
+>    baseline note predicted). Full write-up in `PARSER_NEXT_STEPS.md`.
+>
+>    **Two things it taught, both mutation-measured.** (a) Adding the shipped
+>    source to `compound-command-coverage.test.ts` did NOT redden that gate when
+>    the dispatch case was deleted — a dropped TAIL still parses to one
+>    correctly-named command WITH payload. The gate now re-compiles each probe
+>    wrapped in `on click …`, because the parser reports unplaced input only
+>    from inside a handler body. (b) `show`'s `data-original-display` restore
+>    diverges from upstream (`block` vs `removeProperty`) and is PINNED by a
+>    test, so it was filed, not silently changed.
+> 2. **NEXT — the `recovered` false positive, which BLOCKS strengthening the new gate.**
+>    Measured 2026-08-31 on the vendored 0.9.93 engine: upstream requires `end`
+>    only when `parser.hasMore()`, so every one of these sources ACCEPTS there.
+>    Note `then-as-separator.test.ts` PINS the current strictness ("Deliberate
+>    strictness: upstream tolerates an unterminated `if/then` … and we do not.
+>    That is a separate decision") — that decision is what item 2 has to make,
+>    visibly, not route around.
 >    `if x > 5 then add .active` parses CORRECTLY and still reports
 >    `Expected 'end' after if block` — on `main`, before #1026, across 11 corpus
 >    sources of the single-line `if`/`unless` family. Measured: switching

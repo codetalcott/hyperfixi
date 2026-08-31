@@ -932,7 +932,7 @@ Hide elements by setting display to none
 **Syntax:**
 
 ```hyperscript
-hide [<target>]
+hide [<target>] [when <condition>]
 ```
 
 **Examples:**
@@ -951,6 +951,10 @@ hide .warnings
 
 ```hyperscript
 hide <button/>
+```
+
+```hyperscript
+hide <li/> when its textContent is empty
 ```
 
 **Side Effects:** dom-mutation
@@ -1232,7 +1236,7 @@ Show elements by restoring display property
 **Syntax:**
 
 ```hyperscript
-show [<target>]
+show [<target>] [when <condition>]
 ```
 
 **Examples:**
@@ -1251,6 +1255,10 @@ show .hidden
 
 ```hyperscript
 show <button/>
+```
+
+```hyperscript
+show <li/> when its textContent contains my value
 ```
 
 **Side Effects:** dom-mutation
