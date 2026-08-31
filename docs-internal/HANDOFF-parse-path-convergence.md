@@ -25,19 +25,41 @@
 >    both corrections on the entry in `PARSER_NEXT_STEPS.md`. **It also closed
 >    the query-literal half of item 3 below** (`value` family 9 → 3,
 >    `field-only-trad:fromQuery` 6 → 0).
-> 2. **Item 6 — `implicit-me` (7 rows).** Facts measured 2026-08-31, so the
->    decision no longer needs re-derivation: **all 7 execute IDENTICALLY** on
->    both paths (jsdom, real contexts — the runtime defaults to `me` anyway), so
->    the disagreement is runtime-inert like `settle`'s `isBlocking`. But unlike
->    `isBlocking` it IS visible to a consumer: `fromCoreAST` emits `args: []`
->    vs `args: [identifier me]`, which the interchange layer, the Go client and
->    the LSP all read. Semantic is self-consistent (`contextReference` for both
->    an authored and an injected `me`). So the question is purely "does the
->    default belong in the AST or the runtime?" — an owner call, with no
->    correctness argument on either side. The rows: `blur`, `close`, `focus`,
->    `open`, `reset`, `settle` (bare) inject a `me` arg on the semantic path and
->    leave args empty on the traditional one, plus `transition opacity to 0.5`
->    (`modifiers.on`).
+> 2. ~~**Item 6 — `implicit-me` (7 rows).**~~ — **DECIDED AND DONE 2026-08-31.**
+>    Owner chose: the injected default is **relocated, not duplicated** — held
+>    back from `args`/`modifiers` (the SYNTAX surface, which records what the
+>    author wrote) and kept on `semanticRoles` (the SEMANTICS surface, where a
+>    consumer reads the resolved target). The runtime stays the single
+>    executable home of every default. Triage family 7 → 0.
+>
+>    Three measurements decided it, and the first reframed the question:
+>
+>    - **The class is 3× bigger than this family.** 22 schema roles across 21
+>      commands declare a `default` (20 `me`, plus `by: 1` on
+>      increment/decrement). The triage saw only 7 because `toggle`, `add`,
+>      `remove`, `increment`, `trigger`, `measure` … are on
+>      `skipSemanticParsing` — their injections never reach the core path but DO
+>      reach every `buildAST` consumer (multilingual bundles, R2 validator,
+>      MCP). So any answer had to be a policy for the class, not a fix for 7
+>      rows.
+>    - **The runtime already carries every one of them.** All 7 rows execute
+>      identically with args empty; `toggle` behaves identically with and
+>      without `on: me`; `increment.ts` has `amount = 1`. Injecting into the AST
+>      would put the same default table in two live places AND oblige every
+>      other AST producer (traditional, hybrid template, lite, AOT) to inject it
+>      too, or consumers still could not rely on it.
+>    - **The "mark it in the AST" route has a fossil.** Core already has an
+>      `implicitTarget` field with builder plumbing (`withImplicitTarget`) and
+>      **zero callers, zero readers** — a previous attempt at exactly that,
+>      dead on the vine. The mechanism used instead already existed and is live:
+>      the matcher's `implicit: true` tag, which the multilingual renderers
+>      read to suppress an injected `me` across 24 languages.
+>
+>    Implementation is one predicate (`isImplicitValue`) applied at the three
+>    surfaces that build args/modifiers — `getRole` (covers the declarative
+>    `buildFromAstShape` and the hand-written mappers), `goMapper`'s direct
+>    reads, and `buildGenericCommand`. `semanticRoles` reads the full role map
+>    and is deliberately untouched.
 > 3. **Residual item-5 rows** — ~~query-literal VALUE representation
 >    (`button` + `fromQuery` vs raw `<button/>`; same root cause as item 1
 >    above, so they may close together)~~ **closed with item 1, as predicted**;
@@ -108,11 +130,12 @@
 >
 > **Re-run the measurement before costing anything** —
 > `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After the
-> query-literal fix: same **137** · differ **77** · trad-only 0 · sem-only 0 ·
-> both-fail 19, with families `semanticRoles-added` 77, `field-only-trad`
-> 194/43, `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12,
-> `position` 36/10, `implicit-me` 7, `value` 3, `arity` 1. These numbers move
-> with every fix; the tool is the authority, not this paragraph.
+> query-literal fix AND the implicit-default fix: same **137** · differ **77** ·
+> trad-only 0 · sem-only 0 · both-fail 19, with families `semanticRoles-added`
+> 77, `field-only-trad` 194/43, `field-only-sem` 76/48, `node-type` 14,
+> `marker-in-args` 12, `position` 36/10, `value` 3, `arity` 1. `implicit-me` is
+> gone from the table. These numbers move with every fix; the tool is the
+> authority, not this paragraph.
 >
 > Note the top-line `differ` did NOT move, and that is expected: the fix removed
 > difference SITES from sources that still differ in metadata. Read the family
