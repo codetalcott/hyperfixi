@@ -37,7 +37,16 @@ const PROBES: Record<string, string[]> = {
   add: ['add .active to #probe'],
   go: ['go to #probe'],
   halt: ['halt the event'],
-  hide: ['hide me', 'hide #modal', 'hide <button/>'],
+  hide: [
+    'hide me',
+    'hide #modal',
+    'hide <button/>',
+    // The scope qualifier and the `when` filter. Both were dropped for as long
+    // as show/hide had no case in the switch, and NONE of the three probes
+    // above could see it: they are single-operand sources, which
+    // `parseRegularCommand`'s parsePrimary() loop handles correctly.
+    'hide <li/> in the next <div/> when its textContent is empty',
+  ],
   js: ['js return 5 end'],
   measure: ['measure #probe'],
   morph: ['morph #probe with "x"'],
@@ -53,7 +62,15 @@ const PROBES: Record<string, string[]> = {
   replace: ['replace url "/search?q=test"', 'replace url "/page" with title "Updated Page"'],
   send: ['send dataEvent to #probe'],
   set: ['set myVar to "value"'],
-  show: ['show me', 'show #modal', 'show <button/>'],
+  show: [
+    'show me',
+    'show #modal',
+    'show <button/>',
+    // The exact shape `examples/behaviors/recipes.html` ships; see
+    // src/commands/dom/__tests__/show-hide-when.test.ts.
+    'show <blockquote/> in the next <div/> when its textContent contains my value',
+    'show #modal with *opacity',
+  ],
   start: ['start view transition add .highlight to #probe end'],
   swap: [
     'swap #target with it',
@@ -123,6 +140,24 @@ describe('COMPOUND_COMMANDS ↔ parseCompoundCommand coverage', () => {
               args.length > 0 || Object.keys(modifiers).length > 0 || node.target !== undefined;
             expect(hasPayload, `${src}: parsed to a payload-less ${command}`).toBe(true);
           }
+
+          // …and a payload assertion is STILL not enough. A source whose tail
+          // is dropped keeps its first argument, so it parses to exactly one
+          // correctly-named command WITH payload: `show <blockquote/> in the
+          // next <div/> when <cond>` looked perfect here while both the scope
+          // and the filter were being discarded. Mutation-tested — deleting
+          // the show/hide dispatch case did not redden this file until the
+          // check below existed.
+          //
+          // The parser only REPORTS what it could not place from inside a
+          // handler body (#1026 wired the five sites there), so the probe is
+          // re-compiled wrapped in one. Any tail the command's parser failed to
+          // consume surfaces as a diagnostic on that shape and nowhere else.
+          const wrapped = hyperscript.compileSync(`on click ${src}`, opts as never);
+          expect(
+            wrapped.errors ?? [],
+            `${src}: parsed clean bare, but reported discarded input inside a handler`
+          ).toHaveLength(0);
         }
       });
     }

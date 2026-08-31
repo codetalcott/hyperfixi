@@ -126,6 +126,21 @@ export interface CommandWithParseInput {
    * adapter wraps at that boundary — but it was never the command contract.
    */
   validate?(input: unknown): boolean;
+  /**
+   * `true` when this command consumes `modifiers.when` / `modifiers.where`
+   * ITSELF, and the adapter's generic guard below must leave it alone.
+   *
+   * The guard treats a falsy `when` as "skip the command", which is right for
+   * every command whose `when` is a guard — and wrong for `show`/`hide`, where
+   * upstream defines it as a per-element FILTER that applies the INVERSE action
+   * to the elements it rejects (`show <li/> when <c>` hides the non-matching
+   * ones). Under the generic guard that source would evaluate the condition
+   * once, against a `it` that is not any element, and skip the whole command.
+   *
+   * A flag on the implementation rather than a name list in the adapter: the
+   * command that handles the modifier is the thing that knows it does.
+   */
+  readonly ownsConditionalModifier?: boolean;
   metadata?: CommandMetadata;
 }
 
@@ -321,9 +336,14 @@ export class CommandAdapterV2 implements RuntimeCommand {
         ) {
           // Check when/where conditional modifiers before execution
           // Both 'when' and 'where' are treated as identical conditional guards
+          //
+          // Unless the command owns the modifier — see
+          // `CommandWithParseInput.ownsConditionalModifier`. `show`/`hide` do:
+          // their `when` filters the target set per element instead of gating
+          // the command, so consuming it here would skip the command outright.
           const mods = rawInput.modifiers as Record<string, unknown> | undefined;
           const whenCondition = (mods?.when || mods?.where) as ASTNode | undefined;
-          if (whenCondition) {
+          if (whenCondition && !this.impl.ownsConditionalModifier) {
             const conditionResult = await evaluateAST(whenCondition, context);
             if (!conditionResult) {
               debug.command(
