@@ -245,7 +245,9 @@ const PLAN_HYPOTHESES: Record<string, string> = {
 function main(): void {
   const kinds = scan();
   const wanted = process.argv.find(a => a.startsWith('--kind='))?.split('=')[1];
-  const out = (s: string) => process.stdout.write(s + '\n');
+  const out = (s: string): void => {
+    process.stdout.write(s + '\n');
+  };
 
   if (wanted) {
     const s = kinds.get(wanted);
