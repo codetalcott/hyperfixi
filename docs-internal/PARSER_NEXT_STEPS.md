@@ -631,7 +631,7 @@ true extent means building a real loop node with a body, mirroring
 `tryParseConditionalBlock` → `createConditionalNode`. That is the fix; this entry
 is the brief.
 
-### Role markers bind as roles in the traditional→interchange path (2026-08-30)
+### ~~Role markers bind as roles in the traditional→interchange path~~ — FIXED (2026-08-30)
 
 Found while measuring Arc 1 step 4 of `ENGINE_MIGRATION_PLAN.md`; **pre-existing
 on `main`, verified against `main`'s converter, and unchanged by that step.**
@@ -654,20 +654,53 @@ unbound role. (The semantic parse of the same source keeps prepositions OUT of
 `node.roles` in two dozen places, so any AOT build of a marker-bearing command
 compiles against the marker string.
 
-Two candidate fixes, and the choice is not obviously local:
+**FIXED via candidate 1** (teach the inference to skip role markers), and the
+reason this entry said to WAIT — "option 2 would delete the fix" — was measured
+FALSE. Convergence never touches these rows: `toggle`, `add`, `remove`, `put`,
+`take`, `trigger` and `set` are all on `parseCommandCore`'s `skipSemanticParsing`
+list, so only ONE parser ever runs for them and the two paths already agree. The
+defect is in what BOTH paths hand the interchange converter, which is why the
+parse-path triage could not see it (see the methodological note below).
 
-1. **Teach the inference to skip role markers** — `inferRolesFromSchema` already
-   knows each role's `markerOverride`; the traditional path just never tells it
-   which args are markers. Cheapest, and fixes every command at once.
-2. **Converge the two `args` shapes** — this is option 3 of Arc 1's open decision
-   (see `HANDOFF-engine-arc1.md`). If traditional adopts the semantic shape,
-   this defect disappears with it rather than being patched around.
+**Measured scope** (audit over every documented command example, traditional
+parse → `fromCoreAST` with the schema inferrer): **9 commands** bound a role to a
+bare marker word, not the one this entry named. Dispositions after scoring each
+row rather than assuming:
 
-Do NOT fix this before that decision is made: option 2 would delete the fix.
+| command | binding | disposition |
+| ------- | ------- | ----------- |
+| `toggle` | `destination="on"` | FIXED — `argSkipTokens: ['on']` |
+| `trigger` | `destination="on"` | FIXED — `argSkipTokens: ['on']` |
+| `remove` | `source="from"` | FIXED — `argSkipTokens: ['from']` |
+| `take` | `source="from"` | FIXED — `argSkipTokens: ['from']` |
+| `halt` | `patient="the"` | FIXED — `argSkipTokens: ['the']`; the runtime's `'the'` sentinel reads `raw.args` and is untouched |
+| `set` | `patient="to"` | FIXED in core — see below |
+| `swap` | `method="over"` | **NOT a defect** — `over` is swapSchema's `methodCarrier` doing its job. Scored, not assumed. |
+| `morph` | `patient="over"` | LEFT — semantic cannot parse it either (confidence 0), so there is no oracle for the right shape. Deeper defect. |
+| `pick` | `patient="from"` | LEFT — same: semantic returns `patient="source"` with an unconsumed-input warning. Both paths wrong. |
 
-Scope, unmeasured: `toggle X on Y` is confirmed. Every command whose schema has a
-marker role and whose surface uses the marker is a candidate (`add … to …`,
-`remove … from …`, `put … into …`, `send … to …`). Measure the set before fixing.
+`argSkipTokens` was already the mechanism (`scrollSchema` is its precedent) and
+is read by exactly one function, `inferRolesFromSchema` — so this changes
+interchange `roles` only. Runtime behaviour is untouched: the commands read
+`raw.args`, which still carries the markers.
+
+**`set` needed a second fix, in core.** `from-core.ts` has an explicit `case
+'set'` whose own comment says it exists only for the marker-less legacy form
+`set :var value` — but it intercepted BOTH forms and took `args[1]` blindly,
+which for the canonical form is the `to` KEYWORD. So `set myVar to "value"`
+inferred `patient="to"` and dropped the value, and the traditional parser
+desugars `increment counter` into the same shape, so it was wrong there too. The
+case now delegates the canonical form to the injected schema inferrer. (Its
+stated legacy form, `set :legacy 42`, does not parse at all — `ok:false` — so
+that branch is guarding a surface the parser rejects. Left in place; worth a
+separate look.)
+
+**The methodological note, which is the durable part.** This defect was invisible
+to `tools/triage-parse-paths.ts`, because that tool measures where the two parse
+paths DIFFER — and here they agree, both wrongly. A convergence triage cannot
+see a defect both sides share. Same blind-spot class as the bare-surface gate
+and the corpus-wrapper lesson: the measurement's denominator is the thing to
+check first.
 
 ### ~~Semantic-first silently truncates a command's arguments~~ — FIXED same day (2026-08-30)
 

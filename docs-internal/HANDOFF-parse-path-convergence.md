@@ -158,9 +158,32 @@ The rest are genuine defects, and they are **not all on one side**:
    honestly (they were truncations, see the correction above), and the
    `beep!`/precedence/`between`/`as` rows are now `same` — the node-type family
    below shrinks accordingly. Re-run the triage tool before working any row.
-2. **Markers out of `args`** (19 sources). Semantic is right; teaching the
-   traditional parser to lift markers into roles also deletes the step-4
-   role-binding defect.
+2. ~~**Markers out of `args`**~~ — **NOT EXECUTABLE AS WRITTEN** (measured
+   2026-08-30). Two premises failed:
+
+   - **There is no single "semantic shape" to converge onto.** Semantic is
+     internally inconsistent about markers: `to` becomes `modifiers.to` for
+     `default` and `send`, is DROPPED entirely for `scroll`, and `url` is
+     dropped for `push`/`replace`. Converging requires first CHOOSING one
+     canonical representation — which is Arc 2's job, not a mechanical port.
+   - **Two-thirds of the marker surface never reaches semantic at all.**
+     `toggle`, `add`, `remove`, `put`, `take`, `trigger`, `set` and `append`
+     are on `skipSemanticParsing`, so only one parser ever runs and the paths
+     already agree (markers in `args`, no roles). The 12 differing sources are
+     just the six non-skip commands.
+
+   So this row is a **third argument for pulling Arc 2 step 1 forward**, and it
+   should be re-scoped after that decision rather than attempted first.
+
+   **What WAS done instead**, because it was the part that turned out to be
+   real and independent: the step-4 role-binding defect is FIXED (see
+   `PARSER_NEXT_STEPS.md`). It was never a convergence problem — both paths
+   agreed, both wrongly — and the claim in that filing that convergence would
+   delete the fix was measured false. Nine commands bound a role to a bare
+   marker word; six are fixed via `argSkipTokens` plus one core-side fix to
+   `from-core.ts`'s explicit `set` case, one (`swap`) was scored and found NOT
+   to be a defect, and two (`morph`, `pick`) are a deeper defect both paths
+   share.
 3. **Decide the Arc 2 overlap** before touching `node-type`. Either pull Arc 2
    step 1 forward or accept the duplication knowingly.
 4. **Positions in the semantic path** (106 sources, one fix).
@@ -169,6 +192,20 @@ The rest are genuine defects, and they are **not all on one side**:
    obviously wrong.
 
 Steps 2, 3 and 6 of Arc 1 stay blocked on this arc, as the plan says.
+
+## The tool's blind spot, stated plainly
+
+`tools/triage-parse-paths.ts` measures where the two paths DIFFER. It is
+structurally incapable of seeing a defect they SHARE — and the step-4
+role-binding defect was exactly that: `toggle .active on #panel` bound
+`destination` to the literal word `on` on both paths, reaching AOT codegen, while
+the triage reported the row as `same`. Anything on `skipSemanticParsing` (27 of
+59 commands) can only ever report `same`, because only one parser runs.
+
+**So a green convergence triage is not evidence of correctness.** Use the tool
+to size the convergence work; use per-consumer audits (like the marker audit
+that found this) to find defects. Same blind-spot class as the bare-surface gate
+and the corpus-wrapper lesson: check the denominator first.
 
 ## What has NOT been measured
 

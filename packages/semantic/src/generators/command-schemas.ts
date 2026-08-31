@@ -479,6 +479,15 @@ export const toggleSchema: CommandSchema = {
   primaryRole: 'patient',
   // `toggle .active on #btn for 2s` → args ['.active'], modifiers { on, for }.
   ast: { args: ['patient'], modifiers: { on: 'destination', for: 'duration' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `toggle .active on #panel` → args [.active, on, #panel]. This is the
+  // row that surfaced the defect (Arc 1 step 4): `destination` bound to the
+  // literal identifier 'on' and `#panel` bound to nothing. Semantic binds
+  // patient='.active', destination='me'/'#panel'.
+  argSkipTokens: ['on'],
   roles: [
     {
       role: 'patient',
@@ -677,6 +686,14 @@ export const removeSchema: CommandSchema = {
   ast: { args: ['patient'], modifiers: { from: 'source' } },
   // Trailing `from X` is captured by the core parser as `target`; map it to source.
   targetRole: 'source',
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `remove .active from me` → args [.active, from, me]. `source` has no
+  // markerOverride, so positional binding took the marker. Semantic binds
+  // patient='.active', source='me'.
+  argSkipTokens: ['from'],
   roles: [
     {
       role: 'patient',
@@ -844,6 +861,14 @@ export const setSchema: CommandSchema = {
   // modifier. `scope` carries `set @attr to V on <scope>`, which the core
   // SetCommand applies to every matched element (defaulting to `me`).
   ast: { args: ['destination'], modifiers: { to: 'patient', on: 'scope' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `set myVar to "value"` → args [myVar, to, value]; the traditional
+  // parser also desugars `increment counter` into the same shape. Semantic
+  // binds destination='myVar', patient='value'.
+  argSkipTokens: ['to'],
   roles: [
     {
       role: 'destination',
@@ -1377,6 +1402,13 @@ export const triggerSchema: CommandSchema = {
   primaryRole: 'event',
   // `trigger click on #btn` → args ['click'], modifiers { on: '#btn' }.
   ast: { args: ['event'], modifiers: { on: 'destination' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `trigger click on #button` → args [click, on, #button]. Semantic binds
+  // event='click', destination='#button'.
+  argSkipTokens: ['on'],
   roles: [
     {
       role: 'event',
@@ -1771,6 +1803,13 @@ export const takeSchema: CommandSchema = {
   primaryRole: 'patient',
   // `take .active from #parent for me` → args ['.active'], modifiers { from, for }.
   ast: { args: ['patient'], modifiers: { from: 'source', for: 'recipient' } },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `take class from <#source/>` → args [class, from, selector]. Same
+  // family as remove; the marker is not the source.
+  argSkipTokens: ['from'],
   roles: [
     {
       role: 'patient',
@@ -1864,6 +1903,14 @@ export const haltSchema: CommandSchema = {
   // CONTINUES) from bare `halt` (stops the handler). Dropping it collapsed
   // both to the bare form. HaltCommand resolves a 'the' target to context.event.
   ast: { args: ['patient'] },
+  // Role markers the traditional parser leaves in `args` as bare identifiers.
+  // Skipped when schema-driven inference scans args for role VALUES, so the
+  // marker cannot be bound as one (interchange `roles` only — the runtime
+  // reads `raw.args` and is unaffected).
+  // `halt the event` → args [the, event]. HaltCommand reads the bare
+  // 'the' from raw.args as a context.event sentinel (that stays); the ROLE
+  // must name what is halted. Semantic binds patient='event'.
+  argSkipTokens: ['the'],
   roles: [
     {
       role: 'patient',

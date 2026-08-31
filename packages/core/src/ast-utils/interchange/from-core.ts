@@ -495,8 +495,27 @@ function inferRoles(
     // — schema-driven inference handles the canonical `set :var to value` form
     // correctly, but doesn't model the marker-less positional fallback.
     case 'set': {
-      if (args[0]) roles.destination = args[0];
       const toVal = modifiers?.to;
+      const second = args[1] as { type?: string; name?: unknown; value?: unknown } | undefined;
+      const marksTo =
+        second?.type === 'identifier' &&
+        String(second.name ?? second.value ?? '').toLowerCase() === 'to';
+
+      // The CANONICAL `set x to y` form belongs to schema inference, which
+      // models `to` as a marker (setSchema.argSkipTokens). This case existed
+      // for the marker-less legacy form `set :var value`, but it was
+      // intercepting both — taking args[1] blindly, which for the canonical
+      // form is the `to` KEYWORD, so `set myVar to "value"` inferred
+      // patient="to" and dropped the value. The traditional parser also
+      // desugars `increment counter` into that same shape, so it was wrong
+      // there too. Delegate rather than re-implement.
+      if (marksTo && !toVal) {
+        return infer
+          ? infer(name, args, modifiers as Readonly<Record<string, unknown>> | undefined, target)
+          : null;
+      }
+
+      if (args[0]) roles.destination = args[0];
       if (toVal && typeof toVal === 'object' && 'type' in (toVal as object)) {
         roles.patient = toVal as InterchangeNode;
       } else if (args[1]) {
