@@ -5,20 +5,10 @@
     "real hyperscript.org engine when its trigger event is dispatched in jsdom.",
     "Keys embed a hash of the source: editing the handler changes the key, so entries go",
     "stale and the stale-entry assertion forces their removal — the list only ratchets down.",
-    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md."
+    "Reasons are family-level triage; see docs-internal/HANDOFF-shipped-examples-execution.md.",
+    "2026-08-31 — recipes.html::keyup REMOVED, and this is a coverage LOSS worth stating rather than a convergence. The parser now reports the input it discards, and that handler is one of the sources it reports on, so this gate's eligibility filter ('hyperfixi does not compile it clean') now skips it. Its recorded reason here was ALSO A MISDIAGNOSIS: not a show/hide-strategy difference, but hyperfixi silently discarding the `in the next <div/> when its textContent contains my value` clause — so it showed every blockquote where upstream filtered. Upstream ACCEPTS that source, so it is a real hyperfixi parser defect; it is now tracked by the shipped-sources validity gate instead, and it comes back here the moment the parse is fixed."
   ],
   "allowedDivergences": [
-    {
-      "key": "examples/behaviors/recipes.html::4e3f86c536::keyup",
-      "file": "examples/behaviors/recipes.html",
-      "event": "keyup",
-      "excerpt": "on keyup show <blockquote/> in the next <div/> when its textContent contains my value",
-      "hyperfixi": [
-        "Δinput:45 cls[show] attr[placeholder=Search quotes…,type=text] style[] text[]"
-      ],
-      "upstream": [],
-      "reason": "show/hide strategy: hyperfixi uses class + inline display; upstream consults computed styles and is inert under jsdom. Family pending investigation"
-    },
     {
       "key": "examples/dialogs/modal.html::37ad17f250::click",
       "file": "examples/dialogs/modal.html",

@@ -1102,6 +1102,13 @@ export class Parser {
             error instanceof Error ? error.message : String(error)
           );
           this.error = savedError;
+          // Restoring the singular error keeps the parse alive, but the
+          // command is GONE from the body. Record it, or the body silently
+          // shrinks by one.
+          this.recordDropped(
+            `Discarded a command that failed to parse: ` +
+              `${error instanceof Error ? error.message : String(error)}`
+          );
         }
       } else if (this.checkIdentifier()) {
         debug.parse('❌ IDENTIFIER is not a command:', this.peek().value);
@@ -1109,11 +1116,21 @@ export class Parser {
 
       if (!parsedCommand) {
         debug.parse('❌ No command parsed, breaking. Current token:', this.peek().value);
+        // The loop gives up here with everything from this token on
+        // unconsumed. When it happens on the FIRST iteration the body is
+        // empty — `on click qqqq` — which used to be reported as a clean
+        // parse of a handler that does nothing.
+        if (!this.isAtEnd() && !isStop()) {
+          this.recordDropped(
+            `Not a command, and the rest of the body was discarded: '${this.peek().value}'`
+          );
+        }
         break;
       }
 
       debug.parse('📍 After parsing command, current token:', this.peek().value);
 
+      const skippedFrom = this.current;
       while (
         !this.isAtEnd() &&
         !isStop() &&
@@ -1126,6 +1143,10 @@ export class Parser {
         debug.parse('⚠️  Skipping unexpected token:', this.peek().value);
         this.advance();
       }
+      // Everything walked past above is input the author wrote and the parse
+      // does not contain — `on click log "a" @@@ ###` keeps the log and drops
+      // the tail. Silent until now.
+      this.recordDroppedRange(skippedFrom, this.current);
 
       if (this.match('then', 'and', ',')) {
         debug.parse('✅ Found separator, continuing');
@@ -2787,12 +2808,17 @@ export class Parser {
           }
         } else {
           // No parentheses, parse as regular command
+          const cmdToken = this.peek().value;
           const cmd = this.parseCommandWithErrorRecovery();
           if (cmd) {
             commands.push(cmd);
             debug.parse(
               `✅ parseEventHandler: Parsed command, next token: ${this.isAtEnd() ? 'END' : this.peek().value}`
             );
+          } else {
+            // Recovery swallowed the command whole. `on click unless x foo`
+            // lands here and used to yield an EMPTY handler, reported clean.
+            this.recordDropped(`Command '${cmdToken}' failed to parse and was discarded`);
           }
         }
       } else if (this.checkIdentifier()) {
@@ -2802,6 +2828,7 @@ export class Parser {
           // It's a command - parse as command
           const cmd = this.parseCommandWithErrorRecovery();
           if (cmd) commands.push(cmd);
+          else this.recordDropped(`Command '${token.value}' failed to parse and was discarded`);
         } else {
           // Parse as expression (could be function call like focus())
           let expr;
@@ -2848,16 +2875,33 @@ export class Parser {
               };
               commands.push(commandNode);
             } else {
+              this.recordDroppedExpression(expr);
               break; // Not a command pattern
             }
           } else {
+            this.recordDroppedExpression(expr);
             break; // Not a command pattern
           }
         }
       } else {
+        // Nothing here reads as a command, and everything from this token on is
+        // unconsumed. On the FIRST iteration that means an EMPTY handler —
+        // `on click qqqq` — which used to be reported as a clean parse of a
+        // handler that silently does nothing.
+        if (
+          !this.isAtEnd() &&
+          !this.check('end') &&
+          !this.check('catch') &&
+          !this.check('finally')
+        ) {
+          this.recordDropped(
+            `Not a command, and the rest of the handler body was discarded: '${this.peek().value}'`
+          );
+        }
         break; // No more commands
       }
 
+      const bodySkipFrom = this.current;
       // Skip any unexpected tokens until we find a command or separator
       // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
       // But don't skip 'on' tokens (they start new event handlers)
@@ -2877,6 +2921,10 @@ export class Parser {
       ) {
         this.advance(); // skip the unexpected token
       }
+      // Whatever the loop just walked past is input the author wrote and the
+      // handler does not contain: `on click log "a" @@@ ###` keeps the log and
+      // drops the tail. Silent before this.
+      this.recordDroppedRange(bodySkipFrom, this.current);
 
       // Handle command separators
       if (this.match('then', 'and', ',')) {
@@ -4482,6 +4530,67 @@ export class Parser {
 
     // Accumulate errors for resilient parsing
     this.errors.push(this.error);
+  }
+
+  /**
+   * Record that the parser DISCARDED input it could not place.
+   *
+   * Deliberately does NOT touch the singular `this.error`, which is what
+   * `success` is derived from: the result stays `success: true` with
+   * `recovered: true` and a populated `errors` array — exactly the shape
+   * `parse()` documents for a recovered parse. A dropped body is a degraded
+   * parse, not a failed one, and callers that already tolerate recovery must
+   * keep working.
+   *
+   * Before this existed, the recovery paths in
+   * `parseCommandListUntilTerminator` discarded tokens in TOTAL SILENCE:
+   * `on click qqqq` returned an empty handler with `success: true`,
+   * `recovered: undefined` and zero diagnostics, so a typo'd command name gave
+   * the user a handler that does nothing and said nothing about it.
+   */
+  /**
+   * Record the tokens between two positions as discarded — but ONLY the ones
+   * that represent lost user intent.
+   *
+   * Two kinds of token are walked past legitimately and must not be reported,
+   * or the signal is pure noise: a structural terminator (`end`, which closes
+   * the construct and whose parse is entirely correct — `on click add .a to me
+   * end` was flagged before this filter), and COMMENTS, which are meant to be
+   * skipped. Measured against the shipped-examples corpus: without this filter
+   * 5 of the 9 flagged sources were false positives.
+   */
+  private recordDroppedRange(from: number, to: number): void {
+    const lost = this.tokens.slice(from, to).filter(t => !isComment(t) && t.value !== 'end');
+    if (lost.length === 0) return;
+    this.recordDropped(
+      `Discarded input the parser could not place: '${lost.map(t => t.value).join(' ')}'`
+    );
+  }
+
+  private recordDropped(message: string): void {
+    const token = this.peek();
+    this.errors.push({
+      message,
+      line: Math.max(1, token.line || 1),
+      column: Math.max(1, token.column || 1),
+      position: Math.max(0, token.start || 0),
+    });
+  }
+
+  /**
+   * Record an expression the handler body parsed but then THREW AWAY because it
+   * is not a command.
+   *
+   * `on click qqqq` reaches here: `qqqq` parses cleanly as an identifier, is
+   * not a command, and the body loop breaks — leaving an EMPTY handler that
+   * used to be reported as a perfectly good parse.
+   */
+  private recordDroppedExpression(
+    expr: { type?: string; name?: unknown } | null | undefined
+  ): void {
+    const what =
+      expr && typeof expr.name === 'string' ? `'${expr.name}'` : `a ${expr?.type ?? 'expression'}`;
+    this.recordDropped(`Not a command, and the rest of the handler body was discarded: ${what}`);
   }
 
   /**

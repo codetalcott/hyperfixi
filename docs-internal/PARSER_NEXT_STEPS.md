@@ -1063,7 +1063,7 @@ Not on the convergence queue, and not urgent: the two confirmed rows are a
 non-default path and a command whose bare form works. Filed so the measurement
 is not re-derived.
 
-### A dropped handler body is silently discarded (2026-08-31)
+### ~~A dropped handler body is silently discarded~~ — REPORTED (2026-08-31)
 
 **`on click qqqq` compiles to `ok: true` with an EMPTY handler, no error, no
 warning, `recovered: undefined`.** A typo in a command name gives the user a
@@ -1088,7 +1088,14 @@ The last two are the worst: not a dropped tail but a silent WRONG ANSWER on a
 surface the repo's own docs recommend (all five of `repeat`'s `syntax` lines use
 brace blocks).
 
-**Three sites, all in `parser.ts`'s `parseCommandListUntilTerminator`:**
+~~**Three sites, all in `parser.ts`'s `parseCommandListUntilTerminator`:**~~
+**Corrected: FIVE sites across TWO functions, and the three below were the wrong
+ones.** `parseCommandListUntilTerminator` parses BLOCK bodies (`repeat … end`);
+the handler body — which is where every case in the table above lives — is
+parsed by `parseEventHandler`, which carries its own copies of the same
+give-up paths. Wiring only the three below fixed `repeat 3 times qqqq end` and
+left every row in the table untouched, which is how the error was caught.
+The original three, which are real but were not the defect:
 
 1. `if (!parsedCommand) { break; }` — the body loop gives up with `commands`
    empty and records nothing.
@@ -1098,6 +1105,50 @@ brace blocks).
    `⚠️ Skipping unexpected token` — walks past anything it cannot place.
 
 The bare-command argument loop has the same shape (hence `log }}} broken {{{`).
+
+**The two that actually mattered, in `parseEventHandler`:** its own
+skip-unexpected-tokens loop, and its three give-up branches — the
+`break; // No more commands`, the two `break; // Not a command pattern` after an
+expression parses but is not a command (this is `on click qqqq`), and the
+`parseCommandWithErrorRecovery()` call sites that discard a `null` return
+without a word (this is `on click unless x showLoginForm`).
+
+**FIXED 2026-08-31.** All five sites now call a `recordDropped` helper that
+pushes onto `this.errors` WITHOUT touching the singular `this.error`, so the
+result is `success: true` + `recovered: true` — the shape `parse()` already
+documents for a recovered parse, which keeps every caller that tolerates
+recovery working.
+
+**A filter the first cut needed.** Two kinds of token are walked past
+legitimately and must not be reported: a structural `end` (`on click add .a to
+me end` parses perfectly and was flagged) and COMMENTS. Measured against the
+shipped-examples corpus, **5 of the first 9 flagged sources were false
+positives** from exactly those two. `recordDroppedRange` filters both.
+
+**What it surfaced immediately** — five shipped sources losing user code in
+silence, none of them new, none previously visible:
+
+| source | upstream | what is lost |
+| ------ | -------- | ------------ |
+| `examples/behaviors/recipes.html` | **ACCEPTS** | the whole `in the next <div/> when <cond>` clause — so it shows every blockquote where upstream filters. **A real hyperfixi parser defect.** |
+| `examples/swap-and-morph/swap-morph.html` | rejects (differently) | `.item:last-child` split at the `:` |
+| `examples/vite-plugin-multilingual/index.html` | n/a (Spanish) | EMPTY handler for `alternar` |
+| `packages/core/docs/EXAMPLES.md` | rejects | the `try` keyword AND its entire `catch` branch — a docs example about error handling, shipping without error handling |
+| `packages/core/docs/README.md` | rejects | `formToJSON(me)`'s arguments |
+
+All five are allowlisted in `shipped-sources-validity.json` with their measured
+upstream verdicts. The recipes.html row also **corrected a misdiagnosis** in the
+execution gate's baseline, which had recorded it as a "show/hide strategy"
+difference "pending investigation" — it was this dropped clause all along.
+
+**Still open, and it blocks using `recovered` as a gate: a PRE-EXISTING false
+positive.** `if x > 5 then add .active` parses CORRECTLY and yet reports
+`recovered: true` with `Expected 'end' after if block` — on `main`, before this
+change. Eleven corpus sources are in that state, all the single-line
+`if`/`unless` family. Until that is cleaned, `recovered` carries noise and the
+documented-examples gate cannot be strengthened to read it (measured: doing so
+would take that gate's failure list from 19 to 27, and 8 of the 8 additions are
+this false positive).
 
 **The signal already exists and is simply not raised.** `ParseResult.recovered`
 (added by #784) is set in exactly one place, `Parser.parse()`, iff
