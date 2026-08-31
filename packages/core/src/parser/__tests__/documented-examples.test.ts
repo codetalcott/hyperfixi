@@ -29,12 +29,15 @@
  * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` → `lossy`.
  *
  * The allowlist did NOT collapse when the gate was strengthened, as this
- * docblock once predicted — it GREW, from 19 rows to 30. That is what
- * strengthening a gate blind to an entire band does first: eleven examples that
- * had read as fine for years were losing content in silence. Eight are docs
- * defects (upstream rejects them too) and three are parser gaps (upstream
- * accepts); every entry records which, with the verdict measured on the real
- * hyperscript.org engine rather than guessed.
+ * docblock once predicted — it GREW, from 19 rows to 30, and is now at 29.
+ * That is what strengthening a gate blind to an entire band does first: eleven
+ * examples that had read as fine for years were losing content in silence.
+ * Eight are docs defects (upstream rejects them too) and three were parser gaps
+ * (upstream accepts); every entry records which, with the verdict measured on
+ * the real hyperscript.org engine rather than guessed. The first of the three
+ * to be fixed — `transition left to 100px over 500ms`, which was animating to a
+ * UNITLESS length — dropped straight off the list, which is the ratchet doing
+ * what it is for.
  *
  * ## The allowlist ratchets both ways
  *
@@ -275,13 +278,6 @@ const ALLOWED: readonly Allowed[] = [
     source: 'scroll to me smoothly',
     status: 'lossy',
     reason: 'PARSER GAP: upstream accepts; wrapped, `smoothly` is discarded',
-  },
-  {
-    command: 'transition',
-    source: 'transition left to 100px over 500ms',
-    status: 'lossy',
-    reason:
-      'PARSER GAP: upstream accepts; wrapped, `px over 500ms` is discarded — the duration is lost',
   },
   {
     command: 'make',

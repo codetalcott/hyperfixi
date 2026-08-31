@@ -218,7 +218,7 @@
     "transition opacity to 0.5": "ok:18bacb39efc6",
     "transition my *opacity to 0 over 200ms": "ok:068acf25ec92",
     "transition #box's *opacity to 0 over 200ms": "ok:a1e4e218f41e",
-    "transition left to 100px over 500ms": "ok:48bca33b3a71",
+    "transition left to 100px over 500ms": "ok:bfa1cf095567",
     "transition background-color to red over 1s with ease-in-out": "ok:f1a1b1aaece2",
     "trigger click on #button": "ok:587c6748f09c",
     "trigger customEvent on me": "ok:d13bbd6d7986",

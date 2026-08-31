@@ -1355,11 +1355,10 @@ examples had been losing content in silence. Each carries the real
 
 Two of those are worth acting on next:
 
-- **`transition left to 100px over 500ms` loses its duration** wrapped in a
-  handler. It is TransitionCommand's own documented example and upstream parses
-  it; the tail breaks at the unit suffix (`100` `px`), so a plain
-  `transition left to 100px` is likely affected too — check before assuming this
-  is only about `over`.
+- ~~**`transition left to 100px over 500ms` loses its duration**~~ — **FIXED
+  the same day**; see the entry below. The guess that "a plain
+  `transition left to 100px` is likely affected too" was right, and it was the
+  bigger half: the VALUE was losing its unit, not just the tail.
 - **`make a URL from "/path/", "https://…"` does not parse inside a handler at
   all**, while it parses bare and upstream accepts both. A comma-separated
   argument list that survives at top level and dies in a body points at the body
@@ -1371,6 +1370,45 @@ design". As a DOCUMENTED EXAMPLE it is a docs defect: upstream rejects it, and
 with nearly the same complaint hyperfixi makes ("Expected event name" vs
 "Expected event name after 'on'"). What shape the two parse paths give the
 construct when it *does* appear is a separate, still-open question.
+
+### ~~`transition <prop> to <value>` drops the value's CSS unit~~ — FIXED (2026-08-31)
+
+`transition left to 100px` — TransitionCommand's own documented example, and a
+source `hyperscript.org` accepts — parsed to `to: 100`. The `px` was discarded,
+so the command animated to a **unitless length**, which is not a CSS value at
+all. `transition *width to 50%` lost its `%` the same way, and the `over`
+duration slot had the same limit.
+
+**The engine already had the feature.** `Parser.tryParseStringPostfix` mirrors
+upstream's `StringPostfixExpression` over the 15 CSS length units and `%`, and
+`log 100px` / `set x to 100px` both build a `stringPostfix` node. Only
+`parseTransitionCommand` did not — it read its value with `parsePrimary()`,
+which stops at the literal and never reaches the pratt postfix. Upstream parses
+the same slot with `requireElement("expression")`. The fix is two calls.
+
+So this was **not** the tokenizer gap it looked like from the outside. Worth
+recording as a triage lesson: `100px` being two tokens is true of upstream too,
+and the first hypothesis (add CSS units to the tokenizer, next to `TIME_UNITS`)
+would have added a second, competing mechanism for something the expression
+layer already did correctly everywhere else.
+
+Two things hid it for years: bare, the parser had no channel to report the
+dropped token (that arrived in #1026, and only inside a handler body), and the
+source is a documented EXAMPLE, which nothing parsed until #1025. It surfaced as
+one of the three parser gaps the strengthened `documented-examples` gate found,
+and its allowlist entry dropped straight off again — the first row that gate has
+ratcheted DOWN.
+
+**The `over` half needed its own behavioural row.** Measured: reverting only the
+duration to `parsePrimary` left every other row in the new test file green,
+because `500ms` and `1s` arrive as ONE token. `over 2 * delay` is what proves it
+— which is exactly the "a mutation must redden the behavioural row" discipline
+catching an unproven change in its author's own diff.
+
+Still open, and adjacent: **`over 500 ms` (with a space) drops the `ms`.** The
+tokenizer joins `500ms` into one TIME token, but there is no time POSTFIX
+expression to match upstream's `TimeExpression`, which accepts the spaced form.
+Same shape as the string-postfix gap, one layer over.
 
 ## Notes
 
