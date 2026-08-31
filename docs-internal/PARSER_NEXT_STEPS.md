@@ -927,7 +927,7 @@ The hazard is now documented at the mock. **When production code changes WHICH
 predicate a consumption loop calls, every mock stubbing the old one must
 follow — or the loop becomes infinite.**
 
-### `hide <button/>` THROWS on the default path (2026-08-31)
+### ~~`hide <button/>` THROWS on the default path~~ — FIXED (2026-08-31)
 
 Live, user-visible, in the DEFAULT configuration, on a source that is one of the
 repo's own documented command examples:
@@ -972,9 +972,96 @@ boundary question rather than a typo:
    resolution time. Smallest, but it papers over a wrong AST rather than fixing
    it, and would mis-handle `make`.
 
-Option 2 looks right, and should be measured against the multilingual gate
-either way. Do NOT fix this by stripping `<`/`/>` unconditionally — that breaks
-`make`, which is the case the existing `raw` carve-out exists for.
+~~Option 2 looks right~~, and should be measured against the multilingual gate
+either way. ~~Do NOT fix this by stripping `<`/`/>` unconditionally — that breaks
+`make`, which is the case the existing `raw` carve-out exists for.~~
+
+**Fixed in `packages/semantic`'s `convertSelector` — option 1, and the filing
+above was wrong about option 2 AND about why option 1 was hard. Both were
+measured, not argued.**
+
+- **Option 2 (core's adapter) does not fix the bug.** Core's
+  `semantic-integration.ts` is only ONE of `buildAST`'s consumers.
+  `browser-bundle-multilingual.ts`, `browser-bundle-semantic-complete.ts` and
+  the R2 `execution-validator` call `buildAST` directly and never touch the
+  adapter, so an adapter-side fix leaves them throwing. Measured: with the bug
+  in place, `buildAST` + `runtime.execute` throws `Invalid selector <button/>`
+  for `hide <button/>` **and** for `add .x to <button/>` (whose core default
+  path is fine, because `add` is on `skipSemanticParsing`) **and** in every
+  language (`숨기기 <button/>` [ko] throws identically).
+- **Option 1 does NOT need the converter to know the command**, which was the
+  filing's stated reason for rejecting it. The core AST separates the two
+  meanings with one shape and no command-awareness — which is exactly what the
+  TRADITIONAL parser already does at `parser.ts`'s `matchQueryReference()`
+  branch, for `make` and `hide` alike:
+
+  | field            | value        | who reads it |
+  | ---------------- | ------------ | ------------ |
+  | `value`/`selector` | `button`   | `resolveTargetElements` → `querySelectorAll` |
+  | `fromQuery`      | `true`       | the evaluator, to return the whole collection even for `<#id/>` |
+  | `raw`            | `<button/>`  | `MakeCommand.parseInput`, which reads it FIRST and CREATES an element |
+
+  So an unconditional strip is only wrong if you also drop `raw`. `make` keeps
+  working because `raw` keeps the markup — verified by execution, not by
+  reading: `make a <div.card/>` builds `<div class="card"></div>` through
+  `buildAST` after the fix.
+
+The converter now mirrors `matchQueryReference()` exactly (`slice(1, -2).trim()`),
+gated on a trailing `/>` rather than on a leading `<` alone — a bare `<` or `<=`
+is classified as a *selector* by every tokenizer (the `startsWith('<')` test sits
+above their operator list), and stripping those would corrupt them.
+
+**Effect.** `hide`/`show`/`add … to <button/>` execute on the default path and
+through every `buildAST` consumer, in all 24 languages. The parse-path triage's
+`value` family fell 9 → 3 and `field-only-trad:fromQuery` 6 → 0, which closes the
+query-literal half of the convergence arc's item 3 as that brief predicted. The
+multilingual gate is unmoved (3744/3744, R2/R3 1.0000, no regression on any of
+the eleven signals) — the corpus renders `<button/>` from the semantic IR, which
+this does not touch; only the AST-BUILD direction changed.
+
+**An unrelated gate caught it independently, which is the useful part.** The
+`agent-bench` plausible-phrasing ratchet moved `on click add .modal-open to
+<body/>` from `warned-wrong` to `correct` (behaveCorrectly 18 → 19). That gate
+scores DOM effects for phrasings an agent would plausibly emit, and it was the
+only signal in the repo that had this surface under measurement at all — none of
+the eleven multilingual ratchets, and no core test, covered it.
+
+### A trailing `on <target>` splits into a phantom event handler (2026-08-31)
+
+Found while measuring the convergence arc's `implicit-me` family, not by the
+triage tool — and half of it is a defect **both paths share**, so the triage
+reports those rows as `same`.
+
+`transition opacity to 0.5 on me` parses on the traditional path as TWO
+statements: the `transition` command, plus an `eventHandler` with
+`event: "me"` and an empty body. Upstream 0.9.93 accepts the surface (measured
+against the vendored engine), and the semantic path gets it right —
+`modifiers.on = contextReference me` — so the default configuration is fine and
+only `{ traditional: true }` is affected.
+
+`settle on me` is the sharper one: **both** hyperfixi paths split it, and
+upstream's `settleCommand` carries an `onExpr` field, so upstream models the
+on-target as part of the command. That is a real both-paths defect with a real
+oracle.
+
+Measured over 14 trailing-`on` surfaces, all upstream-VALID:
+
+| surface | traditional | semantic | oracle |
+| ------- | ----------- | -------- | ------ |
+| `transition opacity to 0.5 on me` | splits | ok | semantic |
+| `settle on me` | splits | splits | upstream `settleCommand.onExpr` |
+| `toggle/remove .a on #d`, `focus/blur on …`, `trigger/send foo on #d` | ok | ok | — |
+| `show/hide #d on me`, `measure #d on me`, `increment x on me` | splits | splits | **unknown — no oracle yet** |
+
+The last row is deliberately not called a defect: upstream's `parse(s, 'command')`
+stops at one command without complaining about unconsumed input, and
+`hideCommand` has no on-expr field, so `on me` there may legitimately be a
+following FEATURE rather than part of the command. Establishing the oracle means
+a full-program parse and comparing the feature list — not done.
+
+Not on the convergence queue, and not urgent: the two confirmed rows are a
+non-default path and a command whose bare form works. Filed so the measurement
+is not re-derived.
 
 ## Notes
 

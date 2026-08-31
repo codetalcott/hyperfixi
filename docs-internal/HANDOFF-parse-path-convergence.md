@@ -14,22 +14,36 @@
 >
 > ### What is left, in the order I would take it
 >
-> 1. **`hide <button/>` THROWS on the default path** — a LIVE bug on a
->    documented command example, filed in `PARSER_NEXT_STEPS.md` with three
->    candidate fix sites analysed. Highest value, and independent of everything
->    else. **Read the filing before touching it**: the obvious fix (strip the
->    brackets) breaks `make <div.card/>`, where the same syntax is creation
->    markup rather than a query.
-> 2. **Item 6 — `implicit-me` (7 rows).** The one family where NEITHER side is
->    clearly right, so it likely wants an owner decision rather than a fix:
->    `blur`, `close`, `focus`, `open`, `reset`, `settle` (bare) inject a `me`
->    arg on the semantic path and leave args empty on the traditional one, plus
->    `transition opacity to 0.5` (`modifiers.on`). The question is whether the
->    default belongs in the AST or in the runtime.
-> 3. **Residual item-5 rows** — query-literal VALUE representation
+> 1. ~~**`hide <button/>` THROWS on the default path**~~ — **FIXED
+>    2026-08-31**, in `packages/semantic`'s `convertSelector`. The filing's
+>    recommendation (option 2, core's adapter) was measured WRONG — core's
+>    adapter is one of several `buildAST` consumers, and the multilingual
+>    bundles and the R2 execution validator bypass it — and its stated blocker
+>    for option 1 ("the converter must know the command") was measured false:
+>    `raw` is what keeps `make` working, so one command-agnostic shape serves
+>    both meanings, exactly as the traditional parser already does. Story and
+>    both corrections on the entry in `PARSER_NEXT_STEPS.md`. **It also closed
+>    the query-literal half of item 3 below** (`value` family 9 → 3,
+>    `field-only-trad:fromQuery` 6 → 0).
+> 2. **Item 6 — `implicit-me` (7 rows).** Facts measured 2026-08-31, so the
+>    decision no longer needs re-derivation: **all 7 execute IDENTICALLY** on
+>    both paths (jsdom, real contexts — the runtime defaults to `me` anyway), so
+>    the disagreement is runtime-inert like `settle`'s `isBlocking`. But unlike
+>    `isBlocking` it IS visible to a consumer: `fromCoreAST` emits `args: []`
+>    vs `args: [identifier me]`, which the interchange layer, the Go client and
+>    the LSP all read. Semantic is self-consistent (`contextReference` for both
+>    an authored and an injected `me`). So the question is purely "does the
+>    default belong in the AST or the runtime?" — an owner call, with no
+>    correctness argument on either side. The rows: `blur`, `close`, `focus`,
+>    `open`, `reset`, `settle` (bare) inject a `me` arg on the semantic path and
+>    leave args empty on the traditional one, plus `transition opacity to 0.5`
+>    (`modifiers.on`).
+> 3. **Residual item-5 rows** — ~~query-literal VALUE representation
 >    (`button` + `fromQuery` vs raw `<button/>`; same root cause as item 1
->    above, so they may close together) and the template-literal backticks
->    (`log \`t ${1}\``).
+>    above, so they may close together)~~ **closed with item 1, as predicted**;
+>    what remains is the template-literal backticks (`log \`t ${1}\``). The
+>    `value` family is now 3 sites: that one, plus the two `settle` `isBlocking`
+>    rows the block below marks INERT.
 > 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
 >    `packages/semantic` tracking spans; filed, not faked.
 > 5. **Arc 2 step 2+** — the seven `RENAME_PAIRS` Arc 0 pinned
@@ -58,6 +72,18 @@
 >   EXECUTION to find defects. (The `hide <button/>` throw was found by running
 >   the code — both paths produce a plausible selector node; only one is
 >   executable.)
+> - **A filing's RECOMMENDED FIX SITE ages like its diagnosis does.** The
+>   `hide <button/>` entry analysed three sites and picked core's adapter. The
+>   adapter is one of at least four `buildAST` consumers, so that fix would have
+>   left the multilingual bundles and the R2 execution validator still throwing —
+>   in all 24 languages. Before taking a filing's recommendation, grep for the
+>   OTHER callers of the function it proposes to wrap. Same class as "a filing's
+>   COST estimate ages too".
+> - **A gate you were not aiming at is the best evidence a fix is real.** The
+>   `agent-bench` phrasing ratchet independently moved a row `warned-wrong →
+>   correct`. Read an unexpected ratchet trip before regenerating it: it is
+>   equally likely to be your improvement or your regression, and the band names
+>   tell you which.
 > - **A moved AST-equivalence baseline must be proven before regenerating.**
 >   Single-file swap against `main` over the corpus, and check the diff is
 >   position-only / structure-only. "A gate regenerated to go green is a gate
@@ -78,21 +104,19 @@
 > `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
 > "START HERE" block first and do not re-derive what it marks as settled.
 >
-> Start with the LIVE bug: `hide <button/>` throws
-> `SyntaxError: Invalid selector <button/>` in the DEFAULT configuration, on one
-> of the repo's own documented command examples. The filing in
-> `PARSER_NEXT_STEPS.md` has the measurement and three analysed fix sites; it
-> recommends core's adapter and warns why an unconditional bracket-strip is
-> wrong. Then item 6 (`implicit-me`), which probably needs an owner decision
-> rather than a fix.
+> The LIVE `hide <button/>` bug is FIXED (item 1 above) — start at item 2.
 >
 > **Re-run the measurement before costing anything** —
-> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. As of 2026-08-31 on
-> `main`: same **137** · differ **77** · trad-only 0 · sem-only 0 · both-fail 19,
-> with families `semanticRoles-added` 77, `field-only-trad` 200/43,
-> `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12, `position` 36/10,
-> `value` 9, `implicit-me` 7, `arity` 1. These numbers move with every fix; the
-> tool is the authority, not this paragraph.
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After the
+> query-literal fix: same **137** · differ **77** · trad-only 0 · sem-only 0 ·
+> both-fail 19, with families `semanticRoles-added` 77, `field-only-trad`
+> 194/43, `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12,
+> `position` 36/10, `implicit-me` 7, `value` 3, `arity` 1. These numbers move
+> with every fix; the tool is the authority, not this paragraph.
+>
+> Note the top-line `differ` did NOT move, and that is expected: the fix removed
+> difference SITES from sources that still differ in metadata. Read the family
+> table, not the headline — the headline was misleading in step 5 too.
 >
 > A parser change needs the multilingual gate run LOCALLY before pushing
 > (~10 min): `npm run test:multilingual:build-deps` → `npm run populate --prefix

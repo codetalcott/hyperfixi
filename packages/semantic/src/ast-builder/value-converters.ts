@@ -78,6 +78,20 @@ export function convertLiteral(value: LiteralValue): LiteralNode {
 }
 
 /**
+ * Recognize a query reference (`<button/>`, `<.card/>`, `<#id/>`) and return the
+ * css inside the brackets.
+ *
+ * Deliberately narrower than "starts with `<`": the trailing `/>` is what makes
+ * the surface a query reference, and core's `isQueryReference` +
+ * `queryValue.slice(1, -2)` pair assume it. Returns undefined for anything else.
+ */
+function matchQueryReference(raw: string): { selector: string } | undefined {
+  if (!raw.startsWith('<') || !raw.endsWith('/>') || raw.length <= 3) return undefined;
+  const selector = raw.slice(1, -2).trim();
+  return selector ? { selector } : undefined;
+}
+
+/**
  * Convert a SelectorValue to a SelectorNode.
  *
  * @param value - The selector value to convert
@@ -109,9 +123,38 @@ export function convertSelector(
     );
   }
 
-  // An element LITERAL (`<div.card/>`) is creation markup, not a query — carry
-  // it on `raw` (the canonical parser's element-literal field) so consumers
-  // like MakeCommand use the markup directly instead of querySelector-ing it.
+  // A QUERY REFERENCE (`<button/>`, `<div.card/>`) is one surface with two
+  // meanings, and the core AST resolves the ambiguity with a single shape
+  // rather than by knowing the command:
+  //
+  //   value/selector -> the STRIPPED css (`button`), what querySelectorAll gets
+  //   fromQuery      -> true, so the evaluator returns the whole collection
+  //                     even for `<#id/>` (upstream QueryRef -> ElementCollection)
+  //   raw            -> the full `<…>` markup, which MakeCommand reads FIRST and
+  //                     uses to CREATE an element instead of querying it
+  //
+  // Carrying the markup on `value` too — which this converter used to do — hands
+  // `<button/>` straight to the DOM, and `hide <button/>` / `add .x to <button/>`
+  // die with `SyntaxError: Invalid selector <button/>` in every language and on
+  // every buildAST consumer (core's default English path, the multilingual
+  // browser bundles, the R2 execution validator). `raw` is what keeps `make`
+  // working, so no command-awareness is needed here. Mirrors
+  // `parser.ts`'s `matchQueryReference()` branch exactly.
+  const queryRef = matchQueryReference(value.value);
+  if (queryRef) {
+    return {
+      type: 'selector',
+      value: queryRef.selector,
+      selector: queryRef.selector,
+      selectorType: value.selectorKind as SelectorKind,
+      fromQuery: true,
+      raw: value.value,
+    } as SelectorNode;
+  }
+
+  // A `<`-prefixed value that is NOT a query reference (a stray `<` or `<=` the
+  // tokenizers classify as a selector before reaching their operator list)
+  // keeps its verbatim shape — stripping it would corrupt it.
   if (value.value.startsWith('<')) {
     return {
       type: 'selector',

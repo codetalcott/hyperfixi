@@ -110,17 +110,52 @@ describe('Value Converters', () => {
       expect(result).toMatchObject({ type: 'attributeAccess', attributeName: 'aria-selected' });
     });
 
-    it('carries element-literal markup on `raw` (`<div.card/>` is creation, not a query)', () => {
-      // MakeCommand reads `node.raw` for element literals — without it the
-      // literal was querySelector-ed ("Invalid selector <div.card/>").
+    it('emits the canonical query-reference triple for `<…/>` (stripped value + fromQuery + raw)', () => {
+      // One surface, two meanings, and the core AST separates them WITHOUT
+      // knowing the command:
+      //   `hide <button/>`     reads value+fromQuery -> querySelectorAll('button')
+      //   `make <div.card/>`   reads raw             -> CREATE a <div class="card">
+      // Carrying the markup on `value` too (which this converter used to do)
+      // handed `<div.card/>` straight to the DOM: "Invalid selector".
       const value: SelectorValue = {
         type: 'selector',
         value: '<div.card/>',
         selectorKind: 'complex',
       };
-      const result = convertSelector(value);
 
-      expect(result).toMatchObject({ type: 'selector', value: '<div.card/>', raw: '<div.card/>' });
+      expect(convertSelector(value)).toMatchObject({
+        type: 'selector',
+        value: 'div.card',
+        selector: 'div.card',
+        fromQuery: true,
+        raw: '<div.card/>',
+      });
+    });
+
+    it('matches the traditional parser byte for byte on the strip', () => {
+      // `parser.ts`'s matchQueryReference branch is `queryValue.slice(1, -2).trim()`.
+      for (const [raw, stripped] of [
+        ['<button/>', 'button'],
+        ['<.card/>', '.card'],
+        ['<#id/>', '#id'],
+        ['<[data-x]/>', '[data-x]'],
+        ['< button />', 'button'],
+      ] as const) {
+        expect(convertSelector({ type: 'selector', value: raw, selectorKind: 'complex' })).toMatchObject(
+          { value: stripped, selector: stripped, fromQuery: true, raw }
+        );
+      }
+    });
+
+    it('leaves a `<`-prefixed value that is NOT a query reference verbatim', () => {
+      // Every tokenizer classifies a bare `<` / `<=` as a selector before it
+      // reaches the operator list, so those values arrive here. Stripping them
+      // would corrupt them; only a trailing `/>` makes a query reference.
+      for (const raw of ['<', '<=', '<div>']) {
+        const result = convertSelector({ type: 'selector', value: raw, selectorKind: 'complex' });
+        expect(result).toMatchObject({ type: 'selector', value: raw });
+        expect(result).not.toHaveProperty('fromQuery');
+      }
     });
   });
 

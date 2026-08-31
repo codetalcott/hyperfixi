@@ -3,8 +3,8 @@
   "totals": {
     "phrasings": 37,
     "parse": 36,
-    "behaveCorrectly": 18,
-    "warnedWrong": 16,
+    "behaveCorrectly": 19,
+    "warnedWrong": 15,
     "silentBand": 2,
     "silentNoop": 1
   },
@@ -52,7 +52,7 @@
     {
       "taskId": "add-to-body",
       "code": "on click add .modal-open to <body/>",
-      "band": "warned-wrong"
+      "band": "correct"
     },
     {
       "taskId": "add-to-body",
