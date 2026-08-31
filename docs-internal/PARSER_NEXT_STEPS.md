@@ -669,6 +669,86 @@ Scope, unmeasured: `toggle X on Y` is confirmed. Every command whose schema has 
 marker role and whose surface uses the marker is a candidate (`add … to …`,
 `remove … from …`, `put … into …`, `send … to …`). Measure the set before fixing.
 
+### Semantic-first silently truncates a command's arguments (2026-08-30)
+
+**Live, in the DEFAULT configuration, with `ok: true` and no warning.** The same
+class as the `and` bug #1013 fixed — and **#1013 did not close it**, because the
+mechanism does not need an `and`.
+
+`config.semantic` defaults true, so for the 32 commands NOT on
+`parseCommandCore`'s 27-entry `skipSemanticParsing` list, the analyzer runs
+first. When it matches a **prefix** of the arguments at high confidence,
+`skipToCommandBoundary()` advances past the remaining tokens and they are
+discarded:
+
+```
+hyperscript.compileSync('on click log "a" is not "b"')
+  → ok=true · parser='semantic' · errors=[] · warnings=[]
+  → log "a"                        the comparison is GONE
+
+hyperscript.compileSync('on click log 5 is between 1 and 10')   → log 5
+hyperscript.compileSync('on click log 1 + 2 * 3 and true or false')
+  → log (1 + 2 * 3)                `and true or false` is GONE
+hyperscript.compileSync('beep! myValue')
+  → name 'beep', args []           the argument AND the `!` are GONE
+```
+
+`{ traditional: true }` parses all of them correctly.
+
+**Why no suite caught it.** `if`, `set`, `put`, `add`, `toggle`, `fetch` and the
+other 21 skip-list commands take the traditional path, so every natural test of
+a comparison — `if "a" is not "b" then …`, `set :r to 5 is between 1 and 10` —
+is correct. The bug needs a comparison or a multi-token expression in the
+arguments of a command that is NOT on the list. `log` is the obvious one.
+
+**Measured scope**: 8 engine-corpus sources (indices 20, 21, 22, 25, 26, 41, 42,
+134) lose structure this way — comparisons, `between`, `as` conversions, and
+`beep!`'s arguments. Reproduce with
+`packages/core/tools/triage-parse-paths.ts` (`--kind=node-type`, `--kind=arity`,
+`--kind=value`, and the STRUCTURE LOSS section of the summary).
+
+**The resync is NOT the cause, and `tokensConsumed` cannot fix it.** Measured
+against the real analyzer wiring (`createSemanticAdapter` with semantic's
+`parseSemantic`/`buildAST`, the same objects `hyperscript-api.ts` passes):
+
+| input | confidence | tokensConsumed | roles the analyzer returned |
+| ----- | ---------- | -------------- | --------------------------- |
+| `log "a" is not "b"` | **1.0** | 5 (= the whole input) | `{patient: literal "a"}` |
+| `log 5 is between 1 and 10` | **1.0** | 7 (= the whole input) | `{patient: literal 5}` |
+| `beep! myValue` | **0.5** | 3 (input is 2 words) | `{}` — empty |
+
+So the analyzer **claims full confidence and full consumption while returning a
+node that models a fraction of the input**. `skipToCommandBoundary()` is
+innocent: it skips exactly what the analyzer said it consumed. Driving the
+resync off `tokensConsumed` — the obvious fix, and the one this entry proposed
+before it was measured — would change nothing, because that number is already
+the whole input. It is input length, not comprehension.
+
+Note `beep!` separately: confidence **0.5 is exactly `DEFAULT_CONFIDENCE_THRESHOLD`**,
+so a parse that bound NO roles at all is accepted at the boundary, and
+`tokensConsumed` (3) exceeds the input's word count (2).
+
+That leaves two candidate fixes, neither cheap, and the choice is a real design
+question rather than a tuning exercise:
+
+1. **Make confidence mean something.** The analyzer must score unmatched input
+   against it, so a pattern covering `log <literal>` cannot report 1.0 on
+   `log <literal> is not <literal>`. Fixes every consumer of confidence at once
+   (core's adoption threshold, the multilingual gate, MCP), and is the only fix
+   that also catches the cases nobody has enumerated.
+2. **Have the engine verify rather than trust.** After a semantic parse, check
+   that the returned node accounts for the consumed span, and fall back to
+   traditional when it does not. Cheaper and local to `parseCommandCore`, but it
+   leaves every OTHER consumer of the analyzer trusting the same bad number.
+
+Do not extend the boundary keyword list — that is what #1013 did for one word,
+and this entry is the proof the approach does not generalise. See
+`HANDOFF-parse-path-convergence.md`, where this is item 1.
+
+Unmeasured: whether the same truncation corrupts the multilingual corpus. Every
+row there is `render(parse_en(en), L)`, so a truncating en parse would move all
+24 languages together — the R3 "firestorm means suspect the en parse" inversion.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

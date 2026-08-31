@@ -526,6 +526,37 @@ and the parser loop that assumes it.
    path. The `SemanticAnalyzer` interface and `semantic-integration.ts` shrink
    to the adapter the front-end registers.
 
+**The owner decided on 2026-08-30: CONVERGE the two paths first** (step 5's
+third option). Steps 2, 3 and 6 stay blocked behind that work, which has its own
+brief — **[HANDOFF-parse-path-convergence.md](./HANDOFF-parse-path-convergence.md)**
+— and its own committed measurement tool,
+`packages/core/tools/triage-parse-paths.ts`. Two findings from that brief's
+step 1 belong here because they change THIS plan:
+
+- **The 107 differing sources are not 107 decisions.** They decompose into nine
+  families; **45 differ only in metadata** (positions, `semanticRoles`, optional
+  field presence) and 62 structurally. Most families are one decision each.
+- **Convergence cannot finish without part of Arc 2.** Four of the `node-type`
+  transitions (`identifier`↔`contextReference`,
+  `memberExpression`/`possessiveExpression`↔`propertyAccess`,
+  `command`↔`CommandSequence`) are exactly the alias-of strays Arc 2 step 1
+  classifies. **Arc 2 is sequenced after Arc 1 in this plan, and that ordering is
+  now known to be wrong** — either Arc 2 step 1 moves ahead of the convergence
+  work, or the two duplicate each other.
+
+And one that is a live bug rather than a plan correction: the default English
+path **silently truncates a command's arguments** — `log "a" is not "b"` compiles
+to `log "a"` with `ok: true` and no warning. Same class as the `and` bug #1013
+fixed; #1013 did NOT close it. Filed in `PARSER_NEXT_STEPS.md`.
+
+**It also revises this plan's stated cause for step 6.** The plan says the resync
+heuristic is the problem and step 6 should remove it. Measured: the analyzer
+returns **confidence 1.0 and `tokensConsumed` = the entire input** while binding
+roles for a fraction of it, so `skipToCommandBoundary()` skips exactly what it
+was told. The resync is downstream of the defect, not the defect — and the fix
+that follows from the plan's framing (resync on `tokensConsumed`) is measured
+dead, because that number is already the whole input.
+
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
 snapshot (`hyperfixi.js`, `-multilingual.js`, `-semantic-complete.js`
@@ -1017,6 +1048,26 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   import the front-end **nowhere**. The coupling is confined to the api, the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
+
+- **2026-08-30** — **The owner chose to CONVERGE the two English parse paths**
+  before step 6 (step 5's third option). Its step-1 measurement landed with it:
+  `packages/core/tools/triage-parse-paths.ts` plus
+  `HANDOFF-parse-path-convergence.md`.
+
+  The measurement revised the cost in both directions. **Down:** "107 sources
+  differ" is nine families, and 45 of the 107 differ only in metadata — most
+  families are a single decision. **Up:** the arc cannot finish without part of
+  **Arc 2**, which this plan sequences after Arc 1; and neither path is simply
+  better — traditional is right about operator precedence, `between`, `as` and
+  `beep!`'s arguments, while semantic is right about markers, `settle`'s
+  blocking, `pick`'s roles and query literals in `hide`/`show`.
+
+  It also found a **live shipped bug**, filed in `PARSER_NEXT_STEPS.md`: the
+  default path silently truncates a command's arguments when the analyzer
+  matches a prefix (`log "a" is not "b"` → `log "a"`, `ok: true`, no warning).
+  Same class as #1013's `and` bug, which did not close it — evidence for the
+  plan's existing position that step 6 should REMOVE the resync heuristic rather
+  than tune its keyword list.
 
 - **2026-08-30** — **Arc 1 step 4** landed: `fromCoreAST` takes its role
   inferrer by injection, and the schema-driven default lives in

@@ -3,7 +3,9 @@
 Paste the block below the `---` into a fresh session. Everything above it is
 orientation for a human.
 
-**Arc state:** steps 1, 4 and 5 DONE. Steps 2, 3 and 6 remain.
+**Arc state:** steps 1, 4 and 5 DONE. Steps 2, 3 and 6 remain, and are now
+blocked on the convergence arc the owner chose — see
+[HANDOFF-parse-path-convergence.md](./HANDOFF-parse-path-convergence.md).
 Step 5's measurement moved twice in one session, so it is quoted below with
 both readings and a "re-measure first" instruction rather than a single number.
 
@@ -99,6 +101,12 @@ The plan assumed removing semantic-first from English would be free or an
 improvement. Step 5 measured that it is neither. So:
 
 > **Which parse path should English use?**
+
+> **ANSWERED 2026-08-30: option 3, converge them first.** The three options are
+> kept below for the record. The convergence arc has its own brief —
+> **[HANDOFF-parse-path-convergence.md](./HANDOFF-parse-path-convergence.md)** —
+> whose step-1 measurement is done, and whose queue is what steps 2, 3 and 6 now
+> wait on. Read that before re-reading the options below.
 
 Today `config.semantic` defaults `true`, so English goes through the front-end
 first for the 32 commands not on `parseCommandCore`'s `skipSemanticParsing`
