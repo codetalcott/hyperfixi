@@ -1125,19 +1125,23 @@ me end` parses perfectly and was flagged) and COMMENTS. Measured against the
 shipped-examples corpus, **5 of the first 9 flagged sources were false
 positives** from exactly those two. `recordDroppedRange` filters both.
 
-**What it surfaced immediately** — five shipped sources losing user code in
+**What it surfaced immediately** — four shipped sources losing user code in
 silence, none of them new, none previously visible:
 
 | source | upstream | what is lost |
 | ------ | -------- | ------------ |
 | `examples/behaviors/recipes.html` | **ACCEPTS** | the whole `in the next <div/> when <cond>` clause — so it shows every blockquote where upstream filters. **A real hyperfixi parser defect.** |
 | `examples/swap-and-morph/swap-morph.html` | rejects (differently) | `.item:last-child` split at the `:` |
-| `examples/vite-plugin-multilingual/index.html` | n/a (Spanish) | EMPTY handler for `alternar` |
 | `packages/core/docs/EXAMPLES.md` | rejects | the `try` keyword AND its entire `catch` branch — a docs example about error handling, shipping without error handling |
 | `packages/core/docs/README.md` | rejects | `formToJSON(me)`'s arguments |
 
-All five are allowlisted in `shipped-sources-validity.json` with their measured
-upstream verdicts. The recipes.html row also **corrected a misdiagnosis** in the
+All four are allowlisted in `shipped-sources-validity.json` with their measured
+upstream verdicts. (A FIFTH was measured and withdrawn: the Spanish
+`on click alternar .active on me` came from `examples/vite-plugin-multilingual/`,
+which is GITIGNORED — it existed only in the working tree, so the entry passed
+locally and failed CI as a stale entry. The gate now restricts its walk to
+`git ls-files`, closing a 183-vs-173 local/CI denominator gap that had nothing
+to do with this change; the sibling execution gate had done so since #862.) The recipes.html row also **corrected a misdiagnosis** in the
 execution gate's baseline, which had recorded it as a "show/hide strategy"
 difference "pending investigation" — it was this dropped clause all along.
 

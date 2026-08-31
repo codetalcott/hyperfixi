@@ -29,6 +29,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { extractHyperscriptFromMarkup } from '@hyperfixi/patterns-reference';
@@ -95,7 +96,40 @@ function keyFor(file: string, source: string): string {
   return `${file}::${createHash('sha1').update(source).digest('hex').slice(0, 10)}`;
 }
 
-function walk(dir: string, acc: string[] = []): string[] {
+/**
+ * The files git actually tracks under `repoRoot`, as absolute paths.
+ *
+ * This gate walks the working TREE, and a working tree is not a clean checkout:
+ * `examples/vite-plugin-multilingual/` is GITIGNORED, so a local run saw a
+ * source CI could never see. That is unfixable from the allowlist — with an
+ * entry for it the gate failed in CI as a STALE entry, and without one it
+ * failed locally as a NEW finding. No allowlist state satisfies both, so the
+ * DENOMINATOR is what has to agree.
+ *
+ * The sibling `shipped-examples-execution` gate already derives its corpus this
+ * way, and its comment records that the lesson cost **#862** — it "failed on
+ * every clean checkout the first time CI ran it" for exactly this reason. This
+ * gate was simply never brought into line; it cost another CI round-trip on
+ * 2026-08-31 before anyone noticed the two disagreed.
+ *
+ * git being unavailable THROWS rather than falling back to the full tree, which
+ * is the sibling's convention and for its stated reason: a silent fallback
+ * would resurrect the drift this exists to kill.
+ */
+function trackedFiles(repoRoot: string): Set<string> {
+  const out = execFileSync('git', ['-C', repoRoot, 'ls-files', '-z'], {
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return new Set(
+    out
+      .split('\0')
+      .filter(Boolean)
+      .map(rel => path.join(repoRoot, rel))
+  );
+}
+
+function walk(dir: string, acc: string[] = [], tracked?: Set<string>): string[] {
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -107,8 +141,12 @@ function walk(dir: string, acc: string[] = []): string[] {
       continue;
     }
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, acc);
-    else if (/\.(html|md)$/.test(entry.name)) acc.push(full);
+    if (entry.isDirectory()) walk(full, acc, tracked);
+    else if (/\.(html|md)$/.test(entry.name)) {
+      // Skip anything git does not track, so local and CI score the same set.
+      if (tracked && !tracked.has(full)) continue;
+      acc.push(full);
+    }
   }
   return acc;
 }
@@ -135,8 +173,9 @@ export function collectShippedSources(
   const roots = opts?.roots ?? DEFAULT_ROOTS;
   const out: ShippedSource[] = [];
 
+  const tracked = trackedFiles(repoRoot);
   for (const root of roots) {
-    for (const full of walk(path.join(repoRoot, root))) {
+    for (const full of walk(path.join(repoRoot, root), [], tracked)) {
       const rel = path.relative(repoRoot, full);
       if (EXCLUDED.some(e => e.match(rel))) continue;
       const text = fs.readFileSync(full, 'utf8');
