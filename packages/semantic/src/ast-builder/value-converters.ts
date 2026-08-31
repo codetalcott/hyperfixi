@@ -61,6 +61,24 @@ export function convertValue(value: SemanticValue, warnings?: string[]): Express
 }
 
 /**
+ * Is this role value a MATERIALIZED DEFAULT rather than something the author wrote?
+ *
+ * The pattern matcher tags every value it fills in from a schema `default` with
+ * `implicit: true` (see `pattern-matcher.ts`'s default materialization) — a
+ * bare `focus` gets `patient: {reference me, implicit: true}`, while an authored
+ * `focus me` gets the same value WITHOUT the tag. The multilingual renderers
+ * already read this to suppress an injected `me` when rendering to 24 languages.
+ *
+ * The AST builder reads it for the same reason: `args` and `modifiers` are the
+ * SYNTAX surface — what the author actually wrote — so a materialized default
+ * does not belong there. It stays on `semanticRoles`, the SEMANTICS surface,
+ * where a consumer that wants the resolved target can read it.
+ */
+export function isImplicitValue(value: { implicit?: true } | undefined): boolean {
+  return value?.implicit === true;
+}
+
+/**
  * Convert a LiteralValue to a LiteralNode.
  */
 export function convertLiteral(value: LiteralValue): LiteralNode {

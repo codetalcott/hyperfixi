@@ -74,6 +74,19 @@ this plan needs:
 - **Measure the incumbent before costing the change.** Six of the command arcs
   found a plan claim false on measurement. Each arc's step 1 below is a
   measurement, and several steps are explicitly conditional on what it finds.
+- **`args` is syntax; `semanticRoles` is semantics.** Settled 2026-08-31 by the
+  `implicit-me` decision. `args`/`modifiers` record what the AUTHOR WROTE — a
+  schema default the matcher materialized (tagged `implicit`, e.g. bare `focus`
+  → patient `me`, `increment :x` → quantity `1`) is deliberately absent from
+  them, because forging it in makes the AST claim `focus me` was typed when
+  `focus` was. `semanticRoles` carries the RESOLVED reading, defaults included,
+  and is where a consumer that wants a bare `focus`'s target looks (the
+  interchange layer, the Go client, the LSP already read it). The corollary
+  matters for every future arc: **a runtime default does not need an AST
+  representation.** Duplicating one into the AST obliges every producer — the
+  traditional parser, the hybrid template parser, lite, AOT — to inject it too,
+  or no consumer can rely on it; core's `implicitTarget` field, with builder
+  plumbing and zero readers, is the fossil of the attempt.
 - **Byte-identical where the arc is a refactor; deliberate where it is not.**
   Arcs 2 and 4b are refactors and carry an AST/behaviour-equivalence corpus
   that must not move. Arc 3 changes AST shapes on purpose and regenerates its

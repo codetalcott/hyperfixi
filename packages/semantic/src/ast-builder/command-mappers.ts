@@ -6,7 +6,7 @@
  */
 
 import type { CommandSemanticNode, ActionType, SemanticValue, SemanticRole } from '../types';
-import { convertValue } from './value-converters';
+import { convertValue, isImplicitValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
 import type { ExpressionNode, LiteralNode } from './expression-parser';
 import { getSchema, type AstShape } from '../generators/command-schemas';
@@ -47,10 +47,23 @@ export interface CommandMapper {
 // =============================================================================
 
 /**
- * Get a semantic value from a node's roles, returning undefined if not present.
+ * Get a semantic value from a node's roles, returning undefined if not present
+ * OR if it is a materialized default rather than authored text.
+ *
+ * `args` and `modifiers` are the SYNTAX surface — they record what the author
+ * wrote. A schema default the matcher filled in (`focus` -> patient `me`,
+ * `increment :x` -> quantity `1`) is tagged `implicit` and is deliberately NOT
+ * reproduced here: the runtime already applies every one of those defaults at
+ * execution, and forging them into `args` makes the AST claim `focus me` was
+ * typed when `focus` was.
+ *
+ * The value is not lost — `ASTBuilder.buildCommand` attaches the FULL role map,
+ * implicit values included, as `semanticRoles`. A consumer that wants the
+ * resolved target reads it there. See {@link isImplicitValue}.
  */
 function getRole(node: CommandSemanticNode, role: SemanticRole): SemanticValue | undefined {
-  return node.roles.get(role);
+  const value = node.roles.get(role);
+  return isImplicitValue(value) ? undefined : value;
 }
 
 /**
@@ -185,8 +198,8 @@ const putMapper: CommandMapper = {
 const goMapper: CommandMapper = {
   action: 'go',
   toAST(node, _builder) {
-    const dest = node.roles.get('destination');
-    const method = node.roles.get('method');
+    const dest = getRole(node, 'destination');
+    const method = getRole(node, 'method');
 
     const args: ExpressionNode[] = [];
 
