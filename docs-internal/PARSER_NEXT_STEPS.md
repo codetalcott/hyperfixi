@@ -927,6 +927,55 @@ The hazard is now documented at the mock. **When production code changes WHICH
 predicate a consumption loop calls, every mock stubbing the old one must
 follow — or the loop becomes infinite.**
 
+### `hide <button/>` THROWS on the default path (2026-08-31)
+
+Live, user-visible, in the DEFAULT configuration, on a source that is one of the
+repo's own documented command examples:
+
+```
+await hyperscript.eval('hide <button/>', ctx)
+  → SyntaxError: Invalid selector <button/>
+```
+
+`{ traditional: true }` hides both buttons correctly. Verified pre-existing —
+reproduced with the `hide`/`show` argument fix reverted, and the semantic path
+does not go through the code that fix touched.
+
+**Why it happens, and why it is not a one-line strip.** The same `<…/>` syntax
+means two different things in hyperscript, and the two producers resolve the
+ambiguity differently:
+
+- `make <div.card/>` — **creation markup**. `packages/semantic`'s
+  `value-converters.ts` deliberately carries it verbatim on `raw`, with a
+  comment saying MakeCommand must use the markup rather than querySelector it.
+- `hide <button/>` — a **query literal**, i.e. `querySelectorAll('button')`.
+
+The traditional parser distinguishes them with `fromQuery: true` on the selector
+node plus a STRIPPED value (`button`), which `parser/runtime.ts` reads in
+`resolveTargetElements(elements, selector, node.fromQuery)`. The semantic path
+emits neither — value and `raw` are both the literal `<button/>` — so the
+runtime hands `<button/>` to the DOM and it throws.
+
+**So a fix has to decide where the disambiguation lives**, and that is a
+boundary question rather than a typo:
+
+1. **In `packages/semantic`** — emit query-shaped selectors for every command
+   except the creation-markup consumers. Most correct (the value is wrong at the
+   source), but it needs the converter to know the command, and it moves the
+   multilingual baseline.
+2. **In core's adapter** — apply core's own selector convention (strip +
+   `fromQuery`) when converting a front-end node, keyed on the command.
+   `buildCommandNode` has the command name, so it can. Contained, and arguably
+   the adapter's job: it already stamps the core-required fields semantic does
+   not emit.
+3. **In core's runtime** — treat a `<…>`-wrapped selector value as a query at
+   resolution time. Smallest, but it papers over a wrong AST rather than fixing
+   it, and would mis-handle `make`.
+
+Option 2 looks right, and should be measured against the multilingual gate
+either way. Do NOT fix this by stripping `<`/`/>` unconditionally — that breaks
+`make`, which is the case the existing `raw` carve-out exists for.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
