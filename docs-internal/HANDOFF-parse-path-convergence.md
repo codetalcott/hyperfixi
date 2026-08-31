@@ -180,9 +180,14 @@
 > commit the regenerated `patterns.db`. Never `git stash` in this tree.
 >
 > Every step is a measurement first, and it is allowed to falsify the step.
-> That habit produced everything of value here: across six PRs it killed a
-> proposed fix, voided a queue item, corrected a filing's own instruction, and
-> scored 1 of 9 plan hypotheses correct. When it falsifies something, correct
+> That habit produced everything of value in this arc. Across ten PRs it has
+> killed a proposed fix, voided a queue item, scored 1 of 9 plan hypotheses
+> correct, and — in the 2026-08-31 session alone — falsified **four** written
+> claims: a filing's recommended fix site (the adapter is one of four `buildAST`
+> consumers), a filing I had written myself an hour earlier (it named the wrong
+> function), an oracle choice that inverted the answer on all 19 `both-fail`
+> rows (`try { hs.parse() }` vs `parse().errors`), and a gate-walking bug a
+> sibling gate had already fixed in #862. When it falsifies something, correct
 > the doc in the SAME PR, struck through in place.
 
 **Owner decision, 2026-08-30: converge.** Of the three answers Arc 1 step 5
