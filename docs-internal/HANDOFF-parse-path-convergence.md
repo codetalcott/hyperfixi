@@ -101,9 +101,29 @@
 >    `compound-command-coverage.test.ts` (#1028). Both gates now re-compile
 >    wrapped.
 >
->    Still open from #1025's triage: **`install X on <selector>` is a parser
->    bug** (`install Draggable on me` and `on the first <div/>` parse; `on #box`
->    and `on <#box/>` do not).
+>    ~~Still open from #1025's triage: **`install X on <selector>` is a parser
+>    bug**~~ — **measured WRONG, and the reverse is true.** Upstream's `install`
+>    is a FEATURE with no on-target clause at all, and rejects the selector
+>    forms with the same complaint hyperfixi makes. The two forms that "parse"
+>    are the broken ones: `install Draggable on me` yields `ok: true`, zero
+>    diagnostics, and a phantom `eventHandler` for an event named `me` — while
+>    installing on the current element, not on `me`. Corrected in
+>    `PARSER_NEXT_STEPS.md`; the phantom-handler half is folded into the
+>    existing "A trailing `on <target>` splits into a phantom event handler"
+>    entry. **Third filing this arc whose recommendation aged worse than its
+>    observation** — after the `hide <button/>` fix site and this item's own
+>    19→27/8-additions estimate.
+> 2b. **NEW, from #1029's strengthened gate — two parser gaps remain of the
+>    three it found.** `transition left to 100px` was the third and is FIXED
+>    (#1030). Still open, both upstream-VALID with a repro in
+>    `PARSER_NEXT_STEPS.md`:
+>    - `scroll to me smoothly` drops `smoothly`.
+>    - `make a URL from "/path/", "…"` parses BARE and does not parse inside a
+>      handler at all — a comma-separated argument list that survives at top
+>      level and dies in a body points at the body loop, not at `make`.
+>    - adjacent, found by #1030: `over 500 ms` (with a space) drops the `ms`.
+>      The tokenizer joins `500ms` into one TIME token, but there is no time
+>      POSTFIX expression to match upstream's `TimeExpression`.
 > 3. **Residual item-5 rows** — the template-literal backticks
 >    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
 >    `settle` `isBlocking` rows marked INERT below.

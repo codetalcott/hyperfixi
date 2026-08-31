@@ -1063,9 +1063,29 @@ stops at one command without complaining about unconsumed input, and
 following FEATURE rather than part of the command. Establishing the oracle means
 a full-program parse and comparing the feature list — not done.
 
-Not on the convergence queue, and not urgent: the two confirmed rows are a
-non-default path and a command whose bare form works. Filed so the measurement
-is not re-derived.
+**`install X on <target>` is the sharpest instance, added 2026-08-31**, and it
+arrived here by way of a filing that had it backwards (see the correction in the
+documented-examples triage above). Upstream's `install` is a FEATURE with the
+grammar `install <behavior-path> [(args…)]` and NO on-target clause, so every
+`install X on …` surface is a docs defect. What makes it belong here is what
+hyperfixi does with the two that get through:
+
+| source | hyperfixi | diagnostics |
+| ------ | --------- | ----------- |
+| `install Draggable on me` | `install` (on the CURRENT element) + `eventHandler{event: "me", commands: []}` | **none** |
+| `install Draggable on the first <div/>` | `install` + `eventHandler{event: "the"}` swallowing `first <div/>` | **none** |
+| `install Draggable on #box` | `ok: false`, "Unexpected token after event handlers: #box" | 1 |
+
+An event handler bound to an event named `me`, with an empty body, reported as a
+clean parse. That is the #1026 class — a typo giving you a handler that silently
+does nothing — one level up: #1026 covers a bad COMMAND inside a body, not a bad
+EVENT NAME at the top of a feature. A plausible general rule, not yet
+implemented: an `eventHandler` whose event name is a context word or a known
+non-event AND whose body is empty is a diagnostic, not a parse.
+
+Not on the convergence queue, and not urgent: the two originally-confirmed rows
+are a non-default path and a command whose bare form works. Filed so the
+measurement is not re-derived.
 
 ### ~~A dropped handler body is silently discarded~~ — REPORTED (2026-08-31)
 
@@ -1206,11 +1226,16 @@ The 19, after triage (bare vs wrapped in `on click …`, both engines):
 
 Two worth acting on beyond the docs:
 
-- **`install X on <selector>` is a parser bug, not a docs defect.**
-  `install Draggable on me` and `install Draggable on the first <div/>` both
-  parse; `install Draggable on #box` and `install Draggable on <#box/>` do not.
-  A plain selector is the form the command's own `syntax` line shows and the one
-  a user is most likely to write.
+- ~~**`install X on <selector>` is a parser bug, not a docs defect.**~~ —
+  **MEASURED WRONG (2026-08-31); it is the reverse.** Upstream's `install` is a
+  FEATURE whose entire grammar is `install <behavior-path> [(args…)]` — there is
+  no on-target clause — and it rejects `on #box` / `on .list` / `on <#box/>`
+  with "Expected event name", the same complaint hyperfixi makes. **The two
+  forms that "parse" are the broken ones**: `install Draggable on me` returns
+  `ok: true` with ZERO diagnostics and yields the install (on the current
+  element, NOT on `me`) plus a phantom `eventHandler` for an event named `me`
+  with an empty body. So the row that ERRORS is the honest one. Detail on the
+  phantom-handler half is folded into that entry below.
 - **`repeat`'s brace form is documented in all FIVE of its `syntax` lines** and
   is not hyperscript in either engine. `repeat … end` is the real form. This is
   the docs defect the 2026-07-29 sweep recorded as "being fixed in the arc's own

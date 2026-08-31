@@ -177,23 +177,32 @@ const ALLOWED: readonly Allowed[] = [
     reason: '`and put it on <target>` is declared in syntax but unimplemented',
   },
 
-  // --- real parser bug ------------------------------------------------------
-  // `install X on me` and `install X on the first <div/>` BOTH parse; only a
-  // plain selector target fails — which is the form a user is most likely to
-  // write, and the one the command's own syntax line shows.
+  // --- docs defect: `install` has no `on <target>` clause -------------------
+  // Filed as a "real parser bug" until it was measured against the engine
+  // (2026-08-31). Upstream's `install` is a FEATURE whose whole grammar is
+  // `install <behavior-path> [(args…)]` — there is no on-target at all, and it
+  // rejects `install X on #box` / `on .list` / `on <#box/>` with "Expected
+  // event name", the same complaint hyperfixi makes.
+  //
+  // The inversion worth remembering: the two forms that "parse" are the BROKEN
+  // ones. `install Draggable on me` returns ok:true with ZERO diagnostics and
+  // yields two statements — the install (on the current element, not on `me`)
+  // plus a phantom `eventHandler` for an event literally named `me`, with an
+  // empty body. `on the first <div/>` yields a handler for an event named
+  // `the`. Only `on #box` fails, because `#box` cannot be an event name — so
+  // the one row that errors is the honest one. See PARSER_NEXT_STEPS.md, "A
+  // trailing `on <target>` splits into a phantom event handler".
   {
     command: 'install',
     source: 'install Draggable on #box',
     status: 'no-parse',
-    reason:
-      'parser bug: `install X on <selector>` fails while `on me` / `on the first <div/>` parse',
+    reason: 'docs defect: upstream `install` has no `on <target>` clause and rejects this too',
   },
   {
     command: 'install',
     source: 'install Sortable(axis: "y") on .list',
     status: 'no-parse',
-    reason:
-      'parser bug: `install X on <selector>` fails while `on me` / `on the first <div/>` parse',
+    reason: 'docs defect: upstream `install` has no `on <target>` clause and rejects this too',
   },
 
   // --- start ----------------------------------------------------------------
