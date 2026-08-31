@@ -159,6 +159,18 @@ export function createMockParserContext(
       line: 1,
       column: currentPosition,
     })),
+    // HAZARD: this default does NOT advance `currentPosition`.
+    //
+    // Production arg loops terminate because parsing an argument CONSUMES it,
+    // so a loop whose predicate stays true under this mock never ends — it
+    // exhausts the heap and vitest reports the worker as gone rather than as a
+    // failing test (measured: a 4 GB OOM whose 27 tests came back `pending`,
+    // with the run still summarising as passed).
+    //
+    // So a test driving a consumption loop must stub the predicate the code
+    // ACTUALLY calls to go false — and if the production code changes which
+    // predicate that is, the stub has to follow. Overriding only the old one
+    // leaves the default below answering, forever.
     parsePrimary: vi.fn(() => ({
       type: 'identifier',
       name: 'mock-primary',

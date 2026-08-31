@@ -131,7 +131,20 @@ export function parseRegularCommand(ctx: ParserContext, identifierNode: Identifi
     // checkLiteral() covers: STRING, NUMBER, BOOLEAN, TEMPLATE_LITERAL
     if (
       ctx.checkIdentifierLike() ||
-      ctx.checkSelector() ||
+      // `checkAnySelector`, not `checkSelector`: the latter covers only BASIC
+      // selectors (`#id`, `.class`, css), so a QUERY REFERENCE — `<button/>` —
+      // matched nothing here and the loop broke on its first argument.
+      // `hide <button/>` and `show <button/>` therefore parsed to a command
+      // with NO ARGS at all, silently dropping the target; `clear <textarea/>`
+      // was fine because `clear` is not a COMPOUND_COMMANDS member and takes
+      // `parseCommandCore`'s loop, which calls `parseExpression()` outright.
+      //
+      // The trailing `ctx.match('<')` below is a consuming call sitting in a
+      // chain of non-consuming checks — it never fired for this input (the
+      // tokenizer emits the query reference as ONE token, not a bare `<`), and
+      // it is left alone here rather than widened, since removing it is a
+      // separate question from fixing the drop.
+      ctx.checkAnySelector() ||
       ctx.checkLiteral() ||
       ctx.checkTimeExpression() ||
       ctx.match('<')

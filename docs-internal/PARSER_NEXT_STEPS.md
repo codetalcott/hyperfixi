@@ -887,6 +887,95 @@ change, not a core one. Reproduce the residual with
 Consumers affected: LSP hover and diagnostic ranges are command-accurate now but
 argument-blind on the semantic path.
 
+### ~~`hide <button/>` / `show <button/>` drop their target~~ — FIXED (2026-08-31)
+
+Both parsed to a command with **no arguments at all** — the query reference was
+discarded in silence.
+
+`parseRegularCommand`'s argument loop gated on `ctx.checkSelector()`, which
+covers only BASIC selectors (`#id`, `.class`, css). A QUERY REFERENCE
+(`<button/>`) matched none of its predicates, so the loop broke on its first
+argument and returned an empty command. `clear <textarea/>` was unaffected only
+because `clear` is not a `COMPOUND_COMMANDS` member and therefore takes
+`parseCommandCore`'s loop, which calls `parseExpression()` outright.
+
+Fix: `checkAnySelector()`, which is exactly "any selector INCLUDING query
+reference" and was already on `ParserContext`.
+
+**The existing gate had two holes, and the second is the instructive one.**
+`compound-command-coverage.test.ts` probes each COMPOUND_COMMANDS member's
+documented syntax — but (a) its `hide`/`show` probes were only `hide me` /
+`hide #modal`, and (b) it asserted only that the source parses to **exactly one
+correctly-named command**. A dropped ARGUMENT satisfies that completely. So even
+adding the query-literal probe would not have caught this without also asserting
+that the command carries a payload (args OR modifiers OR target — compound
+parsers legitimately route to all three). Both holes are now closed, and the
+gate names the failure: `hide <button/>: parsed to a payload-less hide`.
+
+**A test-infrastructure hazard this exposed, worth knowing before it bites
+again.** Fixing the parser made one test file OOM at 4 GB, and the run still
+summarised as PASSING: its 27 tests came back `pending` (listed, never run,
+because the worker died) and vitest's JSON reported `success: true`. Finding it
+took diffing per-file test STATUSES against a reverted run.
+
+The cause was the mock, not the parser: `__test-utils__/parser-context-mock.ts`
+has a `parsePrimary` that does NOT advance the token position, and the affected
+test stubbed `checkSelector` — the predicate the code no longer calls — so the
+mock's default `checkAnySelector` answered true forever. Production arg loops
+terminate because parsing an argument consumes it; under that mock they cannot.
+The hazard is now documented at the mock. **When production code changes WHICH
+predicate a consumption loop calls, every mock stubbing the old one must
+follow — or the loop becomes infinite.**
+
+### `hide <button/>` THROWS on the default path (2026-08-31)
+
+Live, user-visible, in the DEFAULT configuration, on a source that is one of the
+repo's own documented command examples:
+
+```
+await hyperscript.eval('hide <button/>', ctx)
+  → SyntaxError: Invalid selector <button/>
+```
+
+`{ traditional: true }` hides both buttons correctly. Verified pre-existing —
+reproduced with the `hide`/`show` argument fix reverted, and the semantic path
+does not go through the code that fix touched.
+
+**Why it happens, and why it is not a one-line strip.** The same `<…/>` syntax
+means two different things in hyperscript, and the two producers resolve the
+ambiguity differently:
+
+- `make <div.card/>` — **creation markup**. `packages/semantic`'s
+  `value-converters.ts` deliberately carries it verbatim on `raw`, with a
+  comment saying MakeCommand must use the markup rather than querySelector it.
+- `hide <button/>` — a **query literal**, i.e. `querySelectorAll('button')`.
+
+The traditional parser distinguishes them with `fromQuery: true` on the selector
+node plus a STRIPPED value (`button`), which `parser/runtime.ts` reads in
+`resolveTargetElements(elements, selector, node.fromQuery)`. The semantic path
+emits neither — value and `raw` are both the literal `<button/>` — so the
+runtime hands `<button/>` to the DOM and it throws.
+
+**So a fix has to decide where the disambiguation lives**, and that is a
+boundary question rather than a typo:
+
+1. **In `packages/semantic`** — emit query-shaped selectors for every command
+   except the creation-markup consumers. Most correct (the value is wrong at the
+   source), but it needs the converter to know the command, and it moves the
+   multilingual baseline.
+2. **In core's adapter** — apply core's own selector convention (strip +
+   `fromQuery`) when converting a front-end node, keyed on the command.
+   `buildCommandNode` has the command name, so it can. Contained, and arguably
+   the adapter's job: it already stamps the core-required fields semantic does
+   not emit.
+3. **In core's runtime** — treat a `<…>`-wrapped selector value as a query at
+   resolution time. Smallest, but it papers over a wrong AST rather than fixing
+   it, and would mis-handle `make`.
+
+Option 2 looks right, and should be measured against the multilingual gate
+either way. Do NOT fix this by stripping `<`/`/>` unconditionally — that breaks
+`make`, which is the case the existing `raw` carve-out exists for.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
