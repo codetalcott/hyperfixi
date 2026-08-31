@@ -184,8 +184,13 @@ The rest are genuine defects, and they are **not all on one side**:
    `from-core.ts`'s explicit `set` case, one (`swap`) was scored and found NOT
    to be a defect, and two (`morph`, `pick`) are a deeper defect both paths
    share.
-3. **Decide the Arc 2 overlap** before touching `node-type`. Either pull Arc 2
-   step 1 forward or accept the duplication knowingly.
+3. ~~**Decide the Arc 2 overlap**~~ — **DECIDED: pulled forward, and Arc 2
+   step 1 is DONE** (2026-08-31; see the plan). The evidence was 12 of the 14
+   remaining node-type differences being alias normalisation. Step 1 found the
+   arc's premise list was mostly stale (1 of 9 hypotheses correct) and removed
+   one genuinely dead kind. **The remaining alias work is the seven
+   `RENAME_PAIRS` Arc 0 pinned** (`binaryExpression`/`binary`,
+   `eventHandler`/`event`, …), which is Arc 2 step 2+, not step 1.
 4. **Positions in the semantic path** (106 sources, one fix).
 5. **The residual real defects** — the table above, smallest first.
 6. **`implicit-me`** last; it is the only family where neither side is

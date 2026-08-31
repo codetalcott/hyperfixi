@@ -583,13 +583,41 @@ A types-only arc. Runtime behaviour is byte-identical; the AST-equivalence
 corpus is the gate and it must not move. The escape-hatch ratchet is the
 progress meter.
 
-1. **Classify the strays.** From Arc 0's vocabulary snapshot, every emitted
-   kind is one of: canonical · alias-of (`CommandSequence` = `sequence`,
-   `Command` = `command`, `functionCall` = `callExpression`) · producer-local
-   (`object`/`keyword` in command-parsers) · dead (`dollarExpression`,
-   `contextVariable`, `idSelector`, `expression` — verify each). Aliases are
-   normalised at the producer, not accepted by the consumer; dead kinds are
-   deleted with the code that emits them. A test pins the classification.
+1. **Classify the strays.** — ✅ **DONE 2026-08-31**, and it scored **1 of this
+   step's 9 hypotheses correct**. Tool: `packages/core/tools/classify-ast-kinds.ts`
+   (committed; run it, the numbers move). Over a 54-kind universe — Arc 0's two
+   producer vocabularies plus `buildAST`'s six — the classification is
+   **46 live · 2 dead (both false positives, annotated) · 3 orphan-read ·
+   3 phantom**.
+
+   | hypothesis | measured |
+   | ---------- | -------- |
+   | `dollarExpression` dead | ✅ **correct** — emitted by `parser.ts`, read NOWHERE in the monorepo. **Fixed**: it now returns the `expression` it was wrapping. |
+   | `contextVariable` dead | phantom — already gone; nothing to delete |
+   | `idSelector` dead | **live** — emitted via a *ternary* (`variable-commands.ts:214`) and read as a token type |
+   | `expression` dead | **live** — 3 emitters, 3 readers |
+   | `functionCall` = alias-of `callExpression` | **not an alias** — command-local, read by `trigger.ts`, exactly as `ast-vocabulary.test.ts` already documented |
+   | `Command` = alias-of `command` | live (2 emit / 1 read) |
+   | `CommandSequence` = alias-of `sequence` | live — the one alias claim that holds |
+   | `object`/`keyword` producer-local | `object` live (10/71); **`keyword` has no emitter at all** |
+
+   So the arc's premise list was mostly stale, and the real remaining alias work
+   is the seven `RENAME_PAIRS` Arc 0 already pinned — not the names above.
+
+   **`dollarExpression` was a latent RUNTIME bug, not tidiness.** An unread kind
+   does not fail at build time; it surfaces as `Unknown AST node type: …`. No
+   input reaches that branch today (the tokenizer emits `$foo` as one variable
+   token), so returning the inner expression is not a behaviour change — it
+   removes the trap.
+
+   **Two traps the tool documents, both hit while building it.** Text matching
+   cannot see a kind consumed by DESTRUCTURING (`forCondition`/`fetchConfig` are
+   read via `node.condition.variable`, and are annotated `NOT dead` rather than
+   suppressed), nor one emitted by a computed expression (`idSelector`'s
+   ternary). And it must strip COMMENTS: the first run after deleting
+   `dollarExpression` still reported it emitted, because the comment explaining
+   the deletion quotes `type: '…'` — the same reason
+   `check-semantic-boundary.cjs` carries its own stripper.
 2. **`ast/nodes.ts`.** The union. Start from `parser/parser-types.ts` (already
    camelCase, already matches the emitted names, already per-kind interfaces
    for 20 kinds) and the interchange union's structure. Keep the emitted
@@ -1052,6 +1080,20 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   import the front-end **nowhere**. The coupling is confined to the api, the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
+
+- **2026-08-31** — **Arc 2 step 1 (classify the strays) ran EARLY**, pulled
+  forward because three separate convergence findings pointed at it: 12 of the
+  14 remaining node-type differences between the two English parse paths are
+  alias normalisation, which is this step's job. It scored **1 of its own 9
+  hypotheses correct** — `dollarExpression` was genuinely dead (emitted, read
+  nowhere in the monorepo) and is now fixed; `contextVariable` was already gone,
+  `idSelector` and `expression` are alive, `functionCall` is command-local
+  rather than an alias, and `keyword` has no emitter at all. Full table on the
+  step. Tool: `packages/core/tools/classify-ast-kinds.ts`, whose own two blind
+  spots (destructured reads, computed emissions) and comment-stripping
+  requirement are documented in it — the last of those was hit live, when
+  deleting the dead kind still reported it emitted because the explanatory
+  comment quoted the literal.
 
 - **2026-08-30** — **The silent-truncation class was decided and fixed** (the
   convergence queue's item 1, same day it was filed). Decision: the engine

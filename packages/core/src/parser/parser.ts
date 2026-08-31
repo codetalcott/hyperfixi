@@ -1840,14 +1840,22 @@ export class Parser {
         }
       }
 
-      // Wrap in a special dollar expression node
-      return {
-        type: 'dollarExpression',
-        expression,
-        raw: `$${identifierToken.value}${this.previous().value || ''}`,
-        line: identifierToken.line,
-        column: identifierToken.column - 1, // Include the $ symbol
-      };
+      // Return the expression itself rather than wrapping it.
+      //
+      // This used to emit `type: 'dollarExpression'`, a kind NOTHING in the
+      // monorepo reads — measured by `tools/classify-ast-kinds.ts` (Arc 2
+      // step 1) and confirmed by grep across every package. An unevaluatable
+      // kind does not fail at build time; it surfaces at runtime as
+      // `Unknown AST node type: dollarExpression`, which is why the vocabulary
+      // snapshot treats an unread kind as a bug rather than as tidiness.
+      //
+      // No input reaches this branch today — the tokenizer emits `$foo` as one
+      // variable token, so `$window.foo`, `$1`, `$foo.bar.baz` and friends all
+      // parse elsewhere, and `dollarExpression` never appears in the corpus
+      // vocabulary. So this is not a behaviour change; it removes a latent
+      // runtime failure and one dead kind. `expression` is already an
+      // identifier or memberExpression, both of which the evaluator handles.
+      return expression;
     }
 
     this.addError("Expected identifier or number after '$'");
