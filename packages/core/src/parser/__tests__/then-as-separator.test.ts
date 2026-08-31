@@ -586,13 +586,23 @@ describe('`then` as a command separator in tell bodies', () => {
     expect(names(tellArgs.slice(1))).toEqual(['add', 'log']);
   });
 
-  it('KNOWN GAP: `and` between tell commands is swallowed by the expression parser', () => {
+  it('KNOWN GAP: `and` between tell commands is swallowed — but is now REPORTED', () => {
     // `parseTellCommand` has always matched `and` as a separator, but it is dead
     // code for the same reason as the `if` case above: the pratt parser absorbs
     // `and` into the preceding command's arguments before the body loop runs, so
-    // the second `add` becomes an identifier operand. Pinned as a known gap.
-    const node = parseClean('on click tell #x add .a and add .b');
+    // the second `add` becomes an identifier operand. Still a known gap.
+    //
+    // What CHANGED: the loss is no longer silent. This test used `parseClean`
+    // and therefore asserted the parser reported nothing while documenting, in
+    // its own comment, that a command was lost — the gap and the assertion
+    // contradicted each other. The parser now records the discarded `.b`, so
+    // the diagnostic is pinned here instead. When the gap itself is fixed, this
+    // expectation drops to `[]` and the `slice(1)` below becomes ['add','add'].
+    const input = 'on click tell #x add .a and add .b';
+    const result = parse(input);
+    expect(recoveredErrors(result)).toEqual(["Discarded input the parser could not place: '.b'"]);
 
+    const node = parseNode(input);
     const tellArgs = node.commands[0].args;
     expect(names(tellArgs.slice(1))).toEqual(['add']);
     expect(tellArgs[1].args[0].type).toBe('binaryExpression');

@@ -281,12 +281,21 @@ describe('documented examples parse', () => {
     // garbage example to a real command does NOT redden this gate — verified
     // by mutation, not assumed.
     //
-    // When the parser learns to record that it dropped input (filed in
-    // PARSER_NEXT_STEPS.md), THIS assertion is what should fail, and it is the
-    // signal to strengthen the gate and shrink ALLOWED.
+    // UPDATE 2026-08-31: the parser now DOES record dropped input
+    // (`recovered: true` + an `errors` entry), and this assertion did NOT fail
+    // — because `classify` reads `ok`, which is derived from `success`, and the
+    // fix deliberately leaves `success` alone (a degraded parse is not a failed
+    // one). So the prediction above was half right: the signal exists, the gate
+    // just cannot read it yet.
+    //
+    // Switching `classify` to reject `recovered` was MEASURED and is not yet
+    // viable: it takes this gate's failure list from 19 to 27, and all 8
+    // additions are a PRE-EXISTING false positive — `if x > 5 then add .active`
+    // parses correctly and still reports `Expected 'end' after if block`, on
+    // main, before any of this. Clean that up first (filed), then strengthen.
     expect(
       classify('log "a" ####'),
-      'if this is no longer ok-bare, the parser now reports dropped input — strengthen this gate'
+      'still ok-bare: the tail is dropped but `success` is unaffected by design'
     ).toBe('ok-bare');
   });
 
