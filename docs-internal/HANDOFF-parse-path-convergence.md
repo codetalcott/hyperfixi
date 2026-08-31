@@ -191,7 +191,25 @@ The rest are genuine defects, and they are **not all on one side**:
    one genuinely dead kind. **The remaining alias work is the seven
    `RENAME_PAIRS` Arc 0 pinned** (`binaryExpression`/`binary`,
    `eventHandler`/`event`, …), which is Arc 2 step 2+, not step 1.
-4. **Positions in the semantic path** (106 sources, one fix).
+4. **Positions** — measured 2026-08-31, and it is **TWO defects, not one**.
+   The brief assumed the traditional parser was the position ORACLE and only
+   the semantic path needed teaching. Measured over the documented
+   single-command examples: traditional is correct for **133 of 183**, and
+   started LATE for the other 50 — its generic command path took
+   `getPosition()` (the previous token, i.e. the last argument) as the
+   command's own span.
+
+   - **Defect (a): traditional's late spans — FIXED** (see
+     `PARSER_NEXT_STEPS.md`). One site, 19 commands, 183/183 correct after.
+     This had to come first: nothing can converge onto an oracle that is wrong
+     for a quarter of its rows.
+   - **Defect (b): the semantic path emits zeros** — `start 0, end 0, line 1`,
+     stamped as defaults by `normalizeBuiltNode`. Still open, and now it has a
+     usable oracle. The coverage gate from queue item 1 helps here: an adopted
+     parse provably consumed `remainingInput` in FULL, and that slice runs from
+     the command token to end-of-source, so the span is computable rather than
+     guessed. Nested arg positions need offsetting by the same amount; `line`
+     and `column` need a newline count over the prefix.
 5. **The residual real defects** — the table above, smallest first.
 6. **`implicit-me`** last; it is the only family where neither side is
    obviously wrong.

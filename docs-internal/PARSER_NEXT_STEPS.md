@@ -823,6 +823,40 @@ Unmeasured: whether the same truncation corrupts the multilingual corpus. Every
 row there is `render(parse_en(en), L)`, so a truncating en parse would move all
 24 languages together — the R3 "firestorm means suspect the en parse" inversion.
 
+### ~~A command node spans its LAST ARGUMENT, not the command~~ — FIXED (2026-08-31)
+
+Found while scoping the convergence queue's "positions" item, whose stated
+premise was that the traditional parser is the position ORACLE. It is — for
+**133 of 183** documented single-command examples. The other 50 started late.
+
+The generic command path ended with:
+
+```ts
+const pos = this.getPosition();   // ← the PREVIOUS token = the last argument
+return { type: 'command', …, start: pos.start, end: pos.end };
+```
+
+So `log "hello"` reported `start 4, end 11` — the span of `"hello"` — instead
+of `0..11`. One site, and it explains every affected row: **19 commands**
+(`log`, `get`, `call`, `clear`, `copy`, `settle`, `blur`, `close`, `open`,
+`render`, `reset`, `return`, `scroll`, `select`, `empty`, `default`, `async`,
+`beep!`, `focus`), which is exactly the set that reaches the generic path
+rather than a specialized parser — which is why `toggle` and `add` were always
+correct and `log` never was.
+
+These are the spans LSP hover and diagnostic ranges use, and that any error
+quoting a source span reads.
+
+**Fix**: the start is the command keyword (`commandToken`), the end is wherever
+argument parsing stopped. Measured after: **183 correct, 0 late.**
+
+**It moved the AST-equivalence baseline, and that was verified rather than
+assumed.** 71 fingerprints changed; a single-file swap against `main`'s parser
+over the whole corpus showed **160 identical · 73 position-only · 0
+structural**, so the baseline regeneration is earned rather than a gate
+re-blessed to go green. Pinned by `command-span.test.ts` (mutation-verified,
+with a non-vacuity guard on its own sweep).
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
