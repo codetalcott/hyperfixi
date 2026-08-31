@@ -58,7 +58,18 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
       const tokens = createTokenStream(['.class', '#id']);
       const ctx = createMockParserContext(tokens, {
         checkIdentifierLike: vi.fn(() => false),
+        // `parseRegularCommand` calls checkAnySelector (query references like
+        // `<button/>` are selectors too, and gating on checkSelector silently
+        // dropped them). Both are stubbed: overriding only the one the code no
+        // longer calls left the mock's DEFAULT checkAnySelector answering, and
+        // since this mock's parsePrimary does NOT advance the token position,
+        // the arg loop never terminated — the worker OOMed rather than failing.
         checkSelector: vi
+          .fn()
+          .mockReturnValueOnce(true)
+          .mockReturnValueOnce(true)
+          .mockReturnValue(false),
+        checkAnySelector: vi
           .fn()
           .mockReturnValueOnce(true)
           .mockReturnValueOnce(true)

@@ -37,7 +37,7 @@ const PROBES: Record<string, string[]> = {
   add: ['add .active to #probe'],
   go: ['go to #probe'],
   halt: ['halt the event'],
-  hide: ['hide me', 'hide #modal'],
+  hide: ['hide me', 'hide #modal', 'hide <button/>'],
   js: ['js return 5 end'],
   measure: ['measure #probe'],
   morph: ['morph #probe with "x"'],
@@ -53,7 +53,7 @@ const PROBES: Record<string, string[]> = {
   replace: ['replace url "/search?q=test"', 'replace url "/page" with title "Updated Page"'],
   send: ['send dataEvent to #probe'],
   set: ['set myVar to "value"'],
-  show: ['show me', 'show #modal'],
+  show: ['show me', 'show #modal', 'show <button/>'],
   start: ['start view transition add .highlight to #probe end'],
   swap: [
     'swap #target with it',
@@ -103,6 +103,26 @@ describe('COMPOUND_COMMANDS ↔ parseCompoundCommand coverage', () => {
               .join(' + ')}`
           ).toBe(1);
           expect(nodes[0]?.name?.toLowerCase(), src).toBe(command);
+
+          // A dropped ARGUMENT is invisible to the assertions above: the parse
+          // still yields exactly one correctly-named command, just an empty
+          // one. That is precisely how `hide <button/>` / `show <button/>`
+          // silently discarded their target — `parseRegularCommand` gated on
+          // `checkSelector()`, which does not cover query references, so the
+          // arg loop broke on its first argument.
+          //
+          // So a probe whose source says more than the bare command keyword
+          // must carry SOME payload. Payload is args OR modifiers OR a target,
+          // because the compound parsers legitimately route to all three
+          // (`put X into Y` fills modifiers; `toggle … on …` fills a target).
+          const node = nodes[0] as Record<string, unknown>;
+          if (src.trim().toLowerCase() !== command) {
+            const args = (node.args as unknown[] | undefined) ?? [];
+            const modifiers = (node.modifiers as Record<string, unknown> | undefined) ?? {};
+            const hasPayload =
+              args.length > 0 || Object.keys(modifiers).length > 0 || node.target !== undefined;
+            expect(hasPayload, `${src}: parsed to a payload-less ${command}`).toBe(true);
+          }
         }
       });
     }

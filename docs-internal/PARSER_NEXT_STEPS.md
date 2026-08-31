@@ -887,6 +887,46 @@ change, not a core one. Reproduce the residual with
 Consumers affected: LSP hover and diagnostic ranges are command-accurate now but
 argument-blind on the semantic path.
 
+### ~~`hide <button/>` / `show <button/>` drop their target~~ — FIXED (2026-08-31)
+
+Both parsed to a command with **no arguments at all** — the query reference was
+discarded in silence.
+
+`parseRegularCommand`'s argument loop gated on `ctx.checkSelector()`, which
+covers only BASIC selectors (`#id`, `.class`, css). A QUERY REFERENCE
+(`<button/>`) matched none of its predicates, so the loop broke on its first
+argument and returned an empty command. `clear <textarea/>` was unaffected only
+because `clear` is not a `COMPOUND_COMMANDS` member and therefore takes
+`parseCommandCore`'s loop, which calls `parseExpression()` outright.
+
+Fix: `checkAnySelector()`, which is exactly "any selector INCLUDING query
+reference" and was already on `ParserContext`.
+
+**The existing gate had two holes, and the second is the instructive one.**
+`compound-command-coverage.test.ts` probes each COMPOUND_COMMANDS member's
+documented syntax — but (a) its `hide`/`show` probes were only `hide me` /
+`hide #modal`, and (b) it asserted only that the source parses to **exactly one
+correctly-named command**. A dropped ARGUMENT satisfies that completely. So even
+adding the query-literal probe would not have caught this without also asserting
+that the command carries a payload (args OR modifiers OR target — compound
+parsers legitimately route to all three). Both holes are now closed, and the
+gate names the failure: `hide <button/>: parsed to a payload-less hide`.
+
+**A test-infrastructure hazard this exposed, worth knowing before it bites
+again.** Fixing the parser made one test file OOM at 4 GB, and the run still
+summarised as PASSING: its 27 tests came back `pending` (listed, never run,
+because the worker died) and vitest's JSON reported `success: true`. Finding it
+took diffing per-file test STATUSES against a reverted run.
+
+The cause was the mock, not the parser: `__test-utils__/parser-context-mock.ts`
+has a `parsePrimary` that does NOT advance the token position, and the affected
+test stubbed `checkSelector` — the predicate the code no longer calls — so the
+mock's default `checkAnySelector` answered true forever. Production arg loops
+terminate because parsing an argument consumes it; under that mock they cannot.
+The hazard is now documented at the mock. **When production code changes WHICH
+predicate a consumption loop calls, every mock stubbing the old one must
+follow — or the loop becomes infinite.**
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
