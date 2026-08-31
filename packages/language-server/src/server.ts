@@ -85,7 +85,26 @@ let lspMetadata: any = null;
 try {
   const core = await import('@hyperfixi/core');
   parseFunction = core.parse;
-  fromCoreASTFn = core.fromCoreAST;
+
+  // `fromCoreAST` names semantic roles only for commands it has an explicit
+  // case for (`set`, `go`) unless a schema-driven inferrer is injected — 41 of
+  // the 43 role-bearing command names come from the front-end one. Bind it
+  // here so every call site downstream stays a one-argument call.
+  let inferRoles: unknown = null;
+  try {
+    ({ schemaRoleInferrer: inferRoles } = await import('@hyperfixi/core/multilingual'));
+  } catch {
+    console.error(
+      '[lokascript-ls] @lokascript/semantic not available — hover shows roles for ' +
+        '`set` and `go` only. Install the semantic package for full role inference.'
+    );
+  }
+  fromCoreASTFn = (node: unknown) =>
+    (core.fromCoreAST as (n: unknown, o?: unknown) => unknown)(
+      node,
+      inferRoles ? { inferRoles } : undefined
+    );
+
   // Interchange-aware LSP module
   interchangeLSP = await import('@hyperfixi/core/ast-utils');
   console.error('[lokascript-ls] @hyperfixi/core loaded — AST parsing + interchange LSP enabled');

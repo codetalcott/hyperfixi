@@ -1,5 +1,5 @@
 {
-  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND \u2014 static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
+  "$comment": "Engine/front-end boundary allowlist for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 1. Each row is a packages/core/src file importing @lokascript/semantic, /intent or /i18n, counted per import KIND — static-value is the real debt, static-type and typeof-import erase at build time, dynamic defers. The list ratchets DOWN only: a new file, a risen count in any kind, and a stale row all fail scripts/check-semantic-boundary.cjs.",
   "generated": "2026-08-30",
   "totals": {
     "static-value": 7,
@@ -11,11 +11,7 @@
     "api/hyperscript-api.ts": {
       "static-value": 1,
       "dynamic": 2,
-      "reason": "THE one that matters. `getSemanticAnalyzer()` builds the analyzer for every compile(), and `config.semantic` defaults true \u2014 so every English compile() runs the front-end first for the 32 commands not on parseCommandCore's skip list. Arc 1 step 2 replaces this with `hyperscript.use(frontEnd)`; the two dynamic imports (compileMultilingual, fromLSECode) are already deferred and go with it."
-    },
-    "ast-utils/interchange/from-core.ts": {
-      "static-value": 2,
-      "reason": "`getSchema` (semantic) + `inferRolesFromSchema` (intent) drive schema-based role inference for the AOT/LSP interchange. Arc 1 step 4 takes the inferrer by injection \u2014 every consumer (mcp-server's lsp-bridge, language-server, aot-compiler) already depends on semantic and can pass the default."
+      "reason": "THE one that matters. `getSemanticAnalyzer()` builds the analyzer for every compile(), and `config.semantic` defaults true — so every English compile() runs the front-end first for the 32 commands not on parseCommandCore's skip list. Arc 1 step 2 replaces this with `hyperscript.use(frontEnd)`; the two dynamic imports (compileMultilingual, fromLSECode) are already deferred and go with it."
     },
     "compatibility/browser-bundle-classic-i18n.ts": {
       "static-value": 1,
@@ -23,7 +19,7 @@
     },
     "compatibility/browser-bundle-multilingual.ts": {
       "typeof-import": 1,
-      "reason": "LEGITIMATE. A `typeof import(...)` type query only \u2014 the module itself is loaded lazily by getSemanticModule(). Target-state row."
+      "reason": "LEGITIMATE. A `typeof import(...)` type query only — the module itself is loaded lazily by getSemanticModule(). Target-state row."
     },
     "compatibility/browser-bundle-semantic-complete.ts": {
       "static-value": 1,
@@ -35,17 +31,21 @@
     },
     "compatibility/eval-hyperscript.ts": {
       "static-value": 1,
-      "reason": "The one compatibility row that is NOT target-state: evalHyperScript duplicates the API's semantic wiring rather than going through it. Falls out of Arc 1 step 2 \u2014 once the API takes a registered front-end, this should ask the API rather than build its own analyzer."
+      "reason": "The one compatibility row that is NOT target-state: evalHyperScript duplicates the API's semantic wiring rather than going through it. Falls out of Arc 1 step 2 — once the API takes a registered front-end, this should ask the API rather than build its own analyzer."
     },
     "multilingual/bridge.ts": {
       "static-type": 1,
       "typeof-import": 1,
       "dynamic": 1,
-      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 \u2014 the engine now owns that policy."
+      "reason": "The front-end module itself, and after Arc 1 step 3 the only core module allowed to import semantic. Already mostly deferred: one dynamic import plus type-only queries. Its static-value import (DEFAULT_CONFIDENCE_THRESHOLD) was removed in step 1 — the engine now owns that policy."
     },
     "multilingual/index.ts": {
       "static-type": 1,
       "reason": "Type-only. MultilingualHyperscript's public surface names SemanticNode/ASTNode. Front-end module; stays after Arc 1 step 3."
+    },
+    "multilingual/schema-roles.ts": {
+      "static-value": 2,
+      "reason": "LEGITIMATE and target-state. The schema-driven role inferrer `fromCoreAST` takes by injection (Arc 1 step 4). These two imports are the SAME two that ast-utils/interchange/from-core.ts used to hold — the step moved them from a file that must not import the front-end onto the front-end side of the line, so the static-value TOTAL is unchanged at 7. Both `multilingual/` rows are target-state under the ratchet's endpoint (compatibility/browser-bundle*.ts + multilingual/ only)."
     }
   }
 }

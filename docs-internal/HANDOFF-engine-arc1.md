@@ -3,7 +3,7 @@
 Paste the block below the `---` into a fresh session. Everything above it is
 orientation for a human.
 
-**Arc state:** steps 1 and 5 DONE and merged. Steps 2, 3, 4 and 6 remain.
+**Arc state:** steps 1, 4 and 5 DONE. Steps 2, 3 and 6 remain.
 Step 5's measurement moved twice in one session, so it is quoted below with
 both readings and a "re-measure first" instruction rather than a single number.
 
@@ -55,8 +55,13 @@ three files:
 | File | Kind | Step |
 | ---- | ---- | ---- |
 | `api/hyperscript-api.ts` | 1 static-value + 2 dynamic | 2 |
-| `ast-utils/interchange/from-core.ts` | 2 static-value (`getSchema`, `inferRolesFromSchema`) | 4 |
+| ~~`ast-utils/interchange/from-core.ts`~~ | ~~2 static-value~~ | **done — step 4** |
 | `compatibility/eval-hyperscript.ts` | 1 static-value | falls out of 2 |
+
+**Step 4 landed 2026-08-30 and corrected this table's arithmetic.** It did NOT
+remove 2 of the 7 static-value imports — it MOVED them, to
+`multilingual/schema-roles.ts`, which is on the target side of the ratchet. The
+total is still **7**; two files remain on the wrong side, both step 2's.
 
 **`parser/`, `runtime/`, `commands/`, `expressions/`, `types/` and `core/`
 import the front-end NOWHERE**, and a test asserts it. Arc 1 is a handful of
@@ -120,16 +125,23 @@ the answer** and is the safe place to start.
 
 ## Recommended order
 
-1. **Step 4 first** — `ast-utils/interchange/from-core.ts` takes its role
-   inferrer by injection. Independent of the decision above, removes 2 of the
-   7 static-value imports, and is the smallest remaining step. It IS
-   cross-package: `fromCoreAST` is exported from `index.ts` and called by
-   `mcp-server/src/tools/lsp-bridge.ts`, `language-server/src/server.ts` and
-   `aot-compiler/src/compiler/core-parser-adapter.ts` — all three call it with
-   one argument, and all three already depend on semantic, so they can pass
-   the default. Land the core change and the three consumers together; a split
-   lands one half green and the other broken.
-2. **Then the decision**, then steps 2/3/6 accordingly.
+1. ~~**Step 4 first**~~ — **DONE 2026-08-30.** `fromCoreAST(node, { inferRoles })`;
+   the schema-driven default is `schemaRoleInferrer` in
+   `packages/core/src/multilingual/schema-roles.ts`, and the three consumers bind
+   it at their module-load site so every downstream call stays one-argument.
+   Two things it measured that the brief had wrong are recorded in the plan's
+   step 4 and History; the one worth carrying forward is that the default
+   supplies roles for **41 of the 43** role-bearing command names, so "the
+   consumer can pass the default" is not optional politeness — omitting it is a
+   cliff, and the AOT consumer now throws rather than degrade.
+
+   It also found a **pre-existing** role-binding defect (traditional parse binds
+   `destination` to the marker word `on` in `toggle .active on #panel`), filed in
+   `PARSER_NEXT_STEPS.md`. **Do not fix it before the decision below** — it is an
+   instance of the same `args`-shape gap, so option 3 would delete the fix.
+
+2. **Then the decision**, then steps 2/3/6 accordingly. Nothing in this arc is
+   unblocked by anything else now: **the decision is the gate.**
 
 Arcs 2 and 3 are gated behind Arc 1 by the plan. Arc 7 was re-costed on
 2026-08-30 and is now known to be **one file** (`expressions/logical/index.ts`)

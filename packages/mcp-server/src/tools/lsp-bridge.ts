@@ -50,9 +50,21 @@ try {
   );
 }
 
+// Try to import the schema-driven role inferrer — the front-end half of
+// `fromCoreAST`. Without it the converter names roles for `set` and `go` only;
+// the other 41 role-bearing command names come from the command schemas.
+let roleInferrer: any = null;
+try {
+  ({ schemaRoleInferrer: roleInferrer } = await import('@hyperfixi/core/multilingual'));
+} catch {
+  console.error(
+    '[mcp:lsp-bridge] @hyperfixi/core/multilingual not available — hover role inference limited to `set` and `go`'
+  );
+}
+
 // Log capability summary
 console.error(
-  `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, parse=${!!parseFunction}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}`
+  `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, parse=${!!parseFunction}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}, roles=${!!roleInferrer}`
 );
 
 // Import error fixes registry
@@ -890,7 +902,10 @@ async function getHoverInfo(
     try {
       const ast = parseFunction(code);
       if (ast) {
-        const interchange = astToolkit.fromCoreAST(ast);
+        const interchange = astToolkit.fromCoreAST(
+          ast,
+          roleInferrer ? { inferRoles: roleInferrer } : undefined
+        );
         const nodes = Array.isArray(interchange) ? interchange : [interchange];
 
         // Build renderLSE callback if framework is available

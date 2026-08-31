@@ -631,6 +631,44 @@ true extent means building a real loop node with a body, mirroring
 `tryParseConditionalBlock` → `createConditionalNode`. That is the fix; this entry
 is the brief.
 
+### Role markers bind as roles in the traditional→interchange path (2026-08-30)
+
+Found while measuring Arc 1 step 4 of `ENGINE_MIGRATION_PLAN.md`; **pre-existing
+on `main`, verified against `main`'s converter, and unchanged by that step.**
+
+`toggle .active on #panel`, parsed traditionally and converted with `fromCoreAST`,
+yields:
+
+```
+roles: { patient: selector '.active', destination: identifier 'on' }
+```
+
+The `destination` is the MARKER WORD, and `#panel` — the thing it marks — appears
+in `args` but in no role at all. The traditional parser leaves prepositions in
+`args`; schema-driven inference binds positionally and so takes `on` for the first
+unbound role. (The semantic parse of the same source keeps prepositions OUT of
+`args` and binds `#panel` correctly — this is one concrete instance of the
+`args`-shape difference step 5 measured across 107 of 216 sources.)
+
+**It reaches generated code.** `aot-compiler`'s `command-transforms.ts` reads
+`node.roles` in two dozen places, so any AOT build of a marker-bearing command
+compiles against the marker string.
+
+Two candidate fixes, and the choice is not obviously local:
+
+1. **Teach the inference to skip role markers** — `inferRolesFromSchema` already
+   knows each role's `markerOverride`; the traditional path just never tells it
+   which args are markers. Cheapest, and fixes every command at once.
+2. **Converge the two `args` shapes** — this is option 3 of Arc 1's open decision
+   (see `HANDOFF-engine-arc1.md`). If traditional adopts the semantic shape,
+   this defect disappears with it rather than being patched around.
+
+Do NOT fix this before that decision is made: option 2 would delete the fix.
+
+Scope, unmeasured: `toggle X on Y` is confirmed. Every command whose schema has a
+marker role and whose surface uses the marker is a candidate (`add … to …`,
+`remove … from …`, `put … into …`, `send … to …`). Measure the set before fixing.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

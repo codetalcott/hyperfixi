@@ -450,6 +450,28 @@ and the parser loop that assumes it.
    moves to the multilingual module. Consumers: `mcp-server/lsp-bridge`,
    `language-server/server.ts`, `aot-compiler/core-parser-adapter.ts` — each
    already depends on semantic and passes the default.
+   — ✅ **DONE 2026-08-30**, with two of its own claims corrected:
+
+   - **The default is not a marginal fallback.** The code comment said it
+     covered "scroll, push, replace, process and any future command"; measured
+     over the corpus's 214 parsing sources, **43 command names receive roles and
+     41 of them come from the default** — only `set` and `go` have explicit
+     cases. A consumer that omits the inferrer loses roles for 41 commands, and
+     `aot-compiler`'s `command-transforms.ts` reads `node.roles` in two dozen
+     places. So the three consumers are wired at their module-load site (one
+     binding each, downstream call sites unchanged), the AOT one throws rather
+     than degrades, and the LSP two log the degradation.
+   - **It does not reduce the static-value count.** The brief said it "removes 2
+     of the 7"; the two imports MOVE, from `ast-utils/interchange/from-core.ts`
+     to the new `multilingual/schema-roles.ts`. Total stays **7**. That is still
+     the progress the arc wants — the ratchet's endpoint is
+     `compatibility/browser-bundle*.ts` + `multilingual/` only, and both rows are
+     now on the target side — but it is a move, not a deletion, and the baseline
+     says so.
+
+   Equivalence was proven rather than assumed: `main`'s converter vs the
+   injected one over both parse paths of every corpus source — **430
+   comparisons, 0 diffs**.
 5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
    the three anticipated outcomes was the answer.** Measured over the 233-source corpus, **and then RE-measured after the `and`
    fix below landed, which moved it**:
@@ -511,7 +533,12 @@ unchanged; `minimal`/`standard`/`classic` unchanged); the multilingual
 `--regression` gate — its 3,744 rows execute exactly the path step 6 rewrites,
 so run it locally before the PR, not in CI first.
 
-Blast radius: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
+Blast radius: **`fromCoreAST` is a published export of `@hyperfixi/core`, and
+step 4 changed its default behaviour** — an external caller passing one argument
+now gets roles for `set` and `go` only. The signature stays source-compatible, so
+this breaks silently rather than loudly; it is the one part of step 4 that
+reaches outside this repo. Every in-repo consumer was updated in the same change.
+Also: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
 values (`'semantic' | 'traditional' | 'lse'`, kept — step 6 makes `'semantic'`
 mean "the front-end produced the AST" rather than "the analyzer was consulted").
 
@@ -991,7 +1018,36 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
 
-  **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
+- **2026-08-30** — **Arc 1 step 4** landed: `fromCoreAST` takes its role
+  inferrer by injection, and the schema-driven default lives in
+  `multilingual/schema-roles.ts` — the front-end side of the boundary.
+  `ast-utils/interchange/from-core.ts` imports the front-end **nowhere**.
+
+  Both of the step's own claims were measured false first, and the step is
+  written up above with the corrections. In short: the default supplies roles
+  for **41 of the 43** role-bearing command names (not the four the comment
+  claimed), so omitting it is a cliff rather than a degradation; and the two
+  imports MOVE rather than disappear, leaving static-value at **7**.
+
+  Byte-equivalence with `main`'s converter was proven over both parse paths of
+  every corpus source — **430 comparisons, 0 diffs** — so this is a pure
+  refactor by measurement, not by assertion. Three new tests pin the injection
+  boundary in core (roles present with the inferrer, ABSENT without, and reached
+  through handler bodies and `if` branches) and one pins it end-to-end through
+  the AOT adapter; the AOT one was mutation-verified by dropping the injection.
+
+  Two things the step found and did not fix:
+
+  - **A pre-existing role-binding defect**, filed in `PARSER_NEXT_STEPS.md`:
+    `toggle .active on #panel` parsed traditionally binds `destination` to the
+    marker word `on`, leaving `#panel` in no role. Confirmed against `main`.
+    It is a concrete instance of the `args`-shape difference step 5 measured,
+    so **the fix depends on the open decision** — option 3 would delete it.
+  - **The two LSP consumers have no test covering the `fromCoreAST` role path**
+    at all (their hover tests assert only `toBeDefined()`). The AOT consumer is
+    now covered; those two are wired identically but unguarded.
+
+    **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
   the 233-source corpus, semantic-first vs traditional for English:
   **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail
   17.** None of step 5's three anticipated outcomes was the answer — the two

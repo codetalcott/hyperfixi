@@ -6,6 +6,13 @@
  * 'binary', 'possessive').
  *
  * This replaces the 444-line core-parser-adapter.ts in the AOT compiler.
+ *
+ * **Role inference is injected, not owned here.** Naming the semantic role an
+ * arg fills needs the command's `CommandSchema`, which lives in the
+ * multilingual front-end — so `fromCoreAST` takes a `RoleInferrer` and the
+ * engine keeps no dependency on it. Pass `schemaRoleInferrer` from
+ * `@hyperfixi/core/multilingual` for the stock behaviour; see Arc 1 step 4 of
+ * `docs-internal/ENGINE_MIGRATION_PLAN.md`.
  */
 
 import type {
@@ -18,14 +25,47 @@ import type {
   WhileNode,
   EventModifiers,
 } from './types';
-import { inferRolesFromSchema, type ValueAdapter } from '@lokascript/intent';
-import { getSchema } from '@lokascript/semantic';
 
 // The core parser AST is untyped from our perspective — we only need
 // the structural shape, not the exact imports (avoiding circular deps).
 interface CoreNode {
   type: string;
   [key: string]: unknown;
+}
+
+/**
+ * Names the semantic roles a command's positional args, modifiers and target
+ * fill — the one part of the conversion the engine cannot do alone, because it
+ * needs each command's `CommandSchema` from the multilingual front-end.
+ *
+ * Return null for "no roles" (no schema, or the schema bound nothing).
+ *
+ * The stock implementation is `schemaRoleInferrer` from
+ * `@hyperfixi/core/multilingual`. Without one, only the two commands with
+ * explicit cases below (`set`, `go`) get roles — measured over the engine
+ * corpus, that is 2 of the 43 command names that otherwise would.
+ */
+export type RoleInferrer = (
+  name: string,
+  args: readonly InterchangeNode[],
+  modifiers: Readonly<Record<string, unknown>> | undefined,
+  target: InterchangeNode | undefined
+) => Readonly<Record<string, InterchangeNode>> | null;
+
+export interface FromCoreOptions {
+  /** Schema-driven role inference for commands with no explicit case. */
+  readonly inferRoles?: RoleInferrer;
+}
+
+/**
+ * Convert a core parser AST node to an interchange node.
+ *
+ * @param node    the core parser's AST
+ * @param options `inferRoles` supplies schema-driven role naming; omit it and
+ *                the result carries roles only for `set` and `go`.
+ */
+export function fromCoreAST(node: CoreNode, options?: FromCoreOptions): InterchangeNode {
+  return convertNode(node, options?.inferRoles ?? null);
 }
 
 /**
@@ -42,31 +82,33 @@ function pos(node: CoreNode): Record<string, number> {
 }
 
 /**
- * Convert a core parser AST node to an interchange node.
+ * The recursion. `infer` is threaded rather than closed over, and is a REQUIRED
+ * parameter on every helper below, so a conversion path that forgets to pass it
+ * is a compile error rather than a silently role-less subtree.
  */
-export function fromCoreAST(node: CoreNode): InterchangeNode {
+function convertNode(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   if (!node) return { type: 'literal', value: null };
 
   switch (node.type) {
     case 'eventHandler':
-      return convertEventHandler(node);
+      return convertEventHandler(node, infer);
     case 'command':
-      return convertCommand(node);
+      return convertCommand(node, infer);
     case 'CommandSequence':
-      return convertCommandSequence(node);
+      return convertCommandSequence(node, infer);
     case 'Program': {
       const statements = (node.statements ?? []) as CoreNode[];
       if (statements.length === 0) {
         return { type: 'literal', value: null, ...pos(node) };
       }
       if (statements.length === 1) {
-        return fromCoreAST(statements[0]);
+        return convertNode(statements[0], infer);
       }
       // Multiple top-level features — convert first; LSP processes one region at a time
-      return fromCoreAST(statements[0]);
+      return convertNode(statements[0], infer);
     }
     case 'block':
-      return convertBlock(node);
+      return convertBlock(node, infer);
 
     // Error nodes from resilient parsing
     case 'errorCommand':
@@ -107,18 +149,18 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
       };
     case 'propertyAccess':
     case 'possessiveExpression':
-      return convertPossessive(node);
+      return convertPossessive(node, infer);
     case 'memberExpression':
-      return convertMember(node);
+      return convertMember(node, infer);
     case 'binaryExpression':
-      return convertBinary(node);
+      return convertBinary(node, infer);
     case 'callExpression':
-      return convertCall(node);
+      return convertCall(node, infer);
     case 'unaryExpression':
       return {
         type: 'unary',
         operator: node.operator as string,
-        operand: fromCoreAST((node.argument as CoreNode) ?? (node.operand as CoreNode)),
+        operand: convertNode((node.argument as CoreNode) ?? (node.operand as CoreNode), infer),
         ...pos(node),
       };
     case 'timeExpression':
@@ -143,7 +185,7 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
         type: 'positional',
         position: node.position as
           'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
-        ...(node.target ? { target: fromCoreAST(node.target as CoreNode) } : {}),
+        ...(node.target ? { target: convertNode(node.target as CoreNode, infer) } : {}),
         ...pos(node),
       };
     case 'positionalExpression':
@@ -151,7 +193,7 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
         type: 'positional',
         position: node.operator as
           'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random',
-        ...(node.argument ? { target: fromCoreAST(node.argument as CoreNode) } : {}),
+        ...(node.argument ? { target: convertNode(node.argument as CoreNode, infer) } : {}),
         ...pos(node),
       };
 
@@ -168,17 +210,17 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
 // CONVERSION HELPERS
 // =============================================================================
 
-function convertEventHandler(node: CoreNode): EventNode {
+function convertEventHandler(node: CoreNode, infer: RoleInferrer | null): EventNode {
   const event = (node.event ?? 'click') as string;
   const commands = (node.commands ?? node.body ?? []) as CoreNode[];
-  const body = commands.map(cmd => fromCoreAST(cmd));
+  const body = commands.map(cmd => convertNode(cmd, infer));
 
   const modifiers = buildEventModifiers(node);
 
   return { type: 'event', event, modifiers, body, ...pos(node) };
 }
 
-function convertCommand(node: CoreNode): InterchangeNode {
+function convertCommand(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const name = node.name as string;
 
   // Convert __ERROR__ command nodes to proper ErrorNode
@@ -193,19 +235,19 @@ function convertCommand(node: CoreNode): InterchangeNode {
   }
 
   if (name === 'if' || name === 'unless') {
-    return convertIfCommand(node);
+    return convertIfCommand(node, infer);
   }
   if (name === 'repeat') {
-    return convertRepeatCommand(node);
+    return convertRepeatCommand(node, infer);
   }
 
-  const args = ((node.args ?? []) as CoreNode[]).map(arg => fromCoreAST(arg));
-  const target = node.target ? fromCoreAST(node.target as CoreNode) : undefined;
+  const args = ((node.args ?? []) as CoreNode[]).map(arg => convertNode(arg, infer));
+  const target = node.target ? convertNode(node.target as CoreNode, infer) : undefined;
   const modifiers = node.modifiers
-    ? convertModifiers(node.modifiers as Record<string, CoreNode>)
+    ? convertModifiers(node.modifiers as Record<string, CoreNode>, infer)
     : undefined;
 
-  const roles = inferRoles(name, args, modifiers, target);
+  const roles = inferRoles(name, args, modifiers, target, infer);
 
   return {
     type: 'command',
@@ -219,24 +261,26 @@ function convertCommand(node: CoreNode): InterchangeNode {
   } as CommandNode;
 }
 
-function convertIfCommand(node: CoreNode): IfNode {
+function convertIfCommand(node: CoreNode, infer: RoleInferrer | null): IfNode {
   const args = (node.args ?? []) as CoreNode[];
   let condition: InterchangeNode;
   let thenBranch: InterchangeNode[];
   let elseBranch: InterchangeNode[] | undefined;
 
   if (node.condition) {
-    condition = fromCoreAST(node.condition as CoreNode);
-    thenBranch = ((node.thenBranch ?? node.then ?? []) as CoreNode[]).map(n => fromCoreAST(n));
+    condition = convertNode(node.condition as CoreNode, infer);
+    thenBranch = ((node.thenBranch ?? node.then ?? []) as CoreNode[]).map(n =>
+      convertNode(n, infer)
+    );
     elseBranch = node.elseBranch
-      ? (node.elseBranch as CoreNode[]).map(n => fromCoreAST(n))
+      ? (node.elseBranch as CoreNode[]).map(n => convertNode(n, infer))
       : node.else
-        ? (node.else as CoreNode[]).map(n => fromCoreAST(n))
+        ? (node.else as CoreNode[]).map(n => convertNode(n, infer))
         : undefined;
   } else {
-    condition = args[0] ? fromCoreAST(args[0]) : { type: 'literal', value: true };
-    thenBranch = extractBlockCommands(args[1]);
-    elseBranch = args[2] ? extractBlockCommands(args[2]) : undefined;
+    condition = args[0] ? convertNode(args[0], infer) : { type: 'literal', value: true };
+    thenBranch = extractBlockCommands(args[1], infer);
+    elseBranch = args[2] ? extractBlockCommands(args[2], infer) : undefined;
   }
 
   // 'unless' → negated condition
@@ -253,7 +297,7 @@ function convertIfCommand(node: CoreNode): IfNode {
   } as IfNode;
 }
 
-function convertRepeatCommand(node: CoreNode): InterchangeNode {
+function convertRepeatCommand(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const args = (node.args ?? []) as CoreNode[];
   if (args.length === 0) {
     return { type: 'repeat', body: [], ...pos(node) } as RepeatNode;
@@ -265,72 +309,76 @@ function convertRepeatCommand(node: CoreNode): InterchangeNode {
 
   switch (loopType) {
     case 'times': {
-      const count = args[1] ? fromCoreAST(args[1]) : undefined;
+      const count = args[1] ? convertNode(args[1], infer) : undefined;
       return {
         type: 'repeat',
         count,
-        body: extractBlockCommands(bodyBlock),
+        body: extractBlockCommands(bodyBlock, infer),
         ...pos(node),
       } as RepeatNode;
     }
     case 'for': {
       const itemName = (args[1]?.value ?? 'item') as string;
       const collection = args[2]
-        ? fromCoreAST(args[2])
+        ? convertNode(args[2], infer)
         : ({ type: 'identifier', value: '[]' } as const);
       return {
         type: 'foreach',
         itemName,
         collection,
-        body: extractBlockCommands(bodyBlock),
+        body: extractBlockCommands(bodyBlock, infer),
         ...pos(node),
       } as ForEachNode;
     }
     case 'while': {
       const condition = args[1]
-        ? fromCoreAST(args[1])
+        ? convertNode(args[1], infer)
         : ({ type: 'literal', value: true } as const);
       return {
         type: 'while',
         condition,
-        body: extractBlockCommands(bodyBlock),
+        body: extractBlockCommands(bodyBlock, infer),
         ...pos(node),
       } as WhileNode;
     }
     default:
-      return { type: 'repeat', body: extractBlockCommands(bodyBlock), ...pos(node) } as RepeatNode;
+      return {
+        type: 'repeat',
+        body: extractBlockCommands(bodyBlock, infer),
+        ...pos(node),
+      } as RepeatNode;
   }
 }
 
-function convertCommandSequence(node: CoreNode): InterchangeNode {
+function convertCommandSequence(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const commands = (node.commands ?? []) as CoreNode[];
   if (commands.length === 1) {
-    return fromCoreAST(commands[0]);
+    return convertNode(commands[0], infer);
   }
   return {
     type: 'event',
     event: 'click',
-    body: commands.map(cmd => fromCoreAST(cmd)),
+    body: commands.map(cmd => convertNode(cmd, infer)),
     ...pos(node),
   } as EventNode;
 }
 
-function convertBlock(node: CoreNode): InterchangeNode {
+function convertBlock(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const commands = (node.commands ?? []) as CoreNode[];
   if (commands.length === 1) {
-    return fromCoreAST(commands[0]);
+    return convertNode(commands[0], infer);
   }
   return {
     type: 'event',
     event: 'click',
-    body: commands.map(cmd => fromCoreAST(cmd)),
+    body: commands.map(cmd => convertNode(cmd, infer)),
     ...pos(node),
   } as EventNode;
 }
 
-function convertPossessive(node: CoreNode): InterchangeNode {
+function convertPossessive(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const object = node.object
-    ? fromCoreAST(node.object as CoreNode)
+    ? convertNode(node.object as CoreNode, infer)
     : ({ type: 'identifier', value: 'me' } as const);
   const property =
     typeof node.property === 'string'
@@ -340,15 +388,15 @@ function convertPossessive(node: CoreNode): InterchangeNode {
   return { type: 'possessive', object, property, ...pos(node) };
 }
 
-function convertMember(node: CoreNode): InterchangeNode {
+function convertMember(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const object = node.object
-    ? fromCoreAST(node.object as CoreNode)
+    ? convertNode(node.object as CoreNode, infer)
     : ({ type: 'identifier', value: 'me' } as const);
   const property =
     typeof node.property === 'string'
       ? node.property
       : node.property
-        ? fromCoreAST(node.property as CoreNode)
+        ? convertNode(node.property as CoreNode, infer)
         : ({ type: 'literal', value: '' } as const);
 
   return {
@@ -360,30 +408,33 @@ function convertMember(node: CoreNode): InterchangeNode {
   };
 }
 
-function convertBinary(node: CoreNode): InterchangeNode {
+function convertBinary(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   return {
     type: 'binary',
     operator: (node.operator ?? '') as string,
-    left: fromCoreAST(node.left as CoreNode),
-    right: fromCoreAST(node.right as CoreNode),
+    left: convertNode(node.left as CoreNode, infer),
+    right: convertNode(node.right as CoreNode, infer),
     ...pos(node),
   };
 }
 
-function convertCall(node: CoreNode): InterchangeNode {
+function convertCall(node: CoreNode, infer: RoleInferrer | null): InterchangeNode {
   const callee =
     typeof node.callee === 'string'
       ? ({ type: 'identifier', value: node.callee, name: node.callee } as const)
-      : fromCoreAST(node.callee as CoreNode);
-  const args = ((node.arguments ?? node.args ?? []) as CoreNode[]).map(a => fromCoreAST(a));
+      : convertNode(node.callee as CoreNode, infer);
+  const args = ((node.arguments ?? node.args ?? []) as CoreNode[]).map(a => convertNode(a, infer));
 
   return { type: 'call', callee, args, ...pos(node) };
 }
 
-function convertModifiers(modifiers: Record<string, CoreNode>): Record<string, unknown> {
+function convertModifiers(
+  modifiers: Record<string, CoreNode>,
+  infer: RoleInferrer | null
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(modifiers)) {
-    result[key] = fromCoreAST(value);
+    result[key] = convertNode(value, infer);
   }
   return result;
 }
@@ -402,12 +453,15 @@ function buildEventModifiers(node: CoreNode): EventModifiers {
   };
 }
 
-function extractBlockCommands(block: CoreNode | undefined): InterchangeNode[] {
+function extractBlockCommands(
+  block: CoreNode | undefined,
+  infer: RoleInferrer | null
+): InterchangeNode[] {
   if (!block) return [];
   if (block.type === 'block') {
-    return ((block.commands ?? []) as CoreNode[]).map(cmd => fromCoreAST(cmd));
+    return ((block.commands ?? []) as CoreNode[]).map(cmd => convertNode(cmd, infer));
   }
-  return [fromCoreAST(block)];
+  return [convertNode(block, infer)];
 }
 
 // =============================================================================
@@ -418,17 +472,19 @@ function extractBlockCommands(block: CoreNode | undefined): InterchangeNode[] {
  * Infer semantic roles from the core parser's positional args and modifiers.
  *
  * The core parser produces commands with positional args and modifier objects
- * but no named roles. Known commands have explicit cases below. Unknown
- * commands fall through to schema-driven inference (`inferRolesFromSchema`),
- * which consults each command's `CommandSchema` from `@lokascript/semantic`.
+ * but no named roles. `set` and `go` have explicit cases below — both are
+ * shapes no schema models (see each case for why). Everything else defers to
+ * the INJECTED `infer`, which is where the other 41 command names in the
+ * engine corpus get their roles.
  *
- * Returns null if no roles can be inferred (no schema and no explicit case).
+ * Returns null if no roles can be inferred (no inferrer, or it declined).
  */
 function inferRoles(
   name: string,
   args: InterchangeNode[],
   modifiers: Record<string, unknown> | undefined,
-  target: InterchangeNode | undefined
+  target: InterchangeNode | undefined,
+  infer: RoleInferrer | null
 ): Readonly<Record<string, InterchangeNode>> | null {
   const roles: Record<string, InterchangeNode> = {};
 
@@ -542,45 +598,12 @@ function inferRoles(
       break;
     }
 
-    default: {
-      // Fall back to schema-driven role inference (Option 4 — scroll, push,
-      // replace, process and any future command without an explicit case).
-      const schema = getSchema(name as Parameters<typeof getSchema>[0]);
-      if (!schema) return null;
-      const inferred = inferRolesFromSchema(
-        schema,
-        args,
-        modifiers as Readonly<Record<string, unknown>> | undefined,
-        target,
-        INTERCHANGE_ADAPTER
-      );
-      return Object.keys(inferred).length > 0
-        ? (inferred as Readonly<Record<string, InterchangeNode>>)
+    default:
+      // Every other command — the injected front-end inferrer, or no roles.
+      return infer
+        ? infer(name, args, modifiers as Readonly<Record<string, unknown>> | undefined, target)
         : null;
-    }
   }
 
   return Object.keys(roles).length > 0 ? roles : null;
 }
-
-/**
- * Adapter for `inferRolesFromSchema` operating on InterchangeNode values.
- * Identifier args carry the keyword in `name` (or `value` as a fallback for
- * contextReference-converted nodes). String modifier values are wrapped as
- * literal nodes; object modifier values pass through unchanged.
- */
-const INTERCHANGE_ADAPTER: ValueAdapter<InterchangeNode, InterchangeNode> = {
-  getIdentifierName(node: InterchangeNode): string | undefined {
-    if (node.type !== 'identifier') return undefined;
-    const ident = node as { name?: unknown; value?: unknown };
-    if (typeof ident.name === 'string' && ident.name !== '') return ident.name;
-    if (typeof ident.value === 'string') return ident.value;
-    return undefined;
-  },
-  convertValue(node: InterchangeNode): InterchangeNode {
-    return node;
-  },
-  createLiteralValue(text: string): InterchangeNode {
-    return { type: 'literal', value: text };
-  },
-};

@@ -20,6 +20,12 @@ import {
   type ParseToASTResult,
 } from './bridge';
 
+/**
+ * Schema-driven role inference for `fromCoreAST` — the engine takes it by
+ * injection so it need not depend on the front-end (Arc 1 step 4).
+ */
+export { schemaRoleInferrer } from './schema-roles';
+
 // Re-export bridge components
 export {
   SemanticGrammarBridge,
