@@ -1063,6 +1063,100 @@ Not on the convergence queue, and not urgent: the two confirmed rows are a
 non-default path and a command whose bare form works. Filed so the measurement
 is not re-derived.
 
+### A dropped handler body is silently discarded (2026-08-31)
+
+**`on click qqqq` compiles to `ok: true` with an EMPTY handler, no error, no
+warning, `recovered: undefined`.** A typo in a command name gives the user a
+handler that does nothing, silently. This is the same class as the semantic
+truncation fixed on 2026-08-30 — but that fix was on the semantic adoption
+path only, and these are the TRADITIONAL parser's own recovery paths, which
+have no coverage gate at all. **The class is not closed.**
+
+Three failure modes, all `success: true` with zero diagnostics:
+
+| input | result |
+| ----- | ------ |
+| `on click qqqq` | `commands: []` — empty handler |
+| `on click unless x showLoginForm` | `commands: []` — empty handler |
+| `on click tell #f submit` | `commands: []` — empty handler |
+| `on click log "a" @@@ ###` | `log "a"`, tail dropped |
+| `log }}} broken {{{` (bare) | `log` with args `[identifier "}"]`, rest dropped |
+| `on click repeat 3 times { log "x" }` | parses, **runs the body ONCE instead of 3×** |
+| `on click repeat for item in [1,2] { log item }` | parses, **logs one empty string** |
+
+The last two are the worst: not a dropped tail but a silent WRONG ANSWER on a
+surface the repo's own docs recommend (all five of `repeat`'s `syntax` lines use
+brace blocks).
+
+**Three sites, all in `parser.ts`'s `parseCommandListUntilTerminator`:**
+
+1. `if (!parsedCommand) { break; }` — the body loop gives up with `commands`
+   empty and records nothing.
+2. The `catch` above it does `this.error = savedError`, deliberately DISCARDING
+   the parse error, and never pushes to `this.errors`.
+3. The inner `while (… ) { this.advance(); }` loop — commented
+   `⚠️ Skipping unexpected token` — walks past anything it cannot place.
+
+The bare-command argument loop has the same shape (hence `log }}} broken {{{`).
+
+**The signal already exists and is simply not raised.** `ParseResult.recovered`
+(added by #784) is set in exactly one place, `Parser.parse()`, iff
+`this.errors` is non-empty — and the recovery paths above restore the SINGULAR
+`this.error` without ever pushing to the plural array. So the fix is to push a
+diagnostic at those three sites rather than to invent a mechanism.
+
+**Blast radius is the reason this is filed rather than fixed in the same
+change.** `compileSync` maps `parseResult.errors` onto its own `errors`, so
+raising them turns a large number of currently-silent parses into
+diagnostics-carrying ones. That reaches the shipped-sources allowlist ratchet,
+the language server, and every consumer that treats a non-empty `errors` as
+failure. Measure how many corpus and `examples/**` sources newly report
+`recovered` BEFORE choosing between "raise an error" and "raise a warning".
+
+Gate: `packages/core/src/parser/__tests__/documented-examples.test.ts` pins the
+19 affected documented examples. It deliberately CANNOT see the dropped-tail and
+misparse modes — its last test pins that blind spot, and is designed to fail
+once this defect is fixed.
+
+### 19 documented `metadata.examples` do not parse (2026-08-31)
+
+Found by asking what the parse-path convergence triage's **`both-fail 19`** (19
+corpus sources neither path parses) actually were — a bucket that arc had never
+opened. All 19 are `metadata.examples` strings, i.e. this repo's own documented
+examples, shipped in docs, MCP `get_command_docs`, and LSP hover.
+
+**A methodology warning first, because it inverted the answer.** Checked with a
+naive `_hyperscript.parse(src)` in a try/catch, **all 19 read as
+upstream-VALID**. Checked with the repo's own oracle — `parse(src).errors`,
+which also folds in the tokenizer's throw channel — **all 19 invert to
+upstream-rejected**. That is the exact trap `canonical-validity.ts` documents in
+its own header ("the split channel misclassified 38/64 residual pairs as valid
+in a try/catch-only harness"). Use `loadCanonicalParser()`; never
+`try { hs.parse(x) }`.
+
+The 19, after triage (bare vs wrapped in `on click …`, both engines):
+
+| class | n | rows |
+| ----- | - | ---- |
+| **harness artifact** — only legal inside a feature, both engines agree wrapped | 4 | `pseudo-command` ×4 |
+| **docs defect, brace blocks** — and a silent MISPARSE when wrapped | 4 | `repeat` ×2, `break`, `continue` |
+| **docs defect, names a non-command** | 3 | `unless … showLoginForm` ×2, `tell … submit` |
+| **declared in `syntax`, unimplemented** | 5 | `render … with (…)` ×3, `settle for <t>`, `take … and put it on …` |
+| **real parser bug** | 2 | `install X on <selector>` ×2 |
+| **bare-only `then` seam** | 1 | `start view transition using "…" then …` |
+
+Two worth acting on beyond the docs:
+
+- **`install X on <selector>` is a parser bug, not a docs defect.**
+  `install Draggable on me` and `install Draggable on the first <div/>` both
+  parse; `install Draggable on #box` and `install Draggable on <#box/>` do not.
+  A plain selector is the form the command's own `syntax` line shows and the one
+  a user is most likely to write.
+- **`repeat`'s brace form is documented in all FIVE of its `syntax` lines** and
+  is not hyperscript in either engine. `repeat … end` is the real form. This is
+  the docs defect the 2026-07-29 sweep recorded as "being fixed in the arc's own
+  diff" (see History) — **it was not fixed**; that claim is stale.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples
