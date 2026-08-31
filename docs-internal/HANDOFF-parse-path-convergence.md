@@ -1,5 +1,111 @@
 # Handoff — converging the two English parse paths (Arc 1, step 5's sequel)
 
+> ## START HERE — fresh-session brief (2026-08-31)
+>
+> **Queue items 1–5 are DONE and merged (#1016–#1021).** What remains is below;
+> paste the block after the `---` into a fresh session. Everything above that
+> line is orientation for a human.
+>
+> **Provenance caveat.** Those six PRs were written AND merged by the agent, on
+> the user's explicit instruction, with CI green on every one but **no human
+> review**. Four touch `parser/parser.ts` or the adapter — the engine's hottest
+> files — and two moved the AST-equivalence baseline. Worth a human read before
+> building on them.
+>
+> ### What is left, in the order I would take it
+>
+> 1. **`hide <button/>` THROWS on the default path** — a LIVE bug on a
+>    documented command example, filed in `PARSER_NEXT_STEPS.md` with three
+>    candidate fix sites analysed. Highest value, and independent of everything
+>    else. **Read the filing before touching it**: the obvious fix (strip the
+>    brackets) breaks `make <div.card/>`, where the same syntax is creation
+>    markup rather than a query.
+> 2. **Item 6 — `implicit-me` (7 rows).** The one family where NEITHER side is
+>    clearly right, so it likely wants an owner decision rather than a fix:
+>    `blur`, `close`, `focus`, `open`, `reset`, `settle` (bare) inject a `me`
+>    arg on the semantic path and leave args empty on the traditional one, plus
+>    `transition opacity to 0.5` (`modifiers.on`). The question is whether the
+>    default belongs in the AST or in the runtime.
+> 3. **Residual item-5 rows** — query-literal VALUE representation
+>    (`button` + `fromQuery` vs raw `<button/>`; same root cause as item 1
+>    above, so they may close together) and the template-literal backticks
+>    (`log \`t ${1}\``).
+> 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
+>    `packages/semantic` tracking spans; filed, not faked.
+> 5. **Arc 2 step 2+** — the seven `RENAME_PAIRS` Arc 0 pinned
+>    (`binaryExpression`/`binary`, `eventHandler`/`event`, …). Step 1 is done
+>    (#1018); this is the actual alias-normalisation work, and it is what the
+>    remaining 14 `node-type` differences are.
+>
+> ### Do not re-derive these
+>
+> - **`settle`'s `isBlocking` disagreement is INERT.** Real (semantic is right;
+>   the traditional generic path hardcodes `false`), but nothing in the
+>   monorepo branches on that field. Scored and deliberately left.
+> - **`swap`'s `method="over"` is NOT a defect** — it is swapSchema's
+>   `methodCarrier` working as designed.
+> - **`morph` and `pick`** bind a marker word as a role, but the SEMANTIC parser
+>   cannot parse those surfaces either, so there is no oracle for the right
+>   shape. Deeper defect; left with reasons.
+> - **`tokensConsumed` is input length, not comprehension.** A resync fix keyed
+>   on it is measured dead.
+>
+> ### Traps that cost time this session
+>
+> - **A convergence triage is blind to defects both paths SHARE.** `same`
+>   includes "agree wrongly", and the 27 `skipSemanticParsing` commands can only
+>   ever report `same`. Use the triage to SIZE work; use per-consumer audits and
+>   EXECUTION to find defects. (The `hide <button/>` throw was found by running
+>   the code — both paths produce a plausible selector node; only one is
+>   executable.)
+> - **A moved AST-equivalence baseline must be proven before regenerating.**
+>   Single-file swap against `main` over the corpus, and check the diff is
+>   position-only / structure-only. "A gate regenerated to go green is a gate
+>   deleted with extra steps."
+> - **`npm run typecheck`, never bare `npx tsc --noEmit`** — only the script
+>   covers `tools/`. CI caught a TS2322 that a bare tsc run missed.
+> - **The mock in `__test-utils__/parser-context-mock.ts` can turn a logic error
+>   into a 4 GB OOM** whose tests come back `pending` while vitest still reports
+>   `success: true`. Its `parsePrimary` does not advance the token position, so
+>   any consumption loop whose predicate stays true spins forever. If a run
+>   exits non-zero with every file "passed", diff per-file test STATUSES against
+>   a reverted run.
+>
+> ---
+>
+> MISSION: continue the parse-path convergence arc.
+> `docs-internal/HANDOFF-parse-path-convergence.md` is the brief and
+> `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
+> "START HERE" block first and do not re-derive what it marks as settled.
+>
+> Start with the LIVE bug: `hide <button/>` throws
+> `SyntaxError: Invalid selector <button/>` in the DEFAULT configuration, on one
+> of the repo's own documented command examples. The filing in
+> `PARSER_NEXT_STEPS.md` has the measurement and three analysed fix sites; it
+> recommends core's adapter and warns why an unconditional bracket-strip is
+> wrong. Then item 6 (`implicit-me`), which probably needs an owner decision
+> rather than a fix.
+>
+> **Re-run the measurement before costing anything** —
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. As of 2026-08-31 on
+> `main`: same **137** · differ **77** · trad-only 0 · sem-only 0 · both-fail 19,
+> with families `semanticRoles-added` 77, `field-only-trad` 200/43,
+> `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12, `position` 36/10,
+> `value` 9, `implicit-me` 7, `arity` 1. These numbers move with every fix; the
+> tool is the authority, not this paragraph.
+>
+> A parser change needs the multilingual gate run LOCALLY before pushing
+> (~10 min): `npm run test:multilingual:build-deps` → `npm run populate --prefix
+> packages/patterns-reference` → `cd packages/testing-framework && npx tsx
+> src/multilingual/cli.ts --full --bundle browser-priority --regression`. Do not
+> commit the regenerated `patterns.db`. Never `git stash` in this tree.
+>
+> Every step is a measurement first, and it is allowed to falsify the step.
+> That habit produced everything of value here: across six PRs it killed a
+> proposed fix, voided a queue item, corrected a filing's own instruction, and
+> scored 1 of 9 plan hypotheses correct. When it falsifies something, correct
+> the doc in the SAME PR, struck through in place.
+
 **Owner decision, 2026-08-30: converge.** Of the three answers Arc 1 step 5
 posed, the owner chose the third — triage the differing ASTs, teach each path
 the shapes worth keeping, and only then let step 6 delete the in-loop semantic
