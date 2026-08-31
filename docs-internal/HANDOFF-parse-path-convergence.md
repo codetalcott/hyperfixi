@@ -12,66 +12,66 @@
 > files — and two moved the AST-equivalence baseline. Worth a human read before
 > building on them.
 >
+> ### Landed 2026-08-31 — do not redo (#1023–#1026)
+>
+> 1. ~~`hide <button/>` THROWS on the default path~~ — **#1023**, in
+>    `packages/semantic`'s `convertSelector`. The filing's recommended fix site
+>    was measured WRONG (core's adapter is one of four `buildAST` consumers;
+>    the multilingual bundles and R2 validator bypass it) and its stated blocker
+>    for the right site was measured false (`raw` is what keeps `make` working,
+>    so one command-agnostic shape serves both meanings). Also closed the
+>    query-literal half of old item 3.
+> 2. ~~Item 6 — `implicit-me`~~ — **#1024**, owner DECIDED: the injected default
+>    is **relocated, not duplicated** — held back from `args`/`modifiers` (the
+>    SYNTAX surface) and kept on `semanticRoles` (the SEMANTICS surface). The
+>    runtime stays the single executable home of every default. The class was
+>    3× the family: 22 schema roles across 21 commands, most invisible to the
+>    triage because they are on `skipSemanticParsing`. Mechanism already
+>    existed — the matcher's `implicit: true` tag. (The "mark it in the AST"
+>    route has a fossil: core's `implicitTarget` + `withImplicitTarget`, zero
+>    callers, zero readers.)
+> 3. **The `both-fail 19` bucket, opened for the first time** — **#1025**. All
+>    19 are the repo's OWN `metadata.examples`, shipped in docs, MCP
+>    `get_command_docs` and LSP hover, and nothing asserted any of the 205
+>    parse. Now gated (`documented-examples.test.ts`), ratcheting both ways.
+> 4. **The parser reports the input it discards** — **#1026**. `on click qqqq`
+>    compiled to `ok: true` with an EMPTY handler and zero diagnostics; a typo
+>    gave you a handler that silently does nothing. Five sites across TWO
+>    functions now record it. Same commit fixed the shipped-sources gate to walk
+>    `git ls-files` rather than the working tree.
+>
 > ### What is left, in the order I would take it
 >
-> 1. ~~**`hide <button/>` THROWS on the default path**~~ — **FIXED
->    2026-08-31**, in `packages/semantic`'s `convertSelector`. The filing's
->    recommendation (option 2, core's adapter) was measured WRONG — core's
->    adapter is one of several `buildAST` consumers, and the multilingual
->    bundles and the R2 execution validator bypass it — and its stated blocker
->    for option 1 ("the converter must know the command") was measured false:
->    `raw` is what keeps `make` working, so one command-agnostic shape serves
->    both meanings, exactly as the traditional parser already does. Story and
->    both corrections on the entry in `PARSER_NEXT_STEPS.md`. **It also closed
->    the query-literal half of item 3 below** (`value` family 9 → 3,
->    `field-only-trad:fromQuery` 6 → 0).
-> 2. ~~**Item 6 — `implicit-me` (7 rows).**~~ — **DECIDED AND DONE 2026-08-31.**
->    Owner chose: the injected default is **relocated, not duplicated** — held
->    back from `args`/`modifiers` (the SYNTAX surface, which records what the
->    author wrote) and kept on `semanticRoles` (the SEMANTICS surface, where a
->    consumer reads the resolved target). The runtime stays the single
->    executable home of every default. Triage family 7 → 0.
+> **Two threads now.** Items 1–2 are the parser-correctness thread that came out
+> of opening `both-fail`; items 3–5 are the original convergence thread. The
+> first thread is live user-visible defects and is worth more per hour.
 >
->    Three measurements decided it, and the first reframed the question:
->
->    - **The class is 3× bigger than this family.** 22 schema roles across 21
->      commands declare a `default` (20 `me`, plus `by: 1` on
->      increment/decrement). The triage saw only 7 because `toggle`, `add`,
->      `remove`, `increment`, `trigger`, `measure` … are on
->      `skipSemanticParsing` — their injections never reach the core path but DO
->      reach every `buildAST` consumer (multilingual bundles, R2 validator,
->      MCP). So any answer had to be a policy for the class, not a fix for 7
->      rows.
->    - **The runtime already carries every one of them.** All 7 rows execute
->      identically with args empty; `toggle` behaves identically with and
->      without `on: me`; `increment.ts` has `amount = 1`. Injecting into the AST
->      would put the same default table in two live places AND oblige every
->      other AST producer (traditional, hybrid template, lite, AOT) to inject it
->      too, or consumers still could not rely on it.
->    - **The "mark it in the AST" route has a fossil.** Core already has an
->      `implicitTarget` field with builder plumbing (`withImplicitTarget`) and
->      **zero callers, zero readers** — a previous attempt at exactly that,
->      dead on the vine. The mechanism used instead already existed and is live:
->      the matcher's `implicit: true` tag, which the multilingual renderers
->      read to suppress an injected `me` across 24 languages.
->
->    Implementation is one predicate (`isImplicitValue`) applied at the three
->    surfaces that build args/modifiers — `getRole` (covers the declarative
->    `buildFromAstShape` and the hand-written mappers), `goMapper`'s direct
->    reads, and `buildGenericCommand`. `semanticRoles` reads the full role map
->    and is deliberately untouched.
-> 3. **Residual item-5 rows** — ~~query-literal VALUE representation
->    (`button` + `fromQuery` vs raw `<button/>`; same root cause as item 1
->    above, so they may close together)~~ **closed with item 1, as predicted**;
->    what remains is the template-literal backticks (`log \`t ${1}\``). The
->    `value` family is now 3 sites: that one, plus the two `settle` `isBlocking`
->    rows the block below marks INERT.
+> 1. **`examples/behaviors/recipes.html` — upstream ACCEPTS, we drop.**
+>    `show <blockquote/> in the next <div/> when <cond>` parses on
+>    hyperscript.org; we keep the `show` and discard BOTH the `in <scope>`
+>    qualifier and the `when` filter, so the shipped example shows every
+>    blockquote instead of filtering. The single highest-value fix on the board:
+>    a real parser gap, with an oracle, on a shipped page. Allowlisted in
+>    `shipped-sources-validity.json` with its measured verdict.
+> 2. **The `recovered` false positive, which BLOCKS strengthening the new gate.**
+>    `if x > 5 then add .active` parses CORRECTLY and still reports
+>    `Expected 'end' after if block` — on `main`, before #1026, across 11 corpus
+>    sources of the single-line `if`/`unless` family. Measured: switching
+>    `documented-examples.test.ts` to reject `recovered` takes its failure list
+>    from 19 to 27, and **all 8 additions are this false positive**. Clean it
+>    first, then strengthen the gate and shrink its allowlist.
+>    Also open from #1025's triage: **`install X on <selector>` is a parser bug**
+>    (`install Draggable on me` and `on the first <div/>` parse; `on #box` and
+>    `on <#box/>` do not).
+> 3. **Residual item-5 rows** — the template-literal backticks
+>    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
+>    `settle` `isBlocking` rows marked INERT below.
 > 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
 >    `packages/semantic` tracking spans; filed, not faked.
 > 5. **Arc 2 step 2+** — the seven `RENAME_PAIRS` Arc 0 pinned
 >    (`binaryExpression`/`binary`, `eventHandler`/`event`, …). Step 1 is done
->    (#1018); this is the actual alias-normalisation work, and it is what the
->    remaining 14 `node-type` differences are.
+>    (#1018); this is the actual alias-normalisation work, and it is what 12 of
+>    the 14 remaining `node-type` differences are.
 >
 > ### Do not re-derive these
 >
@@ -106,6 +106,27 @@
 >   correct`. Read an unexpected ratchet trip before regenerating it: it is
 >   equally likely to be your improvement or your regression, and the band names
 >   tell you which.
+> - **When local and CI disagree, READ THE LOG FIRST.** #1026 failed a gate in
+>   CI that passed locally. I spent four wrong hypotheses on it — stale `dist`,
+>   my invocation, a moved merge base, ESM-vs-CJS — before the log answered it
+>   in one line. The cause was `examples/vite-plugin-multilingual/` being
+>   GITIGNORED: the gate walked the working TREE, so it scored 10 files CI never
+>   sees (183 local vs 173 CI). `git ls-files <path>` would have found it in
+>   seconds, and CLAUDE.md already names the class ("working tree ≠ clean
+>   checkout", #862/#863, two round-trips). GitHub will not release a job log
+>   until the whole run finishes — wait for it rather than theorising against a
+>   black box.
+> - **A local/CI denominator gap is unfixable from an allowlist**, which is how
+>   that one surfaced: WITH the entry the gate failed in CI as stale, WITHOUT it
+>   it failed locally as new. When no allowlist state satisfies both, the
+>   DENOMINATOR is the bug. The sibling `shipped-examples-execution` gate had
+>   solved this since #862; the two silently disagreed for a year.
+> - **`ok: true` is not evidence of comprehension, and a gate keyed on it is
+>   weak.** The `documented-examples` gate was mutation-tested and FAILED its
+>   behavioural row — adding `log }}} totally broken {{{` to a real command does
+>   not redden it, because the parser drops the tail and the example still
+>   "parses". That blind spot is now pinned as an assertion in the gate itself
+>   rather than left implied.
 > - **A moved AST-equivalence baseline must be proven before regenerating.**
 >   Single-file swap against `main` over the corpus, and check the diff is
 >   position-only / structure-only. "A gate regenerated to go green is a gate
@@ -126,16 +147,27 @@
 > `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
 > "START HERE" block first and do not re-derive what it marks as settled.
 >
-> The LIVE `hide <button/>` bug is FIXED (item 1 above) — start at item 2.
+> **#1023–#1026 are landed; start at the top of "What is left".** That is the
+> `recipes.html` parser gap — upstream accepts a surface we silently truncate.
+> The old items 1, 2 and the query-literal half of 3 are done; do not redo them.
 >
 > **Re-run the measurement before costing anything** —
-> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After the
-> query-literal fix AND the implicit-default fix: same **137** · differ **77** ·
-> trad-only 0 · sem-only 0 · both-fail 19, with families `semanticRoles-added`
-> 77, `field-only-trad` 194/43, `field-only-sem` 76/48, `node-type` 14,
-> `marker-in-args` 12, `position` 36/10, `value` 3, `arity` 1. `implicit-me` is
-> gone from the table. These numbers move with every fix; the tool is the
-> authority, not this paragraph.
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. As of 2026-08-31
+> after all four PRs: same **137** · differ **77** · trad-only 0 · sem-only 0 ·
+> both-fail 19, with families `semanticRoles-added` 77, `field-only-trad`
+> 194/43, `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12,
+> `position` 36/10, `value` 3, `arity` 1. `implicit-me` is gone from the table.
+> These numbers move with every fix; the tool is the authority, not this
+> paragraph.
+>
+> **`both-fail 19` is now understood and is NOT parser gaps** — all 19 are the
+> repo's own `metadata.examples`, triaged in `PARSER_NEXT_STEPS.md` and gated by
+> `documented-examples.test.ts`. Do not re-open that bucket; read the filing.
+>
+> **The second gate set matters now.** A change touching the parser's recovery
+> paths moves `shipped-sources-validity` and `shipped-examples-execution`, whose
+> allowlists carry measured upstream verdicts. Both derive their corpus from
+> `git ls-files` — keep it that way.
 >
 > Note the top-line `differ` did NOT move, and that is expected: the fix removed
 > difference SITES from sources that still differ in metadata. Read the family
@@ -148,9 +180,14 @@
 > commit the regenerated `patterns.db`. Never `git stash` in this tree.
 >
 > Every step is a measurement first, and it is allowed to falsify the step.
-> That habit produced everything of value here: across six PRs it killed a
-> proposed fix, voided a queue item, corrected a filing's own instruction, and
-> scored 1 of 9 plan hypotheses correct. When it falsifies something, correct
+> That habit produced everything of value in this arc. Across ten PRs it has
+> killed a proposed fix, voided a queue item, scored 1 of 9 plan hypotheses
+> correct, and — in the 2026-08-31 session alone — falsified **four** written
+> claims: a filing's recommended fix site (the adapter is one of four `buildAST`
+> consumers), a filing I had written myself an hour earlier (it named the wrong
+> function), an oracle choice that inverted the answer on all 19 `both-fail`
+> rows (`try { hs.parse() }` vs `parse().errors`), and a gate-walking bug a
+> sibling gate had already fixed in #862. When it falsifies something, correct
 > the doc in the SAME PR, struck through in place.
 
 **Owner decision, 2026-08-30: converge.** Of the three answers Arc 1 step 5
