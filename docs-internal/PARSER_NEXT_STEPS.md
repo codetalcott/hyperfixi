@@ -857,6 +857,36 @@ structural**, so the baseline regeneration is earned rather than a gate
 re-blessed to go green. Pinned by `command-span.test.ts` (mutation-verified,
 with a non-vacuity guard on its own sweep).
 
+### Semantic-built nodes carry no NESTED positions (2026-08-31)
+
+`@lokascript/semantic`'s `buildAST` emits no position fields: nested argument
+nodes come back with `start`/`end`/`line`/`column` **undefined**, and the
+command node's `start: 0, end: 0, line: 1` is `normalizeBuiltNode`'s
+placeholder, not data.
+
+The COMMAND level is fixed (see the convergence brief's item 4): the parser now
+stamps `[commandToken.start, lastConsumedToken.end]`, which is exact because the
+adoption coverage gate guarantees the analyzer consumed the whole remainder. The
+two parse paths now agree on command spans, and the `position` family across the
+corpus fell from **242 sites / 79 sources to 38 / 12**.
+
+The residual 38 are all NESTED, and they cannot be fixed the same way. There is
+no single offset to apply:
+
+- most nested nodes have no positions at all, so there is nothing to shift;
+- the ones that DO arrive come from the adapter's `parseExpressionString`, which
+  parses each role value as its own substring — their offsets are relative to
+  that value, not to the source (`call myFunction()` reports `callee.start = 0`
+  where the traditional parser reports 5).
+
+So this needs the semantic parser to track real spans through pattern matching
+and role capture, and to report them on the built node — a `packages/semantic`
+change, not a core one. Reproduce the residual with
+`packages/core/tools/triage-parse-paths.ts --kind=position`.
+
+Consumers affected: LSP hover and diagnostic ranges are command-accurate now but
+argument-blind on the semantic path.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

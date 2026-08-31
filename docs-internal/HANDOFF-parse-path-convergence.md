@@ -203,13 +203,25 @@ The rest are genuine defects, and they are **not all on one side**:
      `PARSER_NEXT_STEPS.md`). One site, 19 commands, 183/183 correct after.
      This had to come first: nothing can converge onto an oracle that is wrong
      for a quarter of its rows.
-   - **Defect (b): the semantic path emits zeros** — `start 0, end 0, line 1`,
-     stamped as defaults by `normalizeBuiltNode`. Still open, and now it has a
-     usable oracle. The coverage gate from queue item 1 helps here: an adopted
-     parse provably consumed `remainingInput` in FULL, and that slice runs from
-     the command token to end-of-source, so the span is computable rather than
-     guessed. Nested arg positions need offsetting by the same amount; `line`
-     and `column` need a newline count over the prefix.
+   - **Defect (b): the semantic path emitted zeros — FIXED at the COMMAND
+     level.** `buildAST` emits no positions at all (nested args come back
+     `undefined`; the command's `[0,0]` is `normalizeBuiltNode`'s placeholder),
+     so there was nothing to offset — the information did not exist. The
+     coverage gate from item 1 made it derivable instead: an adoption means the
+     analyzer consumed `remainingInput` in FULL, so the command spans
+     `[commandToken.start, lastConsumedToken.end]`. The two paths now agree
+     exactly. **Effect: the `position` family fell from 242 sites / 79 sources
+     to 38 / 12.**
+
+     (End is the last consumed TOKEN, not the raw input length — measured:
+     `log "x"   ` would otherwise report end 10 where traditional reports 7.)
+
+   - **Still open: NESTED argument positions** (the residual 38 sites / 12
+     sources). `buildAST` never produced them, and the few that do arrive — via
+     the adapter's expression parser — are relative to each value's OWN
+     substring rather than to the source, so there is no single offset to
+     apply. Carrying them needs the semantic parser to track spans, which is a
+     `packages/semantic` change. Filed, not faked.
 5. **The residual real defects** — the table above, smallest first.
 6. **`implicit-me`** last; it is the only family where neither side is
    obviously wrong.

@@ -3518,7 +3518,35 @@ export class Parser {
         while (!this.isAtEnd()) {
           this.advance();
         }
-        return semanticResult;
+
+        // Stamp the real span. `buildAST` emits NO positions — nested args come
+        // back `undefined` and the command node's `[0, 0]` is
+        // `normalizeBuiltNode`'s placeholder — so every semantically-adopted
+        // command used to report `start 0, end 0, line 1` regardless of where it
+        // actually sat. LSP hover and diagnostic ranges read these.
+        //
+        // The span is exact rather than estimated, and only because of the
+        // coverage gate above: an adoption means the analyzer consumed
+        // `remainingInput` IN FULL, and `getRemainingInput()` slices from this
+        // command's token to the end of the source. So the command runs from
+        // `commandToken.start` to the end of the input, and the token carries
+        // the line/column the traditional parser would have reported.
+        //
+        // Nested argument positions stay absent: `buildAST` never produced them,
+        // so there is nothing here to offset. Carrying them needs the semantic
+        // parser to track spans — filed, not faked.
+        if (typeof commandToken.start !== 'number') return semanticResult;
+        // End at the last CONSUMED TOKEN, not at the raw input length: the
+        // source may carry trailing whitespace, and `log "x"   ` would
+        // otherwise report an end of 10 where the traditional parser reports 7.
+        const lastToken = this.previous();
+        return {
+          ...semanticResult,
+          start: commandToken.start,
+          end: lastToken?.end ?? commandToken.end ?? commandToken.start,
+          line: commandToken.line ?? semanticResult.line,
+          column: commandToken.column ?? semanticResult.column,
+        };
       }
       // Fall through to traditional parsing
     }
