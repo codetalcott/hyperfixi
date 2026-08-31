@@ -97,7 +97,6 @@ describe('the generic command tail delegates to buildAST', () => {
     'call foo()',
     'copy "hello"',
     'render #tpl',
-    'live #out',
     'behavior Foo',
   ];
 
@@ -112,6 +111,21 @@ describe('the generic command tail delegates to buildAST', () => {
       true
     );
     expect(shapeOf(attempt.node)).toBe(viaBuilder);
+  });
+
+  it('refuses `live #out` — its only pattern is a truncating prefix-parse', () => {
+    // `live #out` used to be a SURFACES row, and it passed by comparing two
+    // IDENTICALLY TRUNCATED nodes: liveSchema declares no roles, so the
+    // pattern matched the bare keyword at confidence 1.0, `#out` landed in no
+    // role, and both the builder and the adapter produced `live` with empty
+    // roles. The adoption coverage gate now rejects that parse (the node
+    // carries an `unconsumed-input` warning), which is the correct behavior —
+    // a target-less `live` node is not a parse of this surface. (`live` block
+    // FEATURES are handled by the semantic feature-block layer and the hx-v4
+    // attribute processor; bare `live #out` is not a compilable command on
+    // either parse path.)
+    const attempt = makeAdapter().trySemanticParse('live #out');
+    expect(attempt.success).toBe(false);
   });
 
   it('stamps the fields core requires but the builder does not emit', () => {

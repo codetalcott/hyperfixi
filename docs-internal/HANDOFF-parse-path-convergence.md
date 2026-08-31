@@ -147,11 +147,17 @@ The rest are genuine defects, and they are **not all on one side**:
 
 ## Ordered queue
 
-1. **Close the silent-truncation class** (`PARSER_NEXT_STEPS.md`). Live bug,
-   independent of everything else here, and it accounts for most of the
-   traditional-is-right rows above. **Start by deciding between the two candidate
-   fixes there, not by writing code** — the first fix that suggests itself was
-   measured dead inside one session of filing it.
+1. ~~**Close the silent-truncation class**~~ — **DONE 2026-08-30** (decided and
+   implemented the same day; the full story is on the entry in
+   `PARSER_NEXT_STEPS.md`). The engine now verifies rather than trusts: the
+   adapter rejects any parse carrying semantic's own `unconsumed-input`
+   diagnostic, and the resync became exact — `skipToCommandBoundary` is
+   DELETED. Corpus effect: same 107 → 135, truncation-lost sources 8 → 0, and
+   the fix subsumed most of the traditional-is-right rows in the table above.
+   Two knock-ons for the queue below: the two "sem-only" render rows now fail
+   honestly (they were truncations, see the correction above), and the
+   `beep!`/precedence/`between`/`as` rows are now `same` — the node-type family
+   below shrinks accordingly. Re-run the triage tool before working any row.
 2. **Markers out of `args`** (19 sources). Semantic is right; teaching the
    traditional parser to lift markers into roles also deletes the step-4
    role-binding defect.
@@ -166,11 +172,11 @@ Steps 2, 3 and 6 of Arc 1 stay blocked on this arc, as the plan says.
 
 ## What has NOT been measured
 
-- **Whether confidence is meaningful anywhere else.** The measurement above
-  shows it reported 1.0 for a parse that modelled a fraction of the input. Core
-  adopts a semantic parse at ≥ 0.5, and the multilingual stack reads the same
-  number. If confidence is systematically optimistic, every threshold tuned
-  against it was tuned against noise. Nobody has checked.
+- **Whether confidence is meaningful anywhere else.** It still reports 1.0 for
+  a prefix-parse — core's adoption gate now compensates, but every consumer
+  reading the raw number (MCP, the bridge, thresholds tuned against it) is
+  reading role coverage only. Pricing input coverage into the score is parked in
+  semantic behind the `--diagnose-coverage` sweep. Nobody has run that sweep.
 
 - Whether the truncation class reaches **runtime behaviour** in a browser, as
   opposed to the AST. The AST cannot evaluate what it does not contain, so this

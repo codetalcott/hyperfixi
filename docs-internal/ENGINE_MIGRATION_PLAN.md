@@ -544,18 +544,22 @@ step 1 belong here because they change THIS plan:
   now known to be wrong** — either Arc 2 step 1 moves ahead of the convergence
   work, or the two duplicate each other.
 
-And one that is a live bug rather than a plan correction: the default English
-path **silently truncates a command's arguments** — `log "a" is not "b"` compiles
-to `log "a"` with `ok: true` and no warning. Same class as the `and` bug #1013
-fixed; #1013 did NOT close it. Filed in `PARSER_NEXT_STEPS.md`.
-
-**It also revises this plan's stated cause for step 6.** The plan says the resync
-heuristic is the problem and step 6 should remove it. Measured: the analyzer
-returns **confidence 1.0 and `tokensConsumed` = the entire input** while binding
-roles for a fraction of it, so `skipToCommandBoundary()` skips exactly what it
-was told. The resync is downstream of the defect, not the defect — and the fix
-that follows from the plan's framing (resync on `tokensConsumed`) is measured
-dead, because that number is already the whole input.
+And one that was a live bug rather than a plan correction — **found, decided
+and FIXED the same day** (full entry in `PARSER_NEXT_STEPS.md`): the default
+English path silently truncated a command's arguments (`log "a" is not "b"` →
+`log "a"`, `ok: true`, no warning). The fix is the engine verifying rather than
+trusting: core's adapter rejects any semantic parse carrying the parser's own
+`unconsumed-input` diagnostic, and — because an adoption then provably consumed
+the whole remainder — the resync became "consume the rest", **deleting
+`skipToCommandBoundary` and its keyword list**. That is a piece of step 6
+landed early: the resync heuristic is gone; `trySemanticParse` and the
+`skipSemanticParsing` list remain, and their fate is the convergence arc's.
+Corpus effect: same 107 → 135; truncation-lost sources 8 → 0; the two
+`render … with (…)` "semantic-only wins" were measured to be truncations too
+(`style: "("`, named args dropped) and now fail honestly on both paths — so
+**step 5's "strict superset in parseability" claim is corrected: the two
+sem-only rows were prefix-parses, not wins**, and sem-only now reads 0. The
+multilingual `--regression` gate runs green over the change.
 
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
@@ -1048,6 +1052,24 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   import the front-end **nowhere**. The coupling is confined to the api, the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
+
+- **2026-08-30** — **The silent-truncation class was decided and fixed** (the
+  convergence queue's item 1, same day it was filed). Decision: the engine
+  verifies rather than trusts — semantic's `unconsumed-input` diagnostic was
+  already on the node, written there so a caller could act on it, and core's
+  adapter now does (coverage gate in `createSemanticAdapter`); pricing coverage
+  into the confidence SCORE stays parked in semantic behind its
+  `--diagnose-coverage` sweep. Fixing the gate exposed the second half:
+  `skipToCommandBoundary` stopped at any command word and split spans the
+  analyzer had fully consumed (`call element.focus()` → phantom `focus()`
+  command), so the resync became exact and the keyword scan was **deleted** —
+  a piece of step 6 landed early. Measured: corpus same 107 → 135,
+  truncation-lost 8 → 0, sem-only 2 → 0 (both `render … with (…)` rows were
+  prefix-parses — step 5's superset claim corrected), multilingual gate green.
+  Pinned by `semantic-adoption-coverage.test.ts`. Two dead ends measured and
+  recorded on the way: resyncing on `tokensConsumed` (it is input length, not
+  comprehension) and treating the resync as the root cause (it was downstream
+  of adoption trust, and only half the story).
 
 - **2026-08-30** — **The owner chose to CONVERGE the two English parse paths**
   before step 6 (step 5's third option). Its step-1 measurement landed with it:

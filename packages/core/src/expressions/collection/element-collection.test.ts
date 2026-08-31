@@ -157,32 +157,24 @@ describe('Element collections — sorted by / where / mapped to over live DOM re
   });
 
   describe('pick — windowing over sorted element arrays', () => {
-    it('pick items N to M of a sorted element collection (pagination window, traditional parser)', async () => {
+    it('pick items N to M of a sorted element collection (pagination window, default path)', async () => {
+      // A KNOWN GAP test beside this one pinned the semantic-first path
+      // MANGLING this source (the tokenizer classified `(` as an identifier,
+      // the source collapsed to `identifier "("`, and PickCommand rejected
+      // it), with the instruction to delete it and drop `traditional: true`
+      // here once the gap closed. It closed on 2026-08-30 — not by the pick
+      // assembler learning parentheses, but by the semantic adoption coverage
+      // gate rejecting the mangled prefix-parse (it leaves input unconsumed),
+      // so the DEFAULT path now takes the traditional parse this test used to
+      // have to ask for.
       const context = hyperscript.createContext(tbody());
       await hyperscript.eval(
         'pick items 1 to 3 of (<tr/> in me sorted by its @data-price as Number)',
-        context,
-        { traditional: true }
+        context
       );
       // pick lands its selection in the `it`/`result` slot.
       // Rows 1..2 (end-exclusive upstream semantics) of the numeric ordering.
       expect(ids((context as any).result ?? (context as any).it)).toEqual(['r-cable', 'r-board']);
-    });
-
-    it('KNOWN GAP (pinned): the semantic-first path mangles a parenthesized pick source', async () => {
-      // The semantic parser owns pick's range grammar (patterns + the
-      // pick-range assembler), and its tokenizer classifies `(` as an
-      // identifier — so through the default semantic-first path the source
-      // expression collapses to `identifier "("` and PickCommand rejects it.
-      // When the semantic pick assembler learns parenthesized sources, this
-      // test goes red: delete it and drop `traditional: true` above.
-      const context = hyperscript.createContext(tbody());
-      await expect(
-        hyperscript.eval(
-          'pick items 1 to 3 of (<tr/> in me sorted by its @data-price as Number)',
-          context
-        )
-      ).rejects.toThrow(/array or string/);
     });
   });
 

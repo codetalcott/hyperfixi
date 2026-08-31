@@ -3364,46 +3364,6 @@ export class Parser {
   }
 
   /**
-   * Skip tokens until a command boundary is reached.
-   * Used after semantic parsing to sync token position with parsed content.
-   * A command boundary is: then, and, else, end, or end of input.
-   */
-  private skipToCommandBoundary(): void {
-    // `and` is deliberately NOT a boundary, though it was until 2026-08-30.
-    //
-    // It is not a command separator anywhere in this engine — the pratt parser
-    // absorbs it as a binary operator, which `then-as-separator.test.ts` pins as
-    // a KNOWN GAP. So a semantic match that legitimately consumed `log 1 and 2`
-    // (the analyzer reports tokensConsumed 4 at confidence 1) had its resync
-    // stopped at the `and`, and the handler's statement loop then tried to parse
-    // `2` as a fresh command: `Unexpected token: 2`, in the SHIPPED default
-    // configuration, while `{ traditional: true }` parsed the same source fine.
-    //
-    // It hit every command absent from `skipSemanticParsing` below — log, call,
-    // get, append, prepend, throw, return, beep and the rest of the 28 that take
-    // the generic argument loop. Found by ENGINE_MIGRATION_PLAN Arc 1 step 5,
-    // which diffed the two parse paths over one corpus; no suite had ever
-    // compiled a handler-wrapped, semantically-parsed command with `and` in its
-    // arguments.
-    const boundaryKeywords = ['then', 'else', 'end'];
-    while (!this.isAtEnd()) {
-      const token = this.peek();
-      const value = token.value.toLowerCase();
-      // Stop at command boundary keywords
-      if (boundaryKeywords.includes(value)) {
-        break;
-      }
-      // Stop at command tokens (next command starting)
-      if (isCommandPredicate(token)) {
-        break;
-      }
-      // Stop at newline boundaries that might indicate command separation
-      // (Handled implicitly by reaching end of relevant tokens)
-      this.advance();
-    }
-  }
-
-  /**
    * Parse a command, then attach any trailing `when`/`where` conditional guard.
    *
    * Traditional command parsers (parseAddCommand, the generic argument loop,
@@ -3416,8 +3376,9 @@ export class Parser {
    * falsy result.
    *
    * The semantic-parse path already maps its `condition` role into
-   * `modifiers.when` and consumes the tokens via skipToCommandBoundary(), so by
-   * the time we peek here there is nothing left to attach — no double handling.
+   * `modifiers.when` and consumes the rest of the token stream on adoption, so
+   * by the time we peek here there is nothing left to attach — no double
+   * handling.
    */
   private parseCommand(): CommandNode {
     const node = this.parseCommandCore();
@@ -3463,7 +3424,7 @@ export class Parser {
     //     attribute reference (sibling of add / remove, which are also here)
     //   - take: same family as toggle/add/remove. It also carries a
     //     `for <recipient>` tail: the semantic match used to leave `for me`
-    //     unconsumed, skipToCommandBoundary() stopped at `for` (a command
+    //     unconsumed, the old resync scan stopped at `for` (a command
     //     token), and the next round parsed it as a for LOOP. takeSchema now
     //     models `recipient`, but only as a REFERENCE (`for me`) — upstream's
     //     element-expression recipients still need this path
@@ -3479,7 +3440,7 @@ export class Parser {
     //     `with { ... }` would arrive as a bogus identifier node even though the
     //     semantic schema now models the options role (it does, for the buildAST
     //     multilingual path: fetchSchema's `style`). Before this entry existed the
-    //     URL matched at confidence 1.0 and skipToCommandBoundary() ate the rest,
+    //     URL matched at confidence 1.0 and the old resync scan ate the rest,
     //     dropping method/body/headers off the wire in silence.
     //   - process: `processSchema` is patient-only — it models
     //     `partials in <content>` and has no role for the
@@ -3528,11 +3489,27 @@ export class Parser {
       const remainingInput = this.getRemainingInput();
       const semanticResult = this.trySemanticParse(remainingInput);
       if (semanticResult) {
-        // Successfully parsed with semantic analyzer - advance token position
-        // Skip all tokens until we reach a command boundary
-        // This is necessary because semantic parsing operates on raw strings,
-        // not the token stream, so we need to sync the token position
-        this.skipToCommandBoundary();
+        // Adopted — consume the rest of the token stream. This is exact, not a
+        // heuristic: the adapter's coverage gate rejects any parse that left
+        // input unconsumed (`unconsumed-input` diagnostic), and a remainder
+        // holding more than one command parses as kind 'compound', which the
+        // gate also rejects. So an adoption here means the analyzer consumed
+        // remainingInput in FULL — which runs to the end of the source
+        // (`getRemainingInput` slices to the end) — and the resync is simply
+        // "the rest".
+        //
+        // This replaces skipToCommandBoundary(), a keyword scan that stopped at
+        // then/else/end and at any command word. Its command-word stop split
+        // spans the analyzer had fully consumed — `call element.focus()`
+        // stopped at `focus` (a command name inside a member expression) and
+        // re-parsed `focus()` as a phantom second command. Its keyword stops
+        // are dead under the coverage gate: a remainder with a trailing
+        // `end`/`then` tail is never adopted in the first place (the tail is
+        // unconsumed input). Same class as the `and` boundary bug (#1013);
+        // deleting the scan closes the class instead of tuning its word list.
+        while (!this.isAtEnd()) {
+          this.advance();
+        }
         return semanticResult;
       }
       // Fall through to traditional parsing

@@ -669,7 +669,7 @@ Scope, unmeasured: `toggle X on Y` is confirmed. Every command whose schema has 
 marker role and whose surface uses the marker is a candidate (`add … to …`,
 `remove … from …`, `put … into …`, `send … to …`). Measure the set before fixing.
 
-### Semantic-first silently truncates a command's arguments (2026-08-30)
+### ~~Semantic-first silently truncates a command's arguments~~ — FIXED same day (2026-08-30)
 
 **Live, in the DEFAULT configuration, with `ok: true` and no warning.** The same
 class as the `and` bug #1013 fixed — and **#1013 did not close it**, because the
@@ -707,8 +707,8 @@ arguments of a command that is NOT on the list. `log` is the obvious one.
 `packages/core/tools/triage-parse-paths.ts` (`--kind=node-type`, `--kind=arity`,
 `--kind=value`, and the STRUCTURE LOSS section of the summary).
 
-**The resync is NOT the cause, and `tokensConsumed` cannot fix it.** Measured
-against the real analyzer wiring (`createSemanticAdapter` with semantic's
+**The resync is not the sole cause, and `tokensConsumed` cannot fix it.**
+Measured against the real analyzer wiring (`createSemanticAdapter` with semantic's
 `parseSemantic`/`buildAST`, the same objects `hyperscript-api.ts` passes):
 
 | input | confidence | tokensConsumed | roles the analyzer returned |
@@ -728,22 +728,63 @@ Note `beep!` separately: confidence **0.5 is exactly `DEFAULT_CONFIDENCE_THRESHO
 so a parse that bound NO roles at all is accepted at the boundary, and
 `tokensConsumed` (3) exceeds the input's word count (2).
 
-That leaves two candidate fixes, neither cheap, and the choice is a real design
-question rather than a tuning exercise:
+**DECIDED AND IMPLEMENTED: fix 2 — the engine verifies rather than trusts** —
+and the verification data turned out to already arrive on the node. Semantic's
+`describeUnconsumedInput` attaches an `unconsumed-input` warning DIAGNOSTIC to
+exactly the truncating parses (measured: present on every truncating case,
+absent on every good one, markers included), with a written comment saying it
+exists so a caller can act on it. Core's adapter simply never looked. Two
+changes, both in core, semantic untouched:
 
-1. **Make confidence mean something.** The analyzer must score unmatched input
-   against it, so a pattern covering `log <literal>` cannot report 1.0 on
-   `log <literal> is not <literal>`. Fixes every consumer of confidence at once
-   (core's adoption threshold, the multilingual gate, MCP), and is the only fix
-   that also catches the cases nobody has enumerated.
-2. **Have the engine verify rather than trust.** After a semantic parse, check
-   that the returned node accounts for the consumed span, and fall back to
-   traditional when it does not. Cheaper and local to `parseCommandCore`, but it
-   leaves every OTHER consumer of the analyzer trusting the same bad number.
+1. **The coverage gate** (`createSemanticAdapter` in
+   `parser/semantic-integration.ts`): a parse whose node carries an
+   `unconsumed-input` warning is rejected, and the traditional parser takes the
+   command.
+2. **The resync made exact** (`parseCommandCore`): fixing the gate EXPOSED a
+   second cooperating defect — `skipToCommandBoundary()` stopped at any command
+   word, so `call element.focus()` (fully consumed, faithfully parsed) was cut
+   at `focus` and `focus()` re-parsed as a phantom second command; pre-gate that
+   phantom was silently adopted, post-gate its rejection failed the compile.
+   Under the gate an adoption means the analyzer consumed the remainder IN FULL
+   (a multi-command remainder parses as `compound`, which the gate's
+   single-command check also rejects; a trailing `end`/`then` is unconsumed
+   input), so the resync is exactly "the rest of the token stream" —
+   **`skipToCommandBoundary` and its keyword list are deleted**, closing the
+   class #1013 fixed one word of.
 
-Do not extend the boundary keyword list — that is what #1013 did for one word,
-and this entry is the proof the approach does not generalise. See
-`HANDOFF-parse-path-convergence.md`, where this is item 1.
+Measured over the engine corpus (both paths, 233 sources), before → after:
+same **107 → 135**, structure-lost-by-semantic **10 → 2** (the survivors are
+shape differences, not truncations: `go … url` modifiers, `open … as` — the
+`as`-tail is bound to no role but the matcher consumes it, so no diagnostic
+fires; it stays a real residual). The two `render … with (…)` "semantic-only"
+parses were measured to be truncations too (`style: "("`, named args dropped) —
+they now FAIL honestly on both paths. The full multilingual `--regression` gate
+runs green. Pinned by
+`src/parser/__tests__/semantic-adoption-coverage.test.ts` (default-vs-traditional
+agreement, the phantom-split case, handler-final `end`, the honest render
+failure).
+
+The fix also closed two OTHER pinned defects, both of which turned out to be
+this class wearing different clothes — their pins now assert the fixed
+behavior: **`get` invisible to the NEXT command** (runtime.test.ts — the `get`
+head of a then-chain was adopted from a semantic prefix-parse while the rest of
+the chain parsed traditionally, and the result slot did not survive the seam)
+and **pick's parenthesized-source mangling** (element-collection.test.ts — the
+`identifier "("` collapse now falls back to the traditional parse on the
+default path). A third pin was measuring the bug as a feature: the delegation
+suite's `live #out` row passed by comparing two identically-truncated,
+role-less nodes; it is now a refusal pin.
+
+**Fix 1 — pricing input coverage into the confidence SCORE — stays parked**, in
+semantic, exactly where its own `describeUnconsumedInput` comment parked it:
+behind the `--diagnose-coverage` sweep, because it moves the multilingual
+baseline across all 24 languages. It is no longer needed for this class; it
+remains the right long-term answer for consumers that read confidence raw
+(the number still reports 1.0 on a prefix-parse — only core's adoption now
+compensates). Related trap for anyone touching this area:
+`parseWithConfidence`'s `tokensConsumed` is **input length, not comprehension**
+(when the full parser succeeds it reports `tokenize(input).length` verbatim) —
+a fix keyed on it was proposed here and measured dead the same day.
 
 Unmeasured: whether the same truncation corrupts the multilingual corpus. Every
 row there is `render(parse_en(en), L)`, so a truncating en parse would move all
