@@ -69,22 +69,41 @@
 >    from inside a handler body. (b) `show`'s `data-original-display` restore
 >    diverges from upstream (`block` vs `removeProperty`) and is PINNED by a
 >    test, so it was filed, not silently changed.
-> 2. **NEXT — the `recovered` false positive, which BLOCKS strengthening the new gate.**
->    Measured 2026-08-31 on the vendored 0.9.93 engine: upstream requires `end`
->    only when `parser.hasMore()`, so every one of these sources ACCEPTS there.
->    Note `then-as-separator.test.ts` PINS the current strictness ("Deliberate
->    strictness: upstream tolerates an unterminated `if/then` … and we do not.
->    That is a separate decision") — that decision is what item 2 has to make,
->    visibly, not route around.
->    `if x > 5 then add .active` parses CORRECTLY and still reports
->    `Expected 'end' after if block` — on `main`, before #1026, across 11 corpus
->    sources of the single-line `if`/`unless` family. Measured: switching
->    `documented-examples.test.ts` to reject `recovered` takes its failure list
->    from 19 to 27, and **all 8 additions are this false positive**. Clean it
->    first, then strengthen the gate and shrink its allowlist.
->    Also open from #1025's triage: **`install X on <selector>` is a parser bug**
->    (`install Draggable on me` and `on the first <div/>` parse; `on #box` and
->    `on <#box/>` do not).
+> 2. ~~**The `recovered` false positive, which BLOCKS strengthening the new
+>    gate.**~~ — **DONE.** Upstream requires `end` only when
+>    `parser.hasMore()`; hyperfixi required it unconditionally, so
+>    `if x > 5 then add .active` parsed exactly right and reported
+>    `Expected 'end' after if block` anyway. Two tests had PINNED that
+>    strictness as an explicit deferral ("That is a separate decision") — the
+>    decision is made in the same commit, which is what those comments asked
+>    for. `documented-examples.test.ts` now asserts a CLEAN parse; both blind
+>    spots its own docblock confessed are closed and mutation-tested.
+>
+>    **This item's own estimate was wrong in three ways, all measured** (on
+>    `main`, in a throwaway worktree, before touching anything):
+>
+>    - the delta is **19 → 30**, not 19 → 27;
+>    - **11** additions, not 8, and **NOT all** the `if` false positive —
+>      `blur on <input/>` / `focus on <input/>` are a different class;
+>    - the allowlist **GREW**, it did not shrink. That is what strengthening a
+>      gate blind to an entire band does first. Eleven documented examples had
+>      been losing content in silence: 8 docs defects (upstream rejects them
+>      too) and 3 parser gaps (upstream ACCEPTS) —
+>      `transition left to 100px over 500ms` silently loses its DURATION,
+>      `scroll to me smoothly` loses `smoothly`, and
+>      `make a URL from "/path/", "…"` does not parse inside a handler at all.
+>      Those three are the next parser work, filed with repros.
+>
+>    **The mechanical lesson generalises**: the parser reports discarded input
+>    only from inside a handler body (#1026 wired five sites, all there), so a
+>    parse-quality assertion on a BARE command source measures the wrong shape.
+>    The same hole was found the same week in
+>    `compound-command-coverage.test.ts` (#1028). Both gates now re-compile
+>    wrapped.
+>
+>    Still open from #1025's triage: **`install X on <selector>` is a parser
+>    bug** (`install Draggable on me` and `on the first <div/>` parse; `on #box`
+>    and `on <#box/>` do not).
 > 3. **Residual item-5 rows** — the template-literal backticks
 >    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
 >    `settle` `isBlocking` rows marked INERT below.

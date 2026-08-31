@@ -165,15 +165,29 @@ describe('`then` as a command separator in if/unless bodies', () => {
     expect(names(thenBranch(node.commands[0]))).toEqual(['add']);
   });
 
-  it('still requires `end`, and reports its absence', () => {
-    // Deliberate strictness: upstream tolerates an unterminated `if/then` at the
-    // end of a handler and we do not. That is a separate decision — this fix must
-    // not quietly loosen it just because the diagnostic was the visible symptom.
-    const result = parse("if 1 is 1 then log 'a' then log 'b'");
+  it('requires `end` only when something FOLLOWS the block, as upstream does', () => {
+    // THE DECISION THIS ROW DEFERRED, now made and visible.
+    //
+    // It used to assert the opposite — "Deliberate strictness: upstream
+    // tolerates an unterminated `if/then` at the end of a handler and we do
+    // not. That is a separate decision." It is decided: we tolerate it too.
+    //
+    // Upstream's rule is one line, `if (parser.hasMore() && !nestedIfStmt)
+    // parser.requireToken("end")`, and the vendored 0.9.93 engine ACCEPTS both
+    // sources below. Requiring `end` unconditionally cost NINE of this repo's
+    // own `metadata.examples` a diagnostic on a parse that was already exactly
+    // right — `if x > 5 then add .active` among them — which is what blocked
+    // `documented-examples.test.ts` from asserting on `errors` at all.
+    const atEnd = parse("if 1 is 1 then log 'a' then log 'b'");
+    expect(recoveredErrors(atEnd)).toEqual([]);
+    // ...and the body is still assembled correctly, which is what this file is about.
+    expect(names(thenBranch(atEnd.node as any))).toEqual(['log', 'log']);
 
-    expect(recoveredErrors(result)).toContain("Expected 'end' after if block");
-    // ...and the body is still assembled correctly despite the error.
-    expect(names(thenBranch(result.node as any))).toEqual(['log', 'log']);
+    // The other half of the rule, and the reason this is not simply "stop
+    // reporting": with a following feature the block IS unterminated, and both
+    // engines say so (upstream: "Expected 'end' but found 'on'").
+    const followed = parse('on click if x then add .a\non mouseover log 1');
+    expect(recoveredErrors(followed)).toContain("Expected 'end' after if block");
   });
 
   it('leaves the `then`-on-the-next-line header form working', () => {
@@ -432,14 +446,15 @@ describe('a body `then` on a later line does not make a single-line if multi-lin
     // Upstream keeps then-joined commands in the body: BOTH adds are
     // conditional here. The first-command bound broke the scan at `add .a` and
     // evicted `add .b` as an unconditional sibling — the exact silent class this
-    // file exists to kill, on a same-line shape. The recovered "Expected 'end'"
-    // is deliberate strictness (`still requires end`, above), not part of the
-    // defect.
+    // file exists to kill, on a same-line shape.
     const result = parse('on click if 1 is 2 add .a to #t then add .b to #t');
 
     expect(names((result.node as any).commands)).toEqual(['if']);
     expect(names(thenBranch((result.node as any).commands[0]))).toEqual(['add', 'add']);
-    expect(recoveredErrors(result)).toContain("Expected 'end' after if block");
+    // No diagnostic: the block runs to the end of the input, which is exactly
+    // where upstream stops requiring `end`. This asserted the opposite until
+    // that rule landed — see the `end`-only-when-followed row above.
+    expect(recoveredErrors(result)).toEqual([]);
   });
 
   it('still finds a header `then` on the next line past a command-word operand', () => {
