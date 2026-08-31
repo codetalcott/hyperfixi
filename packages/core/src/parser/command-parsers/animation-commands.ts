@@ -255,14 +255,32 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
   }
   ctx.advance(); // consume 'to'
 
-  // Parse target value (can be template string, number, color, etc.)
-  const value = ctx.parsePrimary();
+  // Parse target value (can be template string, number, color, etc.).
+  //
+  // `parseExpression`, not `parsePrimary`: a CSS value is routinely a NUMBER
+  // PLUS A UNIT, and `100px` is two tokens — the engine already models that as
+  // a `stringPostfix` node (`Parser.tryParseStringPostfix`, mirroring upstream's
+  // StringPostfixExpression over the 15 CSS length units and `%`), but only the
+  // pratt path builds it. `parsePrimary` stops at the literal, so
+  // `transition left to 100px` silently became `to: 100` — an animation to a
+  // UNITLESS length, i.e. to nothing — with `px` discarded. Same for
+  // `transition *width to 50%`.
+  //
+  // It was invisible for two reasons at once: bare, the parser had nothing to
+  // report the drop through, and the source is TransitionCommand's own
+  // documented example, which no gate parsed until #1025. Upstream parses both
+  // this value and the duration below with `requireElement("expression")`.
+  const value = ctx.parseExpression();
   modifiers['to'] = value as ExpressionNode;
 
-  // Parse optional 'over <duration>' - store in modifiers
+  // Parse optional 'over <duration>' - store in modifiers.
+  //
+  // `parseExpression` for the same reason, and it is not redundant with the
+  // tokenizer's TIME handling: `500ms` arrives as one token, but `2 * delay`
+  // or `(base + 100) ms` do not.
   if (ctx.check('over')) {
     ctx.advance(); // consume 'over'
-    const duration = ctx.parsePrimary();
+    const duration = ctx.parseExpression();
     modifiers['over'] = duration as ExpressionNode;
   }
 

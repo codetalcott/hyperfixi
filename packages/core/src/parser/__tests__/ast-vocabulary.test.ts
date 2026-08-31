@@ -186,6 +186,12 @@ const FULL_PARSER_KINDS = [
   'propertyOfExpression',
   'selector',
   'string',
+  // A number plus a CSS unit (`100px`, `50%`) — upstream's
+  // StringPostfixExpression. It was already in EVALUATOR_EXPRESSION_KINDS and
+  // absent here for a reason worth recording: no corpus source reached the
+  // pratt path that BUILDS it, because `transition`'s own documented example
+  // parsed its value with `parsePrimary` and dropped the unit.
+  'stringPostfix',
   'templateLiteral',
   'unaryExpression',
 ] as const;
