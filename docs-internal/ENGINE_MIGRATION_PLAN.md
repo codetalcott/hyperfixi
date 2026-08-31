@@ -574,6 +574,41 @@ Corpus effect: same 107 → 135; truncation-lost sources 8 → 0; the two
 sem-only rows were prefix-parses, not wins**, and sem-only now reads 0. The
 multilingual `--regression` gate runs green over the change.
 
+**2026-08-31 — the convergence arc closed three of its own items and opened a
+second thread (#1023–#1026).** Full state in
+[HANDOFF-parse-path-convergence.md](./HANDOFF-parse-path-convergence.md); the
+parts that change THIS plan:
+
+- **Two of the arc's queue items are done.** `hide <button/>` (a live throw on a
+  documented example in the DEFAULT config) is fixed in `packages/semantic`'s
+  `convertSelector`, which also closed the query-literal half of the arc's item
+  3. And **`implicit-me` was DECIDED by the owner**: an injected schema default
+  is *relocated, not duplicated* — held back from `args`/`modifiers` and kept on
+  `semanticRoles`, with the runtime remaining the single executable home of
+  every default. That decision generalises beyond the 7 triaged rows to all 22
+  defaulted schema roles, and it is the precedent for any future "does the
+  default belong in the AST" question in Arc 3.
+- **The triage's `both-fail 19` bucket was opened and is NOT parser gaps.** All
+  19 are the repo's own `metadata.examples` — shipped in docs, MCP
+  `get_command_docs` and LSP hover — and nothing had ever asserted that any of
+  the 205 parse. Now gated by
+  `packages/core/src/parser/__tests__/documented-examples.test.ts`.
+- **A live defect class the plan did not know about: the parser discarded input
+  in silence.** `on click qqqq` compiled to `ok: true` with an EMPTY handler,
+  no error, no warning — a typo produced a handler that does nothing. This is
+  the same class as the truncation fixed on 2026-08-30, but on the TRADITIONAL
+  parser's recovery paths, which had no gate. Five sites now record it via
+  `recovered`, so it is visible to every consumer. **This matters to Arc 2 and
+  Arc 3**: any refactor that touches `parseEventHandler` or
+  `parseCommandListUntilTerminator` must keep those diagnostics, and the
+  AST-equivalence corpus alone will not tell you (a dropped body changes no
+  successful parse's fingerprint — it changes `fail:N` counts only).
+- **A gate-parity finding worth generalising.** `shipped-sources-validity`
+  walked the working TREE while its sibling `shipped-examples-execution` walked
+  `git ls-files`; the two silently disagreed (183 local vs 173 CI) until CI
+  failed on it. Both now derive from git. Any new corpus-walking gate should do
+  the same — the lesson is already recorded at #862 and was not applied.
+
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
 snapshot (`hyperfixi.js`, `-multilingual.js`, `-semantic-complete.js`
