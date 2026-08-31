@@ -450,6 +450,28 @@ and the parser loop that assumes it.
    moves to the multilingual module. Consumers: `mcp-server/lsp-bridge`,
    `language-server/server.ts`, `aot-compiler/core-parser-adapter.ts` — each
    already depends on semantic and passes the default.
+   — ✅ **DONE 2026-08-30**, with two of its own claims corrected:
+
+   - **The default is not a marginal fallback.** The code comment said it
+     covered "scroll, push, replace, process and any future command"; measured
+     over the corpus's 214 parsing sources, **43 command names receive roles and
+     41 of them come from the default** — only `set` and `go` have explicit
+     cases. A consumer that omits the inferrer loses roles for 41 commands, and
+     `aot-compiler`'s `command-transforms.ts` reads `node.roles` in two dozen
+     places. So the three consumers are wired at their module-load site (one
+     binding each, downstream call sites unchanged), the AOT one throws rather
+     than degrades, and the LSP two log the degradation.
+   - **It does not reduce the static-value count.** The brief said it "removes 2
+     of the 7"; the two imports MOVE, from `ast-utils/interchange/from-core.ts`
+     to the new `multilingual/schema-roles.ts`. Total stays **7**. That is still
+     the progress the arc wants — the ratchet's endpoint is
+     `compatibility/browser-bundle*.ts` + `multilingual/` only, and both rows are
+     now on the target side — but it is a move, not a deletion, and the baseline
+     says so.
+
+   Equivalence was proven rather than assumed: `main`'s converter vs the
+   injected one over both parse paths of every corpus source — **430
+   comparisons, 0 diffs**.
 5. **Measure semantic-first for English.** — ✅ **DONE 2026-08-30, and none of
    the three anticipated outcomes was the answer.** Measured over the 233-source corpus, **and then RE-measured after the `and`
    fix below landed, which moved it**:
@@ -504,6 +526,41 @@ and the parser loop that assumes it.
    path. The `SemanticAnalyzer` interface and `semantic-integration.ts` shrink
    to the adapter the front-end registers.
 
+**The owner decided on 2026-08-30: CONVERGE the two paths first** (step 5's
+third option). Steps 2, 3 and 6 stay blocked behind that work, which has its own
+brief — **[HANDOFF-parse-path-convergence.md](./HANDOFF-parse-path-convergence.md)**
+— and its own committed measurement tool,
+`packages/core/tools/triage-parse-paths.ts`. Two findings from that brief's
+step 1 belong here because they change THIS plan:
+
+- **The 107 differing sources are not 107 decisions.** They decompose into nine
+  families; **45 differ only in metadata** (positions, `semanticRoles`, optional
+  field presence) and 62 structurally. Most families are one decision each.
+- **Convergence cannot finish without part of Arc 2.** Four of the `node-type`
+  transitions (`identifier`↔`contextReference`,
+  `memberExpression`/`possessiveExpression`↔`propertyAccess`,
+  `command`↔`CommandSequence`) are exactly the alias-of strays Arc 2 step 1
+  classifies. **Arc 2 is sequenced after Arc 1 in this plan, and that ordering is
+  now known to be wrong** — either Arc 2 step 1 moves ahead of the convergence
+  work, or the two duplicate each other.
+
+And one that was a live bug rather than a plan correction — **found, decided
+and FIXED the same day** (full entry in `PARSER_NEXT_STEPS.md`): the default
+English path silently truncated a command's arguments (`log "a" is not "b"` →
+`log "a"`, `ok: true`, no warning). The fix is the engine verifying rather than
+trusting: core's adapter rejects any semantic parse carrying the parser's own
+`unconsumed-input` diagnostic, and — because an adoption then provably consumed
+the whole remainder — the resync became "consume the rest", **deleting
+`skipToCommandBoundary` and its keyword list**. That is a piece of step 6
+landed early: the resync heuristic is gone; `trySemanticParse` and the
+`skipSemanticParsing` list remain, and their fate is the convergence arc's.
+Corpus effect: same 107 → 135; truncation-lost sources 8 → 0; the two
+`render … with (…)` "semantic-only wins" were measured to be truncations too
+(`style: "("`, named args dropped) and now fail honestly on both paths — so
+**step 5's "strict superset in parseability" claim is corrected: the two
+sem-only rows were prefix-parses, not wins**, and sem-only now reads 0. The
+multilingual `--regression` gate runs green over the change.
+
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
 snapshot (`hyperfixi.js`, `-multilingual.js`, `-semantic-complete.js`
@@ -511,7 +568,12 @@ unchanged; `minimal`/`standard`/`classic` unchanged); the multilingual
 `--regression` gate — its 3,744 rows execute exactly the path step 6 rewrites,
 so run it locally before the PR, not in CI first.
 
-Blast radius: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
+Blast radius: **`fromCoreAST` is a published export of `@hyperfixi/core`, and
+step 4 changed its default behaviour** — an external caller passing one argument
+now gets roles for `set` and `go` only. The signature stays source-compatible, so
+this breaks silently rather than loudly; it is the one part of step 4 that
+reaches outside this repo. Every in-repo consumer was updated in the same change.
+Also: `createSemanticAdapter` (no downstream importer; the signature is kept anyway because the multilingual bundles call it); `config.semantic` (public, kept); `compile().meta.parser`
 values (`'semantic' | 'traditional' | 'lse'`, kept — step 6 makes `'semantic'`
 mean "the front-end produced the AST" rather than "the analyzer was consulted").
 
@@ -991,7 +1053,74 @@ the deletion plus a CHANGELOG `⚠ BREAKING` entry per removed name, in the
   bundles and the multilingual module — so Arc 1's remaining steps are a handful
   of files, not a sweep.
 
-  **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
+- **2026-08-30** — **The silent-truncation class was decided and fixed** (the
+  convergence queue's item 1, same day it was filed). Decision: the engine
+  verifies rather than trusts — semantic's `unconsumed-input` diagnostic was
+  already on the node, written there so a caller could act on it, and core's
+  adapter now does (coverage gate in `createSemanticAdapter`); pricing coverage
+  into the confidence SCORE stays parked in semantic behind its
+  `--diagnose-coverage` sweep. Fixing the gate exposed the second half:
+  `skipToCommandBoundary` stopped at any command word and split spans the
+  analyzer had fully consumed (`call element.focus()` → phantom `focus()`
+  command), so the resync became exact and the keyword scan was **deleted** —
+  a piece of step 6 landed early. Measured: corpus same 107 → 135,
+  truncation-lost 8 → 0, sem-only 2 → 0 (both `render … with (…)` rows were
+  prefix-parses — step 5's superset claim corrected), multilingual gate green.
+  Pinned by `semantic-adoption-coverage.test.ts`. Two dead ends measured and
+  recorded on the way: resyncing on `tokensConsumed` (it is input length, not
+  comprehension) and treating the resync as the root cause (it was downstream
+  of adoption trust, and only half the story).
+
+- **2026-08-30** — **The owner chose to CONVERGE the two English parse paths**
+  before step 6 (step 5's third option). Its step-1 measurement landed with it:
+  `packages/core/tools/triage-parse-paths.ts` plus
+  `HANDOFF-parse-path-convergence.md`.
+
+  The measurement revised the cost in both directions. **Down:** "107 sources
+  differ" is nine families, and 45 of the 107 differ only in metadata — most
+  families are a single decision. **Up:** the arc cannot finish without part of
+  **Arc 2**, which this plan sequences after Arc 1; and neither path is simply
+  better — traditional is right about operator precedence, `between`, `as` and
+  `beep!`'s arguments, while semantic is right about markers, `settle`'s
+  blocking, `pick`'s roles and query literals in `hide`/`show`.
+
+  It also found a **live shipped bug**, filed in `PARSER_NEXT_STEPS.md`: the
+  default path silently truncates a command's arguments when the analyzer
+  matches a prefix (`log "a" is not "b"` → `log "a"`, `ok: true`, no warning).
+  Same class as #1013's `and` bug, which did not close it — evidence for the
+  plan's existing position that step 6 should REMOVE the resync heuristic rather
+  than tune its keyword list.
+
+- **2026-08-30** — **Arc 1 step 4** landed: `fromCoreAST` takes its role
+  inferrer by injection, and the schema-driven default lives in
+  `multilingual/schema-roles.ts` — the front-end side of the boundary.
+  `ast-utils/interchange/from-core.ts` imports the front-end **nowhere**.
+
+  Both of the step's own claims were measured false first, and the step is
+  written up above with the corrections. In short: the default supplies roles
+  for **41 of the 43** role-bearing command names (not the four the comment
+  claimed), so omitting it is a cliff rather than a degradation; and the two
+  imports MOVE rather than disappear, leaving static-value at **7**.
+
+  Byte-equivalence with `main`'s converter was proven over both parse paths of
+  every corpus source — **430 comparisons, 0 diffs** — so this is a pure
+  refactor by measurement, not by assertion. Three new tests pin the injection
+  boundary in core (roles present with the inferrer, ABSENT without, and reached
+  through handler bodies and `if` branches) and one pins it end-to-end through
+  the AOT adapter; the AOT one was mutation-verified by dropping the injection.
+
+  Two things the step found and did not fix:
+
+  - **A pre-existing role-binding defect**, filed in `PARSER_NEXT_STEPS.md`:
+    `toggle .active on #panel` parsed traditionally binds `destination` to the
+    marker word `on`, leaving `#panel` in no role. Confirmed against `main`.
+    It is a concrete instance of the `args`-shape difference step 5 measured,
+    so **the fix depends on the open decision** — option 3 would delete it.
+  - **The two LSP consumers have no test covering the `fromCoreAST` role path**
+    at all (their hover tests assert only `toBeDefined()`). The AOT consumer is
+    now covered; those two are wired identically but unguarded.
+
+    **Arc 1 step 5 ran in the same session and revised the arc.** Measured over
   the 233-source corpus, semantic-first vs traditional for English:
   **same 107 · differ 105 · traditional-only 2 · semantic-only 2 · both-fail
   17.** None of step 5's three anticipated outcomes was the answer — the two

@@ -13,7 +13,8 @@
  * `parseCommandCore` tries the semantic analyzer first for every command NOT in
  * its `skipSemanticParsing` list. For `log 1 and 2` the analyzer reports
  * `confidence: 1` and `tokensConsumed: 4` — the whole input. But
- * `skipToCommandBoundary()` then resynced the token stream by scanning for
+ * `skipToCommandBoundary()` (a keyword scan since deleted — see
+ * `semantic-adoption-coverage.test.ts`) then resynced the token stream by scanning for
  * `then` / `and` / `else` / `end`, stopped at the `and`, and the handler's
  * statement loop tried to parse `2` as a fresh command.
  *

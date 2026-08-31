@@ -3,6 +3,16 @@
  */
 import { describe, it, expect } from 'vitest';
 import { fromCoreAST } from './from-core';
+import { schemaRoleInferrer } from '../../multilingual/schema-roles';
+
+/**
+ * Convert with the stock schema-driven inferrer — what every production
+ * consumer passes. Bare `fromCoreAST(node)` calls elsewhere in this file
+ * exercise the ENGINE-ONLY path, which names roles for `set` and `go` and
+ * nothing else; `engine-only role inference` below pins that boundary.
+ */
+const withRoles = (node: Parameters<typeof fromCoreAST>[0]) =>
+  fromCoreAST(node, { inferRoles: schemaRoleInferrer });
 
 // Helper: create a minimal core node
 function coreNode(
@@ -543,7 +553,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers destination role for scroll, skipping `to` marker', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'scroll',
           args: [
@@ -561,7 +571,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers destination for scroll across position/behavior markers', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'scroll',
           args: [
@@ -580,7 +590,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers patient role for push, skipping `url` marker', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'push',
           args: [
@@ -596,7 +606,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers patient role for replace, skipping `url` marker', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'replace',
           args: [coreNode('identifier', { name: 'url' }), coreNode('literal', { value: '/new' })],
@@ -609,7 +619,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers patient role for process, skipping `partials in` markers', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'process',
           args: [
@@ -934,7 +944,7 @@ describe('fromCoreAST', () => {
 
   describe('inferred roles', () => {
     it('infers set roles: destination + patient from modifiers.to', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'set',
           args: [coreNode('variable', { name: ':count', scope: 'local' })],
@@ -951,7 +961,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers set roles: patient from args[1] when no modifiers.to', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'set',
           args: [
@@ -966,7 +976,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers put roles: patient + destination + method', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'put',
           args: [coreNode('literal', { value: 'hello' })],
@@ -982,7 +992,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers put with before modifier', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'put',
           args: [coreNode('literal', { value: '<li>new</li>' })],
@@ -997,7 +1007,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers put destination from target when no modifiers', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'put',
           args: [coreNode('literal', { value: 'content' })],
@@ -1016,7 +1026,7 @@ describe('fromCoreAST', () => {
     describe('go roles', () => {
       // -- shape 1: traditional parser --
       it('url keyword form → destination + method (traditional)', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [
@@ -1031,7 +1041,7 @@ describe('fromCoreAST', () => {
       });
 
       it('url keyword without `to` → destination + method', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [coreNode('string', { value: 'url' }), coreNode('literal', { value: '/page' })],
@@ -1042,7 +1052,7 @@ describe('fromCoreAST', () => {
       });
 
       it('naked path → destination, no method', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [coreNode('string', { value: 'to' }), coreNode('literal', { value: '/about' })],
@@ -1053,7 +1063,7 @@ describe('fromCoreAST', () => {
       });
 
       it('go back → destination as identifier (AOT history.back)', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', { name: 'go', args: [coreNode('string', { value: 'back' })] })
         ) as any;
         expect(result.roles.destination).toEqual({
@@ -1065,7 +1075,7 @@ describe('fromCoreAST', () => {
       });
 
       it('go forward → destination as identifier', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', { name: 'go', args: [coreNode('string', { value: 'forward' })] })
         ) as any;
         expect(result.roles.destination).toEqual({
@@ -1076,7 +1086,7 @@ describe('fromCoreAST', () => {
       });
 
       it('scroll form → destination is the `of` target', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [
@@ -1091,7 +1101,7 @@ describe('fromCoreAST', () => {
       });
 
       it('scroll form skips a `the` before the target', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [
@@ -1107,7 +1117,7 @@ describe('fromCoreAST', () => {
       });
 
       it('position-only (`go to top`) → no roles', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [coreNode('string', { value: 'to' }), coreNode('string', { value: 'top' })],
@@ -1118,7 +1128,7 @@ describe('fromCoreAST', () => {
 
       // -- shape 2: semantic compileSync (modifiers.on/method) --
       it('semantic modifiers path → destination + method', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [],
@@ -1133,7 +1143,7 @@ describe('fromCoreAST', () => {
       });
 
       it('semantic modifiers path normalizes back → identifier', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [],
@@ -1149,7 +1159,7 @@ describe('fromCoreAST', () => {
 
       // -- shape 3: buildAST goMapper (positional literals) --
       it('buildAST positional url form → destination + method', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [coreNode('literal', { value: 'url' }), coreNode('literal', { value: '/page' })],
@@ -1160,7 +1170,7 @@ describe('fromCoreAST', () => {
       });
 
       it('buildAST positional back → destination identifier', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', { name: 'go', args: [coreNode('literal', { value: 'back' })] })
         ) as any;
         expect(result.roles.destination).toEqual({
@@ -1171,7 +1181,7 @@ describe('fromCoreAST', () => {
       });
 
       it('buildAST positional bare path → destination', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', { name: 'go', args: [coreNode('literal', { value: '/page' })] })
         ) as any;
         expect(result.roles.destination).toEqual({ type: 'literal', value: '/page' });
@@ -1179,7 +1189,7 @@ describe('fromCoreAST', () => {
 
       // -- target fallback (explicit cases bypass schema Pass-2) --
       it('binds a trailing target to destination', () => {
-        const result = fromCoreAST(
+        const result = withRoles(
           coreNode('command', {
             name: 'go',
             args: [],
@@ -1191,7 +1201,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers increment roles: patient + quantity', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'increment',
           args: [coreNode('variable', { name: ':count', scope: 'local' })],
@@ -1208,7 +1218,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers decrement roles', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'decrement',
           args: [coreNode('variable', { name: ':hp', scope: 'local' })],
@@ -1220,7 +1230,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers fetch roles: source + responseType from modifier node', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'fetch',
           args: [coreNode('literal', { value: '/api/data' })],
@@ -1237,7 +1247,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers fetch roles: responseType from identifier modifier', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'fetch',
           args: [coreNode('literal', { value: '/api/users' })],
@@ -1254,7 +1264,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers wait roles: duration', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'wait',
           args: [coreNode('literal', { value: 500 })],
@@ -1265,7 +1275,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers toggle roles: patient + destination', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'toggle',
           args: [coreNode('selector', { value: '.active' })],
@@ -1278,7 +1288,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers add roles: patient + destination', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'add',
           args: [coreNode('selector', { value: '.highlight' })],
@@ -1291,7 +1301,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers remove roles: patient + source', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'remove',
           args: [coreNode('selector', { value: '.hidden' })],
@@ -1304,7 +1314,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers send roles: event + destination', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'send',
           args: [coreNode('literal', { value: 'myEvent' })],
@@ -1317,7 +1327,7 @@ describe('fromCoreAST', () => {
     });
 
     it('omits roles when no args (e.g., toggle with no args)', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'toggle',
           args: [],
@@ -1328,7 +1338,7 @@ describe('fromCoreAST', () => {
     });
 
     it('infers toggle roles without target', () => {
-      const result = fromCoreAST(
+      const result = withRoles(
         coreNode('command', {
           name: 'toggle',
           args: [coreNode('selector', { value: '.active' })],
@@ -1337,6 +1347,102 @@ describe('fromCoreAST', () => {
 
       expect(result.roles.patient).toEqual({ type: 'selector', value: '.active' });
       expect(result.roles.destination).toBeUndefined();
+    });
+  });
+
+  // =============================================================================
+  // B2. THE INJECTION BOUNDARY
+  // =============================================================================
+
+  /**
+   * `fromCoreAST` takes its role inferrer by injection (Arc 1 step 4) so the
+   * engine keeps no dependency on `@lokascript/semantic`. These pin what falls
+   * on each side of that line — and how much rides on it.
+   *
+   * Measured over the engine corpus's 214 parsing sources: 43 command names
+   * receive roles, and 41 of them come from the injected inferrer. Omitting it
+   * is not a marginal degradation, so it must be a VISIBLE one: roles are
+   * absent, never silently wrong.
+   */
+  describe('engine-only role inference (no inferrer injected)', () => {
+    it('still names set roles — an explicit case, no schema needed', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'set',
+          args: [coreNode('variable', { name: ':x', scope: 'element' })],
+          modifiers: { to: coreNode('literal', { value: 5 }) },
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({
+        type: 'variable',
+        name: ':x',
+        scope: 'element',
+      });
+      expect(result.roles.patient).toEqual({ type: 'literal', value: 5 });
+    });
+
+    it('still names go roles — an explicit case, no schema needed', () => {
+      const result = fromCoreAST(
+        coreNode('command', { name: 'go', args: [coreNode('identifier', { name: 'back' })] })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({
+        type: 'identifier',
+        value: 'back',
+        name: 'back',
+      });
+    });
+
+    it('emits NO roles for a schema-driven command, rather than partial ones', () => {
+      const node = coreNode('command', {
+        name: 'toggle',
+        args: [coreNode('selector', { value: '.active' })],
+      });
+
+      expect((fromCoreAST(node) as any).roles).toBeUndefined();
+      // …and the same node WITH the inferrer does name them.
+      expect((withRoles(node) as any).roles.patient).toEqual({
+        type: 'selector',
+        value: '.active',
+      });
+    });
+
+    it('reaches commands nested inside a handler body, not just the top level', () => {
+      const handler = coreNode('eventHandler', {
+        event: 'click',
+        commands: [
+          coreNode('command', {
+            name: 'toggle',
+            args: [coreNode('selector', { value: '.open' })],
+          }),
+        ],
+      });
+
+      expect((fromCoreAST(handler) as any).body[0].roles).toBeUndefined();
+      expect((withRoles(handler) as any).body[0].roles.patient).toEqual({
+        type: 'selector',
+        value: '.open',
+      });
+    });
+
+    it('reaches commands nested inside an if branch', () => {
+      const ifCmd = coreNode('command', {
+        name: 'if',
+        condition: coreNode('identifier', { name: 'ok' }),
+        thenBranch: [
+          coreNode('command', {
+            name: 'add',
+            args: [coreNode('selector', { value: '.on' })],
+          }),
+        ],
+      });
+
+      expect((fromCoreAST(ifCmd) as any).thenBranch[0].roles).toBeUndefined();
+      expect((withRoles(ifCmd) as any).thenBranch[0].roles.patient).toEqual({
+        type: 'selector',
+        value: '.on',
+      });
     });
   });
 

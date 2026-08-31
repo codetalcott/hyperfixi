@@ -10,7 +10,7 @@
  *   en  show #a then show #b               ->  CommandSequence  (2)
  *
  * The English path was shielded by accident, not by design: core's parser calls
- * `skipToCommandBoundary()` after a semantic hit and resumes at the next command,
+ * the resync after a semantic hit and resumes at the next command,
  * so its own loop recovers the commands the semantic parser dropped. Only code that
  * consumes the semantic node directly — every non-English entry point — lost them.
  *

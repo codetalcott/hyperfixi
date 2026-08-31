@@ -1007,8 +1007,32 @@ export function createSemanticAdapter(deps: {
       // (e.g. "compound" → "Unknown command: compound" at runtime). Omitting
       // `command` fails the caller's confidence gate, so the traditional
       // parser takes the segment instead.
+      // Coverage gate: reject a parse the semantic parser itself flagged as
+      // having left input unconsumed (`unconsumed-input` warning diagnostics —
+      // both the Stage-2 raw check and the residue-filtered per-segment one).
+      //
+      // Without this, a pattern that matches a PREFIX of the arguments at high
+      // confidence is adopted as the whole command and the tail is silently
+      // dropped: `log "a" is not "b"` compiled to `log "a"` with ok:true and
+      // no warning, in the default configuration. The analyzer's confidence
+      // scores role coverage, never input coverage — semantic's
+      // `describeUnconsumedInput` records the blindness as a diagnostic
+      // precisely so a caller can act on it, and this is the caller acting.
+      // (Pricing coverage into the SCORE instead is deliberately parked in
+      // semantic behind the `--diagnose-coverage` sweep; see the comment on
+      // `describeUnconsumedInput`.)
+      //
+      // Measured when introduced (engine corpus, 233 sources): flips 29
+      // sources from a truncated/divergent semantic parse to the traditional
+      // one, turns the two `render … with (…)` prefix-parses into honest
+      // failures, and the full multilingual --regression gate stays green.
+      const truncated = !!(
+        result.node as null | { diagnostics?: readonly { severity?: string; message?: string }[] }
+      )?.diagnostics?.some(d => d.severity === 'warning' && /unconsumed/.test(String(d.message)));
       const isSingleCommand =
-        result.node !== null && (result.node.kind === undefined || result.node.kind === 'command');
+        !truncated &&
+        result.node !== null &&
+        (result.node.kind === undefined || result.node.kind === 'command');
       const out: SemanticAnalysisResult = {
         confidence: result.confidence,
         ...(result.tokensConsumed !== undefined ? { tokensConsumed: result.tokensConsumed } : {}),

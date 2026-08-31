@@ -32,8 +32,14 @@ interface CoreHyperscriptAPI {
   ): CoreCompileResult;
 }
 
-/** Interchange converter function signature */
+/** Interchange converter function signature, as this package consumes it. */
 type InterchangeConverter = (node: CoreASTNode) => ASTNode;
+
+/**
+ * `fromCoreAST` as core actually exports it: schema-driven role inference is
+ * injected, so the engine keeps no dependency on the multilingual front-end.
+ */
+type RawInterchangeConverter = (node: CoreASTNode, options?: { inferRoles?: unknown }) => ASTNode;
 
 // =============================================================================
 // CORE PARSER ADAPTER
@@ -114,13 +120,29 @@ export async function createCoreParserAdapter(): Promise<CoreParserAdapter> {
   }
 
   // Use the interchange converter from core
-  const converter = (core as Record<string, unknown>).fromCoreAST as InterchangeConverter;
-  if (!converter) {
+  const rawConverter = (core as Record<string, unknown>).fromCoreAST as RawInterchangeConverter;
+  if (!rawConverter) {
     throw new Error(
       '@hyperfixi/core does not export fromCoreAST. ' +
         'Ensure @hyperfixi/core >= 1.3.0 is installed.'
     );
   }
+
+  // Role inference is injected (see RawInterchangeConverter). Codegen reads
+  // `node.roles` in two dozen places, so a converter without the inferrer would
+  // emit silently wrong JS for every command but `set` and `go` — fail loudly
+  // instead of degrading.
+  let inferRoles: unknown;
+  try {
+    ({ schemaRoleInferrer: inferRoles } = await import('@hyperfixi/core/multilingual'));
+  } catch {
+    throw new Error(
+      'AOT compilation requires @hyperfixi/core/multilingual for schema-driven role ' +
+        'inference, which needs the @lokascript/semantic peer dependency. Without it ' +
+        'the compiler would emit code with roles missing for all but `set` and `go`.'
+    );
+  }
+  const converter: InterchangeConverter = node => rawConverter(node, { inferRoles });
 
   // Cache for standalone convertCoreASTToAOT()
   _converter = converter;

@@ -1049,16 +1049,18 @@ describe('RuntimeBase Method Coverage', () => {
       expect(await run('js return 7 end then put result into #probe')).toBe('7');
     });
 
-    it('KNOWN DEFECT (pre-existing, not Arc C): `get` is invisible to the NEXT command', async () => {
-      // `get 42 then put it into #probe` yields '' — but insert any command
-      // between them and it yields '42'. Verified identical on main before the
-      // step-3 deletion, so this is a `get`-specific sequencing defect, not a
-      // consequence of removing the propagation loop, and not the `it`/`result`
-      // alias (it reproduces through `it` alone).
-      //
-      // Pinned rather than dropped so the knowledge is not lost. If you fix
-      // `get`, this test tells you to update it — both lines should become '42'.
-      expect(await run('get 42 then put it into #probe')).toBe('');
+    it('`get` is visible to the NEXT command (defect fixed 2026-08-30)', async () => {
+      // This pinned a KNOWN DEFECT: `get 42 then put it into #probe` yielded ''
+      // while inserting any command between them yielded '42'. The semantic
+      // adoption coverage gate fixed it — `get` is not on the
+      // skipSemanticParsing list, so the `get` head of a then-chain was
+      // adopted from a SEMANTIC prefix-parse while the rest of the chain
+      // parsed traditionally, and the result slot did not survive that seam.
+      // Under the gate a then-chain parses as `compound`, which the adapter's
+      // single-command check rejects, so the whole chain is traditional and
+      // the slot flows. Kept as the fixed-behavior pin, per the old test's own
+      // instruction ("both lines should become '42'").
+      expect(await run('get 42 then put it into #probe')).toBe('42');
       expect(await run('get 42 then log result then put it into #probe')).toBe('42');
     });
   });
