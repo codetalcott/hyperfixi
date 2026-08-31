@@ -3650,16 +3650,29 @@ export class Parser {
       break;
     }
 
-    const pos = this.getPosition();
+    // Span the COMMAND, not just its last token.
+    //
+    // `getPosition()` reports the PREVIOUS token — after the argument loop
+    // above, that is the last argument — so this node used to claim its final
+    // argument's span as its own: `log "hello"` reported [4,11] ("hello")
+    // rather than [0,11]. Measured over the documented command examples, 50 of
+    // 183 started late this way, across 19 commands (log, get, call, clear,
+    // copy, settle, …) — every command that reaches this generic path rather
+    // than a specialized parser, which is why `toggle` and `add` were correct
+    // and `log` was not.
+    //
+    // The start is the command keyword; the end is wherever argument parsing
+    // stopped. LSP ranges and any diagnostic that quotes the span read these.
+    const endPos = this.getPosition();
     return {
       type: 'command',
       name: commandName,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
+      start: commandToken.start ?? endPos.start,
+      end: endPos.end,
+      line: commandToken.line ?? endPos.line,
+      column: commandToken.column ?? endPos.column,
     };
   }
 
