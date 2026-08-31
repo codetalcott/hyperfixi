@@ -1291,6 +1291,87 @@ assertion, which is an owner decision rather than a papercut — left alone, and
 asserted as-is in `show-hide-when.test.ts` so the behaviour is at least
 recorded where the filter lives.
 
+### ~~`if <cond> then <cmd>` reports a missing `end` it does not need~~ — FIXED (2026-08-31)
+
+`if x > 5 then add .active` — `IfCommand`'s own documented example — parsed
+**completely correctly** and then reported `Expected 'end' after if block`. The
+AST was right; only the diagnostic was wrong, which is why nothing caught it:
+`ok`/`success` both stayed true and no structural assertion could see it.
+
+Upstream's rule is one line, and hyperfixi was missing half of it:
+
+```js
+if (parser.hasMore() && !nestedIfStmt) parser.requireToken("end");
+```
+
+Measured on the vendored 0.9.93 engine: `if x > 5 then add .active`,
+`if 1 is 1 then log 'a' then log 'b'` and `on click if x > 5 then add .active`
+all ACCEPT, while `on click if x then add .a` + a following `on mouseover …`
+is rejected by BOTH engines. `end` is now required exactly when input follows.
+
+**It blocked a gate, which is why it mattered more than a stray message.**
+`documented-examples.test.ts` could not begin asserting on `errors` while nine
+of its own rows carried this false positive. It cost two tests that had PINNED
+the strictness — "Deliberate strictness: upstream tolerates an unterminated
+`if/then` at the end of a handler and we do not. That is a separate decision" —
+which is exactly the deferral this closes, visibly, in the same commit.
+
+Not changed, and pre-existing on both sides of the fix: inside a `def`/`behavior`
+the if-block still consumes the enclosing `end` (`def f()\n if x then log 1\nend`
+→ "Expected 'end' after function definition"), where upstream accepts. Measured
+identical before and after, so it is a separate defect with its own cause.
+
+### The documented-examples gate now reads `errors`, and found 11 more (2026-08-31)
+
+With the false positive above gone, `documented-examples.test.ts` asserts a
+CLEAN parse rather than a merely successful one — closing the two blind spots
+its own docblock confessed ("adding a garbage example to a real command does NOT
+redden this gate"). Both closures are mutation-tested.
+
+Two mechanical points, both measured rather than assumed:
+
+- **The wrapped parse became a REQUIREMENT, not a fallback.** #1026 wired the
+  discarded-input diagnostic into five sites, all inside a handler body, so bare
+  `log "a" ####` still comes back clean while `on click log "a" ####` reports
+  the drop. A gate that stops at the bare parse cannot see the class it was
+  strengthened to see. **This is the same hole, found the same week, as the one
+  in `compound-command-coverage.test.ts`** — worth treating as a general rule:
+  *a parse-quality assertion on a bare command source is measuring the wrong
+  shape.*
+- **`empty-body` is now unreachable**, because a wrapped parse yielding no
+  commands always reports the body it discarded. The branch is kept: it is the
+  right answer if a silently-empty handler body ever returns, which is precisely
+  the #1026 regression.
+
+**The allowlist GREW, 19 → 30**, which is the opposite of what that docblock
+predicted ("the allowlist below collapses to the genuine feature gaps"). Eleven
+examples had been losing content in silence. Each carries the real
+`hyperscript.org` verdict, because that is what decides whose defect it is:
+
+| n | class | rows |
+| - | ----- | ---- |
+| 8 | **docs defect** — upstream rejects it too | `blur on <input/>`, `focus on <input/>`, `async <a> <b>` ×3, `log x y z`, `log "Result:" result`, `pick "red", "green", "blue"` |
+| 3 | **parser gap** — upstream ACCEPTS | `scroll to me smoothly` (drops `smoothly`), `transition left to 100px over 500ms` (drops `px over 500ms` — the DURATION is lost), `make a URL from "/path/", "…"` (does not parse at all inside a handler) |
+
+Two of those are worth acting on next:
+
+- **`transition left to 100px over 500ms` loses its duration** wrapped in a
+  handler. It is TransitionCommand's own documented example and upstream parses
+  it; the tail breaks at the unit suffix (`100` `px`), so a plain
+  `transition left to 100px` is likely affected too — check before assuming this
+  is only about `over`.
+- **`make a URL from "/path/", "https://…"` does not parse inside a handler at
+  all**, while it parses bare and upstream accepts both. A comma-separated
+  argument list that survives at top level and dies in a body points at the body
+  loop, not at `make`.
+
+**And it corrects a claim in the convergence brief.** That brief lists rows
+45/82 (`blur on <input/>`) as "a third defect belonging to neither path's
+design". As a DOCUMENTED EXAMPLE it is a docs defect: upstream rejects it, and
+with nearly the same complaint hyperfixi makes ("Expected event name" vs
+"Expected event name after 'on'"). What shape the two parse paths give the
+construct when it *does* appear is a separate, still-open question.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

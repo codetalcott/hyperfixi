@@ -747,9 +747,23 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       }
     }
 
-    // Consume 'end' for multi-line form
-    // Skip if we consumed 'else if' because the nested if already consumed 'end'
-    if (!consumedElseIf) {
+    // Consume 'end' for multi-line form.
+    //
+    // Skipped when we consumed 'else if' (the nested if already consumed 'end')
+    // and when there is NO INPUT LEFT — the upstream rule, verbatim:
+    //
+    //   if (parser.hasMore() && !nestedIfStmt) parser.requireToken("end");
+    //
+    // Measured on the vendored 0.9.93 engine, which ACCEPTS every one of
+    // `if x > 5 then add .active`, `if 1 is 1 then log 'a' then log 'b'` and
+    // `on click if x > 5 then add .active`. Requiring `end` unconditionally
+    // made the parser report "Expected 'end' after if block" on NINE of this
+    // repo's own `metadata.examples` — sources that parse completely correctly,
+    // whose AST is exactly right, and which then carry a diagnostic saying
+    // otherwise into every gate that reads `errors`. `end` is still required
+    // the moment anything follows, which is what keeps a genuinely
+    // unterminated block inside a larger body an error.
+    if (!consumedElseIf && !ctx.isAtEnd()) {
       ctx.consume(KEYWORDS.END, "Expected 'end' after if block");
     }
   } else {

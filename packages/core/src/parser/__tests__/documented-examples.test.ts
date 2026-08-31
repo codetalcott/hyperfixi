@@ -5,26 +5,36 @@
  * `get_command_docs`, and LSP hover. Nothing asserted that any of them parse.
  * 19 did not, and had not for at least a year.
  *
- * ## What this gate can and cannot see
+ * ## What this gate sees
  *
- * It asserts an example PARSES — bare, or wrapped in a handler for constructs
- * that are only legal inside a feature. It deliberately also asserts the
- * wrapped parse yields a NON-EMPTY body, because `ok: true` is not evidence of
- * comprehension here: `on click qqqq` returns `success: true`, `recovered:
- * undefined`, zero errors and an EMPTY command list. A gate keyed on `ok`
- * alone would pass every one of those.
+ * It asserts an example parses CLEANLY — no diagnostics — bare AND wrapped in a
+ * handler, which is the shape a user actually writes. `ok: true` is not
+ * evidence of comprehension: `on click qqqq` returns `success: true` with an
+ * EMPTY command list, and `log "a" ####` returns an AST with the tail thrown
+ * away. A gate keyed on `ok` alone passes every one of those.
  *
- * It still cannot see two things, both filed in `PARSER_NEXT_STEPS.md` under
- * "a dropped handler body is silently discarded":
+ * **Both halves of that had to land before this gate could read `errors`.**
+ * #1026 gave the parser a channel to report what it discards — and only from
+ * inside a handler body, which is why the wrapped parse is a REQUIREMENT here
+ * and not merely a fallback. Reading the channel then had to wait for the
+ * `if`-without-`end` false positive: `if x > 5 then add .active` parses exactly
+ * right and reported "Expected 'end' after if block" anyway, on NINE of these
+ * examples, which would have swamped the signal. Upstream requires `end` only
+ * when `parser.hasMore()`; hyperfixi now does the same.
  *
- * - **A dropped TAIL.** `on click render x with (a: 1)` parses to a `render`
- *   with the `with (…)` silently gone. Body non-empty, gate green.
- * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` parses and
- *   runs the body ONCE instead of three times. Body non-empty, gate green.
+ * So the two blind spots this docblock used to confess are closed, and both
+ * closures are mutation-tested rather than assumed:
  *
- * Both need the parser to record that it discarded input, which it currently
- * does not. When it does, this gate should assert `recovered === false` and the
- * allowlist below collapses to the genuine feature gaps.
+ * - **A dropped TAIL.** `on click render x with (a: 1)` → `lossy`.
+ * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` → `lossy`.
+ *
+ * The allowlist did NOT collapse when the gate was strengthened, as this
+ * docblock once predicted — it GREW, from 19 rows to 30. That is what
+ * strengthening a gate blind to an entire band does first: eleven examples that
+ * had read as fine for years were losing content in silence. Eight are docs
+ * defects (upstream rejects them too) and three are parser gaps (upstream
+ * accepts); every entry records which, with the verdict measured on the real
+ * hyperscript.org engine rather than guessed.
  *
  * ## The allowlist ratchets both ways
  *
@@ -36,7 +46,7 @@ import { describe, it, expect } from 'vitest';
 import { commandExamples } from './engine-corpus';
 import { hyperscript } from '../../api/hyperscript-api';
 
-type Status = 'ok-bare' | 'ok-wrapped' | 'empty-body' | 'no-parse';
+type Status = 'ok-bare' | 'ok-wrapped' | 'empty-body' | 'lossy' | 'no-parse';
 
 interface Allowed {
   readonly command: string;
@@ -66,7 +76,7 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'pseudo-command',
     source: 'reload() the location of the window',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'pseudo-commands are only legal inside a feature; canonical engine agrees',
   },
   {
@@ -90,25 +100,25 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'repeat',
     source: 'repeat for item in items { log item }',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'brace block is not hyperscript; wrapped it MISPARSES (logs one empty value)',
   },
   {
     command: 'repeat',
     source: 'repeat 5 times { log "hello" }',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'brace block is not hyperscript; wrapped it MISPARSES (runs once, not 5×)',
   },
   {
     command: 'break',
     source: 'repeat for item in items { if item == target then break }',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'embeds a brace-block repeat; same misparse as the repeat rows',
   },
   {
     command: 'continue',
     source: 'repeat for item in items { if item.skip then continue; process item }',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'embeds a brace-block repeat; same misparse as the repeat rows',
   },
 
@@ -116,19 +126,19 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'if',
     source: 'unless user.isLoggedIn showLoginForm',
-    status: 'empty-body',
+    status: 'lossy',
     reason: '`showLoginForm` is not a command — `unless x log "y"` parses fine',
   },
   {
     command: 'unless',
     source: 'unless user.isLoggedIn showLoginForm',
-    status: 'empty-body',
+    status: 'lossy',
     reason: '`showLoginForm` is not a command — `unless x log "y"` parses fine',
   },
   {
     command: 'tell',
     source: 'tell closest <form/> submit',
-    status: 'empty-body',
+    status: 'lossy',
     reason: '`submit` is not a command; canonical engine wants `submit()`',
   },
 
@@ -136,25 +146,25 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'render',
     source: 'render myTemplate with (name: "Alice")',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'paren named-args unimplemented; `with {name: "Alice"}` works. Tail silently dropped',
   },
   {
     command: 'render',
     source: 'render "<template>Hello ${name}!</template>" with (name: "World")',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'paren named-args unimplemented; tail silently dropped',
   },
   {
     command: 'render',
     source: 'render template with (items: data)',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'paren named-args unimplemented; tail silently dropped',
   },
   {
     command: 'settle',
     source: 'settle for 3000',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: '`settle [for <timeout>]` is declared in syntax but unimplemented; tail dropped',
   },
   {
@@ -187,8 +197,98 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'start',
     source: 'start view transition using "slide" then put result into #panel end',
-    status: 'ok-wrapped',
+    status: 'lossy',
     reason: 'bare form rejects the `then` after the `using` clause; wrapped it parses',
+  },
+
+  // --- newly VISIBLE, not newly broken -------------------------------------
+  // Everything below reads `ok: true` and was invisible until this gate started
+  // reading `errors`. Each carries the verdict of the real hyperscript.org
+  // engine, which is what decides whose defect it is: upstream REJECTING means
+  // the example is wrong, upstream ACCEPTING means the parser is.
+
+  // Upstream rejects these too — the EXAMPLES are wrong, not the parser. Note
+  // hyperfixi and upstream even complain about the same token: "Expected event
+  // name after 'on'" vs upstream's "Expected event name". So the convergence
+  // brief's guess that rows 45/82 (`blur on <input/>`) are "a third defect
+  // belonging to neither path's design" is only half right — as a DOCUMENTED
+  // EXAMPLE this is a docs defect. What shape the two paths give it when it
+  // does parse is a separate question, still open.
+  {
+    command: 'blur',
+    source: 'blur on <input/>',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+  },
+  {
+    command: 'focus',
+    source: 'focus on <input/>',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+  },
+
+  // Space-separated argument lists. Upstream rejects all five ("Unexpected
+  // Token : <second arg>") — its `log` wants commas and its `async` takes one
+  // command — so these are docs defects, and the parser quietly keeping only
+  // the first argument is how they read as fine for years.
+  {
+    command: 'async',
+    source: 'async command1 command2',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
+  },
+  {
+    command: 'async',
+    source: 'async fetchData processData',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
+  },
+  {
+    command: 'async',
+    source: 'async animateIn showContent',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects; `async` takes ONE command, the second is discarded',
+  },
+  {
+    command: 'log',
+    source: 'log x y z',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects; `log a, b, c` is the real form, `y z` is discarded',
+  },
+  {
+    command: 'log',
+    source: 'log "Result:" result',
+    status: 'lossy',
+    reason: 'docs defect: upstream rejects; needs a comma, `result` is discarded',
+  },
+  {
+    command: 'pick',
+    source: 'pick "red", "green", "blue"',
+    status: 'lossy',
+    reason: "docs defect: upstream rejects; none of pick's five forms is a bare list",
+  },
+
+  // Upstream ACCEPTS these three — hyperfixi parser gaps, and the two `over`
+  // /adverb tails are content loss on syntax the commands themselves document.
+  {
+    command: 'scroll',
+    source: 'scroll to me smoothly',
+    status: 'lossy',
+    reason: 'PARSER GAP: upstream accepts; wrapped, `smoothly` is discarded',
+  },
+  {
+    command: 'transition',
+    source: 'transition left to 100px over 500ms',
+    status: 'lossy',
+    reason:
+      'PARSER GAP: upstream accepts; wrapped, `px over 500ms` is discarded — the duration is lost',
+  },
+  {
+    command: 'make',
+    source: 'make a URL from "/path/", "https://origin.example.com"',
+    status: 'lossy',
+    reason:
+      'PARSER GAP: upstream accepts both shapes; wrapped in a handler this does not parse at all',
   },
 ] as const;
 
@@ -196,29 +296,82 @@ const ALLOWED: readonly Allowed[] = [
 // Helpers
 // ===========================================================================
 
-function tryParse(source: string): Record<string, unknown> | undefined {
+interface Attempt {
+  /** The AST, when the parse produced one at all. */
+  readonly ast?: Record<string, unknown>;
+  /** No diagnostics — the parser placed every token it was given. */
+  readonly clean: boolean;
+}
+
+function tryParse(source: string): Attempt {
   // Both configurations, because an example is "documented as working" if
   // EITHER path accepts it — the gate is about the docs, not about convergence.
+  // The best of the two wins: a clean parse beats a lossy one beats none.
+  let best: Attempt = { clean: false };
   for (const traditional of [true, false]) {
     try {
       const r = hyperscript.compileSync(source, { traditional } as never) as {
         ok: boolean;
         ast?: Record<string, unknown>;
+        errors?: Array<{ message: string }>;
       };
-      if (r.ok && r.ast) return r.ast;
+      if (!r.ok || !r.ast) continue;
+      const clean = (r.errors ?? []).length === 0;
+      if (clean) return { ast: r.ast, clean };
+      if (!best.ast) best = { ast: r.ast, clean };
     } catch {
       /* try the other path */
     }
   }
-  return undefined;
+  return best;
 }
 
 function classify(source: string): Status {
-  if (tryParse(source)) return 'ok-bare';
-  const wrapped = tryParse(`on click ${source}`);
-  if (!wrapped) return 'no-parse';
-  const commands = (wrapped.commands as unknown[] | undefined)?.length ?? -1;
-  return commands === 0 ? 'empty-body' : 'ok-wrapped';
+  const bare = tryParse(source);
+
+  // The wrapped parse is not just a FALLBACK any more, it is a second
+  // REQUIREMENT — because the parser reports the input it discards only from
+  // inside a handler body (#1026 wired those five sites and no others). Bare,
+  // `log "a" ####` comes back clean with the tail silently gone; wrapped, it
+  // says so. A gate that stops at the bare parse therefore cannot see the very
+  // class it was strengthened to see. (The same hole, measured the same way,
+  // was closed in `compound-command-coverage.test.ts` the same week.)
+  //
+  // A source whose bare parse is ALREADY a feature cannot be wrapped in another
+  // handler — `on click on click breakpoint` is not a stronger test, it is a
+  // different source. Derived from the parse rather than from a keyword list;
+  // exactly 3 of the 205 examples take this branch.
+  const isFeature = bare.ast?.type === 'eventHandler';
+  const wrapped = isFeature ? bare : tryParse(`on click ${source}`);
+
+  if (bare.ast && bare.clean && wrapped.ast && wrapped.clean) return 'ok-bare';
+
+  if (wrapped.ast && wrapped.clean) {
+    // `empty-body` is measured UNREACHABLE today and kept deliberately. Since
+    // #1026 a wrapped parse that yields no commands always reports the body it
+    // discarded ("Not a command, and the rest of the handler body was
+    // discarded: 'qqqq'"), so every such source is caught by `lossy` above.
+    // The branch remains the right answer if a silently-empty handler body ever
+    // reappears — which is precisely the regression #1026 exists to prevent.
+    const commands = wrapped.ast.commands as unknown[] | undefined;
+    return (commands?.length ?? -1) === 0 ? 'empty-body' : 'ok-wrapped';
+  }
+
+  // Parses in at least one shape, but not cleanly in every shape it should:
+  // either the parser reported input it could not place, or the handler-wrapped
+  // form — the shape a user actually writes — does not parse at all.
+  //
+  // Before #1026 the parser had no channel to report a discard, so this whole
+  // band was indistinguishable from a clean parse and these rows read as
+  // `ok-bare` / `ok-wrapped`. It is where the two blind spots this gate's
+  // docblock named actually live: a dropped TAIL (`render x with (a: 1)` → the
+  // `with (…)` is gone) and a silent MISPARSE (`repeat 3 times { … }` → the body
+  // runs once). Kept as its own status rather than folded into `no-parse`,
+  // because "rejects it" and "accepts it and throws half of it away" are
+  // different defects and the STATUS row pins the mode; each entry's `reason`
+  // says which, with the upstream verdict that decides whose defect it is.
+  if (bare.ast || wrapped.ast) return 'lossy';
+  return 'no-parse';
 }
 
 const key = (command: string, source: string) => `${command}|${source}`;
@@ -267,36 +420,32 @@ describe('documented examples parse', () => {
     expect(drifted, 'an allowlisted example changed failure mode').toEqual([]);
   });
 
-  it('the classifier actually detects breakage — and pins what it CANNOT see', () => {
+  it('the classifier actually detects breakage, including a dropped tail', () => {
     // Guard on the guard. Without this the gate could be green because
     // `classify` never returns anything but `ok-bare`.
     expect(classify('qqqq wwww'), 'unknown command should not parse').toBe('no-parse');
-    expect(classify('unless x showLoginForm'), 'non-command body').toBe('empty-body');
     expect(classify('log "ok"'), 'a good example').toBe('ok-bare');
+    // `unless x showLoginForm` now reaches `lossy` rather than `empty-body`:
+    // the parse reports `Command 'unless' failed to parse and was discarded`,
+    // which is strictly more information than an empty body.
+    expect(classify('unless x showLoginForm'), 'non-command body').toBe('lossy');
 
-    // THE BLIND SPOT, pinned deliberately so nobody reads this gate as
-    // stronger than it is. The parser silently discards tokens it cannot
-    // place, so a mangled TAIL still classifies clean: `log }}} broken {{{`
-    // parses to `log` with args `[identifier "}"]` and the rest gone. Adding a
-    // garbage example to a real command does NOT redden this gate — verified
-    // by mutation, not assumed.
+    // THE BLIND SPOT THIS GATE USED TO HAVE, now closed and pinned from the
+    // other side. `log }}} broken {{{` parses to a `log` with the rest
+    // discarded; while `classify` read only `ok` it came back `ok-bare`, so
+    // adding a garbage example to a real command did NOT redden this gate —
+    // verified by mutation then, and asserted here now.
     //
-    // UPDATE 2026-08-31: the parser now DOES record dropped input
-    // (`recovered: true` + an `errors` entry), and this assertion did NOT fail
-    // — because `classify` reads `ok`, which is derived from `success`, and the
-    // fix deliberately leaves `success` alone (a degraded parse is not a failed
-    // one). So the prediction above was half right: the signal exists, the gate
-    // just cannot read it yet.
-    //
-    // Switching `classify` to reject `recovered` was MEASURED and is not yet
-    // viable: it takes this gate's failure list from 19 to 27, and all 8
-    // additions are a PRE-EXISTING false positive — `if x > 5 then add .active`
-    // parses correctly and still reports `Expected 'end' after if block`, on
-    // main, before any of this. Clean that up first (filed), then strengthen.
-    expect(
-      classify('log "a" ####'),
-      'still ok-bare: the tail is dropped but `success` is unaffected by design'
-    ).toBe('ok-bare');
+    // The two halves landed separately. #1026 gave the parser a channel to
+    // report what it discards; READING that channel had to wait for the
+    // `if`-without-`end` false positive, which put `Expected 'end' after if
+    // block` on NINE correct examples (`if x > 5 then add .active` among them)
+    // and would have swamped the signal. Upstream requires `end` only when
+    // `parser.hasMore()`; hyperfixi now does the same, and this row reads the
+    // channel.
+    expect(classify('log "a" ####'), 'the tail is discarded, and the gate can finally see it').toBe(
+      'lossy'
+    );
   });
 
   it('every allowlist entry names a real example and gives a reason', () => {
