@@ -655,6 +655,14 @@ mean "the front-end produced the AST" rather than "the analyzer was consulted").
 
 ### Arc 2 — One typed AST (medium-large)
 
+> **Brief: [HANDOFF-engine-arc2.md](./HANDOFF-engine-arc2.md)** (2026-09-01). It
+> re-measures this section's claims on the current tree and scores **four of
+> seven false**: `parser-types.ts` covers 15 kinds not 20 (and two are
+> PascalCase), positions are not always set (see step 2 below), `ast-utils` is
+> the 5th `any` cluster not the 2nd, and `commands` holds 19% of the hatches
+> rather than "most". The union has to cover **46 live kinds**, of which 15
+> exist — that is the real size of step 2. Read it before starting.
+
 A types-only arc. Runtime behaviour is byte-identical; the AST-equivalence
 corpus is the gate and it must not move. The escape-hatch ratchet is the
 progress meter.
