@@ -269,7 +269,7 @@ export function parseMultiWordCommand(
       }
       const first = elements[0] as ASTNode;
       const last = elements[elements.length - 1] as ASTNode;
-      modifierValue = {
+      const arrayNode: ASTNode = {
         type: 'arrayLiteral',
         // `elements`, not `args` — that is the shape the expression evaluator
         // and every other arrayLiteral producer use. (MakeCommand's
@@ -281,7 +281,8 @@ export function parseMultiWordCommand(
         end: last.end,
         line: first.line,
         column: first.column,
-      } as unknown as typeof modifierValue;
+      };
+      modifierValue = arrayNode;
     }
 
     if (modifierValue) {

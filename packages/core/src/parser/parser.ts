@@ -825,10 +825,15 @@ export class Parser {
    * (`over (2 * delay) ms`). Deliberately narrow; see TIME_POSTFIX_UNITS.
    */
   private isNumericPostfixRoot(left: ASTNode): boolean {
-    const node = left as { type?: string; value?: unknown; operator?: string };
+    const node = left as {
+      type?: string;
+      value?: unknown;
+      operator?: string;
+      argument?: ASTNode;
+    };
     if (node.type === 'literal' && typeof node.value === 'number') return true;
     if (node.type === 'unaryExpression' && (node.operator === '-' || node.operator === '+')) {
-      return this.isNumericPostfixRoot((left as unknown as { argument: ASTNode }).argument);
+      return node.argument !== undefined && this.isNumericPostfixRoot(node.argument);
     }
     if (node.type === 'binaryExpression' && ['+', '-', '*', '/'].includes(node.operator ?? '')) {
       return true;
