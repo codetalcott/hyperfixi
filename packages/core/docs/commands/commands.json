@@ -589,8 +589,18 @@
     },
     "scroll": {
       "description": "Scroll an element into view (upstream _hyperscript 0.9.90)",
-      "syntax": ["scroll to <target>", "scroll to top of <target>", "scroll to <target> smoothly"],
-      "examples": ["scroll to #top", "scroll to bottom of #chat", "scroll to me smoothly"],
+      "syntax": [
+        "scroll to <target>",
+        "scroll to top of <target>",
+        "scroll to <target> smoothly",
+        "scroll [<target>] [up|down|left|right] by <n> [px]"
+      ],
+      "examples": [
+        "scroll to #top",
+        "scroll to bottom of #chat",
+        "scroll to me smoothly",
+        "scroll down by 200"
+      ],
       "sideEffects": ["scrolling"],
       "category": "navigation",
       "compatibility": "standard"

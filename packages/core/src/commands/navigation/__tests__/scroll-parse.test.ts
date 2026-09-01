@@ -36,17 +36,17 @@
  * `the right of` / `last <…> in` throw exactly as before. The dedicated parser
  * emits `string` nodes, which is the whole difference.
  *
- * ## Two divergences from upstream that remain, deliberately
+ * ## The runtime divergences this docblock used to list are FIXED
  *
- * Both are RUNTIME, both predate this change, both are pinned by
- * `scroll-to.test.ts`, and both are filed in `docs-internal/PARSER_NEXT_STEPS.md`
- * rather than silently altered here:
- *
- *  - hyperfixi always sets `behavior: 'smooth'` when no adverb is given;
- *    upstream leaves `behavior` unset (the browser default, `auto`).
- *  - hyperfixi never sets `inline`; upstream always does, and maps the
- *    HORIZONTAL position word (`left`/`center`/`right`) to it rather than to
- *    `block`.
+ * The behavior default (`smooth` when no adverb; upstream leaves it unset),
+ * the unmapped `inline` (upstream maps `left`/`center`/`right` to it, not to
+ * `block`), and the missing `scroll <dir> by <n>` runtime are all aligned with
+ * upstream now — pinned by `scroll-to.test.ts` and the execution rows below.
+ * What remains filed in `docs-internal/PARSER_NEXT_STEPS.md` is the
+ * `in <container>` clause: the parser consumes it (so it cannot corrupt the
+ * target) but the runtime does not model container-relative `scrollTo`,
+ * because upstream's own container branch produces no observable call in
+ * jsdom — there is no oracle for it.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -116,11 +116,21 @@ describe('scroll — parse', () => {
       }
     });
 
-    it('leaves the `scroll <dir> by <n>` branch on the generic path', () => {
-      // Upstream's byMode form has no runtime here; the point is only that
-      // parseScrollCommand declines it rather than mangling it.
+    it('parses the `scroll <dir> by <n>` branch flat, like the `to` branch', () => {
+      // Structural words as `string` nodes the runtime matches by text — the
+      // generic path used to emit `identifier`s here, which evaluate to
+      // `undefined` (and the form had no runtime at all).
       const node = commandOf('scroll down by 100 px', traditional);
       expect(node.name).toBe('scroll');
+      expect(stringArgs(node)).toEqual(['down', 'by', 'px']);
+      expect((node.args ?? []).some(a => a.type === 'literal' && a.value === 100)).toBe(true);
+    });
+
+    it('parses the target-first `scroll <target> <dir> by <n>` form', () => {
+      const node = commandOf('scroll #panel right by 50', traditional);
+      expect(node.name).toBe('scroll');
+      expect(stringArgs(node)).toEqual(['right', 'by']);
+      expect((node.args ?? []).some(a => a.type === 'selector' && a.value === '#panel')).toBe(true);
     });
   });
 });
@@ -174,17 +184,73 @@ describe('scroll — execution (what the parse is FOR)', () => {
     expect(calls[0]?.options.block).toBe(block);
   });
 
-  it('reaches the target of a horizontal position instead of throwing', async () => {
-    // `inline` is not mapped yet (filed); resolving the TARGET at all is what
-    // changed — this shape threw `scroll: target element not found`.
+  it('maps a horizontal position word to `inline`, like upstream', async () => {
+    // This shape used to throw `scroll: target element not found`; then it
+    // resolved the target but dropped the word. Upstream maps
+    // left/center/right to `inline` (block stays at its default).
     await run('scroll to the right of #chat');
     expect(calls).toHaveLength(1);
     expect(calls[0]?.id).toBe('chat');
+    expect(calls[0]?.options).toEqual({ block: 'start', inline: 'end' });
+  });
+
+  it('leaves `behavior` unset when no adverb is given, like upstream', async () => {
+    // hyperfixi used to force `behavior: 'smooth'` here — upstream leaves it
+    // to the browser default (`auto`).
+    await run('scroll to #top');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.options).toEqual({ block: 'start', inline: 'nearest' });
   });
 
   it('scrolls to a positional target with a container clause', async () => {
     await run('scroll to last <.message/> in #chat');
     expect(calls).toHaveLength(1);
     expect(calls[0]?.id).toBe('last-msg');
+  });
+
+  describe('`scroll <dir> by <n>` (scrollBy, upstream byMode)', () => {
+    let byCalls: Array<{ id: string; options: ScrollToOptions }>;
+
+    beforeEach(() => {
+      byCalls = [];
+      vi.spyOn(Element.prototype, 'scrollBy').mockImplementation(function (
+        this: Element,
+        ...byArgs: unknown[]
+      ) {
+        byCalls.push({
+          id: (this as HTMLElement).id,
+          options: (byArgs[0] ?? {}) as ScrollToOptions,
+        });
+      });
+    });
+
+    it.each([
+      ['scroll down by 200', { top: 200, left: 0 }],
+      ['scroll up by 50', { top: -50, left: 0 }],
+      ['scroll left by 10', { top: 0, left: -10 }],
+      ['scroll by 200', { top: 200, left: 0 }], // no direction → down, upstream default
+    ] as const)('%s scrolls the document element %j', async (source, options) => {
+      await run(source);
+      expect(byCalls).toHaveLength(1);
+      expect(byCalls[0]?.id).toBe(document.documentElement.id);
+      expect(byCalls[0]?.options).toEqual(options);
+    });
+
+    it('scrolls a named target horizontally', async () => {
+      await run('scroll #chat right by 50');
+      expect(byCalls).toHaveLength(1);
+      expect(byCalls[0]?.id).toBe('chat');
+      expect(byCalls[0]?.options).toEqual({ top: 0, left: 50 });
+    });
+
+    it('carries the adverb into `behavior`', async () => {
+      await run('scroll down by 200 smoothly');
+      expect(byCalls[0]?.options).toEqual({ top: 200, left: 0, behavior: 'smooth' });
+    });
+
+    it('reads an adjacent px unit', async () => {
+      await run('scroll up by 50px');
+      expect(byCalls[0]?.options).toEqual({ top: -50, left: 0 });
+    });
   });
 });

@@ -411,8 +411,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   scroll: {
     title: 'scroll',
-    description: 'Scrolls an element into view.',
-    example: 'scroll to #section\nscroll to the top of me',
+    description: 'Scrolls an element into view, or by an offset.',
+    example: 'scroll to #section\nscroll to the top of me\nscroll down by 200',
     category: 'command',
   },
   process: {
