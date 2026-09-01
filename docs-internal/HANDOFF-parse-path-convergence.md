@@ -12,7 +12,7 @@
 > files — and two moved the AST-equivalence baseline. Worth a human read before
 > building on them.
 >
-> ### Landed 2026-08-31 — do not redo (#1023–#1026)
+> ### Landed 2026-08-31 — do not redo (#1023–#1026, then #1028–#1031)
 >
 > 1. ~~`hide <button/>` THROWS on the default path~~ — **#1023**, in
 >    `packages/semantic`'s `convertSelector`. The filing's recommended fix site
@@ -39,6 +39,14 @@
 >    gave you a handler that silently does nothing. Five sites across TWO
 >    functions now record it. Same commit fixed the shipped-sources gate to walk
 >    `git ls-files` rather than the working tree.
+>
+> 5. **Thread A items 1 and 2 both closed, plus two follow-ons they turned up**
+>    — **#1028** (`show`/`hide` keep their `in <scope>` and `when`), **#1029**
+>    (`if <cond> then <cmd>` needs `end` only when input follows, and the
+>    documented-examples gate now reads `errors`), **#1030** (`transition … to
+>    <value>` keeps its CSS unit), **#1031** (the `install X on <target>` queue
+>    item, corrected — it is a docs defect, not a parser bug). Detail on each is
+>    in the numbered queue below and in `PARSER_NEXT_STEPS.md`.
 >
 > ### What is left, in the order I would take it
 >
@@ -208,18 +216,20 @@
 > `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
 > "START HERE" block first and do not re-derive what it marks as settled.
 >
-> **#1023–#1026 are landed; start at the top of "What is left".** That is the
-> `recipes.html` parser gap — upstream accepts a surface we silently truncate.
-> The old items 1, 2 and the query-literal half of 3 are done; do not redo them.
+> **#1023–#1026 and #1028–#1031 are landed. Thread A items 1 and 2 are DONE**
+> — do not redo the `recipes.html` gap, the `if`-without-`end` false positive,
+> the `transition` unit drop, or the `install X on <target>` triage. Read the
+> queue below and start at **2b**, the two parser gaps #1029's strengthened gate
+> found and left open.
 >
 > **Re-run the measurement before costing anything** —
-> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. As of 2026-08-31
-> after all four PRs: same **137** · differ **77** · trad-only 0 · sem-only 0 ·
-> both-fail 19, with families `semanticRoles-added` 77, `field-only-trad`
-> 194/43, `field-only-sem` 76/48, `node-type` 14, `marker-in-args` 12,
-> `position` 36/10, `value` 3, `arity` 1. `implicit-me` is gone from the table.
-> These numbers move with every fix; the tool is the authority, not this
-> paragraph.
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. On `7e4ec0a6`:
+> same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail 19, with
+> families `semanticRoles-added` 77, `field-only-trad` 194/43, `field-only-sem`
+> 76/48, `node-type` 14, `marker-in-args` 12, `position` 36/10, `value` 3,
+> `arity` 1. `implicit-me` is gone from the table. `same` moved 137 → 139 only
+> because #1028 added two documented examples to the corpus — the tool is the
+> authority, not this paragraph.
 >
 > **`both-fail 19` is now understood and is NOT parser gaps** — all 19 are the
 > repo's own `metadata.examples`, triaged in `PARSER_NEXT_STEPS.md` and gated by
@@ -230,9 +240,17 @@
 > allowlists carry measured upstream verdicts. Both derive their corpus from
 > `git ls-files` — keep it that way.
 >
-> Note the top-line `differ` did NOT move, and that is expected: the fix removed
-> difference SITES from sources that still differ in metadata. Read the family
-> table, not the headline — the headline was misleading in step 5 too.
+> Note the top-line `differ` has not moved through eight PRs, and that is
+> expected: those fixes removed difference SITES from sources that still differ
+> in metadata, and Thread A's fixes are defects both paths SHARED, which the
+> triage cannot see at all. Read the family table, not the headline — the
+> headline was misleading in step 5 too.
+>
+> **Three allowlists now carry measured upstream verdicts, and their current
+> sizes are part of the state**: `documented-examples.test.ts` **29**,
+> `shipped-sources-validity.json` **4**, `shipped-examples-execution.json`
+> **33**. Two of the three ratchet DOWN only; the documented-examples list grew
+> to 30 when #1029 taught it to read `errors` and is back to 29 after #1030.
 >
 > A parser change needs the multilingual gate run LOCALLY before pushing
 > (~10 min): `npm run test:multilingual:build-deps` → `npm run populate --prefix
