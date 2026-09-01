@@ -77,6 +77,13 @@ export function parseCompoundCommand(
       return parseJsCommand(ctx, identifierNode);
     case 'go':
       return navigationCommands.parseGoCommand(ctx, identifierNode);
+    case 'scroll':
+      // Falls back for the `scroll <dir> by <n>` branch, which has no runtime
+      // here and keeps the generic path.
+      return (
+        navigationCommands.parseScrollCommand(ctx, identifierNode) ??
+        parseRegularCommand(ctx, identifierNode)
+      );
     case 'tell':
       return parseTellCommand(ctx, identifierNode);
     case 'pick':
@@ -231,11 +238,52 @@ export function parseMultiWordCommand(
   }
 
   // Parse modifiers (keywords + their arguments)
+  const commaList = new Set(pattern.commaListKeywords ?? []);
   while (!ctx.isAtEnd() && isKeyword(ctx.peek(), pattern.keywords)) {
     const keyword = ctx.advance().value;
 
     // Parse the expression after the keyword
-    const modifierValue = ctx.parseExpression();
+    let modifierValue = ctx.parseExpression();
+
+    // A comma-separated modifier value (`make a URL from "/a", "/b"`) is one
+    // arrayLiteral, mirroring upstream's
+    // `do { args.push(…) } while (parser.matchOpToken(","))`. The comma is NOT
+    // an operator, so `parseExpression` stops at the first element; before
+    // this, the rest was dropped in silence bare and became a hard
+    // `Unexpected token` once the handler body re-read it as a statement.
+    //
+    // Opt-in per pattern, never generic: `append`/`prepend`'s `to` takes a
+    // single expression upstream, so collecting commas there would accept
+    // syntax the canonical engine rejects.
+    if (
+      modifierValue &&
+      commaList.size > 0 &&
+      commaList.has(ctx.resolveKeyword(keyword).toLowerCase()) &&
+      ctx.check(',')
+    ) {
+      const elements: ASTNode[] = [modifierValue];
+      while (ctx.match(',')) {
+        const next = ctx.parseExpression();
+        if (!next) break;
+        elements.push(next);
+      }
+      const first = elements[0] as ASTNode;
+      const last = elements[elements.length - 1] as ASTNode;
+      modifierValue = {
+        type: 'arrayLiteral',
+        // `elements`, not `args` — that is the shape the expression evaluator
+        // and every other arrayLiteral producer use. (MakeCommand's
+        // `resolveConstructorArgs` also has an `arrayLiteral` + `args` branch;
+        // nothing in the parser has ever produced that shape, so it is dead,
+        // and the live path here is its `Array.isArray(value)` spread.)
+        elements,
+        start: first.start,
+        end: last.end,
+        line: first.line,
+        column: first.column,
+      } as unknown as typeof modifierValue;
+    }
+
     if (modifierValue) {
       modifiers[keyword] = modifierValue as ExpressionNode;
     }

@@ -931,7 +931,7 @@ describe('the command manifest', () => {
       .map(e => e.name)
       .sort();
     expect(manifestMultiword).toEqual([...COMPOUND_COMMANDS].sort());
-    expect(manifestMultiword.length).toBe(22);
+    expect(manifestMultiword.length).toBe(23);
   });
 
   it('consolidationAliasOf names the 4 shared implementations, and only those', () => {

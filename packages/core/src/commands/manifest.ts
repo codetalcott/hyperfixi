@@ -590,7 +590,7 @@ export const COMMAND_MANIFEST: readonly CommandManifestEntry[] = [
     category: 'navigation',
     tier: 'full',
     upstreamOrExtension: 'upstream',
-    multiword: false,
+    multiword: true,
   },
   {
     name: 'select',

@@ -60,6 +60,19 @@ const PROBES: Record<string, string[]> = {
   put: ['put "Hello" into #probe'],
   remove: ['remove .active from #probe'],
   replace: ['replace url "/search?q=test"', 'replace url "/page" with title "Updated Page"'],
+  scroll: [
+    'scroll to #probe',
+    // The trailing adverb, dropped for as long as `scroll` had no case here.
+    // `instantly` is the one that mattered: ScrollCommand's default is
+    // `smooth = !args.includes('instantly')`, so dropping it INVERTED the
+    // request rather than merely losing a hint.
+    'scroll to me instantly',
+    // The positional form. `bottom of #probe` folded into a binary `of`, and
+    // the runtime then threw `scroll: target element not found` — every one of
+    // `top of` / `the bottom of` / `middle of` / `right of` was dead.
+    'scroll to bottom of #probe',
+    'scroll to the top of #probe smoothly',
+  ],
   send: ['send dataEvent to #probe'],
   set: ['set myVar to "value"'],
   show: [

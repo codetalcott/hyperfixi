@@ -116,6 +116,11 @@ export class ScrollCommand implements DecoratedCommand {
       'nearest',
       'smoothly',
       'instantly',
+      // Structural words `parseScrollCommand` emits that carry no target:
+      // `in` introduces the CONTAINER (not modelled here — see
+      // docs-internal/PARSER_NEXT_STEPS.md), `px` follows an offset.
+      'in',
+      'px',
     ]);
 
     for (const a of args) {
