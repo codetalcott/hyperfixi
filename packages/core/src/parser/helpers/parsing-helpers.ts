@@ -8,28 +8,14 @@
  */
 
 import type { Token, ASTNode } from '../../types/core';
-import type { ParserContext } from '../parser-types';
+import type { ParserContext, MultiWordPattern } from '../parser-types';
 import { KEYWORDS } from '../parser-constants';
 
-/**
- * MultiWordPattern - Local type for command syntax patterns
- *
- * Different from parser-types.ts MultiWordPattern which is for type checking.
- * This version includes syntax string for pattern matching.
- */
-export interface MultiWordPattern {
-  command: string;
-  keywords: string[];
-  syntax: string;
-  /**
-   * Modifier keywords whose value is a COMMA-SEPARATED LIST, collected into one
-   * `arrayLiteral`. Upstream spells this as an explicit
-   * `do { … } while (parser.matchOpToken(","))` and only `make`'s `from` has
-   * it — `append`/`prepend`'s `to` takes a single expression there, so making
-   * the comma generic would accept syntax the canonical engine rejects.
-   */
-  commaListKeywords?: string[];
-}
+// The single MultiWordPattern declaration lives in `parser-types.ts` — this
+// module used to carry a second, divergent copy, and a field present on only
+// one side was silently invisible across `getMultiWordPattern`. Re-exported
+// here because callers reach the type as `parsingHelpers.MultiWordPattern`.
+export type { MultiWordPattern } from '../parser-types';
 
 /**
  * Multi-word command patterns

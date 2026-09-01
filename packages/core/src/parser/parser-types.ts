@@ -164,13 +164,14 @@ export interface ProgramNode extends ASTNode {
  *
  * Example: "fetch URL as json" has keywords ["as"]
  *
- * NOTE: this is the SECOND declaration of this name — `helpers/parsing-helpers.ts`
- * has its own, and the two have always differed (`syntax` there, `minArgs`/
- * `maxArgs` here; nothing reads any of the three). `ParserContext` returns THIS
- * one, `MULTI_WORD_PATTERNS` is typed by that one, and the values flow between
- * them structurally. A field added to only one is silently invisible on the
- * other side of `getMultiWordPattern`, which is how `commaListKeywords` first
- * failed to typecheck. Filed with the rest of the duplicate-type divergence.
+ * This is the ONE declaration of this name. It used to be declared twice —
+ * here and in `helpers/parsing-helpers.ts` — with fields the other side did
+ * not have (`syntax` there, unread `minArgs`/`maxArgs` here), and the values
+ * flowed between them structurally: a field added to only one was silently
+ * invisible on the other side of `getMultiWordPattern`, which is how
+ * `commaListKeywords` first failed to typecheck. `parsing-helpers` now
+ * re-exports this type; the pattern DATA (`MULTI_WORD_PATTERNS`) still lives
+ * there.
  */
 export interface MultiWordPattern {
   /** Command name (e.g., "fetch") */
@@ -179,17 +180,17 @@ export interface MultiWordPattern {
   /** Keywords that can appear as modifiers (e.g., ["as", "with"]) */
   keywords: string[];
 
+  /** Human-readable syntax summary, e.g. `append <value> [to <target>]` */
+  syntax: string;
+
   /**
-   * Modifier keywords whose value is a comma-separated LIST, collected into one
-   * `arrayLiteral` — see the declaration in `helpers/parsing-helpers.ts`.
+   * Modifier keywords whose value is a COMMA-SEPARATED LIST, collected into one
+   * `arrayLiteral`. Upstream spells this as an explicit
+   * `do { … } while (parser.matchOpToken(","))` and only `make`'s `from` has
+   * it — `append`/`prepend`'s `to` takes a single expression there, so making
+   * the comma generic would accept syntax the canonical engine rejects.
    */
   commaListKeywords?: string[];
-
-  /** Optional: Minimum number of arguments required */
-  minArgs?: number;
-
-  /** Optional: Maximum number of arguments allowed */
-  maxArgs?: number;
 }
 
 // ============================================================================
