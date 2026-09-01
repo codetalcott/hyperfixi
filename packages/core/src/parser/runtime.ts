@@ -205,9 +205,10 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
     // LEGACY: flat property paths (string `property`, possibly dotted). No
     // parser emits these any more — Thread B item 5 converged the semantic
-    // builder on the core parser's nested `memberExpression` — but hand-built
-    // ASTs (buildAST consumers, older tooling) may still carry them, so the
-    // arm stays until measured dead.
+    // builder on the core parser's nested `memberExpression`. MEASURED
+    // 2026-09-01: zero in-repo non-test producers remain (grep + kind
+    // classifier); the arm now serves only EXTERNAL hand-built ASTs
+    // (buildAST is public API). Delete with the next minor version bump.
     case 'propertyAccess':
       return evaluatePropertyAccess(n, context);
 
@@ -220,8 +221,9 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     // LEGACY: dedicated context-reference nodes (`me`/`you`/`it`/`target`/
     // `event`). No parser emits these any more — Thread B item 5 converged
     // every reference on the core parser's `identifier` spelling (handled
-    // above) — but hand-built ASTs may still carry them, so the arm stays
-    // until measured dead.
+    // above). MEASURED 2026-09-01: zero in-repo non-test producers remain;
+    // the arm now serves only EXTERNAL hand-built ASTs (buildAST is public
+    // API). Delete with the next minor version bump.
     case 'contextReference':
       return evaluateContextReference(n as ContextRefNode, context);
 
@@ -397,9 +399,12 @@ function resolveIdentifierSync(name: string, context: ExecutionContext, scope?: 
   if (context.globals?.has(name)) return context.globals.get(name);
   if (name.startsWith('$') && context.globals?.has(name.slice(1)))
     return context.globals.get(name.slice(1));
-  // Unbound `body` → document.body, mirroring evaluateIdentifier (see the
-  // comment there); placed after locals/globals so a user binding shadows.
+  // Unbound `body`/`detail`/`sender`, mirroring evaluateIdentifier (see the
+  // comments there); placed after locals/globals so a user binding shadows.
   if (name === 'body' && typeof document !== 'undefined') return document.body;
+  if (name === 'detail') return (context as { event?: { detail?: unknown } }).event?.detail ?? null;
+  if (name === 'sender')
+    return (context as { event?: { detail?: { sender?: unknown } } }).event?.detail?.sender ?? null;
   if ((context as any)[name] !== undefined) return (context as any)[name];
   if (typeof globalThis !== 'undefined' && name in globalThis)
     return (globalThis as Record<string, unknown>)[name];
@@ -623,6 +628,21 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   // shadows it (hyperfixi is lenient where upstream reserves the word).
   if (name === 'body' && typeof document !== 'undefined') {
     return document.body;
+  }
+  // Bare `detail` / `sender` — the same class as `body`, found by auditing
+  // upstream's reserved-word list after the body fix. Upstream's Context
+  // derives both from the event (`this.detail = event?.detail ?? null;
+  // this.sender = event?.detail?.sender ?? null`); hyperfixi resolved
+  // NEITHER (`on custom log detail.num` logged undefined while
+  // `event.detail.num` worked). Derived at read time from `context.event`
+  // rather than stamped into the per-event context, so every hydration site
+  // — DOM listener, custom-event path, and any future one — gets it for
+  // free; after locals/globals, so a user binding still shadows.
+  if (name === 'detail') {
+    return (context as { event?: { detail?: unknown } }).event?.detail ?? null;
+  }
+  if (name === 'sender') {
+    return (context as { event?: { detail?: { sender?: unknown } } }).event?.detail?.sender ?? null;
   }
   if ((context as any)[name] !== undefined) {
     // Property on the context object (backward compatibility).
