@@ -609,6 +609,34 @@ parts that change THIS plan:
   failed on it. Both now derive from git. Any new corpus-walking gate should do
   the same — the lesson is already recorded at #862 and was not applied.
 
+**2026-09-01 — the convergence detour is CLOSED by owner decision (#1038–#1042).**
+Steps 2, 3 and 6 are unblocked. Final triage: `same` 140 · `differ` 77 ·
+trad-only 0 · sem-only 0 · both-fail 19 (the gated `metadata.examples`).
+Families: `semanticRoles-added` 77, `field-only-sem` 78, `field-only-trad` 68,
+`marker-in-args` 13, `node-type` 2, `value` 2, **`position` 0**. What is left is
+deliberate enrichment plus a named residual; the owner judged that a defensible
+endpoint rather than a stopping point mid-way. The parts that change THIS plan:
+
+- **The `node-type` alias work landed and is not Arc 2's to redo** (#1040). The
+  ordering correction recorded above — "Arc 2 is sequenced after Arc 1 and that
+  ordering is now known to be wrong" — was resolved by moving Arc 2 **step 1**
+  ahead; it is done, and its own hypothesis table is in Arc 2 below. The four
+  `node-type` transitions the convergence brief listed are gone: semantic's
+  emitters converged on core's spellings, pinned by
+  `node-type-alias-parity.test.ts`.
+- **Every convergence pass found a live defect, including the last one.** The
+  span pass (#1042) set out to fix the SEMANTIC path and fixed the TRADITIONAL
+  one in six places: `memberExpression` / `callExpression` /
+  `possessiveExpression` all took their span from the token consumed LAST, so
+  `call myFunction()` spanned `)` and `get me.parentElement` spanned
+  `parentElement`; two synthesized children took a sibling's span; and
+  `clear :count` reported a column that indexed different text than its own
+  offset. All are read by LSP hover and diagnostic ranges. **The convergence
+  brief had named the traditional parse the oracle for spans. It was not.**
+- **`marker-in-args` (13) is the only family still explicitly blocked**, on Arc 2
+  — semantic is internally inconsistent about markers, and the family is not
+  executable until the union exists.
+
 Gates: step 1's test; the AST-equivalence corpus (steps 2–4 must be
 byte-identical; step 6 must be identical or reviewed per row); bundle-size
 snapshot (`hyperfixi.js`, `-multilingual.js`, `-semantic-complete.js`
@@ -671,8 +699,34 @@ progress meter.
    for 20 kinds) and the interchange union's structure. Keep the emitted
    camelCase names — 61 files import by them and renaming buys nothing.
    Expression and statement unions are separate; `Node = Expr | Stmt`.
-   Positions are a required `{ start, end, line, column }` (the parser always
-   sets them; the type just stops saying it might not).
+   ~~Positions are a required `{ start, end, line, column }` (the parser always
+   sets them; the type just stops saying it might not).~~ **Measured false,
+   2026-09-01, on both paths** — over the engine corpus, the TRADITIONAL parser
+   leaves **24 of 857** typed nodes without a complete position and
+   semantic-first leaves **58 of 949**. A required position would be a lie the
+   type tells, and making it true is not a types change.
+
+   Two distinct causes, and only one of them is a defect:
+
+   - **20 of the semantic 58 are correct.** A value the parser materialized
+     from a schema `default` was never written down, so it has no source text
+     to point at — a bare `focus`'s implicit `me` is asserted span-free in
+     `semantic-span.test.ts`, and a required position would force a fabricated
+     one. Whatever the union says, it has to admit these.
+   - **The traditional 24 are a defect**, from SEVEN producers, none of them
+     the semantic path: `js … end` bodies (9 sites — body literal and params
+     arrayLiteral), `pick`'s `variant`/`rangeMode` modifiers (7),
+     `propertyOfExpression` (which `asExpression` then inherits from, so 2
+     sites collapse to 1), `betweenExpression`, a `when`-modifier
+     `unaryExpression`, an object-literal `properties[].key`, and `set`'s
+     sigil-variable destination — which sets `start`/`end` and omits
+     `line`/`column`, so the same `:count` surface is positioned two different
+     ways inside one parse of
+     `on click set :count to 1 then increment :count`.
+
+   So: keep the position OPTIONAL on `Node` and say why (the materialized case
+   is real), and fix the seven producers separately — a behaviour change, which
+   this types-only arc cannot contain. Filed in `PARSER_NEXT_STEPS.md`.
 3. **`evaluateAST` becomes exhaustive.** `switch (node.type)` over `Expr` with
    a `never` default; the local `type X = ASTNode & {…}` block
    (`parser/runtime.ts:63-135`) is deleted; each `evaluate*` helper takes its
