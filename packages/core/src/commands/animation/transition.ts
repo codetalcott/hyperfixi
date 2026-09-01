@@ -26,6 +26,68 @@ import {
 } from '../decorators';
 
 /**
+ * The CSS property name a node NAMES, for a node the evaluator resolves to
+ * nothing.
+ *
+ * `transition <property>` takes a property NAME, but the two parse paths spell
+ * it differently and only one of them evaluates to its own text:
+ *
+ *   traditional   `transition opacity to 0.5`  → `string{value:'opacity'}`   → "opacity"
+ *   semantic      same source                  → `identifier{name:'opacity'}` → **undefined**
+ *
+ * An unbound identifier evaluates to `undefined`, so `String(firstArg)` became
+ * the literal string `"undefined"` — truthy, so the guard below let it through,
+ * and the command transitioned a CSS property named `undefined`: a SILENT
+ * no-op on the DEFAULT parse path. Measured before this existed: `transition
+ * opacity to 0.5` and `transition color to red` changed nothing, while
+ * `transition *opacity …` and `transition left …` worked — the first because
+ * the `*` sigil makes it a selector token, the second because `left` is a
+ * keyword token, so both arrive as strings either way. That is the same
+ * `String(undefined)` class this file already fixed once for the TARGET slot.
+ *
+ * `my opacity` is the second shape: the semantic path builds one
+ * `propertyAccess` node (`me` . `opacity`) where the traditional path emits two
+ * args (`[me, "opacity"]`), so the property name is the node's own field and
+ * the object is the target.
+ *
+ * Fixed at the consumer rather than at either producer: `transition` is the
+ * only command that needs a CSS property name out of an expression slot, the
+ * semantic schema admits `expression` there DELIBERATELY (see transitionSchema
+ * — a literal-only patient dropped the idiomatic unquoted form in every
+ * language), and every runtime consumer — core, the multilingual bundles, the
+ * R2 execution validator — goes through this method.
+ */
+function namedPropertyOf(node: unknown): { property: string; objectNode?: unknown } | null {
+  if (!node || typeof node !== 'object') return null;
+  const n = node as {
+    type?: string;
+    name?: unknown;
+    value?: unknown;
+    property?: unknown;
+    object?: unknown;
+  };
+
+  if (n.type === 'identifier' && typeof n.name === 'string' && n.name) {
+    return { property: n.name };
+  }
+
+  if (n.type === 'propertyAccess' || n.type === 'memberExpression') {
+    // `property` is a bare string on the semantic node and an identifier node
+    // on the core one.
+    const prop = n.property;
+    const name =
+      typeof prop === 'string'
+        ? prop
+        : typeof (prop as { name?: unknown })?.name === 'string'
+          ? ((prop as { name: string }).name)
+          : undefined;
+    if (name) return { property: name, objectNode: n.object };
+  }
+
+  return null;
+}
+
+/**
  * Typed input for TransitionCommand
  */
 export interface TransitionCommandInput {
@@ -110,11 +172,28 @@ export class TransitionCommand implements DecoratedCommand {
       // absent selector transitioned a property called "undefined", a no-op
       // with no error.
       throw new Error('transition: target element not found');
+    } else if (firstArg === undefined || firstArg === null) {
+      // The node evaluated to nothing — take the name it SPELLS. See
+      // namedPropertyOf: this is the semantic path's bare `opacity` /
+      // `my opacity`, which the traditional path spells as a string.
+      const named = namedPropertyOf(raw.args[0]);
+      if (!named) throw new Error('transition requires a CSS property');
+      property = named.property;
+      if (named.objectNode !== undefined) {
+        const owner = asElement(await evaluator.evaluate(named.objectNode as ASTNode, context));
+        if (isHTMLElement(owner)) target = owner as HTMLElement;
+      }
     } else {
       property = String(firstArg);
     }
 
-    if (!property) throw new Error('transition requires a CSS property');
+    // `'undefined'` is not a CSS property, and reaching this line with it means
+    // a node evaluated to nothing and was stringified anyway — the silent-no-op
+    // class above. Fail loudly instead of animating a property that cannot
+    // exist.
+    if (!property || property === 'undefined' || property === 'null') {
+      throw new Error('transition requires a CSS property');
+    }
     if (!raw.modifiers?.to) throw new Error('transition requires "to <value>"');
 
     let value = await evaluator.evaluate(raw.modifiers.to, context);
