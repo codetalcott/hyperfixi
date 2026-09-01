@@ -79,8 +79,15 @@ Renaming all seven pairs closes **zero** of the sites.
   behavioural one: #1036 fixed it at the CONSUMER (see below), deliberately, so
   the nodes still differ and the outcome no longer does.
 
-**The other 10 have NOT been executed row by row.** Doing that is step 1, and it
-is the step that found three defects last time.
+~~**The other 10 have NOT been executed row by row.** Doing that is step 1, and
+it is the step that found three defects last time.~~ **DONE 2026-09-01 (second
+pass): all 10 behave IDENTICALLY on both paths**, observable by observable —
+zero defects this time. Pinned by
+`packages/core/src/parser/__tests__/node-type-alias-parity.test.ts` (20 rows,
+both paths, mutation-measured), so item 5's rename work cannot silently change
+behaviour while it moves node types. The family is fully dispositioned: 3 live
+defects (fixed, #1036), 11 benign. Item 5 is PURE spelling normalisation now —
+measurement details in `PARSER_NEXT_STEPS.md`.
 
 ## The owner decision item 5 needs
 
@@ -98,9 +105,12 @@ Which spelling wins, per family. This is a real decision, not a coin flip:
 
 Get that decided before writing code.
 
-## Cheap, decision-free work to do FIRST
+## Cheap, decision-free work to do FIRST — ALL FOUR DONE (PR #1038, 2026-09-01)
 
-All four are filed with a repro and need no owner input:
+All four were filed with a repro and needed no owner input. All four shipped
+in #1038, each mutation-measured; the `in <container>` half of item 4 stays
+consumed-but-unimplemented, deliberately (no jsdom oracle — see the filing).
+Kept for the record:
 
 1. **`parseTimeToMs` is wrong by 60x for `minutes`.** It tests suffixes in the
    order `ms, seconds, s, minutes, hours, days`, and `"2minutes"` ends with `s`
@@ -205,17 +215,18 @@ comma list, spaced time units, the template-literal delimiters, the
 tsx tools/triage-parse-paths.ts`. Expect `same` 139 · `differ` 77 · both-fail 19
 with `node-type` 12. The tool is the authority, not this paragraph.
 
-**Start with the four decision-free filings** in the body (parseTimeToMs's 60x
-`minutes` error is the most user-visible). **Then, before any item-5 code:
-execute each of the 10 unchecked `node-type` rows.** That exact step found three
-live defects in the last 14 rows — a bare CSS property that silently animated
-nothing, a sigil-scoped variable that read `undefined` in the last command of
-every handler, and a `clear` that never cleared. Two of the 12 are already
-known-benign and are named in the body.
+~~**Start with the four decision-free filings** in the body … **Then, before
+any item-5 code: execute each of the 10 unchecked `node-type` rows.**~~ **Both
+done 2026-09-01**: the four filings shipped as #1038 (each mutation-measured),
+and all 10 rows executed IDENTICALLY on both paths — zero defects this pass,
+pinned by `node-type-alias-parity.test.ts`. The `node-type` family is fully
+dispositioned (3 fixed in #1036, 11 benign).
 
 **Item 5's stated payoff is measured FALSE** — `RENAME_PAIRS` closes ZERO of the
-sites, and the real work is three names, not seven pairs. It also needs an owner
-decision on which spelling wins per family; get that before writing code.
+sites, and the real work is three names, not seven pairs. With the family fully
+executed it is now PURE spelling normalisation. **The only thing between here
+and the code is the owner decision on which spelling wins per family** (see
+"The owner decision item 5 needs" above); get that before writing any of it.
 
 `both-fail 19` is understood and is NOT parser gaps — all 19 are the repo's own
 `metadata.examples`, gated by `documented-examples.test.ts`. Do not re-open it.
