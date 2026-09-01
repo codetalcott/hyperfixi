@@ -178,7 +178,7 @@ describe('Show Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('show');
-    expect(result.args[0]).toMatchObject({ type: 'contextReference', contextType: 'me' });
+    expect(result.args[0]).toMatchObject({ type: 'identifier', name: 'me' });
   });
 
   it('should map show with duration', () => {
@@ -206,7 +206,7 @@ describe('Hide Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('hide');
-    expect(result.args[0]).toMatchObject({ type: 'contextReference', contextType: 'me' });
+    expect(result.args[0]).toMatchObject({ type: 'identifier', name: 'me' });
   });
 });
 
@@ -250,7 +250,7 @@ describe('Increment Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('increment');
-    expect(result.args[0]).toMatchObject({ type: 'contextReference', contextType: 'counter' });
+    expect(result.args[0]).toMatchObject({ type: 'identifier', name: 'counter' });
   });
 
   it('should map increment with quantity', () => {
@@ -329,7 +329,7 @@ describe('Put Command Mapper', () => {
 
     expect(result.name).toBe('put');
     expect(result.args[0]).toMatchObject({ type: 'literal', value: 'Hello World' });
-    expect(result.modifiers!['into']).toMatchObject({ type: 'contextReference', contextType: 'me' });
+    expect(result.modifiers!['into']).toMatchObject({ type: 'identifier', name: 'me' });
   });
 
   it('maps the manner role to the position modifier (before/after)', () => {
@@ -356,8 +356,8 @@ describe('Put Command Mapper', () => {
     });
     const result = resolveCommandMapper('put')!.toAST(node, new ASTBuilder());
     expect(result.modifiers!['at end of']).toMatchObject({
-      type: 'contextReference',
-      contextType: 'body',
+      type: 'identifier',
+      name: 'body',
     });
     expect(result.modifiers!['into']).toBeUndefined();
   });
@@ -468,7 +468,7 @@ describe('Go Command Mapper', () => {
     const result = mapper.toAST(node, builder);
 
     expect(result.name).toBe('go');
-    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'url' });
+    expect(result.args[0]).toMatchObject({ type: 'string', value: 'url' });
     expect(result.args[1]).toMatchObject({ type: 'literal', value: '/page' });
     expect(result.modifiers ?? {}).toEqual({});
   });
@@ -484,7 +484,7 @@ describe('Go Command Mapper', () => {
 
     expect(result.name).toBe('go');
     expect(result.args).toHaveLength(1);
-    expect(result.args[0]).toMatchObject({ type: 'literal', value: 'back' });
+    expect(result.args[0]).toMatchObject({ type: 'string', value: 'back' });
   });
 
   it('should map a plain destination to a single positional arg', () => {

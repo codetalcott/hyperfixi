@@ -19,11 +19,8 @@ import {
   type ExpressionNode,
   type LiteralNode,
   type SelectorNode,
-  type ContextReferenceNode,
   type AttributeAccessNode,
-  type PropertyAccessNode,
   type IdentifierNode,
-  type ContextType,
   type SelectorKind,
 } from './expression-parser';
 
@@ -192,13 +189,23 @@ export function convertSelector(
 }
 
 /**
- * Convert a ReferenceValue to a context reference — or, for a SIGIL-scoped
- * variable, to the scoped identifier the traditional parser emits.
+ * Convert a ReferenceValue to the identifier the traditional parser emits —
+ * scoped for a SIGIL-prefixed variable, plain for everything else.
  *
- * `me` / `it` / `you` / `event` / … are context references. `:count` and
- * `$total` are **variables**, and calling them context references was a live
- * defect, not a spelling difference: `ContextType` is a closed union that never
- * contained them, so `value.value as ContextType` was a lying cast, and core's
+ * Every reference converges on `identifier` (Thread B item 5, the alias
+ * normalisation): the traditional parser emits `identifier{name:'me'}` for
+ * `me` / `it` / `you` / `event` / … — measured across every context word —
+ * and its evaluator resolves them by name. This function used to emit a
+ * dedicated `contextReference` node instead, which forced core's
+ * `parser/runtime.ts` to carry a parallel dispatch arm for the same meaning.
+ * All 12 node-type divergence sites were executed on both paths first
+ * (`node-type-alias-parity.test.ts`) — the shapes behave identically, so this
+ * is a spelling change, not a behavioural one.
+ *
+ * `:count` and `$total` are **variables**, and calling them context references
+ * was a live defect, not a spelling difference: `ContextType` is a closed
+ * union that never contained them, so `value.value as ContextType` was a
+ * lying cast, and core's
  * `evaluateContextReference` has no case for `:count` — it returns `undefined`.
  *
  * The blast radius was larger than it looks, because of WHERE the semantic path
@@ -220,7 +227,7 @@ export function convertSelector(
  * scope (that is what `getVariableValue` expects of each — not an inconsistency
  * introduced here).
  */
-export function convertReference(value: ReferenceValue): ContextReferenceNode | IdentifierNode {
+export function convertReference(value: ReferenceValue): IdentifierNode {
   const raw = value.value;
 
   if (typeof raw === 'string') {
@@ -232,29 +239,62 @@ export function convertReference(value: ReferenceValue): ContextReferenceNode | 
     }
   }
 
-  return {
-    type: 'contextReference',
-    contextType: raw as ContextType,
-    name: raw,
-  };
+  // Possessive surface forms normalise to their base word, matching what the
+  // traditional parser's fold emits (`my value` → object `identifier{me}`).
+  // Reference values are normally already base words; this is a safety net.
+  const POSSESSIVE_BASE: Record<string, string> = { my: 'me', its: 'it', your: 'you' };
+  const name = String(raw);
+  return { type: 'identifier', name: POSSESSIVE_BASE[name] ?? name };
 }
 
 /**
- * Convert a PropertyPathValue to a PropertyAccessNode.
- * Recursively converts the object part.
+ * Convert a PropertyPathValue to the node the traditional parser emits for
+ * the same surface (Thread B item 5, the alias normalisation):
+ *
+ * - dot access (`event.detail.message`) → a NESTED `memberExpression` chain,
+ *   one link per path segment, `property` an identifier node, `computed`
+ *   false — the traditional parser's exact shape. This function used to emit
+ *   a single flat `propertyAccess` carrying the whole dotted path as a
+ *   string, which forced core's evaluator to carry a parallel dot-splitting
+ *   arm for the same meaning.
+ * - possessive access (`#target's innerHTML`, recorded by the matcher in
+ *   `value.access`) → `possessiveExpression`, again the traditional shape.
+ *   An unrecorded surface falls back to the memberExpression chain.
+ * - EXCEPT a possessive whose object is a pronoun base (`me`/`it`/`you`):
+ *   that surface can only be the space form `my`/`its`/`your` + property,
+ *   which the traditional parser folds to a memberExpression
+ *   (`copy my textContent` → object `identifier{me}`, measured), never to a
+ *   possessiveExpression. `event's detail` / `bob's name` keep
+ *   possessiveExpression on both paths — also measured.
  *
  * @param value - The property path value to convert
  * @param warnings - Optional array to collect warnings
  */
-export function convertPropertyPath(
-  value: PropertyPathValue,
-  warnings?: string[]
-): PropertyAccessNode {
-  return {
-    type: 'propertyAccess',
-    object: convertValue(value.object, warnings),
-    property: value.property,
-  };
+export function convertPropertyPath(value: PropertyPathValue, warnings?: string[]): ExpressionNode {
+  const object = convertValue(value.object, warnings);
+
+  const isPronounBase =
+    object.type === 'identifier' && ['me', 'it', 'you'].includes((object as IdentifierNode).name);
+
+  if (value.access === 'possessive' && !isPronounBase) {
+    return {
+      type: 'possessiveExpression',
+      object,
+      property: { type: 'identifier', name: value.property },
+    } as ExpressionNode;
+  }
+
+  let node: ExpressionNode = object;
+  for (const part of String(value.property).split('.')) {
+    if (!part) continue;
+    node = {
+      type: 'memberExpression',
+      object: node,
+      property: { type: 'identifier', name: part },
+      computed: false,
+    } as ExpressionNode;
+  }
+  return node;
 }
 
 /**

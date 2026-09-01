@@ -203,8 +203,11 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'memberExpression':
       return evaluateMemberExpression(n, context);
 
-    // Semantic→AST-builder property paths (`item.name`). The core parser uses
-    // `memberExpression`, so this only arrives from `@lokascript/semantic`.
+    // LEGACY: flat property paths (string `property`, possibly dotted). No
+    // parser emits these any more — Thread B item 5 converged the semantic
+    // builder on the core parser's nested `memberExpression` — but hand-built
+    // ASTs (buildAST consumers, older tooling) may still carry them, so the
+    // arm stays until measured dead.
     case 'propertyAccess':
       return evaluatePropertyAccess(n, context);
 
@@ -214,11 +217,11 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'selector':
       return evaluateSelector(n, context);
 
-    // Context references (`me`/`you`/`it`/`target`/`event`). The traditional
-    // parser emits these as `identifier` nodes (handled above), but the
-    // semantic→AST builder emits dedicated `contextReference` nodes — e.g. for
-    // a command's implicit `me` target (`toggle .active`). Resolve them through
-    // the same reference expressions / context fields.
+    // LEGACY: dedicated context-reference nodes (`me`/`you`/`it`/`target`/
+    // `event`). No parser emits these any more — Thread B item 5 converged
+    // every reference on the core parser's `identifier` spelling (handled
+    // above) — but hand-built ASTs may still carry them, so the arm stays
+    // until measured dead.
     case 'contextReference':
       return evaluateContextReference(n as ContextRefNode, context);
 
@@ -394,6 +397,9 @@ function resolveIdentifierSync(name: string, context: ExecutionContext, scope?: 
   if (context.globals?.has(name)) return context.globals.get(name);
   if (name.startsWith('$') && context.globals?.has(name.slice(1)))
     return context.globals.get(name.slice(1));
+  // Unbound `body` → document.body, mirroring evaluateIdentifier (see the
+  // comment there); placed after locals/globals so a user binding shadows.
+  if (name === 'body' && typeof document !== 'undefined') return document.body;
   if ((context as any)[name] !== undefined) return (context as any)[name];
   if (typeof globalThis !== 'undefined' && name in globalThis)
     return (globalThis as Record<string, unknown>)[name];
@@ -605,6 +611,18 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
     // (matches how setVariableValue stores them). Covers both legacy parse
     // paths (identifier with `$` prefix) and the newer `globalVariable` path.
     return context.globals.get(name.slice(1));
+  }
+  // Bare `body` → document.body. Upstream RESERVES `body` and resolves it
+  // from its Context (`this.body = document.body`); hyperfixi used to reach
+  // that resolution only through the semantic path's dedicated
+  // `contextReference` node, so the traditional path resolved `body` to
+  // undefined and callers fell back to implicit `me` — `add .x to body`
+  // classed the BUTTON. With every reference converged on `identifier`
+  // (Thread B item 5) the resolution lives here, on the one spelling, placed
+  // AFTER the locals/globals lookups so a user binding named `body` still
+  // shadows it (hyperfixi is lenient where upstream reserves the word).
+  if (name === 'body' && typeof document !== 'undefined') {
+    return document.body;
   }
   if ((context as any)[name] !== undefined) {
     // Property on the context object (backward compatibility).
@@ -1740,11 +1758,10 @@ async function evaluateContextReference(
         (context as any).event?.target ??
         getExpr(context, 'me').evaluate(context)
       );
-    // Document references: the semantic→AST builder emits these surface forms
-    // as contextReference (`put it at end of body` → reference 'body'). The
-    // identifier path deliberately does NOT pre-empt `body` (a user local named
-    // `body` would be shadowed); the contextReference node only ever comes
-    // from the builder, so resolving it here is unambiguous.
+    // Document references. The identifier path now resolves an UNBOUND
+    // `body` too (after the locals/globals lookups, so a user binding still
+    // shadows) — this arm's exclusivity ended with Thread B item 5, when the
+    // builder stopped emitting contextReference; kept for hand-built ASTs.
     case 'body':
       return typeof document !== 'undefined' ? document.body : undefined;
     case 'document':

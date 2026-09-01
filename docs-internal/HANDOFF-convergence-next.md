@@ -89,7 +89,20 @@ behaviour while it moves node types. The family is fully dispositioned: 3 live
 defects (fixed, #1036), 11 benign. Item 5 is PURE spelling normalisation now —
 measurement details in `PARSER_NEXT_STEPS.md`.
 
-## The owner decision item 5 needs
+## The owner decision item 5 needs — DECIDED and EXECUTED (2026-09-01)
+
+The owner delegated the choice ("think about the naming issue, then proceed
+with your recommended approach"). Decision: **converge the semantic emitters
+on the core/traditional vocabulary** (`identifier`, nested
+`memberExpression`, `possessiveExpression`, `string`) — the semantic
+front-end is an adapter into core's AST and should speak the host's
+spelling; core's vocabulary has the vastly larger blast radius; and nothing
+in core uses `contextReference`'s extra information. `node-type` is now
+**2** (the two checked-benign real disagreements). The convergence also
+exposed and fixed a live traditional-path defect — bare `body` resolved to
+implicit `me`, caught by the agent-bench phrasing ratchet. Full record in
+`PARSER_NEXT_STEPS.md` ("Thread B item 5 EXECUTED"). The original framing,
+kept for the record:
 
 Which spelling wins, per family. This is a real decision, not a coin flip:
 
@@ -222,11 +235,17 @@ and all 10 rows executed IDENTICALLY on both paths — zero defects this pass,
 pinned by `node-type-alias-parity.test.ts`. The `node-type` family is fully
 dispositioned (3 fixed in #1036, 11 benign).
 
-**Item 5's stated payoff is measured FALSE** — `RENAME_PAIRS` closes ZERO of the
-sites, and the real work is three names, not seven pairs. With the family fully
-executed it is now PURE spelling normalisation. **The only thing between here
-and the code is the owner decision on which spelling wins per family** (see
-"The owner decision item 5 needs" above); get that before writing any of it.
+~~**Item 5's stated payoff is measured FALSE** … **The only thing between here
+and the code is the owner decision on which spelling wins per family.**~~
+**Item 5 is DONE (2026-09-01, same day):** the owner delegated the decision,
+the semantic emitters converged on the core spellings, `node-type` is **2**
+(both checked-benign), and the convergence flushed out and fixed a live
+traditional-path defect (bare `body` → implicit `me`; the agent-bench
+ratchet caught it). Core's legacy dispatch arms stay until measured dead.
+See "Thread B item 5 EXECUTED" in `PARSER_NEXT_STEPS.md`. What remains of
+the convergence arc: Thread B item 4 (still blocked), and the non-node-type
+difference families (position / field-presence / marker-in-args), which are
+metadata-grade.
 
 `both-fail 19` is understood and is NOT parser gaps — all 19 are the repo's own
 `metadata.examples`, gated by `documented-examples.test.ts`. Do not re-open it.

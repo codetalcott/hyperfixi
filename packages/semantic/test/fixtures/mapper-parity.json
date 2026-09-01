@@ -3165,7 +3165,7 @@
             "name": "go",
             "args": [
               {
-                "type": "literal",
+                "type": "string",
                 "value": "back"
               }
             ]
@@ -3188,7 +3188,7 @@
             "name": "go",
             "args": [
               {
-                "type": "literal",
+                "type": "string",
                 "value": "url"
               },
               {
@@ -11155,8 +11155,7 @@
                 "value": "transitionend"
               },
               "from": {
-                "type": "contextReference",
-                "contextType": "document",
+                "type": "identifier",
                 "name": "document"
               }
             },

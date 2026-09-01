@@ -58,7 +58,14 @@ describe('default — the target variable must survive into args[0]', () => {
     const ast = astOf('default my @data-count to "0"');
 
     expect(ast.args).toHaveLength(1);
-    expect(ast.args[0]).toMatchObject({ type: 'propertyAccess', property: '@data-count' });
+    // The traditional parser's exact shape (measured): memberExpression with
+    // the attribute name as the property identifier. Used to pin the old
+    // divergent flat propertyAccess (Thread B item 5 converged the spellings).
+    expect(ast.args[0]).toMatchObject({
+      type: 'memberExpression',
+      object: { type: 'identifier', name: 'me' },
+      property: { type: 'identifier', name: '@data-count' },
+    });
     expect(ast.modifiers?.to).toMatchObject({ type: 'literal', value: '0' });
   });
 
@@ -129,7 +136,7 @@ describe('swap — the AST contract is keyword-positional args, plus one flag mo
 
     expect(ast.args).toHaveLength(2);
     expect(ast.args[0]).toMatchObject({ type: 'selector', value: '#target' });
-    expect(ast.args[1]).toMatchObject({ type: 'contextReference', name: 'it' });
+    expect(ast.args[1]).toMatchObject({ type: 'identifier', name: 'it' });
     expect(ast.modifiers).toBeUndefined();
   });
 
@@ -183,9 +190,9 @@ describe('swap — the strategy forms carry their content', () => {
   // args[len-2], content from args[len-1].
 
   const STRATEGY_FORMS: Array<[string, string, string, unknown]> = [
-    ['swap into #t with it', 'into', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap into #t with it', 'into', '#t', { type: 'identifier', name: 'it' }],
     ['swap over #modal with c', 'over', '#modal', { type: 'identifier', name: 'c' }],
-    ['swap beforebegin #t with it', 'beforebegin', '#t', { type: 'contextReference', name: 'it' }],
+    ['swap beforebegin #t with it', 'beforebegin', '#t', { type: 'identifier', name: 'it' }],
     ['swap innerHTML of #t with "X"', 'innerHTML', '#t', { type: 'literal', value: 'X' }],
     ['swap outerHTML of #t with "Y"', 'outerHTML', '#t', { type: 'literal', value: 'Y' }],
   ];

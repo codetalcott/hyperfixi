@@ -7300,7 +7300,10 @@ describe('id set-style — two-word possessive connector `punya` (R2 batch 2)', 
     const set = findAstCommand(ast.ast, 'set');
     expect(set).not.toBeNull();
     const roles = set!.semanticRoles as Record<string, { type?: string; property?: string }>;
-    expect(roles.destination).toMatchObject({ type: 'propertyAccess', property: '*background' });
+    expect(roles.destination).toMatchObject({
+      type: 'memberExpression',
+      property: { type: 'identifier', name: '*background' },
+    });
   });
 
   it('[id] single-word possessor (saya *background) still works', () => {

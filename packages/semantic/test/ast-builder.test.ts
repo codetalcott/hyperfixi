@@ -164,8 +164,8 @@ describe('Value Converters', () => {
       const value: ReferenceValue = { type: 'reference', value: 'me' };
       const result = convertReference(value);
 
-      expect(result.type).toBe('contextReference');
-      expect(result.contextType).toBe('me');
+      // Converges on the traditional parser's spelling (Thread B item 5).
+      expect(result.type).toBe('identifier');
       expect(result.name).toBe('me');
     });
 
@@ -173,8 +173,8 @@ describe('Value Converters', () => {
       const value: ReferenceValue = { type: 'reference', value: 'event' };
       const result = convertReference(value);
 
-      expect(result.type).toBe('contextReference');
-      expect(result.contextType).toBe('event');
+      expect(result.type).toBe('identifier');
+      expect(result.name).toBe('event');
     });
   });
 
@@ -187,7 +187,7 @@ describe('Value Converters', () => {
       expect(convertValue(selector).type).toBe('selector');
 
       const reference: ReferenceValue = { type: 'reference', value: 'me' };
-      expect(convertValue(reference).type).toBe('contextReference');
+      expect(convertValue(reference).type).toBe('identifier');
     });
 
     it('should handle property path', () => {
@@ -198,7 +198,7 @@ describe('Value Converters', () => {
       };
       const result = convertValue(value);
 
-      expect(result.type).toBe('propertyAccess');
+      expect(result.type).toBe('memberExpression');
     });
   });
 });
@@ -251,7 +251,7 @@ describe('Command Mappers', () => {
 
       expect(result.name).toBe('add');
       expect(result.args).toHaveLength(1);
-      expect(result.modifiers!['to']).toMatchObject({ type: 'contextReference' });
+      expect(result.modifiers!['to']).toMatchObject({ type: 'identifier', name: 'me' });
     });
   });
 

@@ -206,12 +206,14 @@ const goMapper: CommandMapper = {
     const rawDest =
       dest && 'value' in dest ? dest.value : (dest as { raw?: unknown } | undefined)?.raw;
     if (dest && String(rawDest) === 'back') {
-      // The runtime keys on the literal string 'back'; an expression-typed
-      // capture would evaluate as a variable lookup instead.
-      args.push({ type: 'literal', value: 'back' } as ExpressionNode);
+      // The runtime keys on the string 'back'; an expression-typed capture
+      // would evaluate as a variable lookup instead. `string`, not `literal`:
+      // that is the node the traditional parser's parseGoCommand emits for
+      // structural keywords (Thread B item 5 — one spelling per meaning).
+      args.push({ type: 'string', value: 'back' } as ExpressionNode);
     } else if (dest) {
       if (method && String('value' in method ? method.value : undefined) === 'url') {
-        args.push({ type: 'literal', value: 'url' } as ExpressionNode);
+        args.push({ type: 'string', value: 'url' } as ExpressionNode);
       }
       const destExpr = convertRoleValue(node, 'destination');
       if (destExpr) args.push(destExpr);
