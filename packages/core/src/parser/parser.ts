@@ -136,6 +136,27 @@ const STRING_POSTFIX_UNITS = new Set([
 ]);
 
 /**
+ * Time units recognized as a postfix on a SPACED numeric expression
+ * (`over 500 ms`, `wait 2 s`), mirroring upstream's `TimeExpression` — which
+ * accepts exactly these four and rejects `minutes`/`hours`/`days` in both
+ * spellings.
+ *
+ * The tokenizer already joins the UNSPACED form (`500ms`) into one TIME token,
+ * so this is the other half of the same surface and nothing else. The node it
+ * builds is the same `stringPostfix` the CSS units build, which evaluates to
+ * the string `"500ms"` — byte-identical to what the joined token's literal
+ * carries, so every existing duration consumer reads the two spellings the
+ * same way. (Upstream's TimeExpression evaluates to a NUMBER of ms instead;
+ * matching hyperfixi's own joined form matters more here than matching that,
+ * since the joined form is what every consumer in this repo already parses.)
+ *
+ * hyperfixi's TOKENIZER set is wider (`minutes`, `hours`, `days` join too, as
+ * an extension upstream rejects). That asymmetry is deliberate: widening the
+ * spaced form would invent syntax rather than close a gap.
+ */
+const TIME_POSTFIX_UNITS = new Set(['s', 'seconds', 'ms', 'milliseconds']);
+
+/**
  * Binding power for the string-postfix operator. Chosen to sit between binary
  * `+`/`-` (40) and unary `-`/`+` (80) so `-1px` parses as `(-1)px` → "-1px"
  * while `1em + 2px` parses as `"1em" + "2px"` → "1em2px".
@@ -766,6 +787,16 @@ export class Parser {
     let unit: string | null = null;
     if (STRING_POSTFIX_UNITS.has(v)) {
       unit = v;
+    } else if (TIME_POSTFIX_UNITS.has(v) && this.isNumericPostfixRoot(left)) {
+      // A spaced time unit (`over 500 ms`). Restricted to a NUMERIC root, which
+      // upstream does not do: upstream's TimeExpression matches `s`/`ms` after
+      // ANY expression, so `log a s` becomes the string "as" there. `s` and
+      // `ms` are perfectly ordinary variable names, and hyperfixi's generic
+      // command-argument loops parse expressions in sequence far more often
+      // than upstream's hand-written command parsers do — so the unrestricted
+      // form would silently fuse two arguments. Every real use of this syntax
+      // has a number on the left.
+      unit = v;
     } else if (v === '%') {
       // `%` is the modulo operator only when a right operand follows; otherwise
       // it's a percentage string postfix (`100%`, `100 %`, `(100 + 0) %`).
@@ -786,6 +817,23 @@ export class Parser {
       line: (left as { line?: number }).line,
       column: (left as { column?: number }).column,
     } as ASTNode;
+  }
+
+  /**
+   * Whether `left` is a numeric root a spaced TIME unit may attach to — a
+   * number literal, or a parenthesized/arithmetic expression over one
+   * (`over (2 * delay) ms`). Deliberately narrow; see TIME_POSTFIX_UNITS.
+   */
+  private isNumericPostfixRoot(left: ASTNode): boolean {
+    const node = left as { type?: string; value?: unknown; operator?: string };
+    if (node.type === 'literal' && typeof node.value === 'number') return true;
+    if (node.type === 'unaryExpression' && (node.operator === '-' || node.operator === '+')) {
+      return this.isNumericPostfixRoot((left as unknown as { argument: ASTNode }).argument);
+    }
+    if (node.type === 'binaryExpression' && ['+', '-', '*', '/'].includes(node.operator ?? '')) {
+      return true;
+    }
+    return false;
   }
 
   /** Whether `t` can begin an operand (used to disambiguate `%` postfix vs modulo). */
