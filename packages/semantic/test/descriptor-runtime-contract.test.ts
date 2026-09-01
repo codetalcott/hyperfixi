@@ -37,7 +37,20 @@ describe('default — the target variable must survive into args[0]', () => {
 
     expect(ast.name).toBe('default');
     expect(ast.args).toHaveLength(1);
-    expect(ast.args[0]).toMatchObject({ type: 'contextReference', name: ':x' });
+    // This used to pin `{ type: 'contextReference', name: ':x' }`, which was the
+    // shape `convertReference` produced for EVERY reference — and it was wrong
+    // for a sigil-scoped variable: `ContextType` never contained `:x`, and
+    // core's `evaluateContextReference` has no case for it, so it evaluated to
+    // `undefined`. Measured end-to-end on the default parse path, before and
+    // after:
+    //
+    //   set :x to 7 then default :x to 0 then log :x   before: undefined  after: 7
+    //   default :x to 0 then log :x                    before: undefined  after: 0
+    //
+    // So `default` was neither preserving an existing value nor applying its
+    // default. The node is now the same scoped identifier the TRADITIONAL
+    // parser emits, which is what makes both paths agree.
+    expect(ast.args[0]).toMatchObject({ type: 'identifier', name: 'x', scope: 'element' });
     expect(ast.modifiers?.to).toMatchObject({ type: 'literal', value: 0 });
   });
 
