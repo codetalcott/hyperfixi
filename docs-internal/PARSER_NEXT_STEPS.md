@@ -1778,6 +1778,38 @@ mirrors), placed AFTER the locals/globals lookups so a user binding named
 word. Pinned in `node-type-alias-parity.test.ts` (both paths + the shadow
 row), mutation-measured.
 
+### `detail` and `sender` were unresolved — the `body` defect had SIBLINGS (2026-09-01, fourth pass)
+
+Auditing upstream's reserved-word list (`meta, it, result, locals, event,
+target, detail, sender, body`) after the `body` fix found two more words of
+the same class. Upstream's Context derives `detail = event?.detail ?? null`
+and `sender = event?.detail?.sender ?? null`; hyperfixi resolved NEITHER:
+
+| source (in an `on custom` handler, CustomEvent detail `{sender, num: 5}`) | before | after |
+| --- | --- | --- |
+| `log detail` | **undefined** | the detail object |
+| `log detail.num` | **undefined** | `5` |
+| `log sender` | **undefined** | the sender element |
+| `log event.detail` | worked | unchanged |
+
+Fixed where `body` was fixed — `evaluateIdentifier` + its sync mirror —
+derived at READ time from `context.event` rather than stamped into the
+per-event context: there are two context-hydration sites today (DOM
+listener, custom-event path) and a stamped field would silently miss any
+third. After locals/globals, so a user binding still shadows. Pinned in
+`reserved-context-words.test.ts` (shadow row + no-event nulls both paths),
+mutation-measured. `target`/`event` already resolved (measured);
+`meta`/`locals` are upstream-internal surfaces with no documented usage —
+left unresolved deliberately.
+
+**Legacy-arm liveness, measured the same day:** zero in-repo non-test
+producers of `contextReference` or `propertyAccess` nodes remain (grep over
+every package + the kind classifier; the remaining hits are type
+declarations and consumer-side interfaces). Core's dispatch arms and the
+two LEGACY types now serve only EXTERNAL hand-built ASTs (`buildAST` is
+public API) — recorded in the arm comments; delete with the next minor
+version bump.
+
 ### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
 
 The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
