@@ -48,11 +48,45 @@
 >    item, corrected — it is a docs defect, not a parser bug). Detail on each is
 >    in the numbered queue below and in `PARSER_NEXT_STEPS.md`.
 >
+> 6. **Thread A item 2b — all three gaps CLOSED.** `scroll` got a dedicated
+>    parser, `make`'s `from` got its comma list (plus the runtime fix that made
+>    the example actually run), and the spaced time unit got a postfix. The
+>    `documented-examples` allowlist is at **27** and holds NO parser gaps any
+>    more — only docs defects and legal-only-inside-a-feature rows. Every one of
+>    the three filings was wrong about something, and each correction is struck
+>    through in place in `PARSER_NEXT_STEPS.md`:
+>
+>    - **`scroll to me smoothly`** named the MILD half. The dropped adverb
+>      changed nothing observable on `smoothly` (the runtime already defaulted
+>      to smooth) — while the same drop INVERTED `instantly`, and every
+>      `scroll to <pos> of <target>` form threw `target element not found`
+>      outright. Only executing it against 0.9.93 ranked it. The cheap fix
+>      (COMPOUND_COMMANDS membership with no dispatch case) is measured WRONG:
+>      `parseRegularCommand` consumes those words as `identifier` nodes, an
+>      unbound identifier does not evaluate to its own text, and the runtime
+>      matches them BY text — so the parse looks complete and is still broken.
+>    - **`make a URL from "/a", "/b"`** blamed the body loop. Measured: `log
+>      "a", "b"` and `call foo("a","b")` compile fine in a body; it is `make`.
+>      And "does not parse inside a handler" was the symptom — bare it reported
+>      `ok: true` while dropping everything after the first comma. Fixing the
+>      parse was still not enough: `createClassInstance` could not use a
+>      constructor `parseInput` had already resolved, so the example threw at
+>      every arity, and `make.test.ts`'s MOCK evaluator (returning the STRING
+>      `'URL'`) is why nothing saw it.
+>    - **`over 500 ms`** was RIGHT — the one filing this session that held up.
+>
+>    A fourth thing moved that nobody was aiming at: the triage tool's own
+>    `marker-in-args` family recognised markers only on `identifier` nodes, so
+>    `go to url "…"` had been misfiled under `arity` since `parseGoCommand` was
+>    written. `identName` now reads `string` nodes too — `marker-in-args` 12 →
+>    **13** and **`arity` is EMPTY**.
+>
 > ### What is left, in the order I would take it
 >
-> **Two threads now.** Items 1–2 are the parser-correctness thread that came out
-> of opening `both-fail`; items 3–5 are the original convergence thread. The
-> first thread is live user-visible defects and is worth more per hour.
+> **Thread A (items 1, 2, 2b) is CLOSED.** What remains is items 3–5, the
+> original convergence thread. Thread A was live user-visible defects and was
+> worth more per hour; it is done, and its filings' corrections are recorded in
+> `PARSER_NEXT_STEPS.md` rather than only here.
 >
 > 1. ~~**`examples/behaviors/recipes.html` — upstream ACCEPTS, we drop.**~~ —
 >    **DONE.** `show`/`hide` were the THIRD `COMPOUND_COMMANDS` member with no
@@ -121,17 +155,22 @@
 >    entry. **Third filing this arc whose recommendation aged worse than its
 >    observation** — after the `hide <button/>` fix site and this item's own
 >    19→27/8-additions estimate.
-> 2b. **NEW, from #1029's strengthened gate — two parser gaps remain of the
->    three it found.** `transition left to 100px` was the third and is FIXED
->    (#1030). Still open, both upstream-VALID with a repro in
->    `PARSER_NEXT_STEPS.md`:
->    - `scroll to me smoothly` drops `smoothly`.
->    - `make a URL from "/path/", "…"` parses BARE and does not parse inside a
->      handler at all — a comma-separated argument list that survives at top
->      level and dies in a body points at the body loop, not at `make`.
->    - adjacent, found by #1030: `over 500 ms` (with a space) drops the `ms`.
->      The tokenizer joins `500ms` into one TIME token, but there is no time
->      POSTFIX expression to match upstream's `TimeExpression`.
+> 2b. ~~**NEW, from #1029's strengthened gate — two parser gaps remain of the
+>    three it found.**~~ — **ALL THREE DONE**, plus the `over 500 ms` follow-on.
+>    See item 6 of the landed list above; the corrected diagnoses are struck
+>    through in place in `PARSER_NEXT_STEPS.md`. The `documented-examples`
+>    allowlist now holds **no parser gaps at all**.
+>
+>    Three runtime divergences from upstream were FILED rather than silently
+>    changed, all on `scroll` and all pinned by `scroll-to.test.ts`: the
+>    `behavior: 'smooth'` default (upstream leaves it unset), `inline` never
+>    being set (upstream maps `left`/`center`/`right` to it, not to `block`),
+>    and `in <container>` / `scroll <dir> by <n>` having no runtime. Upstream's
+>    own container branch produced NO observable call in jsdom, so there is no
+>    oracle for it — which is why the parser consumes the clause and the runtime
+>    does not implement it. A fourth, unrelated: `parseTimeToMs` resolves
+>    `debounced at 2minutes` to 2000 ms, not 120000 (it tests `s` before
+>    `minutes`).
 > 3. **Residual item-5 rows** — the template-literal backticks
 >    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
 >    `settle` `isBlocking` rows marked INERT below.
@@ -216,20 +255,20 @@
 > `docs-internal/ENGINE_MIGRATION_PLAN.md` is the authority; read this file's
 > "START HERE" block first and do not re-derive what it marks as settled.
 >
-> **#1023–#1026 and #1028–#1031 are landed. Thread A items 1 and 2 are DONE**
-> — do not redo the `recipes.html` gap, the `if`-without-`end` false positive,
-> the `transition` unit drop, or the `install X on <target>` triage. Read the
-> queue below and start at **2b**, the two parser gaps #1029's strengthened gate
-> found and left open.
+> **#1023–#1026 and #1028–#1031 are landed, and Thread A is now CLOSED**
+> (items 1, 2 and 2b). Do not redo the `recipes.html` gap, the
+> `if`-without-`end` false positive, the `transition` unit drop, the
+> `install X on <target>` triage, or any of item 2b's three gaps. **Start at
+> Thread B — items 3, 4 and 5.**
 >
 > **Re-run the measurement before costing anything** —
-> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. On `7e4ec0a6`:
-> same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail 19, with
-> families `semanticRoles-added` 77, `field-only-trad` 194/43, `field-only-sem`
-> 76/48, `node-type` 14, `marker-in-args` 12, `position` 36/10, `value` 3,
-> `arity` 1. `implicit-me` is gone from the table. `same` moved 137 → 139 only
-> because #1028 added two documented examples to the corpus — the tool is the
-> authority, not this paragraph.
+> `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After Thread A
+> item 2b: same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail
+> 19, with families `semanticRoles-added` 77, `field-only-trad` 194/43,
+> `field-only-sem` 76/48, `node-type` 14, `marker-in-args` **13**,
+> `position` 36/10, `value` 3, `arity` **0**. `implicit-me` is gone from the
+> table, and `arity` joined it — its one member was a marker the tool could not
+> see. The tool is the authority, not this paragraph.
 >
 > **`both-fail 19` is now understood and is NOT parser gaps** — all 19 are the
 > repo's own `metadata.examples`, triaged in `PARSER_NEXT_STEPS.md` and gated by
@@ -247,10 +286,11 @@
 > headline was misleading in step 5 too.
 >
 > **Three allowlists now carry measured upstream verdicts, and their current
-> sizes are part of the state**: `documented-examples.test.ts` **29**,
+> sizes are part of the state**: `documented-examples.test.ts` **27**,
 > `shipped-sources-validity.json` **4**, `shipped-examples-execution.json`
 > **33**. Two of the three ratchet DOWN only; the documented-examples list grew
-> to 30 when #1029 taught it to read `errors` and is back to 29 after #1030.
+> to 30 when #1029 taught it to read `errors`, and Thread A item 2b walked it
+> 30 → 29 → 28 → 27, at which point it holds no parser gaps at all.
 >
 > A parser change needs the multilingual gate run LOCALLY before pushing
 > (~10 min): `npm run test:multilingual:build-deps` → `npm run populate --prefix

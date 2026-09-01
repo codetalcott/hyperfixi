@@ -1376,7 +1376,7 @@ examples had been losing content in silence. Each carries the real
 | n | class | rows |
 | - | ----- | ---- |
 | 8 | **docs defect** — upstream rejects it too | `blur on <input/>`, `focus on <input/>`, `async <a> <b>` ×3, `log x y z`, `log "Result:" result`, `pick "red", "green", "blue"` |
-| 3 | **parser gap** — upstream ACCEPTS | `scroll to me smoothly` (drops `smoothly`), `transition left to 100px over 500ms` (drops `px over 500ms` — the DURATION is lost), `make a URL from "/path/", "…"` (does not parse at all inside a handler) |
+| 3 | **parser gap** — upstream ACCEPTS | ~~`scroll to me smoothly`~~, ~~`transition left to 100px over 500ms`~~, ~~`make a URL from "/path/", "…"`~~ — **all three FIXED** |
 
 Two of those are worth acting on next:
 
@@ -1384,10 +1384,17 @@ Two of those are worth acting on next:
   the same day**; see the entry below. The guess that "a plain
   `transition left to 100px` is likely affected too" was right, and it was the
   bigger half: the VALUE was losing its unit, not just the tail.
-- **`make a URL from "/path/", "https://…"` does not parse inside a handler at
-  all**, while it parses bare and upstream accepts both. A comma-separated
-  argument list that survives at top level and dies in a body points at the body
-  loop, not at `make`.
+- ~~**`scroll to me smoothly` drops `smoothly`**~~ — **FIXED**; see the entry
+  below. Same shape as the `transition` row in the way that matters: the
+  documented example named the MILD half. The dropped adverb changed nothing
+  observable on `smoothly` (the runtime already defaulted to smooth), while
+  `instantly` was INVERTED and every `scroll to <pos> of <target>` form threw.
+- ~~**`make a URL from "/path/", "https://…"` does not parse inside a handler at
+  all**~~ — **FIXED**; see the entry below. **Its stated diagnosis was wrong.**
+  "A comma-separated argument list that survives at top level and dies in a body
+  points at the body loop, not at `make`" — measured: `log "a", "b"` and
+  `call foo("a", "b")` both compile fine inside a handler. The body loop is
+  innocent; it IS `make`.
 
 **And it corrects a claim in the convergence brief.** That brief lists rows
 45/82 (`blur on <input/>`) as "a third defect belonging to neither path's
@@ -1430,10 +1437,189 @@ because `500ms` and `1s` arrive as ONE token. `over 2 * delay` is what proves it
 — which is exactly the "a mutation must redden the behavioural row" discipline
 catching an unproven change in its author's own diff.
 
-Still open, and adjacent: **`over 500 ms` (with a space) drops the `ms`.** The
-tokenizer joins `500ms` into one TIME token, but there is no time POSTFIX
-expression to match upstream's `TimeExpression`, which accepts the spaced form.
-Same shape as the string-postfix gap, one layer over.
+~~Still open, and adjacent: **`over 500 ms` (with a space) drops the `ms`.**~~ —
+**FIXED**, see the time-postfix entry below. The diagnosis in this paragraph was
+right: it is the same shape as the string-postfix gap, one layer over.
+
+### ~~`make a URL from "/a", "/b"` dies inside a handler~~ — FIXED, and the filing blamed the wrong thing (2026-09-01)
+
+The filing said: *"A comma-separated argument list that survives at top level
+and dies in a body points at the body loop, not at `make`."* **Measured, that is
+backwards.** `log "a", "b"` and `call foo("a", "b")` both compile clean inside a
+handler; `make a Set from "a", "b"` fails there exactly like the URL row. The
+body loop is innocent. It is `make`.
+
+**And "does not parse inside a handler" was the symptom, not the defect.** Bare,
+the source reported `ok: true` — while silently discarding everything after the
+first comma. `make` is parsed by `parseMultiWordCommand`, whose modifier loop
+reads one `parseExpression()` per keyword, and the comma is not an operator. So
+`from` took `"/path/"` and left `, "https://…"`; bare that is invisible (the
+parser reports discarded input only from inside a handler body, #1026), and
+inside a handler the remainder is re-read as a statement and the whole handler
+fails to compile. Same source, two very different-looking symptoms, one cause.
+
+Upstream spells the list explicitly —
+`do { args.push(requireElement("expression")) } while (parser.matchOpToken(","))`
+— so the fix is a `commaListKeywords` opt-in on the pattern, **not** a generic
+comma rule: `append "x" to #a, #b` is rejected by the canonical engine too
+(`Unexpected Token : ,`), and collecting commas for every multi-word modifier
+would have made hyperfixi accept syntax upstream refuses. Only `make`'s `from`
+has the opt-in; a test pins that `append`'s comma stays rejected.
+
+**Fixing the parse was not enough — the example still did nothing.** `make a URL
+from …` then threw `Constructor 'class URL { … }' not found or is not a
+function`, at every arity. `parseInput` EVALUATES the type expression and the
+real evaluator resolves a global like `URL` or `Date` to the class object, while
+`createClassInstance` did `String(className)` and looked that up by name — so
+the "name" was the class's entire source text. `make.test.ts` could not see it:
+its rows pass a MOCK evaluator returning the STRING `'URL'`, which is the one
+input shape the name lookup handles. *A unit test can pin the mechanism while
+the real path bypasses it* — again.
+
+Both halves are mutation-tested in
+`src/commands/dom/__tests__/make-constructor-args.test.ts`, and the two-argument
+form now yields `pathname` and `origin` byte-identical to the 0.9.93 engine in
+jsdom. Allowlist 28 → **27**; the AST-equivalence baseline moved on that one
+corpus source, `ok:` → `ok:`.
+
+**One incidental find, filed not fixed:** `MultiWordPattern` is declared TWICE
+(`helpers/parsing-helpers.ts` and `parser-types.ts`), the two have always
+differed (`syntax` vs `minArgs`/`maxArgs`, none of them read), and the values
+flow between them structurally — so a field added to one is silently invisible
+on the other side of `getMultiWordPattern`. That is how `commaListKeywords`
+first failed to typecheck. Part of the known duplicate-type divergence.
+
+### ~~`over 500 ms` (spaced) drops the unit~~ — FIXED (2026-09-01)
+
+The tokenizer joins `500ms` into one TIME token, so the unspaced form always
+worked; the spaced form had nothing to match upstream's `TimeExpression` (a
+POSTFIX over `s` / `seconds` / `ms` / `milliseconds`) and the unit was simply
+discarded. **`wait 2 s` therefore waited two MILLISECONDS** — a 1000× error on
+syntax `hyperscript.org` accepts, and the reason this is not cosmetic.
+
+The filing's diagnosis held: same shape as the string-postfix gap one layer
+over, and the mechanism already existed (`tryParseStringPostfix`, mirroring
+upstream's `StringPostfixExpression`). Only the unit set was missing.
+
+Three decisions, each measured rather than assumed:
+
+- **The node is a `stringPostfix`, evaluating to the string `"500ms"`** —
+  upstream's TimeExpression evaluates to a NUMBER of ms. Matching hyperfixi's own
+  JOINED token matters more: its literal carries `"500ms"` and every duration
+  consumer here already parses that string (`_parseDurationComponents` accepts
+  all four spellings). The tests pin the two spellings to the same VALUE.
+- **The postfix requires a numeric root**, which upstream does not do. Upstream
+  matches `s`/`ms` after any expression, so `log a s` is the string `"as"`
+  there. `s` and `ms` are ordinary variable names and hyperfixi's generic
+  command-argument loops parse expressions in sequence far more often than
+  upstream's hand-written command parsers do, so the unrestricted form would
+  silently fuse two arguments. Pinned, and mutation-tested by removing the guard.
+- **`minutes`/`hours`/`days` stay unspaced-only.** Upstream rejects `wait 2
+  minutes` AND `wait 2minutes`; hyperfixi accepts the joined form as an
+  extension. Widening the spaced set would invent syntax rather than close a gap.
+
+**Still open, found while measuring this:** `parseTimeToMs` (parser-internal,
+used only by `debounced at` / `throttled at`) tests suffixes in the order
+`ms, seconds, s, minutes, hours, days` — and `"2minutes"` ends with `s`, so
+`debounced at 2minutes` resolves to **2000 ms, not 120000**. Reachable (`minutes`
+is in the tokenizer's TIME_UNITS) and wrong by 60×. Not fixed here: it is a
+different surface from the expression postfix and wants its own behavioural row.
+
+### The triage tool's `marker-in-args` family was under-counting
+
+Not a parser defect — a MEASUREMENT one, found because the `scroll` fix tripped
+it. `identName()` recognised a marker only on an `identifier` node, but the
+flat-token-list parsers deliberately emit their structural keywords as `string`
+nodes (an unbound identifier does not evaluate to its own text, and those
+runtimes match by text). So `go to url "…"` had been misfiled under `arity`
+since `parseGoCommand` was written, reporting a bare count instead of the
+markers `["to","url"]`, and `scroll to #top` joined it the moment `scroll` got
+the same treatment.
+
+With `identName` widened, `marker-in-args` reads **13** (12 before this session,
++1 for the corrected `scroll` row) and **`arity` is now EMPTY** — no source in
+the corpus has an unexplained arity difference. Same lesson as the gates: *a
+family that inspects one node type is blind to a parser that emits another.*
+
+### ~~`scroll to me smoothly` drops `smoothly`~~ — FIXED, and the filing named the mild half (2026-09-01)
+
+`scroll` was not a `COMPOUND_COMMANDS` member, so it fell to
+`parseCommandCore`'s generic argument loop, which continues only across a fixed
+set of continuation keywords (`into from to with by at before after over`).
+`scroll` now has a dedicated parser (`parseScrollCommand`) mirroring upstream's
+`_parseScrollModifiers`, emitting the flat token list `parseGoCommand` already
+builds and `commands/navigation/scroll-to.ts` already consumes.
+
+**Executing it against the real 0.9.93 engine — rather than reading the parse —
+is what showed the filing understated the defect.** Both engines were run in
+jsdom with `scrollIntoView` stubbed, on `scroll`'s own documented examples:
+
+| source | upstream | hyperfixi BEFORE | after |
+| ------ | -------- | ---------------- | ----- |
+| `scroll to me smoothly` | `behavior:'smooth'` | `behavior:'smooth'` | unchanged |
+| `scroll to me instantly` | `behavior:'instant'` | **`behavior:'smooth'`** | `'instant'` |
+| `scroll to bottom of #chat` | `block:'end'` on `#chat` | **THREW** `target element not found` | `block:'end'` |
+| `scroll to middle of #chat` | `block:'center'` | **THREW** | `block:'center'` |
+| `scroll to the right of #chat` | `#chat`, `inline:'end'` | **THREW** | `#chat` (inline still unmapped) |
+
+So the row the gate found — `smoothly` — was the one shape whose dropped token
+changed NOTHING observable, because ScrollCommand's default is
+`smooth = !args.includes('instantly')`. The same drop on `instantly` inverted
+the request, and the sibling positional forms were dead outright. **A
+parse-level filing describes a parse-level symptom; only execution ranks it.**
+
+**The obvious cheaper fix is measured wrong.** Adding `scroll` to
+`COMPOUND_COMMANDS` with NO dispatch case routes it to `parseRegularCommand`,
+whose `checkIdentifierLike()` loop *does* consume `instantly` and `bottom`/`of`
+as arguments — the parse looks complete and reports no discarded input. It is
+still broken: `parseRegularCommand` emits them as `identifier` nodes, an unbound
+identifier does not evaluate to its own text, and ScrollCommand matches these
+words by text. Mutation-measured with the case deleted: `instantly` scrolls
+smoothly, `bottom of` scrolls to `start`, `the right of` throws. **The dedicated
+parser's `string` nodes are the entire difference**, and that difference is
+invisible to every parse-shape assertion.
+
+That is also why `compound-command-coverage.test.ts` was not enough here, and
+why `src/commands/navigation/__tests__/scroll-parse.test.ts` exists: deleting the
+dispatch case leaves the coverage gate GREEN (mutation-measured) and reddens 5
+execution rows in the new file. The parse rows there are worth keeping too —
+11 of 15 rows fail against the pre-change parser — but the behavioural five are
+the ones that carry the claim.
+
+**One early probe result was wrong, and the page was why.** The first sweep
+reported `scroll to last <.message/> in #chat` (a multilingual corpus row) as
+throwing on both sides. It resolves fine on both paths; it threw only because
+the scratch page had no `.message` elements. A defect measured on a page that
+cannot exhibit it is not a measurement.
+
+**Deliberately NOT changed — three runtime divergences from upstream, filed:**
+
+1. **`behavior` default.** hyperfixi always sets `behavior:'smooth'` when no
+   adverb is given; upstream leaves it unset (browser default `auto`), so
+   `scroll to #top` force-animates here and does not upstream. Pinned by
+   `scroll-to.test.ts`, so it is a decision, not a slip — same handling #1028
+   gave `show`'s `data-original-display` restore.
+2. **`inline` is never set**, and the HORIZONTAL position word is mapped to
+   `block`. Upstream always sets `inline` (default `nearest`) and maps
+   `left`/`center`/`right` to it — so `scroll to center of #chat` means
+   `inline:'center'` upstream and `block:'center'` here.
+3. **`in <container>` and `scroll <dir> by <n> [px]` have no runtime.** The
+   parser now consumes both (the container clause so it cannot corrupt the
+   target; the by-form is declined outright and keeps the generic path), but
+   ScrollCommand models neither `scrollTo`-relative-to-a-container nor
+   `scrollBy`. Note upstream's own container branch produced no observable call
+   in jsdom, so **there is no oracle for it** — which is why it was consumed
+   rather than implemented.
+
+Gates moved: `documented-examples` allowlist 29 → **28** (second row to ratchet
+DOWN); AST-equivalence baseline moved on exactly the 3 scroll corpus sources,
+all `ok:` → `ok:` (structure, not validity); manifest `multiword` count 22 → 23.
+`shipped-sources-validity` (4) and `shipped-examples-execution` (33) unmoved —
+no shipped page uses `scroll`.
+
+The top-line triage is unchanged (`same` 139 · `differ` 77): both parse paths
+were broken identically and are fixed together, which is precisely the class a
+convergence triage cannot see.
 
 ## Notes
 
