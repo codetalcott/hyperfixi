@@ -125,13 +125,33 @@ describe('implicit schema defaults', () => {
       expect(astFor('increment :x by 5').modifiers?.by).toMatchObject({ value: 5 });
     });
 
-    it('an authored `me` is indistinguishable from a bare command ON semanticRoles', () => {
+    it('an authored `me` resolves to the same target as a bare command', () => {
       // Both resolve to the same target — which is exactly why `args` has to be
       // the surface that separates them.
-      expect(astFor('focus').semanticRoles?.patient).toEqual(
-        astFor('focus me').semanticRoles?.patient
+      //
+      // Compared span-free, because the two are no longer byte-identical: an
+      // AUTHORED `me` carries the span of the word the author wrote, and a
+      // materialized default has none (there is no source text to point at).
+      // That difference is the feature, not a leak — see the companion
+      // assertion below — but it is orthogonal to what this test is about.
+      const withoutSpan = (node: unknown) => {
+        const { start, end, line, column, ...rest } = (node ?? {}) as Record<string, unknown>;
+        return rest;
+      };
+      expect(withoutSpan(astFor('focus').semanticRoles?.patient)).toEqual(
+        withoutSpan(astFor('focus me').semanticRoles?.patient)
       );
       expect(astFor('focus').args ?? []).not.toEqual(astFor('focus me').args);
+    });
+
+    it('…but only the AUTHORED one carries a span', () => {
+      // The honest half of the distinction above. A span says "the author wrote
+      // this here"; a value the parser filled in from a schema default was
+      // written nowhere, so it gets no span rather than a fabricated one at
+      // offset zero. An LSP that highlighted a materialized `me` would be
+      // pointing at text that does not exist.
+      expect(astFor('focus me').semanticRoles?.patient).toMatchObject({ start: 6, end: 8 });
+      expect(astFor('focus').semanticRoles?.patient).not.toHaveProperty('start');
     });
   });
 });

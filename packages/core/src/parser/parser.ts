@@ -5,7 +5,7 @@
  */
 
 // Token classification is fully predicate-based; there is no TokenType enum.
-import { tokenize } from './tokenizer';
+import { tokenize, lineColumnAt } from './tokenizer';
 import type {
   Token,
   ASTNode,
@@ -1655,7 +1655,9 @@ export class Parser {
           start: varToken.start - 2, // Include both `::` in the start position
           end: varToken.end,
           line: varToken.line,
-          column: varToken.column,
+          // The sigil moved the start back; the column has to follow it, or the
+          // node reports a column that indexes different text than its offset.
+          column: varToken.column - 2,
         } as ASTNode;
       } else {
         // This is `:variable` (element scope — persists per-element across firings)
@@ -1667,7 +1669,8 @@ export class Parser {
           start: varToken.start - 1, // Include the `:` in the start position
           end: varToken.end,
           line: varToken.line,
-          column: varToken.column,
+          // As above: the start moved back past the `:`, so the column must too.
+          column: varToken.column - 1,
         } as ASTNode;
       }
     }
@@ -3456,6 +3459,50 @@ export class Parser {
   }
 
   /**
+   * Rebase a semantically-built node's spans onto the whole source.
+   *
+   * `@lokascript/semantic` parses the slice `getRemainingInput()` hands it, so
+   * the spans it records on nested argument nodes count from that slice's
+   * start, and it emits no `line`/`column` at all — it never sees the document
+   * those would index into. Both are recoverable here and nowhere else:
+   * `offset` is the slice's origin, and `this.originalInput` is the document.
+   *
+   * Only nodes that already carry a numeric `start` are touched, so a value the
+   * semantic parser could not place (a materialized schema default, a value
+   * built from synthesized text) stays span-free rather than being given a
+   * fabricated one. The command node's own span is stamped by the caller.
+   *
+   * The walk rebuilds plain objects and arrays and returns anything else by
+   * reference. Nothing else appears today — measured over the whole engine
+   * corpus on this path, 0 non-plain objects — but `buildAST` is public API and
+   * the walk is generic, and copying a `Map` field by `Object.entries` would
+   * silently replace it with `{}`.
+   */
+  private rebaseSemanticSpans(node: unknown, offset: number): unknown {
+    const source = this.originalInput;
+    const rebase = (input: unknown): unknown => {
+      if (Array.isArray(input)) return input.map(rebase);
+      if (!input || typeof input !== 'object') return input;
+      const proto = Object.getPrototypeOf(input) as unknown;
+      if (proto !== Object.prototype && proto !== null) return input;
+      const out: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(input)) {
+        out[key] =
+          (key === 'start' || key === 'end') && typeof value === 'number'
+            ? value + offset
+            : rebase(value);
+      }
+      if (typeof out['start'] === 'number' && source) {
+        const { line, column } = lineColumnAt(source, out['start']);
+        out['line'] = line;
+        out['column'] = column;
+      }
+      return out;
+    };
+    return rebase(node);
+  }
+
+  /**
    * Get remaining input from current token position for semantic analysis.
    */
   private getRemainingInput(): string {
@@ -3624,9 +3671,8 @@ export class Parser {
           this.advance();
         }
 
-        // Stamp the real span. `buildAST` emits NO positions — nested args come
-        // back `undefined` and the command node's `[0, 0]` is
-        // `normalizeBuiltNode`'s placeholder — so every semantically-adopted
+        // Stamp the real span. The command node's `[0, 0]` is
+        // `normalizeBuiltNode`'s placeholder, so every semantically-adopted
         // command used to report `start 0, end 0, line 1` regardless of where it
         // actually sat. LSP hover and diagnostic ranges read these.
         //
@@ -3637,16 +3683,20 @@ export class Parser {
         // `commandToken.start` to the end of the input, and the token carries
         // the line/column the traditional parser would have reported.
         //
-        // Nested argument positions stay absent: `buildAST` never produced them,
-        // so there is nothing here to offset. Carrying them needs the semantic
-        // parser to track spans — filed, not faked.
+        // Nested ARGUMENT spans arrive too, and they are why `rebaseSemanticSpans`
+        // exists. `@lokascript/semantic` records the span of the token run each
+        // role was captured from, but relative to the string IT was handed —
+        // which is `remainingInput`, a slice starting at `commandToken.start`.
+        // So every nested offset is short by exactly that, and the package
+        // deliberately emits no line/column at all (it never sees the whole
+        // document). Rebasing both is the caller's job, and this is the caller.
         if (typeof commandToken.start !== 'number') return semanticResult;
         // End at the last CONSUMED TOKEN, not at the raw input length: the
         // source may carry trailing whitespace, and `log "x"   ` would
         // otherwise report an end of 10 where the traditional parser reports 7.
         const lastToken = this.previous();
         return {
-          ...semanticResult,
+          ...(this.rebaseSemanticSpans(semanticResult, commandToken.start) as CommandNode),
           start: commandToken.start,
           end: lastToken?.end ?? commandToken.end ?? commandToken.start,
           line: commandToken.line ?? semanticResult.line,
@@ -3862,6 +3912,12 @@ export class Parser {
   }
 
   private parseNavigationFunction(funcName: string): CallExpressionNode {
+    // Every caller enters here having JUST consumed the name token, so this is
+    // that token's span. Capturing it up front matters because `createIdentifier`
+    // reads whatever was consumed LAST — and by the time the callee is built
+    // below, that is the ARGUMENT. `first .item` gave its callee `.item`'s
+    // span, so an LSP hover over `first` highlighted `.item`.
+    const namePos = this.getPosition();
     const args: ASTNode[] = [];
 
     // Handle "first of items", "closest <form/>", etc.
@@ -3869,7 +3925,7 @@ export class Parser {
       args.push(this.parseExpression());
     } else if (this.check('(')) {
       // Standard function call syntax
-      return this.finishCall(this.createIdentifier(funcName));
+      return this.finishCall(astHelpers.createIdentifier(funcName, namePos));
     } else if (
       !this.isAtEnd() &&
       !this.checkBasicOperator() &&
@@ -3880,7 +3936,10 @@ export class Parser {
       args.push(this.parsePrimary());
     }
 
-    const callNode = this.createCallExpression(this.createIdentifier(funcName), args);
+    const callNode = this.createCallExpression(
+      astHelpers.createIdentifier(funcName, namePos),
+      args
+    );
 
     // Relative positional modifiers for `next`/`previous`:
     //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
@@ -4004,6 +4063,15 @@ export class Parser {
   }
 
   private parseContextPropertyAccess(contextVar: 'me' | 'it' | 'you'): MemberExpressionNode {
+    // The possessive word (`my`/`its`/`your`) has just been consumed, and it is
+    // what the object node stands for. Build the object from ITS span rather
+    // than from `createIdentifier`'s "last token consumed", which by every
+    // return below is the PROPERTY: `copy my textContent` gave its `me` node
+    // `textContent`'s span, and the whole memberExpression started at the
+    // property too, leaving `my` outside its own expression.
+    const contextPos = this.getPosition();
+    const contextNode = () => astHelpers.createIdentifier(contextVar, contextPos);
+
     // Check for CSS style-ref syntax: `my *color`, `its *height`, `your *width`.
     const hasCssPrefix = this.match('*');
 
@@ -4013,11 +4081,7 @@ export class Parser {
 
       if (!this.checkIdentifier()) {
         this.addError("Expected property name after 'my *'");
-        return this.createMemberExpression(
-          this.createIdentifier(contextVar),
-          this.createIdentifier(''),
-          false
-        );
+        return this.createMemberExpression(contextNode(), this.createIdentifier(''), false);
       }
 
       // Build the CSS property name (e.g., "background-color")
@@ -4041,7 +4105,7 @@ export class Parser {
       // wrongly made `my *color` computed and double-prefixed `my *computed-color`.
       const cssPropertyName = `*${propertyName}`;
       return this.createMemberExpression(
-        this.createIdentifier(contextVar),
+        contextNode(),
         this.createIdentifier(cssPropertyName),
         false
       );
@@ -4054,7 +4118,7 @@ export class Parser {
         const attrToken = this.advance();
         this.consume(']', "Expected ']' after attribute reference");
         return this.createMemberExpression(
-          this.createIdentifier(contextVar),
+          contextNode(),
           {
             type: 'attributeAccess',
             attributeName: attrToken.value.substring(1),
@@ -4073,7 +4137,7 @@ export class Parser {
       if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
         const attrToken = this.advance();
         return this.createMemberExpression(
-          this.createIdentifier(contextVar),
+          contextNode(),
           this.createIdentifier(attrToken.value), // "@data-attr" including @ prefix
           false
         );
@@ -4088,7 +4152,7 @@ export class Parser {
         `Expected property name after '${contextLabels[contextVar]}'`
       );
       return this.createMemberExpression(
-        this.createIdentifier(contextVar),
+        contextNode(),
         this.createIdentifier(property.value),
         false
       );
@@ -4155,8 +4219,45 @@ export class Parser {
     return astHelpers.createUnaryExpression(operator, argument, prefix, this.getPosition());
   }
 
+  /**
+   * Span a COMPOSITE expression from its leftmost component.
+   *
+   * `getPosition()` reports the last token consumed. That is right for a leaf
+   * and wrong for every node built out of other nodes, which is what these
+   * three builders make:
+   *
+   *   get me.parentElement    memberExpression      [7, 20)  = "parentElement"
+   *   call myFunction()       callExpression        [16, 17) = ")"
+   *   log #target's innerHTML possessiveExpression  [14, 23) = "innerHTML"
+   *
+   * LSP hover and diagnostic ranges read exactly these fields, so all three
+   * highlighted the wrong text — the object/callee half of the expression was
+   * outside its own span.
+   *
+   * Found by the parse-path triage once `@lokascript/semantic` began reporting
+   * real spans of its own: the two paths disagreed, and it was the TRADITIONAL
+   * side that was wrong. The convergence handoff had named it the oracle.
+   *
+   * `line`/`column` are re-derived from the corrected start rather than carried
+   * over. Mixing one token's offset with another's column is the same defect in
+   * miniature — it is why `clear :count` reported column 8 for a value that
+   * starts at offset 6.
+   */
+  private spanFromLeftmost(leftmost: ASTNode | undefined): {
+    start: number;
+    end: number;
+    line: number;
+    column: number;
+  } {
+    const pos = this.getPosition();
+    const start = (leftmost as { start?: number } | undefined)?.start;
+    if (typeof start !== 'number' || start >= pos.start) return pos;
+    if (!this.originalInput) return { ...pos, start };
+    return { ...lineColumnAt(this.originalInput, start), start, end: pos.end };
+  }
+
   private createCallExpression(callee: ASTNode, args: ASTNode[]): CallExpressionNode {
-    return astHelpers.createCallExpression(callee, args, this.getPosition());
+    return astHelpers.createCallExpression(callee, args, this.spanFromLeftmost(callee));
   }
 
   private createMemberExpression(
@@ -4164,7 +4265,12 @@ export class Parser {
     property: ASTNode,
     computed: boolean
   ): MemberExpressionNode {
-    return astHelpers.createMemberExpression(object, property, computed, this.getPosition());
+    return astHelpers.createMemberExpression(
+      object,
+      property,
+      computed,
+      this.spanFromLeftmost(object)
+    );
   }
 
   private createSelector(value: string): SelectorNode {
@@ -4172,7 +4278,7 @@ export class Parser {
   }
 
   private createPossessiveExpression(object: ASTNode, property: ASTNode): PossessiveExpressionNode {
-    return astHelpers.createPossessiveExpression(object, property, this.getPosition());
+    return astHelpers.createPossessiveExpression(object, property, this.spanFromLeftmost(object));
   }
 
   private createErrorNode(): IdentifierNode {

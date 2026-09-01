@@ -12,6 +12,7 @@ import type {
   ReferenceValue,
   PropertyPathValue,
   ExpressionValue,
+  SourcePosition,
 } from '../types';
 
 import {
@@ -36,6 +37,28 @@ import {
  * @returns The corresponding AST expression node
  */
 export function convertValue(value: SemanticValue, warnings?: string[]): ExpressionNode {
+  return stampSpan(convertValueShape(value, warnings), value.position);
+}
+
+/**
+ * Give a converted node the span of the token run its value came from.
+ *
+ * Only `start`/`end` — the tokenizer records offsets, not line/column, and a
+ * value's offsets are relative to whatever string was parsed. A caller that
+ * parsed a slice of a larger document owns both the rebasing and the
+ * line/column derivation (see {@link SourceSpanned}); `@hyperfixi/core` does
+ * exactly that on adoption.
+ *
+ * A node that already carries a `start` keeps it: {@link convertExpression}
+ * has sub-parsed nodes whose spans are finer-grained than the whole role's,
+ * and it has already rebased them onto the role's span.
+ */
+function stampSpan(node: ExpressionNode, position: SourcePosition | undefined): ExpressionNode {
+  if (!position || typeof (node as { start?: unknown }).start === 'number') return node;
+  return { ...node, start: position.start, end: position.end } as ExpressionNode;
+}
+
+function convertValueShape(value: SemanticValue, warnings?: string[]): ExpressionNode {
   switch (value.type) {
     case 'literal':
       return convertLiteral(value);
@@ -314,7 +337,46 @@ export function convertExpression(value: ExpressionValue): ExpressionNode {
     return identifier;
   }
 
-  return result.node;
+  return rebaseSpans(result.node, value.position);
+}
+
+/**
+ * Rebase a sub-parsed expression tree onto the span of the role it came from.
+ *
+ * `parseExpression` runs on the role's OWN substring, so every span it emits
+ * counts from zero — `clear myVar` reported `args[0]` at `[0, 5)` where the
+ * traditional parser reports `[6, 11)`. That is not a missing span but a wrong
+ * one, and it leaked all the way to LSP ranges. Adding the role's start offset
+ * makes the tree agree with the traditional parse of the same source.
+ *
+ * `line`/`column` are DROPPED rather than shifted: they described a position
+ * inside the substring, and recovering the real ones needs the full document,
+ * which this package never sees. Absent beats wrong — and the one caller that
+ * does hold the document (`@hyperfixi/core`) derives them from the rebased
+ * offsets.
+ */
+function rebaseSpans(node: ExpressionNode, position: SourcePosition | undefined): ExpressionNode {
+  if (!position || position.start === 0) return node;
+  const shift = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(shift);
+    if (!input || typeof input !== 'object') return input;
+    // Plain objects and arrays are rebuilt; anything else passes by reference,
+    // so a generic walk cannot flatten a `Map` field into `{}`.
+    const proto = Object.getPrototypeOf(input) as unknown;
+    if (proto !== Object.prototype && proto !== null) return input;
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(input)) {
+      if ((key === 'start' || key === 'end') && typeof v === 'number') {
+        out[key] = v + position.start;
+      } else if (key === 'line' || key === 'column') {
+        continue;
+      } else {
+        out[key] = shift(v);
+      }
+    }
+    return out;
+  };
+  return shift(node) as ExpressionNode;
 }
 
 // =============================================================================

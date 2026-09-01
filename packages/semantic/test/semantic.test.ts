@@ -35,11 +35,15 @@ describe('English Parsing', () => {
         type: 'selector',
         value: '.active',
         selectorKind: 'class',
+        // The span of the token run the role was captured from, relative to the
+        // parsed input: `'toggle .active on #button'.slice(7, 14) === '.active'`.
+        position: { start: 7, end: 14 },
       });
       expect(node.roles.get('destination')).toEqual({
         type: 'selector',
         value: '#button',
         selectorKind: 'id',
+        position: { start: 18, end: 25 },
       });
     });
 
@@ -51,9 +55,13 @@ describe('English Parsing', () => {
         type: 'selector',
         value: '.active',
         selectorKind: 'class',
+        position: { start: 7, end: 14 },
       });
       // Implicit target should be 'me'
       expect(node.roles.get('destination')?.value).toBe('me');
+      // …and carry NO span: a value materialized from a schema default was
+      // never written down, so there is nowhere in the source to point at.
+      expect(node.roles.get('destination')?.position).toBeUndefined();
     });
   });
 
@@ -66,11 +74,15 @@ describe('English Parsing', () => {
         type: 'literal',
         value: 'hello',
         dataType: 'string',
+        // The span covers the QUOTES the value no longer carries — it is where
+        // the author wrote the literal, not where its stripped value lives.
+        position: { start: 4, end: 11 },
       });
       expect(node.roles.get('destination')).toEqual({
         type: 'selector',
         value: '#output',
         selectorKind: 'id',
+        position: { start: 17, end: 24 },
       });
     });
   });
@@ -90,6 +102,9 @@ describe('Japanese Parsing', () => {
         type: 'selector',
         value: '.active',
         selectorKind: 'class',
+        // Spans are offsets into the input as written, so a verb-final language
+        // puts the patient at the FRONT — the mirror of the English row above.
+        position: { start: 0, end: 7 },
       });
     });
 
@@ -290,6 +305,10 @@ describe('Arabic Parsing', () => {
         type: 'selector',
         value: '.active',
         selectorKind: 'class',
+        // Offsets are into the CODE UNITS of the string, so the RTL verb's four
+        // characters (ب د ّ ل — the shadda is its own code point) plus the
+        // space put the patient at 5.
+        position: { start: 5, end: 12 },
       });
     });
 
@@ -317,6 +336,7 @@ describe('Spanish Parsing', () => {
         type: 'selector',
         value: '.active',
         selectorKind: 'class',
+        position: { start: 9, end: 16 },
       });
     });
 
@@ -443,7 +463,9 @@ describe('Explicit Mode', () => {
 
   it('should throw on missing required role with description', () => {
     // put requires patient (content) — no default
-    expect(() => parseExplicit('[put destination:#output]')).toThrow('Missing required role "patient"');
+    expect(() => parseExplicit('[put destination:#output]')).toThrow(
+      'Missing required role "patient"'
+    );
     expect(() => parseExplicit('[put destination:#output]')).toThrow('content to put');
   });
 
@@ -507,11 +529,7 @@ describe('Translation', () => {
   });
 
   it('should get all translations', () => {
-    const translations = getAllTranslations(
-      'toggle .active',
-      'en',
-      ['ja', 'ar', 'es']
-    );
+    const translations = getAllTranslations('toggle .active', 'en', ['ja', 'ar', 'es']);
 
     expect(translations.ja).toContain('切り替え');
     expect(translations.ar).toContain('بدّل');
