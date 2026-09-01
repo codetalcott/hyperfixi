@@ -33,6 +33,10 @@ describe('fetch `with { ... }` request options', () => {
     expect(node.roles.get('style')).toEqual({
       type: 'expression',
       raw: "{ method: 'POST' }",
+      // A multi-token FOLD still gets a span: `matchRoleToken` stamps the whole
+      // run it consumed, so the brace object points at itself and not at its
+      // first token.
+      position: { start: 16, end: 34 },
     });
   });
 

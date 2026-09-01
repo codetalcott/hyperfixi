@@ -429,15 +429,8 @@ function addToken(
   // Calculate the column at the start of the token
   let tokenColumn = tokenizer.column - value.length;
   if (start !== undefined) {
-    // If start is explicitly provided, calculate column based on line breaks
-    tokenColumn = 1;
-    let lastNewlinePos = -1;
-    for (let i = 0; i < start; i++) {
-      if (tokenizer.input[i] === '\n' || tokenizer.input[i] === '\r') {
-        lastNewlinePos = i;
-      }
-    }
-    tokenColumn = start - lastNewlinePos;
+    // If start is explicitly provided, derive the column from line breaks
+    tokenColumn = lineColumnAt(tokenizer.input, start).column;
   }
 
   const token: import('../types/core').Token = {
@@ -452,21 +445,41 @@ function addToken(
   tokenizer.tokens.push(token);
 }
 
-function getLineAtPosition(tokenizer: Tokenizer, position: number): number {
+/**
+ * The 1-based line and column of an OFFSET in `input`.
+ *
+ * Exported because the offset→position mapping now has a second reader: a
+ * semantically-adopted command's argument spans arrive as bare offsets (see
+ * `Parser.rebaseSemanticSpans`), and they have to index the same grid the
+ * tokenizer stamps on every token or the two parse paths disagree about where
+ * the same character is. One definition, so they cannot drift.
+ *
+ * `\r\n` counts as one line break, and the column is measured from the last
+ * break — matching what `addToken` has always computed for an explicit start.
+ */
+export function lineColumnAt(input: string, offset: number): { line: number; column: number } {
   let line = 1;
-  for (let i = 0; i < position && i < tokenizer.input.length; i++) {
-    const char = tokenizer.input[i];
+  let lastBreak = -1;
+  const limit = Math.min(offset, input.length);
+  for (let i = 0; i < limit; i++) {
+    const char = input[i];
     if (char === '\n') {
       line++;
+      lastBreak = i;
     } else if (char === '\r') {
       line++;
       // Skip \n if it's part of \r\n
-      if (i + 1 < tokenizer.input.length && tokenizer.input[i + 1] === '\n') {
+      if (i + 1 < input.length && input[i + 1] === '\n') {
         i++;
       }
+      lastBreak = i;
     }
   }
-  return line;
+  return { line, column: offset - lastBreak };
+}
+
+function getLineAtPosition(tokenizer: Tokenizer, position: number): number {
+  return lineColumnAt(tokenizer.input, position).line;
 }
 
 function tokenizeComment(tokenizer: Tokenizer): void {

@@ -143,30 +143,47 @@ export interface ImplicitTaggable {
 }
 
 /**
+ * Where in the parsed INPUT this value's surface text sat.
+ *
+ * Optional and advisory: a value the parser materialized from a schema
+ * `default` was never written down, and several capture paths build a value
+ * from a synthesized string rather than a token run — those carry no position,
+ * and an absent span is honest where a guessed one would not be.
+ *
+ * The offsets are relative to the string handed to the parser, NOT to any
+ * larger document. A caller that parsed a SLICE (as `@hyperfixi/core` does —
+ * it hands the semantic path everything from the command token onward) owns
+ * the translation to absolute offsets.
+ */
+export interface SourceSpanned {
+  readonly position?: SourcePosition;
+}
+
+/**
  * Expected value types for role tokens.
  * Shared between RoleSpec (command-schemas) and RolePatternToken.
  */
 export type ExpectedType = SemanticValue['type'];
 
-export interface LiteralValue extends ImplicitTaggable {
+export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
 }
 
-export interface SelectorValue extends ImplicitTaggable {
+export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'selector';
   readonly value: string; // The CSS selector: #id, .class, [attr], etc.
   readonly selectorKind: 'id' | 'class' | 'attribute' | 'element' | 'complex';
 }
 
-export interface ReferenceValue extends ImplicitTaggable {
+export interface ReferenceValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'reference';
   readonly value:
     'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body' | 'document' | 'window' | 'detail';
 }
 
-export interface PropertyPathValue extends ImplicitTaggable {
+export interface PropertyPathValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
@@ -189,7 +206,7 @@ export interface PropertyPathValue extends ImplicitTaggable {
   readonly access?: 'dot' | 'possessive';
 }
 
-export interface ExpressionValue extends ImplicitTaggable {
+export interface ExpressionValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
@@ -199,7 +216,7 @@ export interface ExpressionValue extends ImplicitTaggable {
  * A boolean flag value — present (+flag) or negated (~flag).
  * Used in declarative domains for no-value attributes like primary-key, not-null.
  */
-export interface FlagValue extends ImplicitTaggable {
+export interface FlagValue extends ImplicitTaggable, SourceSpanned {
   readonly type: 'flag';
   readonly name: string;
   readonly enabled: boolean;
@@ -770,6 +787,21 @@ export function isValidReference(value: string): value is ReferenceValue['value'
  */
 export function createReference(value: ReferenceValue['value']): ReferenceValue {
   return { type: 'reference', value };
+}
+
+/**
+ * Stamp a captured value with the span of the token run it came from.
+ *
+ * A no-op when the caller has no span, so an absent
+ * {@link SourceSpanned.position} keeps meaning "not recorded" rather than
+ * "offset zero". Called from `PatternMatcher.stampCaptureSpan`, which is the
+ * single place a role acquires one.
+ */
+export function withPosition<V extends SemanticValue>(
+  value: V,
+  position: SourcePosition | undefined
+): V {
+  return position ? ({ ...value, position } as V) : value;
 }
 
 /**
