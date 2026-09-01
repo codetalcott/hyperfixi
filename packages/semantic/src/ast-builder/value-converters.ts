@@ -192,13 +192,50 @@ export function convertSelector(
 }
 
 /**
- * Convert a ReferenceValue to a ContextReferenceNode.
+ * Convert a ReferenceValue to a context reference — or, for a SIGIL-scoped
+ * variable, to the scoped identifier the traditional parser emits.
+ *
+ * `me` / `it` / `you` / `event` / … are context references. `:count` and
+ * `$total` are **variables**, and calling them context references was a live
+ * defect, not a spelling difference: `ContextType` is a closed union that never
+ * contained them, so `value.value as ContextType` was a lying cast, and core's
+ * `evaluateContextReference` has no case for `:count` — it returns `undefined`.
+ *
+ * The blast radius was larger than it looks, because of WHERE the semantic path
+ * gets used. Core parses a command sequence traditionally and hands only the
+ * final remainder to the semantic analyzer, so it is the LAST command of a
+ * handler that gets this node. Measured on the default parse path:
+ *
+ *   set :v to 5 then log :v then log :v      →  ["5", "5", undefined]
+ *   set $v to 5 then log $v then log $v      →  ["5", "5", undefined]
+ *   set  v to 5 then log  v then log  v      →  ["5", "5", "5"]      (unscoped: fine)
+ *
+ * So any handler ENDING in a `:`/`$` variable read silently produced
+ * `undefined` — `on click increment :count then log :count` being the ordinary
+ * shape of it. The traditional path was correct throughout.
+ *
+ * The two spellings below are the traditional parser's, matched exactly so both
+ * paths build the same node: `:name` strips the sigil and tags
+ * `scope: 'element'`, while `$name` KEEPS its sigil in the name and carries no
+ * scope (that is what `getVariableValue` expects of each — not an inconsistency
+ * introduced here).
  */
-export function convertReference(value: ReferenceValue): ContextReferenceNode {
+export function convertReference(value: ReferenceValue): ContextReferenceNode | IdentifierNode {
+  const raw = value.value;
+
+  if (typeof raw === 'string') {
+    if (raw.startsWith(':') && raw.length > 1) {
+      return { type: 'identifier', name: raw.slice(1), scope: 'element' };
+    }
+    if (raw.startsWith('$') && raw.length > 1) {
+      return { type: 'identifier', name: raw };
+    }
+  }
+
   return {
     type: 'contextReference',
-    contextType: value.value as ContextType,
-    name: value.value,
+    contextType: raw as ContextType,
+    name: raw,
   };
 }
 

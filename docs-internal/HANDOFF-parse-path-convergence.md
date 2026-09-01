@@ -181,7 +181,21 @@
 >    INERT `settle` rows only.
 > 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
 >    `packages/semantic` tracking spans; filed, not faked.
-> 5. **Arc 2 step 2+** — **and this item's stated payoff is MEASURED FALSE.**
+> 5. **Arc 2 step 2+** — **THREE live defects were found inside this "alias"
+>    family and are FIXED** (2026-09-01): `transition <bare-property>` was a
+>    silent no-op on the default path, a sigil-scoped variable read `undefined`
+>    in the LAST command of any handler (hitting `log` and breaking `default`
+>    outright), and `clear :count` was a no-op on the TRADITIONAL path. Detail
+>    in `PARSER_NEXT_STEPS.md`. `node-type` is **14 → 12**; the four remaining
+>    `identifier -> contextReference` sites are `me` on
+>    `empty`/`hide`/`select`/`show` and ARE genuine aliases.
+>
+>    **The lesson to carry into the rest of item 5:** a family named after a
+>    SHAPE says nothing about whether the shapes behave the same. Execute each
+>    row before calling it a rename. (`open #popup as non-modal` was checked the
+>    same way and IS fine — `OpenCommand` reads both shapes explicitly.)
+>
+>    **And this item's stated payoff is MEASURED FALSE.**
 >    `RENAME_PAIRS` is the full parser vs the **HYBRID** parser; the triage's
 >    `node-type` family is traditional vs **semantic**, and the hybrid parser
 >    takes no part in it. Renaming all seven pairs closes **ZERO** of the 14
@@ -283,7 +297,7 @@
 > `cd packages/core && npx tsx tools/triage-parse-paths.ts`. After Thread A
 > item 2b: same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail
 > 19, with families `semanticRoles-added` 77, `field-only-trad` 194/43,
-> `field-only-sem` 76/48, `node-type` 14, `marker-in-args` **13**,
+> `field-only-sem` 76/48, `node-type` **12**, `marker-in-args` **13**,
 > `position` 36/10, `value` **2**, `arity` **0**. `implicit-me` is gone from the
 > table, and `arity` joined it — its one member was a marker the tool could not
 > see. The tool is the authority, not this paragraph.
