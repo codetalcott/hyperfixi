@@ -351,15 +351,13 @@ export class ExpressionParser {
       // parser, whose own tokenizer strips them, logged "t 1".
       //
       // Safe here rather than at the consumer: `interchange/from-semantic.ts`
-      // reads `raw`, not `value`, and nothing else in this package reads it.
-      // (That `raw` is never SET on this node — so the interchange turns every
-      // template literal into an empty literal — is a separate defect, filed in
-      // docs-internal/PARSER_NEXT_STEPS.md rather than folded in here.)
+      // reads `raw ?? value` (falling back to this content since the empty-
+      // literal fix — `raw` is never set on this node), and nothing else in
+      // this package reads it.
       const raw = token.value;
       const templateNode: TemplateLiteralNode = {
         type: 'templateLiteral',
-        value:
-          raw.length >= 2 && raw.startsWith('`') && raw.endsWith('`') ? raw.slice(1, -1) : raw,
+        value: raw.length >= 2 && raw.startsWith('`') && raw.endsWith('`') ? raw.slice(1, -1) : raw,
         start: token.start,
         end: token.end,
         line: token.line,
