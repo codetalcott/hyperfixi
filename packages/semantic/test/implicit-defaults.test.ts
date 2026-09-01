@@ -87,16 +87,16 @@ describe('implicit schema defaults', () => {
       'bare `%s` still resolves its target on semanticRoles.patient',
       code => {
         expect(astFor(code).semanticRoles?.patient).toMatchObject({
-          type: 'contextReference',
-          contextType: 'me',
+          type: 'identifier',
+          name: 'me',
         });
       }
     );
 
     it('`toggle .active` keeps the resolved destination', () => {
       expect(astFor('toggle .active').semanticRoles?.destination).toMatchObject({
-        type: 'contextReference',
-        contextType: 'me',
+        type: 'identifier',
+        name: 'me',
       });
     });
 
@@ -111,7 +111,7 @@ describe('implicit schema defaults', () => {
     it('`focus me` keeps its positional arg', () => {
       const ast = astFor('focus me');
       expect(ast.args).toHaveLength(1);
-      expect(ast.args?.[0]).toMatchObject({ type: 'contextReference', contextType: 'me' });
+      expect(ast.args?.[0]).toMatchObject({ type: 'identifier', name: 'me' });
     });
 
     it('`toggle .active on #panel` keeps its `on` modifier', () => {

@@ -130,5 +130,27 @@ describe('node-type alias sites — both parse paths agree behaviourally', () =>
       await runOn('go back', traditional);
       expect(backSpy).toHaveBeenCalledTimes(1);
     });
+
+    // ---- bare `body` (found BY the convergence) ---------------------------
+    // Converging references on `identifier` exposed a pre-existing
+    // traditional-path defect: `body` was resolved only by the semantic
+    // path's dedicated contextReference arm, so on the traditional path it
+    // fell through to undefined and `add .x to body` classed the BUTTON
+    // (implicit me). Upstream reserves `body` and resolves it to
+    // document.body. The agent-bench phrasing ratchet is what caught it.
+
+    it('add .x to body classes the document body, not the implicit me', async () => {
+      document.body.className = '';
+      await runOn('add .modal-open to body', traditional);
+      expect(document.body.classList.contains('modal-open')).toBe(true);
+      expect(host().classList.contains('modal-open')).toBe(false);
+      document.body.className = '';
+    });
+
+    it('a user binding named `body` still shadows the document body', async () => {
+      await runOn('set body to me then log body', traditional);
+      expect(logged).toHaveLength(1);
+      expect(logged[0]).toBe(host());
+    });
   });
 });

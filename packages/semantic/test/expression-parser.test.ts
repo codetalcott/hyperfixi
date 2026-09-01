@@ -79,13 +79,15 @@ describe('ExpressionParser', () => {
     });
   });
 
+  // Context words emit plain `identifier` nodes — the traditional parser's
+  // spelling (Thread B item 5); the core evaluator resolves them by name.
   describe('Context References', () => {
     it('parses me', () => {
       const result = parseExpression('me');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
-        type: 'contextReference',
-        contextType: 'me',
+        type: 'identifier',
+        name: 'me',
       });
     });
 
@@ -93,8 +95,8 @@ describe('ExpressionParser', () => {
       const result = parseExpression('it');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
-        type: 'contextReference',
-        contextType: 'it',
+        type: 'identifier',
+        name: 'it',
       });
     });
 
@@ -102,8 +104,8 @@ describe('ExpressionParser', () => {
       const result = parseExpression('event');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
-        type: 'contextReference',
-        contextType: 'event',
+        type: 'identifier',
+        name: 'event',
       });
     });
 
@@ -111,20 +113,21 @@ describe('ExpressionParser', () => {
       const result = parseExpression('target');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
-        type: 'contextReference',
-        contextType: 'target',
+        type: 'identifier',
+        name: 'target',
       });
     });
   });
 
   describe('Property Access', () => {
-    it('parses dot notation', () => {
+    it('parses dot notation as the traditional nested memberExpression', () => {
       const result = parseExpression('me.value');
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
-        type: 'propertyAccess',
-        object: { type: 'contextReference', contextType: 'me' },
-        property: 'value',
+        type: 'memberExpression',
+        object: { type: 'identifier', name: 'me' },
+        property: { type: 'identifier', name: 'value' },
+        computed: false,
       });
     });
 
@@ -133,15 +136,23 @@ describe('ExpressionParser', () => {
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
         type: 'possessiveExpression',
-        object: { type: 'contextReference', contextType: 'me' },
+        object: { type: 'identifier', name: 'me' },
         property: 'value',
       });
     });
 
-    it('parses chained property access', () => {
+    it('parses chained property access as a nested chain', () => {
       const result = parseExpression('event.target.value');
       expect(result.success).toBe(true);
-      expect(result.node?.type).toBe('propertyAccess');
+      expect(result.node).toMatchObject({
+        type: 'memberExpression',
+        object: {
+          type: 'memberExpression',
+          object: { type: 'identifier', name: 'event' },
+          property: { type: 'identifier', name: 'target' },
+        },
+        property: { type: 'identifier', name: 'value' },
+      });
     });
   });
 
@@ -323,7 +334,7 @@ describe('ExpressionParser', () => {
       expect(result.success).toBe(true);
       expect(result.node).toMatchObject({
         type: 'possessiveExpression',
-        object: { type: 'contextReference', contextType: 'me' },
+        object: { type: 'identifier', name: 'me' },
         property: 'innerHTML',
       });
     });
@@ -331,7 +342,7 @@ describe('ExpressionParser', () => {
     it('parses event.target.value', () => {
       const result = parseExpression('event.target.value');
       expect(result.success).toBe(true);
-      expect(result.node?.type).toBe('propertyAccess');
+      expect(result.node?.type).toBe('memberExpression');
     });
   });
 
@@ -362,7 +373,7 @@ describe('ExpressionParser', () => {
       expect(result.node).toMatchObject({
         type: 'binaryExpression',
         operator: 'matches',
-        left: { type: 'contextReference', name: 'target' },
+        left: { type: 'identifier', name: 'target' },
         right: { type: 'selector', value: '.modal-backdrop' },
       });
     });
@@ -383,7 +394,7 @@ describe('ExpressionParser', () => {
       expect(result.node).toMatchObject({
         type: 'binaryExpression',
         operator: 'is',
-        left: { type: 'contextReference', name: 'result' },
+        left: { type: 'identifier', name: 'result' },
         right: { type: 'literal', value: false },
       });
     });
@@ -392,9 +403,9 @@ describe('ExpressionParser', () => {
   // The remaining en condition forms (gate if-exists / if-empty /
   // input-validation execution): the `exists` postfix predicate, the
   // `is empty` / `is not empty` unary predicates, and the possessive SPACE
-  // form (`my value`) folding to a propertyAccess. All evaluate through
-  // existing core runtime expressions (exists/isEmpty/isNotEmpty;
-  // propertyAccess + the contextReference possessive aliases).
+  // form (`my value`) folding to the traditional parser's memberExpression
+  // (object normalised to the base word). All evaluate through existing core
+  // runtime expressions (exists/isEmpty/isNotEmpty; memberExpression).
   describe('postfix predicates and possessive space form', () => {
     it('parses `#modal exists` as a postfix exists unary', () => {
       const result = parseExpression('#modal exists');
@@ -423,9 +434,10 @@ describe('ExpressionParser', () => {
         type: 'unaryExpression',
         operator: 'is empty',
         operand: {
-          type: 'propertyAccess',
-          object: { type: 'contextReference', contextType: 'my' },
-          property: 'value',
+          type: 'memberExpression',
+          object: { type: 'identifier', name: 'me' },
+          property: { type: 'identifier', name: 'value' },
+          computed: false,
         },
       });
     });

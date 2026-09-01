@@ -1708,6 +1708,76 @@ survive the second mutation — those commands fall back to implicit `me` when
 an evaluated target is `undefined`, so their behaviour CANNOT break through
 that arm; the rows still pin the end-to-end surface the fallback serves.
 
+### Thread B item 5 EXECUTED — the vocabulary converged on the core spellings, and the convergence found a live `body` defect (2026-09-01, third pass)
+
+The owner delegated the spelling decision ("think about the naming issue,
+then proceed with your recommended approach"). **Decision: converge the
+semantic emitters on the traditional/core vocabulary**, not the other way:
+
+- The engine-migration direction makes core the canonical engine; the
+  semantic front-end is an adapter INTO core's AST, and adapters speak the
+  host's vocabulary.
+- Blast radius: semantic's emission sites are few (value-converters, the
+  expression parser, one mapper); core's vocabulary is baked into the
+  parser, evaluators, hybrid bundles, the pinned vocabulary and the
+  AST-equivalence baseline — renaming core's emissions would move every
+  fingerprint.
+- On `contextReference` being "arguably better": nothing in core USES the
+  extra information — `evaluateContextReference` resolves through the same
+  machinery as identifier-`me`, and the info is recoverable from the name.
+  If the typed-AST arc later wants a richer node, it renames ONE converged
+  vocabulary instead of two.
+
+**What changed** (all emitter-side, in `packages/semantic`):
+
+- `convertReference` → `identifier{name}` always (possessive surfaces
+  normalise to their base word; the sigil branches from #1036 unchanged).
+- `convertPropertyPath` → the traditional parser's NESTED
+  `memberExpression` chain (one link per dotted-path segment, `property` an
+  identifier node, `computed: false`) — measured byte-identical to trad for
+  `me.value`, `my @data-count`, `event.detail.message`. A possessive
+  surface (`value.access === 'possessive'`) emits `possessiveExpression` —
+  EXCEPT a pronoun-base object (`me`/`it`/`you`), which can only be the
+  space form `my`/`its`/`your` + property and folds to memberExpression
+  exactly as trad does (`copy my textContent`, measured; `event's detail` /
+  `bob's name` keep possessiveExpression on both paths, also measured).
+- The expression parser: CONTEXT_VAR → `identifier`; dot access → nested
+  memberExpression; `[index]` → computed memberExpression (trad-exact; the
+  old flat form stringified an identifier index, silently reading `a[i]` as
+  `a.i`); the possessive space-form fold re-gated by identifier NAME and
+  emitting the base word.
+- The `go` mapper's structural keywords `back`/`url` → `string` nodes (the
+  spelling parseGoCommand emits; string nodes evaluate to their own text).
+
+`ContextReferenceNode` / `PropertyAccessNode` stay in the type union marked
+LEGACY, and core's dispatch arms for them stay until measured dead — they
+serve hand-built ASTs (buildAST is public API). Fixture regenerated
+(`mapper-parity.json`: exactly 2 literal→string + 1
+contextReference→identifier). The AST-equivalence gate pins the TRADITIONAL
+parse only (`parse(source, {})`), so it correctly did not move.
+
+**Result:** `node-type` **12 → 2** — only the two checked-benign real
+disagreements remain (`asExpression→selector` on `open … as non-modal`,
+`string→identifier` on `transition opacity to 0.5`, both dispositioned in
+#1036). The memberExpression→possessiveExpression residual this change
+briefly created on `copy my textContent` was closed by the pronoun-base
+rule above rather than documented — the "equal difference under a new name"
+trap, caught by re-running the triage.
+
+**And the convergence found a live defect, as every pass of this arc has:**
+converging `body` on `identifier` exposed that the TRADITIONAL path had
+never resolved bare `body` — only the semantic path's contextReference arm
+did — so `add .modal-open to body` classed the BUTTON (implicit-me
+fallback) on the traditional path, and started doing so on BOTH paths after
+convergence. The **agent-bench phrasing ratchet** is what caught it
+(`correct → warned-wrong` on the `<body/>` phrasing, whose effect stopped
+matching the reference's). Upstream RESERVES `body` and resolves it from
+its Context to `document.body`. Fixed in `evaluateIdentifier` (async + sync
+mirrors), placed AFTER the locals/globals lookups so a user binding named
+`body` still shadows — hyperfixi stays lenient where upstream reserves the
+word. Pinned in `node-type-alias-parity.test.ts` (both paths + the shadow
+row), mutation-measured.
+
 ### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
 
 The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
