@@ -163,6 +163,14 @@ export interface ProgramNode extends ASTNode {
  * MultiWordPattern - Defines structure for multi-word commands
  *
  * Example: "fetch URL as json" has keywords ["as"]
+ *
+ * NOTE: this is the SECOND declaration of this name — `helpers/parsing-helpers.ts`
+ * has its own, and the two have always differed (`syntax` there, `minArgs`/
+ * `maxArgs` here; nothing reads any of the three). `ParserContext` returns THIS
+ * one, `MULTI_WORD_PATTERNS` is typed by that one, and the values flow between
+ * them structurally. A field added to only one is silently invisible on the
+ * other side of `getMultiWordPattern`, which is how `commaListKeywords` first
+ * failed to typecheck. Filed with the rest of the duplicate-type divergence.
  */
 export interface MultiWordPattern {
   /** Command name (e.g., "fetch") */
@@ -170,6 +178,12 @@ export interface MultiWordPattern {
 
   /** Keywords that can appear as modifiers (e.g., ["as", "with"]) */
   keywords: string[];
+
+  /**
+   * Modifier keywords whose value is a comma-separated LIST, collected into one
+   * `arrayLiteral` — see the declaration in `helpers/parsing-helpers.ts`.
+   */
+  commaListKeywords?: string[];
 
   /** Optional: Minimum number of arguments required */
   minArgs?: number;

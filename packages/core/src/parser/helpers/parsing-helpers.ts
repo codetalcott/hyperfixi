@@ -21,6 +21,14 @@ export interface MultiWordPattern {
   command: string;
   keywords: string[];
   syntax: string;
+  /**
+   * Modifier keywords whose value is a COMMA-SEPARATED LIST, collected into one
+   * `arrayLiteral`. Upstream spells this as an explicit
+   * `do { … } while (parser.matchOpToken(","))` and only `make`'s `from` has
+   * it — `append`/`prepend`'s `to` takes a single expression there, so making
+   * the comma generic would accept syntax the canonical engine rejects.
+   */
+  commaListKeywords?: string[];
 }
 
 /**
@@ -37,6 +45,11 @@ export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
     command: 'make',
     keywords: ['a', 'an', 'from', 'called'],
     syntax: 'make (a|an) <type> [from <args>] [called <name>]',
+    // `make a URL from "/path/", "https://…"` — MakeCommand's own documented
+    // example, and a constructor with two arguments. Without this the modifier
+    // loop took only `"/path/"` and left `, "https://…"`, which is a silent
+    // drop bare and a hard `Unexpected token` inside a handler body.
+    commaListKeywords: ['from'],
   },
   // NOTE: `send` deliberately has NO entry. It is trigger's alias, and
   // COMPOUND_COMMANDS routes both to parseTriggerCommand — which already
