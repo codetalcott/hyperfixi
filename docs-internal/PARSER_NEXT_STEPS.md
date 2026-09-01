@@ -1674,6 +1674,40 @@ the cost of a runtime that carries three fallback branches because the two paths
 disagree. That is the real price of item 5, and it is paid in the commands, not
 in the parser.
 
+### The 10 remaining `node-type` rows executed — ALL benign, the family is fully dispositioned (2026-09-01, second pass)
+
+Step 1 of the convergence brief (`HANDOFF-convergence-next.md`): execute the 10
+`node-type` sites the first pass left unchecked, because that exact step found
+three live defects in the other 4. This time it found **zero** — all 10 behave
+IDENTICALLY on both parse paths, observable by observable, in jsdom:
+
+| row | observable, same on both paths |
+| --- | ------------------------------ |
+| `call element.focus()` | activeElement becomes the target |
+| `copy my textContent` | clipboard receives the text |
+| `get me.parentElement` | resolves the parent (BODY) |
+| `log me.value` | logs the input's value |
+| `empty me` / `hide me` / `show me` | innerHTML `''` / display `none` / restored |
+| `select me` | input contents selected `[0,2]` |
+| `log #target's innerHTML` | logs through the possessive |
+| `go back` | `history.back()` called once |
+
+With #1036's three fixes and the two checked-benign rows (`open … as
+non-modal`, `transition opacity to 0.5`), **all 14 original sites are now
+dispositioned**: 3 live defects (fixed), 11 benign. Thread B item 5 is
+therefore PURE spelling normalisation — there is no behavioural repair hiding
+anywhere in the family — and needs only the owner decision on which spelling
+wins per family before any code.
+
+Pinned by `src/parser/__tests__/node-type-alias-parity.test.ts` (20 rows, both
+paths, observables not parse shapes), so the rename work cannot silently
+change behaviour while it moves node types. Mutation-measured: nulling the
+`propertyAccess` dispatch arm in `parser/runtime.ts` reddens 4 auto-path rows,
+nulling `contextReference` reddens 3. The `empty/hide/show/select me` rows
+survive the second mutation — those commands fall back to implicit `me` when
+an evaluated target is `undefined`, so their behaviour CANNOT break through
+that arm; the rows still pin the end-to-end surface the fallback serves.
+
 ### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
 
 The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
