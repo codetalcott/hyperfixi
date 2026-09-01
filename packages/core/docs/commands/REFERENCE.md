@@ -1583,6 +1583,10 @@ scroll to top of <target>
 scroll to <target> smoothly
 ```
 
+```hyperscript
+scroll [<target>] [up|down|left|right] by <n> [px]
+```
+
 **Examples:**
 
 ```hyperscript
@@ -1595,6 +1599,10 @@ scroll to bottom of #chat
 
 ```hyperscript
 scroll to me smoothly
+```
+
+```hyperscript
+scroll down by 200
 ```
 
 **Side Effects:** scrolling

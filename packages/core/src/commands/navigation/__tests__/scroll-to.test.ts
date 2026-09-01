@@ -89,12 +89,12 @@ describe('ScrollCommand', () => {
 
       const result = await command.execute({ args: ['to', '#target'] }, context);
 
-      expect(scrollSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ block: 'start', behavior: 'smooth' })
-      );
+      // Exact options: no adverb means NO `behavior` key — upstream leaves it
+      // to the browser default (`auto`); forcing `smooth` was a divergence.
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'start', inline: 'nearest' });
       expect(result.element).toBe(element);
       expect(result.position).toBe('start');
-      expect(result.smooth).toBe(true);
+      expect(result.smooth).toBe(false);
 
       document.body.removeChild(element);
     });
@@ -109,9 +109,7 @@ describe('ScrollCommand', () => {
 
       const result = await command.execute({ args: ['to', 'bottom', 'of', '#chat'] }, context);
 
-      expect(scrollSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ block: 'end', behavior: 'smooth' })
-      );
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'end', inline: 'nearest' });
       expect(result.position).toBe('end');
 
       document.body.removeChild(element);
@@ -128,7 +126,45 @@ describe('ScrollCommand', () => {
       const result = await command.execute({ args: ['to', 'middle', 'of', '#mid'] }, context);
 
       expect(result.position).toBe('center');
-      expect(scrollSpy).toHaveBeenCalledWith(expect.objectContaining({ block: 'center' }));
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
+
+      document.body.removeChild(element);
+    });
+
+    it('maps horizontal words to `inline` (upstream inlineMap), not `block`', async () => {
+      const context = createMockContext();
+      const element = document.createElement('div');
+      element.id = 'wide';
+      document.body.appendChild(element);
+      const scrollSpy = vi.fn();
+      element.scrollIntoView = scrollSpy;
+
+      await command.execute({ args: ['to', 'the', 'right', 'of', '#wide'] }, context);
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'start', inline: 'end' });
+
+      // `center` is upstream's HORIZONTAL word (`middle` is the vertical one).
+      await command.execute({ args: ['to', 'center', 'of', '#wide'] }, context);
+      expect(scrollSpy).toHaveBeenLastCalledWith({ block: 'start', inline: 'center' });
+
+      document.body.removeChild(element);
+    });
+
+    it('should honor `smoothly` keyword', async () => {
+      const context = createMockContext();
+      const element = document.createElement('div');
+      element.id = 'soft';
+      document.body.appendChild(element);
+      const scrollSpy = vi.fn();
+      element.scrollIntoView = scrollSpy;
+
+      const result = await command.execute({ args: ['to', '#soft', 'smoothly'] }, context);
+
+      expect(result.smooth).toBe(true);
+      expect(scrollSpy).toHaveBeenCalledWith({
+        block: 'start',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
 
       document.body.removeChild(element);
     });

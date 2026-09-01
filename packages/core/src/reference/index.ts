@@ -389,10 +389,16 @@ export const commands: Record<string, CommandRef> = {
     name: 'scroll',
     description:
       'Scroll an element into view (upstream _hyperscript 0.9.90 replacement for `go to top of`)',
-    syntax: 'scroll to [top|bottom|middle|center|nearest] [of] target [smoothly|instantly]',
+    syntax:
+      'scroll to [top|middle|bottom|nearest] [left|center|right] [of] target [smoothly|instantly] | scroll [target] [up|down|left|right] by n [px]',
     category: 'navigation',
     availability: 'full',
-    examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
+    examples: [
+      'scroll to #top',
+      'scroll to bottom of #chat',
+      'scroll to me smoothly',
+      'scroll down by 200',
+    ],
   },
 
   // Control Flow Commands

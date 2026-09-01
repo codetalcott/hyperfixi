@@ -184,5 +184,47 @@ describe('Event modifiers (v0.9.90)', () => {
       const ast = parse('on mousemove throttled at 100ms call track()').node! as ModifiersNode;
       expect(ast.modifiers?.throttle).toBe(100);
     });
+
+    // parseTimeToMs used to test suffixes in the order ms/seconds/s/minutes/…,
+    // and every larger unit ALSO ends with `s` — so "2minutes" matched the bare
+    // `s` case and resolved to 2000 ms, a 60× error. Pin the whole unit table.
+    it.each([
+      ['200ms', 200],
+      ['2s', 2000],
+      ['3seconds', 3000],
+      ['2minutes', 120000],
+      ['1hours', 3600000],
+      ['1days', 86400000],
+    ])('resolves `debounced at %s` to %d ms', (unit, ms) => {
+      const result = parse(`on keyup debounced at ${unit} call search()`);
+      expect(result.error).toBeUndefined();
+      expect((result.node! as ModifiersNode).modifiers?.debounce).toBe(ms);
+    });
+
+    it('debounces `at 2minutes` for two minutes, not two seconds (behavioural)', async () => {
+      vi.useFakeTimers();
+      try {
+        // Real element — the debounce wrapper installs a real listener and the
+        // handler body must observably run (or not) at the right time.
+        const target = document.createElement('div');
+        document.body.appendChild(target);
+        const ctx = createContext(target);
+
+        const ast = parse('on click debounced at 2minutes add .fired to me').node!;
+        await runtime.execute(ast, ctx);
+        target.dispatchEvent(new Event('click'));
+
+        // With the 60× bug the timer was 2000 ms, so this advance would fire it.
+        await vi.advanceTimersByTimeAsync(2500);
+        expect(target.classList.contains('fired')).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(120000);
+        expect(target.classList.contains('fired')).toBe(true);
+
+        document.body.removeChild(target);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

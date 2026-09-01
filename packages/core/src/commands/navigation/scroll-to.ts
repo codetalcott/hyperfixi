@@ -6,8 +6,10 @@
  *
  * Syntax:
  *   scroll to <target>
- *   scroll to top|middle|bottom [of] <target>
+ *   scroll to top|middle|bottom [of] <target>       (vertical → block)
+ *   scroll to left|center|right [of] <target>       (horizontal → inline)
  *   scroll to <target> smoothly|instantly
+ *   scroll [<target>] [up|down|left|right] by <n> [px]   (scrollBy)
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -29,7 +31,10 @@ export interface ScrollCommandInput {
 
 export interface ScrollCommandOutput {
   element: HTMLElement;
+  /** The vertical (`block`) position for the into-view form. */
   position: ScrollLogicalPosition;
+  /** True only when `smoothly` was given — matching upstream, where no adverb
+   *  leaves `behavior` unset (browser default `auto`), not smooth. */
   smooth: boolean;
 }
 
@@ -37,8 +42,18 @@ export interface ScrollCommandOutput {
 export class ScrollCommand implements DecoratedCommand {
   static readonly metadata = commandMeta({
     description: 'Scroll an element into view (upstream _hyperscript 0.9.90)',
-    syntax: ['scroll to <target>', 'scroll to top of <target>', 'scroll to <target> smoothly'],
-    examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
+    syntax: [
+      'scroll to <target>',
+      'scroll to top of <target>',
+      'scroll to <target> smoothly',
+      'scroll [<target>] [up|down|left|right] by <n> [px]',
+    ],
+    examples: [
+      'scroll to #top',
+      'scroll to bottom of #chat',
+      'scroll to me smoothly',
+      'scroll down by 200',
+    ],
     sideEffects: ['scrolling'],
     category: 'navigation',
     compatibility: 'standard',
@@ -67,8 +82,22 @@ export class ScrollCommand implements DecoratedCommand {
     context: TypedExecutionContext
   ): Promise<ScrollCommandOutput> {
     const { args } = input;
-    const position = this.parsePosition(args);
-    const smooth = !args.includes('instantly');
+
+    // `behavior` is set ONLY when an adverb was given — upstream leaves it
+    // unset otherwise (browser default `auto`). Always defaulting to
+    // `smooth` force-animated every `scroll to <target>`.
+    const behavior: ScrollBehavior | undefined = args.includes('smoothly')
+      ? 'smooth'
+      : args.includes('instantly')
+        ? ('instant' as ScrollBehavior)
+        : undefined;
+
+    if (args.includes('by')) {
+      return this.executeScrollBy(args, behavior, context);
+    }
+
+    const options = this.parseScrollOptions(args);
+    if (behavior) options.behavior = behavior;
     const target = this.resolveTarget(args, context);
 
     if (!target) {
@@ -76,23 +105,83 @@ export class ScrollCommand implements DecoratedCommand {
     }
 
     if (typeof target.scrollIntoView === 'function') {
-      target.scrollIntoView({
-        block: position,
-        behavior: (smooth ? 'smooth' : 'instant') as ScrollBehavior,
-      });
+      target.scrollIntoView(options);
     }
 
-    return { element: target, position, smooth };
+    return { element: target, position: options.block ?? 'start', smooth: behavior === 'smooth' };
   }
 
-  private parsePosition(args: unknown[]): ScrollLogicalPosition {
-    for (const a of args) {
-      if (a === 'top') return 'start';
-      if (a === 'bottom') return 'end';
-      if (a === 'middle' || a === 'center') return 'center';
-      if (a === 'nearest') return 'nearest';
+  /**
+   * `scroll [<target>] [up|down|left|right] by <n> [px]` — upstream scrolls
+   * the target (default: the document element) BY the offset via `scrollBy`,
+   * vertical for `up`/`down` (default `down`), horizontal for `left`/`right`.
+   */
+  private async executeScrollBy(
+    args: unknown[],
+    behavior: ScrollBehavior | undefined,
+    context: ExecutionContext
+  ): Promise<ScrollCommandOutput> {
+    const direction =
+      (args.find(a => a === 'up' || a === 'down' || a === 'left' || a === 'right') as
+        string | undefined) ?? 'down';
+    const offset = this.parseByOffset(args);
+    const target =
+      this.resolveTarget(args, context) ??
+      (typeof document !== 'undefined' ? document.documentElement : null);
+
+    if (!target) {
+      throw new Error('scroll: target element not found');
     }
-    return 'start';
+
+    const options: ScrollToOptions = {
+      top: direction === 'up' ? -offset : direction === 'down' ? offset : 0,
+      left: direction === 'left' ? -offset : direction === 'right' ? offset : 0,
+    };
+    if (behavior) options.behavior = behavior;
+
+    if (typeof target.scrollBy === 'function') {
+      target.scrollBy(options);
+    }
+
+    return { element: target, position: 'start', smooth: behavior === 'smooth' };
+  }
+
+  /**
+   * Position words → scrollIntoView options, mirroring upstream's
+   * `_parseScrollModifiers` maps exactly: defaults `{block:'start',
+   * inline:'nearest'}`; the VERTICAL words `top`/`middle`/`bottom` set
+   * `block`, the HORIZONTAL words `left`/`center`/`right` set `inline`.
+   * (`center` used to land on `block`, and the horizontal words were
+   * otherwise dropped — so `scroll to the right of #chat` scrolled to the
+   * top.) `nearest` is hyperfixi's own documented extension, kept on `block`.
+   */
+  private parseScrollOptions(args: unknown[]): ScrollIntoViewOptions {
+    const options: ScrollIntoViewOptions = { block: 'start', inline: 'nearest' };
+    for (const a of args) {
+      if (a === 'top') options.block = 'start';
+      else if (a === 'middle') options.block = 'center';
+      else if (a === 'bottom') options.block = 'end';
+      else if (a === 'nearest') options.block = 'nearest';
+      else if (a === 'left') options.inline = 'start';
+      else if (a === 'center') options.inline = 'center';
+      else if (a === 'right') options.inline = 'end';
+    }
+    return options;
+  }
+
+  /** Offset for the `by` form: a number literal, or an `"<n>px"` string when
+   *  the unit was written adjacent (`50px`). A preceding `-` sign negates. */
+  private parseByOffset(args: unknown[]): number {
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      const sign = args[i - 1] === '-' ? -1 : 1;
+      if (typeof a === 'number') return sign * a;
+      if (typeof a === 'string') {
+        const m = /^(-?\d+(?:\.\d+)?)px$/.exec(a);
+        if (m) return sign * parseFloat(m[1]);
+      }
+    }
+    return 0;
   }
 
   /**
@@ -118,9 +207,13 @@ export class ScrollCommand implements DecoratedCommand {
       'instantly',
       // Structural words `parseScrollCommand` emits that carry no target:
       // `in` introduces the CONTAINER (not modelled here — see
-      // docs-internal/PARSER_NEXT_STEPS.md), `px` follows an offset.
+      // docs-internal/PARSER_NEXT_STEPS.md), `px` follows an offset, and
+      // `up`/`down`/`by` belong to the scrollBy form.
       'in',
       'px',
+      'up',
+      'down',
+      'by',
     ]);
 
     for (const a of args) {

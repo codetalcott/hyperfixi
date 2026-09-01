@@ -166,14 +166,18 @@ const STRING_POSTFIX_BP = 60;
 /**
  * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
  * The tokenizer already validates the format (TIME_UNITS: ms, s, seconds, minutes, hours, days).
+ *
+ * The bare-`s` check MUST come last: every other unit also ends with `s`, so
+ * testing it earlier captures their suffixes ("2minutes" ended with `s` and
+ * resolved to 2000 ms — a 60× error on `debounced at 2minutes`).
  */
 function parseTimeToMs(timeStr: string): number {
   if (timeStr.endsWith('ms')) return parseInt(timeStr, 10);
   if (timeStr.endsWith('seconds')) return parseFloat(timeStr) * 1000;
-  if (timeStr.endsWith('s')) return parseFloat(timeStr) * 1000;
   if (timeStr.endsWith('minutes')) return parseFloat(timeStr) * 60000;
   if (timeStr.endsWith('hours')) return parseFloat(timeStr) * 3600000;
   if (timeStr.endsWith('days')) return parseFloat(timeStr) * 86400000;
+  if (timeStr.endsWith('s')) return parseFloat(timeStr) * 1000;
   return parseInt(timeStr, 10);
 }
 

@@ -178,6 +178,43 @@ const SCROLL_KEYWORDS = new Set([
 ]);
 
 /**
+ * Structural keywords in the scrollBy form,
+ * `scroll [<target>] [up|down|left|right] by <n> [px] [smoothly|instantly]`
+ * — upstream's non-`to` branch. `up`/`down`/`by` are meaningful only here.
+ */
+const SCROLL_BY_KEYWORDS = new Set([...SCROLL_KEYWORDS, 'up', 'down', 'by']);
+
+/**
+ * Words that end the lookahead for a `by` — the DEFAULT_BOUNDARY_KEYWORDS the
+ * arg loop stops at, plus the additional boundaries `parseScrollCommand`
+ * passes it. (A false claim past a boundary the scan cannot see, e.g. a
+ * newline-led next command, is harmless: the arg loop still stops at the real
+ * boundary and the runtime keys the scrollBy form on `by` being IN the args.)
+ */
+const SCROLL_BY_SCAN_BOUNDARY = new Set([
+  'then',
+  'and',
+  'else',
+  'end',
+  'when',
+  'where',
+  'catch',
+  'finally',
+]);
+
+/** Does a `by` introduce an offset before the next command boundary? */
+function hasScrollByAhead(ctx: ParserContext): boolean {
+  for (let i = 0; i < 12; i++) {
+    const tok = ctx.peekAt(i);
+    if (!tok) return false;
+    const canonical = ctx.resolveKeyword(tok.value).toLowerCase();
+    if (canonical === 'by') return true;
+    if (SCROLL_BY_SCAN_BOUNDARY.has(canonical)) return false;
+  }
+  return false;
+}
+
+/**
  * Parse `scroll to <target>` as a flat, ordered token list — the same shape
  * `parseGoCommand` builds and the same shape [commands/navigation/scroll-to.ts]
  * already consumes (it skips the structural words and takes the first real
@@ -204,19 +241,32 @@ const SCROLL_KEYWORDS = new Set([
  * an early probe reported it throwing, but only because the scratch page it
  * ran on had no `.message` elements.
  *
- * Returns `null` for anything but the `to` branch, so upstream's
- * `scroll <up|down|left|right> by <n> [px]` keeps the generic path it has
- * today. That form has no runtime here either way (ScrollCommand models no
- * `scrollBy`); it is filed in `docs-internal/PARSER_NEXT_STEPS.md` rather than
- * half-built.
+ * The non-`to` branch handles upstream's scrollBy form,
+ * `scroll [<target>] [up|down|left|right] by <n> [px]` — claimed only when a
+ * `by` is genuinely ahead, so the lenient bare `scroll <target>` keeps the
+ * generic path it has today. ScrollCommand executes it via `scrollBy`
+ * (vertical for `up`/`down`, horizontal for `left`/`right`).
  */
 export function parseScrollCommand(
   ctx: ParserContext,
   identifierNode: IdentifierNode
 ): CommandNode | null {
   if (ctx.isAtEnd()) return null;
-  if (ctx.resolveKeyword(ctx.peek().value).toLowerCase() !== 'to') return null;
 
+  if (ctx.resolveKeyword(ctx.peek().value).toLowerCase() === 'to') {
+    return collectScrollArgs(ctx, identifierNode, SCROLL_KEYWORDS);
+  }
+  if (hasScrollByAhead(ctx)) {
+    return collectScrollArgs(ctx, identifierNode, SCROLL_BY_KEYWORDS);
+  }
+  return null;
+}
+
+function collectScrollArgs(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode,
+  keywords: ReadonlySet<string>
+): CommandNode {
   const args: ASTNode[] = [];
 
   while (!isCommandBoundary(ctx, ['when', 'where', 'catch', 'finally'])) {
@@ -226,7 +276,7 @@ export function parseScrollCommand(
     // 1. Structural scroll keyword → flat string arg. String, not identifier:
     //    an unbound identifier evaluates to `undefined` at runtime, and the
     //    runtime matches these by their own text.
-    if (SCROLL_KEYWORDS.has(canonical)) {
+    if (keywords.has(canonical)) {
       ctx.advance();
       args.push(stringNode(canonical, tok));
       continue;
