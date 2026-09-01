@@ -171,19 +171,37 @@
 >    does not implement it. A fourth, unrelated: `parseTimeToMs` resolves
 >    `debounced at 2minutes` to 2000 ms, not 120000 (it tests `s` before
 >    `minutes`).
-> 3. **Residual item-5 rows** — the template-literal backticks
->    (`log \`t ${1}\``). The `value` family is 3 sites: that one, plus the two
->    `settle` `isBlocking` rows marked INERT below.
+> 3. ~~**Residual item-5 rows** — the template-literal backticks
+>    (`log \`t ${1}\``).~~ — **DONE.** Not a shape nicety: the delimiters were
+>    being PRINTED (`log \`t ${1}\`` logged `` `t 1` `` on the default path).
+>    The producer is `packages/semantic`'s expression parser, found only after
+>    two plausible fix sites were measured DEAD — and a `src` edit there proves
+>    nothing until the package is rebuilt, because core's tests resolve
+>    `@lokascript/semantic` through `dist`. The `value` family is now the two
+>    INERT `settle` rows only.
 > 4. **Nested argument positions** (36 sites / 10 sources). Blocked on
 >    `packages/semantic` tracking spans; filed, not faked.
-> 5. **Arc 2 step 2+** — the seven `RENAME_PAIRS` Arc 0 pinned
->    (`binaryExpression`/`binary`, `eventHandler`/`event`, …). Step 1 is done
->    (#1018); this is the actual alias-normalisation work, and it is what 12 of
->    the 14 remaining `node-type` differences are.
+> 5. **Arc 2 step 2+** — **and this item's stated payoff is MEASURED FALSE.**
+>    `RENAME_PAIRS` is the full parser vs the **HYBRID** parser; the triage's
+>    `node-type` family is traditional vs **semantic**, and the hybrid parser
+>    takes no part in it. Renaming all seven pairs closes **ZERO** of the 14
+>    sites. Measured over the corpus: the only divergent kinds are
+>    `contextReference` + `propertyAccess` (semantic-only) and `functionCall`
+>    (traditional-only), and NO `RENAME_PAIRS` name appears among them.
+>
+>    The real step is **three names, not seven pairs**: normalise
+>    `identifier`/`contextReference` (6 sites) and
+>    `memberExpression`+`possessiveExpression`/`propertyAccess` (5), which is 11
+>    of the 12 alias sites; `parser/runtime.ts` already carries the parallel arms
+>    and its own comments name the work. Two of the 14 (`asExpression→selector`,
+>    `string→identifier`) are real disagreements, not aliases. Full measurement
+>    in `PARSER_NEXT_STEPS.md`.
 >
 > ### Do not re-derive these
 >
-> - **`settle`'s `isBlocking` disagreement is INERT.** Real (semantic is right;
+> - **`settle`'s `isBlocking` disagreement is INERT** — and since Thread B item
+>   3 landed, it is the ENTIRE `value` family (2 sites, both `settle`).
+>   Real (semantic is right;
 >   the traditional generic path hardcodes `false`), but nothing in the
 >   monorepo branches on that field. Scored and deliberately left.
 > - **`swap`'s `method="over"` is NOT a defect** — it is swapSchema's
@@ -266,7 +284,7 @@
 > item 2b: same **139** · differ **77** · trad-only 0 · sem-only 0 · both-fail
 > 19, with families `semanticRoles-added` 77, `field-only-trad` 194/43,
 > `field-only-sem` 76/48, `node-type` 14, `marker-in-args` **13**,
-> `position` 36/10, `value` 3, `arity` **0**. `implicit-me` is gone from the
+> `position` 36/10, `value` **2**, `arity` **0**. `implicit-me` is gone from the
 > table, and `arity` joined it — its one member was a marker the tool could not
 > see. The tool is the authority, not this paragraph.
 >

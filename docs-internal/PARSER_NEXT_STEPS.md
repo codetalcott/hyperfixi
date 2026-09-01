@@ -1525,6 +1525,95 @@ used only by `debounced at` / `throttled at`) tests suffixes in the order
 is in the tokenizer's TIME_UNITS) and wrong by 60×. Not fixed here: it is a
 different surface from the expression postfix and wants its own behavioural row.
 
+### ~~A template literal's `value` carried its BACKTICKS on the semantic path~~ — FIXED (2026-09-01)
+
+Thread B item 3. The convergence triage's `value` family was three sites and
+this was the only one not marked inert; it read like an AST-shape nicety
+(`"t ${1}"` vs `` "`t ${1}`" ``). It was not. The delimiters were being
+**printed**: `log \`t ${1}\`` logged `` `t 1` `` on the default path and `t 1`
+on the traditional one, because the evaluator interpolates the value it is given
+and emits whatever comes out.
+
+Narrow by construction — `put` and `set` are on `skipSemanticParsing`, so only
+commands that reach the semantic path could show it, and both were measured
+correct before and after.
+
+**The producer took three attempts to find, and the first two were plausible.**
+Recording them because the pattern generalises:
+
+1. **core's `semanticValueToExpression`** (`semantic-integration.ts`) builds a
+   `templateLiteral` for any literal containing `${…}`. Patching it changed
+   NOTHING — that branch never fires for this source. *Drop each piece of the
+   fix and re-measure*, again.
+2. **`packages/semantic`'s top-level `parse`** returns `null` for both
+   `log \`t ${1}\`` and its handler-wrapped form, so `buildAST` was not the
+   route either.
+3. The live producer is **the semantic package's expression parser**
+   (`ast-builder/expression-parser/parser.ts`), reached from core through the
+   built `dist`. Tagging its SOURCE proved nothing until the package was
+   rebuilt — core's vitest config aliases only `@`/`@test`, so
+   `@lokascript/semantic` resolves through the workspace symlink to `dist`.
+   **A probe that edits a sibling package's `src` and runs core's tests measures
+   the OLD build.**
+
+Fixed at the producer rather than at the consumer, because
+`interchange/from-semantic.ts` reads `raw` and nothing else in that package
+reads `value`. The `value` family is now the two INERT `settle` rows only.
+
+**Found while checking that, filed not fixed:** the same node never SETS `raw`,
+and `from-semantic.ts` does `node.raw ?? ''` — so the interchange turns every
+template literal into an EMPTY literal. Separate defect, separate blast radius
+(interchange output has its own gates).
+
+### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
+
+The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
+(`binaryExpression`/`binary`, `eventHandler`/`event`, …) … and it is what 12 of
+the 14 remaining `node-type` differences are."* **The two halves of that
+sentence are about different axes**, and only the second is true.
+
+- `RENAME_PAIRS` (in `ast-vocabulary.test.ts`) is the **full parser vs the
+  HYBRID parser** — the slim-bundle producer. `binaryExpression`/`binary`,
+  `memberExpression`/`member`, and so on.
+- The triage's `node-type` family is **traditional vs semantic**, and the
+  hybrid parser takes no part in it at all: the tool calls
+  `hyperscript.compileSync(src, { traditional })` both times.
+
+Measured over the whole corpus, collecting every node kind each path emits:
+
+```
+semantic-only kinds : contextReference, propertyAccess
+traditional-only    : functionCall
+RENAME_PAIRS names among those divergent kinds : (NONE)
+RENAME_PAIRS hybrid names emitted by EITHER path: (NONE)
+```
+
+So renaming all seven pairs moves **zero** of the 14 sites. `memberExpression`
+does appear in a transition — but as `memberExpression → propertyAccess`, and
+its RENAME_PAIRS partner is `member`; renaming it would leave
+`member → propertyAccess`, an equal difference under a new name.
+
+**The real convergence vocabulary gap is THREE names, not seven pairs**, and the
+12 alias sites are exactly two families:
+
+| transition | sites | what it is |
+| ---------- | ----- | ---------- |
+| `identifier → contextReference` | 6 | semantic emits a dedicated node for `me`/`it`/`you` |
+| `memberExpression → propertyAccess` | 4 | one meaning, two spellings |
+| `possessiveExpression → propertyAccess` | 1 | two traditional spellings collapsing to one |
+| `string → literal` | 1 | one meaning, two spellings |
+| `asExpression → selector` | 1 | **not an alias** — a real disagreement |
+| `string → identifier` | 1 | **not an alias** — a real disagreement |
+
+`parser/runtime.ts` already carries the parallel arms, and its own comments name
+the work: *"The core parser uses `memberExpression`, so this only arrives from
+`@lokascript/semantic`"* and *"The traditional parser emits these as `identifier`
+nodes … but the semantic→AST builder emits dedicated `contextReference` nodes."*
+Pick one spelling per family and those duplicate arms collapse. That is the
+actual step, and it is smaller and better-defined than the brief's version —
+but it changes AST shapes across `packages/semantic`, 9 consumer files, and the
+AST-equivalence baseline, so it wants its own PR.
+
 ### The triage tool's `marker-in-args` family was under-counting
 
 Not a parser defect — a MEASUREMENT one, found because the `scroll` fix tripped
