@@ -185,13 +185,14 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
-#### Three gates `test:check` does NOT cover
+#### ~~Three~~ FOUR classes of gate `test:check` does NOT cover
 
 These are required CI checks that no `test:check` invocation reaches, so a green
-local run can still fail CI. Each cost a full CI round-trip during Arc F
-follow-ups round 2. Run all three whenever a change touches
-`packages/semantic/src/generators/command-schemas.ts`, a language profile, or
-R2's curated execution subset:
+local run can still fail CI. The first three cost a full CI round-trip during Arc
+F follow-ups round 2; the fourth cost one on #1034. Run 1–3 whenever a change
+touches `packages/semantic/src/generators/command-schemas.ts`, a language
+profile, or R2's curated execution subset — and run 4 whenever you touch
+**anything**, because it is a dozen cheap scripts that guard the whole repo:
 
 ```bash
 # 1. Vocab consistency (V1–V4 cross-surface check)
@@ -202,6 +203,22 @@ npm run test:check --prefix packages/hyperscript-adapter
 
 # 3. The R2 curated-subset lock (part of the testing-framework suite)
 npm run test:check --prefix packages/testing-framework
+
+# 4. Everything the `lint-typecheck` JOB runs that no test suite does.
+#    Nine guard scripts + their three self-tests, then oxlint, then the 32
+#    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
+#    the FIRST failure hides the rest.
+for s in check-ci-build-order check-bundle-shards check-test-check-list \
+         check-ci-test-list check-ci-job-lists validate-versions \
+         check-type-escapes check-layering check-semantic-boundary; do
+  node scripts/$s.cjs || echo "FAILED: $s"
+done
+for t in check-type-escapes check-layering check-semantic-boundary; do
+  node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
+done
+npm run lint
+npm run typecheck:scripts --prefix packages/core
+# …plus `npm run typecheck --prefix packages/<each>` for the 32 the job lists.
 ```
 
 1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
@@ -215,7 +232,17 @@ npm run test:check --prefix packages/testing-framework
    Two traps — the file is **tracked but also matches `.gitignore`**, so it needs
    `git add -f`, and lint-staged cannot re-add it after prettier, so that commit
    needs `--no-verify`.
-3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
+4. **The `lint-typecheck` guards are RATCHETS, not lint.** Three of them hold a
+   committed baseline and fail on any increase: `check-type-escapes`
+   (`any` / `as any` / `as Record<string, unknown>` / `as unknown as`, per
+   directory), `check-layering` (upward imports), and `check-semantic-boundary`.
+   #1034 added exactly **two** `as unknown as` in `packages/core/src/parser`
+   while every test suite stayed green — both were avoidable, and the right
+   answer was to type the values, not to run `check:type-escapes:update`. Reach
+   for `:update` only when the hatch is genuinely required, and say why in the
+   PR. Note these run BEFORE `npm ci` in the job, which is why they are cheap
+   enough to run on every change.
+5. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
    exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
    count in the test title, the sorted expectation array, AND regenerating the
    multilingual baseline in the same PR.
