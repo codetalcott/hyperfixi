@@ -118,11 +118,28 @@ function createElementFromHTML(html: string): HTMLElement {
 
 /** Create class instance using constructor lookup */
 function createClassInstance(
-  className: string | HTMLElement,
+  className: string | HTMLElement | ((...a: unknown[]) => unknown),
   args: unknown[],
   context: TypedExecutionContext
 ): unknown {
   if (isHTMLElement(className)) return className;
+
+  // Already a constructor. `parseInput` EVALUATES the type expression, and the
+  // real evaluator resolves a global like `URL` or `Date` to the class itself —
+  // so `String(className)` was the class's whole source text and the name
+  // lookup below could never match it. `make a URL from …` (MakeCommand's own
+  // documented example) therefore threw
+  // `Constructor 'class URL { … }' not found` for every constructor that
+  // resolves, at every arity.
+  //
+  // The unit tests could not see it: they pass a MOCK evaluator that returns
+  // the STRING `'URL'`, which is the one input shape the name lookup handles.
+  // The integration rows added alongside this go through the real parser and
+  // evaluator.
+  if (typeof className === 'function') {
+    const Ctor = className as unknown as new (...a: unknown[]) => unknown;
+    return args.length === 0 ? new Ctor() : new Ctor(...args);
+  }
 
   const name = String(className);
   let Constructor: (new (...args: unknown[]) => unknown) | undefined;

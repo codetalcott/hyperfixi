@@ -343,9 +343,23 @@ export class ExpressionParser {
     }
 
     if (this.match(TokenType.TEMPLATE_LITERAL)) {
+      // `value` is the template's CONTENT, with its backticks stripped — the
+      // tokenizer hands them over, and the one consumer that reads this field
+      // (core's evaluator, via `buildAST`) interpolates the value as-is and
+      // emits whatever it is given. Keeping the delimiters made the semantic
+      // path PRINT them: `log \`t ${1}\`` logged "`t 1`" where the traditional
+      // parser, whose own tokenizer strips them, logged "t 1".
+      //
+      // Safe here rather than at the consumer: `interchange/from-semantic.ts`
+      // reads `raw`, not `value`, and nothing else in this package reads it.
+      // (That `raw` is never SET on this node — so the interchange turns every
+      // template literal into an empty literal — is a separate defect, filed in
+      // docs-internal/PARSER_NEXT_STEPS.md rather than folded in here.)
+      const raw = token.value;
       const templateNode: TemplateLiteralNode = {
         type: 'templateLiteral',
-        value: token.value,
+        value:
+          raw.length >= 2 && raw.startsWith('`') && raw.endsWith('`') ? raw.slice(1, -1) : raw,
         start: token.start,
         end: token.end,
         line: token.line,

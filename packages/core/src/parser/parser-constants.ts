@@ -155,6 +155,11 @@ export const COMPOUND_COMMANDS = new Set([
   // go to <pos> of <el> — keyword-driven; the generic arg loop drops the
   // trailing URL and folds scroll forms into binary expressions.
   'go',
+  // scroll to [the] [top|middle|bottom] [of] <target> [in <container>]
+  // [smoothly|instantly] — keyword-driven. The generic arg loop folded
+  // `bottom of #chat` into a binary `of` (the runtime then threw) and dropped
+  // the trailing adverb, which INVERTED `instantly`.
+  'scroll',
   'tell', // tell <target> <command> [<command> ...]
   // pick: 5 variants from upstream _hyperscript (first/last/random/range/match)
   // — keyword-driven, can't be parsed by the generic identifier-plus-args path.

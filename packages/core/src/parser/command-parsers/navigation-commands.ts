@@ -151,3 +151,128 @@ export function parseGoCommand(
     .endingAt(ctx.getPosition())
     .build();
 }
+
+/**
+ * Structural keywords in `scroll to …`, mirroring upstream's
+ * `_parseScrollModifiers`: `[the] [top|middle|bottom] [left|center|right] [of]
+ * <target> [+|- <offset>] [px] [in <container>] [smoothly|instantly]`.
+ *
+ * `nearest` is hyperfixi's own (documented in `reference/index.ts` and accepted
+ * by ScrollCommand.parsePosition); upstream has no such position word.
+ */
+const SCROLL_KEYWORDS = new Set([
+  'to',
+  'the',
+  'of',
+  'in',
+  'top',
+  'middle',
+  'bottom',
+  'left',
+  'center',
+  'right',
+  'nearest',
+  'px',
+  'smoothly',
+  'instantly',
+]);
+
+/**
+ * Parse `scroll to <target>` as a flat, ordered token list — the same shape
+ * `parseGoCommand` builds and the same shape [commands/navigation/scroll-to.ts]
+ * already consumes (it skips the structural words and takes the first real
+ * target).
+ *
+ * Without this, `scroll` fell to `parseCommandCore`'s generic argument loop,
+ * which continues only across a fixed set of continuation keywords. Measured
+ * against the real 0.9.93 engine, that cost two of `scroll`'s OWN documented
+ * examples:
+ *
+ *   - `scroll to me smoothly` / `… instantly` — the adverb was discarded. The
+ *     `instantly` case was the harmful one: ScrollCommand's default is
+ *     `smooth = !args.includes('instantly')`, so a dropped `instantly` did not
+ *     merely lose a hint, it inverted the request.
+ *   - `scroll to bottom of #chat` — `bottom of #chat` folded into a binary
+ *     `of` expression, so the runtime found neither the position nor the
+ *     target and THREW `scroll: target element not found`. Every positional
+ *     form (`top of`, `the bottom of`, `middle of`, `right of`) was dead.
+ *
+ * It also brings the container clause into line with upstream: `scroll to last
+ * <.message/> in #chat` (a multilingual corpus row) now reads `in #chat` as
+ * scroll's container, as `_parseScrollModifiers` does, rather than folding it
+ * into the target expression. That row already RESOLVED correctly either way —
+ * an early probe reported it throwing, but only because the scratch page it
+ * ran on had no `.message` elements.
+ *
+ * Returns `null` for anything but the `to` branch, so upstream's
+ * `scroll <up|down|left|right> by <n> [px]` keeps the generic path it has
+ * today. That form has no runtime here either way (ScrollCommand models no
+ * `scrollBy`); it is filed in `docs-internal/PARSER_NEXT_STEPS.md` rather than
+ * half-built.
+ */
+export function parseScrollCommand(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+): CommandNode | null {
+  if (ctx.isAtEnd()) return null;
+  if (ctx.resolveKeyword(ctx.peek().value).toLowerCase() !== 'to') return null;
+
+  const args: ASTNode[] = [];
+
+  while (!isCommandBoundary(ctx, ['when', 'where', 'catch', 'finally'])) {
+    const tok = ctx.peek();
+    const canonical = ctx.resolveKeyword(tok.value).toLowerCase();
+
+    // 1. Structural scroll keyword → flat string arg. String, not identifier:
+    //    an unbound identifier evaluates to `undefined` at runtime, and the
+    //    runtime matches these by their own text.
+    if (SCROLL_KEYWORDS.has(canonical)) {
+      ctx.advance();
+      args.push(stringNode(canonical, tok));
+      continue;
+    }
+
+    // 2. Offset sign (`scroll to me + 50 px`) → keep the sign as a string.
+    if (tok.value === '+' || tok.value === '-') {
+      ctx.advance();
+      args.push(stringNode(tok.value, tok));
+      continue;
+    }
+
+    // 3. Number, merging an immediately-adjacent `px` unit into "50px" — the
+    //    same rule `go`'s scroll forms use.
+    if (tok.kind === 'number') {
+      ctx.advance();
+      const next = ctx.peek();
+      if (!ctx.isAtEnd() && next.value === 'px' && next.start === tok.end) {
+        const px = ctx.advance();
+        args.push(stringNode(`${tok.value}px`, { ...tok, end: px.end }));
+      } else {
+        args.push({
+          type: 'literal',
+          value: Number(tok.value),
+          raw: tok.value,
+          start: tok.start,
+          end: tok.end,
+          line: tok.line,
+          column: tok.column,
+        } as ASTNode);
+      }
+      continue;
+    }
+
+    // 4. The target (or container): selector, query reference, `me`/`it`,
+    //    positional expression, variable, parenthesized expression.
+    const before = ctx.current;
+    args.push(ctx.parsePrimary());
+    if (ctx.current === before) {
+      // parsePrimary didn't consume — stop rather than spin.
+      break;
+    }
+  }
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .endingAt(ctx.getPosition())
+    .build();
+}

@@ -29,15 +29,20 @@
  * - **A silent MISPARSE.** `on click repeat 3 times { log "x" }` → `lossy`.
  *
  * The allowlist did NOT collapse when the gate was strengthened, as this
- * docblock once predicted — it GREW, from 19 rows to 30, and is now at 29.
+ * docblock once predicted — it GREW, from 19 rows to 30, and is now at 27.
  * That is what strengthening a gate blind to an entire band does first: eleven
  * examples that had read as fine for years were losing content in silence.
  * Eight are docs defects (upstream rejects them too) and three were parser gaps
  * (upstream accepts); every entry records which, with the verdict measured on
- * the real hyperscript.org engine rather than guessed. The first of the three
- * to be fixed — `transition left to 100px over 500ms`, which was animating to a
- * UNITLESS length — dropped straight off the list, which is the ratchet doing
- * what it is for.
+ * the real hyperscript.org engine rather than guessed. **All three of the
+ * parser gaps have since dropped off the list** — `transition left to 100px
+ * over 500ms`, which was animating to a UNITLESS length; `scroll to me
+ * smoothly`, whose dropped adverb turned out to be the MILD half of a defect
+ * that also killed every `scroll to <pos> of <target>` form outright; and
+ * `make a URL from "/path/", "…"`, which was dropping constructor arguments in
+ * the parser AND unable to use a resolved constructor in the runtime. What
+ * remains on the list is docs defects and legal-only-inside-a-feature rows.
+ * That is the ratchet doing what it is for.
  *
  * ## The allowlist ratchets both ways
  *
@@ -280,21 +285,6 @@ const ALLOWED: readonly Allowed[] = [
     reason: "docs defect: upstream rejects; none of pick's five forms is a bare list",
   },
 
-  // Upstream ACCEPTS these three — hyperfixi parser gaps, and the two `over`
-  // /adverb tails are content loss on syntax the commands themselves document.
-  {
-    command: 'scroll',
-    source: 'scroll to me smoothly',
-    status: 'lossy',
-    reason: 'PARSER GAP: upstream accepts; wrapped, `smoothly` is discarded',
-  },
-  {
-    command: 'make',
-    source: 'make a URL from "/path/", "https://origin.example.com"',
-    status: 'lossy',
-    reason:
-      'PARSER GAP: upstream accepts both shapes; wrapped in a handler this does not parse at all',
-  },
 ] as const;
 
 // ===========================================================================

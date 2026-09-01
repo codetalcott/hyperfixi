@@ -84,10 +84,23 @@ function nodeType(v: unknown): string | undefined {
     : undefined;
 }
 
+/**
+ * The word a node carries, if it is the kind of node a marker can arrive as.
+ *
+ * `string` is here as well as `identifier` because the flat-token-list parsers
+ * (`parseGoCommand`, `parseScrollCommand`) deliberately emit their structural
+ * keywords as `string` nodes — an unbound identifier does not evaluate to its
+ * own text, and those runtimes match these words BY text. Reading only
+ * `identifier` therefore under-counted `marker-in-args` and spilled the same
+ * differences into `arity`: `go to url "…"` had been misfiled that way since
+ * `parseGoCommand` was written, and `scroll to #top` joined it the moment
+ * `scroll` got the same treatment. Both are markers the semantic path lifts
+ * into a role, which is exactly what this family is for.
+ */
 function identName(v: unknown): string | undefined {
   if (!v || typeof v !== 'object') return undefined;
   const n = v as { type?: string; name?: unknown; value?: unknown };
-  if (n.type !== 'identifier') return undefined;
+  if (n.type !== 'identifier' && n.type !== 'string') return undefined;
   if (typeof n.name === 'string' && n.name !== '') return n.name;
   return typeof n.value === 'string' ? n.value : undefined;
 }
