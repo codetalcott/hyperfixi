@@ -1565,6 +1565,115 @@ and `from-semantic.ts` does `node.raw ?? ''` — so the interchange turns every
 template literal into an EMPTY literal. Separate defect, separate blast radius
 (interchange output has its own gates).
 
+### Three live defects were hiding inside the `node-type` family (2026-09-01)
+
+Thread B item 5 is "alias normalisation", and the 14 `node-type` sites read as
+spellings needing a rename. Executing each one found **three** live defects on
+the DEFAULT parse path, in three different commands. The lesson generalises past
+this arc: *a difference family named after a SHAPE tells you nothing about
+whether the shapes behave the same.*
+
+#### 1. `transition <property>` was a silent no-op for a bare CSS property
+
+Filed as `string -> identifier` on `transition opacity to 0.5`. The traditional
+parser emits `string{value:'opacity'}`, which evaluates to its own text; the
+semantic parser emits `identifier{name:'opacity'}`, which evaluates to
+**undefined**. `parseInput` did `String(firstArg)`, so the property became the
+literal string `"undefined"` — truthy, so the existing guard passed it — and the
+command animated a CSS property that cannot exist. No error, no effect.
+
+| source | traditional | semantic (DEFAULT) |
+| ------ | ----------- | ------------------ |
+| `transition opacity to 0.5` | `0.5` | **no-op** |
+| `transition color to red` | `red` | **no-op** |
+| `transition my opacity to 0.5` | `0.5` | **no-op** |
+| `transition *opacity to 0.5` | `0.5` | `0.5` |
+| `transition left to 100px` | `100px` | `100px` |
+
+The three that worked are the tell: `*opacity` is a SELECTOR token because of
+the sigil and `left` is a KEYWORD token, so both reach the runtime as strings
+either way. Only a bare, non-keyword CSS property — the idiomatic form, and the
+command's own documented syntax — was broken.
+
+Fixed at the CONSUMER, deliberately: `transition` is the only command that needs
+a property NAME out of an expression slot, transitionSchema admits `expression`
+there on purpose (a literal-only patient dropped the unquoted form in every
+language — see its role comment), and every runtime consumer goes through
+`parseInput`. The `!property` guard now also rejects `'undefined'`/`'null'`,
+which is the whole `String(<nothing>)` class this file had already been bitten
+by once for the TARGET slot.
+
+**jsdom cannot oracle this against upstream.** Run on the real 0.9.93 engine,
+*every* row above is a no-op, `*opacity` included: upstream's transition
+completes through `transitionend`, which jsdom never fires. That is exactly why
+`shipped-examples-execution` disqualifies `transition` outright. The oracle here
+is hyperfixi's own traditional path.
+
+#### 2. A sigil-scoped variable read as `undefined` in the LAST command of a handler
+
+Filed as `identifier -> contextReference`, six sites. `packages/semantic`'s
+`convertReference` turned EVERY reference into a `contextReference`, sigil and
+all: `:count` became
+`{ type: 'contextReference', contextType: ':count', name: ':count' }`. But
+`ContextType` is a closed union of `me`/`it`/`you`/`event`/… that never
+contained a sigil form — so the cast was a lie — and core's
+`evaluateContextReference` has no case for it and returns `undefined`.
+
+**Core parses a command sequence traditionally and hands only the final
+remainder to the semantic analyzer**, so it is the LAST command of a handler
+that gets the semantic node. That is what made it both easy to miss and easy to
+misattribute:
+
+```
+set :v to 5 then log :v then log :v   →  ["5", "5", undefined]
+set $v to 5 then log $v then log $v   →  ["5", "5", undefined]
+set  v to 5 then log  v then log  v   →  ["5", "5", "5"]      (unscoped: fine)
+```
+
+So `on click increment :count then log :count` produced `undefined` while every
+earlier command in the same handler was fine. `default` was hit harder — it was
+neither preserving an existing value nor applying its default:
+
+```
+default :x to 0 then log :x                   before: undefined  after: 0
+set :x to 7 then default :x to 0 then log :x  before: undefined  after: 7
+```
+
+Fixed at the producer, which is also where it was WRONG rather than merely
+different: `convertReference` now emits the scoped identifier the traditional
+parser emits (`:name` strips the sigil and tags `scope: 'element'`; `$name`
+keeps its sigil and carries no scope — those are two different conventions and
+both are the traditional parser's, matched exactly). A real context reference is
+still a context reference, which is why **only 2 of the 6 sites closed**: the
+other four are `me` on `empty`/`hide`/`select`/`show`, genuine aliases and the
+actual item-5 work.
+
+`node-type` **14 → 12**.
+
+#### 3. `clear :count` was a no-op on the TRADITIONAL path
+
+Found in the same measurement, on the opposite path, and fixed alongside because
+the two together are what make the paths agree. `clear` wrote
+`context.locals.set(name, null)` directly, ignoring the `scope` its node
+carries — so an element-scoped `:count` was never cleared (`log :count` still
+read 5). `clear $g` and `clear x` worked, which is why it survived: only the
+element scope is a genuinely separate store. It now writes through
+`setVariableValue`, the helper `set` already uses.
+
+`clear` is a hyperfixi EXTENSION — upstream has no `clear` keyword at all and
+parses `clear :count` as something else — so "upstream ACCEPTs it" is not an
+oracle here. Internal consistency with `set`/`get` is.
+
+#### And one that is NOT a defect, checked rather than assumed
+
+`open #popup as non-modal` (`asExpression -> selector`) looked like content
+loss: the semantic path drops the `asExpression` and the traditional path keeps
+it. It does not — the semantic path lifts `as non-modal` into `modifiers.as`,
+and `OpenCommand` already reads BOTH shapes explicitly. Working as designed, at
+the cost of a runtime that carries three fallback branches because the two paths
+disagree. That is the real price of item 5, and it is paid in the commands, not
+in the parser.
+
 ### Thread B item 5's stated payoff is FALSE — the seven `RENAME_PAIRS` close ZERO node-type differences
 
 The convergence brief says item 5 is *"the seven `RENAME_PAIRS` Arc 0 pinned
