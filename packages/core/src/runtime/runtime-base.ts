@@ -1131,11 +1131,6 @@ export class RuntimeBase {
       locals: new Map(),
       globals: this.globalVariables,
       registry: this.expressionRegistry,
-      halted: false,
-      returned: false,
-      broke: false,
-      continued: false,
-      async: false,
     };
 
     // Enhance context with registered providers

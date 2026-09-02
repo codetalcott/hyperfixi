@@ -174,8 +174,6 @@ export class ContextBridge {
       globals: context.globals || new Map(),
 
       // Runtime state
-      ...(context.events !== undefined && { events: context.events }),
-      meta: context.meta || {},
 
       // Bundle-supplied ExpressionRegistry. Commands like `call` invoke
       // `evaluateAST(node, context)` directly inside their `execute()`, which
@@ -185,9 +183,6 @@ export class ContextBridge {
       ...(context.registry !== undefined && { registry: context.registry }),
 
       // Enhanced features for typed commands
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'strict',
       evaluationHistory: [],
     };
   }
@@ -209,8 +204,6 @@ export class ContextBridge {
       ...(typedContext.variables !== undefined && { variables: typedContext.variables }),
       locals: typedContext.locals,
       globals: typedContext.globals,
-      ...(typedContext.events !== undefined && { events: typedContext.events }),
-      ...(typedContext.meta !== undefined && { meta: typedContext.meta }),
     };
   }
 }

@@ -45,7 +45,6 @@ describe('Hyperscript Runtime', () => {
       locals: new Map(),
       globals: new Map(),
       variables: new Map(),
-      events: new Map(),
     };
     vi.clearAllMocks();
   });

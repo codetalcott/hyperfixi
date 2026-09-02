@@ -97,7 +97,6 @@ describe('control-flow matrix (Arc 4a step 1)', () => {
       locals: new Map(),
       globals,
       variables: new Map(),
-      events: new Map(),
     } as unknown as ExecutionContext;
   });
 

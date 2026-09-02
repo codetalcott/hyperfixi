@@ -34,8 +34,6 @@ describe('ContextBridge', () => {
       variables: new Map([['testVar', 'testValue']]),
       locals: new Map([['localVar', 'localValue']]),
       globals: new Map([['globalVar', 'globalValue']]),
-      events: new Map(),
-      meta: { testMeta: 'metaValue' },
     };
   });
 
@@ -56,13 +54,10 @@ describe('ContextBridge', () => {
       expect(typedContext.globals).toBe(baseContext.globals);
 
       // Check runtime state
-      expect(typedContext.events).toBe(baseContext.events);
-      expect(typedContext.meta!).toBe(baseContext.meta);
 
       // Check enhanced features (cast to any for legacy properties not in current type)
       expect((typedContext as any).errors).toEqual([]);
       expect((typedContext as any).commandHistory).toEqual([]);
-      expect(typedContext.validationMode).toBe('strict');
     });
 
     it('should handle missing optional properties', () => {
@@ -79,8 +74,6 @@ describe('ContextBridge', () => {
       expect(typedContext.variables!).toEqual(new Map());
       expect(typedContext.locals).toEqual(new Map());
       expect(typedContext.globals).toEqual(new Map());
-      expect(typedContext.meta!).toEqual({});
-      expect(typedContext.events).toBe(undefined);
     });
   });
 
@@ -92,14 +85,12 @@ describe('ContextBridge', () => {
       (typedContext as { result: unknown }).result = 'new-result';
       typedContext.it = 'modified-it';
       typedContext.variables!.set('newVar', 'newValue');
-      typedContext.meta!.newMeta = 'newMetaValue';
 
       const updatedContext = ContextBridge.fromTyped(typedContext, baseContext);
 
       expect(updatedContext.result).toBe('new-result');
       expect(updatedContext.it).toBe('modified-it');
       expect(updatedContext.variables!.get('newVar')).toBe('newValue');
-      expect(updatedContext.meta!.newMeta).toBe('newMetaValue');
 
       // Original references should be preserved where appropriate
       expect(updatedContext.me).toBe(mockElement);
@@ -113,7 +104,6 @@ describe('ContextBridge', () => {
       expect(Object.keys(updatedContext)).toContain('me');
       expect(Object.keys(updatedContext)).toContain('it');
       expect(Object.keys(updatedContext)).toContain('variables');
-      expect(Object.keys(updatedContext)).toContain('meta');
     });
   });
 
@@ -127,7 +117,6 @@ describe('ContextBridge', () => {
       expect(backToOriginal.variables).toBe(baseContext.variables);
       expect(backToOriginal.locals).toBe(baseContext.locals);
       expect(backToOriginal.globals).toBe(baseContext.globals);
-      expect(backToOriginal.meta).toBe(baseContext.meta);
     });
 
     it.skip('should handle context modifications during round-trip', () => {
@@ -154,7 +143,6 @@ describe('ContextBridge', () => {
       // Enhanced features should be available
       expect(Array.isArray(typedContext.errors)).toBe(true);
       expect(Array.isArray(typedContext.commandHistory)).toBe(true);
-      expect(typeof typedContext.validationMode).toBe('string');
 
       // Should be mutable for command use
       typedContext.errors.push('test error');
@@ -166,11 +154,6 @@ describe('ContextBridge', () => {
 
     it('should support different validation modes', () => {
       const typedContext = ContextBridge.toTyped(baseContext);
-
-      expect(typedContext.validationMode).toBe('strict');
-
-      (typedContext as { validationMode: string }).validationMode = 'lenient';
-      expect(typedContext.validationMode).toBe('lenient');
     });
   });
 

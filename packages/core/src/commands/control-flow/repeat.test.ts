@@ -84,7 +84,6 @@ function createMockContext(): TypedExecutionContext {
     locals: new Map([['_testExecute', vi.fn(async () => 'executed')]]),
     globals: new Map(),
     result: undefined,
-    halted: false,
     it: undefined,
   };
 }

@@ -26,7 +26,6 @@ function createMockContext(): TypedExecutionContext {
     globals: new Map(),
     you: null,
     result: undefined,
-    halted: false,
     it: undefined,
   };
 }

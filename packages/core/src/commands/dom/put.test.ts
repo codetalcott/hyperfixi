@@ -37,7 +37,6 @@ function createMockContext(element?: HTMLElement): TypedExecutionContext {
     locals: new Map(),
     globals: new Map(),
     result: undefined,
-    halted: false,
     it: undefined,
   };
 }
