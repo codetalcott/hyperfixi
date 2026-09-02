@@ -2016,6 +2016,31 @@ Both are behaviour changes and neither belongs in Arc 2. Start from the table
 above (it is the oracle), and note the `the X of Y` row throws from
 `property-target.ts`, a different code path than the three silent rows.
 
+### Leftover argument tokens are dropped in silence — `log x y z` parses `log x` (2026-09-02)
+
+Arc 3 step 4 replaced the generic argument loop with a declared grammar and
+kept ONE of its behaviours on purpose: when a command's arguments end at a
+token that is neither a boundary (`then`/`and`/`else`/`end`/`on`, a command
+word) nor a marker of that command, the parser stops and leaves the token
+where it is. `log x y z` becomes `log x`; the statement loop then meets `y`,
+which is not a command, and the rest vanishes without a diagnostic. Upstream
+0.9.93 rejects `log x y z` outright, and the documented-examples gate records
+it (and `log "Result:" result`, `async a b`) as a docs defect on that basis.
+
+Turning the silent drop into a parse error is the right end state and a
+one-line change in `parseDeclaredCommand` — but it flips silent truncation
+into hard failure across every shipped page that happens to carry a stray
+token, a set nobody has measured. Do it behind the shipped-examples and
+shipped-sources gates (run both, read the allowlist diff), not as a drive-by.
+
+Two defects the same step DID fix, for the record: a zero-argument command
+at the end of a handler body swallowed the NEXT HANDLER as its argument
+(`on click focus\non keyup log 1` compiled to one handler — the loop never
+stopped at `on`, and `parsePrimary` on `on` returns a handler), and
+`call fetch("/x")` split at the command word into an empty `call` plus a
+`fetch` command that then ran. Both are pinned in
+`parser/__tests__/declared-commands.test.ts`.
+
 ## Notes
 
 **The `examples/**` execution gap is CLOSED** (2026-07-27): the shipped-examples

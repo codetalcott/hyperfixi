@@ -93,6 +93,8 @@ import * as animationCommands from './command-parsers/animation-commands';
 import * as domCommands from './command-parsers/dom-commands';
 import * as asyncCommands from './command-parsers/async-commands';
 import * as utilityCommands from './command-parsers/utility-commands';
+import { parseDeclaredCommand } from './command-parsers/declared-commands';
+import { grammarOf, PLUGIN_COMMAND_GRAMMAR } from './command-grammar';
 import * as variableCommands from './command-parsers/variable-commands';
 
 // Pratt parser for expression parsing.
@@ -3366,26 +3368,10 @@ export class Parser {
   }
 
   /**
-   * Get multi-word pattern definition for a command
-   */
-  private getMultiWordPattern(commandName: string): parsingHelpers.MultiWordPattern | null {
-    return parsingHelpers.getMultiWordPattern(commandName);
-  }
-
-  /**
    * Check if current token is one of the specified keywords
    */
   private isTokenKeyword(token: Token | undefined, keywords: string[]): boolean {
     return parsingHelpers.isKeyword(token, keywords);
-  }
-
-  /**
-   * Parse multi-word command with modifiers (e.g., "append X to Y", "fetch URL as json")
-   * Returns null if this command doesn't use multi-word syntax
-   */
-  private parseMultiWordCommand(commandToken: Token, commandName: string): CommandNode | null {
-    // Delegate to extracted utility command parser
-    return utilityCommands.parseMultiWordCommand(this.getContext(), commandToken, commandName);
   }
 
   /**
@@ -3481,12 +3467,6 @@ export class Parser {
       return utilityCommands.parseFetchCommand(this.getContext(), commandToken);
     }
 
-    // Check if this is a multi-word command (append...to, etc.)
-    const multiWordResult = this.parseMultiWordCommand(commandToken, commandName);
-    if (multiWordResult) {
-      return multiWordResult;
-    }
-
     // Handle control flow commands
     const lowerName = commandName.toLowerCase();
     if (lowerName === 'repeat') {
@@ -3528,96 +3508,22 @@ export class Parser {
       );
     }
 
-    const args: ASTNode[] = [];
-
     // Special handling for increment/decrement commands with 'global' and 'by' syntax
     if ((commandName === 'increment' || commandName === 'decrement') && !this.isAtEnd()) {
       return variableCommands.parseIncrementDecrementCommand(this.getContext(), commandToken);
     }
 
-    // Parse command arguments - continue until we hit a separator, end, or another command
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end') &&
-      !this.checkIsCommand()
-    ) {
-      // Always use parseExpression for arguments to handle complex expressions
-      // This allows for expressions like 'Result: ' + (#math-input's value as Math)
-      const expr = this.parseExpression();
-      if (expr) {
-        args.push(expr);
-      } else {
-        // If parseExpression fails, try parsePrimary as fallback
-        args.push(this.parsePrimary());
-      }
-
-      // For comma-separated arguments, consume the comma and continue
-      if (this.match(',')) {
-        // Comma-separated - continue to next argument
-        continue;
-      }
-
-      // For hyperscript natural language syntax, continue if we see keywords that indicate more arguments
-      // This handles patterns like "put X into Y", "add X to Y", "remove X from Y", "transition X over Yms", etc.
-      const continuationKeywords = [
-        'into',
-        'from',
-        'to',
-        'with',
-        'by',
-        'at',
-        'before',
-        'after',
-        'over',
-      ];
-      if (continuationKeywords.some(keyword => this.check(keyword))) {
-        // Continue parsing - this is likely part of the command
-        continue;
-      }
-
-      // Also continue if the previous argument was a continuation keyword
-      // This handles the case where we just parsed "from" and need to parse the target
-      const lastArg = args[args.length - 1];
-      if (
-        lastArg &&
-        (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
-        continuationKeywords.includes((lastArg.name ?? lastArg.value) as string)
-      ) {
-        // The previous argument was a continuation keyword, so continue parsing
-        continue;
-      }
-
-      // No comma and no continuation context - this argument sequence is complete
-      break;
-    }
-
-    // Span the COMMAND, not just its last token.
-    //
-    // `getPosition()` reports the PREVIOUS token — after the argument loop
-    // above, that is the last argument — so this node used to claim its final
-    // argument's span as its own: `log "hello"` reported [4,11] ("hello")
-    // rather than [0,11]. Measured over the documented command examples, 50 of
-    // 183 started late this way, across 19 commands (log, get, call, clear,
-    // copy, settle, …) — every command that reaches this generic path rather
-    // than a specialized parser, which is why `toggle` and `add` were correct
-    // and `log` was not.
-    //
-    // The start is the command keyword; the end is wherever argument parsing
-    // stopped. LSP ranges and any diagnostic that quotes the span read these.
-    const endPos = this.getPosition();
-    return {
-      type: 'command',
-      name: commandName,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      start: commandToken.start ?? endPos.start,
-      end: endPos.end,
-      line: commandToken.line ?? endPos.line,
-      column: commandToken.column ?? endPos.column,
-    };
+    // Every remaining command is parsed from its declared grammar row
+    // (`command-grammar.ts`) by the one generic parser. A command word the
+    // manifest does not know — one a plugin registered at runtime — gets the
+    // default row, which is what the old tail loop did for everything:
+    // positional expressions, no marker slots.
+    return parseDeclaredCommand(
+      this.getContext(),
+      commandToken,
+      commandName,
+      grammarOf(commandName) ?? PLUGIN_COMMAND_GRAMMAR
+    ) as CommandNode;
   }
 
   private parseConditional(): ASTNode {
@@ -4722,7 +4628,6 @@ export class Parser {
       isCommand: this.isCommand.bind(this),
       isCompoundCommand: this.isCompoundCommand.bind(this),
       isKeyword: this.isKeyword.bind(this),
-      getMultiWordPattern: this.getMultiWordPattern.bind(this),
       resolveKeyword: this.resolveKeyword.bind(this),
 
       // Position Checkpoint Methods

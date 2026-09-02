@@ -1,14 +1,13 @@
 /**
  * Test Suite for Utility Command Parsers (Non-Dispatch Functions)
  *
- * Tests parseRegularCommand, parseMultiWordCommand, parseJsCommand, and parseTellCommand.
+ * Tests parseRegularCommand, parseJsCommand, and parseTellCommand.
  * Skips parseCompoundCommand to avoid circular dependency issues.
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import {
   parseRegularCommand,
-  parseMultiWordCommand,
   parseFetchCommand,
   parseJsCommand,
   parseTellCommand,
@@ -103,112 +102,9 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
     });
   });
 
-  describe('parseMultiWordCommand', () => {
-    it('should return null if no pattern found', () => {
-      const tokens = createTokenStream([]);
-      const ctx = createMockParserContext(tokens, {
-        getMultiWordPattern: vi.fn(() => null),
-      });
-
-      const result = parseMultiWordCommand(ctx, createToken('unknown'), 'unknown');
-
-      expect(result).toBeNull();
-    });
-
-    it('should parse command with keyword modifiers', () => {
-      // "fetch /api/data as json" → primary arg: /api/data, modifier: { as: json }
-      const tokens = createTokenStream(['/api/data', 'as', 'json']);
-      let pos = 0;
-      const ctx = createMockParserContext(tokens, {
-        getMultiWordPattern: vi.fn(() => ({
-          command: 'fetch',
-          keywords: ['as', 'with'],
-          syntax: 'fetch <url> [as <type>] [with <options>]',
-        })),
-        isAtEnd: vi.fn(() => pos >= tokens.length),
-        peek: vi.fn(
-          () =>
-            tokens[pos] || { value: '', kind: 'identifier', start: 0, end: 0, line: 1, column: 0 }
-        ),
-        advance: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return t;
-        }),
-        match: vi.fn((val: string) => {
-          if (tokens[pos]?.value === val) {
-            pos++;
-            return true;
-          }
-          return false;
-        }),
-        parsePrimary: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return { type: 'literal', value: t?.value, start: 0, end: 10 };
-        }),
-        parseExpression: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return { type: 'identifier', name: t?.value, start: 0, end: 10 };
-        }),
-        getPosition: vi.fn(() => ({ start: 0, end: 30, line: 1, column: 0 })),
-      });
-
-      const result = parseMultiWordCommand(ctx, createToken('fetch'), 'fetch');
-
-      expect(result).not.toBeNull();
-      expect(result!.name).toBe('fetch');
-      expect(result!.args).toHaveLength(1); // primary arg: /api/data
-    });
-
-    it('should parse command with multiple modifiers', () => {
-      // "append <div/> to #target" → primary arg: <div/>, modifier: { to: #target }
-      const tokens = createTokenStream(['<div/>', 'to', '#target']);
-      let pos = 0;
-      const ctx = createMockParserContext(tokens, {
-        getMultiWordPattern: vi.fn(() => ({
-          command: 'append',
-          keywords: ['to'],
-          syntax: 'append <value> [to <target>]',
-        })),
-        isAtEnd: vi.fn(() => pos >= tokens.length),
-        peek: vi.fn(
-          () =>
-            tokens[pos] || { value: '', kind: 'identifier', start: 0, end: 0, line: 1, column: 0 }
-        ),
-        advance: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return t;
-        }),
-        match: vi.fn((val: string) => {
-          if (tokens[pos]?.value === val) {
-            pos++;
-            return true;
-          }
-          return false;
-        }),
-        parsePrimary: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return { type: 'selector', value: t?.value, start: 0, end: 10 };
-        }),
-        parseExpression: vi.fn(() => {
-          const t = tokens[pos];
-          pos++;
-          return { type: 'selector', value: t?.value, start: 0, end: 10 };
-        }),
-        getPosition: vi.fn(() => ({ start: 0, end: 30, line: 1, column: 0 })),
-      });
-
-      const result = parseMultiWordCommand(ctx, createToken('append'), 'append');
-
-      expect(result).not.toBeNull();
-      expect(result!.name).toBe('append');
-      expect(result!.args).toHaveLength(1); // primary arg
-    });
-  });
+  // `parseMultiWordCommand` was replaced by `parseDeclaredCommand` (Arc 3
+  // step 4), whose behaviour is pinned end-to-end in
+  // `parser/__tests__/declared-commands.test.ts` rather than through mocks.
 
   describe('parseJsCommand', () => {
     it('should parse js command without parameters', () => {
