@@ -170,12 +170,6 @@ const ALLOWED: readonly Allowed[] = [
     reason: 'paren named-args unimplemented; tail silently dropped',
   },
   {
-    command: 'settle',
-    source: 'settle for 3000',
-    status: 'lossy',
-    reason: '`settle [for <timeout>]` is declared in syntax but unimplemented; tail dropped',
-  },
-  {
     command: 'take',
     source: 'take @data-value from <.source/> and put it on <#target/>',
     status: 'no-parse',
@@ -234,14 +228,16 @@ const ALLOWED: readonly Allowed[] = [
   {
     command: 'blur',
     source: 'blur on <input/>',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+    status: 'no-parse',
+    reason:
+      'docs defect: upstream rejects it too (\"Expected event name\"). Since Arc 3 step 4 the declared grammar stops a command\'s arguments at `on`, so this fails to parse instead of swallowing `<input/>` (and, at the end of a handler body, the NEXT handler) as an argument',
   },
   {
     command: 'focus',
     source: 'focus on <input/>',
-    status: 'lossy',
-    reason: 'docs defect: upstream rejects it too ("Expected event name"); `<input/>` is discarded',
+    status: 'no-parse',
+    reason:
+      'docs defect: upstream rejects it too (\"Expected event name\"). Since Arc 3 step 4 the declared grammar stops a command\'s arguments at `on`, so this fails to parse instead of swallowing `<input/>` (and, at the end of a handler body, the NEXT handler) as an argument',
   },
 
   // Space-separated argument lists. Upstream rejects all five ("Unexpected
@@ -284,7 +280,6 @@ const ALLOWED: readonly Allowed[] = [
     status: 'lossy',
     reason: "docs defect: upstream rejects; none of pick's five forms is a bare list",
   },
-
 ] as const;
 
 // ===========================================================================

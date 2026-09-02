@@ -159,40 +159,6 @@ export interface ProgramNode extends ASTNode {
   statements: ASTNode[];
 }
 
-/**
- * MultiWordPattern - Defines structure for multi-word commands
- *
- * Example: "fetch URL as json" has keywords ["as"]
- *
- * This is the ONE declaration of this name. It used to be declared twice —
- * here and in `helpers/parsing-helpers.ts` — with fields the other side did
- * not have (`syntax` there, unread `minArgs`/`maxArgs` here), and the values
- * flowed between them structurally: a field added to only one was silently
- * invisible on the other side of `getMultiWordPattern`, which is how
- * `commaListKeywords` first failed to typecheck. `parsing-helpers` now
- * re-exports this type; the pattern DATA (`MULTI_WORD_PATTERNS`) still lives
- * there.
- */
-export interface MultiWordPattern {
-  /** Command name (e.g., "fetch") */
-  command: string;
-
-  /** Keywords that can appear as modifiers (e.g., ["as", "with"]) */
-  keywords: string[];
-
-  /** Human-readable syntax summary, e.g. `append <value> [to <target>]` */
-  syntax: string;
-
-  /**
-   * Modifier keywords whose value is a COMMA-SEPARATED LIST, collected into one
-   * `arrayLiteral`. Upstream spells this as an explicit
-   * `do { … } while (parser.matchOpToken(","))` and only `make`'s `from` has
-   * it — `append`/`prepend`'s `to` takes a single expression there, so making
-   * the comma generic would accept syntax the canonical engine rejects.
-   */
-  commaListKeywords?: string[];
-}
-
 // ============================================================================
 // Focused Sub-Interfaces
 //
@@ -391,9 +357,6 @@ export interface ParserUtilities {
 
   /** Check if identifier is a keyword */
   isKeyword(name: string): boolean;
-
-  /** Get multi-word pattern for command */
-  getMultiWordPattern(commandName: string): MultiWordPattern | null;
 
   /**
    * Resolve a keyword to its canonical English form.

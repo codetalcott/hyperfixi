@@ -159,6 +159,9 @@ Item 5 is what the plan missed.
    `patient` is. `@lokascript/intent` exports `CommandSchema`/`RoleSpec`/
    `defineCommand`; do not import them into `packages/core` (Arc 1's
    `no-static-semantic-import` gate would catch it, and should).
+   **Decided and done 2026-09-02** — the plan's step 4 entry carries the
+   design, the seven moved corpus rows, the two tail-loop defects it closed
+   and the five pinned grammar↔schema asymmetries.
 3. **The `CommandName` type.** Claim 4: `COMMAND_NAMES` is `readonly string[]`.
    Making it `as const` (or deriving a union from the manifest) is a one-line
    change with a ripple through every `string`-typed consumer of it. Do it as

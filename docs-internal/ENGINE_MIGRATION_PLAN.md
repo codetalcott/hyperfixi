@@ -1057,7 +1057,54 @@ typed node and does nothing but evaluate slots — which is what Arc 4 turns int
    (measured 2026-09-02) — 23 through `parseCommandCore`'s own tail loop and
    2 (`push`, `replace`) through `parseRegularCommand`, because there are
    TWO generic loops, not one** — get a declared grammar instead of the
-   loop. **Decision to record in the brief:** (a) a core-local arg spec per
+   loop. ✅ **DONE 2026-09-02 for the 23 (+ the 4 multi-word commands), option
+   (a).** `parser/command-grammar.ts` is the table — one row per command:
+   a positional rule (`expression` for the 23, `primary` for the four that were
+   `MULTI_WORD_PATTERNS`, `none` for the argument-less five), the marker words
+   that open a slot, and the syntax string — and
+   `command-parsers/declared-commands.ts` is the ONE parser that reads it.
+   The tail loop, its `continuationKeywords` array, `parseMultiWordCommand`,
+   `MULTI_WORD_PATTERNS`, `getMultiWordPattern` and the `MultiWordPattern`
+   type are deleted. `command-routes.test.ts` pins that the dedicated set and
+   the grammar's keys partition `COMMAND_NAMES` exactly (tolerance 0): every
+   command has one route and no command has two. `push`/`replace` stay on
+   `parseRegularCommand` via the compound switch's `default` — their
+   `with title <expr>` is a two-word marker the row shape does not have yet.
+
+   **Why (a), measured.** The schemas describe the same commands from the
+   other side (`svoPosition` 108 sites, `markerOverride` 47, `argSkipTokens`
+   8), in a role vocabulary the engine has no reason to know, across the
+   boundary Arc 1 draws. The parity the plan asked for in exchange is
+   `grammar-schema-parity.test.ts`: for every generic command, the grammar's
+   marker words are compared with the English markers the schema would bind,
+   and the **five** asymmetries are pinned by name with their reasons
+   (`copy`'s inert `to`, `get`'s unread schema `on`, `make`'s constructor
+   words, `open`'s `as` parsed inside the expression, and `settle`'s `for` —
+   which the front-end's schema cannot express at all: a front-end gap, filed
+   in `MULTILINGUAL_NEXT_STEPS.md`).
+
+   **Two defects the tail loop had, fixed by the shared boundary rule.** It
+   did not stop at `on`, and `parsePrimary` on `on` returns an event handler,
+   so a zero-argument command at the end of a handler body swallowed the NEXT
+   HANDLER as its argument — `on click focus\non keyup log 1` compiled to one
+   handler. And it stopped at every command word, so `call fetch("/x")` split
+   into an empty `call` and a `fetch` COMMAND that then ran; a command word
+   followed by `(` is now a call expression. `settle for 3000` — declared in
+   the command's own syntax, filed as a parser gap — parses. The
+   AST-equivalence baseline moved on exactly **7 rows**, each reviewed: the
+   three `default … to …` examples (`to` is now a `modifiers` slot, which
+   DefaultCommand already read on the semantic path), `call fetch(...)`,
+   `settle for 3000` (fail → ok), and `blur`/`focus on <input/>` (ok →
+   fail, matching upstream's rejection; the documented-examples gate rows are
+   re-statused `no-parse`). `CommandSequence` left the corpus vocabulary pin:
+   its only producer was the `call fetch` split.
+
+   **Deliberately NOT changed:** leftover tokens that are neither a boundary
+   nor a marker are left for the statement loop exactly as before, so
+   `log x y z` still parses `log x` and drops the rest in silence. Upstream
+   rejects the source; making it an error is filed in `PARSER_NEXT_STEPS.md`
+   as the follow-up, because it flips silent drops into errors across an
+   unmeasured set of pages. **Decision to record in the brief:** (a) a core-local arg spec per
    command module (`args: [{ slot: 'value', kind: 'expr' }, { marker: 'to',
    slot: 'target' }]`) consumed by ONE generic parser, or (b) reuse
    `@lokascript/semantic`'s per-command schemas via `@lokascript/intent`.

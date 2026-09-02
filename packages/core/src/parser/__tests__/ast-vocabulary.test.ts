@@ -63,7 +63,8 @@ import {
  *   - **Documentation defects** — `repeat … { … }` (four rows) uses C-style
  *     braces for a block. Hyperscript has never had that syntax; the examples
  *     are wrong, not the parser.
- *   - **Parser gaps** — `install Draggable on #box`, `settle for 3000`,
+ *   - **Parser gaps** — `install Draggable on #box`, ~~`settle for 3000`~~ (fixed
+ *     by Arc 3 step 4's declared grammar),
  *     `tell closest <form/> submit`, `take @x from <.a/> and put it on <#b/>`,
  *     the four `pseudo-command` forms, the three `render … with (…)` forms and
  *     `start view transition … end` are syntax the command's own metadata
@@ -73,8 +74,10 @@ import {
  * Fixing either kind shrinks this list, and the shrink is the point.
  */
 const EXAMPLES_THE_FULL_PARSER_REJECTS = [
+  'blur | blur on <input/>',
   'break | repeat for item in items { if item == target then break }',
   'continue | repeat for item in items { if item.skip then continue; process item }',
+  'focus | focus on <input/>',
   'if | unless user.isLoggedIn showLoginForm',
   'install | install Draggable on #box',
   'install | install Sortable(axis: "y") on .list',
@@ -87,7 +90,6 @@ const EXAMPLES_THE_FULL_PARSER_REJECTS = [
   'render | render template with (items: data)',
   'repeat | repeat 5 times { log "hello" }',
   'repeat | repeat for item in items { log item }',
-  'settle | settle for 3000',
   'start | start view transition using "slide" then put result into #panel end',
   'take | take @data-value from <.source/> and put it on <#target/>',
   'tell | tell closest <form/> submit',
@@ -162,8 +164,13 @@ function hybridParserKinds(sources: string[]): Set<string> {
  *   - `callExpression` and `functionCall` are two names for one thing; see
  *     the orphan test below for who reads the second.
  */
+// `CommandSequence` left this list with Arc 3 step 4: the corpus's ONLY
+// producer of it was `call fetch("/api/data")`, which the old generic loop
+// split at the command word into `call` + a `fetch` command — a defect, not a
+// sequence. The kind is still live (`parseCommandSequence`, the union, the
+// runtime's `sequence`/`CommandSequence` arm); no documented example reaches
+// it any more, which is what this list measures.
 const FULL_PARSER_KINDS = [
-  'CommandSequence',
   'Program',
   'arrayLiteral',
   'asExpression',
