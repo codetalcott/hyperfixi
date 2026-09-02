@@ -64,26 +64,20 @@ const BOOL_PROPS = new Set([
   'contentEditable',
 ]);
 
-/** Check if node is a propertyOfExpression AST node (core parser: "the X of Y") */
-export function isPropertyOfExpressionNode(node: unknown): node is PropertyOfExpressionNode {
-  if (!node || typeof node !== 'object') return false;
-  const n = node as Record<string, unknown>;
-  return n.type === 'propertyOfExpression' && typeof n.property === 'object' && n.property !== null;
-}
+// The two guards moved to `ast/guards.ts` (Arc 2 step 5) — a node guard
+// belongs with the union, and every caller here imports from THIS path, so it
+// is re-exported. The local interfaces above stay: they are the RESOLVERS'
+// contract (`property` must carry `name` / be a string), which is narrower
+// than what the guards verify — the guards' runtime checks moved verbatim, and
+// strengthening them to the resolver contract would change which nodes route
+// here.
+import {
+  isPropertyOfExpressionNode as isPropertyOfExpressionNodeGuard,
+  isPropertyAccessNode as isPropertyAccessNodeGuard,
+} from '../../ast/guards';
 
-/** Check if node is a propertyAccess AST node (semantic parser: "#element's X", expression parser: "obj.prop") */
-export function isPropertyAccessNode(node: unknown): node is PropertyAccessNode {
-  if (!node || typeof node !== 'object') return false;
-  const n = node as Record<string, unknown>;
-  if (n.type !== 'propertyAccess') return false;
-  // Accept both formats: string (semantic parser) or {name: string} (expression parser)
-  return (
-    typeof n.property === 'string' ||
-    (typeof n.property === 'object' &&
-      n.property !== null &&
-      typeof (n.property as Record<string, unknown>).name === 'string')
-  );
-}
+export const isPropertyOfExpressionNode = isPropertyOfExpressionNodeGuard;
+export const isPropertyAccessNode = isPropertyAccessNodeGuard;
 
 /** Check if value is a "the X of Y" string */
 export function isPropertyTargetString(value: unknown): value is string {

@@ -8,6 +8,7 @@
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
+import { isLiteralNode } from '../../ast/guards';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -45,7 +46,7 @@ export interface NumericTargetInput {
  */
 function getNodeType(node: ASTNode): string {
   if (!node || typeof node !== 'object') return 'unknown';
-  return (node as any).type || 'unknown';
+  return node.type || 'unknown';
 }
 
 /**
@@ -118,14 +119,14 @@ export async function parseNumericTargetInput(
 
   for (let i = 1; i < raw.args.length; i++) {
     const arg = raw.args[i];
-    if (arg && (arg as any).type === 'literal') {
-      const literalValue = (arg as any).value;
+    if (isLiteralNode(arg)) {
+      const literalValue = arg.value;
       if (literalValue === 'global') {
         scope = 'global';
       } else if (typeof literalValue === 'number') {
         amount = literalValue;
       }
-    } else if (arg && (arg as any).type !== 'literal') {
+    } else if (arg) {
       const evaluated = await evaluator.evaluate(arg, context);
       if (typeof evaluated === 'number') {
         amount = evaluated;

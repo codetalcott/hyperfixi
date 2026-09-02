@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import { isDOMNode } from '../../types/type-guards';
 
 /**
  * Typed input for GoCommand
@@ -285,7 +286,7 @@ export class GoCommand implements DecoratedCommand {
     }
 
     for (const arg of args) {
-      if (typeof arg === 'object' && arg && (arg as any).nodeType) return arg as HTMLElement;
+      if (isDOMNode(arg)) return arg as HTMLElement;
     }
 
     const skip = [

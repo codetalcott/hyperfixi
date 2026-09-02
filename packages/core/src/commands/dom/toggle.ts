@@ -51,6 +51,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import { isNodeOfKind } from '../../ast/guards';
 
 /** Typed input for ToggleCommand */
 export type ToggleCommandInput =
@@ -91,13 +92,12 @@ export type ToggleCommandInput =
 
 /** True when an arg is `<target> as modal` (asExpression with a `modal` target). */
 function isModalAsExpression(arg: ASTNode | undefined): boolean {
-  if (!arg || (arg as Record<string, unknown>).type !== 'asExpression') return false;
-  const targetType = (arg as Record<string, unknown>).targetType;
-  // targetType is dual-shape: an identifier node { name } or a bare string.
+  if (!isNodeOfKind(arg, 'asExpression')) return false;
+  // targetType is dual-shape: an identifier node { name } or a bare string —
+  // typed as exactly that on the union's AsExpressionNode.
+  const targetType = arg.targetType;
   const name =
-    typeof targetType === 'string'
-      ? targetType
-      : ((targetType as Record<string, unknown>)?.name as string | undefined);
+    typeof targetType === 'string' ? targetType : (targetType?.name as string | undefined);
   return typeof name === 'string' && name.toLowerCase() === 'modal';
 }
 

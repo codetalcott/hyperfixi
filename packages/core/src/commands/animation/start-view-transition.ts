@@ -98,10 +98,16 @@ export class StartViewTransitionCommand implements DecoratedCommand {
       for (const cmd of input.body) {
         if (runtimeExecute) {
           await runtimeExecute(cmd, context);
-        } else if (cmd && typeof (cmd as any).execute === 'function') {
-          await (cmd as any).execute(context);
+        } else if (cmd && typeof (cmd as { execute?: unknown }).execute === 'function') {
+          // Re-read and re-narrow: the condition's typeof does not flow to a
+          // fresh property access, and `unknown` narrowed by typeof is callable
+          // without any cast. `.call(cmd, …)` keeps the original receiver.
+          const execute = (cmd as { execute?: unknown }).execute;
+          if (typeof execute === 'function') await execute.call(cmd, context);
         } else if (typeof cmd === 'function') {
-          await (cmd as any)(context);
+          // `typeof` narrows to `ASTNode & Function` — Function alone has no
+          // call signature TS will invoke, so state the one we mean.
+          await (cmd as (c: typeof context) => unknown)(context);
         }
         commandsExecuted++;
       }
