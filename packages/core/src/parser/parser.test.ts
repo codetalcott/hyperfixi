@@ -579,11 +579,8 @@ describe('Hyperscript AST Parser', () => {
       expectAST('remove .loading from #button', {
         type: 'command',
         name: 'remove',
-        args: [
-          { type: 'selector', value: '.loading' },
-          { type: 'identifier', name: 'from' },
-          { type: 'selector', value: '#button' },
-        ],
+        args: [{ type: 'selector', value: '.loading' }],
+        modifiers: { from: { type: 'selector', value: '#button' } },
       });
     });
 

@@ -220,7 +220,8 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.from).toMatchObject({ type: 'selector', value: '#button' });
     });
 
     it('should parse remove with string class', () => {
@@ -233,7 +234,8 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.from).toMatchObject({ type: 'selector', value: '#el' });
     });
   });
 
@@ -299,7 +301,8 @@ describe('DOM Command Parsers', () => {
       const result = parseAddCommand(ctx, createToken('add'));
 
       expect(result.name).toBe('add');
-      expect(result.args.length).toBeGreaterThanOrEqual(2);
+      expect(result.args).toHaveLength(1);
+      expect(result.modifiers?.to).toMatchObject({ type: 'selector', value: '#el' });
     });
 
     it('should parse add with CSS object literal', () => {

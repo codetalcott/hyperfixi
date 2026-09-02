@@ -64,7 +64,7 @@ export class SelectCommand implements DecoratedCommand {
       evaluator,
       context,
       'select',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

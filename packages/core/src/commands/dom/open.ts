@@ -133,7 +133,7 @@ export class OpenCommand implements DecoratedCommand {
       evaluator,
       context,
       'open',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     const targets = resolveSmartElementTargets(rawTargets);

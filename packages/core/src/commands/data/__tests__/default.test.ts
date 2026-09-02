@@ -138,18 +138,14 @@ describe('DefaultCommand (Standalone V2)', () => {
       expect(input).toEqual({ type: 'variable', name: 'myVar', value: 42 });
     });
 
-    it('should read the value past the positional "to" keyword marker', async () => {
-      // The traditional parser emits `[target, identifier('to'), value]` — the
-      // same triple `SetCommand.parseInput` reads. Taking `args[1]` for the
-      // value here installed the KEYWORD's evaluation (undefined) instead.
+    it('should read the value from the `to` slot', async () => {
+      // Both parsers emit `modifiers.to`. The flat `[target, 'to', value]`
+      // triple this once pinned no longer exists — marker words never reach
+      // args, so a `to` word there would be read as the bare two-arg value.
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'myVar' } as any,
-            { type: 'identifier', name: 'to' } as any,
-            { type: 'literal', value: 'real' } as any,
-          ],
-          modifiers: {},
+          args: [{ type: 'identifier', name: 'myVar' } as any],
+          modifiers: { to: { type: 'literal', value: 'real' } as any },
         },
         evaluator,
         context

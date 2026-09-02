@@ -57,7 +57,7 @@ export class FocusCommand implements DecoratedCommand {
       evaluator,
       context,
       'focus',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

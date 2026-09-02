@@ -138,7 +138,7 @@ export class ClearCommand implements DecoratedCommand {
       evaluator,
       context,
       'clear',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { type: 'form-fields', targets };

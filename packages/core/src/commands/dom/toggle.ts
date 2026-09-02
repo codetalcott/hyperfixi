@@ -208,7 +208,7 @@ export class ToggleCommand implements DecoratedCommand {
         evaluator,
         context,
         'toggle',
-        { filterPrepositions: true, fallbackModifierKey: 'on' } as const,
+        { fallbackModifierKey: 'on' } as const,
         raw.modifiers
       );
       return { type: 'classes-between', classA, classB, targets, duration, untilEvent };
@@ -272,7 +272,7 @@ export class ToggleCommand implements DecoratedCommand {
           evaluator,
           context
         );
-        const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+        const resolveOpts = { fallbackModifierKey: 'on' } as const;
         const targets = await resolveTargetsFromArgs(
           raw.args.slice(argsConsumed),
           evaluator,
@@ -301,7 +301,7 @@ export class ToggleCommand implements DecoratedCommand {
     }
 
     const { type: exprType, expression } = detectExpressionType(firstValue, firstArg);
-    const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+    const resolveOpts = { fallbackModifierKey: 'on' } as const;
 
     switch (exprType) {
       case 'attribute': {

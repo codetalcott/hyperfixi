@@ -57,7 +57,7 @@ export class BlurCommand implements DecoratedCommand {
       evaluator,
       context,
       'blur',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     return { targets };

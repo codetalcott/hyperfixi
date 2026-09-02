@@ -110,24 +110,14 @@ export class RemoveCommand extends DOMModificationBase {
       // Attribute syntax: [@attr] or @attr
       if (this.isAttribute(trimmed)) {
         const name = parseAttributeName(trimmed);
-        const targets = await this.resolveTargets(
-          raw.args.slice(1),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'attribute', name, targets };
       }
 
       // CSS property shorthand: *property
       if (this.isCSSProperty(trimmed)) {
         const property = trimmed.substring(1).trim();
-        const targets = await this.resolveTargets(
-          raw.args.slice(1),
-          evaluator,
-          context,
-          raw.modifiers
-        );
+        const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
         return { type: 'styles', properties: [property], targets };
       }
     }
@@ -138,7 +128,7 @@ export class RemoveCommand extends DOMModificationBase {
       throw new Error('remove command: no valid class names found');
     }
 
-    const targets = await this.resolveTargets(raw.args.slice(1), evaluator, context, raw.modifiers);
+    const targets = await this.resolveTargets(evaluator, context, raw.modifiers);
     return { type: 'classes', classes, targets };
   }
 

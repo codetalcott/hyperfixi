@@ -76,20 +76,17 @@ export abstract class DOMModificationBase implements DecoratedCommand {
   /**
    * Shared: Resolve targets from remaining args
    */
+  /**
+   * The target is the command's preposition slot (`to` for add, `from` for
+   * remove) — the one key both parsers emit. No slot means `me`.
+   */
   protected async resolveTargets(
-    args: ASTNode[],
     evaluator: ExpressionEvaluator,
     context: ExecutionContext,
     modifiers: Record<string, ExpressionNode>
   ): Promise<HTMLElement[]> {
-    return resolveTargetsFromArgs(
-      args,
-      evaluator,
-      context,
-      this.mode,
-      { filterPrepositions: true, fallbackModifierKey: this.preposition },
-      modifiers
-    );
+    const target = modifiers?.[this.preposition];
+    return resolveTargetsFromArgs(target ? [target] : [], evaluator, context, this.mode);
   }
 
   /**

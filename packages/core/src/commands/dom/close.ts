@@ -71,7 +71,7 @@ export class CloseCommand implements DecoratedCommand {
       evaluator,
       context,
       'close',
-      { filterPrepositions: true, fallbackModifierKey: 'on' },
+      { fallbackModifierKey: 'on' },
       raw.modifiers
     );
     const targets = resolveSmartElementTargets(rawTargets);

@@ -95,8 +95,9 @@ describe('when/where conditional modifiers', () => {
       // semantic `modifiers.where`; it is just unreachable via this surface.)
       const node = parseCommandNode('add .active to me where false');
       expect(node.modifiers?.where).toBeUndefined();
-      const lastArg = node.args[node.args.length - 1] as { operator?: string } | undefined;
-      expect(lastArg?.operator).toBe('where');
+      // The target is the `to` slot (Arc 3 step 3); the filter binds inside it.
+      const target = node.modifiers?.to as { operator?: string } | undefined;
+      expect(target?.operator).toBe('where');
     });
 
     it('leaves modifiers unset when there is no guard', () => {

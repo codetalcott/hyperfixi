@@ -3,7 +3,7 @@
   "generated": "2026-09-02",
   "totals": {
     "bodies": 51,
-    "lines": 2135,
+    "lines": 2110,
     "branches": 323,
     "syntaxSites": 76,
     "valueSites": 202
@@ -165,7 +165,7 @@
     },
     "add": {
       "file": "src/commands/dom/add.ts",
-      "lines": 67,
+      "lines": 52,
       "branches": 7,
       "syntaxSites": 2,
       "valueSites": 5
@@ -214,7 +214,7 @@
     },
     "remove": {
       "file": "src/commands/dom/remove.ts",
-      "lines": 63,
+      "lines": 53,
       "branches": 7,
       "syntaxSites": 1,
       "valueSites": 3

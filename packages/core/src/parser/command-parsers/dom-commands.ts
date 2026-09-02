@@ -128,17 +128,16 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
     args.push(classArg);
   }
 
-  // Consume 'from' keyword and add to args
-  consumeKeywordToArgs(ctx, KEYWORDS.FROM, args);
-
-  // Parse target argument
-  const targetArg = parseOneArgument(ctx);
-  if (targetArg) {
-    args.push(targetArg);
+  // `from <target>` is the `from` slot — the key the semantic path emits.
+  const modifiers: Record<string, ExpressionNode> = {};
+  if (consumeOptionalKeyword(ctx, KEYWORDS.FROM)) {
+    const targetArg = parseOneArgument(ctx);
+    if (targetArg) modifiers['from'] = targetArg as ExpressionNode;
   }
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
@@ -425,19 +424,16 @@ export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  // Parse optional 'to <target>'
-  if (ctx.check(KEYWORDS.TO)) {
-    ctx.advance(); // consume 'to'
-
-    // Parse target element
+  // `to <target>` is the `to` slot — the key the semantic path emits.
+  const modifiers: Record<string, ExpressionNode> = {};
+  if (consumeOptionalKeyword(ctx, KEYWORDS.TO)) {
     const targetArg = parseOneArgument(ctx);
-    if (targetArg) {
-      args.push(targetArg);
-    }
+    if (targetArg) modifiers['to'] = targetArg as ExpressionNode;
   }
 
   return CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
+    .withModifiers(modifiers)
     .endingAt(ctx.getPosition())
     .build();
 }
