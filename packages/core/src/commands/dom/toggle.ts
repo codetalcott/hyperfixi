@@ -52,6 +52,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import { isNodeOfKind } from '../../ast/guards';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /** Typed input for ToggleCommand */
 export type ToggleCommandInput =
@@ -171,6 +172,7 @@ export class ToggleCommand implements DecoratedCommand {
       'toggle #myDialog as modal',
       'toggle .loading for 2s',
       'toggle between .expanded and .collapsed',
+      'toggle .loading until click from #done',
     ],
     sideEffects: ['dom-mutation'],
     category: 'dom',
@@ -184,7 +186,7 @@ export class ToggleCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'toggle'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ToggleCommandInput> {

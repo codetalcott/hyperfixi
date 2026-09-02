@@ -1,10 +1,10 @@
 {
   "$comment": "Parse fingerprints for docs-internal/ENGINE_MIGRATION_PLAN.md Arc 0. One entry per corpus source (see src/parser/__tests__/engine-corpus.ts); the value is a hash of the canonicalized parse, or fail:<errorCount> for a source the parser rejects. ast-equivalence.test.ts fails when any entry moves. Regenerate ONLY in a change that deliberately alters a parse — Arcs 1 and 2 are refactors and must leave this file alone.",
   "generated": "2026-09-02",
-  "sourceCount": 242,
-  "uniqueSourceCount": 226,
+  "sourceCount": 243,
+  "uniqueSourceCount": 227,
   "outcomes": {
-    "ok": 207,
+    "ok": 208,
     "fail": 19
   },
   "fingerprints": {
@@ -220,6 +220,7 @@
     "toggle #myDialog as modal": "ok:b54bf980c30f",
     "toggle .loading for 2s": "ok:103ba7a99b6c",
     "toggle between .expanded and .collapsed": "ok:c5f67dba87d5",
+    "toggle .loading until click from #done": "ok:9e6179e27659",
     "transition opacity to 0.5": "ok:18bacb39efc6",
     "transition my *opacity to 0 over 200ms": "ok:6d7c370620d9",
     "transition #box's *opacity to 0 over 200ms": "ok:a1e4e218f41e",

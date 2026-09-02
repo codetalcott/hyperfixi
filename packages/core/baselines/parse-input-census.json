@@ -6,7 +6,7 @@
     "lines": 2085,
     "branches": 313,
     "syntaxSites": 76,
-    "valueSites": 184
+    "valueSites": 181
   },
   "commands": {
     "async": {
@@ -357,7 +357,7 @@
       "lines": 93,
       "branches": 18,
       "syntaxSites": 4,
-      "valueSites": 22
+      "valueSites": 19
     },
     "tell": {
       "file": "src/commands/utility/tell.ts",

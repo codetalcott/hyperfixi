@@ -30,6 +30,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { debug } from '../../utils/debug';
 import { commandMeta } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for RenderCommand
@@ -102,7 +103,7 @@ export class RenderCommand {
    * @returns Typed input object for execute()
    */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'render'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<RenderCommandInput> {

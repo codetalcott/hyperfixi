@@ -19,6 +19,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for TellCommand
@@ -61,7 +62,7 @@ export class TellCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'tell'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<TellCommandInput> {

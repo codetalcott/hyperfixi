@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /** Conditional mode type */
 export type ConditionalMode = 'if' | 'unless';
@@ -94,7 +95,7 @@ export class ConditionalCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
+    raw: CommandRaw<'if'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ConditionalCommandInput> {

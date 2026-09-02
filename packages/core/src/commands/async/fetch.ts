@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export type FetchResponseType = 'text' | 'json' | 'html' | 'response' | 'blob' | 'arrayBuffer';
 
@@ -173,7 +174,7 @@ export class FetchCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'fetch'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<FetchCommandInput> {

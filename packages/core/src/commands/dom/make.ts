@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 const HTML_ESCAPE: Record<string, string> = {
   '&': '&amp;',
@@ -219,7 +220,7 @@ export class MakeCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ASTNode> },
+    raw: CommandRaw<'make'>,
     evaluator: ExpressionEvaluator,
     context: TypedExecutionContext
   ): Promise<MakeCommandInput> {

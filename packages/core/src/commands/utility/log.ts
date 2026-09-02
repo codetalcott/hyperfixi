@@ -20,6 +20,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for LogCommand
@@ -60,7 +61,7 @@ export class LogCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'log'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<LogCommandInput> {

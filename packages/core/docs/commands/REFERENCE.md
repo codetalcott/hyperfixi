@@ -1373,6 +1373,10 @@ toggle .loading for 2s
 toggle between .expanded and .collapsed
 ```
 
+```hyperscript
+toggle .loading until click from #done
+```
+
 **Side Effects:** dom-mutation
 
 ---

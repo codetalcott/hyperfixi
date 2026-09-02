@@ -77,9 +77,7 @@ describe('EventDispatchCommand (trigger)', () => {
 
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'click' } as any,
-          ],
+          args: [{ type: 'identifier', name: 'click' } as any],
           modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,
@@ -376,9 +374,7 @@ describe('EventDispatchCommand (trigger)', () => {
       // Parse
       const input = await command.parseInput(
         {
-          args: [
-            { type: 'identifier', name: 'testClick' } as any,
-          ],
+          args: [{ type: 'identifier', name: 'testClick' } as any],
           modifiers: { on: { type: 'identifier', name: 'me' } as any },
         },
         evaluator,

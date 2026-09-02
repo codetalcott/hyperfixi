@@ -38,6 +38,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import type { NodeWriterFn } from '../../parser/extensions';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -116,7 +117,7 @@ export class SetCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {
@@ -313,7 +314,7 @@ export class SetCommand implements DecoratedCommand {
 
   private async tryParseMemberExpression(
     firstArg: Record<string, unknown>,
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput | null> {
@@ -379,7 +380,7 @@ export class SetCommand implements DecoratedCommand {
   }
 
   private async extractValue(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
@@ -420,7 +421,7 @@ export class SetCommand implements DecoratedCommand {
 
   private async parseTheXofY(
     expression: string,
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'set'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {

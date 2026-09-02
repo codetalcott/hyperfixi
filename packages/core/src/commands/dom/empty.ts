@@ -25,6 +25,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export interface EmptyCommandInput {
   targets: HTMLElement[];
@@ -48,7 +49,7 @@ export class EmptyCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'empty'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<EmptyCommandInput> {

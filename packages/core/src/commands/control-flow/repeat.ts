@@ -34,6 +34,7 @@ import {
   createUntilEventLoopConfig,
   createForeverLoopConfig,
 } from '../helpers/loop-executor';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /** Typed input for RepeatCommand */
 export interface RepeatCommandInput {
@@ -116,7 +117,7 @@ export class RepeatCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'repeat'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<RepeatCommandInput> {
@@ -215,7 +216,7 @@ export class RepeatCommand implements DecoratedCommand {
       if (!condition) throw new Error('until loops require a condition');
       return { type: 'until', condition, indexVariable, commands, elseCommands, bottomTested };
     }
-    if (loopType === 'forever' || m.forever) {
+    if (loopType === 'forever') {
       return { type: 'forever', indexVariable, commands, elseCommands };
     }
     throw new Error('repeat command requires a loop type (for/times/while/until/forever)');

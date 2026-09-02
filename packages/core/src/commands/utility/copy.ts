@@ -21,6 +21,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for CopyCommand
@@ -64,7 +65,7 @@ export class CopyCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'copy'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<CopyCommandInput> {

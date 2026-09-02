@@ -34,6 +34,7 @@ import {
 } from '../../validation/partial-warning-formatter';
 import type { PartialValidationResult } from '../../validation/partial-validation-types';
 import { dispatchLokaScriptEvent } from '../helpers/event-helpers';
+import type { CommandRaw } from '../../parser/command-slots';
 
 // ============================================================================
 // Types
@@ -234,7 +235,7 @@ export class ProcessPartialsCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'process'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ProcessPartialsCommandInput> {

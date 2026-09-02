@@ -37,6 +37,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 // Re-export types from swap-executor for consumers
 export type { SwapStrategy } from '../../lib/swap-executor';
@@ -134,7 +135,7 @@ export class SwapCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'swap' | 'morph'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SwapCommandInput> {
@@ -287,7 +288,7 @@ export class MorphCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'swap' | 'morph'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SwapCommandInput> {

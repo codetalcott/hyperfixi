@@ -30,6 +30,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for DefaultCommand (discriminated union).
@@ -131,7 +132,7 @@ export class DefaultCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'default'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<DefaultCommandInput> {
@@ -194,7 +195,7 @@ export class DefaultCommand implements DecoratedCommand {
    * kept for callers that build the node directly.
    */
   private async extractValue(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'default'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {

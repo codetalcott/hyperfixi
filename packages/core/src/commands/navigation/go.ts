@@ -22,6 +22,7 @@ import {
   type CommandMetadata,
 } from '../decorators';
 import { isDOMNode } from '../../types/type-guards';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for GoCommand
@@ -63,7 +64,7 @@ export class GoCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'go'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<GoCommandInput> {

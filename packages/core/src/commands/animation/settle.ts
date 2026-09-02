@@ -28,6 +28,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 /**
  * Typed input for SettleCommand
@@ -71,7 +72,7 @@ export class SettleCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'settle'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SettleCommandInput> {

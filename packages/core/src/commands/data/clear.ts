@@ -31,6 +31,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import type { CommandRaw } from '../../parser/command-slots';
 
 export type ClearCommandInput =
   | { type: 'variable'; name: string; scope?: string }
@@ -106,7 +107,7 @@ export class ClearCommand implements DecoratedCommand {
   declare readonly name: string;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: CommandRaw<'clear'>,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ClearCommandInput> {
